@@ -338,10 +338,39 @@ end external
 
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
 
-## Events
+## Lifecycle
+The following define the typical lifecycle of an entity.
+
+### Creation
+New entities can be made through the create command. This is typically saved to an attribute of the same name on a patch.
+
+```
+start patch Default
+
+  location = all
+  Conifer.init = create Conifer
+
+end patch
+```
+
+However, these are regular values that can also be saved to variables:
+
+```
+const newConifer = create Conifer
+```
+
+By default, a single entity is made. This can be extended to multiple using a scalar with the count units:
+
+```
+const newConifers = create 5 count of Conifer
+```
+
+This will return a realized distribution.
+
+### Events
 The init event will only be executed at the initalization of a simulation or the creation of an entity. The remove event will only be executed when an entity is removed from a grid cell. There are also start, step, and end events which correspond to when in a simulation timestep the event handler should be invoked. All start will execute before step which will all execute before end though order of execution is not guaranteed within these groups. A modifier of `:if(meta.stepCount == 0 count)` can be used to determine if init is being run as part of simulation initalization (prior to starting) or if an agent is made while the simulation is running.
 
-## States
+### States
 All entities have a default state but custom states can be added. This can be used to specify behavior which only happens during certain states.
 
 ```
@@ -358,6 +387,79 @@ end organism
 
 This can be modified using the state attribute. All event handlers on the default state will be executed followed by the state-specific handlers.
 
+
+# Computational flow
+This language provides a conceptually imperative approach. In other words, the order in which different snippets of code are run such as which entity is evaluatd first is generally but not explicitly dictated by the simulation author. Instead, the interpreter / compiler can choose in what order to execute computation. The expected behaviors are further described in this section.
+
+## Non-interacting flow
+Absent interactions, all event handlers for an event will be executed in order: simulation, patch, management, organism, and disturbance. For example, all patch start events in a simulation will execute before organism start events which are executed before patch step events which are executed before organism step event. 
+
+## Interacting flow
+If an entity's event handler requests current state information for another entity within the same patch, a computational graph is created. For example:
+
+```
+start organism CoverTree
+
+  height.step: self.height + 6 in
+
+end organism
+
+start organism Grass
+
+  isShaded.step: max(CoverTree.height) > 1 ft
+  height.step: self.height + (-1 cm if self.isShaded else 1 cm)
+
+end organism
+```
+
+The CoverTree height will evaluate prior to Grass isShaded which will evaluate prior to Grass height
+
+## State changes
+If an entity changes states, the handlers for the current event will not run within that state. For example:
+
+```
+class organism Tree
+
+  age.init = 0 years
+  age.step = self.age + 1 year
+  state.init = "juvenile"
+  height.init = 0 in
+
+  start state "juvenile"
+    state.start:if(self.age > 5 years) = "adult"
+    height.step = self.height + 3 in  # Run if juvenile does not become adult
+  end state
+
+  start state "adult"
+    state.start:if(self.age > 50 years) = "dead"
+    height.step = self.height + 6 in  # Run in same year becomes adult
+  end state
+
+end organism
+```
+
+The adult state event handlers will run for step but not for start if a juvenile becomes an adult. However, if a juvenile becomes an adult the juvenile event handler for step will not run.
+
+## Limitations
+The computational graph created must be acyclic. For example:
+
+```
+start organism Tree1
+
+  isShaded.step: max(Tree2.height) > self.height
+  height.step: self.height + (2 in if self.isShaded else 4 in)
+
+end organism
+
+start organism Tree2
+
+  isShaded.step: max(Tree1.height) > self.height
+  height.step: self.height + (2 in if self.isShaded else 4 in)
+
+end organism
+```
+
+This snippet should result in an exception. This could be resolved by querying for the prior timestep.
 
 # Type system
 The type system supports typed units such as 50% or 10 inches. These types need to be defined though they may be imported.
@@ -570,13 +672,19 @@ const a = {
 ```
 
 ## Mapping
-Mapping one from set of numbers to another is available though only linear mapping is supported at this time:
+Mapping one from set of numbers to another is available with the default being linear mapping.
 
 ```
 const a = map b from [0 in, 100 in] to [0 %, 100%]
 ```
 
-This will extraplote linearlly in the range if an input outside the domain is provided.
+This will extraplote linearlly in the range if an input outside the domain is provided. The following has identical behavior:
+
+```
+const a = map b from [0 in, 100 in] to [0 %, 100%] linearlly
+```
+
+Additionally logarithmically and exponentially are available.
 
 ## Limit
 Limits can be used to enforce a min, max, or range:
@@ -749,14 +857,133 @@ const countsAlsoOnCell = JoshuaTree.count
 To help improve readability, it is recommended that entity names are `CamelCase` with leading upper case character.
 
 ## Reserved names
-The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within. The following are reserved for future use: gaussian, linearly, logrithmically, logistically.
+The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within.
 
 
 # Example
-This simple Joshua Tree-inspired example demonstrates basic mechanics.
+Two examples are provided where one sues agents to represent full communities and other uses agents to represent individuals.
 
-## Setup
-This implementation starts with a grid where each cell or patch is 30 meters by 30 meters centered at a given geographic location. without sampling.
+## Competing Trees
+This first example assumes that one agent represents a collection of individuals within a patch.
+
+### Setup
+This implementation starts with a grid where each cell or patch is 30 meters by 30 meters.
+
+```
+start simulation Example
+
+  grid.size = 30 m
+
+end simulation
+```
+
+This demonstration will also use local geotiff with perceipitation information.
+
+```
+start external observedAges
+
+  source.location = "file://perceipitation.geotiff"
+  source.format = "geotiff"
+  source.units = "cm / year"
+  source.band = 0
+
+end external
+```
+
+Unit definitions are also provided.
+
+```
+start unit cm
+
+  m = self / 100
+
+end unit
+
+start unit years
+
+  year = self
+  yr = self
+  yrs = self
+
+end unit
+```
+
+Finally, uniform patches are defined with all species present.
+
+```
+start patch Default
+
+  location = all
+  Shrubs.init = create 1 count of Shrubs
+  TreeA.init = create 1 count of TreeA
+  TreeB.init = create 1 count of TreeB
+
+end patch
+```
+
+### Organisms
+This example next defines its organisms:
+
+```
+start organism Shrubs
+
+  carryingCapacity.init: 80 %
+  reproduction.init: 15% / year
+  
+  otherCover.step = limit sum(Deciduous.cover) + sum(Conifer.cover) to [0%, 100%]
+
+  cover.init = sample normal with mean of 50% std of 10%
+  cover.step
+    :if(self.otherCover < 20%) = self.cover + 10%
+    :elif(self.otherCover < 40%) = self.cover + 5%
+    :elif(self.otherCover > 80%) = self.cover - 10%
+    :elif(self.otherCover > 60%) = self.cover - 5%
+
+  cover.end = limit self.cover to [, self.carryingCapacity]
+
+end organism
+
+
+start organism TreeA
+
+  carryingCapacity.init = 90%
+
+  age.init = 1 year
+  age.step = self.age + 10 year
+
+  shade.start = sum(TreeB[TreeB.height > self.height].shade)
+  cover.step = self.height / 5 m * 10 %
+  
+  growth.step = map self.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
+  growthLimit.step = self.growth * (100 % - self.shade) / 100 %
+  
+  height.step = self.height + self.growthLimit
+
+end organism
+
+
+start organism TreeB
+
+  carryingCapacity.init = 90%
+
+  age.init = 1 year
+  age.step = self.age + 10 year
+
+  growth.step = map self.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
+  height.step = self.height + growth
+  cover.step = self.height * 10 % / 3 m
+  height.end = limit self.height to [, 30 m]
+
+end organism
+```
+
+Each organism represents a species and each patch has exactly one agent per organism.
+
+## Joshua Tree
+This second simple Joshua Tree-inspired example demonstrates basic mechanics where agents represent individuals. These parameters and mechanics are demonstrative only and not intended to be realistic.
+
+### Setup
+This implementation starts with a grid where each cell or patch is 30 meters by 30 meters centered at a given geographic location. This will operate without sampling.
 
 ```
 start simulation Example
@@ -808,14 +1035,14 @@ Finally, uniform patches are defined.
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
 
 end patch
 ```
 
-This patch is further modified after additional definition
+This patch is further modified after additional definition.
 
-## Organism behavior
+### Organism behavior
 This organism will primarily be defined through changes in state. Note that initial state is set based on age.
 
 ```
@@ -874,34 +1101,39 @@ end organism
 
 The starting implementation simply updates age and state without seed dispersal.
 
-## Dispersal
+### Dispersal
 Seed dispersal means that new Joshua Trees may be created if the space is not too crowded. This is handled in the patch:
 
 ```
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+
+  carryingCapacity.init = 30 count
+  remainingRoom.step = carryingCapacity - count(JoshuaTree)
+
+  seedDensity.init = 0 count
+  seedDensity.step = {
+    const neighbors = JoshuaTree within 30 m radial
+    const adultNeighbors = neighbors[neighbors.state == "adult"]
+    return sum(adultNeighbors.seedCache) / 10% * 1 count
+  }
+
+  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
   JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
   JoshuaTree.step = {
     const prior = JoshuaTree
-    const neighbors = JoshuaTree within 30 m radial
-    const adultNeighbors = neighbors[neighbors.state == "adult"]
-    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
-    const newCount = floor(sample uniform from 0 count to seedDensity)
-    const newCountCapped = limit newCount to [0, 30 - count(prior)]
-    const new = create newCountCapped JoshuaTree
+    const newCount = floor(sample uniform from 0 count to self.seedDensity)
+    const newCountCapped = limit newCount to [0 count, self.remainingRoom]
+    const new = create newCountCapped of JoshuaTree
     return new + prior
   }
 
 end patch
 ```
 
-## Disturbances
-We include a simple fire disturbance at random locations.
-
-### Use of a disturbance agent
-The first approach involves an agent.
+### Disturbances with agents
+We include a simple fire disturbance at random locations. The first approach involves an agent.
 
 ```
 start disturbance Fire
@@ -919,21 +1151,16 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
   JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
-  JoshuaTree.step = {
-    const prior = JoshuaTree
-    const neighbors = JoshuaTree within 30 m radial
-    const adultNeighbors = neighbors[neighbors.state == "adult"]
-    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
-    const newCount = floor(sample uniform from 0 count to seedDensity)
-    const newCountCapped = limit newCount to [0, 30 - count(prior)]
-    const new = create newCountCapped JoshuaTree
-    return new + prior
-  }
 
-  Fire.step = create (1 if sample uniform from 0% to 100% < 5%) else 0) Fire
+  # ...
+
   Fire.start = Fire - JoshuaTree[Fire.active == false]
+  Fire.step = {
+    const count = 1 count if sample uniform from 0% to 100% < 5%) else 0 count
+    return create count of Fire
+  }
 
 end patch
 ```
@@ -943,16 +1170,16 @@ Finally, the JoshuaTree can respond to fire:
 ```
 start organism JoshuaTree
 
-  # ... prior ...
+  # ...
 
   state.step:if(count(Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
 
-  # ... states ...
+  # ...
 
 end organism
 ```
 
-### Without a disturbance agent
+### Disturbance without an agent
 This second approach simply uses the patch itself.
 
 ```
@@ -960,18 +1187,10 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
   JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
-  JoshuaTree.step = {
-    const prior = JoshuaTree
-    const neighbors = JoshuaTree within 30 m radial
-    const adultNeighbors = neighbors[neighbors.state == "adult"]
-    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
-    const newCount = floor(sample uniform from 0 count to seedDensity)
-    const newCountCapped = limit newCount to [0, 30 - count(prior)]
-    const new = create newCountCapped JoshuaTree
-    return new + prior
-  }
+
+  # ...
 
   onFire.start = sample uniform from 0% to 100% < 5%
 
