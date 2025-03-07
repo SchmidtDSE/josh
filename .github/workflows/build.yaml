@@ -20,7 +20,7 @@ jobs:
       - name: Build paper
         run: pandoc -o spec.pdf --number-sections README.md
       - name: Upload paper
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: spec
           path: spec.pdf
