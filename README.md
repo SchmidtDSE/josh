@@ -87,7 +87,7 @@ Attributes have different events such as init and step. These can be conditional
 ```
 start organism Deciduous
 
-  cover.limit:if(max(Conifer.cover) > 0%) = map mean(Conifer.cover) from [0%, 90%] to [0%, 100%]
+  cover.end:if(max(Conifer.cover) > 0%) = limit self.cover to [,map mean(Conifer.cover) from [0%, 90%] to [0%, 100%]]
 
 end organism
 ```
@@ -311,7 +311,7 @@ end external
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
 
 ## Events
-The init event will only be executed at the initalization of a simulation or the creation of an entity. The remove event will only be executed when an entity is removed from a grid cell. There are also start, step, and end events which correspond to when in a simulation timestep the event handler should be invoked. All start will execute before step which will all execute before end though order of execution is not guaranteed within these groups. Finally, limit will be applied after end to enforce constraints. A modifier of `.if(meta.stepCount == 0 count)` can be used to determine if init is being run as part of simulation initalization (prior to starting) or if an agent is made while the simulation is running.
+The init event will only be executed at the initalization of a simulation or the creation of an entity. The remove event will only be executed when an entity is removed from a grid cell. There are also start, step, and end events which correspond to when in a simulation timestep the event handler should be invoked. All start will execute before step which will all execute before end though order of execution is not guaranteed within these groups. A modifier of `:if(meta.stepCount == 0 count)` can be used to determine if init is being run as part of simulation initalization (prior to starting) or if an agent is made while the simulation is running.
 
 ## States
 All entities have a default state but custom states can be added. This can be used to specify behavior which only happens during certain states.
@@ -723,15 +723,18 @@ To help improve readability, it is recommended that entity names are `CamelCase`
 ## Reserved names
 The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within. The following are reserved for future use: gaussian, linearly, logrithmically, logistically.
 
-# Example
 
-## Description
+# Example
+TKTK
 
 ## Baseline implementation
+TKTK
 
 ## Disturbances
+TKTK
 
 ## Interventions
+TKTK
 
 
 # Implementation
