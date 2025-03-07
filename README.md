@@ -1,3 +1,17 @@
+---
+title: "Josh Language Specification 2.0"
+header-includes: |
+  \usepackage{float}
+  \floatplacement{figure}{H}
+date: Mar 6, 2025
+author:
+  - name: A Samuel Pottinger
+  - name: Nick Gondek
+  - name: Lucia Layritz
+  - name: Maya Zomer
+  - name: Maya Weltman-Fahs
+---
+
 Focused on vegetation, the Josh language allows for the description of multi-occupancy patch-based ecological simulations in which multiple species occupying a grid cell describing a small segment of a community can be described through individual behaviors with optional state changes.
 
 
