@@ -5,11 +5,11 @@ header-includes: |
   \floatplacement{figure}{H}
 date: Mar 6, 2025
 author:
-  - name: A Samuel Pottinger
-  - name: Nick Gondek
-  - name: Lucia Layritz
-  - name: Maya Zomer
-  - name: Maya Weltman-Fahs
+  - A Samuel Pottinger
+  - Nick Gondek
+  - Lucia Layritz
+  - Maya Zomer
+  - Maya Weltman-Fahs
 ---
 
 Focused on vegetation, the Josh language allows for the description of multi-occupancy patch-based ecological simulations in which multiple species occupying a grid cell describing a small segment of a community can be described through individual behaviors with optional state changes.
@@ -101,7 +101,10 @@ Attributes have different events such as init and step. These can be conditional
 ```
 start organism Deciduous
 
-  cover.end:if(max(Conifer.cover) > 0%) = limit self.cover to [,map mean(Conifer.cover) from [0%, 90%] to [0%, 100%]]
+  cover.end:if(max(Conifer.cover) > 0%) = {
+    const maxCover = map mean(Conifer.cover) from [0%, 90%] to [0%, 100%]
+    return limit self.cover to [,maxCover]
+  }
 
 end organism
 ```
