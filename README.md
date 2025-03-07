@@ -60,7 +60,7 @@ Each stanza can manipulate attributes. These are variables attached to a specifi
 ```
 start organism JoshuaTree
 
-  age.init = draw ageGeotiff
+  age.init = sample ageGeotiff
 
 end organism
 ```
@@ -97,8 +97,8 @@ This can also be stochastic:
 ```
 start organism Confier
 
-  cover.step:if(draw uniform from 0% to 100% > 50%) = {
-    const growth = draw normal with mean of 5% std of 1%
+  cover.step:if(sample uniform from 0% to 100% > 50%) = {
+    const growth = sample normal with mean of 5% std of 1%
     const newCover = limit self.cover + growth to [0%, 100%]
     return newCove
   }
@@ -112,7 +112,7 @@ Finally, this can depend on external variables like for environment:
 start organism Confier
 
   cover.step:if(mean(growSeasonPreciptation) > 1 in) = {
-    const growth = draw normal with mean of 5% std of 1%
+    const growth = sample normal with mean of 5% std of 1%
     const prior = self.cover
     const new = limit prior + growth to [0%, 100%]
     return new
@@ -131,7 +131,7 @@ Settings which dictate behavior of the entire simulation are dictated in a Simul
 ```
 start simulation Detailed
 
-  grid = 1km square from 34 degrees latitude -116 degrees longitude to 35 degrees latitude -115 degrees longitude
+  grid.init = 1km square from 34 degrees latitude -116 degrees longitude to 35 degrees latitude -115 degrees longitude
 
 end simulation
 ```
@@ -141,7 +141,10 @@ This can include generalized sampling behavior:
 ```
 start simulation Coarse
 
-  grid = 1km square from 34 degrees latitude -116 degrees longitude to 35 degrees latitude -115 degrees longitude
+  grid.size = 1km
+  grid.start = 34 degrees longitude -116 degrees latitude
+  grid.end = 35 degrees longitude -115 degrees latitude
+  
   sampling = 1%  # Sample 1% of individuals in each patch
 
 end simulation
@@ -152,7 +155,10 @@ Alternatively, sampling can be specified per agent:
 ```
 start simulation Coarse
 
-  grid = 1km square from 34 degrees latitude -116 degrees longitude to 35 degrees latitude -115 degrees longitude
+  grid.size = 1km
+  grid.start = 34 degrees longitude -116 degrees latitude
+  grid.end = 35 degrees longitude -115 degrees latitude
+  
   sampling.JoshuaTree = 1%  # Sample 1% of individuals in each patch
   sampling.ShrubGrass = 100 count  # Sample
 
@@ -164,7 +170,10 @@ Finally, simulations can also control the sampling behavior for distribution ari
 ```
 start simulation Coarse
 
-  grid = 1km square from 34 degrees latitude -116 degrees longitude to 35 degrees latitude -115 degrees longitude
+  grid.size = 1km
+  grid.start = 34 degrees latitude -116 degrees longitude
+  grid.end = 35 degrees latitude -115 degrees longitude
+  
   sampling.general = 1000 count
 
 end simulation
@@ -179,11 +188,11 @@ Patches are the grid cells in which communities of organisms may be present.
 start patch Default
 
   location = all
-  occupancy.JoshuaTree.init = create sum locationsGeotiff JoshuaTree
-  occupancy.JoshuaTree.step = occupancy.JoshuaTree - occupancy.JoshuaTree[state == "dead"]
-  occupancy.JoshuaTree.step = {
-    const new = create 1 count JoshuaTree if sum(JoshuaTree.occupancy) < 10 count else emptyc
-    const prior = occupancy.JoshuaTree
+  JoshuaTree.init = create sum(locationsGeotiff) JoshuaTree
+  JoshuaTree.step = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTree.step = {
+    const new = create 1 count if sum(JoshuaTree) < 10 count else 0 JoshuaTree
+    const prior = JoshuaTree
     return prior + new
   }
 
@@ -196,8 +205,8 @@ Some simulations may represent simple occupancy as a binary where only one agent
 start patch Default
 
   location = all
-  occupancy.JoshuaTree.init = {
-    const numNew = 1 count if sum locationsGeotiff > 0 count else 0 count
+  JoshuaTree.init = {
+    const numNew = 1 count if sum(locationsGeotiff) > 0 count else 0 count
     const new = create numNew JoshuaTree
     return new
   }
@@ -301,9 +310,9 @@ External data layers can also add additional information that can be used by age
 start external growingSeasonPrecipitation
 
   year.init = meta.stepCount + 2050 count  # Simulation starts in 2050
-  location.init = "file://precipitation/{{ meta.stepCount }}.geotiff"
-  format.init = geotiff
-  units.init = in / month
+  source.location = "file://precipitation/{{ self.year }}.geotiff"
+  source.format = "geotiff"
+  source.units = "in / month"
 
 end external
 ```
@@ -375,22 +384,22 @@ Distributions can be converted to scalars via reduction operations:
 If using virtualized distributions, operations may perform sampling as controlled by the Simulation to proivde an estimation. If nested distributions (distribution of distributions) is provided, they are flattened and then the operation is performed.
 
 ### Stochastic operations
-Drawing values from distributions randomly is available through the draw command which, by default, will draw a single value.
+Drawing values from distributions randomly is available through the sample command which, by default, will draw a single value.
 
 ```
-const randomAge = draw ageGeotiff
+const randomAge = sample ageGeotiff
 ```
 
 Drawing multiple times with replacement:
 
 ```
-const randomAge = draw 5 count from ageGeotiff
+const randomAge = sample 5 count from ageGeotiff
 ```
 
 Drawing multiple times without replacement:
 
 ```
-const randomAge = draw 5 count from ageGeotiff without replacement
+const randomAge = sample 5 count from ageGeotiff without replacement
 ```
 
 The count can be a variable with a count number.
@@ -405,7 +414,7 @@ Sets are a realized distribution that automatically removes duplicates. At this 
 For realized scalars only, subsets can be retrieved through indexing:
 
 ```
-occupancy.JoshuaTree[state == "dead"]
+JoshuaTree[JoshuaTree.state == "dead"]
 ```
 
 This returns a new distribution that meets the given condition applied per element. If applied to a virtualized distribution, it will be sampled.
@@ -725,16 +734,201 @@ The following are used by the system and it is not recommended that they be used
 
 
 # Example
-TKTK
+This simple Joshua Tree-inspired example demonstrates basic mechanics.
 
-## Baseline implementation
-TKTK
+## Setup
+This implementation starts with a grid where each cell or patch is 30 meters by 30 meters centered at a given geographic location. without sampling.
+
+```
+start simulation Example
+
+  grid.size = 30 m
+  grid.start = 34 degrees longitude -116 degrees latitude
+  grid.end = 35 degrees longitude -115 degrees latitude
+
+end simulation
+```
+
+This demonstration will also use local geotiff with estimated counts of trees and ages with geographic specificity:
+
+```
+start external observedAges
+
+  source.location = "file://obsevations.geotiff"
+  source.format = "geotiff"
+  source.units = "years"
+  source.band = 0
+
+end external
+
+start external observedCounts
+
+  source.location = "file://obsevations.geotiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 1
+
+end external
+```
+
+Unit definitions are also provided.
+
+```
+start unit years
+
+  year = self
+  yr = self
+  yrs = self
+
+end unit
+```
+
+Finally, uniform patches are defined.
+
+```
+start patch Default
+
+  location = all
+  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+
+end patch
+```
+
+This patch is further modified after additional definition
+
+## Organism behavior
+This organism will primarily be defined through changes in state. Note that initial state is set based on age.
+
+```
+start organism JoshuaTree
+
+  age.init
+    :if(meta.stepCount == 0 count) = sample observedAges
+    :else = 0 years
+
+  age.step = self.age + 1 year
+
+  state.init
+    :if(self.age > 30 years) = "adult"
+    :elif(self.age > 2 years) = "juvenile"
+    :elif(self.age > 0 years) = "seedling"
+    :else = "seed"
+
+  seedCache.init
+    :if(self.age > 30 years) = self.age * (5% / 1 year)
+    :else = 0%
+
+  start state "seed"
+
+    state.step
+      :if(sample uniform from 0% to 100% > 50%) = "seedling"
+      :elif(sample uniform from 0% to 100% > 50%) = "dead"
+      :elif(self.age > 3 years) = "dead"
+  
+  end state
+
+  start state "seedling"
+
+    state.step
+      :if(sample uniform from 0% to 100% < 20%) = "dead"
+      :elif(self.age > 2 years) = "juvenile"
+
+  end state
+
+  start state "juvenile"
+
+    state.step
+      :if(sample uniform from 0% to 100% < 10%) = "dead"
+      :elif(self.age > 30 years) = "adult"
+
+  end state
+
+  start state "adult"
+
+    seedCache.step = limit 1% + seedCache to [0%, 100%]
+    state.step:if(sample uniform from 0% to 100% < 5%) = "dead"
+
+  end state
+
+end organism
+```
+
+The starting implementation simply updates age and state without seed dispersal.
+
+## Dispersal
+Seed dispersal means that new Joshua Trees may be created if the space is not too crowded. This is handled in the patch:
+
+```
+start patch Default
+
+  location = all
+  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTree.step = {
+    const prior = JoshuaTree
+    const neighbors = JoshuaTree within 30 m radial
+    const adultNeighbors = neighbors[neighbors.state == "adult"]
+    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
+    const newCount = floor(sample uniform from 0 count to seedDensity)
+    const newCountCapped = limit newCount to [0, 30 - count(prior)]
+    const new = create newCountCapped JoshuaTree
+    return new + prior
+  }
+
+end patch
+```
 
 ## Disturbances
-TKTK
+We include a simple fire disturbance at random locations.
 
-## Interventions
-TKTK
+```
+start disturbance Fire
+
+  active.init = true
+  active.step = false
+
+end disturbance
+```
+
+This is used as a simple marker:
+
+```
+start patch Default
+
+  location = all
+
+  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTree.step = {
+    const prior = JoshuaTree
+    const neighbors = JoshuaTree within 30 m radial
+    const adultNeighbors = neighbors[neighbors.state == "adult"]
+    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
+    const newCount = floor(sample uniform from 0 count to seedDensity)
+    const newCountCapped = limit newCount to [0, 30 - count(prior)]
+    const new = create newCountCapped JoshuaTree
+    return new + prior
+  }
+
+  Fire.step = create (1 if sample uniform from 0% to 100% < 5%) else 0) Fire
+  Fire.start = Fire - JoshuaTree[Fire.active == false]
+
+end patch
+```
+
+Finally, the JoshuaTree can respond to fire:
+
+```
+start organism JoshuaTree
+
+  # ... prior ...
+
+  state.step:if(count(Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
+
+  # ... states ...
+
+end organism
+```
 
 
 # Implementation
