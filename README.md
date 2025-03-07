@@ -3,7 +3,7 @@ title: "Josh Language Specification 2.0"
 header-includes: |
   \usepackage{float}
   \floatplacement{figure}{H}
-date: Mar 6, 2025
+date: Mar 7, 2025
 author:
   - A Samuel Pottinger
   - Nick Gondek
