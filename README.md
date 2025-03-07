@@ -881,6 +881,9 @@ end patch
 ## Disturbances
 We include a simple fire disturbance at random locations.
 
+### Use of a disturbance agent
+The first approach involves an agent.
+
 ```
 start disturbance Fire
 
@@ -930,6 +933,45 @@ start organism JoshuaTree
 end organism
 ```
 
+### Without a disturbance agent
+This second approach simply uses the patch itself.
+
+```
+start patch Default
+
+  location = all
+
+  JoshuaTree.init = create sum(observedCounts) JoshuaTree
+  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTree.step = {
+    const prior = JoshuaTree
+    const neighbors = JoshuaTree within 30 m radial
+    const adultNeighbors = neighbors[neighbors.state == "adult"]
+    const seedDensity = sum(adultNeighbors.seedCache) / 10% * 1 count
+    const newCount = floor(sample uniform from 0 count to seedDensity)
+    const newCountCapped = limit newCount to [0, 30 - count(prior)]
+    const new = create newCountCapped JoshuaTree
+    return new + prior
+  }
+
+  onFire.start = sample uniform from 0% to 100% < 5%
+
+end patch
+```
+
+Then, the JoshuaTree can respond to fire:
+
+```
+start organism JoshuaTree
+
+  # ... prior ...
+
+  state.step:if(patch.onFire and sample uniform 0% to 100% < 90%) = "dead"
+
+  # ... states ...
+
+end organism
+```
 
 # Implementation
 Given this language structure and the earlier described motivation, the following optional recommendations are given for those implementing this language.
