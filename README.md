@@ -877,19 +877,6 @@ start simulation Example
 end simulation
 ```
 
-This demonstration will also use local geotiff with perceipitation information.
-
-```
-start external observedAges
-
-  source.location = "file://perceipitation.geotiff"
-  source.format = "geotiff"
-  source.units = "cm / year"
-  source.band = 0
-
-end external
-```
-
 Unit definitions are also provided.
 
 ```
