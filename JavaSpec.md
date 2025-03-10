@@ -1,3 +1,7 @@
+# Technologies
+
+Will use JUnit, JavaDoc, Decimal, and [Gradle](https://github.com/junit-team/junit5-samples/blob/r5.12.0/junit5-jupiter-starter-gradle/build.gradle) which, at the start, only needs to pull in JUnit via Maven (MavenCentral).
+
 # Engine API
 Each subheader is an object.
 
