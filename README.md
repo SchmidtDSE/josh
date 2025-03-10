@@ -88,7 +88,7 @@ start organism JoshuaTree
     const currentAge = self.age
     const newAge = currentAge + 1 year
     return newAge
-  } 
+  }
 
 end organism
 ```
@@ -117,7 +117,7 @@ start organism Confier
   cover.step:if(sample uniform from 0% to 100% > 50%) = {
     const growth = sample normal with mean of 5% std of 1%
     const newCover = limit self.cover + growth to [0%, 100%]
-    return newCove
+    return newCover
   }
 
 end organism
@@ -658,17 +658,17 @@ This acts as a function call which takes a single argument which is of type bool
 If statements are defined as following a Python-like turninary operation:
 
 ```
-const a = 1 if b = 2 else 3
+const a = 1 if b == 2 else 3
 ```
 
 These can be full bodies:
 
 ```
-const a = {
-    return 1
-  } if b = 2 else {
-    return 3
-  }
+const a = if b == 2 {
+  return 1
+} else {
+  return 3
+}
 ```
 
 ## Mapping
