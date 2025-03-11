@@ -1,9 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.query;
-
-import org.dse.JoshLang.core.geometry.Geometry;
+package org.dse.JoshLang.geometry;
 
 /**
  * Interface representing a spatial and temporal query.

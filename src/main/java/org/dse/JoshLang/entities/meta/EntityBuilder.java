@@ -3,7 +3,6 @@
  */
 package org.dse.JoshLang.entities;
 
-import org.dse.JoshLang.core.entity.meta.Entity;
 import org.dse.JoshLang.events.EventHandlerGroup;
 
 /**

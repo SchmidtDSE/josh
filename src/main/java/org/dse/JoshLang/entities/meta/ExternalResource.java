@@ -1,10 +1,10 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.entity.meta;
+package org.dse.JoshLang.entities.meta;
 
 import org.dse.JoshLang.core.distribution.Distribution;
-import org.dse.JoshLang.core.geometry.Geometry;
+import org.dse.JoshLang.geometry.Geometry;
 
 /**
  * Represents an external resource entity in the system.

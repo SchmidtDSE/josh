@@ -5,7 +5,7 @@ package org.dse.JoshLang.simulation;
 
 import java.util.Optional;
 
-import org.dse.JoshLang.entity.Entity;
+import org.dse.JoshLang.entities.meta.Entity;
 import org.dse.JoshLang.geometry.Geometry;
 
 /**

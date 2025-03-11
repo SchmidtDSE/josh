@@ -1,7 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.entity.meta;
+package org.dse.JoshLang.entities.meta;
 
 import org.dse.JoshLang.core.value.EngineValue;
 import org.dse.JoshLang.events.EventHandlerGroup;

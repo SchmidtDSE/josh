@@ -1,9 +1,9 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.entity.meta;
+package org.dse.JoshLang.entities.spatial;
 
-import org.dse.JoshLang.core.geometry.GeoPoint;
+import org.dse.JoshLang.geometry.GeoPoint;
 
 /**
  * Represents an entity with spatial properties in the system.

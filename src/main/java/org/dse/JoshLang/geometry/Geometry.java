@@ -1,7 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.geometry;
+package org.dse.JoshLang.geometry;
 
 import java.math.BigDecimal;
 

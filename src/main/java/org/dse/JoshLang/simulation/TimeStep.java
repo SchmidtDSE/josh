@@ -1,9 +1,9 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.replicate;
+package org.dse.JoshLang.simulation;
 
-import org.dse.JoshLang.entity.Entity;
+import org.dse.JoshLang.entities.meta.Entity;
 import org.dse.JoshLang.geometry.Geometry;
 
 /**
