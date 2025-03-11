@@ -1,0 +1,7 @@
+-classpath '/workspaces/josh-specification/build/classes/java/main:/workspaces/josh-specification/build/resources/main'
+-d '/workspaces/josh-specification/build/docs/javadoc'
+-doctitle 'JoshLang API'
+-notimestamp 
+-quiet 
+-windowtitle 'JoshLang API'
+'/workspaces/josh-specification/src/main/java/org/dse/JoshLang/EngineValue.java'
