@@ -383,7 +383,17 @@ start organism Deciduous
 end organism
 ```
 
-In this example, `seedBank.step` will get the `Fire` distribution from the Patch containing this Deciduous where `here` is an alias for that Patch.
+In this example, `seedBank.step` will get the `Fire` distribution from the Patch containing this Deciduous where `here` is an alias for that Patch. The Patch will be evaluated first but, if an attribute is requested that is not on the Patch, external resources will be checked.
+
+```
+start organism Deciduous
+
+  age.init = sample here.ageGeotiff
+
+end organism
+```
+
+In this example, `ageGeotiff` may refer to an External and the ages at this grid cell will be randomly sampled.
 
 ### Other grid cells
 These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
