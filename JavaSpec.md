@@ -69,6 +69,10 @@ Arithmetic operations will throw an error if units are not the same.
 
 Get a copy of this entity from the prior time step or an empty java.util.Optional if this entity did not exist in the prior timestep or no prior timestep exists.
 
+`clone() -> Entity`
+
+Make a deep copy of this entity. This copy will be returned for use by the client but will not change the entity in the timestep / replicate. Any locks on the original entity will be unchanged but the returned copy will have all locks unlocked.
+
 `getEventHandler(String attribute, String event) -> Iterable<EventHandlerGroup>`
 
 `getAttributeValue(String name) -> Optional<EngineValue>`

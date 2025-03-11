@@ -341,6 +341,15 @@ end external
 
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
 
+## Keywords
+Entities go through a series of steps which can moodify their attributes. The following are provided:
+
+ - `self`: The entity in the current event.
+ - `prior`: The entity from the event immediately prior to the current event being evaluated.
+ - `here`: Can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `self` when referring to attributes of the Patch.
+
+These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially.
+
 ## Lifecycle
 The following define the typical lifecycle of an entity.
 
@@ -791,17 +800,19 @@ const priorCount = sum(prior.here.JoshuaTree.count)
 At this time, only spatial queries by radial distance are supported by within.
 
 ```
-const nearbyCount = sum(JoshuaTree.count within 30 m radial)
+const nearbyCount = sum(JoshuaTree.count within 30 m radial at prior)
 ```
 
 This results in a set for which const can be used:
 
 ```
-const treesNearby = JoshuaTree within 30 m radial
+const treesNearby = JoshuaTree within 30 m radial at prior
 const treesOn = here.JoshuaTree
 const nearbyButNotOn = treesNearby - treesOn
 const nearbyButNotOnCount = sum(nearbyButNotOn.count)
 ```
+
+Note that `at prior` will return the state of these entities prior to the current step. At this time, `at prior` is required.
 
 ## Imports
 Imports will cause another script to get executed as if the contents were found at the import location.
@@ -1109,7 +1120,7 @@ start patch Default
 
   seedDensity.init = 0 count
   seedDensity.step = {
-    const neighbors = JoshuaTree within 30 m radial
+    const neighbors = JoshuaTree within 30 m radial at prior
     const adultNeighbors = neighbors[neighbors.state == "adult"]
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
