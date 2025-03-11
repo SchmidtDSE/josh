@@ -3,36 +3,25 @@
  */
 package org.dse.JoshLang.simulation;
 
-import java.util.Optional;
-
-import org.dse.JoshLang.entities.meta.Entity;
-import org.dse.JoshLang.geometry.Geometry;
+import org.dse.JoshLang.entities.meta.EntityBuilder;
 
 /**
- * Interface representing a full simulation replicate.
- * Provides methods to access time steps and query entities across time steps.
+ * Interface for building Replicate objects.
+ * Provides methods to add entities and finalize the building process.
  */
-public interface Replicate {
+public interface ReplicateBuilder {
     /**
-     * Adds a time step to this replicate.
+     * Adds an entity builder to the replicate being constructed.
      *
-     * @param timeStep the time step to add
+     * @param entity the entity builder to add
+     * @return this builder for method chaining
      */
-    void addTimeStep(TimeStep timeStep);
+    ReplicateBuilder addEntity(EntityBuilder entity);
 
     /**
-     * Gets a time step by its step number.
+     * Finalizes the building process and returns the constructed Replicate.
      *
-     * @param stepNumber the step number to retrieve
-     * @return an Optional containing the time step if found, or empty if not found
+     * @return the constructed Replicate object
      */
-    Optional<TimeStep> getTimeStep(int stepNumber);
-
-    /**
-     * Queries entities across time steps based on the provided query.
-     *
-     * @param query the query defining spatial and temporal bounds
-     * @return an iterable of matching entities
-     */
-    Iterable<Entity> query(Query query);
+    Replicate step();
 }

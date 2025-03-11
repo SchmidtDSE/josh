@@ -4,6 +4,7 @@
 package org.dse.JoshLang.entities.spatial;
 
 import org.dse.JoshLang.geometry.GeoPoint;
+import org.dse.JoshLang.entities.meta.Entity;
 
 /**
  * Represents an entity with spatial properties in the system.

@@ -1,7 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.replicate;
+package org.dse.JoshLang.simulation;
 
 import java.util.Optional;
 
