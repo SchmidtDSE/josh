@@ -71,6 +71,14 @@ Arithmetic operations will throw an error if units are not the same.
 
 `setAttributeValue(String name, EngineValue value)`
 
+`lock()`
+
+Convinenece provided to client code to request a global lock on this entity. This is not enforced in getters and setters but can be used to signal that this object is undergoing mutation requiring thread safety. Will block until lock is acquired.
+
+`unlock()`
+
+Convinenece provided to client code to release the global lock on this entity. This is not enforced in getters and setters but can be used to signal that this object is undergoing mutation requiring thread safety.
+
 ## ExternalResource(Entity)
 
 `getValues(Geometry geometry) -> Distribution`
