@@ -342,13 +342,51 @@ end external
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
 
 ## Keywords
-Entities go through a series of steps which can moodify their attributes. The following are provided:
+Entities go through a series of steps which can modify their attributes. To support these calculations, different scoping keywords are provided.
 
- - `self`: The entity in the current event.
- - `prior`: The entity from the event immediately prior to the current event being evaluated.
- - `here`: Can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `self` when referring to attributes of the Patch.
+### Keyword for self
+The `self` keyword can be used to access the entity in the current event. If a variable on self is referenced that is not yet calculated, it will be calculated dynamically. For example: 
 
-These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially.
+```
+start organism Tree
+
+  cover.step = self.height / 5 m * 10 %
+  height.step = prior.height + 1 m
+
+end organism
+```
+
+In this case, if `cover.step` is evaluated first, `self.height` will cause `height.step` to be evaluated.
+
+### Keyword for prior
+The `prior` keyword can be used to access this entity but from the event immediately prior to the current event being evaluated. This will not cause dynamic calculation. For example:
+
+```
+start organism Tree
+
+  cover.step = prior.height / 5 m * 10 %
+  height.step = prior.height + 1 m
+
+end organism
+```
+
+In this case, if `cover.step` is evaluated first, `self.height` will not cause `height.step` to be evaluated. Indeed, `prior.height` in `cover.step` will always use the value for height from before the step event started.
+
+### Keyword for here
+The `here` keyword can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `self` when referring to attributes of the Patch.
+
+```
+start organism Deciduous
+
+  seedBank.step:if(max(here.Fire.cover) > 0%) = "seed"
+
+end organism
+```
+
+In this example, `seedBank.step` will get the `Fire` distribution from the Patch containing this Deciduous where `here` is an alias for that Patch.
+
+### Other grid cells
+These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
 
 ## Lifecycle
 The following define the typical lifecycle of an entity.
