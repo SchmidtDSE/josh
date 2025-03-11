@@ -1,7 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.event;
+package org.dse.JoshLang.events;
 
 import java.util.Optional;
 

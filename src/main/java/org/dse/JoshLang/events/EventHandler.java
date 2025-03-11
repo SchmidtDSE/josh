@@ -1,10 +1,10 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.event;
+package org.dse.JoshLang.events;
 
 import java.util.Optional;
-import org.dse.JoshLang.core.selector.CompiledSelector;
+import org.dse.JoshLang.core.compiled.CompiledSelector;
 
 /**
  * Interface for handling events in the system.

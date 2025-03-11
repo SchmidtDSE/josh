@@ -3,7 +3,7 @@
  */
 package org.dse.JoshLang.core.geometry;
 
-import java.math.Decimal;
+import java.math.BigDecimal;
 
 /**
  * Interface representing a geographical point on Earth.
@@ -16,7 +16,7 @@ public interface GeoPoint extends Geometry {
      * @return the latitude of this point
      */
     @Override
-    Decimal getCenterLatitude();
+    BigDecimal getCenterLatitude();
 
     /**
      * {@inheritDoc}
@@ -24,7 +24,7 @@ public interface GeoPoint extends Geometry {
      * @return the longitude of this point
      */
     @Override
-    Decimal getCenterLongitude();
+    BigDecimal getCenterLongitude();
 
     /**
      * {@inheritDoc}
@@ -32,5 +32,5 @@ public interface GeoPoint extends Geometry {
      * @return zero for a point
      */
     @Override
-    Decimal getRadius();
+    BigDecimal getRadius();
 }

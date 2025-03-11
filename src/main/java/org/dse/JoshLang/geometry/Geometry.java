@@ -3,7 +3,7 @@
  */
 package org.dse.JoshLang.core.geometry;
 
-import java.math.Decimal;
+import java.math.BigDecimal;
 
 /**
  * Interface representing geometric objects with geographic properties.
@@ -15,7 +15,7 @@ public interface Geometry {
      * @return the latitude as a Decimal value
      * @throws IllegalStateException if the geometry has no defined center
      */
-    Decimal getCenterLatitude();
+    BigDecimal getCenterLatitude();
 
     /**
      * Gets the longitude component of this geometry's center point.
@@ -23,7 +23,7 @@ public interface Geometry {
      * @return the longitude as a Decimal value
      * @throws IllegalStateException if the geometry has no defined center
      */
-    Decimal getCenterLongitude();
+    BigDecimal getCenterLongitude();
 
     /**
      * Gets the radius of this geometry.
@@ -31,5 +31,5 @@ public interface Geometry {
      * @return the radius as a Decimal value
      * @throws UnsupportedOperationException if the geometry has no defined radius
      */
-    Decimal getRadius();
+    BigDecimal getRadius();
 }

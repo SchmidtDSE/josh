@@ -3,7 +3,7 @@
  */
 package org.dse.JoshLang.core.geometry;
 
-import java.math.Decimal;
+import java.math.BigDecimal;
 
 /**
  * Interface representing a circle in geographic coordinates.
@@ -16,7 +16,7 @@ public interface Circle extends Geometry {
      * @return the latitude of this circle's center
      */
     @Override
-    Decimal getCenterLatitude();
+    BigDecimal getCenterLatitude();
 
     /**
      * {@inheritDoc}
@@ -24,7 +24,7 @@ public interface Circle extends Geometry {
      * @return the longitude of this circle's center
      */
     @Override
-    Decimal getCenterLongitude();
+    BigDecimal getCenterLongitude();
 
     /**
      * {@inheritDoc}
@@ -32,5 +32,5 @@ public interface Circle extends Geometry {
      * @return the radius of this circle
      */
     @Override
-    Decimal getRadius();
+    BigDecimal getRadius();
 }

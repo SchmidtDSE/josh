@@ -4,6 +4,7 @@
 package org.dse.JoshLang.core.entity.meta;
 
 import org.dse.JoshLang.core.value.EngineValue;
+import org.dse.JoshLang.events.EventHandlerGroup;
 import java.util.Optional;
 
 /**
