@@ -1,7 +1,7 @@
 /**
  * @license BSD-3-Clause
  */
-package org.dse.JoshLang.core.entity.meta;
+package org.dse.JoshLang.simulation;
 
 /**
  * Represents a simulation entity in the system.
