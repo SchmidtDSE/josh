@@ -141,7 +141,7 @@ Take a step where all entities do not have a prior state.
 
 `step(Replicate currentReplicate) -> Replicate`
 
-Advance to next step where the curent step is reprsented by 1currentReplicate`.
+Advance to next step where the curent step is reprsented by `currentReplicate`.
 
 ## TimeStep
 
