@@ -1,3 +1,7 @@
+/**
+ @license BSD-3-Clause
+ */
+
 package org.dse.JoshLang;
 
 /**
