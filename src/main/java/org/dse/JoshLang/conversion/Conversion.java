@@ -28,4 +28,5 @@ public interface Conversion {
      *
      * @return a compiled callable that performs the conversion
      */
-    
+    CompiledCallable getConversionCallable();
+}
