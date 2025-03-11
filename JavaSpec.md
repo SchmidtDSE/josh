@@ -109,6 +109,8 @@ Arithmetic operations will throw an error if units are not the same.
 
 `evaluate(Scope scope) -> EngineValue`
 
+## Scope
+
 ## Geometry
 
 `getCenterLatitude() -> Decimal`

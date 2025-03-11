@@ -3,7 +3,7 @@
  */
 package org.dse.JoshLang.conversion;
 
-import org.dse.JoshLang.core.CompiledCallable;
+import org.dse.JoshLang.core.compiled.CompiledCallable;
 
 /**
  * Represents a conversion rule between two unit types.

@@ -2,6 +2,7 @@
  * @license BSD-3-Clause
  */
 package org.dse.JoshLang.core.compiled;
+import org.dse.JoshLang.core.value.EngineValue;
 
 /**
  * Represents a compiled callable that can be evaluated to produce a value.
