@@ -1,0 +1,19 @@
+/**
+ * @license BSD-3-Clause
+ */
+package org.dse.JoshLang.core.entity.meta;
+
+import org.dse.JoshLang.core.geometry.GeoPoint;
+
+/**
+ * Represents an entity with spatial properties in the system.
+ * This interface defines methods for accessing location information.
+ */
+public interface SpatialEntity extends Entity {
+    /**
+     * Gets the geographic location of this spatial entity.
+     *
+     * @return the geographic point representing this entity's location
+     */
+    GeoPoint getLocation();
+}
