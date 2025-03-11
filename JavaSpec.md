@@ -33,7 +33,7 @@ Arithmetic operations will throw an error if units are not the same.
 
 ## VirtualDistribution(Distribution)
 
-### StandardVirtualDistrubtion(Distribution)
+## StandardVirtualDistrubtion(Distribution)
 
 ## Set(Distribution)
 
