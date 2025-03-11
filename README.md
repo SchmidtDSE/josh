@@ -103,7 +103,7 @@ start organism Deciduous
 
   cover.end:if(max(here.Conifers.cover) > 0%) = {
     const maxCover = map mean(here.Conifers.cover) from [0%, 90%] to [0%, 100%]
-    return limit self.cover to [,maxCover]
+    return limit current.cover to [,maxCover]
   }
 
 end organism
@@ -209,13 +209,13 @@ start patch Default
   location = all
   JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
   JoshuaTrees.step = {
-    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
-    return self.JoshuaTrees - deadTrees
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTrees - deadTrees
   }
   JoshuaTrees.step = {
-    const newCount = 1 count if count(self.JoshuaTrees) < 10 count else 0
+    const newCount = 1 count if count(current.JoshuaTrees) < 10 count else 0
     const new = create newCount JoshuaTree
-    return self.JoshuaTrees + new
+    return current.JoshuaTrees + new
   }
 
 end patch
@@ -245,7 +245,7 @@ start patch Default
 
   # ...
 
-  occupationScore.step = sum(self.JoshuaTrees.cover)
+  occupationScore.step = sum(current.JoshuaTrees.cover)
 
 end patch
 ```
@@ -332,7 +332,7 @@ External data layers can also add additional information that can be used by age
 start external GrowingSeasonPrecipitation
 
   year.init = meta.stepCount + 2050 count  # Simulation starts in 2050
-  source.location = "file://precipitation/{{ self.year }}.geotiff"
+  source.location = "file://precipitation/{{ current.year }}.geotiff"
   source.format = "geotiff"
   source.units = "in / month"
 
@@ -344,19 +344,19 @@ These may be used for environmental data such as temperature projections. Locati
 ## Keywords
 Entities go through a series of steps which can modify their attributes. To support these calculations, different scoping keywords are provided.
 
-### Keyword for self
-The `self` keyword can be used to access the entity in the current event. If a variable on self is referenced that is not yet calculated, it will be calculated dynamically. For example: 
+### Keyword for current
+The `current` keyword can be used to access the entity in the current event. If a variable on current is referenced that is not yet calculated, it will be calculated dynamically. For example: 
 
 ```
 start organism Tree
 
-  cover.step = self.height / 5 m * 10 %
+  cover.step = current.height / 5 m * 10 %
   height.step = prior.height + 1 m
 
 end organism
 ```
 
-In this case, if `cover.step` is evaluated first, `self.height` will cause `height.step` to be evaluated.
+In this case, if `cover.step` is evaluated first, `current.height` will cause `height.step` to be evaluated.
 
 ### Keyword for prior
 The `prior` keyword can be used to access this entity but from the event immediately prior to the current event being evaluated. This will not cause dynamic calculation. For example:
@@ -370,10 +370,10 @@ start organism Tree
 end organism
 ```
 
-In this case, if `cover.step` is evaluated first, `self.height` will not cause `height.step` to be evaluated. Indeed, `prior.height` in `cover.step` will always use the value for height from before the step event started.
+In this case, if `cover.step` is evaluated first, `prior.height` will not cause `height.step` to be evaluated. Indeed, `prior.height` in `cover.step` will always use the value for height from before the step event started.
 
 ### Keyword for here
-The `here` keyword can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `self` when referring to attributes of the Patch.
+The `here` keyword can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `current` when referring to attributes of the Patch.
 
 ```
 start organism Deciduous
@@ -467,7 +467,7 @@ end organism
 start organism Grass
 
   isShaded.step: max(here.CoverTrees.height) > 1 ft
-  height.step: prior.height + (-1 cm if self.isShaded else 1 cm)
+  height.step: prior.height + (-1 cm if current.isShaded else 1 cm)
 
 end organism
 ```
@@ -486,12 +486,12 @@ class organism Tree
   height.init = 0 in
 
   start state "juvenile"
-    state.start:if(self.age > 5 years) = "adult"
+    state.start:if(current.age > 5 years) = "adult"
     height.step = prior.height + 3 in  # Run if juvenile does not become adult
   end state
 
   start state "adult"
-    state.start:if(self.age > 50 years) = "dead"
+    state.start:if(current.age > 50 years) = "dead"
     height.step = prior.height + 6 in  # Run in same year becomes adult
   end state
 
@@ -506,15 +506,15 @@ The computational graph created must be acyclic. For example:
 ```
 start organism TreeA
 
-  isShaded.step: max(here.TreeBs.height) > self.height
-  height.step: prior.height + (2 in if self.isShaded else 4 in)
+  isShaded.step: max(here.TreeBs.height) > current.height
+  height.step: prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 
 start organism TreeB
 
-  isShaded.step: max(here.TreeAs.height) > self.height
-  height.step: prior.height + (2 in if self.isShaded else 4 in)
+  isShaded.step: max(here.TreeAs.height) > current.height
+  height.step: prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 ```
@@ -525,7 +525,7 @@ This snippet should result in an exception. This could be resolved by querying f
 The type system supports typed units such as 50% or 10 inches. These types need to be defined though they may be imported.
 
 ## Scalar
-This specification calls individual numbers with units as scalars. Regular arithmetic operations (+, -, *, /, ^) will work for this type with automated unit conversion if numbers of non-identical units encountered. This is typically accessed via the `self` keyword:
+This specification calls individual numbers with units as scalars. Regular arithmetic operations (+, -, *, /, ^) will work for this type with automated unit conversion if numbers of non-identical units encountered.
 
 ```
 start organism JoshuaTree
@@ -535,7 +535,7 @@ start organism JoshuaTree
 end organism
 ```
 
-In general, accessing scalar attributes of individual non-self agents is discouraged. Scalar values can be made through a number followed by units.
+This is typically accessed via the `current` or `prior` keyword. Scalar values can be made through a number followed by units.
 
 ## Distribution
 A distibution can be created a few ways. First, it can be a set of individual numbers (such as an array) read from a file called a realized distribution:
@@ -628,8 +628,8 @@ Users may add additional units with aliases:
 
 ```
 start unit inch
-  in = self
-  inches = self
+  alias in
+  alisas inches
 end unit
 ```
 
@@ -637,14 +637,16 @@ Conversions can also be created:
 
 ```
 start unit inch
-  in = self * 1
-  inches = self * 1
-  feet = self / 12
+  alias in
+  alias inches
+
+  feet = current / 12
 end unit
 
 start unit foot
-  feet = self
-  yard = self / 3
+  alias feet
+
+  yard = current / 3
 end unit
 ```
 
@@ -652,7 +654,7 @@ These conversions can depend on where the conversion is taking place:
 
 ```
 start unit percent
-  ft.Conifer.cover = self / 100 * 300
+  ft.Conifer.cover = current / 100 * 300
 end unit
 ```
 
@@ -810,9 +812,9 @@ However, these are like const and cannot be written:
 start organism JoshuaTree
 
   age.step = {
-    const currentAge = prior.age
-    const newAge = currentAge + 1 year
-    self.age = newAge  # Results in an error
+    const priorAge = prior.age
+    const newAge = priorAge + 1 year
+    current.age = newAge  # Results in an error
   } 
 
 end organism
@@ -944,15 +946,15 @@ Unit definitions are also provided.
 ```
 start unit cm
 
-  m = self / 100
+  m = current / 100
 
 end unit
 
 start unit years
 
-  year = self
-  yr = self
-  yrs = self
+  alias year
+  alias yr
+  alias yrs
 
 end unit
 ```
@@ -988,12 +990,12 @@ start organism Shrubs
 
   cover.init = sample normal with mean of 50% std of 10%
   cover.step
-    :if(self.otherCover < 20%) = prior.cover + 10%
-    :elif(self.otherCover < 40%) = prior.cover + 5%
-    :elif(self.otherCover > 80%) = prior.cover - 10%
-    :elif(self.otherCover > 60%) = prior.cover - 5%
+    :if(current.otherCover < 20%) = prior.cover + 10%
+    :elif(current.otherCover < 40%) = prior.cover + 5%
+    :elif(current.otherCover > 80%) = prior.cover - 10%
+    :elif(current.otherCover > 60%) = prior.cover - 5%
 
-  cover.end = limit self.cover to [, self.carryingCapacity]
+  cover.end = limit current.cover to [, current.carryingCapacity]
 
 end organism
 
@@ -1005,13 +1007,13 @@ start organism TreeA
   age.init = 1 year
   age.step = prior.age + 10 year
 
-  shade.start = sum(here.TreeBs[here.TreeBs.height > self.height].shade)
-  cover.step = self.height / 5 m * 10 %
+  shade.start = sum(here.TreeBs[here.TreeBs.height > current.height].shade)
+  cover.step = current.height / 5 m * 10 %
   
-  growth.step = map self.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
-  growthLimit.step = self.growth * (100 % - self.shade) / 100 %
+  growth.step = map current.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
+  growthLimit.step = current.growth * (100 % - current.shade) / 100 %
   
-  height.step = prior.height + self.growthLimit
+  height.step = prior.height + current.growthLimit
 
 end organism
 
@@ -1023,9 +1025,9 @@ start organism TreeB
   age.init = 1 year
   age.step = prior.age + 10 year
 
-  growth.step = map self.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
+  growth.step = map curent.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
   height.step = prior.height + growth
-  cover.step = self.height * 10 % / 3 m
+  cover.step = curent.height * 10 % / 3 m
   height.end = limit prior.height to [, 30 m]
 
 end organism
@@ -1076,9 +1078,9 @@ Unit definitions are also provided.
 ```
 start unit years
 
-  year = self
-  yr = self
-  yrs = self
+  alias year
+  alias yr
+  alias yrs
 
 end unit
 ```
@@ -1109,13 +1111,13 @@ start organism JoshuaTree
   age.step = prior.age + 1 year
 
   state.init
-    :if(self.age > 30 years) = "adult"
-    :elif(self.age > 2 years) = "juvenile"
-    :elif(self.age > 0 years) = "seedling"
+    :if(current.age > 30 years) = "adult"
+    :elif(current.age > 2 years) = "juvenile"
+    :elif(current.age > 0 years) = "seedling"
     :else = "seed"
 
   seedCache.init
-    :if(self.age > 30 years) = self.age * (5% / 1 year)
+    :if(current.age > 30 years) = current.age * (5% / 1 year)
     :else = 0%
 
   start state "seed"
@@ -1123,7 +1125,7 @@ start organism JoshuaTree
     state.step
       :if(sample uniform from 0% to 100% > 50%) = "seedling"
       :elif(sample uniform from 0% to 100% > 50%) = "dead"
-      :elif(self.age > 3 years) = "dead"
+      :elif(current.age > 3 years) = "dead"
   
   end state
 
@@ -1131,7 +1133,7 @@ start organism JoshuaTree
 
     state.step
       :if(sample uniform from 0% to 100% < 20%) = "dead"
-      :elif(self.age > 2 years) = "juvenile"
+      :elif(current.age > 2 years) = "juvenile"
 
   end state
 
@@ -1139,7 +1141,7 @@ start organism JoshuaTree
 
     state.step
       :if(sample uniform from 0% to 100% < 10%) = "dead"
-      :elif(self.age > 30 years) = "adult"
+      :elif(current.age > 30 years) = "adult"
 
   end state
 
@@ -1164,7 +1166,7 @@ start patch Default
   location = all
 
   carryingCapacity.init = 30 count
-  remainingRoom.step = self.carryingCapacity - count(self.JoshuaTrees)
+  remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
 
   seedDensity.init = 0 count
   seedDensity.step = {
@@ -1175,12 +1177,12 @@ start patch Default
 
   JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
   JoshuaTrees.start = {
-    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
-    return self.JoshuaTree - deadTrees
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
   }
   JoshuaTrees.step = {
-    const newCount = floor(sample uniform from 0 count to self.seedDensity)
-    const newCountCapped = limit newCount to [0 count, self.remainingRoom]
+    const newCount = floor(sample uniform from 0 count to current.seedDensity)
+    const newCountCapped = limit newCount to [0 count, current.remainingRoom]
     const new = create newCountCapped of JoshuaTree
     return new + prior.JoshuaTrees
   }
@@ -1209,8 +1211,8 @@ start patch Default
 
   JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
-    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
-    return self.JoshuaTree - deadTrees
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
   }
 
   # ...
@@ -1232,7 +1234,7 @@ start organism JoshuaTree
 
   # ...
 
-  state.step:if(count(self.Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
+  state.step:if(count(current.Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
 
   # ...
 
@@ -1249,8 +1251,8 @@ start patch Default
 
   JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
   JoshuaTrees.start = {
-    const deadTrees = self.JoshuaTree[self.JoshuaTrees.state == "dead"]
-    reutrn self.JoshuaTrees - deadTrees
+    const deadTrees = current.JoshuaTree[current.JoshuaTrees.state == "dead"]
+    reutrn current.JoshuaTrees - deadTrees
   }
 
   # ...
