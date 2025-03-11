@@ -74,7 +74,7 @@ Each stanza can manipulate attributes. These are variables attached to a specifi
 ```
 start organism JoshuaTree
 
-  age.init = sample ageGeotiff
+  age.init = sample AgeGeotiff
 
 end organism
 ```
@@ -101,8 +101,8 @@ Attributes have different events such as init and step. These can be conditional
 ```
 start organism Deciduous
 
-  cover.end:if(max(here.Conifer.cover) > 0%) = {
-    const maxCover = map mean(here.Conifer.cover) from [0%, 90%] to [0%, 100%]
+  cover.end:if(max(here.Conifers.cover) > 0%) = {
+    const maxCover = map mean(here.Conifers.cover) from [0%, 90%] to [0%, 100%]
     return limit self.cover to [,maxCover]
   }
 
@@ -128,7 +128,7 @@ Finally, this can depend on external variables like for environment:
 ```
 start organism Confier
 
-  cover.step:if(mean(here.growSeasonPreciptation) > 1 in) = {
+  cover.step:if(mean(here.GrowSeasonPreciptation) > 1 in) = {
     const growth = sample normal with mean of 5% std of 1%
     const newCover = prior.cover + growth
     const newLimited = limit newCover to [0%, 100%]
@@ -178,13 +178,13 @@ start simulation Coarse
   grid.start = 34 degrees longitude, -116 degrees latitude
   grid.end = 35 degrees longitude, -115 degrees latitude
   
-  sampling.JoshuaTree = 1%  # Sample 1% of individuals in each patch
-  sampling.ShrubGrass = 100 count  # Sample
+  sampling.JoshuaTrees = 1%  # Sample 1% of individuals in each patch
+  sampling.ShrubGrasses = 100 count  # Sample
 
 end simulation
 ```
 
-Finally, simulations can also control the sampling behavior for distribution arithmetic:
+These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute names on patches. Finally, simulations can also control the sampling behavior for distribution arithmetic:
 
 ```
 start simulation Coarse
@@ -207,15 +207,15 @@ Patches are the grid cells in which communities of organisms may be present.
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(here.locationsGeotiff) JoshuaTree
-  JoshuaTree.step = {
-    const deadTrees = self.JoshuaTree[self.JoshuaTree.state == "dead"]
-    return self.JoshuaTree - deadTrees
+  JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
+  JoshuaTrees.step = {
+    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
+    return self.JoshuaTrees - deadTrees
   }
-  JoshuaTree.step = {
-    const newCount = 1 count if sum(self.JoshuaTree) < 10 count else 0
+  JoshuaTrees.step = {
+    const newCount = 1 count if count(self.JoshuaTrees) < 10 count else 0
     const new = create newCount JoshuaTree
-    return self.JoshuaTree + new
+    return self.JoshuaTrees + new
   }
 
 end patch
@@ -227,8 +227,8 @@ Some simulations may represent simple occupancy as a binary where only one agent
 start patch Default
 
   location = all
-  JoshuaTree.init = {
-    const numNew = 1 count if sum(here.locationsGeotiff) > 0 count else 0 count
+  JoshuaTrees.init = {
+    const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
     const new = create numNew JoshuaTree
     return new
   }
@@ -245,7 +245,7 @@ start patch Default
 
   # ...
 
-  occupationScore.step = sum(self.JoshuaTree.cover)
+  occupationScore.step = sum(self.JoshuaTrees.cover)
 
 end patch
 ```
@@ -255,7 +255,7 @@ Location of all will use this patch across the entire simulation. However, patch
 ```
 start patch Wet
 
-  location = mean(here.percepitationGeotiff) > 5 in
+  location = mean(here.PercepitationGeotiff) > 5 in
 
 end patch
 ```
@@ -318,7 +318,7 @@ Management agents can be created through user configuration or user interactions
 ```
 start management Planting
 
-  cover.init: mean(here.plantingMap)
+  cover.init: mean(here.PlantingMap)
 
 end management
 ```
@@ -329,7 +329,7 @@ These are typically markers used that other agents can react to
 External data layers can also add additional information that can be used by agents. Data inside these layers cannot be edited.
 
 ```
-start external growingSeasonPrecipitation
+start external GrowingSeasonPrecipitation
 
   year.init = meta.stepCount + 2050 count  # Simulation starts in 2050
   source.location = "file://precipitation/{{ self.year }}.geotiff"
@@ -388,12 +388,12 @@ In this example, `seedBank.step` will get the `Fire` distribution from the Patch
 ```
 start organism Deciduous
 
-  age.init = sample here.ageGeotiff
+  age.init = sample here.AgeGeotiff
 
 end organism
 ```
 
-In this example, `ageGeotiff` may refer to an External and the ages at this grid cell will be randomly sampled.
+In this example, `AgeGeotiff` may refer to an External and the ages at this grid cell will be randomly sampled.
 
 ### Other grid cells
 These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
@@ -408,7 +408,7 @@ New entities can be made through the create command. This is typically saved to 
 start patch Default
 
   location = all
-  Conifer.init = create Conifer
+  Conifers.init = create Conifer
 
 end patch
 ```
@@ -419,7 +419,7 @@ However, these are regular values that can also be saved to variables:
 const newConifer = create Conifer
 ```
 
-By default, a single entity is made. This can be extended to multiple using a scalar with the count units:
+By default, a single entity is made (distribution of 1). This can be extended to multiple using a scalar with the count units:
 
 ```
 const newConifers = create 5 count of Conifer
@@ -439,7 +439,7 @@ start organism Conifer
   state.step:if(max(here.Fire.cover) > 0%) = "stump"
 
   start state "stump"
-    state.step:if(mean(precipitationGeotiff) > 2 in) = "default"
+    state.step:if(mean(here.PrecipitationGeotiff) > 2 in) = "default"
   end state
 
 end organism
@@ -466,7 +466,7 @@ end organism
 
 start organism Grass
 
-  isShaded.step: max(here.CoverTree.height) > 1 ft
+  isShaded.step: max(here.CoverTrees.height) > 1 ft
   height.step: prior.height + (-1 cm if self.isShaded else 1 cm)
 
 end organism
@@ -504,16 +504,16 @@ The adult state event handlers will run for step but not for start if a juvenile
 The computational graph created must be acyclic. For example:
 
 ```
-start organism Tree1
+start organism TreeA
 
-  isShaded.step: max(here.Tree2.height) > self.height
+  isShaded.step: max(here.TreeBs.height) > self.height
   height.step: prior.height + (2 in if self.isShaded else 4 in)
 
 end organism
 
-start organism Tree2
+start organism TreeB
 
-  isShaded.step: max(here.Tree1.height) > self.height
+  isShaded.step: max(here.TreeAs.height) > self.height
   height.step: prior.height + (2 in if self.isShaded else 4 in)
 
 end organism
@@ -541,7 +541,7 @@ In general, accessing scalar attributes of individual non-self agents is discour
 A distibution can be created a few ways. First, it can be a set of individual numbers (such as an array) read from a file called a realized distribution:
 
 ```
-const distribution = here.ageGeotiff
+const distribution = here.AgeGeotiff
 ```
 
 Altnernatively, it can be a formally described distribution created in code called a virtual distribution:
@@ -568,19 +568,19 @@ If using virtualized distributions, operations may perform sampling as controlle
 Drawing values from distributions randomly is available through the sample command which, by default, will draw a single value.
 
 ```
-const randomAge = sample here.ageGeotiff
+const randomAge = sample here.AgeGeotiff
 ```
 
 Drawing multiple times with replacement:
 
 ```
-const randomAge = sample 5 count from here.ageGeotiff
+const randomAge = sample 5 count from here.AgeGeotiff
 ```
 
 Drawing multiple times without replacement:
 
 ```
-const randomAge = sample 5 count from here.ageGeotiff without replacement
+const randomAge = sample 5 count from here.AgeGeotiff without replacement
 ```
 
 The count can be a variable with a count number.
@@ -595,7 +595,7 @@ Sets are a realized distribution that automatically removes duplicates. At this 
 For realized scalars only, subsets can be retrieved through indexing:
 
 ```
-here.JoshuaTree[here.JoshuaTree.state == "dead"]
+here.JoshuaTrees[here.JoshuaTrees.state == "dead"]
 ```
 
 This returns a new distribution that meets the given condition applied per element. If applied to a virtualized distribution, it will be sampled.
@@ -841,20 +841,20 @@ Information from other time steps and cells can be queried through the at and wi
 At this time, only prior for timestep minus 1 is supported by the prior keyword.
 
 ```
-const priorCount = sum(prior.here.JoshuaTree.count)
+const priorCount = sum(prior.here.JoshuaTrees.count)
 ```
 
 ### Spatial queries
 At this time, only spatial queries by radial distance are supported by within.
 
 ```
-const nearbyCount = sum(JoshuaTree.count within 30 m radial at prior)
+const nearbyCount = sum(JoshuaTrees.count within 30 m radial at prior)
 ```
 
 This results in a set for which const can be used:
 
 ```
-const treesNearby = JoshuaTree within 30 m radial at prior
+const treesNearby = JoshuaTrees within 30 m radial at prior
 const treesOn = here.JoshuaTree
 const nearbyButNotOn = treesNearby - treesOn
 const nearbyButNotOnCount = sum(nearbyButNotOn.count)
@@ -901,19 +901,19 @@ The following conventions are recommended. Unless specified otherwise, violation
 Local variables like defined via const are recommended to follow `camelCase` with leading lowercase letter. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
 
 ## Attributes
-Attribute names are recommended to follow `camelCase` with leading lowercase letter. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
+Attribute names are recommended to follow `camelCase` with leading lowercase letter when a scalar and `CamelCase` with leading uppercase letter when a dimension. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
 
 ## Entities
-Groups of agents present on the same patch can be found by specifying the name of the agent:
+Groups of agents present on the same patch should be found by specifying the name of the agent plurlaized. This is achieved through an attribute name on the Patch with the entity name pluralized.
 
 ```
-const alsoOnCell = here.JoshuaTree
+const alsoOnCell = here.JoshuaTrees
 ```
 
 Distributions of values can be found on those groups:
 
 ```
-const countsAlsoOnCell = here.JoshuaTree.count
+const countsAlsoOnCell = here.JoshuaTrees.count
 ```
 
 To help improve readability, it is recommended that entity names are `CamelCase` with leading upper case character.
@@ -964,8 +964,8 @@ start patch Default
 
   location = all
   Shrubs.init = create 1 count of Shrubs
-  TreeA.init = create 1 count of TreeA
-  TreeB.init = create 1 count of TreeB
+  TreeAs.init = create 1 count of TreeA
+  TreeBs.init = create 1 count of TreeB
 
 end patch
 ```
@@ -980,9 +980,9 @@ start organism Shrubs
   reproduction.init: 15% / year
   
   otherCover.step = {
-    const deciduousCover = sum(here.Deciduous.cover)
-    const coniferCover = sum(here.Conifer.cover)
-    const total = deciduousCover + coniferCover
+    const treeACover = sum(here.TreeAs.cover)
+    const treeBCover = sum(here.TreeBs.cover)
+    const total = treeACover + treeBCover
     return limit total to [0%, 100%]
   }
 
@@ -1005,7 +1005,7 @@ start organism TreeA
   age.init = 1 year
   age.step = prior.age + 10 year
 
-  shade.start = sum(here.TreeB[here.TreeB.height > self.height].shade)
+  shade.start = sum(here.TreeBs[here.TreeBs.height > self.height].shade)
   cover.step = self.height / 5 m * 10 %
   
   growth.step = map self.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
@@ -1052,7 +1052,7 @@ end simulation
 This demonstration will also use local geotiff with estimated counts of trees and ages with geographic specificity:
 
 ```
-start external observedAges
+start external ObservedAges
 
   source.location = "file://obsevations.geotiff"
   source.format = "geotiff"
@@ -1061,7 +1061,7 @@ start external observedAges
 
 end external
 
-start external observedCounts
+start external ObservedCounts
 
   source.location = "file://obsevations.geotiff"
   source.format = "geotiff"
@@ -1089,7 +1089,7 @@ Finally, uniform patches are defined.
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
 
 end patch
 ```
@@ -1103,7 +1103,7 @@ This organism will primarily be defined through changes in state. Note that init
 start organism JoshuaTree
 
   age.init
-    :if(meta.stepCount == 0 count) = sample here.observedAges
+    :if(meta.stepCount == 0 count) = sample here.ObservedAges
     :else = 0 years
 
   age.step = prior.age + 1 year
@@ -1164,25 +1164,25 @@ start patch Default
   location = all
 
   carryingCapacity.init = 30 count
-  remainingRoom.step = self.carryingCapacity - count(self.JoshuaTree)
+  remainingRoom.step = self.carryingCapacity - count(self.JoshuaTrees)
 
   seedDensity.init = 0 count
   seedDensity.step = {
-    const neighbors = JoshuaTree within 30 m radial at prior
+    const neighbors = JoshuaTrees within 30 m radial at prior
     const adultNeighbors = neighbors[neighbors.state == "adult"]
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  JoshuaTree.init = create sum(here.observedCounts) of JoshuaTree
-  JoshuaTree.start = {
-    const deadTrees = self.JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
     return self.JoshuaTree - deadTrees
   }
-  JoshuaTree.step = {
+  JoshuaTrees.step = {
     const newCount = floor(sample uniform from 0 count to self.seedDensity)
     const newCountCapped = limit newCount to [0 count, self.remainingRoom]
     const new = create newCountCapped of JoshuaTree
-    return new + prior.JoshuaTree
+    return new + prior.JoshuaTrees
   }
 
 end patch
@@ -1207,9 +1207,9 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(here.observedCounts) of JoshuaTree
-  JoshuaTree.start = {
-    const deadTrees = self.JoshuaTree[self.JoshuaTree.state == "dead"]
+  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = self.JoshuaTrees[self.JoshuaTrees.state == "dead"]
     return self.JoshuaTree - deadTrees
   }
 
@@ -1247,8 +1247,11 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(here.observedCounts) of JoshuaTree
-  JoshuaTree.start = here.JoshuaTree - here.JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = self.JoshuaTree[self.JoshuaTrees.state == "dead"]
+    reutrn self.JoshuaTrees - deadTrees
+  }
 
   # ...
 
