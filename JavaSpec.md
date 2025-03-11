@@ -65,6 +65,10 @@ Arithmetic operations will throw an error if units are not the same.
 
 ## Entity
 
+`getFromPriorStep() -> Optional<Entity>`
+
+Get a copy of this entity from the prior time step or an empty java.util.Optional if this entity did not exist in the prior timestep or no prior timestep exists.
+
 `getEventHandler(String attribute, String event) -> Iterable<EventHandlerGroup>`
 
 `getAttributeValue(String name) -> Optional<EngineValue>`
@@ -132,6 +136,12 @@ Arithmetic operations will throw an error if units are not the same.
 `addEntity(EntityBuilder entity)`
 
 `step() -> Replicate`
+
+Take a step where all entities do not have a prior state.
+
+`step(Replicate currentReplicate) -> Replicate`
+
+Advance to next step where the curent step is reprsented by 1currentReplicate`.
 
 ## TimeStep
 
