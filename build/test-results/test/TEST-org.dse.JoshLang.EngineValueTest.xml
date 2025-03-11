@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.dse.JoshLang.EngineValueTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-03-11T02:30:32" hostname="a6650523bbdd" time="0.052">
+<testsuite name="org.dse.JoshLang.EngineValueTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-03-11T03:03:57" hostname="54f3c5315e8d" time="0.018">
   <properties/>
-  <testcase name="testAdd()" classname="org.dse.JoshLang.EngineValueTest" time="0.052"/>
+  <testcase name="testAdd()" classname="org.dse.JoshLang.EngineValueTest" time="0.018"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
