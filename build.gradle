@@ -3,6 +3,7 @@ plugins {
     id 'eclipse' // optional (to generate Eclipse project files)
     id 'idea' // optional (to generate IntelliJ IDEA project files)
     id 'application' // for creating executable JARs
+    id 'checkstyle' // for code style checking
 }
 
 repositories {
@@ -58,3 +59,35 @@ javadoc {
     
     destinationDir = file("${buildDir}/docs/javadoc")
 }
+
+checkstyle {
+    toolVersion = '10.21.4'
+    configFile = file("${rootDir}/config/checkstyle/google_checks.xml")
+    configDirectory = file("${rootDir}/config/checkstyle")
+    maxErrors = 0
+    maxWarnings = 0
+    ignoreFailures = false
+}
+
+checkstyleMain {
+    source = 'src/main/java/org/joshsim'
+}
+
+checkstyleTest {
+    source = 'src/test/java/org/joshsim'
+}
+
+// Create directory and checkstyle config if it doesn't exist
+task setupCheckstyle {
+    doLast {
+        def configDir = file("${rootDir}/config/checkstyle")
+        configDir.mkdirs()
+        def checksFile = new File(configDir, "google_checks.xml")
+        if (!checksFile.exists()) {
+            checksFile << new URL("https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml").text
+        }
+    }
+}
+
+// Make checkstyleMain depend on setupCheckstyle
+checkstyleMain.dependsOn setupCheckstyle
