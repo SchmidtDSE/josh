@@ -10,9 +10,8 @@ package org.joshsim.engine.value;
 /**
  * Structure representing a value in the engine.
  *
- * <p>Represents a value in the engine which may be an individual value (Scalar) or may be a collection
- * of values (Distribution).
- * </p>
+ * <p>Represents a value in the engine which may be an individual value (Scalar) or may be a
+ * collection of values (Distribution).</p>
  */
 public interface EngineValue extends Comparable<EngineValue> {
 
@@ -73,10 +72,8 @@ public interface EngineValue extends Comparable<EngineValue> {
   /**
    * Compare this EngineValue to the specified object for equality.
    *
-   * <p>
-   * Compare two EngineValues for equality where two EngineValue objects are considered equal if
-   * they have the same numeric value.
-   * </p>
+   * <p>Compare two EngineValues for equality where two EngineValue objects are considered equal if
+   * they have the same numeric value.</p>
    *
    * @param obj the object to compare with
    * @return true if the objects are equal, false otherwise
@@ -89,9 +86,9 @@ public interface EngineValue extends Comparable<EngineValue> {
    * <p>Compare two EngineValues for ordinal ranking where two EngineValue objects are considered
    * equal if they have the same numeric value.</p>
    *
-   * @param obj the object to compare with
+   * @param other the object to compare with.
    * @return A number less than 0 if this is less than other, 0 if the two are the same, and a
-   *    number larger than 1 if this is more than other.
+   *     number larger than 1 if this is more than other.
    */
   int compareTo(EngineValue other);
 

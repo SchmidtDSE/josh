@@ -10,8 +10,7 @@ package org.joshsim.engine.value;
 /**
  * A normal distribution.
  *
- * <p>A standard or normal distribution as described by a mean and standard deviation but which does 
- * not have a specific range.
- * </p>
+ * <p>A standard or normal distribution as described by a mean and standard deviation but which
+ * does not have a specific range.</p>
  */
 public interface StandardVirtualDistribution extends VirtualDistribution {}

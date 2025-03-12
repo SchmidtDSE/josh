@@ -1,6 +1,6 @@
 /**
  * Structures to describe pre-compiled logic.
- * 
+ *
  * @license BSD-3-Clause
  */
 
