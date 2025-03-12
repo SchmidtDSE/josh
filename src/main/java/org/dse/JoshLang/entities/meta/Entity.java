@@ -36,4 +36,19 @@ public interface Entity {
      * @param value the value to set
      */
     void setAttributeValue(String name, EngineValue value);
+
+    /**
+     * Acquires a global lock on this entity for thread safety.
+     * This is a convenience method for client code and is not automatically 
+     * enforced by getters and setters. The method will block until the lock 
+     * is acquired.
+     */
+    void lock();
+
+    /**
+     * Releases the global lock on this entity.
+     * This is a convenience method for client code and should be called after 
+     * thread-safe operations are complete.
+     */
+    void unlock();
 }
