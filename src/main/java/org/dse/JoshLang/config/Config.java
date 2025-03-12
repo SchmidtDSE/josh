@@ -3,6 +3,8 @@
  */
 package org.dse.JoshLang.config;
 
+import org.dse.JoshLang.core.value.EngineValue;
+
 /**
  * Interface representing a configuration container.
  * Provides methods to retrieve configuration values by name.
