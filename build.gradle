@@ -26,7 +26,6 @@ test {
     }
 }
 
-// Fat JAR task
 task fatJar(type: Jar) {
     manifest {
         attributes(

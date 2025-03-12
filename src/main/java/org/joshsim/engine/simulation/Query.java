@@ -3,7 +3,7 @@
  */
 package org.joshsim.engine.simulation;
 
-import org.joshsim.engine.value.Geometry;
+import org.joshsim.engine.geometry.Geometry;
 
 
 /**

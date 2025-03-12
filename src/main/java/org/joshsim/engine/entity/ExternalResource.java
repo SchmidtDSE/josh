@@ -4,7 +4,7 @@
 package org.joshsim.engine.entity;
 
 import org.joshsim.engine.value.Distribution;
-import org.joshsim.engine.value.Geometry;
+import org.joshsim.engine.geometry.Geometry;
 
 
 /**
