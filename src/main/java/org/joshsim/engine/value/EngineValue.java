@@ -1,88 +1,75 @@
 /**
  @license BSD-3-Clause
  */
+package org.joshsim.engine.value;
 
-package org.dse.JoshLang;
 
 /**
  * Represents a value in the engine.
  */
-public class EngineValue {
-    private final double value;
-
-    /**
-     * Constructs an EngineValue with the specified value.
-     *
-     * @param value the value to be set
-     */
-    public EngineValue(double value) {
-        this.value = value;
-    }
+public interface EngineValue {
 
     /**
      * Adds this value to another value.
      *
      * @param other the other value
      * @return the result of the addition
+     * @throws IllegalArgumentException if units are incompatible
      */
-    public EngineValue add(EngineValue other) {
-        return new EngineValue(this.value + other.value);
-    }
+    EngineValue add(EngineValue other);
 
     /**
      * Subtracts another value from this value.
      *
      * @param other the other value
      * @return the result of the subtraction
+     * @throws IllegalArgumentException if units are incompatible
      */
-    public EngineValue subtract(EngineValue other) {
-        // TODO: Implement this method
-        return null;
-    }
+    EngineValue subtract(EngineValue other);
 
     /**
      * Multiplies this value by another value.
      *
      * @param other the other value
      * @return the result of the multiplication
+     * @throws IllegalArgumentException if units are incompatible
      */
-    public EngineValue multiply(EngineValue other) {
-        // TODO: Implement this method
-        return null;
-    }
+    EngineValue multiply(EngineValue other);
 
     /**
      * Divides this value by another value.
      *
      * @param other the other value
      * @return the result of the division
+     * @throws IllegalArgumentException if units are incompatible
+     * @throws ArithmeticException if division by zero is attempted
      */
-    public EngineValue divide(EngineValue other) {
-        // TODO: Implement this method
-        return null;
-    }
+    EngineValue divide(EngineValue other);
 
     /**
      * Raises this value to the power of another value.
      *
      * @param other the other value
      * @return the result of the exponentiation
+     * @throws IllegalArgumentException if units are incompatible
+     * @throws ArithmeticException if division by zero is attempted
      */
-    public EngineValue raiseToPower(EngineValue other) {
-        // TODO: Implement this method
-        return null;
-    }
+    EngineValue raiseToPower(EngineValue other);
 
     /**
      * Gets the units of this value.
      *
      * @return the units of this value
      */
-    public String getUnits() {
-        // TODO: Implement this method
-        return null;
-    }
+    String getUnits();
 
+    /**
+     * Gets the numerical value.
+     * 
+     * @return the numerical value
+     */
+    double getValue();
+    
     /**
      * Compares this EngineValue to the specified object for equality.
      * Two EngineValue objects are considered equal if they have the same numeric value.
@@ -91,10 +78,6 @@ public class EngineValue {
      * @return true if the objects are equal, false otherwise
      */
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        EngineValue that = (EngineValue) obj;
-        return Double.compare(that.value, value) == 0;
-    }
+    boolean equals(Object obj);
+
 }

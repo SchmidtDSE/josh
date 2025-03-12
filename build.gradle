@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'eclipse' // optional (to generate Eclipse project files)
     id 'idea' // optional (to generate IntelliJ IDEA project files)
+    id 'application' // for creating executable JARs
 }
 
 repositories {
@@ -14,11 +15,36 @@ dependencies {
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
 }
 
+application {
+    mainClass = 'org.joshsim.JoshSim'
+}
+
 test {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
     }
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes(
+            'Main-Class': 'org.joshsim.JoshSim'
+        )
+    }
+    archiveBaseName = 'joshsim'
+    archiveClassifier = 'fat'
+    
+    // Include all dependencies
+    from { 
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
+    }
+    
+    // Include the main classes
+    with jar
+    
+    // Exclude META-INF signatures to avoid security exceptions
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
 }
 
 javadoc {

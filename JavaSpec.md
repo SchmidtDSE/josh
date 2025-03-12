@@ -33,7 +33,7 @@ Arithmetic operations will throw an error if units are not the same.
 
 ## VirtualDistribution(Distribution)
 
-### StandardVirtualDistrubtion(Distribution)
+## StandardVirtualDistrubtion(Distribution)
 
 ## Set(Distribution)
 
@@ -116,6 +116,8 @@ Convinenece provided to client code to release the global lock on this entity. T
 ## CompiledCallable
 
 `evaluate(Scope scope) -> EngineValue`
+
+## Scope
 
 ## Geometry
 
