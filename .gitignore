@@ -12,6 +12,7 @@ bin/
 
 # Compiled class files
 *.class
+*.jar
 
 # Log files
 *.log
