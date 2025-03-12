@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.value;
 
+import java.math.BigDecimal;
+
 
 /**
  * Engine value which only has a single discrete value.
