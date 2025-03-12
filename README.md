@@ -74,7 +74,7 @@ Each stanza can manipulate attributes. These are variables attached to a specifi
 ```
 start organism JoshuaTree
 
-  age.init = sample ageGeotiff
+  age.init = sample AgeGeotiff
 
 end organism
 ```
@@ -85,7 +85,7 @@ This can also take a full body notation:
 start organism JoshuaTree
 
   age.step = {
-    const currentAge = self.age
+    const currentAge = prior.age
     const newAge = currentAge + 1 year
     return newAge
   }
@@ -101,9 +101,9 @@ Attributes have different events such as init and step. These can be conditional
 ```
 start organism Deciduous
 
-  cover.end:if(max(Conifer.cover) > 0%) = {
-    const maxCover = map mean(Conifer.cover) from [0%, 90%] to [0%, 100%]
-    return limit self.cover to [,maxCover]
+  cover.end:if(max(here.Conifers.cover) > 0%) = {
+    const maxCover = map mean(here.Conifers.cover) from [0%, 90%] to [0%, 100%]
+    return limit current.cover to [,maxCover]
   }
 
 end organism
@@ -116,7 +116,7 @@ start organism Confier
 
   cover.step:if(sample uniform from 0% to 100% > 50%) = {
     const growth = sample normal with mean of 5% std of 1%
-    const newCover = limit self.cover + growth to [0%, 100%]
+    const newCover = limit prior.cover + growth to [0%, 100%]
     return newCover
   }
 
@@ -128,11 +128,11 @@ Finally, this can depend on external variables like for environment:
 ```
 start organism Confier
 
-  cover.step:if(mean(growSeasonPreciptation) > 1 in) = {
+  cover.step:if(mean(here.GrowSeasonPreciptation) > 1 in) = {
     const growth = sample normal with mean of 5% std of 1%
-    const prior = self.cover
-    const new = limit prior + growth to [0%, 100%]
-    return new
+    const newCover = prior.cover + growth
+    const newLimited = limit newCover to [0%, 100%]
+    return newLimited
   }
 
 end organism
@@ -178,13 +178,13 @@ start simulation Coarse
   grid.start = 34 degrees longitude, -116 degrees latitude
   grid.end = 35 degrees longitude, -115 degrees latitude
   
-  sampling.JoshuaTree = 1%  # Sample 1% of individuals in each patch
-  sampling.ShrubGrass = 100 count  # Sample
+  sampling.JoshuaTrees = 1%  # Sample 1% of individuals in each patch
+  sampling.ShrubGrasses = 100 count  # Sample
 
 end simulation
 ```
 
-Finally, simulations can also control the sampling behavior for distribution arithmetic:
+These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute names on patches. Finally, simulations can also control the sampling behavior for distribution arithmetic:
 
 ```
 start simulation Coarse
@@ -207,12 +207,15 @@ Patches are the grid cells in which communities of organisms may be present.
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(locationsGeotiff) JoshuaTree
-  JoshuaTree.step = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
-  JoshuaTree.step = {
-    const new = create 1 count if sum(JoshuaTree) < 10 count else 0 JoshuaTree
-    const prior = JoshuaTree
-    return prior + new
+  JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
+  JoshuaTrees.step = {
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTrees - deadTrees
+  }
+  JoshuaTrees.step = {
+    const newCount = 1 count if count(current.JoshuaTrees) < 10 count else 0
+    const new = create newCount JoshuaTree
+    return current.JoshuaTrees + new
   }
 
 end patch
@@ -224,8 +227,8 @@ Some simulations may represent simple occupancy as a binary where only one agent
 start patch Default
 
   location = all
-  JoshuaTree.init = {
-    const numNew = 1 count if sum(locationsGeotiff) > 0 count else 0 count
+  JoshuaTrees.init = {
+    const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
     const new = create numNew JoshuaTree
     return new
   }
@@ -242,7 +245,7 @@ start patch Default
 
   # ...
 
-  occupationScore.step = sum(JoshuaTree.cover)
+  occupationScore.step = sum(current.JoshuaTrees.cover)
 
 end patch
 ```
@@ -252,7 +255,7 @@ Location of all will use this patch across the entire simulation. However, patch
 ```
 start patch Wet
 
-  location = mean(percepitationGeotiff) > 5 in
+  location = mean(here.PercepitationGeotiff) > 5 in
 
 end patch
 ```
@@ -265,7 +268,7 @@ Organisms can define attributes which have event handlers. These can have condit
 ```
 start organism Conifer
 
-  state.step:if(max(Fire.cover) > 0%) = "stump"
+  state.step:if(max(here.Fire.cover) > 0%) = "stump"
 
 end organism
 ```
@@ -276,8 +279,8 @@ These conditions can be strung together in if / else relationships:
 start organism Conifer
 
   state.step
-    :if(max(Fire.cover) > 50%) = "dead"
-    :elif(max(Fire.cover) > 0%) = "stump"
+    :if(max(here.Fire.cover) > 50%) = "dead"
+    :elif(max(here.Fire.cover) > 0%) = "stump"
 
 end organism
 ```
@@ -287,8 +290,8 @@ The keywords if, elif (else if), and else are available. Only one else is allowe
 ```
 start organism Deciduous
 
-  seedBank.step = self.seedBank + 5%
-  seedBank.step:if(max(Fire.cover) > 0%) = "seed"
+  seedBank.step = prior.seedBank + 5%
+  seedBank.step:if(max(here.Fire.cover) > 0%) = "seed"
 
 end organism
 ```
@@ -302,7 +305,7 @@ In addition to "organism" one can specify other types of agents representing dis
 start disturbance Fire
 
   cover.init = 0%
-  cover.step = self.cover + 5%
+  cover.step = prior.cover + 5%
 
 end disturbance
 ```
@@ -315,7 +318,7 @@ Management agents can be created through user configuration or user interactions
 ```
 start management Planting
 
-  cover.init: mean(plantingMap)
+  cover.init: mean(here.PlantingMap)
 
 end management
 ```
@@ -326,10 +329,10 @@ These are typically markers used that other agents can react to
 External data layers can also add additional information that can be used by agents. Data inside these layers cannot be edited.
 
 ```
-start external growingSeasonPrecipitation
+start external GrowingSeasonPrecipitation
 
   year.init = meta.stepCount + 2050 count  # Simulation starts in 2050
-  source.location = "file://precipitation/{{ self.year }}.geotiff"
+  source.location = "file://precipitation/{{ current.year }}.geotiff"
   source.format = "geotiff"
   source.units = "in / month"
 
@@ -337,6 +340,63 @@ end external
 ```
 
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
+
+## Keywords
+Entities go through a series of steps which can modify their attributes. To support these calculations, different scoping keywords are provided.
+
+### Keyword for current
+The `current` keyword can be used to access the entity in the current event. If a variable on current is referenced that is not yet calculated, it will be calculated dynamically. For example: 
+
+```
+start organism Tree
+
+  cover.step = current.height / 5 m * 10 %
+  height.step = prior.height + 1 m
+
+end organism
+```
+
+In this case, if `cover.step` is evaluated first, `current.height` will cause `height.step` to be evaluated.
+
+### Keyword for prior
+The `prior` keyword can be used to access this entity but from the event immediately prior to the current event being evaluated. This will not cause dynamic calculation. For example:
+
+```
+start organism Tree
+
+  cover.step = prior.height / 5 m * 10 %
+  height.step = prior.height + 1 m
+
+end organism
+```
+
+In this case, if `cover.step` is evaluated first, `prior.height` will not cause `height.step` to be evaluated. Indeed, `prior.height` in `cover.step` will always use the value for height from before the step event started.
+
+### Keyword for here
+The `here` keyword can be used to refer to the Patch or an External resource within the same grid cell as this Entity. For Patch, this is the same as `current` when referring to attributes of the Patch.
+
+```
+start organism Deciduous
+
+  seedBank.step:if(max(here.Fire.cover) > 0%) = "seed"
+
+end organism
+```
+
+In this example, `seedBank.step` will get the `Fire` distribution from the Patch containing this Deciduous where `here` is an alias for that Patch. The Patch will be evaluated first but, if an attribute is requested that is not on the Patch, external resources will be checked.
+
+```
+start organism Deciduous
+
+  age.init = sample here.AgeGeotiff
+
+end organism
+```
+
+In this example, `AgeGeotiff` may refer to an External and the ages at this grid cell will be randomly sampled.
+
+### Other grid cells
+These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
 
 ## Lifecycle
 The following define the typical lifecycle of an entity.
@@ -348,7 +408,7 @@ New entities can be made through the create command. This is typically saved to 
 start patch Default
 
   location = all
-  Conifer.init = create Conifer
+  Conifers.init = create Conifer
 
 end patch
 ```
@@ -359,7 +419,7 @@ However, these are regular values that can also be saved to variables:
 const newConifer = create Conifer
 ```
 
-By default, a single entity is made. This can be extended to multiple using a scalar with the count units:
+By default, a single entity is made (distribution of 1). This can be extended to multiple using a scalar with the count units:
 
 ```
 const newConifers = create 5 count of Conifer
@@ -376,10 +436,10 @@ All entities have a default state but custom states can be added. This can be us
 ```
 start organism Conifer
 
-  state.step:if(max(Fire.cover) > 0%) = "stump"
+  state.step:if(max(here.Fire.cover) > 0%) = "stump"
 
   start state "stump"
-    state.step:if(mean(precipitationGeotiff) > 2 in) = "default"
+    state.step:if(mean(here.PrecipitationGeotiff) > 2 in) = "default"
   end state
 
 end organism
@@ -400,14 +460,14 @@ If an entity's event handler requests current state information for another enti
 ```
 start organism CoverTree
 
-  height.step: self.height + 6 in
+  height.step: prior.height + 6 in
 
 end organism
 
 start organism Grass
 
-  isShaded.step: max(CoverTree.height) > 1 ft
-  height.step: self.height + (-1 cm if self.isShaded else 1 cm)
+  isShaded.step: max(here.CoverTrees.height) > 1 ft
+  height.step: prior.height + (-1 cm if current.isShaded else 1 cm)
 
 end organism
 ```
@@ -421,18 +481,18 @@ If an entity changes states, the handlers for the current event will not run wit
 class organism Tree
 
   age.init = 0 years
-  age.step = self.age + 1 year
+  age.step = prior.age + 1 year
   state.init = "juvenile"
   height.init = 0 in
 
   start state "juvenile"
-    state.start:if(self.age > 5 years) = "adult"
-    height.step = self.height + 3 in  # Run if juvenile does not become adult
+    state.start:if(current.age > 5 years) = "adult"
+    height.step = prior.height + 3 in  # Run if juvenile does not become adult
   end state
 
   start state "adult"
-    state.start:if(self.age > 50 years) = "dead"
-    height.step = self.height + 6 in  # Run in same year becomes adult
+    state.start:if(current.age > 50 years) = "dead"
+    height.step = prior.height + 6 in  # Run in same year becomes adult
   end state
 
 end organism
@@ -444,17 +504,17 @@ The adult state event handlers will run for step but not for start if a juvenile
 The computational graph created must be acyclic. For example:
 
 ```
-start organism Tree1
+start organism TreeA
 
-  isShaded.step: max(Tree2.height) > self.height
-  height.step: self.height + (2 in if self.isShaded else 4 in)
+  isShaded.step: max(here.TreeBs.height) > current.height
+  height.step: prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 
-start organism Tree2
+start organism TreeB
 
-  isShaded.step: max(Tree1.height) > self.height
-  height.step: self.height + (2 in if self.isShaded else 4 in)
+  isShaded.step: max(here.TreeAs.height) > current.height
+  height.step: prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 ```
@@ -465,23 +525,23 @@ This snippet should result in an exception. This could be resolved by querying f
 The type system supports typed units such as 50% or 10 inches. These types need to be defined though they may be imported.
 
 ## Scalar
-This specification calls individual numbers with units as scalars. Regular arithmetic operations (+, -, *, /, ^) will work for this type with automated unit conversion if numbers of non-identical units encountered. This is typically accessed via the `self` keyword:
+This specification calls individual numbers with units as scalars. Regular arithmetic operations (+, -, *, /, ^) will work for this type with automated unit conversion if numbers of non-identical units encountered.
 
 ```
 start organism JoshuaTree
 
-  age.step = self.age + 1 year
+  age.step = prior.age + 1 year
 
 end organism
 ```
 
-In general, accessing scalar attributes of individual non-self agents is discouraged. Scalar values can be made through a number followed by units.
+This is typically accessed via the `current` or `prior` keyword. Scalar values can be made through a number followed by units.
 
 ## Distribution
 A distibution can be created a few ways. First, it can be a set of individual numbers (such as an array) read from a file called a realized distribution:
 
 ```
-const distribution = ageGeotiff
+const distribution = here.AgeGeotiff
 ```
 
 Altnernatively, it can be a formally described distribution created in code called a virtual distribution:
@@ -508,19 +568,19 @@ If using virtualized distributions, operations may perform sampling as controlle
 Drawing values from distributions randomly is available through the sample command which, by default, will draw a single value.
 
 ```
-const randomAge = sample ageGeotiff
+const randomAge = sample here.AgeGeotiff
 ```
 
 Drawing multiple times with replacement:
 
 ```
-const randomAge = sample 5 count from ageGeotiff
+const randomAge = sample 5 count from here.AgeGeotiff
 ```
 
 Drawing multiple times without replacement:
 
 ```
-const randomAge = sample 5 count from ageGeotiff without replacement
+const randomAge = sample 5 count from here.AgeGeotiff without replacement
 ```
 
 The count can be a variable with a count number.
@@ -535,7 +595,7 @@ Sets are a realized distribution that automatically removes duplicates. At this 
 For realized scalars only, subsets can be retrieved through indexing:
 
 ```
-JoshuaTree[JoshuaTree.state == "dead"]
+here.JoshuaTrees[here.JoshuaTrees.state == "dead"]
 ```
 
 This returns a new distribution that meets the given condition applied per element. If applied to a virtualized distribution, it will be sampled.
@@ -568,8 +628,8 @@ Users may add additional units with aliases:
 
 ```
 start unit inch
-  in = self
-  inches = self
+  alias in
+  alisas inches
 end unit
 ```
 
@@ -577,14 +637,16 @@ Conversions can also be created:
 
 ```
 start unit inch
-  in = self * 1
-  inches = self * 1
-  feet = self / 12
+  alias in
+  alias inches
+
+  feet = current / 12
 end unit
 
 start unit foot
-  feet = self
-  yard = self / 3
+  alias feet
+
+  yard = current / 3
 end unit
 ```
 
@@ -592,7 +654,7 @@ These conversions can depend on where the conversion is taking place:
 
 ```
 start unit percent
-  ft.Conifer.cover = self / 100 * 300
+  ft.Conifer.cover = current / 100 * 300
 end unit
 ```
 
@@ -736,7 +798,7 @@ Outside variables can be read inside full bodies:
 start organism JoshuaTree
 
   age.step = {
-    const currentAge = self.age
+    const currentAge = prior.age
     const newAge = currentAge + 1 year
     return newAge
   } 
@@ -750,9 +812,9 @@ However, these are like const and cannot be written:
 start organism JoshuaTree
 
   age.step = {
-    const currentAge = self.age
-    const newAge = currentAge + 1 year
-    self.age = newAge  # Results in an error
+    const priorAge = prior.age
+    const newAge = priorAge + 1 year
+    current.age = newAge  # Results in an error
   } 
 
 end organism
@@ -778,27 +840,29 @@ The following which take a single argument are only available for distributions 
 Information from other time steps and cells can be queried through the at and within keywords. These always return realized distributions.
 
 ### Temporal queries
-At this time, only prior for timestep minus 1 is suppored for the at keyword.
+At this time, only prior for timestep minus 1 is supported by the prior keyword.
 
 ```
-const priorCount = sum(JoshuaTree.count at prior)
+const priorCount = sum(prior.here.JoshuaTrees.count)
 ```
 
 ### Spatial queries
-At this time, only spatial queries by radial distance are supported.
+At this time, only spatial queries by radial distance are supported by within.
 
 ```
-const nearbyCount = sum(JoshuaTree.count within 30 m radial)
+const nearbyCount = sum(JoshuaTrees.count within 30 m radial at prior)
 ```
 
 This results in a set for which const can be used:
 
 ```
-const treesNearby = JoshuaTree within 30 m radial
-const treesOn = JoshuaTree
+const treesNearby = JoshuaTrees within 30 m radial at prior
+const treesOn = here.JoshuaTree
 const nearbyButNotOn = treesNearby - treesOn
 const nearbyButNotOnCount = sum(nearbyButNotOn.count)
 ```
+
+Note that `at prior` will return the state of these entities prior to the current step. At this time, `at prior` is required.
 
 ## Imports
 Imports will cause another script to get executed as if the contents were found at the import location.
@@ -839,19 +903,19 @@ The following conventions are recommended. Unless specified otherwise, violation
 Local variables like defined via const are recommended to follow `camelCase` with leading lowercase letter. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
 
 ## Attributes
-Attribute names are recommended to follow `camelCase` with leading lowercase letter. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
+Attribute names are recommended to follow `camelCase` with leading lowercase letter when a scalar and `CamelCase` with leading uppercase letter when a dimension. Note that only alphanumeric names are supported and the first character cannot be a number where violations should result in an exception.
 
 ## Entities
-Groups of agents present on the same patch can be found by specifying the name of the agent:
+Groups of agents present on the same patch should be found by specifying the name of the agent plurlaized. This is achieved through an attribute name on the Patch with the entity name pluralized.
 
 ```
-const alsoOnCell = JoshuaTree
+const alsoOnCell = here.JoshuaTrees
 ```
 
 Distributions of values can be found on those groups:
 
 ```
-const countsAlsoOnCell = JoshuaTree.count
+const countsAlsoOnCell = here.JoshuaTrees.count
 ```
 
 To help improve readability, it is recommended that entity names are `CamelCase` with leading upper case character.
@@ -882,15 +946,15 @@ Unit definitions are also provided.
 ```
 start unit cm
 
-  m = self / 100
+  m = current / 100
 
 end unit
 
 start unit years
 
-  year = self
-  yr = self
-  yrs = self
+  alias year
+  alias yr
+  alias yrs
 
 end unit
 ```
@@ -902,8 +966,8 @@ start patch Default
 
   location = all
   Shrubs.init = create 1 count of Shrubs
-  TreeA.init = create 1 count of TreeA
-  TreeB.init = create 1 count of TreeB
+  TreeAs.init = create 1 count of TreeA
+  TreeBs.init = create 1 count of TreeB
 
 end patch
 ```
@@ -917,16 +981,21 @@ start organism Shrubs
   carryingCapacity.init: 80 %
   reproduction.init: 15% / year
   
-  otherCover.step = limit sum(Deciduous.cover) + sum(Conifer.cover) to [0%, 100%]
+  otherCover.step = {
+    const treeACover = sum(here.TreeAs.cover)
+    const treeBCover = sum(here.TreeBs.cover)
+    const total = treeACover + treeBCover
+    return limit total to [0%, 100%]
+  }
 
   cover.init = sample normal with mean of 50% std of 10%
   cover.step
-    :if(self.otherCover < 20%) = self.cover + 10%
-    :elif(self.otherCover < 40%) = self.cover + 5%
-    :elif(self.otherCover > 80%) = self.cover - 10%
-    :elif(self.otherCover > 60%) = self.cover - 5%
+    :if(current.otherCover < 20%) = prior.cover + 10%
+    :elif(current.otherCover < 40%) = prior.cover + 5%
+    :elif(current.otherCover > 80%) = prior.cover - 10%
+    :elif(current.otherCover > 60%) = prior.cover - 5%
 
-  cover.end = limit self.cover to [, self.carryingCapacity]
+  cover.end = limit current.cover to [, current.carryingCapacity]
 
 end organism
 
@@ -936,15 +1005,15 @@ start organism TreeA
   carryingCapacity.init = 90%
 
   age.init = 1 year
-  age.step = self.age + 10 year
+  age.step = prior.age + 10 year
 
-  shade.start = sum(TreeB[TreeB.height > self.height].shade)
-  cover.step = self.height / 5 m * 10 %
+  shade.start = sum(here.TreeBs[here.TreeBs.height > current.height].shade)
+  cover.step = current.height / 5 m * 10 %
   
-  growth.step = map self.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
-  growthLimit.step = self.growth * (100 % - self.shade) / 100 %
+  growth.step = map current.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
+  growthLimit.step = current.growth * (100 % - current.shade) / 100 %
   
-  height.step = self.height + self.growthLimit
+  height.step = prior.height + current.growthLimit
 
 end organism
 
@@ -954,12 +1023,12 @@ start organism TreeB
   carryingCapacity.init = 90%
 
   age.init = 1 year
-  age.step = self.age + 10 year
+  age.step = prior.age + 10 year
 
-  growth.step = map self.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
-  height.step = self.height + growth
-  cover.step = self.height * 10 % / 3 m
-  height.end = limit self.height to [, 30 m]
+  growth.step = map curent.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
+  height.step = prior.height + growth
+  cover.step = curent.height * 10 % / 3 m
+  height.end = limit prior.height to [, 30 m]
 
 end organism
 ```
@@ -985,7 +1054,7 @@ end simulation
 This demonstration will also use local geotiff with estimated counts of trees and ages with geographic specificity:
 
 ```
-start external observedAges
+start external ObservedAges
 
   source.location = "file://obsevations.geotiff"
   source.format = "geotiff"
@@ -994,7 +1063,7 @@ start external observedAges
 
 end external
 
-start external observedCounts
+start external ObservedCounts
 
   source.location = "file://obsevations.geotiff"
   source.format = "geotiff"
@@ -1009,9 +1078,9 @@ Unit definitions are also provided.
 ```
 start unit years
 
-  year = self
-  yr = self
-  yrs = self
+  alias year
+  alias yr
+  alias yrs
 
 end unit
 ```
@@ -1022,7 +1091,7 @@ Finally, uniform patches are defined.
 start patch Default
 
   location = all
-  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
 
 end patch
 ```
@@ -1036,19 +1105,19 @@ This organism will primarily be defined through changes in state. Note that init
 start organism JoshuaTree
 
   age.init
-    :if(meta.stepCount == 0 count) = sample observedAges
+    :if(meta.stepCount == 0 count) = sample here.ObservedAges
     :else = 0 years
 
-  age.step = self.age + 1 year
+  age.step = prior.age + 1 year
 
   state.init
-    :if(self.age > 30 years) = "adult"
-    :elif(self.age > 2 years) = "juvenile"
-    :elif(self.age > 0 years) = "seedling"
+    :if(current.age > 30 years) = "adult"
+    :elif(current.age > 2 years) = "juvenile"
+    :elif(current.age > 0 years) = "seedling"
     :else = "seed"
 
   seedCache.init
-    :if(self.age > 30 years) = self.age * (5% / 1 year)
+    :if(current.age > 30 years) = current.age * (5% / 1 year)
     :else = 0%
 
   start state "seed"
@@ -1056,7 +1125,7 @@ start organism JoshuaTree
     state.step
       :if(sample uniform from 0% to 100% > 50%) = "seedling"
       :elif(sample uniform from 0% to 100% > 50%) = "dead"
-      :elif(self.age > 3 years) = "dead"
+      :elif(current.age > 3 years) = "dead"
   
   end state
 
@@ -1064,7 +1133,7 @@ start organism JoshuaTree
 
     state.step
       :if(sample uniform from 0% to 100% < 20%) = "dead"
-      :elif(self.age > 2 years) = "juvenile"
+      :elif(current.age > 2 years) = "juvenile"
 
   end state
 
@@ -1072,7 +1141,7 @@ start organism JoshuaTree
 
     state.step
       :if(sample uniform from 0% to 100% < 10%) = "dead"
-      :elif(self.age > 30 years) = "adult"
+      :elif(current.age > 30 years) = "adult"
 
   end state
 
@@ -1097,23 +1166,25 @@ start patch Default
   location = all
 
   carryingCapacity.init = 30 count
-  remainingRoom.step = carryingCapacity - count(JoshuaTree)
+  remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
 
   seedDensity.init = 0 count
   seedDensity.step = {
-    const neighbors = JoshuaTree within 30 m radial
+    const neighbors = JoshuaTrees within 30 m radial at prior
     const adultNeighbors = neighbors[neighbors.state == "adult"]
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
-  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
-  JoshuaTree.step = {
-    const prior = JoshuaTree
-    const newCount = floor(sample uniform from 0 count to self.seedDensity)
-    const newCountCapped = limit newCount to [0 count, self.remainingRoom]
+  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
+  }
+  JoshuaTrees.step = {
+    const newCount = floor(sample uniform from 0 count to current.seedDensity)
+    const newCountCapped = limit newCount to [0 count, current.remainingRoom]
     const new = create newCountCapped of JoshuaTree
-    return new + prior
+    return new + prior.JoshuaTrees
   }
 
 end patch
@@ -1138,15 +1209,19 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
-  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
+  }
 
   # ...
 
-  Fire.start = Fire - JoshuaTree[Fire.active == false]
+  Fire.start = prior.Fire - prior.Fire[prior.Fire.active == false]
   Fire.step = {
-    const count = 1 count if sample uniform from 0% to 100% < 5%) else 0 count
-    return create count of Fire
+    const count = 1 count if (sample uniform from 0% to 100% < 5%) else 0 count
+    const new = create count of Fire
+    return prior.Fire + new;
   }
 
 end patch
@@ -1159,7 +1234,7 @@ start organism JoshuaTree
 
   # ...
 
-  state.step:if(count(Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
+  state.step:if(count(current.Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
 
   # ...
 
@@ -1174,8 +1249,11 @@ start patch Default
 
   location = all
 
-  JoshuaTree.init = create sum(observedCounts) of JoshuaTree
-  JoshuaTree.start = JoshuaTree - JoshuaTree[JoshuaTree.state == "dead"]
+  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = current.JoshuaTree[current.JoshuaTrees.state == "dead"]
+    reutrn current.JoshuaTrees - deadTrees
+  }
 
   # ...
 
@@ -1191,7 +1269,7 @@ start organism JoshuaTree
 
   # ... prior ...
 
-  state.step:if(patch.onFire and sample uniform 0% to 100% < 90%) = "dead"
+  state.step:if(here.onFire and sample uniform 0% to 100% < 90%) = "dead"
 
   # ... states ...
 
