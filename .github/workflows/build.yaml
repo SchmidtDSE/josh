@@ -36,7 +36,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup other deps
-        run: sudo apt-get install wget
-      - name: Run Checkstyle
-        run: bash support/run_lint.sh
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Check main style
+        run: ./gradlew checkstyleMain
+      - name: Check test style
+        run: ./gradlew checkstyleTest

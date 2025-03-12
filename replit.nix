@@ -1,6 +1,6 @@
 {pkgs}: {
   deps = [
-    pkgs.wget,
+    pkgs.wget
     pkgs.gradle
   ];
 }
