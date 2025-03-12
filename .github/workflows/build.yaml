@@ -2,8 +2,8 @@ name: Build
 on: [push]
 
 jobs:
-  build:
-    environment: build
+  buildSpec:
+    environment: Build
     runs-on: ubuntu-latest
     name: Build Paper
     steps:
@@ -24,3 +24,42 @@ jobs:
         with:
           name: spec
           path: spec.pdf
+  checkJava:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Static Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Check main style
+        run: gradle checkstyleMain
+      - name: Check test style
+        run: gradle checkstyleTest
+  buildJava:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Build Fat Jar
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build fat jar
+        run: gradle fatJar
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: farJar
+          path: build/libs/joshsim-fat.jar
