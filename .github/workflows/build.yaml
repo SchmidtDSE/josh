@@ -2,8 +2,8 @@ name: Build
 on: [push]
 
 jobs:
-  build:
-    environment: build
+  buildSpec:
+    environment: Build
     runs-on: ubuntu-latest
     name: Build Paper
     steps:
@@ -24,3 +24,19 @@ jobs:
         with:
           name: spec
           path: spec.pdf
+  checkJava:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Static Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup other deps
+        run: sudo apt-get install wget
+      - name: Run Checkstyle
+        run: bash support/run_lint.sh
