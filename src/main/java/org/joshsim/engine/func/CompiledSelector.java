@@ -1,6 +1,6 @@
 /**
  * Structures describing precompiled selectors.
- * 
+ *
  * @license BSD-3-Clause
  */
 

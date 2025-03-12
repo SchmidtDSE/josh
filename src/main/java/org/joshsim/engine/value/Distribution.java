@@ -1,6 +1,6 @@
 /**
  * Structures to represent distributions of values.
- * 
+ *
  * @license BSD-3-Clause
  */
 
@@ -11,19 +11,17 @@ import java.util.Optional;
 /**
  * Structure representing a distribution of values.
  *
- * <p>Structure representing a distribution of values where this may be a finite collection of specific
- * discrete values or it may be a theoreticcal distribution with undefined size.
+ * <p>Structure representing a distribution of values where this may be a finite collection of
+ * specific discrete values or it may be a theoreticcal distribution with undefined size.
  * </p>
  */
 public interface Distribution extends EngineValue {
   /**
    * Sample a single value from this distribution.
    *
-   * <p>
-   * Sample a single value from this distribution where each element has a probability of selection
-   * propotional to the frequency with which that value appears in the distribution.
-   * </p>
-   * 
+   * <p>Sample a single value from this distribution where each element has a probability of
+   * selection propotional to the frequency with which that value appears in the distribution.</p>
+   *
    * @return Scalar value which is sampled from this distribution with frequency-proportional 
    *      selection probability.
    */

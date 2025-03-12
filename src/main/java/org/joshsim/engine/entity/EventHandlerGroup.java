@@ -1,6 +1,6 @@
 /**
  * Structures for a group of related event handlers.
- * 
+ *
  * @license BSD-3-Clause
  */
 

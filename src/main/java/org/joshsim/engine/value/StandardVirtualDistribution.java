@@ -1,6 +1,6 @@
 /**
  * Structures describing a normal distribution.
- * 
+ *
  * @license BSD-3-Clause
  */
 

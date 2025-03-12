@@ -1,6 +1,6 @@
 /**
- * Structures describing a cell within a simulation
- * 
+ * Structures describing a cell within a simulation.
+ *
  * @license BSD-3-Clause
  */
 

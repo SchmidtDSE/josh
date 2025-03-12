@@ -1,6 +1,6 @@
 /**
  * Structures describing either an individual value or distribution of values.
- * 
+ *
  * @license BSD-3-Clause
  */
 
@@ -86,10 +86,8 @@ public interface EngineValue extends Comparable<EngineValue> {
   /**
    * Compare this EngineValue to the specified object.
    *
-   * <p>
-   * Compare two EngineValues for ordinal ranking where two EngineValue objects are considered
-   * equal if they have the same numeric value.
-   * </p>
+   * <p>Compare two EngineValues for ordinal ranking where two EngineValue objects are considered
+   * equal if they have the same numeric value.</p>
    *
    * @param obj the object to compare with
    * @return A number less than 0 if this is less than other, 0 if the two are the same, and a

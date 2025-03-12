@@ -1,6 +1,6 @@
 /**
  * Description of a distribution with finite size.
- * 
+ *
  * @license BSD-3-Clause
  */
 

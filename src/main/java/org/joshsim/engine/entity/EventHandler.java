@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
-
 import org.joshsim.engine.func.CompiledSelector;
 
 

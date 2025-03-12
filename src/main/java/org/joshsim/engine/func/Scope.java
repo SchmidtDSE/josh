@@ -1,6 +1,6 @@
 /**
  * Structures to describe Josh language or simulation local scope.
- * 
+ *
  * @license BSD-3-Clause
  */
 

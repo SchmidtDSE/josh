@@ -1,6 +1,6 @@
 /**
  * Structures describing an individual timestep within a replicate.
- * 
+ *
  * @license BSD-3-Clause
  */
 

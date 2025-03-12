@@ -1,6 +1,6 @@
 /**
  * Structures describing callabales which can be used to convert between units.
- * 
+ *
  * @license BSD-3-Clause
  */
 

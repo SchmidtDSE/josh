@@ -30,7 +30,7 @@ public interface GeoPoint extends Geometry {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @return zero for a point
    */
   @Override

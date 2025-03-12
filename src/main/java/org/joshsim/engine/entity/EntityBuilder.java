@@ -1,6 +1,6 @@
 /**
  * Convienence functions to create entities.
- * 
+ *
  * @license BSD-3-Clause
  */
 

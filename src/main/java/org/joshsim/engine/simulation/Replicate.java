@@ -7,7 +7,6 @@
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
-
 import org.joshsim.engine.entity.Entity;
 
 
