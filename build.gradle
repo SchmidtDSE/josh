@@ -13,8 +13,8 @@ repositories {
 
 dependencies {
     // ANTLR dependencies
-    antlr 'org.antlr:antlr4:4.13.1' // The ANTLR tool for grammar processing
-    implementation 'org.antlr:antlr4-runtime:4.13.1' // ANTLR runtime for generated code
+    antlr('org.antlr:antlr4:4.13.1') // The ANTLR tool for grammar processing
+    implementation('org.antlr:antlr4-runtime:4.13.1') // ANTLR runtime for generated code
     
     // Testing dependencies
     testImplementation(platform('org.junit:junit-bom:5.12.0'))
@@ -95,11 +95,10 @@ task setupCheckstyle {
     }
 }
 
-// Make checkstyleMain depend on setupCheckstyle
 // ANTLR configuration
 generateGrammarSource {
     // Set output directory for generated files
-    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/org/joshsim/lang")
+    outputDirectory = file("${project.buildDir}/generated-src/main/java/org/joshsim/lang")
     
     // Set package for the generated visitor and other classes
     arguments += ["-visitor", "-package", "org.joshsim.lang"]
@@ -120,4 +119,8 @@ sourceSets {
 // Make compileJava depend on generating ANTLR sources
 compileJava.dependsOn generateGrammarSource
 
+// Require Checkstyle set up before checing main.
 checkstyleMain.dependsOn setupCheckstyle
+
+// Require Checkstyle set up before checing test.
+checkstyleTest.dependsOn setupCheckstyle
