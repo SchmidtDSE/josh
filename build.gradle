@@ -4,6 +4,7 @@ plugins {
     id 'idea' // optional (to generate IntelliJ IDEA project files)
     id 'application' // for creating executable JARs
     id 'checkstyle' // for code style checking
+    id 'antlr' // for ANTLR grammar processing
 }
 
 repositories {
@@ -11,6 +12,11 @@ repositories {
 }
 
 dependencies {
+    // ANTLR dependencies
+    antlr 'org.antlr:antlr4:4.13.1' // The ANTLR tool for grammar processing
+    implementation 'org.antlr:antlr4-runtime:4.13.1' // ANTLR runtime for generated code
+    
+    // Testing dependencies
     testImplementation(platform('org.junit:junit-bom:5.12.0'))
     testImplementation('org.junit.jupiter:junit-jupiter')
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
@@ -90,4 +96,28 @@ task setupCheckstyle {
 }
 
 // Make checkstyleMain depend on setupCheckstyle
+// ANTLR configuration
+generateGrammarSource {
+    // Set output directory for generated files
+    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/org/joshsim/lang")
+    
+    // Set package for the generated visitor and other classes
+    arguments += ["-visitor", "-package", "org.joshsim.lang"]
+    
+    // To use direct left recursion
+    arguments += ["-Dlanguage=Java"]
+}
+
+// Add generated sources to the compile path
+sourceSets {
+    main {
+        java {
+            srcDirs += file("${project.buildDir}/generated-src/antlr/main")
+        }
+    }
+}
+
+// Make compileJava depend on generating ANTLR sources
+compileJava.dependsOn generateGrammarSource
+
 checkstyleMain.dependsOn setupCheckstyle
