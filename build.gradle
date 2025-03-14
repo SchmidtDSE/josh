@@ -73,20 +73,15 @@ checkstyle {
     maxErrors = 0
     maxWarnings = 0
     ignoreFailures = false
+
+    configProperties = [
+        "org.checkstyle.google.suppressionfilter.config":
+        "/home/runner/workspace/config/checkstyle/suppressions.xml",
+    ]
 }
 
 checkstyleMain {
     source = 'src/main/java/org/joshsim'
-    
-    // Exclude ANTLR-generated files from checkstyle
-    excludes = [
-        '**/JoshLangBaseListener.java',
-        '**/JoshLangBaseVisitor.java',
-        '**/JoshLangLexer.java',
-        '**/JoshLangListener.java',
-        '**/JoshLangParser.java',
-        '**/JoshLangVisitor.java'
-    ]
 }
 
 checkstyleTest {

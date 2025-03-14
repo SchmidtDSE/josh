@@ -2,7 +2,7 @@
 .gradle/
 build/
 bin/
-config/
+config/checkstyle/google_checks.xml
 
 # IDE
 .idea/
