@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * Engine value which only has a single discrete value.
  */
-public interface Scalar extends EngineValue, Comaprable<Scalar> {
+public interface Scalar extends EngineValue, Comparable<Scalar> {
 
   /**
    * Gets the value as a BigDecimal.
