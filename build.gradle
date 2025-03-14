@@ -77,6 +77,16 @@ checkstyle {
 
 checkstyleMain {
     source = 'src/main/java/org/joshsim'
+    
+    // Exclude ANTLR-generated files from checkstyle
+    excludes = [
+        '**/JoshLangBaseListener.java',
+        '**/JoshLangBaseVisitor.java',
+        '**/JoshLangLexer.java',
+        '**/JoshLangListener.java',
+        '**/JoshLangParser.java',
+        '**/JoshLangVisitor.java'
+    ]
 }
 
 checkstyleTest {
