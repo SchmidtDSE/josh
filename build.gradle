@@ -76,7 +76,7 @@ checkstyle {
 
     configProperties = [
         "org.checkstyle.google.suppressionfilter.config":
-        "/home/runner/workspace/config/checkstyle/suppressions.xml",
+        "${rootDir}/config/checkstyle/suppressions.xml",
     ]
 }
 
