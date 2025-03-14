@@ -666,6 +666,20 @@ Strings have a built in unit called string. The only operation support for strin
 ## Location
 Location is on every agent that has a latitude / longitude pair in degrees. These individual values cannot be accessed but location can be used for operations like difference. If converted to another type like meters, this will become a scaler.
 
+## Autoboxing
+If a command expecting a scalar value is called with a distribution, it will automatically randomly sample that distribution:
+
+```
+const new = create CountDistribution of JoshuaTree
+```
+
+Similarly, if a command expecting a distribution is called with a scalar, a single value distribution of that scalar will be used:
+
+```
+const value = sample scalarValue
+```
+
+This allows authors to easily change their code from using a scalar to modeling stochastic properties with minimal code change. This also allows the same Josh code to work on configuration files / user inputs that switch between scalars and distributions.
 
 # Features
 The following language features are defined though some are only available in full bodies as opposed to lambdas.
