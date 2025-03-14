@@ -2,7 +2,7 @@
 .gradle/
 build/
 bin/
-config/
+config/checkstyle/google_checks.xml
 
 # IDE
 .idea/
@@ -10,6 +10,9 @@ config/
 .settings/
 .classpath
 .project
+
+# Generated sources
+src-generated
 
 # Compiled class files
 *.class

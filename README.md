@@ -661,7 +661,7 @@ end unit
 When a conversion is attempted for which logic is not provided, an exception should be thrown. If multiple definitions for a unit exist, they will combine but those specified in larger line numbers will override conversions from those matching in smaller line numbers.
 
 ## String
-Strings have a built in unit called string. The only operation support for strings are + and | which both do concatenation.
+Strings have a built in unit called string. The only operation support is | which does concatenation.
 
 ## Location
 Location is on every agent that has a latitude / longitude pair in degrees. These individual values cannot be accessed but location can be used for operations like difference. If converted to another type like meters, this will become a scaler.
