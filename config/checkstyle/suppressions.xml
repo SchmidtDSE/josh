@@ -7,10 +7,10 @@
 
 <suppressions>
   <!-- Suppress all checks for ANTLR-generated files -->
-  <suppress files="JoshLangBaseListener\.java" checks=".*"/>
-  <suppress files="JoshLangBaseVisitor\.java" checks=".*"/>
-  <suppress files="JoshLangLexer\.java" checks=".*"/>
-  <suppress files="JoshLangListener\.java" checks=".*"/>
-  <suppress files="JoshLangParser\.java" checks=".*"/>
-  <suppress files="JoshLangVisitor\.java" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangBaseListener\.java$" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangBaseVisitor\.java$" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangLexer\.java$" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangListener\.java$" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangParser\.java$" checks=".*"/>
+  <suppress files=".*[/\\]org[/\\]joshsim[/\\]lang[/\\]JoshLangVisitor\.java$" checks=".*"/>
 </suppressions>

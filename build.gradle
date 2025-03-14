@@ -15,7 +15,7 @@ dependencies {
     // ANTLR dependencies
     antlr('org.antlr:antlr4:4.13.1') // The ANTLR tool for grammar processing
     implementation('org.antlr:antlr4-runtime:4.13.1') // ANTLR runtime for generated code
-    
+
     // Testing dependencies
     testImplementation(platform('org.junit:junit-bom:5.12.0'))
     testImplementation('org.junit.jupiter:junit-jupiter')
@@ -41,15 +41,15 @@ task fatJar(type: Jar) {
     }
     archiveBaseName = 'joshsim'
     archiveClassifier = 'fat'
-    
+
     // Include all dependencies
     from { 
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
     }
-    
+
     // Include the main classes
     with jar
-    
+
     // Exclude META-INF signatures to avoid security exceptions
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
 }
@@ -62,7 +62,7 @@ javadoc {
         links "https://docs.oracle.com/en/java/javase/11/docs/api/"
         windowTitle = "JoshLang"
     }
-    
+
     destinationDir = file("${buildDir}/docs/javadoc")
 }
 
@@ -82,6 +82,21 @@ checkstyle {
 
 checkstyleMain {
     source = 'src/main/java/org/joshsim'
+
+    // Exclude ANTLR-generated files from checkstyle
+    excludes = [
+        '**/**/JoshLangBaseListener.java',
+        '**/**/JoshLangBaseVisitor.java',
+        '**/**/JoshLangLexer.java',
+        '**/**/JoshLangListener.java',
+        '**/**/JoshLangParser.java',
+        '**/**/JoshLangVisitor.java'
+    ]
+
+    // Also exclude src-generated directory
+    source = source.filter { 
+        !it.path.contains('src-generated')
+    }
 }
 
 checkstyleTest {
@@ -104,10 +119,10 @@ task setupCheckstyle {
 generateGrammarSource {
     // Set output directory for generated files
     outputDirectory = file("src-generated/main/java")
-    
+
     // Set package for the generated visitor and other classes
     arguments += ["-visitor", "-package", "org.joshsim.lang"]
-    
+
     // To use direct left recursion
     arguments += ["-Dlanguage=Java"]
 }
