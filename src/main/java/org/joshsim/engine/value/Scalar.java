@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * Engine value which only has a single discrete value.
  */
-public abstract class Scalar extends EngineValue implements Comparable<Scalar.Scalar> {
+public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
 
   /**
    * Constructor.
@@ -62,41 +62,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar.Sc
    * @param other the scalar to add.
    * @return the result of the addition.
    */
-  public abstract Scalar add(Scalar other);
 
-  /**
-   * Subtracts another scalar from this scalar.
-   *
-   * @param other the scalar to subtract.
-   * @return the result of the subtraction.
-   */
-  public abstract Scalar subtract(Scalar other);
-
-  /**
-   * Multiplies this scalar by another scalar.
-   *
-   * @param other the scalar to subtract.
-   * @return
-   */
-  public abstract Scalar multiply(Scalar other);
-
-  /**
-   * Divides this scalar by another scalar.
-   * @param other
-   * @return
-   */
-  public abstract Scalar divide(Scalar other);
-
-  /**
-   * Compare this Scalar to the specified object.
-   *
-   * <p>Compare two Scalars for ordinal ranking where two Scalar objects are considered equal if
-   * they have the same numeric value.</p>
-   *
-   * @param other the object to compare with.
-   * @return A number less than 0 if this is less than other, 0 if the two are the same, and a
-   *     number larger than 1 if this is more than other.
-   */
   public abstract int compareTo(Scalar other);
 
   /**
