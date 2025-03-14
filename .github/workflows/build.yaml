@@ -39,12 +39,12 @@ jobs:
           java-version: '21'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+      - name: Check grammar
+        run: gradle generateGrammarSource
       - name: Check main style
         run: gradle checkstyleMain
       - name: Check test style
         run: gradle checkstyleTest
-      - name: Check grammar
-        run: gradle generateGrammarSource
   buildJava:
     environment: Build
     runs-on: ubuntu-latest
