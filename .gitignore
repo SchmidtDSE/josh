@@ -12,9 +12,7 @@ config/
 .project
 
 # Generated sources
-src/main/java/org/joshsim/lang/JoshLangLexer.interp
-src/main/java/org/joshsim/lang/JoshLangLexer.java
-src/main/java/org/joshsim/lang/JoshLangLexer.tokens
+src-generated
 
 # Compiled class files
 *.class

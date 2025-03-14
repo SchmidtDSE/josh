@@ -16,6 +16,7 @@ FLOAT_: [0-9]* '.' [0-9]+;
 INTEGER_: [0-9]+;
 
 // Syntax
+ADD_: '+';
 COLON_: ':';
 COMMA_: ',';
 CONCAT_: '|';
@@ -31,11 +32,10 @@ LCURLY_: '{';
 LPAREN_: '(';
 LT_: '<';
 LTEQ_: '<=';
-MINUS_: '-';
+SUB_: '-';
 MULT_: '*';
 NEQ_: '!=';
 PERCENT_: '%';
-PLUS_: '+';
 POW_: '^';
 RBRAC_: ']';
 RCURLY_: '}';
@@ -45,6 +45,7 @@ RPAREN_: ')';
 ALIAS_: 'alias';
 ALL_: 'all';
 AND_: 'and';
+AS_: 'as';
 AT_: 'at';
 CONFIG_: 'config';
 CONST_: 'const';
@@ -55,9 +56,11 @@ ELIF_: 'elif';
 ELSE_: 'else';
 END_: 'end';
 EXTERNAL_: 'external';
+FORCE_: 'force';
 FROM_: 'from';
 HERE_: 'here';
 IF_: 'if';
+IMPORT_: 'import';
 INIT_: 'init';
 LATITUDE_: 'latitude';
 LIMIT_: 'limit';
@@ -80,6 +83,7 @@ STATE_: 'state';
 STEP_: 'step';
 TO_: 'to';
 UNIFORM_: 'uniform';
+UNIT_: 'unit';
 WITH_: 'with';
 WITHIN_: 'within';
 WITHOUT_: 'without';
@@ -92,7 +96,7 @@ identifier: IDENTIFIER_;
 nestedIdentifier: identifier (DOT_ identifier)*;
 
 // Values
-number: (MINUS_|PLUS_)? (FLOAT_ | INTEGER_);
+number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
 
 unitsValue: number identifier;
 
@@ -104,7 +108,8 @@ expression: number # simpleNumber
   | identifier # simpleIdentifier
   | unitsValue # simpleExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
-  | (FORCE_)? operand=expression AS_ target=identifier # cast
+  | operand=expression AS_ target=identifier # cast
+  | FORCE_ operand=expression AS_ target=identifier # castForce
   | name=identifier LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
@@ -139,7 +144,7 @@ callable: (lambda | fullBody);
 // Event handlers
 eventHandler: nestedIdentifier EQ_ callable;
 
-eventSelector: COLON_ LAREN_ expression RPAREN_;
+eventSelector: COLON_ LPAREN_ expression RPAREN_;
 
 eventHandlerGroupMember: eventSelector EQ_ callable;
 
@@ -158,15 +163,15 @@ agentStanza: START_ agentStanzaType (eventHandlerGeneral | innerStanza)* END_ ag
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
-  | identifier = statement # activeConversion
+  | identifier EQ_ statement # activeConversion
   ;
 
 unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 
 // Imports and config
-configStatment: CONFIG_ expression;
+configStatement: CONFIG_ expression;
 
-importStatment: IMPORT_ expression;
+importStatement: IMPORT_ expression;
 
 // Program
 program: (configStatement | importStatement | unitStanza | agentStanza)*;
