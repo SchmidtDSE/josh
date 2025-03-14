@@ -1,5 +1,9 @@
 grammar JoshLang;
 
+@header {
+  package org.joshsim.lang;
+}
+
 // Base values
 STR_: '"' ~[",]* '"';
 
@@ -135,11 +139,11 @@ callable: (lambda | fullBody);
 // Event handlers
 eventHandler: nestedIdentifier EQ_ callable;
 
-eventSelector: COLON_ LAREN_ expression RPAREN_
+eventSelector: COLON_ LAREN_ expression RPAREN_;
 
 eventHandlerGroupMember: eventSelector EQ_ callable;
 
-eventHandlerGroup: nestedIdentifier eventHandlerGroupMember*
+eventHandlerGroup: nestedIdentifier eventHandlerGroupMember*;
 
 eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 
@@ -150,7 +154,7 @@ innerStanza: START_ innerStanzaType eventHandlerGeneral* END_ innerStanzaType;
 
 agentStanzaType: (DISTURBANCE_ EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanza: START_ outerStanzaType (eventHandlerGeneral | innerStanza)* END_ stanzaType;
+agentStanza: START_ agentStanzaType (eventHandlerGeneral | innerStanza)* END_ agentStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
@@ -160,9 +164,9 @@ unitConversion: ALIAS_ identifier # noopConversion
 unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 
 // Imports and config
-configStatment = CONFIG_ expression;
+configStatment: CONFIG_ expression;
 
-importStatment = IMPORT_ expression;
+importStatment: IMPORT_ expression;
 
 // Program
-program: (configStatement | importStatement | unitStanza | agentStanza)*
+program: (configStatement | importStatement | unitStanza | agentStanza)*;

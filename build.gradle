@@ -98,22 +98,13 @@ task setupCheckstyle {
 // ANTLR configuration
 generateGrammarSource {
     // Set output directory for generated files
-    outputDirectory = file("${project.buildDir}/generated-src/main/java/org/joshsim/lang")
+    outputDirectory = file("src/main/java")
     
     // Set package for the generated visitor and other classes
     arguments += ["-visitor", "-package", "org.joshsim.lang"]
     
     // To use direct left recursion
     arguments += ["-Dlanguage=Java"]
-}
-
-// Add generated sources to the compile path
-sourceSets {
-    main {
-        java {
-            srcDirs += file("${project.buildDir}/generated-src/antlr/main")
-        }
-    }
 }
 
 // Make compileJava depend on generating ANTLR sources

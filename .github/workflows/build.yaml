@@ -43,6 +43,8 @@ jobs:
         run: gradle checkstyleMain
       - name: Check test style
         run: gradle checkstyleTest
+      - name: Check grammar
+        run: gradle generateGrammarSource
   buildJava:
     environment: Build
     runs-on: ubuntu-latest
