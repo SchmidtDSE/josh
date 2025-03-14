@@ -13,4 +13,13 @@ package org.joshsim.engine.value;
  * <p>A standard or normal distribution as described by a mean and standard deviation but which
  * does not have a specific range.</p>
  */
-public interface StandardVirtualDistribution extends VirtualDistribution {}
+public abstract class StandardVirtualDistribution extends VirtualDistribution {
+    /**
+     * Create a new distribution, declaring the units of the distribution.
+     *
+     * @param units
+     */
+    public StandardVirtualDistribution(String units) {
+        super(units);
+    }
+}

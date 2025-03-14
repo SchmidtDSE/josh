@@ -13,7 +13,16 @@ package org.joshsim.engine.value;
  * <p>Represents a value in the engine which may be an individual value (Scalar) or may be a
  * collection of values (Distribution).</p>
  */
-public interface EngineValue extends Comparable<EngineValue> {
+public abstract class EngineValue implements Comparable<EngineValue> {
+  private final String units;
+
+  protected EngineValue(String units) {
+    this.units = units;
+  }
+
+  public String getUnits() {
+    return units;
+  }
 
   /**
    * Add this value to another value.
@@ -22,7 +31,7 @@ public interface EngineValue extends Comparable<EngineValue> {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue add(EngineValue other);
+  public abstract EngineValue add(EngineValue other);
 
   /**
    * Subtract another value from this value.
@@ -31,7 +40,7 @@ public interface EngineValue extends Comparable<EngineValue> {
    * @return the result of the subtraction
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue subtract(EngineValue other);
+  public abstract EngineValue subtract(EngineValue other);
 
   /**
    * Multiply this value by another value.
@@ -40,7 +49,7 @@ public interface EngineValue extends Comparable<EngineValue> {
    * @return the result of the multiplication
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue multiply(EngineValue other);
+  public abstract EngineValue multiply(EngineValue other);
 
   /**
    * Divide this value by another value.
@@ -50,7 +59,7 @@ public interface EngineValue extends Comparable<EngineValue> {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  EngineValue divide(EngineValue other);
+  public abstract EngineValue divide(EngineValue other);
 
   /**
    * Raise this value to the power of another value.
@@ -60,25 +69,14 @@ public interface EngineValue extends Comparable<EngineValue> {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  EngineValue raiseToPower(EngineValue other);
+  public abstract EngineValue raiseToPower(EngineValue other);
 
   /**
    * Get the units of this value.
    *
    * @return the units of this value
    */
-  String getUnits();
-
-  /**
-   * Compare this EngineValue to the specified object for equality.
-   *
-   * <p>Compare two EngineValues for equality where two EngineValue objects are considered equal if
-   * they have the same numeric value.</p>
-   *
-   * @param obj the object to compare with
-   * @return true if the objects are equal, false otherwise
-   */
-  boolean equals(EngineValue obj);
+  public abstract boolean equals(EngineValue obj);
 
   /**
    * Compare this EngineValue to the specified object.
@@ -88,8 +86,8 @@ public interface EngineValue extends Comparable<EngineValue> {
    *
    * @param other the object to compare with.
    * @return A number less than 0 if this is less than other, 0 if the two are the same, and a
-   *     number larger than 1 if this is more than other.
+   *     number larger than 1 if this is more than the other.
    */
-  int compareTo(EngineValue other);
+  public abstract int compareTo(EngineValue other);
 
 }

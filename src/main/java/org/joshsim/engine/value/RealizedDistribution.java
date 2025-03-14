@@ -16,4 +16,13 @@ package org.joshsim.engine.value;
  * cannot be iterated through.
  * </p>
  */
-public interface RealizedDistribution extends Distribution {}
+public abstract class RealizedDistribution extends Distribution {
+    /**
+     * Create a new distribution, declaring the units of the distribution.
+     *
+     * @param units
+     */
+    public RealizedDistribution(String units) {
+        super(units);
+    }
+}
