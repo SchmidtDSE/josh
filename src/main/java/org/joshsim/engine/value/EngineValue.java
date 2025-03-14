@@ -13,7 +13,7 @@ package org.joshsim.engine.value;
  * <p>Represents a value in the engine which may be an individual value (Scalar) or may be a
  * collection of values (Distribution).</p>
  */
-public interface EngineValue extends Comparable<EngineValue> {
+public interface EngineValue {
 
   /**
    * Add this value to another value.
@@ -70,26 +70,27 @@ public interface EngineValue extends Comparable<EngineValue> {
   String getUnits();
 
   /**
-   * Compare this EngineValue to the specified object for equality.
+   * Convert this EngineValue to a Scalar.
    *
-   * <p>Compare two EngineValues for equality where two EngineValue objects are considered equal if
-   * they have the same numeric value.</p>
+   * <p>Convert this EngineValue to a Scalar such that Scalars return themselves unchanged while
+   * Distributions are sampled randomly for a single value with selection probability proportional
+   * to the frequency of each value. This can be useful if the user is providing a Distribution
+   * where a Scalar is typically provided, allowing any operation to become stochastic.</p>
    *
-   * @param obj the object to compare with
-   * @return true if the objects are equal, false otherwise
+   * @return This EngineValue either as a Scalar or sampled for a single Scalar.
    */
-  boolean equals(EngineValue obj);
+  Scalar getAsScalar();
 
   /**
-   * Compare this EngineValue to the specified object.
+   * Convert this EngineValue to a Distribution.
    *
-   * <p>Compare two EngineValues for ordinal ranking where two EngineValue objects are considered
-   * equal if they have the same numeric value.</p>
+   * <p>Convert this EngineValue to a Distribution such that Distributions return themselves
+   * unchanged and Scalars are returned as a RealizedDistribution of size 1. This can be useful if
+   * the user is trying to use a Scalar value in a place where a Distribution is typically
+   * requested, causing effectively a distribution of constant value to be used.</p>
    *
-   * @param other the object to compare with.
-   * @return A number less than 0 if this is less than other, 0 if the two are the same, and a
-   *     number larger than 1 if this is more than other.
+   * @return This EngineValue as a distribution.
    */
-  int compareTo(EngineValue other);
+  Distribution getAsDistribution();
 
 }
