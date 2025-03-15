@@ -184,7 +184,7 @@ agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanz
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
-  | identifier EQ_ statement # activeConversion
+  | identifier EQ_ expression # activeConversion
   ;
 
 unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
