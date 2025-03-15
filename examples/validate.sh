@@ -45,3 +45,4 @@ assert_ok examples/age.josh || exit 2
 assert_ok examples/selector.josh || exit 3
 assert_ok examples/limit.josh || exit 4
 assert_ok examples/sample.josh || exit 5
+assert_ok examples/state.josh || exit 6

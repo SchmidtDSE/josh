@@ -95,13 +95,13 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|PRIOR_);
+nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
 number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
 
-unitsValue: number identifier;
+unitsValue: number (identifier|PERCENT_);
 
 string: STR_;
 
@@ -164,13 +164,11 @@ eventHandlerGroup: identifier eventHandlerGroupMember*;
 eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 
 // Regular stanzas
-innerStanzaType: STATE_;
-
-innerStanza: START_ innerStanzaType eventHandlerGeneral* END_ innerStanzaType;
+stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
 agentStanzaType: (DISTURBANCE_ EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | innerStanza)* END_ agentStanzaType;
+agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
