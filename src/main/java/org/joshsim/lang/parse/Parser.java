@@ -21,8 +21,8 @@ import org.joshsim.lang.antlr.JoshLangParser;
 /**
  * Entrypoint for the Josh DSL parser step.
  *
- * <p>Entry point to the parser machinery for the Josh DSL (Domain Specific Language). It
- * leverages ANTLR for, capturing any syntax errors encountered during parsing.</p>
+ * <p>Facade acting as an entry point to the parser machinery for the Josh DSL (Domain Specific
+ * Language). It leverages ANTLR for, capturing any syntax errors encountered during parsing.</p>
  */
 public class Parser {
 
