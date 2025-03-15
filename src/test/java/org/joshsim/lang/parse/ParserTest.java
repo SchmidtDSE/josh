@@ -19,7 +19,10 @@ import org.junit.jupiter.api.Test;
 public class ParserTest {
 
   private Parser parser;
-  
+
+  /**
+   * Create a new parser before each test.
+   */
   @BeforeEach
   public void setUp() {
     parser = new Parser();
