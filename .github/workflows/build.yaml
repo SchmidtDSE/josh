@@ -70,7 +70,7 @@ jobs:
     needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
-    name: Build Fat Jar
+    name: Validate Josh examples
     steps:
       - name: Checkout
         uses: actions/checkout@v3
