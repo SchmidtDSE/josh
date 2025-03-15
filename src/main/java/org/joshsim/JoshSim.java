@@ -54,6 +54,9 @@ public class JoshSim {
   )
   static class ValidateCommand implements Callable<Integer> {
 
+    @Option(names = "--quiet", description = "Suppress output messages")
+    private boolean quiet;
+
     @Parameters(index = "0", description = "Path to file to validate")
     private File file;
 
@@ -69,7 +72,9 @@ public class JoshSim {
     @Override
     public Integer call() {
       if (!file.exists()) {
-        System.err.println("Could not find file: " + file);
+        if (!quiet) {
+          System.err.println("Could not find file: " + file);
+        }
         return 1;
       }
 
@@ -77,7 +82,9 @@ public class JoshSim {
       try {
         fileContent = new String(java.nio.file.Files.readAllBytes(file.toPath()));
       } catch (java.io.IOException e) {
-        System.err.println("Error in reading input file: " + e.getMessage());
+        if (!quiet) {
+          System.err.println("Error in reading input file: " + e.getMessage());
+        }
         return 2;
       }
 
@@ -85,21 +92,25 @@ public class JoshSim {
       ParseResult result = parser.parse(fileContent);
 
       if (result.hasErrors()) {
-        String leadMessage = String.format("Found errors in Josh code at %s:", file);
-        System.err.println(leadMessage);
-        
-        for (ParseError error : result.getErrors()) {
-          String lineMessage = String.format(
-              " - On line %d: %s",
-              error.getLine(),
-              error.getMessage()
-          );
-          System.err.println(lineMessage);
+        if (!quiet) {
+          String leadMessage = String.format("Found errors in Josh code at %s:", file);
+          System.err.println(leadMessage);
+          
+          for (ParseError error : result.getErrors()) {
+            String lineMessage = String.format(
+                " - On line %d: %s",
+                error.getLine(),
+                error.getMessage()
+            );
+            System.err.println(lineMessage);
+          }
         }
         
         return 3;
       } else {
-        System.out.println("Validated Josh code at " + file);
+        if (!quiet) {
+          System.out.println("Validated Josh code at " + file);
+        }
         return 0;
       }
     }
