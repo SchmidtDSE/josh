@@ -318,7 +318,7 @@ Management agents can be created through user configuration or user interactions
 ```
 start management Planting
 
-  cover.init: mean(here.PlantingMap)
+  cover.init = mean(here.PlantingMap)
 
 end management
 ```

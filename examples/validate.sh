@@ -50,3 +50,4 @@ assert_ok examples/disturbance.josh || exit 7
 assert_ok examples/patch.josh || exit 8
 assert_ok examples/slice.josh || exit 9
 assert_ok examples/simulation.josh || exit 10
+assert_ok examples/management.josh || exit 11

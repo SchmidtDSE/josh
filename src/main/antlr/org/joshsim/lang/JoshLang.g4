@@ -123,7 +123,7 @@ expression: unitsValue # simpleExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
-  | name=identifier LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
+  | name=funcName LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
@@ -141,6 +141,10 @@ expression: unitsValue # simpleExpression
   | CREATE_ count=expression OF_ target=identifier # createVariableExpression
   | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
+  ;
+
+funcName: (MEAN_ | STD_) # reservedFuncName
+  | identifier # identifierFuncName
   ;
 
 assignment: CONST_ identifier EQ_ expression;
