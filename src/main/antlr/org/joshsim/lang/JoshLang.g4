@@ -7,8 +7,6 @@ grammar JoshLang;
 // Base values
 STR_: '"' ~[",]* '"';
 
-WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
-
 COMMENT: '#' ~[\r\n]* -> channel(HIDDEN);
 
 FLOAT_: [0-9]* '.' [0-9]+;
@@ -91,9 +89,12 @@ WITHOUT_: 'without';
 // Dynamic
 IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 
+// Whitespace
+WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
+
 // Identifiers
-identifier: IDENTIFIER_;
-nestedIdentifier: identifier (DOT_ identifier)*;
+nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|PRIOR_);
+identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
 number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
@@ -103,10 +104,10 @@ unitsValue: number identifier;
 string: STR_;
 
 // Statement
-expression: number # simpleNumber
+expression: unitsValue # simpleExpression
+  | number # simpleNumber
   | string # simpleString
   | identifier # simpleIdentifier
-  | unitsValue # simpleExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
@@ -139,16 +140,16 @@ lambda: expression;
 
 fullBody: LCURLY_ statement* RCURLY_;
 
-callable: (lambda | fullBody);
+callable: (fullBody | lambda);
 
 // Event handlers
-eventHandler: nestedIdentifier EQ_ callable;
+eventHandler: identifier EQ_ callable;
 
 eventSelector: COLON_ LPAREN_ expression RPAREN_;
 
-eventHandlerGroupMember: eventSelector EQ_ callable;
+eventHandlerGroupMember: (eventSelector)? EQ_ callable;
 
-eventHandlerGroup: nestedIdentifier eventHandlerGroupMember*;
+eventHandlerGroup: identifier eventHandlerGroupMember*;
 
 eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 
@@ -159,7 +160,7 @@ innerStanza: START_ innerStanzaType eventHandlerGeneral* END_ innerStanzaType;
 
 agentStanzaType: (DISTURBANCE_ EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanza: START_ agentStanzaType (eventHandlerGeneral | innerStanza)* END_ agentStanzaType;
+agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | innerStanza)* END_ agentStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion

@@ -82,10 +82,26 @@ public class JoshSim {
       }
 
       Parser parser = new Parser();
-      parser.parse(fileContent);
+      ParseResult result = parser.parse(fileContent);
 
-      System.out.println("Validated Josh code at " + file);
-      return 0;
+      if (result.hasErrors()) {
+        String leadMessage = String.format("Found errors in Josh code at %s:", file);
+        System.err.println(leadMessage);
+        
+        for (ParseError error : result.getErrors()) {
+          String lineMessage = String.format(
+            " - On line %d: %s",
+            error.getLine(),
+            error.getMessage()
+          );
+          System.err.println(lineMessage);
+        }
+        
+        return 3;
+      } else {
+        System.out.println("Validated Josh code at " + file);
+        return 0;
+      }
     }
   }
 
