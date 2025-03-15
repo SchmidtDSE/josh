@@ -1,0 +1,9 @@
+start organism ForeverTree
+
+  height.init = 1 m
+
+  height.step = prior.height + 1 m
+
+  heightKm.step = height as km
+
+end organism

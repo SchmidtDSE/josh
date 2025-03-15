@@ -54,3 +54,4 @@ assert_ok examples/management.josh || exit 11
 assert_ok examples/external.josh || exit 12
 assert_ok examples/here.josh || exit 13
 assert_ok examples/cyclic.josh || exit 13
+assert_ok examples/units_default.josh || exit 13
