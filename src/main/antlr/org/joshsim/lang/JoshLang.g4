@@ -1,7 +1,7 @@
 grammar JoshLang;
 
 @header {
-  package org.joshsim.lang;
+  package org.joshsim.lang.antlr;
 }
 
 // Base values

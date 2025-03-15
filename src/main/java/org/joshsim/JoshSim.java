@@ -18,6 +18,9 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+import org.joshsim.lang.parse.ParseError;
+import org.joshsim.lang.parse.Parser;
+import org.joshsim.lang.parse.ParseResult;
 
 /**
  * Command line interface for JoshSim.
@@ -77,8 +80,11 @@ public class JoshSim {
         System.err.println("Error in reading input file: " + e.getMessage());
         return 2;
       }
-      
-      System.out.println("Validated " + file);
+
+      Parser parser = new Parser();
+      parser.parse(fileContent);
+
+      System.out.println("Validated Josh code at " + file);
       return 0;
     }
   }
