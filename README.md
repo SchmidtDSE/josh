@@ -460,14 +460,14 @@ If an entity's event handler requests current state information for another enti
 ```
 start organism CoverTree
 
-  height.step: prior.height + 6 in
+  height.step = prior.height + 6 in
 
 end organism
 
 start organism Grass
 
-  isShaded.step: max(here.CoverTrees.height) > 1 ft
-  height.step: prior.height + (-1 cm if current.isShaded else 1 cm)
+  isShaded.step = max(here.CoverTrees.height) > 1 ft
+  height.step = prior.height + (-1 cm if current.isShaded else 1 cm)
 
 end organism
 ```
@@ -506,15 +506,15 @@ The computational graph created must be acyclic. For example:
 ```
 start organism TreeA
 
-  isShaded.step: max(here.TreeBs.height) > current.height
-  height.step: prior.height + (2 in if current.isShaded else 4 in)
+  isShaded.step = max(here.TreeBs.height) > current.height
+  height.step = prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 
 start organism TreeB
 
-  isShaded.step: max(here.TreeAs.height) > current.height
-  height.step: prior.height + (2 in if current.isShaded else 4 in)
+  isShaded.step = max(here.TreeAs.height) > current.height
+  height.step = prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 ```

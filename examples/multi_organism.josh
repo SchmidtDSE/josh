@@ -1,0 +1,13 @@
+start organism CoverTree
+
+  height.step = prior.height + 6 in
+
+end organism
+
+
+start organism Grass
+
+  isShaded.step = max(here.CoverTrees.height) > 1 ft
+  height.step = prior.height + (-1 cm if current.isShaded else 1 cm)
+
+end organism
