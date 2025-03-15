@@ -3,6 +3,7 @@
  *
  * @license BSD-3-Clause
  */
+
 package org.joshsim.lang.parse;
 
 import java.lang.IllegalArgumentException;
@@ -22,7 +23,7 @@ public class ParseResult {
   /**
    * Constructs a ParseResult with the specified program and no errors.
    *
-   * @param program the parsed program.
+   * @param newProgram the parsed program.
    */
   public ParseResult(JoshLangParser.ProgramContext newProgram) {
     program = Optional.of(newProgram);
@@ -32,8 +33,8 @@ public class ParseResult {
   /**
    * Constructs a ParseResult with the specified errors and no program.
    *
-   * @throws IllegalArgumentException if newErrors is empty.
    * @param newErrors the errors encountered which must not be empty.
+   * @throws IllegalArgumentException if newErrors is empty.
    */
   public ParseResult(List<ParseError> newErrors) {
     if (newErrors.isEmpty()) {

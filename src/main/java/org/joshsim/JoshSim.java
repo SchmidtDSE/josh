@@ -15,12 +15,12 @@ package org.joshsim;
 
 import java.io.File;
 import java.util.concurrent.Callable;
+import org.joshsim.lang.parse.ParseError;
+import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.lang.parse.Parser;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-import org.joshsim.lang.parse.ParseError;
-import org.joshsim.lang.parse.Parser;
-import org.joshsim.lang.parse.ParseResult;
 
 /**
  * Command line interface for JoshSim.
@@ -90,9 +90,9 @@ public class JoshSim {
         
         for (ParseError error : result.getErrors()) {
           String lineMessage = String.format(
-            " - On line %d: %s",
-            error.getLine(),
-            error.getMessage()
+              " - On line %d: %s",
+              error.getLine(),
+              error.getMessage()
           );
           System.err.println(lineMessage);
         }
