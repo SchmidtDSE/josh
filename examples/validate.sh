@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -f build/libs/joshsim-fat.jar ]; then
+   gradle fatJar
+fi
+
 assert_ok() {
   java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
   local status=$?
@@ -23,3 +27,4 @@ assert_not_ok() {
 assert_not_ok examples/error.josh || exit 1
 
 assert_ok examples/age.josh || exit 1
+assert_ok examples/selector.josh || exit 1
