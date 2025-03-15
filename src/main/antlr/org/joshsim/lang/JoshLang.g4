@@ -54,6 +54,7 @@ ELIF_: 'elif';
 ELSE_: 'else';
 END_: 'end';
 EXTERNAL_: 'external';
+FALSE_: 'false';
 FORCE_: 'force';
 FROM_: 'from';
 HERE_: 'here';
@@ -82,6 +83,7 @@ STATE_: 'state';
 STD_: 'std';
 STEP_: 'step';
 TO_: 'to';
+TRUE_: 'true';
 UNIFORM_: 'uniform';
 UNIT_: 'unit';
 WITH_: 'with';
@@ -115,6 +117,7 @@ sampleTarget: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
 expression: unitsValue # simpleExpression
   | number # simpleNumber
   | string # simpleString
+  | bool # simpleBoolExpression
   | identifier # simpleIdentifier
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | operand=expression AS_ target=identifier # cast
@@ -143,6 +146,8 @@ return: RETURN_ expression;
 
 statement: (assignment | return);
 
+bool: (TRUE_ | FALSE_);
+
 // Callables
 lambda: expression;
 
@@ -166,7 +171,7 @@ eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-agentStanzaType: (DISTURBANCE_ EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
+agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
 agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
 
