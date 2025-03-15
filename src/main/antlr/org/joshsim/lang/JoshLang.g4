@@ -118,7 +118,8 @@ expression: unitsValue # simpleExpression
   | number # simpleNumber
   | string # simpleString
   | bool # simpleBoolExpression
-  | identifier # simpleIdentifier
+  | ALL_ # allExpression
+  | identifier # identifierExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
@@ -136,6 +137,8 @@ expression: unitsValue # simpleExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
+  | CREATE_ target=identifier # createSingleExpression
+  | CREATE_ count=expression OF_ target=identifier # createVariableExpression
   | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;

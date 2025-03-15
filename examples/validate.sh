@@ -47,3 +47,4 @@ assert_ok examples/limit.josh || exit 4
 assert_ok examples/sample.josh || exit 5
 assert_ok examples/state.josh || exit 6
 assert_ok examples/disturbance.josh || exit 7
+assert_ok examples/patch.josh || exit 8
