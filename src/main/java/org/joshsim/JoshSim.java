@@ -84,7 +84,17 @@ public class JoshSim {
                 return 2;
             }
 
-            return 0;
+            try {
+                org.antlr.v4.runtime.CharStream input = org.antlr.v4.runtime.CharStreams.fromString(fileContent);
+                org.joshsim.lang.JoshLangLexer lexer = new org.joshsim.lang.JoshLangLexer(input);
+                org.antlr.v4.runtime.CommonTokenStream tokens = new org.antlr.v4.runtime.CommonTokenStream(lexer);
+                org.joshsim.lang.JoshLangParser parser = new org.joshsim.lang.JoshLangParser(tokens);
+                parser.identifier(); // Start parsing from root rule
+                return 0;
+            } catch (Exception e) {
+                System.err.println("Error parsing file: " + e.getMessage());
+                return 3;
+            }
         }
     }
 
