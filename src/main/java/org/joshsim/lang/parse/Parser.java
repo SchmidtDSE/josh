@@ -27,8 +27,10 @@ import org.joshsim.lang.antlr.JoshLangParser;
 public class Parser {
 
   /**
-   * Constructs a Compiler object. This constructor initializes any necessary
-   * configuration or state for the compilation process of Josh DSL.
+   * Attempt to parse a Josh source.
+   *
+   * @param inputCode The code to parse.
+   * @returns a parse result which may contain error information.
    */
   public ParseResult parse(String inputCode) {
     CharStream input = CharStreams.fromString(inputCode);
