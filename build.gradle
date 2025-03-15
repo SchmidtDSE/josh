@@ -16,6 +16,9 @@ dependencies {
     antlr('org.antlr:antlr4:4.13.1') // The ANTLR tool for grammar processing
     implementation('org.antlr:antlr4-runtime:4.13.1') // ANTLR runtime for generated code
     
+    // Command line parsing
+    implementation('info.picocli:picocli:4.7.5')
+    
     // Testing dependencies
     testImplementation(platform('org.junit:junit-bom:5.12.0'))
     testImplementation('org.junit.jupiter:junit-jupiter')
