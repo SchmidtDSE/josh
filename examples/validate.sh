@@ -43,3 +43,4 @@ assert_not_ok examples/error.josh || exit 1
 
 assert_ok examples/age.josh || exit 1
 assert_ok examples/selector.josh || exit 1
+assert_ok examples/limit.josh || exit 1

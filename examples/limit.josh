@@ -1,0 +1,18 @@
+start unit year
+
+  alias years
+  alias yr
+  alias yrs
+
+end unit
+
+start organism ForeverTree
+
+  height.init = 1 m
+
+  height.step = {
+    const newHeight = prior.height + 1 m
+    return limit newHeight to [,10 m]
+  }
+
+end organism
