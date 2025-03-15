@@ -33,8 +33,12 @@ public class Parser {
   public ParseResult parse(String inputCode) {
     CharStream input = CharStreams.fromString(inputCode);
     JoshLangLexer lexer = new JoshLangLexer(input);
+    // Remove default error listeners that print to console
+    lexer.removeErrorListeners();
+    
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshLangParser parser = new JoshLangParser(tokens);
+    parser.removeErrorListeners();
 
     List<ParseError> parseErrors = new ArrayList<>();
     BaseErrorListener listener = new BaseErrorListener() {
@@ -45,6 +49,8 @@ public class Parser {
         }
     };
 
+    // Add our error listener to both lexer and parser
+    lexer.addErrorListener(listener);
     parser.addErrorListener(listener);
 
     JoshLangParser.ProgramContext program = parser.program();
