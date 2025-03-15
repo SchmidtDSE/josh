@@ -7,6 +7,11 @@ plugins {
     id 'antlr' // for ANTLR grammar processing
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_19
+    targetCompatibility = JavaVersion.VERSION_19
+}
+
 repositories {
     mavenCentral()
 }
