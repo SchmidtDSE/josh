@@ -145,9 +145,11 @@ callable: (fullBody | lambda);
 // Event handlers
 eventHandler: identifier EQ_ callable;
 
-eventSelector: COLON_ LPAREN_ expression RPAREN_;
+conditionalEventSelector: COLON_ (IF_|ELIF_) LPAREN_ expression RPAREN_;
 
-eventHandlerGroupMember: (eventSelector)? EQ_ callable;
+elseEventSelector: COLON_ ELSE_;
+
+eventHandlerGroupMember: (conditionalEventSelector|elseEventSelector)? EQ_ callable;
 
 eventHandlerGroup: identifier eventHandlerGroupMember*;
 
