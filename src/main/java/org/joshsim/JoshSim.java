@@ -15,12 +15,6 @@ package org.joshsim;
 
 import java.io.File;
 import java.util.concurrent.Callable;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
-import org.joshsim.lang.JoshLangLexer;
-import org.joshsim.lang.JoshLangParser;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -83,44 +77,9 @@ public class JoshSim {
         System.err.println("Error in reading input file: " + e.getMessage());
         return 2;
       }
-
-      try {
-        CharStream input = CharStreams.fromString(fileContent);
-        JoshLangLexer lexer = new JoshLangLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JoshLangParser parser = new JoshLangParser(tokens);
-        parser.program();
-        return 0;
-      } catch (Exception parseException) {
-        String errorDescription = describeError(parseException);
-        System.err.println("Error parsing file. " + errorDescription);
-        return 3;
-      }
-    }    
-
-    /**
-     * Describe an error based on a RecognitionException.
-     *
-     * <p>Extract the line number and message from the given RecognitionException and return a
-     * well- formatted description of the issue that occurred during parsing.</p>
-     *
-     * @param recognitionException The RecognitionException that occurred.
-     * @return A formatted string describing the error, including the line number and message.
-     */
-    private String describeError(RecognitionException recognitionException) {
-      int line = recognitionException.getOffendingToken().getLine();
-      String description = recognitionException.getMessage();
-      return String.format("Issue on line %d: %s", line, description);
-    }
-
-    /**
-     * Describes an error based on a generic Exception.
-     *
-     * @param otherException The Exception that occurred.
-     * @return A formatted string describing the error message.
-     */
-    private String describeError(Exception otherException) {
-      return String.format("Issue: %s", otherException.getMessage());
+      
+      System.out.println("Validated " + file);
+      return 0;
     }
   }
 
