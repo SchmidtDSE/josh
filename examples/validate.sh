@@ -1,7 +1,7 @@
 #!/bin/bash
 
 assert_ok() {
-  java -jar build/libs/joshsim-fat.jar validate "$1"
+  java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
   local status=$?
   if [ $status -eq 0 ]; then
     return 0
@@ -11,7 +11,7 @@ assert_ok() {
 }
 
 assert_not_ok() {
-  java -jar build/libs/joshsim-fat.jar validate "$1"
+  java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
   local status=$?
   if [ $status -ne 0 ]; then
     return 0

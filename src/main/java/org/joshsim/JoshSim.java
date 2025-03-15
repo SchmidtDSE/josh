@@ -72,9 +72,7 @@ public class JoshSim {
     @Override
     public Integer call() {
       if (!file.exists()) {
-        if (!quiet) {
-          System.err.println("Could not find file: " + file);
-        }
+        printError("Could not find file: " + file);
         return 1;
       }
 
@@ -82,9 +80,7 @@ public class JoshSim {
       try {
         fileContent = new String(java.nio.file.Files.readAllBytes(file.toPath()));
       } catch (java.io.IOException e) {
-        if (!quiet) {
-          System.err.println("Error in reading input file: " + e.getMessage());
-        }
+        printError("Error in reading input file: " + e.getMessage());
         return 2;
       }
 
@@ -102,17 +98,41 @@ public class JoshSim {
                 error.getLine(),
                 error.getMessage()
             );
-            System.err.println(lineMessage);
+            printError(lineMessage);
           }
         }
         
         return 3;
       } else {
-        if (!quiet) {
-          System.out.println("Validated Josh code at " + file);
-        }
+        printOut("Validated Josh code at " + file);
         return 0;
       }
+    }
+
+    /**
+     * Print a message to standard out if quiet is not enabled.
+     *
+     * @param message the message to print to standard out.
+     */
+    private void printOut(String message) {
+      if (quiet) {
+        return;
+      }
+
+      System.out.println(message);
+    }
+
+    /**
+     * Print a message to standard error if quiet is not enabled.
+     *
+     * @param message the message to print to standard error.
+     */
+    private void printError(String message) {
+      if (quiet) {
+        return;
+      }
+
+      System.err.println(message);
     }
   }
 
