@@ -65,6 +65,7 @@ LIMIT_: 'limit';
 LONGITUDE_: 'longitude';
 MANAGEMENT_: 'management';
 MAP_: 'map';
+MEAN_: 'mean';
 NORMAL_: 'normal';
 OF_: 'of';
 OR_: 'or';
@@ -78,6 +79,7 @@ SAMPLE_: 'sample';
 SIMULATION_: 'simulation';
 START_: 'start';
 STATE_: 'state';
+STD_: 'std';
 STEP_: 'step';
 TO_: 'to';
 UNIFORM_: 'uniform';
@@ -103,6 +105,12 @@ unitsValue: number identifier;
 
 string: STR_;
 
+// Sample targets
+sampleTarget: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
+  | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ std=expression # normalSample
+  | expression # expressionSample
+  ;
+
 // Statement
 expression: unitsValue # simpleExpression
   | number # simpleNumber
@@ -117,9 +125,9 @@ expression: unitsValue # simpleExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
   | LPAREN_ expression RPAREN_ # parenExpression
   | identifier LBRAC_ expression RBRAC_ # slice
-  | SAMPLE_ target=expression # sampleSimple
-  | SAMPLE_ count=expression FROM_ target=expression # sampleParam
-  | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
+  | SAMPLE_ target=sampleTarget # sampleSimple
+  | SAMPLE_ count=expression FROM_ target=sampleTarget # sampleParam
+  | SAMPLE_ count=expression FROM_ target=sampleTarget replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
   | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMaxExpression
   | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMinExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
