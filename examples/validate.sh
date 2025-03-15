@@ -52,3 +52,4 @@ assert_ok examples/slice.josh || exit 9
 assert_ok examples/simulation.josh || exit 10
 assert_ok examples/management.josh || exit 11
 assert_ok examples/external.josh || exit 12
+assert_ok examples/here.josh || exit 13
