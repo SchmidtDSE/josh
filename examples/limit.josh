@@ -1,11 +1,3 @@
-start unit year
-
-  alias years
-  alias yr
-  alias yrs
-
-end unit
-
 start organism ForeverTree
 
   height.init = 1 m
