@@ -64,7 +64,7 @@ jobs:
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
-          name: farJar
+          name: fatJar
           path: build/libs/joshsim-fat.jar
   validateExamples:
     needs: buildJava
@@ -82,8 +82,8 @@ jobs:
       - name: Download farJar artifact
         uses: actions/download-artifact@v4
         with:
-          name: farJar
-      - name: Move the fat jar to build location
-        run: mv farJar build/libs/joshsim-fat.jar
+          name: fatJar
+      - name: Unzip artifact
+        run: unzip fatJar.zip
       - name: Validate examples
         run: bash examples/validate.sh
