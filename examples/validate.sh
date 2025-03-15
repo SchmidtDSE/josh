@@ -5,9 +5,9 @@ if [ ! -f build/libs/joshsim-fat.jar ]; then
    gradle fatJar
 fi
 
-verbose=false
-if [ "$1" = "verbose" ]; then
-  verbose=true
+verbose=true
+if [ "$1" = "quiet" ]; then
+  verbose=false
   shift
 fi
 
