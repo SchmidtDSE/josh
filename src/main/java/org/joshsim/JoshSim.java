@@ -11,23 +11,54 @@ import java.util.concurrent.Callable;
     name = "joshsim",
     mixinStandardHelpOptions = true,
     version = "1.0",
-    description = "JoshSim command line interface"
+    description = "JoshSim command line interface",
+    subcommands = {
+        JoshSim.ValidateCommand.class,
+        JoshSim.RunCommand.class
+    }
 )
-public class JoshSim implements Callable<Integer> {
+public class JoshSim {
 
-    @Parameters(index = "0", description = "Path to file to validate")
-    private File file;
+    @Command(
+        name = "validate",
+        description = "Validate a simulation file"
+    )
+    static class ValidateCommand implements Callable<Integer> {
+        @Parameters(index = "0", description = "Path to file to validate")
+        private File file;
 
-    @Override
-    public Integer call() {
-        if (!file.exists()) {
-            System.err.println("Error: File does not exist: " + file);
-            return 1;
+        @Override
+        public Integer call() {
+            if (!file.exists()) {
+                System.err.println("Error: File does not exist: " + file);
+                return 1;
+            }
+            
+            // TODO: Implement actual validation logic here
+            System.out.println("Validating file: " + file);
+            return 0;
         }
-        
-        // TODO: Implement actual validation logic here
-        System.out.println("Validating file: " + file);
-        return 0;
+    }
+
+    @Command(
+        name = "run",
+        description = "Run a simulation"
+    )
+    static class RunCommand implements Callable<Integer> {
+        @Parameters(index = "0", description = "Path to simulation file to run")
+        private File file;
+
+        @Override
+        public Integer call() {
+            if (!file.exists()) {
+                System.err.println("Error: File does not exist: " + file);
+                return 1;
+            }
+            
+            // TODO: Implement actual simulation logic here
+            System.out.println("Running simulation from file: " + file);
+            return 0;
+        }
     }
 
     public static void main(String[] args) {
