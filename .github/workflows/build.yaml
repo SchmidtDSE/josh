@@ -66,3 +66,24 @@ jobs:
         with:
           name: farJar
           path: build/libs/joshsim-fat.jar
+  validateExamples:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Build Fat Jar
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: farJar
+      - name: Move the fat jar to build location
+        run: mv farJar build/libs/joshsim-fat.jar
+      - name: Validate examples
+        run: bash examples/validate.sh
