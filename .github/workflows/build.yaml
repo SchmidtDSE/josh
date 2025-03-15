@@ -83,7 +83,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: fatJar
-      - name: Unzip artifact
-        run: unzip fatJar.zip
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
