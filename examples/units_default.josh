@@ -6,4 +6,6 @@ start organism ForeverTree
 
   heightKm.step = height as km
 
+  heightKmForce.step = force height / 1000 m as km
+
 end organism
