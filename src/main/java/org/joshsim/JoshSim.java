@@ -90,7 +90,7 @@ public class JoshSim {
 
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
-        System.err.println(leadMessage);
+        printError(leadMessage);
         
         for (ParseError error : result.getErrors()) {
           String lineMessage = String.format(
