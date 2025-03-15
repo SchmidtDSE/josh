@@ -1,11 +1,22 @@
+
 #!/bin/bash
 
 if [ ! -f build/libs/joshsim-fat.jar ]; then
    gradle fatJar
 fi
 
+verbose=false
+if [ "$1" = "verbose" ]; then
+  verbose=true
+  shift
+fi
+
 assert_ok() {
-  java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
+  if [ "$verbose" = true ]; then
+    java -jar build/libs/joshsim-fat.jar validate "$1"
+  else
+    java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
+  fi
   local status=$?
   if [ $status -eq 0 ]; then
     return 0
@@ -15,7 +26,11 @@ assert_ok() {
 }
 
 assert_not_ok() {
-  java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
+  if [ "$verbose" = true ]; then
+    java -jar build/libs/joshsim-fat.jar validate "$1"
+  else
+    java -jar build/libs/joshsim-fat.jar validate --quiet "$1"
+  fi
   local status=$?
   if [ $status -ne 0 ]; then
     return 0
