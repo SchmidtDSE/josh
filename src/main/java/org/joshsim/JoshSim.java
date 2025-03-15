@@ -89,18 +89,16 @@ public class JoshSim {
       ParseResult result = parser.parse(fileContent);
 
       if (result.hasErrors()) {
-        if (!quiet) {
-          String leadMessage = String.format("Found errors in Josh code at %s:", file);
-          System.err.println(leadMessage);
-          
-          for (ParseError error : result.getErrors()) {
-            String lineMessage = String.format(
-                " - On line %d: %s",
-                error.getLine(),
-                error.getMessage()
-            );
-            printError(lineMessage);
-          }
+        String leadMessage = String.format("Found errors in Josh code at %s:", file);
+        System.err.println(leadMessage);
+        
+        for (ParseError error : result.getErrors()) {
+          String lineMessage = String.format(
+              " - On line %d: %s",
+              error.getLine(),
+              error.getMessage()
+          );
+          printError(lineMessage);
         }
         
         return 3;
