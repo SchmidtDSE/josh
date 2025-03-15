@@ -17,6 +17,11 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import java.io.File;
 import java.util.concurrent.Callable;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.joshsim.lang.JoshLangLexer;
+import org.joshsim.lang.JoshLangParser;
 
 /**
  * Command line interface for JoshSim.
@@ -85,14 +90,18 @@ public class JoshSim {
             }
 
             try {
-                org.antlr.v4.runtime.CharStream input = org.antlr.v4.runtime.CharStreams.fromString(fileContent);
-                org.joshsim.lang.JoshLangLexer lexer = new org.joshsim.lang.JoshLangLexer(input);
-                org.antlr.v4.runtime.CommonTokenStream tokens = new org.antlr.v4.runtime.CommonTokenStream(lexer);
-                org.joshsim.lang.JoshLangParser parser = new org.joshsim.lang.JoshLangParser(tokens);
+                CharStream input = CharStreams.fromString(fileContent);
+                JoshLangLexer lexer = new JoshLangLexer(input);
+                CommonTokenStream tokens = new CommonTokenStream(lexer);
+                JoshLangParser parser = new JoshLangParser(tokens);
                 parser.identifier(); // Start parsing from root rule
                 return 0;
             } catch (Exception e) {
-                System.err.println("Error parsing file: " + e.getMessage());
+                int line = -1;
+                if (e instanceof org.antlr.v4.runtime.RecognitionException) {
+                    line = ((org.antlr.v4.runtime.RecognitionException) e).getOffendingToken().getLine();
+                }
+                System.err.println("Error parsing file" + (line != -1 ? " at line " + line : "") + ": " + e.getMessage());
                 return 3;
             }
         }
