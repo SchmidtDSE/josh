@@ -192,7 +192,7 @@ unitConversion: ALIAS_ identifier # noopConversion
 unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 
 // Imports and config
-configStatement: CONFIG_ expression;
+configStatement: CONFIG_ expression AS_ identifier;
 
 importStatement: IMPORT_ expression;
 

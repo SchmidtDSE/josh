@@ -893,7 +893,7 @@ These statements must be at top level (not within any stanzas). Paths can be spe
 In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas):
 
 ```
-config "file://config.json"
+config "file://config.json" AS fileConfig
 ```
 
 The JSON file at the location (additoinal protocols like `https://` may be made avialable) should have an object with string keys and string values where the string values should be a numeric followed by a units and msut have valid variable names similar to const:
