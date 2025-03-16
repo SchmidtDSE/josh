@@ -63,4 +63,5 @@ assert_ok examples/conditional_lambda.josh || exit 17
 assert_ok examples/query_temporal.josh || exit 18
 assert_ok examples/query_spatial.josh || exit 19
 assert_ok examples/config.josh || exit 20
-assert_ok examples/import.josh || exit 20
+assert_ok examples/import.josh || exit 21
+assert_ok examples/map.josh || exit 22
