@@ -89,6 +89,7 @@ UNIT_: 'unit';
 WITH_: 'with';
 WITHIN_: 'within';
 WITHOUT_: 'without';
+XOR_: 'xor';
 
 // Dynamic
 IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
@@ -124,6 +125,7 @@ expression: unitsValue # simpleExpression
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
+  | left=expression op=(AND_ | OR_ | XOR_) right=expression # logicalExpression
   | LPAREN_ expression RPAREN_ # parenExpression
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam

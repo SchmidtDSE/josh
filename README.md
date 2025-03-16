@@ -1250,7 +1250,7 @@ start organism JoshuaTree
 
   # ...
 
-  state.step:if(count(current.Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
+  state.step:if(count(current.Fire) > 0 and sample uniform from 0% to 100% < 90%) = "dead"
 
   # ...
 
