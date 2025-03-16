@@ -146,7 +146,9 @@ assignment: CONST_ identifier EQ_ expression;
 
 return: RETURN_ expression;
 
-statement: (assignment | return);
+fullConditional: IF_ LPAREN_ expression RPAREN_ fullBody (ELIF_ LPAREN_ expression RPAREN_ fullBody)* (ELSE_ fullBody)?;
+
+statement: (assignment | return | fullConditional);
 
 bool: (TRUE_ | FALSE_);
 

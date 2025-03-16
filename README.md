@@ -734,16 +734,18 @@ This acts as a function call which takes a single argument which is of type bool
 If statements are defined as following a Python-like turninary operation:
 
 ```
-const a = 1 if b == 2 else 3
+const a = 1 if (b == 2) else 3
 ```
 
 These can be full bodies:
 
 ```
-const a = if b == 2 {
-  return 1
-} else {
-  return 3
+const a = {
+  if (b == 2) {
+    return 1
+  } else {
+    return 3
+  }
 }
 ```
 
