@@ -207,7 +207,7 @@ Patches are the grid cells in which communities of organisms may be present.
 start patch Default
 
   location = all
-  JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
+  JoshuaTrees.init = create sum(here.LocationsGeotiff) of JoshuaTree
   JoshuaTrees.step = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTrees - deadTrees
@@ -229,7 +229,7 @@ start patch Default
   location = all
   JoshuaTrees.init = {
     const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
-    const new = create numNew JoshuaTree
+    const new = create numNew of JoshuaTree
     return new
   }
 
