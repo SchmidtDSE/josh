@@ -66,3 +66,4 @@ assert_ok examples/config.josh || exit 20
 assert_ok examples/import.josh || exit 21
 assert_ok examples/map.josh || exit 22
 assert_ok examples/comments.josh || exit 23
+assert_ok examples/full_interaction.josh || exit 24

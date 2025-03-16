@@ -115,7 +115,9 @@ expression: unitsValue # simpleExpression
   | ALL_ # allExpression
   | distributionDescription # distributionExpression
   | identifier # identifierExpression
+  | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
+  | expression LBRAC_ expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
   | name=funcName LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
@@ -123,7 +125,6 @@ expression: unitsValue # simpleExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
   | LPAREN_ expression RPAREN_ # parenExpression
-  | identifier LBRAC_ expression RBRAC_ # slice
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam
   | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement

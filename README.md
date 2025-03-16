@@ -994,8 +994,8 @@ This example next defines its organisms:
 ```
 start organism Shrubs
 
-  carryingCapacity.init: 80 %
-  reproduction.init: 15% / year
+  carryingCapacity.init = 80 %
+  reproduction.init = 15% / year
   
   otherCover.step = {
     const treeACover = sum(here.TreeAs.cover)
