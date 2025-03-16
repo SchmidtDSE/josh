@@ -56,3 +56,5 @@ assert_ok examples/here.josh || exit 13
 assert_ok examples/cyclic.josh || exit 13
 assert_ok examples/units_default.josh || exit 13
 assert_ok examples/units_custom.josh || exit 14
+assert_ok examples/autobox_distribution.josh || exit 15
+assert_ok examples/autobox_scalar.josh || exit 15

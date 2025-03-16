@@ -107,18 +107,13 @@ unitsValue: number (identifier|PERCENT_);
 
 string: STR_;
 
-// Sample targets
-sampleTarget: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
-  | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ std=expression # normalSample
-  | expression # expressionSample
-  ;
-
 // Statement
 expression: unitsValue # simpleExpression
   | number # simpleNumber
   | string # simpleString
   | bool # simpleBoolExpression
   | ALL_ # allExpression
+  | distributionDescription # distributionExpression
   | identifier # identifierExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | operand=expression AS_ target=identifier # cast
@@ -129,9 +124,9 @@ expression: unitsValue # simpleExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
   | LPAREN_ expression RPAREN_ # parenExpression
   | identifier LBRAC_ expression RBRAC_ # slice
-  | SAMPLE_ target=sampleTarget # sampleSimple
-  | SAMPLE_ count=expression FROM_ target=sampleTarget # sampleParam
-  | SAMPLE_ count=expression FROM_ target=sampleTarget replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
+  | SAMPLE_ target=expression # sampleSimple
+  | SAMPLE_ count=expression FROM_ target=expression # sampleParam
+  | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
   | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMaxExpression
   | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMinExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
@@ -154,6 +149,10 @@ return: RETURN_ expression;
 statement: (assignment | return);
 
 bool: (TRUE_ | FALSE_);
+
+distributionDescription: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
+  | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ stdev=expression # normalSample
+  ;
 
 // Callables
 lambda: expression;

@@ -1,0 +1,10 @@
+start patch Default
+
+  location = all
+
+  treeA.init = {
+    const cnt = normal with mean of 5 count std of 1 count
+    return create 5 count of TreeA
+  }
+
+end patch
