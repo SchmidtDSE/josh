@@ -19,7 +19,7 @@ jobs:
       - name: Install Pandoc
         run: sudo dpkg -i pandoc-3.1.10-1-amd64.deb
       - name: Build paper
-        run: pandoc -o spec.pdf --number-sections README.md
+        run: pandoc -o spec.pdf --number-sections LanguageSpecification.md
       - name: Upload paper
         uses: actions/upload-artifact@v4
         with:
@@ -39,6 +39,8 @@ jobs:
           java-version: '21'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+      - name: Check grammar
+        run: gradle generateGrammarSource
       - name: Check main style
         run: gradle checkstyleMain
       - name: Check test style
@@ -62,5 +64,43 @@ jobs:
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
-          name: farJar
+          name: fatJar
           path: build/libs/joshsim-fat.jar
+  testJava:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Java
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Run tests
+        run: gradle test
+  validateExamples:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Validate Josh examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Validate examples
+        run: bash examples/validate.sh
