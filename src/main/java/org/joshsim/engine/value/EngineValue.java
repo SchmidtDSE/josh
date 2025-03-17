@@ -86,7 +86,6 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  public abstract EngineValue raiseToPower(EngineValue other);
   public abstract EngineValue power(EngineValue other);
   public abstract EngineValue powerIntScalar(IntScalar other);
   public abstract EngineValue powerDecimalScalar(DecimalScalar other);

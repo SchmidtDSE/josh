@@ -115,11 +115,6 @@ public class DecimalScalar extends Scalar {
     public EngineValue power(EngineValue other) {
         return other.powerDecimalScalar(this);
     }
-
-    @Override
-    public EngineValue raiseToPower(EngineValue other) {
-        return power(other);
-    }
     //</editor-fold>
 
     // SECOND DISPATCH

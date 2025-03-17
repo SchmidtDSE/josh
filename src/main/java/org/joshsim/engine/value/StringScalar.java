@@ -125,11 +125,6 @@ public class StringScalar extends Scalar {
     public EngineValue power(EngineValue other) {
         return other.powerStringScalar(this);
     }
-
-    @Override
-    public EngineValue raiseToPower(EngineValue other) {
-        return power(other);
-    }
     //</editor-fold>
 
     // SECOND DISPATCH

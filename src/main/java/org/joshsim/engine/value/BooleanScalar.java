@@ -116,11 +116,6 @@ public class BooleanScalar extends Scalar {
     public EngineValue power(EngineValue other) {
         return other.powerBooleanScalar(this);
     }
-
-    @Override
-    public EngineValue raiseToPower(EngineValue other) {
-        return power(other);
-    }
     //</editor-fold>
 
     // SECOND DISPATCH
