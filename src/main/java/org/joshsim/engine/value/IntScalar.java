@@ -200,5 +200,62 @@ public class IntScalar extends Scalar {
     }
     //</editor-fold>
 
+    //<editor-fold desc="BooleanScalar Operations">
+    @Override
+    public EngineValue addBooleanScalar(BooleanScalar other) {
+        throw new UnsupportedOperationException("Cannot add boolean to integer");
+    }
+
+    @Override
+    public EngineValue subtractBooleanScalar(BooleanScalar other) {
+        throw new UnsupportedOperationException("Cannot subtract boolean from integer");
+    }
+
+    @Override
+    public EngineValue multiplyBooleanScalar(BooleanScalar other) {
+        if (other.getAsBoolean()) {
+            return new IntScalar(value, getUnits());
+        } else {
+            return new IntScalar(0, getUnits());
+        }
+    }
+
+    @Override
+    public EngineValue divideBooleanScalar(BooleanScalar other) {
+        throw new UnsupportedOperationException("Cannot divide boolean from integer");
+    }
+
+    @Override
+    public EngineValue powerBooleanScalar(BooleanScalar other) {
+        throw new UnsupportedOperationException("Cannot raise integer to power of boolean");
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="StringScalar Operations">
+    @Override
+    public EngineValue addStringScalar(StringScalar other) {
+        return new StringScalar(Integer.toString(value) + other.getAsString(), getUnits());
+    }
+
+    @Override
+    public EngineValue subtractStringScalar(StringScalar other) {
+        throw new UnsupportedOperationException("Cannot subtract string from integer");
+    }
+
+    @Override
+    public EngineValue multiplyStringScalar(StringScalar other) {
+        throw new UnsupportedOperationException("Cannot multiply integer by string");
+    }
+
+    @Override
+    public EngineValue divideStringScalar(StringScalar other) {
+        throw new UnsupportedOperationException("Cannot divide integer by string");
+    }
+
+    @Override
+    public EngineValue powerStringScalar(StringScalar other) {
+        throw new UnsupportedOperationException("Cannot raise integer to power of string");
+    }
+//</editor-fold>
 
 }
