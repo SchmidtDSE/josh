@@ -54,6 +54,7 @@ ELIF_: 'elif';
 ELSE_: 'else';
 END_: 'end';
 EXTERNAL_: 'external';
+FALSE_: 'false';
 FORCE_: 'force';
 FROM_: 'from';
 HERE_: 'here';
@@ -65,6 +66,7 @@ LIMIT_: 'limit';
 LONGITUDE_: 'longitude';
 MANAGEMENT_: 'management';
 MAP_: 'map';
+MEAN_: 'mean';
 NORMAL_: 'normal';
 OF_: 'of';
 OR_: 'or';
@@ -78,13 +80,16 @@ SAMPLE_: 'sample';
 SIMULATION_: 'simulation';
 START_: 'start';
 STATE_: 'state';
+STD_: 'std';
 STEP_: 'step';
 TO_: 'to';
+TRUE_: 'true';
 UNIFORM_: 'uniform';
 UNIT_: 'unit';
 WITH_: 'with';
 WITHIN_: 'within';
 WITHOUT_: 'without';
+XOR_: 'xor';
 
 // Dynamic
 IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
@@ -93,13 +98,13 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|PRIOR_);
+nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
 number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
 
-unitsValue: number identifier;
+unitsValue: number (identifier|PERCENT_);
 
 string: STR_;
 
@@ -107,16 +112,21 @@ string: STR_;
 expression: unitsValue # simpleExpression
   | number # simpleNumber
   | string # simpleString
-  | identifier # simpleIdentifier
+  | bool # simpleBoolExpression
+  | ALL_ # allExpression
+  | distributionDescription # distributionExpression
+  | identifier # identifierExpression
+  | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
+  | expression LBRAC_ expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
-  | name=identifier LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
+  | name=funcName LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
+  | left=expression op=(AND_ | OR_ | XOR_) right=expression # logicalExpression
   | LPAREN_ expression RPAREN_ # parenExpression
-  | identifier LBRAC_ expression RBRAC_ # slice
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam
   | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
@@ -125,15 +135,30 @@ expression: unitsValue # simpleExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
+  | CREATE_ target=identifier # createSingleExpression
+  | CREATE_ count=expression OF_ target=identifier # createVariableExpression
+  | target=expression WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
   | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
+  ;
+
+funcName: (MEAN_ | STD_) # reservedFuncName
+  | identifier # identifierFuncName
   ;
 
 assignment: CONST_ identifier EQ_ expression;
 
 return: RETURN_ expression;
 
-statement: (assignment | return);
+fullConditional: IF_ LPAREN_ expression RPAREN_ fullBody (ELIF_ LPAREN_ expression RPAREN_ fullBody)* (ELSE_ fullBody)?;
+
+statement: (assignment | return | fullConditional);
+
+bool: (TRUE_ | FALSE_);
+
+distributionDescription: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
+  | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ stdev=expression # normalSample
+  ;
 
 // Callables
 lambda: expression;
@@ -145,32 +170,32 @@ callable: (fullBody | lambda);
 // Event handlers
 eventHandler: identifier EQ_ callable;
 
-eventSelector: COLON_ LPAREN_ expression RPAREN_;
+conditionalEventSelector: COLON_ (IF_|ELIF_) LPAREN_ expression RPAREN_;
 
-eventHandlerGroupMember: (eventSelector)? EQ_ callable;
+elseEventSelector: COLON_ ELSE_;
+
+eventHandlerGroupMember: (conditionalEventSelector|elseEventSelector)? EQ_ callable;
 
 eventHandlerGroup: identifier eventHandlerGroupMember*;
 
 eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 
 // Regular stanzas
-innerStanzaType: STATE_;
+stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-innerStanza: START_ innerStanzaType eventHandlerGeneral* END_ innerStanzaType;
+agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanzaType: (DISTURBANCE_ EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
-
-agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | innerStanza)* END_ agentStanzaType;
+agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
-  | identifier EQ_ statement # activeConversion
+  | identifier EQ_ expression # activeConversion
   ;
 
 unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 
 // Imports and config
-configStatement: CONFIG_ expression;
+configStatement: CONFIG_ expression AS_ identifier;
 
 importStatement: IMPORT_ expression;
 

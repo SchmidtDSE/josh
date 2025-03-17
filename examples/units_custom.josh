@@ -1,0 +1,27 @@
+start unit year
+
+  alias years
+  alias yr
+  alias yrs
+
+  month = 12 * current
+
+end unit
+
+start unit month
+
+  alias months
+
+end unit
+
+start organism ForeverTree
+
+  age.init = 12 months
+
+  age.step = {
+    const currentAge = prior.age
+    const newAge = currentAge + 1 year
+    return newAge as months
+  }
+
+end organism

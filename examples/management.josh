@@ -1,0 +1,5 @@
+start management Planting
+
+  cover.init = mean(here.PlantingMap)
+
+end management
