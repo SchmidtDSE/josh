@@ -55,6 +55,9 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   public abstract String getType();
 
+  //<editor-fold desc="Comparison">
+  public abstract boolean equals(Scalar obj);
+
   /**
    * Compares this scalar to another scalar.
    *
