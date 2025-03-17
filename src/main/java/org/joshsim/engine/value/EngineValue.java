@@ -31,7 +31,9 @@ public abstract class EngineValue {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  public abstract EngineValue add(EngineValue other);
+  public EngineValue add(EngineValue other){
+    throw new Error("`add` not implemented for abstract class EngineValue");
+  }
 
   /**
    * Subtract another value from this value.
@@ -40,7 +42,9 @@ public abstract class EngineValue {
    * @return the result of the subtraction
    * @throws IllegalArgumentException if units are incompatible
    */
-  public abstract EngineValue subtract(EngineValue other);
+  public EngineValue subtract(EngineValue other){
+    throw new Error("`subtract` not implemented for abstract class EngineValue");
+  }
 
   /**
    * Multiply this value by another value.
@@ -49,7 +53,9 @@ public abstract class EngineValue {
    * @return the result of the multiplication
    * @throws IllegalArgumentException if units are incompatible
    */
-  public abstract EngineValue multiply(EngineValue other);
+  public EngineValue multiply(EngineValue other){
+    throw new Error("`multiply` not implemented for abstract class EngineValue");
+  }
 
   /**
    * Divide this value by another value.
@@ -59,7 +65,9 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  public abstract EngineValue divide(EngineValue other);
+  public EngineValue divide(EngineValue other){
+    throw new Error("`divide` not implemented for abstract class EngineValue");
+  }
 
   /**
    * Raise this value to the power of another value.
@@ -69,7 +77,9 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  public abstract EngineValue raiseToPower(EngineValue other);
+  public EngineValue raiseToPower(EngineValue other){
+    throw new Error("`raiseToPower` not implemented for abstract class EngineValue");
+  }
 
   /**
    * Convert this EngineValue to a Scalar.
@@ -94,4 +104,14 @@ public abstract class EngineValue {
    * @return This EngineValue as a distribution.
    */
   public abstract Distribution getAsDistribution();
+
+
+  /**
+   * Compare for equality.
+   *
+   * @param other the other valu
+   */
+  public boolean equals(EngineValue other) {
+    return this.equals(other);
+  }
 }

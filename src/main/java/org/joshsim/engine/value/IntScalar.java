@@ -17,6 +17,22 @@ public class IntScalar extends Scalar {
     }
 
     /**
+     * Returns as a Scalar.
+     *
+     * @return the scalar value.
+     */
+    public Scalar getAsScalar() {
+        return this;
+    }
+
+    /**
+     * Returns as a distribution, with just this single value.
+     */
+    public Distribution getAsDistribution() {
+        throw new Error("Not yet implemented");
+    }
+
+    /**
      * Gets the value as an integer.
      *
      * @return the scalar value as an int.
@@ -107,24 +123,15 @@ public class IntScalar extends Scalar {
         return new IntScalar(raised, getUnits());
     }
 
-
-    // TODO: BigDecimal.pow() does not accept a BigDecimal as an argument??
-//    public EngineValue raiseToPower(DecimalScalar other) {
-//        BigDecimal raised = new BigDecimal(value).pow(other.getAsDecimal());
-//        return new DecimalScalar(raised, getUnits());
-//    }
-
     public boolean equals(Scalar obj) {
         return value == obj.getAsInt();
     }
 
-    public int compareTo(Scalar other) {
-        if (other instanceof IntScalar) {
-            return Integer.compare(value, other.getAsInt());
-        } else if (other instanceof DecimalScalar) {
-            return new BigDecimal(value).compareTo(other.getAsDecimal());
-        } else {
-            throw new IllegalArgumentException("Cannot compare IntScalar to " + other.getType());
-        }
+    public int compareTo(IntScalar other) {
+        return Integer.compare(value, other.getAsInt());
+    }
+
+    public int compareTo(DecimalScalar other) {
+        return new BigDecimal(value).compareTo(other.getAsDecimal());
     }
 }

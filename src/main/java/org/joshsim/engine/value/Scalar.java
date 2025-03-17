@@ -7,7 +7,7 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-
+import java.error.NotImplementedError;
 
 /**
  * Engine value which only has a single discrete value.
@@ -57,14 +57,14 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public abstract String getType();
 
   /**
-   * Adds another scalar to this scalar.
+   * Compares this scalar to another scalar.
    *
    * @param other the scalar to add.
-   * @return the result of the addition.
+   * @return -1 if the scalar is less than the other scalar, 0 if they are equal, 1 if the scalar is greater than the other scalar.
    */
-
-  public abstract int compareTo(Scalar other);
-
+  public int compareTo(Scalar other) {
+    throw new Error("`compareTo` is not implemented for abstract type Scalar");
+  }
   /**
    * Compare this EngineValue to the specified object for equality.
    *
@@ -74,5 +74,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param obj the object to compare with
    * @return true if the objects are equal, false otherwise
    */
-  public abstract boolean equals(EngineValue obj);
+  public boolean equals(EngineValue obj) {
+    throw new Error("`equals` is not implemented for abstract type Scalar");
+  }
 }
