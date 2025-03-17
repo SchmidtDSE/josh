@@ -103,16 +103,18 @@ public class IntScalar extends Scalar {
     }
 
     public EngineValue raiseToPower(IntScalar other) {
-        int raised = Math.pow(value, other.getAsInt());
+        int raised = (int)Math.pow(value, other.getAsInt());
         return new IntScalar(raised, getUnits());
     }
 
-    public EngineValue raiseToPower(DecimalScalar other) {
-        BigDecimal raised = new BigDecimal(value).pow(other.getAsDecimal());
-        return new DecimalScalar(raised, getUnits());
-    }
 
-    public boolean equals(EngineValue obj) {
+    // TODO: BigDecimal.pow() does not accept a BigDecimal as an argument??
+//    public EngineValue raiseToPower(DecimalScalar other) {
+//        BigDecimal raised = new BigDecimal(value).pow(other.getAsDecimal());
+//        return new DecimalScalar(raised, getUnits());
+//    }
+
+    public boolean equals(Scalar obj) {
         return value == obj.getAsInt();
     }
 

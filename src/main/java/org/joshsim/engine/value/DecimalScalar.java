@@ -111,7 +111,7 @@ public class DecimalScalar extends Scalar {
         return new DecimalScalar(raised, getUnits());
     }
 
-    public boolean equals(EngineValue obj) {
+    public boolean equals(Scalar obj) {
         return value.compareTo(obj.getAsDecimal()) == 0;
     }
 
