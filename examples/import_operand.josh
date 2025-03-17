@@ -1,0 +1,15 @@
+start unit year
+
+  alias years
+  alias yr
+  alias yrs
+
+  month = 12 * current
+
+end unit
+
+start unit month
+
+  alias months
+
+end unit

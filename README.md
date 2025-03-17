@@ -207,7 +207,7 @@ Patches are the grid cells in which communities of organisms may be present.
 start patch Default
 
   location = all
-  JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
+  JoshuaTrees.init = create sum(here.LocationsGeotiff) of JoshuaTree
   JoshuaTrees.step = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTrees - deadTrees
@@ -229,7 +229,7 @@ start patch Default
   location = all
   JoshuaTrees.init = {
     const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
-    const new = create numNew JoshuaTree
+    const new = create numNew of JoshuaTree
     return new
   }
 
@@ -318,7 +318,7 @@ Management agents can be created through user configuration or user interactions
 ```
 start management Planting
 
-  cover.init: mean(here.PlantingMap)
+  cover.init = mean(here.PlantingMap)
 
 end management
 ```
@@ -460,14 +460,14 @@ If an entity's event handler requests current state information for another enti
 ```
 start organism CoverTree
 
-  height.step: prior.height + 6 in
+  height.step = prior.height + 6 in
 
 end organism
 
 start organism Grass
 
-  isShaded.step: max(here.CoverTrees.height) > 1 ft
-  height.step: prior.height + (-1 cm if current.isShaded else 1 cm)
+  isShaded.step = max(here.CoverTrees.height) > 1 ft
+  height.step = prior.height + (-1 cm if current.isShaded else 1 cm)
 
 end organism
 ```
@@ -506,15 +506,15 @@ The computational graph created must be acyclic. For example:
 ```
 start organism TreeA
 
-  isShaded.step: max(here.TreeBs.height) > current.height
-  height.step: prior.height + (2 in if current.isShaded else 4 in)
+  isShaded.step = max(here.TreeBs.height) > current.height
+  height.step = prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 
 start organism TreeB
 
-  isShaded.step: max(here.TreeAs.height) > current.height
-  height.step: prior.height + (2 in if current.isShaded else 4 in)
+  isShaded.step = max(here.TreeAs.height) > current.height
+  height.step = prior.height + (2 in if current.isShaded else 4 in)
 
 end organism
 ```
@@ -734,16 +734,18 @@ This acts as a function call which takes a single argument which is of type bool
 If statements are defined as following a Python-like turninary operation:
 
 ```
-const a = 1 if b == 2 else 3
+const a = 1 if (b == 2) else 3
 ```
 
 These can be full bodies:
 
 ```
-const a = if b == 2 {
-  return 1
-} else {
-  return 3
+const a = {
+  if (b == 2) {
+    return 1
+  } else {
+    return 3
+  }
 }
 ```
 
@@ -891,7 +893,7 @@ These statements must be at top level (not within any stanzas). Paths can be spe
 In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas):
 
 ```
-config "file://config.json"
+config "file://config.json" AS fileConfig
 ```
 
 The JSON file at the location (additoinal protocols like `https://` may be made avialable) should have an object with string keys and string values where the string values should be a numeric followed by a units and msut have valid variable names similar to const:
@@ -992,8 +994,8 @@ This example next defines its organisms:
 ```
 start organism Shrubs
 
-  carryingCapacity.init: 80 %
-  reproduction.init: 15% / year
+  carryingCapacity.init = 80 %
+  reproduction.init = 15% / year
   
   otherCover.step = {
     const treeACover = sum(here.TreeAs.cover)
@@ -1248,7 +1250,7 @@ start organism JoshuaTree
 
   # ...
 
-  state.step:if(count(current.Fire) > 0 and sample uniform 0% to 100% < 90%) = "dead"
+  state.step:if(count(current.Fire) > 0 and sample uniform from 0% to 100% < 90%) = "dead"
 
   # ...
 

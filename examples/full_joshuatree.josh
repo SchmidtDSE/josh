@@ -1,0 +1,122 @@
+start unit years
+
+  alias year
+  alias yr
+  alias yrs
+
+end unit
+
+
+start simulation Example
+
+  grid.size = 30 m
+  grid.start = 34 degrees longitude, -116 degrees latitude
+  grid.end = 35 degrees longitude, -115 degrees latitude
+
+end simulation
+
+
+start external ObservedAges
+
+  source.location = "file://obsevations.geotiff"
+  source.format = "geotiff"
+  source.units = "years"
+  source.band = 0
+
+end external
+
+
+start external ObservedCounts
+
+  source.location = "file://obsevations.geotiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 1
+
+end external
+
+
+start patch Default
+
+  location = all
+
+  carryingCapacity.init = 30 count
+  remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
+
+  seedDensity.init = 0 count
+  seedDensity.step = {
+    const neighbors = JoshuaTrees within 30 m radial at prior
+    const adultNeighbors = neighbors[neighbors.state == "adult"]
+    return sum(adultNeighbors.seedCache) / 10% * 1 count
+  }
+
+  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
+  }
+  JoshuaTrees.step = {
+    const newCount = floor(sample uniform from 0 count to current.seedDensity)
+    const newCountCapped = limit newCount to [0 count, current.remainingRoom]
+    const new = create newCountCapped of JoshuaTree
+    return new + prior.JoshuaTrees
+  }
+
+  onFire.start = sample uniform from 0% to 100% < 5%
+
+end patch
+
+
+start organism JoshuaTree
+
+  age.init
+    :if(meta.stepCount == 0 count) = sample here.ObservedAges
+    :else = 0 years
+
+  age.step = prior.age + 1 year
+
+  state.init
+    :if(current.age > 30 years) = "adult"
+    :elif(current.age > 2 years) = "juvenile"
+    :elif(current.age > 0 years) = "seedling"
+    :else = "seed"
+
+  seedCache.init
+    :if(current.age > 30 years) = current.age * (5% / 1 year)
+    :else = 0%
+
+  state.step:if(here.onFire and sample uniform from 0% to 100% < 90%) = "dead"
+
+  start state "seed"
+
+    state.step
+      :if(sample uniform from 0% to 100% > 50%) = "seedling"
+      :elif(sample uniform from 0% to 100% > 50%) = "dead"
+      :elif(current.age > 3 years) = "dead"
+
+  end state
+
+  start state "seedling"
+
+    state.step
+      :if(sample uniform from 0% to 100% < 20%) = "dead"
+      :elif(current.age > 2 years) = "juvenile"
+
+  end state
+
+  start state "juvenile"
+
+    state.step
+      :if(sample uniform from 0% to 100% < 10%) = "dead"
+      :elif(current.age > 30 years) = "adult"
+
+  end state
+
+  start state "adult"
+
+    seedCache.step = limit 1% + seedCache to [0%, 100%]
+    state.step:if(sample uniform from 0% to 100% < 5%) = "dead"
+
+  end state
+
+end organism

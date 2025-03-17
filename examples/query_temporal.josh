@@ -1,0 +1,10 @@
+start organism TreeB
+
+  height.init = 1 m
+
+  height.step = {
+    const otherCount = sum(prior.here.TreeA.count)
+    return 10 m - otherCount / 1 count * 1 m
+  }
+
+end organism
