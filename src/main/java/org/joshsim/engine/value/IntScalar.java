@@ -16,6 +16,7 @@ public class IntScalar extends Scalar {
         this.value = value;
     }
 
+    //<editor-fold desc="Getters">
     /**
      * Returns as a Scalar.
      *
@@ -76,53 +77,9 @@ public class IntScalar extends Scalar {
     public String getType() {
         return "int";
     }
+    //</editor-fold>
 
-
-    public EngineValue add(IntScalar other) {
-        int sum = value + other.getAsInt();
-        return new IntScalar(sum, getUnits());
-    }
-
-    public EngineValue add(DecimalScalar other) {
-        BigDecimal sum = new BigDecimal(value).add(other.getAsDecimal());
-        return new DecimalScalar(sum, getUnits());
-    }
-
-    public EngineValue subtract(IntScalar other) {
-        int difference = value - other.getAsInt();
-        return new IntScalar(difference, getUnits());
-    }
-
-    public EngineValue subtract(DecimalScalar other) {
-        BigDecimal difference = new BigDecimal(value).subtract(other.getAsDecimal());
-        return new DecimalScalar(difference, getUnits());
-    }
-
-    public EngineValue multiply(IntScalar other) {
-        int product = value * other.getAsInt();
-        return new IntScalar(product, getUnits());
-    }
-
-    public EngineValue multiply(DecimalScalar other) {
-        BigDecimal product = new BigDecimal(value).multiply(other.getAsDecimal());
-        return new DecimalScalar(product, getUnits());
-    }
-
-    public EngineValue divide(IntScalar other) {
-        int quotient = value / other.getAsInt();
-        return new IntScalar(quotient, getUnits());
-    }
-
-    public EngineValue divide(DecimalScalar other) {
-        BigDecimal quotient = new BigDecimal(value).divide(other.getAsDecimal());
-        return new DecimalScalar(quotient, getUnits());
-    }
-
-    public EngineValue raiseToPower(IntScalar other) {
-        int raised = (int)Math.pow(value, other.getAsInt());
-        return new IntScalar(raised, getUnits());
-    }
-
+    //<editor-fold desc="Comparison">
     public boolean equals(Scalar obj) {
         return value == obj.getAsInt();
     }
@@ -134,4 +91,114 @@ public class IntScalar extends Scalar {
     public int compareTo(DecimalScalar other) {
         return new BigDecimal(value).compareTo(other.getAsDecimal());
     }
+    //</editor-fold>
+
+    // FIRST DISPATCH
+    // This ensures that the proper method is called, but
+    // that we only need to implement each operation once. Each type of scalar needs to know how to perform
+    // arithmetic on each other type of scalar as an argument.
+
+    //<editor-fold desc="First Dispatch">
+
+    @Override
+    public EngineValue add(EngineValue other) {
+        return other.addIntScalar(this);
+    }
+
+    @Override
+    public EngineValue subtract(EngineValue other) {
+        return other.subtractIntScalar(this);
+    }
+
+    @Override
+    public EngineValue multiply(EngineValue other) {
+        return other.multiplyIntScalar(this);
+    }
+
+    @Override
+    public EngineValue divide(EngineValue other) {
+        return other.divideIntScalar(this);
+    }
+
+    @Override
+    public EngineValue power(EngineValue other) {
+        return other.powerIntScalar(this);
+    }
+    //</editor-fold>
+
+    // SECOND DISPATCH
+    // These methods are called by the first dispatch methods, and are implemented in each subclass of Scalar. We
+    // need one for each type of scalar that can be passed as an argument.
+
+    //<editor-fold desc="IntScalar Operations">
+
+    @Override
+    public EngineValue addIntScalar(IntScalar other) {
+        int sum = value + other.getAsInt();
+        return new IntScalar(sum, getUnits());
+    }
+
+    @Override
+    public EngineValue subtractIntScalar(IntScalar other) {
+        int difference = value - other.getAsInt();
+        return new IntScalar(difference, getUnits());
+    }
+
+    @Override
+    public EngineValue multiplyIntScalar(IntScalar other) {
+        int product = value * other.getAsInt();
+        return new IntScalar(product, getUnits());
+    }
+
+    @Override
+    public EngineValue divideIntScalar(IntScalar other) {
+        BigDecimal quotient = new BigDecimal(value).divide(new BigDecimal(other.getAsInt()));
+        if (quotient.scale() == 0) {
+            return new IntScalar(quotient.intValue(), getUnits());
+        } else {
+            return new DecimalScalar(quotient, getUnits());
+        }
+    }
+
+    @Override
+    public EngineValue powerIntScalar(IntScalar other) {
+        int power = (int) Math.pow(value, other.getAsInt());
+        return new IntScalar(power, getUnits());
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="DecimalScalar Operations">
+    @Override
+    public EngineValue subtractDecimalScalar(DecimalScalar other) {
+        BigDecimal difference = new BigDecimal(value).subtract(other.getAsDecimal());
+        return new DecimalScalar(difference, getUnits());
+    }
+
+    @Override
+    public EngineValue addDecimalScalar(DecimalScalar other) {
+        BigDecimal sum = new BigDecimal(value).add(other.getAsDecimal());
+        return new DecimalScalar(sum, getUnits());
+    }
+
+    @Override
+    public EngineValue multiplyDecimalScalar(DecimalScalar other) {
+        BigDecimal product = new BigDecimal(value).multiply(other.getAsDecimal());
+        return new DecimalScalar(product, getUnits());
+    }
+
+    @Override
+    public EngineValue divideDecimalScalar(DecimalScalar other) {
+        BigDecimal quotient = new BigDecimal(value).divide(other.getAsDecimal());
+        return new DecimalScalar(quotient, getUnits());
+    }
+
+    @Override
+    public EngineValue powerDecimalScalar(DecimalScalar other) {
+        BigDecimal power = new BigDecimal(value).pow(other.getAsInt());
+        return new DecimalScalar(power, getUnits());
+    }
+    //</editor-fold>
+
+
 }

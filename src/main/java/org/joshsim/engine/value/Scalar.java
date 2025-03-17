@@ -7,7 +7,6 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-import java.error.NotImplementedError;
 
 /**
  * Engine value which only has a single discrete value.

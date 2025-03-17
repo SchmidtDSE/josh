@@ -31,9 +31,12 @@ public abstract class EngineValue {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  public EngineValue add(EngineValue other){
-    throw new Error("`add` not implemented for abstract class EngineValue");
-  }
+  public abstract EngineValue add(EngineValue other);
+  public abstract EngineValue addIntScalar(IntScalar other);
+  public abstract EngineValue addDecimalScalar(DecimalScalar other);
+  public abstract EngineValue addBooleanScalar(BooleanScalar other);
+  public abstract EngineValue addStringScalar(StringScalar other);
+
 
   /**
    * Subtract another value from this value.
@@ -42,9 +45,11 @@ public abstract class EngineValue {
    * @return the result of the subtraction
    * @throws IllegalArgumentException if units are incompatible
    */
-  public EngineValue subtract(EngineValue other){
-    throw new Error("`subtract` not implemented for abstract class EngineValue");
-  }
+  public abstract EngineValue subtract(EngineValue other);
+  public abstract EngineValue subtractIntScalar(IntScalar other);
+  public abstract EngineValue subtractDecimalScalar(DecimalScalar other);
+  public abstract EngineValue subtractBooleanScalar(BooleanScalar other);
+  public abstract EngineValue subtractStringScalar(StringScalar other);
 
   /**
    * Multiply this value by another value.
@@ -53,9 +58,11 @@ public abstract class EngineValue {
    * @return the result of the multiplication
    * @throws IllegalArgumentException if units are incompatible
    */
-  public EngineValue multiply(EngineValue other){
-    throw new Error("`multiply` not implemented for abstract class EngineValue");
-  }
+  public abstract EngineValue multiply(EngineValue other);
+  public abstract EngineValue multiplyIntScalar(IntScalar other);
+  public abstract EngineValue multiplyDecimalScalar(DecimalScalar other);
+  public abstract EngineValue multiplyBooleanScalar(BooleanScalar other);
+  public abstract EngineValue multiplyStringScalar(StringScalar other);
 
   /**
    * Divide this value by another value.
@@ -65,9 +72,11 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  public EngineValue divide(EngineValue other){
-    throw new Error("`divide` not implemented for abstract class EngineValue");
-  }
+  public abstract EngineValue divide(EngineValue other);
+  public abstract EngineValue divideIntScalar(IntScalar other);
+  public abstract EngineValue divideDecimalScalar(DecimalScalar other);
+  public abstract EngineValue divideBooleanScalar(BooleanScalar other);
+  public abstract EngineValue divideStringScalar(StringScalar other);
 
   /**
    * Raise this value to the power of another value.
@@ -77,9 +86,12 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  public EngineValue raiseToPower(EngineValue other){
-    throw new Error("`raiseToPower` not implemented for abstract class EngineValue");
-  }
+  public abstract EngineValue raiseToPower(EngineValue other);
+  public abstract EngineValue power(EngineValue other);
+  public abstract EngineValue powerIntScalar(IntScalar other);
+  public abstract EngineValue powerDecimalScalar(DecimalScalar other);
+  public abstract EngineValue powerBooleanScalar(BooleanScalar other);
+  public abstract EngineValue powerStringScalar(StringScalar other);
 
   /**
    * Convert this EngineValue to a Scalar.
