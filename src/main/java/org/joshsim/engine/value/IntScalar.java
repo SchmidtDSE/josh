@@ -15,7 +15,6 @@ import java.math.BigDecimal;
  */
 public class IntScalar extends Scalar {
 
-  private final EngineValueCaster caster;
   private final Integer innerValue;
 
   public IntScalar(EngineValueCaster newCaster, int newInnerValue, String newUnits) {
@@ -88,7 +87,7 @@ public class IntScalar extends Scalar {
 
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(caster);
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
 
     List<Integer> values = new ArrayList<>(1);
     values.add(innerValue);

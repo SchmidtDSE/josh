@@ -26,7 +26,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public BigDecimal getAsDecimal() {
-    throw new UnsupportedOperationException("Cannot convert a string to decimal.");
+    return factory.build(BigDecimal.parse(innerValue));
   }
 
   @Override
@@ -41,7 +41,8 @@ public class StringScalar extends Scalar {
 
   @Override
   public int getAsInt() {
-    throw new UnsupportedOperationException("Cannot convert a string to int.");
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
+    return factory.build(Integer.parse(innerValue));
   }
 
   @Override
