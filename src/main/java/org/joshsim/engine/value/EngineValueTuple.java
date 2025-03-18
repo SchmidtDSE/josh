@@ -84,7 +84,7 @@ public class EngineValueTuple {
    * where one unit comes from one engine value and the other unit comes from the other engine
    * value.</p>
    */
-  private abstract class InnerTuple {
+  private static abstract class InnerTuple {
     private final String first;
     private final String second;
 
@@ -155,7 +155,7 @@ public class EngineValueTuple {
   /**
    * Typle describing two types that are in this engine value tuple such as int and decimal. 
    */
-  public class TypesTuple extends InnerTuple {
+  public static class TypesTuple extends InnerTuple {
     
     /**
      * Create a new types tuple representing a pair of types.
@@ -181,7 +181,7 @@ public class EngineValueTuple {
   /**
    * Typle describing two units that are in this engine value tuple such as meters and centimeters.
    */
-  public class UnitsTuple extends InnerTuple {
+  public static class UnitsTuple extends InnerTuple {
     
     /**
      * Create a new units tuple representing a pair of units.

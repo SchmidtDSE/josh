@@ -101,7 +101,7 @@ public class EngineValueWideningCaster implements EngineValueCaster {
    * @param strategy the strategy to employ to execute the cast.
    */
   private void addCast(EngineValueTuple.TypesTuple types, Cast strategy) {
-    strategies.add(types, strategy);
+    strategies.put(types, strategy);
   }
 
 }

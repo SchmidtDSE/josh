@@ -41,7 +41,7 @@ public class EngineValueFactory {
    * @returns decorated version of innerValue.
    */
   public EngineValue build(int innerValue) {
-    return new IntScalar(caster, innerValue);
+    return new IntScalar(caster, innerValue, "");
   } 
 
   /**
