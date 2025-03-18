@@ -91,6 +91,13 @@ public class IntScalar extends Scalar {
     );
   }
   
+  /**
+   * Divides this IntScalar by another IntScalar.
+   *
+   * @param other the IntScalar to divide this one by
+   * @return a new IntScalar that is the quotient of this divided by the other IntScalar
+   * @throws ArithmeticException if division by zero is attempted
+   */
   public EngineValue divide(IntScalar other) {
     return new IntScalar(
       caster,
@@ -99,6 +106,12 @@ public class IntScalar extends Scalar {
     );
   }
   
+  /**
+   * Raises this IntScalar to the power of another IntScalar.
+   *
+   * @param other the IntScalar to use as the exponent
+   * @return a new DecimalScalar that is this value raised to the power of the other value
+   */
   public EngineValue raiseToPower(IntScalar other) {
     return new DecimalScalar(caster, Math.pow(getAsInt(), other.getAsInt()), getUnits());
   }
