@@ -5,6 +5,7 @@ plugins {
     id 'application' // for creating executable JARs
     id 'checkstyle' // for code style checking
     id 'antlr' // for ANTLR grammar processing
+    id "com.diffplug.spotless" version "6.25.0" // for code formatting
 }
 
 java {
@@ -90,6 +91,13 @@ checkstyleMain {
 
 checkstyleTest {
     source = 'src/test/java/org/joshsim'
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        target 'src/main/java/org/joshsim/**/*.java'
+    }
 }
 
 // Create directory and checkstyle config if it doesn't exist
