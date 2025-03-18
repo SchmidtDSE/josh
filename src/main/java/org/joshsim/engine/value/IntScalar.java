@@ -59,25 +59,33 @@ public class IntScalar extends Scalar {
   }
   
   @Overrides
-  EngineValue subtract(EngineValue other);
+  EngineValue subtract(EngineValue other) {
+    return new IntScalar(caster, getAsInt() - other.getAsInt());
+  }
   
   @Overrides
-  EngineValue multiply(EngineValue other);
+  EngineValue multiply(EngineValue other) {
+    return new IntScalar(caster, getAsInt() * other.getAsInt());
+  }
   
   @Overrides
-  EngineValue divide(EngineValue other);
+  EngineValue divide(EngineValue other) {
+    return new IntScalar(caster, getAsInt() / other.getAsInt());
+  }
   
   @Overrides
-  EngineValue raiseToPower(EngineValue other);
-  
-  @Overrides
-  String getUnits();
-  
-  @Overrides
-  Scalar getAsScalar();
-  
-  @Overrides
-  Distribution getAsDistribution();
+  EngineValue raiseToPower(EngineValue other) {
+    return new IntScalar(caster, Math.pow(getAsInt(), other.getAsInt()));
+  }
 
+  @Overrides
+  public Distribution getAsDistribution() {
+    EngineValueFactory factory = new EngineValueFactory(caster);
+
+    List<Integer> values = new ArrayList<>(1);
+    values.add(innerValue);
+
+    return factory.build(values);
+  }
   
 }

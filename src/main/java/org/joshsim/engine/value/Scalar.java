@@ -14,6 +14,17 @@ import java.math.BigDecimal;
  */
 public abstract class Scalar extends EngineValue, Comparable<Scalar> {
 
+  private final String units;
+
+  /**
+   * Create a new scalar with the given units.
+   *
+   * @param newUnits String describing the units which may be a user-defined unit.
+   */
+  public Scalar(String newUnits) {
+    units = newUnits;
+  }
+
   /**
    * Gets the value as a BigDecimal.
    *
@@ -121,6 +132,16 @@ public abstract class Scalar extends EngineValue, Comparable<Scalar> {
     EngineValueTuple tuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
+  }
+
+  @Overrides
+  public String getUnits() {
+    return units;    
+  }
+
+  @Overrides
+  public Scalar getAsScalar() {
+    return this;
   }
   
 }
