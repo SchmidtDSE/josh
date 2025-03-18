@@ -93,4 +93,51 @@ public interface EngineValue {
    */
   Distribution getAsDistribution();
 
+  /**
+   * Get a string description of the type that this engine value would be in Josh sources.
+   *
+   * <p>Get a string description of the type that this engine value would be in Josh sources, giving
+   * subclasses control over when they no longer should follow the type conversion rules of their
+   * parents.</p>
+   *
+   * @returns String description of this type as it would appear to Josh source code.
+   */
+  String getLanguageType();
+
+  /**
+   * Change the type of this EngineValue.
+   *
+   * <p>Change the data type of this EngineValue, leaving the units unchanged. For example this may
+   * change from int to string but not meters to centimeters.</p>
+   *
+   * @param strategy Cast strategy to apply.
+   * @returns Engine value after cast.
+   */
+  EngineValue cast(Cast strategy);
+
+  /**
+   * Get the underlying Java object decorated by this EngineValue.
+   *
+   * @returns inner Java object decorated by this EngineValue.
+   */
+  Object getInnerValue();
+
+  /**
+   * Determine the new units string having multipled two units together.
+   *
+   * @param left units from the left side operand.
+   * @param right units from the right side operand.
+   * @returns new units description string.
+   */
+  String determineMultipliedUnits(String left, String right);
+
+  /**
+   * Determine the new units string having divided two units.
+   *
+   * @param left units from the left side operand.
+   * @param right units from the right side operand.
+   * @returns new units description string.
+   */
+  String determineDividedUnits(String left, String right);
+
 }
