@@ -30,6 +30,11 @@ public class EngineValueTuple {
     units = new UnitsTuple(first.getUnits(), second.getUnits());
   }
 
+  /**
+   * Reverse the order of the values within the tuple.
+   *
+   * @returns copy of this tuple with order of operands reversed.
+   */
   public EngineValueTuple reverse() {
     return new EngineValueTuple(getSecond(), getFirst());
   }
@@ -84,7 +89,7 @@ public class EngineValueTuple {
    * where one unit comes from one engine value and the other unit comes from the other engine
    * value.</p>
    */
-  private static abstract class InnerTuple {
+  private abstract static class InnerTuple {
     private final String first;
     private final String second;
 
@@ -128,7 +133,7 @@ public class EngineValueTuple {
      * Get the type of tuple that this represents.
      *
      * @returns tuple type like "units" or "types" which, for example, may correspond to meters or
-     *    integer.
+     *     integer.
      */
     public abstract String getTupleType();
 
@@ -165,7 +170,7 @@ public class EngineValueTuple {
      *
      * @param newFirst the first type, representing for example the type of the left-side operand.
      * @param newSecond the second type, representing for example the type of the right-side
-     *    operand.
+     *     operand.
      */
     public TypesTuple(String newFirst, String newSecond) {
       super(newFirst, newSecond);
@@ -191,7 +196,7 @@ public class EngineValueTuple {
      *
      * @param newFirst the first unit, representing for example the unit of the left-side operand.
      * @param newSecond the second unit, representing for example the unit of the right-side
-     *    operand.
+     *     operand.
      */
     public UnitsTuple(String newFirst, String newSecond) {
       super(newFirst, newSecond);

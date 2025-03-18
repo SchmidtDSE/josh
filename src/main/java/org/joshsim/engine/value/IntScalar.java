@@ -18,7 +18,14 @@ import java.util.List;
 public class IntScalar extends Scalar {
 
   private final Integer innerValue;
-
+  
+  /**
+   * Constructs an IntScalar instance with specified caster, value, and units.
+   *
+   * @param newCaster the EngineValueCaster used for casting
+   * @param newInnerValue the initial integer value of this IntScalar
+   * @param newUnits the units associated with this IntScalar
+   */
   public IntScalar(EngineValueCaster newCaster, int newInnerValue, String newUnits) {
     super(newCaster, newUnits);
     innerValue = newInnerValue;
@@ -58,7 +65,7 @@ public class IntScalar extends Scalar {
   /**
    * Compares this IntScalar instance with another for equality.
    *
-   * @param obj the object to compare to
+   * @param other the object to compare to
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue add(IntScalar other) {
@@ -68,8 +75,8 @@ public class IntScalar extends Scalar {
   
   /**
    * Checks equality of this IntScalar instance with another object.
-   * 
-   * @param obj the object to compare to
+   *
+   * @param other the object to compare to
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue subtract(IntScalar other) {

@@ -85,7 +85,7 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    * <p>Compare two EngineValues for equality where two EngineValue objects are considered equal if
    * they have the same numeric value.</p>
    *
-   * @param obj the object to compare with
+   * @param other the object to compare with
    * @return true if the objects are equal, false otherwise
    */
   public boolean equals(EngineValue other) {

@@ -20,6 +20,13 @@ public class Units {
   private final Map<String, Integer> numeratorUnits;
   private final Map<String, Integer> denominatorUnits;
 
+  /**
+   * Constructs Units from a description string.
+   *
+   * @param description a string representation of the units, with numerator and optionally a
+   *     denominator.
+   * @throws IllegalArgumentException if more than one denominator is specified.
+   */
   public Units(String description) {
     String numerator = "";
     String denominator = "";
@@ -53,7 +60,7 @@ public class Units {
 
   /**
    * Gets the denominator units.
-   * 
+   *
    * @return a Map representing the units in the denominator, mapping from name to count.
    */
   public Map<String, Integer> getDenominatorUnits() {

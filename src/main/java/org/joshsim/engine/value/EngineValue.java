@@ -96,7 +96,7 @@ public interface EngineValue {
   /**
    * Get a string description of the type that this engine value would be in Josh sources.
    *
-   * <p>Get a string description of the type that this engine value would be in Josh sources, giving 
+   * <p>Get a string description of the type that this engine value would be in Josh sources, giving
    * subclasses control over when they no longer should follow the type conversion rules of their
    * parents.</p>
    *

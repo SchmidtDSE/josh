@@ -19,6 +19,13 @@ public class DecimalScalar extends Scalar {
 
   private final BigDecimal innerValue;
 
+  /**
+  * Constructs a new DecimalScalar with the specified value.
+  *
+  * @param newCaster the caster to use for automatic type conversion.
+  * @param newInnerValue value the value of this scalar.
+  * @param newUnits the units of this scalar.
+  */
   public DecimalScalar(EngineValueCaster newCaster, BigDecimal newInnerValue, String newUnits) {
     super(newCaster, newUnits);
     innerValue = newInnerValue;

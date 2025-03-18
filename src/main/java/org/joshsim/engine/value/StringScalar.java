@@ -19,6 +19,13 @@ public class StringScalar extends Scalar {
 
   private final String innerValue;
 
+  /**
+  * Constructs a new DecimalScalar with the specified value.
+  * 
+  * @param newCaster the caster to use for automatic type conversion.
+  * @param newInnerValue the value of this StringScalar.
+  * @param newUnits the units of this StringScalar.
+  */
   public StringScalar(EngineValueCaster newCaster, String newInnerValue, String newUnits) {
     super(newCaster, newUnits);
     innerValue = newInnerValue;

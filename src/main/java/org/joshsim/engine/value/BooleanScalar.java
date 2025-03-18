@@ -19,6 +19,13 @@ public class BooleanScalar extends Scalar {
 
   private final boolean innerValue;
 
+  /**
+   * Constructs a BooleanScalar with the specified values.
+   *
+   * @param newCaster The caster for this engine value.
+   * @param newInnerValue The inner boolean value.
+   * @param newUnits The units associated with this engine value.
+   */
   public BooleanScalar(EngineValueCaster newCaster, boolean newInnerValue, String newUnits) {
     super(newCaster, newUnits);
     innerValue = newInnerValue;
