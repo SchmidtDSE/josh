@@ -1,0 +1,172 @@
+/**
+ * Structures to represent units.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.engine.value;
+
+import java.util.Map;
+import java.util.TreeMap;
+
+
+/**
+ * Strategy which represents a set of units which performs dimensional analysis.
+ */
+public class Units {
+
+  private final Map<String, Integer> numeratorUnits;
+  private final Map<String, Integer> denominatorUnits;
+
+  public Units(String description) {
+    String numerator = "";
+    String denominator = "";
+    
+    if (description.contains(" / ")) {
+      String[] pieces = description.split(" / ");
+      if (pieces.length > 2) {
+        String message = "No more than one numerator and denominator allowed: " + description;
+        throw new InvalidArgumentException(message);
+      }
+
+      numerator = pieces[0];
+      denominator = pieces.length > 1 ? pieces[1] : "";
+    } else {
+      numerator = description;
+      denominator = "";
+    }
+
+    numeratorUnits = parseMultiplyString(numerator);
+    denominatorUnits = parseMultiplyString(denominator);
+  }
+
+  /**
+   * Constructs Units with the specified numerator and denominator unit maps.
+   *
+   * @param newNumerator a Map representing the units in the numerator, mapping from name to count.
+   * @param newDenominator a Map representing the units in the denominator, mapping from name to
+   *    count.
+   */
+  public Units(Map<String, Integer> newNumerator, Map<String, Integer> newDenominator) {
+    numeratorUnits = newNumerator;
+    denominatorUnits = newDenominator;
+  }
+
+  /**
+   * Flip the units such that the numerator and denominator are inverted.
+   *
+   * @returns inverted copy of these units.
+   */
+  public Units invert() {
+    return new Units(denominatorUnits, numeratorUnits);
+  }
+
+  public Units multiply(Units other) {
+    Map<String, Integer> newNumeratorUnits = new TreeMap<>(numeratorUnits);
+    Map<String, Integer> newDenominatorUnits = new TreeMap<>(denominatorUnits);
+  
+    Map<String, Integer> otherNumeratorUnits = other.getNumeratorUnits();
+    for (String units : otherNumeratorUnits) {
+      int priorCount = newNumeratorUnits.get(units, 0);
+      int otherCount = otherNumeratorUnits.get(units);
+      int newCount = priorCount + otherCount;
+      newNumeratorUnits.put(units, newCount);
+    }
+
+    Map<String, Integer> otherDenominatorUnits = other.getNumeratorUnits();
+    for (String units : otherDenominatorUnits) {
+      int priorCount = newDenominatorUnits.get(units, 0);
+      int otherCount = otherDenominatorUnits.get(units);
+      int newCount = priorCount + otherCount;
+      newDenominatorUnits.put(units, newCount);
+    }
+
+    return new Units(newNumeratorUnits, newDenominatorUnits);
+  }
+
+  public Units divide(Units other) {
+    return multiply(other.invert());
+  }
+
+  public Units simplify() {
+    Map<String, Integer> newNumeratorUnits = new TreeMap<>();
+    Map<String, Integer> newDenominatorUnits = new TreeMap<>();
+    
+    Set<String> sharedUnits = numeratorUnits.keySet();
+    sharedUnits.retainAll(denominatorUnits.keySet());
+
+    for (String units : sharedUnits) {
+      int numeratorCount = numeratorUnits.get(units);
+      int denominatorCount = denominatorUnits.get(units);
+      int simplifiedCount = numeratorCount - denominatorCount;
+      
+      if (simplifiedCount > 0) {
+        newNumeartorUnits.put(units, simplifiedCount);
+      } else {
+        newDenominatorUnits.put(unit, simplifiedCount * -1);
+      }
+    }
+
+    Set<String> numeratorOnlyUnits = numeratorUnits.keySet();
+    numeratorOnlyUnits.removeAll(denominatorUnits.keySet());
+
+    for (String units : numeratorOnlyUnits) {
+      newNumeratorUnits.put(units, numeratorUnits.get(units));
+    }
+    
+    Set<String> denominatorOnlyUnits = denominatorUnits.keySet();
+    denominatorOnlyUnits.removeAll(numeratorUnits.keySet());
+
+    for (String units : denominatorOnlyUnits) {
+      newDenominatorUnits.put(units, denominatorUnits.get(units));
+    }
+
+    return new Units(newNumeratorUnits, newDenominatorUnits);
+  }
+
+  /**
+   * Check if this units and another units are the same without simplification.
+   *
+   * @param other the other units.
+   * @returns true if this units and the other units are the same without simplification and false
+   *    otherwise.
+   */
+  public boolean equals(Units other) {
+    return toString().equals(other.toString());
+  }
+
+  @Override
+  public String toString() {
+    String numeratorString = serializeMultiplyString(numeratorUnits);
+    Strind denominatorString = serializeMultiplyString(denominatorUnits);
+    boolean noDenominator = denominatorString.isEmpty();
+    return noDenominator ? numeratorString : numeratorString + "/" + denominatorString;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+
+  private Map<String, Integer> parseMultiplyString(String target) {
+    Map<String, Integer> unitCounts = new TreeMap<>();
+    for(String unit : target.split(" * ")) {
+      unitCounts.put(unit, unitCounts.getOrDefault(unit, 0) + 1);
+    }
+    return unitCounts;
+  }
+
+  private String serializeMuliplyString(Map<String, Integer> target) {
+    StringJoiner joiner = new StringJoiner(" * ");
+
+    for(String unit : target.keySet()) {
+      int numInstances = target.get(unit);
+      for (int i = 0; i < numInstances; i++) {
+        joiner.add(unit);
+      }
+    }
+
+    return joiner.toString();
+  }
+  
+}
