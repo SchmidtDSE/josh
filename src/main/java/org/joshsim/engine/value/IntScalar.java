@@ -18,67 +18,68 @@ public class IntScalar extends Scalar {
   private final EngineValueCaster caster;
   private final Integer innerValue;
 
-  public IntScalar(EngineValueCaster newCaster, int newInnerValue) {
+  public IntScalar(EngineValueCaster newCaster, int newInnerValue, String newUnits) {
+    super(newUnits);
     caster = newCaster;
     innerValue = newInnerValue;
   }
 
-  @Overrides
+  @Override
   public BigDecimal getAsDecimal() {
     return new BigDecimal(innerValue);
   }
 
-  @Overrides
+  @Override
   public boolean getAsBoolean() {
     throw new UnsupportedOperationException("Cannot convert an int to boolean.");
   }
 
-  @Overrides
+  @Override
   public String getAsString() {
     return innerValue.toString();
   }
 
-  @Overrides
+  @Override
   public int getAsInt() {
     return innerValue;
   }
 
-  @Overrides
+  @Override
   public String getType() {
     return "int";
   }
 
-  @Overrides
+  @Override
   public Comparable getInnerValue() {
     return innerValue;
   }
-  
-  @Overrides
+
+  @Override
   public EngineValue add(IntScalar other) {
-    return new IntScalar(caster, getAsInt() + other.getAsInt());
-  }
-  
-  @Overrides
-  EngineValue subtract(EngineValue other) {
-    return new IntScalar(caster, getAsInt() - other.getAsInt());
-  }
-  
-  @Overrides
-  EngineValue multiply(EngineValue other) {
-    return new IntScalar(caster, getAsInt() * other.getAsInt());
-  }
-  
-  @Overrides
-  EngineValue divide(EngineValue other) {
-    return new IntScalar(caster, getAsInt() / other.getAsInt());
-  }
-  
-  @Overrides
-  EngineValue raiseToPower(EngineValue other) {
-    return new IntScalar(caster, Math.pow(getAsInt(), other.getAsInt()));
+    return new IntScalar(caster, getAsInt() + other.getAsInt(), getUnits());
   }
 
-  @Overrides
+  @Override
+  EngineValue subtract(IntScalar other) {
+    return new IntScalar(caster, getAsInt() - other.getAsInt(), getUnits());
+  }
+
+  @Override
+  EngineValue multiply(IntScalar other) {
+    return new IntScalar(caster, getAsInt() * other.getAsInt(), getUnits());
+  }
+
+  @Override
+  EngineValue divide(IntScalar other) {
+    return new IntScalar(caster, getAsInt() / other.getAsInt(), getUnits());
+  }
+
+  @Override
+  EngineValue raiseToPower(EngineValue other) {
+    return new IntScalar(caster, Math.pow(getAsInt(), other.getAsInt()), getUnits());
+  }
+
+  @Override
   public Distribution getAsDistribution() {
     EngineValueFactory factory = new EngineValueFactory(caster);
 
