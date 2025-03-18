@@ -162,7 +162,7 @@ public class IntScalar extends Scalar {
 
     @Override
     public EngineValue powerIntScalar(IntScalar other) {
-        int power = (int) Math.pow(value, other.getAsInt());
+        int power = (int)Math.pow(value, other.getAsInt());
         return new IntScalar(power, getUnits());
     }
 
