@@ -92,9 +92,9 @@ public class IntScalar extends Scalar {
    */
   public EngineValue multiply(IntScalar other) {
     return new IntScalar(
-      getCaster(),
-      getAsInt() * other.getAsInt(),
-      determineMultipliedUnits(getUnits(), other.getUnits())
+        getCaster(),
+        getAsInt() * other.getAsInt(),
+        determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
   
@@ -107,9 +107,9 @@ public class IntScalar extends Scalar {
    */
   public EngineValue divide(IntScalar other) {
     return new IntScalar(
-      getCaster(),
-      getAsInt() / other.getAsInt(),
-      determineDividedUnits(getUnits(), other.getUnits())
+        getCaster(),
+        getAsInt() / other.getAsInt(),
+        determineDividedUnits(getUnits(), other.getUnits())
     );
   }
   
@@ -121,9 +121,9 @@ public class IntScalar extends Scalar {
    */
   public EngineValue raiseToPower(IntScalar other) {
     return new DecimalScalar(
-      getCaster(),
-      new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-      getUnits()
+        getCaster(),
+        new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
+        getUnits()
     );
   }
 

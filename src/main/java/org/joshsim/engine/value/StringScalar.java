@@ -21,7 +21,7 @@ public class StringScalar extends Scalar {
 
   /**
   * Constructs a new DecimalScalar with the specified value.
-  * 
+  *
   * @param newCaster the caster to use for automatic type conversion.
   * @param newInnerValue the value of this StringScalar.
   * @param newUnits the units of this StringScalar.
