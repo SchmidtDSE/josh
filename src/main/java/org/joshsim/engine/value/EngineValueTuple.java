@@ -156,7 +156,6 @@ public class EngineValueTuple {
    * Typle describing two types that are in this engine value tuple such as int and decimal. 
    */
   public class TypesTuple extends InnerTuple {
-
     
     /**
      * Create a new types tuple representing a pair of types.
