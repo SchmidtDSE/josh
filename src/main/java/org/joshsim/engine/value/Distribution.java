@@ -16,10 +16,11 @@ import java.util.Optional;
  * </p>
  */
 public abstract class Distribution extends EngineValue {
+  
   /**
    * Create a new distribution, declaring the units of the distribution.
    *
-   * @param units
+   * @param units The units of the distribution such as meters.
    */
   public Distribution(String units) {
     super(units);

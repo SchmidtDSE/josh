@@ -16,10 +16,22 @@ package org.joshsim.engine.value;
 public abstract class EngineValue {
   private final String units;
 
+  
+  /**
+   * Constructs an EngineValue with specified units.
+   *
+   * @param units the units associated with this EngineValue like meters.
+   */
   protected EngineValue(String units) {
     this.units = units;
   }
 
+  
+  /**
+   * Retrieves the units associated with this EngineValue.
+   *
+   * @return the units of this EngineValue like meters.
+   */
   public String getUnits() {
     return units;
   }

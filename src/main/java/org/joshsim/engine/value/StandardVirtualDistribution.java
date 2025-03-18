@@ -14,12 +14,12 @@ package org.joshsim.engine.value;
  * does not have a specific range.</p>
  */
 public abstract class StandardVirtualDistribution extends VirtualDistribution {
-    /**
-     * Create a new distribution, declaring the units of the distribution.
-     *
-     * @param units
-     */
-    public StandardVirtualDistribution(String units) {
-        super(units);
-    }
+  /**
+   * Create a new distribution, declaring the units of the distribution.
+   *
+   * @param units
+   */
+  public StandardVirtualDistribution(String units) {
+    super(units);
+  }
 }

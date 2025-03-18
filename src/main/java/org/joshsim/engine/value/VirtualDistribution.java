@@ -15,12 +15,12 @@ package org.joshsim.engine.value;
  * used for generating summary statistics.</p> 
  */
 public abstract class VirtualDistribution extends Distribution {
-    /**
-     * Create a new distribution, declaring the units of the distribution.
-     *
-     * @param units
-     */
-    public VirtualDistribution(String units) {
-        super(units);
-    }
+  /**
+   * Create a new distribution, declaring the units of the distribution.
+   *
+   * @param units
+   */
+  public VirtualDistribution(String units) {
+    super(units);
+  }
 }

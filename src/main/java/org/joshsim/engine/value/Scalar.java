@@ -17,7 +17,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * Constructor.
    */
   public Scalar(String units) {
-      super(units);
+    super(units);
   }
 
   /**
@@ -67,6 +67,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public int compareTo(Scalar other) {
     throw new Error("`compareTo` is not implemented for abstract type Scalar");
   }
+  
   /**
    * Compare this EngineValue to the specified object for equality.
    *

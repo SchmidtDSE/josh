@@ -139,10 +139,3 @@ sourceSets {
 compileJava.dependsOn generateGrammarSource
 
 // Require setupCheckstyle prior to rewrite
-rewriteRun.dependsOn setupCheckstyle
-
-// Require checkstyle set up before checking main.
-checkstyleMain.dependsOn setupCheckstyle
-
-// Require checkstyle set up before checking test.
-checkstyleTest.dependsOn setupCheckstyle
