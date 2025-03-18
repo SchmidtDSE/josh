@@ -56,14 +56,32 @@ public class DecimalScalar extends Scalar {
     return innerValue;
   }
   
+  /**
+   * Adds this DecimalScalar with another DecimalScalar.
+   *
+   * @param other the DecimalScalar to add to this one
+   * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
+   */
   public EngineValue add(DecimalScalar other) {
     return new DecimalScalar(caster, getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
   
+  /**
+   * Subtracts another DecimalScalar from this DecimalScalar.
+   *
+   * @param other the DecimalScalar to subtract from this one
+   * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
+   */
   public EngineValue subtract(DecimalScalar other) {
     return new DecimalScalar(caster, getAsDecimal().subtract(other.getAsDecimal()), getUnits());
   }
   
+  /**
+   * Multiplies this DecimalScalar with another DecimalScalar.
+   *
+   * @param other the DecimalScalar to multiply with this one
+   * @return a new DecimalScalar that is the product of this and the other DecimalScalar
+   */
   public EngineValue multiply(DecimalScalar other) {
     return new DecimalScalar(
       caster,
@@ -72,6 +90,12 @@ public class DecimalScalar extends Scalar {
     );
   }
   
+  /**
+   * Divides this DecimalScalar by another DecimalScalar.
+   *
+   * @param other the DecimalScalar to divide this one by
+   * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
+   */
   public EngineValue divide(DecimalScalar other) {
     return new DecimalScalar(
       caster,
@@ -80,6 +104,12 @@ public class DecimalScalar extends Scalar {
     );
   }
   
+  /**
+   * Raises this DecimalScalar to the power of another DecimalScalar.
+   *
+   * @param other the DecimalScalar to use as the exponent
+   * @return a new DecimalScalar that is this value raised to the power of the other value
+   */
   public EngineValue raiseToPower(DecimalScalar other) {
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsDecimal().doubleValue();
