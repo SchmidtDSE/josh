@@ -14,6 +14,8 @@
 package org.joshsim;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -79,8 +81,8 @@ public class JoshSim {
 
       String fileContent;
       try {
-        fileContent = new String(java.nio.file.Files.readAllBytes(file.toPath()));
-      } catch (java.io.IOException e) {
+        fileContent = new String(Files.readAllBytes(file.toPath()));
+      } catch (IOException e) {
         printError("Error in reading input file: " + e.getMessage());
         return 2;
       }
