@@ -63,6 +63,46 @@ public class EngineValueFactory {
   }
 
   /**
+   * Build a new EngineValue from a boolean.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(boolean innerValue) {
+    return new BooleanScalar(caster, innerValue, "");
+  }
+
+  /**
+   * Build a new EngineValue from a BigDecimal.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(BigDecimal innerValue) {
+    return new DecimalScalar(caster, innerValue, "");
+  }
+
+  /**
+   * Build a new EngineValue from a list of booleans.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(List<Boolean> innerValue) {
+    return null;  // Need realized distribution
+  }
+
+  /**
+   * Build a new EngineValue from a list of BigDecimals.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(List<BigDecimal> innerValue) {
+    return null;  // Need realized distribution
+  }
+
+  /**
    * Build a new EngineValue from a list of strings.
    *
    * @param innerValue the value to decorate in an EngineValue.
