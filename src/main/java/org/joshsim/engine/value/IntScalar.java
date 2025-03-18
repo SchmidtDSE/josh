@@ -8,6 +8,8 @@ package org.joshsim.engine.value;
 
 import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -43,7 +45,7 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public String getType() {
+  public String getLanguageType() {
     return "int";
   }
 
@@ -51,18 +53,36 @@ public class IntScalar extends Scalar {
   public Comparable getInnerValue() {
     return innerValue;
   }
+
   
-  @Override
+  /**
+   * Compares this IntScalar instance with another for equality.
+   *
+   * @param obj the object to compare to
+   * @return true if the specified object is equal to this IntScalar; false otherwise.
+   */
   public EngineValue add(IntScalar other) {
     return new IntScalar(caster, getAsInt() + other.getAsInt(), getUnits());
   }
+
   
-  @Override
+  /**
+   * Checks equality of this IntScalar instance with another object.
+   * 
+   * @param obj the object to compare to
+   * @return true if the specified object is equal to this IntScalar; false otherwise.
+   */
   public EngineValue subtract(IntScalar other) {
     return new IntScalar(caster, getAsInt() - other.getAsInt(), getUnits());
   }
+
   
-  @Override
+  /**
+   * Multiplies this IntScalar instance with another IntScalar.
+   *
+   * @param other the IntScalar to multiply with
+   * @return a new IntScalar that is the product of this and the other IntScalar
+   */
   public EngineValue multiply(IntScalar other) {
     return new IntScalar(
       caster,
@@ -71,7 +91,6 @@ public class IntScalar extends Scalar {
     );
   }
   
-  @Override
   public EngineValue divide(IntScalar other) {
     return new IntScalar(
       caster,
@@ -80,9 +99,8 @@ public class IntScalar extends Scalar {
     );
   }
   
-  @Override
   public EngineValue raiseToPower(IntScalar other) {
-    return new IntScalar(caster, Math.pow(getAsInt(), other.getAsInt()));
+    return new DecimalScalar(caster, Math.pow(getAsInt(), other.getAsInt()), getUnits());
   }
 
   @Override
@@ -92,7 +110,7 @@ public class IntScalar extends Scalar {
     List<Integer> values = new ArrayList<>(1);
     values.add(innerValue);
 
-    return factory.build(values);
+    return factory.buildDistribution(values);
   }
   
 }

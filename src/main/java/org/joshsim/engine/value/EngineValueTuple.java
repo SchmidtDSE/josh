@@ -26,7 +26,7 @@ public class EngineValueTuple {
   public EngineValueTuple(EngineValue newFirst, EngineValue newSecond) {
     first = newFirst;
     second = newSecond;
-    types = new TypesTuple(first.getType(), second.getType());
+    types = new TypesTuple(first.getLanguageType(), second.getLanguageType());
     units = new UnitsTuple(first.getUnits(), second.getUnits());
   }
 

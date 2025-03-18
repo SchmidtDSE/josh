@@ -47,7 +47,7 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public String getType() {
+  public String getLanguageType() {
     return "boolean";
   }
 
@@ -56,27 +56,47 @@ public class BooleanScalar extends Scalar {
     return innerValue;
   }
   
-  @Override
+  /**
+   * Indicate that add is not supported for this type.
+   *
+   * @param other the other operand.
+   */
   public EngineValue add(BooleanScalar other) {
-    return new BooleanScalar(caster, getAsBoolean() || other.getAsBoolean(), getUnits());
+    throw new UnsupportedOperationException("Cannot add booleans.");
   }
   
-  @Override
+  /**
+   * Indicate that subtract is not supported for this type.
+   *
+   * @param other the other operand.
+   */
   public EngineValue subtract(BooleanScalar other) {
     throw new UnsupportedOperationException("Cannot subtract booleans.");
   }
   
-  @Override
+  /**
+   * Indicate that multiply is not supported for this type.
+   *
+   * @param other the other operand.
+   */
   public EngineValue multiply(BooleanScalar other) {
     return new BooleanScalar(caster, getAsBoolean() && other.getAsBoolean(), getUnits());
   }
   
-  @Override
+  /**
+   * Indicate that divide is not supported for this type.
+   *
+   * @param other the other operand.
+   */
   public EngineValue divide(BooleanScalar other) {
     throw new UnsupportedOperationException("Cannot divide booleans.");
   }
   
-  @Override
+  /**
+   * Indicate that raise to power is not supported for this type.
+   *
+   * @param other the other operand.
+   */
   public EngineValue raiseToPower(BooleanScalar other) {
     throw new UnsupportedOperationException("Cannot raise booleans to powers.");
   }

@@ -102,7 +102,7 @@ public interface EngineValue {
    *
    * @returns String description of this type as it would appear to Josh source code.
    */
-  String getLanugageType();
+  String getLanguageType();
 
   /**
    * Change the type of this EngineValue.
@@ -121,16 +121,6 @@ public interface EngineValue {
    * @returns inner Java object decorated by this EngineValue.
    */
   Object getInnerValue();
-
-  /**
-   * Gets the type of this value.
-   *
-   * <p>Gets the type of this value, either the inner value itself if a Scalar or the type 
-   * contained within the collection if a Distribution.</p>
-   *
-   * @return the type identifier as a String.
-   */
-  String getType();
 
   /**
    * Determine the new units string having multipled two units together.

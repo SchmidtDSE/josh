@@ -26,7 +26,7 @@ public class Units {
       String[] pieces = description.split(" / ");
       if (pieces.length > 2) {
         String message = "No more than one numerator and denominator allowed: " + description;
-        throw new InvalidArgumentException(message);
+        throw new IllegalArgumentException(message);
       }
 
       numerator = pieces[0];

@@ -33,7 +33,7 @@ public class DecimalScalar extends Scalar {
 
   @Override
   public boolean getAsBoolean() {
-    return !innerValue.equals(BigDecimal.ZERO);
+    throw new UnsupportedOperationException("Cannot convert decimal to boolean");
   }
 
   @Override
@@ -47,7 +47,7 @@ public class DecimalScalar extends Scalar {
   }
 
   @Override
-  public String getType() {
+  public String getLanguageType() {
     return "decimal";
   }
 
@@ -56,17 +56,14 @@ public class DecimalScalar extends Scalar {
     return innerValue;
   }
   
-  @Override
   public EngineValue add(DecimalScalar other) {
     return new DecimalScalar(caster, getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
   
-  @Override
   public EngineValue subtract(DecimalScalar other) {
     return new DecimalScalar(caster, getAsDecimal().subtract(other.getAsDecimal()), getUnits());
   }
   
-  @Override
   public EngineValue multiply(DecimalScalar other) {
     return new DecimalScalar(
       caster,
@@ -75,7 +72,6 @@ public class DecimalScalar extends Scalar {
     );
   }
   
-  @Override
   public EngineValue divide(DecimalScalar other) {
     return new DecimalScalar(
       caster,
@@ -84,7 +80,6 @@ public class DecimalScalar extends Scalar {
     );
   }
   
-  @Override
   public EngineValue raiseToPower(DecimalScalar other) {
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsDecimal().doubleValue();

@@ -16,7 +16,9 @@ public interface EngineValueCaster {
    * Convert two engine values to the same type so that they can participate in mutual operations.
    *
    * @param operands the operands that need to be made compatible.
+   * @param requireSameUnits flag indicating if the units must be the same, throwing an exception if
+   *    they are different only if this flag is true.
    */
-  EngineValueTuple makeCompatible(EngineValueTuple operands);
+  EngineValueTuple makeCompatible(EngineValueTuple operands, boolean requireSameUnits);
   
 }

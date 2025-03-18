@@ -59,23 +59,15 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     );
   }
 
-  /**
-   * Convert a tuple of engine values to a tuple where the two values are compatible.
-   *
-   * <p>Convert a tuple of engine values which are not compatible to a tuple of engine values which
-   * can be used in an operation together. This returns a new tuple with identical units and types
-   * or throws an exception if the conversion cannot be made.</p>
-   *
-   * @param operands tuple of engine values to convert and make compatible.
-   * @returns tuple of compatible engine values.
-   */
-  public EngineValueTuple makeCompatible(EngineValueTuple operands) {
-    if (operands.getAreCompatible()) {
-      return opearnds;
+  @Override
+  public EngineValueTuple makeCompatible(EngineValueTuple operands, boolean requireSameUnits) {
+    EngineValueTuple.TypesTuple types = operands.getTypes();
+    if (operands.getAreCompatible() || (!requireSameUnits && types.getAreCompatible())) {
+      return operands;
     }
     
-    EngineValueTuple.UnitTuple units = operands.getUnits();
-    if (!units.getAreCompatible()) {
+    EngineValueTuple.UnitsTuple units = operands.getUnits();
+    if (requireSameUnits && !units.getAreCompatible()) {
         String message = String.format(
           "Cannot cast with different units %s and %s",
           units.getFirst(),
@@ -84,13 +76,12 @@ public class EngineValueWideningCaster implements EngineValueCaster {
         throw new IllegalArgumentException(message);
     }
 
-    EngineValueTuple.TypesTuple types = operands.getTypes();
     EngineValueTuple.TypesTuple typesReversed = operands.reverse().getTypes();
 
-    if (strategies.has(types)) {
+    if (strategies.containsKey(types)) {
       EngineValue newFirst = operands.getFirst().cast(strategies.get(types));
       return new EngineValueTuple(newFirst, operands.getSecond());
-    } else if (strategies.has(typesReversed)) {
+    } else if (strategies.containsKey(typesReversed)) {
       EngineValue newSecond = operands.getSecond().cast(strategies.get(types));
       return new EngineValueTuple(operands.getFirst(), newSecond);
     } else {

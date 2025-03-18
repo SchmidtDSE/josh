@@ -60,6 +60,7 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    *
    * @returns value inside this Scalar decorator.
    */
+  @Override
   public abstract Comparable getInnerValue();
 
   /**
@@ -73,6 +74,7 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    * @return A number less than 0 if this is less than other, 0 if the two are the same, and a
    *     number larger than 1 if this is more than other.
    */
+  @Override
   public int compareTo(Scalar other) {
     return getInnerValue().compareTo(other.getInnerValue());
   }
@@ -109,35 +111,40 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
   @Override
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
     return safeTuple.getFirst().add(safeTuple.getSecond());
   }
 
   @Override
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
     return safeTuple.getFirst().subtract(safeTuple.getSecond());
   }
 
   @Override
   public EngineValue multiply(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
     return safeTuple.getFirst().multiply(safeTuple.getSecond());
   }
 
   @Override
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
     return safeTuple.getFirst().divide(safeTuple.getSecond());
   }
 
   @Override
   public EngineValue raiseToPower(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (!other.getUnits().equals("count")) {
+      throw new IllegalArgumentException("Can only raise to a count.");
+    }
+
     return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
   }
 

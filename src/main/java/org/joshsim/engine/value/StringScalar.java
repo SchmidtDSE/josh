@@ -1,4 +1,3 @@
-
 /**
  * Structures describing an individual engine value.
  *
@@ -9,6 +8,8 @@ package org.joshsim.engine.value;
 
 import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -26,7 +27,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public BigDecimal getAsDecimal() {
-    return factory.build(BigDecimal.parse(innerValue));
+    return factory.build(new BigDecimal(Double.parse(innerValue)));
   }
 
   @Override
@@ -46,7 +47,7 @@ public class StringScalar extends Scalar {
   }
 
   @Override
-  public String getType() {
+  public String getLanguageType() {
     return "string";
   }
 

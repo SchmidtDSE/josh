@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.value;
 
+import java.lang.UnsupportedOperationException;
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -40,17 +42,7 @@ public class EngineValueFactory {
    */
   public EngineValue build(int innerValue) {
     return new IntScalar(caster, innerValue);
-  }
-
-  /**
-   * Build a new EngineValue from an integer.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(List<Integer> innerValue) {
-    return null;  // Need realized distribution
-  }
+  } 
 
   /**
    * Build a new EngineValue from a string.
@@ -83,33 +75,17 @@ public class EngineValueFactory {
   }
 
   /**
-   * Build a new EngineValue from a list of booleans.
+   * Build a new EngineValue from an integer.
    *
    * @param innerValue the value to decorate in an EngineValue.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(List<Boolean> innerValue) {
-    return null;  // Need realized distribution
-  }
+  public EngineValue buildDistribution(List innerValue) {
+    if (innerValue.size() == 0) {
+      throw new IllegalArgumentException("Distributions cannot be empty.");
+    }
 
-  /**
-   * Build a new EngineValue from a list of BigDecimals.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(List<BigDecimal> innerValue) {
-    return null;  // Need realized distribution
-  }
-
-  /**
-   * Build a new EngineValue from a list of strings.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(List<String> innerValue) {
-    return null;  // Need realized distribution
+    throw new UnsupportedOperationException("Not implemented.");
   }
   
 }
