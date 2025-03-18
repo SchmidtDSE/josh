@@ -51,5 +51,25 @@ public class EngineValueFactory {
   public EngineValue build(List<Integer> innerValue) {
     return null;  // Need realized distribution
   }
+
+  /**
+   * Build a new EngineValue from a string.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(String innerValue) {
+    return new StringScalar(caster, innerValue, "");
+  }
+
+  /**
+   * Build a new EngineValue from a list of strings.
+   *
+   * @param innerValue the value to decorate in an EngineValue.
+   * @returns decorated version of innerValue.
+   */
+  public EngineValue build(List<String> innerValue) {
+    return null;  // Need realized distribution
+  }
   
 }
