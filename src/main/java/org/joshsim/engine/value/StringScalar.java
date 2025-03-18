@@ -56,27 +56,22 @@ public class StringScalar extends Scalar {
     return innerValue;
   }
   
-  @Override
   public EngineValue add(StringScalar other) {
     return new StringScalar(caster, getAsString() + other.getAsString(), getUnits());
   }
   
-  @Override
   public EngineValue subtract(StringScalar other) {
     throw new UnsupportedOperationException("Cannot subtract strings.");
   }
   
-  @Override
   public EngineValue multiply(StringScalar other) {
     throw new UnsupportedOperationException("Cannot multiply strings.");
   }
   
-  @Override
   public EngineValue divide(StringScalar other) {
     throw new UnsupportedOperationException("Cannot divide strings.");
   }
   
-  @Override
   public EngineValue raiseToPower(StringScalar other) {
     throw new UnsupportedOperationException("Cannot raise strings to powers.");
   }
