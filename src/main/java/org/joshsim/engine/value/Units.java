@@ -50,8 +50,20 @@ public class Units {
   }
 
   /**
+   * Constructs Units with the specified numerator and denominator unit maps.
+   *
+   * @param newNumerator a Map representing the units in the numerator, mapping from name to count.
+   * @param newDenominator a Map representing the units in the denominator, mapping from name to
+   *     count.
+   */
+  public Units(Map<String, Integer> newNumerator, Map<String, Integer> newDenominator) {
+    numeratorUnits = newNumerator;
+    denominatorUnits = newDenominator;
+  }
+
+  /**
    * Gets the numerator units.
-   * 
+   *
    * @return a Map representing the units in the numerator, mapping from name to count.
    */
   public Map<String, Integer> getNumeratorUnits() {
@@ -68,18 +80,6 @@ public class Units {
   }
 
   /**
-   * Constructs Units with the specified numerator and denominator unit maps.
-   *
-   * @param newNumerator a Map representing the units in the numerator, mapping from name to count.
-   * @param newDenominator a Map representing the units in the denominator, mapping from name to
-   *    count.
-   */
-  public Units(Map<String, Integer> newNumerator, Map<String, Integer> newDenominator) {
-    numeratorUnits = newNumerator;
-    denominatorUnits = newDenominator;
-  }
-
-  /**
    * Flip the units such that the numerator and denominator are inverted.
    *
    * @returns inverted copy of these units.
@@ -88,6 +88,12 @@ public class Units {
     return new Units(denominatorUnits, numeratorUnits);
   }
 
+  /**
+   * Multiply the current units with other units.
+   *
+   * @param other the other Units to multiply with.
+   * @return a new Units instance representing the multiplication of the current and other units.
+   */
   public Units multiply(Units other) {
     Map<String, Integer> newNumeratorUnits = new TreeMap<>(numeratorUnits);
     Map<String, Integer> newDenominatorUnits = new TreeMap<>(denominatorUnits);
@@ -111,10 +117,23 @@ public class Units {
     return new Units(newNumeratorUnits, newDenominatorUnits);
   }
 
+  /**
+   * Divide the current units with other units.
+   *
+   * @param other the other Units to divide with.
+   * @return a new Units instance representing the division of the current and other units.
+   */
   public Units divide(Units other) {
     return multiply(other.invert());
   }
 
+  
+  /**
+   * Simplify the units by canceling out common units in the numerator and denominator.
+   *
+   * @return a new Units instance where common units in the numerator and denominator are canceled
+   *     out.
+   */
   public Units simplify() {
     Map<String, Integer> newNumeratorUnits = new TreeMap<>();
     Map<String, Integer> newDenominatorUnits = new TreeMap<>();
@@ -156,7 +175,7 @@ public class Units {
    *
    * @param other the other units.
    * @returns true if this units and the other units are the same without simplification and false
-   *    otherwise.
+   *     otherwise.
    */
   public boolean equals(Units other) {
     return toString().equals(other.toString());
@@ -177,7 +196,8 @@ public class Units {
 
   private Map<String, Integer> parseMultiplyString(String target) {
     Map<String, Integer> unitCounts = new TreeMap<>();
-    for(String unit : target.split(" * ")) {
+
+    for (String unit : target.split(" * ")) {
       unitCounts.put(unit, unitCounts.getOrDefault(unit, 0) + 1);
     }
     return unitCounts;
@@ -186,7 +206,7 @@ public class Units {
   private String serializeMultiplyString(Map<String, Integer> target) {
     StringJoiner joiner = new StringJoiner(" * ");
 
-    for(String unit : target.keySet()) {
+    for (String unit : target.keySet()) {
       int numInstances = target.get(unit);
       for (int i = 0; i < numInstances; i++) {
         joiner.add(unit);

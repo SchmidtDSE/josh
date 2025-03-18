@@ -78,7 +78,11 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
   public EngineValue subtract(DecimalScalar other) {
-    return new DecimalScalar(getCaster(), getAsDecimal().subtract(other.getAsDecimal()), getUnits());
+    return new DecimalScalar(
+        getCaster(),
+        getAsDecimal().subtract(other.getAsDecimal()),
+        getUnits()
+    );
   }
   
   /**

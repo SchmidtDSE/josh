@@ -68,12 +68,12 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     
     EngineValueTuple.UnitsTuple units = operands.getUnits();
     if (requireSameUnits && !units.getAreCompatible()) {
-        String message = String.format(
+      String message = String.format(
           "Cannot cast with different units %s and %s",
           units.getFirst(),
           units.getSecond()
-        );
-        throw new IllegalArgumentException(message);
+      );
+      throw new IllegalArgumentException(message);
     }
 
     EngineValueTuple.TypesTuple typesReversed = operands.reverse().getTypes();
@@ -86,9 +86,9 @@ public class EngineValueWideningCaster implements EngineValueCaster {
       return new EngineValueTuple(operands.getFirst(), newSecond);
     } else {
       String message = String.format(
-        "Cannot convert between %s and %s",
-        types.getFirst(),
-        types.getSecond()
+          "Cannot convert between %s and %s",
+          types.getFirst(),
+          types.getSecond()
       );
       throw new IllegalArgumentException(message);
     }
