@@ -3,13 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
-
-/**
- * Store of available conversion operations between different units.
- */
+/** Store of available conversion operations between different units. */
 public interface Converter {
   /**
    * Get a conversion between two unit types.

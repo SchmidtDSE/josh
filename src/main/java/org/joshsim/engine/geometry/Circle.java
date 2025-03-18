@@ -3,14 +3,11 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 
-/**
- * Geospatial circle described in geographic coordinates.
- */
+/** Geospatial circle described in geographic coordinates. */
 public interface Circle extends Geometry {
   /**
    * {@inheritDoc}

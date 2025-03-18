@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
@@ -13,7 +12,6 @@ import java.util.Optional;
  *
  * <p>A set of event handlers where one may execute conditional on another not executing like in an
  * if, else if, else relationship established through selectors.
- * </p>
  */
 public interface EventHandlerGroup {
   /**

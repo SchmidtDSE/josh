@@ -3,17 +3,15 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.simulation;
 
 import org.joshsim.engine.geometry.Geometry;
-
 
 /**
  * A spatial and temporal query.
  *
  * <p>A query which refers to a specific geospatial geometry at a specific time. This provides
- * methods to retrieve geometry and time step information for querying entities.</p>
+ * methods to retrieve geometry and time step information for querying entities.
  */
 public interface Query {
   /**

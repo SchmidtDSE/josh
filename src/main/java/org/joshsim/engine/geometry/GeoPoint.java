@@ -3,14 +3,11 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 
-/**
- * Interface representing a geographical point on Earth.
- */
+/** Interface representing a geographical point on Earth. */
 public interface GeoPoint extends Geometry {
   /**
    * {@inheritDoc}

@@ -3,16 +3,14 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.config;
 
 import org.joshsim.engine.value.EngineValue;
 
-
 /**
  * Read-only configuration container.
  *
- * <p>Read-only configuration container which maps from string names to EngineValues.</p>
+ * <p>Read-only configuration container which maps from string names to EngineValues.
  */
 public interface Config {
   /**

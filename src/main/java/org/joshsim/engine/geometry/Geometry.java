@@ -3,14 +3,11 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 
-/**
- * Geometric object with geographic properties.
- */
+/** Geometric object with geographic properties. */
 public interface Geometry {
   /**
    * Get the latitude component of this geometry's center point.

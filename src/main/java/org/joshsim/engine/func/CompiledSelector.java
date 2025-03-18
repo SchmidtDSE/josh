@@ -3,16 +3,13 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.func;
-
 
 /**
  * Pre-compiled selector which is similar to a CompiledCallable but can only evaluate to a boolean.
  *
  * <p>Pre-compiled selector that can evaluate to a boolean value typically used for conditional
  * expressions or filters. This may be created through Josh DSL code.
- * </p>
  */
 public interface CompiledSelector {
   /**

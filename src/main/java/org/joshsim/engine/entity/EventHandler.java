@@ -3,16 +3,12 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
 import org.joshsim.engine.func.CompiledSelector;
 
-
-/**
- * Interface for an event handler which offers a callback for an event.
- */
+/** Interface for an event handler which offers a callback for an event. */
 public interface EventHandler {
   /**
    * Get the name of the attribute associated with this event handler.

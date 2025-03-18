@@ -3,18 +3,15 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.simulation;
 
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.geometry.Geometry;
 
-
 /**
  * Structure representing a discrete time step within a simulation.
  *
  * <p>Provides methods to retrieve entities at a specific point in time.
- * </p>
  */
 public interface TimeStep {
   /**

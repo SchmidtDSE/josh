@@ -1,19 +1,16 @@
-
 /**
  * Structures to represent errors in attempted parsing of a Josh source.
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.lang.parse;
-
 
 /**
  * Description of an error encountered in parsing a Josh source file or string.
  *
  * <p>Structure representing a parse error that occurs during the compilation process of a Josh
  * source file which encapsulates the line number where the error was encountered and a message
- * providing details about the error.</p>
+ * providing details about the error.
  */
 public class ParseError {
 
@@ -48,5 +45,4 @@ public class ParseError {
   public String getMessage() {
     return message;
   }
-
 }

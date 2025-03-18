@@ -1,16 +1,15 @@
 /**
  * Entrypoint for the JoshSim command line interface application.
  *
- * <div>
- * Entrypoint into the JoshSim engine and language avialable via the command line. Commands include:
+ * <p><div> Entrypoint into the JoshSim engine and language avialable via the command line. Commands
+ * include:
  *
  * <ul>
- *  <li><strong>validate</strong>: Check if a .josh file is valid and parsable.</li>
+ *   <li><strong>validate</strong>: Check if a .josh file is valid and parsable.
  * </ul>
  *
  * </div>
  */
-
 package org.joshsim;
 
 import java.io.File;
@@ -25,9 +24,9 @@ import picocli.CommandLine.Parameters;
 
 /**
  * Command line interface for JoshSim.
- * 
+ *
  * <p>Provides several subcommands like validate and run with options to help users validate
- * simulation files or execute them through the interface.</p>
+ * simulation files or execute them through the interface.
  *
  * @version 1.0
  * @since 1.0
@@ -37,22 +36,16 @@ import picocli.CommandLine.Parameters;
     mixinStandardHelpOptions = true,
     version = "1.0",
     description = "JoshSim command line interface",
-    subcommands = {
-        JoshSim.ValidateCommand.class
-    }
-)
+    subcommands = {JoshSim.ValidateCommand.class})
 public class JoshSim {
 
   /**
    * Command to validate a simulation file.
-   * 
-   * <p>Validate command which checks if the given josh DSL code file, yielding exit code of zero
-   * if valid and parseable and non-zero otherwise.</p>
+   *
+   * <p>Validate command which checks if the given josh DSL code file, yielding exit code of zero if
+   * valid and parseable and non-zero otherwise.
    */
-  @Command(
-      name = "validate",
-      description = "Validate a simulation file"
-  )
+  @Command(name = "validate", description = "Validate a simulation file")
   static class ValidateCommand implements Callable<Integer> {
 
     @Option(names = "--quiet", description = "Suppress output messages")
@@ -65,8 +58,7 @@ public class JoshSim {
      * Validates the simulation file specified.
      *
      * <p>Ensure the file exists and read the content through a JoshLang parser, returning a non-
-     * zero exit code if the file is not found or cannot be parsed and a zero exit code
-     * otherwise.</p>
+     * zero exit code if the file is not found or cannot be parsed and a zero exit code otherwise.
      *
      * @return an exit code indicating success (zero) or failure (non-zero).
      */
@@ -91,16 +83,13 @@ public class JoshSim {
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
         printError(leadMessage);
-        
+
         for (ParseError error : result.getErrors()) {
-          String lineMessage = String.format(
-              " - On line %d: %s",
-              error.getLine(),
-              error.getMessage()
-          );
+          String lineMessage =
+              String.format(" - On line %d: %s", error.getLine(), error.getMessage());
           printError(lineMessage);
         }
-        
+
         return 3;
       } else {
         printOut("Validated Josh code at " + file);
