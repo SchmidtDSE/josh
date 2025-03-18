@@ -138,4 +138,8 @@ sourceSets {
 // Make compileJava depend on generating ANTLR sources
 compileJava.dependsOn generateGrammarSource
 
-// Require setupCheckstyle prior to rewrite
+// Require Checkstyle set up before checing main.
+checkstyleMain.dependsOn setupCheckstyle
+
+// Require Checkstyle set up before checing test.
+checkstyleTest.dependsOn setupCheckstyle
