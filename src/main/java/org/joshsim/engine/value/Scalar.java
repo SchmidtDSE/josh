@@ -12,8 +12,9 @@ import java.math.BigDecimal;
 /**
  * Engine value which only has a single discrete value.
  */
-public abstract class Scalar extends EngineValue, Comparable<Scalar> {
+public abstract class Scalar implements EngineValue, Comparable<Scalar> {
 
+  private final EngineValueCaster caster;
   private final String units;
 
   /**
@@ -21,7 +22,8 @@ public abstract class Scalar extends EngineValue, Comparable<Scalar> {
    *
    * @param newUnits String describing the units which may be a user-defined unit.
    */
-  public Scalar(String newUnits) {
+  public Scalar(EngineValueCaster newCaster, String newUnits) {
+    caster = newCaster;
     units = newUnits;
   }
 
@@ -52,16 +54,11 @@ public abstract class Scalar extends EngineValue, Comparable<Scalar> {
    * @return the scalar value as an int.
    */
   public abstract int getAsInt();
-  
-  /**
-   * Gets the type of this scalar value.
-   *
-   * @return the type as a String.
-   */
-  public abstract String getType();
 
   /**
+   * Get the decorated value.
    *
+   * @returns value inside this Scalar decorator.
    */
   public abstract Comparable getInnerValue();
 
@@ -90,58 +87,78 @@ public abstract class Scalar extends EngineValue, Comparable<Scalar> {
    * @return true if the objects are equal, false otherwise
    */
   public boolean equals(EngineValue other) {
-    boolean sameUnits = getUnits().equals(obj.getUnits());
+    boolean sameUnits = getUnits().equals(other.getUnits());
     boolean sameValue = getInnerValue().equals(other.getInnerValue());
     return sameUnits && sameValue;
   }
 
+  /**
+   * Get the caster to use for operations involving this engine value.
+   *
+   * @returns EngineValueCaster to use if this is the left-hand operand.
+   */
+  protected EngineValueCaster getCaster() {
+    return caster;
+  }
+
+  @Override
   public EngineValue cast(Cast strategy) {
     return strategy.cast(this);
   }
 
-  @Overrides
+  @Override
   public EngineValue add(EngineValue other) {
-    EngineValueTuple tuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().add(safeTuple.getSecond());
   }
 
-  @Overrides
+  @Override
   public EngineValue subtract(EngineValue other) {
-    EngineValueTuple tuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().subtract(safeTuple.getSecond());
   }
 
-  @Overrides
+  @Override
   public EngineValue multiply(EngineValue other) {
-    EngineValueTuple tuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().multiply(safeTuple.getSecond());
   }
 
-  @Overrides
+  @Override
   public EngineValue divide(EngineValue other) {
-    EngineValueTuple tuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().divide(safeTuple.getSecond());
   }
 
-  @Overrides
+  @Override
   public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple tuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple);
     return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
   }
 
-  @Overrides
+  @Override
   public String getUnits() {
     return units;    
   }
 
-  @Overrides
+  @Override
   public Scalar getAsScalar() {
     return this;
+  }
+
+  @Override
+  public String determineMultipliedUnits(String left, String right) {
+    
+  }
+
+  @Override
+  public String determineDividedUnits(String left, String right) {
+    
   }
   
 }

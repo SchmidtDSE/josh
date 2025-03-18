@@ -27,7 +27,7 @@ public class EngineValueTuple {
     first = newFirst;
     second = newSecond;
     types = new TypesTuple(first.getType(), second.getType());
-    units = new TypesTuple(first.getUnits(), second.getUnits());
+    units = new UnitsTuple(first.getUnits(), second.getUnits());
   }
 
   public EngineValueTuple reverse() {
@@ -87,7 +87,6 @@ public class EngineValueTuple {
   private abstract class InnerTuple {
     private final String first;
     private final String second;
-    private final String key;
 
     /**
      * Create a new tuple to represent a pair of identifying names.
@@ -138,8 +137,12 @@ public class EngineValueTuple {
       return String.format("%s: %s, %s", getTupleType(), first, second);
     }
 
-    @Override
-    public boolean equals(UnitsTuple other) {
+    /**
+     * Determine if this tuple equals another tuple.
+     *
+     * @returns True if the tuples' paired elements have string equality and false otherwise.
+     */
+    public boolean equals(InnerTuple other) {
       return toString().equals(other.toString());
     }
   }
@@ -149,8 +152,23 @@ public class EngineValueTuple {
    */
   public class TypesTuple extends InnerTuple {
 
+    
+    /**
+     * Create a new types tuple representing a pair of types.
+     *
+     * <p>This constructor initializes a new pair of types given for the  first and second values. 
+     * This might include types, for example, like int or decimal.</p>
+     *
+     * @param newFirst the first type, representing for example the type of the left-side operand.
+     * @param newSecond the second type, representing for example the type of the right-side
+     *    operand.
+     */
+    public TypesTuple(String newFirst, String newSecond) {
+      super(newFirst, newSecond);
+    }
+
     @Override
-    public abstract String getTupleType() {
+    public String getTupleType() {
       return "types";
     }
     
@@ -161,8 +179,23 @@ public class EngineValueTuple {
    */
   public class UnitsTuple extends InnerTuple {
 
+    
+    /**
+     * Create a new units tuple representing a pair of units.
+     *
+     * <p>This constructor initializes a new pair of units given for the first and second values. 
+     * This might include units, for example, like meters or centimeters.</p>
+     *
+     * @param newFirst the first unit, representing for example the unit of the left-side operand.
+     * @param newSecond the second unit, representing for example the unit of the right-side
+     *    operand.
+     */
+    public UnitsTuple(String newFirst, String newSecond) {
+      super(newFirst, newSecond);
+    }
+
     @Override
-    public abstract String getTupleType() {
+    public String getTupleType() {
       return "units";
     }
 

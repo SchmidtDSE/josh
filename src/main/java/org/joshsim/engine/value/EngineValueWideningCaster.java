@@ -6,6 +6,9 @@
 
 package org.joshsim.engine.value;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Caster which always widens to achieve type compatibility.
@@ -15,8 +18,11 @@ package org.joshsim.engine.value;
  */
 public class EngineValueWideningCaster implements EngineValueCaster {
 
-  private Map<EngineValueTuple.TypeTuple, Cast> strategies;
+  private Map<EngineValueTuple.TypesTuple, Cast> strategies;
 
+  /**
+   * Create a new widening caster with default allowed casts.
+   */
   public EngineValueWideningCaster() {
     strategies = new HashMap<>();
 
@@ -24,42 +30,52 @@ public class EngineValueWideningCaster implements EngineValueCaster {
 
     // Options for boolean
     addCast(
-      new EngineValueTuple.TypeTuple("boolean", "int"),
-      (x) => factory.build(x.getAsInt());
+      new EngineValueTuple.TypesTuple("boolean", "int"),
+      (x) -> factory.build(x.getAsInt())
     );
     addCast(
-      new EngineValueTuple.TypeTuple("boolean", "decimal"),
-      (x) => factory.build(x.getAsDecimal());
+      new EngineValueTuple.TypesTuple("boolean", "decimal"),
+      (x) -> factory.build(x.getAsDecimal())
     );
     addCast(
-      new EngineValueTuple.TypeTuple("boolean", "string"),
-      (x) => factory.build(x.getAsString());
+      new EngineValueTuple.TypesTuple("boolean", "string"),
+      (x) -> factory.build(x.getAsString())
     );
 
     // Options for int
     addCast(
-      new EngineValueTuple.TypeTuple("int", "decimal"),
-      (x) => factory.build(x.getAsDecimal())
+      new EngineValueTuple.TypesTuple("int", "decimal"),
+      (x) -> factory.build(x.getAsDecimal())
     );
     addCast(
-      new EngineValueTuple.TypeTuple("int", "String"),
-      (x) => factory.build(x.getAsString())
+      new EngineValueTuple.TypesTuple("int", "String"),
+      (x) -> factory.build(x.getAsString())
     );
 
     // Options for decimal
     addCast(
-      new EngineValueTuple.TypeTuple("decimal", "string"),
-      (x) => factory.build(x.getAsString()));
+      new EngineValueTuple.TypesTuple("decimal", "string"),
+      (x) -> factory.build(x.getAsString())
     );
   }
 
+  /**
+   * Convert a tuple of engine values to a tuple where the two values are compatible.
+   *
+   * <p>Convert a tuple of engine values which are not compatible to a tuple of engine values which
+   * can be used in an operation together. This returns a new tuple with identical units and types
+   * or throws an exception if the conversion cannot be made.</p>
+   *
+   * @param operands tuple of engine values to convert and make compatible.
+   * @returns tuple of compatible engine values.
+   */
   public EngineValueTuple makeCompatible(EngineValueTuple operands) {
     if (operands.getAreCompatible()) {
       return opearnds;
     }
     
     EngineValueTuple.UnitTuple units = operands.getUnits();
-    if (!units.getAreCompatible())
+    if (!units.getAreCompatible()) {
         String message = String.format(
           "Cannot cast with different units %s and %s",
           units.getFirst(),
@@ -68,8 +84,8 @@ public class EngineValueWideningCaster implements EngineValueCaster {
         throw new IllegalArgumentException(message);
     }
 
-    EngineValueTuple.TypeTuple types = operands.getTypes();
-    EngineValueTuple.TypeTuple typesReversed = operands.reverse().getTypes();
+    EngineValueTuple.TypesTuple types = operands.getTypes();
+    EngineValueTuple.TypesTuple typesReversed = operands.reverse().getTypes();
 
     if (strategies.has(types)) {
       EngineValue newFirst = operands.getFirst().cast(strategies.get(types));
@@ -87,7 +103,13 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     }
   }
 
-  private addCast(EngineValueTuple.TypeTuple types, Cast strategy) {
+  /**
+   * Indicate that a cast is valid.
+   *
+   * @param types directional tuple of types for which this conversion is allowed.
+   * @param strategy the strategy to employ to execute the cast.
+   */
+  private void addCast(EngineValueTuple.TypesTuple types, Cast strategy) {
     strategies.add(types, strategy);
   }
 

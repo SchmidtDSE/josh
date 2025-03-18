@@ -104,8 +104,50 @@ public interface EngineValue {
    */
   String getLanugageType();
 
+  /**
+   * Change the type of this EngineValue.
+   *
+   * <p>Change the data type of this EngineValue, leaving the units unchanged. For example this may
+   * change from int to string but not meters to centimeters.</p>
+   *
+   * @param strategy Cast strategy to apply.
+   * @returns Engine value after cast.
+   */
   EngineValue cast(Cast strategy);
 
+  /**
+   * Get the underlying Java object decorated by this EngineValue.
+   *
+   * @returns inner Java object decorated by this EngineValue.
+   */
   Object getInnerValue();
+
+  /**
+   * Gets the type of this value.
+   *
+   * <p>Gets the type of this value, either the inner value itself if a Scalar or the type 
+   * contained within the collection if a Distribution.</p>
+   *
+   * @return the type identifier as a String.
+   */
+  String getType();
+
+  /**
+   * Determine the new units string having multipled two units together.
+   *
+   * @param left units from the left side operand.
+   * @param right units from the right side operand.
+   * @returns new units description string.
+   */
+  String determineMultipliedUnits(String left, String right);
+
+  /**
+   * Determine the new units string having divided two units.
+   *
+   * @param left units from the left side operand.
+   * @param right units from the right side operand.
+   * @returns new units description string.
+   */
+  String determineDividedUnits(String left, String right);
 
 }
