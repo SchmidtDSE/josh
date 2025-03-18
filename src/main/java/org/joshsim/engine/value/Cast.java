@@ -21,5 +21,5 @@ public interface Cast {
    * @param target the Scalar to cast.
    * @returns the Scalar after the cast operation.
    */
-  Scalar cast(Scalar target);
+  EngineValue cast(Scalar target);
 }

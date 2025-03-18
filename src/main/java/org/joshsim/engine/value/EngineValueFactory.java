@@ -15,6 +15,13 @@ import java.util.List;
 public class EngineValueFactory {
 
   private final EngineValueCaster caster;
+
+  /**
+   * Create a new EnigneValueFactory using a default casting strategy.
+   */
+  public EngineValueFactory() {
+    caster = new EngineValueWideningCaster();
+  }
   
   /**
    * Constructor for EngineValueFactory.

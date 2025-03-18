@@ -132,11 +132,6 @@ public class EngineValueTuple {
      */
     public abstract String getTupleType();
 
-    @Override
-    public String toString() {
-      return String.format("%s: %s, %s", getTupleType(), first, second);
-    }
-
     /**
      * Determine if this tuple equals another tuple.
      *
@@ -144,6 +139,16 @@ public class EngineValueTuple {
      */
     public boolean equals(InnerTuple other) {
       return toString().equals(other.toString());
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s: %s, %s", getTupleType(), first, second);
+    }
+
+    @Override
+    public int hashCode() {
+      return toString().hashCode();
     }
   }
 
@@ -178,7 +183,6 @@ public class EngineValueTuple {
    * Typle describing two units that are in this engine value tuple such as meters and centimeters.
    */
   public class UnitsTuple extends InnerTuple {
-
     
     /**
      * Create a new units tuple representing a pair of units.

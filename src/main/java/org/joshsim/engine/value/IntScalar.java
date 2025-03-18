@@ -77,7 +77,6 @@ public class IntScalar extends Scalar {
     return new IntScalar(
       caster,
       getAsInt() / other.getAsInt(),
-      getUnits() " / ",
       determineDividedUnits(getUnits(), other.getUnits())
     );
   }

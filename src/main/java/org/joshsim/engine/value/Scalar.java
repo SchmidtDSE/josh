@@ -153,12 +153,16 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
 
   @Override
   public String determineMultipliedUnits(String left, String right) {
-    
+    Units leftUnits = new Units(left);
+    Units rightUnits = new Units(right);
+    return leftUnits.multiply(rightUnits).simplify().toString();
   }
 
   @Override
   public String determineDividedUnits(String left, String right) {
-    
+    Units leftUnits = new Units(left);
+    Units rightUnits = new Units(right);
+    return leftUnits.divide(rightUnits).simplify().toString();
   }
   
 }
