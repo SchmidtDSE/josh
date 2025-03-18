@@ -1,5 +1,6 @@
 # Gradle
 .gradle/
+gradle/
 build/
 bin/
 config/checkstyle/google_checks.xml
