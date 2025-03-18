@@ -17,12 +17,10 @@ import java.util.List;
  */
 public class BooleanScalar extends Scalar {
 
-  private final EngineValueCaster caster;
   private final boolean innerValue;
 
   public BooleanScalar(EngineValueCaster newCaster, boolean newInnerValue, String newUnits) {
     super(newCaster, newUnits);
-    caster = newCaster;
     innerValue = newInnerValue;
   }
 
@@ -80,7 +78,7 @@ public class BooleanScalar extends Scalar {
    * @param other the other operand.
    */
   public EngineValue multiply(BooleanScalar other) {
-    return new BooleanScalar(caster, getAsBoolean() && other.getAsBoolean(), getUnits());
+    return new BooleanScalar(getCaster(), getAsBoolean() && other.getAsBoolean(), getUnits());
   }
   
   /**
@@ -103,9 +101,9 @@ public class BooleanScalar extends Scalar {
 
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(caster);
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
     List<Boolean> values = new ArrayList<>(1);
     values.add(innerValue);
-    return factory.build(values);
+    return factory.buildDistribution(values, getUnits());
   }
 }

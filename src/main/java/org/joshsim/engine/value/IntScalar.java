@@ -62,7 +62,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue add(IntScalar other) {
-    return new IntScalar(caster, getAsInt() + other.getAsInt(), getUnits());
+    return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
   
@@ -73,7 +73,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue subtract(IntScalar other) {
-    return new IntScalar(caster, getAsInt() - other.getAsInt(), getUnits());
+    return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
   
@@ -85,7 +85,7 @@ public class IntScalar extends Scalar {
    */
   public EngineValue multiply(IntScalar other) {
     return new IntScalar(
-      caster,
+      getCaster(),
       getAsInt() * other.getAsInt(),
       determineMultipliedUnits(getUnits(), other.getUnits())
     );
@@ -100,7 +100,7 @@ public class IntScalar extends Scalar {
    */
   public EngineValue divide(IntScalar other) {
     return new IntScalar(
-      caster,
+      getCaster(),
       getAsInt() / other.getAsInt(),
       determineDividedUnits(getUnits(), other.getUnits())
     );
@@ -113,7 +113,11 @@ public class IntScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   public EngineValue raiseToPower(IntScalar other) {
-    return new DecimalScalar(caster, Math.pow(getAsInt(), other.getAsInt()), getUnits());
+    return new DecimalScalar(
+      getCaster(),
+      new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
+      getUnits()
+    );
   }
 
   @Override
@@ -123,7 +127,7 @@ public class IntScalar extends Scalar {
     List<Integer> values = new ArrayList<>(1);
     values.add(innerValue);
 
-    return factory.buildDistribution(values);
+    return factory.buildDistribution(values, getUnits());
   }
   
 }

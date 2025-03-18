@@ -17,12 +17,10 @@ import java.util.List;
  */
 public class DecimalScalar extends Scalar {
 
-  private final EngineValueCaster caster;
   private final BigDecimal innerValue;
 
   public DecimalScalar(EngineValueCaster newCaster, BigDecimal newInnerValue, String newUnits) {
     super(newCaster, newUnits);
-    caster = newCaster;
     innerValue = newInnerValue;
   }
 
@@ -63,7 +61,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
   public EngineValue add(DecimalScalar other) {
-    return new DecimalScalar(caster, getAsDecimal().add(other.getAsDecimal()), getUnits());
+    return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
   
   /**
@@ -73,7 +71,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
   public EngineValue subtract(DecimalScalar other) {
-    return new DecimalScalar(caster, getAsDecimal().subtract(other.getAsDecimal()), getUnits());
+    return new DecimalScalar(getCaster(), getAsDecimal().subtract(other.getAsDecimal()), getUnits());
   }
   
   /**
@@ -84,7 +82,7 @@ public class DecimalScalar extends Scalar {
    */
   public EngineValue multiply(DecimalScalar other) {
     return new DecimalScalar(
-      caster,
+      getCaster(),
       getAsDecimal().multiply(other.getAsDecimal()),
       determineMultipliedUnits(getUnits(), other.getUnits())
     );
@@ -98,7 +96,7 @@ public class DecimalScalar extends Scalar {
    */
   public EngineValue divide(DecimalScalar other) {
     return new DecimalScalar(
-      caster,
+      getCaster(),
       getAsDecimal().divide(other.getAsDecimal()),
       determineDividedUnits(getUnits(), other.getUnits())
     );
@@ -113,14 +111,14 @@ public class DecimalScalar extends Scalar {
   public EngineValue raiseToPower(DecimalScalar other) {
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsDecimal().doubleValue();
-    return new DecimalScalar(caster, BigDecimal.valueOf(Math.pow(base, exponent)), getUnits());
+    return new DecimalScalar(getCaster(), BigDecimal.valueOf(Math.pow(base, exponent)), getUnits());
   }
 
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(caster);
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
     List<BigDecimal> values = new ArrayList<>(1);
     values.add(innerValue);
-    return factory.build(values);
+    return factory.buildDistribution(values, getUnits());
   }
 }

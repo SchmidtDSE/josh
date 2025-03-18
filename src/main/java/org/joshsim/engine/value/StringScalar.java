@@ -17,7 +17,6 @@ import java.util.List;
  */
 public class StringScalar extends Scalar {
 
-  private final EngineValueCaster caster;
   private final String innerValue;
 
   public StringScalar(EngineValueCaster newCaster, String newInnerValue, String newUnits) {
@@ -27,7 +26,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public BigDecimal getAsDecimal() {
-    return factory.build(new BigDecimal(Double.parse(innerValue)));
+    return new BigDecimal(Double.parseDouble(innerValue));
   }
 
   @Override
@@ -42,8 +41,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public int getAsInt() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-    return factory.build(Integer.parse(innerValue));
+    return Integer.parseInt(innerValue);
   }
 
   @Override
@@ -63,7 +61,7 @@ public class StringScalar extends Scalar {
    * @return a new StringScalar that is the concatenation of this and the other StringScalar
    */
   public EngineValue add(StringScalar other) {
-    return new StringScalar(caster, getAsString() + other.getAsString(), getUnits());
+    return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }
   
   /**
@@ -108,11 +106,11 @@ public class StringScalar extends Scalar {
 
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(caster);
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
 
     List<String> values = new ArrayList<>(1);
     values.add(innerValue);
 
-    return factory.build(values);
+    return factory.buildDistribution(values, getUnits());
   }
 }

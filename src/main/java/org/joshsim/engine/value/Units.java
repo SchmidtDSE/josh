@@ -7,6 +7,8 @@
 package org.joshsim.engine.value;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.TreeMap;
 
 
@@ -41,6 +43,24 @@ public class Units {
   }
 
   /**
+   * Gets the numerator units.
+   * 
+   * @return a Map representing the units in the numerator, mapping from name to count.
+   */
+  public Map<String, Integer> getNumeratorUnits() {
+    return numeratorUnits;
+  }
+
+  /**
+   * Gets the denominator units.
+   * 
+   * @return a Map representing the units in the denominator, mapping from name to count.
+   */
+  public Map<String, Integer> getDenominatorUnits() {
+    return denominatorUnits;
+  }
+
+  /**
    * Constructs Units with the specified numerator and denominator unit maps.
    *
    * @param newNumerator a Map representing the units in the numerator, mapping from name to count.
@@ -66,16 +86,16 @@ public class Units {
     Map<String, Integer> newDenominatorUnits = new TreeMap<>(denominatorUnits);
   
     Map<String, Integer> otherNumeratorUnits = other.getNumeratorUnits();
-    for (String units : otherNumeratorUnits) {
-      int priorCount = newNumeratorUnits.get(units, 0);
+    for (String units : otherNumeratorUnits.keySet()) {
+      int priorCount = newNumeratorUnits.getOrDefault(units, 0);
       int otherCount = otherNumeratorUnits.get(units);
       int newCount = priorCount + otherCount;
       newNumeratorUnits.put(units, newCount);
     }
 
     Map<String, Integer> otherDenominatorUnits = other.getNumeratorUnits();
-    for (String units : otherDenominatorUnits) {
-      int priorCount = newDenominatorUnits.get(units, 0);
+    for (String units : otherDenominatorUnits.keySet()) {
+      int priorCount = newDenominatorUnits.getOrDefault(units, 0);
       int otherCount = otherDenominatorUnits.get(units);
       int newCount = priorCount + otherCount;
       newDenominatorUnits.put(units, newCount);
@@ -101,9 +121,9 @@ public class Units {
       int simplifiedCount = numeratorCount - denominatorCount;
       
       if (simplifiedCount > 0) {
-        newNumeartorUnits.put(units, simplifiedCount);
+        newNumeratorUnits.put(units, simplifiedCount);
       } else {
-        newDenominatorUnits.put(unit, simplifiedCount * -1);
+        newDenominatorUnits.put(units, simplifiedCount * -1);
       }
     }
 
@@ -138,7 +158,7 @@ public class Units {
   @Override
   public String toString() {
     String numeratorString = serializeMultiplyString(numeratorUnits);
-    Strind denominatorString = serializeMultiplyString(denominatorUnits);
+    String denominatorString = serializeMultiplyString(denominatorUnits);
     boolean noDenominator = denominatorString.isEmpty();
     return noDenominator ? numeratorString : numeratorString + "/" + denominatorString;
   }
@@ -156,7 +176,7 @@ public class Units {
     return unitCounts;
   }
 
-  private String serializeMuliplyString(Map<String, Integer> target) {
+  private String serializeMultiplyString(Map<String, Integer> target) {
     StringJoiner joiner = new StringJoiner(" * ");
 
     for(String unit : target.keySet()) {

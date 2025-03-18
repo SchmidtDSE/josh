@@ -31,31 +31,31 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     // Options for boolean
     addCast(
       new EngineValueTuple.TypesTuple("boolean", "int"),
-      (x) -> factory.build(x.getAsInt())
+      (x) -> factory.build(x.getAsInt(), x.getUnits())
     );
     addCast(
       new EngineValueTuple.TypesTuple("boolean", "decimal"),
-      (x) -> factory.build(x.getAsDecimal())
+      (x) -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
       new EngineValueTuple.TypesTuple("boolean", "string"),
-      (x) -> factory.build(x.getAsString())
+      (x) -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for int
     addCast(
       new EngineValueTuple.TypesTuple("int", "decimal"),
-      (x) -> factory.build(x.getAsDecimal())
+      (x) -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
       new EngineValueTuple.TypesTuple("int", "String"),
-      (x) -> factory.build(x.getAsString())
+      (x) -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for decimal
     addCast(
       new EngineValueTuple.TypesTuple("decimal", "string"),
-      (x) -> factory.build(x.getAsString())
+      (x) -> factory.build(x.getAsString(), x.getUnits())
     );
   }
 

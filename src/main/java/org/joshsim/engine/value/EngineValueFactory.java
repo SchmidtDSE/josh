@@ -47,16 +47,6 @@ public class EngineValueFactory {
   } 
 
   /**
-   * Build a new EngineValue from an integer with no units.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(int innerValue) {
-    return build(innerValue, "");
-  }
-
-  /**
    * Build a new EngineValue from a string.
    *
    * @param innerValue the value to decorate in an EngineValue.
@@ -65,16 +55,6 @@ public class EngineValueFactory {
    */
   public EngineValue build(String innerValue, String units) {
     return new StringScalar(caster, innerValue, units);
-  }
-
-  /**
-   * Build a new EngineValue from a string with no units.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(String innerValue) {
-    return build(innerValue, "");
   }
 
   /**
@@ -89,16 +69,6 @@ public class EngineValueFactory {
   }
 
   /**
-   * Build a new EngineValue from a boolean with no units.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(boolean innerValue) {
-    return build(innerValue, "");
-  }
-
-  /**
    * Build a new EngineValue from a BigDecimal.
    *
    * @param innerValue the value to decorate in an EngineValue.
@@ -110,38 +80,18 @@ public class EngineValueFactory {
   }
 
   /**
-   * Build a new EngineValue from a BigDecimal with no units.
-   *
-   * @param innerValue the value to decorate in an EngineValue.
-   * @returns decorated version of innerValue.
-   */
-  public EngineValue build(BigDecimal innerValue) {
-    return build(innerValue, "");
-  }
-
-  /**
    * Build a new EngineValue distribution from a list.
    *
    * @param innerValue the values to include in the distribution.
    * @param units the units for the values in the distribution.
    * @returns decorated version of innerValue as a distribution.
    */
-  public EngineValue buildDistribution(List innerValue, String units) {
+  public Distribution buildDistribution(List innerValue, String units) {
     if (innerValue.size() == 0) {
       throw new IllegalArgumentException("Distributions cannot be empty.");
     }
 
     throw new UnsupportedOperationException("Not implemented.");
-  }
-
-  /**
-   * Build a new EngineValue distribution from a list with no units.
-   *
-   * @param innerValue the values to include in the distribution.
-   * @returns decorated version of innerValue as a distribution.
-   */
-  public EngineValue buildDistribution(List innerValue) {
-    return buildDistribution(innerValue, "");
   }
   
 }
