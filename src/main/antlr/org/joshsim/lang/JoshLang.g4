@@ -44,6 +44,7 @@ ALIAS_: 'alias';
 ALL_: 'all';
 AND_: 'and';
 AS_: 'as';
+ASSERT_: 'assert';
 AT_: 'at';
 CONFIG_: 'config';
 CONST_: 'const';
@@ -77,11 +78,11 @@ RADIAL_: 'radial';
 REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
-SIMULATION_: 'simulation';
 START_: 'start';
 STATE_: 'state';
 STD_: 'std';
 STEP_: 'step';
+TEST_CASE_: 'TestCase';
 TO_: 'to';
 TRUE_: 'true';
 UNIFORM_: 'uniform';
@@ -98,7 +99,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_);
+nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -183,7 +184,7 @@ eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
+agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_ | TEST_CASE_);
 
 agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
 
