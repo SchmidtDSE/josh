@@ -57,7 +57,7 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public Comparable getInnerValue() {
+  public Comparable<Long> getInnerValue() {
     return innerValue;
   }
 
