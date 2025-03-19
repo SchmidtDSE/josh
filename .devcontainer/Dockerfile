@@ -2,7 +2,7 @@
 FROM quay.io/lib/eclipse-temurin:21
 
 # Set the working directory
-WORKDIR /workspaces/josh-specification
+WORKDIR /workspaces/josh
 
 # Copy the repo contents
 COPY . .
@@ -11,7 +11,7 @@ COPY . .
 RUN .devcontainer/scripts/on_build/install_gradle.sh
 
 # Add josh_validator and other interactive scripts to PATH, to be able to run them from anywhere
-ENV PATH="/workspaces/josh-specification/.devcontainer/scripts/interactive:${PATH}"
+ENV PATH="/workspaces/josh/.devcontainer/scripts/interactive:${PATH}"
 
 # Keep the container running
 CMD tail -f /dev/nu

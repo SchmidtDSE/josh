@@ -8,5 +8,14 @@
         "ghcr.io/devcontainers/features/common-utils:2.5.2": {
             "installSsh": true
         }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack",
+                "redhat.java",
+                "shengchen.vscode-checkstyle"
+            ]
+        }
     }
 }
