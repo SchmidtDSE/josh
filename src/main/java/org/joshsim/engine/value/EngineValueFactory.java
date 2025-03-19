@@ -42,7 +42,7 @@ public class EngineValueFactory {
    * @param units the units for the value.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(int innerValue, String units) {
+  public EngineValue build(long innerValue, String units) {
     return new IntScalar(caster, innerValue, units);
   } 
 

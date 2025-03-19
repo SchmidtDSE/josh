@@ -53,7 +53,7 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    *
    * @return the scalar value as an int.
    */
-  public abstract int getAsInt();
+  public abstract long getAsInt();
 
   /**
    * Get the decorated value.

@@ -47,7 +47,7 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public int getAsInt() {
+  public long getAsInt() {
     return innerValue ? 1 : 0;
   }
 
