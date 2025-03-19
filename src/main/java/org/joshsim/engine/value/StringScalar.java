@@ -47,8 +47,8 @@ public class StringScalar extends Scalar {
   }
 
   @Override
-  public int getAsInt() {
-    return Integer.parseInt(innerValue);
+  public long getAsInt() {
+    return Long.parseLong(innerValue);
   }
 
   @Override

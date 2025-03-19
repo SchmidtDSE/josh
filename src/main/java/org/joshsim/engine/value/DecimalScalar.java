@@ -47,7 +47,7 @@ public class DecimalScalar extends Scalar {
   }
 
   @Override
-  public int getAsInt() {
+  public long getAsInt() {
     return innerValue.intValue();
   }
 

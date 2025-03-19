@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class IntScalar extends Scalar {
 
-  private final Integer innerValue;
+  private final Long innerValue;
   
   /**
    * Constructs an IntScalar instance with specified caster, value, and units.
@@ -26,7 +26,7 @@ public class IntScalar extends Scalar {
    * @param newInnerValue the initial integer value of this IntScalar
    * @param newUnits the units associated with this IntScalar
    */
-  public IntScalar(EngineValueCaster newCaster, int newInnerValue, String newUnits) {
+  public IntScalar(EngineValueCaster newCaster, long newInnerValue, String newUnits) {
     super(newCaster, newUnits);
     innerValue = newInnerValue;
   }
@@ -47,7 +47,7 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public int getAsInt() {
+  public long getAsInt() {
     return innerValue;
   }
 
@@ -131,7 +131,7 @@ public class IntScalar extends Scalar {
   public Distribution getAsDistribution() {
     EngineValueFactory factory = new EngineValueFactory(getCaster());
 
-    List<Integer> values = new ArrayList<>(1);
+    List<Long> values = new ArrayList<>(1);
     values.add(innerValue);
 
     return factory.buildDistribution(values, getUnits());
