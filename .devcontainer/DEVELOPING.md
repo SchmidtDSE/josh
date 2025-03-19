@@ -22,3 +22,9 @@ Found errors in Josh code at examples/error.josh:
  - On line 1: no viable alternative at input 'start test'
 Validation failed (exit code: 3)
 ```
+
+NOTES: 
+
+- The first run will be relatively slow, as under the hood, the script will compile the `java` codebase and start the gradle daemon. Subsequent runs will be faster!
+
+- A future iteration of this approach could probably use the gradle extension within VSCode to validate `.josh` files, which may be a bit cleaner - this works for now.
