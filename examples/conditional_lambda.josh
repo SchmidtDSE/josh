@@ -1,7 +1,0 @@
-start organism Tree
-
-  height.init = 1 m
-
-  height.step = prior.height + (0.1 m if (prior.height >= 10 m) else 0.5 m)
-
-end organism

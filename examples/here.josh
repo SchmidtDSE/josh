@@ -1,5 +1,0 @@
-start organism Deciduous
-
-  seedBank.step:if(max(here.Fire.cover) > 0%) = "seed"
-
-end organism

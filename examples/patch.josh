@@ -1,8 +1,0 @@
-start patch Default
-
-  location = all
-  
-  TreeA.init = create 2 count of TreeA
-  TreeB.init = create TreeB
-
-end patch

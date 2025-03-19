@@ -1,6 +1,0 @@
-start disturbance Fire
-
-  active.init = true
-  active.step = false
-
-end disturbance

@@ -82,7 +82,6 @@ START_: 'start';
 STATE_: 'state';
 STD_: 'std';
 STEP_: 'step';
-TEST_CASE_: 'TestCase';
 TO_: 'to';
 TRUE_: 'true';
 UNIFORM_: 'uniform';
@@ -184,7 +183,7 @@ eventHandlerGeneral: (eventHandler | eventHandlerGroup);
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_ | TEST_CASE_);
+agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
 agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
 

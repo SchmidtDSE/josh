@@ -1,8 +1,0 @@
-start organism Deciduous
-
-  cover.end:if(max(here.Conifers.cover) > 0%) = {
-    const maxCover = map mean(here.Conifers.cover) from [0%, 90%] to [0%, 100%]
-    return limit current.cover to [,maxCover]
-  }
-
-end organism
