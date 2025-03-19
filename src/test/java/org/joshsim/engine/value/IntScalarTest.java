@@ -1,7 +1,9 @@
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,17 @@ class IntScalarTest {
     assertEquals(new BigDecimal(10), scalar.getAsDecimal());
     assertEquals("10", scalar.getAsString());
     assertEquals("int", scalar.getLanguageType());
+    assertEquals(10L, scalar.getInnerValue());
+  }
+
+  @Test
+  void testGetAsBoolean() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar nonZeroScalar = new IntScalar(caster, 10L, "");
+    IntScalar zeroScalar = new IntScalar(caster, 0L, "");
+
+    assertTrue(nonZeroScalar.getAsBoolean());
+    assertFalse(zeroScalar.getAsBoolean());
   }
 
   @Test
@@ -32,6 +45,15 @@ class IntScalarTest {
   }
 
   @Test
+  void testAddWithDifferentUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, "m");
+    IntScalar scalar2 = new IntScalar(caster, 5L, "s");
+
+    assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2));
+  }
+
+  @Test
   void testSubtract() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, "m");
@@ -40,6 +62,15 @@ class IntScalarTest {
     IntScalar result = (IntScalar) scalar1.subtract(scalar2);
     assertEquals(5L, result.getAsInt());
     assertEquals("m", result.getUnits());
+  }
+
+  @Test
+  void testSubtractWithDifferentUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, "m");
+    IntScalar scalar2 = new IntScalar(caster, 5L, "s");
+
+    assertThrows(IllegalArgumentException.class, () -> scalar1.subtract(scalar2));
   }
 
   @Test
@@ -65,6 +96,26 @@ class IntScalarTest {
   }
 
   @Test
+  void testDivideByZero() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, "m");
+    IntScalar zeroScalar = new IntScalar(caster, 0L, "s");
+
+    assertThrows(ArithmeticException.class, () -> scalar1.divide(zeroScalar));
+  }
+
+  @Test
+  void testDivisionRounding() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 7L, "m");
+    IntScalar scalar2 = new IntScalar(caster, 2L, "s");
+
+    IntScalar result = (IntScalar) scalar1.divide(scalar2);
+    assertEquals(3L, result.getAsInt()); // Integer division should truncate
+    assertEquals("m/s", result.getUnits());
+  }
+
+  @Test
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 2L, "m");
@@ -72,25 +123,57 @@ class IntScalarTest {
 
     DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal(8), result.getAsDecimal());
-    assertEquals("m", result.getUnits());
+    assertEquals("m^3", result.getUnits());
+  }
+  
+  @Test
+  void testRaiseToPowerWithUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 2L, "m");
+    IntScalar scalar2 = new IntScalar(caster, 3L, "s");
+
+    assertThrows(IllegalArgumentException.class, () -> scalar1.raiseToPower(scalar2));
   }
 
   // @Test
   // void testGetAsDistribution() {
-  //     EngineValueCaster caster = new EngineValueWideningCaster();
-  //     IntScalar scalar = new IntScalar(caster, 10L, "m");
+  //   EngineValueCaster caster = new EngineValueWideningCaster();
+  //   IntScalar scalar = new IntScalar(caster, 10L, "m");
 
-  //     Distribution distribution = scalar.getAsDistribution();
-  //     assertEquals(1, distribution.getValues().size());
-  //     assertEquals(10L, distribution.getValues().get(0));
-  //     assertEquals("m", distribution.getUnits());
+  //   Distribution distribution = scalar.getAsDistribution();
+  //   assertEquals(1, distribution.getValues().size());
+  //   assertEquals(10L, distribution.getValues().get(0));
+  //   assertEquals("m", distribution.getUnits());
   // }
 
   @Test
-  void testGetAsBooleanThrowsException() {
+  void testNegativeNumbers() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar = new IntScalar(caster, 10L, "m");
-
-    assertThrows(UnsupportedOperationException.class, scalar::getAsBoolean);
+    IntScalar scalar = new IntScalar(caster, -42L, "m");
+    
+    assertEquals(-42L, scalar.getAsInt());
+    assertEquals(new BigDecimal(-42), scalar.getAsDecimal());
+    assertEquals("-42", scalar.getAsString());
+    assertTrue(scalar.getAsBoolean()); // Non-zero should be true
+  }
+  
+  @Test
+  void testMaxIntValue() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    long maxValue = Long.MAX_VALUE;
+    IntScalar scalar = new IntScalar(caster, maxValue, "");
+    
+    assertEquals(maxValue, scalar.getAsInt());
+    assertEquals(new BigDecimal(maxValue), scalar.getAsDecimal());
+  }
+  
+  @Test
+  void testMinIntValue() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    long minValue = Long.MIN_VALUE;
+    IntScalar scalar = new IntScalar(caster, minValue, "");
+    
+    assertEquals(minValue, scalar.getAsInt());
+    assertEquals(new BigDecimal(minValue), scalar.getAsDecimal());
   }
 }
