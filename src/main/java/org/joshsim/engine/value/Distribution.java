@@ -15,7 +15,31 @@ import java.util.Optional;
  * specific discrete values or it may be a theoreticcal distribution with undefined size.
  * </p>
  */
-public interface Distribution extends EngineValue {
+public abstract class Distribution implements EngineValue {
+  // TODO: Should probably be handled within EngineValue?
+  private final EngineValueCaster caster;
+  private final String units;
+
+  /**
+   * Constructor for a distribution.
+   *
+   * @param newCaster the engine value caster to use for this distribution.
+   * @param newUnits the units of this distribution.
+   */
+  public Distribution(EngineValueCaster newCaster, String newUnits) {
+    caster = newCaster;
+    units = newUnits;
+  }
+
+  /**
+   * Get the engine value caster for this distribution.
+   *
+   * @return the engine value caster for this distribution.
+   */
+  protected EngineValueCaster getCaster() {
+    return caster;
+  }
+
   /**
    * Sample a single value from this distribution.
    *
@@ -25,14 +49,14 @@ public interface Distribution extends EngineValue {
    * @return Scalar value which is sampled from this distribution with frequency-proportional 
    *      selection probability.
    */
-  Scalar sample();
+  abstract Scalar sample();
   
   /**
    * Get the size of the distribution if known.
    *
    * @return the number of elements in the distribution, or empty if virtualized
    */
-  Optional<Integer> getSize();
+  abstract Optional<Integer> getSize();
   
   /**
    * Get a specified number of values from the distribution.
@@ -52,7 +76,7 @@ public interface Distribution extends EngineValue {
    *      and sampling without replacement (like there are too few elements if the distribution is 
    *      realized).
    */
-  Iterable<EngineValue> getContents(int count, boolean withReplacement);
+  abstract Iterable<EngineValue> getContents(int count, boolean withReplacement);
 
   /**
    * Get the mean value of this distribution.
@@ -60,7 +84,7 @@ public interface Distribution extends EngineValue {
    * @returns mean value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  Optional<Scalar> getMean();
+  abstract Optional<Scalar> getMean();
 
   /**
    * Get the standard deviation of this distribution.
@@ -68,7 +92,7 @@ public interface Distribution extends EngineValue {
    * @returns standard deviation this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  Optional<Scalar> getStd();
+  abstract Optional<Scalar> getStd();
 
   /**
    * Get the minimum value of this distribution.
@@ -76,7 +100,7 @@ public interface Distribution extends EngineValue {
    * @returns minimum value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  Optional<Scalar> getMin();
+  abstract Optional<Scalar> getMin();
 
   /**
    * Get the maximum value of this distribution.
@@ -84,7 +108,7 @@ public interface Distribution extends EngineValue {
    * @returns maximum value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  Optional<Scalar> getMax();
+  abstract Optional<Scalar> getMax();
 
   /**
    * Get the sum value of this distribution.
@@ -92,5 +116,5 @@ public interface Distribution extends EngineValue {
    * @returns sum value of all elements in this distribution either actual or hypothetical 
    *      depending on distribution type. Empty if not defined for this distribution.
    */
-  Optional<Scalar> getSum();
+  abstract Optional<Scalar> getSum();
 }

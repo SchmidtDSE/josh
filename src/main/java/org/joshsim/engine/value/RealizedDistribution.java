@@ -23,9 +23,8 @@ import java.util.stream.Stream;
  * cannot be iterated through.
  * </p>
  */
-public class RealizedDistribution implements Distribution {
+public class RealizedDistribution extends Distribution {
   private ArrayList<EngineValue> values;
-  private String units;
   private Optional<DoubleSummaryStatistics> stats = Optional.empty();
 
   /**
@@ -45,19 +44,27 @@ public class RealizedDistribution implements Distribution {
   /**
    * Create a new RealizedDistribution.
    *
-   * @param newValues The values to be stored in the distribution.
+   * @param newCaster The EngineValueCaster to use for casting.
+   * @param newInnerValue The values to be stored in the distribution.
+   * @param newUnits The units of the distribution.
    */
-  public RealizedDistribution(ArrayList<EngineValue> newValues, String newUnits) {
-    values = newValues;
-    units = newUnits;
+  public RealizedDistribution(
+      EngineValueCaster newCaster,
+      ArrayList<EngineValue> newInnerValue,
+      String newUnits
+  ) {
+    super(newCaster, newUnits);
+    values = newInnerValue;
   }
+
+  
 
   @Override
   public RealizedDistribution add(EngineValue other) {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.add(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
@@ -65,7 +72,7 @@ public class RealizedDistribution implements Distribution {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.subtract(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
@@ -73,7 +80,7 @@ public class RealizedDistribution implements Distribution {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.multiply(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
@@ -81,7 +88,7 @@ public class RealizedDistribution implements Distribution {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.divide(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
@@ -89,12 +96,12 @@ public class RealizedDistribution implements Distribution {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.raiseToPower(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
   public String getUnits() {
-    return units; 
+    return getUnits(); 
   }
 
   @Override
@@ -117,7 +124,7 @@ public class RealizedDistribution implements Distribution {
     ArrayList<EngineValue> result = values.stream()
         .map(value -> value.cast(strategy))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
@@ -158,15 +165,14 @@ public class RealizedDistribution implements Distribution {
     }
   }
 
-  @Override
-  public Optional<Scalar> getMean() {
-    if (stats.isEmpty()) {
-      computeStats();
-    }
-    double mean = stats.get().getAverage();
-    // return new DecimalScalar(null, mean, getUnits());
-    return null;
-  }
+  // @Override
+  // public Optional<Scalar> getMean() {
+  //   if (stats.isEmpty()) {
+  //     computeStats();
+  //   }
+  //   double mean = BigDecimal(stats.get().getAverage());
+  //   return new Optional.of(DecimalScalar(getCaster(), mean, getUnits()));
+  // }
 
   @Override
   public Optional<Scalar> getStd() {
