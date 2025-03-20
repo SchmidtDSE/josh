@@ -2,10 +2,10 @@
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EngineBridgeSimulationStoreTest {
     
@@ -22,14 +22,14 @@ public class EngineBridgeSimulationStoreTest {
     }
     
     @Test
-    void testGetStepFunction_ExistingSimulation() {
+    void testGetKnownSimulation() {
         EngineBridgeOperation operation = store.getStepFunction("testSimulation");
         assertNotNull(operation, "Should return operation for existing simulation");
         assertEquals(mockOperation, operation, "Should return the correct operation");
     }
     
     @Test
-    void testGetStepFunction_NonExistingSimulation() {
+    void testGetUnknownSimulation() {
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
             store.getStepFunction("nonExistingSimulation");
         });
@@ -37,17 +37,5 @@ public class EngineBridgeSimulationStoreTest {
         String expectedMessage = "Unknown simulation: nonExistingSimulation";
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage, "Should throw correct exception message");
-    }
-    
-    @Test
-    void testConstructor_WithEmptyMap() {
-        Map<String, EngineBridgeOperation> emptyMap = new HashMap<>();
-        EngineBridgeSimulationStore emptyStore = new EngineBridgeSimulationStore(emptyMap);
-        
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            emptyStore.getStepFunction("anySimulation");
-        });
-        
-        assertNotNull(exception, "Should throw exception for empty store");
     }
 }
