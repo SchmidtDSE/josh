@@ -8,8 +8,6 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -66,7 +64,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  public EngineValue add(BooleanScalar other) {
+  protected EngineValue fullfillAdd(EngineValue other) {
     throw new UnsupportedOperationException("Cannot add booleans.");
   }
   
@@ -75,7 +73,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  public EngineValue subtract(BooleanScalar other) {
+  protected EngineValue fullfillSubtract(EngineValue other) {
     throw new UnsupportedOperationException("Cannot subtract booleans.");
   }
   
@@ -84,7 +82,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  public EngineValue multiply(BooleanScalar other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
     return new BooleanScalar(getCaster(), getAsBoolean() && other.getAsBoolean(), getUnits());
   }
   
@@ -93,7 +91,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  public EngineValue divide(BooleanScalar other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
     throw new UnsupportedOperationException("Cannot divide booleans.");
   }
   
@@ -102,7 +100,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  public EngineValue raiseToPower(BooleanScalar other) {
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
     throw new UnsupportedOperationException("Cannot raise booleans to powers.");
   }
 }

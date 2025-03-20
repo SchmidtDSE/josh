@@ -9,6 +9,7 @@ package org.joshsim.engine.value;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 public class RealizedDistribution extends Distribution {
-  private final ArrayList<EngineValue> values;
+  private final List<EngineValue> values;
   private Optional<DoubleSummaryStatistics> stats = Optional.empty();
 
   /**
@@ -34,7 +35,7 @@ public class RealizedDistribution extends Distribution {
    */
   public RealizedDistribution(
       EngineValueCaster newCaster,
-      ArrayList<EngineValue> newInnerValue,
+      List<EngineValue> newInnerValue,
       String newUnits
   ) {
     super(newCaster, newUnits);
@@ -57,7 +58,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public RealizedDistribution add(EngineValue other) {
-    ArrayList<EngineValue> result = values.stream()
+    List<EngineValue> result = values.stream()
         .map(value -> value.add(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
@@ -65,7 +66,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public EngineValue subtract(EngineValue other) {
-    ArrayList<EngineValue> result = values.stream()
+    List<EngineValue> result = values.stream()
         .map(value -> value.subtract(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
@@ -73,7 +74,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public EngineValue multiply(EngineValue other) {
-    ArrayList<EngineValue> result = values.stream()
+    List<EngineValue> result = values.stream()
         .map(value -> value.multiply(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
@@ -81,7 +82,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public EngineValue divide(EngineValue other) {
-    ArrayList<EngineValue> result = values.stream()
+    List<EngineValue> result = values.stream()
         .map(value -> value.divide(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
@@ -89,7 +90,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public EngineValue raiseToPower(EngineValue other) {
-    ArrayList<EngineValue> result = values.stream()
+    List<EngineValue> result = values.stream()
         .map(value -> value.raiseToPower(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
