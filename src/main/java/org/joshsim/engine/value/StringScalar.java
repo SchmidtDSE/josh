@@ -70,7 +70,7 @@ public class StringScalar extends Scalar {
    * @param other the StringScalar to concatenate with this one
    * @return a new StringScalar that is the concatenation of this and the other StringScalar
    */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }

@@ -71,7 +71,7 @@ public class IntScalar extends Scalar {
    * @param other the object to compare to
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
@@ -83,7 +83,7 @@ public class IntScalar extends Scalar {
    * @param other the object to compare to
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  protected EngineValue unsafeSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
@@ -95,7 +95,7 @@ public class IntScalar extends Scalar {
    * @param other the IntScalar to multiply with
    * @return a new IntScalar that is the product of this and the other IntScalar
    */
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -111,7 +111,7 @@ public class IntScalar extends Scalar {
    * @return a new IntScalar that is the quotient of this divided by the other IntScalar
    * @throws ArithmeticException if division by zero is attempted
    */
-  protected EngineValue fulfillDivide(EngineValue other) {
+  protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -126,7 +126,7 @@ public class IntScalar extends Scalar {
    * @param other the IntScalar to use as the exponent
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
 
     if (!other.canBePower()) {

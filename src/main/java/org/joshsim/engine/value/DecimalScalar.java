@@ -64,7 +64,7 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to add to this one
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
@@ -75,7 +75,7 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to subtract from this one
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  protected EngineValue unsafeSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
         getCaster(),
@@ -90,7 +90,7 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to multiply with this one
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
@@ -105,7 +105,7 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to divide this one by
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
-  protected EngineValue fulfillDivide(EngineValue other) {
+  protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
@@ -120,7 +120,7 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to use as the exponent
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarType(other, getLanguageType());
   
     double base = getAsDecimal().doubleValue();

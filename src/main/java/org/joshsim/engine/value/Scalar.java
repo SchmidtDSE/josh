@@ -120,7 +120,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param other the other operand.
    */
   @Override
-  protected EngineValue fulfillAdd(EngineValue other) {
+  protected EngineValue unsafeAdd(EngineValue other) {
     raiseUnsupported("Cannot add %s.");
   }
 
@@ -130,7 +130,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param other the other operand.
    */
   @Override
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  protected EngineValue unsafeSubtract(EngineValue other) {
     raiseUnsupported("Cannot subtract with %s.");
   }
 
@@ -140,7 +140,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param other the other operand.
    */
   @Override
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  protected EngineValue unsafeMultiply(EngineValue other) {
     raiseUnsupported("Cannot multiply with %s.");
   }
 
@@ -150,7 +150,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param other the other operand.
    */
   @Override
-  protected EngineValue fulfillDivide(EngineValue other) {
+  protected EngineValue unsafeDivide(EngineValue other) {
     raiseUnsupported("Cannot divide with %s.");
   }
 
@@ -160,7 +160,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @param other the other operand.
    */
   @Override
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
     raiseUnsupported("Cannot raise %s to powers.");
   }
 

@@ -70,34 +70,34 @@ public abstract class EngineValue {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  protected abstract EngineValue fulfillAdd(EngineValue other);
-  protected abstract EngineValue fulfillSubtract(EngineValue other);
-  protected abstract EngineValue fulfillMultiply(EngineValue other);
-  protected abstract EngineValue fulfillDivide(EngineValue other);
-  protected abstract EngineValue fulfillRaiseToPower(EngineValue other);
+  protected abstract EngineValue unsafeAdd(EngineValue other);
+  protected abstract EngineValue unsafeSubtract(EngineValue other);
+  protected abstract EngineValue unsafeMultiply(EngineValue other);
+  protected abstract EngineValue unsafeDivide(EngineValue other);
+  protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
 
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().fulfillAdd(safeTuple.getSecond());
+    return safeTuple.getFirst().unsafeAdd(safeTuple.getSecond());
   }
 
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().fulfillSubtract(safeTuple.getSecond());
+    return safeTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
   }
 
   public EngineValue multiply(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().fulfillMultiply(safeTuple.getSecond());
+    return safeTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
   }
 
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().fulfillDivide(safeTuple.getSecond());
+    return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
   }
 
   public EngineValue raiseToPower(EngineValue other) {
@@ -110,7 +110,7 @@ public abstract class EngineValue {
       throw new IllegalArgumentException("Can only raise to a count.");
     }
 
-    return safeTuple.getFirst().fulfillRaiseToPower(safeTuple.getSecond());
+    return safeTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
   }
 
   /**
