@@ -1,12 +1,16 @@
 
 package org.joshsim.lang.bridge;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
-import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
@@ -14,9 +18,7 @@ import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
@@ -45,26 +47,26 @@ public class ShadowingEntityTest {
 
     @Test
     void testSubstepLifecycle() {
-        String substepName = "testSubstep";
+        String substepName = "start";
         
         // Start substep
         spatialEntity.startSubstep(substepName);
         
         // Verify cannot start another substep
         assertThrows(IllegalStateException.class, () -> 
-            spatialEntity.startSubstep("anotherSubstep")
+            spatialEntity.startSubstep("step")
         );
         
         // End substep
         spatialEntity.endSubstep();
         
         // Can start new substep after ending
-        spatialEntity.startSubstep("newSubstep");
+        spatialEntity.startSubstep("step");
         spatialEntity.endSubstep();
     }
 
     @Test
-    void testAttributeManagement() {
+    void testSetAttribute() {
         String attrName = "testAttr";
         
         // Setup mock behavior
@@ -109,8 +111,20 @@ public class ShadowingEntityTest {
     }
 
     @Test
-    void testLocationAccessors() {
+        void testGetCurrentAttributeResolved() {
+            String attrName = "testAttr";
+            spatialEntity.setCurrentAttribute("testAttr", mockEngineValue);
+            Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
+            assertFalse(result.isEmpty());
+        }
+
+    @Test
+    void testPatchAccessors() {
         assertEquals(patchEntity, spatialEntity.getHere());
+    }
+
+    @Test
+    void testSimluationAccessors() {
         assertEquals(mockSimulation, spatialEntity.getMeta());
     }
 

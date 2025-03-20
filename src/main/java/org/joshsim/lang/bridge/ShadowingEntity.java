@@ -40,7 +40,7 @@ public class ShadowingEntity {
    * @param inner entity to decorate.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(Patch inner, Entity meta) {
+  public ShadowingEntity(Patch inner, Simulation meta) {
     this.inner = inner;
     this.here = this;
     this.meta = meta;
@@ -120,7 +120,7 @@ public class ShadowingEntity {
     if (substep.isEmpty()) {
       String message = String.format(
         "Cannot get handler for %s while not within a substep.",
-        attribute,
+        attribute
       );
       throw new IllegalStateException(message);
     }
@@ -160,6 +160,7 @@ public class ShadowingEntity {
    */
   public void setCurrentAttribute(String name, EngineValue value) {
     assertAttributePresent(name);
+    resolvedAttributes.add(name);
     inner.setAttributeValue(name, value);
   }
 
