@@ -46,7 +46,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "m");
 
-    DecimalScalar result = (DecimalScalar) scalar1.add(scalar2);
+    DecimalScalar result = (DecimalScalar)scalar1.add(scalar2);
     assertEquals(new BigDecimal("15.8"), result.getAsDecimal());
     assertEquals("m", result.getUnits());
   }
@@ -66,7 +66,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "m");
 
-    DecimalScalar result = (DecimalScalar) scalar1.subtract(scalar2);
+    DecimalScalar result = (DecimalScalar)scalar1.subtract(scalar2);
     assertEquals(new BigDecimal("5.2"), result.getAsDecimal());
     assertEquals("m", result.getUnits());
   }
@@ -86,7 +86,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), "s");
 
-    DecimalScalar result = (DecimalScalar) scalar1.multiply(scalar2);
+    DecimalScalar result = (DecimalScalar)scalar1.multiply(scalar2);
     assertEquals(new BigDecimal("21.00"), result.getAsDecimal());
     assertEquals("m*s", result.getUnits());
   }
@@ -97,7 +97,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), "s");
 
-    DecimalScalar result = (DecimalScalar) scalar1.divide(scalar2);
+    DecimalScalar result = (DecimalScalar)scalar1.divide(scalar2);
     assertEquals(new BigDecimal("5.25"), result.getAsDecimal());
     assertEquals("m/s", result.getUnits());
   }
@@ -117,7 +117,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), "");
 
-    DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
+    DecimalScalar result = (DecimalScalar)scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal("8.0"), result.getAsDecimal());
     assertEquals("m^3", result.getUnits());
   }
