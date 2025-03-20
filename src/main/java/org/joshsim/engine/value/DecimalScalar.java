@@ -22,13 +22,13 @@ public class DecimalScalar extends Scalar {
   /**
   * Constructs a new DecimalScalar with the specified value.
   *
-  * @param newCaster the caster to use for automatic type conversion.
-  * @param newInnerValue value the value of this scalar.
-  * @param newUnits the units of this scalar.
+  * @param caster the caster to use for automatic type conversion.
+  * @param innerValue value the value of this scalar.
+  * @param units the units of this scalar.
   */
-  public DecimalScalar(EngineValueCaster newCaster, BigDecimal newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public DecimalScalar(EngineValueCaster caster, BigDecimal innerValue, String units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override
