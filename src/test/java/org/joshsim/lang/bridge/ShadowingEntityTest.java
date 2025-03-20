@@ -99,10 +99,15 @@ public class ShadowingEntityTest {
   @Test
   void testGetCurrentAttributeResolved() {
     String attrName = "testAttr";
-    spatialEntity.startSubstep("test");
+    String substepName = "test";
+    when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
+    
+    spatialEntity.startSubstep(substepName);
     spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
     Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
+    
     assertFalse(result.isEmpty());
+    verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
   }
 
