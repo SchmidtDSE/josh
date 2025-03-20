@@ -23,7 +23,8 @@ import org.joshsim.engine.value.EngineValue;
  * Structure which allows for querying prior or current state of a SpatialEntity as it resolves.
  *
  * <p>Structure which allows for querying prior or current state of a SpatialEntity and allows for
- * determining if an attribute value has been resolved over time.</p>
+ * determining if an attribute value has been resolved over time. This manages reference to 
+ * current, prior, and here.</p>
  */
 public class ShadowingEntity {
 

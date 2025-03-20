@@ -1,3 +1,8 @@
+/**
+ * Tests for ShadowingEntity.
+ *
+ * @license BSD-3-Clause.
+ */
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +27,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
+/**
+ * Tests for the shadowing entity decorator which deals with queries and progressive creation.
+  */
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 
