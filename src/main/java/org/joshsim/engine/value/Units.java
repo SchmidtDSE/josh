@@ -128,7 +128,20 @@ public class Units {
     return multiply(other.invert());
   }
 
-  
+  /** 
+   * Raise the current units to a power.
+   *
+   * @param power the power to raise the units to.
+   * @return a new Units instance representing the current units raised to the power.
+   */
+  public Units raiseToPower(int power) {
+    Units result = new Units(new TreeMap<>(), new TreeMap<>());
+    for (int i = 0; i < power; i++) {
+      result = result.multiply(this);
+    }
+    return result;
+  }
+
   /**
    * Simplify the units by canceling out common units in the numerator and denominator.
    *
@@ -188,7 +201,7 @@ public class Units {
     String numeratorString = serializeMultiplyString(numeratorUnits);
     String denominatorString = serializeMultiplyString(denominatorUnits);
     boolean noDenominator = denominatorString.isEmpty();
-    return noDenominator ? numeratorString : numeratorString + "/" + denominatorString;
+    return noDenominator ? numeratorString : numeratorString + " / " + denominatorString;
   }
 
   @Override

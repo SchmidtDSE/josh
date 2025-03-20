@@ -181,4 +181,12 @@ public abstract class EngineValue {
    */
   abstract String determineDividedUnits(String left, String right);
 
+  /**
+   * Determine the new units string having raised a unit to a power.
+   *
+   * @param base units from the base operand.
+   * @param exponent units from the exponent operand.
+   * @returns new units description string.
+   */
+  abstract String determineRaisedUnits(String base, Long exponent);
 }

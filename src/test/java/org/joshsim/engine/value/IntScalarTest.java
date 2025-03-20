@@ -81,9 +81,9 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, "m");
     IntScalar scalar2 = new IntScalar(caster, 2L, "s");
 
-    IntScalar result = (IntScalar)scalar1.multiply(scalar2);
+    IntScalar result = (IntScalar) scalar1.multiply(scalar2);
     assertEquals(20L, result.getAsInt());
-    assertEquals("m*s", result.getUnits());
+    assertEquals("m * s", result.getUnits());
   }
 
   @Test
@@ -92,9 +92,9 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, "m");
     IntScalar scalar2 = new IntScalar(caster, 2L, "s");
 
-    IntScalar result = (IntScalar)scalar1.divide(scalar2);
+    IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(5L, result.getAsInt());
-    assertEquals("m/s", result.getUnits());
+    assertEquals("m / s", result.getUnits());
   }
 
   @Test

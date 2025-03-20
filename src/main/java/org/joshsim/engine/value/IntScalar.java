@@ -128,7 +128,7 @@ public class IntScalar extends Scalar {
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-        getUnits()
+        determineRaisedUnits(other.getAsInt())
     );
   }
 }

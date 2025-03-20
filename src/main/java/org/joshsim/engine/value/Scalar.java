@@ -178,4 +178,10 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return leftUnits.divide(rightUnits).simplify().toString();
   }
 
+  @Override
+  public String determineRaisedUnits(String base, Long exponent) {
+    Units baseUnits = new Units(base);
+    return baseUnits.raiseToPower(exponent).simplify().toString();
+  }
+
 }
