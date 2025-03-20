@@ -57,7 +57,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public RealizedDistribution add(EngineValue other) {
+  protected EngineValue fulfillAdd(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.add(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -65,7 +65,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public EngineValue subtract(EngineValue other) {
+  protected EngineValue fulfillSubtract(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.subtract(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -73,7 +73,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public EngineValue multiply(EngineValue other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.multiply(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -81,7 +81,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public EngineValue divide(EngineValue other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.divide(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -89,7 +89,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public EngineValue raiseToPower(EngineValue other) {
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.raiseToPower(other))
         .collect(Collectors.toCollection(ArrayList::new));

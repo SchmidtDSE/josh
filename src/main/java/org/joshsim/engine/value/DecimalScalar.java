@@ -1,4 +1,3 @@
-
 /**
  * Structures describing an individual engine value.
  *
@@ -67,73 +66,78 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to add to this one
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
-  public EngineValue add(DecimalScalar other) {
-    validateCommonUnits(other);
-    return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
+  protected EngineValue fulfillAdd(EngineValue other) {
+    DecimalScalar otherScalar = (DecimalScalar) other;
+    validateCommonUnits(otherScalar);
+    return new DecimalScalar(getCaster(), getAsDecimal().add(otherScalar.getAsDecimal()), getUnits());
   }
-  
+
   /**
    * Subtracts another DecimalScalar from this DecimalScalar.
    *
    * @param other the DecimalScalar to subtract from this one
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
-  public EngineValue subtract(DecimalScalar other) {
-    validateCommonUnits(other);
+  protected EngineValue fulfillSubtract(EngineValue other) {
+    DecimalScalar otherScalar = (DecimalScalar) other;
+    validateCommonUnits(otherScalar);
     return new DecimalScalar(
         getCaster(),
-        getAsDecimal().subtract(other.getAsDecimal()),
+        getAsDecimal().subtract(otherScalar.getAsDecimal()),
         getUnits()
     );
   }
-  
+
   /**
    * Multiplies this DecimalScalar with another DecimalScalar.
    *
    * @param other the DecimalScalar to multiply with this one
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
-  public EngineValue multiply(DecimalScalar other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
+    DecimalScalar otherScalar = (DecimalScalar) other;
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().multiply(other.getAsDecimal()),
-      determineMultipliedUnits(getUnits(), other.getUnits())
+      getAsDecimal().multiply(otherScalar.getAsDecimal()),
+      determineMultipliedUnits(getUnits(), otherScalar.getUnits())
     );
   }
-  
+
   /**
    * Divides this DecimalScalar by another DecimalScalar.
    *
    * @param other the DecimalScalar to divide this one by
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
-  public EngineValue divide(DecimalScalar other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
+    DecimalScalar otherScalar = (DecimalScalar) other;
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().divide(other.getAsDecimal()),
-      determineDividedUnits(getUnits(), other.getUnits())
+      getAsDecimal().divide(otherScalar.getAsDecimal()),
+      determineDividedUnits(getUnits(), otherScalar.getUnits())
     );
   }
-  
+
   /**
    * Raises this DecimalScalar to the power of another DecimalScalar.
    *
    * @param other the DecimalScalar to use as the exponent
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
-  public EngineValue raiseToPower(DecimalScalar other) {
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+    DecimalScalar otherScalar = (DecimalScalar) other;
     double base = getAsDecimal().doubleValue();
-    double exponent = other.getAsInt();
-    if (exponent != other.getAsDecimal().doubleValue()) {
+    double exponent = otherScalar.getAsInt();
+    if (exponent != otherScalar.getAsDecimal().doubleValue()) {
       throw new UnsupportedOperationException("Non-integer exponents are not supported");
     }
-    if (other.getUnits() != "") {
+    if (otherScalar.getUnits() != "") {
       throw new IllegalArgumentException("Cannot raise an int to a power with units.");
     }
     return new DecimalScalar(
       getCaster(),
       BigDecimal.valueOf(Math.pow(base, exponent)),
-      determineRaisedUnits(getUnits(), other.getAsInt())
+      determineRaisedUnits(getUnits(), otherScalar.getAsInt())
     );
   }
 }
