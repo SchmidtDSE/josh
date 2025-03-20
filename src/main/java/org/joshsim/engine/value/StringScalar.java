@@ -65,54 +65,30 @@ public class StringScalar extends Scalar {
   public Comparable getInnerValue() {
     return innerValue;
   }
-  
-  /**
-   * Concatenates this StringScalar with another StringScalar.
-   *
-   * @param other the StringScalar to concatenate with this one
-   * @return a new StringScalar that is the concatenation of this and the other StringScalar
-   */
-  public EngineValue add(StringScalar other) {
-    return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
+
+  @Override
+  protected EngineValue fulfillAdd(Scalar other) {
+    validateCommonUnits(other);
+    return new StringScalar(getCaster(), getAsString() + ((StringScalar)other).getAsString(), getUnits());
   }
-  
-  /**
-   * String subtraction operation is not supported.
-   *
-   * @param other the StringScalar that would be subtracted
-   * @throws UnsupportedOperationException as strings cannot be subtracted
-   */
-  public EngineValue subtract(StringScalar other) {
+
+  @Override
+  protected EngineValue fulfillSubtract(Scalar other) {
     throw new UnsupportedOperationException("Cannot subtract strings.");
   }
-  
-  /**
-   * String multiplication operation is not supported.
-   *
-   * @param other the StringScalar that would be multiplied
-   * @throws UnsupportedOperationException as strings cannot be multiplied
-   */
-  public EngineValue multiply(StringScalar other) {
+
+  @Override
+  protected EngineValue fulfillMultiply(Scalar other) {
     throw new UnsupportedOperationException("Cannot multiply strings.");
   }
-  
-  /**
-   * String division operation is not supported.
-   *
-   * @param other the StringScalar that would be the divisor
-   * @throws UnsupportedOperationException as strings cannot be divided
-   */
-  public EngineValue divide(StringScalar other) {
+
+  @Override
+  protected EngineValue fulfillDivide(Scalar other) {
     throw new UnsupportedOperationException("Cannot divide strings.");
   }
-  
-  /**
-   * String exponentiation operation is not supported.
-   *
-   * @param other the StringScalar that would be the exponent
-   * @throws UnsupportedOperationException as strings cannot be raised to powers
-   */
-  public EngineValue raiseToPower(StringScalar other) {
+
+  @Override
+  protected EngineValue fulfillRaiseToPower(Scalar other) {
     throw new UnsupportedOperationException("Cannot raise strings to powers.");
   }
 }

@@ -61,67 +61,42 @@ public class DecimalScalar extends Scalar {
     return innerValue;
   }
 
-  /**
-   * Adds this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to add to this one
-   * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
-   */
-  public EngineValue add(DecimalScalar other) {
+  @Override
+  protected EngineValue fulfillAdd(Scalar other) {
     validateCommonUnits(other);
-    return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
+    return new DecimalScalar(getCaster(), getAsDecimal().add(((DecimalScalar)other).getAsDecimal()), getUnits());
   }
-  
-  /**
-   * Subtracts another DecimalScalar from this DecimalScalar.
-   *
-   * @param other the DecimalScalar to subtract from this one
-   * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
-   */
-  public EngineValue subtract(DecimalScalar other) {
+
+  @Override
+  protected EngineValue fulfillSubtract(Scalar other) {
     validateCommonUnits(other);
     return new DecimalScalar(
         getCaster(),
-        getAsDecimal().subtract(other.getAsDecimal()),
+        getAsDecimal().subtract(((DecimalScalar)other).getAsDecimal()),
         getUnits()
     );
   }
-  
-  /**
-   * Multiplies this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to multiply with this one
-   * @return a new DecimalScalar that is the product of this and the other DecimalScalar
-   */
-  public EngineValue multiply(DecimalScalar other) {
+
+  @Override
+  protected EngineValue fulfillMultiply(Scalar other) {
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().multiply(other.getAsDecimal()),
+      getAsDecimal().multiply(((DecimalScalar)other).getAsDecimal()),
       determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
-  
-  /**
-   * Divides this DecimalScalar by another DecimalScalar.
-   *
-   * @param other the DecimalScalar to divide this one by
-   * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
-   */
-  public EngineValue divide(DecimalScalar other) {
+
+  @Override
+  protected EngineValue fulfillDivide(Scalar other) {
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().divide(other.getAsDecimal()),
+      getAsDecimal().divide(((DecimalScalar)other).getAsDecimal()),
       determineDividedUnits(getUnits(), other.getUnits())
     );
   }
-  
-  /**
-   * Raises this DecimalScalar to the power of another DecimalScalar.
-   *
-   * @param other the DecimalScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
-  public EngineValue raiseToPower(DecimalScalar other) {
+
+  @Override
+  protected EngineValue fulfillRaiseToPower(Scalar other) {
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {

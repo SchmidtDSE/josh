@@ -30,21 +30,21 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @return the scalar value as a BigDecimal.
    */
   public abstract BigDecimal getAsDecimal();
-  
+
   /**
    * Gets the value as a boolean.
    *
    * @return the scalar value as a boolean.
    */
   public abstract boolean getAsBoolean();
-  
+
   /**
    * Gets the value as a String.
    *
    * @return the scalar value as a String.
    */
   public abstract String getAsString();
-  
+
   /**
    * Gets the value as an integer.
    *
@@ -66,6 +66,31 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   }
 
   /**
+   * Fulfill an add operation with another scalar of the same type.
+   */
+  protected abstract EngineValue fulfillAdd(Scalar other);
+
+  /**
+   * Fulfill a subtract operation with another scalar of the same type.
+   */
+  protected abstract EngineValue fulfillSubtract(Scalar other);
+
+  /**
+   * Fulfill a multiply operation with another scalar of the same type.
+   */
+  protected abstract EngineValue fulfillMultiply(Scalar other);
+
+  /**
+   * Fulfill a divide operation with another scalar of the same type.
+   */
+  protected abstract EngineValue fulfillDivide(Scalar other);
+
+  /**
+   * Fulfill a raise to power operation with another scalar of the same type.
+   */
+  protected abstract EngineValue fulfillRaiseToPower(Scalar other);
+
+  /**
    * Get the decorated value.
    *
    * @returns value inside this Scalar decorator.
@@ -77,7 +102,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * Compare this Scalar to the specified object.
    *
    * <p>Compare two Scalars for ordinal ranking where two Scalar objects are considered equal if
-   
+
    * they have the same numeric value.</p>
    *
    * @param other the object to compare with.
@@ -88,7 +113,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public int compareTo(Scalar other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    
+
     // TODO: Seems smelly to have to convert to BigDecimal to compare Scalars
     return safeTuple.getFirst().getAsScalar().getAsDecimal()
             .compareTo(safeTuple.getSecond().getAsScalar().getAsDecimal());
@@ -118,28 +143,28 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().add(safeTuple.getSecond());
+    return safeTuple.getFirst().fulfillAdd(safeTuple.getSecond().getAsScalar());
   }
 
   @Override
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().subtract(safeTuple.getSecond());
+    return safeTuple.getFirst().fulfillSubtract(safeTuple.getSecond().getAsScalar());
   }
 
   @Override
   public EngineValue multiply(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().multiply(safeTuple.getSecond());
+    return safeTuple.getFirst().fulfillMultiply(safeTuple.getSecond().getAsScalar());
   }
 
   @Override
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().divide(safeTuple.getSecond());
+    return safeTuple.getFirst().fulfillDivide(safeTuple.getSecond().getAsScalar());
   }
 
   @Override
@@ -151,7 +176,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
       throw new IllegalArgumentException("Can only raise to a count.");
     }
 
-    return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
+    return safeTuple.getFirst().fulfillRaiseToPower(safeTuple.getSecond().getAsScalar());
   }
 
   @Override
