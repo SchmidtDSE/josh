@@ -10,6 +10,7 @@ import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.lang.antlr.JoshLangParser;
 
 /**
  * Structure representing the result of parsing a Josh source code file.
