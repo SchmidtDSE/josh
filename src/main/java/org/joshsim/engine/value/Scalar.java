@@ -60,10 +60,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public int compareTo(Scalar other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    
-    // TODO: Seems smelly to have to convert to BigDecimal to compare Scalars
-    return safeTuple.getFirst().getAsScalar().getAsDecimal()
-            .compareTo(safeTuple.getSecond().getAsScalar().getAsDecimal());
+    return safeTuple.getFirst().getInnerValue().equals(safeTuple.getSecond().getInnerValue());
   }
 
   /**
@@ -114,6 +111,72 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public String determineRaisedUnits(String base, Long exponent) {
     Units baseUnits = new Units(base);
     return baseUnits.raiseToPower(exponent).simplify().toString();
+  }
+
+
+  /**
+   * Indicate that add is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue fulfillAdd(EngineValue other) {
+    raiseUnsupported("Cannot add %s.");
+  }
+
+  /**
+   * Indicate that subtract is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue fulfillSubtract(EngineValue other) {
+    raiseUnsupported("Cannot subtract with %s.");
+  }
+
+  /**
+   * Indicate that multiply is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue fulfillMultiply(EngineValue other) {
+    raiseUnsupported("Cannot multiply with %s.");
+  }
+
+  /**
+   * Indicate that divide is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue fulfillDivide(EngineValue other) {
+    raiseUnsupported("Cannot divide with %s.");
+  }
+
+  /**
+   * Indicate that raise to power is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+    raiseUnsupported("Cannot raise %s to powers.");
+  }
+
+  protected void assertScalarCompatible(EngineValue other) {
+    if (other.getLanguageType().contains("Distribution")) {
+      throw IllegalArgumentException("Unexpected distribution.");
+    }
+
+    if (!getLanguageType().equals(other.getLanguageType())) {
+      throw IllegalArgumentException("Unsafe scalar arithmetic operation with incompatible types.");
+    }
+  }
+
+  private void raiseUnsupported(String messageTemplate) {
+    String message = String.format(messageTemplate, getLanguageType());
+    throw NotImplementedException(message);
   }
 
 }

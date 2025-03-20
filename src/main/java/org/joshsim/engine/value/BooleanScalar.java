@@ -58,49 +58,5 @@ public class BooleanScalar extends Scalar {
   public Comparable<?> getInnerValue() {
     return innerValue;
   }
-  
-  /**
-   * Indicate that add is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillAdd(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot add booleans.");
-  }
-  
-  /**
-   * Indicate that subtract is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillSubtract(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot subtract booleans.");
-  }
-  
-  /**
-   * Indicate that multiply is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillMultiply(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot multiply booleans.");
-  }
-  
-  /**
-   * Indicate that divide is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillDivide(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot divide booleans.");
-  }
-  
-  /**
-   * Indicate that raise to power is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot raise booleans to powers.");
-  }
+
 }

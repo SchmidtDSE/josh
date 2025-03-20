@@ -72,6 +72,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   protected EngineValue fulfillAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
@@ -83,6 +84,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   protected EngineValue fulfillSubtract(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
@@ -94,6 +96,7 @@ public class IntScalar extends Scalar {
    * @return a new IntScalar that is the product of this and the other IntScalar
    */
   protected EngineValue fulfillMultiply(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() * other.getAsInt(),
@@ -109,6 +112,7 @@ public class IntScalar extends Scalar {
    * @throws ArithmeticException if division by zero is attempted
    */
   protected EngineValue fulfillDivide(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() / other.getAsInt(),
@@ -123,9 +127,12 @@ public class IntScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    if (other.getUnits() != "") {
-      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+    assertScalarCompatible(other);
+
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
     }
+
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),

@@ -65,6 +65,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
   protected EngineValue fulfillAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
 
@@ -75,6 +76,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
   protected EngineValue fulfillSubtract(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
         getCaster(),
         getAsDecimal().subtract(other.getAsDecimal()),
@@ -89,6 +91,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
   protected EngineValue fulfillMultiply(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().multiply(other.getAsDecimal()),
@@ -103,6 +106,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
   protected EngineValue fulfillDivide(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().divide(other.getAsDecimal()),
@@ -117,14 +121,17 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   protected EngineValue fulfillRaiseToPower(EngineValue other) {
+    assertScalarType(other, getLanguageType());
+  
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {
       throw new UnsupportedOperationException("Non-integer exponents are not supported");
     }
-    if (other.getUnits() != "") {
-      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
     }
+
     return new DecimalScalar(
       getCaster(),
       BigDecimal.valueOf(Math.pow(base, exponent)),
