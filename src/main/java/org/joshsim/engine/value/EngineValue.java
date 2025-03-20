@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.value;
 
-import org.antlr.v4.parse.v4ParserException;
 
 /**
  * Structure representing a value in the engine.
@@ -70,7 +69,11 @@ public abstract class EngineValue {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  abstract EngineValue add(EngineValue other);
+  public EngineValue add(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    return safeTuple.getFirst().add(safeTuple.getSecond());
+  }
 
   /**
    * Subtract another value from this value.
@@ -79,7 +82,11 @@ public abstract class EngineValue {
    * @return the result of the subtraction
    * @throws IllegalArgumentException if units are incompatible
    */
-  abstract EngineValue subtract(EngineValue other);
+  public EngineValue subtract(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    return safeTuple.getFirst().subtract(safeTuple.getSecond());
+  }
 
   /**
    * Multiply this value by another value.
@@ -88,7 +95,11 @@ public abstract class EngineValue {
    * @return the result of the multiplication
    * @throws IllegalArgumentException if units are incompatible
    */
-  abstract EngineValue multiply(EngineValue other);
+  public EngineValue multiply(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    return safeTuple.getFirst().multiply(safeTuple.getSecond());
+  }
 
   /**
    * Divide this value by another value.
@@ -98,7 +109,11 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  abstract EngineValue divide(EngineValue other);
+  public EngineValue divide(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    return safeTuple.getFirst().divide(safeTuple.getSecond());
+  }
 
   /**
    * Raise this value to the power of another value.
@@ -108,7 +123,16 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  abstract EngineValue raiseToPower(EngineValue other);
+  public EngineValue raiseToPower(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (!other.getUnits().equals("count")) {
+      throw new IllegalArgumentException("Can only raise to a count.");
+    }
+
+    return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
+  }
 
   /**
    * Convert this EngineValue to a Scalar.
