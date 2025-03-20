@@ -1,0 +1,13 @@
+start organism Tree
+
+  height.init = {
+    const height = sample normal with mean of 10 m std of 5 m
+    return limit height to [0,]
+  }
+
+  height.step
+    :if(prior.height < 5 m) = prior.height + sample uniform from 0.5 m to 1.5 m
+    :elif(prior.height < 10 m) = prior.height + sample uniform from 0 m to 1 m
+    :else = prior.height + sample uniform from 0 m to 0.1 m
+
+end organism

@@ -1,0 +1,15 @@
+start organism Tree
+
+  height.init = 1 m
+
+  height.step = {
+    if (prior.height >= 10 m) {
+      return prior.height + 0.1 m
+    } elif (prior.height >= 5 m) {
+      return prior.height + 0.5 m
+    } else {
+      return prior.height + 1 m
+    }
+  }
+
+end organism

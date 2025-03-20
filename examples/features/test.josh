@@ -1,0 +1,22 @@
+start organism TreeB
+
+  height.init = 1 m
+
+  height.step = {
+    const otherCount = sum(prior.here.TreeA.count)
+    return 10 m - otherCount / 1 count * 1 m
+  }
+
+end organism
+
+start test TestHeight
+
+  grid.size = 1km
+  grid.start = 34 degrees latitude, -116 degrees longitude
+  grid.end = 35 degrees latitude, -115 degrees longitude
+  steps.start = 0 count
+  steps.end = 5 count
+
+  assert mean(TreeB.height) > 5 m
+
+end test

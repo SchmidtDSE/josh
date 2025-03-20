@@ -1,0 +1,8 @@
+start external GrowingSeasonPrecipitation
+
+  year.init = meta.stepCount + 2050 count  # Simulation starts in 2050
+  source.location = "file://precipitation/{{ current.year }}.geotiff"
+  source.format = "geotiff"
+  source.units = "in / month"
+
+end external

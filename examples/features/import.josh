@@ -1,0 +1,14 @@
+import "file://import_operand.josh"
+
+start organism ForeverTree
+
+  age.init = 12 months
+
+  age.step = {
+    const currentAge = prior.age
+    const newAge = currentAge + 1 year
+    return newAge as months
+  }
+
+end organism
+
