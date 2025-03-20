@@ -68,17 +68,12 @@ class BooleanScalarTest {
   }
   
   @Test
-  void testMultiply() {
+  void testMultiplyThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     BooleanScalar scalar1 = new BooleanScalar(caster, true, "");
     BooleanScalar scalar2 = new BooleanScalar(caster, false, "");
-    BooleanScalar scalar3 = new BooleanScalar(caster, true, "");
-    
-    BooleanScalar result1 = (BooleanScalar)scalar1.multiply(scalar2);
-    assertEquals(false, result1.getAsBoolean());
-    
-    BooleanScalar result2 = (BooleanScalar)scalar1.multiply(scalar3);
-    assertEquals(true, result2.getAsBoolean());
+
+    assertThrows(UnsupportedOperationException.class, () -> scalar1.multiply(scalar2));
   }
   
   @Test
