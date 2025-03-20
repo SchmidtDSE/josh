@@ -42,8 +42,14 @@ dependencies {
   implementation("org.teavm:teavm-jso-apis:0.10.0")
 }
 
-teavm.wasm {
-  mainClass = "org.joshsim.JoshSim"
+teavm {
+  wasm {
+    targetType = "WEBASSEMBLY_LIBRARY"
+    classesToExclude = ["org.joshsim.JoshSim"]
+    dependencies {
+      excludeLibrary("picocli")
+    }
+  }
 }
 
 application {
