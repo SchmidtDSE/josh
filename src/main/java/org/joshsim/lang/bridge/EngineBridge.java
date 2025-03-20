@@ -31,8 +31,8 @@ public class EngineBridge {
     this.simulation = simulation;
     this.replicate = replicate;
 
-    currentStep = simulation.getAttributeValue("").orElse(DEFAULT_START_STEP);
-    endStep = simulation.getAttributeValue("").orElse(DEFAULT_END_STEP);
+    currentStep = simulation.getAttributeValue("stepCount").orElse(DEFAULT_START_STEP);
+    endStep = simulation.getAttributeValue("stepCount").orElse(DEFAULT_END_STEP);
     inStep = false;
   }
   
