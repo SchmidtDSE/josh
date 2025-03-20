@@ -40,155 +40,6 @@ public abstract class EngineValue {
   }
 
   /**
-   * Get the EngineValueCaster for this value.
-   *
-   * @return the EngineValueCaster for this value
-   */
-  public EngineValueCaster getCaster() {
-    return caster;
-  }
-
-  /**
-   * Checks if the units match or handles the case based on requirements.
-   *
-   *
-   * @param other The other scalar to check units against
-   * @param requireSameUnits Whether matching units are required
-   * @return true if the operation can proceed, false otherwise
-   * @throws IllegalArgumentException if units don't match and matching is required
-   */
-  protected void validateCommonUnits(EngineValue other) {
-    if (!units.equals(other.getUnits())) {
-      throw new IllegalArgumentException("Units do not match");
-    }
-  }
-
-  /**
-   * Add this value to another value assuming that the units and type are compatible and in order.
-   *
-   * <p>Add this value to another value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of the addition
-   * @throws NotImplementedException if the operation is not supported for this data tyep.
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  /**
-   * Add this value to another value assuming that the units and type are compatible and in order.
-   *
-   * <p>Add this value to another value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of the addition
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  protected abstract EngineValue unsafeAdd(EngineValue other);
-
-  /**
-   * Subtract another value from this value assuming that the units and type are compatible and in order.
-   *
-   * <p>Subtract another value from this value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of the subtraction
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  protected abstract EngineValue unsafeSubtract(EngineValue other);
-
-  /**
-   * Multiply this value by another value assuming that the units and type are compatible and in order.
-   *
-   * <p>Multiply this value by another value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of the multiplication
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  protected abstract EngineValue unsafeMultiply(EngineValue other);
-
-  /**
-   * Divide this value by another value assuming that the units and type are compatible and in order.
-   *
-   * <p>Divide this value by another value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of the division
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  protected abstract EngineValue unsafeDivide(EngineValue other);
-
-  /**
-   * Raise this value to the power of another value assuming that the units and type are compatible and in order.
-   *
-   * <p>Raise this value to the power of another value assuming that the units and type are compatible and in
-   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
-   * compatible for operations, and the are in expected order. The left side operator must be a
-   * distribution if one or more distributions are present in the operation.</p>
-   *
-   * @param other the other value
-   * @return the result of raising to power
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible or exponent has non-count units
-   */
-  protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
-
-  public EngineValue add(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().unsafeAdd(safeTuple.getSecond());
-  }
-
-  public EngineValue subtract(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
-  }
-
-  public EngineValue multiply(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
-  }
-
-  public EngineValue divide(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
-  }
-
-  public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-
-    String otherUnits = other.getUnits();
-    boolean validUnits = otherUnits.equals("count") || otherUnits.equals("");
-    if (!validUnits) {
-      throw new IllegalArgumentException("Can only raise to a count.");
-    }
-
-    return safeTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
-  }
-
-  /**
    * Convert this EngineValue to a Scalar.
    *
    * <p>Convert this EngineValue to a Scalar such that Scalars return themselves unchanged while
@@ -295,4 +146,130 @@ public abstract class EngineValue {
    * @returns new units description string.
    */
   public abstract String determineRaisedUnits(String base, Long exponent);
+
+  /**
+   * Get the EngineValueCaster for this value.
+   *
+   * @return the EngineValueCaster for this value
+   */
+  public EngineValueCaster getCaster() {
+    return caster;
+  }
+
+  public EngineValue add(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    EngineValueTuple orderedTuple = orderOperands(safeTuple);
+    return orderedTuple.getFirst().unsafeAdd(safeTuple.getSecond());
+  }
+
+  public EngineValue subtract(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    EngineValueTuple orderedTuple = orderOperands(safeTuple);
+    return orderedTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
+  }
+
+  public EngineValue multiply(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    EngineValueTuple orderedTuple = orderOperands(safeTuple);
+    return orderedTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
+  }
+
+  public EngineValue divide(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    EngineValueTuple orderedTuple = orderOperands(safeTuple);
+    return orderedTuple.getFirst().unsafeDivide(safeTuple.getSecond());
+  }
+
+  public EngineValue raiseToPower(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    EngineValueTuple orderedTuple = orderOperands(safeTuple);
+
+    String otherUnits = other.getUnits();
+    boolean validUnits = otherUnits.equals("count") || otherUnits.equals("");
+    if (!validUnits) {
+      throw new IllegalArgumentException("Can only raise to a count.");
+    }
+
+    return orderedTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
+  }
+
+  /**
+   * Add this value to another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Add this value to another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the addition
+   * @throws NotImplementedException if the operation is not supported for this data tyep.
+   * @throws IllegalArgumentException if units are incompatible
+   */
+  protected abstract EngineValue unsafeAdd(EngineValue other);
+
+  /**
+   * Subtract another value from this value assuming units and type are compatible and in order.
+   *
+   * <p>Subtract another value from this value assuming that the units and type are compatible and
+   * in order meaning that the units are confirmed to be semantically equivalent, actual data types
+   * are compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the subtraction
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
+  protected abstract EngineValue unsafeSubtract(EngineValue other);
+
+  /**
+   * Multiply this value by another value assuming units and type are compatible and in order.
+   *
+   * <p>Multiply this value by another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the multiplication
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
+  protected abstract EngineValue unsafeMultiply(EngineValue other);
+
+  /**
+   * Divide this value by another value assuming units and type are compatible and in order.
+   *
+   * <p>Divide this value by another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the division
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
+  protected abstract EngineValue unsafeDivide(EngineValue other);
+
+  /**
+   * Raise this value to the power of another value assuming units / type are compatible / in order.
+   *
+   * <p>Raise this value to the power of another value assuming that the units and type are
+   * compatible and in order meaning that the units are confirmed to be semantically equivalent,
+   * actual data types are compatible for operations, and the are in expected order. The left side
+   * operator must be a distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of raising to power
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible or exponent has non-count units
+   */
+  protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
 }
