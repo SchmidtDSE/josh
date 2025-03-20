@@ -31,8 +31,8 @@ public class EngineValueFactory {
    *
    * @param newCaster EngineValueCaster to cast within operations involving the EngineValue.
    */
-  public EngineValueFactory(EngineValueCaster newCaster) {
-    caster = newCaster;
+  public EngineValueFactory(EngineValueCaster caster) {
+    this.caster = caster;
   }
 
   /**

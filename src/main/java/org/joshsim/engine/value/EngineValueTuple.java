@@ -20,12 +20,12 @@ public class EngineValueTuple {
   /**
    * Create a new tuple of engine values.
    *
-   * @param newFirst the first engine value for this tuple, for example the left side operand.
-   * @param newSecond the second engine value for this tuple, for example the left side operand.
+   * @param first the first engine value for this tuple, for example the left side operand.
+   * @param second the second engine value for this tuple, for example the left side operand.
    */
-  public EngineValueTuple(EngineValue newFirst, EngineValue newSecond) {
-    first = newFirst;
-    second = newSecond;
+  public EngineValueTuple(EngineValue first, EngineValue second) {
+    this.first = first;
+    this.second = second;
     types = new TypesTuple(first.getLanguageType(), second.getLanguageType());
     units = new UnitsTuple(first.getUnits(), second.getUnits());
   }
@@ -96,12 +96,12 @@ public class EngineValueTuple {
     /**
      * Create a new tuple to represent a pair of identifying names.
      *
-     * @param newFirst the first value, for example from the left-side operand.
-     * @param newSecond the first value, for example from the right-side operand.
+     * @param first the first value, for example from the left-side operand.
+     * @param second the first value, for example from the right-side operand.
      */
-    public InnerTuple(String newFirst, String newSecond) {
-      first = newFirst;
-      second = newSecond;
+    public InnerTuple(String first, String second) {
+      this.first = first;
+      this.second = second;
     }
 
     /**
@@ -168,12 +168,12 @@ public class EngineValueTuple {
      * <p>This constructor initializes a new pair of types given for the  first and second values. 
      * This might include types, for example, like int or decimal.</p>
      *
-     * @param newFirst the first type, representing for example the type of the left-side operand.
-     * @param newSecond the second type, representing for example the type of the right-side
+     * @param first the first type, representing for example the type of the left-side operand.
+     * @param second the second type, representing for example the type of the right-side
      *     operand.
      */
-    public TypesTuple(String newFirst, String newSecond) {
-      super(newFirst, newSecond);
+    public TypesTuple(String first, String second) {
+      super(first, second);
     }
 
     @Override
@@ -194,12 +194,11 @@ public class EngineValueTuple {
      * <p>This constructor initializes a new pair of units given for the first and second values. 
      * This might include units, for example, like meters or centimeters.</p>
      *
-     * @param newFirst the first unit, representing for example the unit of the left-side operand.
-     * @param newSecond the second unit, representing for example the unit of the right-side
-     *     operand.
+     * @param first the first unit, representing for example the unit of the left-side operand.
+     * @param second the second unit, representing for example the unit of the right-side operand.
      */
-    public UnitsTuple(String newFirst, String newSecond) {
-      super(newFirst, newSecond);
+    public UnitsTuple(String first, String second) {
+      super(first, second);
     }
 
     @Override

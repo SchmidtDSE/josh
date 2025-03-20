@@ -23,12 +23,12 @@ public class ParseError {
   /**
    * Constructs a new ParseError with the specified line number and message.
    *
-   * @param newLine the line number where the parsing error occurred
-   * @param newMessage the error message describing the parsing failure
+   * @param line the line number where the parsing error occurred
+   * @param message the error message describing the parsing failure
    */
-  public ParseError(int newLine, String newMessage) {
-    line = newLine;
-    message = newMessage;
+  public ParseError(int line, String message) {
+    this.line = line;
+    this.message = message;
   }
 
   /**
