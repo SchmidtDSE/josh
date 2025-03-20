@@ -104,7 +104,9 @@ public abstract class EngineValue {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
-    if (!other.getUnits().equals("count")) {
+    String otherUnits = other.getUnits();
+    boolean validUnits = otherUnits.equals("count") || otherUnits.equals("");
+    if (!validUnits) {
       throw new IllegalArgumentException("Can only raise to a count.");
     }
 
