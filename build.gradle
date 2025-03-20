@@ -5,7 +5,7 @@ plugins {
   id "application" // for creating executable JARs
   id "checkstyle" // for code style checking
   id "antlr" // for ANTLR grammar
-  id "org.openrewrite.rewrite" version "7.2.0"
+  id "org.openrewrite.rewrite" version "7.2.0" // Formatting for google style guide
 }
 
 java {
@@ -40,6 +40,7 @@ application {
   mainClass = "org.joshsim.JoshSim"
 }
 
+// JUnit target for al tests.
 test {
   useJUnitPlatform()
   testLogging {
@@ -47,6 +48,7 @@ test {
   }
 }
 
+// Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
     attributes(
@@ -68,6 +70,7 @@ task fatJar(type: Jar) {
   exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 }
 
+// Standard JavaDoc target
 javadoc {
   options {
     outputLevel = JavadocOutputLevel.QUIET
@@ -80,6 +83,7 @@ javadoc {
   destinationDir = file("${buildDir}/docs/javadoc")
 }
 
+// Shared configuration options for checkstyle
 checkstyle {
   toolVersion = "10.21.4"
   configFile = file("${rootDir}/config/checkstyle/google_checks.xml")
@@ -89,14 +93,17 @@ checkstyle {
   ignoreFailures = false
 }
 
+// Checkstyle target for main code
 checkstyleMain {
   source = "src/main/java/org/joshsim"
 }
 
+// Checkstyle target for test code
 checkstyleTest {
   source = "src/test/java/org/joshsim"
 }
 
+// Local formatting tool
 rewrite {
   activeRecipe("org.openrewrite.staticanalysis.CodeCleanup")
   checkstyleConfigFile = file("${rootDir}/config/checkstyle/google_checks.xml")
