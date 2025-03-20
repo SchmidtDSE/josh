@@ -125,10 +125,13 @@ public class IntScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   public EngineValue raiseToPower(IntScalar other) {
+    if (other.getUnits() != "") {
+      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+    }
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-        determineRaisedUnits(other.getAsInt())
+        determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
 }

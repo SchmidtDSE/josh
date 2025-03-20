@@ -134,7 +134,7 @@ public class Units {
    * @param power the power to raise the units to.
    * @return a new Units instance representing the current units raised to the power.
    */
-  public Units raiseToPower(int power) {
+  public Units raiseToPower(Long power) {
     Units result = new Units(new TreeMap<>(), new TreeMap<>());
     for (int i = 0; i < power; i++) {
       result = result.multiply(this);

@@ -112,9 +112,9 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 7L, "m");
     IntScalar scalar2 = new IntScalar(caster, 2L, "s");
 
-    IntScalar result = (IntScalar)scalar1.divide(scalar2);
+    IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(3L, result.getAsInt()); // Integer division should truncate
-    assertEquals("m/s", result.getUnits());
+    assertEquals("m / s", result.getUnits());
   }
 
   @Test
@@ -123,11 +123,11 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 2L, "m");
     IntScalar scalar2 = new IntScalar(caster, 3L, "");
 
-    DecimalScalar result = (DecimalScalar)scalar1.raiseToPower(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal(8), result.getAsDecimal());
-    assertEquals("m^3", result.getUnits());
+    assertEquals("m * m * m", result.getUnits());
   }
-  
+
   @Test
   void testRaiseToPowerWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();

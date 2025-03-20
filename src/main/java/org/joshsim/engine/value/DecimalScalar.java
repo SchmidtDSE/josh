@@ -123,7 +123,17 @@ public class DecimalScalar extends Scalar {
    */
   public EngineValue raiseToPower(DecimalScalar other) {
     double base = getAsDecimal().doubleValue();
-    double exponent = other.getAsDecimal().doubleValue();
-    return new DecimalScalar(getCaster(), BigDecimal.valueOf(Math.pow(base, exponent)), getUnits());
+    double exponent = other.getAsInt();
+    if (exponent != other.getAsDecimal().doubleValue()) {
+      throw new UnsupportedOperationException("Non-integer exponents are not supported");
+    }
+    if (other.getUnits() != "") {
+      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+    }
+    return new DecimalScalar(
+      getCaster(),
+      BigDecimal.valueOf(Math.pow(base, exponent)),
+      determineRaisedUnits(getUnits(), other.getAsInt())
+    );
   }
 }

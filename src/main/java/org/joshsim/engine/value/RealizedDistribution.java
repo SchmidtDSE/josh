@@ -134,6 +134,11 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  public String determineRaisedUnits(String base, Long exponent) {
+    return null;
+  }
+
+  @Override
   public Scalar sample() {
     return null;
   }

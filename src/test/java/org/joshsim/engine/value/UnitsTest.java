@@ -214,7 +214,7 @@ class UnitsTest {
   @Test
   void testToString() {
     Units units = new Units("m * m / s");
-    assertEquals("m * m/s", units.toString());
+    assertEquals("m * m / s", units.toString());
     
     // Empty case
     Map<String, Integer> emptyMap = new TreeMap<>();
