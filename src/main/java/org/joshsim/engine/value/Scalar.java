@@ -20,11 +20,11 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
   /**
    * Create a new scalar with the given units.
    *
-   * @param newUnits String describing the units which may be a user-defined unit.
+   * @param units String describing the units which may be a user-defined unit.
    */
-  public Scalar(EngineValueCaster newCaster, String newUnits) {
-    caster = newCaster;
-    units = newUnits;
+  public Scalar(EngineValueCaster caster, String units) {
+    this.caster = caster;
+    this.units = units;
   }
 
   /**
