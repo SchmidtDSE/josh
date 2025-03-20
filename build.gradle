@@ -42,14 +42,8 @@ dependencies {
   implementation("org.teavm:teavm-jso-apis:0.10.0")
 }
 
-teavm {
-    compileScopes = ["compile"]
-    minifying = true
-    optimizationLevel = "ADVANCED"
-    targetDirectory = "build/wasm"
-    mainClass = "org.joshsim.JoshSim"
-    webappDirectory = "build/webapp"
-    generateSourceMaps = true
+teavm.wasm {
+  mainClass = "org.joshsim.JoshSim"
 }
 
 application {
