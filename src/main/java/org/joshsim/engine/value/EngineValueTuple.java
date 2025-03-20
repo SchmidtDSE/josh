@@ -199,11 +199,25 @@ public class EngineValueTuple {
       return nestedTypes[nestedTypes.length - 1];
     }
 
-    @Override
-    public String toString() {
+    public String toRootString() {
       return String.format("%s: %s, %s", getTupleType(), getFirstRoot(), getSecondRoot());
     }
-    
+
+    /**
+     * Determine if this tuple equals another tuple.
+     *
+     * @returns True if the tuples' paired elements have string equality and false otherwise.
+     */
+    @Override
+    public boolean equals(InnerTuple other) {
+      return toRootString().equals(other.toRootString());
+    }
+
+    @Override
+    public int hashCode() {
+      return toRootString().hashCode();
+    }
+
   }
 
   /**
