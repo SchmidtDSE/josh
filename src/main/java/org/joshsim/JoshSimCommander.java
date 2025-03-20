@@ -41,7 +41,7 @@ import picocli.CommandLine.Parameters;
     version = "1.0",
     description = "JoshSim command line interface",
     subcommands = {
-        JoshSim.ValidateCommand.class
+        JoshSimCommander.ValidateCommand.class
     }
 )
 public class JoshSimCommander {
@@ -143,7 +143,7 @@ public class JoshSimCommander {
    * @param args command line arguments passed to the JoshSim application to be parsed by picocli.
    */
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new JoshSim()).execute(args);
+    int exitCode = new CommandLine(new JoshSimCommander()).execute(args);
     System.exit(exitCode);
   }
 }

@@ -44,7 +44,7 @@ teavm {
 }
 
 application {
-  mainClass = "org.joshsim.JoshSim"
+  mainClass = "org.joshsim.JoshSimCommander"
 }
 
 // JUnit target for al tests.
