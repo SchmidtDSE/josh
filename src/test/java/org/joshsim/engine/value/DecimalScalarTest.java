@@ -28,8 +28,8 @@ class DecimalScalarTest {
     DecimalScalar nonZeroScalar = new DecimalScalar(caster, new BigDecimal("42.5"), "");
     DecimalScalar zeroScalar = new DecimalScalar(caster, BigDecimal.ZERO, "");
 
-    assertTrue(nonZeroScalar.getAsBoolean());
-    assertFalse(zeroScalar.getAsBoolean());
+    assertThrows(UnsupportedOperationException.class, () -> nonZeroScalar.getAsBoolean());
+    assertThrows(UnsupportedOperationException.class, () -> zeroScalar.getAsBoolean());
   }
 
   @Test
@@ -46,7 +46,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "m");
 
-    DecimalScalar result = (DecimalScalar)scalar1.add(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.add(scalar2);
     assertEquals(new BigDecimal("15.8"), result.getAsDecimal());
     assertEquals("m", result.getUnits());
   }
@@ -57,7 +57,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "s");
 
-    assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2));
+    assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2, true));
   }
 
   @Test
@@ -66,7 +66,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "m");
 
-    DecimalScalar result = (DecimalScalar)scalar1.subtract(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.subtract(scalar2);
     assertEquals(new BigDecimal("5.2"), result.getAsDecimal());
     assertEquals("m", result.getUnits());
   }

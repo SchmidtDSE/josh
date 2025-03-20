@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.value;
 
+import org.antlr.v4.parse.v4ParserException;
 
 /**
  * Structure representing a value in the engine.
@@ -34,7 +35,7 @@ public abstract class EngineValue {
    *
    * @return the units of this value
    */
-  String getUnits() {
+  public String getUnits() {
     return units;
   }
 
@@ -43,8 +44,23 @@ public abstract class EngineValue {
    *
    * @return the EngineValueCaster for this value
    */
-  EngineValueCaster getCaster() {
+  public EngineValueCaster getCaster() {
     return caster;
+  }
+
+  /**
+   * Checks if the units match or handles the case based on requirements.
+   *
+   *
+   * @param other The other scalar to check units against
+   * @param requireSameUnits Whether matching units are required
+   * @return true if the operation can proceed, false otherwise
+   * @throws IllegalArgumentException if units don't match and matching is required
+   */
+  protected void validateUnits(EngineValue other) {
+    if (!units.equals(other.getUnits())) {
+      throw new IllegalArgumentException("Units do not match");
+    }
   }
 
   /**
