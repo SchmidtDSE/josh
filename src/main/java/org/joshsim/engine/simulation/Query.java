@@ -39,7 +39,7 @@ public class Query {
    */
   public Query(int step, Geometry geometry) {
     this.step = step;
-    this.geometry = geometry;
+    this.geometry = Optional.of(geometry);
   }
 
   /**
