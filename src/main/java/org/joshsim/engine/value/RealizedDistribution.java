@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 public class RealizedDistribution extends Distribution {
-	private final ArrayList<EngineValue> values;
+  private final ArrayList<EngineValue> values;
   private Optional<DoubleSummaryStatistics> stats = Optional.empty();
 
   /**
