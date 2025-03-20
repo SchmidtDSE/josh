@@ -1,4 +1,3 @@
-
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
-
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 
@@ -31,19 +29,15 @@ public class ShadowingEntityTest {
   @Mock private Simulation mockSimulation;
   @Mock private EventHandlerGroup mockEventHandlerGroup;
   @Mock private EngineValue mockEngineValue;
-  
+
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
 
   @BeforeEach
   void setUp() {
-    when(mockPatch.getName()).thenReturn("TestPatch");
-    when(mockSpatialEntity.getName()).thenReturn("TestEntity");
-    
-    // Setup event handlers
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
-    
+
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
   }
@@ -51,19 +45,9 @@ public class ShadowingEntityTest {
   @Test
   void testSubstepLifecycle() {
     String substepName = "start";
-    
-    // Start substep
     spatialEntity.startSubstep(substepName);
-    
-    // Verify cannot start another substep
-    assertThrows(IllegalStateException.class, () -> 
-      spatialEntity.startSubstep("step")
-    );
-    
-    // End substep
+    assertThrows(IllegalStateException.class, () -> spatialEntity.startSubstep("step"));
     spatialEntity.endSubstep();
-    
-    // Can start new substep after ending
     spatialEntity.startSubstep("step");
     spatialEntity.endSubstep();
   }
@@ -71,35 +55,28 @@ public class ShadowingEntityTest {
   @Test
   void testSetAttribute() {
     String attrName = "testAttr";
-    
-    // Setup mock behavior
-    when(mockSpatialEntity.getAttributeValue(attrName))
-      .thenReturn(Optional.of(mockEngineValue));
-    
-    // Test getting prior attribute
+    when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
+
     EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
     assertEquals(mockEngineValue, priorValue);
-    
-    // Test setting current attribute
+
     spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
     verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
   }
 
   @Test
   void testGetHandlersFailsOutsideSubstep() {
-    assertThrows(IllegalStateException.class, () ->
-      spatialEntity.getHandlers("testAttr")
-    );
+    assertThrows(IllegalStateException.class, () -> spatialEntity.getHandlers("testAttr"));
   }
 
   @Test
   void testGetHandlersDuringSubstep() {
     String attrName = "testAttr";
     String substepName = "testSubstep";
-    
+
     when(mockSpatialEntity.getEventHandlers(attrName, substepName))
       .thenReturn(Arrays.asList(mockEventHandlerGroup));
-      
+
     spatialEntity.startSubstep(substepName);
     Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
     assertNotNull(handlers);
@@ -114,12 +91,12 @@ public class ShadowingEntityTest {
   }
 
   @Test
-    void testGetCurrentAttributeResolved() {
-      String attrName = "testAttr";
-      spatialEntity.setCurrentAttribute("testAttr", mockEngineValue);
-      Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
-      assertFalse(result.isEmpty());
-    }
+  void testGetCurrentAttributeResolved() {
+    String attrName = "testAttr";
+    spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
+    Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
+    assertFalse(result.isEmpty());
+  }
 
   @Test
   void testPatchAccessors() {
@@ -134,13 +111,9 @@ public class ShadowingEntityTest {
   @Test
   void testNonexistentAttributeAccess() {
     String nonexistentAttr = "nonexistent";
-    
     assertThrows(IllegalArgumentException.class, () ->
-      spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue)
-    );
-    
+      spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
     assertThrows(IllegalArgumentException.class, () ->
-      spatialEntity.getPriorAttribute(nonexistentAttr)
-    );
+      spatialEntity.getPriorAttribute(nonexistentAttr));
   }
 }
