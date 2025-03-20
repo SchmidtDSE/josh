@@ -6,7 +6,7 @@ plugins {
   id "checkstyle" // for code style checking
   id "antlr" // for ANTLR grammar
   id "org.openrewrite.rewrite" version "7.2.0" // Formatting for google style guide
-  id "org.teavm.library" version "0.11.0" // TeaVM for WASM compilation
+  id "org.teavm" version "0.11.0" // TeaVM for WASM compilation
 }
 
 java {
@@ -35,19 +35,11 @@ dependencies {
 
   // Command line parsing
   implementation("info.picocli:picocli:4.7.6")
-
-  // TeaVM dependencies
-  implementation("org.teavm:teavm-classlib:0.10.0")
-  implementation("org.teavm:teavm-jso:0.10.0")
-  implementation("org.teavm:teavm-jso-apis:0.10.0")
 }
 
 teavm {
   wasm {
-    classesToExclude = ["org.joshsim.JoshSim"]
-    dependencies {
-      excludeLibrary("picocli")
-    }
+    mainClass = "org.joshsim.JoshSimFacade"
   }
 }
 

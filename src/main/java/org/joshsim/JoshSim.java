@@ -19,14 +19,13 @@ import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.parse.Parser;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /**
- * Command line interface for JoshSim.
+ * Command line interface for Josh.
  * 
  * <p>Provides several subcommands like validate and run with options to help users validate
  * simulation files or execute them through the interface.</p>
@@ -87,8 +86,7 @@ public class JoshSim {
         return 2;
       }
 
-      Parser parser = new Parser();
-      ParseResult result = parser.parse(fileContent);
+      ParseResult result = JoshSimFacade.parse(fileContent);
 
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
