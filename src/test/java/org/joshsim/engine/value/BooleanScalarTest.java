@@ -88,8 +88,8 @@ class BooleanScalarTest {
   @Test
   void testRaiseToPowerThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, "");
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, "");
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, "count");
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, "count");
     
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
