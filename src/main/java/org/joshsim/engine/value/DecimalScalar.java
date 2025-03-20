@@ -58,23 +58,13 @@ public class DecimalScalar extends Scalar {
     return innerValue;
   }
 
-  /**
-   * Adds this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to add to this one
-   * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
-   */
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
 
-  /**
-   * Subtracts another DecimalScalar from this DecimalScalar.
-   *
-   * @param other the DecimalScalar to subtract from this one
-   * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
-   */
+  @Override
   protected EngineValue unsafeSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
@@ -84,12 +74,7 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Multiplies this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to multiply with this one
-   * @return a new DecimalScalar that is the product of this and the other DecimalScalar
-   */
+  @Override
   protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
@@ -99,12 +84,7 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Divides this DecimalScalar by another DecimalScalar.
-   *
-   * @param other the DecimalScalar to divide this one by
-   * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
-   */
+  @Override
   protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
@@ -114,12 +94,7 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Raises this DecimalScalar to the power of another DecimalScalar.
-   *
-   * @param other the DecimalScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
+  @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarType(other, getLanguageType());
   

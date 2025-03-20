@@ -65,37 +65,22 @@ public class IntScalar extends Scalar {
   }
 
 
-  /**
-   * Compares this IntScalar instance with another for equality.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
 
-  /**
-   * Checks equality of this IntScalar instance with another object.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
-  protected EngineValue unsafeSubtract(EngineValue other) {
+  @Override
+  protected EngineValue fulfillSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
 
-  /**
-   * Multiplies this IntScalar instance with another IntScalar.
-   *
-   * @param other the IntScalar to multiply with
-   * @return a new IntScalar that is the product of this and the other IntScalar
-   */
-  protected EngineValue unsafeMultiply(EngineValue other) {
+  @Override
+  protected EngineValue fulfillMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -104,14 +89,8 @@ public class IntScalar extends Scalar {
     );
   }
 
-  /**
-   * Divides this IntScalar by another IntScalar.
-   *
-   * @param other the IntScalar to divide this one by
-   * @return a new IntScalar that is the quotient of this divided by the other IntScalar
-   * @throws ArithmeticException if division by zero is attempted
-   */
-  protected EngineValue unsafeDivide(EngineValue other) {
+  @Override
+  protected EngineValue fulfillDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -120,13 +99,8 @@ public class IntScalar extends Scalar {
     );
   }
 
-  /**
-   * Raises this IntScalar to the power of another IntScalar.
-   *
-   * @param other the IntScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
-  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+  @Override
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
 
     if (!other.canBePower()) {

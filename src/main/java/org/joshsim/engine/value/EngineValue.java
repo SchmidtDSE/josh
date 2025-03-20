@@ -64,16 +64,26 @@ public abstract class EngineValue {
   }
 
   /**
-   * Add this value to another value.
+   * Add this value to another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Add this value to another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
    *
    * @param other the other value
    * @return the result of the addition
+   * @throws NotImplementedException if the operation is not supported for this data tyep.
    * @throws IllegalArgumentException if units are incompatible
    */
   protected abstract EngineValue unsafeAdd(EngineValue other);
+ 
   protected abstract EngineValue unsafeSubtract(EngineValue other);
+  
   protected abstract EngineValue unsafeMultiply(EngineValue other);
+  
   protected abstract EngineValue unsafeDivide(EngineValue other);
+  
   protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
 
   public EngineValue add(EngineValue other) {
