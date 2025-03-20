@@ -9,7 +9,9 @@ package org.joshsim.engine.value;
 
 import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 
 /**
@@ -86,13 +88,17 @@ public class EngineValueFactory {
    * @param units the units for the values in the distribution.
    * @returns decorated version of innerValue as a distribution.
    */
-  public RealizedDistribution buildRealizedDistribution(List<Scalar> innerValue, String units) {
+  public RealizedDistribution buildRealizedDistribution(
+      List<EngineValue> innerValue,
+      String units
+  ) {
     if (innerValue.size() == 0) {
       throw new IllegalArgumentException("Distributions cannot be empty.");
     }
 
-    return new RealizedDistribution(caster, innerValue, units);
-;
+    ArrayList<EngineValue> innerArrayList = new ArrayList<EngineValue>(innerValue);;
+    return new RealizedDistribution(caster, innerArrayList, units);
+
   }
   
 }

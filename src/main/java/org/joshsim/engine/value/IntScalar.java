@@ -126,15 +126,4 @@ public class IntScalar extends Scalar {
         getUnits()
     );
   }
-
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-
-    List<Long> values = new ArrayList<>(1);
-    values.add(innerValue);
-
-    return factory.buildDistribution(values, getUnits());
-  }
-  
 }

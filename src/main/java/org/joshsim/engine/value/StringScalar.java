@@ -110,14 +110,4 @@ public class StringScalar extends Scalar {
   public EngineValue raiseToPower(StringScalar other) {
     throw new UnsupportedOperationException("Cannot raise strings to powers.");
   }
-
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-
-    List<String> values = new ArrayList<>(1);
-    values.add(innerValue);
-
-    return factory.buildDistribution(values, getUnits());
-  }
 }

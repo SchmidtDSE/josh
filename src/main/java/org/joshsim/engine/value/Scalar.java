@@ -7,15 +7,13 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
  * Engine value which only has a single discrete value.
  */
-public abstract class Scalar implements EngineValue, Comparable<Scalar> {
-
-  private final EngineValueCaster caster;
-  private final String units;
+public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
 
   /**
    * Create a new scalar with the given units.
@@ -23,8 +21,7 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    * @param newUnits String describing the units which may be a user-defined unit.
    */
   public Scalar(EngineValueCaster newCaster, String newUnits) {
-    caster = newCaster;
-    units = newUnits;
+    super(newCaster, newUnits);
   }
 
   /**
@@ -56,12 +53,25 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
   public abstract long getAsInt();
 
   /**
+   * Converts this Scalar into a Distribution.
+   *
+   * <p>Creates a realized distribution containing this scalar value.</p>
+   *
+   * @return a Distribution representation of this Scalar.
+   */
+  public Distribution getAsDistribution() {
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
+    List<EngineValue> values = List.of(this);
+    return factory.buildRealizedDistribution(values, getUnits());
+  }
+
+  /**
    * Get the decorated value.
    *
    * @returns value inside this Scalar decorator.
    */
   @Override
-  public abstract Comparable getInnerValue();
+  public abstract Comparable<?> getInnerValue();
 
   /**
    * Compare this Scalar to the specified object.
@@ -76,7 +86,12 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    */
   @Override
   public int compareTo(Scalar other) {
-    return getInnerValue().compareTo(other.getInnerValue());
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    
+    // TODO: Seems smelly to have to convert to BigDecimal to compare Scalars
+    return safeTuple.getFirst().getAsScalar().getAsDecimal()
+            .compareTo(safeTuple.getSecond().getAsScalar().getAsDecimal());
   }
 
   /**
@@ -92,15 +107,6 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
     boolean sameUnits = getUnits().equals(other.getUnits());
     boolean sameValue = getInnerValue().equals(other.getInnerValue());
     return sameUnits && sameValue;
-  }
-
-  /**
-   * Get the caster to use for operations involving this engine value.
-   *
-   * @returns EngineValueCaster to use if this is the left-hand operand.
-   */
-  protected EngineValueCaster getCaster() {
-    return caster;
   }
 
   @Override
@@ -171,5 +177,5 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
     Units rightUnits = new Units(right);
     return leftUnits.divide(rightUnits).simplify().toString();
   }
-  
+
 }

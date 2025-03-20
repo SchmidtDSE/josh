@@ -124,12 +124,4 @@ public class DecimalScalar extends Scalar {
     double exponent = other.getAsDecimal().doubleValue();
     return new DecimalScalar(getCaster(), BigDecimal.valueOf(Math.pow(base, exponent)), getUnits());
   }
-
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-    List<BigDecimal> values = new ArrayList<>(1);
-    values.add(innerValue);
-    return factory.buildDistribution(values, getUnits());
-  }
 }

@@ -15,10 +15,7 @@ import java.util.Optional;
  * specific discrete values or it may be a theoreticcal distribution with undefined size.
  * </p>
  */
-public abstract class Distribution implements EngineValue {
-  // TODO: Should probably be handled within EngineValue?
-  private final EngineValueCaster caster;
-  private final String units;
+public abstract class Distribution extends EngineValue {
 
   /**
    * Constructor for a distribution.
@@ -27,17 +24,7 @@ public abstract class Distribution implements EngineValue {
    * @param newUnits the units of this distribution.
    */
   public Distribution(EngineValueCaster newCaster, String newUnits) {
-    caster = newCaster;
-    units = newUnits;
-  }
-
-  /**
-   * Get the engine value caster for this distribution.
-   *
-   * @return the engine value caster for this distribution.
-   */
-  protected EngineValueCaster getCaster() {
-    return caster;
+    super(newCaster, newUnits);
   }
 
   /**

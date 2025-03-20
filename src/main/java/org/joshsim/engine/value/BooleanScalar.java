@@ -57,7 +57,7 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public Comparable getInnerValue() {
+  public Comparable<?> getInnerValue() {
     return innerValue;
   }
   
@@ -104,13 +104,5 @@ public class BooleanScalar extends Scalar {
    */
   public EngineValue raiseToPower(BooleanScalar other) {
     throw new UnsupportedOperationException("Cannot raise booleans to powers.");
-  }
-
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-    List<Boolean> values = new ArrayList<>(1);
-    values.add(innerValue);
-    return factory.buildDistribution(values, getUnits());
   }
 }

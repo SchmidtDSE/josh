@@ -10,4 +10,16 @@ package org.joshsim.engine.value;
 /**
  * Distribution in which each unique value can only zero or one times.
  */
-public interface Set extends Distribution {}
+public abstract class Set extends Distribution {
+
+  /**
+   * Constructor.
+   *
+   * @param newCaster The caster to use.
+   * @param newUnits The units of the distribution.
+   */
+  public Set(EngineValueCaster newCaster, String newUnits) {
+    super(newCaster, newUnits);
+  }
+
+}

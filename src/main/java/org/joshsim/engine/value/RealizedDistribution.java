@@ -6,13 +6,11 @@
 
 package org.joshsim.engine.value;
 
-import java.lang.foreign.Linker.Option;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.DoubleSummaryStatistics;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Distribution with a finite number of elements.
@@ -26,20 +24,6 @@ import java.util.stream.Stream;
 public class RealizedDistribution extends Distribution {
   private ArrayList<EngineValue> values;
   private Optional<DoubleSummaryStatistics> stats = Optional.empty();
-
-  /**
-   * Compute statistics on demand using parallel stream.
-   * 
-   *
-   * @return DoubleSummaryStatistics for the values
-   */
-  private void computeStats() {
-    DoubleSummaryStatistics newStats = values.parallelStream()
-        .map(EngineValue::getAsScalar)
-        .map(Scalar::getAsDecimal)
-        .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));
-    stats = Optional.of(newStats);
-  }
 
   /**
    * Create a new RealizedDistribution.
@@ -57,7 +41,19 @@ public class RealizedDistribution extends Distribution {
     values = newInnerValue;
   }
 
-  
+  /**
+   * Compute statistics on demand using parallel stream.
+   * 
+   *
+   * @return DoubleSummaryStatistics for the values
+   */
+  private void computeStats() {
+    DoubleSummaryStatistics newStats = values.parallelStream()
+        .map(EngineValue::getAsScalar)
+        .map(Scalar::getAsDecimal)
+        .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));
+    stats = Optional.of(newStats);
+  }
 
   @Override
   public RealizedDistribution add(EngineValue other) {
@@ -97,11 +93,6 @@ public class RealizedDistribution extends Distribution {
         .map(value -> value.raiseToPower(other))
         .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
-  }
-
-  @Override
-  public String getUnits() {
-    return getUnits(); 
   }
 
   @Override
@@ -165,14 +156,14 @@ public class RealizedDistribution extends Distribution {
     }
   }
 
-  // @Override
-  // public Optional<Scalar> getMean() {
-  //   if (stats.isEmpty()) {
-  //     computeStats();
-  //   }
-  //   double mean = BigDecimal(stats.get().getAverage());
-  //   return new Optional.of(DecimalScalar(getCaster(), mean, getUnits()));
-  // }
+  @Override
+  public Optional<Scalar> getMean() {
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    BigDecimal meanDecimal = new BigDecimal(stats.get().getAverage());
+    return Optional.of(new DecimalScalar(getCaster(), meanDecimal, getUnits()));
+  }
 
   @Override
   public Optional<Scalar> getStd() {

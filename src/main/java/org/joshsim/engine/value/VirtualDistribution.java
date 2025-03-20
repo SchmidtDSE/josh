@@ -14,4 +14,16 @@ package org.joshsim.engine.value;
  * which does not have specific individual elements. These distributions can still be sampled and
  * used for generating summary statistics.</p> 
  */
-public interface VirtualDistribution extends Distribution {}
+public abstract class VirtualDistribution extends Distribution {
+
+  /**
+   * Create a new virtual distribution.
+   *
+   * @param newCaster The value caster to use for this distribution.
+   * @param newUnits The units of this distribution.
+   */
+  public VirtualDistribution(EngineValueCaster newCaster, String newUnits) {
+    super(newCaster, newUnits);
+  }
+
+}

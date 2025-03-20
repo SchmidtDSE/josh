@@ -13,7 +13,39 @@ package org.joshsim.engine.value;
  * <p>Represents a value in the engine which may be an individual value (Scalar) or may be a
  * collection of values (Distribution).</p>
  */
-public interface EngineValue {
+public abstract class EngineValue {
+
+  protected final EngineValueCaster caster;
+  protected final String units;
+
+  /**
+   * Create a new EngineValue.
+   *
+   * @param caster the EngineValueCaster to use for casting
+   * @param units the units of the value
+   */
+  public EngineValue(EngineValueCaster caster, String units) {
+    this.caster = caster;
+    this.units = units;
+  }
+
+  /**
+   * Get the units of this value.
+   *
+   * @return the units of this value
+   */
+  String getUnits() {
+    return units;
+  }
+
+  /**
+   * Get the EngineValueCaster for this value.
+   *
+   * @return the EngineValueCaster for this value
+   */
+  EngineValueCaster getCaster() {
+    return caster;
+  }
 
   /**
    * Add this value to another value.
@@ -22,7 +54,7 @@ public interface EngineValue {
    * @return the result of the addition
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue add(EngineValue other);
+  abstract EngineValue add(EngineValue other);
 
   /**
    * Subtract another value from this value.
@@ -31,7 +63,7 @@ public interface EngineValue {
    * @return the result of the subtraction
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue subtract(EngineValue other);
+  abstract EngineValue subtract(EngineValue other);
 
   /**
    * Multiply this value by another value.
@@ -40,7 +72,7 @@ public interface EngineValue {
    * @return the result of the multiplication
    * @throws IllegalArgumentException if units are incompatible
    */
-  EngineValue multiply(EngineValue other);
+  abstract EngineValue multiply(EngineValue other);
 
   /**
    * Divide this value by another value.
@@ -50,7 +82,7 @@ public interface EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  EngineValue divide(EngineValue other);
+  abstract EngineValue divide(EngineValue other);
 
   /**
    * Raise this value to the power of another value.
@@ -60,14 +92,7 @@ public interface EngineValue {
    * @throws IllegalArgumentException if units are incompatible
    * @throws ArithmeticException if division by zero is attempted
    */
-  EngineValue raiseToPower(EngineValue other);
-
-  /**
-   * Get the units of this value.
-   *
-   * @return the units of this value
-   */
-  String getUnits();
+  abstract EngineValue raiseToPower(EngineValue other);
 
   /**
    * Convert this EngineValue to a Scalar.
@@ -79,7 +104,7 @@ public interface EngineValue {
    *
    * @return This EngineValue either as a Scalar or sampled for a single Scalar.
    */
-  Scalar getAsScalar();
+  abstract Scalar getAsScalar();
 
   /**
    * Convert this EngineValue to a Distribution.
@@ -91,7 +116,7 @@ public interface EngineValue {
    *
    * @return This EngineValue as a distribution.
    */
-  Distribution getAsDistribution();
+  abstract Distribution getAsDistribution();
 
   /**
    * Get a string description of the type that this engine value would be in Josh sources.
@@ -102,7 +127,7 @@ public interface EngineValue {
    *
    * @returns String description of this type as it would appear to Josh source code.
    */
-  String getLanguageType();
+  abstract String getLanguageType();
 
   /**
    * Change the type of this EngineValue.
@@ -113,14 +138,14 @@ public interface EngineValue {
    * @param strategy Cast strategy to apply.
    * @returns Engine value after cast.
    */
-  EngineValue cast(Cast strategy);
+  abstract EngineValue cast(Cast strategy);
 
   /**
    * Get the underlying Java object decorated by this EngineValue.
    *
    * @returns inner Java object decorated by this EngineValue.
    */
-  Object getInnerValue();
+  abstract Object getInnerValue();
 
   /**
    * Determine the new units string having multipled two units together.
@@ -129,7 +154,7 @@ public interface EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  String determineMultipliedUnits(String left, String right);
+  abstract String determineMultipliedUnits(String left, String right);
 
   /**
    * Determine the new units string having divided two units.
@@ -138,6 +163,6 @@ public interface EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  String determineDividedUnits(String left, String right);
+  abstract String determineDividedUnits(String left, String right);
 
 }
