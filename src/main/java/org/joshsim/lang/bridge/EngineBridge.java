@@ -15,24 +15,49 @@ import org.joshsim.engine.value.EngineValue;
 /**
  * Bridge that decouples the engine from the language interpreter.
  */
-public interface EngineBridge {
+public class EngineBridge {
 
-  public EngineBridge(Simulation simulation, Replicate replicate)
+  private static final int DEFAULT_START_STEP = 0;
+  private static final int DEFAULT_END_STEP = 100;
 
-  Simulation getSimulation();
+  private final Simulation simulation;
+  private final Replicate replicate;
+  private final int endStep;
   
-  void startStep();
+  private int currentStep;
+  private boolean inStep;
 
-  void endStep();
+  public EngineBridge(Simulation simulation, Replicate replicate) {
+    this.simulation = simulation;
+    this.replicate = replicate;
 
-  ShadowingEntity getPatch(GeoPoint point);
+    currentStep = simulation.getAttributeValue("").orElse(DEFAULT_START_STEP);
+    endStep = simulation.getAttributeValue("").orElse(DEFAULT_END_STEP);
+    inStep = false;
+  }
+  
+  public void startStep() {
+    
+  }
 
-  Iterable<ShadowingEntity> getCurrentPatches();
+  public void endStep() {
+    
+  }
 
-  Iterable<ShadowingEntity> getPriorPatches(Geometry query);
+  public ShadowingEntity getPatch(GeoPoint point) {
+    
+  }
 
-  EngineValue convert(EngineValue current, String newUnits);
+  public Iterable<ShadowingEntity> getCurrentPatches() {
+    
+  }
 
-  Replicate end();
+  public Iterable<ShadowingEntity> getPriorPatches(Geometry query) {
+    
+  }
+
+  public EngineValue convert(EngineValue current, String newUnits) {
+    
+  }
   
 }
