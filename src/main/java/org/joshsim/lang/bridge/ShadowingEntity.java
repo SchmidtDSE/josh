@@ -9,6 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.Patch;
@@ -129,9 +131,10 @@ public class ShadowingEntity {
   /**
    * Get the current value of an attribute if it has been resolved in the current substep.
    *
-   * @param name unique identifier of the attribute to retrieve
-   * @return Optional containing the current value if resolved, empty Optional otherwise
-   * @throws IllegalStateException if the attribute exists but has not been initialized
+   * @param name unique identifier of the attribute to retrieve.
+   * @return Optional containing the current value if resolved, empty Optional otherwise.
+   * @throws IllegalArgumentException if the attribute is not known for this entity.
+   * @throws IllegalStateException if the attribute exists but has not been initialized.
    */
   public Optional<EngineValue> getCurrentAttribute(String name) {
     if (!resolvedAttributes.contains(name)) {
@@ -151,9 +154,9 @@ public class ShadowingEntity {
   /**
    * Set the current value of an attribute in the current substep.
    *
-   * @param name unique identifier of the attribute to set
-   * @param value new value to assign to the attribute
-   * @throws IllegalArgumentException if the attribute does not exist
+   * @param name unique identifier of the attribute to set.
+   * @param value new value to assign to the attribute.
+   * @throws IllegalArgumentException if the attribute is not known for this entity.
    */
   public void setCurrentAttribute(String name, EngineValue value) {
     assertAttributePresent(name);
@@ -163,10 +166,10 @@ public class ShadowingEntity {
   /**
    * Get the value of an attribute from the previous time step.
    *
-   * @param name unique identifier of the attribute to retrieve
-   * @return the value of the attribute from the previous step
-   * @throws IllegalStateException if the attribute exists but has no value
-   * @throws IllegalArgumentException if the attribute does not exist
+   * @param name unique identifier of the attribute to retrieve.
+   * @return the value of the attribute from the previous step.
+   * @throws IllegalStateException if the attribute exists but has not been initalized.
+   * @throws IllegalArgumentException if the attribute does not exist on this entity.
    */
   public EngineValue getPriorAttribute(String name) {
     Optional<EngineValue> valueMaybe = inner.getAttributeValue(name);
@@ -192,7 +195,7 @@ public class ShadowingEntity {
   /**
    * Get the patch that contains this entity.
    *
-   * @return the ShadowingEntity representing the containing patch
+   * @return the ShadowingEntity representing the containing patch.
    */
   public ShadowingEntity getHere() {
     return here;
@@ -201,7 +204,7 @@ public class ShadowingEntity {
   /**
    * Get the simulation context for this entity.
    *
-   * @return the Simulation object that provides context for this entity
+   * @return the Simulation object that provides context for this entity.
    */
   public Simulation getMeta() {
     return meta;
@@ -210,8 +213,8 @@ public class ShadowingEntity {
   /**
    * Verify that an attribute exists on this entity.
    *
-   * @param name unique identifier of the attribute to verify
-   * @throws IllegalArgumentException if the attribute is not found
+   * @param name unique identifier of the attribute to verify.
+   * @throws IllegalArgumentException if the attribute is not found.
    */
   private void assertAttributePresent(String name) {
     if (hasAttribute(name)) {
@@ -225,12 +228,12 @@ public class ShadowingEntity {
   /**
    * Extract all attribute names from an entity's event handlers.
    *
-   * @param target the Entity from which to extract attribute names
-   * @return Set of attribute names found in the entity's event handlers
+   * @param target the Entity from which to extract attribute names.
+   * @return Set of attribute names found in the entity's event handlers.
    */
   private Set<String> getAttributes(Entity target) {
-    return inner.getEventHandlers().stream()
-      .flatMap(group -> group.getEventHandlers())
+    return StreamSupport.stream(inner.getEventHandlers().spliterator(), false)
+      .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
       .map(handler -> handler.getAttributeName())
       .collect(Collectors.toSet());
   }
