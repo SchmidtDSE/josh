@@ -22,9 +22,7 @@ import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 /**
@@ -109,11 +107,11 @@ public class ShadowingEntityTest {
     String attrName = "testAttr";
     String substepName = "test";
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
-    
+
     spatialEntity.startSubstep(substepName);
     spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
     Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
-    
+
     assertFalse(result.isEmpty());
     verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
