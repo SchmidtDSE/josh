@@ -76,14 +76,79 @@ public abstract class EngineValue {
    * @throws NotImplementedException if the operation is not supported for this data tyep.
    * @throws IllegalArgumentException if units are incompatible
    */
+  /**
+   * Add this value to another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Add this value to another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the addition
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeAdd(EngineValue other);
- 
+
+  /**
+   * Subtract another value from this value assuming that the units and type are compatible and in order.
+   *
+   * <p>Subtract another value from this value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the subtraction
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeSubtract(EngineValue other);
-  
+
+  /**
+   * Multiply this value by another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Multiply this value by another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the multiplication
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeMultiply(EngineValue other);
-  
+
+  /**
+   * Divide this value by another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Divide this value by another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of the division
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeDivide(EngineValue other);
-  
+
+  /**
+   * Raise this value to the power of another value assuming that the units and type are compatible and in order.
+   *
+   * <p>Raise this value to the power of another value assuming that the units and type are compatible and in
+   * order meaning that the units are confirmed to be semantically equivalent, actual data types are
+   * compatible for operations, and the are in expected order. The left side operator must be a
+   * distribution if one or more distributions are present in the operation.</p>
+   *
+   * @param other the other value
+   * @return the result of raising to power
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible or exponent has non-count units
+   */
   protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
 
   public EngineValue add(EngineValue other) {
