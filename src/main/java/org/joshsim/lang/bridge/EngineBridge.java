@@ -17,21 +17,17 @@ import org.joshsim.engine.value.EngineValue;
  */
 public interface EngineBridge {
 
+  public EngineBridge(Simulation simulation, Replicate replicate)
+
   Simulation getSimulation();
   
   void startStep();
 
   void endStep();
 
-  void startSubstep(String phase);
-
-  void endSubstep();
-
   ShadowingEntity getPatch(GeoPoint point);
 
   Iterable<ShadowingEntity> getCurrentPatches();
-
-  Iterable<ShadowingEntity> getPriorPatches();
 
   Iterable<ShadowingEntity> getPriorPatches(Geometry query);
 

@@ -105,7 +105,7 @@ public class ShadowingEntity {
   /**
    * Get the names of all attributes with event handlers registered to this entity.
    *
-   * @returns Iterable over attribute names as Strings.
+   * @return Iterable over attribute names as Strings.
    */
   public Iterable<String> getAttributes() {
     return allAttributes;
@@ -188,7 +188,7 @@ public class ShadowingEntity {
    * Determine if this entity has an attribute.
    *
    * @param name unique identifier of the attribute.
-   * @returns true if found on this entity within any event handler registration or false otherwise.
+   * @return true if found on this entity within any event handler registration or false otherwise.
    */
   public boolean hasAttribute(String name) {
     return allAttributes.contains(name);

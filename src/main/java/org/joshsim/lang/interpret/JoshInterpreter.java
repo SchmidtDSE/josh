@@ -19,7 +19,7 @@ public interface JoshInterpreter {
    * Interpret a Josh source into a simulation.
    *
    * @param source String source code for the Josh simulation to interpret.
-   * @returns Parsed simulation.
+   * @return Parsed simulation.
    */
   EngineBridgeSimulationStore interpret(String source);
 

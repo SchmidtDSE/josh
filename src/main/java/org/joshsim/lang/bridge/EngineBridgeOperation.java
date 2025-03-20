@@ -19,7 +19,7 @@ public interface EngineBridgeOperation {
    * Operation which can manipulate an EngineBridge in a repeatable way.
    *
    * @param target EngineBridge in which to perform this operation.
-   * @returns Optional which is empty if the operation does not yield a value (like an assertion)
+   * @return Optional which is empty if the operation does not yield a value (like an assertion)
    *     or an Optional containing the EngineValue which resulted from the operation if it does
    *     yield a value.
    */
