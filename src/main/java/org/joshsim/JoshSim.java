@@ -27,8 +27,10 @@ import picocli.CommandLine.Parameters;
 /**
  * Command line interface for Josh.
  * 
- * <p>Provides several subcommands like validate and run with options to help users validate
- * simulation files or execute them through the interface.</p>
+ * <p>Provides several subcommands like validate and run which check simulation files or execute
+ * them via the command line respectively. This is in contrast to using Josh as a library like
+ * through JoshSimFacade where client code can perform operations on the platform
+ * programmatically.</p>
  *
  * @version 1.0
  * @since 1.0
