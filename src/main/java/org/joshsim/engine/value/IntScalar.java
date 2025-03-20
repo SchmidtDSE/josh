@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 public class IntScalar extends Scalar {
 
   private final Long innerValue;
-
+  
   /**
    * Constructs an IntScalar instance with specified caster, value, and units.
    *
@@ -64,49 +64,74 @@ public class IntScalar extends Scalar {
     return innerValue;
   }
 
-
-  @Override
-  protected EngineValue fulfillAdd(Scalar other) {
+  
+  /**
+   * Compares this IntScalar instance with another for equality.
+   *
+   * @param other the object to compare to
+   * @return true if the specified object is equal to this IntScalar; false otherwise.
+   */
+  public EngineValue add(IntScalar other) {
     validateCommonUnits(other);
-    return new IntScalar(getCaster(), getAsInt() + ((IntScalar)other).getAsInt(), getUnits());
+    return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
-  @Override
-  protected EngineValue fulfillSubtract(Scalar other) {
+  
+  /**
+   * Checks equality of this IntScalar instance with another object.
+   *
+   * @param other the object to compare to
+   * @return true if the specified object is equal to this IntScalar; false otherwise.
+   */
+  public EngineValue subtract(IntScalar other) {
     validateCommonUnits(other);
-    return new IntScalar(getCaster(), getAsInt() - ((IntScalar)other).getAsInt(), getUnits());
+    return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
-  @Override
-  protected EngineValue fulfillMultiply(Scalar other) {
+  
+  /**
+   * Multiplies this IntScalar instance with another IntScalar.
+   *
+   * @param other the IntScalar to multiply with
+   * @return a new IntScalar that is the product of this and the other IntScalar
+   */
+  public EngineValue multiply(IntScalar other) {
     return new IntScalar(
         getCaster(),
-        getAsInt() * ((IntScalar)other).getAsInt(),
+        getAsInt() * other.getAsInt(),
         determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
-
-  @Override
-  protected EngineValue fulfillDivide(Scalar other) {
-    if (((IntScalar)other).getAsInt() == 0) {
-      throw new ArithmeticException("Division by zero");
-    }
+  
+  /**
+   * Divides this IntScalar by another IntScalar.
+   *
+   * @param other the IntScalar to divide this one by
+   * @return a new IntScalar that is the quotient of this divided by the other IntScalar
+   * @throws ArithmeticException if division by zero is attempted
+   */
+  public EngineValue divide(IntScalar other) {
     return new IntScalar(
         getCaster(),
-        getAsInt() / ((IntScalar)other).getAsInt(),
+        getAsInt() / other.getAsInt(),
         determineDividedUnits(getUnits(), other.getUnits())
     );
   }
-
-  @Override
-  protected EngineValue fulfillRaiseToPower(Scalar other) {
+  
+  /**
+   * Raises this IntScalar to the power of another IntScalar.
+   *
+   * @param other the IntScalar to use as the exponent
+   * @return a new DecimalScalar that is this value raised to the power of the other value
+   */
+  public EngineValue raiseToPower(IntScalar other) {
     if (other.getUnits() != "") {
       throw new IllegalArgumentException("Cannot raise an int to a power with units.");
     }
     return new DecimalScalar(
         getCaster(),
-        new BigDecimal(Math.pow(getAsInt(), ((IntScalar)other).getAsInt())),
-        determineRaisedUnits(getUnits(), ((IntScalar)other).getAsInt())
+        new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
+        determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
 }
