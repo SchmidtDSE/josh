@@ -126,6 +126,13 @@ public class ShadowingEntity {
     return inner.getEventHandlers(attribute, substep.get());
   }
 
+  /**
+   * Get the current value of an attribute if it has been resolved in the current substep.
+   *
+   * @param name unique identifier of the attribute to retrieve
+   * @return Optional containing the current value if resolved, empty Optional otherwise
+   * @throws IllegalStateException if the attribute exists but has not been initialized
+   */
   public Optional<EngineValue> getCurrentAttribute(String name) {
     if (!resolvedAttributes.contains(name)) {
       return Optional.empty();
@@ -141,11 +148,26 @@ public class ShadowingEntity {
     return valueMaybe;
   }
 
+  /**
+   * Set the current value of an attribute in the current substep.
+   *
+   * @param name unique identifier of the attribute to set
+   * @param value new value to assign to the attribute
+   * @throws IllegalArgumentException if the attribute does not exist
+   */
   public void setCurrentAttribute(String name, EngineValue value) {
     assertAttributePresent(name);
     inner.setAttributeValue(name, value);
   }
 
+  /**
+   * Get the value of an attribute from the previous time step.
+   *
+   * @param name unique identifier of the attribute to retrieve
+   * @return the value of the attribute from the previous step
+   * @throws IllegalStateException if the attribute exists but has no value
+   * @throws IllegalArgumentException if the attribute does not exist
+   */
   public EngineValue getPriorAttribute(String name) {
     Optional<EngineValue> valueMaybe = inner.getAttributeValue(name);
     if (valueMaybe.isEmpty()) {
@@ -167,14 +189,30 @@ public class ShadowingEntity {
     return allAttributes.contains(name);
   }
 
+  /**
+   * Get the patch that contains this entity.
+   *
+   * @return the ShadowingEntity representing the containing patch
+   */
   public ShadowingEntity getHere() {
     return here;
   }
 
+  /**
+   * Get the simulation context for this entity.
+   *
+   * @return the Simulation object that provides context for this entity
+   */
   public Simulation getMeta() {
     return meta;
   }
 
+  /**
+   * Verify that an attribute exists on this entity.
+   *
+   * @param name unique identifier of the attribute to verify
+   * @throws IllegalArgumentException if the attribute is not found
+   */
   private void assertAttributePresent(String name) {
     if (hasAttribute(name)) {
       return;
@@ -184,6 +222,12 @@ public class ShadowingEntity {
     throw new IllegalArgumentException(message);
   }
 
+  /**
+   * Extract all attribute names from an entity's event handlers.
+   *
+   * @param target the Entity from which to extract attribute names
+   * @return Set of attribute names found in the entity's event handlers
+   */
   private Set<String> getAttributes(Entity target) {
     return inner.getEventHandlers().stream()
       .flatMap(group -> group.getEventHandlers())
