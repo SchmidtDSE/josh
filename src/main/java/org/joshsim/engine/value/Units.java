@@ -106,7 +106,7 @@ public class Units {
       newNumeratorUnits.put(units, newCount);
     }
 
-    Map<String, Integer> otherDenominatorUnits = other.getNumeratorUnits();
+    Map<String, Integer> otherDenominatorUnits = other.getDenominatorUnits();
     for (String units : otherDenominatorUnits.keySet()) {
       int priorCount = newDenominatorUnits.getOrDefault(units, 0);
       int otherCount = otherDenominatorUnits.get(units);
@@ -197,7 +197,10 @@ public class Units {
   private Map<String, Integer> parseMultiplyString(String target) {
     Map<String, Integer> unitCounts = new TreeMap<>();
 
-    for (String unit : target.split(" * ")) {
+    for (String unit : target.split("\\s*\\*\\s*")) {
+      if (unit.isEmpty()) {
+        continue;
+      }
       unitCounts.put(unit, unitCounts.getOrDefault(unit, 0) + 1);
     }
     return unitCounts;
