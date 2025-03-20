@@ -166,7 +166,7 @@ class UnitsTest {
   void testSimplify() {
     Map<String, Integer> numerator = new TreeMap<>();
     numerator.put("m", 3);
-    numerator.put("kilogram", 1);
+    numerator.put("kg", 1);
     
     Map<String, Integer> denominator = new TreeMap<>();
     denominator.put("m", 1);
@@ -178,8 +178,8 @@ class UnitsTest {
     assertEquals(2, simplified.getNumeratorUnits().size());
     assertTrue(simplified.getNumeratorUnits().containsKey("m"));
     assertEquals(2, simplified.getNumeratorUnits().get("m"));
-    assertTrue(simplified.getNumeratorUnits().containsKey("kilogram"));
-    assertEquals(1, simplified.getNumeratorUnits().get("kilogram"));
+    assertTrue(simplified.getNumeratorUnits().containsKey("kg"));
+    assertEquals(1, simplified.getNumeratorUnits().get("kg"));
     
     assertEquals(1, simplified.getDenominatorUnits().size());
     assertTrue(simplified.getDenominatorUnits().containsKey("s"));

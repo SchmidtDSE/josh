@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.value;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -138,7 +139,8 @@ public class Units {
     Map<String, Integer> newNumeratorUnits = new TreeMap<>();
     Map<String, Integer> newDenominatorUnits = new TreeMap<>();
     
-    Set<String> sharedUnits = numeratorUnits.keySet();
+    // Create a copy instead of a view to avoid modifying original collections
+    Set<String> sharedUnits = new HashSet<>(numeratorUnits.keySet());
     sharedUnits.retainAll(denominatorUnits.keySet());
 
     for (String units : sharedUnits) {
@@ -148,19 +150,19 @@ public class Units {
       
       if (simplifiedCount > 0) {
         newNumeratorUnits.put(units, simplifiedCount);
-      } else {
-        newDenominatorUnits.put(units, simplifiedCount * -1);
+      } else if (simplifiedCount < 0) {
+        newDenominatorUnits.put(units, Math.abs(simplifiedCount));
       }
     }
 
-    Set<String> numeratorOnlyUnits = numeratorUnits.keySet();
+    Set<String> numeratorOnlyUnits = new HashSet<>(numeratorUnits.keySet());
     numeratorOnlyUnits.removeAll(denominatorUnits.keySet());
 
     for (String units : numeratorOnlyUnits) {
       newNumeratorUnits.put(units, numeratorUnits.get(units));
     }
     
-    Set<String> denominatorOnlyUnits = denominatorUnits.keySet();
+    Set<String> denominatorOnlyUnits = new HashSet<>(denominatorUnits.keySet());
     denominatorOnlyUnits.removeAll(numeratorUnits.keySet());
 
     for (String units : denominatorOnlyUnits) {
