@@ -6,7 +6,8 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.lang.parse.EngineBridgeSimulation;
+import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
+
 
 
 /**
@@ -20,6 +21,6 @@ public interface JoshInterpreter {
    * @param source String source code for the Josh simulation to interpret.
    * @returns Parsed simulation.
    */
-  EngineBridgeSimulation interpret(String source);
+  EngineBridgeSimulationStore interpret(String source);
 
 }

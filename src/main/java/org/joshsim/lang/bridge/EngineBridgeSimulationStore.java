@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Structure describing a set of simulations read from a Josh source.
  */
-public class EngineBridgeSimulation {
+public class EngineBridgeSimulationStore {
 
   private final Map<String, EngineBridgeOperation> simulationSteps;
 
@@ -22,7 +22,7 @@ public class EngineBridgeSimulation {
    * @param simulationSteps EngineBridgeOperations by simulation name where each operation
    *     execute a single time step when given an EngineBridge on which to operate.
    */
-  public EngineBridgeSimulation(Map<String, EngineBridgeOperation> simulationSteps) {
+  public EngineBridgeSimulationStore(Map<String, EngineBridgeOperation> simulationSteps) {
     this.simulationSteps = simulationSteps;
   }
 
