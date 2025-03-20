@@ -30,31 +30,37 @@ public class EngineValueWideningCaster implements EngineValueCaster {
 
     // Options for boolean
     addCast(
-        new EngineValueTuple.TypesTuple("boolean", "int"),
+        "boolean",
+        "int",
         x -> factory.build(x.getAsInt(), x.getUnits())
     );
     addCast(
-        new EngineValueTuple.TypesTuple("boolean", "decimal"),
+        "boolean",
+        "decimal",
         x -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
-        new EngineValueTuple.TypesTuple("boolean", "string"),
+        "boolean",
+        "string",
         x -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for int
     addCast(
-        new EngineValueTuple.TypesTuple("int", "decimal"),
+        "int",
+        "decimal",
         x -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
-        new EngineValueTuple.TypesTuple("int", "String"),
+        "int",
+        "string",
         x -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for decimal
     addCast(
-        new EngineValueTuple.TypesTuple("decimal", "string"),
+        "decimal",
+        "string",
         x -> factory.build(x.getAsString(), x.getUnits())
     );
   }
@@ -97,10 +103,17 @@ public class EngineValueWideningCaster implements EngineValueCaster {
   /**
    * Indicate that a cast is valid.
    *
-   * @param types directional tuple of types for which this conversion is allowed.
+   * @param firstRoot the starting type of the cast in terms of root type. Will be broadcast if
+   *     given to a distribution.
+   * @param secondRoot the ending type of the cast in terms of root type. Will be broadcast if
+   *     given to a distribution.
    * @param strategy the strategy to employ to execute the cast.
    */
-  private void addCast(EngineValueTuple.TypesTuple types, Cast strategy) {
+  private void addCast(String firstRoot, String secondRoot, Cast strategy) {
+    EngineValueTuple.TypesTuple types = new EngineValueTuple.TypesTuple(
+        new LanguageType(firstRoot),
+        new LanguageType(secondRoot)
+    );
     strategies.put(types, strategy);
   }
 

@@ -49,8 +49,8 @@ public class DecimalScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "decimal";
+  public LanguageType getLanguageType() {
+    return new LanguageType("decimal");
   }
 
   @Override
@@ -96,7 +96,7 @@ public class DecimalScalar extends Scalar {
 
   @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
-    assertScalarType(other, getLanguageType());
+    assertScalarCompatible(other);
   
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();

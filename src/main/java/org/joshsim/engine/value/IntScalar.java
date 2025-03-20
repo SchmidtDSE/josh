@@ -55,8 +55,8 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "int";
+  public LanguageType getLanguageType() {
+    return new LanguageType("int");
   }
 
   @Override
@@ -73,14 +73,14 @@ public class IntScalar extends Scalar {
 
 
   @Override
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  protected EngineValue unsafeSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
 
   @Override
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -90,7 +90,7 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  protected EngineValue fulfillDivide(EngineValue other) {
+  protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
@@ -100,7 +100,7 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
 
     if (!other.canBePower()) {

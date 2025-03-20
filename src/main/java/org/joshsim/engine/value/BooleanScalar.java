@@ -50,8 +50,8 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "boolean";
+  public LanguageType getLanguageType() {
+    return new LanguageType("boolean");
   }
 
   @Override

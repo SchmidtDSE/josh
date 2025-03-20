@@ -43,7 +43,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @returns value inside this Scalar decorator.
    */
   @Override
-  public abstract Comparable<?> getInnerValue();
+  public abstract Comparable getInnerValue();
 
   /**
    * Compare this Scalar to the specified object.
@@ -60,7 +60,9 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public int compareTo(Scalar other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().getInnerValue().equals(safeTuple.getSecond().getInnerValue());
+    Scalar firstScalar = (Scalar) safeTuple.getFirst();
+    Scalar secondScalar = (Scalar) safeTuple.getSecond();
+    return firstScalar.getInnerValue().compareTo(secondScalar.getInnerValue());
   }
 
   /**
@@ -122,6 +124,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     raiseUnsupported("Cannot add %s.");
+    return null;
   }
 
   /**
@@ -132,6 +135,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeSubtract(EngineValue other) {
     raiseUnsupported("Cannot subtract with %s.");
+    return null;
   }
 
   /**
@@ -142,6 +146,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeMultiply(EngineValue other) {
     raiseUnsupported("Cannot multiply with %s.");
+    return null;
   }
 
   /**
@@ -152,6 +157,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeDivide(EngineValue other) {
     raiseUnsupported("Cannot divide with %s.");
+    return null;
   }
 
   /**
@@ -162,21 +168,22 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     raiseUnsupported("Cannot raise %s to powers.");
+    return null;
   }
 
   protected void assertScalarCompatible(EngineValue other) {
-    if (other.getLanguageType().contains("Distribution")) {
-      throw IllegalArgumentException("Unexpected distribution.");
+    if (other.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Unexpected distribution.");
     }
 
     if (!getLanguageType().equals(other.getLanguageType())) {
-      throw IllegalArgumentException("Unsafe scalar arithmetic operation with incompatible types.");
+      throw new IllegalArgumentException("Unsafe scalar arithmetic operation with incompatible types.");
     }
   }
 
   private void raiseUnsupported(String messageTemplate) {
     String message = String.format(messageTemplate, getLanguageType());
-    throw NotImplementedException(message);
+    throw new UnsupportedOperationException(message);
   }
 
 }

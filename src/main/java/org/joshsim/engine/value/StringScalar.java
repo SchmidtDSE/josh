@@ -55,8 +55,8 @@ public class StringScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "string";
+  public LanguageType getLanguageType() {
+    return new LanguageType("string");
   }
 
   @Override

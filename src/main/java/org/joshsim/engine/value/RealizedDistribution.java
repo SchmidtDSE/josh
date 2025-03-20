@@ -107,9 +107,15 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public String getLanguageType() {
+  public LanguageType getLanguageType() {
     EngineValue exampleValue = values.get(0);
-    return String.format("(Realized)Distribution.%s", exampleValue.getLanguageType());
+    
+    Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
+    List<String> distributions = new ArrayList<>();
+    distributions.add("RealizedDistribution");
+    innerDistributions.forEach(distributions::add);
+    
+    return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
   }
 
   @Override
