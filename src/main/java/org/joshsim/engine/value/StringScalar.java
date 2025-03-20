@@ -73,8 +73,7 @@ public class StringScalar extends Scalar {
    * @return a new StringScalar that is the concatenation of this and the other StringScalar
    */
   protected EngineValue fulfillAdd(EngineValue other) {
-    StringScalar otherScalar = (StringScalar) other;
-    return new StringScalar(getCaster(), getAsString() + otherScalar.getAsString(), getUnits());
+    return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }
 
   /**

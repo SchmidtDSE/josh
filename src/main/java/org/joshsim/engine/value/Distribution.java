@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.value;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -36,14 +37,14 @@ public abstract class Distribution extends EngineValue {
    * @return Scalar value which is sampled from this distribution with frequency-proportional 
    *      selection probability.
    */
-  abstract Scalar sample();
+  public abstract Scalar sample();
   
   /**
    * Get the size of the distribution if known.
    *
    * @return the number of elements in the distribution, or empty if virtualized
    */
-  abstract Optional<Integer> getSize();
+  public abstract Optional<Integer> getSize();
   
   /**
    * Get a specified number of values from the distribution.
@@ -63,7 +64,7 @@ public abstract class Distribution extends EngineValue {
    *      and sampling without replacement (like there are too few elements if the distribution is 
    *      realized).
    */
-  abstract Iterable<EngineValue> getContents(int count, boolean withReplacement);
+  public abstract Iterable<EngineValue> getContents(int count, boolean withReplacement);
 
   /**
    * Get the mean value of this distribution.
@@ -71,7 +72,7 @@ public abstract class Distribution extends EngineValue {
    * @returns mean value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  abstract Optional<Scalar> getMean();
+  public abstract Optional<Scalar> getMean();
 
   /**
    * Get the standard deviation of this distribution.
@@ -79,7 +80,7 @@ public abstract class Distribution extends EngineValue {
    * @returns standard deviation this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  abstract Optional<Scalar> getStd();
+  public abstract Optional<Scalar> getStd();
 
   /**
    * Get the minimum value of this distribution.
@@ -87,7 +88,7 @@ public abstract class Distribution extends EngineValue {
    * @returns minimum value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  abstract Optional<Scalar> getMin();
+  public abstract Optional<Scalar> getMin();
 
   /**
    * Get the maximum value of this distribution.
@@ -95,7 +96,7 @@ public abstract class Distribution extends EngineValue {
    * @returns maximum value of this distribution either actual or hypothetical depending on
    *      distribution type. Empty if not defined for this distribution.
    */
-  abstract Optional<Scalar> getMax();
+  public abstract Optional<Scalar> getMax();
 
   /**
    * Get the sum value of this distribution.
@@ -103,5 +104,25 @@ public abstract class Distribution extends EngineValue {
    * @returns sum value of all elements in this distribution either actual or hypothetical 
    *      depending on distribution type. Empty if not defined for this distribution.
    */
-  abstract Optional<Scalar> getSum();
+  public abstract Optional<Scalar> getSum();
+
+  @Override
+  public BigDecimal getAsDecimal() {
+    return sample().getAsDecimal();
+  }
+
+  @Override
+  public boolean getAsBoolean() {
+    return sample().getAsBoolean();
+  }
+
+  @Override
+  public String getAsString() {
+    return sample().getAsString();
+  }
+
+  @Override
+  public long getAsInt() {
+    return sample().getAsInt();
+  }
 }

@@ -7,8 +7,6 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -67,9 +65,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
   protected EngineValue fulfillAdd(EngineValue other) {
-    DecimalScalar otherScalar = (DecimalScalar) other;
-    validateCommonUnits(otherScalar);
-    return new DecimalScalar(getCaster(), getAsDecimal().add(otherScalar.getAsDecimal()), getUnits());
+    return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
 
   /**
@@ -79,11 +75,9 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
   protected EngineValue fulfillSubtract(EngineValue other) {
-    DecimalScalar otherScalar = (DecimalScalar) other;
-    validateCommonUnits(otherScalar);
     return new DecimalScalar(
         getCaster(),
-        getAsDecimal().subtract(otherScalar.getAsDecimal()),
+        getAsDecimal().subtract(other.getAsDecimal()),
         getUnits()
     );
   }
@@ -95,11 +89,10 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
   protected EngineValue fulfillMultiply(EngineValue other) {
-    DecimalScalar otherScalar = (DecimalScalar) other;
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().multiply(otherScalar.getAsDecimal()),
-      determineMultipliedUnits(getUnits(), otherScalar.getUnits())
+      getAsDecimal().multiply(other.getAsDecimal()),
+      determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
 
@@ -110,11 +103,10 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
   protected EngineValue fulfillDivide(EngineValue other) {
-    DecimalScalar otherScalar = (DecimalScalar) other;
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().divide(otherScalar.getAsDecimal()),
-      determineDividedUnits(getUnits(), otherScalar.getUnits())
+      getAsDecimal().divide(other.getAsDecimal()),
+      determineDividedUnits(getUnits(), other.getUnits())
     );
   }
 
@@ -125,19 +117,18 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    DecimalScalar otherScalar = (DecimalScalar) other;
     double base = getAsDecimal().doubleValue();
-    double exponent = otherScalar.getAsInt();
-    if (exponent != otherScalar.getAsDecimal().doubleValue()) {
+    double exponent = other.getAsInt();
+    if (exponent != other.getAsDecimal().doubleValue()) {
       throw new UnsupportedOperationException("Non-integer exponents are not supported");
     }
-    if (otherScalar.getUnits() != "") {
+    if (other.getUnits() != "") {
       throw new IllegalArgumentException("Cannot raise an int to a power with units.");
     }
     return new DecimalScalar(
       getCaster(),
       BigDecimal.valueOf(Math.pow(base, exponent)),
-      determineRaisedUnits(getUnits(), otherScalar.getAsInt())
+      determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
 }

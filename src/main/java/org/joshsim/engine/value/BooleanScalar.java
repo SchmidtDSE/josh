@@ -64,7 +64,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  protected EngineValue add(EngineValue other) {
+  protected EngineValue fulfillAdd(EngineValue other) {
     throw new UnsupportedOperationException("Cannot add booleans.");
   }
   
@@ -73,7 +73,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  protected EngineValue subtract(EngineValue other) {
+  protected EngineValue fulfillSubtract(EngineValue other) {
     throw new UnsupportedOperationException("Cannot subtract booleans.");
   }
   
@@ -82,7 +82,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  protected EngineValue multiply(EngineValue other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
     throw new UnsupportedOperationException("Cannot multiply booleans.");
   }
   
@@ -91,7 +91,7 @@ public class BooleanScalar extends Scalar {
    *
    * @param other the other operand.
    */
-  protected EngineValue divide(EngineValue other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
     throw new UnsupportedOperationException("Cannot divide booleans.");
   }
   

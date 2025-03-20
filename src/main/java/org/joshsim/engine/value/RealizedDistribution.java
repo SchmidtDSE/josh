@@ -190,4 +190,5 @@ public class RealizedDistribution extends Distribution {
   public Optional<Scalar> getSum() {
     return null;
   }
+
 }

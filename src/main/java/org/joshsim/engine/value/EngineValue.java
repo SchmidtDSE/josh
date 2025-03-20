@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.value;
+import java.math.BigDecimal;
 
 
 /**
@@ -120,7 +121,35 @@ public abstract class EngineValue {
    *
    * @return This EngineValue either as a Scalar or sampled for a single Scalar.
    */
-  abstract Scalar getAsScalar();
+  public abstract Scalar getAsScalar();
+
+  /**
+   * Gets the value as a BigDecimal or samples randomly if a distribution.
+   *
+   * @return the scalar value as a BigDecimal or distribution sampled.
+   */
+  public abstract BigDecimal getAsDecimal();
+
+  /**
+   * Gets the value as a boolean or samples randomly if a distribution.
+   *
+   * @return the scalar value as a boolean or distribution sampled.
+   */
+  public abstract boolean getAsBoolean();
+
+  /**
+   * Gets the value as a String or samples randomly if a distribution.
+   *
+   * @return the scalar value as a String or distribution sampled.
+   */
+  public abstract String getAsString();
+
+  /**
+   * Gets the value as an integer or samples randomly if a distribution.
+   *
+   * @return the scalar value as an int or distribution sampled.
+   */
+  public abstract long getAsInt();
 
   /**
    * Convert this EngineValue to a Distribution.
@@ -132,7 +161,7 @@ public abstract class EngineValue {
    *
    * @return This EngineValue as a distribution.
    */
-  abstract Distribution getAsDistribution();
+  public abstract Distribution getAsDistribution();
 
   /**
    * Get a string description of the type that this engine value would be in Josh sources.
@@ -143,7 +172,7 @@ public abstract class EngineValue {
    *
    * @returns String description of this type as it would appear to Josh source code.
    */
-  abstract String getLanguageType();
+  public abstract String getLanguageType();
 
   /**
    * Change the type of this EngineValue.
@@ -154,14 +183,14 @@ public abstract class EngineValue {
    * @param strategy Cast strategy to apply.
    * @returns Engine value after cast.
    */
-  abstract EngineValue cast(Cast strategy);
+  public abstract EngineValue cast(Cast strategy);
 
   /**
    * Get the underlying Java object decorated by this EngineValue.
    *
    * @returns inner Java object decorated by this EngineValue.
    */
-  abstract Object getInnerValue();
+  public abstract Object getInnerValue();
 
   /**
    * Determine the new units string having multipled two units together.
@@ -170,7 +199,7 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  abstract String determineMultipliedUnits(String left, String right);
+  public abstract String determineMultipliedUnits(String left, String right);
 
   /**
    * Determine the new units string having divided two units.
@@ -179,7 +208,7 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  abstract String determineDividedUnits(String left, String right);
+  public abstract String determineDividedUnits(String left, String right);
 
   /**
    * Determine the new units string having raised a unit to a power.
@@ -188,5 +217,5 @@ public abstract class EngineValue {
    * @param exponent units from the exponent operand.
    * @returns new units description string.
    */
-  abstract String determineRaisedUnits(String base, Long exponent);
+  public abstract String determineRaisedUnits(String base, Long exponent);
 }

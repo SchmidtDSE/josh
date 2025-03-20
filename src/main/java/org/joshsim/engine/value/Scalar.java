@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.value;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -23,34 +22,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public Scalar(EngineValueCaster newCaster, String newUnits) {
     super(newCaster, newUnits);
   }
-
-  /**
-   * Gets the value as a BigDecimal.
-   *
-   * @return the scalar value as a BigDecimal.
-   */
-  public abstract BigDecimal getAsDecimal();
-  
-  /**
-   * Gets the value as a boolean.
-   *
-   * @return the scalar value as a boolean.
-   */
-  public abstract boolean getAsBoolean();
-  
-  /**
-   * Gets the value as a String.
-   *
-   * @return the scalar value as a String.
-   */
-  public abstract String getAsString();
-  
-  /**
-   * Gets the value as an integer.
-   *
-   * @return the scalar value as an int.
-   */
-  public abstract long getAsInt();
 
   /**
    * Converts this Scalar into a Distribution.
