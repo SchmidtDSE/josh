@@ -1,4 +1,3 @@
-
 /**
  * Structures describing an individual engine value.
  *
@@ -8,8 +7,6 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -67,61 +64,59 @@ public class DecimalScalar extends Scalar {
    * @param other the DecimalScalar to add to this one
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
-  public EngineValue add(DecimalScalar other) {
-    validateCommonUnits(other);
+  protected EngineValue fulfillAdd(EngineValue other) {
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
-  
+
   /**
    * Subtracts another DecimalScalar from this DecimalScalar.
    *
    * @param other the DecimalScalar to subtract from this one
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
-  public EngineValue subtract(DecimalScalar other) {
-    validateCommonUnits(other);
+  protected EngineValue fulfillSubtract(EngineValue other) {
     return new DecimalScalar(
         getCaster(),
         getAsDecimal().subtract(other.getAsDecimal()),
         getUnits()
     );
   }
-  
+
   /**
    * Multiplies this DecimalScalar with another DecimalScalar.
    *
    * @param other the DecimalScalar to multiply with this one
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
-  public EngineValue multiply(DecimalScalar other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().multiply(other.getAsDecimal()),
       determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
-  
+
   /**
    * Divides this DecimalScalar by another DecimalScalar.
    *
    * @param other the DecimalScalar to divide this one by
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
-  public EngineValue divide(DecimalScalar other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().divide(other.getAsDecimal()),
       determineDividedUnits(getUnits(), other.getUnits())
     );
   }
-  
+
   /**
    * Raises this DecimalScalar to the power of another DecimalScalar.
    *
    * @param other the DecimalScalar to use as the exponent
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
-  public EngineValue raiseToPower(DecimalScalar other) {
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {

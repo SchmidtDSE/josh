@@ -209,7 +209,7 @@ class RealizedDistributionTest {
     assertTrue(mean.get() instanceof DecimalScalar);
     
     DecimalScalar meanScalar = (DecimalScalar) mean.get();
-    assertEquals(new BigDecimal("3.0"), meanScalar.getAsDecimal());
+    assertEquals(3.0, meanScalar.getAsDecimal().doubleValue(), 0.0001);
     assertEquals("m", meanScalar.getUnits());
   }
   

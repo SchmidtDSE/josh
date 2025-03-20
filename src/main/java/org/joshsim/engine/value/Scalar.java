@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.value;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -25,40 +24,13 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   }
 
   /**
-   * Gets the value as a BigDecimal.
-   *
-   * @return the scalar value as a BigDecimal.
-   */
-  public abstract BigDecimal getAsDecimal();
-  
-  /**
-   * Gets the value as a boolean.
-   *
-   * @return the scalar value as a boolean.
-   */
-  public abstract boolean getAsBoolean();
-  
-  /**
-   * Gets the value as a String.
-   *
-   * @return the scalar value as a String.
-   */
-  public abstract String getAsString();
-  
-  /**
-   * Gets the value as an integer.
-   *
-   * @return the scalar value as an int.
-   */
-  public abstract long getAsInt();
-
-  /**
    * Converts this Scalar into a Distribution.
    *
    * <p>Creates a realized distribution containing this scalar value.</p>
    *
    * @return a Distribution representation of this Scalar.
    */
+  @Override
   public Distribution getAsDistribution() {
     EngineValueFactory factory = new EngineValueFactory(getCaster());
     List<EngineValue> values = List.of(this);
@@ -112,46 +84,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   public EngineValue cast(Cast strategy) {
     return strategy.cast(this);
-  }
-
-  @Override
-  public EngineValue add(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().add(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue subtract(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().subtract(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue multiply(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().multiply(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue divide(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().divide(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-
-    if (!other.getUnits().equals("count")) {
-      throw new IllegalArgumentException("Can only raise to a count.");
-    }
-
-    return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
   }
 
   @Override

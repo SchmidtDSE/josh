@@ -180,7 +180,44 @@ public class EngineValueTuple {
     public String getTupleType() {
       return "types";
     }
-    
+
+    @Override
+    public boolean getAreCompatible() {
+      return getFirstRoot().equals(getSecondRoot());
+    }
+
+    public String getFirstRoot() {
+      return getRootType(getFirst());
+    }
+
+    public String getSecondRoot() {
+      return getRootType(getSecond());
+    }
+
+    private String getRootType(String target) {
+      String[] nestedTypes = target.split("\\.");
+      return nestedTypes[nestedTypes.length - 1];
+    }
+
+    public String toRootString() {
+      return String.format("%s: %s, %s", getTupleType(), getFirstRoot(), getSecondRoot());
+    }
+
+    /**
+     * Determine if this tuple equals another tuple.
+     *
+     * @returns True if the tuples' paired elements have string equality and false otherwise.
+     */
+    @Override
+    public boolean equals(InnerTuple other) {
+      return toRootString().equals(other.toRootString());
+    }
+
+    @Override
+    public int hashCode() {
+      return toRootString().hashCode();
+    }
+
   }
 
   /**

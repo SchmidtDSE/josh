@@ -65,54 +65,54 @@ public class StringScalar extends Scalar {
   public Comparable getInnerValue() {
     return innerValue;
   }
-  
+
   /**
    * Concatenates this StringScalar with another StringScalar.
    *
    * @param other the StringScalar to concatenate with this one
    * @return a new StringScalar that is the concatenation of this and the other StringScalar
    */
-  public EngineValue add(StringScalar other) {
+  protected EngineValue fulfillAdd(EngineValue other) {
     return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }
-  
+
   /**
    * String subtraction operation is not supported.
    *
    * @param other the StringScalar that would be subtracted
    * @throws UnsupportedOperationException as strings cannot be subtracted
    */
-  public EngineValue subtract(StringScalar other) {
+  protected EngineValue fulfillSubtract(EngineValue other) {
     throw new UnsupportedOperationException("Cannot subtract strings.");
   }
-  
+
   /**
    * String multiplication operation is not supported.
    *
    * @param other the StringScalar that would be multiplied
    * @throws UnsupportedOperationException as strings cannot be multiplied
    */
-  public EngineValue multiply(StringScalar other) {
+  protected EngineValue fulfillMultiply(EngineValue other) {
     throw new UnsupportedOperationException("Cannot multiply strings.");
   }
-  
+
   /**
    * String division operation is not supported.
    *
    * @param other the StringScalar that would be the divisor
    * @throws UnsupportedOperationException as strings cannot be divided
    */
-  public EngineValue divide(StringScalar other) {
+  protected EngineValue fulfillDivide(EngineValue other) {
     throw new UnsupportedOperationException("Cannot divide strings.");
   }
-  
+
   /**
    * String exponentiation operation is not supported.
    *
    * @param other the StringScalar that would be the exponent
    * @throws UnsupportedOperationException as strings cannot be raised to powers
    */
-  public EngineValue raiseToPower(StringScalar other) {
+  protected EngineValue fulfillRaiseToPower(EngineValue other) {
     throw new UnsupportedOperationException("Cannot raise strings to powers.");
   }
 }
