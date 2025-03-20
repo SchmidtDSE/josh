@@ -57,7 +57,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), "m");
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), "s");
 
-    assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2, true));
+    assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2));
   }
 
   @Test

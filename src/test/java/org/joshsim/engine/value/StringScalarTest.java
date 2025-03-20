@@ -42,10 +42,10 @@ class StringScalarTest {
   @Test
   void testAddWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", "label1");
-    StringScalar scalar2 = new StringScalar(caster, " world", "label2");
+    StringScalar scalar1 = new StringScalar(caster, "hello", "");
+    StringScalar scalar2 = new StringScalar(caster, " world", "");
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
     assertEquals("", result.getUnits()); // Units should be empty for concatenated strings
   }

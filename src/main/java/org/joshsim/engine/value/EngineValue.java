@@ -57,7 +57,7 @@ public abstract class EngineValue {
    * @return true if the operation can proceed, false otherwise
    * @throws IllegalArgumentException if units don't match and matching is required
    */
-  protected void validateUnits(EngineValue other) {
+  protected void validateCommonUnits(EngineValue other) {
     if (!units.equals(other.getUnits())) {
       throw new IllegalArgumentException("Units do not match");
     }

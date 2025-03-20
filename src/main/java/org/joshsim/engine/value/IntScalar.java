@@ -67,6 +67,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue add(IntScalar other) {
+    validateCommonUnits(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
@@ -78,6 +79,7 @@ public class IntScalar extends Scalar {
    * @return true if the specified object is equal to this IntScalar; false otherwise.
    */
   public EngineValue subtract(IntScalar other) {
+    validateCommonUnits(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 

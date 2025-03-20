@@ -68,7 +68,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
    */
   public EngineValue add(DecimalScalar other) {
-    validateUnits(other);
+    validateCommonUnits(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
   
@@ -79,7 +79,7 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
    */
   public EngineValue subtract(DecimalScalar other) {
-    validateUnits(other);
+    validateCommonUnits(other);
     return new DecimalScalar(
         getCaster(),
         getAsDecimal().subtract(other.getAsDecimal()),
@@ -94,7 +94,6 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the product of this and the other DecimalScalar
    */
   public EngineValue multiply(DecimalScalar other) {
-    validateUnits(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().multiply(other.getAsDecimal()),
@@ -109,7 +108,6 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
    */
   public EngineValue divide(DecimalScalar other) {
-    validateUnits(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().divide(other.getAsDecimal()),
@@ -124,7 +122,6 @@ public class DecimalScalar extends Scalar {
    * @return a new DecimalScalar that is this value raised to the power of the other value
    */
   public EngineValue raiseToPower(DecimalScalar other) {
-    validateUnits(other);
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsDecimal().doubleValue();
     return new DecimalScalar(getCaster(), BigDecimal.valueOf(Math.pow(base, exponent)), getUnits());
