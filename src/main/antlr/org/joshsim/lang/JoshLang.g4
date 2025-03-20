@@ -78,6 +78,7 @@ RADIAL_: 'radial';
 REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
+SIMULATION_: 'simulation';
 START_: 'start';
 STATE_: 'state';
 STD_: 'std';
