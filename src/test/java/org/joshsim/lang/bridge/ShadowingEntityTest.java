@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
@@ -28,12 +29,11 @@ public class ShadowingEntityTest {
   @Mock private SpatialEntity mockSpatialEntity;
   @Mock private Simulation mockSimulation;
   @Mock private EventHandlerGroup mockEventHandlerGroup;
+  @Mock private EventHandler mockEventHandler;
   @Mock private EngineValue mockEngineValue;
 
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
-
-  @Mock private EventHandler mockEventHandler;
 
   @BeforeEach
   void setUp() {
@@ -90,16 +90,20 @@ public class ShadowingEntityTest {
   @Test
   void testGetCurrentAttributeUnresolved() {
     String attrName = "testAttr";
+    spatialEntity.startSubstep("test");
     Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
     assertTrue(result.isEmpty());
+    spatialEntity.endSubstep();
   }
 
   @Test
   void testGetCurrentAttributeResolved() {
     String attrName = "testAttr";
+    spatialEntity.startSubstep("test");
     spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
     Optional<EngineValue> result = spatialEntity.getCurrentAttribute(attrName);
     assertFalse(result.isEmpty());
+    spatialEntity.endSubstep();
   }
 
   @Test
