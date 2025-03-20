@@ -108,7 +108,8 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public String getLanguageType() {
-    return "RealizedDistribution";
+    EngineValue exampleValue = values.get(0);
+    return String.format("(Realized)Distribution.%s", exampleValue.getLanguageType());
   }
 
   @Override

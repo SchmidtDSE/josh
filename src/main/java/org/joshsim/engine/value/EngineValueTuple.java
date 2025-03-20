@@ -180,6 +180,29 @@ public class EngineValueTuple {
     public String getTupleType() {
       return "types";
     }
+
+    @Override
+    public boolean getAreCompatible() {
+      return getFirstRoot().equals(getSecondRoot());
+    }
+
+    public String getFirstRoot() {
+      return getRootType(getFirst());
+    }
+
+    public String getSecondRoot() {
+      return getRootType(getSecond());
+    }
+
+    private String getRootType(String target) {
+      String[] nestedTypes = target.split("\\.");
+      return nestedTypes[nestedTypes.length - 1];
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s: %s, %s", getTupleType(), getFirstRoot(), getSecondRoot());
+    }
     
   }
 
