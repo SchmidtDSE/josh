@@ -7,7 +7,7 @@
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
-import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.Patch;
 
 
 /**
@@ -22,23 +22,24 @@ public interface Replicate {
   /**
    * Add a time step to this replicate.
    *
-   * @param timeStep the time step to add
+   * @param timeStep the new time step to this replicate.
+   * @throws IllegalArgumentException if a TimeStep of the given step number already exists.
    */
   void addTimeStep(TimeStep timeStep);
 
   /**
    * Get a time step by its step number.
    *
-   * @param stepNumber the step number to retrieve
-   * @return an Optional containing the time step if found, or empty if not found
+   * @param stepNumber the unique step number corresponding to the TimeStep to retrieve.
+   * @return an Optional containing the time step if found, or empty if not found.
    */
   Optional<TimeStep> getTimeStep(int stepNumber);
 
   /**
-   * Query entities across time steps based on the provided query description.
+   * Query patches across space and / or time based on the provided query description.
    *
-   * @param query the query defining spatial and temporal bounds
-   * @return an iterable of matching entities
+   * @param query the query defining spatial and / or temporal bounds.
+   * @return an iterable of matching patches.
    */
-  Iterable<Entity> query(Query query);
+  Iterable<Patch> query(Query query);
 }

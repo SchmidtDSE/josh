@@ -26,5 +26,5 @@ public interface ReplicateBuilder {
    *
    * @return the constructed Replicate object
    */
-  Replicate step();
+  Replicate build();
 }
