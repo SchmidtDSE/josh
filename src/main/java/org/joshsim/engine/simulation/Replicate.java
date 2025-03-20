@@ -22,8 +22,8 @@ public interface Replicate {
   /**
    * Add a time step to this replicate.
    *
-   * @throws IllegalArgumentException if a TimeStep of the given step number already exists.
    * @param timeStep the new time step to this replicate.
+   * @throws IllegalArgumentException if a TimeStep of the given step number already exists.
    */
   void addTimeStep(TimeStep timeStep);
 

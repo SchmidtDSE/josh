@@ -1,6 +1,7 @@
 /**
  * Tests for the Query structure.
  */
+
 package org.joshsim.engine.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,10 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.joshsim.engine.geometry.Geometry;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test query which is used to parameterize searching for patches.
