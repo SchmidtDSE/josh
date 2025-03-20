@@ -152,8 +152,8 @@ public class EngineValueTuple {
     }
 
     @Override
-    public String toString() {
-      return String.format("units: %s, %s", first, second);
+    public boolean equals(Object other) {
+      return equals((TypesTuple) other);
     }
 
     @Override
@@ -207,12 +207,8 @@ public class EngineValueTuple {
       return getFirst().equals(getSecond());
     }
 
-    /**
-     * Determine if this tuple equals another tuple.
-     *
-     * @returns True if the tuples' paired elements have string equality and false otherwise.
-     */
-    public boolean equals(UnitsTuple other) {
+    @Override
+    public boolean equals(Object other) {
       return toString().equals(other.toString());
     }
 

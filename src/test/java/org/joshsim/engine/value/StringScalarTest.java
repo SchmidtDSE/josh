@@ -16,7 +16,7 @@ class StringScalarTest {
     StringScalar scalar = new StringScalar(caster, "hello", "");
 
     assertEquals("hello", scalar.getAsString());
-    assertEquals("string", scalar.getLanguageType());
+    assertEquals(new LanguageType("string"), scalar.getLanguageType());
     assertEquals("hello", scalar.getInnerValue());
   }
 

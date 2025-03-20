@@ -81,6 +81,11 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   }
 
   @Override
+  public boolean equals(Object other) {
+    return equals((EngineValue) other);
+  }
+
+  @Override
   public EngineValue cast(Cast strategy) {
     return strategy.cast(this);
   }

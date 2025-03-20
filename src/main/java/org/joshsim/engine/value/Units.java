@@ -185,14 +185,8 @@ public class Units {
     return new Units(newNumeratorUnits, newDenominatorUnits);
   }
 
-  /**
-   * Check if this units and another units are the same without simplification.
-   *
-   * @param other the other units.
-   * @returns true if this units and the other units are the same without simplification and false
-   *     otherwise.
-   */
-  public boolean equals(Units other) {
+  @Override
+  public boolean equals(Object other) {
     return toString().equals(other.toString());
   }
 

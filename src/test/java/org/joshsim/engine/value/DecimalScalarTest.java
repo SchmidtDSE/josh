@@ -16,7 +16,7 @@ class DecimalScalarTest {
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), "m");
 
     assertEquals(new BigDecimal("42.5"), scalar.getAsDecimal());
-    assertEquals("decimal", scalar.getLanguageType());
+    assertEquals(new LanguageType("decimal"), scalar.getLanguageType());
     assertEquals("42.5", scalar.getAsString());
     assertEquals(new BigDecimal("42.5"), scalar.getInnerValue());
     assertEquals("m", scalar.getUnits());

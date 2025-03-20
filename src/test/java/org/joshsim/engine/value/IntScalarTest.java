@@ -19,7 +19,7 @@ class IntScalarTest {
     assertEquals("m", scalar.getUnits());
     assertEquals(new BigDecimal(10), scalar.getAsDecimal());
     assertEquals("10", scalar.getAsString());
-    assertEquals("int", scalar.getLanguageType());
+    assertEquals(new LanguageType("int"), scalar.getLanguageType());
     assertEquals(10L, scalar.getInnerValue());
   }
 

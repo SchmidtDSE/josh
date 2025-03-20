@@ -27,7 +27,7 @@ class RealizedDistributionTest {
   
   @Test
   void testConstructorAndGetters() {
-    assertEquals("RealizedDistribution", distribution.getLanguageType());
+    assertEquals(new LanguageType("RealizedDistribution"), distribution.getLanguageType());
     assertEquals("m", distribution.getUnits());
     assertSame(values, distribution.getInnerValue());
     assertEquals(Optional.of(5), distribution.getSize());
@@ -136,7 +136,7 @@ class RealizedDistributionTest {
       assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
     }
     
-    assertEquals("m^2", result.getUnits());
+    assertEquals("m * m", result.getUnits());
   }
   
   @Test
