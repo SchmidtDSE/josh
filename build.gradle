@@ -59,7 +59,7 @@ test {
 task fatJar(type: Jar) {
   manifest {
     attributes(
-      "Main-Class": "org.joshsim.JoshSim"
+      "Main-Class": "org.joshsim.JoshSimCommander"
     )
   }
   archiveBaseName = "joshsim"
