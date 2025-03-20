@@ -14,7 +14,7 @@ class BooleanScalarTest {
     BooleanScalar scalar = new BooleanScalar(caster, true, "");
 
     assertEquals(true, scalar.getAsBoolean());
-    assertEquals("boolean", scalar.getLanguageType());
+    assertEquals(new LanguageType("boolean"), scalar.getLanguageType());
     assertEquals("true", scalar.getAsString());
     assertEquals(Boolean.TRUE, scalar.getInnerValue());
   }
