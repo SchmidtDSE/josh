@@ -29,7 +29,7 @@ public class EngineValueFactory {
   /**
    * Constructor for EngineValueFactory.
    *
-   * @param newCaster EngineValueCaster to cast within operations involving the EngineValue.
+   * @param caster EngineValueCaster to cast within operations involving the EngineValue.
    */
   public EngineValueFactory(EngineValueCaster caster) {
     this.caster = caster;

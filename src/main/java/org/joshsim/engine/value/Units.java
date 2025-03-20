@@ -52,7 +52,8 @@ public class Units {
   /**
    * Constructs Units with the specified numerator and denominator unit maps.
    *
-   * @param numeratorUnits a Map representing the units in the numerator, mapping from name to count.
+   * @param numeratorUnits a Map representing the units in the numerator, mapping from name to
+   *     count.
    * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
    *     count.
    */
