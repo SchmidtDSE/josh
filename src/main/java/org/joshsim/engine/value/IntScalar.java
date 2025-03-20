@@ -36,6 +36,11 @@ public class IntScalar extends Scalar {
 
   @Override
   public boolean getAsBoolean() {
+    if (innerValue == 0) {
+      return false;
+    } else if (innerValue == 1) {
+      return true;
+    }
     throw new UnsupportedOperationException("Cannot convert an int to boolean.");
   }
 

@@ -28,9 +28,11 @@ class IntScalarTest {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar nonZeroScalar = new IntScalar(caster, 10L, "");
     IntScalar zeroScalar = new IntScalar(caster, 0L, "");
+    IntScalar oneScalar = new IntScalar(caster, 1L, "");
 
-    assertTrue(nonZeroScalar.getAsBoolean());
+    assertThrows(UnsupportedOperationException.class, () -> nonZeroScalar.getAsBoolean());
     assertFalse(zeroScalar.getAsBoolean());
+    assertTrue(oneScalar.getAsBoolean());
   }
 
   @Test
@@ -154,7 +156,6 @@ class IntScalarTest {
     assertEquals(-42L, scalar.getAsInt());
     assertEquals(new BigDecimal(-42), scalar.getAsDecimal());
     assertEquals("-42", scalar.getAsString());
-    assertTrue(scalar.getAsBoolean()); // Non-zero should be true
   }
   
   @Test
