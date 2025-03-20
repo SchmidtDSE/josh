@@ -44,7 +44,7 @@ import picocli.CommandLine.Parameters;
         JoshSim.ValidateCommand.class
     }
 )
-public class JoshSim {
+public class JoshSimCommander {
 
   /**
    * Command to validate a simulation file.
