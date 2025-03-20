@@ -33,8 +33,12 @@ public class ShadowingEntityTest {
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
 
+  @Mock private EventHandler mockEventHandler;
+
   @BeforeEach
   void setUp() {
+    when(mockEventHandler.getAttributeName()).thenReturn("testAttr");
+    when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
 
