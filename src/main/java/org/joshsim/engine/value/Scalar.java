@@ -184,7 +184,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     }
 
     if (!getLanguageType().equals(other.getLanguageType())) {
-      throw new IllegalArgumentException("Unsafe scalar arithmetic operation with incompatible types.");
+      throw new IllegalArgumentException("Unsafe scalar operation: incompatible types.");
     }
   }
 
@@ -193,13 +193,25 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * 
    * <p>This implementation returns a string representation of the inner value
    * contained by this Scalar, which can be useful for debugging and logging purposes.</p>
-   * 
+   *
    * @return a string representation of this Scalar.
    */
   @Override
   public String toString() {
     return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
   }
+
+  
+
+  /**
+   * Log a message and raise an UnsupportedOperationException with the given message template.
+   *
+   * <p>This method utilizes the current Scalar's language type to format the message
+   * before throwing the exception.</p>
+   *
+   * @param messageTemplate the template for the exception message.
+   * @throws UnsupportedOperationException always thrown with a formatted message.
+   */
   private void raiseUnsupported(String messageTemplate) {
     String message = String.format(messageTemplate, getLanguageType());
     throw new UnsupportedOperationException(message);

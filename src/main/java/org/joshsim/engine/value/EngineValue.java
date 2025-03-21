@@ -327,7 +327,9 @@ public abstract class EngineValue {
 
   /**
    * Subtract this value from another value assuming units and type are compatible.
-   * This is the reverse operation of unsafeSubtract.
+   *
+   * <p>Subtract this value from another value assuming units and type are compatible. This is the
+   * reverse of operands of unsafeSubtract as subtraction is non-commutative, unlike addition.</p>
    *
    * @param other the value to subtract this value from
    * @return the result of the subtraction
@@ -338,23 +340,24 @@ public abstract class EngineValue {
 
   /**
    * Divide another value by this value assuming units and type are compatible.
-   * This is the reverse operation of unsafeDivide.
    *
-   * @param other the value to be divided by this value
-   * @return the result of the division
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if units are incompatible
+   * <p>Divide another value by this value assuming units and type are compatible. This is the
+   * reverse of operands of unsafeDivide as division is non-commutative, unlike multiplication.</p>
+   *
+   * @param other the value to be divided by this value.
+   * @return the result of the division.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeDivideFrom(EngineValue other);
 
   /**
-   * Raise all values to a power in a distribution context.
-   * This method is specifically for handling power operations when the exponent is a distribution.
+   * Raise a value to all values in a distribution via broadcast.
    *
-   * @param other the distribution of exponents
-   * @return the result of raising this value to all powers in the distribution
-   * @throws NotImplementedException if the operation is not supported for this data type
-   * @throws IllegalArgumentException if exponent has non-count units
+   * @param other the distribution of exponents.
+   * @return the result of raising this value to all powers in the distribution.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if exponent has non-count units.
    */
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
 
