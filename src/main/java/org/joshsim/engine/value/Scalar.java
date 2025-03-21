@@ -6,54 +6,37 @@
 
 package org.joshsim.engine.value;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
  * Engine value which only has a single discrete value.
  */
-public abstract class Scalar implements EngineValue, Comparable<Scalar> {
-
-  private final EngineValueCaster caster;
-  private final String units;
+public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
 
   /**
    * Create a new scalar with the given units.
    *
-   * @param units String describing the units which may be a user-defined unit.
+   * @param caster The engine value caster to use in operations involving this scalar.
+   * @param units for dimensional analysis.
    */
-  public Scalar(EngineValueCaster caster, String units) {
-    this.caster = caster;
-    this.units = units;
+  public Scalar(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 
   /**
-   * Gets the value as a BigDecimal.
+   * Converts this Scalar into a Distribution.
    *
-   * @return the scalar value as a BigDecimal.
-   */
-  public abstract BigDecimal getAsDecimal();
-  
-  /**
-   * Gets the value as a boolean.
+   * <p>Creates a realized distribution containing this scalar value.</p>
    *
-   * @return the scalar value as a boolean.
+   * @return a Distribution representation of this Scalar.
    */
-  public abstract boolean getAsBoolean();
-  
-  /**
-   * Gets the value as a String.
-   *
-   * @return the scalar value as a String.
-   */
-  public abstract String getAsString();
-  
-  /**
-   * Gets the value as an integer.
-   *
-   * @return the scalar value as an int.
-   */
-  public abstract long getAsInt();
+  @Override
+  public Distribution getAsDistribution() {
+    EngineValueFactory factory = new EngineValueFactory(getCaster());
+    List<EngineValue> values = List.of(this);
+    return factory.buildRealizedDistribution(values, getUnits());
+  }
 
   /**
    * Get the decorated value.
@@ -76,7 +59,11 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
    */
   @Override
   public int compareTo(Scalar other) {
-    return getInnerValue().compareTo(other.getInnerValue());
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    Scalar firstScalar = (Scalar) safeTuple.getFirst();
+    Scalar secondScalar = (Scalar) safeTuple.getSecond();
+    return firstScalar.getInnerValue().compareTo(secondScalar.getInnerValue());
   }
 
   /**
@@ -94,13 +81,9 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
     return sameUnits && sameValue;
   }
 
-  /**
-   * Get the caster to use for operations involving this engine value.
-   *
-   * @returns EngineValueCaster to use if this is the left-hand operand.
-   */
-  protected EngineValueCaster getCaster() {
-    return caster;
+  @Override
+  public boolean equals(Object other) {
+    return equals((EngineValue) other);
   }
 
   @Override
@@ -109,67 +92,129 @@ public abstract class Scalar implements EngineValue, Comparable<Scalar> {
   }
 
   @Override
-  public EngineValue add(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().add(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue subtract(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().subtract(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue multiply(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().multiply(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue divide(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().divide(safeTuple.getSecond());
-  }
-
-  @Override
-  public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-
-    if (!other.getUnits().equals("count")) {
-      throw new IllegalArgumentException("Can only raise to a count.");
-    }
-
-    return safeTuple.getFirst().raiseToPower(safeTuple.getSecond());
-  }
-
-  @Override
-  public String getUnits() {
-    return units;    
-  }
-
-  @Override
   public Scalar getAsScalar() {
     return this;
   }
 
+  /**
+   * Indicate that add is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
   @Override
-  public String determineMultipliedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.multiply(rightUnits).simplify().toString();
+  protected EngineValue unsafeAdd(EngineValue other) {
+    raiseUnsupported("Cannot add %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that subtract is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeSubtract(EngineValue other) {
+    raiseUnsupported("Cannot subtract with %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that multiply is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeMultiply(EngineValue other) {
+    raiseUnsupported("Cannot multiply with %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that divide is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeDivide(EngineValue other) {
+    raiseUnsupported("Cannot divide with %s.");
+    return null;
   }
 
   @Override
-  public String determineDividedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.divide(rightUnits).simplify().toString();
+  protected EngineValue unsafeSubtractFrom(EngineValue other) {
+    return other.unsafeSubtract(this);
   }
+
+  @Override
+  protected EngineValue unsafeDivideFrom(EngineValue other) {
+    return other.unsafeDivide(this);
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
+    return other.unsafeRaiseToPower(this);
+  }
+
+  /**
+   * Indicate that raise to power is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    raiseUnsupported("Cannot raise %s to powers.");
+    return null;
+  }
+
   
+  /**
+   * Check if provided EngineValue is compatible with the current Scalar for arithmetic operations.
+   *
+   * <p>This method ensures that the other EngineValue is not a distribution and that it has the
+   * same type as the current Scalar. If these conditions are not met, an 
+   * IllegalArgumentException is thrown.</p>
+   *
+   * @param other the EngineValue to check compatibility with.
+   * @throws IllegalArgumentException if the other EngineValue is a distribution or has a different
+   *     type.
+   */
+  protected void assertScalarCompatible(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Unexpected distribution.");
+    }
+
+    if (!getLanguageType().equals(other.getLanguageType())) {
+      throw new IllegalArgumentException("Unsafe scalar operation: incompatible types.");
+    }
+  }
+
+  /**
+   * Provides a human-readable representation of the Scalar.
+   * 
+   * <p>This implementation returns a string representation of the inner value
+   * contained by this Scalar, which can be useful for debugging and logging purposes.</p>
+   *
+   * @return a string representation of this Scalar.
+   */
+  @Override
+  public String toString() {
+    return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
+  }
+
+  
+
+  /**
+   * Log a message and raise an UnsupportedOperationException with the given message template.
+   *
+   * <p>This method utilizes the current Scalar's language type to format the message
+   * before throwing the exception.</p>
+   *
+   * @param messageTemplate the template for the exception message.
+   * @throws UnsupportedOperationException always thrown with a formatted message.
+   */
+  private void raiseUnsupported(String messageTemplate) {
+    String message = String.format(messageTemplate, getLanguageType());
+    throw new UnsupportedOperationException(message);
+  }
+
 }

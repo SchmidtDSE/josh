@@ -8,8 +8,6 @@ package org.joshsim.engine.value;
 
 import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -18,7 +16,7 @@ import java.util.List;
 public class IntScalar extends Scalar {
 
   private final Long innerValue;
-  
+
   /**
    * Constructs an IntScalar instance with specified caster, value, and units.
    *
@@ -26,7 +24,7 @@ public class IntScalar extends Scalar {
    * @param innerValue the initial integer value of this IntScalar
    * @param units the units associated with this IntScalar
    */
-  public IntScalar(EngineValueCaster caster, long innerValue, String units) {
+  public IntScalar(EngineValueCaster caster, long innerValue, Units units) {
     super(caster, units);
     this.innerValue = innerValue;
   }
@@ -38,6 +36,11 @@ public class IntScalar extends Scalar {
 
   @Override
   public boolean getAsBoolean() {
+    if (innerValue == 0) {
+      return false;
+    } else if (innerValue == 1) {
+      return true;
+    }
     throw new UnsupportedOperationException("Cannot convert an int to boolean.");
   }
 
@@ -52,89 +55,62 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "int";
+  public LanguageType getLanguageType() {
+    return new LanguageType("int");
   }
 
   @Override
-  public Comparable getInnerValue() {
+  public Comparable<Long> getInnerValue() {
     return innerValue;
   }
 
-  
-  /**
-   * Compares this IntScalar instance with another for equality.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
-  public EngineValue add(IntScalar other) {
+
+  @Override
+  protected EngineValue unsafeAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
-  
-  /**
-   * Checks equality of this IntScalar instance with another object.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
-  public EngineValue subtract(IntScalar other) {
+
+  @Override
+  protected EngineValue unsafeSubtract(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
-  
-  /**
-   * Multiplies this IntScalar instance with another IntScalar.
-   *
-   * @param other the IntScalar to multiply with
-   * @return a new IntScalar that is the product of this and the other IntScalar
-   */
-  public EngineValue multiply(IntScalar other) {
+
+  @Override
+  protected EngineValue unsafeMultiply(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() * other.getAsInt(),
         determineMultipliedUnits(getUnits(), other.getUnits())
     );
   }
-  
-  /**
-   * Divides this IntScalar by another IntScalar.
-   *
-   * @param other the IntScalar to divide this one by
-   * @return a new IntScalar that is the quotient of this divided by the other IntScalar
-   * @throws ArithmeticException if division by zero is attempted
-   */
-  public EngineValue divide(IntScalar other) {
+
+  @Override
+  protected EngineValue unsafeDivide(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() / other.getAsInt(),
         determineDividedUnits(getUnits(), other.getUnits())
     );
   }
-  
-  /**
-   * Raises this IntScalar to the power of another IntScalar.
-   *
-   * @param other the IntScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
-  public EngineValue raiseToPower(IntScalar other) {
+
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    assertScalarCompatible(other);
+
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
+    }
+
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-        getUnits()
+        determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
-
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-
-    List<Long> values = new ArrayList<>(1);
-    values.add(innerValue);
-
-    return factory.buildDistribution(values, getUnits());
-  }
-  
 }

@@ -8,8 +8,6 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -26,7 +24,7 @@ public class BooleanScalar extends Scalar {
    * @param innerValue The inner boolean value.
    * @param units The units associated with this engine value.
    */
-  public BooleanScalar(EngineValueCaster caster, boolean innerValue, String units) {
+  public BooleanScalar(EngineValueCaster caster, boolean innerValue, Units units) {
     super(caster, units);
     this.innerValue = innerValue;
   }
@@ -52,65 +50,13 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "boolean";
+  public LanguageType getLanguageType() {
+    return new LanguageType("boolean");
   }
 
   @Override
-  public Comparable getInnerValue() {
+  public Comparable<?> getInnerValue() {
     return innerValue;
   }
-  
-  /**
-   * Indicate that add is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  public EngineValue add(BooleanScalar other) {
-    throw new UnsupportedOperationException("Cannot add booleans.");
-  }
-  
-  /**
-   * Indicate that subtract is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  public EngineValue subtract(BooleanScalar other) {
-    throw new UnsupportedOperationException("Cannot subtract booleans.");
-  }
-  
-  /**
-   * Indicate that multiply is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  public EngineValue multiply(BooleanScalar other) {
-    return new BooleanScalar(getCaster(), getAsBoolean() && other.getAsBoolean(), getUnits());
-  }
-  
-  /**
-   * Indicate that divide is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  public EngineValue divide(BooleanScalar other) {
-    throw new UnsupportedOperationException("Cannot divide booleans.");
-  }
-  
-  /**
-   * Indicate that raise to power is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  public EngineValue raiseToPower(BooleanScalar other) {
-    throw new UnsupportedOperationException("Cannot raise booleans to powers.");
-  }
 
-  @Override
-  public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory(getCaster());
-    List<Boolean> values = new ArrayList<>(1);
-    values.add(innerValue);
-    return factory.buildDistribution(values, getUnits());
-  }
 }
