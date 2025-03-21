@@ -54,6 +54,28 @@ class RealizedDistributionTest {
     
     assertEquals(new Units("m"), result.getUnits());
   }
+
+  @Test
+  void testAddReverse() {
+    IntScalar addend = new IntScalar(caster, 10L, new Units("m"));
+    RealizedDistribution result = (RealizedDistribution) addend.add(distribution);
+
+    // Fix unchecked cast warning by using a safer approach
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been incremented by 10
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertEquals(i + 11, scalar.getAsInt());
+    }
+
+    assertEquals(new Units("m"), result.getUnits());
+  }
   
   @Test
   void testSubtract() {
