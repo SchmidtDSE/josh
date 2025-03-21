@@ -1,6 +1,10 @@
 package org.joshsim.engine.value;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -65,11 +69,11 @@ class UnitsTest {
 
   @Test
   void testConstructorWithMaps() {
-    Map<String, Integer> numerator = new HashMap<>();
-    numerator.put("m", 2);
+    Map<String, Long> numerator = new HashMap<>();
+    numerator.put("m", 2L);
     
-    Map<String, Integer> denominator = new HashMap<>();
-    denominator.put("s", 1);
+    Map<String, Long> denominator = new HashMap<>();
+    denominator.put("s", 1L);
     
     Units units = new Units(numerator, denominator);
     
@@ -85,7 +89,7 @@ class UnitsTest {
   @Test
   void testGetNumeratorUnits() {
     Units units = new Units("m * m");
-    Map<String, Integer> numerator = units.getNumeratorUnits();
+    Map<String, Long> numerator = units.getNumeratorUnits();
     
     assertEquals(1, numerator.size());
     assertTrue(numerator.containsKey("m"));
@@ -95,7 +99,7 @@ class UnitsTest {
   @Test
   void testGetDenominatorUnits() {
     Units units = new Units("m / s");
-    Map<String, Integer> denominator = units.getDenominatorUnits();
+    Map<String, Long> denominator = units.getDenominatorUnits();
     
     assertEquals(1, denominator.size());
     assertTrue(denominator.containsKey("s"));
@@ -164,13 +168,13 @@ class UnitsTest {
 
   @Test
   void testSimplify() {
-    Map<String, Integer> numerator = new TreeMap<>();
-    numerator.put("m", 3);
-    numerator.put("kg", 1);
+    Map<String, Long> numerator = new TreeMap<>();
+    numerator.put("m", 3L);
+    numerator.put("kg", 1L);
     
-    Map<String, Integer> denominator = new TreeMap<>();
-    denominator.put("m", 1);
-    denominator.put("s", 2);
+    Map<String, Long> denominator = new TreeMap<>();
+    denominator.put("m", 1L);
+    denominator.put("s", 2L);
     
     Units units = new Units(numerator, denominator);
     Units simplified = units.simplify();
@@ -188,11 +192,11 @@ class UnitsTest {
 
   @Test
   void testSimplifyWithFullCancellation() {
-    Map<String, Integer> numerator = new TreeMap<>();
-    numerator.put("m", 2);
+    Map<String, Long> numerator = new TreeMap<>();
+    numerator.put("m", 2L);
     
-    Map<String, Integer> denominator = new TreeMap<>();
-    denominator.put("m", 2);
+    Map<String, Long> denominator = new TreeMap<>();
+    denominator.put("m", 2L);
     
     Units units = new Units(numerator, denominator);
     Units simplified = units.simplify();
@@ -217,7 +221,7 @@ class UnitsTest {
     assertEquals("m * m / s", units.toString());
     
     // Empty case
-    Map<String, Integer> emptyMap = new TreeMap<>();
+    Map<String, Long> emptyMap = new TreeMap<>();
     Units emptyUnits = new Units(emptyMap, emptyMap);
     assertEquals("", emptyUnits.toString());
   }
@@ -251,9 +255,9 @@ class UnitsTest {
 
   @Test
   void testSerializeMultiplyString() {
-    Map<String, Integer> numerator = new TreeMap<>();
-    numerator.put("m", 2);
-    numerator.put("kilogram", 1);
+    Map<String, Long> numerator = new TreeMap<>();
+    numerator.put("m", 2L);
+    numerator.put("kilogram", 1L);
     
     Units units = new Units(numerator, new TreeMap<>());
     

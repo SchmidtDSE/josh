@@ -21,11 +21,11 @@ public abstract class Distribution extends EngineValue {
   /**
    * Constructor for a distribution.
    *
-   * @param newCaster the engine value caster to use for this distribution.
-   * @param newUnits the units of this distribution.
+   * @param caster the engine value caster to use for this distribution.
+   * @param units the units of this distribution.
    */
-  public Distribution(EngineValueCaster newCaster, String newUnits) {
-    super(newCaster, newUnits);
+  public Distribution(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 
   /**

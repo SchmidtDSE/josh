@@ -19,11 +19,11 @@ public abstract class VirtualDistribution extends Distribution {
   /**
    * Create a new virtual distribution.
    *
-   * @param newCaster The value caster to use for this distribution.
-   * @param newUnits The units of this distribution.
+   * @param caster The value caster to use for this distribution.
+   * @param units The units of this distribution.
    */
-  public VirtualDistribution(EngineValueCaster newCaster, String newUnits) {
-    super(newCaster, newUnits);
+  public VirtualDistribution(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 
 }

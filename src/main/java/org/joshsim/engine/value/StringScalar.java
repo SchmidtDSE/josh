@@ -8,8 +8,6 @@ package org.joshsim.engine.value;
 
 import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -22,13 +20,13 @@ public class StringScalar extends Scalar {
   /**
   * Constructs a new DecimalScalar with the specified value.
   *
-  * @param newCaster the caster to use for automatic type conversion.
-  * @param newInnerValue the value of this StringScalar.
-  * @param newUnits the units of this StringScalar.
+  * @param caster the caster to use for automatic type conversion.
+  * @param innerValue the value of this StringScalar.
+  * @param units the units of this StringScalar.
   */
-  public StringScalar(EngineValueCaster newCaster, String newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public StringScalar(EngineValueCaster caster, String innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override
@@ -57,8 +55,8 @@ public class StringScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "string";
+  public LanguageType getLanguageType() {
+    return new LanguageType("string");
   }
 
   @Override
@@ -66,53 +64,10 @@ public class StringScalar extends Scalar {
     return innerValue;
   }
 
-  /**
-   * Concatenates this StringScalar with another StringScalar.
-   *
-   * @param other the StringScalar to concatenate with this one
-   * @return a new StringScalar that is the concatenation of this and the other StringScalar
-   */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  @Override
+  protected EngineValue unsafeAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }
 
-  /**
-   * String subtraction operation is not supported.
-   *
-   * @param other the StringScalar that would be subtracted
-   * @throws UnsupportedOperationException as strings cannot be subtracted
-   */
-  protected EngineValue fulfillSubtract(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot subtract strings.");
-  }
-
-  /**
-   * String multiplication operation is not supported.
-   *
-   * @param other the StringScalar that would be multiplied
-   * @throws UnsupportedOperationException as strings cannot be multiplied
-   */
-  protected EngineValue fulfillMultiply(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot multiply strings.");
-  }
-
-  /**
-   * String division operation is not supported.
-   *
-   * @param other the StringScalar that would be the divisor
-   * @throws UnsupportedOperationException as strings cannot be divided
-   */
-  protected EngineValue fulfillDivide(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot divide strings.");
-  }
-
-  /**
-   * String exponentiation operation is not supported.
-   *
-   * @param other the StringScalar that would be the exponent
-   * @throws UnsupportedOperationException as strings cannot be raised to powers
-   */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot raise strings to powers.");
-  }
 }

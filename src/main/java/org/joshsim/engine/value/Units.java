@@ -18,8 +18,8 @@ import java.util.TreeMap;
  */
 public class Units {
 
-  private final Map<String, Integer> numeratorUnits;
-  private final Map<String, Integer> denominatorUnits;
+  private final Map<String, Long> numeratorUnits;
+  private final Map<String, Long> denominatorUnits;
 
   /**
    * Constructs Units from a description string.
@@ -57,7 +57,7 @@ public class Units {
    * @param newDenominator a Map representing the units in the denominator, mapping from name to
    *     count.
    */
-  public Units(Map<String, Integer> newNumerator, Map<String, Integer> newDenominator) {
+  public Units(Map<String, Long> newNumerator, Map<String, Long> newDenominator) {
     numeratorUnits = newNumerator;
     denominatorUnits = newDenominator;
   }
@@ -67,7 +67,7 @@ public class Units {
    *
    * @return a Map representing the units in the numerator, mapping from name to count.
    */
-  public Map<String, Integer> getNumeratorUnits() {
+  public Map<String, Long> getNumeratorUnits() {
     return numeratorUnits;
   }
 
@@ -76,7 +76,7 @@ public class Units {
    *
    * @return a Map representing the units in the denominator, mapping from name to count.
    */
-  public Map<String, Integer> getDenominatorUnits() {
+  public Map<String, Long> getDenominatorUnits() {
     return denominatorUnits;
   }
 
@@ -96,22 +96,22 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
-    Map<String, Integer> newNumeratorUnits = new TreeMap<>(numeratorUnits);
-    Map<String, Integer> newDenominatorUnits = new TreeMap<>(denominatorUnits);
+    Map<String, Long> newNumeratorUnits = new TreeMap<>(numeratorUnits);
+    Map<String, Long> newDenominatorUnits = new TreeMap<>(denominatorUnits);
   
-    Map<String, Integer> otherNumeratorUnits = other.getNumeratorUnits();
+    Map<String, Long> otherNumeratorUnits = other.getNumeratorUnits();
     for (String units : otherNumeratorUnits.keySet()) {
-      int priorCount = newNumeratorUnits.getOrDefault(units, 0);
-      int otherCount = otherNumeratorUnits.get(units);
-      int newCount = priorCount + otherCount;
+      long priorCount = newNumeratorUnits.getOrDefault(units, 0L);
+      long otherCount = otherNumeratorUnits.get(units);
+      long newCount = priorCount + otherCount;
       newNumeratorUnits.put(units, newCount);
     }
 
-    Map<String, Integer> otherDenominatorUnits = other.getDenominatorUnits();
+    Map<String, Long> otherDenominatorUnits = other.getDenominatorUnits();
     for (String units : otherDenominatorUnits.keySet()) {
-      int priorCount = newDenominatorUnits.getOrDefault(units, 0);
-      int otherCount = otherDenominatorUnits.get(units);
-      int newCount = priorCount + otherCount;
+      long priorCount = newDenominatorUnits.getOrDefault(units, 0L);
+      long otherCount = otherDenominatorUnits.get(units);
+      long newCount = priorCount + otherCount;
       newDenominatorUnits.put(units, newCount);
     }
 
@@ -135,11 +135,20 @@ public class Units {
    * @return a new Units instance representing the current units raised to the power.
    */
   public Units raiseToPower(Long power) {
-    Units result = new Units(new TreeMap<>(), new TreeMap<>());
-    for (int i = 0; i < power; i++) {
-      result = result.multiply(this);
+    Map<String, Long> newNumeratorUnits = new TreeMap<>(numeratorUnits);
+    Map<String, Long> newDenominatorUnits = new TreeMap<>(denominatorUnits);
+
+    for (String units : newNumeratorUnits.keySet()) {
+      long newCount = newNumeratorUnits.getOrDefault(units, 0L) * power;
+      newNumeratorUnits.put(units, newCount);
     }
-    return result;
+
+    for (String units : newDenominatorUnits.keySet()) {
+      long newCount = newDenominatorUnits.getOrDefault(units, 0L) * power;
+      newDenominatorUnits.put(units, newCount);
+    }
+
+    return new Units(newNumeratorUnits, newDenominatorUnits);
   }
 
   /**
@@ -149,17 +158,17 @@ public class Units {
    *     out.
    */
   public Units simplify() {
-    Map<String, Integer> newNumeratorUnits = new TreeMap<>();
-    Map<String, Integer> newDenominatorUnits = new TreeMap<>();
+    Map<String, Long> newNumeratorUnits = new TreeMap<>();
+    Map<String, Long> newDenominatorUnits = new TreeMap<>();
     
     // Create a copy instead of a view to avoid modifying original collections
     Set<String> sharedUnits = new HashSet<>(numeratorUnits.keySet());
     sharedUnits.retainAll(denominatorUnits.keySet());
 
     for (String units : sharedUnits) {
-      int numeratorCount = numeratorUnits.get(units);
-      int denominatorCount = denominatorUnits.get(units);
-      int simplifiedCount = numeratorCount - denominatorCount;
+      long numeratorCount = numeratorUnits.get(units);
+      long denominatorCount = denominatorUnits.get(units);
+      long simplifiedCount = numeratorCount - denominatorCount;
       
       if (simplifiedCount > 0) {
         newNumeratorUnits.put(units, simplifiedCount);
@@ -185,14 +194,8 @@ public class Units {
     return new Units(newNumeratorUnits, newDenominatorUnits);
   }
 
-  /**
-   * Check if this units and another units are the same without simplification.
-   *
-   * @param other the other units.
-   * @returns true if this units and the other units are the same without simplification and false
-   *     otherwise.
-   */
-  public boolean equals(Units other) {
+  @Override
+  public boolean equals(Object other) {
     return toString().equals(other.toString());
   }
 
@@ -209,24 +212,24 @@ public class Units {
     return toString().hashCode();
   }
 
-  private Map<String, Integer> parseMultiplyString(String target) {
-    Map<String, Integer> unitCounts = new TreeMap<>();
+  private Map<String, Long> parseMultiplyString(String target) {
+    Map<String, Long> unitCounts = new TreeMap<>();
 
     for (String unit : target.split("\\s*\\*\\s*")) {
       if (unit.isEmpty()) {
         continue;
       }
-      unitCounts.put(unit, unitCounts.getOrDefault(unit, 0) + 1);
+      unitCounts.put(unit, unitCounts.getOrDefault(unit, 0L) + 1);
     }
     return unitCounts;
   }
 
-  private String serializeMultiplyString(Map<String, Integer> target) {
+  private String serializeMultiplyString(Map<String, Long> target) {
     StringJoiner joiner = new StringJoiner(" * ");
 
     for (String unit : target.keySet()) {
-      int numInstances = target.get(unit);
-      for (int i = 0; i < numInstances; i++) {
+      long numInstances = target.get(unit);
+      for (long i = 0; i < numInstances; i++) {
         joiner.add(unit);
       }
     }

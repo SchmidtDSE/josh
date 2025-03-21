@@ -20,13 +20,13 @@ public class IntScalar extends Scalar {
   /**
    * Constructs an IntScalar instance with specified caster, value, and units.
    *
-   * @param newCaster the EngineValueCaster used for casting
-   * @param newInnerValue the initial integer value of this IntScalar
-   * @param newUnits the units associated with this IntScalar
+   * @param caster the EngineValueCaster used for casting
+   * @param innerValue the initial integer value of this IntScalar
+   * @param units the units associated with this IntScalar
    */
-  public IntScalar(EngineValueCaster newCaster, long newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public IntScalar(EngineValueCaster caster, long innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override
@@ -55,8 +55,8 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "int";
+  public LanguageType getLanguageType() {
+    return new LanguageType("int");
   }
 
   @Override
@@ -65,35 +65,23 @@ public class IntScalar extends Scalar {
   }
 
 
-  /**
-   * Compares this IntScalar instance with another for equality.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  @Override
+  protected EngineValue unsafeAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
 
 
-  /**
-   * Checks equality of this IntScalar instance with another object.
-   *
-   * @param other the object to compare to
-   * @return true if the specified object is equal to this IntScalar; false otherwise.
-   */
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  @Override
+  protected EngineValue unsafeSubtract(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
 
-  /**
-   * Multiplies this IntScalar instance with another IntScalar.
-   *
-   * @param other the IntScalar to multiply with
-   * @return a new IntScalar that is the product of this and the other IntScalar
-   */
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  @Override
+  protected EngineValue unsafeMultiply(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() * other.getAsInt(),
@@ -101,14 +89,9 @@ public class IntScalar extends Scalar {
     );
   }
 
-  /**
-   * Divides this IntScalar by another IntScalar.
-   *
-   * @param other the IntScalar to divide this one by
-   * @return a new IntScalar that is the quotient of this divided by the other IntScalar
-   * @throws ArithmeticException if division by zero is attempted
-   */
-  protected EngineValue fulfillDivide(EngineValue other) {
+  @Override
+  protected EngineValue unsafeDivide(EngineValue other) {
+    assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() / other.getAsInt(),
@@ -116,16 +99,14 @@ public class IntScalar extends Scalar {
     );
   }
 
-  /**
-   * Raises this IntScalar to the power of another IntScalar.
-   *
-   * @param other the IntScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    if (other.getUnits() != "") {
-      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    assertScalarCompatible(other);
+
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
     }
+
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),

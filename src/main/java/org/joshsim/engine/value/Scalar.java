@@ -17,10 +17,11 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   /**
    * Create a new scalar with the given units.
    *
-   * @param newUnits String describing the units which may be a user-defined unit.
+   * @param caster The engine value caster to use in operations involving this scalar.
+   * @param units for dimensional analysis.
    */
-  public Scalar(EngineValueCaster newCaster, String newUnits) {
-    super(newCaster, newUnits);
+  public Scalar(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 
   /**
@@ -43,7 +44,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * @returns value inside this Scalar decorator.
    */
   @Override
-  public abstract Comparable<?> getInnerValue();
+  public abstract Comparable getInnerValue();
 
   /**
    * Compare this Scalar to the specified object.
@@ -60,10 +61,9 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public int compareTo(Scalar other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    
-    // TODO: Seems smelly to have to convert to BigDecimal to compare Scalars
-    return safeTuple.getFirst().getAsScalar().getAsDecimal()
-            .compareTo(safeTuple.getSecond().getAsScalar().getAsDecimal());
+    Scalar firstScalar = (Scalar) safeTuple.getFirst();
+    Scalar secondScalar = (Scalar) safeTuple.getSecond();
+    return firstScalar.getInnerValue().compareTo(secondScalar.getInnerValue());
   }
 
   /**
@@ -82,13 +82,13 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   }
 
   @Override
-  public EngineValue cast(Cast strategy) {
-    return strategy.cast(this);
+  public boolean equals(Object other) {
+    return equals((EngineValue) other);
   }
 
   @Override
-  public String getUnits() {
-    return units;    
+  public EngineValue cast(Cast strategy) {
+    return strategy.cast(this);
   }
 
   @Override
@@ -96,24 +96,125 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return this;
   }
 
+  /**
+   * Indicate that add is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
   @Override
-  public String determineMultipliedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.multiply(rightUnits).simplify().toString();
+  protected EngineValue unsafeAdd(EngineValue other) {
+    raiseUnsupported("Cannot add %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that subtract is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeSubtract(EngineValue other) {
+    raiseUnsupported("Cannot subtract with %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that multiply is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeMultiply(EngineValue other) {
+    raiseUnsupported("Cannot multiply with %s.");
+    return null;
+  }
+
+  /**
+   * Indicate that divide is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeDivide(EngineValue other) {
+    raiseUnsupported("Cannot divide with %s.");
+    return null;
   }
 
   @Override
-  public String determineDividedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.divide(rightUnits).simplify().toString();
+  protected EngineValue unsafeSubtractFrom(EngineValue other) {
+    return other.unsafeSubtract(this);
   }
 
   @Override
-  public String determineRaisedUnits(String base, Long exponent) {
-    Units baseUnits = new Units(base);
-    return baseUnits.raiseToPower(exponent).simplify().toString();
+  protected EngineValue unsafeDivideFrom(EngineValue other) {
+    return other.unsafeDivide(this);
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
+    return other.unsafeRaiseToPower(this);
+  }
+
+  /**
+   * Indicate that raise to power is not supported for this type unless overloaded.
+   *
+   * @param other the other operand.
+   */
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    raiseUnsupported("Cannot raise %s to powers.");
+    return null;
+  }
+
+  
+  /**
+   * Check if provided EngineValue is compatible with the current Scalar for arithmetic operations.
+   *
+   * <p>This method ensures that the other EngineValue is not a distribution and that it has the
+   * same type as the current Scalar. If these conditions are not met, an 
+   * IllegalArgumentException is thrown.</p>
+   *
+   * @param other the EngineValue to check compatibility with.
+   * @throws IllegalArgumentException if the other EngineValue is a distribution or has a different
+   *     type.
+   */
+  protected void assertScalarCompatible(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Unexpected distribution.");
+    }
+
+    if (!getLanguageType().equals(other.getLanguageType())) {
+      throw new IllegalArgumentException("Unsafe scalar operation: incompatible types.");
+    }
+  }
+
+  /**
+   * Provides a human-readable representation of the Scalar.
+   * 
+   * <p>This implementation returns a string representation of the inner value
+   * contained by this Scalar, which can be useful for debugging and logging purposes.</p>
+   *
+   * @return a string representation of this Scalar.
+   */
+  @Override
+  public String toString() {
+    return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
+  }
+
+  
+
+  /**
+   * Log a message and raise an UnsupportedOperationException with the given message template.
+   *
+   * <p>This method utilizes the current Scalar's language type to format the message
+   * before throwing the exception.</p>
+   *
+   * @param messageTemplate the template for the exception message.
+   * @throws UnsupportedOperationException always thrown with a formatted message.
+   */
+  private void raiseUnsupported(String messageTemplate) {
+    String message = String.format(messageTemplate, getLanguageType());
+    throw new UnsupportedOperationException(message);
   }
 
 }

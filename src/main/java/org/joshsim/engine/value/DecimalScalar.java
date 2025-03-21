@@ -19,13 +19,13 @@ public class DecimalScalar extends Scalar {
   /**
   * Constructs a new DecimalScalar with the specified value.
   *
-  * @param newCaster the caster to use for automatic type conversion.
-  * @param newInnerValue value the value of this scalar.
-  * @param newUnits the units of this scalar.
+  * @param caster the caster to use for automatic type conversion.
+  * @param innerValue value the value of this scalar.
+  * @param units the units of this scalar.
   */
-  public DecimalScalar(EngineValueCaster newCaster, BigDecimal newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public DecimalScalar(EngineValueCaster caster, BigDecimal innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override
@@ -49,8 +49,8 @@ public class DecimalScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "decimal";
+  public LanguageType getLanguageType() {
+    return new LanguageType("decimal");
   }
 
   @Override
@@ -58,23 +58,15 @@ public class DecimalScalar extends Scalar {
     return innerValue;
   }
 
-  /**
-   * Adds this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to add to this one
-   * @return a new DecimalScalar that is the sum of this and the other DecimalScalar
-   */
-  protected EngineValue fulfillAdd(EngineValue other) {
+  @Override
+  protected EngineValue unsafeAdd(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
   }
 
-  /**
-   * Subtracts another DecimalScalar from this DecimalScalar.
-   *
-   * @param other the DecimalScalar to subtract from this one
-   * @return a new DecimalScalar that is the difference between this and the other DecimalScalar
-   */
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  @Override
+  protected EngineValue unsafeSubtract(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
         getCaster(),
         getAsDecimal().subtract(other.getAsDecimal()),
@@ -82,13 +74,9 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Multiplies this DecimalScalar with another DecimalScalar.
-   *
-   * @param other the DecimalScalar to multiply with this one
-   * @return a new DecimalScalar that is the product of this and the other DecimalScalar
-   */
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  @Override
+  protected EngineValue unsafeMultiply(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().multiply(other.getAsDecimal()),
@@ -96,13 +84,9 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Divides this DecimalScalar by another DecimalScalar.
-   *
-   * @param other the DecimalScalar to divide this one by
-   * @return a new DecimalScalar that is the quotient of this divided by the other DecimalScalar
-   */
-  protected EngineValue fulfillDivide(EngineValue other) {
+  @Override
+  protected EngineValue unsafeDivide(EngineValue other) {
+    assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
       getAsDecimal().divide(other.getAsDecimal()),
@@ -110,21 +94,19 @@ public class DecimalScalar extends Scalar {
     );
   }
 
-  /**
-   * Raises this DecimalScalar to the power of another DecimalScalar.
-   *
-   * @param other the DecimalScalar to use as the exponent
-   * @return a new DecimalScalar that is this value raised to the power of the other value
-   */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    assertScalarCompatible(other);
+  
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {
       throw new UnsupportedOperationException("Non-integer exponents are not supported");
     }
-    if (other.getUnits() != "") {
-      throw new IllegalArgumentException("Cannot raise an int to a power with units.");
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
     }
+
     return new DecimalScalar(
       getCaster(),
       BigDecimal.valueOf(Math.pow(base, exponent)),

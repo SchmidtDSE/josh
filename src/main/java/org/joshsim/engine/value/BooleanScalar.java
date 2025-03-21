@@ -20,13 +20,13 @@ public class BooleanScalar extends Scalar {
   /**
    * Constructs a BooleanScalar with the specified values.
    *
-   * @param newCaster The caster for this engine value.
-   * @param newInnerValue The inner boolean value.
-   * @param newUnits The units associated with this engine value.
+   * @param caster The caster for this engine value.
+   * @param innerValue The inner boolean value.
+   * @param units The units associated with this engine value.
    */
-  public BooleanScalar(EngineValueCaster newCaster, boolean newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public BooleanScalar(EngineValueCaster caster, boolean innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override
@@ -50,57 +50,13 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
-  public String getLanguageType() {
-    return "boolean";
+  public LanguageType getLanguageType() {
+    return new LanguageType("boolean");
   }
 
   @Override
   public Comparable<?> getInnerValue() {
     return innerValue;
   }
-  
-  /**
-   * Indicate that add is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillAdd(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot add booleans.");
-  }
-  
-  /**
-   * Indicate that subtract is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillSubtract(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot subtract booleans.");
-  }
-  
-  /**
-   * Indicate that multiply is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillMultiply(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot multiply booleans.");
-  }
-  
-  /**
-   * Indicate that divide is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillDivide(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot divide booleans.");
-  }
-  
-  /**
-   * Indicate that raise to power is not supported for this type.
-   *
-   * @param other the other operand.
-   */
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
-    throw new UnsupportedOperationException("Cannot raise booleans to powers.");
-  }
+
 }

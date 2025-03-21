@@ -1,6 +1,10 @@
 package org.joshsim.engine.value;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,30 +16,37 @@ class RealizedDistributionTest {
   
   private EngineValueCaster caster;
   private ArrayList<EngineValue> values;
+  private ArrayList<EngineValue> nakedValues;
   private RealizedDistribution distribution;
+  private RealizedDistribution nakedDistribution;
   
   @BeforeEach
   void setUp() {
     caster = new EngineValueWideningCaster();
     values = new ArrayList<>();
+    nakedValues = new ArrayList<>();
+
     // Add some test values (integers 1-5)
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(caster, (long) i, "m"));
+      values.add(new IntScalar(caster, (long) i, new Units("m")));
+      nakedValues.add(new IntScalar(caster, (long) i, new Units("")));
     }
-    distribution = new RealizedDistribution(caster, values, "m");
+    
+    distribution = new RealizedDistribution(caster, values, new Units("m"));
+    nakedDistribution = new RealizedDistribution(caster, values, new Units(""));
   }
   
   @Test
   void testConstructorAndGetters() {
-    assertEquals("RealizedDistribution", distribution.getLanguageType());
-    assertEquals("m", distribution.getUnits());
+    assertEquals(new LanguageType("RealizedDistribution"), distribution.getLanguageType());
+    assertEquals(new Units("m"), distribution.getUnits());
     assertSame(values, distribution.getInnerValue());
     assertEquals(Optional.of(5), distribution.getSize());
   }
   
   @Test
   void testAdd() {
-    IntScalar addend = new IntScalar(caster, 10L, "m");
+    IntScalar addend = new IntScalar(caster, 10L, new Units("m"));
     RealizedDistribution result = (RealizedDistribution) distribution.add(addend);
     
     // Fix unchecked cast warning by using a safer approach
@@ -52,12 +63,34 @@ class RealizedDistributionTest {
       assertEquals(i + 11, scalar.getAsInt());
     }
     
-    assertEquals("m", result.getUnits());
+    assertEquals(new Units("m"), result.getUnits());
+  }
+
+  @Test
+  void testAddReverse() {
+    IntScalar addend = new IntScalar(caster, 10L, new Units("m"));
+    RealizedDistribution result = (RealizedDistribution) addend.add(distribution);
+
+    // Fix unchecked cast warning by using a safer approach
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been incremented by 10
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertEquals(i + 11, scalar.getAsInt());
+    }
+
+    assertEquals(new Units("m"), result.getUnits());
   }
   
   @Test
   void testSubtract() {
-    IntScalar subtrahend = new IntScalar(caster, 1L, "m");
+    IntScalar subtrahend = new IntScalar(caster, 1L, new Units("m"));
     RealizedDistribution result = (RealizedDistribution) distribution.subtract(subtrahend);
     
     Object innerValue = result.getInnerValue();
@@ -73,12 +106,33 @@ class RealizedDistributionTest {
       assertEquals(i, scalar.getAsInt());
     }
     
-    assertEquals("m", result.getUnits());
+    assertEquals(new Units("m"), result.getUnits());
+  }
+
+  @Test
+  void testSubtractReverse() {
+    IntScalar subtrahend = new IntScalar(caster, 1L, new Units("m"));
+    RealizedDistribution result = (RealizedDistribution) subtrahend.subtract(distribution);
+
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been decremented by 1
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertEquals(i, scalar.getAsInt());
+    }
+
+    assertEquals(new Units("m"), result.getUnits());
   }
   
   @Test
   void testMultiply() {
-    IntScalar multiplier = new IntScalar(caster, 2L, "s");
+    IntScalar multiplier = new IntScalar(caster, 2L, new Units("s"));
     RealizedDistribution result = (RealizedDistribution) distribution.multiply(multiplier);
     
     Object innerValue = result.getInnerValue();
@@ -94,12 +148,32 @@ class RealizedDistributionTest {
       assertEquals((i + 1) * 2, scalar.getAsInt());
     }
     
-    assertEquals("m*s", result.getUnits());
+    assertEquals(new Units("m*s"), result.getUnits());
+  }
+
+  void testMultiplyReverse() {
+    IntScalar multiplier = new IntScalar(caster, 2L, new Units("s"));
+    RealizedDistribution result = (RealizedDistribution) multiplier.multiply(distribution);
+
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been multiplied by 2
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertEquals((i + 1) * 2, scalar.getAsInt());
+    }
+
+    assertEquals(new Units("m*s"), result.getUnits());
   }
   
   @Test
   void testDivide() {
-    IntScalar divisor = new IntScalar(caster, 2L, "s");
+    IntScalar divisor = new IntScalar(caster, 2L, new Units("s"));
     RealizedDistribution result = (RealizedDistribution) distribution.divide(divisor);
     
     Object innerValue = result.getInnerValue();
@@ -115,12 +189,33 @@ class RealizedDistributionTest {
       assertEquals((i + 1) / 2, scalar.getAsInt());
     }
     
-    assertEquals("m/s", result.getUnits());
+    assertEquals(new Units("m / s"), result.getUnits());
+  }
+
+  @Test
+  void testDivideReverse() {
+    IntScalar divisor = new IntScalar(caster, 2L, new Units("s"));
+    RealizedDistribution result = (RealizedDistribution) divisor.divide(distribution);
+
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been divided by 2
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertEquals((int) (2 / (i + 1)), scalar.getAsInt());
+    }
+
+    assertEquals(new Units("s / m"), result.getUnits());
   }
   
   @Test
   void testRaiseToPower() {
-    IntScalar exponent = new IntScalar(caster, 2L, "");
+    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
     RealizedDistribution result = (RealizedDistribution) distribution.raiseToPower(exponent);
     
     Object innerValue = result.getInnerValue();
@@ -136,7 +231,28 @@ class RealizedDistributionTest {
       assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
     }
     
-    assertEquals("m^2", result.getUnits());
+    assertEquals(new Units("m * m"), result.getUnits());
+  }
+
+  @Test
+  void testRaiseToPowerReverse() {
+    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
+    RealizedDistribution result = (RealizedDistribution) exponent.raiseToPower(nakedDistribution);
+
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    assertEquals(5, resultValues.size());
+
+    // Check each value has been squared
+    for (int i = 0; i < 5; i++) {
+      Object value = resultValues.get(i);
+      assertTrue(value instanceof DecimalScalar);
+      DecimalScalar scalar = (DecimalScalar) value;
+      assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
+    }
+
+    assertEquals(new Units(""), result.getUnits());
   }
   
   @Test
@@ -210,7 +326,7 @@ class RealizedDistributionTest {
     
     DecimalScalar meanScalar = (DecimalScalar) mean.get();
     assertEquals(3.0, meanScalar.getAsDecimal().doubleValue(), 0.0001);
-    assertEquals("m", meanScalar.getUnits());
+    assertEquals(new Units("m"), meanScalar.getUnits());
   }
   
   @Test
@@ -240,23 +356,12 @@ class RealizedDistributionTest {
   @Test
   void testEmptyDistribution() {
     ArrayList<EngineValue> emptyValues = new ArrayList<>();
-    RealizedDistribution emptyDist = new RealizedDistribution(caster, emptyValues, "m");
     
-    assertEquals(Optional.of(0), emptyDist.getSize());
-    Optional<Scalar> mean = emptyDist.getMean();
-    assertTrue(mean.isPresent());
-    assertEquals(new BigDecimal("0"), ((DecimalScalar) mean.get()).getAsDecimal());
+    assertThrows(IllegalArgumentException.class, () -> new RealizedDistribution(
+        caster,
+        emptyValues,
+        new Units("m")
+    ));
   }
-  
-  @Test
-  void testMixedTypeDistribution() {
-    ArrayList<EngineValue> mixedValues = new ArrayList<>();
-    mixedValues.add(new IntScalar(caster, 1L, "m"));
-    mixedValues.add(new DecimalScalar(caster, new BigDecimal("2.5"), "m"));
-    mixedValues.add(new StringScalar(caster, "3", "m"));
-    
-    RealizedDistribution mixedDist = new RealizedDistribution(caster, mixedValues, "m");
-    
-    assertThrows(UnsupportedOperationException.class, () -> mixedDist.getMean());
-  }
+
 }

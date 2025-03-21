@@ -42,7 +42,7 @@ public class EngineValueFactory {
    * @param units the units for the value.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(long innerValue, String units) {
+  public EngineValue build(long innerValue, Units units) {
     return new IntScalar(caster, innerValue, units);
   } 
 
@@ -53,7 +53,7 @@ public class EngineValueFactory {
    * @param units the units for the value.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(String innerValue, String units) {
+  public EngineValue build(String innerValue, Units units) {
     return new StringScalar(caster, innerValue, units);
   }
 
@@ -64,7 +64,7 @@ public class EngineValueFactory {
    * @param units the units for the value.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(boolean innerValue, String units) {
+  public EngineValue build(boolean innerValue, Units units) {
     return new BooleanScalar(caster, innerValue, units);
   }
 
@@ -75,7 +75,7 @@ public class EngineValueFactory {
    * @param units the units for the value.
    * @returns decorated version of innerValue.
    */
-  public EngineValue build(BigDecimal innerValue, String units) {
+  public EngineValue build(BigDecimal innerValue, Units units) {
     return new DecimalScalar(caster, innerValue, units);
   }
 
@@ -88,7 +88,7 @@ public class EngineValueFactory {
    */
   public RealizedDistribution buildRealizedDistribution(
       List<EngineValue> innerValue,
-      String units
+      Units units
   ) {
     if (innerValue.size() == 0) {
       throw new IllegalArgumentException("Distributions cannot be empty.");

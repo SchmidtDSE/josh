@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.value;
+
 import java.math.BigDecimal;
 
 
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 public abstract class EngineValue {
 
   protected final EngineValueCaster caster;
-  protected final String units;
+  protected final Units units;
 
   /**
    * Create a new EngineValue.
@@ -25,7 +26,7 @@ public abstract class EngineValue {
    * @param caster the EngineValueCaster to use for casting
    * @param units the units of the value
    */
-  public EngineValue(EngineValueCaster caster, String units) {
+  public EngineValue(EngineValueCaster caster, Units units) {
     this.caster = caster;
     this.units = units;
   }
@@ -35,82 +36,8 @@ public abstract class EngineValue {
    *
    * @return the units of this value
    */
-  public String getUnits() {
+  public Units getUnits() {
     return units;
-  }
-
-  /**
-   * Get the EngineValueCaster for this value.
-   *
-   * @return the EngineValueCaster for this value
-   */
-  public EngineValueCaster getCaster() {
-    return caster;
-  }
-
-  /**
-   * Checks if the units match or handles the case based on requirements.
-   *
-   *
-   * @param other The other scalar to check units against
-   * @param requireSameUnits Whether matching units are required
-   * @return true if the operation can proceed, false otherwise
-   * @throws IllegalArgumentException if units don't match and matching is required
-   */
-  protected void validateCommonUnits(EngineValue other) {
-    if (!units.equals(other.getUnits())) {
-      throw new IllegalArgumentException("Units do not match");
-    }
-  }
-
-  /**
-   * Add this value to another value.
-   *
-   * @param other the other value
-   * @return the result of the addition
-   * @throws IllegalArgumentException if units are incompatible
-   */
-  protected abstract EngineValue fulfillAdd(EngineValue other);
-  protected abstract EngineValue fulfillSubtract(EngineValue other);
-  protected abstract EngineValue fulfillMultiply(EngineValue other);
-  protected abstract EngineValue fulfillDivide(EngineValue other);
-  protected abstract EngineValue fulfillRaiseToPower(EngineValue other);
-
-  public EngineValue add(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().fulfillAdd(safeTuple.getSecond());
-  }
-
-  public EngineValue subtract(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().fulfillSubtract(safeTuple.getSecond());
-  }
-
-  public EngineValue multiply(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().fulfillMultiply(safeTuple.getSecond());
-  }
-
-  public EngineValue divide(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().fulfillDivide(safeTuple.getSecond());
-  }
-
-  public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
-    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-
-    String otherUnits = other.getUnits();
-    boolean validUnits = otherUnits.equals("count") || otherUnits.equals("");
-    if (!validUnits) {
-      throw new IllegalArgumentException("Can only raise to a count.");
-    }
-
-    return safeTuple.getFirst().fulfillRaiseToPower(safeTuple.getSecond());
   }
 
   /**
@@ -174,7 +101,7 @@ public abstract class EngineValue {
    *
    * @returns String description of this type as it would appear to Josh source code.
    */
-  public abstract String getLanguageType();
+  public abstract LanguageType getLanguageType();
 
   /**
    * Change the type of this EngineValue.
@@ -201,7 +128,9 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  public abstract String determineMultipliedUnits(String left, String right);
+  public Units determineMultipliedUnits(Units left, Units right) {
+    return left.multiply(right);
+  }
 
   /**
    * Determine the new units string having divided two units.
@@ -210,7 +139,9 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  public abstract String determineDividedUnits(String left, String right);
+  public Units determineDividedUnits(Units left, Units right) {
+    return left.divide(right);
+  }
 
   /**
    * Determine the new units string having raised a unit to a power.
@@ -219,5 +150,223 @@ public abstract class EngineValue {
    * @param exponent units from the exponent operand.
    * @returns new units description string.
    */
-  public abstract String determineRaisedUnits(String base, Long exponent);
+  public Units determineRaisedUnits(Units base, long exponent) {
+    return base.raiseToPower(exponent);
+  }
+
+  /**
+   * Get the EngineValueCaster for this value.
+   *
+   * @return the EngineValueCaster for this value
+   */
+  public EngineValueCaster getCaster() {
+    return caster;
+  }
+
+  /**
+   * Add another value to this value.
+   * 
+   * <p>Performs addition after ensuring type and unit compatibility through casting.
+   * If either value is a Distribution, the result will be a Distribution.</p>
+   *
+   * @param other the value to add to this value.
+   * @return the result of the addition.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
+   */
+  public EngineValue add(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeAdd(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeAdd(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Subtract another value from this value.
+   * 
+   * <p>Performs subtraction after ensuring type and unit compatibility through casting.
+   * If either value is a Distribution, the result will be a Distribution.</p>
+   *
+   * @param other the value to subtract from this value.
+   * @return the result of the subtraction.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
+   */
+  public EngineValue subtract(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getFirst().unsafeSubtractFrom(safeTuple.getSecond());
+    } else {
+      return safeTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Multiply this value by another value.
+   * 
+   * <p>Performs multiplication after ensuring type compatibility through casting. Units are 
+   * combined according to multiplication rules. If either value is a Distribution, the result will
+   * be a Distribution.</p>
+   *
+   * @param other the value to multiply by
+   * @return the result of the multiplication
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast
+   */
+  public EngineValue multiply(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeMultiply(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Divide this value by another value.
+   * 
+   * <p>Performs division after ensuring type compatibility through casting. Units are combined
+   * according to division rules. If either value is a Distribution, the result will be a 
+   * Distribution.</p>
+   *
+   * @param other the value to divide by.
+   * @return the result of the division.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
+   */
+  public EngineValue divide(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeDivideFrom(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Raise this value to the power of another value.
+   * 
+   * <p>Performs exponentiation after ensuring type compatibility through casting.The exponent must
+   * be a count or unitless value. Units are combined according to power rules. If either value is
+   * a Distribution, the result will be a Distribution.</p>
+   *
+   * @param other the exponent value to raise this value to
+   * @return the result of raising this value to the given power
+   * @throws IllegalArgumentException if the exponent has units or values are incompatible
+   */
+  public EngineValue raiseToPower(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (!other.canBePower()) {
+      throw new IllegalArgumentException("Can only raise to a count.");
+    }
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getFirst().unsafeRaiseAllToPower(safeTuple.getSecond());
+    } else {
+      return safeTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Add this value to another value assuming that the units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the addition.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeAdd(EngineValue other);
+
+  /**
+   * Subtract another value from this value assuming units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the subtraction.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeSubtract(EngineValue other);
+
+  /**
+   * Multiply this value by another value assuming units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the multiplication.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeMultiply(EngineValue other);
+
+  /**
+   * Divide this value by another value assuming units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the division.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeDivide(EngineValue other);
+
+  /**
+   * Raise this value to the power of another value assuming units / type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of raising to power.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible or exponent has non-count units.
+   */
+  protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
+
+  /**
+   * Subtract this value from another value assuming units and type are compatible.
+   *
+   * <p>Subtract this value from another value assuming units and type are compatible. This is the
+   * reverse of operands of unsafeSubtract as subtraction is non-commutative, unlike addition.</p>
+   *
+   * @param other the value to subtract this value from
+   * @return the result of the subtraction
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
+  protected abstract EngineValue unsafeSubtractFrom(EngineValue other);
+
+  /**
+   * Divide another value by this value assuming units and type are compatible.
+   *
+   * <p>Divide another value by this value assuming units and type are compatible. This is the
+   * reverse of operands of unsafeDivide as division is non-commutative, unlike multiplication.</p>
+   *
+   * @param other the value to be divided by this value.
+   * @return the result of the division.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeDivideFrom(EngineValue other);
+
+  /**
+   * Raise a value to all values in a distribution via broadcast.
+   *
+   * @param other the distribution of exponents.
+   * @return the result of raising this value to all powers in the distribution.
+   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if exponent has non-count units.
+   */
+  protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
+
+  /**
+   * Determine if this value can be used to raise another value to a power.
+   *
+   * @return true if this can be a power and false otherwise.
+   */
+  protected boolean canBePower() {
+    return getUnits().equals("") || getUnits().equals("count");
+  }
 }

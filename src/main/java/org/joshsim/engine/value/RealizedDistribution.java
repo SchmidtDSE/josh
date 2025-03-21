@@ -29,17 +29,20 @@ public class RealizedDistribution extends Distribution {
   /**
    * Create a new RealizedDistribution.
    *
-   * @param newCaster The EngineValueCaster to use for casting.
-   * @param newInnerValue The values to be stored in the distribution.
-   * @param newUnits The units of the distribution.
+   * @param caster The EngineValueCaster to use for casting.
+   * @param values The values to be stored in the distribution.
+   * @param units The units of the distribution.
    */
   public RealizedDistribution(
-      EngineValueCaster newCaster,
-      List<EngineValue> newInnerValue,
-      String newUnits
+      EngineValueCaster caster,
+      List<EngineValue> values,
+      Units units
   ) {
-    super(newCaster, newUnits);
-    values = newInnerValue;
+    super(caster, units);
+    if (values.size() == 0) {
+      throw new IllegalArgumentException("Cannot create a distribution with no values.");
+    }
+    this.values = values;
   }
 
   /**
@@ -57,7 +60,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  protected EngineValue fulfillAdd(EngineValue other) {
+  protected EngineValue unsafeAdd(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.add(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -65,7 +68,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  protected EngineValue fulfillSubtract(EngineValue other) {
+  protected EngineValue unsafeSubtract(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.subtract(other))
         .collect(Collectors.toCollection(ArrayList::new));
@@ -73,27 +76,52 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  protected EngineValue fulfillMultiply(EngineValue other) {
+  protected EngineValue unsafeMultiply(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.multiply(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits().multiply(other.getUnits()));
   }
 
   @Override
-  protected EngineValue fulfillDivide(EngineValue other) {
+  protected EngineValue unsafeDivide(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> value.divide(other))
         .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits().divide(other.getUnits()));
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseToPower(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.raiseToPower(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
+  }
+
+  @Override
+  protected EngineValue unsafeSubtractFrom(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> other.subtract(value))
+        .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
-  protected EngineValue fulfillRaiseToPower(EngineValue other) {
+  protected EngineValue unsafeDivideFrom(EngineValue other) {
     List<EngineValue> result = values.stream()
-        .map(value -> value.raiseToPower(other))
+        .map(value -> other.divide(value))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    Units newUnits = getUnits().divide(other.getUnits()).invert();
+    return new RealizedDistribution(getCaster(), result, newUnits);
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> other.raiseToPower(value))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
   }
 
   @Override
@@ -107,9 +135,15 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public String getLanguageType() {
+  public LanguageType getLanguageType() {
     EngineValue exampleValue = values.get(0);
-    return String.format("(Realized)Distribution.%s", exampleValue.getLanguageType());
+    
+    Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
+    List<String> distributions = new ArrayList<>();
+    distributions.add("RealizedDistribution");
+    innerDistributions.forEach(distributions::add);
+    
+    return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
   }
 
   @Override
@@ -123,21 +157,6 @@ public class RealizedDistribution extends Distribution {
   @Override
   public Object getInnerValue() {
     return values;
-  }
-
-  @Override
-  public String determineMultipliedUnits(String left, String right) {
-    return null;
-  }
-
-  @Override
-  public String determineDividedUnits(String left, String right) {
-    return null;
-  }
-
-  @Override
-  public String determineRaisedUnits(String base, Long exponent) {
-    return null;
   }
 
   @Override
