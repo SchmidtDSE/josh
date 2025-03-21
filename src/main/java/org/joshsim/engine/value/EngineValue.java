@@ -200,7 +200,7 @@ public abstract class EngineValue {
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
     
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
-      return safeTuple.getFirst().unsafeDivideBy(safeTuple.getSecond());
+      return safeTuple.getSecond().unsafeDivideFrom(safeTuple.getFirst());
     } else {
       return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
     }
@@ -273,7 +273,7 @@ public abstract class EngineValue {
 
   protected abstract EngineValue unsafeSubtractFrom(EngineValue other);
 
-  protected abstract EngineValue unsafeDivideBy(EngineValue other);
+  protected abstract EngineValue unsafeDivideFrom(EngineValue other);
 
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
 

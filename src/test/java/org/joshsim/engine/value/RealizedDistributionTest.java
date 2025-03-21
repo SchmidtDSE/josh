@@ -203,7 +203,7 @@ class RealizedDistributionTest {
       Object value = resultValues.get(i);
       assertTrue(value instanceof IntScalar);
       IntScalar scalar = (IntScalar) value;
-      assertEquals((i + 1) / 2, scalar.getAsInt());
+      assertEquals((int) (2 / (i + 1)), scalar.getAsInt());
     }
 
     assertEquals(new Units("s / m"), result.getUnits());

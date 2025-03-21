@@ -146,7 +146,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   }
 
   @Override
-  protected EngineValue unsafeDivideBy(EngineValue other) {
+  protected EngineValue unsafeDivideFrom(EngineValue other) {
     return other.unsafeDivide(this);
   }
 

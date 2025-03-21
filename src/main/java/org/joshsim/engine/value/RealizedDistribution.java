@@ -108,7 +108,7 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  protected EngineValue unsafeDivideBy(EngineValue other) {
+  protected EngineValue unsafeDivideFrom(EngineValue other) {
     List<EngineValue> result = values.stream()
         .map(value -> other.divide(value))
         .collect(Collectors.toCollection(ArrayList::new));
