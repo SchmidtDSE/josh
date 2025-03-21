@@ -23,6 +23,9 @@ dependencies {
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
   
+  // Spatial4j for spatial context / operations
+  implementation("org.locationtech.spatial4j:spatial4j:0.8")
+
   // Rewrite dependencies
   rewrite("org.openrewrite:rewrite-java:7.46.0")
   rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.4.0")
