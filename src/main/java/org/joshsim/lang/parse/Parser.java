@@ -30,7 +30,7 @@ public class Parser {
    * Attempt to parse a Josh source.
    *
    * @param inputCode The code to parse.
-   * @returns a parse result which may contain error information.
+   * @return a parse result which may contain error information.
    */
   public ParseResult parse(String inputCode) {
     CharStream input = CharStreams.fromString(inputCode);
