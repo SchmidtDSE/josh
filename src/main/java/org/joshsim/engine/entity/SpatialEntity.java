@@ -16,11 +16,15 @@ import org.joshsim.engine.geometry.Geometry;
  * entities and spatial information.
  * </p>
  */
-public interface SpatialEntity extends Entity {
+public abstract class SpatialEntity implements Entity {
+  private Geometry geometry;
+
   /**
    * Get the geographic location of this spatial entity.
    *
    * @return the geographic point representing this entity's location
    */
-  Geometry getGeometry();
+  public Geometry getGeometry() {
+    return geometry;
+  }
 }
