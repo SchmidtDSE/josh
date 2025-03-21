@@ -325,10 +325,37 @@ public abstract class EngineValue {
    */
   protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
 
+  /**
+   * Subtract this value from another value assuming units and type are compatible.
+   * This is the reverse operation of unsafeSubtract.
+   *
+   * @param other the value to subtract this value from
+   * @return the result of the subtraction
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeSubtractFrom(EngineValue other);
 
+  /**
+   * Divide another value by this value assuming units and type are compatible.
+   * This is the reverse operation of unsafeDivide.
+   *
+   * @param other the value to be divided by this value
+   * @return the result of the division
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if units are incompatible
+   */
   protected abstract EngineValue unsafeDivideFrom(EngineValue other);
 
+  /**
+   * Raise all values to a power in a distribution context.
+   * This method is specifically for handling power operations when the exponent is a distribution.
+   *
+   * @param other the distribution of exponents
+   * @return the result of raising this value to all powers in the distribution
+   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws IllegalArgumentException if exponent has non-count units
+   */
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
 
   /**
