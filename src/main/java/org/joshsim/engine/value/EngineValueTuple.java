@@ -20,12 +20,12 @@ public class EngineValueTuple {
   /**
    * Create a new tuple of engine values.
    *
-   * @param newFirst the first engine value for this tuple, for example the left side operand.
-   * @param newSecond the second engine value for this tuple, for example the left side operand.
+   * @param first the first engine value for this tuple, for example the left side operand.
+   * @param second the second engine value for this tuple, for example the left side operand.
    */
-  public EngineValueTuple(EngineValue newFirst, EngineValue newSecond) {
-    first = newFirst;
-    second = newSecond;
+  public EngineValueTuple(EngineValue first, EngineValue second) {
+    this.first = first;
+    this.second = second;
     types = new TypesTuple(first.getLanguageType(), second.getLanguageType());
     units = new UnitsTuple(first.getUnits(), second.getUnits());
   }
@@ -96,8 +96,8 @@ public class EngineValueTuple {
      * <p>This constructor initializes a new pair of types given for the first and second values. 
      * This might include types, for example, like int or decimal.</p>
      *
-     * @param newFirst the first type, representing for example the type of the left-side operand.
-     * @param newSecond the second type, representing for example the type of the right-side
+     * @param first the first type, representing for example the type of the left-side operand.
+     * @param second the second type, representing for example the type of the right-side
      *     operand.
      */
     public TypesTuple(LanguageType first, LanguageType second) {

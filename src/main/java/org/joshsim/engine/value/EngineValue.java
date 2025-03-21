@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.value;
+
 import java.math.BigDecimal;
 
 

@@ -21,9 +21,9 @@ public class LanguageType {
   private final String rootType;
 
   /**
-   * Creates a new LanguageType with only a root type.
+   * Creates a new LanguageType for a value that is not in a distribution.
    *
-   * @param rootType The base type (e.g., "decimal", "string", etc.)
+   * @param rootType The base type (e.g., "decimal", "string", etc.).
    */
   public LanguageType(String rootType) {
     this.rootType = rootType;
@@ -33,8 +33,8 @@ public class LanguageType {
   /**
    * Creates a new LanguageType with distribution types and a root type.
    *
-   * @param distributionTypes Collection of distribution type identifiers
-   * @param rootType The base type (e.g., "decimal", "string", etc.)
+   * @param distributionTypes Collection of distribution type identifiers.
+   * @param rootType The base type (e.g., "decimal", "string", etc.).
    */
   public LanguageType(Collection<String> distributionTypes, String rootType) {
     this.distributionTypes = distributionTypes;
