@@ -1,12 +1,3 @@
-start unit years
-
-  alias year
-  alias yr
-  alias yrs
-
-end unit
-
-
 start simulation Example
 
   grid.size = 30 m
@@ -62,7 +53,7 @@ start patch Default
     return new + prior.JoshuaTrees
   }
 
-  onFire.start = sample uniform from 0% to 100% < 5%
+  onFire.start = sample uniform from 0% to 100% < 5
 
 end patch
 
@@ -120,3 +111,12 @@ start organism JoshuaTree
   end state
 
 end organism
+
+
+start unit years
+
+  alias year
+  alias yr
+  alias yrs
+
+end unit

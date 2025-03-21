@@ -14,7 +14,8 @@ start test TestHeight
   grid.size = 1km
   grid.start = 34 degrees latitude, -116 degrees longitude
   grid.end = 35 degrees latitude, -115 degrees longitude
-  steps = 5 count
+  steps.start = 0 count
+  steps.end = 5 count
 
   assert mean(TreeB.height) > 5 m
 
