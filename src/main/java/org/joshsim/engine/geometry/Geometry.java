@@ -10,38 +10,23 @@ import org.locationtech.spatial4j.shape.Shape;
  */
 public class Geometry implements Spatial {
   
-  protected SpatialContext spatialContext;
+  protected SpatialContext spatialContext = SpatialContext.GEO;
   protected Shape shape;
-  protected Point center;
-  protected double radiusInDegrees;
 
   /**
-   * Constructs a Geometry with the default SpatialContext (WGS84).
+   * Constructs a Geometry with a provided spatial4j shape.
    */
-  public Geometry() {
-    this.spatialContext = SpatialContext.GEO;
+  public Geometry(Shape shape) {
+    this.shape = shape;
   }
-  
+
   /**
-   * Constructs a Geometry with a custom SpatialContext.
+   * Gets the center point of this geometry, calculating from the shape.
    *
-   * @param spatialContext The spatial context to use
+   * @return The center point
    */
-  public Geometry(SpatialContext spatialContext) {
-    this.spatialContext = spatialContext;
-  }
-  
-  /**
-   * Sets the center point of this geometry.
-   *
-   * @param latitude Latitude in degrees
-   * @param longitude Longitude in degrees
-   */
-  public void setCenter(BigDecimal latitude, BigDecimal longitude) {
-    this.center = spatialContext.getShapeFactory().pointXY(
-        longitude.doubleValue(), 
-        latitude.doubleValue()
-    );
+  protected Point getCenter() {
+    return shape.getCenter();
   }
 
   /**
@@ -51,7 +36,7 @@ public class Geometry implements Spatial {
    * @return Distance in degrees
    */
   public BigDecimal centerDistanceTo(Geometry other) {
-    return new BigDecimal(spatialContext.calcDistance(center, other.center));
+    return new BigDecimal(spatialContext.calcDistance(shape.getCenter(), other.getCenter()));
   }
 
   /**
@@ -90,12 +75,12 @@ public class Geometry implements Spatial {
 
   @Override
   public BigDecimal getCenterLatitude() {
-    return center != null ? BigDecimal.valueOf(center.getY()) : null;
+    return BigDecimal.valueOf(getCenter().getY());
   }
 
   @Override
   public BigDecimal getCenterLongitude() {
-    return center != null ? BigDecimal.valueOf(center.getX()) : null;
+    return BigDecimal.valueOf(getCenter().getX());
   }
 
 }
