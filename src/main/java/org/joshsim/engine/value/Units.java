@@ -58,9 +58,9 @@ public class Units {
    * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
    *     count.
    */
-  public Units(Map<String, Long> newNumerator, Map<String, Long> newDenominator) {
-    numeratorUnits = newNumerator;
-    denominatorUnits = newDenominator;
+  public Units(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
+    this.numeratorUnits = numeratorUnits;
+    this.denominatorUnits = denominatorUnits;
   }
 
   /**
