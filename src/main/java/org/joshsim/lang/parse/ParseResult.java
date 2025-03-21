@@ -23,26 +23,26 @@ public class ParseResult {
   /**
    * Constructs a ParseResult with the specified program and no errors.
    *
-   * @param newProgram the parsed program.
+   * @param program the parsed program.
    */
-  public ParseResult(JoshLangParser.ProgramContext newProgram) {
-    program = Optional.of(newProgram);
-    errors = new ArrayList<>();
+  public ParseResult(JoshLangParser.ProgramContext program) {
+    this.program = Optional.of(program);
+    this.errors = new ArrayList<>();
   }
 
   /**
    * Constructs a ParseResult with the specified errors and no program.
    *
-   * @param newErrors the errors encountered which must not be empty.
-   * @throws IllegalArgumentException if newErrors is empty.
+   * @param errors the errors encountered which must not be empty.
+   * @throws IllegalArgumentException if errors is empty.
    */
-  public ParseResult(List<ParseError> newErrors) {
-    if (newErrors.isEmpty()) {
+  public ParseResult(List<ParseError> errors) {
+    if (errors.isEmpty()) {
       throw new IllegalArgumentException("Passed an empty errors list without parsed program.");
     }
 
     program = Optional.empty();
-    errors = newErrors;
+    this.errors = errors;
   }
 
   /**

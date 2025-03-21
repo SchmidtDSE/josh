@@ -53,8 +53,9 @@ public class Units {
   /**
    * Constructs Units with the specified numerator and denominator unit maps.
    *
-   * @param newNumerator a Map representing the units in the numerator, mapping from name to count.
-   * @param newDenominator a Map representing the units in the denominator, mapping from name to
+   * @param numeratorUnits a Map representing the units in the numerator, mapping from name to
+   *     count.
+   * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
    *     count.
    */
   public Units(Map<String, Long> newNumerator, Map<String, Long> newDenominator) {
