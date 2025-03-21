@@ -5,7 +5,8 @@ plugins {
   id "application" // for creating executable JARs
   id "checkstyle" // for code style checking
   id "antlr" // for ANTLR grammar
-  id "org.openrewrite.rewrite" version "7.2.0"
+  id "org.openrewrite.rewrite" version "7.2.0" // Formatting for google style guide
+  id "org.teavm" version "0.11.0" // TeaVM for WASM compilation
 }
 
 java {
@@ -22,9 +23,6 @@ dependencies {
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
   
-  // Command line parsing
-  implementation("info.picocli:picocli:4.7.6")
-  
   // Rewrite dependencies
   rewrite("org.openrewrite:rewrite-java:7.46.0")
   rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.4.0")
@@ -35,12 +33,22 @@ dependencies {
   testImplementation("org.mockito:mockito-core:5.16.1")
   testImplementation("org.mockito:mockito-junit-jupiter:5.16.1")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+  // Command line parsing
+  implementation("info.picocli:picocli:4.7.6")
+}
+
+teavm {
+  wasm {
+    mainClass = "org.joshsim.JoshSimFacade"
+  }
 }
 
 application {
-  mainClass = "org.joshsim.JoshSim"
+  mainClass = "org.joshsim.JoshSimCommander"
 }
 
+// JUnit target for al tests.
 test {
   useJUnitPlatform()
   testLogging {
@@ -49,10 +57,11 @@ test {
   }
 }
 
+// Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
     attributes(
-      "Main-Class": "org.joshsim.JoshSim"
+      "Main-Class": "org.joshsim.JoshSimCommander"
     )
   }
   archiveBaseName = "joshsim"
@@ -70,6 +79,7 @@ task fatJar(type: Jar) {
   exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 }
 
+// Standard JavaDoc target
 javadoc {
   options {
     outputLevel = JavadocOutputLevel.QUIET
@@ -82,6 +92,7 @@ javadoc {
   destinationDir = file("${buildDir}/docs/javadoc")
 }
 
+// Shared configuration options for checkstyle
 checkstyle {
   toolVersion = "10.21.4"
   configFile = file("${rootDir}/config/checkstyle/google_checks.xml")
@@ -91,14 +102,17 @@ checkstyle {
   ignoreFailures = false
 }
 
+// Checkstyle target for main code
 checkstyleMain {
   source = "src/main/java/org/joshsim"
 }
 
+// Checkstyle target for test code
 checkstyleTest {
   source = "src/test/java/org/joshsim"
 }
 
+// Local formatting tool
 rewrite {
   activeRecipe("org.openrewrite.staticanalysis.CodeCleanup")
   checkstyleConfigFile = file("${rootDir}/config/checkstyle/google_checks.xml")

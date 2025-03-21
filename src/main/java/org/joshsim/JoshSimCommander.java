@@ -19,17 +19,18 @@ import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.parse.Parser;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /**
- * Command line interface for JoshSim.
+ * Command line interface for Josh.
  * 
- * <p>Provides several subcommands like validate and run with options to help users validate
- * simulation files or execute them through the interface.</p>
+ * <p>Provides several subcommands like validate and run which check simulation files or execute
+ * them via the command line respectively. This is in contrast to using Josh as a library like
+ * through JoshSimFacade where client code can perform operations on the platform
+ * programmatically.</p>
  *
  * @version 1.0
  * @since 1.0
@@ -40,10 +41,10 @@ import picocli.CommandLine.Parameters;
     version = "1.0",
     description = "JoshSim command line interface",
     subcommands = {
-        JoshSim.ValidateCommand.class
+        JoshSimCommander.ValidateCommand.class
     }
 )
-public class JoshSim {
+public class JoshSimCommander {
 
   /**
    * Command to validate a simulation file.
@@ -87,8 +88,7 @@ public class JoshSim {
         return 2;
       }
 
-      Parser parser = new Parser();
-      ParseResult result = parser.parse(fileContent);
+      ParseResult result = JoshSimFacade.parse(fileContent);
 
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
@@ -143,7 +143,7 @@ public class JoshSim {
    * @param args command line arguments passed to the JoshSim application to be parsed by picocli.
    */
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new JoshSim()).execute(args);
+    int exitCode = new CommandLine(new JoshSimCommander()).execute(args);
     System.exit(exitCode);
   }
 }
