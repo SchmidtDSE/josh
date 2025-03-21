@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.Optional;
+import org.joshsim.engine.value.EngineValue;
 
 /**
  * Mutable spatial entity which represents a distrubance.
@@ -13,4 +15,35 @@ package org.joshsim.engine.entity;
  * <p>Agent representing a disturbance entity in the system. Disturbances are events that can affect
  * other entities in the environment such as a fire or a management intervention.</p>
  */
-public interface Disturbance extends SpatialEntity {}
+public class Disturbance extends SpatialEntity {
+
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
+  }
+
+  @Override
+  public Optional<EngineValue> getAttributeValue(String name) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
+  }
+
+  @Override
+  public void setAttributeValue(String name, EngineValue value) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
+  }
+
+  @Override
+  public void lock() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'lock'");
+  }
+
+  @Override
+  public void unlock() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
+  }
+}

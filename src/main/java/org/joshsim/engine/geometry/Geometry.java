@@ -1,3 +1,10 @@
+/**
+ * A generic geometric object that implements the Spatial interface. Since we use 
+ * spatial4j, this class is a wrapper around spatial4j's Shape class.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
@@ -8,8 +15,8 @@ import org.locationtech.spatial4j.shape.Shape;
 /**
  * Represents a geometric object that implements the Spatial interface.
  */
-public abstract class Geometry implements Spatial {
-  
+public class Geometry implements Spatial {
+
   protected SpatialContext spatialContext = SpatialContext.GEO;
   protected Shape shape;
 

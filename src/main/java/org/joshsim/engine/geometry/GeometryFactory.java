@@ -10,10 +10,13 @@ import java.math.BigDecimal;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.ShapeFactory;
+
 /**
  * Factory methods for creating geometric shapes.
  */
 public class GeometryFactory {
+  private static ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
+
   /**
    * Creates a square geometry with the specified width and center.
    *
@@ -37,7 +40,7 @@ public class GeometryFactory {
     double minLat = centerLat - halfWidth;
     double maxLat = centerLat + halfWidth;
     
-    Rectangle rectangle = geometry.spatialContext.getShapeFactory().rect(minLon, maxLon, minLat, maxLat);
+    Rectangle rectangle = shapeFactory.rect(minLon, maxLon, minLat, maxLat);
     Geometry geometry = new Geometry(rectangle);
     return geometry;
   }
@@ -62,28 +65,20 @@ public class GeometryFactory {
     double maxLon = bottomRightLongitude.doubleValue();
     double maxLat = topLeftLatitude.doubleValue();
     double minLat = bottomRightLatitude.doubleValue();
-    
+
     // Check if it's a square (approximately, within reasonable precision)
     double width = Math.abs(maxLon - minLon);
     double height = Math.abs(maxLat - minLat);
-    
+
     if (Math.abs(width - height) > 0.000001) {
       throw new IllegalArgumentException(
         "The specified coordinates don't form a square: width=" 
             + width + ", height=" + height
       );
     }
-    
-    Geometry geometry = new Geometry();
-    
-    // Create rectangle shape
-    geometry.shape = geometry.spatialContext.getShapeFactory().rect(minLon, maxLon, minLat, maxLat);
-    
-    // Calculate and set center
-    double centerLat = (minLat + maxLat) / 2.0;
-    double centerLon = (minLon + maxLon) / 2.0;
-    geometry.center = geometry.spatialContext.getShapeFactory().pointXY(centerLon, centerLat);
-    
+
+    Rectangle rectangle = shapeFactory.rect(minLon, maxLon, minLat, maxLat);
+    Geometry geometry = new Geometry(rectangle);
     return geometry;
   }
 }
