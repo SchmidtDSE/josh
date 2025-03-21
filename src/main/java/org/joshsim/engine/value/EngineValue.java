@@ -165,25 +165,45 @@ public abstract class EngineValue {
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().unsafeAdd(safeTuple.getSecond());
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeAdd(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeAdd(safeTuple.getSecond());
+    }
   }
 
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    return safeTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getFirst().unsafeSubtractFrom(safeTuple.getSecond());
+    } else {
+      return safeTuple.getFirst().unsafeSubtract(safeTuple.getSecond());
+    }
   }
 
   public EngineValue multiply(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeMultiply(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeMultiply(safeTuple.getSecond());
+    }
   }
 
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
+    
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getFirst().unsafeDivideBy(safeTuple.getSecond());
+    } else {
+      return safeTuple.getFirst().unsafeDivide(safeTuple.getSecond());
+    }
   }
 
   public EngineValue raiseToPower(EngineValue other) {
@@ -194,7 +214,11 @@ public abstract class EngineValue {
       throw new IllegalArgumentException("Can only raise to a count.");
     }
 
-    return safeTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getFirst().unsafeRaiseAllToPower(safeTuple.getSecond());
+    } else {
+      return safeTuple.getFirst().unsafeRaiseToPower(safeTuple.getSecond());
+    }
   }
 
   /**
@@ -246,6 +270,12 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible or exponent has non-count units.
    */
   protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
+
+  protected abstract EngineValue unsafeSubtractFrom(EngineValue other);
+
+  protected abstract EngineValue unsafeDivideBy(EngineValue other);
+
+  protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
 
   /**
    * Determine if this value can be used to raise another value to a power.

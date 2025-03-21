@@ -100,6 +100,31 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  protected EngineValue unsafeSubtractFrom(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> other.subtract(value))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeDivideBy(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> other.divide(value))
+        .collect(Collectors.toCollection(ArrayList::new));
+    Units newUnits = getUnits().divide(other.getUnits()).invert();
+    return new RealizedDistribution(getCaster(), result, newUnits);
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> other.raiseToPower(value))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Cannot convert multiple values to a single scalar.");
   }

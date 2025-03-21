@@ -140,6 +140,21 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return null;
   }
 
+  @Override
+  protected EngineValue unsafeSubtractFrom(EngineValue other) {
+    return other.unsafeSubtract(this);
+  }
+
+  @Override
+  protected EngineValue unsafeDivideBy(EngineValue other) {
+    return other.unsafeDivide(this);
+  }
+
+  @Override
+  protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
+    return other.unsafeRaiseToPower(this);
+  }
+
   /**
    * Indicate that raise to power is not supported for this type unless overloaded.
    *
