@@ -21,7 +21,7 @@ public abstract class StandardVirtualDistribution extends VirtualDistribution {
    * @param newCaster The value caster to use.
    * @param newUnits The units of the distribution.
    */
-  public StandardVirtualDistribution(EngineValueCaster newCaster, String newUnits) {
-    super(newCaster, newUnits);
+  public StandardVirtualDistribution(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 }

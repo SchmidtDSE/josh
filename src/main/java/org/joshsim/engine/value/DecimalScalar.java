@@ -23,9 +23,9 @@ public class DecimalScalar extends Scalar {
   * @param newInnerValue value the value of this scalar.
   * @param newUnits the units of this scalar.
   */
-  public DecimalScalar(EngineValueCaster newCaster, BigDecimal newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public DecimalScalar(EngineValueCaster caster, BigDecimal innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override

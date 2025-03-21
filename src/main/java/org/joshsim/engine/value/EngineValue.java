@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 public abstract class EngineValue {
 
   protected final EngineValueCaster caster;
-  protected final String units;
+  protected final Units units;
 
   /**
    * Create a new EngineValue.
@@ -25,7 +25,7 @@ public abstract class EngineValue {
    * @param caster the EngineValueCaster to use for casting
    * @param units the units of the value
    */
-  public EngineValue(EngineValueCaster caster, String units) {
+  public EngineValue(EngineValueCaster caster, Units units) {
     this.caster = caster;
     this.units = units;
   }
@@ -35,7 +35,7 @@ public abstract class EngineValue {
    *
    * @return the units of this value
    */
-  public String getUnits() {
+  public Units getUnits() {
     return units;
   }
 
@@ -184,9 +184,7 @@ public abstract class EngineValue {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
-    String otherUnits = other.getUnits();
-    boolean validUnits = otherUnits.equals("count") || otherUnits.equals("");
-    if (!validUnits) {
+    if (!other.canBePower()) {
       throw new IllegalArgumentException("Can only raise to a count.");
     }
 

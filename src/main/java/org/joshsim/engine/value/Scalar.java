@@ -17,10 +17,11 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   /**
    * Create a new scalar with the given units.
    *
-   * @param newUnits String describing the units which may be a user-defined unit.
+   * @param caster The engine value caster to use in operations involving this scalar.
+   * @param units for dimensional analysis.
    */
-  public Scalar(EngineValueCaster newCaster, String newUnits) {
-    super(newCaster, newUnits);
+  public Scalar(EngineValueCaster caster, Units units) {
+    super(caster, units);
   }
 
   /**
@@ -88,11 +89,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   public EngineValue cast(Cast strategy) {
     return strategy.cast(this);
-  }
-
-  @Override
-  public String getUnits() {
-    return units;    
   }
 
   @Override

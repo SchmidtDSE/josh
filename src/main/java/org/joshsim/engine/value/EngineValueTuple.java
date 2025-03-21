@@ -168,18 +168,18 @@ public class EngineValueTuple {
    */
   public static class UnitsTuple {
 
-    private final String first;
-    private final String second;
+    private final Units first;
+    private final Units second;
 
     /**
      * Create a new tuple to represent a pair of identifying names.
      *
      * @param newFirst the first value, for example from the left-side operand.
-     * @param newSecond the first value, for example from the right-side operand.
+     * @param newSecond the second value, for example from the right-side operand.
      */
-    public UnitsTuple(String newFirst, String newSecond) {
-      first = newFirst;
-      second = newSecond;
+    public UnitsTuple(Units first, Units second) {
+      this.first = first;
+      this.second = second;
     }
 
     /**
@@ -187,7 +187,7 @@ public class EngineValueTuple {
      *
      * @returns the first identifying value.
      */
-    public String getFirst() {
+    public Units getFirst() {
       return first;
     }
 
@@ -196,7 +196,7 @@ public class EngineValueTuple {
      *
      * @returns the second identifying value.
      */
-    public String getSecond() {
+    public Units getSecond() {
       return second;
     }
 

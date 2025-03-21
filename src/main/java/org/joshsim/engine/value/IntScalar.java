@@ -20,13 +20,13 @@ public class IntScalar extends Scalar {
   /**
    * Constructs an IntScalar instance with specified caster, value, and units.
    *
-   * @param newCaster the EngineValueCaster used for casting
-   * @param newInnerValue the initial integer value of this IntScalar
-   * @param newUnits the units associated with this IntScalar
+   * @param caster the EngineValueCaster used for casting
+   * @param innerValue the initial integer value of this IntScalar
+   * @param units the units associated with this IntScalar
    */
-  public IntScalar(EngineValueCaster newCaster, long newInnerValue, String newUnits) {
-    super(newCaster, newUnits);
-    innerValue = newInnerValue;
+  public IntScalar(EngineValueCaster caster, long innerValue, Units units) {
+    super(caster, units);
+    this.innerValue = innerValue;
   }
 
   @Override

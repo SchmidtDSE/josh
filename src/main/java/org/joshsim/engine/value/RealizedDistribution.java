@@ -29,17 +29,17 @@ public class RealizedDistribution extends Distribution {
   /**
    * Create a new RealizedDistribution.
    *
-   * @param newCaster The EngineValueCaster to use for casting.
-   * @param newInnerValue The values to be stored in the distribution.
-   * @param newUnits The units of the distribution.
+   * @param caster The EngineValueCaster to use for casting.
+   * @param values The values to be stored in the distribution.
+   * @param units The units of the distribution.
    */
   public RealizedDistribution(
-      EngineValueCaster newCaster,
+      EngineValueCaster caster,
       List<EngineValue> newInnerValue,
-      String newUnits
+      Units units
   ) {
-    super(newCaster, newUnits);
-    values = newInnerValue;
+    super(caster, units);
+    values = values;
   }
 
   /**
