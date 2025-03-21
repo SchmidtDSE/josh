@@ -127,7 +127,9 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  public abstract String determineMultipliedUnits(String left, String right);
+  public Units determineMultipliedUnits(Units left, Units right) {
+    return left.multiply(right);
+  }
 
   /**
    * Determine the new units string having divided two units.
@@ -136,7 +138,9 @@ public abstract class EngineValue {
    * @param right units from the right side operand.
    * @returns new units description string.
    */
-  public abstract String determineDividedUnits(String left, String right);
+  public Units determineDividedUnits(Units left, Units right) {
+    return left.divide(right);
+  }
 
   /**
    * Determine the new units string having raised a unit to a power.
@@ -145,7 +149,9 @@ public abstract class EngineValue {
    * @param exponent units from the exponent operand.
    * @returns new units description string.
    */
-  public abstract String determineRaisedUnits(String base, Long exponent);
+  public Units determineRaisedUnits(Units base, long exponent) {
+    return base.raiseToPower(exponent);
+  }
 
   /**
    * Get the EngineValueCaster for this value.

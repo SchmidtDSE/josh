@@ -35,11 +35,14 @@ public class RealizedDistribution extends Distribution {
    */
   public RealizedDistribution(
       EngineValueCaster caster,
-      List<EngineValue> newInnerValue,
+      List<EngineValue> values,
       Units units
   ) {
     super(caster, units);
-    values = values;
+    if (values.size() == 0) {
+      throw new IllegalArgumentException("Cannot create a distribution with no values.");
+    }
+    this.values = values;
   }
 
   /**
@@ -77,7 +80,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.multiply(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits().multiply(other.getUnits()));
   }
 
   @Override
@@ -85,7 +88,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.divide(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits().divide(other.getUnits()));
   }
 
   @Override
@@ -93,7 +96,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.raiseToPower(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
   }
 
   @Override
@@ -129,21 +132,6 @@ public class RealizedDistribution extends Distribution {
   @Override
   public Object getInnerValue() {
     return values;
-  }
-
-  @Override
-  public String determineMultipliedUnits(String left, String right) {
-    return null;
-  }
-
-  @Override
-  public String determineDividedUnits(String left, String right) {
-    return null;
-  }
-
-  @Override
-  public String determineRaisedUnits(String base, Long exponent) {
-    return null;
   }
 
   @Override

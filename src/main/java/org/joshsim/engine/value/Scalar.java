@@ -96,27 +96,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return this;
   }
 
-  @Override
-  public String determineMultipliedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.multiply(rightUnits).simplify().toString();
-  }
-
-  @Override
-  public String determineDividedUnits(String left, String right) {
-    Units leftUnits = new Units(left);
-    Units rightUnits = new Units(right);
-    return leftUnits.divide(rightUnits).simplify().toString();
-  }
-
-  @Override
-  public String determineRaisedUnits(String base, Long exponent) {
-    Units baseUnits = new Units(base);
-    return baseUnits.raiseToPower(exponent).simplify().toString();
-  }
-
-
   /**
    * Indicate that add is not supported for this type unless overloaded.
    *
