@@ -9,7 +9,37 @@ import org.joshsim.engine.value.EngineValue;
  * Spatial operations will be performed on the elements of the grid, Patches, which
  * are the basic unit of spatial representation.
  */
-public abstract class Grid {
+public class Grid {
   private List<Patch> patches;
   private EngineValue spacing;
+
+
+  /**
+   * Constructor for the Grid class.
+   *
+   * @param patches List of patches in the grid.
+   * @param spacing Width of a cell in the grid.
+   */
+  public Grid(List<Patch> patches, EngineValue spacing) {
+    this.patches = patches;
+    this.spacing = spacing;
+  }
+
+  /**
+   * Returns the list of patches in the grid.
+   *
+   * @return List of patches in the grid.
+   */
+  public List<Patch> getPatches() {
+    return patches;
+  }
+  
+  /**
+   * Returns the width of a cell in the grid.
+   *
+   * @return Width of a cell in the grid.
+   */
+  public EngineValue getSpacing() {
+    return spacing;
+  }
 }

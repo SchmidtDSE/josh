@@ -19,6 +19,16 @@ import org.joshsim.engine.value.EngineValue;
  */
 public class Patch extends SpatialEntity {
 
+  /**
+   * Create a new patch.
+   *
+   * @param geometry The geometry of the patch.
+   */
+  public Patch(Geometry geometry) {
+    super(geometry);
+  }
+
+
   @Override
   public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
     // TODO Auto-generated method stub

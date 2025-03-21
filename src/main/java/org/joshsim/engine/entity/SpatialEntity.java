@@ -20,6 +20,15 @@ public abstract class SpatialEntity implements Entity {
   private Geometry geometry;
 
   /**
+   * Create a new spatial entity with the given location.
+   *
+   * @param geometry the geographic location of this entity
+   */
+  public SpatialEntity(Geometry geometry) {
+    this.geometry = geometry;
+  }
+
+  /**
    * Get the geographic location of this spatial entity.
    *
    * @return the geographic point representing this entity's location
