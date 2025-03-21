@@ -41,7 +41,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
 
-    IntScalar result = (IntScalar)scalar1.add(scalar2);
+    IntScalar result = (IntScalar) scalar1.add(scalar2);
     assertEquals(15L, result.getAsInt());
     assertEquals(new Units("m"), result.getUnits());
   }
@@ -61,7 +61,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
 
-    IntScalar result = (IntScalar)scalar1.subtract(scalar2);
+    IntScalar result = (IntScalar) scalar1.subtract(scalar2);
     assertEquals(5L, result.getAsInt());
     assertEquals(new Units("m"), result.getUnits());
   }

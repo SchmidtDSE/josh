@@ -1,6 +1,10 @@
 package org.joshsim.engine.value;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -105,7 +109,7 @@ class RealizedDistributionTest {
     assertEquals(new Units("m"), result.getUnits());
   }
 
-   @Test
+  @Test
   void testSubtractReverse() {
     IntScalar subtrahend = new IntScalar(caster, 1L, new Units("m"));
     RealizedDistribution result = (RealizedDistribution) subtrahend.subtract(distribution);
@@ -353,7 +357,11 @@ class RealizedDistributionTest {
   void testEmptyDistribution() {
     ArrayList<EngineValue> emptyValues = new ArrayList<>();
     
-    assertThrows(IllegalArgumentException.class, () -> new RealizedDistribution(caster, emptyValues, new Units("m")));
+    assertThrows(IllegalArgumentException.class, () -> new RealizedDistribution(
+        caster,
+        emptyValues,
+        new Units("m")
+    ));
   }
 
 }

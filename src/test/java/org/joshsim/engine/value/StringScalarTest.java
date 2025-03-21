@@ -35,7 +35,7 @@ class StringScalarTest {
     StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
     StringScalar scalar2 = new StringScalar(caster, " world", new Units(""));
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
   }
 
@@ -172,7 +172,7 @@ class StringScalarTest {
     StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
     StringScalar scalar2 = new StringScalar(caster, null, new Units(""));
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hellonull", result.getAsString());
   }
 }
