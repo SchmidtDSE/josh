@@ -168,14 +168,15 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
 
   
   /**
-   * Checks if the provided EngineValue is compatible with the current Scalar for arithmetic operations.
+   * Check if provided EngineValue is compatible with the current Scalar for arithmetic operations.
    *
    * <p>This method ensures that the other EngineValue is not a distribution and that it has the
    * same type as the current Scalar. If these conditions are not met, an 
    * IllegalArgumentException is thrown.</p>
    *
    * @param other the EngineValue to check compatibility with.
-   * @throws IllegalArgumentException if the other EngineValue is a distribution or has a different type.
+   * @throws IllegalArgumentException if the other EngineValue is a distribution or has a different
+   *     type.
    */
   protected void assertScalarCompatible(EngineValue other) {
     if (other.getLanguageType().isDistribution()) {

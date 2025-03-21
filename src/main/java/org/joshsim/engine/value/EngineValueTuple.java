@@ -174,8 +174,8 @@ public class EngineValueTuple {
     /**
      * Create a new tuple to represent a pair of identifying names.
      *
-     * @param newFirst the first value, for example from the left-side operand.
-     * @param newSecond the second value, for example from the right-side operand.
+     * @param first the first value, for example from the left-side operand.
+     * @param second the second value, for example from the right-side operand.
      */
     public UnitsTuple(Units first, Units second) {
       this.first = first;

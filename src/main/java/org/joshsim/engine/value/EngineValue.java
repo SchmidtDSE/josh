@@ -169,9 +169,9 @@ public abstract class EngineValue {
    * <p>Performs addition after ensuring type and unit compatibility through casting.
    * If either value is a Distribution, the result will be a Distribution.</p>
    *
-   * @param other the value to add to this value
-   * @return the result of the addition
-   * @throws IllegalArgumentException if the values are incompatible and cannot be cast
+   * @param other the value to add to this value.
+   * @return the result of the addition.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -190,9 +190,9 @@ public abstract class EngineValue {
    * <p>Performs subtraction after ensuring type and unit compatibility through casting.
    * If either value is a Distribution, the result will be a Distribution.</p>
    *
-   * @param other the value to subtract from this value
-   * @return the result of the subtraction
-   * @throws IllegalArgumentException if the values are incompatible and cannot be cast
+   * @param other the value to subtract from this value.
+   * @return the result of the subtraction.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -208,9 +208,9 @@ public abstract class EngineValue {
   /**
    * Multiply this value by another value.
    * 
-   * <p>Performs multiplication after ensuring type compatibility through casting.
-   * Units are combined according to multiplication rules.
-   * If either value is a Distribution, the result will be a Distribution.</p>
+   * <p>Performs multiplication after ensuring type compatibility through casting. Units are 
+   * combined according to multiplication rules. If either value is a Distribution, the result will
+   * be a Distribution.</p>
    *
    * @param other the value to multiply by
    * @return the result of the multiplication
@@ -230,13 +230,13 @@ public abstract class EngineValue {
   /**
    * Divide this value by another value.
    * 
-   * <p>Performs division after ensuring type compatibility through casting.
-   * Units are combined according to division rules.
-   * If either value is a Distribution, the result will be a Distribution.</p>
+   * <p>Performs division after ensuring type compatibility through casting. Units are combined
+   * according to division rules. If either value is a Distribution, the result will be a 
+   * Distribution.</p>
    *
-   * @param other the value to divide by
-   * @return the result of the division
-   * @throws IllegalArgumentException if the values are incompatible and cannot be cast
+   * @param other the value to divide by.
+   * @return the result of the division.
+   * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -252,10 +252,9 @@ public abstract class EngineValue {
   /**
    * Raise this value to the power of another value.
    * 
-   * <p>Performs exponentiation after ensuring type compatibility through casting.
-   * The exponent must be a count (unitless) value.
-   * Units are combined according to power rules.
-   * If either value is a Distribution, the result will be a Distribution.</p>
+   * <p>Performs exponentiation after ensuring type compatibility through casting.The exponent must
+   * be a count or unitless value. Units are combined according to power rules. If either value is
+   * a Distribution, the result will be a Distribution.</p>
    *
    * @param other the exponent value to raise this value to
    * @return the result of raising this value to the given power
