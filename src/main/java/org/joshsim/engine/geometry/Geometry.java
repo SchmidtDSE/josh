@@ -8,7 +8,7 @@ import org.locationtech.spatial4j.shape.Shape;
 /**
  * Represents a geometric object that implements the Spatial interface.
  */
-public class Geometry implements Spatial {
+public abstract class Geometry implements Spatial {
   
   protected SpatialContext spatialContext = SpatialContext.GEO;
   protected Shape shape;
