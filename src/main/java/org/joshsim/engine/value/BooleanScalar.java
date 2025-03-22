@@ -1,14 +1,11 @@
-
 /**
  * Structures describing an individual engine value.
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-
 
 /**
  * Engine value which only has a single discrete boolean value.
@@ -58,5 +55,4 @@ public class BooleanScalar extends Scalar {
   public Comparable<?> getInnerValue() {
     return innerValue;
   }
-
 }

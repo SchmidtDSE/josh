@@ -3,12 +3,10 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.util.HashMap;
 import java.util.Map;
-
 
 /**
  * Caster which always widens to achieve type compatibility.
@@ -29,40 +27,16 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     EngineValueFactory factory = new EngineValueFactory(this);
 
     // Options for boolean
-    addCast(
-        "boolean",
-        "int",
-        x -> factory.build(x.getAsInt(), x.getUnits())
-    );
-    addCast(
-        "boolean",
-        "decimal",
-        x -> factory.build(x.getAsDecimal(), x.getUnits())
-    );
-    addCast(
-        "boolean",
-        "string",
-        x -> factory.build(x.getAsString(), x.getUnits())
-    );
+    addCast("boolean", "int", x -> factory.build(x.getAsInt(), x.getUnits()));
+    addCast("boolean", "decimal", x -> factory.build(x.getAsDecimal(), x.getUnits()));
+    addCast("boolean", "string", x -> factory.build(x.getAsString(), x.getUnits()));
 
     // Options for int
-    addCast(
-        "int",
-        "decimal",
-        x -> factory.build(x.getAsDecimal(), x.getUnits())
-    );
-    addCast(
-        "int",
-        "string",
-        x -> factory.build(x.getAsString(), x.getUnits())
-    );
+    addCast("int", "decimal", x -> factory.build(x.getAsDecimal(), x.getUnits()));
+    addCast("int", "string", x -> factory.build(x.getAsString(), x.getUnits()));
 
     // Options for decimal
-    addCast(
-        "decimal",
-        "string",
-        x -> factory.build(x.getAsString(), x.getUnits())
-    );
+    addCast("decimal", "string", x -> factory.build(x.getAsString(), x.getUnits()));
   }
 
   @Override
@@ -71,14 +45,12 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     if (operands.getAreCompatible() || (!requireSameUnits && types.getAreCompatible())) {
       return operands;
     }
-    
+
     EngineValueTuple.UnitsTuple units = operands.getUnits();
     if (requireSameUnits && !units.getAreCompatible()) {
-      String message = String.format(
-          "Cannot cast with different units %s and %s",
-          units.getFirst(),
-          units.getSecond()
-      );
+      String message =
+          String.format(
+              "Cannot cast with different units %s and %s", units.getFirst(), units.getSecond());
       throw new IllegalArgumentException(message);
     }
 
@@ -91,11 +63,8 @@ public class EngineValueWideningCaster implements EngineValueCaster {
       EngineValue newSecond = operands.getSecond().cast(strategies.get(types));
       return new EngineValueTuple(operands.getFirst(), newSecond);
     } else {
-      String message = String.format(
-          "Cannot convert between %s and %s",
-          types.getFirst(),
-          types.getSecond()
-      );
+      String message =
+          String.format("Cannot convert between %s and %s", types.getFirst(), types.getSecond());
       throw new IllegalArgumentException(message);
     }
   }
@@ -110,11 +79,8 @@ public class EngineValueWideningCaster implements EngineValueCaster {
    * @param strategy the strategy to employ to execute the cast.
    */
   private void addCast(String firstRoot, String secondRoot, Cast strategy) {
-    EngineValueTuple.TypesTuple types = new EngineValueTuple.TypesTuple(
-        new LanguageType(firstRoot),
-        new LanguageType(secondRoot)
-    );
+    EngineValueTuple.TypesTuple types =
+        new EngineValueTuple.TypesTuple(new LanguageType(firstRoot), new LanguageType(secondRoot));
     strategies.put(types, strategy);
   }
-
 }

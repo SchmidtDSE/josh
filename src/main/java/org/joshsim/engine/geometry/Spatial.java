@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
@@ -44,5 +43,4 @@ public interface Spatial {
    * @return true if the geometry intersects with the point, false otherwise
    */
   public boolean intersects(BigDecimal latitude, BigDecimal longitude);
-
 }

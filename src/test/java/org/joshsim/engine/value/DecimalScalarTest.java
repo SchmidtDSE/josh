@@ -1,9 +1,7 @@
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -36,7 +34,7 @@ class DecimalScalarTest {
   void testGetAsInt() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units(""));
-    
+
     assertEquals(42L, scalar.getAsInt());
   }
 
@@ -46,7 +44,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("m"));
 
-    DecimalScalar result = (DecimalScalar)scalar1.add(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.add(scalar2);
     assertEquals(new BigDecimal("15.8"), result.getAsDecimal());
     assertEquals(new Units("m"), result.getUnits());
   }
@@ -66,7 +64,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("m"));
 
-    DecimalScalar result = (DecimalScalar)scalar1.subtract(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.subtract(scalar2);
     assertEquals(new BigDecimal("5.2"), result.getAsDecimal());
     assertEquals(new Units("m"), result.getUnits());
   }
@@ -86,7 +84,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("s"));
 
-    DecimalScalar result = (DecimalScalar)scalar1.multiply(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.multiply(scalar2);
     assertEquals(new BigDecimal("21.00"), result.getAsDecimal());
     assertEquals(new Units("m * s"), result.getUnits());
   }
@@ -97,7 +95,7 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("s"));
 
-    DecimalScalar result = (DecimalScalar)scalar1.divide(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.divide(scalar2);
     assertEquals(new BigDecimal("5.25"), result.getAsDecimal());
     assertEquals(new Units("m / s"), result.getUnits());
   }
@@ -117,11 +115,11 @@ class DecimalScalarTest {
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), new Units(""));
 
-    DecimalScalar result = (DecimalScalar)scalar1.raiseToPower(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal("8.0"), result.getAsDecimal());
     assertEquals(new Units("m * m * m"), result.getUnits());
   }
-  
+
   @Test
   void testRaiseToPowerWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
@@ -144,19 +142,18 @@ class DecimalScalarTest {
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
   //   DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units("kg"));
-    
+
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());
   //   assertEquals(new BigDecimal("42.5"), dist.getValues().get(0));
   //   assertEquals("kg", dist.getUnits());
   // }
-  
-  
+
   @Test
   void testScaleAndPrecision() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("123.456789"), new Units(""));
-    
+
     assertEquals(new BigDecimal("123.456789"), scalar.getAsDecimal());
     assertEquals("123.456789", scalar.getAsString());
   }

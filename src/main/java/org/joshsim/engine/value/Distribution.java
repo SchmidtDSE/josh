@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
@@ -34,18 +33,18 @@ public abstract class Distribution extends EngineValue {
    * <p>Sample a single value from this distribution where each element has a probability of
    * selection propotional to the frequency with which that value appears in the distribution.</p>
    *
-   * @return Scalar value which is sampled from this distribution with frequency-proportional 
+   * @return Scalar value which is sampled from this distribution with frequency-proportional
    *      selection probability.
    */
   public abstract Scalar sample();
-  
+
   /**
    * Get the size of the distribution if known.
    *
    * @return the number of elements in the distribution, or empty if virtualized
    */
   public abstract Optional<Integer> getSize();
-  
+
   /**
    * Get a specified number of values from the distribution.
    *
@@ -57,11 +56,11 @@ public abstract class Distribution extends EngineValue {
    *
    * @param count number of values to retrieve.
    * @param withReplacement boolean flag indicating whether to sample with replacement. True if
-   *      sample with replacement and False otherwise. If this distribution does not have a finite 
+   *      sample with replacement and False otherwise. If this distribution does not have a finite
    *      number of elements (virtualized), this flag will be ignored.
    * @return an iterable of engine values from the distribution.
    * @throws IllegalArgumentException if count exceeds the cardinality of this distribution
-   *      and sampling without replacement (like there are too few elements if the distribution is 
+   *      and sampling without replacement (like there are too few elements if the distribution is
    *      realized).
    */
   public abstract Iterable<EngineValue> getContents(int count, boolean withReplacement);
@@ -101,7 +100,7 @@ public abstract class Distribution extends EngineValue {
   /**
    * Get the sum value of this distribution.
    *
-   * @returns sum value of all elements in this distribution either actual or hypothetical 
+   * @returns sum value of all elements in this distribution either actual or hypothetical
    *      depending on distribution type. Empty if not defined for this distribution.
    */
   public abstract Optional<Scalar> getSum();

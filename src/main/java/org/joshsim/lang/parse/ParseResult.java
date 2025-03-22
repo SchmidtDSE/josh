@@ -3,10 +3,8 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.lang.parse;
 
-import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,5 +69,4 @@ public class ParseResult {
   public boolean hasErrors() {
     return !errors.isEmpty();
   }
-
 }

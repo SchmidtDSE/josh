@@ -3,11 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.simulation;
 
 import org.joshsim.engine.entity.EntityBuilder;
-
 
 /**
  * Builder of replicates which can be used to bulid for each step.

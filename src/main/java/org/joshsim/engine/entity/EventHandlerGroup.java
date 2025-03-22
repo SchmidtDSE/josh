@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import java.util.Optional;

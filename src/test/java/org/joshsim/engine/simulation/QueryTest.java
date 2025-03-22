@@ -1,7 +1,6 @@
 /**
  * Tests for the Query structure.
  */
-
 package org.joshsim.engine.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 class QueryTest {
-  
-  @Mock
-  private Geometry mockGeometry;
+
+  @Mock private Geometry mockGeometry;
 
   @Test
   void testQueryWithStepOnly() {

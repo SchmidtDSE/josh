@@ -3,11 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.config;
 
 import org.joshsim.engine.value.EngineValue;
-
 
 /**
  * Read-only configuration container.

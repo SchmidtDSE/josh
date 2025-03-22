@@ -3,9 +3,7 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
-
 
 /**
  * Interface for strategies which manage automated type casts.
@@ -20,5 +18,4 @@ public interface EngineValueCaster {
    *     they are different only if this flag is true.
    */
   EngineValueTuple makeCompatible(EngineValueTuple operands, boolean requireSameUnits);
-  
 }

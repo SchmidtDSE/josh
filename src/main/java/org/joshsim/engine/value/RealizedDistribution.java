@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
@@ -33,11 +32,7 @@ public class RealizedDistribution extends Distribution {
    * @param values The values to be stored in the distribution.
    * @param units The units of the distribution.
    */
-  public RealizedDistribution(
-      EngineValueCaster caster,
-      List<EngineValue> values,
-      Units units
-  ) {
+  public RealizedDistribution(EngineValueCaster caster, List<EngineValue> values, Units units) {
     super(caster, units);
     if (values.size() == 0) {
       throw new IllegalArgumentException("Cannot create a distribution with no values.");
@@ -47,80 +42,89 @@ public class RealizedDistribution extends Distribution {
 
   /**
    * Compute statistics on demand using parallel stream.
-   * 
+   *
    *
    * @return DoubleSummaryStatistics for the values
    */
   private void computeStats() {
-    DoubleSummaryStatistics newStats = values.parallelStream()
-        .map(EngineValue::getAsScalar)
-        .map(Scalar::getAsDecimal)
-        .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));
+    DoubleSummaryStatistics newStats =
+        values.parallelStream()
+            .map(EngineValue::getAsScalar)
+            .map(Scalar::getAsDecimal)
+            .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));
     stats = Optional.of(newStats);
   }
 
   @Override
   protected EngineValue unsafeAdd(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> value.add(other))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> value.add(other))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
   protected EngineValue unsafeSubtract(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> value.subtract(other))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> value.subtract(other))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
   protected EngineValue unsafeMultiply(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> value.multiply(other))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> value.multiply(other))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits().multiply(other.getUnits()));
   }
 
   @Override
   protected EngineValue unsafeDivide(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> value.divide(other))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> value.divide(other))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits().divide(other.getUnits()));
   }
 
   @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> value.raiseToPower(other))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> value.raiseToPower(other))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
   }
 
   @Override
   protected EngineValue unsafeSubtractFrom(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> other.subtract(value))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> other.subtract(value))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
   @Override
   protected EngineValue unsafeDivideFrom(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> other.divide(value))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> other.divide(value))
+            .collect(Collectors.toCollection(ArrayList::new));
     Units newUnits = getUnits().divide(other.getUnits()).invert();
     return new RealizedDistribution(getCaster(), result, newUnits);
   }
 
   @Override
   protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
-    List<EngineValue> result = values.stream()
-        .map(value -> other.raiseToPower(value))
-        .collect(Collectors.toCollection(ArrayList::new));
+    List<EngineValue> result =
+        values.stream()
+            .map(value -> other.raiseToPower(value))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits().raiseToPower(other.getAsInt()));
   }
 
@@ -137,20 +141,21 @@ public class RealizedDistribution extends Distribution {
   @Override
   public LanguageType getLanguageType() {
     EngineValue exampleValue = values.get(0);
-    
+
     Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
     List<String> distributions = new ArrayList<>();
     distributions.add("RealizedDistribution");
     innerDistributions.forEach(distributions::add);
-    
+
     return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
   }
 
   @Override
   public EngineValue cast(Cast strategy) {
-    ArrayList<EngineValue> result = values.stream()
-        .map(value -> value.cast(strategy))
-        .collect(Collectors.toCollection(ArrayList::new));
+    ArrayList<EngineValue> result =
+        values.stream()
+            .map(value -> value.cast(strategy))
+            .collect(Collectors.toCollection(ArrayList::new));
     return new RealizedDistribution(getCaster(), result, getUnits());
   }
 
@@ -210,5 +215,4 @@ public class RealizedDistribution extends Distribution {
   public Optional<Scalar> getSum() {
     return null;
   }
-
 }

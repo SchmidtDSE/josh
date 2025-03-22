@@ -3,9 +3,7 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.func;
-
 
 /**
  * Pre-compiled selector which is similar to a CompiledCallable but can only evaluate to a boolean.

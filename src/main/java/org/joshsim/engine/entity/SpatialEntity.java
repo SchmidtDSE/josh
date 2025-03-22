@@ -3,11 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import org.joshsim.engine.geometry.Geometry;
-
 
 /**
  * An entity with spatial properties in the system.
@@ -17,7 +15,7 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public abstract class SpatialEntity implements Entity {
-	private final Geometry geometry;
+  private final Geometry geometry;
 
   /**
    * Create a new spatial entity with the given location.

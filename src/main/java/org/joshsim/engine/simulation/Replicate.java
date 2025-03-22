@@ -3,16 +3,14 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.Patch;
 
-
 /**
  * A full simulation replicate.
- * 
+ *
  * <p>A single replicate of a simulation which, in Monte Carlo, may have multiple replicates. This
  * extends  across all timesteps in a replicate such that replicates may be created in distribution.
  * This provides methods to access time steps and query entities across time steps.

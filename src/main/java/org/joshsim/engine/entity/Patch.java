@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
@@ -27,7 +26,6 @@ public class Patch extends SpatialEntity {
   public Patch(Geometry geometry) {
     super(geometry);
   }
-
 
   @Override
   public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {

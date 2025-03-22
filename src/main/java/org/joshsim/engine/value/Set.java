@@ -3,9 +3,7 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
-
 
 /**
  * Distribution in which each unique value can only zero or one times.
@@ -21,5 +19,4 @@ public abstract class Set extends Distribution {
   public Set(EngineValueCaster caster, Units units) {
     super(caster, units);
   }
-
 }

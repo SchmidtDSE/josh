@@ -10,7 +10,6 @@
  *
  * </div>
  */
-
 package org.joshsim;
 
 import java.io.File;
@@ -26,7 +25,7 @@ import picocli.CommandLine.Parameters;
 
 /**
  * Command line interface for Josh.
- * 
+ *
  * <p>Provides several subcommands like validate and run which check simulation files or execute
  * them via the command line respectively. This is in contrast to using Josh as a library like
  * through JoshSimFacade where client code can perform operations on the platform
@@ -40,22 +39,16 @@ import picocli.CommandLine.Parameters;
     mixinStandardHelpOptions = true,
     version = "1.0",
     description = "JoshSim command line interface",
-    subcommands = {
-        JoshSimCommander.ValidateCommand.class
-    }
-)
+    subcommands = {JoshSimCommander.ValidateCommand.class})
 public class JoshSimCommander {
 
   /**
    * Command to validate a simulation file.
-   * 
+   *
    * <p>Validate command which checks if the given josh DSL code file, yielding exit code of zero
    * if valid and parseable and non-zero otherwise.</p>
    */
-  @Command(
-      name = "validate",
-      description = "Validate a simulation file"
-  )
+  @Command(name = "validate", description = "Validate a simulation file")
   static class ValidateCommand implements Callable<Integer> {
 
     @Option(names = "--quiet", description = "Suppress output messages")
@@ -93,16 +86,13 @@ public class JoshSimCommander {
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
         printError(leadMessage);
-        
+
         for (ParseError error : result.getErrors()) {
-          String lineMessage = String.format(
-              " - On line %d: %s",
-              error.getLine(),
-              error.getMessage()
-          );
+          String lineMessage =
+              String.format(" - On line %d: %s", error.getLine(), error.getMessage());
           printError(lineMessage);
         }
-        
+
         return 3;
       } else {
         printOut("Validated Josh code at " + file);

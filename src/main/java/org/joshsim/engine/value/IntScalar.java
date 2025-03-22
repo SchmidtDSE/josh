@@ -3,12 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
-import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
-
 
 /**
  * Engine value which only has a single discrete value.
@@ -64,13 +61,11 @@ public class IntScalar extends Scalar {
     return innerValue;
   }
 
-
   @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(getCaster(), getAsInt() + other.getAsInt(), getUnits());
   }
-
 
   @Override
   protected EngineValue unsafeSubtract(EngineValue other) {
@@ -78,15 +73,13 @@ public class IntScalar extends Scalar {
     return new IntScalar(getCaster(), getAsInt() - other.getAsInt(), getUnits());
   }
 
-
   @Override
   protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new IntScalar(
         getCaster(),
         getAsInt() * other.getAsInt(),
-        determineMultipliedUnits(getUnits(), other.getUnits())
-    );
+        determineMultipliedUnits(getUnits(), other.getUnits()));
   }
 
   @Override
@@ -95,8 +88,7 @@ public class IntScalar extends Scalar {
     return new IntScalar(
         getCaster(),
         getAsInt() / other.getAsInt(),
-        determineDividedUnits(getUnits(), other.getUnits())
-    );
+        determineDividedUnits(getUnits(), other.getUnits()));
   }
 
   @Override
@@ -110,7 +102,6 @@ public class IntScalar extends Scalar {
     return new DecimalScalar(
         getCaster(),
         new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-        determineRaisedUnits(getUnits(), other.getAsInt())
-    );
+        determineRaisedUnits(getUnits(), other.getAsInt()));
   }
 }

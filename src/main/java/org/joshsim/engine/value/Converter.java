@@ -3,9 +3,7 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
-
 
 /**
  * Store of available conversion operations between different units.

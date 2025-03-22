@@ -1,16 +1,13 @@
-
 /**
  * Data structures describing initialization helpers for EngineValues.
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  * Factory to build new EngineValues from Java types.
@@ -25,7 +22,7 @@ public class EngineValueFactory {
   public EngineValueFactory() {
     caster = new EngineValueWideningCaster();
   }
-  
+
   /**
    * Constructor for EngineValueFactory.
    *
@@ -44,7 +41,7 @@ public class EngineValueFactory {
    */
   public EngineValue build(long innerValue, Units units) {
     return new IntScalar(caster, innerValue, units);
-  } 
+  }
 
   /**
    * Build a new EngineValue from a string.
@@ -86,17 +83,13 @@ public class EngineValueFactory {
    * @param units the units for the values in the distribution.
    * @returns decorated version of innerValue as a distribution.
    */
-  public RealizedDistribution buildRealizedDistribution(
-      List<EngineValue> innerValue,
-      Units units
-  ) {
+  public RealizedDistribution buildRealizedDistribution(List<EngineValue> innerValue, Units units) {
     if (innerValue.size() == 0) {
       throw new IllegalArgumentException("Distributions cannot be empty.");
     }
 
-    ArrayList<EngineValue> innerArrayList = new ArrayList<EngineValue>(innerValue);;
+    ArrayList<EngineValue> innerArrayList = new ArrayList<EngineValue>(innerValue);
+    ;
     return new RealizedDistribution(caster, innerArrayList, units);
-
   }
-  
 }

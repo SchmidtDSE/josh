@@ -3,12 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
-import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
-
 
 /**
  * Engine value which only has a single discrete string value.
@@ -18,12 +15,12 @@ public class StringScalar extends Scalar {
   private final String innerValue;
 
   /**
-  * Constructs a new DecimalScalar with the specified value.
-  *
-  * @param caster the caster to use for automatic type conversion.
-  * @param innerValue the value of this StringScalar.
-  * @param units the units of this StringScalar.
-  */
+   * Constructs a new DecimalScalar with the specified value.
+   *
+   * @param caster the caster to use for automatic type conversion.
+   * @param innerValue the value of this StringScalar.
+   * @param units the units of this StringScalar.
+   */
   public StringScalar(EngineValueCaster caster, String innerValue, Units units) {
     super(caster, units);
     this.innerValue = innerValue;
@@ -69,5 +66,4 @@ public class StringScalar extends Scalar {
     assertScalarCompatible(other);
     return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());
   }
-
 }

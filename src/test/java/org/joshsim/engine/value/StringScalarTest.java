@@ -24,7 +24,7 @@ class StringScalarTest {
   void testConstructorWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     StringScalar scalar = new StringScalar(caster, "hello", new Units("label"));
-    
+
     assertEquals("hello", scalar.getAsString());
     assertEquals(new Units("label"), scalar.getUnits());
   }
@@ -35,7 +35,7 @@ class StringScalarTest {
     StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
     StringScalar scalar2 = new StringScalar(caster, " world", new Units(""));
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
   }
 
@@ -45,7 +45,7 @@ class StringScalarTest {
     StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
     StringScalar scalar2 = new StringScalar(caster, " world", new Units(""));
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
     assertEquals(new Units(""), result.getUnits());
   }
@@ -142,7 +142,7 @@ class StringScalarTest {
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
   //   StringScalar scalar = new StringScalar(caster, "hello", "labelnew Units("));
-    
+
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());
   //   assertEquals("hello", dist.getValues().get(0));
@@ -153,7 +153,7 @@ class StringScalarTest {
   void testEmptyString() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     StringScalar scalar = new StringScalar(caster, "", new Units(""));
-    
+
     assertEquals("", scalar.getAsString());
     assertEquals("", scalar.getInnerValue());
   }
@@ -162,7 +162,7 @@ class StringScalarTest {
   void testSpecialCharacters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     StringScalar scalar = new StringScalar(caster, "!@#$%^&*()_+", new Units(""));
-    
+
     assertEquals("!@#$%^&*()_+", scalar.getAsString());
   }
 
@@ -172,7 +172,7 @@ class StringScalarTest {
     StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
     StringScalar scalar2 = new StringScalar(caster, null, new Units(""));
 
-    StringScalar result = (StringScalar)scalar1.add(scalar2);
+    StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hellonull", result.getAsString());
   }
 }

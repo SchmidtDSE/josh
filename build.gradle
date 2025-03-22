@@ -5,8 +5,9 @@ plugins {
   id "application" // for creating executable JARs
   id "checkstyle" // for code style checking
   id "antlr" // for ANTLR grammar
-  id "org.openrewrite.rewrite" version "7.2.0" // Formatting for google style guide
+  // id "org.openrewrite.rewrite" version "7.2.0" // Formatting for google style guide
   id "org.teavm" version "0.11.0" // TeaVM for WASM compilation
+  id("com.diffplug.spotless") version "7.0.2"
 }
 
 java {
@@ -27,9 +28,9 @@ dependencies {
   implementation("org.locationtech.spatial4j:spatial4j:0.8")
 
   // Rewrite dependencies
-  rewrite("org.openrewrite:rewrite-java:7.46.0")
-  rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.4.0")
-  
+  // rewrite("org.openrewrite:rewrite-java:7.46.0")
+  // rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.4.0")
+
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
   testImplementation("org.junit.jupiter:junit-jupiter")
@@ -116,9 +117,16 @@ checkstyleTest {
 }
 
 // Local formatting tool
-rewrite {
-  activeRecipe("org.openrewrite.staticanalysis.CodeCleanup")
-  checkstyleConfigFile = file("${rootDir}/config/checkstyle/google_checks.xml")
+// rewrite {
+//   activeRecipe("org.openrewrite.staticanalysis.CodeCleanup")
+//   checkstyleConfigFile = file("${rootDir}/config/checkstyle/google_checks.xml")
+// }
+
+spotless {
+  java {
+    target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+    googleJavaFormat('1.17.0').reflowLongStrings().skipJavadocFormatting()
+  }
 }
 
 // Create directory and checkstyle config if it doesn"t exist

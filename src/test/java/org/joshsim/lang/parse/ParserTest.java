@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.lang.parse;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 
 /**
  * Test for the Parser facade.
@@ -27,7 +25,7 @@ public class ParserTest {
   public void setUp() {
     parser = new Parser();
   }
-  
+
   @Test
   public void testEmpty() {
     ParseResult result = parser.parse("");
@@ -45,5 +43,4 @@ public class ParserTest {
     ParseResult result = parser.parse("start organism test end organism");
     assertFalse(result.hasErrors());
   }
-
 }

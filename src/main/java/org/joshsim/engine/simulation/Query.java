@@ -3,12 +3,10 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
-
 
 /**
  * A spatial and / or temporal query which can be used to look up Patches.
@@ -50,7 +48,7 @@ public class Query {
   public int getStep() {
     return step;
   }
-  
+
   /**
    * Get the geometry associated with this query.
    *
@@ -59,5 +57,4 @@ public class Query {
   public Optional<Geometry> getGeometry() {
     return geometry;
   }
-
 }

@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.geometry;
 
 import org.locationtech.spatial4j.shape.Shape;

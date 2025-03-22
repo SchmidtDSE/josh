@@ -3,12 +3,10 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
 import org.joshsim.engine.value.EngineValue;
-
 
 /**
  * Base entity in system which has mutable attributes.
@@ -41,7 +39,7 @@ public interface Entity {
 
   /**
    * Acquire a global lock on this entity for thread safety.
-   * 
+   *
    * <p>This is a convenience method for client code and is not automatically  enforced by getters
    * and setters. The method will block until the lock is acquired.</p>
    */
@@ -49,7 +47,7 @@ public interface Entity {
 
   /**
    * Release the global lock on this entity.
-   * 
+   *
    * <p>This is a convenience method for client code and should be called after thread-safe
    * operations are complete.</p>
    */

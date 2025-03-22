@@ -3,11 +3,9 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
-
 
 /**
  * Engine value which only has a single discrete decimal value.
@@ -17,12 +15,12 @@ public class DecimalScalar extends Scalar {
   private final BigDecimal innerValue;
 
   /**
-  * Constructs a new DecimalScalar with the specified value.
-  *
-  * @param caster the caster to use for automatic type conversion.
-  * @param innerValue value the value of this scalar.
-  * @param units the units of this scalar.
-  */
+   * Constructs a new DecimalScalar with the specified value.
+   *
+   * @param caster the caster to use for automatic type conversion.
+   * @param innerValue value the value of this scalar.
+   * @param units the units of this scalar.
+   */
   public DecimalScalar(EngineValueCaster caster, BigDecimal innerValue, Units units) {
     super(caster, units);
     this.innerValue = innerValue;
@@ -68,36 +66,31 @@ public class DecimalScalar extends Scalar {
   protected EngineValue unsafeSubtract(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
-        getCaster(),
-        getAsDecimal().subtract(other.getAsDecimal()),
-        getUnits()
-    );
+        getCaster(), getAsDecimal().subtract(other.getAsDecimal()), getUnits());
   }
 
   @Override
   protected EngineValue unsafeMultiply(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
-      getCaster(),
-      getAsDecimal().multiply(other.getAsDecimal()),
-      determineMultipliedUnits(getUnits(), other.getUnits())
-    );
+        getCaster(),
+        getAsDecimal().multiply(other.getAsDecimal()),
+        determineMultipliedUnits(getUnits(), other.getUnits()));
   }
 
   @Override
   protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(
-      getCaster(),
-      getAsDecimal().divide(other.getAsDecimal()),
-      determineDividedUnits(getUnits(), other.getUnits())
-    );
+        getCaster(),
+        getAsDecimal().divide(other.getAsDecimal()),
+        determineDividedUnits(getUnits(), other.getUnits()));
   }
 
   @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
-  
+
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {
@@ -108,9 +101,8 @@ public class DecimalScalar extends Scalar {
     }
 
     return new DecimalScalar(
-      getCaster(),
-      BigDecimal.valueOf(Math.pow(base, exponent)),
-      determineRaisedUnits(getUnits(), other.getAsInt())
-    );
+        getCaster(),
+        BigDecimal.valueOf(Math.pow(base, exponent)),
+        determineRaisedUnits(getUnits(), other.getAsInt()));
   }
 }

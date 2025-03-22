@@ -3,17 +3,10 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.concurrent.Callable;
-import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.lang.parse.Parser;
-
 
 /**
  * Entry point into the Josh platform when used as a library.
@@ -38,7 +31,5 @@ public class JoshSimFacade {
     return parser.parse(code);
   }
 
-	private JoshSimFacade() {
-	}
-  
+  private JoshSimFacade() {}
 }

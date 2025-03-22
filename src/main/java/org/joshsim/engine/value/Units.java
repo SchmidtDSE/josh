@@ -3,7 +3,6 @@
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.util.HashSet;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeMap;
-
 
 /**
  * Strategy which represents a set of units which performs dimensional analysis.
@@ -31,7 +29,7 @@ public class Units {
   public Units(String description) {
     String numerator = "";
     String denominator = "";
-    
+
     if (description.contains(" / ")) {
       String[] pieces = description.split(" / ");
       if (pieces.length > 2) {
@@ -99,7 +97,7 @@ public class Units {
   public Units multiply(Units other) {
     Map<String, Long> newNumeratorUnits = new TreeMap<>(numeratorUnits);
     Map<String, Long> newDenominatorUnits = new TreeMap<>(denominatorUnits);
-  
+
     Map<String, Long> otherNumeratorUnits = other.getNumeratorUnits();
     for (String units : otherNumeratorUnits.keySet()) {
       long priorCount = newNumeratorUnits.getOrDefault(units, 0L);
@@ -129,7 +127,7 @@ public class Units {
     return multiply(other.invert());
   }
 
-  /** 
+  /**
    * Raise the current units to a power.
    *
    * @param power the power to raise the units to.
@@ -161,7 +159,7 @@ public class Units {
   public Units simplify() {
     Map<String, Long> newNumeratorUnits = new TreeMap<>();
     Map<String, Long> newDenominatorUnits = new TreeMap<>();
-    
+
     // Create a copy instead of a view to avoid modifying original collections
     Set<String> sharedUnits = new HashSet<>(numeratorUnits.keySet());
     sharedUnits.retainAll(denominatorUnits.keySet());
@@ -170,7 +168,7 @@ public class Units {
       long numeratorCount = numeratorUnits.get(units);
       long denominatorCount = denominatorUnits.get(units);
       long simplifiedCount = numeratorCount - denominatorCount;
-      
+
       if (simplifiedCount > 0) {
         newNumeratorUnits.put(units, simplifiedCount);
       } else if (simplifiedCount < 0) {
@@ -184,7 +182,7 @@ public class Units {
     for (String units : numeratorOnlyUnits) {
       newNumeratorUnits.put(units, numeratorUnits.get(units));
     }
-    
+
     Set<String> denominatorOnlyUnits = new HashSet<>(denominatorUnits.keySet());
     denominatorOnlyUnits.removeAll(numeratorUnits.keySet());
 
@@ -237,5 +235,4 @@ public class Units {
 
     return joiner.toString();
   }
-  
 }

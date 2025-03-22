@@ -41,7 +41,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
 
-    IntScalar result = (IntScalar)scalar1.add(scalar2);
+    IntScalar result = (IntScalar) scalar1.add(scalar2);
     assertEquals(15L, result.getAsInt());
     assertEquals(new Units("m"), result.getUnits());
   }
@@ -61,7 +61,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
 
-    IntScalar result = (IntScalar)scalar1.subtract(scalar2);
+    IntScalar result = (IntScalar) scalar1.subtract(scalar2);
     assertEquals(5L, result.getAsInt());
     assertEquals(new Units("m"), result.getUnits());
   }
@@ -81,7 +81,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
 
-    IntScalar result = (IntScalar)scalar1.multiply(scalar2);
+    IntScalar result = (IntScalar) scalar1.multiply(scalar2);
     assertEquals(20L, result.getAsInt());
     assertEquals(new Units("m * s"), result.getUnits());
   }
@@ -92,7 +92,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
 
-    IntScalar result = (IntScalar)scalar1.divide(scalar2);
+    IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(5L, result.getAsInt());
     assertEquals(new Units("m / s"), result.getUnits());
   }
@@ -112,7 +112,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 7L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
 
-    IntScalar result = (IntScalar)scalar1.divide(scalar2);
+    IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(3L, result.getAsInt()); // Integer division should truncate
     assertEquals(new Units("m / s"), result.getUnits());
   }
@@ -123,7 +123,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 2L, new Units("m"));
     IntScalar scalar2 = new IntScalar(caster, 3L, new Units(""));
 
-    DecimalScalar result = (DecimalScalar)scalar1.raiseToPower(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal(8), result.getAsDecimal());
     assertEquals(new Units("m * m * m"), result.getUnits());
   }
@@ -152,28 +152,28 @@ class IntScalarTest {
   void testNegativeNumbers() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar = new IntScalar(caster, -42L, new Units("m"));
-    
+
     assertEquals(-42L, scalar.getAsInt());
     assertEquals(new BigDecimal(-42), scalar.getAsDecimal());
     assertEquals("-42", scalar.getAsString());
   }
-  
+
   @Test
   void testMaxIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long maxValue = Long.MAX_VALUE;
     IntScalar scalar = new IntScalar(caster, maxValue, new Units(""));
-    
+
     assertEquals(maxValue, scalar.getAsInt());
     assertEquals(new BigDecimal(maxValue), scalar.getAsDecimal());
   }
-  
+
   @Test
   void testMinIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long minValue = Long.MIN_VALUE;
     IntScalar scalar = new IntScalar(caster, minValue, new Units(""));
-    
+
     assertEquals(minValue, scalar.getAsInt());
     assertEquals(new BigDecimal(minValue), scalar.getAsDecimal());
   }

@@ -1,16 +1,13 @@
-
 /**
  * Structures to describe language types.
  *
  * @license BSD-3-Clause
  */
-
 package org.joshsim.engine.value;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.StringJoiner;
-
 
 /**
  * Data structure describing a language data type like decimal.
@@ -90,5 +87,4 @@ public class LanguageType {
   public int hashCode() {
     return toString().hashCode();
   }
-  
 }
