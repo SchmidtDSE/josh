@@ -15,7 +15,7 @@ import org.locationtech.spatial4j.shape.ShapeFactory;
  * Factory methods for creating geometric shapes.
  */
 public class GeometryFactory {
-	private static final ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
+  private static final ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
 
   /**
    * Creates a square geometry with the specified width and center.
@@ -30,21 +30,21 @@ public class GeometryFactory {
       BigDecimal centerLatitude,
       BigDecimal centerLongitude
   ) {
-    
+
     double halfWidth = width.doubleValue() / 2.0;
     double centerLat = centerLatitude.doubleValue();
     double centerLon = centerLongitude.doubleValue();
-    
+
     double minLon = centerLon - halfWidth;
     double maxLon = centerLon + halfWidth;
     double minLat = centerLat - halfWidth;
     double maxLat = centerLat + halfWidth;
-    
+
     Rectangle rectangle = shapeFactory.rect(minLon, maxLon, minLat, maxLat);
     Geometry geometry = new Geometry(rectangle);
     return geometry;
   }
-    
+
   /**
    * Creates a square geometry from topLeft and bottomRight coordinates.
    *
@@ -57,7 +57,7 @@ public class GeometryFactory {
    */
   public static Geometry createSquare(
       BigDecimal topLeftLatitude,
-      BigDecimal topLeftLongitude, 
+      BigDecimal topLeftLongitude,
       BigDecimal bottomRightLatitude,
       BigDecimal bottomRightLongitude
   ) {
@@ -72,7 +72,7 @@ public class GeometryFactory {
 
     if (Math.abs(width - height) > 0.000001) {
       throw new IllegalArgumentException(
-        "The specified coordinates don't form a square: width=" 
+        "The specified coordinates don't form a square: width="
             + width + ", height=" + height
       );
     }
@@ -82,6 +82,6 @@ public class GeometryFactory {
     return geometry;
   }
 
-	private GeometryFactory() {
-	}
+  private GeometryFactory() {
+  }
 }

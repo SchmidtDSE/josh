@@ -17,7 +17,7 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public abstract class SpatialEntity implements Entity {
-	private final Geometry geometry;
+  private final Geometry geometry;
 
   /**
    * Create a new spatial entity with the given location.

@@ -1,5 +1,5 @@
 /**
- * A generic geometric object that implements the Spatial interface. Since we use 
+ * A generic geometric object that implements the Spatial interface. Since we use
  * spatial4j, this class is a wrapper around spatial4j's Shape class.
  *
  * @license BSD-3-Clause
@@ -57,12 +57,12 @@ public class Geometry implements Spatial {
     if (shape == null) {
       throw new IllegalStateException("Shape not initialized");
     }
-    
+
     Point point = spatialContext.getShapeFactory().pointXY(
-        longitude.doubleValue(), 
+        longitude.doubleValue(),
         latitude.doubleValue()
     );
-    
+
     return shape.relate(point).intersects();
   }
 
@@ -76,7 +76,7 @@ public class Geometry implements Spatial {
     if (shape == null) {
       throw new IllegalStateException("Shape not initialized");
     }
-    
+
     return shape.relate(other.shape).intersects();
   }
 
