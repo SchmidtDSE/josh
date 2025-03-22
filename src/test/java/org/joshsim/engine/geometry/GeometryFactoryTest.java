@@ -55,8 +55,16 @@ public class GeometryFactoryTest {
       assertEquals(9.0, rect.getMinY(), 0.000001, "minLat should be centerLat - halfWidth");
       assertEquals(11.0, rect.getMaxY(), 0.000001, "maxLat should be centerLat + halfWidth");
       
-      assertEquals(BigDecimal.valueOf(10.0), geometry.getCenterLatitude(), "Center latitude should match input");
-      assertEquals(BigDecimal.valueOf(20.0), geometry.getCenterLongitude(), "Center longitude should match input");
+      assertEquals(
+          BigDecimal.valueOf(10.0), 
+          geometry.getCenterLatitude(), 
+          "Center latitude should match input"
+      );
+      assertEquals(
+          BigDecimal.valueOf(20.0), 
+          geometry.getCenterLongitude(), 
+          "Center longitude should match input"
+      );
     }
     
     @Test
