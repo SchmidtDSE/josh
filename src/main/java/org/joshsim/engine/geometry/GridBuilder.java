@@ -11,10 +11,8 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.EngineValueFactory;
-import org.joshsim.engine.value.Units;
 
 /**
  * This class is responsible for building grid structures.

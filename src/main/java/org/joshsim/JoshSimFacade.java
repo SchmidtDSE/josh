@@ -6,11 +6,6 @@
 
 package org.joshsim;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.concurrent.Callable;
-import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.lang.parse.Parser;
 
