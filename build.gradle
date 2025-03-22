@@ -117,8 +117,7 @@ spotless {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
     googleJavaFormat('1.17.0')
       .skipJavadocFormatting()
-      .addFlag("--skip-reflowing-long-strings")
-      .addFlag("--skip-sorting-imports")
+      .skipReflowingLongStrings()
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
