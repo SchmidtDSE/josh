@@ -15,7 +15,7 @@ import org.locationtech.spatial4j.shape.ShapeFactory;
  * Factory methods for creating geometric shapes.
  */
 public class GeometryFactory {
-  private static ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
+	private static final ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
 
   /**
    * Creates a square geometry with the specified width and center.
@@ -81,4 +81,7 @@ public class GeometryFactory {
     Geometry geometry = new Geometry(rectangle);
     return geometry;
   }
+
+	private GeometryFactory() {
+	}
 }

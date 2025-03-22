@@ -10,8 +10,8 @@ import org.joshsim.engine.value.EngineValue;
  * are the basic unit of spatial representation.
  */
 public class Grid {
-  private List<Patch> patches;
-  private EngineValue spacing;
+	private final List<Patch> patches;
+	private final EngineValue spacing;
 
 
   /**

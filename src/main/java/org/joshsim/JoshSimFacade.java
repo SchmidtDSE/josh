@@ -37,5 +37,8 @@ public class JoshSimFacade {
     Parser parser = new Parser();
     return parser.parse(code);
   }
+
+	private JoshSimFacade() {
+	}
   
 }
