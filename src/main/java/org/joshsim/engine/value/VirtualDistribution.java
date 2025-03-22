@@ -12,7 +12,7 @@ package org.joshsim.engine.value;
  *
  * <p>A distribution which is described by parameters to define a certain mathematical shape but
  * which does not have specific individual elements. These distributions can still be sampled and
- * used for generating summary statistics.</p> 
+ * used for generating summary statistics.</p>
  */
 public abstract class VirtualDistribution extends Distribution {
 

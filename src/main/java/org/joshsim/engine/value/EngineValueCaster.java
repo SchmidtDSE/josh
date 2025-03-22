@@ -20,5 +20,5 @@ public interface EngineValueCaster {
    *     they are different only if this flag is true.
    */
   EngineValueTuple makeCompatible(EngineValueTuple operands, boolean requireSameUnits);
-  
+
 }

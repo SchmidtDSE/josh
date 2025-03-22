@@ -11,7 +11,7 @@ import org.joshsim.engine.value.EngineValue;
 
 /**
  * An invocable piece of pre-compiled code.
- * 
+ *
  * <p>Represents a compiled callable that can be evaluated to produce a value. This is the
  * foundation for functions, operators, and expressions in the Josh language and simulation engine.
  * These may be created through Josh DSL code.

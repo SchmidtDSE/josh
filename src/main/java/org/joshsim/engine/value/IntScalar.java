@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.value;
 
-import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
 
 

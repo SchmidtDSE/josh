@@ -71,7 +71,7 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     if (operands.getAreCompatible() || (!requireSameUnits && types.getAreCompatible())) {
       return operands;
     }
-    
+
     EngineValueTuple.UnitsTuple units = operands.getUnits();
     if (requireSameUnits && !units.getAreCompatible()) {
       String message = String.format(

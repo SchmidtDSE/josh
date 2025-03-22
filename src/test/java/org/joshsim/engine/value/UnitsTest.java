@@ -15,7 +15,7 @@ class UnitsTest {
   @Test
   void testConstructorWithString() {
     Units units = new Units("m");
-    
+
     assertEquals(1, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(1, units.getNumeratorUnits().get("m"));
@@ -24,11 +24,11 @@ class UnitsTest {
   @Test
   void testConstructorWithStringContainingDenominator() {
     Units units = new Units("m / s");
-    
+
     assertEquals(1, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(1, units.getNumeratorUnits().get("m"));
-    
+
     assertEquals(1, units.getDenominatorUnits().size());
     assertTrue(units.getDenominatorUnits().containsKey("s"));
     assertEquals(1, units.getDenominatorUnits().get("s"));
@@ -37,11 +37,11 @@ class UnitsTest {
   @Test
   void testConstructorWithComplexString() {
     Units units = new Units("m * m / s * s");
-    
+
     assertEquals(1, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(2, units.getNumeratorUnits().get("m"));
-    
+
     assertEquals(1, units.getDenominatorUnits().size());
     assertTrue(units.getDenominatorUnits().containsKey("s"));
     assertEquals(2, units.getDenominatorUnits().get("s"));
@@ -50,7 +50,7 @@ class UnitsTest {
   @Test
   void testConstructorWithComplexNumeratorString() {
     Units units = new Units("m * m * kg");
-    
+
     assertEquals(2, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(2, units.getNumeratorUnits().get("m"));
@@ -71,16 +71,16 @@ class UnitsTest {
   void testConstructorWithMaps() {
     Map<String, Long> numerator = new HashMap<>();
     numerator.put("m", 2L);
-    
+
     Map<String, Long> denominator = new HashMap<>();
     denominator.put("s", 1L);
-    
+
     Units units = new Units(numerator, denominator);
-    
+
     assertEquals(1, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(2, units.getNumeratorUnits().get("m"));
-    
+
     assertEquals(1, units.getDenominatorUnits().size());
     assertTrue(units.getDenominatorUnits().containsKey("s"));
     assertEquals(1, units.getDenominatorUnits().get("s"));
@@ -90,7 +90,7 @@ class UnitsTest {
   void testGetNumeratorUnits() {
     Units units = new Units("m * m");
     Map<String, Long> numerator = units.getNumeratorUnits();
-    
+
     assertEquals(1, numerator.size());
     assertTrue(numerator.containsKey("m"));
     assertEquals(2, numerator.get("m"));
@@ -100,7 +100,7 @@ class UnitsTest {
   void testGetDenominatorUnits() {
     Units units = new Units("m / s");
     Map<String, Long> denominator = units.getDenominatorUnits();
-    
+
     assertEquals(1, denominator.size());
     assertTrue(denominator.containsKey("s"));
     assertEquals(1, denominator.get("s"));
@@ -110,11 +110,11 @@ class UnitsTest {
   void testInvert() {
     Units units = new Units("m / s");
     Units inverted = units.invert();
-    
+
     assertEquals(1, inverted.getNumeratorUnits().size());
     assertTrue(inverted.getNumeratorUnits().containsKey("s"));
     assertEquals(1, inverted.getNumeratorUnits().get("s"));
-    
+
     assertEquals(1, inverted.getDenominatorUnits().size());
     assertTrue(inverted.getDenominatorUnits().containsKey("m"));
     assertEquals(1, inverted.getDenominatorUnits().get("m"));
@@ -124,15 +124,15 @@ class UnitsTest {
   void testMultiply() {
     Units units1 = new Units("m");
     Units units2 = new Units("s");
-    
+
     Units multiplied = units1.multiply(units2);
-    
+
     assertEquals(2, multiplied.getNumeratorUnits().size());
     assertTrue(multiplied.getNumeratorUnits().containsKey("m"));
     assertEquals(1, multiplied.getNumeratorUnits().get("m"));
     assertTrue(multiplied.getNumeratorUnits().containsKey("s"));
     assertEquals(1, multiplied.getNumeratorUnits().get("s"));
-    
+
     assertEquals(0, multiplied.getDenominatorUnits().size());
   }
 
@@ -140,13 +140,13 @@ class UnitsTest {
   void testMultiplyWithSameUnits() {
     Units units1 = new Units("m");
     Units units2 = new Units("m");
-    
+
     Units multiplied = units1.multiply(units2);
-    
+
     assertEquals(1, multiplied.getNumeratorUnits().size());
     assertTrue(multiplied.getNumeratorUnits().containsKey("m"));
     assertEquals(2, multiplied.getNumeratorUnits().get("m"));
-    
+
     assertEquals(0, multiplied.getDenominatorUnits().size());
   }
 
@@ -154,13 +154,13 @@ class UnitsTest {
   void testDivide() {
     Units units1 = new Units("m");
     Units units2 = new Units("s");
-    
+
     Units divided = units1.divide(units2);
-    
+
     assertEquals(1, divided.getNumeratorUnits().size());
     assertTrue(divided.getNumeratorUnits().containsKey("m"));
     assertEquals(1, divided.getNumeratorUnits().get("m"));
-    
+
     assertEquals(1, divided.getDenominatorUnits().size());
     assertTrue(divided.getDenominatorUnits().containsKey("s"));
     assertEquals(1, divided.getDenominatorUnits().get("s"));
@@ -171,20 +171,20 @@ class UnitsTest {
     Map<String, Long> numerator = new TreeMap<>();
     numerator.put("m", 3L);
     numerator.put("kg", 1L);
-    
+
     Map<String, Long> denominator = new TreeMap<>();
     denominator.put("m", 1L);
     denominator.put("s", 2L);
-    
+
     Units units = new Units(numerator, denominator);
     Units simplified = units.simplify();
-    
+
     assertEquals(2, simplified.getNumeratorUnits().size());
     assertTrue(simplified.getNumeratorUnits().containsKey("m"));
     assertEquals(2, simplified.getNumeratorUnits().get("m"));
     assertTrue(simplified.getNumeratorUnits().containsKey("kg"));
     assertEquals(1, simplified.getNumeratorUnits().get("kg"));
-    
+
     assertEquals(1, simplified.getDenominatorUnits().size());
     assertTrue(simplified.getDenominatorUnits().containsKey("s"));
     assertEquals(2, simplified.getDenominatorUnits().get("s"));
@@ -194,13 +194,13 @@ class UnitsTest {
   void testSimplifyWithFullCancellation() {
     Map<String, Long> numerator = new TreeMap<>();
     numerator.put("m", 2L);
-    
+
     Map<String, Long> denominator = new TreeMap<>();
     denominator.put("m", 2L);
-    
+
     Units units = new Units(numerator, denominator);
     Units simplified = units.simplify();
-    
+
     assertEquals(0, simplified.getNumeratorUnits().size());
     assertEquals(0, simplified.getDenominatorUnits().size());
   }
@@ -210,7 +210,7 @@ class UnitsTest {
     Units units1 = new Units("m / s");
     Units units2 = new Units("m / s");
     Units units3 = new Units("kilogram");
-    
+
     assertTrue(units1.equals(units2));
     assertFalse(units1.equals(units3));
   }
@@ -219,7 +219,7 @@ class UnitsTest {
   void testToString() {
     Units units = new Units("m * m / s");
     assertEquals("m * m / s", units.toString());
-    
+
     // Empty case
     Map<String, Long> emptyMap = new TreeMap<>();
     Units emptyUnits = new Units(emptyMap, emptyMap);
@@ -230,14 +230,14 @@ class UnitsTest {
   void testHashCode() {
     Units units1 = new Units("m / s");
     Units units2 = new Units("m / s");
-    
+
     assertEquals(units1.hashCode(), units2.hashCode());
   }
 
   @Test
   void testEmptyString() {
     Units units = new Units("");
-    
+
     assertEquals(0, units.getNumeratorUnits().size());
     assertEquals(0, units.getDenominatorUnits().size());
   }
@@ -245,7 +245,7 @@ class UnitsTest {
   @Test
   void testParseMultiplyString() {
     Units units = new Units("m * kilogram * m");
-    
+
     assertEquals(2, units.getNumeratorUnits().size());
     assertTrue(units.getNumeratorUnits().containsKey("m"));
     assertEquals(2, units.getNumeratorUnits().get("m"));
@@ -258,9 +258,9 @@ class UnitsTest {
     Map<String, Long> numerator = new TreeMap<>();
     numerator.put("m", 2L);
     numerator.put("kilogram", 1L);
-    
+
     Units units = new Units(numerator, new TreeMap<>());
-    
+
     // The exact order might depend on TreeMap sorting, but we can check for content
     String result = units.toString();
     assertTrue(result.contains("m"));

@@ -25,7 +25,7 @@ public class EngineValueFactory {
   public EngineValueFactory() {
     caster = new EngineValueWideningCaster();
   }
-  
+
   /**
    * Constructor for EngineValueFactory.
    *
@@ -44,7 +44,7 @@ public class EngineValueFactory {
    */
   public EngineValue build(long innerValue, Units units) {
     return new IntScalar(caster, innerValue, units);
-  } 
+  }
 
   /**
    * Build a new EngineValue from a string.
@@ -98,5 +98,5 @@ public class EngineValueFactory {
     return new RealizedDistribution(caster, innerArrayList, units);
 
   }
-  
+
 }

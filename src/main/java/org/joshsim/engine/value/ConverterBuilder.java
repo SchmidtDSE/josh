@@ -17,7 +17,7 @@ public interface ConverterBuilder {
    * @return this builder for method chaining
    */
   ConverterBuilder addConversion(Conversion conversion);
-  
+
   /**
    * Build and returns a Converter based on the added conversions.
    *

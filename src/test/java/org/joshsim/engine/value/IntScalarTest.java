@@ -152,28 +152,28 @@ class IntScalarTest {
   void testNegativeNumbers() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar = new IntScalar(caster, -42L, new Units("m"));
-    
+
     assertEquals(-42L, scalar.getAsInt());
     assertEquals(new BigDecimal(-42), scalar.getAsDecimal());
     assertEquals("-42", scalar.getAsString());
   }
-  
+
   @Test
   void testMaxIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long maxValue = Long.MAX_VALUE;
     IntScalar scalar = new IntScalar(caster, maxValue, new Units(""));
-    
+
     assertEquals(maxValue, scalar.getAsInt());
     assertEquals(new BigDecimal(maxValue), scalar.getAsDecimal());
   }
-  
+
   @Test
   void testMinIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long minValue = Long.MIN_VALUE;
     IntScalar scalar = new IntScalar(caster, minValue, new Units(""));
-    
+
     assertEquals(minValue, scalar.getAsInt());
     assertEquals(new BigDecimal(minValue), scalar.getAsDecimal());
   }

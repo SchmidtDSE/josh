@@ -165,7 +165,7 @@ public abstract class EngineValue {
 
   /**
    * Add another value to this value.
-   * 
+   *
    * <p>Performs addition after ensuring type and unit compatibility through casting.
    * If either value is a Distribution, the result will be a Distribution.</p>
    *
@@ -176,7 +176,7 @@ public abstract class EngineValue {
   public EngineValue add(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    
+
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
       return safeTuple.getSecond().unsafeAdd(safeTuple.getFirst());
     } else {
@@ -186,7 +186,7 @@ public abstract class EngineValue {
 
   /**
    * Subtract another value from this value.
-   * 
+   *
    * <p>Performs subtraction after ensuring type and unit compatibility through casting.
    * If either value is a Distribution, the result will be a Distribution.</p>
    *
@@ -197,7 +197,7 @@ public abstract class EngineValue {
   public EngineValue subtract(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
-    
+
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
       return safeTuple.getFirst().unsafeSubtractFrom(safeTuple.getSecond());
     } else {
@@ -207,8 +207,8 @@ public abstract class EngineValue {
 
   /**
    * Multiply this value by another value.
-   * 
-   * <p>Performs multiplication after ensuring type compatibility through casting. Units are 
+   *
+   * <p>Performs multiplication after ensuring type compatibility through casting. Units are
    * combined according to multiplication rules. If either value is a Distribution, the result will
    * be a Distribution.</p>
    *
@@ -229,9 +229,9 @@ public abstract class EngineValue {
 
   /**
    * Divide this value by another value.
-   * 
+   *
    * <p>Performs division after ensuring type compatibility through casting. Units are combined
-   * according to division rules. If either value is a Distribution, the result will be a 
+   * according to division rules. If either value is a Distribution, the result will be a
    * Distribution.</p>
    *
    * @param other the value to divide by.
@@ -241,7 +241,7 @@ public abstract class EngineValue {
   public EngineValue divide(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
-    
+
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
       return safeTuple.getSecond().unsafeDivideFrom(safeTuple.getFirst());
     } else {
@@ -251,7 +251,7 @@ public abstract class EngineValue {
 
   /**
    * Raise this value to the power of another value.
-   * 
+   *
    * <p>Performs exponentiation after ensuring type compatibility through casting.The exponent must
    * be a count or unitless value. Units are combined according to power rules. If either value is
    * a Distribution, the result will be a Distribution.</p>

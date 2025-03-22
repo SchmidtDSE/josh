@@ -24,14 +24,14 @@ public interface Conversion {
    * @return the source units as a string
    */
   String getSourceUnits();
-  
+
   /**
    * Get the destination units for this conversion.
    *
    * @return the destination units as a string
    */
   String getDestinationUnits();
-  
+
   /**
    * Get the callable that performs the actual conversion.
    *
