@@ -37,14 +37,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Check grammar
-        run: gradle generateGrammarSource
+        run: ./gradlew generateGrammarSource
       - name: Check main style
-        run: gradle checkstyleMain
+        run: ./gradlew checkstyleMain
       - name: Check test style
-        run: gradle checkstyleTest
+        run: ./gradlew checkstyleTest
   buildJava:
     environment: Build
     runs-on: ubuntu-latest
@@ -57,10 +55,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Build fat jar
-        run: gradle fatJar
+        run: ./gradlew fatJar
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
@@ -79,10 +75,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Build fat jar
-        run: gradle generateWasm
+        run: ./gradlew generateWasm
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
@@ -101,10 +95,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Run tests
-        run: gradle test
+        run: ./gradlew test
   validateExamples:
     needs: buildJava
     environment: Build
