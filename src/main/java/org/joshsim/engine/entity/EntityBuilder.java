@@ -9,7 +9,7 @@ package org.joshsim.engine.entity;
 
 /**
  * Builder to assist in constructing entities.
- * 
+ *
  * <p>Builder for creating Entity instances, providing methods to add event handlers and build the
  * final entity.
  * </p>
@@ -22,7 +22,7 @@ public interface EntityBuilder {
    * @return this builder for method chaining
    */
   EntityBuilder addEventHandlerGroup(EventHandlerGroup group);
-  
+
   /**
    * Build and returns an Entity based on the added event handlers.
    *

@@ -9,7 +9,7 @@ package org.joshsim.engine.func;
 
 /**
  * Description of a variable scope.
- * 
+ *
  * <p>Structure maintaining state over local variables used in Josh simulation or Josh langage full
  * body evaluations or inlined lambdas.
  * </p>

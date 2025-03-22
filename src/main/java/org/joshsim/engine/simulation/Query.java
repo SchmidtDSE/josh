@@ -50,7 +50,7 @@ public class Query {
   public int getStep() {
     return step;
   }
-  
+
   /**
    * Get the geometry associated with this query.
    *

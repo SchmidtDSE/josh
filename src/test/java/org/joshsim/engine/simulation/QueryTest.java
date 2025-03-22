@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 class QueryTest {
-  
+
   @Mock
   private Geometry mockGeometry;
 

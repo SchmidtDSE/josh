@@ -41,7 +41,7 @@ public class EngineValueTuple {
 
   /**
    * Determine if the two values in this tuple are compatable without further casting.
-   */ 
+   */
   public boolean getAreCompatible() {
     return types.getAreCompatible() && units.getAreCompatible();
   }
@@ -83,17 +83,17 @@ public class EngineValueTuple {
   }
 
   /**
-   * Typle describing two types that are in this engine value tuple such as int and decimal. 
+   * Typle describing two types that are in this engine value tuple such as int and decimal.
    */
   public static class TypesTuple {
 
     private final LanguageType first;
     private final LanguageType second;
-    
+
     /**
      * Create a new types tuple representing a pair of types.
      *
-     * <p>This constructor initializes a new pair of types given for the first and second values. 
+     * <p>This constructor initializes a new pair of types given for the first and second values.
      * This might include types, for example, like int or decimal.</p>
      *
      * @param first the first type, representing for example the type of the left-side operand.
@@ -221,7 +221,7 @@ public class EngineValueTuple {
     public int hashCode() {
       return toString().hashCode();
     }
-    
+
   }
 
 }

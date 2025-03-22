@@ -1,9 +1,7 @@
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -36,7 +34,7 @@ class DecimalScalarTest {
   void testGetAsInt() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units(""));
-    
+
     assertEquals(42L, scalar.getAsInt());
   }
 
@@ -121,7 +119,7 @@ class DecimalScalarTest {
     assertEquals(new BigDecimal("8.0"), result.getAsDecimal());
     assertEquals(new Units("m * m * m"), result.getUnits());
   }
-  
+
   @Test
   void testRaiseToPowerWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
@@ -144,19 +142,19 @@ class DecimalScalarTest {
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
   //   DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units("kg"));
-    
+
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());
   //   assertEquals(new BigDecimal("42.5"), dist.getValues().get(0));
   //   assertEquals("kg", dist.getUnits());
   // }
-  
-  
+
+
   @Test
   void testScaleAndPrecision() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("123.456789"), new Units(""));
-    
+
     assertEquals(new BigDecimal("123.456789"), scalar.getAsDecimal());
     assertEquals("123.456789", scalar.getAsString());
   }

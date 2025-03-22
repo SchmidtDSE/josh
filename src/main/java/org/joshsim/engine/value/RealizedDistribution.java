@@ -47,7 +47,7 @@ public class RealizedDistribution extends Distribution {
 
   /**
    * Compute statistics on demand using parallel stream.
-   * 
+   *
    *
    * @return DoubleSummaryStatistics for the values
    */
@@ -137,12 +137,12 @@ public class RealizedDistribution extends Distribution {
   @Override
   public LanguageType getLanguageType() {
     EngineValue exampleValue = values.get(0);
-    
+
     Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
     List<String> distributions = new ArrayList<>();
     distributions.add("RealizedDistribution");
     innerDistributions.forEach(distributions::add);
-    
+
     return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
   }
 
