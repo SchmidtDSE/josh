@@ -38,7 +38,7 @@ public class JoshSimFacade {
     return parser.parse(code);
   }
 
-	private JoshSimFacade() {
-	}
+  private JoshSimFacade() {
+  }
   
 }

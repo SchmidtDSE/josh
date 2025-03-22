@@ -26,7 +26,7 @@ public class GridBuilder {
   private BigDecimal bottomRightLatitude;
   private BigDecimal bottomRightLongitude;
   private EngineValue cellWidth;
-	private final EngineValueFactory engineValueFactory;
+  private final EngineValueFactory engineValueFactory;
 
   /**
    * Constructor for GridBuilder.
