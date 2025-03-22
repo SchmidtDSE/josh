@@ -90,5 +90,5 @@ public class LanguageType {
   public int hashCode() {
     return toString().hashCode();
   }
-  
+
 }

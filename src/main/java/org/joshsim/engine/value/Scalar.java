@@ -50,7 +50,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    * Compare this Scalar to the specified object.
    *
    * <p>Compare two Scalars for ordinal ranking where two Scalar objects are considered equal if
-   
+
    * they have the same numeric value.</p>
    *
    * @param other the object to compare with.
@@ -166,12 +166,12 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return null;
   }
 
-  
+
   /**
    * Check if provided EngineValue is compatible with the current Scalar for arithmetic operations.
    *
    * <p>This method ensures that the other EngineValue is not a distribution and that it has the
-   * same type as the current Scalar. If these conditions are not met, an 
+   * same type as the current Scalar. If these conditions are not met, an
    * IllegalArgumentException is thrown.</p>
    *
    * @param other the EngineValue to check compatibility with.
@@ -190,7 +190,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
 
   /**
    * Provides a human-readable representation of the Scalar.
-   * 
+   *
    * <p>This implementation returns a string representation of the inner value
    * contained by this Scalar, which can be useful for debugging and logging purposes.</p>
    *
@@ -201,7 +201,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
   }
 
-  
+
 
   /**
    * Log a message and raise an UnsupportedOperationException with the given message template.

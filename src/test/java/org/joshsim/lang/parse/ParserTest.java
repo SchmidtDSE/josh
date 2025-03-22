@@ -27,7 +27,7 @@ public class ParserTest {
   public void setUp() {
     parser = new Parser();
   }
-  
+
   @Test
   public void testEmpty() {
     ParseResult result = parser.parse("");
