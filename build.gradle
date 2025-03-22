@@ -115,7 +115,10 @@ checkstyleTest {
 spotless {
   java {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
-    googleJavaFormat('1.17.0').skipJavadocFormatting()
+    googleJavaFormat('1.17.0')
+      .skipJavadocFormatting()
+      .formatAnnotations()
+      .reflowLongStrings()
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
