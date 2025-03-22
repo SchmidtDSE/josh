@@ -37,6 +37,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Check grammar
         run: ./gradlew generateGrammarSource
       - name: Check main style
@@ -55,6 +57,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Build fat jar
         run: ./gradlew fatJar
       - name: Upload jar
@@ -75,6 +79,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Build fat jar
         run: ./gradlew generateWasm
       - name: Upload jar
@@ -95,6 +101,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Run tests
         run: ./gradlew test
   validateExamples:
