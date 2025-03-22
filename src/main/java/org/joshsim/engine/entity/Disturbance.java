@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -16,6 +17,15 @@ import org.joshsim.engine.value.EngineValue;
  * other entities in the environment such as a fire or a management intervention.</p>
  */
 public class Disturbance extends SpatialEntity {
+
+  /**
+   * Constructs a disturbance entity with the given geometry.
+   *
+   * @param geometry the geometry of the disturbance
+   */
+  public Disturbance(Geometry geometry) {
+    super(geometry);
+  }
 
   @Override
   public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
