@@ -153,7 +153,7 @@ public class EngineValueTuple {
 
     @Override
     public boolean equals(Object other) {
-      return equals((TypesTuple)other);
+      return equals((TypesTuple) other);
     }
 
     @Override
