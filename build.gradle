@@ -117,6 +117,9 @@ spotless {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
     cleanthat()
     indentWithSpaces(2)
+    custom 'ensure space after typecast', {
+      return it.replaceAll('\\)([a-zA-Z0-9_])', ') $1')
+    }
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
