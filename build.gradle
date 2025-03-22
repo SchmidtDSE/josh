@@ -23,7 +23,7 @@ dependencies {
   // ANTLR dependencies
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
-  
+
   // Spatial4j for spatial context / operations
   implementation("org.locationtech.spatial4j:spatial4j:0.8")
 
@@ -66,15 +66,15 @@ task fatJar(type: Jar) {
   }
   archiveBaseName = "joshsim"
   archiveClassifier = "fat"
-  
+
   // Include all dependencies
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
   }
-  
+
   // Include the main classes
   with jar
-  
+
   // Exclude META-INF signatures to avoid security exceptions
   exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 }
@@ -88,7 +88,7 @@ javadoc {
     links "https://docs.oracle.com/en/java/javase/11/docs/api/"
     windowTitle = "JoshLang"
   }
-  
+
   destinationDir = file("${buildDir}/docs/javadoc")
 }
 
@@ -115,9 +115,7 @@ checkstyleTest {
 spotless {
   java {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
-    googleJavaFormat('1.17.0')
-      .skipJavadocFormatting()
-      .reflowLongStrings(false)
+    cleanthat()
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
@@ -143,10 +141,10 @@ task setupCheckstyle {
 generateGrammarSource {
   // Set output directory for generated files
   outputDirectory = file("src-generated/main/java")
-  
+
   // Set package for the generated visitor and other classes
   arguments += ["-visitor"]
-  
+
   // To use direct left recursion
   arguments += ["-Dlanguage=Java"]
 }
