@@ -1,7 +1,15 @@
 package org.joshsim.engine.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +22,7 @@ import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.SpatialRelation;
 
+
 /**
  * Tests for the Geometry class, organized by shape type.
  */
@@ -21,6 +30,9 @@ public class GeometryTest {
 
   private SpatialContext ctx;
 
+  /**
+   * Create a GEO context for all tests.
+   */
   @BeforeEach
   public void setUp() {
     ctx = SpatialContext.GEO;
@@ -77,16 +89,16 @@ public class GeometryTest {
     @Test
     public void testPointIntersectsWithItself() {
       assertTrue(pointGeometry.intersects(
-        BigDecimal.valueOf(20.0),
-        BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(20.0),
+          BigDecimal.valueOf(10.0)
       ), "Point should intersect with itself");
     }
 
     @Test
     public void testPointDoesNotIntersectWithDistantPoint() {
       assertFalse(pointGeometry.intersects(
-        BigDecimal.valueOf(30.0),
-        BigDecimal.valueOf(40.0)
+          BigDecimal.valueOf(30.0),
+          BigDecimal.valueOf(40.0)
       ), "Point should not intersect with distant point");
     }
 
@@ -134,20 +146,20 @@ public class GeometryTest {
     public void testRectangleContainsPoint() {
       // Point inside rectangle
       assertTrue(rectangleGeometry.intersects(
-        BigDecimal.valueOf(21.0),
-        BigDecimal.valueOf(11.0)
+          BigDecimal.valueOf(21.0),
+          BigDecimal.valueOf(11.0)
       ), "Rectangle should contain point inside its bounds");
 
       // Point on rectangle boundary
       assertTrue(rectangleGeometry.intersects(
-        BigDecimal.valueOf(20.0),
-        BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(20.0),
+          BigDecimal.valueOf(10.0)
       ), "Rectangle should contain point on its boundary");
 
       // Point outside rectangle
       assertFalse(rectangleGeometry.intersects(
-        BigDecimal.valueOf(30.0),
-        BigDecimal.valueOf(40.0)
+          BigDecimal.valueOf(30.0),
+          BigDecimal.valueOf(40.0)
       ), "Rectangle should not contain point outside its bounds");
     }
 
@@ -197,20 +209,20 @@ public class GeometryTest {
     public void testCircleContainsPoint() {
       // Point at center of circle
       assertTrue(circleGeometry.intersects(
-        BigDecimal.valueOf(20.0),
-        BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(20.0),
+          BigDecimal.valueOf(10.0)
       ), "Circle should contain its center point");
 
       // Point inside circle
       assertTrue(circleGeometry.intersects(
-        BigDecimal.valueOf(20.5),
-        BigDecimal.valueOf(10.5)
+          BigDecimal.valueOf(20.5),
+          BigDecimal.valueOf(10.5)
       ), "Circle should contain point inside its radius");
 
       // Point outside circle
       assertFalse(circleGeometry.intersects(
-        BigDecimal.valueOf(25.0),
-        BigDecimal.valueOf(15.0)
+          BigDecimal.valueOf(25.0),
+          BigDecimal.valueOf(15.0)
       ), "Circle should not contain point outside its radius");
     }
 

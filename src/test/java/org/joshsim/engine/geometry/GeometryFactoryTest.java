@@ -6,7 +6,10 @@
 
 package org.joshsim.engine.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +20,6 @@ import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Rectangle;
 
 
-
-
 /**
  * Unit tests for the GeometryFactory class.
  */
@@ -26,6 +27,9 @@ public class GeometryFactoryTest {
 
   private SpatialContext ctx;
 
+  /**
+   * Use geo context for each test.
+   */
   @BeforeEach
   public void setUp() {
     ctx = SpatialContext.GEO;
@@ -174,8 +178,17 @@ public class GeometryFactoryTest {
       assertEquals(9.0, rect.getMinY(), 0.000001);
       assertEquals(11.0, rect.getMaxY(), 0.000001);
 
-      assertEquals(BigDecimal.valueOf(10.0), geometry.getCenterLatitude(), "Center latitude should be correct");
-      assertEquals(BigDecimal.valueOf(20.0), geometry.getCenterLongitude(), "Center longitude should be correct");
+      assertEquals(
+          BigDecimal.valueOf(10.0),
+          geometry.getCenterLatitude(),
+          "Center latitude should be correct"
+      );
+
+      assertEquals(
+          BigDecimal.valueOf(20.0),
+          geometry.getCenterLongitude(),
+          "Center longitude should be correct"
+      );
     }
 
     @Test
@@ -189,7 +202,11 @@ public class GeometryFactoryTest {
       // When/Then
       IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
         GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon);
+            topLeftLat,
+            topLeftLon,
+            bottomRightLat,
+            bottomRightLon
+        );
       }, "Should throw IllegalArgumentException when coordinates don't form a square");
 
       assertTrue(exception.getMessage().contains("don't form a square"));
@@ -206,7 +223,11 @@ public class GeometryFactoryTest {
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-        topLeftLat, topLeftLon, bottomRightLat, bottomRightLon);
+          topLeftLat,
+          topLeftLon,
+          bottomRightLat,
+          bottomRightLon
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should be created when within tolerance");
@@ -224,7 +245,11 @@ public class GeometryFactoryTest {
       // When/Then
       assertThrows(NullPointerException.class, () -> {
         GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon);
+            topLeftLat,
+            topLeftLon,
+            bottomRightLat,
+            bottomRightLon
+        );
       }, "Should throw NullPointerException when topLeftLatitude is null");
     }
 
