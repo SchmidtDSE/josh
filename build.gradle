@@ -116,6 +116,7 @@ spotless {
   java {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
     cleanthat()
+    indentWithSpaces(2)
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
