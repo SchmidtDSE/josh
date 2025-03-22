@@ -169,6 +169,10 @@ sourceSets {
   }
 }
 
+task wrapper(type: Wrapper) {
+  gradleVersion = "8.7"
+}
+
 // Make compileJava depend on generating ANTLR sources
 compileJava.dependsOn generateGrammarSource
 
