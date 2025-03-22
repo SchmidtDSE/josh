@@ -116,6 +116,8 @@ spotless {
   java {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
     cleanthat()
+    importOrder()  // This will sort imports alphabetically
+    removeUnusedImports()
     leadingTabsToSpaces(2)
     custom 'ensure space after typecast', {
       return it.replaceAll('\\)([a-zA-Z0-9_])', ') $1')
