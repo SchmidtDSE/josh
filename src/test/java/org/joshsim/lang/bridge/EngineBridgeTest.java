@@ -38,6 +38,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
+/**
+ * Test for EngineBridge which helps decouple the engine from interpreter.
+ */
 @ExtendWith(MockitoExtension.class)
 public class EngineBridgeTest {
 
@@ -52,9 +55,12 @@ public class EngineBridgeTest {
 
   private EngineBridge bridge;
 
+  /**
+   * Create a bridge to test before each.
+   */
   @BeforeEach
   void setUp() {
-  bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
   }
 
   @Test
@@ -87,8 +93,11 @@ public class EngineBridgeTest {
   void testGetPatchThrowsOnNoPatch() {
     expectQuery(new Query(0, mockPoint), Arrays.asList());
 
-    assertThrows(IllegalStateException.class, () -> bridge.getPatch(mockPoint),
-      "Should throw when no patch found");
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridge.getPatch(mockPoint),
+        "Should throw when no patch found"
+    );
   }
 
   @Test
