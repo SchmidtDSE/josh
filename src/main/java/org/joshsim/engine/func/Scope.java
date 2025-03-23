@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.func;
+import org.joshsim.engine.value.EngineValue;
 
 
 /**
@@ -14,4 +15,8 @@ package org.joshsim.engine.func;
  * body evaluations or inlined lambdas.
  * </p>
  */
-public interface Scope {}
+public interface Scope {
+
+  EngineValue get(String name);
+  
+}
