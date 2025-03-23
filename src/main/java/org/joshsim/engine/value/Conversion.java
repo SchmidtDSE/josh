@@ -17,20 +17,25 @@ import org.joshsim.engine.func.CompiledCallable;
  * EngineValues of different units.
  * </p>
  */
-public interface Conversion {
+public class Conversion {
+
+  private final Units sourceUnits
+  private final Units destinationUnits
+  ConversionCallable
+  
   /**
    * Get the source units for this conversion.
    *
    * @return the source units as a string
    */
-  String getSourceUnits();
+  Units getSourceUnits();
 
   /**
    * Get the destination units for this conversion.
    *
    * @return the destination units as a string
    */
-  String getDestinationUnits();
+  Units getDestinationUnits();
 
   /**
    * Get the callable that performs the actual conversion.

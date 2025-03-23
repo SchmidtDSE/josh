@@ -22,6 +22,7 @@ import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
+import org.joshsim.engine.value.Conversion;
 import org.joshsim.engine.value.Converter;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.Units;
