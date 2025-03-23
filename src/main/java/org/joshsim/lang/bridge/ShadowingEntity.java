@@ -112,6 +112,19 @@ public class ShadowingEntity {
   }
 
   /**
+   * Extract all attribute names from an entity's event handlers.
+   *
+   * @param target the Entity from which to extract attribute names.
+   * @return Set of attribute names found in the entity's event handlers.
+   */
+  private Set<String> getAttributes(Entity target) {
+    return StreamSupport.stream(target.getEventHandlers().spliterator(), false)
+      .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
+      .map(handler -> handler.getAttributeName())
+      .collect(Collectors.toSet());
+  }
+
+  /**
    * Get all known event handlers for the given attribute on the current substep.
    *
    * @param attribute name of the attribute for which event handlers are requested.
@@ -120,8 +133,8 @@ public class ShadowingEntity {
   public Iterable<EventHandlerGroup> getHandlers(String attribute) {
     if (substep.isEmpty()) {
       String message = String.format(
-        "Cannot get handler for %s while not within a substep.",
-        attribute
+          "Cannot get handler for %s while not within a substep.",
+          attribute
       );
       throw new IllegalStateException(message);
     }
@@ -225,19 +238,6 @@ public class ShadowingEntity {
 
     String message = String.format("%s is not a known attribute of %s", name, inner.getName());
     throw new IllegalArgumentException(message);
-  }
-
-  /**
-   * Extract all attribute names from an entity's event handlers.
-   *
-   * @param target the Entity from which to extract attribute names.
-   * @return Set of attribute names found in the entity's event handlers.
-   */
-  private Set<String> getAttributes(Entity target) {
-    return StreamSupport.stream(inner.getEventHandlers().spliterator(), false)
-      .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
-      .map(handler -> handler.getAttributeName())
-      .collect(Collectors.toSet());
   }
 
 }

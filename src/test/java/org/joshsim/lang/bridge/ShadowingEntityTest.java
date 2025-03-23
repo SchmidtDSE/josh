@@ -24,7 +24,9 @@ import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for the shadowing entity decorator which deals with queries and progressive creation.
@@ -86,7 +88,7 @@ public class ShadowingEntityTest {
     String substepName = "testSubstep";
 
     when(mockSpatialEntity.getEventHandlers(attrName, substepName))
-      .thenReturn(Arrays.asList(mockEventHandlerGroup));
+        .thenReturn(Arrays.asList(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
     Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
@@ -132,8 +134,8 @@ public class ShadowingEntityTest {
   void testNonexistentAttributeAccess() {
     String nonexistentAttr = "nonexistent";
     assertThrows(IllegalArgumentException.class, () ->
-      spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
+        spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
     assertThrows(IllegalArgumentException.class, () ->
-      spatialEntity.getPriorAttribute(nonexistentAttr));
+        spatialEntity.getPriorAttribute(nonexistentAttr));
   }
 }

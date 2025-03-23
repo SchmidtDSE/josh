@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.lang.bridge;
+
 import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.Patch;
@@ -39,6 +40,19 @@ public class EngineBridge {
   private EngineValue currentStep;
   private boolean inStep;
 
+
+  /**
+   * Constructs an EngineBridge to manipulate the specified simulation, replicate, and converter.
+   *
+   * <p>This class provides a bridge to decouple the simulation engine from the language
+   * interpreter. It facilitates interactions with the engine's simulation and replicate components,
+   * as well as value conversion.</p>
+   *
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param replicate The replicate instance for querying patches and other simulation data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   */
   public EngineBridge(Simulation simulation, Replicate replicate, Converter converter) {
     this.simulation = simulation;
     this.replicate = replicate;
@@ -156,7 +170,7 @@ public class EngineBridge {
   }
 
   /**
-   * Iterator that decorates patches with shadow tracking capabilities.
+   * Iterator that decorates patches with shadow tracking.
    */
   private class DecoratingShadowIterator implements Iterator<ShadowingEntity> {
 

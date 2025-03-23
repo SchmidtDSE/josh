@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.func;
+
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -15,6 +16,12 @@ public class SingleValueScope implements Scope {
 
   private final EngineValue value;
 
+
+  /**
+   * Create a scope containing only current.
+   *
+   * @param value EngineValue to use for current.
+   */
   public SingleValueScope(EngineValue value) {
     this.value = value;
   }
