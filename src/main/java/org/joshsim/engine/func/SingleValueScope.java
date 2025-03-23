@@ -28,11 +28,16 @@ public class SingleValueScope implements Scope {
 
   @Override
   public EngineValue get(String name) {
-    if (!"current".equals(name)) {
-      throw new IllegalArgumentException("Single value scope only has current");
+    if (!has(name)) {
+      throw new IllegalArgumentException("Single value scope only has current.");
     }
 
     return value;
+  }
+
+  @Override
+  public boolean has(String name) {
+    return "current".equals(name);
   }
 
 }

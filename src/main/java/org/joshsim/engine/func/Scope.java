@@ -25,4 +25,12 @@ public interface Scope {
    */
   EngineValue get(String name);
 
+  /**
+   * Check if a value is within this scope.
+   *
+   * @param name of the attribute to look for.
+   * @return true if present and false otherwise.
+   */
+  boolean has(String name);
+
 }
