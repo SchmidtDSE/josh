@@ -66,6 +66,7 @@ jobs:
     needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     name: Build WASM
     steps:
       - name: Checkout
