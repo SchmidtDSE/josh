@@ -24,13 +24,13 @@ import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.Converter;
 import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
 import org.joshsim.engine.value.Units;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 
 @ExtendWith(MockitoExtension.class)
 public class EngineBridgeTest {
@@ -47,20 +47,25 @@ public class EngineBridgeTest {
 
   @BeforeEach
   void setUp() {
-    bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
+  bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
   }
 
   @Test
   void testStepLifecycle() {
     // Test starting a step
     bridge.startStep();
-    assertThrows(IllegalStateException.class, () -> bridge.startStep(),
-        "Should not be able to start step twice");
+    assertThrows(
+        IllegalStateException.class, () -> bridge.startStep(),
+        "Should not be able to start step twice"
+    );
 
     // Test ending a step
     bridge.endStep();
-    assertThrows(IllegalStateException.class, () -> bridge.endStep(),
-        "Should not be able to end step twice");
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridge.endStep(),
+        "Should not be able to end step twice"
+    );
   }
 
   @Test
@@ -78,7 +83,7 @@ public class EngineBridgeTest {
         .thenReturn(Arrays.asList());
 
     assertThrows(IllegalStateException.class, () -> bridge.getPatch(mockPoint),
-        "Should throw when no patch found");
+      "Should throw when no patch found");
   }
 
   @Test
@@ -86,8 +91,11 @@ public class EngineBridgeTest {
     when(mockReplicate.query(new Query(0, mockPoint)))
         .thenReturn(Arrays.asList(mockPatch, mockPatch));
 
-    assertThrows(IllegalStateException.class, () -> bridge.getPatch(mockPoint),
-        "Should throw when multiple patches found");
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridge.getPatch(mockPoint),
+        "Should throw when multiple patches found"
+    );
   }
 
   @Test
@@ -101,9 +109,11 @@ public class EngineBridgeTest {
 
   @Test
   void testGetPriorPatches() {
-    when(mockReplicate.query(new Query(-1, mockGeometry)))
+    when(mockReplicate.query(new Query(0, mockGeometry)))
         .thenReturn(Arrays.asList(mockPatch));
 
+    bridge.startStep();
+    bridge.endStep();
     Iterable<ShadowingEntity> results = bridge.getPriorPatches(mockGeometry);
     assertTrue(results.iterator().hasNext(), "Should return prior patches");
   }
@@ -113,7 +123,7 @@ public class EngineBridgeTest {
     Units newUnits = new Units("test");
     when(mockEngineValue.getUnits()).thenReturn(new Units("old"));
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
-        .thenReturn(scope -> mockEngineValue);
+        .
 
     EngineValue result = bridge.convert(mockEngineValue, newUnits);
     assertEquals(mockEngineValue, result, "Should return converted value");
