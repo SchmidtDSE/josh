@@ -33,4 +33,11 @@ public interface Scope {
    */
   boolean has(String name);
 
+  /**
+   * Determine what values are on this scope.
+   *
+   * @return all attributes within this scope.
+   */
+  Iterable<String> getAttributes();
+
 }

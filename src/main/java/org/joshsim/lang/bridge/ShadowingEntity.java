@@ -9,13 +9,12 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.SpatialEntity;
+import org.joshsim.engine.func.EntityScope;
+import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -24,7 +23,10 @@ import org.joshsim.engine.value.EngineValue;
  *
  * <p>Structure which allows for querying prior or current state of a SpatialEntity and allows for
  * determining if an attribute value has been resolved over time. This manages reference to
- * current, prior, and here.</p>
+ * current, prior, and here. Current can be used for values set in the current timestep and substep
+ * or to determine if just in time evaluation is required if it not yet been resolved. Prior can be
+ * used to query for previously resolved values. Here can be used to access the Path or patch-like
+ * entity which hosues this entity.</p>
  */
 public class ShadowingEntity {
 
@@ -32,7 +34,7 @@ public class ShadowingEntity {
   private final ShadowingEntity here;
   private final Simulation meta;
   private final Set<String> resolvedAttributes;
-  private final Set<String> allAttributes;
+  private final Scope scope;
   private Optional<String> substep;
 
   /**
@@ -48,7 +50,7 @@ public class ShadowingEntity {
 
     resolvedAttributes = new HashSet<>();
     substep = Optional.empty();
-    allAttributes = getAttributes(inner);
+    scope = new EntityScope(inner);
   }
 
   /**
@@ -65,7 +67,7 @@ public class ShadowingEntity {
 
     resolvedAttributes = new HashSet<>();
     substep = Optional.empty();
-    allAttributes = getAttributes(inner);
+    scope = new EntityScope(inner);
   }
 
   /**
@@ -108,20 +110,7 @@ public class ShadowingEntity {
    * @return Iterable over attribute names as Strings.
    */
   public Iterable<String> getAttributes() {
-    return allAttributes;
-  }
-
-  /**
-   * Extract all attribute names from an entity's event handlers.
-   *
-   * @param target the Entity from which to extract attribute names.
-   * @return Set of attribute names found in the entity's event handlers.
-   */
-  private Set<String> getAttributes(Entity target) {
-    return StreamSupport.stream(target.getEventHandlers().spliterator(), false)
-      .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
-      .map(handler -> handler.getAttributeName())
-      .collect(Collectors.toSet());
+    return scope.getAttributes();
   }
 
   /**
@@ -179,7 +168,7 @@ public class ShadowingEntity {
   }
 
   /**
-   * Get the value of an attribute from the previous time step.
+   * Get the value of an attribute from the previous substep or, if first substep, prior timestep.
    *
    * @param name unique identifier of the attribute to retrieve.
    * @return the value of the attribute from the previous step.

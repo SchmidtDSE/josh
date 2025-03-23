@@ -7,8 +7,10 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
+import java.util.StringJoiner;
+import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
+import org.joshsim.engine.value.EngineValue;
 
 
 
@@ -29,12 +31,18 @@ public class ValueResolver {
   }
 
   public Optional<EngineValue> get(Scope target) {
-    Optional<ValueResolver> innerResolver = getInnerResolver(target);
-    if (innerResolver == null) {
+    Optional<ValueResolver> innerResolverMaybe = getInnerResolver(target);
+    if (innerResolverMaybe == null) {
       return Optional.empty();
     }
 
-    
+    EngineValue resolved = target.get(foundPath);
+    if (innerResolverMaybe.isEmpty()) {
+      return Optional.of(resolved);
+    } else {
+      ValueResolver innerResolver = innerResolverMaybe.get();
+      return innerResolver.get(new EntityScope(resolved));
+    }
   }
 
   private Optional<ValueResolver> getInnerResolver(Scope target) {
@@ -42,8 +50,8 @@ public class ValueResolver {
       return memoizedInnerResolver;
     }
     
-    String[] pieces = target.split(".");
-    int numPieces = numPieces
+    String[] pieces = path.split("\\.");
+    int numPieces = numPieces;
     
     for (int numPiecesAttempt = pieces.length; numPiecesAttempt > 0; numPiecesAttempt--) {
       StringJoiner attemptJoiner = new StringJoiner(".");

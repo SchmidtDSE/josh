@@ -16,7 +16,6 @@ public class SingleValueScope implements Scope {
 
   private final EngineValue value;
 
-
   /**
    * Create a scope containing only current.
    *
@@ -38,6 +37,11 @@ public class SingleValueScope implements Scope {
   @Override
   public boolean has(String name) {
     return "current".equals(name);
+  }
+
+  @Override
+  public Iterable<String> getAttributes() {
+    return java.util.Collections.singletonList("current");
   }
 
 }
