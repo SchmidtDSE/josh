@@ -57,6 +57,14 @@ public class EngineBridge {
     inStep = false;
   }
 
+  /**
+   * Start a new simulation step.
+   *
+   * <p>Indicates that a new simulation step is beginning. This must be called before any mutations
+   * can occur in the current step.</p>
+   *
+   * @throws IllegalStateException if called while already in a step.
+   */
   public void startStep() {
     if (inStep) {
       throw new IllegalStateException("Tried to start a step before finishing the current one.");
@@ -65,6 +73,14 @@ public class EngineBridge {
     inStep = true;
   }
 
+  /**
+   * End the current simulation step.
+   *
+   * <p>Indicates that the current simulation step is complete. This must be called after all
+   * mutations for the current step have completed.</p>
+   *
+   * @throws IllegalStateException if called while not in a step.
+   */
   public void endStep() {
     if (!inStep) {
       throw new IllegalStateException("Tried to end a step before starting the current one.");
@@ -74,6 +90,13 @@ public class EngineBridge {
     inStep = false;
   }
 
+  /**
+   * Get a patch at a specific geometric point.
+   *
+   * @param point the geometric location to query.
+   * @return Optional containing the patch if found, empty Optional otherwise.
+   * @throws IllegalStateException if zero or multiple patches found at the point.
+   */
   public Optional<ShadowingEntity> getPatch(GeoPoint point) {
     Query query = new Query(currentStep.getAsInt(), point);
     Iterable<Patch> patches = replicate.query(query);
@@ -94,6 +117,11 @@ public class EngineBridge {
     return Optional.of(decorated);
   }
 
+  /**
+   * Get all patches in the current simulation step.
+   *
+   * @return Iterable of all patches in the current step.
+   */
   public Iterable<ShadowingEntity> getCurrentPatches() {
     Query query = new Query(currentStep.getAsInt());
     Iterable<Patch> patches = replicate.query(query);
@@ -101,6 +129,12 @@ public class EngineBridge {
     return decorated;
   }
 
+  /**
+   * Get patches from the previous step within a specific geometry.
+   *
+   * @param geometry the geometric area to query.
+   * @return Iterable of patches from the previous step within the specified geometry.
+   */
   public Iterable<ShadowingEntity> getPriorPatches(Geometry geometry) {
     Query query = new Query(currentStep.getAsInt() - 1, geometry);
     Iterable<Patch> patches = replicate.query(query);
@@ -108,16 +142,31 @@ public class EngineBridge {
     return decorated;
   }
 
+  /**
+   * Convert an engine value to different units.
+   *
+   * @param current the value to convert.
+   * @param newUnits the units to convert to.
+   * @return the converted value.
+   */
   public EngineValue convert(EngineValue current, Units newUnits) {
     Conversion conversion = converter.getConversion(current.getUnits(), newUnits);
     CompiledCallable callable = conversion.getConversionCallable();
     return callable.evaluate(new SingleValueScope(current));
   }
 
+  /**
+   * Iterator that decorates patches with shadow tracking capabilities.
+   */
   private class DecoratingShadowIterator implements Iterator<ShadowingEntity> {
 
     private final Iterator<Patch> patches;
 
+    /**
+     * Create a new decorating iterator.
+     *
+     * @param patches the iterator of patches to decorate.
+     */
     public DecoratingShadowIterator(Iterator<Patch> patches) {
       this.patches = patches;
     }
