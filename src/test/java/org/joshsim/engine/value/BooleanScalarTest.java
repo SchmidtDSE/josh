@@ -6,9 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
+
 class BooleanScalarTest {
-
-
 
   @Test
   void testConstructorAndGetters() {

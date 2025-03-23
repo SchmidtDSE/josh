@@ -126,7 +126,7 @@ public abstract class Distribution extends EngineValue {
   public long getAsInt() {
     return sample().getAsInt();
   }
-  
+
   @Override
   public Entity getAsEntity() {
     return sample().getAsEntity();

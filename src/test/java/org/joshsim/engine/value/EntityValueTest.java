@@ -1,4 +1,3 @@
-
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +27,7 @@ class EntityValueTest {
   @Test
   void testConstruction() {
     EntityValue value = new EntityValue(mockCaster, mockEntity);
-    
+
     assertEquals("TestEntity", value.getUnits().toString());
     assertEquals("TestEntity", value.getLanguageType().toString());
     assertEquals(mockEntity, value.getInnerValue());
