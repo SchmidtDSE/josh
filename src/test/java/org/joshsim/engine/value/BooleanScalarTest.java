@@ -103,6 +103,17 @@ class BooleanScalarTest {
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
 
+  // @Test
+  // void testGetAsDistribution() {
+  //   EngineValueCaster caster = new EngineValueWideningCaster();
+  //   BooleanScalar scalar = new BooleanScalar(caster, true, new Units("units"));
+
+  //   Distribution dist = scalar.getAsDistribution();
+  //   assertEquals(1, dist.getValues().size());
+  //   assertEquals(true, dist.getValues().get(0));
+  //   assertEquals("units", dist.getUnits());
+  // }
+
   @Test
   void testGetAsEntityThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
