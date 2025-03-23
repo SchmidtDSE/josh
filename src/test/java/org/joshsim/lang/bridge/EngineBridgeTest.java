@@ -11,10 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
@@ -29,7 +32,9 @@ import org.joshsim.engine.value.Units;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
@@ -41,6 +46,7 @@ public class EngineBridgeTest {
   @Mock private Converter mockConverter;
   @Mock private Patch mockPatch;
   @Mock private EngineValue mockEngineValue;
+  @Mock private EngineValue mockEngineValueConverted;
   @Mock private GeoPoint mockPoint;
   @Mock private Geometry mockGeometry;
 
@@ -71,8 +77,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetPatch() {
-    when(mockReplicate.query(new Query(0, mockPoint)))
-        .thenReturn(Arrays.asList(mockPatch));
+    expectQuery(new Query(0, mockPoint), Arrays.asList(mockPatch));
 
     Optional<ShadowingEntity> result = bridge.getPatch(mockPoint);
     assertTrue(result.isPresent(), "Should return a patch");
@@ -80,8 +85,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetPatchThrowsOnNoPatch() {
-    when(mockReplicate.query(new Query(0, mockPoint)))
-        .thenReturn(Arrays.asList());
+    expectQuery(new Query(0, mockPoint), Arrays.asList());
 
     assertThrows(IllegalStateException.class, () -> bridge.getPatch(mockPoint),
       "Should throw when no patch found");
@@ -89,8 +93,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetPatchThrowsOnMultiplePatches() {
-    when(mockReplicate.query(new Query(0, mockPoint)))
-        .thenReturn(Arrays.asList(mockPatch, mockPatch));
+    expectQuery(new Query(0, mockPoint), Arrays.asList(mockPatch, mockPatch));
 
     assertThrows(
         IllegalStateException.class,
@@ -101,8 +104,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetCurrentPatches() {
-    when(mockReplicate.query(new Query(0)))
-        .thenReturn(Arrays.asList(mockPatch));
+    expectQuery(new Query(0), Arrays.asList(mockPatch, mockPatch));
 
     Iterable<ShadowingEntity> results = bridge.getCurrentPatches();
     assertTrue(results.iterator().hasNext(), "Should return patches");
@@ -110,8 +112,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetPriorPatches() {
-    when(mockReplicate.query(new Query(0, mockGeometry)))
-        .thenReturn(Arrays.asList(mockPatch));
+    expectQuery(new Query(0, mockGeometry), Arrays.asList(mockPatch));
 
     bridge.startStep();
     bridge.endStep();
@@ -121,12 +122,22 @@ public class EngineBridgeTest {
 
   @Test
   void testValueConversion() {
+    Units oldUnits = new Units("old");
     Units newUnits = new Units("test");
-    when(mockEngineValue.getUnits()).thenReturn(new Units("old"));
+    when(mockEngineValue.getUnits()).thenReturn(oldUnits);
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
-        .thenReturn((Conversion) scope -> mockEngineValue);
+        .thenReturn(new Conversion(newUnits, newUnits, (x) -> mockEngineValueConverted));
 
     EngineValue result = bridge.convert(mockEngineValue, newUnits);
-    assertEquals(mockEngineValue, result, "Should return converted value");
+    assertEquals(mockEngineValueConverted, result, "Should return converted value");
+  }
+
+  private void expectQuery(Query query, List<Patch> result) {
+    when(mockReplicate.query(any(Query.class))).thenAnswer(invocation -> {
+      Query argument = invocation.getArgument(0);
+      assert argument.getStep() == query.getStep();
+      assert argument.getGeometry().equals(query.getGeometry());
+      return result;
+    });
   }
 }

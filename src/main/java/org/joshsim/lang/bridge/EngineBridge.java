@@ -100,7 +100,7 @@ public class EngineBridge {
       throw new IllegalStateException("Tried to end a step before starting the current one.");
     }
 
-    currentStep = engineValueFactory.build(currentStep.getAsInt(), new Units("count"));
+    currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, new Units("count"));
     inStep = false;
   }
 
