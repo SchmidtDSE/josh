@@ -3,6 +3,7 @@
  *
  * @license BSD-3-Clause.
  */
+
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

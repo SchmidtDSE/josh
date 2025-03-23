@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
@@ -34,7 +35,7 @@ public class EngineBridge {
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
   private final Converter converter;
-  
+
   private EngineValue currentStep;
   private boolean inStep;
 
@@ -52,10 +53,10 @@ public class EngineBridge {
     endStep = simulation
       .getAttributeValue("stepCount")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
-    
+
     inStep = false;
   }
-  
+
   public void startStep() {
     if (inStep) {
       throw new IllegalStateException("Tried to start a step before finishing the current one.");
@@ -69,14 +70,14 @@ public class EngineBridge {
       throw new IllegalStateException("Tried to end a step before starting the current one.");
     }
 
-    currentStep = engineValueFactory.build(engineStep.getAsInt(), "count");
+    currentStep = engineValueFactory.build(currentStep.getAsInt(), new Units("count"));
     inStep = false;
   }
 
   public Optional<ShadowingEntity> getPatch(GeoPoint point) {
-    Query query = new Query(engineStep.getAsInt(), point);
+    Query query = new Query(currentStep.getAsInt(), point);
     Iterable<Patch> patches = replicate.query(query);
-    
+
     Iterator<Patch> iterator = patches.iterator();
 
     if (!iterator.hasNext()) {
@@ -85,7 +86,7 @@ public class EngineBridge {
 
     Patch patch = iterator.next();
     ShadowingEntity decorated = new ShadowingEntity(patch, simulation);
-    
+
     if (iterator.hasNext()) {
       throw new IllegalStateException("Expected exactly one Patch, but found more.");
     }
@@ -94,18 +95,20 @@ public class EngineBridge {
   }
 
   public Iterable<ShadowingEntity> getCurrentPatches() {
-    Query query = new Query(engineStep.getAsInt());
+    Query query = new Query(currentStep.getAsInt());
     Iterable<Patch> patches = replicate.query(query);
-    return () -> new DecoratingShadowIterator(patches);
+    Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
+    return decorated;
   }
 
   public Iterable<ShadowingEntity> getPriorPatches(Geometry geometry) {
-    Query query = new Query(engineStep.getAsInt() - 1, geometry);
+    Query query = new Query(currentStep.getAsInt() - 1, geometry);
     Iterable<Patch> patches = replicate.query(query);
-    return () -> new DecoratingShadowIterator(patches);
+    Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
+    return decorated;
   }
 
-  public EngineValue convert(EngineValue current, String newUnits) {
+  public EngineValue convert(EngineValue current, Units newUnits) {
     Conversion conversion = converter.getConversion(current.getUnits(), newUnits);
     CompiledCallable callable = conversion.getConversionCallable();
     return callable.evaluate(new SingleValueScope(current));
@@ -118,15 +121,15 @@ public class EngineBridge {
     public DecoratingShadowIterator(Iterator<Patch> patches) {
       this.patches = patches;
     }
-    
+
     @Override
     public boolean hasNext() {
-      return patchIterator.hasNext();
+      return patches.hasNext();
     }
 
     @Override
     public ShadowingEntity next() {
-      Patch patch = patchIterator.next();
+      Patch patch = patches.next();
       return new ShadowingEntity(patch, simulation);
     }
 
@@ -135,5 +138,5 @@ public class EngineBridge {
       throw new UnsupportedOperationException();
     }
   }
-  
+
 }

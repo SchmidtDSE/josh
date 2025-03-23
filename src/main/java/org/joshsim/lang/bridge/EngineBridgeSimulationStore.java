@@ -39,7 +39,7 @@ public class EngineBridgeSimulationStore {
     if (!simulationSteps.containsKey(name)) {
       throw new UnsupportedOperationException("Unknown simulation: " + name);
     }
-    
+
     return simulationSteps.get(name);
   }
 

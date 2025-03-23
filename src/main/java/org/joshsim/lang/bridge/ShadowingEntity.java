@@ -23,7 +23,7 @@ import org.joshsim.engine.value.EngineValue;
  * Structure which allows for querying prior or current state of a SpatialEntity as it resolves.
  *
  * <p>Structure which allows for querying prior or current state of a SpatialEntity and allows for
- * determining if an attribute value has been resolved over time. This manages reference to 
+ * determining if an attribute value has been resolved over time. This manages reference to
  * current, prior, and here.</p>
  */
 public class ShadowingEntity {
@@ -70,7 +70,7 @@ public class ShadowingEntity {
 
   /**
    * Indicate that this entity is starting a substep or step phase like step.
-   * 
+   *
    * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
    * acquiring a global lock on this entity for thread safety.</p>
    *
@@ -92,7 +92,7 @@ public class ShadowingEntity {
 
   /**
    * Indicate that this entity is finishing with a substep or step phase like start.
-   * 
+   *
    * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
    * releasing a global lock on this entity for thread safety.</p>
    */

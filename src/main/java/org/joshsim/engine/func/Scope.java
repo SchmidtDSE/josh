@@ -18,5 +18,5 @@ import org.joshsim.engine.value.EngineValue;
 public interface Scope {
 
   EngineValue get(String name);
-  
+
 }

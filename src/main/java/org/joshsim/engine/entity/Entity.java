@@ -21,7 +21,7 @@ public interface Entity {
    * @returns unique name of this entity type.
    */
   String getName();
-  
+
   /**
    * Get event handlers for all attributes and events.
    *
