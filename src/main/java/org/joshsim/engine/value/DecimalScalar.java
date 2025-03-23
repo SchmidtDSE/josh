@@ -97,7 +97,7 @@ public class DecimalScalar extends Scalar {
   @Override
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
-  
+
     double base = getAsDecimal().doubleValue();
     double exponent = other.getAsInt();
     if (exponent != other.getAsDecimal().doubleValue()) {

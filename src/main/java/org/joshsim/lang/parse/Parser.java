@@ -37,7 +37,7 @@ public class Parser {
     JoshLangLexer lexer = new JoshLangLexer(input);
     // Remove default error listeners that print to console
     lexer.removeErrorListeners();
-    
+
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshLangParser parser = new JoshLangParser(tokens);
     parser.removeErrorListeners();
