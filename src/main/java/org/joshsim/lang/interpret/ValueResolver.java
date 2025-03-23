@@ -19,6 +19,7 @@ import org.joshsim.engine.value.EngineValue;
  */
 public class ValueResolver {
 
+  /*
   private final String path;
   
   private String foundPath;
@@ -41,7 +42,7 @@ public class ValueResolver {
       return Optional.of(resolved);
     } else {
       ValueResolver innerResolver = innerResolverMaybe.get();
-      return innerResolver.get(new EntityScope(resolved));
+      return innerResolver.get(new EntityScope(resolved.getAsEntity()));
     }
   }
 
@@ -51,9 +52,9 @@ public class ValueResolver {
     }
     
     String[] pieces = path.split("\\.");
-    int numPieces = numPieces;
+    int numPieces = pieces.length;
     
-    for (int numPiecesAttempt = pieces.length; numPiecesAttempt > 0; numPiecesAttempt--) {
+    for (int numPiecesAttempt = numPieces; numPiecesAttempt > 0; numPiecesAttempt--) {
       StringJoiner attemptJoiner = new StringJoiner(".");
       
       for (int i = 0; i < numPiecesAttempt; i++) {
@@ -65,11 +66,11 @@ public class ValueResolver {
       if (target.has(attemptPath)) {
         foundPath = attemptPath;
 
-        if (numPiecesAttempt == pieces.length) {
+        if (numPiecesAttempt == numPieces) {
           memoizedInnerResolver = Optional.empty();
         } else {
           StringJoiner remainingJoiner = new StringJoiner(".");
-          for (int i = numPiecesAttempt; i < pieces.length; i++) {
+          for (int i = numPiecesAttempt; i < numPieces; i++) {
             remainingJoiner.add(pieces[i]);
           }
           String remainingPath = remainingJoiner.toString();
@@ -80,5 +81,6 @@ public class ValueResolver {
 
     return memoizedInnerResolver;
   }
+  */
 
 }

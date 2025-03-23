@@ -8,6 +8,8 @@ package org.joshsim.engine.func;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.value.EngineValue;
 
@@ -25,7 +27,7 @@ public class EntityScope implements Scope {
    *
    * @param value EngineValue to use for current.
    */
-  public SingleValueScope(Entity value) {
+  public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = getAttributes(value);
   }
@@ -34,7 +36,7 @@ public class EntityScope implements Scope {
   public EngineValue get(String name) {
     Optional<EngineValue> attrValue = value.getAttributeValue(name);
     if (attrValue.isEmpty()) {
-      String message = String.format("Cannot find %s on this entity. May be uninitalized.", name)
+      String message = String.format("Cannot find %s on this entity. May be uninitalized.", name);
       throw new IllegalArgumentException(message);
     } else {
       return attrValue.get();

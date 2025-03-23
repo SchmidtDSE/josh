@@ -8,6 +8,7 @@ package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import org.joshsim.engine.entity.Entity;
 
 /**
  * Structure representing a distribution of values.
@@ -124,5 +125,10 @@ public abstract class Distribution extends EngineValue {
   @Override
   public long getAsInt() {
     return sample().getAsInt();
+  }
+  
+  @Override
+  public Entity getAsEntity() {
+    return sample().getAsEntity();
   }
 }

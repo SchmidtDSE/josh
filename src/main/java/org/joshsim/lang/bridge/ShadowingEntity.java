@@ -193,7 +193,7 @@ public class ShadowingEntity {
    * @return true if found on this entity within any event handler registration or false otherwise.
    */
   public boolean hasAttribute(String name) {
-    return allAttributes.contains(name);
+    return scope.has(name);
   }
 
   /**
