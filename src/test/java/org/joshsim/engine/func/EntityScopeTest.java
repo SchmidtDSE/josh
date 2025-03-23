@@ -1,3 +1,10 @@
+
+/**
+ * Tests for EntityScope.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.func;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +25,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Tests for the EntityScope which provides attribute access to entities.
+ */
 @ExtendWith(MockitoExtension.class)
 class EntityScopeTest {
 
@@ -28,19 +38,22 @@ class EntityScopeTest {
 
   private EntityScope scope;
 
+  /**
+   * Set up the test environment before each test.
+   */
   @BeforeEach
   void setUp() {
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup));
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
-
+    
     scope = new EntityScope(mockEntity);
   }
 
   @Test
   void testGetExistingAttribute() {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
-
+    
     EngineValue result = scope.get("testAttr");
     assertEquals(mockValue, result);
   }
@@ -48,7 +61,7 @@ class EntityScopeTest {
   @Test
   void testGetNonExistentAttribute() {
     when(mockEntity.getAttributeValue("nonexistent")).thenReturn(Optional.empty());
-
+    
     assertThrows(IllegalArgumentException.class, () -> scope.get("nonexistent"));
   }
 

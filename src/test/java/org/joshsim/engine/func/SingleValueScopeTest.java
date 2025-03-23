@@ -1,3 +1,10 @@
+
+/**
+ * Tests for SingleValueScope.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.func;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,12 +19,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Tests for the SingleValueScope which provides access to a single current value.
+ */
 @ExtendWith(MockitoExtension.class)
 class SingleValueScopeTest {
 
   @Mock private EngineValue mockValue;
   private SingleValueScope scope;
 
+  /**
+   * Set up the test environment before each test.
+   */
   @BeforeEach
   void setUp() {
     scope = new SingleValueScope(mockValue);
