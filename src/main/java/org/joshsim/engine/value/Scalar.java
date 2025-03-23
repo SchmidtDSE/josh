@@ -201,8 +201,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
   }
 
-
-
   /**
    * Log a message and raise an UnsupportedOperationException with the given message template.
    *
