@@ -1,3 +1,10 @@
+
+/**
+ * Tests for BooleanScalar.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,7 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
-
+/**
+ * Tests for the BooleanScalar class which represents boolean values in the engine.
+ */
 class BooleanScalarTest {
 
   @Test
@@ -95,16 +104,13 @@ class BooleanScalarTest {
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
 
-  // @Test
-  // void testGetAsDistribution() {
-  //   EngineValueCaster caster = new EngineValueWideningCaster();
-  //   BooleanScalar scalar = new BooleanScalar(caster, true, new Units("units"));
+  @Test
+  void testGetAsEntityThrowsException() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
 
-  //   Distribution dist = scalar.getAsDistribution();
-  //   assertEquals(1, dist.getValues().size());
-  //   assertEquals(true, dist.getValues().get(0));
-  //   assertEquals("units", dist.getUnits());
-  // }
+    assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
+  }
 
   @Test
   void testWithDifferentUnits() {
