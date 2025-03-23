@@ -27,7 +27,7 @@ public class Conversion {
    * Create a new conversion.
    *
    * @param sourceUnits which is what is expected of the input EngineValue.
-   * @param sourceUnits which is what is expected of the output EngineValue.
+   * @param destinationUnits which is what is expected of the output EngineValue.
    * @param callable which implements this conversion.
    */
   public Conversion(Units sourceUnits, Units destinationUnits, CompiledCallable callable) {
