@@ -1,3 +1,9 @@
+/**
+ * Tests for RealizedDistribution.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,6 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
+/**
+ * Tests for a distribution which has a discrete number of elements.
+ */
 class RealizedDistributionTest {
 
   private EngineValueCaster caster;

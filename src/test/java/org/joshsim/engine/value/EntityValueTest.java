@@ -1,3 +1,9 @@
+/**
+ * Tests for EntityValue.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,6 +19,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
+/**
+ * Tests for a engine entity as a variable value.
+ */
 @ExtendWith(MockitoExtension.class)
 class EntityValueTest {
 

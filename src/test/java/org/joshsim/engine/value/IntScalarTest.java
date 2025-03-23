@@ -1,3 +1,9 @@
+/**
+ * Tests for IntScalar.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,6 +15,9 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 
+/**
+ * Tests for an integer within the engine as a variable value.
+ */
 class IntScalarTest {
 
   @Test
@@ -136,6 +145,14 @@ class IntScalarTest {
     IntScalar scalar2 = new IntScalar(caster, 3L, new Units("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.raiseToPower(scalar2));
+  }
+
+  @Test
+  void testGetAsEntityThrowsException() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+
+    assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
   }
 
   // @Test
