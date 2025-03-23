@@ -123,7 +123,7 @@ public class EngineBridgeTest {
     Units newUnits = new Units("test");
     when(mockEngineValue.getUnits()).thenReturn(new Units("old"));
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
-        .
+        .thenReturn((Conversion) scope -> mockEngineValue);
 
     EngineValue result = bridge.convert(mockEngineValue, newUnits);
     assertEquals(mockEngineValue, result, "Should return converted value");
