@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.func;
+
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -17,6 +18,11 @@ import org.joshsim.engine.value.EngineValue;
  */
 public interface Scope {
 
+  /**
+   * Get a value within this scope.
+   *
+   * @param name of the attribute which must be accessible on this scope's root.
+   */
   EngineValue get(String name);
 
 }
