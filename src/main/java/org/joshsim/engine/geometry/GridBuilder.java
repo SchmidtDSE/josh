@@ -25,7 +25,7 @@ public class GridBuilder {
   private BigDecimal topLeftLongitude;
   private BigDecimal bottomRightLatitude;
   private BigDecimal bottomRightLongitude;
-  private EngineValue cellWidth;
+  private BigDecimal cellWidth;
   private boolean inputIsGeographic;
 
   // CRS-related fields
@@ -116,7 +116,7 @@ public class GridBuilder {
    * @param cellWidth The width of each cell (in units of the target CRS)
    * @return this builder for method chaining
    */
-  public GridBuilder setCellWidth(EngineValue cellWidth) {
+  public GridBuilder setCellWidth(BigDecimal cellWidth) {
     this.cellWidth = cellWidth;
     return this;
   }
@@ -174,8 +174,11 @@ public class GridBuilder {
     DirectPosition2D bottomRight = new DirectPosition2D(
         bottomRightLongitude.doubleValue(), bottomRightLatitude.doubleValue());
 
-    transform.transform(topLeft, topLeft);
-    transform.transform(bottomRight, bottomRight);
+    topLeft.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
+    bottomRight.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
+
+    DirectPosition transformedTopLeft = transform.transform(topLeft, null);
+    DirectPosition transformedBottomRight = transform.transform(bottomRight, null);
 
     return new DirectPosition2D[] { topLeft, bottomRight };
   }
@@ -211,7 +214,7 @@ public class GridBuilder {
       DirectPosition2D topLeft,
       DirectPosition2D bottomRight
   ) {
-    double cellWidthUnits = cellWidth.getAsDecimal().doubleValue();
+    double cellWidthUnits = cellWidth.doubleValue();
 
     double rowDiff = topLeft.y - bottomRight.y;
     double colDiff = bottomRight.x - topLeft.x;
