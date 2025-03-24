@@ -1,3 +1,9 @@
+/**
+ * Tests for Units.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,6 +16,10 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.junit.jupiter.api.Test;
 
+
+/**
+ * Tests for structure describing a unit like meter.
+ */
 class UnitsTest {
 
   @Test

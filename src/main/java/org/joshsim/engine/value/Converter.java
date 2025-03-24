@@ -19,5 +19,5 @@ public interface Converter {
    * @return a Conversion that can convert between the specified units
    * @throws IllegalArgumentException if no conversion exists between the units
    */
-  Conversion getConversion(String oldUnits, String newUnits);
+  Conversion getConversion(Units oldUnits, Units newUnits);
 }

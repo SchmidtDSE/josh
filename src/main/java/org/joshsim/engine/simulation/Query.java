@@ -18,7 +18,7 @@ import org.joshsim.engine.geometry.Geometry;
  */
 public class Query {
 
-  private final int step;
+  private final long step;
   private final Optional<Geometry> geometry;
 
   /**
@@ -26,7 +26,7 @@ public class Query {
    *
    * @param step unique step count or time step ID for which to query.
    */
-  public Query(int step) {
+  public Query(long step) {
     this.step = step;
     this.geometry = Optional.empty();
   }
@@ -37,7 +37,7 @@ public class Query {
    * @param step unique step count or time step ID for which to query.
    * @param geometry spatial bounds within which patches should be returned.
    */
-  public Query(int step, Geometry geometry) {
+  public Query(long step, Geometry geometry) {
     this.step = step;
     this.geometry = Optional.of(geometry);
   }
@@ -47,7 +47,7 @@ public class Query {
    *
    * @return the time step index for this query.
    */
-  public int getStep() {
+  public long getStep() {
     return step;
   }
 
