@@ -77,7 +77,7 @@ public class ValueResolverTest {
   }
 
   @Test
-  void testLocalValueResolution() {
+  void testLocalDotValueResolution() {
     resolver = new ValueResolver("local.value");
     Optional<EngineValue> result = resolver.get(mockScope);
     
