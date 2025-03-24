@@ -26,11 +26,11 @@ public class GeometryMomento {
   /**
    * Constructs a GeometryMomento with the specified shape parameters.
    *
-   * @param shapeName The name of the shape (e.g., "square", "circle")
-   * @param centerX The x-coordinate of the shape's center
-   * @param centerY The y-coordinate of the shape's center
-   * @param diameter The diameter or width of the shape
-   * @throws IllegalArgumentException if the shape name is not supported
+   * @param shapeName The name of the shape (e.g., "square", "circle").
+   * @param centerX The x-coordinate of the shape's center.
+   * @param centerY The y-coordinate of the shape's center.
+   * @param diameter The diameter or width of the shape.
+   * @throws IllegalArgumentException if the shape name is not supported.
    */
   public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY, 
       BigDecimal diameter) {
@@ -47,7 +47,7 @@ public class GeometryMomento {
   /**
    * Builds and returns a Geometry object from this momento.
    *
-   * @return A new Geometry instance representing the shape described by this momento
+   * @return A new Geometry instance representing the shape described by this momento.
    */
   public Geometry build() {
     return getBuilder().get().build();
@@ -77,8 +77,8 @@ public class GeometryMomento {
   /**
    * Gets the appropriate shape builder for this momento's shape type.
    *
-   * @return Optional containing a MomentoShapeBuilder if the shape type is supported,
-   *     empty Optional otherwise
+   * @return Optional containing a MomentoShapeBuilder if the shape type is supported, empty
+   *     Optional otherwise.
    */
   private Optional<MomentoShapeBuilder> getBuilder() {
     switch (shapeName) {
@@ -94,14 +94,13 @@ public class GeometryMomento {
 
   /**
    * Interface for building geometries from momentos.
-   * Implementations provide specific shape building logic.
    */
   private interface MomentoShapeBuilder {
 
     /**
      * Builds a geometry from the momento's parameters.
      *
-     * @return A new Geometry instance
+     * @return A new Geometry instance.
      */
     Geometry build();
     
