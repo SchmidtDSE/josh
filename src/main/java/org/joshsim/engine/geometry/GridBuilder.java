@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
 
 /**
  * This class is responsible for building grid structures.
@@ -24,16 +23,6 @@ public class GridBuilder {
   private BigDecimal bottomRightLatitude;
   private BigDecimal bottomRightLongitude;
   private EngineValue cellWidth;
-  private final EngineValueFactory engineValueFactory;
-
-  /**
-   * Constructor for GridBuilder.
-   *
-   * @param engineValueFactory The factory to create EngineValues
-   */
-  public GridBuilder(EngineValueFactory engineValueFactory) {
-    this.engineValueFactory = engineValueFactory;
-  }
 
   /**
    * Sets the top-left coordinates of the grid.
