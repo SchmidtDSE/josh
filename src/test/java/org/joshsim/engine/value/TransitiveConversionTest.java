@@ -26,13 +26,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class TransitiveConversionTest {
 
-  @Mock private Conversion mockFirstConversion;
-  @Mock private Conversion mockSecondConversion;
-  @Mock private CompiledCallable mockFirstCallable;
-  @Mock private CompiledCallable mockSecondCallable;
-  @Mock private Scope mockScope;
-  @Mock private EngineValue mockFirstResult;
-  @Mock private EngineValue mockSecondResult;
+  @Mock(lenient = true) private Conversion mockFirstConversion;
+  @Mock(lenient = true) private Conversion mockSecondConversion;
+  @Mock(lenient = true) private CompiledCallable mockFirstCallable;
+  @Mock(lenient = true) private CompiledCallable mockSecondCallable;
+  @Mock(lenient = true) private Scope mockScope;
+  @Mock(lenient = true) private EngineValue mockFirstResult;
+  @Mock(lenient = true) private EngineValue mockSecondResult;
 
   private Units sourceUnits;
   private Units intermediateUnits;
