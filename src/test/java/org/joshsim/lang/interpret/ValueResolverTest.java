@@ -1,4 +1,3 @@
-
 /**
  * Tests for ValueResolver.
  *
@@ -12,8 +11,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Optional;
 import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.EventHandler;
+import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
@@ -34,11 +36,23 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EngineValue mockDirectValue;
   @Mock(lenient = true) private EngineValue mockEntityValue;
   @Mock(lenient = true) private EngineValue mockNestedValue;
-
-  private ValueResolver resolver;
+  @Mock(lenient = true) private EventHandlerGroup mockGroup;
+  @Mock(lenient = true) private EventHandler mockHandler;
+  private Scope scope;
 
   @BeforeEach
   void setUp() {
+    @Mock EventHandlerGroup mockNestedGroup;
+    @Mock EventHandler mockNestedHandler;
+
+    when(mockNestedHandler.getAttributeName()).thenReturn("nested");
+    when(mockNestedHandler.getEventName()).thenReturn("init");
+    when(mockNestedGroup.getEventHandlers()).thenReturn(Arrays.asList(mockNestedHandler));
+
+    when(mockHandler.getAttributeName()).thenReturn("testAttr");
+    when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
+    when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup, mockNestedGroup));
+
     // Configure mock for direct value test
     when(mockScope.get("direct")).thenReturn(mockDirectValue);
     when(mockScope.has("direct")).thenReturn(true);
@@ -60,7 +74,7 @@ public class ValueResolverTest {
   void testDirectValueResolution() {
     resolver = new ValueResolver("direct");
     Optional<EngineValue> result = resolver.get(mockScope);
-    
+
     assertTrue(result.isPresent(), "Should resolve direct value");
     assertEquals(mockDirectValue, result.get(), "Should return correct direct value");
   }
@@ -69,7 +83,7 @@ public class ValueResolverTest {
   void testNestedValueResolution() {
     resolver = new ValueResolver("entity.nested");
     Optional<EngineValue> result = resolver.get(mockScope);
-    
+
     assertTrue(result.isPresent(), "Should resolve nested value");
     assertEquals(mockNestedValue, result.get(), "Should return correct nested value");
   }
@@ -78,8 +92,9 @@ public class ValueResolverTest {
   void testLocalDotValueResolution() {
     resolver = new ValueResolver("local.value");
     Optional<EngineValue> result = resolver.get(mockScope);
-    
+
     assertTrue(result.isPresent(), "Should resolve local.value");
     assertEquals(mockDirectValue, result.get(), "Should return correct local value");
   }
+  private ValueResolver resolver;
 }
