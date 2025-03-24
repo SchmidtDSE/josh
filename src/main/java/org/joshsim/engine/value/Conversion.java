@@ -17,27 +17,50 @@ import org.joshsim.engine.func.CompiledCallable;
  * EngineValues of different units.
  * </p>
  */
-public interface Conversion {
+public class Conversion {
+
+  private final Units sourceUnits;
+  private final Units destinationUnits;
+  private final CompiledCallable callable;
+
+  /**
+   * Create a new conversion.
+   *
+   * @param sourceUnits which is what is expected of the input EngineValue.
+   * @param destinationUnits which is what is expected of the output EngineValue.
+   * @param callable which implements this conversion.
+   */
+  public Conversion(Units sourceUnits, Units destinationUnits, CompiledCallable callable) {
+    this.sourceUnits = sourceUnits;
+    this.destinationUnits = destinationUnits;
+    this.callable = callable;
+  }
 
   /**
    * Get the source units for this conversion.
    *
    * @return the source units as a string
    */
-  Units getSourceUnits();
+  public Units getSourceUnits() {
+    return sourceUnits;
+  }
 
   /**
    * Get the destination units for this conversion.
    *
    * @return the destination units as a string
    */
-  Units getDestinationUnits();
+  public Units getDestinationUnits() {
+    return destinationUnits;
+  }
 
   /**
    * Get the callable that performs the actual conversion.
    *
    * @return a compiled callable that performs the conversion
    */
-  CompiledCallable getConversionCallable();
+  public CompiledCallable getConversionCallable() {
+    return callable;
+  }
 
 }

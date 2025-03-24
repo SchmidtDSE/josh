@@ -34,6 +34,7 @@ public class Converter {
    * @return a Conversion that can convert between the specified units
    * @throws IllegalArgumentException if no conversion exists between the units
    */
+<<<<<<< HEAD
   public Conversion getConversion(Units oldUnits, Units newUnits) {
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(oldUnits, newUnits);
 
@@ -52,4 +53,7 @@ public class Converter {
 
     return conversions.get(tuple);
   }
+=======
+  Conversion getConversion(Units oldUnits, Units newUnits);
+>>>>>>> dev
 }

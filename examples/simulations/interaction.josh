@@ -1,22 +1,11 @@
-start unit cm
-
-  m = current / 100
-
-end unit
-
-
-start unit years
-
-  alias year
-  alias yr
-  alias yrs
-
-end unit
-
-
 start simulation Example
 
-  grid.size = 30 m
+  grid.size = 1 count
+  grid.start = 1 count latitude, 1 count longitude
+  grid.end = 2 count latitude, 2 count longitude
+  steps.start = 0 count
+  steps.end = 100 count
+  randSeed = 1234
 
 end simulation
 
@@ -24,9 +13,13 @@ end simulation
 start patch Default
 
   location = all
-  Shrubs.init = create 1 count of Shrubs
-  TreeAs.init = create 1 count of TreeA
-  TreeBs.init = create 1 count of TreeB
+  Shrubs.init = create Shrubs
+  TreeAs.init = create TreeA
+  TreeBs.init = create TreeB
+
+  assert.heightTreeB
+    :if(meta.stepCount == 0 count) = max(here.TreeB.height) == 0 m
+    :elif(meta.stepCount == 100 count) = max(here.TreeB.height) > 0 m
 
 end patch
 
@@ -62,6 +55,8 @@ start organism TreeA
   age.init = 1 year
   age.step = prior.age + 10 year
 
+  height.start = sample normal with mean of 5 m std of 1 m
+
   shade.start = sum(here.TreeBs[here.TreeBs.height > current.height].shade)
   cover.step = current.height / 5 m * 10 %
 
@@ -80,9 +75,28 @@ start organism TreeB
   age.init = 1 year
   age.step = prior.age + 10 year
 
+  height.start = 0 m
+
   growth.step = map curent.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
-  height.step = prior.height + growth
+  height.step = prior.height + current.growth
   cover.step = curent.height * 10 % / 3 m
+
   height.end = limit prior.height to [, 30 m]
 
 end organism
+
+
+start unit cm
+
+  m = current / 100
+
+end unit
+
+
+start unit years
+
+  alias year
+  alias yr
+  alias yrs
+
+end unit
