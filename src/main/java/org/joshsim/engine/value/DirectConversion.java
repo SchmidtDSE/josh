@@ -17,19 +17,19 @@ public class DirectConversion implements Conversion {
 
   private final String sourceUnits;
   private final String destinationUnits;
-  private final CompiledCallable conversionCallable;
+  private final CompiledCallable callable;
 
   /**
    * Constructs a new DirectConversion with the specified units and conversion callable.
    *
-   * @param sourceUnits the source units for this conversion
-   * @param destinationUnits the destination units for this conversion
-   * @param conversionCallable the callable that performs the conversion
+   * @param sourceUnits the source units for this conversion.
+   * @param destinationUnits the destination units for this conversion.
+   * @param conversionCallable the callable that performs the conversion.
    */
-  public DirectConversion(String sourceUnits, String destinationUnits, CompiledCallable conversionCallable) {
+  public DirectConversion(String sourceUnits, String destinationUnits, CompiledCallable callable) {
     this.sourceUnits = sourceUnits;
     this.destinationUnits = destinationUnits;
-    this.conversionCallable = conversionCallable;
+    this.callable = callable;
   }
 
   @Override
@@ -44,7 +44,7 @@ public class DirectConversion implements Conversion {
 
   @Override
   public CompiledCallable getConversionCallable() {
-    return conversionCallable;
+    return callable;
   }
 
 }
