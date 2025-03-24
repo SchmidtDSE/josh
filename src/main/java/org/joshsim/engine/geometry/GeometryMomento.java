@@ -66,7 +66,7 @@ public class GeometryMomento {
         () -> GeometryFactory.createSquare(diameter, centerX, centerY)
       );
       case "circle": return Optional.of(
-        () -> GeometryFactory.createSquare(diameter, centerX, centerY)
+        () -> GeometryFactory.createCircle(diameter, centerX, centerY)
       );
       default: return Optional.empty();
     }

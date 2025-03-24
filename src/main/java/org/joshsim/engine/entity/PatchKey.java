@@ -1,4 +1,3 @@
-
 /**
  * Structures describing keys for cells within a simulation.
  *
