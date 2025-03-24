@@ -161,7 +161,8 @@ public class GridBuilder {
   /**
    * Transforms the corner coordinates from input CRS to target CRS.
    */
-  private DirectPosition2D[] transformCornerCoordinates() throws FactoryException, TransformException {
+  private DirectPosition2D[] transformCornerCoordinates() 
+      throws FactoryException, TransformException {
     MathTransform transform = CRS.findOperation(
         inputCoordinateReferenceSystem,
         targetCoordinateReferenceSystem,
@@ -192,30 +193,33 @@ public class GridBuilder {
    * Represents the dimensions of the grid in terms of cell counts.
    */
   private static class GridDimensions {
-    final int xCells;
-    final int yCells;
+    final int colCells;
+    final int rowCells;
     final double cellWidthUnits;
 
-    GridDimensions(int xCells, int yCells, double cellWidthUnits) {
-        this.xCells = xCells;
-        this.yCells = yCells;
-        this.cellWidthUnits = cellWidthUnits;
+    GridDimensions(int colCells, int rowCells, double cellWidthUnits) {
+      this.colCells = colCells;
+      this.rowCells = rowCells;
+      this.cellWidthUnits = cellWidthUnits;
     }
   }
 
   /**
    * Calculates the number of cells in each direction.
    */
-  private GridDimensions calculateGridDimensions(DirectPosition2D topLeft, DirectPosition2D bottomRight) {
+  private GridDimensions calculateGridDimensions(
+      DirectPosition2D topLeft,
+      DirectPosition2D bottomRight
+  ) {
     double cellWidthUnits = cellWidth.getAsDecimal().doubleValue();
 
-    double yDiff = topLeft.y - bottomRight.y;
-    double xDiff = bottomRight.x - topLeft.x;
+    double rowDiff = topLeft.y - bottomRight.y;
+    double colDiff = bottomRight.x - topLeft.x;
 
-    int yCells = (int) Math.ceil(yDiff / cellWidthUnits);
-    int xCells = (int) Math.ceil(xDiff / cellWidthUnits);
+    int rowCells = (int) Math.ceil(rowDiff / cellWidthUnits);
+    int colCells = (int) Math.ceil(colDiff / cellWidthUnits);
 
-    return new GridDimensions(xCells, yCells, cellWidthUnits);
+    return new GridDimensions(colCells, rowCells, cellWidthUnits);
   }
 
   /**
@@ -245,10 +249,10 @@ public class GridBuilder {
         SpatialContext context
   ) {
     List<Patch> patches = new ArrayList<>();
-    for (int yIdx = 0; yIdx < dimensions.yCells; yIdx++) {
-      for (int xIdx = 0; xIdx < dimensions.xCells; xIdx++) {
-        double cellTopLeftY = topLeft.y - (yIdx * dimensions.cellWidthUnits);
-        double cellTopLeftX = topLeft.x + (xIdx * dimensions.cellWidthUnits);
+    for (int rowIdx = 0; rowIdx < dimensions.rowCells; rowIdx++) {
+      for (int colIdx = 0; colIdx < dimensions.colCells; colIdx++) {
+        double cellTopLeftY = topLeft.y - (rowIdx * dimensions.cellWidthUnits);
+        double cellTopLeftX = topLeft.x + (colIdx * dimensions.cellWidthUnits);
 
         double cellBottomRightY = cellTopLeftY - dimensions.cellWidthUnits;
         double cellBottomRightX = cellTopLeftX + dimensions.cellWidthUnits;
@@ -315,5 +319,10 @@ public class GridBuilder {
     if (targetCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Target CRS not specified");
     }
+
+    if (cellWidth.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
+
   }
 }
