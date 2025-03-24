@@ -38,9 +38,7 @@ public class Converter {
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(oldUnits, newUnits);
 
     if (tuple.getAreCompatible()) {
-      return new Conversion() {
-        
-      };
+      return new NoopConversion(newUnits);
     }
 
     if (!conversions.containsKey(tuple)) {

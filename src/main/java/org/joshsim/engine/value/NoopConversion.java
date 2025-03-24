@@ -20,7 +20,7 @@ public class NoopConversion implements Conversion {
   /**
    * Constructs a new NoopConversion with the specified units.
    *
-   * @param units The units to use for both source and destination
+   * @param units The units to use for both source and destination.
    */
   public NoopConversion(Units units) {
     this.units = units;

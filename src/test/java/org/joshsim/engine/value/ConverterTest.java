@@ -8,6 +8,7 @@ package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -63,6 +64,6 @@ public class ConverterTest {
   @Test
   void testGetConversionWithSameUnits() {
     Conversion result = converter.getConversion(sourceUnits, sourceUnits);
-    assertEquals(mockConversion, result);
+    assertTrue(result instanceof NoopConversion);
   }
 }
