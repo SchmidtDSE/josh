@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+
 /**
  * Tests for the ValueResolver which resolves dot-chained paths in scopes.
  */
@@ -38,17 +39,23 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EngineValue mockNestedValue;
   @Mock(lenient = true) private EventHandlerGroup mockGroup;
   @Mock(lenient = true) private EventHandler mockHandler;
+  @Mock(lenient = true) private EventHandlerGroup mockNestedGroup;
+  @Mock(lenient = true) private EventHandler mockNestedHandler;
+  
   private Scope scope;
+  private ValueResolver resolver;
 
+  /**
+   * Setup an entity hierarchy for testing.
+   */
   @BeforeEach
   void setUp() {
-    @Mock EventHandlerGroup mockNestedGroup;
-    @Mock EventHandler mockNestedHandler;
-
+    // Set up nested reference on root
     when(mockNestedHandler.getAttributeName()).thenReturn("nested");
     when(mockNestedHandler.getEventName()).thenReturn("init");
     when(mockNestedGroup.getEventHandlers()).thenReturn(Arrays.asList(mockNestedHandler));
 
+    // Setup root test attr
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup, mockNestedGroup));
@@ -62,7 +69,7 @@ public class ValueResolverTest {
     when(mockScope.has("entity")).thenReturn(true);
     when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
 
-    EntityScope entityScope = new EntityScope(mockEntity);
+    // Setup nested entity value.
     when(mockEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));
 
     // Configure mock for local.value test
@@ -96,5 +103,5 @@ public class ValueResolverTest {
     assertTrue(result.isPresent(), "Should resolve local.value");
     assertEquals(mockDirectValue, result.get(), "Should return correct local value");
   }
-  private ValueResolver resolver;
+  
 }
