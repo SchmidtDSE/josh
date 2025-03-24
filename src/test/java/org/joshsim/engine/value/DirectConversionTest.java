@@ -18,30 +18,39 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Test for a conversion which has a single callable.
+ */
 @ExtendWith(MockitoExtension.class)
 public class DirectConversionTest {
 
-  @Mock private Units mockSourceUnits;
-  @Mock private Units mockDestUnits;
+  private Units sourceUnits;
+  private Units destUnits;
+
   @Mock private CompiledCallable mockCallable;
   @Mock private Scope mockScope;
   @Mock private EngineValue mockEngineValue;
 
   private DirectConversion conversion;
 
+  /**
+   * Establish common values before each test
+   */
   @BeforeEach
   void setUp() {
-    conversion = new DirectConversion(mockSourceUnits, mockDestUnits, mockCallable);
+    sourceUnits = new Units("m");
+    destUnits = new Units("cm");
+    conversion = new DirectConversion(sourceUnits, destUnits, mockCallable);
   }
 
   @Test
   void testGetSourceUnits() {
-    assertEquals(mockSourceUnits, conversion.getSourceUnits());
+    assertEquals(sourceUnits, conversion.getSourceUnits());
   }
 
   @Test
   void testGetDestinationUnits() {
-    assertEquals(mockDestUnits, conversion.getDestinationUnits());
+    assertEquals(destUnits, conversion.getDestinationUnits());
   }
 
   @Test
