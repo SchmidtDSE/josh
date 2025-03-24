@@ -23,45 +23,45 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ConverterBuilderTest {
 
-  @Mock(lenient = true) private Conversion kmToMeterConversion;
-  @Mock(lenient = true) private Conversion mToCmConversion;
+  @Mock(lenient = true) private Conversion kilometersToMetersConversion;
+  @Mock(lenient = true) private Conversion metersToCentimetersConversion;
   
-  private Units kmUnits;
-  private Units mUnits;
-  private Units cmUnits;
+  private Units kilometersUnits;
+  private Units metersUnits;
+  private Units centimetersUnits;
   private ConverterBuilder builder;
 
   /**
-   * Setup example converter builder with km -> m and m -> cm.
+   * Setup example converter builder with kilometers -> meters and meters -> centimeters.
    */
   @BeforeEach
   void setUp() {
-    kmUnits = new Units("km");
-    mUnits = new Units("m");
-    cmUnits = new Units("cm");
+    kilometersUnits = new Units("km");
+    metersUnits = new Units("m");
+    centimetersUnits = new Units("cm");
     
-    when(kmToMConversion.getSourceUnits()).thenReturn(kmUnits);
-    when(kmToMConversion.getDestinationUnits()).thenReturn(mUnits);
+    when(kilometersToMetersConversion.getSourceUnits()).thenReturn(kilometersUnits);
+    when(kilometersToMetersConversion.getDestinationUnits()).thenReturn(metersUnits);
     
-    when(mToCmConversion.getSourceUnits()).thenReturn(mUnits);
-    when(mToCmConversion.getDestinationUnits()).thenReturn(cmUnits);
+    when(metersToCentimetersConversion.getSourceUnits()).thenReturn(metersUnits);
+    when(metersToCentimetersConversion.getDestinationUnits()).thenReturn(centimetersUnits);
     
     builder = new ConverterBuilder();
-    builder.addConversion(kmToMConversion);
-    builder.addConversion(mToCmConversion);
+    builder.addConversion(kilometersToMetersConversion);
+    builder.addConversion(metersToCentimetersConversion);
   }
 
   @Test
   void testKilometersToMetersConversion() {
     Converter converter = builder.build();
-    Conversion result = converter.getConversion(kmUnits, mUnits);
-    assertEquals(kmToMConversion, result);
+    Conversion result = converter.getConversion(kilometersUnits, metersUnits);
+    assertEquals(kilometersToMetersConversion, result);
   }
 
   @Test
   void testKilometersToCentimetersTransitiveConversion() {
     Converter converter = builder.build();
-    Conversion result = converter.getConversion(kmUnits, cmUnits);
+    Conversion result = converter.getConversion(kilometersUnits, centimetersUnits);
     // The result should be a transitive conversion since it requires two steps
     assertTrue(result instanceof TransitiveConversion);
   }
