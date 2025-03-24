@@ -7,6 +7,7 @@
 package org.joshsim.engine.value;
 
 import java.util.List;
+import org.joshsim.engine.entity.Entity;
 
 
 /**
@@ -36,6 +37,16 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     EngineValueFactory factory = new EngineValueFactory(getCaster());
     List<EngineValue> values = List.of(this);
     return factory.buildRealizedDistribution(values, getUnits());
+  }
+
+  /**
+   * Indicate that non-entity conversion to entity for single values is not defined.
+   *
+   * @throws UnsupportedOperationException on all calls.
+   */
+  @Override
+  public Entity getAsEntity() {
+    throw new UnsupportedOperationException("Non-entity scalar conversion to entity not defined");
   }
 
   /**
@@ -200,8 +211,6 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   public String toString() {
     return "Scalar [value=" + getInnerValue() + ", units=" + getUnits() + "]";
   }
-
-
 
   /**
    * Log a message and raise an UnsupportedOperationException with the given message template.

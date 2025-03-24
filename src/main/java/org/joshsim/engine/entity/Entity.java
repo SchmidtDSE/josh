@@ -14,6 +14,21 @@ import org.joshsim.engine.value.EngineValue;
  * Base entity in system which has mutable attributes.
  */
 public interface Entity {
+
+  /**
+   * Get the name of this tyep of entity.
+   *
+   * @returns unique name of this entity type.
+   */
+  String getName();
+
+  /**
+   * Get event handlers for all attributes and events.
+   *
+   * @returns Iterable over all registered event handler groups.
+   */
+  Iterable<EventHandlerGroup> getEventHandlers();
+
   /**
    * Get event handlers for a specific attribute and event.
    *

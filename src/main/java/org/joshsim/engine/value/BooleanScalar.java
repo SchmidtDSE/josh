@@ -1,6 +1,6 @@
 
 /**
- * Structures describing an individual engine value.
+ * Structures describing an individual engine boolean value.
  *
  * @license BSD-3-Clause
  */
