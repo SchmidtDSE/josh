@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
+import org.locationtech.spatial4j.context.SpatialContext;
 
 /**
  * This class is responsible for building grid structures.
@@ -24,15 +24,29 @@ public class GridBuilder {
   private BigDecimal bottomRightLatitude;
   private BigDecimal bottomRightLongitude;
   private EngineValue cellWidth;
-  private final EngineValueFactory engineValueFactory;
+  private SpatialContext spatialContext;
 
   /**
-   * Constructor for GridBuilder.
-   *
-   * @param engineValueFactory The factory to create EngineValues
+   * Creates a new GridBuilder.
    */
-  public GridBuilder(EngineValueFactory engineValueFactory) {
-    this.engineValueFactory = engineValueFactory;
+  public GridBuilder() {
+    this.spatialContext = GeometryFactory.getDefaultSpatialContext();
+  }
+
+  /**
+   * Creates a new GridBuilder with the specified SpatialContext.
+   *
+   * @param spatialContext The SpatialContext to use
+   */
+  public GridBuilder(SpatialContext spatialContext) {
+    this.spatialContext = spatialContext;
+  }
+
+  /**
+   * Returns the SpatialContext used by this builder and any grids it creates.
+   */
+  public SpatialContext getSpatialContext() {
+    return spatialContext;
   }
 
   /**
@@ -146,7 +160,11 @@ public class GridBuilder {
 
         // Create the geometry for this cell
         Geometry cellGeometry = GeometryFactory.createSquare(
-            cellTopLeftLat, cellTopLeftLon, cellBottomRightLat, cellBottomRightLon
+            cellTopLeftLat,
+            cellTopLeftLon,
+            cellBottomRightLat,
+            cellBottomRightLon,
+            getSpatialContext()
         );
 
         // Create a patch with this geometry
