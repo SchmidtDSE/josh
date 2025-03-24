@@ -88,7 +88,8 @@ public class ValueResolver {
 
       String attemptPath = attemptJoiner.toString();
 
-      if (target.has(attemptPath)) {
+      try {
+        EngineValue value = target.get(attemptPath);
         foundPath = attemptPath;
 
         if (numPiecesAttempt == numPieces) {
@@ -101,6 +102,10 @@ public class ValueResolver {
           String remainingPath = remainingJoiner.toString();
           memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
         }
+        break;
+      } catch (IllegalArgumentException e) {
+        // Path not found, continue to next attempt
+        continue;
       }
     }
 
