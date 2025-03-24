@@ -910,6 +910,44 @@ const a = config.val1 + 1 count
 
 This JSON may, in practice, be generated from user interface elements like sliders depending on the interpreter / compiler.
 
+## Assertions
+Variables starting with `assert` expect a value of true or false and are evaluated each time an event handler for that variable is executed.
+
+```
+start organism ForeverTree
+
+  age.init = 1 year
+
+  age.step = {
+    const currentAge = prior.age
+    const newAge = currentAge + 1 year
+    return newAge
+  }
+
+  assert.age:if(meta.stepCount == 5) = mean(current.age) == 5 years
+
+end organism
+```
+
+These assertions can be placed on any entity type including patches.
+
+```
+start patch Default
+
+  location = all
+  
+  SeedTree.init = create 100 count of LifeSeedTree
+  SeedTree.end = here.SeedTree[here.SeedTree != "dead"]
+  
+  assert.seed
+    :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "seed"]) == 100 count
+    :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "seed"]) > 0 count
+
+end patch
+```
+
+Assertions will generate warnings in default execution of the engine but `--ignore-assertions` can be executed in which case they will generate warnings on standard out instead.
+
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
 
