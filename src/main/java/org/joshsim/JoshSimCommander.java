@@ -58,8 +58,8 @@ public class JoshSimCommander {
   )
   static class ValidateCommand implements Callable<Integer> {
 
-    @Option(names = "--suppress-warnings", description = "Suppress standard output messages")
-    private boolean suppressWarnings;
+    @Option(names = "--suppress-info", description = "Suppress standard output messages")
+    private boolean suppressInfo;
 
     @Option(names = "--suppress-errors", description = "Suppress error messages")
     private boolean suppressErrors;
@@ -119,7 +119,7 @@ public class JoshSimCommander {
      * @param message the message to print to standard out.
      */
     private void printOut(String message) {
-      if (suppressWarnings) {
+      if (suppressInfo) {
         return;
       }
 
