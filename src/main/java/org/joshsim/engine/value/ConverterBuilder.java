@@ -26,7 +26,7 @@ public class ConverterBuilder {
     conversions = new HashMap<>();
     conversionsByDestination = new HashMap<>();
   }
-  
+
   /**
    * Add a conversion rule to the builder.
    *
@@ -44,7 +44,7 @@ public class ConverterBuilder {
       conversionsByDestination.put(destination, new ArrayList<>());
     }
     conversionsByDestination.get(destination).add(conversion);
-    
+
     extendTransitively(conversion);
     return this;
   }

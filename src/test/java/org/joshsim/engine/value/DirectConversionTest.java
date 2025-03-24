@@ -61,7 +61,7 @@ public class DirectConversionTest {
   @Test
   void testConversionCallableExecution() {
     when(mockCallable.evaluate(mockScope)).thenReturn(mockEngineValue);
-    
+
     EngineValue result = conversion.getConversionCallable().evaluate(mockScope);
     assertEquals(mockEngineValue, result);
   }

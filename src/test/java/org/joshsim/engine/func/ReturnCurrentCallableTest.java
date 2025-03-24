@@ -35,7 +35,7 @@ class ReturnCurrentCallableTest {
   @Test
   void testEvaluate() {
     when(mockScope.get("current")).thenReturn(mockValue);
-    
+
     EngineValue result = callable.evaluate(mockScope);
     assertEquals(mockValue, result);
   }

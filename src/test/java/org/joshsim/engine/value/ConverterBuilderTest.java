@@ -25,7 +25,7 @@ public class ConverterBuilderTest {
 
   @Mock(lenient = true) private Conversion kilometersToMetersConversion;
   @Mock(lenient = true) private Conversion metersToCentimetersConversion;
-  
+
   private Units kilometersUnits;
   private Units metersUnits;
   private Units centimetersUnits;
@@ -39,13 +39,13 @@ public class ConverterBuilderTest {
     kilometersUnits = new Units("km");
     metersUnits = new Units("m");
     centimetersUnits = new Units("cm");
-    
+
     when(kilometersToMetersConversion.getSourceUnits()).thenReturn(kilometersUnits);
     when(kilometersToMetersConversion.getDestinationUnits()).thenReturn(metersUnits);
-    
+
     when(metersToCentimetersConversion.getSourceUnits()).thenReturn(metersUnits);
     when(metersToCentimetersConversion.getDestinationUnits()).thenReturn(centimetersUnits);
-    
+
     builder = new ConverterBuilder();
     builder.addConversion(kilometersToMetersConversion);
     builder.addConversion(metersToCentimetersConversion);

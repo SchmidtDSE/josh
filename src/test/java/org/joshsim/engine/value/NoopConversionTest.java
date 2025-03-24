@@ -43,7 +43,7 @@ class NoopConversionTest {
   @Test
   void testConversionCallableExecution() {
     when(mockScope.get("current")).thenReturn(mockValue);
-    
+
     EngineValue result = conversion.getConversionCallable().evaluate(mockScope);
     assertEquals(mockValue, result);
   }

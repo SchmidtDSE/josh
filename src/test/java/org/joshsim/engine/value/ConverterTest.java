@@ -39,11 +39,11 @@ public class ConverterTest {
     sourceUnits = new Units("m");
     destUnits = new Units("cm");
     conversions = new HashMap<>();
-    
+
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(sourceUnits, destUnits);
     when(mockConversion.getSourceUnits()).thenReturn(sourceUnits);
     when(mockConversion.getDestinationUnits()).thenReturn(destUnits);
-    
+
     conversions.put(tuple, mockConversion);
     converter = new Converter(conversions);
   }
