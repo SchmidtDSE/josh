@@ -6,33 +6,19 @@
 
 package org.joshsim.engine.geometry;
 
-import java.math.BigDecimal;
+import org.locationtech.spatial4j.shape.Shape;
 
 /**
  * Interface representing a geographical point on Earth.
  */
-public interface GeoPoint extends Geometry {
-  /**
-   * {@inheritDoc}
-   *
-   * @return the latitude of this point
-   */
-  @Override
-  BigDecimal getCenterLatitude();
+public class GeoPoint extends Geometry {
 
   /**
-   * {@inheritDoc}
+   * Constructs a GeoPoint with the specified shape.
    *
-   * @return the longitude of this point
+   * @param shape the shape representing the geographical point
    */
-  @Override
-  BigDecimal getCenterLongitude();
-
-  /**
-   * {@inheritDoc}
-   *
-   * @return zero for a point
-   */
-  @Override
-  BigDecimal getRadius();
+  public GeoPoint(Shape shape) {
+    super(shape);
+  }
 }
