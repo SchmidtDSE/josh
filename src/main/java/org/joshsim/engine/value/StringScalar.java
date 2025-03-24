@@ -35,9 +35,9 @@ public class StringScalar extends Scalar {
 
   @Override
   public boolean getAsBoolean() {
-    if (innerValue.equals("true")) {
+    if ("true".equals(innerValue)) {
       return true;
-    } else if (innerValue.equals("false")) {
+    } else if ("false".equals(innerValue)) {
       return false;
     }
     throw new UnsupportedOperationException("Cannot convert a string to boolean.");
