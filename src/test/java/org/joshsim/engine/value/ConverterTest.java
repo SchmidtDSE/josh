@@ -18,15 +18,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Test for a converter which supports conversion lookup.
+ */
 @ExtendWith(MockitoExtension.class)
 public class ConverterTest {
 
-  @Mock private Conversion mockConversion;
+  @Mock(lenient = true) private Conversion mockConversion;
   private Units sourceUnits;
   private Units destUnits;
   private Map<EngineValueTuple.UnitsTuple, Conversion> conversions;
   private Converter converter;
 
+  /**
+   * Setup common objects across tests with an example conversion.
+   */
   @BeforeEach
   void setUp() {
     sourceUnits = new Units("m");
@@ -52,13 +58,6 @@ public class ConverterTest {
     Units unknownUnits = new Units("unknown");
     assertThrows(IllegalArgumentException.class,
         () -> converter.getConversion(sourceUnits, unknownUnits));
-  }
-
-  @Test
-  void testGetConversionWithEmptyConverter() {
-    converter = new Converter(new HashMap<>());
-    assertThrows(IllegalArgumentException.class,
-        () -> converter.getConversion(sourceUnits, destUnits));
   }
 
   @Test

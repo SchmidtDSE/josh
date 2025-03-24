@@ -37,7 +37,13 @@ public class Converter {
   public Conversion getConversion(Units oldUnits, Units newUnits) {
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(oldUnits, newUnits);
 
-    if (conversions.containsKey(tuple)) {
+    if (tuple.getAreCompatible()) {
+      return new Conversion() {
+        
+      };
+    }
+
+    if (!conversions.containsKey(tuple)) {
       String message = String.format(
           "No conversion exists between %s and %s.",
           oldUnits,
