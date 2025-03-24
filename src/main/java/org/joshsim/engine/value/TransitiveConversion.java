@@ -25,7 +25,7 @@ public class TransitiveConversion implements Conversion {
    * Constructs a new DirectConversion with the specified units and conversion callable.
    *
    * @param first Conversion to apply first.
-   * @param first Conversion to apply second.
+   * @param second Conversion to apply second.
    */
   public TransitiveConversion(Conversion first, Conversion second) {
     this.first = first;

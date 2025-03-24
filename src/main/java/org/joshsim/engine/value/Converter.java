@@ -9,10 +9,12 @@ package org.joshsim.engine.value;
 
 import java.util.Map;
 
+
 /**
  * Store of available conversion operations between different units.
  */
 public class Converter {
+
   private final Map<EngineValueTuple.UnitsTuple, Conversion> conversions;
 
   /**
@@ -34,12 +36,16 @@ public class Converter {
    */
   public Conversion getConversion(Units oldUnits, Units newUnits) {
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(oldUnits, newUnits);
-    Conversion conversion = conversions.get(tuple);
-    
-    if (conversion == null) {
-      throw new IllegalArgumentException("No conversion exists between " + oldUnits + " and " + newUnits);
+
+    if (conversions.containsKey(tuple)) {
+      String message = String.format(
+          "No conversion exists between %s and %s.",
+          oldUnits,
+          newUnits
+      );
+      throw new IllegalArgumentException(message);
     }
-    
-    return conversion;
+
+    return conversions.get(tuple);
   }
 }

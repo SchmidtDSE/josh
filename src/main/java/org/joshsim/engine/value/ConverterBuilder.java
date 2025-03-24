@@ -64,11 +64,13 @@ public class ConverterBuilder {
    * @param newConversion for which to add new transitive conversions.
    */
   private void extendTransitively(Conversion newConversion) {
-    if (!conversionsByDestination.containsKey(newConversion.getSourceUnits())) {
+    Units newSource = newConversion.getSourceUnits();
+
+    if (!conversionsByDestination.containsKey(newSource)) {
       return;
     }
 
-    List<Conversion> endingAtSource = conversionsByDestination.get(conversion.getSourceUnits());
+    List<Conversion> endingAtSource = conversionsByDestination.get(newSource);
     for (Conversion conversionToChain : endingAtSource) {
       Conversion chainedConversion = new TransitiveConversion(conversionToChain, newConversion);
       addConversion(chainedConversion);
