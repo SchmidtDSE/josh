@@ -20,7 +20,7 @@ import org.joshsim.engine.value.EngineValue;
  */
 public abstract class Patch extends SpatialEntity {
 
-  private final Key key;
+  private final PatchKey key;
   
   /**
    * Create a new patch.
@@ -29,7 +29,7 @@ public abstract class Patch extends SpatialEntity {
    */
   public Patch(GeometryMomento geometryMomento) {
     super(geometryMomento.build());
-    key = new Key(geometryMomento, getName());
+    key = new PatchKey(geometryMomento, getName());
   }
 
   /**
@@ -37,7 +37,7 @@ public abstract class Patch extends SpatialEntity {
    *
    * @return Uniquely identifying key which can be hashed and used in equality operations.
    */
-  public Key getKey() {
+  public PatchKey getKey() {
     return key;
   }
 
@@ -77,50 +77,6 @@ public abstract class Patch extends SpatialEntity {
     throw new UnsupportedOperationException("Unimplemented method 'getGeometry'");
   }
 
-  /**
-   * Represents a key to uniquely identify a Patch within a simulation.
-   *
-   * <p>The key consists of a GeometryMomento and a patch type, which together
-   * provide a unique identifier for the patch. This key can be used for equality
-   * checks and hashing within collections and maps for patches.</p>
-   */
-  public class Key {
-
-    private final GeometryMomento geometryMomento;
-    private final String patchType;
-
-    
-    /**
-     * Constructs a Key with the specified geometry momento and patch type.
-     *
-     * @param geometryMomento The geometry momento that reflects the state of the geometry at a 
-     *     specific point in time.
-     * @param patchType A string representing the type of patch for which the key is being 
-     *     constructed.
-     */
-    public Key(GeometryMomento geometryMomento, String patchType) {
-      this.geometryMomento = geometryMomento;
-      this.patchType = patchType;
-    }
-    
-    /**
-     * Get the GeometryMomento associated with this key.
-     *
-     * @return The GeometryMomento that uniquely identifies the geometry of the patch.
-     */
-    public GeometryMomento getGeometryMomento() {
-        return geometryMomento;
-    }
-
-    /**
-     * Get the patch type associated with this key.
-     *
-     * @return A string representing the type of the patch.
-     */
-    public String getPatchType() {
-        return patchType;
-    }
-
-  }
+  
   
 }
