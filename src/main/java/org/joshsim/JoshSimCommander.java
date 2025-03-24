@@ -58,8 +58,11 @@ public class JoshSimCommander {
   )
   static class ValidateCommand implements Callable<Integer> {
 
-    @Option(names = "--quiet", description = "Suppress output messages")
-    private boolean quiet;
+    @Option(names = "--suppress-warnings", description = "Suppress standard output messages")
+    private boolean suppressWarnings;
+
+    @Option(names = "--suppress-errors", description = "Suppress error messages")
+    private boolean suppressErrors;
 
     @Parameters(index = "0", description = "Path to file to validate")
     private File file;
@@ -116,7 +119,7 @@ public class JoshSimCommander {
      * @param message the message to print to standard out.
      */
     private void printOut(String message) {
-      if (quiet) {
+      if (suppressWarnings) {
         return;
       }
 
@@ -129,7 +132,7 @@ public class JoshSimCommander {
      * @param message the message to print to standard error.
      */
     private void printError(String message) {
-      if (quiet) {
+      if (suppressErrors) {
         return;
       }
 
