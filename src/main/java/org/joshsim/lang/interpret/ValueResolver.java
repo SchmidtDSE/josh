@@ -90,7 +90,7 @@ public class ValueResolver {
 
       if (target.has(attemptPath)) {
           foundPath = attemptPath;
-    
+
           if (numPiecesAttempt == numPieces) {
             memoizedContinuationResolver = Optional.empty();
           } else {
@@ -101,7 +101,7 @@ public class ValueResolver {
             String remainingPath = remainingJoiner.toString();
             memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
           }
-    
+
         return memoizedContinuationResolver;
       }
     }

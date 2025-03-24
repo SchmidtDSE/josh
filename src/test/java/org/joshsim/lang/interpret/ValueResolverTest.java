@@ -41,7 +41,7 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EventHandler mockHandler;
   @Mock(lenient = true) private EventHandlerGroup mockNestedGroup;
   @Mock(lenient = true) private EventHandler mockNestedHandler;
-  
+
   private Scope scope;
   private ValueResolver resolver;
 
@@ -103,5 +103,5 @@ public class ValueResolverTest {
     assertTrue(result.isPresent(), "Should resolve local.value");
     assertEquals(mockDirectValue, result.get(), "Should return correct local value");
   }
-  
+
 }
