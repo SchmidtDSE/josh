@@ -29,29 +29,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ValueResolverTest {
 
-  @Mock private Scope mockScope;
-  @Mock private Entity mockEntity;
-  @Mock private EngineValue mockDirectValue;
-  @Mock private EngineValue mockEntityValue;
-  @Mock private EngineValue mockNestedValue;
+  @Mock(lenient = true) private Scope mockScope;
+  @Mock(lenient = true) private Entity mockEntity;
+  @Mock(lenient = true) private EngineValue mockDirectValue;
+  @Mock(lenient = true) private EngineValue mockEntityValue;
+  @Mock(lenient = true) private EngineValue mockNestedValue;
 
   private ValueResolver resolver;
 
   @BeforeEach
   void setUp() {
     // Configure mock for direct value test
-    lenient().when(mockScope.has("direct")).thenReturn(true);
-    lenient().when(mockScope.get("direct")).thenReturn(mockDirectValue);
+    when(mockScope.has("direct")).thenReturn(true);
+    when(mockScope.get("direct")).thenReturn(mockDirectValue);
 
     // Configure mocks for nested value test
-    lenient().when(mockScope.has("entity")).thenReturn(true);
-    lenient().when(mockScope.get("entity")).thenReturn(mockEntityValue);
-    lenient().when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockScope.has("entity")).thenReturn(true);
+    when(mockScope.get("entity")).thenReturn(mockEntityValue);
+    when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    lenient().when(mockEntity.getScope()).thenReturn(entityScope);
-    lenient().when(mockEntity.has("nested")).thenReturn(true);
-    lenient().when(mockEntity.get("nested")).thenReturn(mockNestedValue);
+    when(mockEntity.getScope()).thenReturn(entityScope);
+    when(mockEntity.has("nested")).thenReturn(true);
+    when(mockEntity.get("nested")).thenReturn(mockNestedValue);
   }
 
   @Test
