@@ -52,6 +52,10 @@ public class ValueResolverTest {
     when(mockEntity.getScope()).thenReturn(entityScope);
     when(mockEntity.has("nested")).thenReturn(true);
     when(mockEntity.get("nested")).thenReturn(mockNestedValue);
+
+    // Configure mock for local.value test
+    when(mockScope.has("local.value")).thenReturn(true);
+    when(mockScope.get("local.value")).thenReturn(mockDirectValue);
   }
 
   @Test
@@ -70,5 +74,14 @@ public class ValueResolverTest {
     
     assertTrue(result.isPresent(), "Should resolve nested value");
     assertEquals(mockNestedValue, result.get(), "Should return correct nested value");
+  }
+
+  @Test
+  void testLocalValueResolution() {
+    resolver = new ValueResolver("local.value");
+    Optional<EngineValue> result = resolver.get(mockScope);
+    
+    assertTrue(result.isPresent(), "Should resolve local.value");
+    assertEquals(mockDirectValue, result.get(), "Should return correct local value");
   }
 }
