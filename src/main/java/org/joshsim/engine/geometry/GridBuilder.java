@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.value.EngineValue;
+import org.locationtech.spatial4j.context.SpatialContext;
 
 /**
  * This class is responsible for building grid structures.
@@ -23,6 +24,30 @@ public class GridBuilder {
   private BigDecimal bottomRightLatitude;
   private BigDecimal bottomRightLongitude;
   private EngineValue cellWidth;
+  private SpatialContext spatialContext;
+
+  /**
+   * Creates a new GridBuilder.
+   */
+  public GridBuilder() {
+    this.spatialContext = GeometryFactory.getDefaultSpatialContext();
+  }
+
+  /**
+   * Creates a new GridBuilder with the specified SpatialContext.
+   *
+   * @param spatialContext The SpatialContext to use
+   */
+  public GridBuilder(SpatialContext spatialContext) {
+    this.spatialContext = spatialContext;
+  }
+
+  /**
+   * Returns the SpatialContext used by this builder and any grids it creates.
+   */
+  public SpatialContext getSpatialContext() {
+    return spatialContext;
+  }
 
   /**
    * Sets the top-left coordinates of the grid.
@@ -135,7 +160,11 @@ public class GridBuilder {
 
         // Create the geometry for this cell
         Geometry cellGeometry = GeometryFactory.createSquare(
-            cellTopLeftLat, cellTopLeftLon, cellBottomRightLat, cellBottomRightLon
+            cellTopLeftLat,
+            cellTopLeftLon,
+            cellBottomRightLat,
+            cellBottomRightLon,
+            getSpatialContext()
         );
 
         // Create a patch with this geometry
