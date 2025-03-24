@@ -8,6 +8,7 @@
 package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,10 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Test transitive conversion construction.
+ */
 @ExtendWith(MockitoExtension.class)
 public class ConverterBuilderTest {
 
-  @Mock(lenient = true) private Conversion kmToMConversion;
+  @Mock(lenient = true) private Conversion kmToMeterConversion;
   @Mock(lenient = true) private Conversion mToCmConversion;
   
   private Units kmUnits;
@@ -27,6 +31,9 @@ public class ConverterBuilderTest {
   private Units cmUnits;
   private ConverterBuilder builder;
 
+  /**
+   * Setup example converter builder with km -> m and m -> cm.
+   */
   @BeforeEach
   void setUp() {
     kmUnits = new Units("km");
@@ -56,6 +63,6 @@ public class ConverterBuilderTest {
     Converter converter = builder.build();
     Conversion result = converter.getConversion(kmUnits, cmUnits);
     // The result should be a transitive conversion since it requires two steps
-    assertEquals(TransitiveConversion.class, result.getClass());
+    assertTrue(result instanceof TransitiveConversion);
   }
 }

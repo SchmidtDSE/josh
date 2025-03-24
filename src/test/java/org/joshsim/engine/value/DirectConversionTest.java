@@ -34,7 +34,7 @@ public class DirectConversionTest {
   private DirectConversion conversion;
 
   /**
-   * Establish common values before each test
+   * Establish common values before each test.
    */
   @BeforeEach
   void setUp() {
