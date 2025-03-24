@@ -1,5 +1,7 @@
 /**
- * Tests for the Query structure.
+ * Tests for Query.
+ *
+ * @license BSD-3-Clause
  */
 
 package org.joshsim.engine.simulation;
@@ -15,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Test query which is used to parameterize searching for patches.
+ * Tests for the Query structure which parameterizes searching for patches.
  */
 @ExtendWith(MockitoExtension.class)
 class QueryTest {

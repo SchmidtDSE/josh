@@ -10,6 +10,7 @@ package org.joshsim.engine.value;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import org.joshsim.engine.entity.Entity;
 
 
 /**
@@ -77,6 +78,16 @@ public class EngineValueFactory {
    */
   public EngineValue build(BigDecimal innerValue, Units units) {
     return new DecimalScalar(caster, innerValue, units);
+  }
+
+  /**
+   * Build a new EngineValue from an Entity.
+   *
+   * @param entity the value to decorate in an EngineValue.
+   * @returns decorated version of entity.
+   */
+  public EngineValue build(Entity entity) {
+    return new EntityValue(caster, entity);
   }
 
   /**
