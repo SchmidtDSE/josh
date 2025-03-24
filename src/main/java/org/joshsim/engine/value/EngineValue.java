@@ -7,6 +7,7 @@
 package org.joshsim.engine.value;
 
 import java.math.BigDecimal;
+import org.joshsim.engine.entity.Entity;
 
 
 /**
@@ -79,6 +80,13 @@ public abstract class EngineValue {
    * @return the scalar value as an int or distribution sampled.
    */
   public abstract long getAsInt();
+
+  /**
+   * Gets the value as an Entity or samples randomly if a distribution.
+   *
+   * @return the single value as an Entity or distribution sampled.
+   */
+  public abstract Entity getAsEntity();
 
   /**
    * Convert this EngineValue to a Distribution.

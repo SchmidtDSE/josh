@@ -1,5 +1,5 @@
 /**
- * Structures describing an individual engine value.
+ * Structures describing an individual engine decimal value.
  *
  * @license BSD-3-Clause
  */
