@@ -68,8 +68,8 @@ public class ValueResolver {
    * It then creates a resolver for any remaining path segments if needed.</p>
    *
    * @param target The scope to search for matching path prefixes
-   * @return Optional containing a resolver for remaining segments if any, empty if full path matched,
-   *     or null if no match found
+   * @return Optional containing a resolver for remaining segments if any, empty if full path
+   *     matched on the root, or null if no match found
    */
   private Optional<ValueResolver> getInnerResolver(Scope target) {
     if (memoizedContinuationResolver != null) {
@@ -83,24 +83,24 @@ public class ValueResolver {
       StringJoiner attemptJoiner = new StringJoiner(".");
 
       for (int i = 0; i < numPiecesAttempt; i++) {
-          attemptJoiner.add(pieces[i]);
+        attemptJoiner.add(pieces[i]);
       }
 
       String attemptPath = attemptJoiner.toString();
 
       if (target.has(attemptPath)) {
-          foundPath = attemptPath;
+        foundPath = attemptPath;
 
-          if (numPiecesAttempt == numPieces) {
-            memoizedContinuationResolver = Optional.empty();
-          } else {
-            StringJoiner remainingJoiner = new StringJoiner(".");
-            for (int i = numPiecesAttempt; i < numPieces; i++) {
-              remainingJoiner.add(pieces[i]);
-            }
-            String remainingPath = remainingJoiner.toString();
-            memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
+        if (numPiecesAttempt == numPieces) {
+          memoizedContinuationResolver = Optional.empty();
+        } else {
+          StringJoiner remainingJoiner = new StringJoiner(".");
+          for (int i = numPiecesAttempt; i < numPieces; i++) {
+            remainingJoiner.add(pieces[i]);
           }
+          String remainingPath = remainingJoiner.toString();
+          memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
+        }
 
         return memoizedContinuationResolver;
       }
