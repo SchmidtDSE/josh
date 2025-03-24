@@ -50,5 +50,5 @@ public interface Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Patch getPatchByKey(PatchKey key, int stepNumber);
+  Patch getPatchByKey(PatchKey key, long stepNumber);
 }

@@ -20,25 +20,13 @@ import org.joshsim.engine.value.EngineValue;
  */
 public abstract class Patch extends SpatialEntity {
 
-  private final PatchKey key;
-  
-  /**
-   * Create a new patch.
-   *
-   * @param geometry The geometry of the patch.
-   */
-  public Patch(GeometryMomento geometryMomento) {
-    super(geometryMomento.build());
-    key = new PatchKey(geometryMomento, getName());
-  }
-
   /**
    * Get a key that uniquely identifies this patch within a replicate.
    *
    * @return Uniquely identifying key which can be hashed and used in equality operations.
    */
   public PatchKey getKey() {
-    return key;
+    return new PatchKey(this);
   }
 
   @Override

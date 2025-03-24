@@ -9,10 +9,11 @@ package org.joshsim.lang.bridge;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.PatchKey;
 import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.Converter;
 
@@ -22,7 +23,7 @@ import org.joshsim.engine.value.Converter;
  */
 public class QueryCacheEngineBridge extends EngineBridge {
 
-  private final Map<GeometryMomento, List<Patch.Key>> cachedPatchesByGeometry;
+  private final Map<GeometryMomento, List<PatchKey>> cachedPatchesByGeometry;
 
   /**
    * Constructs a caching EngineBridge to manipulate simulation, replicate, and converter.
@@ -41,13 +42,27 @@ public class QueryCacheEngineBridge extends EngineBridge {
   }
 
   @Override
-  public Optional<ShadowingEntity> getPatch(GeoPoint point) {
-    
-  }
+  public Iterable<ShadowingEntity> getPriorPatches(GeometryMomento geometryMomento) {
+    if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
+      List<PatchKey> keys = cachedPatchesByGeometry.get(geometryMomento);
 
-  @Override
-  public Iterable<ShadowingEntity> getPriorPatches(Geometry geometry) {
-    
+      Simulation simulation = null;
+      long priorTimestep = getPriorTimestep();
+      
+      return keys.stream()
+          .map((key) -> getReplicate().getPatchByKey(key, priorTimestep))
+          .map((entity) -> new ShadowingEntity(entity, simulation))
+          .collect(Collectors.toList());
+    } else {
+      Iterable<ShadowingEntity> entities = getPriorPatches(geometryMomento.build());
+      
+      List<PatchKey> patchKeys = StreamSupport.stream(entities.spliterator(), false)
+          .map((entity) -> entity.getPatchKey())
+          .collect(Collectors.toList());
+
+      cachedPatchesByGeometry.put(geometryMomento, patchKeys);
+      return entities;
+    }
   }
 
 }

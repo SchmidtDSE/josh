@@ -137,7 +137,7 @@ public class EngineBridge {
    * @return Iterable of all patches in the current step.
    */
   public Iterable<ShadowingEntity> getCurrentPatches() {
-    Query query = new Query(currentStep.getAsInt());
+    Query query = new Query(getCurrentTimestep());
     Iterable<Patch> patches = replicate.query(query);
     Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
@@ -150,10 +150,20 @@ public class EngineBridge {
    * @return Iterable of patches from the previous step within the specified geometry.
    */
   public Iterable<ShadowingEntity> getPriorPatches(Geometry geometry) {
-    Query query = new Query(currentStep.getAsInt() - 1, geometry);
+    Query query = new Query(getPriorTimestep(), geometry);
     Iterable<Patch> patches = replicate.query(query);
     Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
+  }
+
+  /**
+   * Get patches from the previous step within a specific geometry momento.
+   *
+   * @param geometryMomento with the momento for the geometric area to query.
+   * @return Iterable of patches from the previous step within the specified geometry.
+   */
+  public Iterable<ShadowingEntity> getPriorPatches(GeometryMomento geometryMomento) {
+    return getPriorPatches(geometryMomento.build());
   }
 
   /**
@@ -167,6 +177,33 @@ public class EngineBridge {
     Conversion conversion = converter.getConversion(current.getUnits(), newUnits);
     CompiledCallable callable = conversion.getConversionCallable();
     return callable.evaluate(new SingleValueScope(current));
+  }
+
+  /**
+   * Get the current simulation step as a long value.
+   *
+   * @return the current simulation step count as a long.
+   */
+  public long getCurrentTimestep() {
+    return currentStep.getAsInt();
+  }
+
+  /**
+   * Get the prior simulation step as a long value.
+   *
+   * @return the prior simulation step count as a long.
+   */
+  public long getPriorTimestep() {
+    return currentStep.getAsInt() - 1;
+  }
+
+  /**
+   * Get the replicate being modified by this EngineBridge.
+   *
+   * @return Replicate being manipulated by this bridge.
+   */
+  protected Replicate getReplicate() {
+    return replicate;
   }
 
   /**
