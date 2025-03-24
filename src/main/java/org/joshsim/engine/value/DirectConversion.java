@@ -33,12 +33,12 @@ public class DirectConversion implements Conversion {
   }
 
   @Override
-  public String getSourceUnits() {
+  public Units getSourceUnits() {
     return sourceUnits;
   }
 
   @Override
-  public String getDestinationUnits() {
+  public Units getDestinationUnits() {
     return destinationUnits;
   }
 

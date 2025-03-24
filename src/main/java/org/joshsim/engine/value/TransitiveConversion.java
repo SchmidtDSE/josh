@@ -8,6 +8,8 @@
 package org.joshsim.engine.value;
 
 import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.func.SingleValueScope;
 
 
 /**
@@ -25,15 +27,16 @@ public class TransitiveConversion implements Conversion {
    * @param first Conversion to apply first.
    * @param first Conversion to apply second.
    */
-  public DirectConversion(Conversion first, Conversion second) {
+  public TransitiveConversion(Conversion first, Conversion second) {
     this.first = first;
     this.second = second;
 
-    callable = return new CompiledCallable() {
+    callable = new CompiledCallable() {
       @Override
       public EngineValue evaluate(Scope scope) {
-        Scope firstScope = first.evaluate(scope);
-        Scope scondScope = 
+        EngineValue firstResult = first.getConversionCallable().evaluate(scope);
+        Scope transitiveScope = new SingleValueScope(firstResult);
+        return second.getConversionCallable().evaluate(transitiveScope);
       }
     };
 
@@ -49,18 +52,19 @@ public class TransitiveConversion implements Conversion {
   }
 
   @Override
-  public String getSourceUnits() {
+  public Units getSourceUnits() {
     return first.getSourceUnits();
   }
 
   @Override
-  public String getDestinationUnits() {
+  public Units getDestinationUnits() {
     return second.getDestinationUnits();
   }
 
   @Override
   public CompiledCallable getConversionCallable() {
-    
+    return callable;
   }
+
 
 }
