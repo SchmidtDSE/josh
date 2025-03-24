@@ -45,14 +45,14 @@ class EntityScopeTest {
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup));
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
-    
+
     scope = new EntityScope(mockEntity);
   }
 
   @Test
   void testGetExistingAttribute() {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
-    
+
     EngineValue result = scope.get("testAttr");
     assertEquals(mockValue, result);
   }
@@ -60,7 +60,7 @@ class EntityScopeTest {
   @Test
   void testGetNonExistentAttribute() {
     when(mockEntity.getAttributeValue("nonexistent")).thenReturn(Optional.empty());
-    
+
     assertThrows(IllegalArgumentException.class, () -> scope.get("nonexistent"));
   }
 
