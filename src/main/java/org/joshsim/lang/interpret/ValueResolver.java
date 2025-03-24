@@ -88,27 +88,24 @@ public class ValueResolver {
 
       String attemptPath = attemptJoiner.toString();
 
-      try {
-        EngineValue value = target.get(attemptPath);
-        foundPath = attemptPath;
-
-        if (numPiecesAttempt == numPieces) {
-          memoizedContinuationResolver = Optional.empty();
-        } else {
-          StringJoiner remainingJoiner = new StringJoiner(".");
-          for (int i = numPiecesAttempt; i < numPieces; i++) {
-            remainingJoiner.add(pieces[i]);
+      if (target.has(attemptPath)) {
+          foundPath = attemptPath;
+    
+          if (numPiecesAttempt == numPieces) {
+            memoizedContinuationResolver = Optional.empty();
+          } else {
+            StringJoiner remainingJoiner = new StringJoiner(".");
+            for (int i = numPiecesAttempt; i < numPieces; i++) {
+              remainingJoiner.add(pieces[i]);
+            }
+            String remainingPath = remainingJoiner.toString();
+            memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
           }
-          String remainingPath = remainingJoiner.toString();
-          memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
-        }
-        break;
-      } catch (IllegalArgumentException e) {
-        // Path not found, continue to next attempt
-        continue;
+    
+        return memoizedContinuationResolver;
       }
     }
 
-    return memoizedContinuationResolver;
+    return Optional.empty();
   }
 }

@@ -41,9 +41,11 @@ public class ValueResolverTest {
   void setUp() {
     // Configure mock for direct value test
     when(mockScope.get("direct")).thenReturn(mockDirectValue);
+    when(mockScope.has("direct")).thenReturn(true);
 
     // Configure mocks for nested value test
     when(mockScope.get("entity")).thenReturn(mockEntityValue);
+    when(mockScope.has("entity")).thenReturn(true);
     when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
 
     EntityScope entityScope = new EntityScope(mockEntity);
@@ -51,10 +53,7 @@ public class ValueResolverTest {
 
     // Configure mock for local.value test
     when(mockScope.get("local.value")).thenReturn(mockDirectValue);
-
-    // Configure mocks to throw for invalid paths
-    when(mockScope.get("invalid")).thenThrow(new IllegalArgumentException());
-    when(mockScope.get("entity.invalid")).thenThrow(new IllegalArgumentException());
+    when(mockScope.has("local.value")).thenReturn(true);
   }
 
   @Test
