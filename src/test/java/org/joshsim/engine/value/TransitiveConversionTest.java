@@ -9,6 +9,7 @@ package org.joshsim.engine.value;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import org.joshsim.engine.func.CompiledCallable;
@@ -19,6 +20,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Test chaining conversions for transitive behavior.
+ */
 @ExtendWith(MockitoExtension.class)
 public class TransitiveConversionTest {
 
@@ -35,6 +39,9 @@ public class TransitiveConversionTest {
   private Units destUnits;
   private TransitiveConversion conversion;
 
+  /**
+   * Crate common values for tests.
+   */
   @BeforeEach
   void setUp() {
     sourceUnits = new Units("m");
