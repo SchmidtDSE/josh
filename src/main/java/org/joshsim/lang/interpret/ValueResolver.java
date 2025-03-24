@@ -1,4 +1,3 @@
-
 /**
  * Structures to help find values within a scope or nested scopes.
  *
@@ -29,7 +28,7 @@ public class ValueResolver {
   /**
    * Creates a new ValueResolver for resolving dot-separated paths.
    *
-   * @param path The dot-separated path to resolve (e.g. "entity.attribute")
+   * @param path The dot-separated path to resolve (e.g. "entity.attribute").
    */
   public ValueResolver(String path) {
     this.path = path;
@@ -43,8 +42,8 @@ public class ValueResolver {
    * <p>This method will attempt to resolve as much of the path as possible within the given scope,
    * then recursively resolve any remaining path segments in nested entity scopes.</p>
    *
-   * @param target The scope to search for the value
-   * @return Optional containing the resolved value if found, empty otherwise
+   * @param target The scope to search for the value.
+   * @return Optional containing the resolved value if found, empty otherwise.
    */
   public Optional<EngineValue> get(Scope target) {
     Optional<ValueResolver> continuationResolverMaybe = getInnerResolver(target);
@@ -65,11 +64,15 @@ public class ValueResolver {
    * Gets or creates a resolver for any remaining path segments after the longest matching prefix.
    *
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.
-   * It then creates a resolver for any remaining path segments if needed.</p>
+   * It then creates a resolver for any remaining path segments if needed. This is required because
+   * some attributes may appear nested but not actually within an inner scope. This may be beacuse
+   * they are saved on the outer scope like for steps.start and steps.end which are within
+   * Simulation. The "nesting" is simply syntatic sugar in this case for the Josh language.</p>
    *
-   * @param target The scope to search for matching path prefixes
-   * @return Optional containing a resolver for remaining segments if any, empty if full path
-   *     matched on the root, or null if no match found
+   * @param target The scope to search for matching path prefixes.
+   * @return Optional containing a resolver for remaining segments if any, empty if full path.
+   *     matched on the root, or null if no match found. If null, this should try resolution again
+   *     on the next request.
    */
   private Optional<ValueResolver> getInnerResolver(Scope target) {
     if (memoizedContinuationResolver != null) {
@@ -106,6 +109,6 @@ public class ValueResolver {
       }
     }
 
-    return Optional.empty();
+    return null;
   }
 }
