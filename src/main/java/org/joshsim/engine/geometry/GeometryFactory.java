@@ -9,6 +9,7 @@ package org.joshsim.engine.geometry;
 import java.math.BigDecimal;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Rectangle;
+import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.ShapeFactory;
 
 /**
@@ -99,7 +100,7 @@ public class GeometryFactory {
     double centerLat = centerLatitude.doubleValue();
     double centerLon = centerLongitude.doubleValue();
 
-    org.locationtech.spatial4j.shape.Circle circle = shapeFactory.circle(centerLon, centerLat, radiusVal);
+    Circle circle = shapeFactory.circle(centerLon, centerLat, radiusVal);
     Geometry geometry = new Geometry(circle);
     return geometry;
   }
@@ -128,7 +129,7 @@ public class GeometryFactory {
     // Calculate radius using distance between center and point
     double radius = Math.sqrt(Math.pow(pLat - cLat, 2) + Math.pow(pLon - cLon, 2));
 
-    org.locationtech.spatial4j.shape.Circle circle = shapeFactory.circle(cLon, cLat, radius);
+    Circle circle = shapeFactory.circle(cLon, cLat, radius);
     Geometry geometry = new Geometry(circle);
     return geometry;
   }
