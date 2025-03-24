@@ -276,4 +276,102 @@ public class GeometryFactoryTest {
       });
     }
   }
+
+  @Nested
+  class CreateCircleWithRadiusAndCenterTests {
+
+    @Test
+    @DisplayName("Should create circle from valid radius and center")
+    public void testCreateCircleWithRadius() {
+      // Given
+      BigDecimal radius = BigDecimal.valueOf(1.0);
+      BigDecimal centerLat = BigDecimal.valueOf(10.0);
+      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+
+      // When
+      Geometry geometry = GeometryFactory.createCircle(radius, centerLat, centerLon);
+
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      assertTrue(geometry.shape instanceof org.locationtech.spatial4j.shape.Circle, 
+          "Shape should be a Circle");
+
+      org.locationtech.spatial4j.shape.Circle circle = 
+          (org.locationtech.spatial4j.shape.Circle) geometry.shape;
+      assertEquals(20.0, circle.getCenter().getLon(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getLat(), 0.000001);
+      assertEquals(1.0, circle.getRadius(), 0.000001);
+    }
+
+    @Test
+    public void testCreateCircleWithNullParameters() {
+      // Given valid values
+      BigDecimal validValue = BigDecimal.valueOf(10.0);
+
+      // When/Then - test each parameter being null
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(null, validValue, validValue);
+      });
+
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(validValue, null, validValue);
+      });
+
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(validValue, validValue, null);
+      });
+    }
+  }
+
+  @Nested
+  class CreateCircleWithPointAndCenterTests {
+
+    @Test
+    @DisplayName("Should create circle from valid point and center coordinates")
+    public void testCreateCircleWithPointAndCenter() {
+      // Given
+      BigDecimal pointLat = BigDecimal.valueOf(11.0);
+      BigDecimal pointLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerLat = BigDecimal.valueOf(10.0);
+      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+
+      // When
+      Geometry geometry = GeometryFactory.createCircle(
+          pointLat, pointLon, centerLat, centerLon);
+
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      assertTrue(geometry.shape instanceof org.locationtech.spatial4j.shape.Circle,
+          "Shape should be a Circle");
+
+      org.locationtech.spatial4j.shape.Circle circle = 
+          (org.locationtech.spatial4j.shape.Circle) geometry.shape;
+      assertEquals(20.0, circle.getCenter().getLon(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getLat(), 0.000001);
+      assertEquals(1.0, circle.getRadius(), 0.000001);
+    }
+
+    @Test
+    public void testCreateCircleWithNullCoordinates() {
+      // Given valid values
+      BigDecimal validValue = BigDecimal.valueOf(10.0);
+
+      // When/Then - test each parameter being null
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(null, validValue, validValue, validValue);
+      });
+
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(validValue, null, validValue, validValue);
+      });
+
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(validValue, validValue, null, validValue);
+      });
+
+      assertThrows(NullPointerException.class, () -> {
+        GeometryFactory.createCircle(validValue, validValue, validValue, null);
+      });
+    }
+  }
 }
