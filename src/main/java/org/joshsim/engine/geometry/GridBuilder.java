@@ -2,13 +2,14 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.geometry.GeneralDirectPosition;
 import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.crs.AbstractCRS;
+import org.apache.sis.referencing.cs.AxesConvention;
 import org.joshsim.engine.entity.Patch;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
@@ -26,7 +27,6 @@ import org.opengis.util.FactoryException;
  */
 public class GridBuilder {
   private BigDecimal cellWidth;
-  private boolean inputIsGeographic;
 
   // CRS-related fields
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
@@ -57,107 +57,39 @@ public class GridBuilder {
     }
     this.cellWidth = cellWidth;
     
-    // Set up CRS
-    this.inputCoordinateReferenceSystem = CRS.forCode(inputCrsCode);
-    this.targetCoordinateReferenceSystem = CRS.forCode(targetCrsCode);
-    this.inputIsGeographic = inputCoordinateReferenceSystem instanceof GeographicCRS;
+    // Set up CRS and ensure X,Y (longitude/easting, latitude/northing) ordering
+    CoordinateReferenceSystem inputCrs = CRS.forCode(inputCrsCode);
+    CoordinateReferenceSystem targetCrs = CRS.forCode(targetCrsCode);
     
-    // Extract coordinates - handling different naming based on input CRS type
+    // Ensure consistent X,Y ordering using Apache SIS's recommendation
+    // https://sis.apache.org/faq.html#axisOrderInTransforms
+    // This will leave projected systems unchanged, but will swap axes for geographic systems
+    // such that we don't have to maintain different checks for geographic and projected systems
+    this.inputCoordinateReferenceSystem = 
+        AbstractCRS.castOrCopy(inputCrs).forConvention(AxesConvention.RIGHT_HANDED);
+    this.targetCoordinateReferenceSystem = 
+        AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
+    
+    // Extract coordinates with consistent naming (X first, Y second)
     BigDecimal topLeftX, topLeftY, bottomRightX, bottomRightY;
     
-    if (inputIsGeographic) {
-        // Geographic CRS usually uses lat/lon
-        topLeftX = cornerCoords.get("topLeftLon"); 
-        topLeftY = cornerCoords.get("topLeftLat"); 
-        bottomRightX = cornerCoords.get("bottomRightLon"); 
-        bottomRightY = cornerCoords.get("bottomRightLat"); 
-        
-    } else {
-        // Projected CRS usually uses easting/northing
-        topLeftX = cornerCoords.get("topLeftE");
-        topLeftY = cornerCoords.get("topLeftN");
-        bottomRightX = cornerCoords.get("bottomRightE");
-        bottomRightY = cornerCoords.get("bottomRightN"); 
-    }
+    // Extract with consistent X,Y keys regardless of CRS type
+    topLeftX = cornerCoords.get("topLeftX");
+    topLeftY = cornerCoords.get("topLeftY");
+    bottomRightX = cornerCoords.get("bottomRightX");
+    bottomRightY = cornerCoords.get("bottomRightY");
     
     // Validate corners
     validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
     
-    // Transform coordinates immediately (or copy if same CRS)
+    // Transform coordinates immediately
     transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
   }
 
   /**
-   * Gets the names of the axes for both input CRS and target CRS.
-   */
-  private Map<String, String> getAxisAbbreviationsFromCRS() {
-    String inputAxisZero = inputCoordinateReferenceSystem.getCoordinateSystem().getAxis(0).getAbbreviation();
-    String inputAxisOne = inputCoordinateReferenceSystem.getCoordinateSystem().getAxis(1).getAbbreviation();
-    String targetAxisZero = targetCoordinateReferenceSystem.getCoordinateSystem().getAxis(0).getAbbreviation();
-    String targetAxisOne = targetCoordinateReferenceSystem.getCoordinateSystem().getAxis(1).getAbbreviation();
-
-    Map<String, String> axisAbbreviations = new HashMap<>();
-    axisAbbreviations.put("inputAxisZero", inputAxisZero);
-    axisAbbreviations.put("inputAxisOne", inputAxisOne);
-    axisAbbreviations.put("targetAxisZero", targetAxisZero);
-    axisAbbreviations.put("targetAxisOne", targetAxisOne);
-
-    return axisAbbreviations;
-  }
-  
-  /**
-   * Validates the input map contains required corner coordinates based on CRS axis abbreviations
-   * and constructs DirectPosition2D objects for corners.
-   * 
-   * @param cornerCoordinates Map containing corner coordinates
-   * @param crs The Coordinate Reference System
-   * @throws IllegalArgumentException if required fields are missing
-   */
-  public DirectPosition2D[] validateAndCreatePositions(
-        Map<String, Double> cornerCoordinates, 
-        CoordinateReferenceSystem crs
-    ) {
-      // Get axis abbreviations from CRS
-      Map<String, String> axisAbbreviations = getAxisAbbreviationsFromCRS();
-      
-      // Extract axis abbreviations - fixed case sensitivity issue
-      String xAxisAbbrev = axisAbbreviations.get("inputAxisZero");
-      String yAxisAbbrev = axisAbbreviations.get("inputAxisOne");
-      
-      if (xAxisAbbrev == null || yAxisAbbrev == null) {
-          throw new IllegalArgumentException("Could not determine axis abbreviations from CRS");
-      }
-      
-      // Define required fields
-      String topLeftXKey = "topLeft" + xAxisAbbrev;
-      String topLeftYKey = "topLeft" + yAxisAbbrev;
-      String bottomRightXKey = "bottomRight" + xAxisAbbrev;
-      String bottomRightYKey = "bottomRight" + yAxisAbbrev;
-      
-      // Validate all required fields exist
-      String[] requiredKeys = {topLeftXKey, topLeftYKey, bottomRightXKey, bottomRightYKey};
-      for (String key : requiredKeys) {
-          if (!cornerCoordinates.containsKey(key)) {
-              throw new IllegalArgumentException("Missing required field: " + key);
-          }
-      }
-      
-      // Create the DirectPosition2D objects
-      DirectPosition2D topLeft = new DirectPosition2D(
-          cornerCoordinates.get(topLeftXKey),
-          cornerCoordinates.get(topLeftYKey)
-      );
-      
-      DirectPosition2D bottomRight = new DirectPosition2D(
-          cornerCoordinates.get(bottomRightXKey),
-          cornerCoordinates.get(bottomRightYKey)
-      );
-      
-      return new DirectPosition2D[] {topLeft, bottomRight};
-  }
-
-  /**
    * Validates corner coordinates based on coordinate system type.
+   * For both geographic and projected coordinates, we expect Y to increase northward
+   * and X to increase eastward.
    */
   private void validateCornerCoordinates(
       BigDecimal topLeftX, BigDecimal topLeftY, 
@@ -167,26 +99,17 @@ public class GridBuilder {
       throw new IllegalArgumentException("Missing corner coordinates");
     }
     
-    if (inputIsGeographic) {
-      // For geographic coordinates (longitude increases eastward, latitude increases northward)
-      if (topLeftY.compareTo(bottomRightY) <= 0) {
-        throw new IllegalArgumentException(
-            "Top-left latitude must be greater than bottom-right latitude");
-      }
-      if (topLeftX.compareTo(bottomRightX) >= 0) {
-        throw new IllegalArgumentException(
-            "Top-left longitude must be less than bottom-right longitude");
-      }
-    } else {
-      // For projected coordinates (Y increases upward, X increases rightward)
-      if (topLeftY.compareTo(bottomRightY) <= 0) {
-        throw new IllegalArgumentException(
-            "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
-      }
-      if (topLeftX.compareTo(bottomRightX) >= 0) {
-        throw new IllegalArgumentException(
-            "Top-left X-coordinate must be less than bottom-right X-coordinate");
-      }
+    // Consistent validation for both geographic and projected coordinates
+    // Y-coordinate (latitude/northing) should decrease from top to bottom
+    if (topLeftY.compareTo(bottomRightY) <= 0) {
+      throw new IllegalArgumentException(
+          "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
+    }
+    
+    // X-coordinate (longitude/easting) should increase from left to right
+    if (topLeftX.compareTo(bottomRightX) >= 0) {
+      throw new IllegalArgumentException(
+          "Top-left X-coordinate must be less than bottom-right X-coordinate");
     }
   }
 
@@ -203,7 +126,7 @@ public class GridBuilder {
     
     DirectPosition2D[] corners = {topLeft, bottomRight};
     
-    // Transform the corners using the new method
+    // Transform the corners
     DirectPosition2D[] transformed = transformCornerCoordinates(
         corners, 
         inputCoordinateReferenceSystem, 
@@ -216,7 +139,7 @@ public class GridBuilder {
   }
 
   /**
-   * Transforms corner coordinates to a target CRS, respecting the axis order of the target CRS.
+   * Transforms corner coordinates to a target CRS, with consistent X,Y axis ordering.
    * 
    * @param corners Array of DirectPosition2D objects representing corner points
    * @param sourceCrs The source Coordinate Reference System
@@ -232,9 +155,7 @@ public class GridBuilder {
     // Get the transformation between the two CRS
     MathTransform transform;
     try {
-      transform = CRS.findOperation(
-          sourceCrs, targetCrs, null
-      ).getMathTransform();
+      transform = CRS.findOperation(sourceCrs, targetCrs, null).getMathTransform();
     } catch (FactoryException e) {
       throw new TransformException("Failed to find transformation between CRS: " + e.getMessage());
     }
@@ -242,18 +163,15 @@ public class GridBuilder {
     DirectPosition2D[] transformedCorners = new DirectPosition2D[corners.length];
     
     for (int i = 0; i < corners.length; i++) {
-        // Create a general DirectPosition for the transformation
-        DirectPosition result = new GeneralDirectPosition(targetCrs.getCoordinateSystem().getDimension());
-        
-        // Transform the coordinates
-        transform.transform(corners[i], result);
-        
-        // Get the correct order of coordinates based on target CRS
-        double ordinate0 = result.getOrdinate(0);  // First coordinate in target CRS order
-        double ordinate1 = result.getOrdinate(1);  // Second coordinate in target CRS order
-        
-        // Create a new DirectPosition2D with the correct axis order for target CRS
-        transformedCorners[i] = new DirectPosition2D(ordinate0, ordinate1);
+      // Create a general DirectPosition for the transformation
+      DirectPosition result = new GeneralDirectPosition(targetCrs.getCoordinateSystem().getDimension());
+      
+      // Transform the coordinates
+      transform.transform(corners[i], result);
+      
+      // Since we've set consistent X,Y ordering using AxesConvention.RIGHT_HANDED,
+      // we can directly use the ordinates in the original order
+      transformedCorners[i] = new DirectPosition2D(result.getOrdinate(0), result.getOrdinate(1));
     }
     
     return transformedCorners;

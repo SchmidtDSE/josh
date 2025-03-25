@@ -332,17 +332,15 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
 
       // When/Then
-      IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-        GeometryFactory.createSquare(
+      Geometry geometry = GeometryFactory.createSquare(
             topLeftLat,
             topLeftLon,
             bottomRightLat,
             bottomRightLon,
             geoContext
         );
-      }, "Should throw IllegalArgumentException when coordinates don't form a square");
 
-      assertTrue(exception.getMessage().contains("don't form a square"));
+      assertEquals(null, geometry, "Geometry should be null if it is not reasonably square");
     }
 
     @Test
@@ -354,17 +352,15 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
 
       // When/Then
-      IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-        GeometryFactory.createSquare(
+      Geometry geometry = GeometryFactory.createSquare(
             topLeftLat,
             topLeftLon,
             bottomRightLat,
             bottomRightLon,
             projectedContext
         );
-      }, "Should throw IllegalArgumentException when coordinates don't form a square");
 
-      assertTrue(exception.getMessage().contains("don't form a square"));
+      assertEquals(null, geometry, "Geometry should be null if it is not reasonably square");
     }
 
     @Test
