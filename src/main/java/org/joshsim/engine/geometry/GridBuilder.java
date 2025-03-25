@@ -175,9 +175,9 @@ public class GridBuilder {
 
     // Create input positions longitude first, latitude second
     DirectPosition2D topLeftSource = new DirectPosition2D(
-        topLeftLongitude.doubleValue(), topLeftLatitude.doubleValue());
+        topLeftLatitude.doubleValue(), topLeftLongitude.doubleValue());
     DirectPosition2D bottomRightSource = new DirectPosition2D(
-        bottomRightLongitude.doubleValue(), bottomRightLatitude.doubleValue());
+        bottomRightLatitude.doubleValue(), bottomRightLongitude.doubleValue());
     topLeftSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
     bottomRightSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
 
