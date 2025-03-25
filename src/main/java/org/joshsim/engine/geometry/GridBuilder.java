@@ -146,11 +146,11 @@ public class GridBuilder {
    * @return Array of transformed DirectPosition2D objects
    * @throws TransformException if transformation fails
    */
-  public DirectPosition2D[] transformCornerCoordinates(DirectPosition2D[] corners,
-                                                    CoordinateReferenceSystem sourceCrs,
-                                                    CoordinateReferenceSystem targetCrs)
-                                                    throws TransformException {
-
+  public DirectPosition2D[] transformCornerCoordinates(
+      DirectPosition2D[] corners,
+      CoordinateReferenceSystem sourceCrs,
+      CoordinateReferenceSystem targetCrs
+  ) throws TransformException {
     // Get the transformation between the two CRS
     MathTransform transform;
     try {
@@ -173,7 +173,7 @@ public class GridBuilder {
       // Since we've set consistent X,Y ordering using AxesConvention.RIGHT_HANDED,
       // we can directly use the ordinates in the original order
       transformedCorners[i] = new DirectPosition2D(
-          result.getOrdinate(0), 
+          result.getOrdinate(0),
           result.getOrdinate(1)
       );
     }

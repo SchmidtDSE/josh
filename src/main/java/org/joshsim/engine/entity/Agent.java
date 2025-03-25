@@ -34,6 +34,12 @@ public class Agent extends SpatialEntity {
   }
 
   @Override
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
+  }
+
+  @Override
   public Optional<EngineValue> getAttributeValue(String name) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
@@ -56,4 +62,11 @@ public class Agent extends SpatialEntity {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'unlock'");
   }
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getName'");
+  }
+
 }
