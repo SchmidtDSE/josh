@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.geometry.GeneralDirectPosition;
 import org.apache.sis.referencing.CRS;
@@ -31,14 +30,14 @@ public class GridBuilder {
   // CRS-related fields
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
   private CoordinateReferenceSystem targetCoordinateReferenceSystem;
-  
+
   // Transformed coordinates stored directly as DirectPosition2D
   private DirectPosition2D topLeftTransformed;
   private DirectPosition2D bottomRightTransformed;
 
   /**
    * Creates a new GridBuilder with specified input and target CRS, and corner coordinates.
-   * 
+   *
    * @param inputCrsCode EPSG code for the input CRS
    * @param targetCrsCode EPSG code for the target CRS
    * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
@@ -47,41 +46,41 @@ public class GridBuilder {
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
-  public GridBuilder(String inputCrsCode, String targetCrsCode, 
-                    Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth) 
+  public GridBuilder(String inputCrsCode, String targetCrsCode,
+                    Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
       throws FactoryException, TransformException {
-    
+
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell width must be positive");
     }
     this.cellWidth = cellWidth;
-    
+
     // Set up CRS and ensure X,Y (longitude/easting, latitude/northing) ordering
     CoordinateReferenceSystem inputCrs = CRS.forCode(inputCrsCode);
     CoordinateReferenceSystem targetCrs = CRS.forCode(targetCrsCode);
-    
+
     // Ensure consistent X,Y ordering using Apache SIS's recommendation
     // https://sis.apache.org/faq.html#axisOrderInTransforms
     // This will leave projected systems unchanged, but will swap axes for geographic systems
     // such that we don't have to maintain different checks for geographic and projected systems
-    this.inputCoordinateReferenceSystem = 
+    this.inputCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(inputCrs).forConvention(AxesConvention.RIGHT_HANDED);
-    this.targetCoordinateReferenceSystem = 
+    this.targetCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
-    
+
     // Extract coordinates with consistent naming (X first, Y second)
     BigDecimal topLeftX, topLeftY, bottomRightX, bottomRightY;
-    
+
     // Extract with consistent X,Y keys regardless of CRS type
     topLeftX = cornerCoords.get("topLeftX");
     topLeftY = cornerCoords.get("topLeftY");
     bottomRightX = cornerCoords.get("bottomRightX");
     bottomRightY = cornerCoords.get("bottomRightY");
-    
+
     // Validate corners
     validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
-    
+
     // Transform coordinates immediately
     transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
   }
@@ -92,20 +91,20 @@ public class GridBuilder {
    * and X to increase eastward.
    */
   private void validateCornerCoordinates(
-      BigDecimal topLeftX, BigDecimal topLeftY, 
+      BigDecimal topLeftX, BigDecimal topLeftY,
       BigDecimal bottomRightX, BigDecimal bottomRightY) {
-      
+
     if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
       throw new IllegalArgumentException("Missing corner coordinates");
     }
-    
+
     // Consistent validation for both geographic and projected coordinates
     // Y-coordinate (latitude/northing) should decrease from top to bottom
     if (topLeftY.compareTo(bottomRightY) <= 0) {
       throw new IllegalArgumentException(
           "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
     }
-    
+
     // X-coordinate (longitude/easting) should increase from left to right
     if (topLeftX.compareTo(bottomRightX) >= 0) {
       throw new IllegalArgumentException(
@@ -119,20 +118,20 @@ public class GridBuilder {
   private void transformCornerCoordinates(
       BigDecimal topLeftX, BigDecimal topLeftY,
       BigDecimal bottomRightX, BigDecimal bottomRightY) throws TransformException {
-    
+
     // Create DirectPosition2D objects for the corners
     DirectPosition2D topLeft = new DirectPosition2D(topLeftX.doubleValue(), topLeftY.doubleValue());
     DirectPosition2D bottomRight = new DirectPosition2D(bottomRightX.doubleValue(), bottomRightY.doubleValue());
-    
+
     DirectPosition2D[] corners = {topLeft, bottomRight};
-    
+
     // Transform the corners
     DirectPosition2D[] transformed = transformCornerCoordinates(
-        corners, 
-        inputCoordinateReferenceSystem, 
+        corners,
+        inputCoordinateReferenceSystem,
         targetCoordinateReferenceSystem
     );
-    
+
     // Store the transformed coordinates
     this.topLeftTransformed = transformed[0];
     this.bottomRightTransformed = transformed[1];
@@ -140,18 +139,18 @@ public class GridBuilder {
 
   /**
    * Transforms corner coordinates to a target CRS, with consistent X,Y axis ordering.
-   * 
+   *
    * @param corners Array of DirectPosition2D objects representing corner points
    * @param sourceCrs The source Coordinate Reference System
    * @param targetCrs The target Coordinate Reference System
    * @return Array of transformed DirectPosition2D objects
    * @throws TransformException if transformation fails
    */
-  public DirectPosition2D[] transformCornerCoordinates(DirectPosition2D[] corners, 
-                                                    CoordinateReferenceSystem sourceCrs, 
-                                                    CoordinateReferenceSystem targetCrs) 
+  public DirectPosition2D[] transformCornerCoordinates(DirectPosition2D[] corners,
+                                                    CoordinateReferenceSystem sourceCrs,
+                                                    CoordinateReferenceSystem targetCrs)
                                                     throws TransformException {
-    
+
     // Get the transformation between the two CRS
     MathTransform transform;
     try {
@@ -161,19 +160,19 @@ public class GridBuilder {
     }
 
     DirectPosition2D[] transformedCorners = new DirectPosition2D[corners.length];
-    
+
     for (int i = 0; i < corners.length; i++) {
       // Create a general DirectPosition for the transformation
       DirectPosition result = new GeneralDirectPosition(targetCrs.getCoordinateSystem().getDimension());
-      
+
       // Transform the coordinates
       transform.transform(corners[i], result);
-      
+
       // Since we've set consistent X,Y ordering using AxesConvention.RIGHT_HANDED,
       // we can directly use the ordinates in the original order
       transformedCorners[i] = new DirectPosition2D(result.getOrdinate(0), result.getOrdinate(1));
     }
-    
+
     return transformedCorners;
   }
 
@@ -186,28 +185,28 @@ public class GridBuilder {
     try {
       // Validate all required parameters first
       validateParameters();
-      
+
       // Create spatial context
       SpatialContext targetContext = createSpatialContext();
-      
+
       // Calculate grid dimensions
       GridDimensions dimensions = calculateGridDimensions();
-      
+
       // Create all patches
       List<Patch> patches = createPatchGrid(dimensions, targetContext);
-      
+
       return new Grid(patches, cellWidth);
     } catch (Exception e) {
       throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
     }
   }
-  
+
   private SpatialContext createSpatialContext() {
     SpatialContextFactory factory = new SpatialContextFactory();
     factory.geo = targetCoordinateReferenceSystem instanceof GeographicCRS;
     return factory.newSpatialContext();
   }
-  
+
   private static class GridDimensions {
     final int colCells;
     final int rowCells;
@@ -219,19 +218,19 @@ public class GridBuilder {
       this.cellWidthUnits = cellWidthUnits;
     }
   }
-  
+
   private GridDimensions calculateGridDimensions() {
     double cellWidthUnits = this.cellWidth.doubleValue();
-    
+
     double rowDiff = topLeftTransformed.y - bottomRightTransformed.y;
     double colDiff = bottomRightTransformed.x - topLeftTransformed.x;
-    
+
     int rowCells = (int) Math.ceil(rowDiff / cellWidthUnits);
     int colCells = (int) Math.ceil(colDiff / cellWidthUnits);
-    
+
     return new GridDimensions(colCells, rowCells, cellWidthUnits);
   }
-  
+
   /**
    * Creates a single patch geometry for a specific cell.
    */
