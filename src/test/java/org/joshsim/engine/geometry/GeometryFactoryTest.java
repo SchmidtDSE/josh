@@ -65,7 +65,10 @@ public class GeometryFactoryTest {
       assertEquals(21.0, rect.getMaxX(), 0.000001);
       assertEquals(9.0, rect.getMinY(), 0.000001);
       assertEquals(11.0, rect.getMaxY(), 0.000001);
-      assertTrue(GeometryFactory.getDefaultSpatialContext().isGeo(), "Default context should be geographic");
+      assertTrue(
+          GeometryFactory.getDefaultSpatialContext().isGeo(),
+          "Default context should be geographic"
+      );
     }
 
     @Test
@@ -98,7 +101,9 @@ public class GeometryFactoryTest {
       BigDecimal centerLon = BigDecimal.valueOf(20.0);
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, projectedContext);
+      Geometry geometry = GeometryFactory.createSquare(
+          width, centerLat, centerLon, projectedContext
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -107,7 +112,10 @@ public class GeometryFactoryTest {
       assertEquals(21.0, rect.getMaxX(), 0.000001);
       assertEquals(9.0, rect.getMinY(), 0.000001);
       assertEquals(11.0, rect.getMaxY(), 0.000001);
-      assertFalse(projectedContext.isGeo(), "Should be a projected (non-geographic) context");
+      assertFalse(
+          projectedContext.isGeo(),
+          "Should be a projected (non-geographic) context"
+      );
     }
 
     @Test
@@ -118,7 +126,9 @@ public class GeometryFactoryTest {
       BigDecimal centerLon = BigDecimal.valueOf(20.0);
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
+      Geometry geometry = GeometryFactory.createSquare(
+          width, centerLat, centerLon, geoContext
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -138,7 +148,9 @@ public class GeometryFactoryTest {
       BigDecimal centerLon = BigDecimal.valueOf(20.0);
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, projectedContext);
+      Geometry geometry = GeometryFactory.createSquare(
+          width, centerLat, centerLon, projectedContext
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -179,7 +191,9 @@ public class GeometryFactoryTest {
       BigDecimal centerLon = new BigDecimal("20.123456789");
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, projectedContext);
+      Geometry geometry = GeometryFactory.createSquare(
+          width, centerLat, centerLon, projectedContext
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -375,7 +389,7 @@ public class GeometryFactoryTest {
       // When/Then
       assertThrows(NullPointerException.class, () -> {
         GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon, nullContext
+            topLeftLat, topLeftLon, bottomRightLat, bottomRightLon, nullContext
         );
       }, "Should throw NullPointerException when context is null");
     }

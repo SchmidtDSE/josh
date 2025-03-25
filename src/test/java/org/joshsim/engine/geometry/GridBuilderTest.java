@@ -1,7 +1,9 @@
 package org.joshsim.engine.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -91,15 +93,26 @@ class GridBuilderTest {
 
     @Test
     @DisplayName("transformCornerCoordinates should correctly transform between different CRS")
-    void transformCornerCoordinatesBetweenCRS() throws FactoryException, TransformException {
+    void transformCornerCoordinates() throws FactoryException, TransformException {
       CoordinateReferenceSystem wgs84 = CRS.forCode("EPSG:4326");
       CoordinateReferenceSystem utm11n = CRS.forCode("EPSG:32611");
 
-      GridBuilder builder = new GridBuilder("EPSG:4326", "EPSG:32611", wgs84CornerCoords, cellWidth);
+      GridBuilder builder = new GridBuilder(
+          "EPSG:4326",
+          "EPSG:32611",
+          wgs84CornerCoords,
+          cellWidth
+      );
 
       // Create positions with consistent X,Y ordering using RIGHT_HANDED convention
-      DirectPosition2D topLeft = new DirectPosition2D(wgs84WestLon.doubleValue(), wgs84NorthLat.doubleValue());
-      DirectPosition2D bottomRight = new DirectPosition2D(wgs84EastLon.doubleValue(), wgs84SouthLat.doubleValue());
+      DirectPosition2D topLeft = new DirectPosition2D(
+          wgs84WestLon.doubleValue(),
+          wgs84NorthLat.doubleValue()
+      );
+      DirectPosition2D bottomRight = new DirectPosition2D(
+          wgs84EastLon.doubleValue(),
+          wgs84SouthLat.doubleValue()
+      );
       DirectPosition2D[] corners = {topLeft, bottomRight};
 
       // Transform using normalized CRS (RIGHT_HANDED convention)
@@ -144,24 +157,24 @@ class GridBuilderTest {
     @DisplayName("Constructor should validate corner coordinate relationships")
     void constructorValidatesCornerRelationships() {
       // Create inverted coordinates (top-left is below bottom-right)
-      Map<String, BigDecimal> invertedYCoords = new HashMap<>(wgs84CornerCoords);
-      invertedYCoords.put("topLeftY", wgs84SouthLat);
-      invertedYCoords.put("bottomRightY", wgs84NorthLat);
+      Map<String, BigDecimal> invertedCoordsY = new HashMap<>(wgs84CornerCoords);
+      invertedCoordsY.put("topLeftY", wgs84SouthLat);
+      invertedCoordsY.put("bottomRightY", wgs84NorthLat);
 
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder("EPSG:4326", "EPSG:32611", invertedYCoords, cellWidth)
+          () -> new GridBuilder("EPSG:4326", "EPSG:32611", invertedCoordsY, cellWidth)
       );
       assertTrue(exception.getMessage().contains("Y-coordinate"));
 
       // Create inverted X coordinates (top-left is east of bottom-right)
-      Map<String, BigDecimal> invertedXCoords = new HashMap<>(wgs84CornerCoords);
-      invertedXCoords.put("topLeftX", wgs84EastLon);
-      invertedXCoords.put("bottomRightX", wgs84WestLon);
+      Map<String, BigDecimal> invertedCoordsX = new HashMap<>(wgs84CornerCoords);
+      invertedCoordsX.put("topLeftX", wgs84EastLon);
+      invertedCoordsX.put("bottomRightX", wgs84WestLon);
 
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder("EPSG:4326", "EPSG:32611", invertedXCoords, cellWidth)
+          () -> new GridBuilder("EPSG:4326", "EPSG:32611", invertedCoordsX, cellWidth)
       );
       assertTrue(exception.getMessage().contains("X-coordinate"));
     }
@@ -170,7 +183,12 @@ class GridBuilderTest {
     @DisplayName("build() should validate parameters")
     void buildValidatesParameters() throws FactoryException, TransformException {
       // Create a builder with valid parameters
-      GridBuilder builder = new GridBuilder("EPSG:4326", "EPSG:32611", wgs84CornerCoords, cellWidth);
+      GridBuilder builder = new GridBuilder(
+          "EPSG:4326",
+          "EPSG:32611",
+          wgs84CornerCoords,
+          cellWidth
+      );
 
       // Should work fine
       Grid grid = builder.build();

@@ -69,14 +69,11 @@ public class GridBuilder {
     this.targetCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
 
-    // Extract coordinates with consistent naming (X first, Y second)
-    BigDecimal topLeftX, topLeftY, bottomRightX, bottomRightY;
-
     // Extract with consistent X,Y keys regardless of CRS type
-    topLeftX = cornerCoords.get("topLeftX");
-    topLeftY = cornerCoords.get("topLeftY");
-    bottomRightX = cornerCoords.get("bottomRightX");
-    bottomRightY = cornerCoords.get("bottomRightY");
+    BigDecimal topLeftX = cornerCoords.get("topLeftX");
+    BigDecimal topLeftY = cornerCoords.get("topLeftY");
+    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
+    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
 
     // Validate corners
     validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
@@ -121,7 +118,10 @@ public class GridBuilder {
 
     // Create DirectPosition2D objects for the corners
     DirectPosition2D topLeft = new DirectPosition2D(topLeftX.doubleValue(), topLeftY.doubleValue());
-    DirectPosition2D bottomRight = new DirectPosition2D(bottomRightX.doubleValue(), bottomRightY.doubleValue());
+    DirectPosition2D bottomRight = new DirectPosition2D(
+        bottomRightX.doubleValue(),
+        bottomRightY.doubleValue()
+    );
 
     DirectPosition2D[] corners = {topLeft, bottomRight};
 
@@ -163,14 +163,19 @@ public class GridBuilder {
 
     for (int i = 0; i < corners.length; i++) {
       // Create a general DirectPosition for the transformation
-      DirectPosition result = new GeneralDirectPosition(targetCrs.getCoordinateSystem().getDimension());
+      DirectPosition result = new GeneralDirectPosition(
+          targetCrs.getCoordinateSystem().getDimension()
+      );
 
       // Transform the coordinates
       transform.transform(corners[i], result);
 
       // Since we've set consistent X,Y ordering using AxesConvention.RIGHT_HANDED,
       // we can directly use the ordinates in the original order
-      transformedCorners[i] = new DirectPosition2D(result.getOrdinate(0), result.getOrdinate(1));
+      transformedCorners[i] = new DirectPosition2D(
+          result.getOrdinate(0), 
+          result.getOrdinate(1)
+      );
     }
 
     return transformedCorners;
@@ -313,12 +318,12 @@ public class GridBuilder {
     // Validate that after transformation, the coordinates still make sense
     if (topLeftTransformed.y <= bottomRightTransformed.y) {
       throw new IllegalArgumentException(
-        "After transformation, top-left Y-coordinate must be greater than bottom-right Y-coordinate");
+        "After transformation, top-left Y-coord must be greater than bottom-right Y-coord");
     }
 
     if (topLeftTransformed.x >= bottomRightTransformed.x) {
       throw new IllegalArgumentException(
-        "After transformation, top-left X-coordinate must be less than bottom-right X-coordinate");
+        "After transformation, top-left X-coord must be less than bottom-right X-coord");
     }
   }
 }
