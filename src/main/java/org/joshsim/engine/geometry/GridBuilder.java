@@ -62,11 +62,6 @@ public class GridBuilder {
     this.targetCoordinateReferenceSystem = CRS.forCode(targetCrsCode);
     this.inputIsGeographic = inputCoordinateReferenceSystem instanceof GeographicCRS;
     
-    // Get axis information to determine coordinate order
-    Map<String, String> axisInfo = getAxisAbbreviationsFromCRS();
-    String inputX = axisInfo.get("inputAxisZero");
-    String inputY = axisInfo.get("inputAxisOne");
-    
     // Extract coordinates - handling different naming based on input CRS type
     BigDecimal topLeftX, topLeftY, bottomRightX, bottomRightY;
     
