@@ -8,6 +8,7 @@ package org.joshsim.engine.entity;
 
 import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.GeometryMomento;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -29,20 +30,16 @@ public class Patch extends SpatialEntity {
   }
 
   /**
-   * Get the geometry of the patch.
+   * Get a key that uniquely identifies this patch within a replicate.
+   *
+   * @return Uniquely identifying key which can be hashed and used in equality operations.
    */
-  public Geometry getPatchGeometry() {
-    return getGeometry();
+  public PatchKey getKey() {
+    return new PatchKey(this);
   }
 
   @Override
   public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
   }
@@ -77,4 +74,9 @@ public class Patch extends SpatialEntity {
     throw new UnsupportedOperationException("Unimplemented method 'getName'");
   }
 
+  @Override
+  public Geometry getGeometry() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getGeometry'");
+  }
 }

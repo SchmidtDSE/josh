@@ -71,9 +71,6 @@ public class GeometryFactory {
       BigDecimal bottomRightLongitude,
       SpatialContext spatialContext
   ) {
-
-
-
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     double minLon = topLeftLongitude.doubleValue();
@@ -94,4 +91,56 @@ public class GeometryFactory {
     return geometry;
   }
 
+  /**
+   * Creates a circular geometry with the specified radius and center.
+   *
+   * @param radius The radius of the circle
+   * @param centerLatitude The center latitude
+   * @param centerLongitude The center longitude
+   * @return A Geometry object representing a circle
+   */
+  public static Geometry createCircle(
+      BigDecimal radius,
+      BigDecimal centerLatitude,
+      BigDecimal centerLongitude
+  ) {
+    double radiusVal = radius.doubleValue();
+    double centerLat = centerLatitude.doubleValue();
+    double centerLon = centerLongitude.doubleValue();
+
+    Circle circle = shapeFactory.circle(centerLon, centerLat, radiusVal);
+    Geometry geometry = new Geometry(circle);
+    return geometry;
+  }
+
+  /**
+   * Creates a circular geometry from radius and a point on the circumference.
+   *
+   * @param pointLatitude The latitude of a point on the circle's circumference
+   * @param pointLongitude The longitude of a point on the circle's circumference
+   * @param centerLatitude The latitude of the circle's center
+   * @param centerLongitude The longitude of the circle's center
+   * @return A Geometry object representing a circle
+   * @throws IllegalArgumentException if the coordinates are invalid
+   */
+  public static Geometry createCircle(
+      BigDecimal pointLatitude,
+      BigDecimal pointLongitude,
+      BigDecimal centerLatitude,
+      BigDecimal centerLongitude
+  ) {
+    double pLat = pointLatitude.doubleValue();
+    double pLon = pointLongitude.doubleValue();
+    double cLat = centerLatitude.doubleValue();
+    double cLon = centerLongitude.doubleValue();
+
+    // Calculate radius using distance between center and point
+    double radius = Math.sqrt(Math.pow(pLat - cLat, 2) + Math.pow(pLon - cLon, 2));
+
+    Circle circle = shapeFactory.circle(cLon, cLat, radius);
+    Geometry geometry = new Geometry(circle);
+    return geometry;
+  }
+
+  private GeometryFactory() {}
 }

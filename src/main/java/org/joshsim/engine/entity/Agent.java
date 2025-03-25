@@ -68,5 +68,4 @@ public class Agent extends SpatialEntity {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException("Unimplemented method 'getName'");
   }
-
 }

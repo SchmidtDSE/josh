@@ -19,6 +19,7 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
+
 /**
  * This class is responsible for building grid structures.
  * It creates a rectangular grid of patches based on coordinates in any coordinate reference system,

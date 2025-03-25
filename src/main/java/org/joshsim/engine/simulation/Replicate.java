@@ -8,6 +8,7 @@ package org.joshsim.engine.simulation;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.PatchKey;
 
 
 /**
@@ -42,4 +43,12 @@ public interface Replicate {
    * @return an iterable of matching patches.
    */
   Iterable<Patch> query(Query query);
+
+  /**
+   * Lookup a Patch at the given step number.
+   *
+   * @param key of the Patch to lookup.
+   * @param stepNumber of the timestep at which to return the patch.
+   */
+  Patch getPatchByKey(PatchKey key, long stepNumber);
 }
