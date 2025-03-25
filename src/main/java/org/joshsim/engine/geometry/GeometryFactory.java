@@ -72,6 +72,8 @@ public class GeometryFactory {
       SpatialContext spatialContext
   ) {
 
+
+
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     double minLon = topLeftLongitude.doubleValue();
@@ -80,14 +82,11 @@ public class GeometryFactory {
     double minLat = bottomRightLatitude.doubleValue();
 
     // Check if it's a square (approximately, within reasonable precision)
+    double reasonableSquarePctDiff = .01;
     double width = Math.abs(maxLon - minLon);
     double height = Math.abs(maxLat - minLat);
-
-    if (Math.abs(width - height) > 0.000001) {
-      throw new IllegalArgumentException(
-        "The specified coordinates don't form a square: width="
-            + width + ", height=" + height
-      );
+    if ((1 - (width / height)) > reasonableSquarePctDiff) {
+      return null;
     }
 
     Rectangle rectangle = shapeFactory.rect(minLon, maxLon, minLat, maxLat);

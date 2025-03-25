@@ -28,6 +28,12 @@ public class Patch extends SpatialEntity {
     super(geometry);
   }
 
+  /**
+   * Get the geometry of the patch.
+   */
+  public Geometry getPatchGeometry() {
+    return getGeometry();
+  }
 
   @Override
   public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
@@ -59,9 +65,4 @@ public class Patch extends SpatialEntity {
     throw new UnsupportedOperationException("Unimplemented method 'unlock'");
   }
 
-  @Override
-  public Geometry getGeometry() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getGeometry'");
-  }
 }
