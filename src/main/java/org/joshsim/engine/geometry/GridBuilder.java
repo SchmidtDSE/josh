@@ -125,9 +125,9 @@ public class GridBuilder {
       // Get axis abbreviations from CRS
       Map<String, String> axisAbbreviations = getAxisAbbreviationsFromCRS();
       
-      // Extract axis abbreviations
-      String xAxisAbbrev = axisAbbreviations.get("InputAxisZero");
-      String yAxisAbbrev = axisAbbreviations.get("InputAxisOne");
+      // Extract axis abbreviations - fixed case sensitivity issue
+      String xAxisAbbrev = axisAbbreviations.get("inputAxisZero");
+      String yAxisAbbrev = axisAbbreviations.get("inputAxisOne");
       
       if (xAxisAbbrev == null || yAxisAbbrev == null) {
           throw new IllegalArgumentException("Could not determine axis abbreviations from CRS");
@@ -196,6 +196,31 @@ public class GridBuilder {
   }
 
   /**
+   * Transforms corner coordinates from input CRS to target CRS.
+   */
+  private void transformCornerCoordinates(
+      BigDecimal topLeftX, BigDecimal topLeftY,
+      BigDecimal bottomRightX, BigDecimal bottomRightY) throws TransformException {
+    
+    // Create DirectPosition2D objects for the corners
+    DirectPosition2D topLeft = new DirectPosition2D(topLeftX.doubleValue(), topLeftY.doubleValue());
+    DirectPosition2D bottomRight = new DirectPosition2D(bottomRightX.doubleValue(), bottomRightY.doubleValue());
+    
+    DirectPosition2D[] corners = {topLeft, bottomRight};
+    
+    // Transform the corners using the new method
+    DirectPosition2D[] transformed = transformCornerCoordinates(
+        corners, 
+        inputCoordinateReferenceSystem, 
+        targetCoordinateReferenceSystem
+    );
+    
+    // Store the transformed coordinates
+    this.topLeftTransformed = transformed[0];
+    this.bottomRightTransformed = transformed[1];
+  }
+
+  /**
    * Transforms corner coordinates to a target CRS, respecting the axis order of the target CRS.
    * 
    * @param corners Array of DirectPosition2D objects representing corner points
@@ -246,6 +271,9 @@ public class GridBuilder {
    */
   public Grid build() {
     try {
+      // Validate all required parameters first
+      validateParameters();
+      
       // Create spatial context
       SpatialContext targetContext = createSpatialContext();
       
