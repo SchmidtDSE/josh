@@ -27,6 +27,7 @@ import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.Conversion;
 import org.joshsim.engine.value.Converter;
+import org.joshsim.engine.value.DirectConversion;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.Units;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,7 +136,7 @@ public class EngineBridgeTest {
     Units newUnits = new Units("test");
     when(mockEngineValue.getUnits()).thenReturn(oldUnits);
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
-        .thenReturn(new Conversion(newUnits, newUnits, (x) -> mockEngineValueConverted));
+        .thenReturn(new DirectConversion(newUnits, newUnits, (x) -> mockEngineValueConverted));
 
     EngineValue result = bridge.convert(mockEngineValue, newUnits);
     assertEquals(mockEngineValueConverted, result, "Should return converted value");
