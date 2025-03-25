@@ -8,6 +8,7 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.ShapeFactory;
 
@@ -29,6 +30,7 @@ public class GeometryFactory {
    * @param width The width of the square
    * @param centerLatitude The center latitude
    * @param centerLongitude The center longitude
+   * @param spatialContext The context to use in creating the shape
    * @return A Geometry object representing a square
    */
   public static Geometry createSquare(
@@ -55,12 +57,29 @@ public class GeometryFactory {
   }
 
   /**
+   * Creates a square geometry with the specified width and center.
+   *
+   * @param width The width of the square
+   * @param centerLatitude The center latitude
+   * @param centerLongitude The center longitude
+   * @return A Geometry object representing a square
+   */
+  public static Geometry createSquare(
+      BigDecimal width,
+      BigDecimal centerLatitude,
+      BigDecimal centerLongitude
+  ) {
+    return createSquare(width, centerLatitude, centerLongitude, getDefaultSpatialContext());
+  }
+
+  /**
    * Creates a square geometry from topLeft and bottomRight coordinates.
    *
    * @param topLeftLatitude The latitude of the top-left corner
    * @param topLeftLongitude The longitude of the top-left corner
    * @param bottomRightLatitude The latitude of the bottom-right corner
    * @param bottomRightLongitude The longitude of the bottom-right corner
+   * @param spatialContext The context to use in creating the shape
    * @return A Geometry object representing a square
    * @throws IllegalArgumentException if the coordinates don't form a square
    */
@@ -92,6 +111,57 @@ public class GeometryFactory {
   }
 
   /**
+   * Creates a square geometry from topLeft and bottomRight coordinates.
+   *
+   * @param topLeftLatitude The latitude of the top-left corner
+   * @param topLeftLongitude The longitude of the top-left corner
+   * @param bottomRightLatitude The latitude of the bottom-right corner
+   * @param bottomRightLongitude The longitude of the bottom-right corner
+   * @return A Geometry object representing a square
+   * @throws IllegalArgumentException if the coordinates don't form a square
+   */
+  public static Geometry createSquare(
+      BigDecimal topLeftLatitude,
+      BigDecimal topLeftLongitude,
+      BigDecimal bottomRightLatitude,
+      BigDecimal bottomRightLongitude
+  ) {
+    return createSquare(
+        topLeftLatitude,
+        topLeftLongitude,
+        bottomRightLatitude,
+        bottomRightLongitude,
+        getDefaultSpatialContext()
+    );
+  }
+
+  /**
+   * Creates a circular geometry with the specified radius and center.
+   *
+   * @param radius The radius of the circle
+   * @param centerLatitude The center latitude
+   * @param centerLongitude The center longitude
+   * @param spatialContext The context to use in creating the shape
+   * @return A Geometry object representing a circle
+   */
+  public static Geometry createCircle(
+      BigDecimal radius,
+      BigDecimal centerLatitude,
+      BigDecimal centerLongitude,
+      SpatialContext spatialContext
+  ) {
+    double radiusVal = radius.doubleValue();
+    double centerLat = centerLatitude.doubleValue();
+    double centerLon = centerLongitude.doubleValue();
+
+    ShapeFactory shapeFactory = spatialContext.getShapeFactory();
+
+    Circle circle = shapeFactory.circle(centerLon, centerLat, radiusVal);
+    Geometry geometry = new Geometry(circle);
+    return geometry;
+  }
+
+  /**
    * Creates a circular geometry with the specified radius and center.
    *
    * @param radius The radius of the circle
@@ -104,11 +174,40 @@ public class GeometryFactory {
       BigDecimal centerLatitude,
       BigDecimal centerLongitude
   ) {
-    double radiusVal = radius.doubleValue();
+    return createCircle(radius, centerLatitude, centerLongitude, getDefaultSpatialContext());
+  }
+
+  /**
+   * Creates a circular geometry from radius and a point on the circumference.
+   *
+   * @param pointLatitude The latitude of a point on the circle's circumference
+   * @param pointLongitude The longitude of a point on the circle's circumference
+   * @param centerLatitude The latitude of the circle's center
+   * @param centerLongitude The longitude of the circle's center
+   * @param spatialContext The context to use in creating the shape
+   * @return A Geometry object representing a circle
+   * @throws IllegalArgumentException if the coordinates are invalid
+   */
+  public static Geometry createCircle(
+      BigDecimal pointLatitude,
+      BigDecimal pointLongitude,
+      BigDecimal centerLatitude,
+      BigDecimal centerLongitude,
+      SpatialContext spatialContext
+  ) {
+    double pointLat = pointLatitude.doubleValue();
+    double pointLon = pointLongitude.doubleValue();
     double centerLat = centerLatitude.doubleValue();
     double centerLon = centerLongitude.doubleValue();
 
-    Circle circle = shapeFactory.circle(centerLon, centerLat, radiusVal);
+    // Calculate radius using distance between center and point
+    double radius = Math.sqrt(
+        Math.pow(pointLat - centerLat, 2) + Math.pow(pointLon - centerLon, 2)
+    );
+
+    ShapeFactory shapeFactory = spatialContext.getShapeFactory();
+
+    Circle circle = shapeFactory.circle(centerLon, centerLat, radius);
     Geometry geometry = new Geometry(circle);
     return geometry;
   }
@@ -129,17 +228,13 @@ public class GeometryFactory {
       BigDecimal centerLatitude,
       BigDecimal centerLongitude
   ) {
-    double pLat = pointLatitude.doubleValue();
-    double pLon = pointLongitude.doubleValue();
-    double cLat = centerLatitude.doubleValue();
-    double cLon = centerLongitude.doubleValue();
-
-    // Calculate radius using distance between center and point
-    double radius = Math.sqrt(Math.pow(pLat - cLat, 2) + Math.pow(pLon - cLon, 2));
-
-    Circle circle = shapeFactory.circle(cLon, cLat, radius);
-    Geometry geometry = new Geometry(circle);
-    return geometry;
+    return createCircle(
+        pointLatitude,
+        pointLongitude,
+        centerLatitude,
+        centerLongitude,
+        getDefaultSpatialContext()
+    );
   }
 
   private GeometryFactory() {}

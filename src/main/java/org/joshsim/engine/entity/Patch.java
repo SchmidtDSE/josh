@@ -6,10 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.geometry.GeometryMomento;
-import org.joshsim.engine.value.EngineValue;
 
 /**
  * Spatial entity representing a patch in a simulation.
@@ -36,47 +33,5 @@ public class Patch extends SpatialEntity {
    */
   public PatchKey getKey() {
     return new PatchKey(this);
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
-  }
-
-  @Override
-  public Geometry getGeometry() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getGeometry'");
   }
 }

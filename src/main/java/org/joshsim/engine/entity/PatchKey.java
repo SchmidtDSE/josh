@@ -17,7 +17,7 @@ public class PatchKey {
   private final Patch patch;
 
   /**
-   * Constructs a Key with the specified patch
+   * Constructs a Key with the specified patch.
    *
    * @param patch The patch to be keyed.
    */

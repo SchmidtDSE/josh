@@ -26,46 +26,4 @@ public class Agent extends SpatialEntity {
   public Agent(Geometry geometry) {
     super(geometry);
   }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
-  }
 }
