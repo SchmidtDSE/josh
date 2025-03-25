@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.sis.geometry.DirectPosition2D;
+import org.apache.sis.geometry.GeneralDirectPosition;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.entity.Patch;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
+import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.crs.GeographicCRS;
 import org.opengis.referencing.operation.MathTransform;
@@ -109,6 +111,57 @@ public class GridBuilder {
   }
   
   /**
+   * Validates the input map contains required corner coordinates based on CRS axis abbreviations
+   * and constructs DirectPosition2D objects for corners.
+   * 
+   * @param cornerCoordinates Map containing corner coordinates
+   * @param crs The Coordinate Reference System
+   * @throws IllegalArgumentException if required fields are missing
+   */
+  public DirectPosition2D[] validateAndCreatePositions(
+        Map<String, Double> cornerCoordinates, 
+        CoordinateReferenceSystem crs
+    ) {
+      // Get axis abbreviations from CRS
+      Map<String, String> axisAbbreviations = getAxisAbbreviationsFromCRS();
+      
+      // Extract axis abbreviations
+      String xAxisAbbrev = axisAbbreviations.get("InputAxisZero");
+      String yAxisAbbrev = axisAbbreviations.get("InputAxisOne");
+      
+      if (xAxisAbbrev == null || yAxisAbbrev == null) {
+          throw new IllegalArgumentException("Could not determine axis abbreviations from CRS");
+      }
+      
+      // Define required fields
+      String topLeftXKey = "topLeft" + xAxisAbbrev;
+      String topLeftYKey = "topLeft" + yAxisAbbrev;
+      String bottomRightXKey = "bottomRight" + xAxisAbbrev;
+      String bottomRightYKey = "bottomRight" + yAxisAbbrev;
+      
+      // Validate all required fields exist
+      String[] requiredKeys = {topLeftXKey, topLeftYKey, bottomRightXKey, bottomRightYKey};
+      for (String key : requiredKeys) {
+          if (!cornerCoordinates.containsKey(key)) {
+              throw new IllegalArgumentException("Missing required field: " + key);
+          }
+      }
+      
+      // Create the DirectPosition2D objects
+      DirectPosition2D topLeft = new DirectPosition2D(
+          cornerCoordinates.get(topLeftXKey),
+          cornerCoordinates.get(topLeftYKey)
+      );
+      
+      DirectPosition2D bottomRight = new DirectPosition2D(
+          cornerCoordinates.get(bottomRightXKey),
+          cornerCoordinates.get(bottomRightYKey)
+      );
+      
+      return new DirectPosition2D[] {topLeft, bottomRight};
+  }
+
+  /**
    * Validates corner coordinates based on coordinate system type.
    */
   private void validateCornerCoordinates(
@@ -143,49 +196,47 @@ public class GridBuilder {
   }
 
   /**
-   * Transforms the corner coordinates from input CRS to target CRS and stores them.
+   * Transforms corner coordinates to a target CRS, respecting the axis order of the target CRS.
+   * 
+   * @param corners Array of DirectPosition2D objects representing corner points
+   * @param sourceCrs The source Coordinate Reference System
+   * @param targetCrs The target Coordinate Reference System
+   * @return Array of transformed DirectPosition2D objects
+   * @throws TransformException if transformation fails
    */
-  private void transformCornerCoordinates(
-      BigDecimal topLeftX, BigDecimal topLeftY,
-      BigDecimal bottomRightX, BigDecimal bottomRightY) 
-      throws FactoryException, TransformException {
-      
-    // Create input positions (X/longitude first, Y/latitude second)
-    DirectPosition2D topLeftSource = new DirectPosition2D(
-        topLeftX.doubleValue(), topLeftY.doubleValue());
-    DirectPosition2D bottomRightSource = new DirectPosition2D(
-        bottomRightX.doubleValue(), bottomRightY.doubleValue());
+  public DirectPosition2D[] transformCornerCoordinates(DirectPosition2D[] corners, 
+                                                    CoordinateReferenceSystem sourceCrs, 
+                                                    CoordinateReferenceSystem targetCrs) 
+                                                    throws TransformException {
     
-    topLeftSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
-    bottomRightSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
-
-    // Check if transformation is needed
-    if (inputCoordinateReferenceSystem.equals(targetCoordinateReferenceSystem)) {
-      // No transformation needed, just copy
-      topLeftTransformed = new DirectPosition2D(
-          topLeftX.doubleValue(), topLeftY.doubleValue());
-      bottomRightTransformed = new DirectPosition2D(
-          bottomRightX.doubleValue(), bottomRightY.doubleValue());
-          
-      topLeftTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
-      bottomRightTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
-    } else {
-      // Transform coordinates
-      MathTransform transform = CRS.findOperation(
-          inputCoordinateReferenceSystem,
-          targetCoordinateReferenceSystem,
-          null
+    // Get the transformation between the two CRS
+    MathTransform transform;
+    try {
+      transform = CRS.findOperation(
+          sourceCrs, targetCrs, null
       ).getMathTransform();
-      
-      topLeftTransformed = new DirectPosition2D();
-      bottomRightTransformed = new DirectPosition2D();
-      
-      transform.transform(topLeftSource, topLeftTransformed);
-      transform.transform(bottomRightSource, bottomRightTransformed);
-      
-      topLeftTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
-      bottomRightTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
+    } catch (FactoryException e) {
+      throw new TransformException("Failed to find transformation between CRS: " + e.getMessage());
     }
+
+    DirectPosition2D[] transformedCorners = new DirectPosition2D[corners.length];
+    
+    for (int i = 0; i < corners.length; i++) {
+        // Create a general DirectPosition for the transformation
+        DirectPosition result = new GeneralDirectPosition(targetCrs.getCoordinateSystem().getDimension());
+        
+        // Transform the coordinates
+        transform.transform(corners[i], result);
+        
+        // Get the correct order of coordinates based on target CRS
+        double ordinate0 = result.getOrdinate(0);  // First coordinate in target CRS order
+        double ordinate1 = result.getOrdinate(1);  // Second coordinate in target CRS order
+        
+        // Create a new DirectPosition2D with the correct axis order for target CRS
+        transformedCorners[i] = new DirectPosition2D(ordinate0, ordinate1);
+    }
+    
+    return transformedCorners;
   }
 
   /**
