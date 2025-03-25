@@ -16,7 +16,7 @@ import org.joshsim.engine.geometry.Geometry;
  * entities and spatial information. This specifically refers to those which recieve geometry by
  * being part of another entity like a Patch.</p>
  */
-public abstract class MemberEntity extends SpatialEntity {
+public abstract class MemberEntity extends RootSpatialEntity {
   private final SpatialEntity parent;
 
   /**
