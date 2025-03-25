@@ -1,8 +1,8 @@
 package org.joshsim.engine.geometry;
 
+import java.math.BigDecimal;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.value.EngineValue;
 
 /**
  * The Grid class contains a list of patches and a cell width for conveniences.
@@ -11,7 +11,7 @@ import org.joshsim.engine.value.EngineValue;
  */
 public class Grid {
   private final List<Patch> patches;
-  private final EngineValue spacing;
+  private final BigDecimal spacing;
 
 
   /**
@@ -20,7 +20,7 @@ public class Grid {
    * @param patches List of patches in the grid.
    * @param spacing Width of a cell in the grid.
    */
-  public Grid(List<Patch> patches, EngineValue spacing) {
+  public Grid(List<Patch> patches, BigDecimal spacing) {
     this.patches = patches;
     this.spacing = spacing;
   }
@@ -39,7 +39,7 @@ public class Grid {
    *
    * @return Width of a cell in the grid.
    */
-  public EngineValue getSpacing() {
+  public BigDecimal getSpacing() {
     return spacing;
   }
 }

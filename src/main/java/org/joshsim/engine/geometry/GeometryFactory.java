@@ -13,10 +13,16 @@ import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.ShapeFactory;
 
 /**
- * Factory methods for creating geometric shapes.
+ * Factory methods for creating geometric shapes. By default, the shapes are
+ * created using the WGS84 spatial context, but methods are provided to override
+ * this behavior.
  */
 public class GeometryFactory {
-  private static final ShapeFactory shapeFactory = SpatialContext.GEO.getShapeFactory();
+  private static final SpatialContext DEFAULT_CONTEXT = SpatialContext.GEO;
+
+  public static SpatialContext getDefaultSpatialContext() {
+    return DEFAULT_CONTEXT;
+  }
 
   /**
    * Creates a square geometry with the specified width and center.
@@ -29,8 +35,11 @@ public class GeometryFactory {
   public static Geometry createSquare(
       BigDecimal width,
       BigDecimal centerLatitude,
-      BigDecimal centerLongitude
+      BigDecimal centerLongitude,
+      SpatialContext spatialContext
   ) {
+
+    ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     double halfWidth = width.doubleValue() / 2.0;
     double centerLat = centerLatitude.doubleValue();
@@ -60,8 +69,12 @@ public class GeometryFactory {
       BigDecimal topLeftLatitude,
       BigDecimal topLeftLongitude,
       BigDecimal bottomRightLatitude,
-      BigDecimal bottomRightLongitude
+      BigDecimal bottomRightLongitude,
+      SpatialContext spatialContext
   ) {
+
+    ShapeFactory shapeFactory = spatialContext.getShapeFactory();
+
     double minLon = topLeftLongitude.doubleValue();
     double maxLon = bottomRightLongitude.doubleValue();
     double maxLat = topLeftLatitude.doubleValue();
@@ -136,4 +149,5 @@ public class GeometryFactory {
 
   private GeometryFactory() {
   }
+
 }
