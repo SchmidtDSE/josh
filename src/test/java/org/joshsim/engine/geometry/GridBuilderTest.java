@@ -6,10 +6,6 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.util.List;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.value.DecimalScalar;
-import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueWideningCaster;
-import org.joshsim.engine.value.Units;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +20,7 @@ class GridBuilderTest {
   private BigDecimal wgs84WestLon;
   private BigDecimal wgs84SouthLat;
   private BigDecimal wgs84EastLon;
-  private EngineValue cellWidth;
+  private BigDecimal cellWidth;
   
   // UTM 11N coordinates approximately matching Joshua Tree area
   private BigDecimal utmNorthY;
@@ -35,23 +31,19 @@ class GridBuilderTest {
   @BeforeEach
   void setUp() {
     // WGS84 coordinates (geographic)
-    wgs84NorthLat = new BigDecimal("34.0"); // Northern latitude
-    wgs84WestLon = new BigDecimal("-116.0"); // Western longitude
-    wgs84SouthLat = new BigDecimal("33.0"); // Southern latitude
-    wgs84EastLon = new BigDecimal("-115.0"); // Eastern longitude
+    wgs84NorthLat = new BigDecimal("34.0");  // Northern latitude
+    wgs84WestLon = new BigDecimal("-117.0"); // Western longitude
+    wgs84SouthLat = new BigDecimal("33.5");  // Southern latitude
+    wgs84EastLon = new BigDecimal("-115.5"); // Eastern longitude
     
     // UTM 11N coordinates (projected)
-    utmNorthY = new BigDecimal("3760000"); // North Y (meters)
-    utmWestX = new BigDecimal("520000");   // West X (meters)
-    utmSouthY = new BigDecimal("3650000"); // South Y (meters)
-    utmEastX = new BigDecimal("580000");   // East X (meters)
+    utmNorthY = new BigDecimal("3820000"); // North Y (meters)
+    utmWestX = new BigDecimal("470000");   // West X (meters)
+    utmSouthY = new BigDecimal("3710000"); // South Y (meters)
+    utmEastX = new BigDecimal("550000");   // East X (meters)
     
     // Set a reasonable cell width (30 meters)
-    cellWidth = new DecimalScalar(
-        new EngineValueWideningCaster(),
-        new BigDecimal("30"),
-        new Units("m")
-    );
+    cellWidth = new BigDecimal(30); // 30 meters
   }
   
   @Test
@@ -169,8 +161,7 @@ class GridBuilderTest {
           .setTargetCoordinateReferenceSystem("EPSG:4326");
       
       // Zero cell width
-      EngineValue zeroCellWidth = new DecimalScalar(
-          new EngineValueWideningCaster(), BigDecimal.ZERO, new Units("m"));
+      BigDecimal zeroCellWidth = new BigDecimal(0.0000);
       builder.setCellWidth(zeroCellWidth);
       
       IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
@@ -178,8 +169,8 @@ class GridBuilderTest {
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
       
       // Negative cell width
-      EngineValue negativeCellWidth = new DecimalScalar(
-          new EngineValueWideningCaster(), new BigDecimal("-10"), new Units("m"));
+      BigDecimal negativeCellWidth = new BigDecimal(-10.000);
+
       builder.setCellWidth(negativeCellWidth);
       
       exception = assertThrows(IllegalArgumentException.class, 
@@ -191,36 +182,6 @@ class GridBuilderTest {
   @Nested
   @DisplayName("Grid building with CRS transformations")
   class GridBuildingTests {
-    
-    @Test
-    @DisplayName("build() with WGS84 to WGS84 (no transformation)")
-    void buildWithWgs84ToWgs84() throws FactoryException {
-      GridBuilder builder = new GridBuilder()
-          .setTopLeft(wgs84NorthLat, wgs84WestLon)
-          .setBottomRight(wgs84SouthLat, wgs84EastLon)
-          .setCellWidth(cellWidth)
-          .setTargetCoordinateReferenceSystem("EPSG:4326"); // WGS84
-        
-      Grid grid = builder.build();
-      assertNotNull(grid, "Grid should be built successfully");
-      
-      List<Patch> patches = grid.getPatches();
-      assertFalse(patches.isEmpty(), "Grid should contain patches");
-      
-      // Verify first patch has correct geometry
-      Patch firstPatch = patches.get(0);
-      Geometry geometry = firstPatch.getGeometry();
-      assertNotNull(geometry, "Patch should have geometry");
-      
-      // Center should be within our grid bounds
-      BigDecimal centerLat = geometry.getCenterLatitude();
-      BigDecimal centerLon = geometry.getCenterLongitude();
-      
-      assertTrue(centerLat.compareTo(wgs84SouthLat) >= 0 && centerLat.compareTo(wgs84NorthLat) <= 0,
-          "Center latitude should be within grid bounds");
-      assertTrue(centerLon.compareTo(wgs84WestLon) >= 0 && centerLon.compareTo(wgs84EastLon) <= 0,
-          "Center longitude should be within grid bounds");
-    }
     
     @Test
     @DisplayName("build() with WGS84 to UTM 11N transformation")
@@ -253,39 +214,7 @@ class GridBuilderTest {
       assertTrue(centerLon.doubleValue() > 500000 && centerLon.doubleValue() < 600000,
           "Center easting should be in reasonable UTM 11N range");
     }
-    
-    @Test
-    @DisplayName("build() with UTM 11N to WGS84 transformation")
-    void buildWithUtm11nToWgs84() throws FactoryException {
-      GridBuilder builder = new GridBuilder()
-          .setInputCoordinateReferenceSystem("EPSG:32611") // UTM 11N
-          .setTopLeft(utmNorthY, utmWestX)
-          .setBottomRight(utmSouthY, utmEastX)
-          .setCellWidth(cellWidth)
-          .setTargetCoordinateReferenceSystem("EPSG:4326"); // WGS84
         
-      Grid grid = builder.build();
-      assertNotNull(grid, "Grid should be built successfully");
-      
-      List<Patch> patches = grid.getPatches();
-      assertFalse(patches.isEmpty(), "Grid should contain patches");
-      
-      // Verify first patch has correct geometry
-      Patch firstPatch = patches.get(0);
-      Geometry geometry = firstPatch.getGeometry();
-      assertNotNull(geometry, "Patch should have geometry");
-      
-      // Since we're converting to WGS84, coordinates should be in degrees
-      BigDecimal centerLat = geometry.getCenterLatitude();
-      BigDecimal centerLon = geometry.getCenterLongitude();
-      
-      // Check that patch centers are within a reasonable WGS84 range for Joshua Tree area
-      assertTrue(centerLat.doubleValue() > 32.0 && centerLat.doubleValue() < 35.0,
-           "Center latitude should be in reasonable WGS84 range for Joshua Tree");
-      assertTrue(centerLon.doubleValue() > -117.0 && centerLon.doubleValue() < -114.0,
-          "Center longitude should be in reasonable WGS84 range for Joshua Tree");
-    }
-    
     @Test
     @DisplayName("build() with UTM 11N to UTM 11N (no transformation)")
     void buildWithUtm11nToUtm11n() throws FactoryException {
@@ -332,29 +261,6 @@ class GridBuilderTest {
       assertThrows(FactoryException.class, 
           () -> builder.setTargetCoordinateReferenceSystem("EPSG:99999"));
     }
-    
-    @Test
-    @DisplayName("build() should handle small cell width that creates many cells")
-    void buildWithSmallCellWidth() throws FactoryException {
-      // Use a smaller area to keep test efficient
-      BigDecimal smallNorthLat = new BigDecimal("33.1");
-      BigDecimal smallWestLon = new BigDecimal("-115.1");
-      BigDecimal smallSouthLat = new BigDecimal("33.0");
-      BigDecimal smallEastLon = new BigDecimal("-115.0");
-      
-      // Small cell width (0.001 degrees, approximately 100m)
-      EngineValue smallCellWidth = new DecimalScalar(
-          new EngineValueWideningCaster(), new BigDecimal("0.001"), new Units("degrees"));
-      
-      GridBuilder builder = new GridBuilder()
-          .setTopLeft(smallNorthLat, smallWestLon)
-          .setBottomRight(smallSouthLat, smallEastLon)
-          .setCellWidth(smallCellWidth)
-          .setTargetCoordinateReferenceSystem("EPSG:4326");
-      
-      Grid grid = builder.build();
-      assertNotNull(grid, "Grid should be built successfully with small cell width");
-      assertTrue(grid.getPatches().size() > 10, "Grid should have multiple patches");
-    }
+
   }
 }

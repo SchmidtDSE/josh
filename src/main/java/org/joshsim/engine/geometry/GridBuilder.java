@@ -163,24 +163,51 @@ public class GridBuilder {
    */
   private DirectPosition2D[] transformCornerCoordinates() 
       throws FactoryException, TransformException {
-    MathTransform transform = CRS.findOperation(
-        inputCoordinateReferenceSystem,
-        targetCoordinateReferenceSystem,
-        null
-    ).getMathTransform();
 
-    DirectPosition2D topLeft = new DirectPosition2D(
+    // Print input values for debugging
+    System.out.println("Input coordinates:");
+    System.out.println("Top left: " + topLeftLongitude + "," + topLeftLatitude);
+    System.out.println("Bottom right: " + bottomRightLongitude + "," + bottomRightLatitude);
+    
+    // Print CRS information
+    System.out.println("Input CRS: " + inputCoordinateReferenceSystem);
+    System.out.println("Target CRS: " + targetCoordinateReferenceSystem);
+
+    // Create input positions longitude first, latitude second
+    DirectPosition2D topLeftSource = new DirectPosition2D(
         topLeftLongitude.doubleValue(), topLeftLatitude.doubleValue());
-    DirectPosition2D bottomRight = new DirectPosition2D(
+    DirectPosition2D bottomRightSource = new DirectPosition2D(
         bottomRightLongitude.doubleValue(), bottomRightLatitude.doubleValue());
+    topLeftSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
+    bottomRightSource.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
 
-    topLeft.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
-    bottomRight.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
+    // Create separate output positions
+    DirectPosition2D topLeftTarget = new DirectPosition2D();
+    DirectPosition2D bottomRightTarget = new DirectPosition2D();
+    topLeftTarget.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
+    bottomRightTarget.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
 
-    DirectPosition transformedTopLeft = transform.transform(topLeft, null);
-    DirectPosition transformedBottomRight = transform.transform(bottomRight, null);
-
-    return new DirectPosition2D[] { topLeft, bottomRight };
+    // Transform
+    try {
+      MathTransform transform = CRS.findOperation(
+          inputCoordinateReferenceSystem,
+          targetCoordinateReferenceSystem,
+          null
+      ).getMathTransform();
+      transform.transform(topLeftSource, topLeftTarget);
+      transform.transform(bottomRightSource, bottomRightTarget);
+      
+      // Debug output
+      System.out.println("Transformed coordinates:");
+      System.out.println("Top left: " + topLeftTarget.x + "," + topLeftTarget.y);
+      System.out.println("Bottom right: " + bottomRightTarget.x + "," + bottomRightTarget.y);
+      
+      return new DirectPosition2D[] { topLeftTarget, bottomRightTarget };
+    } catch (Exception e) {
+      System.err.println("Transformation error: " + e.getMessage());
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   /**
@@ -323,7 +350,7 @@ public class GridBuilder {
       throw new IllegalStateException("Target CRS not specified");
     }
 
-    if (cellWidth.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+    if (cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell width must be positive");
     }
 
