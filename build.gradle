@@ -28,7 +28,7 @@ dependencies {
 
   // Apache SIS for coordinate system transformations and COG support
   implementation("org.apache.sis.core:sis-referencing:1.4")
-  runtimeOnly("org.apache.sis.non-free:sis-embedded-data:1.4")
+  // runtimeOnly("org.apache.sis.non-free:sis-embedded-data:1.4")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
@@ -74,6 +74,11 @@ task fatJar(type: Jar) {
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
   }
+
+  // Exclude duplicates
+  // TODO: What are implications of this?
+  // We are getting a `module-info.class` duplicate here.
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
   // Include the main classes
   with jar
