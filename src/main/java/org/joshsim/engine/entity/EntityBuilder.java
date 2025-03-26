@@ -16,22 +16,31 @@ import org.joshsim.engine.geometry.Geometry;
  * final entity.
  * </p>
  */
-public interface EntityBuilder {
+public class EntityBuilder {
+  EventHandlerGroup eventHandlerGroup;
+  
+
   /**
    * Add event handlers to the entity being built.
    *
    * @param group the event handler group to add
    * @return this builder for method chaining
    */
-  EntityBuilder addEventHandlerGroup(EventHandlerGroup group);
-  
+  EntityBuilder addEventHandlerGroup(EventHandlerGroup group) {
+    this.eventHandlerGroup = group;
+    return this;
+  }
+
   /**
    * Build an agent entity.
    *
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed agent entity
    */
-  Agent buildAgent(SpatialEntity parent);
+  Agent buildAgent(SpatialEntity parent) {
+    Agent agent = new Agent(parent);
+    return agent;
+  }
 
   /**
    * Build a disturbance entity.
@@ -39,7 +48,10 @@ public interface EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed disturbance entity
    */
-  Disturbance buildDisturbance(SpatialEntity parent);
+  Disturbance buildDisturbance(SpatialEntity parent){
+    Disturbance disturbance = new Disturbance(parent);
+    return disturbance;
+  }
 
   /**
    * Build a patch entity.
@@ -47,7 +59,10 @@ public interface EntityBuilder {
    * @param geometry The geometry defining the bounds of this Patch.
    * @return A constructed patch entity
    */
-  Patch buildPatch(Geometry geometry);
+  Patch buildPatch(Geometry geometry){
+    Patch patch = new Patch(geometry);
+    return patch;
+  }
 
   /**
    * Build a simulation instance.
@@ -55,5 +70,8 @@ public interface EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed simulation instance
    */
-  Simulation buildSimulation(SpatialEntity parent);
+  Simulation buildSimulation(SpatialEntity parent){
+    Simulation simulation = new Simulation(parent);
+    return simulation;
+  }
 }

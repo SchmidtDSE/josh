@@ -15,18 +15,33 @@ import java.util.Optional;
  * if, else if, else relationship established through selectors.
  * </p>
  */
-public interface EventHandlerGroup {
+public class EventHandlerGroup {
+  private final Iterable<EventHandler> eventHandlers;
+  private final Optional<String> state;
+
+  /**
+   * Constructor for an EventHandlerGroup.
+   */
+  public EventHandlerGroup(Iterable<EventHandler> eventHandlers, Optional<String> state) {
+    this.eventHandlers = eventHandlers;
+    this.state = state;
+  }
+
   /**
    * Get all event handlers in this group.
    *
    * @return an Iterable of EventHandler objects
    */
-  Iterable<EventHandler> getEventHandlers();
+  Iterable<EventHandler> getEventHandlers() {
+    return eventHandlers;
+  }
 
   /**
    * Get the state associated with this event handler group.
    *
    * @return an Optional containing the state String if one exists, empty otherwise
    */
-  Optional<String> getState();
+  Optional<String> getState(){
+    return state;
+  }
 }
