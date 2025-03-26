@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.engine.entity;
+
 import org.joshsim.engine.geometry.Geometry;
 
 

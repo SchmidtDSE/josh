@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -16,15 +15,15 @@ import org.joshsim.engine.value.EngineValue;
  * <p>Agent representing a disturbance entity in the system. Disturbances are events that can affect
  * other entities in the environment such as a fire or a management intervention.</p>
  */
-public class Disturbance extends SpatialEntity {
+public class Disturbance extends MemberSpatialEntity {
 
   /**
    * Constructs a disturbance entity with the given geometry.
    *
-   * @param geometry the geometry of the disturbance
+   * @param parent The parent containing this entity.
    */
-  public Disturbance(Geometry geometry) {
-    super(geometry);
+  public Disturbance(SpatialEntity parent) {
+    super(parent);
   }
 
   @Override

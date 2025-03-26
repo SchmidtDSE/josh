@@ -8,6 +8,7 @@ package org.joshsim.engine.entity;
 
 import org.joshsim.engine.geometry.Geometry;
 
+
 /**
  * An entity with spatial properties in the system.
  *
@@ -16,23 +17,11 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public interface SpatialEntity extends Entity {
-    /**
-     * Get the geographic location of this spatial entity.
-     *
-     * @return the geographic point representing this entity's location
-     */
-    Geometry getGeometry();
-}
 
-class RootSpatialEntity implements SpatialEntity{
-    private final Geometry geometry;
-
-    public RootSpatialEntity(Geometry geometry) {
-        this.geometry = geometry;
-    }
-
-    @Override
-    public Geometry getGeometry() {
-        return geometry;
-    }
+  /**
+   * Get the geographic location of this spatial entity.
+   *
+   * @return The geographic point representing this entity's location.
+   */
+  Geometry getGeometry();
 }

@@ -17,7 +17,7 @@ import org.joshsim.engine.value.EngineValue;
  * within the JoshSim gridded simulation.
  * </p>
  */
-public class Patch extends SpatialEntity {
+public class Patch extends RootSpatialEntity {
 
   /**
    * Create a new patch.
