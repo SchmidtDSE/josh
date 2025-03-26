@@ -16,7 +16,7 @@ import org.joshsim.engine.value.Distribution;
  * <p>Represents an external resource entity in the system which provides access to distributed
  * values based on a geometry and attribute-sensitive paths.</p>
  */
-public interface ExternalResource extends Entity {
+public abstract class ExternalResource extends Entity {
 
   /**
    * Get distribution values for the specified geometry.
@@ -24,5 +24,5 @@ public interface ExternalResource extends Entity {
    * @param geometry the geometry to query values for
    * @return the distribution of values for the given geometry
    */
-  Distribution getDistribution(Geometry geometry);
+  abstract Distribution getDistribution(Geometry geometry);
 }

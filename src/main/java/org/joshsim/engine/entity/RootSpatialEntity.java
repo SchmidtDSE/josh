@@ -9,7 +9,7 @@ import org.joshsim.engine.geometry.Geometry;
  * <p>RootSpatialEntity is a type of SpatialEntity which has its own geometry as opposed to
  * inhering that geometry by being part of another entity.</p>
  */
-public abstract class RootSpatialEntity implements SpatialEntity {
+public abstract class RootSpatialEntity extends SpatialEntity {
   private final Geometry geometry;
   
   /**

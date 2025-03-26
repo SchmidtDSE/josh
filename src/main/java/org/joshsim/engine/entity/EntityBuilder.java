@@ -71,7 +71,7 @@ public class EntityBuilder {
    * @return A constructed simulation instance
    */
   Simulation buildSimulation(SpatialEntity parent){
-    Simulation simulation = new Simulation(parent);
+    Simulation simulation = new Simulation();
     return simulation;
   }
 }

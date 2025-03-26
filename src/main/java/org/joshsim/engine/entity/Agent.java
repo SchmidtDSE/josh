@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
-import org.joshsim.engine.value.EngineValue;
 
 /**
  * Mutable spatial entity.
@@ -16,56 +15,12 @@ import org.joshsim.engine.value.EngineValue;
  * actions and interact with their environment.</p>
  */
 public class Agent extends MemberSpatialEntity {
-
   /**
    * Create a new agent with the given geometry.
    *
    * @param parent The parent containing this entity.
    */
-  public Agent(SpatialEntity parent) {
+  public Agent(SpatialEntity parent, Optional<EventHandlerGroup> eventHandlerGroup) {
     super(parent);
   }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
-  }
-
 }

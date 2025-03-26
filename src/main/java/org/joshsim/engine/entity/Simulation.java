@@ -12,7 +12,7 @@ import org.joshsim.engine.value.EngineValue;
 /**
  * Simulation entity with cross-timestep attributes.
  */
-public class Simulation implements Entity {
+public class Simulation extends Entity {
 
   @Override
   public String getName() {

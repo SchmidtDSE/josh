@@ -1,72 +1,49 @@
-/**
- * Entity which can operate within a JoshSim.
- *
- * @license BSD-3-Clause
- */
-
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.value.EngineValue;
 
+public abstract class Entity implements Lockable, AttributeManaging {
+  String name;
+  Iterable<EventHandlerGroup> eventHandlers;
+  HashMap<String, EngineValue> attributes;
+  
 
-/**
- * Base entity in system which has mutable attributes.
- */
-public interface Entity {
+  @Override
+  public String getName() {
+    return name;
+  }
 
-  /**
-   * Get the name of this tyep of entity.
-   *
-   * @returns unique name of this entity type.
-   */
-  String getName();
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    return eventHandlers;
+  }
 
-  /**
-   * Get event handlers for all attributes and events.
-   *
-   * @returns Iterable over all registered event handler groups.
-   */
-  Iterable<EventHandlerGroup> getEventHandlers();
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
+    // TODO Auto-generated method stub
+  }
 
-  /**
-   * Get event handlers for a specific attribute and event.
-   *
-   * @param attribute the attribute name
-   * @param event the event name
-   * @return an iterable collection of event handler groups
-   */
-  Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event);
+  @Override
+  public Optional<EngineValue> getAttributeValue(String name) {
+    return Optional.ofNullable(attributes.get(name));
+  }
 
-  /**
-   * Get the value of an attribute by name.
-   *
-   * @param name the attribute name
-   * @return an Optional containing the attribute value, or empty if not found
-   */
-  Optional<EngineValue> getAttributeValue(String name);
+  @Override
+  public void setAttributeValue(String name, EngineValue value) {
+    attributes.put(name, value);
+  }
 
-  /**
-   * Set the value of an attribute by name.
-   *
-   * @param name the attribute name
-   * @param value the value to set
-   */
-  void setAttributeValue(String name, EngineValue value);
+  @Override
+  public void lock() {
+    
+  }
 
-  /**
-   * Acquire a global lock on this entity for thread safety.
-   *
-   * <p>This is a convenience method for client code and is not automatically  enforced by getters
-   * and setters. The method will block until the lock is acquired.</p>
-   */
-  void lock();
-
-  /**
-   * Release the global lock on this entity.
-   *
-   * <p>This is a convenience method for client code and should be called after thread-safe
-   * operations are complete.</p>
-   */
-  void unlock();
+  @Override
+  public void unlock() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
+  }
+  
 }

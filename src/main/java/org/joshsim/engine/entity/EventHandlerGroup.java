@@ -41,7 +41,7 @@ public class EventHandlerGroup {
    *
    * @return an Optional containing the state String if one exists, empty otherwise
    */
-  Optional<String> getState(){
+  Optional<String> getState() {
     return state;
   }
 }
