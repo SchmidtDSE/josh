@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.entity;
 
+import org.joshsim.engine.geometry.Geometry;
+
 
 /**
  * Builder to assist in constructing entities.
@@ -22,11 +24,36 @@ public interface EntityBuilder {
    * @return this builder for method chaining
    */
   EntityBuilder addEventHandlerGroup(EventHandlerGroup group);
+  
+  /**
+   * Build an agent entity.
+   *
+   * @param parent The entity like Patch that this will be part of.
+   * @return A constructed agent entity
+   */
+  Agent buildAgent(SpatialEntity parent);
 
   /**
-   * Build and returns an Entity based on the added event handlers.
+   * Build a disturbance entity.
    *
-   * @return a new Entity instance
+   * @param parent The entity like Patch that this will be part of.
+   * @return A constructed disturbance entity
    */
-  Entity build();
+  Disturbance buildDisturbance(SpatialEntity parent);
+
+  /**
+   * Build a patch entity.
+   *
+   * @param geometry The geometry defining the bounds of this Patch.
+   * @return A constructed patch entity
+   */
+  Patch buildPatch(Geometry geometry);
+
+  /**
+   * Build a simulation instance.
+   *
+   * @param parent The entity like Patch that this will be part of.
+   * @return A constructed simulation instance
+   */
+  Simulation buildSimulation(SpatialEntity parent);
 }
