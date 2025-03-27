@@ -52,12 +52,7 @@ public abstract class Entity implements Lockable, AttributeContainer {
   }
 
   @Override
-  public Optional<EventHandlerGroup> getEventHandlers(
-      String state,
-      String attribute,
-      String event
-  ) {
-    EventKey eventKey = new EventKey(state, attribute, event);
+  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
     return Optional.of(eventHandlerGroups.get(eventKey));
   }
 

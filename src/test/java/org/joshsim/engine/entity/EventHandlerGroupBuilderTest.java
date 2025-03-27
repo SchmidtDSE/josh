@@ -51,8 +51,8 @@ public class EventHandlerGroupBuilderTest {
     assertEquals("testState", group.getState());
     assertEquals("testAttribute", group.getAttribute());
     assertEquals("testEvent", group.getEvent());
-    assertEquals(1, group.getEventHandlers().size());
-    assertEquals(mockHandler1, group.getEventHandlers().get(0));
+    assertTrue(group.getEventHandlers().isPresent());
+    assertEquals(mockHandler1, group.getEventHandlers().get());
   }
 
   /**
@@ -116,8 +116,8 @@ public class EventHandlerGroupBuilderTest {
     builder.addEventHandler(mockHandler1);
     
     EventHandlerGroup group = builder.build();
-    assertEquals(1, group.getEventHandlers().size());
-    assertEquals(mockHandler1, group.getEventHandlers().get(0));
+    assertEquals(group.getEventHandlers().isPresent());
+    assertEquals(mockHandler1, group.getEventHandlers().get().get(0));
   }
 
   /**
@@ -129,7 +129,7 @@ public class EventHandlerGroupBuilderTest {
     builder.addEventHandler(handlers);
     
     EventHandlerGroup group = builder.build();
-    assertEquals(2, group.getEventHandlers().size());
+    assertEquals(group.getEventHandlers().isPresent());
     assertEquals(mockHandler1, group.getEventHandlers().get(0));
     assertEquals(mockHandler2, group.getEventHandlers().get(1));
   }

@@ -136,13 +136,15 @@ public class PatchTest {
     
     // Test getEventHandlers with specific parameters
     Optional<EventHandlerGroup> retrievedGroup = patch.getEventHandlers(
-        "testState", "testAttribute", "testEvent");
+        new EventKey("testState", "testAttribute", "testEvent")
+    );
     assertTrue(retrievedGroup.isPresent());
     assertEquals(handlerGroup, retrievedGroup.get());
     
     // Test with non-existent event key
     Optional<EventHandlerGroup> nonExistentGroup = patch.getEventHandlers(
-        "nonExistent", "nonExistent", "nonExistent");
+        new EventKey("nonExistent", "nonExistent", "nonExistent")
+    );
     assertEquals(Optional.empty(), nonExistentGroup);
   }
 }

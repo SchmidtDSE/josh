@@ -21,7 +21,7 @@ public class EventKey {
   /**
    * Composite key class for mapping state x attribute x event to an EventHandlerGroup.
    *
-   * @param state state string
+   * @param state state string or empty if default state
    * @param attribute attribute string
    * @param event event string
    */

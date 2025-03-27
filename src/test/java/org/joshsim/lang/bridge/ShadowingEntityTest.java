@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import org.joshsim.engine.entity.EventKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -87,7 +88,8 @@ public class ShadowingEntityTest {
     String attrName = "testAttr";
     String substepName = "testSubstep";
 
-    when(mockSpatialEntity.getEventHandlers(attrName, substepName))
+    EventKey eventKey = new EventKey("", attrName, substepName);
+    when(mockSpatialEntity.getEventHandlers(eventKey))
         .thenReturn(Arrays.asList(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);

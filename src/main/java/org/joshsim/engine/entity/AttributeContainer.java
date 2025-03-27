@@ -33,15 +33,10 @@ public interface AttributeContainer {
   /**
    * Get event handlers for a specific attribute and event.
    *
-   * @param attribute the attribute name
-   * @param event the event name
+   * @param event The event for which handler groups should be returned.
    * @return the event handler group, or empty if it does not exist
    */
-  Optional<EventHandlerGroup> getEventHandlers(
-      String state,
-      String attribute,
-      String event
-  );
+  Optional<EventHandlerGroup> getEventHandlers(EventKey event);
 
   /**
    * Get the value of an attribute by name.

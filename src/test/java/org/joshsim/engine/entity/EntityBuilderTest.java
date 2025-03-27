@@ -207,7 +207,8 @@ public class EntityBuilderTest {
     
     // Agent should not have the new entries
     assertEquals(1, agent.getEventHandlers().size());
-    assertThrows(ClassCastException.class, 
-        () -> agent.getEventHandlers("newState", "newAttribute", "newEvent"));
+    assertThrows(ClassCastException.class, () -> agent.getEventHandlers(
+        new EventKey("newState", "newAttribute", "newEvent")
+    ));
   }
 }

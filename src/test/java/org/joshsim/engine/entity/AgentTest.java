@@ -151,7 +151,9 @@ public class AgentTest {
    */
   @Test
   public void testGetEventHandlers() {
-    EventHandlerGroup result = agent.getEventHandlers("state", "attribute", "event").get();
+    EventHandlerGroup result = agent.getEventHandlers(
+        new EventKey("state", "attribute", "event")
+    ).get();
     assertEquals(eventHandlers.get(EVENT_KEY), result);
   }
   

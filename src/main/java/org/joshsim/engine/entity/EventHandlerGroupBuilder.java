@@ -18,7 +18,7 @@ import java.util.Optional;
  * EventHandlerGroup objects.
  */
 public class EventHandlerGroupBuilder {
-  private ArrayList<EventHandler> eventHandlers = new ArrayList<>();
+  private List<EventHandler> eventHandlers = new ArrayList<>();
   private Optional<String> state = Optional.empty();
   private Optional<String> attribute = Optional.empty();
   private Optional<String> event = Optional.empty();
@@ -31,9 +31,7 @@ public class EventHandlerGroupBuilder {
   public EventHandlerGroup build() {
     return new EventHandlerGroup(
       eventHandlers,
-      getState(),
-      getAttribute(),
-      getEvent()
+      new EventKey(getState(), getAttribute(), getEvent())
     );
   }
 
@@ -49,10 +47,11 @@ public class EventHandlerGroupBuilder {
   /**
    * Gets the current state.
    *
-   * @return an Optional containing the state if set, or empty if not set
+   * @return the state
+   * @throws IllegalStateException if the state has not been set
    */
-  public Optional<String> getState() {
-    return state;
+  private String getState() {
+    return state.orElseThrow(() -> new IllegalStateException("State not set"));
   }
 
   /**
@@ -70,7 +69,7 @@ public class EventHandlerGroupBuilder {
    * @return the attribute value
    * @throws IllegalStateException if the attribute has not been set
    */
-  public String getAttribute() {
+  private String getAttribute() {
     return attribute.orElseThrow(() -> new IllegalStateException("Attribute not set"));
   }
 
@@ -89,7 +88,7 @@ public class EventHandlerGroupBuilder {
    * @return the event value
    * @throws IllegalStateException if the event has not been set
    */
-  public String getEvent() {
+  private String getEvent() {
     return event.orElseThrow(() -> new IllegalStateException("Event not set"));
   }
 
