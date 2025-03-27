@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
+import java.util.HashMap;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -23,9 +23,17 @@ public class Patch extends RootSpatialEntity {
    * Create a new patch.
    *
    * @param geometry The geometry of the patch.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public Patch(Geometry geometry) {
-    super(geometry);
+  public Patch(
+      Geometry geometry,
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    super(geometry, name, eventHandlerGroups, attributes);
   }
 
   /**

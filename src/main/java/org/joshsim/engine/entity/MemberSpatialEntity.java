@@ -26,6 +26,9 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    * Create a new spatial entity with the given location.
    *
    * @param parent The parent entity like Patch which houses this entity.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
   public MemberSpatialEntity(
       SpatialEntity parent,
