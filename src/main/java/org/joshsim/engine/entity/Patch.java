@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
+import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -23,9 +23,17 @@ public class Patch extends RootSpatialEntity {
    * Create a new patch.
    *
    * @param geometry The geometry of the patch.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public Patch(Geometry geometry) {
-    super(geometry);
+  public Patch(
+      Geometry geometry,
+      String name,
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
+  ) {
+    super(geometry, name, eventHandlerGroups, attributes);
   }
 
   /**
@@ -34,47 +42,4 @@ public class Patch extends RootSpatialEntity {
   public Geometry getPatchGeometry() {
     return getGeometry();
   }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
-  }
-
 }

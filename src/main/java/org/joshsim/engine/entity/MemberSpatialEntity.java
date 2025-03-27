@@ -1,12 +1,14 @@
 /**
- * Strcture describing entities which are in patches.
+ * A spatial entity which has geometry inherited from a parent entity.
  *
  * @license BSD-3-Clause
  */
 
 package org.joshsim.engine.entity;
 
+import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.EngineValue;
 
 
 /**
@@ -16,16 +18,25 @@ import org.joshsim.engine.geometry.Geometry;
  * entities and spatial information. This specifically refers to those which recieve geometry by
  * being part of another entity like a Patch.</p>
  */
-public abstract class MemberSpatialEntity implements SpatialEntity {
-  
+public abstract class MemberSpatialEntity extends SpatialEntity {
+
   private final SpatialEntity parent;
 
   /**
    * Create a new spatial entity with the given location.
    *
    * @param parent The parent entity like Patch which houses this entity.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public MemberSpatialEntity(SpatialEntity parent) {
+  public MemberSpatialEntity(
+      SpatialEntity parent,
+      String name,
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
+  ) {
+    super(name, eventHandlerGroups, attributes);
     this.parent = parent;
   }
 
@@ -39,7 +50,7 @@ public abstract class MemberSpatialEntity implements SpatialEntity {
     return parent.getGeometry();
   }
 
-  
+
   /**
    * Get the entity that houses this entity.
    *
