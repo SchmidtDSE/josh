@@ -43,7 +43,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Test for EngineBridge which helps decouple the engine from interpreter.
  */
 @ExtendWith(MockitoExtension.class)
-public class EngineBridgeTest {
+public class MinimalEngineBridgeTest {
 
   @Mock private Simulation mockSimulation;
   @Mock private Replicate mockReplicate;
@@ -61,7 +61,7 @@ public class EngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
-    bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new MinimalEngineBridge(mockSimulation, mockReplicate, mockConverter);
   }
 
   @Test

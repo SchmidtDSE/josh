@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.PatchKey;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.simulation.Replicate;
@@ -19,9 +18,9 @@ import org.joshsim.engine.value.Converter;
 
 
 /**
- * Bridge that caches query calls.
+ * Bridge decorator that caches query calls.
  */
-public class QueryCacheEngineBridge extends EngineBridge {
+public class QueryCacheEngineBridge extends MinimalEngineBridge {
 
   private final Map<GeometryMomento, List<PatchKey>> cachedPatchesByGeometry;
 

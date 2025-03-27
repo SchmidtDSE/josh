@@ -17,6 +17,6 @@ public interface InterpreterAction {
    *
    * @param scope The scope in which to apply this action and in which to manipulate memory.
    */
-  InterpreterScope apply(InterpreterScope scope);
+  InterpreterContext apply(InterpreterContext scope);
 
 }
