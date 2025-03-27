@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
  * Tests for the Agent class functionality including inherited behavior.
  */
 public class AgentTest {
-  
+
   private SpatialEntity mockParent;
   private Geometry mockGeometry;
   private EngineValue mockValue;
@@ -45,17 +45,17 @@ public class AgentTest {
     mockParent = mock(SpatialEntity.class);
     mockGeometry = mock(Geometry.class);
     mockValue = mock(EngineValue.class);
-    
+
     when(mockParent.getGeometry()).thenReturn(mockGeometry);
-    
+
     // Initialize maps
     eventHandlers = new HashMap<>();
     EventHandlerGroup handlerGroup = mock(EventHandlerGroup.class);
     eventHandlers.put(EVENT_KEY, handlerGroup);
-    
+
     attributes = new HashMap<>();
     attributes.put(ATTR_NAME, mockValue);
-    
+
     // Create agent instance
     agent = new Agent(mockParent, AGENT_NAME, eventHandlers, attributes);
   }
@@ -110,7 +110,7 @@ public class AgentTest {
   public void testSetAttributeValue() {
     EngineValue newValue = mock(EngineValue.class);
     agent.setAttributeValue("newAttr", newValue);
-    
+
     Optional<EngineValue> result = agent.getAttributeValue("newAttr");
     assertTrue(result.isPresent(), "New attribute should be present");
     assertEquals(newValue, result.get(), "Retrieved value should match set value");
@@ -123,7 +123,7 @@ public class AgentTest {
   public void testLockedSetAttributeValue() {
     agent.lock();
     EngineValue newValue = mock(EngineValue.class);
-    
+
     assertThrows(IllegalStateException.class, () -> {
       agent.setAttributeValue("newAttr", newValue);
     }, "Setting attribute on locked entity should throw exception");
@@ -136,11 +136,11 @@ public class AgentTest {
   public void testLockUnlockCycle() {
     agent.lock();
     agent.unlock();
-    
+
     EngineValue newValue = mock(EngineValue.class);
     // Should not throw exception
     agent.setAttributeValue("newAttr", newValue);
-    
+
     assertEquals(newValue, agent.getAttributeValue("newAttr").get());
   }
 
@@ -154,7 +154,7 @@ public class AgentTest {
     ).get();
     assertEquals(eventHandlers.get(EVENT_KEY), result);
   }
-  
+
   /**
    * Test null handling in constructor.
    */
@@ -163,18 +163,18 @@ public class AgentTest {
     Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null);
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
-    assertTrue(groups.iterator().hasNext(), 
+    assertTrue(groups.iterator().hasNext(),
         "Event handlers should be initialized as empty map when null is provided");
-    assertFalse(nullMapAgent.getAttributeValue("any").isPresent(), 
+    assertFalse(nullMapAgent.getAttributeValue("any").isPresent(),
         "Attributes should be initialized as empty map when null is provided");
   }
-  
+
   /**
    * Test the complete event handlers map is retrievable.
    */
   @Test
   public void testGetAllEventHandlers() {
-    assertEquals(eventHandlers, agent.getEventHandlers(), 
+    assertEquals(eventHandlers, agent.getEventHandlers(),
         "Event handlers map should match the one provided in constructor");
   }
 }

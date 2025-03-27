@@ -30,7 +30,7 @@ public class EventHandlerGroupBuilderTest {
     builder.addEventHandler(mockHandler);
 
     EventHandlerGroup group = builder.build();
-    
+
     assertNotNull(group);
     assertTrue(group.getEventHandlers().iterator().hasNext());
     assertEquals(TEST_STATE, group.getEventKey().getState());
@@ -73,7 +73,7 @@ public class EventHandlerGroupBuilderTest {
   public void testBuildWithoutState() {
     builder.setAttribute(TEST_ATTRIBUTE);
     builder.setEvent(TEST_EVENT);
-    
+
     assertThrows(IllegalStateException.class, () -> builder.build());
   }
 
@@ -81,7 +81,7 @@ public class EventHandlerGroupBuilderTest {
   public void testBuildWithoutAttribute() {
     builder.setState(TEST_STATE);
     builder.setEvent(TEST_EVENT);
-    
+
     assertThrows(IllegalStateException.class, () -> builder.build());
   }
 
@@ -89,7 +89,7 @@ public class EventHandlerGroupBuilderTest {
   public void testBuildWithoutEvent() {
     builder.setState(TEST_STATE);
     builder.setAttribute(TEST_ATTRIBUTE);
-    
+
     assertThrows(IllegalStateException.class, () -> builder.build());
   }
 }

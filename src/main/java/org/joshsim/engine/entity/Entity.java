@@ -39,7 +39,7 @@ public abstract class Entity implements Lockable, AttributeContainer {
       Map<String, EngineValue> attributes
   ) {
     this.name = name;
-    this.eventHandlerGroups = eventHandlerGroups != null 
+    this.eventHandlerGroups = eventHandlerGroups != null
         ? eventHandlerGroups : new HashMap<>();
     this.attributes = attributes != null
         ? attributes : new HashMap<>();
@@ -80,5 +80,5 @@ public abstract class Entity implements Lockable, AttributeContainer {
   public void unlock() {
     lock.unlock();
   }
-  
+
 }

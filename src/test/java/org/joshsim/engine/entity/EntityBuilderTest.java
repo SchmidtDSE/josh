@@ -1,13 +1,13 @@
 package org.joshsim.engine.entity;
 
-import java.util.ArrayList;
-import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,9 +47,9 @@ public class EntityBuilderTest {
     builder.setName(agentName)
         .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
         .addAttribute("agentAttr", mockValue);
-    
+
     Agent agent = builder.buildAgent(mockParent);
-    
+
     assertNotNull(agent);
     assertEquals(agentName, agent.getName());
     assertEquals(mockParent, agent.getParent());
@@ -64,9 +64,9 @@ public class EntityBuilderTest {
   public void testBuildDisturbance() {
     String disturbanceName = "TestDisturbance";
     builder.setName(disturbanceName);
-    
+
     Disturbance disturbance = builder.buildDisturbance(mockParent);
-    
+
     assertNotNull(disturbance);
     assertEquals(disturbanceName, disturbance.getName());
     assertEquals(mockParent, disturbance.getParent());
@@ -80,9 +80,9 @@ public class EntityBuilderTest {
     String patchName = "TestPatch";
     builder.setName(patchName)
         .addAttribute("patchAttr", mockValue);
-    
+
     Patch patch = builder.buildPatch(mockGeometry);
-    
+
     assertNotNull(patch);
     assertEquals(patchName, patch.getName());
     assertEquals(mockGeometry, patch.getGeometry());
@@ -98,9 +98,9 @@ public class EntityBuilderTest {
     builder.setName(simName)
         .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
         .addAttribute("simAttr", mockValue);
-    
+
     Simulation sim = builder.buildSimulation();
-    
+
     assertNotNull(sim);
     assertEquals(simName, sim.getName());
     assertLengthEquals(1, sim.getEventHandlers());
@@ -115,15 +115,15 @@ public class EntityBuilderTest {
     builder.setName("TestEntity")
         .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
         .addAttribute("attr", mockValue);
-    
+
     Agent agent = builder.buildAgent(mockParent);
-    
+
     // Modify the builder's maps after building
     EventKey newKey = new EventKey("newState", "newAttribute", "newEvent");
     EventHandlerGroup newHandler = mock(EventHandlerGroup.class);
     builder.addEventHandlerGroup(newKey, newHandler);
     builder.addAttribute("newAttr", mockValue);
-    
+
     // Agent should not have the new entries
     assertLengthEquals(1, agent.getEventHandlers());
     assertThrows(ClassCastException.class, () -> agent.getEventHandlers(

@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.bridge;
 
-import org.joshsim.engine.entity.EventKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,6 +17,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.SpatialEntity;
