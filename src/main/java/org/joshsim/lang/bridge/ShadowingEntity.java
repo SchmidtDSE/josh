@@ -217,7 +217,7 @@ public class ShadowingEntity {
    * @return the PatchKey of the patch that contains this entity.
    */
   public PatchKey getPatchKey() {
-    Patch patch = (Patch) getHere().getRaw();
+    Patch patch = (Patch) getHere().getInner();
     return patch.getKey();
   }
 
@@ -235,7 +235,7 @@ public class ShadowingEntity {
    *
    * @return entity that is decorated by this object.
    */
-  protected SpatialEntity getRaw() {
+  protected SpatialEntity getInner() {
     return inner;
   }
 
