@@ -1,4 +1,8 @@
-
+/**
+ * Tests for a momento structure for Geometry.
+ *
+ * @license BSD-3-Clause
+ */
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,6 +19,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Tests for a momento structure for Geometry.
+ */
 @ExtendWith(MockitoExtension.class)
 public class GeometryMomentoTest {
 
@@ -27,6 +34,9 @@ public class GeometryMomentoTest {
     private BigDecimal centerY;
     private BigDecimal diameter;
 
+    /**
+     * Create common structures for tests.
+     */
     @BeforeEach
     void setUp() {
         centerX = new BigDecimal("10.0");

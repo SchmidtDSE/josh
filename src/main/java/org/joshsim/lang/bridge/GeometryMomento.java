@@ -83,15 +83,15 @@ public class GeometryMomento {
    *     Optional otherwise.
    */
   private Optional<MomentoShapeBuilder> getBuilder() {
-    switch (shapeName) {
-      case "sqaure": return Optional.of(
+    return switch (shapeName) {
+      case "square" -> Optional.of(
         () -> GeometryFactory.createSquare(diameter, centerX, centerY)
       );
-      case "circle": return Optional.of(
+      case "circle" -> Optional.of(
         () -> GeometryFactory.createCircle(diameter, centerX, centerY)
       );
-      default: return Optional.empty();
-    }
+      default -> Optional.empty();
+    };
   }
 
   /**
