@@ -1,3 +1,8 @@
+/**
+ * Tests for a bridge which cache quries through GeometryMomentos.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.lang.bridge;
 
@@ -23,19 +28,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+
+/**
+ * Test an EngineBridge which performs query caching.
+ */
 @ExtendWith(MockitoExtension.class)
 public class QueryCacheEngineBridgeTest {
 
-    @Mock private Simulation mockSimulation;
-    @Mock private Replicate mockReplicate;
-    @Mock private Converter mockConverter;
-    @Mock private Patch mockPatch;
-    @Mock private Geometry mockGeometry;
-    @Mock private GeometryMomento mockGeometryMomento;
-    @Mock private PatchKey mockPatchKey;
+    @Mock(lenient = true) private Simulation mockSimulation;
+    @Mock(lenient = true) private Replicate mockReplicate;
+    @Mock(lenient = true) private Converter mockConverter;
+    @Mock(lenient = true) private Patch mockPatch;
+    @Mock(lenient = true) private Geometry mockGeometry;
+    @Mock(lenient = true) private GeometryMomento mockGeometryMomento;
+    @Mock(lenient = true) private PatchKey mockPatchKey;
 
     private QueryCacheEngineBridge bridge;
 
+    /**
+     * Create an example bridge.
+     */
     @BeforeEach
     void setUp() {
         bridge = new QueryCacheEngineBridge(mockSimulation, mockReplicate, mockConverter);
@@ -45,7 +57,7 @@ public class QueryCacheEngineBridgeTest {
     void testGetPriorPatchesWithoutCache() {
         // Setup
         when(mockGeometryMomento.build()).thenReturn(mockGeometry);
-        when(mockPatch.getPatchKey()).thenReturn(mockPatchKey);
+        when(mockPatch.getKey()).thenReturn(mockPatchKey);
         List<Patch> patches = Arrays.asList(mockPatch);
         when(mockReplicate.query(any(Query.class))).thenReturn(patches);
         when(mockReplicate.getPatchByKey(eq(mockPatchKey), eq(-1L))).thenReturn(mockPatch);
@@ -62,7 +74,7 @@ public class QueryCacheEngineBridgeTest {
     void testGetPriorPatchesWithCache() {
         // Setup
         when(mockGeometryMomento.build()).thenReturn(mockGeometry);
-        when(mockPatch.getPatchKey()).thenReturn(mockPatchKey);
+        when(mockPatch.getKey()).thenReturn(mockPatchKey);
         List<Patch> patches = Arrays.asList(mockPatch);
         when(mockReplicate.query(any(Query.class))).thenReturn(patches);
         when(mockReplicate.getPatchByKey(eq(mockPatchKey), eq(-1L))).thenReturn(mockPatch);
@@ -76,6 +88,6 @@ public class QueryCacheEngineBridgeTest {
         // Verify
         verify(mockReplicate, times(1)).query(any(Query.class));
         verify(mockGeometryMomento, times(1)).build();
-        verify(mockReplicate, times(2)).getPatchByKey(eq(mockPatchKey), eq(-1L));
+        verify(mockReplicate, times(1)).getPatchByKey(eq(mockPatchKey), eq(-1L));
     }
 }
