@@ -7,8 +7,12 @@
 package org.joshsim.engine.entity;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.joshsim.engine.value.EngineValue;
+
 
 /**
  * Represents a base entity that is mutable.
@@ -16,10 +20,11 @@ import org.joshsim.engine.value.EngineValue;
  * and supports locking to be thread-safe.
  */
 public abstract class Entity implements Lockable, AttributeContainer {
-  String name;
-  HashMap<EventKey, EventHandlerGroup> eventHandlerGroups;
-  HashMap<String, EngineValue> attributes;
-  boolean isLocked;
+
+  private final String name;
+  private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
+  private final Map<String, EngineValue> attributes;
+  private final Lock lock;
 
   /**
    * Constructor for Entity.
@@ -38,7 +43,7 @@ public abstract class Entity implements Lockable, AttributeContainer {
         ? eventHandlerGroups : new HashMap<>();
     this.attributes = attributes != null
         ? attributes : new HashMap<>();
-    isLocked = false;
+    lock = new ReentrantLock();
   }
 
   @Override
@@ -47,13 +52,13 @@ public abstract class Entity implements Lockable, AttributeContainer {
   }
 
   @Override
-  public HashMap<EventKey, EventHandlerGroup> getEventHandlers() {
-    return eventHandlerGroups;
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    return eventHandlerGroups.values();
   }
 
   @Override
   public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
-    return Optional.of(eventHandlerGroups.get(eventKey));
+    return Optional.ofNullable(eventHandlerGroups.get(eventKey));
   }
 
   @Override
@@ -63,22 +68,17 @@ public abstract class Entity implements Lockable, AttributeContainer {
 
   @Override
   public void setAttributeValue(String name, EngineValue value) {
-    if (isLocked) {
-      throw new IllegalStateException("Entity is locked");
-    }
-    isLocked = true;
     attributes.put(name, value);
-    isLocked = false;
   }
 
   @Override
   public void lock() {
-    isLocked = true;
+    lock.lock();
   }
 
   @Override
   public void unlock() {
-    isLocked = false;
+    lock.unlock();
   }
   
 }

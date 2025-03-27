@@ -47,8 +47,7 @@ public class PatchTest {
   public void testConstructor() {
     assertEquals(patchName, patch.getName());
     assertEquals(mockGeometry, patch.getGeometry());
-    assertEquals(attributes, patch.attributes);
-    assertEquals(eventHandlerGroups, patch.eventHandlerGroups);
+    assertTrue(patch.getAttributeValue("testAttribute").isPresent());
   }
 
   /**

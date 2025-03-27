@@ -90,7 +90,7 @@ public class ShadowingEntityTest {
 
     EventKey eventKey = new EventKey("", attrName, substepName);
     when(mockSpatialEntity.getEventHandlers(eventKey))
-        .thenReturn(Arrays.asList(mockEventHandlerGroup));
+        .thenReturn(Optional.of(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
     Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
