@@ -12,7 +12,7 @@ import java.util.Optional;
 
 /**
  * Builder class for creating {@link EventHandlerGroup} instances.
- * 
+ *
  * <p>This builder manages collections of event handlers along with their associated state,
  * attribute, and event information. Use this class to construct properly configured
  * EventHandlerGroup objects.
@@ -30,8 +30,8 @@ public class EventHandlerGroupBuilder {
    */
   public EventHandlerGroup build() {
     return new EventHandlerGroup(
-      eventHandlers,
-      new EventKey(getState(), getAttribute(), getEvent())
+        eventHandlers,
+        new EventKey(getState(), getAttribute(), getEvent())
     );
   }
 

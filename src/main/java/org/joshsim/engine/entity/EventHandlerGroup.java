@@ -39,7 +39,7 @@ public class EventHandlerGroup {
     return eventHandlers;
   }
 
-  
+
   /**
    * Get the event key associated with this group of event handlers.
    *

@@ -1,7 +1,10 @@
 
 package org.joshsim.engine.entity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
@@ -9,6 +12,9 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for a group of event handlers related by mutual conditons.
+ */
 public class EventHandlerGroupTest {
   private List<EventHandler> eventHandlers;
   private EventKey eventKey;
@@ -17,6 +23,9 @@ public class EventHandlerGroupTest {
   private static final String TEST_ATTRIBUTE = "testAttribute";
   private static final String TEST_EVENT = "testEvent";
 
+  /**
+   * Setup mock event handler groups.
+   */
   @BeforeEach
   public void setUp() {
     eventHandlers = new ArrayList<>();

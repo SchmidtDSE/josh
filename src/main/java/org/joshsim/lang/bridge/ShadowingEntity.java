@@ -31,7 +31,7 @@ import org.joshsim.engine.value.EngineValue;
  */
 public class ShadowingEntity {
 
-  private final String DEFAULT_STATE_STR = "";
+  private static final String DEFAULT_STATE_STR = "";
 
   private final SpatialEntity inner;
   private final ShadowingEntity here;

@@ -18,7 +18,7 @@ import org.joshsim.engine.value.EngineValue;
  */
 public abstract class RootSpatialEntity extends SpatialEntity {
   private final Geometry geometry;
-  
+
   /**
    * Constructs a RootSpatialEntity with the specified geometry.
    *
@@ -36,7 +36,7 @@ public abstract class RootSpatialEntity extends SpatialEntity {
     super(name, eventHandlerGroups, attributes);
     this.geometry = geometry;
   }
-  
+
   @Override
   public Geometry getGeometry() {
     return geometry;

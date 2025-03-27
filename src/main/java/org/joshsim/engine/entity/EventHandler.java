@@ -33,7 +33,7 @@ public class EventHandler {
     this.attributeName = attributeName;
     this.eventName = eventName;
     this.conditional = conditional;
-  } 
+  }
 
   /**
    * Get the name of the attribute associated with this event handler.

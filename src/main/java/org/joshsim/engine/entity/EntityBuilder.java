@@ -69,8 +69,8 @@ public class EntityBuilder {
    * @param group the event handler group to add
    * @return this builder for method chaining
    */
-  public EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup eventHandlerGroup) {
-    eventHandlerGroups.put(eventKey, eventHandlerGroup);
+  public EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup group) {
+    eventHandlerGroups.put(eventKey, group);
     return this;
   }
 
@@ -122,7 +122,6 @@ public class EntityBuilder {
   /**
    * Build a simulation instance.
    *
-   * @param parent The entity like Patch that this will be part of.
    * @return A constructed simulation instance
    */
   public Simulation buildSimulation() {

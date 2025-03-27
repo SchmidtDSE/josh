@@ -56,7 +56,7 @@ public class EventKey {
     this.attribute = attribute;
     this.event = event;
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -66,11 +66,11 @@ public class EventKey {
       return false;
     }
     EventKey eventKey = (EventKey) o;
-    return Objects.equals(state, eventKey.state) 
+    return Objects.equals(state, eventKey.state)
           && Objects.equals(attribute, eventKey.attribute)
           && Objects.equals(event, eventKey.event);
   }
-  
+
   @Override
   public int hashCode() {
     return Objects.hash(state, attribute, event);

@@ -19,7 +19,7 @@ import org.joshsim.engine.value.EngineValue;
  * being part of another entity like a Patch.</p>
  */
 public abstract class MemberSpatialEntity extends SpatialEntity {
-  
+
   private final SpatialEntity parent;
 
   /**
@@ -50,7 +50,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
     return parent.getGeometry();
   }
 
-  
+
   /**
    * Get the entity that houses this entity.
    *
