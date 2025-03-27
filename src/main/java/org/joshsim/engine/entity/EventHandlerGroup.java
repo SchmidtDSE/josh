@@ -18,13 +18,22 @@ import java.util.Optional;
 public class EventHandlerGroup {
   private final Iterable<EventHandler> eventHandlers;
   private final Optional<String> state;
+  private final String attribute;
+  private final String event;
 
   /**
    * Constructor for an EventHandlerGroup.
    */
-  public EventHandlerGroup(Iterable<EventHandler> eventHandlers, Optional<String> state) {
+  public EventHandlerGroup(
+      Iterable<EventHandler> eventHandlers,
+      Optional<String> state, 
+      String attribute,
+      String event
+  ) {
     this.eventHandlers = eventHandlers;
     this.state = state;
+    this.attribute = attribute;
+    this.event = event;
   }
 
   /**
@@ -43,5 +52,23 @@ public class EventHandlerGroup {
    */
   Optional<String> getState() {
     return state;
+  }
+
+  /**
+   * Get the attribute associated with this event handler group.
+   *
+   * @return the attribute String
+   */
+  String getAttribute() {
+    return attribute;
+  }
+
+  /**
+   * Get the event associated with this event handler group.
+   *
+   * @return the event String
+   */
+  String getEvent() {
+    return event;
   }
 }

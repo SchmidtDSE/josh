@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class EventHandlerGroupBuilder {
-  ArrayList<EventHandler> eventHandlers;
+  ArrayList<EventHandler> eventHandlers = new ArrayList<>();
   Optional<String> state;
 
   public EventHandlerGroup build() {
