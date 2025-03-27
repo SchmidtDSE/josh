@@ -18,7 +18,7 @@ public interface Lockable {
   /**
    * Acquire a global lock on this entity for thread safety.
    *
-   * <p>This is a convenience method for client code and is not automatically  enforced by getters
+   * <p>This is a convenience method for client code and is not automatically enforced by getters
    * and setters. The method will block until the lock is acquired.</p>
    */
   void lock();

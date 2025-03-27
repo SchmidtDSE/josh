@@ -34,12 +34,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 
-  @Mock private Patch mockPatch;
-  @Mock private SpatialEntity mockSpatialEntity;
-  @Mock private Simulation mockSimulation;
-  @Mock private EventHandlerGroup mockEventHandlerGroup;
-  @Mock private EventHandler mockEventHandler;
-  @Mock private EngineValue mockEngineValue;
+  @Mock(lenient = true) private Patch mockPatch;
+  @Mock(lenient = true) private SpatialEntity mockSpatialEntity;
+  @Mock(lenient = true) private Simulation mockSimulation;
+  @Mock(lenient = true) private EventHandlerGroup mockEventHandlerGroup;
+  @Mock(lenient = true) private EventHandler mockEventHandler;
+  @Mock(lenient = true) private EngineValue mockEngineValue;
 
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
@@ -87,7 +87,7 @@ public class ShadowingEntityTest {
     String attrName = "testAttr";
     String substepName = "testSubstep";
 
-    EventKey eventKey = new EventKey(substepName, attrName, substepName);
+    EventKey eventKey = new EventKey("", attrName, substepName);
     when(mockSpatialEntity.getEventHandlers(eventKey))
         .thenReturn(Optional.of(mockEventHandlerGroup));
 
