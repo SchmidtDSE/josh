@@ -6,8 +6,10 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.Distribution;
+import org.joshsim.engine.value.EngineValue;
 
 
 /**
@@ -17,6 +19,20 @@ import org.joshsim.engine.value.Distribution;
  * values based on a geometry and attribute-sensitive paths.</p>
  */
 public abstract class ExternalResource extends Entity {
+  /**
+   * Constructor for a ExternalResource, which allows access to external data to influence Entities.
+   *
+   * @param name Name of the entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
+   * @param attributes A map of attribute names to their corresponding EngineValues.
+   */
+  public ExternalResource(
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    super(name, eventHandlerGroups, attributes);
+  }
 
   /**
    * Get distribution values for the specified geometry.
