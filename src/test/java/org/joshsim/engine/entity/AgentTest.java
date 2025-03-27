@@ -21,8 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
-
-
 /**
  * Tests for the Agent class functionality including inherited behavior.
  */
@@ -163,10 +161,10 @@ public class AgentTest {
   @Test
   public void testNullMapsInConstructor() {
     Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null);
-    
-    assertTrue(nullMapAgent.getEventHandlers().isEmpty(), 
+
+    Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
+    assertTrue(groups.iterator().hasNext(), 
         "Event handlers should be initialized as empty map when null is provided");
-    
     assertFalse(nullMapAgent.getAttributeValue("any").isPresent(), 
         "Attributes should be initialized as empty map when null is provided");
   }

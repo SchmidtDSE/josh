@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -30,8 +30,8 @@ public abstract class RootSpatialEntity extends SpatialEntity {
   public RootSpatialEntity(
       Geometry geometry,
       String name,
-      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
-      HashMap<String, EngineValue> attributes
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
   ) {
     super(name, eventHandlerGroups, attributes);
     this.geometry = geometry;

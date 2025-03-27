@@ -35,8 +35,8 @@ public abstract class Entity implements Lockable, AttributeContainer {
    */
   public Entity(
       String name,
-      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
-      HashMap<String, EngineValue> attributes
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
   ) {
     this.name = name;
     this.eventHandlerGroups = eventHandlerGroups != null 

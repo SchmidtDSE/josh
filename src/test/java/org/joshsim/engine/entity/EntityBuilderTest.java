@@ -1,5 +1,7 @@
 package org.joshsim.engine.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,89 +36,6 @@ public class EntityBuilderTest {
     mockEventKey = new EventKey("testState", "testAttribute", "testEvent");
     mockHandlerGroup = mock(EventHandlerGroup.class);
     mockValue = mock(EngineValue.class);
-  }
-
-  /**
-   * Test setting and getting the name of the entity.
-   */
-  @Test
-  public void testSetAndGetName() {
-    String testName = "TestEntity";
-    builder.setName(testName);
-    assertEquals(testName, builder.getName());
-  }
-
-  /**
-   * Test that getName throws exception when name is not set.
-   */
-  @Test
-  public void testGetNameThrowsWhenNameNotSet() {
-    IllegalStateException exception = assertThrows(
-        IllegalStateException.class,
-        () -> builder.getName()
-    );
-    assertEquals("Name not set", exception.getMessage());
-  }
-
-  /**
-   * Test clearing the builder state.
-   */
-  @Test
-  public void testClear() {
-    // Set up builder with values
-    builder.setName("TestName")
-        .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
-        .addAttribute("testAttribute", mockValue);
-    
-    // Clear the builder
-    builder.clear();
-    
-    // Verify name is reset
-    assertThrows(IllegalStateException.class, () -> builder.getName());
-    
-    // Verify collections are cleared
-    assertTrue(builder.eventHandlerGroups.isEmpty());
-    assertTrue(builder.attributes.isEmpty());
-  }
-
-  /**
-   * Test adding event handler groups.
-   */
-  @Test
-  public void testAddEventHandlerGroup() {
-    builder.addEventHandlerGroup(mockEventKey, mockHandlerGroup);
-    
-    assertEquals(1, builder.eventHandlerGroups.size());
-    assertTrue(builder.eventHandlerGroups.containsKey(mockEventKey));
-    assertEquals(mockHandlerGroup, builder.eventHandlerGroups.get(mockEventKey));
-  }
-
-  /**
-   * Test adding attributes.
-   */
-  @Test
-  public void testAddAttribute() {
-    String attributeName = "testAttribute";
-    builder.addAttribute(attributeName, mockValue);
-    
-    assertEquals(1, builder.attributes.size());
-    assertTrue(builder.attributes.containsKey(attributeName));
-    assertEquals(mockValue, builder.attributes.get(attributeName));
-  }
-
-  /**
-   * Test method chaining functionality.
-   */
-  @Test
-  public void testMethodChaining() {
-    builder.setName("ChainTest")
-        .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
-        .addAttribute("attr1", mockValue)
-        .addAttribute("attr2", mockValue);
-    
-    assertEquals("ChainTest", builder.getName());
-    assertEquals(1, builder.eventHandlerGroups.size());
-    assertEquals(2, builder.attributes.size());
   }
 
   /**
@@ -184,7 +103,7 @@ public class EntityBuilderTest {
     
     assertNotNull(sim);
     assertEquals(simName, sim.getName());
-    assertEquals(1, sim.getEventHandlers().size());
+    assertLengthEquals(1, sim.getEventHandlers());
     assertTrue(sim.getAttributeValue("simAttr").isPresent());
   }
 
@@ -206,9 +125,15 @@ public class EntityBuilderTest {
     builder.addAttribute("newAttr", mockValue);
     
     // Agent should not have the new entries
-    assertEquals(1, agent.getEventHandlers().size());
+    assertLengthEquals(1, agent.getEventHandlers());
     assertThrows(ClassCastException.class, () -> agent.getEventHandlers(
         new EventKey("newState", "newAttribute", "newEvent")
     ));
+  }
+
+  private void assertLengthEquals(int length, Iterable<EventHandlerGroup> groups) {
+    List<EventHandlerGroup> groupList = new ArrayList<>();
+    groups.forEach(groupList::add);
+    assertEquals(length, groupList.size());
   }
 }

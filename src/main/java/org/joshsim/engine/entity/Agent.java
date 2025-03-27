@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -27,8 +27,8 @@ public class Agent extends MemberSpatialEntity {
   public Agent(
       SpatialEntity parent,
       String name,
-      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
-      HashMap<String, EngineValue> attributes
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
   ) {
     super(parent, name, eventHandlerGroups, attributes);
   }
