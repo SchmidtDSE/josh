@@ -61,7 +61,7 @@ public class EntityScope implements Scope {
    * @return Set of attribute names found in the entity's event handlers.
    */
   private Set<String> getAttributes(Entity target) {
-    return StreamSupport.stream(target.getEventHandlers().spliterator(), false)
+    return StreamSupport.stream(target.getEventHandlers().values().spliterator(), false)
       .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
       .map(handler -> handler.getAttributeName())
       .collect(Collectors.toSet());

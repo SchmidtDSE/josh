@@ -40,7 +40,7 @@ public class EventHandler {
    *
    * @return the attribute name
    */
-  String getAttributeName() {
+  public String getAttributeName() {
     return attributeName;
   }
 
@@ -49,7 +49,7 @@ public class EventHandler {
    *
    * @return the event name
    */
-  String getEventName() {
+  public String getEventName() {
     return eventName;
   }
 
@@ -58,7 +58,7 @@ public class EventHandler {
    *
    * @return an Optional containing the CompiledSelector if one exists, empty otherwise
    */
-  Optional<CompiledSelector> getConditional() {
+  public Optional<CompiledSelector> getConditional() {
     return conditional;
   }
 }

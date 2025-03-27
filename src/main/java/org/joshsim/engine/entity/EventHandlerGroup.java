@@ -41,7 +41,7 @@ public class EventHandlerGroup {
    *
    * @return an Iterable of EventHandler objects
    */
-  Iterable<EventHandler> getEventHandlers() {
+  public Iterable<EventHandler> getEventHandlers() {
     return eventHandlers;
   }
 
