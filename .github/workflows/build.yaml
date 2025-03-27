@@ -119,3 +119,38 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
+  deploy:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Deploy to SFTP
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    needs: [buildJava, buildWasm]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set branch name
+        id: branch
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "name=$BRANCH" >> $GITHUB_OUTPUT
+      - name: Download fatJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+          path: ./deploy
+      - name: Download WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm
+          path: ./deploy/wasm
+      - name: Create WASM zip
+        run: cd ./deploy && zip -r wasm.zip wasm/
+      - name: Upload to SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './deploy'
+          remotePath: './joshsim.org/dist/${{ steps.branch.outputs.name }}'
