@@ -16,7 +16,33 @@ public class EventKey {
   private final String state;
   private final String attribute;
   private final String event;
-  
+
+  /**
+   * Gets the state component of this event key.
+   *
+   * @return the state string, or empty if default state
+   */
+  public String getState() {
+    return state;
+  }
+
+  /**
+   * Gets the attribute component of this event key.
+   *
+   * @return the attribute string
+   */
+  public String getAttribute() {
+    return attribute;
+  }
+
+  /**
+   * Gets the event component of this event key.
+   *
+   * @return the event string
+   */
+  public String getEvent() {
+    return event;
+  }
 
   /**
    * Composite key class for mapping state x attribute x event to an EventHandlerGroup.
