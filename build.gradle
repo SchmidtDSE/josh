@@ -28,7 +28,6 @@ dependencies {
 
   // Apache SIS for coordinate system transformations and COG support
   implementation("org.apache.sis.core:sis-referencing:1.4")
-  // runtimeOnly("org.apache.sis.non-free:sis-embedded-data:1.4")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))

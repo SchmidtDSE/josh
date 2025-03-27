@@ -12,6 +12,7 @@ import java.util.Set;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.PatchKey;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.func.EntityScope;
@@ -211,12 +212,31 @@ public class ShadowingEntity {
   }
 
   /**
+   * Get the key of the patch that contians this entity.
+   *
+   * @return the PatchKey of the patch that contains this entity.
+   */
+  public PatchKey getPatchKey() {
+    Patch patch = (Patch) getHere().getInner();
+    return patch.getKey();
+  }
+
+  /**
    * Get the simulation context for this entity.
    *
    * @return the Simulation object that provides context for this entity.
    */
   public Simulation getMeta() {
     return meta;
+  }
+
+  /**
+   * Get the underlying entity.
+   *
+   * @return entity that is decorated by this object.
+   */
+  protected SpatialEntity getInner() {
+    return inner;
   }
 
   /**

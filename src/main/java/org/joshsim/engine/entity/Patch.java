@@ -10,6 +10,7 @@ import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
+
 /**
  * Spatial entity representing a patch in a simulation.
  *
@@ -37,9 +38,11 @@ public class Patch extends RootSpatialEntity {
   }
 
   /**
-   * Get the geometry of the patch.
+   * Get a key that uniquely identifies this patch within a replicate.
+   *
+   * @return Uniquely identifying key which can be hashed and used in equality operations.
    */
-  public Geometry getPatchGeometry() {
-    return getGeometry();
+  public PatchKey getKey() {
+    return new PatchKey(this);
   }
 }

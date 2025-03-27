@@ -70,8 +70,7 @@ public class PatchTest {
    */
   @Test
   public void testGetPatchGeometry() {
-    assertEquals(mockGeometry, patch.getPatchGeometry());
-    assertEquals(patch.getGeometry(), patch.getPatchGeometry());
+    assertEquals(mockGeometry, patch.getGeometry());
   }
 
   /**
