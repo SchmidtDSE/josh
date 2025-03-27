@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +32,26 @@ public class EntityBuilder {
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
     attributes = new HashMap<>();
+  }
+
+  /**
+   * Creates an immutable copy of the event handler groups map.
+   *
+   * @return an immutable copy of the event handler groups
+   */
+  private Map<EventKey, EventHandlerGroup> createImmutableEventHandlerGroupsCopy() {
+    Map<EventKey, EventHandlerGroup> copy = new HashMap<>(eventHandlerGroups);
+    return Collections.unmodifiableMap(copy);
+  }
+
+  /**
+   * Creates an immutable copy of the attributes map.
+   *
+   * @return an immutable copy of the attributes
+   */
+  private Map<String, EngineValue> createImmutableAttributesCopy() {
+    Map<String, EngineValue> copy = new HashMap<>(attributes);
+    return Collections.unmodifiableMap(copy);
   }
 
   /**
@@ -93,7 +114,11 @@ public class EntityBuilder {
    * @return A constructed agent entity
    */
   public Agent buildAgent(SpatialEntity parent) {
-    Agent agent = new Agent(parent, getName(), eventHandlerGroups, attributes);
+    Agent agent = new Agent(
+        parent, 
+        getName(), 
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return agent;
   }
 
@@ -104,7 +129,11 @@ public class EntityBuilder {
    * @return A constructed disturbance entity
    */
   public Disturbance buildDisturbance(SpatialEntity parent) {
-    Disturbance disturbance = new Disturbance(parent, getName(), eventHandlerGroups, attributes);
+    Disturbance disturbance = new Disturbance(
+        parent, 
+        getName(), 
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return disturbance;
   }
 
@@ -115,7 +144,11 @@ public class EntityBuilder {
    * @return A constructed patch entity
    */
   public Patch buildPatch(Geometry geometry) {
-    Patch patch = new Patch(geometry, getName(), eventHandlerGroups, attributes);
+    Patch patch = new Patch(
+        geometry, 
+        getName(), 
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return patch;
   }
 
@@ -125,7 +158,10 @@ public class EntityBuilder {
    * @return A constructed simulation instance
    */
   public Simulation buildSimulation() {
-    Simulation simulation = new Simulation(getName(), eventHandlerGroups, attributes);
+    Simulation simulation = new Simulation(
+        getName(), 
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return simulation;
   }
 }
