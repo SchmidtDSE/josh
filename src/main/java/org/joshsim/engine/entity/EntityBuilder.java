@@ -115,8 +115,8 @@ public class EntityBuilder {
    */
   public Agent buildAgent(SpatialEntity parent) {
     Agent agent = new Agent(
-        parent, 
-        getName(), 
+        parent,
+        getName(),
         createImmutableEventHandlerGroupsCopy(),
         createImmutableAttributesCopy());
     return agent;
@@ -130,8 +130,8 @@ public class EntityBuilder {
    */
   public Disturbance buildDisturbance(SpatialEntity parent) {
     Disturbance disturbance = new Disturbance(
-        parent, 
-        getName(), 
+        parent,
+        getName(),
         createImmutableEventHandlerGroupsCopy(),
         createImmutableAttributesCopy());
     return disturbance;
@@ -145,8 +145,8 @@ public class EntityBuilder {
    */
   public Patch buildPatch(Geometry geometry) {
     Patch patch = new Patch(
-        geometry, 
-        getName(), 
+        geometry,
+        getName(),
         createImmutableEventHandlerGroupsCopy(),
         createImmutableAttributesCopy());
     return patch;
@@ -159,7 +159,7 @@ public class EntityBuilder {
    */
   public Simulation buildSimulation() {
     Simulation simulation = new Simulation(
-        getName(), 
+        getName(),
         createImmutableEventHandlerGroupsCopy(),
         createImmutableAttributesCopy());
     return simulation;
