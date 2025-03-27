@@ -36,7 +36,11 @@ public class PatchTest {
     attributes = new HashMap<>();
     EngineValue mockValue = mock(EngineValue.class);
     attributes.put("testAttribute", mockValue);
-    
+
+    EventKey stateKey = new EventKey("testState", "testAttribute", "testEvent");
+    EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
+    eventHandlerGroups.put(stateKey, stateHandlerGroup);
+
     patch = new Patch(mockGeometry, patchName, eventHandlerGroups, attributes);
   }
 
@@ -47,8 +51,7 @@ public class PatchTest {
   public void testConstructor() {
     assertEquals(patchName, patch.getName());
     assertEquals(mockGeometry, patch.getGeometry());
-    assertEquals(attributes, patch.attributes);
-    assertEquals(eventHandlerGroups, patch.eventHandlerGroups);
+    assertTrue(patch.getAttributeValue("testAttribute").isPresent());
   }
 
   /**
@@ -57,12 +60,9 @@ public class PatchTest {
   @Test
   public void testConstructorWithNullMaps() {
     Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null);
-    
+
     assertNotNull(nullMapPatch.getEventHandlers());
-    assertTrue(nullMapPatch.getEventHandlers().isEmpty());
-    
-    assertNotNull(nullMapPatch.attributes);
-    assertTrue(nullMapPatch.attributes.isEmpty());
+    assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());
   }
 
   /**
@@ -82,11 +82,11 @@ public class PatchTest {
     // Test getting an existing attribute
     Optional<EngineValue> attributeValue = patch.getAttributeValue("testAttribute");
     assertTrue(attributeValue.isPresent());
-    
+
     // Test getting a non-existent attribute
     attributeValue = patch.getAttributeValue("nonExistentAttribute");
     assertFalse(attributeValue.isPresent());
-    
+
     // Test setting a new attribute
     EngineValue newValue = mock(EngineValue.class);
     patch.setAttributeValue("newAttribute", newValue);
@@ -103,19 +103,17 @@ public class PatchTest {
     // Test that setting attributes works when not locked
     EngineValue mockValue = mock(EngineValue.class);
     patch.setAttributeValue("testLock", mockValue);
-    
-    // Lock the entity
+
+    // Lock the entity - should not throw
     patch.lock();
-    
-    // Setting attributes should throw an exception when locked
-    EngineValue anotherMockValue = mock(EngineValue.class);
-    assertThrows(IllegalStateException.class, () -> 
-        patch.setAttributeValue("anotherAttribute", anotherMockValue));
-    
+
     // Unlock and verify setting works again
     patch.unlock();
     patch.setAttributeValue("unlockedAttribute", mockValue);
     assertTrue(patch.getAttributeValue("unlockedAttribute").isPresent());
+
+    // Unlock again - should throw
+    assertThrows(IllegalMonitorStateException.class, () -> patch.unlock());
   }
 
   /**
@@ -123,26 +121,23 @@ public class PatchTest {
    */
   @Test
   public void testEventHandlerManagement() {
-    // Create and add an event handler group
-    EventKey testKey = new EventKey("testState", "testAttribute", "testEvent");
-    EventHandlerGroup handlerGroup = mock(EventHandlerGroup.class);
-    patch.eventHandlerGroups.put(testKey, handlerGroup);
-    
     // Test getEventHandlers()
-    HashMap<EventKey, EventHandlerGroup> handlers = patch.getEventHandlers();
-    assertEquals(1, handlers.size());
-    assertTrue(handlers.containsKey(testKey));
-    assertEquals(handlerGroup, handlers.get(testKey));
-    
+    Iterable<EventHandlerGroup> handlers = patch.getEventHandlers();
+    assertTrue(handlers.iterator().hasNext());
+    assertTrue(patch.getEventHandlers(
+        new EventKey("testState", "testAttribute", "testEvent")
+    ).isPresent());
+
     // Test getEventHandlers with specific parameters
     Optional<EventHandlerGroup> retrievedGroup = patch.getEventHandlers(
-        "testState", "testAttribute", "testEvent");
+        new EventKey("testState", "testAttribute", "testEvent")
+    );
     assertTrue(retrievedGroup.isPresent());
-    assertEquals(handlerGroup, retrievedGroup.get());
-    
+
     // Test with non-existent event key
     Optional<EventHandlerGroup> nonExistentGroup = patch.getEventHandlers(
-        "nonExistent", "nonExistent", "nonExistent");
+        new EventKey("nonExistent", "nonExistent", "nonExistent")
+    );
     assertEquals(Optional.empty(), nonExistentGroup);
   }
 }

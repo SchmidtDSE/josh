@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -19,7 +19,7 @@ import org.joshsim.engine.value.EngineValue;
  * being part of another entity like a Patch.</p>
  */
 public abstract class MemberSpatialEntity extends SpatialEntity {
-  
+
   private final SpatialEntity parent;
 
   /**
@@ -33,8 +33,8 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
   public MemberSpatialEntity(
       SpatialEntity parent,
       String name,
-      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
-      HashMap<String, EngineValue> attributes
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
   ) {
     super(name, eventHandlerGroups, attributes);
     this.parent = parent;
@@ -50,7 +50,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
     return parent.getGeometry();
   }
 
-  
+
   /**
    * Get the entity that houses this entity.
    *

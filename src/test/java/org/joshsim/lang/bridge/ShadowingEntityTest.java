@@ -8,7 +8,6 @@ package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -18,6 +17,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.SpatialEntity;
@@ -34,12 +34,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 
-  @Mock private Patch mockPatch;
-  @Mock private SpatialEntity mockSpatialEntity;
-  @Mock private Simulation mockSimulation;
-  @Mock private EventHandlerGroup mockEventHandlerGroup;
-  @Mock private EventHandler mockEventHandler;
-  @Mock private EngineValue mockEngineValue;
+  @Mock(lenient = true) private Patch mockPatch;
+  @Mock(lenient = true) private SpatialEntity mockSpatialEntity;
+  @Mock(lenient = true) private Simulation mockSimulation;
+  @Mock(lenient = true) private EventHandlerGroup mockEventHandlerGroup;
+  @Mock(lenient = true) private EventHandler mockEventHandler;
+  @Mock(lenient = true) private EngineValue mockEngineValue;
 
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
@@ -87,12 +87,13 @@ public class ShadowingEntityTest {
     String attrName = "testAttr";
     String substepName = "testSubstep";
 
-    when(mockSpatialEntity.getEventHandlers(attrName, substepName))
-        .thenReturn(Arrays.asList(mockEventHandlerGroup));
+    EventKey eventKey = new EventKey("", attrName, substepName);
+    when(mockSpatialEntity.getEventHandlers(eventKey))
+        .thenReturn(Optional.of(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
-    Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
-    assertNotNull(handlers);
+    Optional<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
+    assertTrue(handlers.isPresent());
     spatialEntity.endSubstep();
   }
 

@@ -17,23 +17,17 @@ import java.util.Optional;
  */
 public class EventHandlerGroup {
   private final Iterable<EventHandler> eventHandlers;
-  private final Optional<String> state;
-  private final String attribute;
-  private final String event;
+  private final EventKey eventKey;
 
   /**
    * Constructor for an EventHandlerGroup.
    */
   public EventHandlerGroup(
       Iterable<EventHandler> eventHandlers,
-      Optional<String> state, 
-      String attribute,
-      String event
+      EventKey eventKey
   ) {
     this.eventHandlers = eventHandlers;
-    this.state = state;
-    this.attribute = attribute;
-    this.event = event;
+    this.eventKey = eventKey;
   }
 
   /**
@@ -45,30 +39,14 @@ public class EventHandlerGroup {
     return eventHandlers;
   }
 
-  /**
-   * Get the state associated with this event handler group.
-   *
-   * @return an Optional containing the state String if one exists, empty otherwise
-   */
-  Optional<String> getState() {
-    return state;
-  }
 
   /**
-   * Get the attribute associated with this event handler group.
+   * Get the event key associated with this group of event handlers.
    *
-   * @return the attribute String
+   * @return the EventKey Identifying the event for which this event handler group should be
+   *     evaluated.
    */
-  String getAttribute() {
-    return attribute;
-  }
-
-  /**
-   * Get the event associated with this event handler group.
-   *
-   * @return the event String
-   */
-  String getEvent() {
-    return event;
+  public EventKey getEventKey() {
+    return this.eventKey;
   }
 }

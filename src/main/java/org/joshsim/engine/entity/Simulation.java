@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -23,8 +23,8 @@ public class Simulation extends Entity {
    */
   public Simulation(
       String name,
-      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
-      HashMap<String, EngineValue> attributes
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
   ) {
     super(name, eventHandlerGroups, attributes);
   }

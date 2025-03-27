@@ -6,15 +6,15 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.value.EngineValue;
+
 
 /**
  * Interface that defines an entity behavior that can manage attributes, including event handling
  * callbacks.
  */
-public interface AttributeManaging {
+public interface AttributeContainer {
 
   /**
    * Get the name of this type of entity.
@@ -28,20 +28,15 @@ public interface AttributeManaging {
    *
    * @returns Hashmap of (state x attribute x event) to EventHandlerGroups.
    */
-  HashMap<EventKey, EventHandlerGroup> getEventHandlers();
+  Iterable<EventHandlerGroup> getEventHandlers();
 
   /**
    * Get event handlers for a specific attribute and event.
    *
-   * @param attribute the attribute name
-   * @param event the event name
+   * @param event The event for which handler groups should be returned.
    * @return the event handler group, or empty if it does not exist
    */
-  Optional<EventHandlerGroup> getEventHandlers(
-      String state,
-      String attribute,
-      String event
-  );
+  Optional<EventHandlerGroup> getEventHandlers(EventKey event);
 
   /**
    * Get the value of an attribute by name.

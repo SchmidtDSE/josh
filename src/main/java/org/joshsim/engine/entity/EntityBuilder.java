@@ -6,7 +6,9 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
@@ -19,9 +21,38 @@ import org.joshsim.engine.value.EngineValue;
  * </p>
  */
 public class EntityBuilder {
-  Optional<String> name;
-  HashMap<EventKey, EventHandlerGroup> eventHandlerGroups = new HashMap<>();
-  HashMap<String, EngineValue> attributes = new HashMap<>();
+  private Optional<String> name;
+  private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
+  private Map<String, EngineValue> attributes;
+
+  /**
+   * Create an empty builder.
+   */
+  public EntityBuilder() {
+    name = Optional.empty();
+    eventHandlerGroups = new HashMap<>();
+    attributes = new HashMap<>();
+  }
+
+  /**
+   * Creates an immutable copy of the event handler groups map.
+   *
+   * @return an immutable copy of the event handler groups
+   */
+  private Map<EventKey, EventHandlerGroup> createImmutableEventHandlerGroupsCopy() {
+    Map<EventKey, EventHandlerGroup> copy = new HashMap<>(eventHandlerGroups);
+    return Collections.unmodifiableMap(copy);
+  }
+
+  /**
+   * Creates an immutable copy of the attributes map.
+   *
+   * @return an immutable copy of the attributes
+   */
+  private Map<String, EngineValue> createImmutableAttributesCopy() {
+    Map<String, EngineValue> copy = new HashMap<>(attributes);
+    return Collections.unmodifiableMap(copy);
+  }
 
   /**
    * Set the name of the entity being built.
@@ -29,7 +60,7 @@ public class EntityBuilder {
    * @param name the name of the entity
    * @return this builder for method chaining
    */
-  EntityBuilder setName(String name) {
+  public EntityBuilder setName(String name) {
     this.name = Optional.of(name);
     return this;
   }
@@ -39,7 +70,7 @@ public class EntityBuilder {
    *
    * @return the name of the entity
    */
-  String getName() {
+  private String getName() {
     return name.orElseThrow(() -> new IllegalStateException("Name not set"));
   }
 
@@ -59,8 +90,8 @@ public class EntityBuilder {
    * @param group the event handler group to add
    * @return this builder for method chaining
    */
-  EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup eventHandlerGroup) {
-    eventHandlerGroups.put(eventKey, eventHandlerGroup);
+  public EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup group) {
+    eventHandlerGroups.put(eventKey, group);
     return this;
   }
 
@@ -71,7 +102,7 @@ public class EntityBuilder {
    * @param value the value of the attribute
    * @return this builder for method chaining
    */
-  EntityBuilder addAttribute(String attribute, EngineValue value) {
+  public EntityBuilder addAttribute(String attribute, EngineValue value) {
     attributes.put(attribute, value);
     return this;
   }
@@ -82,8 +113,12 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed agent entity
    */
-  Agent buildAgent(SpatialEntity parent) {
-    Agent agent = new Agent(parent, getName(), eventHandlerGroups, attributes);
+  public Agent buildAgent(SpatialEntity parent) {
+    Agent agent = new Agent(
+        parent,
+        getName(),
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return agent;
   }
 
@@ -93,8 +128,12 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed disturbance entity
    */
-  Disturbance buildDisturbance(SpatialEntity parent) {
-    Disturbance disturbance = new Disturbance(parent, getName(), eventHandlerGroups, attributes);
+  public Disturbance buildDisturbance(SpatialEntity parent) {
+    Disturbance disturbance = new Disturbance(
+        parent,
+        getName(),
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return disturbance;
   }
 
@@ -104,19 +143,25 @@ public class EntityBuilder {
    * @param geometry The geometry defining the bounds of this Patch.
    * @return A constructed patch entity
    */
-  Patch buildPatch(Geometry geometry) {
-    Patch patch = new Patch(geometry, getName(), eventHandlerGroups, attributes);
+  public Patch buildPatch(Geometry geometry) {
+    Patch patch = new Patch(
+        geometry,
+        getName(),
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return patch;
   }
 
   /**
    * Build a simulation instance.
    *
-   * @param parent The entity like Patch that this will be part of.
    * @return A constructed simulation instance
    */
-  Simulation buildSimulation() {
-    Simulation simulation = new Simulation(getName(), eventHandlerGroups, attributes);
+  public Simulation buildSimulation() {
+    Simulation simulation = new Simulation(
+        getName(),
+        createImmutableEventHandlerGroupsCopy(),
+        createImmutableAttributesCopy());
     return simulation;
   }
 }
