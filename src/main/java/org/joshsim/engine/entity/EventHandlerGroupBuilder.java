@@ -30,8 +30,8 @@ public class EventHandlerGroupBuilder {
    */
   public EventHandlerGroup build() {
     return new EventHandlerGroup(
-      eventHandlers,
-      new EventKey(getState(), getAttribute(), getEvent())
+        eventHandlers,
+        new EventKey(getState(), getAttribute(), getEvent())
     );
   }
 
