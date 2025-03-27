@@ -1,10 +1,15 @@
+/**
+ * Tests for structures to help build event handler groups.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.engine.entity;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
@@ -12,6 +17,9 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for structures to help build event handler groups.
+ */
 public class EventHandlerGroupBuilderTest {
   private EventHandlerGroupBuilder builder;
   private EventHandler mockHandler;
@@ -19,6 +27,9 @@ public class EventHandlerGroupBuilderTest {
   private static final String TEST_ATTRIBUTE = "testAttribute";
   private static final String TEST_EVENT = "testEvent";
 
+  /**
+   * Create a test event handler group builder and mock handler.
+   */
   @BeforeEach
   public void setUp() {
     builder = new EventHandlerGroupBuilder();
