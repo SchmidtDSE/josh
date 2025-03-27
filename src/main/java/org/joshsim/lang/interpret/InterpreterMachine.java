@@ -19,4 +19,6 @@ public interface InterpreterMachine {
 
   InterpreterMachine pushValue(EngineValue value);
 
+  InterpreterMachine applyMap(String strategy);
+
 }

@@ -10,7 +10,7 @@ package org.joshsim.lang.interpret;
 /**
  * Fragment of a InterpreterMachineSaffold containing a single action.
  */
-public class SingleActionMachineScaffold {
+public class SingleActionMachineScaffold implements InterpreterMachineScaffold {
 
   private final InterpreterAction action;
 

@@ -7,42 +7,49 @@
 package org.joshsim.lang.interpret;
 
 import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.EngineValueFactory;
+import org.joshsim.engine.value.Units;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
 
+import java.math.BigDecimal;
 
-public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterMachineBuilder> {
 
-  @Override
-  public InterpreterMachineBuilder visitIdentifier(JoshLangParser.IdentifierContext ctx) {
+public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterMachineScaffold> {
+
+  private final EngineValueFactory engineValueFactory;
+
+  public JoshParserToMachineVisitor() {
+    super();
+    engineValueFactory = new EngineValueFactory();
+  }
+
+  public InterpreterMachineScaffold visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
     InterpreterAction action = (machine) -> machine.pushIdentifier(identifierName);
     return new SingleActionMachineScaffold(action);
   }
 
-  @Override
-  public InterpreterMachineBuilder visitNumber(JoshLangParser.NumberContext ctx) {
+  public InterpreterMachineScaffold visitNumber(JoshLangParser.NumberContext ctx) {
     double number = Double.parseDouble(ctx.getText());
-    InterpreterAction action = (machine) -> machine.pushNumber(numberText);
+    InterpreterAction action = (machine) -> machine.pushNumber(number);
     return new SingleActionMachineScaffold(action);
   }
 
-  @Override
-  public InterpreterMachineBuilder visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
-    String numberText = Double.parseDouble(ctx.getChild(0).getText());
+  public InterpreterMachineScaffold visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
+    BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
     String unitsText = ctx.getChild(1).getText();
-    EngineValue value = new EngineValue(numberText, new Units(unitsText));
+    EngineValue value = engineValueFactory.build(number, new Units(unitsText));
     InterpreterAction action = (machine) -> machine.pushValue(value);
     return new SingleActionMachineScaffold(action);
   }
 
-  @Override
-  public InterpreterMachineBuilder visitMapParam(JoshLangParser.MapParamContext ctx) {
-    InterpterAction operandAction = ctx.operand.accept(this).getAction();
-    InterpterAction fromLowAction = ctx.fromlow.accept(this).getAction();
-    InterpterAction fromHighAction = ctx.fromhigh.accept(this).getAction();
-    InterpterAction toLowAction = ctx.tolow.accept(this).getAction();
-    InterpterAction toHighAction = ctx.tohigh.accept(this).getAction();
+  public InterpreterMachineScaffold visitMapParam(JoshLangParser.MapParamContext ctx) {
+    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    InterpreterAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
+    InterpreterAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
+    InterpreterAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
+    InterpreterAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
     String method = ctx.method.getText();
 
     InterpreterAction action = (machine) -> {
@@ -57,5 +64,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
 
     return new SingleActionMachineScaffold(action);
   }
+
+
   
 }
