@@ -19,9 +19,38 @@ import org.joshsim.engine.value.EngineValue;
  * </p>
  */
 public class EntityBuilder {
-  String name;
-  Optional<HashMap<EventKey, EventHandlerGroup>> eventHandlerGroups;
-  Optional<HashMap<String, EngineValue>> attributes;
+  Optional<String> name;
+  HashMap<EventKey, EventHandlerGroup> eventHandlerGroups = new HashMap<>();
+  HashMap<String, EngineValue> attributes = new HashMap<>();
+
+  /**
+   * Set the name of the entity being built.
+   *
+   * @param name the name of the entity
+   * @return this builder for method chaining
+   */
+  EntityBuilder setName(String name) {
+    this.name = Optional.of(name);
+    return this;
+  }
+
+  /**
+   * Get the name of the entity being built.
+   *
+   * @return the name of the entity
+   */
+  String getName() {
+    return name.orElseThrow(() -> new IllegalStateException("Name not set"));
+  }
+
+  /**
+   * Clears the current state of the builder, resetting all fields to their default values.
+   */
+  public void clear() {
+    name = Optional.empty();
+    eventHandlerGroups.clear();
+    attributes.clear();
+  }
 
   /**
    * Add event handlers to the entity being built.
@@ -31,24 +60,19 @@ public class EntityBuilder {
    * @return this builder for method chaining
    */
   EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup eventHandlerGroup) {
-    if (eventHandlerGroups.isEmpty()) {
-      eventHandlerGroups = Optional.of(new HashMap<>());
-    }
-    eventHandlerGroups.get().put(eventKey, eventHandlerGroup);
+    eventHandlerGroups.put(eventKey, eventHandlerGroup);
     return this;
   }
 
   /**
-   * Add attributes to the entity being built.
+   * Add attribute to the entity being built.
    *
-   * @param attributes The attributes to add to the entity
+   * @param attribute the attribute to add
+   * @param value the value of the attribute
    * @return this builder for method chaining
    */
-  EntityBuilder addAttributes(HashMap<String, EngineValue> attributes) {
-    if (this.attributes.isEmpty()) {
-      this.attributes = Optional.of(new HashMap<>());
-    }
-    this.attributes.get().putAll(attributes);
+  EntityBuilder addAttribute(String attribute, EngineValue value) {
+    attributes.put(attribute, value);
     return this;
   }
 
@@ -59,7 +83,7 @@ public class EntityBuilder {
    * @return A constructed agent entity
    */
   Agent buildAgent(SpatialEntity parent) {
-    Agent agent = new Agent(parent);
+    Agent agent = new Agent(parent, getName(), eventHandlerGroups, attributes);
     return agent;
   }
 
@@ -69,8 +93,8 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed disturbance entity
    */
-  Disturbance buildDisturbance(SpatialEntity parent){
-    Disturbance disturbance = new Disturbance(parent);
+  Disturbance buildDisturbance(SpatialEntity parent) {
+    Disturbance disturbance = new Disturbance(parent, getName(), eventHandlerGroups, attributes);
     return disturbance;
   }
 
@@ -80,8 +104,8 @@ public class EntityBuilder {
    * @param geometry The geometry defining the bounds of this Patch.
    * @return A constructed patch entity
    */
-  Patch buildPatch(Geometry geometry){
-    Patch patch = new Patch(geometry);
+  Patch buildPatch(Geometry geometry) {
+    Patch patch = new Patch(geometry, getName(), eventHandlerGroups, attributes);
     return patch;
   }
 
@@ -91,8 +115,8 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed simulation instance
    */
-  Simulation buildSimulation(SpatialEntity parent){
-    Simulation simulation = new Simulation();
+  Simulation buildSimulation() {
+    Simulation simulation = new Simulation(getName(), eventHandlerGroups, attributes);
     return simulation;
   }
 }
