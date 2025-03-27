@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
+import java.util.HashMap;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -21,50 +21,16 @@ public class Disturbance extends MemberSpatialEntity {
    * Constructs a disturbance entity with the given geometry.
    *
    * @param parent The parent containing this entity.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public Disturbance(SpatialEntity parent) {
-    super(parent);
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
+  public Disturbance(
+      SpatialEntity parent,
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    super(parent, name, eventHandlerGroups, attributes);
   }
 }

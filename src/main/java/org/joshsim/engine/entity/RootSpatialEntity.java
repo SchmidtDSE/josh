@@ -1,7 +1,14 @@
+/**
+ * A spatial entity with its own geometry.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
 import org.joshsim.engine.geometry.Geometry;
-
+import org.joshsim.engine.value.EngineValue;
 
 /**
  * RootSpatialEntity is a type of SpatialEntity which has its own geometry.
@@ -16,8 +23,17 @@ public abstract class RootSpatialEntity extends SpatialEntity {
    * Constructs a RootSpatialEntity with the specified geometry.
    *
    * @param geometry the geometry associated with this entity.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public RootSpatialEntity(Geometry geometry) {
+  public RootSpatialEntity(
+      Geometry geometry,
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    super(name, eventHandlerGroups, attributes);
     this.geometry = geometry;
   }
   

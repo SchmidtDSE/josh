@@ -1,5 +1,5 @@
 /**
- * Strcture describing entities which are in patches.
+ * A spatial entity which has geometry inherited from a parent entity.
  *
  * @license BSD-3-Clause
  */
@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity;
 
 import java.util.HashMap;
-
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
