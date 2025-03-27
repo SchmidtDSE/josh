@@ -282,7 +282,14 @@ public class GridBuilder {
         );
 
         if (!(cellGeometry == null)) {
-          patches.add(new Patch(cellGeometry));
+          String cellName = String.format("cell_%d_%d", rowIdx, colIdx);
+          Patch patch = new Patch(
+              cellGeometry,
+              cellName,
+              null,
+              null
+          );
+          patches.add(patch);
         }
       }
     }

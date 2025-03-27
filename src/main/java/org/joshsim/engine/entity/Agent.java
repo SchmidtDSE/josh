@@ -6,8 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
+import java.util.Map;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -16,14 +15,21 @@ import org.joshsim.engine.value.EngineValue;
  * <p>Represent an agent entity in the system where agents are spatial entities that can perform
  * actions and interact with their environment.</p>
  */
-public class Agent extends SpatialEntity {
-
+public class Agent extends MemberSpatialEntity {
   /**
    * Create a new agent with the given geometry.
    *
-   * @param geometry The geometry of the agent.
+   * @param parent The parent containing this entity.
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public Agent(Geometry geometry) {
-    super(geometry);
+  public Agent(
+      SpatialEntity parent,
+      String name,
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
+  ) {
+    super(parent, name, eventHandlerGroups, attributes);
   }
 }

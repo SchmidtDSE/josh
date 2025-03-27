@@ -1,72 +1,84 @@
 /**
- * Entity which can operate within a JoshSim.
+ * Base entity which is a mutable entity.
  *
  * @license BSD-3-Clause
  */
 
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.joshsim.engine.value.EngineValue;
 
 
 /**
- * Base entity in system which has mutable attributes.
+ * Represents a base entity that is mutable.
+ * This class provides mechanisms for managing attributes and event handlers,
+ * and supports locking to be thread-safe.
  */
-public interface Entity {
+public abstract class Entity implements Lockable, AttributeContainer {
+
+  private final String name;
+  private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
+  private final Map<String, EngineValue> attributes;
+  private final Lock lock;
 
   /**
-   * Get the name of this tyep of entity.
+   * Constructor for Entity.
    *
-   * @returns unique name of this entity type.
+   * @param name Name of the entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
+   * @param attributes A map of attribute names to their corresponding EngineValues.
    */
-  String getName();
+  public Entity(
+      String name,
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
+  ) {
+    this.name = name;
+    this.eventHandlerGroups = eventHandlerGroups != null
+        ? eventHandlerGroups : new HashMap<>();
+    this.attributes = attributes != null
+        ? attributes : new HashMap<>();
+    lock = new ReentrantLock();
+  }
 
-  /**
-   * Get event handlers for all attributes and events.
-   *
-   * @returns Iterable over all registered event handler groups.
-   */
-  Iterable<EventHandlerGroup> getEventHandlers();
+  @Override
+  public String getName() {
+    return name;
+  }
 
-  /**
-   * Get event handlers for a specific attribute and event.
-   *
-   * @param attribute the attribute name
-   * @param event the event name
-   * @return an iterable collection of event handler groups
-   */
-  Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event);
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    return eventHandlerGroups.values();
+  }
 
-  /**
-   * Get the value of an attribute by name.
-   *
-   * @param name the attribute name
-   * @return an Optional containing the attribute value, or empty if not found
-   */
-  Optional<EngineValue> getAttributeValue(String name);
+  @Override
+  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
+    return Optional.ofNullable(eventHandlerGroups.get(eventKey));
+  }
 
-  /**
-   * Set the value of an attribute by name.
-   *
-   * @param name the attribute name
-   * @param value the value to set
-   */
-  void setAttributeValue(String name, EngineValue value);
+  @Override
+  public Optional<EngineValue> getAttributeValue(String name) {
+    return Optional.ofNullable(attributes.get(name));
+  }
 
-  /**
-   * Acquire a global lock on this entity for thread safety.
-   *
-   * <p>This is a convenience method for client code and is not automatically  enforced by getters
-   * and setters. The method will block until the lock is acquired.</p>
-   */
-  void lock();
+  @Override
+  public void setAttributeValue(String name, EngineValue value) {
+    attributes.put(name, value);
+  }
 
-  /**
-   * Release the global lock on this entity.
-   *
-   * <p>This is a convenience method for client code and should be called after thread-safe
-   * operations are complete.</p>
-   */
-  void unlock();
+  @Override
+  public void lock() {
+    lock.lock();
+  }
+
+  @Override
+  public void unlock() {
+    lock.unlock();
+  }
+
 }

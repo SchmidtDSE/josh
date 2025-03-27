@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.PatchKey;
 import org.joshsim.engine.entity.Simulation;
@@ -30,6 +31,8 @@ import org.joshsim.engine.value.EngineValue;
  * entity which hosues this entity.</p>
  */
 public class ShadowingEntity {
+
+  private static final String DEFAULT_STATE_STR = "";
 
   private final SpatialEntity inner;
   private final ShadowingEntity here;
@@ -120,7 +123,7 @@ public class ShadowingEntity {
    * @param attribute name of the attribute for which event handlers are requested.
    * @throws IllegalStateException if not currently in a substep.
    */
-  public Iterable<EventHandlerGroup> getHandlers(String attribute) {
+  public Optional<EventHandlerGroup> getHandlers(String attribute) {
     if (substep.isEmpty()) {
       String message = String.format(
           "Cannot get handler for %s while not within a substep.",
@@ -129,7 +132,9 @@ public class ShadowingEntity {
       throw new IllegalStateException(message);
     }
 
-    return inner.getEventHandlers(attribute, substep.get());
+    String state = getState();
+    EventKey eventKey = new EventKey(state, attribute, substep.get());
+    return inner.getEventHandlers(eventKey);
   }
 
   /**
@@ -247,6 +252,25 @@ public class ShadowingEntity {
 
     String message = String.format("%s is not a known attribute of %s", name, inner.getName());
     throw new IllegalArgumentException(message);
+  }
+
+  /**
+   * Get the current state of this entity.
+   *
+   * @return State of this entity after current resolution.
+   */
+  private String getState() {
+    boolean doesNotUseState = !resolvedAttributes.contains("state");
+    if (doesNotUseState) {
+      return DEFAULT_STATE_STR;
+    }
+
+    Optional<EngineValue> stateValueMaybe = getCurrentAttribute("state");
+    if (stateValueMaybe.isPresent()) {
+      return stateValueMaybe.get().getAsString();
+    } else {
+      return DEFAULT_STATE_STR;  // TODO: Need to do just in time resolution later merge request.
+    }
   }
 
 }

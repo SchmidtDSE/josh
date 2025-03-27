@@ -6,10 +6,10 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
+
+import java.util.Map;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
-
 
 /**
  * An entity with spatial properties in the system.
@@ -18,66 +18,27 @@ import org.joshsim.engine.value.EngineValue;
  * entities and spatial information.
  * </p>
  */
-public abstract class SpatialEntity implements Entity {
-  private final Geometry geometry;
+public abstract class SpatialEntity extends Entity {
 
   /**
-   * Create a new spatial entity with the given location.
+   * Constructs a SpatialEntity with the specified name, event handler groups, and attributes.
    *
-   * @param geometry the geographic location of this entity
+   * @param name The name of the spatial entity.
+   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param attributes A map of attribute names to their corresponding engine values.
    */
-  public SpatialEntity(Geometry geometry) {
-    this.geometry = geometry;
+  public SpatialEntity(
+      String name,
+      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
+      Map<String, EngineValue> attributes
+  ) {
+    super(name, eventHandlerGroups, attributes);
   }
 
   /**
    * Get the geographic location of this spatial entity.
    *
-   * @return the geographic point representing this entity's location
+   * @return The geographic point representing this entity's location.
    */
-  public Geometry getGeometry() {
-    return geometry;
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers(String attribute, String event) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getEventHandlers'");
-  }
-
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getAttributeValue'");
-  }
-
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'setAttributeValue'");
-  }
-
-  @Override
-  public void lock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'lock'");
-  }
-
-  @Override
-  public void unlock() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'unlock'");
-  }
-
-  @Override
-  public String getName() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getName'");
-  }
+  abstract Geometry getGeometry();
 }
