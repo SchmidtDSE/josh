@@ -15,8 +15,9 @@ public interface InterpreterAction {
   /**
    * Apply this action.
    *
-   * @param scope The scope in which to apply this action and in which to manipulate memory.
+   * @param target The machine in which to apply this action and in which to manipulate memory.
+   * @return Machine in which to continue actions.
    */
-  InterpreterContext apply(InterpreterContext scope);
+  InterpreterMachine apply(InterpreterMachine target);
 
 }
