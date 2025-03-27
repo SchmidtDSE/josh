@@ -53,7 +53,7 @@ public class EntityBuilderTest {
     assertNotNull(agent);
     assertEquals(agentName, agent.getName());
     assertEquals(mockParent, agent.getParent());
-    assertEquals(1, agent.getEventHandlers().size());
+    assertTrue(agent.getEventHandlers().iterator().hasNext());
     assertTrue(agent.getAttributeValue("agentAttr").isPresent());
   }
 

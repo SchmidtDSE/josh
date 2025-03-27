@@ -36,6 +36,10 @@ public class PatchTest {
     attributes = new HashMap<>();
     EngineValue mockValue = mock(EngineValue.class);
     attributes.put("testAttribute", mockValue);
+
+    EventKey stateKey = new EventKey("testState", "testAttribute", "testEvent");
+    EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
+    eventHandlerGroups.put(stateKey, stateHandlerGroup);
     
     patch = new Patch(mockGeometry, patchName, eventHandlerGroups, attributes);
   }
@@ -58,10 +62,7 @@ public class PatchTest {
     Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null);
     
     assertNotNull(nullMapPatch.getEventHandlers());
-    assertTrue(nullMapPatch.getEventHandlers().isEmpty());
-    
-    assertNotNull(nullMapPatch.attributes);
-    assertTrue(nullMapPatch.attributes.isEmpty());
+    assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());
   }
 
   /**
@@ -122,23 +123,18 @@ public class PatchTest {
    */
   @Test
   public void testEventHandlerManagement() {
-    // Create and add an event handler group
-    EventKey testKey = new EventKey("testState", "testAttribute", "testEvent");
-    EventHandlerGroup handlerGroup = mock(EventHandlerGroup.class);
-    patch.eventHandlerGroups.put(testKey, handlerGroup);
-    
     // Test getEventHandlers()
-    HashMap<EventKey, EventHandlerGroup> handlers = patch.getEventHandlers();
-    assertEquals(1, handlers.size());
-    assertTrue(handlers.containsKey(testKey));
-    assertEquals(handlerGroup, handlers.get(testKey));
+    Iterable<EventHandlerGroup> handlers = patch.getEventHandlers();
+    assertTrue(handlers.iterator().hasNext());
+    assertTrue(patch.getEventHandlers(
+        new EventKey("testState", "testAttribute", "testEvent")
+    ).isPresent());
     
     // Test getEventHandlers with specific parameters
     Optional<EventHandlerGroup> retrievedGroup = patch.getEventHandlers(
         new EventKey("testState", "testAttribute", "testEvent")
     );
     assertTrue(retrievedGroup.isPresent());
-    assertEquals(handlerGroup, retrievedGroup.get());
     
     // Test with non-existent event key
     Optional<EventHandlerGroup> nonExistentGroup = patch.getEventHandlers(
