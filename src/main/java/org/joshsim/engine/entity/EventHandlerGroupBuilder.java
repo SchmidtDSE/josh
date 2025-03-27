@@ -95,19 +95,19 @@ public class EventHandlerGroupBuilder {
   /**
    * Adds a single event handler to this group.
    *
-   * @param eventHandler the event handler to add
+   * @param handler the event handler to add
    */
-  public void addEventHandler(EventHandler eventHandler) {
-    eventHandlers.add(eventHandler);
+  public void addEventHandler(EventHandler handler) {
+    eventHandlers.add(handler);
   }
 
   /**
    * Adds multiple event handlers to this group.
    *
-   * @param eventHandlers the list of event handlers to add
+   * @param handlers the list of event handlers to add
    */
-  public void addEventHandler(List<EventHandler> eventHandlers) {
-    eventHandlers.addAll(eventHandlers);
+  public void addEventHandler(List<EventHandler> handlers) {
+    eventHandlers.addAll(handlers);
   }
 
   /**
