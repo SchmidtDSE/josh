@@ -6,7 +6,10 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
+
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.EngineValue;
 
 
 /**
@@ -25,7 +28,13 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    *
    * @param parent The parent entity like Patch which houses this entity.
    */
-  public MemberSpatialEntity(SpatialEntity parent) {
+  public MemberSpatialEntity(
+      SpatialEntity parent,
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    super(name, eventHandlerGroups, attributes);
     this.parent = parent;
   }
 

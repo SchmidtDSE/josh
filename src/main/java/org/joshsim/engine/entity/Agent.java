@@ -6,7 +6,9 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
 import java.util.Optional;
+import org.joshsim.engine.value.EngineValue;
 
 /**
  * Mutable spatial entity.
@@ -20,7 +22,12 @@ public class Agent extends MemberSpatialEntity {
    *
    * @param parent The parent containing this entity.
    */
-  public Agent(SpatialEntity parent, Optional<EventHandlerGroup> eventHandlerGroup) {
+  public Agent(
+      SpatialEntity parent,
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
     super(parent);
   }
 }

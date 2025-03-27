@@ -6,8 +6,10 @@
 
 package org.joshsim.engine.entity;
 
+import java.util.HashMap;
+import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
-
+import org.joshsim.engine.value.EngineValue;
 
 /**
  * Builder to assist in constructing entities.
@@ -17,17 +19,36 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public class EntityBuilder {
-  EventHandlerGroup eventHandlerGroup;
-  
+  String name;
+  Optional<HashMap<EventKey, EventHandlerGroup>> eventHandlerGroups;
+  Optional<HashMap<String, EngineValue>> attributes;
 
   /**
    * Add event handlers to the entity being built.
    *
+   * @param eventKey the event key to add the handler to
    * @param group the event handler group to add
    * @return this builder for method chaining
    */
-  EntityBuilder addEventHandlerGroup(EventHandlerGroup group) {
-    this.eventHandlerGroup = group;
+  EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup eventHandlerGroup) {
+    if (eventHandlerGroups.isEmpty()) {
+      eventHandlerGroups = Optional.of(new HashMap<>());
+    }
+    eventHandlerGroups.get().put(eventKey, eventHandlerGroup);
+    return this;
+  }
+
+  /**
+   * Add attributes to the entity being built.
+   *
+   * @param attributes The attributes to add to the entity
+   * @return this builder for method chaining
+   */
+  EntityBuilder addAttributes(HashMap<String, EngineValue> attributes) {
+    if (this.attributes.isEmpty()) {
+      this.attributes = Optional.of(new HashMap<>());
+    }
+    this.attributes.get().putAll(attributes);
     return this;
   }
 
