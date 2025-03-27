@@ -15,7 +15,7 @@ import org.joshsim.engine.value.EngineValue;
  * This class provides mechanisms for managing attributes and event handlers,
  * and supports locking to be thread-safe.
  */
-public abstract class Entity implements Lockable, AttributeManaging {
+public abstract class Entity implements Lockable, AttributeContainer {
   String name;
   HashMap<EventKey, EventHandlerGroup> eventHandlerGroups;
   HashMap<String, EngineValue> attributes;

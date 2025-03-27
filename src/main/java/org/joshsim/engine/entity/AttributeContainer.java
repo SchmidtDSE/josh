@@ -14,7 +14,7 @@ import org.joshsim.engine.value.EngineValue;
  * Interface that defines an entity behavior that can manage attributes, including event handling
  * callbacks.
  */
-public interface AttributeManaging {
+public interface AttributeContainer {
 
   /**
    * Get the name of this type of entity.
