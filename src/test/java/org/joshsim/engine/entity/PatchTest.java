@@ -103,10 +103,10 @@ public class PatchTest {
     // Test that setting attributes works when not locked
     EngineValue mockValue = mock(EngineValue.class);
     patch.setAttributeValue("testLock", mockValue);
-    
+
     // Lock the entity - should not throw
     patch.lock();
-    
+
     // Unlock and verify setting works again
     patch.unlock();
     patch.setAttributeValue("unlockedAttribute", mockValue);

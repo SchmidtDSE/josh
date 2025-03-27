@@ -180,11 +180,11 @@ public class AgentTest {
     List<EventHandlerGroup> expectedHandlers = new ArrayList<>(eventHandlers.values());
     List<EventHandlerGroup> actualHandlers = new ArrayList<>();
     agent.getEventHandlers().forEach(actualHandlers::add);
-    
+
     // Check they contain the same elements
-    assertEquals(expectedHandlers.size(), actualHandlers.size(), 
+    assertEquals(expectedHandlers.size(), actualHandlers.size(),
         "Event handlers should have the same number of elements");
-    assertTrue(expectedHandlers.containsAll(actualHandlers), 
+    assertTrue(expectedHandlers.containsAll(actualHandlers),
         "Event handlers should contain the same elements");
   }
 }
