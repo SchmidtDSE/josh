@@ -48,7 +48,7 @@ public class AgentTest {
     mockGeometry = mock(Geometry.class);
     mockValue = mock(EngineValue.class);
 
-    when(mockParent.getGeometry()).thenReturn(mockGeometry);
+    when(mockParent.getGeometry()).thenReturn(Optional.of(mockGeometry));
 
     // Initialize maps
     eventHandlers = new HashMap<>();

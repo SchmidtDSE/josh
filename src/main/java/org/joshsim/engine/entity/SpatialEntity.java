@@ -8,6 +8,8 @@ package org.joshsim.engine.entity;
 
 
 import java.util.Map;
+import java.util.Optional;
+
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -35,10 +37,4 @@ public abstract class SpatialEntity extends MutableEntity {
     super(name, eventHandlerGroups, attributes);
   }
 
-  /**
-   * Get the geographic location of this spatial entity.
-   *
-   * @return The geographic point representing this entity's location.
-   */
-  abstract Geometry getGeometry();
 }

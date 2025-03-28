@@ -27,7 +27,7 @@ public class PatchKey {
 
   @Override
   public String toString() {
-    Geometry geometry = patch.getGeometry();
+    Geometry geometry = patch.getGeometry().orElseThrow();
     return String.format(
       "Patch of type %s at (%.6f, %.6f)",
       patch.getName(),

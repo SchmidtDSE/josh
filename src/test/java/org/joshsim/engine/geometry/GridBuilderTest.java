@@ -218,8 +218,7 @@ class GridBuilderTest {
 
     // Verify a patch exists
     Patch firstPatch = patches.get(0);
-    Geometry geometry = firstPatch.getGeometry();
-    assertNotNull(geometry, "Patch should have geometry");
+    assertTrue(firstPatch.getGeometry().isPresent());
   }
 
   @Test

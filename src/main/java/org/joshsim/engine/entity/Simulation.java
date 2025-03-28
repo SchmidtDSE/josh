@@ -7,6 +7,9 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
+
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 /**
@@ -32,5 +35,10 @@ public class Simulation extends MutableEntity {
   @Override
   public EntityType getEntityType() {
     return EntityType.SIMULATION;
+  }
+
+  @Override
+  public Optional<Geometry> getGeometry() {
+    return Optional.empty();
   }
 }

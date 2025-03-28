@@ -20,6 +20,9 @@ import org.joshsim.engine.entity.PatchKey;
  * </p>
  */
 public interface Replicate {
+
+  // TODO
+
   /**
    * Add a time step to this replicate.
    *

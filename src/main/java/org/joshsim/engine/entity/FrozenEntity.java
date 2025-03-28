@@ -1,21 +1,23 @@
 package org.joshsim.engine.entity;
 
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class FrozenEntity implements Entity {
 
-  private final EntityType entityType;
+  private final EntityType type;
   private final String name;
   private final Map<String, EngineValue> attributes;
+  private final Optional<Geometry> geometry;
 
-  public FrozenEntity(EntityType entityType, String name, Map<String, EngineValue> attributes) {
-    this.entityType = entityType;
+  public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes, Optional<Geometry> geometry) {
+    this.type = type;
     this.name = name;
     this.attributes = attributes;
+    this.geometry = geometry;
   }
 
   @Override
@@ -71,5 +73,10 @@ public class FrozenEntity implements Entity {
   @Override
   public boolean isFrozen() {
     return true;
+  }
+
+  @Override
+  public Optional<Geometry> getGeometry() {
+    return geometry;
   }
 }

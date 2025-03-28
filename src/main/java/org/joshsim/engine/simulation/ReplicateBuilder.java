@@ -13,6 +13,9 @@ import org.joshsim.engine.entity.EntityBuilder;
  * Builder of replicates which can be used to bulid for each step.
  */
 public interface ReplicateBuilder {
+
+  // TODO
+
   /**
    * Add an entity builder to the replicate being constructed.
    *

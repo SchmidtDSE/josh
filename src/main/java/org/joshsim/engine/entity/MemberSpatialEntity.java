@@ -7,6 +7,8 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
+
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -46,7 +48,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    * @return the geographic point representing this entity's location
    */
   @Override
-  public Geometry getGeometry() {
+  public Optional<Geometry> getGeometry() {
     return parent.getGeometry();
   }
 

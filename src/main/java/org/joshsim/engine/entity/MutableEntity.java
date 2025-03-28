@@ -83,14 +83,13 @@ public abstract class MutableEntity implements Entity {
 
   @Override
   public Entity freeze() {
-    return new FrozenEntity(getEntityType(), name, new HashMap<>(attributes));
-  };
+    return new FrozenEntity(getEntityType(), name, new HashMap<>(attributes), getGeometry());
+  }
 
   @Override
   public boolean isFrozen() {
     return false;
   }
 
-  public abstract EntityType getEntityType();
 }
 

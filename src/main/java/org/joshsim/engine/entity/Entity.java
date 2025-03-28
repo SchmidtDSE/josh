@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -26,6 +28,13 @@ public interface Entity extends Lockable, AttributeContainer {
   public Entity freeze();
 
   boolean isFrozen();
+
+  /**
+   * Get the geographic location of this spatial entity.
+   *
+   * @return The geographic point representing this entity's location.
+   */
+  Optional<Geometry> getGeometry();
 
 }
 

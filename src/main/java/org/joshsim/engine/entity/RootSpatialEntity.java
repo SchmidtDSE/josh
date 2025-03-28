@@ -7,6 +7,8 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
+
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -38,7 +40,7 @@ public abstract class RootSpatialEntity extends SpatialEntity {
   }
 
   @Override
-  public Geometry getGeometry() {
-    return geometry;
+  public Optional<Geometry> getGeometry() {
+    return Optional.of(geometry);
   }
 }
