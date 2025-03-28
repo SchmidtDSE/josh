@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
+import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Rectangle;
 
 /**
@@ -51,11 +52,11 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithDefaultContext() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon,
+      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY,
           GeometryFactory.getDefaultSpatialContext());
 
       // Then
@@ -76,11 +77,11 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithGeoContext() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
+      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -97,12 +98,12 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithProjectedContext() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // easting (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          width, centerLat, centerLon, projectedContext
+          width, centerX, centerY, projectedContext
       );
 
       // Then
@@ -122,55 +123,55 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithZeroWidthGeoContext() {
       // Given
       BigDecimal width = BigDecimal.ZERO;
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          width, centerLat, centerLon, geoContext
+          width, centerX, centerY, geoContext
       );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Rectangle rect = (Rectangle) geometry.shape;
 
-      assertEquals(20.0, rect.getMinX(), 0.000001, "minLon should equal centerLon for zero width");
-      assertEquals(20.0, rect.getMaxX(), 0.000001, "maxLon should equal centerLon for zero width");
-      assertEquals(10.0, rect.getMinY(), 0.000001, "minLat should equal centerLat for zero width");
-      assertEquals(10.0, rect.getMaxY(), 0.000001, "maxLat should equal centerLat for zero width");
+      assertEquals(20.0, rect.getMinX(), 0.000001, "minX should equal centerX for zero width");
+      assertEquals(20.0, rect.getMaxX(), 0.000001, "maxX should equal centerX for zero width");
+      assertEquals(10.0, rect.getMinY(), 0.000001, "minY should equal centerY for zero width");
+      assertEquals(10.0, rect.getMaxY(), 0.000001, "maxY should equal centerY for zero width");
     }
 
     @Test
     public void testCreateSquareWithZeroWidthProjectedContext() {
       // Given
       BigDecimal width = BigDecimal.ZERO;
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // easting (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          width, centerLat, centerLon, projectedContext
+          width, centerX, centerY, projectedContext
       );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Rectangle rect = (Rectangle) geometry.shape;
 
-      assertEquals(20.0, rect.getMinX(), 0.000001, "minLon should equal centerLon for zero width");
-      assertEquals(20.0, rect.getMaxX(), 0.000001, "maxLon should equal centerLon for zero width");
-      assertEquals(10.0, rect.getMinY(), 0.000001, "minLat should equal centerLat for zero width");
-      assertEquals(10.0, rect.getMaxY(), 0.000001, "maxLat should equal centerLat for zero width");
+      assertEquals(20.0, rect.getMinX(), 0.000001, "minX should equal centerX for zero width");
+      assertEquals(20.0, rect.getMaxX(), 0.000001, "maxX should equal centerX for zero width");
+      assertEquals(10.0, rect.getMinY(), 0.000001, "minY should equal centerY for zero width");
+      assertEquals(10.0, rect.getMaxY(), 0.000001, "maxY should equal centerY for zero width");
     }
 
     @Test
     public void testCreateSquareWithPrecisionGeoContext() {
       // Given
       BigDecimal width = new BigDecimal("1.123456789");
-      BigDecimal centerLat = new BigDecimal("10.987654321");
-      BigDecimal centerLon = new BigDecimal("20.123456789");
+      BigDecimal centerX = new BigDecimal("20.123456789"); // longitude (x)
+      BigDecimal centerY = new BigDecimal("10.987654321"); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
+      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -187,12 +188,12 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithPrecisionProjectedContext() {
       // Given
       BigDecimal width = new BigDecimal("1.123456789");
-      BigDecimal centerLat = new BigDecimal("10.987654321");
-      BigDecimal centerLon = new BigDecimal("20.123456789");
+      BigDecimal centerX = new BigDecimal("20.123456789"); // easting (x)
+      BigDecimal centerY = new BigDecimal("10.987654321"); // northing (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          width, centerLat, centerLon, projectedContext
+          width, centerX, centerY, projectedContext
       );
 
       // Then
@@ -210,13 +211,13 @@ public class GeometryFactoryTest {
     public void testNullContextThrowsException() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
       SpatialContext nullContext = null;
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        GeometryFactory.createSquare(width, centerLat, centerLon, nullContext);
+        GeometryFactory.createSquare(width, centerX, centerY, nullContext);
       }, "Should throw NullPointerException when context is null");
     }
 
@@ -224,39 +225,39 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithNullWidth() {
       // Given
       BigDecimal width = null;
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
+        GeometryFactory.createSquare(width, centerX, centerY, geoContext);
       }, "Should throw NullPointerException when width is null");
     }
 
     @Test
-    public void testCreateSquareWithNullCenterLatitude() {
+    public void testCreateSquareWithNullCenterX() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = null;
-      BigDecimal centerLon = BigDecimal.valueOf(20.0);
+      BigDecimal centerX = null;
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
-      }, "Should throw NullPointerException when centerLatitude is null");
+        GeometryFactory.createSquare(width, centerX, centerY, geoContext);
+      }, "Should throw NullPointerException when centerX is null");
     }
 
     @Test
-    public void testCreateSquareWithNullCenterLongitude() {
+    public void testCreateSquareWithNullCenterY() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerLat = BigDecimal.valueOf(10.0);
-      BigDecimal centerLon = null;
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x) 
+      BigDecimal centerY = null;
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        GeometryFactory.createSquare(width, centerLat, centerLon, geoContext);
-      }, "Should throw NullPointerException when centerLongitude is null");
+        GeometryFactory.createSquare(width, centerX, centerY, geoContext);
+      }, "Should throw NullPointerException when centerY is null");
     }
   }
 
@@ -267,14 +268,14 @@ public class GeometryFactoryTest {
     @DisplayName("Should create square from valid corner coordinates with default context")
     public void testCreateSquareWithValidCornersDefaultContext() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(11.0);
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // longitude (x)
+      BigDecimal topLeftY = BigDecimal.valueOf(11.0); // latitude (y)
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // longitude (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon,
+          topLeftX, topLeftY, bottomRightX, bottomRightY,
           GeometryFactory.getDefaultSpatialContext()
       );
 
@@ -292,14 +293,14 @@ public class GeometryFactoryTest {
     @DisplayName("Should create square from valid corner coordinates with geographic context")
     public void testCreateSquareWithValidCornersGeoContext() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(11.0);
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // longitude (x)
+      BigDecimal topLeftY = BigDecimal.valueOf(11.0); // latitude (y)
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // longitude (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon, geoContext
+          topLeftX, topLeftY, bottomRightX, bottomRightY, geoContext
       );
 
       // Then
@@ -316,14 +317,14 @@ public class GeometryFactoryTest {
     @DisplayName("Should create square from valid corner coordinates with projected context")
     public void testCreateSquareWithValidCornersProjectedContext() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(11.0);
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // easting (x)
+      BigDecimal topLeftY = BigDecimal.valueOf(11.0); // northing (y)
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // easting (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When
       Geometry geometry = GeometryFactory.createSquare(
-          topLeftLat, topLeftLon, bottomRightLat, bottomRightLon, projectedContext
+          topLeftX, topLeftY, bottomRightX, bottomRightY, projectedContext
       );
 
       // Then
@@ -340,17 +341,17 @@ public class GeometryFactoryTest {
     @Test
     public void testCreateSquareWithNonSquareCoordinatesGeoContext() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(12.0);  // Height = 3
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);  // Width = 2
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // longitude (x) - Width = 2
+      BigDecimal topLeftY = BigDecimal.valueOf(12.0); // latitude (y) - Height = 3
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // longitude (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When/Then
       Geometry geometry = GeometryFactory.createSquare(
-            topLeftLat,
-            topLeftLon,
-            bottomRightLat,
-            bottomRightLon,
+            topLeftX,
+            topLeftY,
+            bottomRightX,
+            bottomRightY,
             geoContext
         );
 
@@ -360,17 +361,17 @@ public class GeometryFactoryTest {
     @Test
     public void testCreateSquareWithNonSquareCoordinatesProjectedContext() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(12.0);  // Height = 3
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);  // Width = 2
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // easting (x) - Width = 2
+      BigDecimal topLeftY = BigDecimal.valueOf(12.0); // northing (y) - Height = 3
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // easting (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When/Then
       Geometry geometry = GeometryFactory.createSquare(
-            topLeftLat,
-            topLeftLon,
-            bottomRightLat,
-            bottomRightLon,
+            topLeftX,
+            topLeftY,
+            bottomRightX,
+            bottomRightY,
             projectedContext
         );
 
@@ -380,18 +381,101 @@ public class GeometryFactoryTest {
     @Test
     public void testNullContextWithCornersThrowsException() {
       // Given
-      BigDecimal topLeftLat = BigDecimal.valueOf(11.0);
-      BigDecimal topLeftLon = BigDecimal.valueOf(19.0);
-      BigDecimal bottomRightLat = BigDecimal.valueOf(9.0);
-      BigDecimal bottomRightLon = BigDecimal.valueOf(21.0);
+      BigDecimal topLeftX = BigDecimal.valueOf(19.0); // longitude (x)
+      BigDecimal topLeftY = BigDecimal.valueOf(11.0); // latitude (y)
+      BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // longitude (x)
+      BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
       SpatialContext nullContext = null;
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
         GeometryFactory.createSquare(
-            topLeftLat, topLeftLon, bottomRightLat, bottomRightLon, nullContext
+            topLeftX, topLeftY, bottomRightX, bottomRightY, nullContext
         );
       }, "Should throw NullPointerException when context is null");
+    }
+  }
+
+  @Nested
+  class CreateCircleTests {
+    
+    @Test
+    @DisplayName("Create circle with radius and center with default context")
+    public void testCreateCircleWithRadiusAndCenterDefaultContext() {
+      // Given
+      BigDecimal radius = BigDecimal.valueOf(1.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
+      
+      // When
+      Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY);
+      
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      Circle circle = (Circle) geometry.shape;
+      assertEquals(20.0, circle.getCenter().getX(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getY(), 0.000001);
+      assertEquals(1.0, circle.getRadius(), 0.000001);
+    }
+    
+    @Test
+    @DisplayName("Create circle with radius and center with geo context")
+    public void testCreateCircleWithRadiusAndCenterGeoContext() {
+      // Given
+      BigDecimal radius = BigDecimal.valueOf(1.0);
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
+      
+      // When
+      Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, geoContext);
+      
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      Circle circle = (Circle) geometry.shape;
+      assertEquals(20.0, circle.getCenter().getX(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getY(), 0.000001);
+      assertEquals(1.0, circle.getRadius(), 0.000001);
+    }
+    
+    @Test
+    @DisplayName("Create circle from point on circumference and center with default context")
+    public void testCreateCircleFromPointAndCenterDefaultContext() {
+      // Given
+      BigDecimal pointX = BigDecimal.valueOf(21.0); // longitude (x)
+      BigDecimal pointY = BigDecimal.valueOf(10.0); // latitude (y)
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
+      
+      // When
+      Geometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY);
+      
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      Circle circle = (Circle) geometry.shape;
+      assertEquals(20.0, circle.getCenter().getX(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getY(), 0.000001);
+      assertEquals(1.0, circle.getRadius(), 0.000001); // Distance from (20,10) to (21,10) is 1.0
+    }
+    
+    @Test
+    @DisplayName("Create circle with non-default radius calculation")
+    public void testCreateCircleWithNonDefaultRadiusCalculation() {
+      // Given
+      BigDecimal pointX = BigDecimal.valueOf(22.0); // longitude (x)
+      BigDecimal pointY = BigDecimal.valueOf(14.0); // latitude (y)
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
+      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
+      
+      // When
+      Geometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY, projectedContext);
+      
+      // Then
+      assertNotNull(geometry, "Geometry should not be null");
+      Circle circle = (Circle) geometry.shape;
+      double expectedRadius = Math.sqrt(Math.pow(22.0 - 20.0, 2) + Math.pow(14.0 - 10.0, 2)); // √(2² + 4²) = √20 = 4.47...
+      assertEquals(20.0, circle.getCenter().getX(), 0.000001);
+      assertEquals(10.0, circle.getCenter().getY(), 0.000001);
+      assertEquals(expectedRadius, circle.getRadius(), 0.000001);
     }
   }
 
