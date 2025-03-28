@@ -54,7 +54,7 @@ public class GeometryTest {
 
     // Test intersects with coordinates
     Exception exception1 = assertThrows(IllegalStateException.class, () -> {
-      nullGeometry.intersects(BigDecimal.valueOf(20.0), BigDecimal.valueOf(10.0));
+      nullGeometry.intersects(BigDecimal.valueOf(10.0), BigDecimal.valueOf(20.0));
     });
     assertEquals("Shape not initialized", exception1.getMessage());
 
@@ -80,25 +80,25 @@ public class GeometryTest {
 
     @Test
     public void testGetCenterCoordinates() {
-      assertEquals(BigDecimal.valueOf(20.0), pointGeometry.getCenterLatitude(),
-          "Center latitude should match the point's Y coordinate");
-      assertEquals(BigDecimal.valueOf(10.0), pointGeometry.getCenterLongitude(),
-          "Center longitude should match the point's X coordinate");
+      assertEquals(BigDecimal.valueOf(10.0), pointGeometry.getCenterX(),
+          "Center X should match the point's X coordinate");
+      assertEquals(BigDecimal.valueOf(20.0), pointGeometry.getCenterY(),
+          "Center Y should match the point's Y coordinate");
     }
 
     @Test
     public void testPointIntersectsWithItself() {
       assertTrue(pointGeometry.intersects(
-          BigDecimal.valueOf(20.0),
-          BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(10.0),
+          BigDecimal.valueOf(20.0)
       ), "Point should intersect with itself");
     }
 
     @Test
     public void testPointDoesNotIntersectWithDistantPoint() {
       assertFalse(pointGeometry.intersects(
-          BigDecimal.valueOf(30.0),
-          BigDecimal.valueOf(40.0)
+          BigDecimal.valueOf(40.0),
+          BigDecimal.valueOf(30.0)
       ), "Point should not intersect with distant point");
     }
 
@@ -136,30 +136,30 @@ public class GeometryTest {
 
     @Test
     public void testGetCenterCoordinates() {
-      assertEquals(BigDecimal.valueOf(21.0), rectangleGeometry.getCenterLatitude(),
-          "Center latitude should be the middle of min and max");
-      assertEquals(BigDecimal.valueOf(11.0), rectangleGeometry.getCenterLongitude(),
-          "Center longitude should be the middle of min and max");
+      assertEquals(BigDecimal.valueOf(11.0), rectangleGeometry.getCenterX(),
+          "Center X should be the middle of min and max");
+      assertEquals(BigDecimal.valueOf(21.0), rectangleGeometry.getCenterY(),
+          "Center Y should be the middle of min and max");
     }
 
     @Test
     public void testRectangleContainsPoint() {
       // Point inside rectangle
       assertTrue(rectangleGeometry.intersects(
-          BigDecimal.valueOf(21.0),
-          BigDecimal.valueOf(11.0)
+          BigDecimal.valueOf(11.0),
+          BigDecimal.valueOf(21.0)
       ), "Rectangle should contain point inside its bounds");
 
       // Point on rectangle boundary
       assertTrue(rectangleGeometry.intersects(
-          BigDecimal.valueOf(20.0),
-          BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(10.0),
+          BigDecimal.valueOf(20.0)
       ), "Rectangle should contain point on its boundary");
 
       // Point outside rectangle
       assertFalse(rectangleGeometry.intersects(
-          BigDecimal.valueOf(30.0),
-          BigDecimal.valueOf(40.0)
+          BigDecimal.valueOf(40.0),
+          BigDecimal.valueOf(30.0)
       ), "Rectangle should not contain point outside its bounds");
     }
 
@@ -199,30 +199,30 @@ public class GeometryTest {
 
     @Test
     public void testGetCenterCoordinates() {
-      assertEquals(BigDecimal.valueOf(20.0), circleGeometry.getCenterLatitude(),
-          "Center latitude should match the circle's center Y");
-      assertEquals(BigDecimal.valueOf(10.0), circleGeometry.getCenterLongitude(),
-          "Center longitude should match the circle's center X");
+      assertEquals(BigDecimal.valueOf(10.0), circleGeometry.getCenterX(),
+          "Center X should match the circle's center X");
+      assertEquals(BigDecimal.valueOf(20.0), circleGeometry.getCenterY(),
+          "Center Y should match the circle's center Y");
     }
 
     @Test
     public void testCircleContainsPoint() {
       // Point at center of circle
       assertTrue(circleGeometry.intersects(
-          BigDecimal.valueOf(20.0),
-          BigDecimal.valueOf(10.0)
+          BigDecimal.valueOf(10.0),
+          BigDecimal.valueOf(20.0)
       ), "Circle should contain its center point");
 
       // Point inside circle
       assertTrue(circleGeometry.intersects(
-          BigDecimal.valueOf(20.5),
-          BigDecimal.valueOf(10.5)
+          BigDecimal.valueOf(10.5),
+          BigDecimal.valueOf(20.5)
       ), "Circle should contain point inside its radius");
 
       // Point outside circle
       assertFalse(circleGeometry.intersects(
-          BigDecimal.valueOf(25.0),
-          BigDecimal.valueOf(15.0)
+          BigDecimal.valueOf(15.0),
+          BigDecimal.valueOf(25.0)
       ), "Circle should not contain point outside its radius");
     }
 
@@ -256,15 +256,15 @@ public class GeometryTest {
       Shape mockedShape = mock(Shape.class);
       Point mockedCenter = mock(Point.class);
       when(mockedShape.getCenter()).thenReturn(mockedCenter);
-      when(mockedCenter.getY()).thenReturn(25.5);
       when(mockedCenter.getX()).thenReturn(15.5);
+      when(mockedCenter.getY()).thenReturn(25.5);
 
       // Create test geometry with mocked shape
       Geometry mockedGeometry = new Geometry(mockedShape);
 
       // Test center coordinates
-      assertEquals(BigDecimal.valueOf(25.5), mockedGeometry.getCenterLatitude());
-      assertEquals(BigDecimal.valueOf(15.5), mockedGeometry.getCenterLongitude());
+      assertEquals(BigDecimal.valueOf(15.5), mockedGeometry.getCenterX());
+      assertEquals(BigDecimal.valueOf(25.5), mockedGeometry.getCenterY());
 
       // Verify shape.getCenter() was called
       verify(mockedShape, times(2)).getCenter();

@@ -239,17 +239,23 @@ public class GridBuilder {
 
   /**
    * Creates a single patch geometry for a specific cell.
+   *
+   * @param leftX The left X coordinate
+   * @param topY The top Y coordinate
+   * @param rightX The right X coordinate
+   * @param bottomY The bottom Y coordinate
+   * @param context The spatial context
    */
   private Geometry createCellGeometry(
-        double topY, double leftX,
-        double bottomY, double rightX,
+        double leftX, double topY,
+        double rightX, double bottomY,
         SpatialContext context
   ) {
     return GeometryFactory.createSquare(
-        BigDecimal.valueOf(topY),
         BigDecimal.valueOf(leftX),
-        BigDecimal.valueOf(bottomY),
+        BigDecimal.valueOf(topY),
         BigDecimal.valueOf(rightX),
+        BigDecimal.valueOf(bottomY),
         context
     );
   }
@@ -264,20 +270,20 @@ public class GridBuilder {
     List<Patch> patches = new ArrayList<>();
     for (int rowIdx = 0; rowIdx < dimensions.rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < dimensions.colCells; colIdx++) {
-        double cellTopLeftY = topLeftTransformed.y - (rowIdx * dimensions.cellWidthUnits);
         double cellTopLeftX = topLeftTransformed.x + (colIdx * dimensions.cellWidthUnits);
+        double cellTopLeftY = topLeftTransformed.y - (rowIdx * dimensions.cellWidthUnits);
 
-        double cellBottomRightY = cellTopLeftY - dimensions.cellWidthUnits;
         double cellBottomRightX = cellTopLeftX + dimensions.cellWidthUnits;
+        double cellBottomRightY = cellTopLeftY - dimensions.cellWidthUnits;
 
         // Ensure we don't exceed grid boundaries
-        cellBottomRightY = Math.max(cellBottomRightY, bottomRightTransformed.y);
         cellBottomRightX = Math.min(cellBottomRightX, bottomRightTransformed.x);
+        cellBottomRightY = Math.max(cellBottomRightY, bottomRightTransformed.y);
 
         // Create geometry for this cell
         Geometry cellGeometry = createCellGeometry(
-            cellTopLeftY, cellTopLeftX,
-            cellBottomRightY, cellBottomRightX,
+            cellTopLeftX, cellTopLeftY,
+            cellBottomRightX, cellBottomRightY,
             context
         );
 
