@@ -119,10 +119,10 @@ expression: unitsValue # simpleExpression
   | identifier # identifierExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
-  | expression LBRAC_ expression RBRAC_ # slice
+  | subject=expression LBRAC_ selection=expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
-  | name=funcName LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
+  | name=funcName LPAREN_ operand=expression RPAREN_ # singleParamFunctionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
@@ -131,8 +131,8 @@ expression: unitsValue # simpleExpression
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam
   | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
-  | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMaxExpression
-  | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMinExpression
+  | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMinExpression
+  | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMaxExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
@@ -147,11 +147,15 @@ funcName: (MEAN_ | STD_) # reservedFuncName
   | identifier # identifierFuncName
   ;
 
-assignment: CONST_ identifier EQ_ expression;
+assignment: CONST_ name=identifier EQ_ val=expression;
 
 return: RETURN_ expression;
 
-fullConditional: IF_ LPAREN_ expression RPAREN_ fullBody (ELIF_ LPAREN_ expression RPAREN_ fullBody)* (ELSE_ fullBody)?;
+fullConditional: IF_ LPAREN_ cond=expression RPAREN_ fullBody fullElifBranch* fullElseBranch?;
+
+fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ action=fullBody;
+
+fullElseBranch: ELSE_ action=fullBody;
 
 statement: (assignment | return | fullConditional);
 
