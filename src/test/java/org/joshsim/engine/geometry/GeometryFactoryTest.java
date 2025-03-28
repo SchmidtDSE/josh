@@ -251,7 +251,7 @@ public class GeometryFactoryTest {
     public void testCreateSquareWithNullCenterY() {
       // Given
       BigDecimal width = BigDecimal.valueOf(2.0);
-      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x) 
+      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
       BigDecimal centerY = null;
 
       // When/Then
@@ -398,7 +398,7 @@ public class GeometryFactoryTest {
 
   @Nested
   class CreateCircleTests {
-    
+
     @Test
     @DisplayName("Create circle with radius and center with default context")
     public void testCreateCircleWithRadiusAndCenterDefaultContext() {
@@ -406,10 +406,10 @@ public class GeometryFactoryTest {
       BigDecimal radius = BigDecimal.valueOf(1.0);
       BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
-      
+
       // When
       Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY);
-      
+
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Circle circle = (Circle) geometry.shape;
@@ -417,7 +417,7 @@ public class GeometryFactoryTest {
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001);
     }
-    
+
     @Test
     @DisplayName("Create circle with radius and center with geo context")
     public void testCreateCircleWithRadiusAndCenterGeoContext() {
@@ -425,10 +425,10 @@ public class GeometryFactoryTest {
       BigDecimal radius = BigDecimal.valueOf(1.0);
       BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
-      
+
       // When
       Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, geoContext);
-      
+
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Circle circle = (Circle) geometry.shape;
@@ -436,7 +436,7 @@ public class GeometryFactoryTest {
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001);
     }
-    
+
     @Test
     @DisplayName("Create circle from point on circumference and center with default context")
     public void testCreateCircleFromPointAndCenterDefaultContext() {
@@ -445,10 +445,10 @@ public class GeometryFactoryTest {
       BigDecimal pointY = BigDecimal.valueOf(10.0); // latitude (y)
       BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
-      
+
       // When
       Geometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY);
-      
+
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Circle circle = (Circle) geometry.shape;
@@ -456,7 +456,7 @@ public class GeometryFactoryTest {
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001); // Distance from (20,10) to (21,10) is 1.0
     }
-    
+
     @Test
     @DisplayName("Create circle with non-default radius calculation")
     public void testCreateCircleWithNonDefaultRadiusCalculation() {
@@ -465,14 +465,18 @@ public class GeometryFactoryTest {
       BigDecimal pointY = BigDecimal.valueOf(14.0); // latitude (y)
       BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
-      
+
       // When
-      Geometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY, projectedContext);
-      
+      Geometry geometry = GeometryFactory.createCircle(
+          pointX, pointY, centerX, centerY, projectedContext
+      );
+
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Circle circle = (Circle) geometry.shape;
-      double expectedRadius = Math.sqrt(Math.pow(22.0 - 20.0, 2) + Math.pow(14.0 - 10.0, 2)); // √(2² + 4²) = √20 = 4.47...
+      double expectedRadius = Math.sqrt(
+          Math.pow(22.0 - 20.0, 2) + Math.pow(14.0 - 10.0, 2)
+      ); // √(2² + 4²) = √20 = 4.47...
       assertEquals(20.0, circle.getCenter().getX(), 0.000001);
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(expectedRadius, circle.getRadius(), 0.000001);

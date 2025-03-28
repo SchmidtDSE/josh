@@ -34,7 +34,7 @@ public class GeometryMomento {
    * @param diameter The diameter or width of the shape.
    * @throws IllegalArgumentException if the shape name is not supported.
    */
-  public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY, 
+  public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY,
       BigDecimal diameter) {
     this.shapeName = shapeName;
     this.centerX = centerX;
@@ -45,7 +45,7 @@ public class GeometryMomento {
       throw new IllegalArgumentException("Unsupported momento shape: " + shapeName);
     }
   }
-  
+
   /**
    * Builds and returns a Geometry object from this momento.
    *
@@ -105,7 +105,7 @@ public class GeometryMomento {
      * @return A new Geometry instance.
      */
     Geometry build();
-    
+
   }
 
 }

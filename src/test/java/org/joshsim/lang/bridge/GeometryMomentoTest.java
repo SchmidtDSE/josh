@@ -55,7 +55,7 @@ public class GeometryMomentoTest {
 
   @Test
   void testConstructorInvalidShape() {
-    assertThrows(IllegalArgumentException.class, () -> 
+    assertThrows(IllegalArgumentException.class, () ->
       new GeometryMomento("triangle", centerX, centerY, diameter));
   }
 
