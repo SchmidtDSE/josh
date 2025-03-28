@@ -6,8 +6,6 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.Optional;
-
 /**
  * Interface representing a group of event handlers.
  *

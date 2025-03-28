@@ -47,14 +47,14 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
 
       Simulation simulation = null;
       long priorTimestep = getPriorTimestep();
-      
+
       return keys.stream()
           .map((key) -> getReplicate().getPatchByKey(key, priorTimestep))
           .map((entity) -> new ShadowingEntity(entity, simulation))
           .collect(Collectors.toList());
     } else {
       Iterable<ShadowingEntity> entities = getPriorPatches(geometryMomento.build());
-      
+
       List<PatchKey> patchKeys = StreamSupport.stream(entities.spliterator(), false)
           .map((entity) -> entity.getPatchKey())
           .collect(Collectors.toList());

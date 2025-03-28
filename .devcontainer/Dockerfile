@@ -14,4 +14,4 @@ RUN .devcontainer/scripts/on_build/install_gradle.sh
 ENV PATH="/workspaces/josh/.devcontainer/scripts/interactive:${PATH}"
 
 # Keep the container running
-CMD tail -f /dev/nu
+CMD tail -f /dev/null
