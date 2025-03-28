@@ -49,18 +49,18 @@ public class Geometry implements Spatial {
   /**
    * Checks if a point is contained within this geometry, regardless of shape type.
    *
-   * @param latitude Latitude of the point
-   * @param longitude Longitude of the point
+   * @param x X position of the point (Longitude / Easting)
+   * @param y Y position of the point (Latitude / Northing)
    * @return true if the point is contained within the geometry
    */
-  public boolean intersects(BigDecimal latitude, BigDecimal longitude) {
+  public boolean intersects(BigDecimal x, BigDecimal y) {
     if (shape == null) {
       throw new IllegalStateException("Shape not initialized");
     }
 
     Point point = spatialContext.getShapeFactory().pointXY(
-        longitude.doubleValue(),
-        latitude.doubleValue()
+        x.doubleValue(),
+        y.doubleValue()
     );
 
     return shape.relate(point).intersects();
@@ -81,13 +81,13 @@ public class Geometry implements Spatial {
   }
 
   @Override
-  public BigDecimal getCenterLatitude() {
-    return BigDecimal.valueOf(getCenter().getY());
+  public BigDecimal getCenterX() {
+    return BigDecimal.valueOf(getCenter().getX());
   }
 
   @Override
-  public BigDecimal getCenterLongitude() {
-    return BigDecimal.valueOf(getCenter().getX());
+  public BigDecimal getCenterY() {
+    return BigDecimal.valueOf(getCenter().getY());
   }
 
 }

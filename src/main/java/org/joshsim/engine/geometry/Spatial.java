@@ -13,20 +13,20 @@ import java.math.BigDecimal;
  */
 public interface Spatial {
   /**
-   * Get the latitude component of this geometry's center point.
+   * Get the Y component of this geometry's center point.
    *
-   * @return the latitude as a Decimal value
+   * @return the Y component as a Decimal value
    * @throws IllegalStateException if the geometry has no defined center
    */
-  BigDecimal getCenterLatitude();
+  BigDecimal getCenterY();
 
   /**
-   * Get the longitude component of this geometry's center point.
+   * Get the X component of this geometry's center point.
    *
-   * @return the longitude as a Decimal value
+   * @return the X component as a Decimal value
    * @throws IllegalStateException if the geometry has no defined center
    */
-  BigDecimal getCenterLongitude();
+  BigDecimal getCenterX();
 
   /**
    * Determines if this geometry intersects with another spatial geometry.
