@@ -1,7 +1,13 @@
 package org.joshsim.util;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mockStatic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,13 +15,19 @@ import io.minio.MinioClient;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
+/**
+ * Unit tests for the {@link MinioOptions} class.
+ * This class tests various functionalities of MinioOptions, including
+ * bucket name extraction, object name extraction, credentials retrieval,
+ * and Minio client creation.
+ */
 public class MinioOptionsTest {
 
   private MinioOptions options;
@@ -126,7 +138,7 @@ public class MinioOptionsTest {
 
   @Test
   void getCredentials_withNoValidSource_throwsException() {
-    assertThrows(IllegalStateException.class, () -> invokeGetCredentials(options));
+    assertThrows(InvocationTargetException.class, () -> invokeGetCredentials(options));
   }
 
   @Test

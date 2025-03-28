@@ -105,8 +105,9 @@ public class MinioHandler {
     }
 
     if (!failedFiles.isEmpty()) {
-      output.printError("Failed to upload " + failedFiles.size() + " files: " +
-                       String.join(", ", failedFiles));
+      output.printError(
+          "Failed to upload " + failedFiles.size() + " files: " + String.join(", ", failedFiles)
+      );
     }
 
     return successCount;
