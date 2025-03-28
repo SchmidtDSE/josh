@@ -22,4 +22,8 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
         super(geometry, "reference", new HashMap<>(), new HashMap<>());
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.REFERENCE;
+    }
 }

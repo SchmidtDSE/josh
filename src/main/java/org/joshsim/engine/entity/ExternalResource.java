@@ -41,4 +41,9 @@ public abstract class ExternalResource extends Entity {
    * @return the distribution of values for the given geometry
    */
   abstract Distribution getDistribution(Geometry geometry);
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.EXTERNAL_RESOURCE;
+  }
 }

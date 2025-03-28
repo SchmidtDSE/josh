@@ -32,4 +32,9 @@ public class Agent extends MemberSpatialEntity {
   ) {
     super(parent, name, eventHandlerGroups, attributes);
   }
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.AGENT;
+  }
 }

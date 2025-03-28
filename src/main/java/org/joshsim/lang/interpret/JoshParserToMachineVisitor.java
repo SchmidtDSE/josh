@@ -6,81 +6,89 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.engine.entity.Agent;
-import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.ReferenceGeometryEntity;
-import org.joshsim.engine.entity.SpatialEntity;
-import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.geometry.GeometryFactory;
+import org.joshsim.engine.entity.*;
+import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.CompiledSelector;
+import org.joshsim.engine.func.CompiledSelectorFromCallable;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.EngineValueFactory;
 import org.joshsim.engine.value.Units;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
+import org.joshsim.lang.interpret.action.ConditionalAction;
+import org.joshsim.lang.interpret.action.EventHandlerAction;
+import org.joshsim.lang.interpret.fragment.*;
+import org.joshsim.lang.interpret.machine.EntityPrototype;
+import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
 
 
-public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterMachineScaffold> {
+public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   private final EngineValueFactory engineValueFactory;
   private final EngineValue singleCount;
   private final EngineValue allString;
+  private final EngineValue trueValue;
 
   public JoshParserToMachineVisitor() {
     super();
     engineValueFactory = new EngineValueFactory();
     singleCount = engineValueFactory.build(1, new Units("count"));
     allString = engineValueFactory.build("all", new Units(""));
+    trueValue = engineValueFactory.build(true, new Units(""));
   }
 
-  public InterpreterMachineScaffold visitIdentifier(JoshLangParser.IdentifierContext ctx) {
+  public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
-    InterpreterAction action = (machine) -> machine.pushIdentifier(identifierName);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = (machine) -> machine.pushIdentifier(identifierName);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitNumber(JoshLangParser.NumberContext ctx) {
+  public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
     BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
     EngineValue value = engineValueFactory.build(number, new Units(""));
-    InterpreterAction action = (machine) -> machine.push(value);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = (machine) -> machine.push(value);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
+  public Fragment visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
     EngineValue value = parseUnitsValue(ctx);
-    InterpreterAction action = (machine) -> machine.push(value);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = (machine) -> machine.push(value);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitString(JoshLangParser.StringContext ctx) {
+  public Fragment visitString(JoshLangParser.StringContext ctx) {
     String string = ctx.getText();
     EngineValue value = engineValueFactory.build(string, new Units(""));
-    InterpreterAction action = (machine) -> machine.push(value);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = (machine) -> machine.push(value);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitAllExpression(JoshLangParser.AllExpressionContext ctx) {
-    InterpreterAction action = (machine) -> machine.push(allString);
-    return new SingleActionMachineScaffold(action);
-  }
-
-  public InterpreterMachineScaffold visitSimpleBoolExpression(JoshLangParser.SimpleBoolExpressionContext ctx) {
+  public Fragment visitBool(JoshLangParser.BoolContext ctx) {
     boolean bool = ctx.getChild(0).getText().equals("true");
     EngineValue value = engineValueFactory.build(bool, new Units(""));
-    InterpreterAction action = (machine) -> machine.push(value);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = (machine) -> machine.push(value);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitMapLinear(JoshLangParser.MapLinearContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    InterpreterAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
-    InterpreterAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
-    InterpreterAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
-    InterpreterAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
+  public Fragment visitAllExpression(JoshLangParser.AllExpressionContext ctx) {
+    EventHandlerAction action = (machine) -> machine.push(allString);
+    return new ActionFragment(action);
+  }
 
-    InterpreterAction action = (machine) -> {
+  public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
+    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
+    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
+    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       fromLowAction.apply(machine);
       fromHighAction.apply(machine);
@@ -90,18 +98,18 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitMapParam(JoshLangParser.MapParamContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    InterpreterAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
-    InterpreterAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
-    InterpreterAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
-    InterpreterAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
+  public Fragment visitMapParam(JoshLangParser.MapParamContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
+    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
+    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
+    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
     String method = ctx.method.getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       fromLowAction.apply(machine);
       fromHighAction.apply(machine);
@@ -111,92 +119,92 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
-    InterpreterAction leftAction = ctx.left.accept(this).getCurrentAction();
-    InterpreterAction rightAction = ctx.left.accept(this).getCurrentAction();
+  public Fragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.left.accept(this).getCurrentAction();
     boolean isAddition = ctx.op.getText().equals("+");
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       leftAction.apply(machine);
       rightAction.apply(machine);
       return isAddition ? machine.add() : machine.subtract();
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitMultiplyExpression(JoshLangParser.MultiplyExpressionContext ctx) {
-    InterpreterAction leftAction = ctx.left.accept(this).getCurrentAction();
-    InterpreterAction rightAction = ctx.right.accept(this).getCurrentAction();
+  public Fragment visitMultiplyExpression(JoshLangParser.MultiplyExpressionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
     boolean isMultiplication = ctx.op.getText().equals("*");
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       leftAction.apply(machine);
       rightAction.apply(machine);
       return isMultiplication ? machine.multiply() : machine.divide();
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitPowExpression(JoshLangParser.PowExpressionContext ctx) {
-    InterpreterAction leftAction = ctx.left.accept(this).getCurrentAction();
-    InterpreterAction rightAction = ctx.right.accept(this).getCurrentAction();
+  public Fragment visitPowExpression(JoshLangParser.PowExpressionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       leftAction.apply(machine);
       rightAction.apply(machine);
       machine.pow();
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
-    InterpreterAction leftAction = ctx.left.accept(this).getCurrentAction();
-    InterpreterAction rightAction = ctx.right.accept(this).getCurrentAction();
+  public Fragment visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
     String opStr = ctx.op.getText();
 
-    InterpreterAction innerAction = switch (opStr) {
+    EventHandlerAction innerAction = switch (opStr) {
       case "and" -> (machine) -> machine.and();
       case "or" -> (machine) -> machine.or();
       case "xor" -> (machine) -> machine.xor();
       default -> throw new IllegalArgumentException(opStr + " is not a valid logical expression.");
     };
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       leftAction.apply(machine);
       rightAction.apply(machine);
       innerAction.apply(machine);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSlice(JoshLangParser.SliceContext ctx) {
-    InterpreterAction subjectAction = ctx.subject.accept(this).getCurrentAction();
-    InterpreterAction selectionAction = ctx.selection.accept(this).getCurrentAction();
+  public Fragment visitSlice(JoshLangParser.SliceContext ctx) {
+    EventHandlerAction subjectAction = ctx.subject.accept(this).getCurrentAction();
+    EventHandlerAction selectionAction = ctx.selection.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       subjectAction.apply(machine);
       selectionAction.apply(machine);
       return machine.slice();
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitCondition(JoshLangParser.ConditionContext ctx) {
-    InterpreterAction leftAction = ctx.left.accept(this).getCurrentAction();
-    InterpreterAction rightAction = ctx.right.accept(this).getCurrentAction();
+  public Fragment visitCondition(JoshLangParser.ConditionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
     String opStr = ctx.op.getText();
 
-    InterpreterAction innerAction = switch (opStr) {
+    EventHandlerAction innerAction = switch (opStr) {
       case "!=" -> (machine) -> machine.neq();
       case ">" -> (machine) -> machine.gt();
       case "<" -> (machine) -> machine.lt();
@@ -206,79 +214,129 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
       default -> throw new IllegalArgumentException(opStr + " is not a valid comparator.");
     };
 
-    return new SingleActionMachineScaffold(innerAction);
+    return new ActionFragment(innerAction);
   }
 
-  public InterpreterMachineScaffold visitConditional(JoshLangParser.ConditionalContext ctx) {
-    InterpreterAction posAction = ctx.pos.accept(this).getCurrentAction();
-    InterpreterAction negAction = ctx.neg.accept(this).getCurrentAction();
-    InterpreterAction condAction = ctx.cond.accept(this).getCurrentAction();
+  public Fragment visitConditional(JoshLangParser.ConditionalContext ctx) {
+    EventHandlerAction posAction = ctx.pos.accept(this).getCurrentAction();
+    EventHandlerAction negAction = ctx.neg.accept(this).getCurrentAction();
+    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
 
-    InterpreterAction action = new ConditionalAction(condAction, posAction, negAction);
-    return new SingleActionMachineScaffold(action);
+    EventHandlerAction action = new ConditionalAction(condAction, posAction, negAction);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitFullConditional(JoshLangParser.FullConditionalContext ctx) {
+  public Fragment visitFullConditional(JoshLangParser.FullConditionalContext ctx) {
+    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
+    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
 
+    ChaniningConditionalBuilder chainBuilder = new ChaniningConditionalBuilder();
+    chainBuilder.add(new ConditionalAction(condAction, posAction));
+
+    int numElse = ctx.getChildCount() - 5;
+    for (int elseIndex = 0; elseIndex < numElse; elseIndex++) {
+      int childIndex = elseIndex + 5;
+      EventHandlerAction elseAction = ctx.getChild(childIndex).accept(this).getCurrentAction();
+      chainBuilder.add(elseAction);
+    }
+
+    EventHandlerAction action = chainBuilder.build();
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitFullElifBranch(JoshLangParser.FullElifBranchContext ctx) {
+  public Fragment visitFullElifBranch(JoshLangParser.FullElifBranchContext ctx) {
+    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
+    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
 
+    EventHandlerAction action = new ConditionalAction(condAction, posAction);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitFullElseBranch(JoshLangParser.FullElseBranchContext ctx) {
+  public Fragment visitFullElseBranch(JoshLangParser.FullElseBranchContext ctx) {
+    EventHandlerAction condAction = (machine) -> machine.push(trueValue);
+    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
 
+    EventHandlerAction action = new ConditionalAction(condAction, posAction);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
-    InterpreterAction targetAction = ctx.target.accept(this).getCurrentAction();
+  public Fragment visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
+    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
       targetAction.apply(machine);
       machine.sample(true);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSampleParam(JoshLangParser.SampleParamContext ctx) {
-    InterpreterAction countAction = ctx.count.accept(this).getCurrentAction();
-    InterpreterAction targetAction = ctx.target.accept(this).getCurrentAction();
+  public Fragment visitSampleParam(JoshLangParser.SampleParamContext ctx) {
+    EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
+    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
       targetAction.apply(machine);
       machine.sample(true);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
-    InterpreterAction countAction = ctx.count.accept(this).getCurrentAction();
-    InterpreterAction targetAction = ctx.target.accept(this).getCurrentAction();
+  public Fragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
+    EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
+    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
     String replacementStr = ctx.replace.getText();
     boolean withReplacement = replacementStr.equals("with");
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
       targetAction.apply(machine);
       machine.sample(withReplacement);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitLimitBoundExpression(JoshLangParser.LimitBoundExpressionContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    InterpreterAction lowerBoundAction = ctx.lower.accept(this).getCurrentAction();
-    InterpreterAction upperBoundAction = ctx.upper.accept(this).getCurrentAction();
+  public Fragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
+    EventHandlerAction lowAction = ctx.low.accept(this).getCurrentAction();
+    EventHandlerAction highAction = ctx.high.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
+      lowAction.apply(machine);
+      highAction.apply(machine);
+      machine.randUniform();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitNormalSample(JoshLangParser.NormalSampleContext ctx) {
+    EventHandlerAction meanAction = ctx.mean.accept(this).getCurrentAction();
+    EventHandlerAction stdAction = ctx.stdev.accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
+      meanAction.apply(machine);
+      stdAction.apply(machine);
+      machine.randNorm();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitLimitBoundExpression(JoshLangParser.LimitBoundExpressionContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction lowerBoundAction = ctx.lower.accept(this).getCurrentAction();
+    EventHandlerAction upperBoundAction = ctx.upper.accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       lowerBoundAction.apply(machine);
       upperBoundAction.apply(machine);
@@ -286,104 +344,104 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitLimitMinExpression(JoshLangParser.LimitMinExpressionContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    InterpreterAction limitAction = ctx.limit.accept(this).getCurrentAction();
-    InterpreterAction action = (machine) -> {
+  public Fragment visitLimitMinExpression(JoshLangParser.LimitMinExpressionContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       limitAction.apply(machine);
       machine.bound(true, false);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitLimitMaxExpression(JoshLangParser.LimitMinExpressionContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    InterpreterAction limitAction = ctx.limit.accept(this).getCurrentAction();
-    InterpreterAction action = (machine) -> {
+  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMinExpressionContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       limitAction.apply(machine);
       machine.bound(false, true);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitCast(JoshLangParser.CastContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
+  public Fragment visitCast(JoshLangParser.CastContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
     String newUnits = ctx.target.getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       machine.cast(newUnits, false);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitCastForce(JoshLangParser.CastForceContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
+  public Fragment visitCastForce(JoshLangParser.CastForceContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
     String newUnits = ctx.target.getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       machine.cast(newUnits, true);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitCreateVariableExpression(JoshLangParser.CreateVariableExpressionContext ctx) {
-    InterpreterAction countAction = ctx.count.accept(this).getCurrentAction();
+  public Fragment visitCreateVariableExpression(JoshLangParser.CreateVariableExpressionContext ctx) {
+    EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
     String entityType = ctx.target.getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
       machine.makeEntity(entityType);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
+  public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     String attrName = ctx.getChild(2).getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       machine.pushAttribute(attrName);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    InterpreterAction targetAction = ctx.target.accept(this).getCurrentAction();
-    InterpreterAction distanceAction = ctx.distance.accept(this).getCurrentAction();
+  public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
+    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
+    EventHandlerAction distanceAction = ctx.distance.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       targetAction.apply(machine);
       distanceAction.apply(machine);
       machine.executeSpatialQuery();
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
-    InterpreterAction operandAction = ctx.operand.accept(this).getCurrentAction();
+  public Fragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
     String funcName = ctx.name.getText();
 
-    InterpreterAction functionAction = switch (funcName) {
+    EventHandlerAction functionAction = switch (funcName) {
       case "abs" -> (machine) -> machine.abs();
       case "ceil" -> (machine) -> machine.ceil();
       case "count" -> (machine) -> machine.count();
@@ -399,86 +457,280 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<InterpreterM
       default -> throw new IllegalArgumentException("Unknown function name: " + funcName);
     };
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
       functionAction.apply(machine);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitPosition(JoshLangParser.PositionContext ctx) {
-    EngineValue first = parseUnitsValue((JoshLangParser.UnitsValueContext) ctx.getChild(0));
-    String firstTypeStr = ctx.getChild(1).getText();
-    boolean firstTypeLatitude = firstTypeStr.equals("latitude");
+  public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
+    String payload = ctx.getText();
+    EngineValue decoratedPayload = engineValueFactory.build(payload, new Units("position"));
 
-    EngineValue second = parseUnitsValue((JoshLangParser.UnitsValueContext) ctx.getChild(3));
-    String secondTypeStr = ctx.getChild(4).getText();
-    boolean secondTypeLatitude = secondTypeStr.equals("latitude");
-
-    boolean allDegrees = first.getUnits().equals("degrees") && second.getUnits().equals("degrees");
-    if (!allDegrees) {
-      String message = String.format(
-          "Units for a geographic point must be degrees. Got %s, %s.",
-          first.getUnits(),
-          second.getUnits()
-      );
-      throw new IllegalArgumentException(message);
-    }
-
-    boolean onlyOneAxis = firstTypeLatitude == secondTypeLatitude;
-    if (onlyOneAxis) {
-      throw new IllegalArgumentException("Both latitude and longitude must be specified.");
-    }
-
-    EngineValue latitude = firstTypeLatitude ? first : second;
-    EngineValue longitude = secondTypeLatitude ? first : second;
-
-    Geometry point = GeometryFactory.createPoint(latitude.getAsDecimal(), longitude.getAsDecimal());
-    Entity entity = new ReferenceGeometryEntity(point);
-    EngineValue decoratedEntity = engineValueFactory.build(entity);
-
-    InterpreterAction action = (machine) -> {
-      machine.push(decoratedEntity);
+    EventHandlerAction action = (machine) -> {
+      machine.push(decoratedPayload);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
+  public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.getChild(0).getText();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
       machine.create();
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitAssignment(JoshLangParser.AssignmentContext ctx) {
+  public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
-    InterpreterAction valAction = ctx.val.accept(this).getCurrentAction();
+    EventHandlerAction valAction = ctx.val.accept(this).getCurrentAction();
 
-    InterpreterAction action = (machine) -> {
+    EventHandlerAction action = (machine) -> {
       valAction.apply(machine);
       machine.saveLocalVariable(identifierName);
       return machine;
     };
 
-    return new SingleActionMachineScaffold(action);
+    return new ActionFragment(action);
   }
 
-  public InterpreterMachineScaffold visitReturn(JoshLangParser.ReturnContext ctx) {
-    return ctx.getChild(1).accept(this);
+  public Fragment visitLambda(JoshLangParser.LambdaContext ctx) {
+    EventHandlerAction innerAction = ctx.getChild(0).accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
+      innerAction.apply(machine);
+      machine.end();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitReturn(JoshLangParser.ReturnContext ctx) {
+    EventHandlerAction innerAction = ctx.getChild(1).accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
+      machine.end();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitFullBody(JoshLangParser.FullBodyContext ctx) {
+    List<EventHandlerAction> innerActions = new ArrayList<>();
+
+    int numChildren = ctx.getChildCount();
+    int numStatements = numChildren - 2;
+    for (int statementIndex = 0; statementIndex < numStatements; statementIndex++) {
+      int childIndex = statementIndex + 2;
+      EventHandlerAction statementAction = ctx.getChild(childIndex).accept(this).getCurrentAction();
+      innerActions.add(statementAction);
+    }
+
+    EventHandlerAction action = (machine) -> {
+
+      for (EventHandlerAction innerAction : innerActions) {
+        innerAction.apply(machine);
+        if (!machine.isEnded()) {
+          break;
+        }
+      }
+
+      if (machine.isEnded()) {
+        throw new IllegalStateException("Event handler finished without returning a value.");
+      }
+
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitEventHandlerGroupMemberInner(JoshLangParser.EventHandlerGroupMemberInnerContext ctx) {
+    EventHandlerAction handlerAction = ctx.target.accept(this).getCurrentAction();
+    return new ActionFragment(handlerAction);
+  }
+
+  public Fragment visitConditionalIfEventHandlerGroupMember(
+      JoshLangParser.ConditionalIfEventHandlerGroupMemberContext ctx) {
+    EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
+    EventHandlerAction conditionAction = ctx.target.accept(this).getCurrentAction();
+
+    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
+    CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
+    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(decoratedConditionAction);
+
+    return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
+  }
+
+  public Fragment visitConditionalElifEventHandlerGroupMember(
+      JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
+    EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
+    EventHandlerAction conditionAction = ctx.target.accept(this).getCurrentAction();
+
+    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
+    CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
+    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(decoratedConditionAction);
+
+    return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
+  }
+
+  public Fragment visitConditionalElseEventHandlerGroupMember(
+      JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
+    EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
+    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
+    return new CompiledCallableFragment(decoratedInterpreterAction);
+  }
+
+  public Fragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
+    String fullName = ctx.name.getText();
+    Fragment innerFragment = ctx.getChild(1).accept(this);
+
+    if (innerFragment.getCompiledSelector().isPresent()) {
+      throw new RuntimeException("Unexpected selector on non-conditional event handler");
+    }
+
+    EventKey eventKey = buildEventKey(fullName);
+    EventHandler eventHandler = new EventHandler(
+        innerFragment.getCompiledCallable(),
+        eventKey.getAttribute(),
+        eventKey.getEvent()
+    );
+
+    EventHandlerGroupBuilder eventHandlerGroupBuilder = new EventHandlerGroupBuilder();
+    eventHandlerGroupBuilder.addEventHandler(eventHandler);
+    eventHandlerGroupBuilder.setEventKey(eventKey);
+
+    return new EventHandlerGroupFragment(eventHandlerGroupBuilder);
+  }
+
+  public Fragment visitEventHandlerGroupMultiple(JoshLangParser.EventHandlerGroupMultipleContext ctx) {
+    String fullName = ctx.name.getText();
+    EventKey eventKey = buildEventKey(fullName);
+
+    EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
+
+    int numBranches = ctx.getChildCount() - 1;
+    for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
+      int childIndex = branchIndex + 1;
+      Fragment childFragment = ctx.getChild(childIndex).accept(this);
+
+      if (childFragment.getCompiledSelector().isPresent()) {
+        groupBuilder.addEventHandler(new EventHandler(
+            childFragment.getCompiledCallable(),
+            eventKey.getAttribute(),
+            eventKey.getEvent(),
+            childFragment.getCompiledSelector().get()
+        ));
+      } else {
+        groupBuilder.addEventHandler(new EventHandler(
+            childFragment.getCompiledCallable(),
+            eventKey.getAttribute(),
+            eventKey.getEvent()
+        ));
+      }
+    }
+
+    return new EventHandlerGroupFragment(groupBuilder);
+  }
+
+  public Fragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
+    List<EventHandlerGroupBuilder> groups = new ArrayList<>();
+    String stateName = ctx.getChild(2).getText();
+
+    int numHandlerGroups = ctx.getChildCount() - 5;
+    for (int handlerGroupIndex = 0; handlerGroupIndex < numHandlerGroups; handlerGroupIndex++) {
+      int childIndex = handlerGroupIndex + 3;
+      Fragment childFragment = ctx.getChild(childIndex).accept(this);
+      EventHandlerGroupBuilder groupBuilder = childFragment.getEventHandlerGroup();
+      groupBuilder.setState(stateName);
+      groups.add(groupBuilder);
+    }
+
+    return new StateFragment(groups);
+  }
+
+  public Fragment visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
+    int numChildren = ctx.getChildCount();
+    int numInner = numChildren - 5;
+
+    String entityType = ctx.getChild(1).getText();
+    String identifier = ctx.getChild(2).getText();
+    String closeEntityType = ctx.getChild(numChildren - 1).getText();
+    if (!entityType.equals(closeEntityType)) {
+      String message = String.format("Stanza start and end type different: %s, %s", entityType, closeEntityType);
+      throw new IllegalArgumentException(message);
+    }
+
+    EntityBuilder entityBuilder = new EntityBuilder();
+    entityBuilder.setName(identifier);
+
+    for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
+      int childIndex = innerIndex + 3;
+      Fragment childFragment = ctx.getChild(childIndex).accept(this);
+      EventHandlerGroupBuilder groupBuilder = childFragment.getEventHandlerGroup();
+      entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+    }
+
+    EntityPrototype prototype = new EntityPrototype(identifier, getEntityType(entityType), entityBuilder);
+    return new EntityFragment(prototype);
   }
 
   private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {
     BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
     String unitsText = ctx.getChild(1).getText();
     return engineValueFactory.build(number, new Units(unitsText));
+  }
+
+  private boolean isEventName(String candidate) {
+    return switch (candidate) {
+      case "init", "start", "step", "end", "remove", "constant" -> true;
+      default -> false;
+    };
+  }
+
+  private EventKey buildEventKey(String fullName) {
+    String[] namePieces = fullName.split("\\.");
+    String candidateEventName = namePieces[namePieces.length - 1];
+    boolean endsWithEventName = isEventName(candidateEventName);
+
+    StringJoiner attributeNameJoiner = new StringJoiner(".");
+    for (int i = 0; i < namePieces.length - 1; i++) {
+      attributeNameJoiner.add(namePieces[i]);
+    }
+
+    String attributeName;
+    String eventName;
+    if (endsWithEventName) {
+      attributeName = attributeNameJoiner.toString();
+      eventName = candidateEventName;
+    } else {
+      attributeNameJoiner.add(candidateEventName);
+      attributeName = attributeNameJoiner.toString();
+      eventName = "constant";
+    }
+
+    return new EventKey(attributeName, eventName);
+  }
+
+  private EntityType getEntityType(String entityType) {
+    return switch (entityType) {
+      case "agent" -> EntityType.AGENT;
+      case "disturbance" -> EntityType.DISTURBANCE;
+      case "external" -> EntityType.EXTERNAL_RESOURCE;
+      case "patch" -> EntityType.PATCH;
+      case "simulation" -> EntityType.SIMULATION;
+      default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
+    };
   }
 }

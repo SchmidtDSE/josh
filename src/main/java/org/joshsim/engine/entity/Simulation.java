@@ -28,4 +28,9 @@ public class Simulation extends Entity {
   ) {
     super(name, eventHandlerGroups, attributes);
   }
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.SIMULATION;
+  }
 }

@@ -81,4 +81,5 @@ public abstract class Entity implements Lockable, AttributeContainer {
     lock.unlock();
   }
 
+  public abstract EntityType getEntityType();
 }

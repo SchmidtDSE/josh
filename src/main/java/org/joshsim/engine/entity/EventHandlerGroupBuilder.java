@@ -29,10 +29,11 @@ public class EventHandlerGroupBuilder {
    * @return a new EventHandlerGroup instance
    */
   public EventHandlerGroup build() {
-    return new EventHandlerGroup(
-        eventHandlers,
-        new EventKey(getState(), getAttribute(), getEvent())
-    );
+    return new EventHandlerGroup(eventHandlers, buildKey());
+  }
+
+  public EventKey buildKey() {
+    return new EventKey(getState(), getAttribute(), getEvent());
   }
 
   /**
@@ -90,6 +91,12 @@ public class EventHandlerGroupBuilder {
    */
   private String getEvent() {
     return event.orElseThrow(() -> new IllegalStateException("Event not set"));
+  }
+
+  public void setEventKey(EventKey eventKey) {
+    setEvent(eventKey.getEvent());
+    setAttribute(eventKey.getAttribute());
+    setState(eventKey.getState());
   }
 
   /**

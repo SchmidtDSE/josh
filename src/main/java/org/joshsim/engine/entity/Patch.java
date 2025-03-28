@@ -45,4 +45,9 @@ public class Patch extends RootSpatialEntity {
   public PatchKey getKey() {
     return new PatchKey(this);
   }
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.PATCH;
+  }
 }

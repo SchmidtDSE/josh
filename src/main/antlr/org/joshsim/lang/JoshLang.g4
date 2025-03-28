@@ -151,11 +151,11 @@ assignment: CONST_ name=identifier EQ_ val=expression;
 
 return: RETURN_ expression;
 
-fullConditional: IF_ LPAREN_ cond=expression RPAREN_ fullBody fullElifBranch* fullElseBranch?;
+fullConditional: IF_ LPAREN_ cond=expression RPAREN_ target=fullBody fullElifBranch* fullElseBranch?;
 
-fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ action=fullBody;
+fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ target=fullBody;
 
-fullElseBranch: ELSE_ action=fullBody;
+fullElseBranch: ELSE_ target=fullBody;
 
 statement: (assignment | return | fullConditional);
 
@@ -173,24 +173,28 @@ fullBody: LCURLY_ statement* RCURLY_;
 callable: (fullBody | lambda);
 
 // Event handlers
-eventHandler: identifier EQ_ callable;
+eventHandlerGroupMemberInner: EQ_ target=callable;
 
-conditionalEventSelector: COLON_ (IF_|ELIF_) LPAREN_ expression RPAREN_;
+conditionalIfEventHandlerGroupMember: COLON_ IF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-elseEventSelector: COLON_ ELSE_;
+conditionalElifEventHandlerGroupMember: COLON_ ELIF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-eventHandlerGroupMember: (conditionalEventSelector|elseEventSelector)? EQ_ callable;
+conditionalElseEventHandlerGroupMember: COLON_ ELSE_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-eventHandlerGroup: identifier eventHandlerGroupMember*;
+eventHandlerGroupSingle: name=identifier eventHandlerGroupMemberInner;
 
-eventHandlerGeneral: (eventHandler | eventHandlerGroup);
+eventHandlerGroupMultiple: name=identifier conditionalIfEventHandlerGroupMember conditionalElifEventHandlerGroupMember* conditionalElseEventHandlerGroupMember?;
+
+eventHandlerGroup: (eventHandlerGroupSingle | eventHandlerGroupMultiple);
+
+eventHandlerGeneral: eventHandlerGroup;
 
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
+entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
+entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
@@ -205,4 +209,4 @@ configStatement: CONFIG_ expression AS_ identifier;
 importStatement: IMPORT_ expression;
 
 // Program
-program: (configStatement | importStatement | unitStanza | agentStanza)*;
+program: (configStatement | importStatement | unitStanza | entityStanza)*;

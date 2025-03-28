@@ -33,4 +33,9 @@ public class Disturbance extends MemberSpatialEntity {
   ) {
     super(parent, name, eventHandlerGroups, attributes);
   }
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.DISTURBANCE;
+  }
 }
