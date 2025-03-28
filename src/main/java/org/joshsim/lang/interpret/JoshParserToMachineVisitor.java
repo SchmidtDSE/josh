@@ -10,16 +10,14 @@ import org.joshsim.engine.entity.*;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.CompiledSelectorFromCallable;
-import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
-import org.joshsim.engine.value.Units;
+import org.joshsim.engine.value.*;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.*;
-import org.joshsim.lang.interpret.machine.EntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 
 import java.math.BigDecimal;
@@ -684,6 +682,55 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EntityPrototype prototype = new EntityPrototype(identifier, getEntityType(entityType), entityBuilder);
     return new EntityFragment(prototype);
+  }
+
+  public Fragment visitNoopConversion(JoshLangParser.NoopConversionContext ctx) {
+    String aliasName = ctx.getChild(1).getText();
+    Conversion conversion = new NoopConversion(new Units(aliasName));
+    return new ConversionFragment(conversion);
+  }
+
+  public Fragment visitActiveConversion(JoshLangParser.ActiveConversionContext ctx) {
+    String destinationUnitsName = ctx.getChild(0).getText();
+    Units destinationUnits = new Units(destinationUnitsName);
+    EventHandlerAction action = ctx.getChild(2).accept(this).getCurrentAction();
+    CompiledCallable conversionLogic = new PushDownMachineCallable(action);
+    Conversion conversion = new DirectConversion(destinationUnits, destinationUnits, conversionLogic);
+    return new ConversionFragment(conversion);
+  }
+
+  public Fragment visitUnitStanza(JoshLangParser.UnitStanzaContext ctx) {
+    String sourceUnitName = ctx.getChild(2).getText();
+    Units sourceUnits = new Units(sourceUnitName);
+
+    List<Conversion> conversions = new ArrayList<>();
+    int numChildren = ctx.getChildCount();
+    int numConversions = numChildren - 5;
+    for (int conversionIndex = 0; conversionIndex < numConversions; conversionIndex++) {
+      int childIndex = conversionIndex + 3;
+      Fragment childFragment = ctx.getChild(childIndex).accept(this);
+      Conversion incompleteConversion = childFragment.getConversion();
+      Conversion completeConversion = new DirectConversion(
+          sourceUnits,
+          incompleteConversion.getDestinationUnits(),
+          incompleteConversion.getConversionCallable()
+      );
+      conversions.add(completeConversion);
+    }
+
+    return new ConversionsFragment(conversions);
+  }
+
+  public Fragment visitConfigStatement(JoshLangParser.ConfigStatementContext ctx) {
+    throw new RuntimeException("Configuration statements reserved for future use.");
+  }
+
+  public Fragment visitImportStatement(JoshLangParser.ImportStatementContext ctx) {
+    throw new RuntimeException("Import statements reserved for future use.");
+  }
+
+  public Fragment visitProgram(JoshLangParser.ProgramContext ctx) {
+    return null;  // TODO
   }
 
   private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {

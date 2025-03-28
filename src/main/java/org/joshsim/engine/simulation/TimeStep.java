@@ -22,7 +22,7 @@ public interface TimeStep {
    *
    * @return the integer time step number
    */
-  int getTimeStep();
+  long getTimeStep();
 
   /**
    * Get entities within the specified geometry at this time step.

@@ -24,4 +24,9 @@ public class ActionFragment extends Fragment {
     return action;
   }
 
+  @Override
+  public FragmentType getFragmentType() {
+    return FragmentType.ACTION;
+  }
+
 }

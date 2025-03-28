@@ -10,8 +10,9 @@ package org.joshsim.lang.interpret.fragment;
 import org.joshsim.engine.entity.EventHandlerGroupBuilder;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
+import org.joshsim.engine.value.Conversion;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.machine.EntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,5 +45,15 @@ public abstract class Fragment {
   public EntityPrototype getEntity() {
     throw new RuntimeException("This fragment does not have an entity.");
   }
+
+  public Conversion getConversion() {
+    throw new RuntimeException("This fragment does not have a conversion.");
+  }
+
+  public Iterable<Conversion> getConversions() {
+    return List.of(getConversion());
+  }
+
+  public abstract FragmentType getFragmentType();
   
 }

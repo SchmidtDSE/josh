@@ -11,6 +11,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.value.Converter;
+import org.joshsim.engine.value.EmptyConverter;
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -21,6 +25,8 @@ public class EntityScope implements Scope {
 
   private final Entity value;
   private final Set<String> expectedAttrs;
+  private final Converter converter;
+  private final EntityPrototypeStore prototypeStore;
 
   /**
    * Create a scope decorator around this entity.
@@ -30,6 +36,21 @@ public class EntityScope implements Scope {
   public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = getAttributes(value);
+
+    converter = new EmptyConverter();
+    prototypeStore = new EmptyEntityPrototypeStore();
+  }
+
+  /**
+   * Create a scope decorator around this entity with context.
+   *
+   * @param value EngineValue to use for current.
+   */
+  public EntityScope(Entity value, Converter converter, EntityPrototypeStore prototypeStore) {
+    this.value = value;
+    this.expectedAttrs = getAttributes(value);
+    this.converter = converter;
+    this.prototypeStore = prototypeStore;
   }
 
   @Override
@@ -52,6 +73,16 @@ public class EntityScope implements Scope {
   @Override
   public Iterable<String> getAttributes() {
     return expectedAttrs;
+  }
+
+  @Override
+  public Converter getConverter() {
+    return converter;
+  }
+
+  @Override
+  public EntityPrototypeStore getPrototypeStore() {
+    return prototypeStore;
   }
 
   /**

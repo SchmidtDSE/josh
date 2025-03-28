@@ -17,4 +17,9 @@ public class StateFragment extends Fragment {
     return groups;
   }
 
+  @Override
+  public FragmentType getFragmentType() {
+    return FragmentType.STATE;
+  }
+
 }

@@ -18,7 +18,7 @@ import org.joshsim.engine.value.EngineValue;
  * entities and spatial information.
  * </p>
  */
-public abstract class SpatialEntity extends Entity {
+public abstract class SpatialEntity extends MutableEntity {
 
   /**
    * Constructs a SpatialEntity with the specified name, event handler groups, and attributes.

@@ -9,12 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.engine.entity.EventHandlerGroup;
-import org.joshsim.engine.entity.EventKey;
-import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
-import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.entity.SpatialEntity;
+
+import org.joshsim.engine.entity.*;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
@@ -273,4 +269,7 @@ public class ShadowingEntity {
     }
   }
 
+  public Entity freeze() {
+    return inner.freeze();
+  }
 }

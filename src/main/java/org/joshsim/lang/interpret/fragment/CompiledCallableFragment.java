@@ -30,4 +30,9 @@ public class CompiledCallableFragment extends Fragment {
     return selector;
   }
 
+  @Override
+  public FragmentType getFragmentType() {
+    return FragmentType.COMPILED_CALLABLE;
+  }
+
 }

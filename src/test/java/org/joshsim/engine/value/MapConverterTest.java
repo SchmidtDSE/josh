@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Test for a converter which supports conversion lookup.
  */
 @ExtendWith(MockitoExtension.class)
-public class ConverterTest {
+public class MapConverterTest {
 
   @Mock(lenient = true) private Conversion mockConversion;
   private Units sourceUnits;
@@ -45,7 +45,7 @@ public class ConverterTest {
     when(mockConversion.getDestinationUnits()).thenReturn(destUnits);
 
     conversions.put(tuple, mockConversion);
-    converter = new Converter(conversions);
+    converter = new MapConverter(conversions);
   }
 
   @Test

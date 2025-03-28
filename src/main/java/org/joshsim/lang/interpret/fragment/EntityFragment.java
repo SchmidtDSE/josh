@@ -1,6 +1,6 @@
 package org.joshsim.lang.interpret.fragment;
 
-import org.joshsim.lang.interpret.machine.EntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 
 
 public class EntityFragment extends Fragment {
@@ -13,6 +13,11 @@ public class EntityFragment extends Fragment {
 
   public EntityPrototype getEntity() {
     return prototype;
+  }
+
+  @Override
+  public FragmentType getFragmentType() {
+    return FragmentType.ENTITY;
   }
 
 }

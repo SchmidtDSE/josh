@@ -18,7 +18,7 @@ import org.joshsim.engine.value.EngineValue;
  * <p>Represents an external resource entity in the system which provides access to distributed
  * values based on a geometry and attribute-sensitive paths.</p>
  */
-public abstract class ExternalResource extends Entity {
+public abstract class ExternalResource extends MutableEntity {
   /**
    * Constructor for a ExternalResource, which allows access to external data to influence Entities.
    *

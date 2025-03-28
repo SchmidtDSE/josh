@@ -103,6 +103,8 @@ public interface EngineBridge {
    */
   long getPriorTimestep();
 
+  long getAbsoluteTimestep();
+
   /**
    * Get the replicate being modified by this EngineBridge.
    *

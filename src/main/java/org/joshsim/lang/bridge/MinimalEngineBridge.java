@@ -37,6 +37,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final EngineValue endStep;
   private final Converter converter;
 
+  private long absoluteStep;
   private EngineValue currentStep;
   private boolean inStep;
 
@@ -61,13 +62,14 @@ public class MinimalEngineBridge implements EngineBridge {
     engineValueFactory = new EngineValueFactory();
 
     currentStep = simulation
-      .getAttributeValue("stepCount")
+      .getAttributeValue("step.start")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
 
     endStep = simulation
-      .getAttributeValue("stepCount")
+      .getAttributeValue("step.end")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
 
+    absoluteStep = 0;
     inStep = false;
   }
 
@@ -87,6 +89,8 @@ public class MinimalEngineBridge implements EngineBridge {
     }
 
     currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, new Units("count"));
+    absoluteStep++;
+    // TODO: TimeStep
     inStep = false;
   }
 
@@ -147,6 +151,11 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public long getPriorTimestep() {
     return currentStep.getAsInt() - 1;
+  }
+
+  @Override
+  public long getAbsoluteTimestep() {
+    return absoluteStep;
   }
 
   @Override

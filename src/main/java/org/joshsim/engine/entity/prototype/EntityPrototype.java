@@ -1,4 +1,4 @@
-package org.joshsim.lang.interpret.machine;
+package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EntityBuilder;
@@ -21,6 +21,10 @@ public class EntityPrototype {
 
   public String getIdentifier() {
     return identifier;
+  }
+
+  public EntityType getEntityType() {
+    return entityType;
   }
 
   Entity build() {

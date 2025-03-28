@@ -12,7 +12,7 @@ import org.joshsim.engine.value.EngineValue;
 /**
  * Simulation entity with cross-timestep attributes.
  */
-public class Simulation extends Entity {
+public class Simulation extends MutableEntity {
 
   /**
    * Constructor for a Simulation, which contains 'meta' attributes and event handlers.

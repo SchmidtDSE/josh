@@ -15,4 +15,9 @@ public class EventHandlerGroupFragment extends Fragment {
     return eventHandlerGroup;
   }
 
+  @Override
+  public FragmentType getFragmentType() {
+    return FragmentType.EVENT_HANDLER_GROUP;
+  }
+
 }
