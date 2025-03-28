@@ -39,10 +39,10 @@ public interface Spatial {
   /**
    * Determines if this geometry intersects with a specific geographic point.
    *
-   * @param latitude the latitude of the point
-   * @param longitude the longitude of the point
+   * @param locationX the X position (Longitude / Easting) of the point
+   * @param locationY the Y position (Latitude / Northing) of the point
    * @return true if the geometry intersects with the point, false otherwise
    */
-  boolean intersects(BigDecimal latitude, BigDecimal longitude);
+  boolean intersects(BigDecimal locationX, BigDecimal locationY);
 
 }
