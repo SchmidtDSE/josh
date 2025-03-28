@@ -31,8 +31,8 @@ public class PatchKey {
     return String.format(
       "Patch of type %s at (%.6f, %.6f)",
       patch.getName(),
-      geometry.getCenterLongitude(),
-      geometry.getCenterLatitude()
+      geometry.getCenterX(),
+      geometry.getCenterY()
     );
   }
 }
