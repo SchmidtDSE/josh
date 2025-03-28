@@ -132,12 +132,8 @@ public class JoshSimCommander {
      */
     private Integer saveToMinio(File file) {
       try {
-        // Create MinioClient
-        MinioClient minioClient = MinioClient.builder()
-            .endpoint(minioOptions.getMinioEndpoint())
-            .credentials(minioOptions.getMinioKey(), minioOptions.getMinioSecret())
-            .build();
-
+        // Create MinioClient and get bucket and object names
+        MinioClient minioClient = minioOptions.getMinioClient();
         String bucketName = minioOptions.getBucketName();
         String objectName = minioOptions.getObjectName();
 

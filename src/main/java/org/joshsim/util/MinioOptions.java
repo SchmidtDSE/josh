@@ -1,5 +1,6 @@
 package org.joshsim.util;
 
+import io.minio.MinioClient;
 import picocli.CommandLine.Option;
 
 /**
@@ -19,10 +20,6 @@ public class MinioOptions {
   @Option(names = "--minio-endpoint", description = "Minio endpoint URL",
           defaultValue = "http://localhost:9000")
   private String minioEndpoint;
-
-  public boolean isMinioOutput() {
-    return output != null && output.startsWith("minio://");
-  }
 
   /**
    * Extracts and returns the bucket name from the output path if it is a Minio URL.
@@ -50,5 +47,36 @@ public class MinioOptions {
     String path = output.substring("minio://".length());
     int slashIndex = path.indexOf('/');
     return slashIndex > 0 ? path.substring(slashIndex + 1) : "";
+  }
+
+
+  /**
+   * Returns true if the output path is a Minio URL.
+   *
+   * @return true if the output path is a Minio URL
+   */
+  public boolean isMinioOutput() {
+    return output != null && output.startsWith("minio://");
+  }
+
+  /**
+   * Returns the Minio/S3 endpoint.
+   *
+   * @return the Minio/S3 endpoint
+   */
+  public String getMinioEndpoint() {
+    return minioEndpoint;
+  }
+
+  /**
+   * Returns the built Minio client.
+   *
+   * @return the Minio client
+   */
+  public MinioClient getMinioClient() {
+    return MinioClient.builder()
+        .endpoint(minioEndpoint)
+        .credentials(minioKey, minioSecret)
+        .build();
   }
 }
