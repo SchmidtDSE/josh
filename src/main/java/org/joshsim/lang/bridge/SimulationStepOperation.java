@@ -38,10 +38,11 @@ public class SimulationStepOperation implements EngineBridgeOperation {
   }
 
   private ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
+    // TODO
     return target;
   }
 
   private void initSimulation() {
-
+    // TODO
   }
 }

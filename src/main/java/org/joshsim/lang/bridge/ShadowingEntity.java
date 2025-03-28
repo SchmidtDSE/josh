@@ -270,6 +270,7 @@ public class ShadowingEntity {
   }
 
   public Entity freeze() {
+    // TODO: propagate freeze
     return inner.freeze();
   }
 }
