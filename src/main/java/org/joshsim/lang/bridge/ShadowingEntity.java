@@ -30,7 +30,7 @@ public class ShadowingEntity {
 
   private static final String DEFAULT_STATE_STR = "";
 
-  private final SpatialEntity inner;
+  private final Entity inner;
   private final ShadowingEntity here;
   private final Simulation meta;
   private final Set<String> resolvedAttributes;
@@ -60,7 +60,7 @@ public class ShadowingEntity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(SpatialEntity inner, ShadowingEntity here, Simulation meta) {
+  public ShadowingEntity(Entity inner, ShadowingEntity here, Simulation meta) {
     this.inner = inner;
     this.here = here;
     this.meta = meta;
@@ -231,7 +231,7 @@ public class ShadowingEntity {
    *
    * @return entity that is decorated by this object.
    */
-  protected SpatialEntity getInner() {
+  protected Entity getInner() {
     return inner;
   }
 

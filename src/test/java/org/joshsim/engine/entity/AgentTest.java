@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
  */
 public class AgentTest {
 
-  private SpatialEntity mockParent;
+  private Entity mockParent;
   private Geometry mockGeometry;
   private EngineValue mockValue;
   private HashMap<EventKey, EventHandlerGroup> eventHandlers;
@@ -44,7 +44,7 @@ public class AgentTest {
   @BeforeEach
   public void setUp() {
     // Set up mocks
-    mockParent = mock(SpatialEntity.class);
+    mockParent = mock(Entity.class);
     mockGeometry = mock(Geometry.class);
     mockValue = mock(EngineValue.class);
 

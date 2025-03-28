@@ -26,7 +26,7 @@ public class Disturbance extends MemberSpatialEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    */
   public Disturbance(
-      SpatialEntity parent,
+      Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes

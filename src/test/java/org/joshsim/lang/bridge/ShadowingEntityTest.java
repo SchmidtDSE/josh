@@ -20,7 +20,6 @@ import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ShadowingEntityTest {
 
   @Mock(lenient = true) private Patch mockPatch;
-  @Mock(lenient = true) private SpatialEntity mockSpatialEntity;
+  @Mock(lenient = true) private Entity mockSpatialEntity;
   @Mock(lenient = true) private Simulation mockSimulation;
   @Mock(lenient = true) private EventHandlerGroup mockEventHandlerGroup;
   @Mock(lenient = true) private EventHandler mockEventHandler;

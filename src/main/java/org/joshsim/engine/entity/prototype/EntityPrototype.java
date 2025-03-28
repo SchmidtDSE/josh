@@ -3,7 +3,6 @@ package org.joshsim.engine.entity.prototype;
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EntityBuilder;
 import org.joshsim.engine.entity.EntityType;
-import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.geometry.Geometry;
 
 
@@ -35,7 +34,7 @@ public class EntityPrototype {
     };
   }
 
-  SpatialEntity buildSpatial(SpatialEntity parent) {
+  Entity buildSpatial(Entity parent) {
     return switch (entityType) {
       case AGENT -> entityBuilder.buildAgent(parent);
       case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
@@ -43,7 +42,7 @@ public class EntityPrototype {
     };
   }
 
-  SpatialEntity buildSpatial(Geometry parent) {
+  Entity buildSpatial(Geometry parent) {
     return switch (entityType) {
       case PATCH -> entityBuilder.buildPatch(parent);
       default -> throw new RuntimeException("Cannot instantiate the following with a geometry: " + entityType);
