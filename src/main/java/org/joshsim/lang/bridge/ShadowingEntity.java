@@ -30,7 +30,7 @@ public class ShadowingEntity {
 
   private static final String DEFAULT_STATE_STR = "";
 
-  private final Entity inner;
+  private final MutableEntity inner;
   private final ShadowingEntity here;
   private final Simulation meta;
   private final Set<String> resolvedAttributes;
@@ -60,7 +60,7 @@ public class ShadowingEntity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(Entity inner, ShadowingEntity here, Simulation meta) {
+  public ShadowingEntity(MutableEntity inner, ShadowingEntity here, Simulation meta) {
     this.inner = inner;
     this.here = here;
     this.meta = meta;

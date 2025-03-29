@@ -85,7 +85,7 @@ public class EntityBuilderTest {
 
     assertNotNull(patch);
     assertEquals(patchName, patch.getName());
-    assertEquals(mockGeometry, patch.getGeometry());
+    assertEquals(mockGeometry, patch.getGeometry().get());
     assertTrue(patch.getAttributeValue("patchAttr").isPresent());
   }
 

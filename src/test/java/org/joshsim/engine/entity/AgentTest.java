@@ -83,7 +83,7 @@ public class AgentTest {
    */
   @Test
   public void testGetGeometry() {
-    assertEquals(mockGeometry, agent.getGeometry(), "Geometry should come from parent");
+    assertEquals(mockGeometry, agent.getGeometry().get(), "Geometry should come from parent");
   }
 
   /**

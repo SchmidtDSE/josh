@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -19,7 +22,7 @@ import org.joshsim.engine.value.EngineValue;
  * This class provides mechanisms for managing attributes and event handlers,
  * and supports locking to be thread-safe.
  */
-public abstract class MutableEntity implements Entity {
+public abstract class MutableEntity implements Entity, Lockable {
 
   private final String name;
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
@@ -51,12 +54,21 @@ public abstract class MutableEntity implements Entity {
     return name;
   }
 
-  @Override
+  /**
+   * Get event handlers for all attributes and events.
+   *
+   * @returns Hashmap of (state x attribute x event) to EventHandlerGroups.
+   */
   public Iterable<EventHandlerGroup> getEventHandlers() {
     return eventHandlerGroups.values();
   }
 
-  @Override
+  /**
+   * Get event handlers for a specific attribute and event.
+   *
+   * @param event The event for which handler groups should be returned.
+   * @return the event handler group, or empty if it does not exist
+   */
   public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
     return Optional.ofNullable(eventHandlerGroups.get(eventKey));
   }
@@ -66,7 +78,12 @@ public abstract class MutableEntity implements Entity {
     return Optional.ofNullable(attributes.get(name));
   }
 
-  @Override
+  /**
+   * Set the value of an attribute by name.
+   *
+   * @param name the attribute name
+   * @param value the value to set
+   */
   public void setAttributeValue(String name, EngineValue value) {
     attributes.put(name, value);
   }
@@ -87,9 +104,11 @@ public abstract class MutableEntity implements Entity {
   }
 
   @Override
-  public boolean isFrozen() {
-    return false;
+  public Iterable<String> getAttributeNames() {
+    return StreamSupport.stream(getEventHandlers().spliterator(), false)
+        .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
+        .map(EventHandler::getAttributeName)
+        .collect(Collectors.toSet());
   }
-
 }
 

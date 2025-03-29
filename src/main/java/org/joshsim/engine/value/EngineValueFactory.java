@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.MutableEntity;
 
 
 /**
@@ -88,6 +89,16 @@ public class EngineValueFactory {
    */
   public EngineValue build(Entity entity) {
     return new EntityValue(caster, entity);
+  }
+
+  /**
+   * Build a new EngineValue from an Entity.
+   *
+   * @param entity the value to decorate in an EngineValue.
+   * @returns decorated version of entity.
+   */
+  public EngineValue build(MutableEntity entity) {
+    return new MutableEntityValue(caster, entity);
   }
 
   /**

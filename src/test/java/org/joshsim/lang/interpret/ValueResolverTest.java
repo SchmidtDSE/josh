@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
@@ -33,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ValueResolverTest {
 
   @Mock(lenient = true) private Scope mockScope;
-  @Mock(lenient = true) private Entity mockEntity;
+  @Mock(lenient = true) private MutableEntity mockEntity;
   @Mock(lenient = true) private EngineValue mockDirectValue;
   @Mock(lenient = true) private EngineValue mockEntityValue;
   @Mock(lenient = true) private EngineValue mockNestedValue;
@@ -59,6 +60,7 @@ public class ValueResolverTest {
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup, mockNestedGroup));
+    when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("nested"));
 
     // Configure mock for direct value test
     when(mockScope.get("direct")).thenReturn(mockDirectValue);
@@ -67,7 +69,7 @@ public class ValueResolverTest {
     // Configure mocks for nested value test
     when(mockScope.get("entity")).thenReturn(mockEntityValue);
     when(mockScope.has("entity")).thenReturn(true);
-    when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockEntityValue.getAsMutableEntity()).thenReturn(mockEntity);
 
     // Setup nested entity value.
     when(mockEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));
