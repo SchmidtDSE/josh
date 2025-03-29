@@ -1,5 +1,8 @@
 package org.joshsim.engine.entity;
 
+/**
+ * Enum representing different types of entities that can exist within the simulation.
+ */
 public enum EntityType {
   AGENT,
   DISTURBANCE,

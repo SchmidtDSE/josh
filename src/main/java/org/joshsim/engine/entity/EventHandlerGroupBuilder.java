@@ -32,6 +32,16 @@ public class EventHandlerGroupBuilder {
     return new EventHandlerGroup(eventHandlers, buildKey());
   }
 
+  
+  /**
+   * Build an EventKey using the current state, attribute, and event.
+   *
+   * <p>This method encapsulates the logic for generating an immutable EventKey from the provided
+   * state, attribute, and event information of this builder.</p>
+   *
+   * @return A new EventKey instance which is immutable.
+   * @throws IllegalStateException if any of state, attribute, or event have not been set.
+   */
   public EventKey buildKey() {
     return new EventKey(getState(), getAttribute(), getEvent());
   }

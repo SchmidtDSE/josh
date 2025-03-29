@@ -6,11 +6,7 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -47,21 +43,22 @@ public interface Entity {
   /**
    * Get the names of all attributes associated with this entity.
    *
-   * @return An Iterable of attribute names as Strings
+   * @return All attribute names available on this entity as strings. This may include non-
+   *     initialized names.
    */
   Iterable<String> getAttributeNames();
 
   /**
    * Get the type of this entity.
    *
-   * @return The EntityType (AGENT, DISTURBANCE, EXTERNAL_RESOURCE, PATCH, SIMULATION, or REFERENCE)
+   * @return The EntityType for this entity.
    */
   EntityType getEntityType();
 
   /**
-   * Creates an immutable copy of this entity.
+   * An immutable copy of this entity's attributes or a reference to this entity if already frozen.
    *
-   * @return A new immutable FrozenEntity containing the current state
+   * @return An immutable FrozenEntity containing the attributes of this entity.
    */
   Entity freeze();
 
