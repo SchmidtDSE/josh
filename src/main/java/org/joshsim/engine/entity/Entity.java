@@ -44,10 +44,25 @@ public interface Entity {
    */
   Optional<EngineValue> getAttributeValue(String name);
 
+  /**
+   * Get the names of all attributes associated with this entity.
+   *
+   * @return An Iterable of attribute names as Strings
+   */
   Iterable<String> getAttributeNames();
 
+  /**
+   * Get the type of this entity.
+   *
+   * @return The EntityType (AGENT, DISTURBANCE, EXTERNAL_RESOURCE, PATCH, SIMULATION, or REFERENCE)
+   */
   EntityType getEntityType();
 
+  /**
+   * Creates an immutable copy of this entity.
+   *
+   * @return A new immutable FrozenEntity containing the current state
+   */
   Entity freeze();
 
 }
