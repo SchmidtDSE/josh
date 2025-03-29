@@ -6,28 +6,28 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Abstract base class for configuration that retrieves credentials from multiple sources
- * in priority order: command line arguments → credentials file → environment variables.
+ * Abstract base class for configuration that retrieves values from multiple sources
+ * in priority order: direct values → config file → environment variables.
  */
 public abstract class Config {
 
-  protected String credentialsFilePath;
-  private JsonNode cachedCredentials;
+  protected String configJsonFilePath;
+  private JsonNode cachedJsonConfig;
   private final ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Retrieves a credential value from available sources in priority order.
+   * Retrieves a configuration value from available sources in priority order.
    *
    * @param directValue Value passed directly (highest priority)
-   * @param credentialKey Key to look for in credentials file
+   * @param configKey Key to look for in config file
    * @param envVarName Environment variable name
    * @param required Whether to throw an exception if not found
-   * @return The credential value or null if not required and not found
-   * @throws IllegalStateException if required credential not found
+   * @return The value or null if not required and not found
+   * @throws IllegalStateException if required value not found
    */
-  protected String getCredential(
+  protected String getValue(
         String directValue,
-        String credentialKey,
+        String configKey,
         String envVarName,
         boolean required
   ) {
@@ -36,37 +36,44 @@ public abstract class Config {
       return directValue;
     }
 
-    // 2. Credentials file
-    String fileValue = getCredentialFromFile(credentialKey);
+    // 2. Config file
+    String fileValue = getValueFromJsonFile(configKey);
     if (fileValue != null && !fileValue.isEmpty()) {
       return fileValue;
     }
 
     // 3. Environment variable
-    String envValue = System.getenv(envVarName);
+    String envValue = getEnvVar(envVarName);
     if (envValue != null && !envValue.isEmpty()) {
       return envValue;
     }
 
     if (required) {
       throw new IllegalStateException(
-          "Required credential '" + credentialKey + "' not found in any source");
+          "Required configuration value '" + configKey + "' not found in any source");
     }
 
     return null;
   }
 
   /**
-   * Gets a credential from the credentials file.
+   * Gets a value from an environment variable.
    */
-  private String getCredentialFromFile(String key) {
+  private String getEnvVar(String name) {
+    return System.getenv(name);
+  }
+
+  /**
+   * Gets a value from the JSON configuration file.
+   */
+  private String getValueFromJsonFile(String key) {
     try {
-      if (cachedCredentials == null) {
-        loadCredentialsFile();
+      if (cachedJsonConfig == null) {
+        loadJsonConfigFile();
       }
 
-      if (cachedCredentials != null && cachedCredentials.has(key)) {
-        JsonNode value = cachedCredentials.get(key);
+      if (cachedJsonConfig != null && cachedJsonConfig.has(key)) {
+        JsonNode value = cachedJsonConfig.get(key);
         return value.isTextual() ? value.asText() : null;
       }
     } catch (Exception e) {
@@ -76,24 +83,28 @@ public abstract class Config {
   }
 
   /**
-   * Loads credentials from the JSON file.
+   * Loads configuration from the JSON file.
    */
-  private void loadCredentialsFile() {
-    File file = new File(credentialsFilePath);
+  private void loadConfigJsonFile() {
+    if (configJsonFilePath == null) {
+      return;
+    }
+    
+    File file = new File(configJsonFilePath);
     if (file.exists() && file.canRead()) {
       try {
-        cachedCredentials = mapper.readTree(file);
+        cachedJsonConfig = mapper.readTree(file);
       } catch (IOException e) {
-        cachedCredentials = null;
+        cachedJsonConfig = null;
       }
     }
   }
 
   /**
-   * Updates the credentials file path and clears the cache.
+   * Updates the configuration file path and clears the cache.
    */
-  protected void setCredentialsFilePath(String path) {
-    this.credentialsFilePath = path;
-    this.cachedCredentials = null;
+  protected void setConfigJsonFilePath(String path) {
+    this.configJsonFilePath = path;
+    this.cachedJsonConfig = null;
   }
 }
