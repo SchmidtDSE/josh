@@ -1,6 +1,15 @@
+/**
+ * Structure to indicate that no conversions are available.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.value;
 
 
+/**
+ * Converter which can only convert between identical units.
+ */
 public class EmptyConverter implements Converter {
 
   @Override

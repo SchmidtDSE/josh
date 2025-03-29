@@ -31,7 +31,6 @@ public class EventHandlerGroupBuilder {
   public EventHandlerGroup build() {
     return new EventHandlerGroup(eventHandlers, buildKey());
   }
-
   
   /**
    * Build an EventKey using the current state, attribute, and event.
@@ -103,6 +102,11 @@ public class EventHandlerGroupBuilder {
     return event.orElseThrow(() -> new IllegalStateException("Event not set"));
   }
 
+  /**
+   * Parse attributes of the given EventKey into this builder.
+   *
+   * @param eventKey The EventKey from which to parse attributes.
+   */
   public void setEventKey(EventKey eventKey) {
     setEvent(eventKey.getEvent());
     setAttribute(eventKey.getAttribute());

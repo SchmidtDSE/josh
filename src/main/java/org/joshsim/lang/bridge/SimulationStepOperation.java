@@ -2,19 +2,13 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.value.EngineValue;
 
 
+/**
+ * Operation on an EngineBridge which completes a full step in a simulation.
+ */
 public class SimulationStepOperation implements EngineBridgeOperation {
-
-  private final EntityPrototype prototype;
-
-  public SimulationStepOperation(EntityPrototype prototype) {
-    this.prototype = prototype;
-  }
 
   @Override
   public Optional<EngineValue> perform(EngineBridge target) {
@@ -36,11 +30,23 @@ public class SimulationStepOperation implements EngineBridgeOperation {
     return Optional.empty();  // TODO
   }
 
+  
+  /**
+   * Updates the target shadowing entity based on the specified sub-step.
+   *
+   * @param target the shadowing entity to update
+   * @param subStep the sub-step name, which can be "start", "step", or "end"
+   * @return the updated shadowing entity
+   */
   private ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
     // TODO
     return target;
   }
 
+  
+  /**
+   * Set up necessary state or configuration before simulation start.
+   */
   private void initSimulation() {
     // TODO
   }

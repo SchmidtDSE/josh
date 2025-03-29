@@ -274,6 +274,12 @@ public class ShadowingEntity {
     }
   }
 
+  /**
+   * Get an immutable copy of the decorated entity for record keeping.
+   *
+   * @return Entity that is an immutable snapshot such that further edits to this entity are not
+   *     reflected on past frozen entities.
+   */
   public Entity freeze() {
     // TODO: propagate freeze
     return inner.freeze();

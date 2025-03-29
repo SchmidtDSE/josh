@@ -103,6 +103,11 @@ public interface EngineBridge {
    */
   long getPriorTimestep();
 
+  /**
+   * Get the number of timesteps completed.
+   *
+   * @return Integer count of full timesteps which have been completed in their entirety.
+   */
   long getAbsoluteTimestep();
 
   /**

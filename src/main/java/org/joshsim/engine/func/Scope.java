@@ -42,8 +42,18 @@ public interface Scope {
    */
   Iterable<String> getAttributes();
 
+  /**
+   * Get converter to use in operations within this scope.
+   *
+   * @return Converter to use in completing operations within this scope.
+   */
   Converter getConverter();
 
+  /**
+   * Get prototypes to use in constructing entities.
+   *
+   * @return Store of indexed prototypes.
+   */
   EntityPrototypeStore getPrototypeStore();
 
 }
