@@ -11,7 +11,6 @@ import java.util.Map;
 
 /**
  * Builder class for constructing an EntityPrototypeStore.
- * Provides methods to add and retrieve prototypes during construction.
  */
 public class EntityPrototypeStoreBuilder {
 
@@ -27,7 +26,7 @@ public class EntityPrototypeStoreBuilder {
   /**
    * Adds an entity prototype to the store being built.
    *
-   * @param prototype The EntityPrototype to add to the store
+   * @param prototype The EntityPrototype to be added to the store.
    */
   public void add(EntityPrototype prototype) {
     prototypes.put(prototype.getIdentifier(), prototype);
@@ -36,9 +35,9 @@ public class EntityPrototypeStoreBuilder {
   /**
    * Retrieves an entity prototype by name from the store being built.
    *
-   * @param name The identifier of the entity prototype to retrieve
-   * @return The EntityPrototype associated with the given name
-   * @throws IllegalArgumentException if the entity name is not found in the store
+   * @param name The identifier of the entity prototype to retrieve.
+   * @return The EntityPrototype associated with the given name.
+   * @throws IllegalArgumentException if the entity name is not found in the store.
    */
   public EntityPrototype get(String name) {
     if (!prototypes.containsKey(name)) {
@@ -50,7 +49,7 @@ public class EntityPrototypeStoreBuilder {
   /**
    * Constructs and returns a new EntityPrototypeStore containing all added prototypes.
    *
-   * @return A new MapEntityPrototypeStore instance containing all prototypes
+   * @return A new MapEntityPrototypeStore instance containing all prototypes given to this builder.
    */
   public EntityPrototypeStore build() {
     return new MapEntityPrototypeStore(prototypes);
