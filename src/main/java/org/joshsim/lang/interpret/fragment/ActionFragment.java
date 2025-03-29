@@ -16,10 +16,16 @@ public class ActionFragment extends Fragment {
 
   private final EventHandlerAction action;
 
+  /**
+   * Create a new fragment around a given action.
+   *
+   * @param action to decorate.
+   */
   public ActionFragment(EventHandlerAction action) {
     this.action = action;
   }
 
+  @Override
   public EventHandlerAction getCurrentAction() {
     return action;
   }
