@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collections;
 
 /**
  * Abstract base class for configuration that retrieves values from multiple sources
@@ -17,7 +17,7 @@ public abstract class HierarchyConfig {
   protected String configJsonFilePath;
   private JsonNode cachedJsonConfig;
   private final ObjectMapper mapper = new ObjectMapper();
-  
+
   // Map to track sources of retrieved values
   private final Map<String, ValueSource> valueSources = new HashMap<>();
 
@@ -25,7 +25,7 @@ public abstract class HierarchyConfig {
    * Retrieves a configuration value from available sources in priority order.
    * Uses conventions: config file key = key, env var = KEY
    *
-   * @param key A unique identifier for this value (used for source tracking) 
+   * @param key A unique identifier for this value (used for source tracking)
    * @param directValue Value passed directly (highest priority)
    * @param required Whether to throw an exception if not found
    * @return The value or null if not required and not found
@@ -69,23 +69,7 @@ public abstract class HierarchyConfig {
     } else {
       return null;
     }
-    
-  }
 
-  /**
-   * Gets a value with a default if not found elsewhere.
-   */
-  protected String getValueWithDefault(
-        String key,
-        String directValue,
-        String defaultValue
-  ) {
-    String result = getValue(key, directValue, false);
-    if (result == null) {
-      valueSources.put(key, ValueSource.DEFAULT);
-      return defaultValue;
-    }
-    return result;
   }
 
   /**
@@ -105,16 +89,23 @@ public abstract class HierarchyConfig {
   }
 
   /**
+   * Gets the JSON configuration file as a JsonNode.
+   */
+  protected JsonNode getJsonConfig() {
+    if (cachedJsonConfig == null) {
+      loadJsonConfigFile();
+    }
+    return cachedJsonConfig;
+  }
+
+  /**
    * Gets a value from the JSON configuration file.
    */
   private String getValueFromJsonFile(String key) {
     try {
-      if (cachedJsonConfig == null) {
-        loadJsonConfigFile();
-      }
-
-      if (cachedJsonConfig != null && cachedJsonConfig.has(key)) {
-        JsonNode value = cachedJsonConfig.get(key);
+      JsonNode jsonConfig = getJsonConfig();
+      if (jsonConfig != null && jsonConfig.has(key)) {
+        JsonNode value = jsonConfig.get(key);
         return value.isTextual() ? value.asText() : null;
       }
     } catch (Exception e) {
@@ -130,7 +121,7 @@ public abstract class HierarchyConfig {
     if (configJsonFilePath == null) {
       return;
     }
-    
+
     File file = new File(configJsonFilePath);
     if (file.exists() && file.canRead()) {
       try {
@@ -148,7 +139,7 @@ public abstract class HierarchyConfig {
     this.configJsonFilePath = path;
     this.cachedJsonConfig = null;
   }
-  
+
   /**
    * Returns a map of all value sources.
    *
