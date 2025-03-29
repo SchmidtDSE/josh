@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.interpret.fragment;
 
-
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.EventHandlerGroupBuilder;
@@ -16,6 +15,7 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.value.Conversion;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+
 
 /**
  * Structure which helps build an interpreter runtime.
@@ -64,7 +64,6 @@ public abstract class Fragment {
 
   /**
    * Gets all event handler groups from this fragment.
-   * By default, returns a single group from {@link #getEventHandlerGroup()}.
    *
    * @return An iterable of event handler group builders
    */
@@ -94,7 +93,6 @@ public abstract class Fragment {
 
   /**
    * Gets all conversions from this fragment.
-   * By default, returns a single conversion from {@link #getConversion()}.
    *
    * @return An iterable of conversions
    */
