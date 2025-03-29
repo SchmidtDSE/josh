@@ -62,7 +62,7 @@ public abstract class HierarchyConfig {
     String outValue = null;
     if (defaultValue != null) {
       outValue = defaultValue;
-    } 
+    }
 
     if (required && outValue == null) {
       throw new IllegalStateException(
