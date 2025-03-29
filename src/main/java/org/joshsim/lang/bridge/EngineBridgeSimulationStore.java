@@ -6,9 +6,8 @@
 
 package org.joshsim.lang.bridge;
 
-import org.joshsim.engine.entity.prototype.EntityPrototype;
-
 import java.util.Map;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 
 
 /**

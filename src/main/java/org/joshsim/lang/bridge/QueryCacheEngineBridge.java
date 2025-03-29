@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.GeoKey;
 import org.joshsim.engine.entity.Simulation;

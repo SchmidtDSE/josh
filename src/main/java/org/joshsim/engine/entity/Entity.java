@@ -66,7 +66,7 @@ public interface Entity {
    * Get a key that uniquely identifies the location of this entity within a replicate.
    *
    * @return Uniquely identifying key which can be hashed and used in equality operations or empty
-   *    if there is no location associated with this entity.
+   *     if there is no location associated with this entity.
    */
   Optional<GeoKey> getKey();
 }

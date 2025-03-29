@@ -8,7 +8,6 @@ package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
 import java.util.Optional;
-
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
