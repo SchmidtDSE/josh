@@ -407,10 +407,37 @@ public interface EventHandlerMachine {
    */
   EventHandlerMachine ln();
 
+  /**
+   * Calculate the maximum value in a distribution.
+   *
+   * <p>Pop a value from the top of the stack, find its maximum value, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine max();
 
+  /**
+   * Calculate the mean (average) of a distribution.
+   *
+   * <p>Pop a value from the top of the stack, calculate its mean, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine mean();
 
+  /**
+   * Calculate the minimum value in a distribution.
+   *
+   * <p>Pop a value from the top of the stack, find its minimum value, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine min();
 
   /**
