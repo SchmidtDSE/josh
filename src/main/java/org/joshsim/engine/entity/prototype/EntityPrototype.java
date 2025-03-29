@@ -28,9 +28,9 @@ public class EntityPrototype {
   /**
    * Creates a new EntityPrototype with the specified identifier, type, and builder.
    *
-   * @param identifier The unique identifier for this entity prototype
-   * @param entityType The type of entity this prototype represents
-   * @param entityBuilder The builder used to construct instances of this entity
+   * @param identifier The unique identifier for this entity prototype.
+   * @param entityType The type of entity this prototype can build.
+   * @param entityBuilder The builder used to construct instances of this entity.
    */
   public EntityPrototype(String identifier, EntityType entityType, EntityBuilder entityBuilder) {
     this.identifier = identifier;
@@ -41,16 +41,16 @@ public class EntityPrototype {
   /**
    * Gets the unique identifier of this entity prototype.
    *
-   * @return The identifier string
+   * @return The identifier string with which entities will be built from this prototype.
    */
   public String getIdentifier() {
     return identifier;
   }
 
   /**
-   * Gets the type of entity this prototype represents.
+   * Gets the type of entity this prototype will build.
    *
-   * @return The EntityType enum value
+   * @return The EntityType enum value with which entities will be built from this prototype.
    */
   public EntityType getEntityType() {
     return entityType;
@@ -60,8 +60,8 @@ public class EntityPrototype {
    * Builds a non-spatial entity instance from this prototype.
    * Only valid for SIMULATION type entities.
    *
-   * @return A new Entity instance
-   * @throws RuntimeException if the entity type cannot be built without spatial context
+   * @return A new Entity instance created from this prototype.
+   * @throws RuntimeException if the entity type cannot be built without spatial context.
    */
   public Entity build() {
     return switch (entityType) {
@@ -75,9 +75,9 @@ public class EntityPrototype {
    * Builds a spatial entity instance from this prototype with a parent entity.
    * Valid for AGENT and DISTURBANCE type entities.
    *
-   * @param parent The parent Entity that provides spatial context
-   * @return A new Entity instance
-   * @throws RuntimeException if the entity type cannot be built with a parent entity
+   * @param parent The parent Entity that houses this entity.
+   * @return A new Entity instance created from this prototype.
+   * @throws RuntimeException if the entity type cannot be built with a parent entity.
    */
   public Entity buildSpatial(Entity parent) {
     return switch (entityType) {
@@ -91,9 +91,9 @@ public class EntityPrototype {
    * Builds a spatial entity instance from this prototype with a geometry parent.
    * Valid only for PATCH type entities.
    *
-   * @param parent The parent Geometry that provides spatial context
-   * @return A new Entity instance
-   * @throws RuntimeException if the entity type cannot be built with a geometry parent
+   * @param parent The parent Geometry that houses this entity.
+   * @return A new Entity instance created from this prototype.
+   * @throws RuntimeException if the entity type cannot be built with a geometry parent.
    */
   public Entity buildSpatial(Geometry parent) {
     return switch (entityType) {
