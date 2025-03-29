@@ -9,8 +9,7 @@ package org.joshsim.engine.entity;
 import java.util.Objects;
 
 /**
- * Represents a composite key for mapping state, attribute, and event
- * to an EventHandlerGroup.
+ * Composite key for mapping state, attribute, and event.
  */
 public class EventKey {
   private final String state;
@@ -18,7 +17,7 @@ public class EventKey {
   private final String event;
 
   /**
-   * Composite key class for mapping attribute x event to an EventHandlerGroup using empty default state.
+   * Key for mapping attribute x event to an EventHandlerGroup using empty default state.
    *
    * @param attribute attribute string
    * @param event event string

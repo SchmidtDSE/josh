@@ -15,8 +15,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
-
-import org.joshsim.engine.entity.*;
+import org.joshsim.engine.entity.EventHandler;
+import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.EventKey;
+import org.joshsim.engine.entity.MutableEntity;
+import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

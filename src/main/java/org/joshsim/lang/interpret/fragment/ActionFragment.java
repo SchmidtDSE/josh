@@ -19,7 +19,7 @@ public class ActionFragment extends Fragment {
   public ActionFragment(EventHandlerAction action) {
     this.action = action;
   }
-  
+
   public EventHandlerAction getCurrentAction() {
     return action;
   }

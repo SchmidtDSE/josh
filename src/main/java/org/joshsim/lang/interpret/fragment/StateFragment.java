@@ -1,8 +1,7 @@
 package org.joshsim.lang.interpret.fragment;
 
-import org.joshsim.engine.entity.EventHandlerGroupBuilder;
-
 import java.util.List;
+import org.joshsim.engine.entity.EventHandlerGroupBuilder;
 
 public class StateFragment extends Fragment {
 

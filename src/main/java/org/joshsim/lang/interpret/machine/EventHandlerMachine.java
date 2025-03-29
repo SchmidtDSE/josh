@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.lang.interpret.machine;
+
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -96,7 +97,7 @@ public interface EventHandlerMachine {
 
   EventHandlerMachine sum();
 
-  EventHandlerMachine create();
+  EventHandlerMachine create(String entityName);
 
   EventHandlerMachine saveLocalVariable(String identifierName);
 

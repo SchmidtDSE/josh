@@ -1,10 +1,9 @@
 package org.joshsim.engine.entity;
 
-import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.value.EngineValue;
-
 import java.util.Map;
 import java.util.Optional;
+import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.EngineValue;
 
 public class FrozenEntity implements Entity {
 
@@ -13,7 +12,8 @@ public class FrozenEntity implements Entity {
   private final Map<String, EngineValue> attributes;
   private final Optional<Geometry> geometry;
 
-  public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes, Optional<Geometry> geometry) {
+  public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes,
+      Optional<Geometry> geometry) {
     this.type = type;
     this.name = name;
     this.attributes = attributes;

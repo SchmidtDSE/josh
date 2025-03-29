@@ -7,15 +7,14 @@
 package org.joshsim.lang.interpret.fragment;
 
 
+import java.util.List;
+import java.util.Optional;
 import org.joshsim.engine.entity.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.value.Conversion;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.engine.entity.prototype.EntityPrototype;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Structure which helps build an interpreter runtime.
@@ -55,5 +54,5 @@ public abstract class Fragment {
   }
 
   public abstract FragmentType getFragmentType();
-  
+
 }

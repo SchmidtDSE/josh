@@ -1,9 +1,8 @@
 package org.joshsim.lang.interpret.fragment;
 
+import java.util.Optional;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
-
-import java.util.Optional;
 
 public class CompiledCallableFragment extends Fragment {
 

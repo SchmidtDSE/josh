@@ -6,24 +6,39 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.engine.entity.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
+import org.joshsim.engine.entity.EntityBuilder;
+import org.joshsim.engine.entity.EntityType;
+import org.joshsim.engine.entity.EventHandler;
+import org.joshsim.engine.entity.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.EventKey;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.CompiledSelectorFromCallable;
-import org.joshsim.engine.value.*;
+import org.joshsim.engine.value.Conversion;
+import org.joshsim.engine.value.DirectConversion;
+import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.EngineValueFactory;
+import org.joshsim.engine.value.NoopConversion;
+import org.joshsim.engine.value.Units;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.*;
-import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.lang.interpret.fragment.ActionFragment;
+import org.joshsim.lang.interpret.fragment.CompiledCallableFragment;
+import org.joshsim.lang.interpret.fragment.ConversionFragment;
+import org.joshsim.lang.interpret.fragment.ConversionsFragment;
+import org.joshsim.lang.interpret.fragment.EntityFragment;
+import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
+import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
 
 
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
@@ -397,7 +412,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new ActionFragment(action);
   }
 
-  public Fragment visitCreateVariableExpression(JoshLangParser.CreateVariableExpressionContext ctx) {
+  public Fragment visitCreateVariableExpression(
+      JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
     String entityType = ctx.target.getText();
 
@@ -466,7 +482,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
     String payload = ctx.getText();
-    EngineValue decoratedPayload = engineValueFactory.build(payload, new Units("position"));
+    EngineValue decoratedPayload = engineValueFactory.build(
+        payload,
+        new Units("position")
+    );
 
     EventHandlerAction action = (machine) -> {
       machine.push(decoratedPayload);
@@ -481,7 +500,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
-      machine.create();
+      machine.create(entityName);
       return machine;
     };
 
@@ -502,7 +521,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitLambda(JoshLangParser.LambdaContext ctx) {
-    EventHandlerAction innerAction = ctx.getChild(0).accept(this).getCurrentAction();
+    EventHandlerAction innerAction = ctx
+        .getChild(0)
+        .accept(this)
+        .getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
       innerAction.apply(machine);
@@ -514,9 +536,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitReturn(JoshLangParser.ReturnContext ctx) {
-    EventHandlerAction innerAction = ctx.getChild(1).accept(this).getCurrentAction();
+    EventHandlerAction innerAction = ctx
+        .getChild(1)
+        .accept(this)
+        .getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
+      innerAction.apply(machine);
       machine.end();
       return machine;
     };
@@ -531,7 +557,12 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     int numStatements = numChildren - 2;
     for (int statementIndex = 0; statementIndex < numStatements; statementIndex++) {
       int childIndex = statementIndex + 2;
-      EventHandlerAction statementAction = ctx.getChild(childIndex).accept(this).getCurrentAction();
+
+      EventHandlerAction statementAction = ctx
+          .getChild(childIndex)
+          .accept(this)
+          .getCurrentAction();
+
       innerActions.add(statementAction);
     }
 
@@ -554,7 +585,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new ActionFragment(action);
   }
 
-  public Fragment visitEventHandlerGroupMemberInner(JoshLangParser.EventHandlerGroupMemberInnerContext ctx) {
+  public Fragment visitEventHandlerGroupMemberInner(
+      JoshLangParser.EventHandlerGroupMemberInnerContext ctx) {
     EventHandlerAction handlerAction = ctx.target.accept(this).getCurrentAction();
     return new ActionFragment(handlerAction);
   }
@@ -566,7 +598,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
     CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
-    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(decoratedConditionAction);
+    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(
+        decoratedConditionAction
+    );
 
     return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
   }
@@ -578,7 +612,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
     CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
-    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(decoratedConditionAction);
+    CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(
+        decoratedConditionAction
+    );
 
     return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
   }
@@ -612,7 +648,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new EventHandlerGroupFragment(eventHandlerGroupBuilder);
   }
 
-  public Fragment visitEventHandlerGroupMultiple(JoshLangParser.EventHandlerGroupMultipleContext ctx) {
+  public Fragment visitEventHandlerGroupMultiple(
+      JoshLangParser.EventHandlerGroupMultipleContext ctx) {
     String fullName = ctx.name.getText();
     EventKey eventKey = buildEventKey(fullName);
 
@@ -666,7 +703,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String identifier = ctx.getChild(2).getText();
     String closeEntityType = ctx.getChild(numChildren - 1).getText();
     if (!entityType.equals(closeEntityType)) {
-      String message = String.format("Stanza start and end type different: %s, %s", entityType, closeEntityType);
+      String message = String.format(
+          "Stanza start and end type different: %s, %s",
+          entityType,
+          closeEntityType
+      );
       throw new IllegalArgumentException(message);
     }
 
@@ -680,7 +721,12 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
     }
 
-    EntityPrototype prototype = new EntityPrototype(identifier, getEntityType(entityType), entityBuilder);
+    EntityPrototype prototype = new EntityPrototype(
+        identifier,
+        getEntityType(entityType),
+        entityBuilder
+    );
+
     return new EntityFragment(prototype);
   }
 
@@ -695,7 +741,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     Units destinationUnits = new Units(destinationUnitsName);
     EventHandlerAction action = ctx.getChild(2).accept(this).getCurrentAction();
     CompiledCallable conversionLogic = new PushDownMachineCallable(action);
-    Conversion conversion = new DirectConversion(destinationUnits, destinationUnits, conversionLogic);
+
+    Conversion conversion = new DirectConversion(
+        destinationUnits,
+        destinationUnits,
+        conversionLogic
+    );
+
     return new ConversionFragment(conversion);
   }
 

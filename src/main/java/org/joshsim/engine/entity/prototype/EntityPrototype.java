@@ -30,7 +30,7 @@ public class EntityPrototype {
     return switch (entityType) {
       case EXTERNAL_RESOURCE -> throw new RuntimeException("External resources yet implemented.");
       case SIMULATION -> entityBuilder.buildSimulation();
-      default -> throw new RuntimeException("Cannot instantiate the following without a location: " + entityType);
+      default -> throw new RuntimeException("Cannot instantiate without a location: " + entityType);
     };
   }
 
@@ -38,14 +38,14 @@ public class EntityPrototype {
     return switch (entityType) {
       case AGENT -> entityBuilder.buildAgent(parent);
       case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
-      default -> throw new RuntimeException("Cannot instantiate the following with a parent: " + entityType);
+      default -> throw new RuntimeException("Cannot instantiate with a parent: " + entityType);
     };
   }
 
   Entity buildSpatial(Geometry parent) {
     return switch (entityType) {
       case PATCH -> entityBuilder.buildPatch(parent);
-      default -> throw new RuntimeException("Cannot instantiate the following with a geometry: " + entityType);
+      default -> throw new RuntimeException("Cannot instantiate with a geometry: " + entityType);
     };
   }
 

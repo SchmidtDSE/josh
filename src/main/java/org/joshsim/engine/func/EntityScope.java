@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
@@ -28,7 +27,7 @@ public class EntityScope implements Scope {
   private final Entity value;
   private final Set<String> expectedAttrs;
   private final Converter converter;
-  private final EntityPrototypeStore prototypeStore;
+  private final EntityPrototypeStore prototypes;
 
   /**
    * Create a scope decorator around this entity.
@@ -40,7 +39,7 @@ public class EntityScope implements Scope {
     this.expectedAttrs = getAttributes(value);
 
     converter = new EmptyConverter();
-    prototypeStore = new EmptyEntityPrototypeStore();
+    prototypes = new EmptyEntityPrototypeStore();
   }
 
   /**
@@ -48,11 +47,11 @@ public class EntityScope implements Scope {
    *
    * @param value EngineValue to use for current.
    */
-  public EntityScope(MutableEntity value, Converter converter, EntityPrototypeStore prototypeStore) {
+  public EntityScope(MutableEntity value, Converter converter, EntityPrototypeStore prototypes) {
     this.value = value;
     this.expectedAttrs = getAttributes(value);
     this.converter = converter;
-    this.prototypeStore = prototypeStore;
+    this.prototypes = prototypes;
   }
 
   @Override
@@ -77,16 +76,6 @@ public class EntityScope implements Scope {
     return expectedAttrs;
   }
 
-  @Override
-  public Converter getConverter() {
-    return converter;
-  }
-
-  @Override
-  public EntityPrototypeStore getPrototypeStore() {
-    return prototypeStore;
-  }
-
   /**
    * Extract all attribute names from an entity's event handlers or set attributes.
    *
@@ -95,7 +84,17 @@ public class EntityScope implements Scope {
    */
   private Set<String> getAttributes(Entity target) {
     return StreamSupport
-        .stream(value.getAttributeNames().spliterator(), false)
-        .collect(Collectors.toSet());
+            .stream(value.getAttributeNames().spliterator(), false)
+            .collect(Collectors.toSet());
+  }
+
+  @Override
+  public Converter getConverter() {
+    return converter;
+  }
+
+  @Override
+  public EntityPrototypeStore getPrototypeStore() {
+    return prototypes;
   }
 }

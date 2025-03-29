@@ -9,8 +9,13 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
-import org.joshsim.engine.entity.*;
+import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.EventKey;
+import org.joshsim.engine.entity.MutableEntity;
+import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.PatchKey;
+import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
@@ -208,7 +213,7 @@ public class ShadowingEntity {
   }
 
   /**
-   * Get the key of the patch that contians this entity.
+   * Get the key of the patch that contains this entity.
    *
    * @return the PatchKey of the patch that contains this entity.
    */
@@ -231,7 +236,7 @@ public class ShadowingEntity {
    *
    * @return entity that is decorated by this object.
    */
-  protected Entity getInner() {
+  protected MutableEntity getInner() {
     return inner;
   }
 

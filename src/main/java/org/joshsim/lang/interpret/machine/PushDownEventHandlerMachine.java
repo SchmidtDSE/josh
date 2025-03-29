@@ -211,7 +211,7 @@ public class PushDownEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine create() {
+  public EventHandlerMachine create(String entityName) {
     return null;
   }
 

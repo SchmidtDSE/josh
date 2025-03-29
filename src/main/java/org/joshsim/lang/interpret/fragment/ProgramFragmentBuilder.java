@@ -1,5 +1,9 @@
 package org.joshsim.lang.interpret.fragment;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.joshsim.engine.entity.EntityType;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStoreBuilder;
@@ -7,11 +11,6 @@ import org.joshsim.engine.value.ConverterBuilder;
 import org.joshsim.lang.bridge.EngineBridgeOperation;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.JoshProgram;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 public class ProgramFragmentBuilder {
@@ -30,7 +29,9 @@ public class ProgramFragmentBuilder {
     switch (fragment.getFragmentType()) {
       case CONVERSIONS -> fragment.getConversions().forEach(converter::addConversion);
       case ENTITY -> addEntity(fragment.getEntity());
-      default -> throw new IllegalArgumentException("Unexpected top level fragment: " + fragment.getFragmentType());
+      default -> throw new IllegalArgumentException(
+          "Unexpected top level fragment: " + fragment.getFragmentType()
+      );
     }
   }
 

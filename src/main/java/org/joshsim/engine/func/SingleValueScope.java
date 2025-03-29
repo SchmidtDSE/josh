@@ -20,7 +20,7 @@ public class SingleValueScope implements Scope {
 
   private final EngineValue value;
   private final Converter converter;
-  private final EntityPrototypeStore prototypeStore;
+  private final EntityPrototypeStore prototypes;
 
   /**
    * Create a scope containing only current.
@@ -31,19 +31,20 @@ public class SingleValueScope implements Scope {
     this.value = value;
 
     converter = new EmptyConverter();
-    prototypeStore = new EmptyEntityPrototypeStore();
+    prototypes = new EmptyEntityPrototypeStore();
   }
 
   /**
    * Create a scope containing only current with access to conversion and other entity prototypes.
    *
    * @param value EngineValue to use for current.
-   * @param converter Converter to use to convert between values in operations on variables in this scope.
+   * @param converter Converter to use to convert between values in operations on variables in this
+   *     scope.
    */
-  public SingleValueScope(EngineValue value, Converter converter, EntityPrototypeStore prototypeStore) {
+  public SingleValueScope(EngineValue value, Converter converter, EntityPrototypeStore prototypes) {
     this.value = value;
     this.converter = converter;
-    this.prototypeStore = prototypeStore;
+    this.prototypes = prototypes;
   }
 
   @Override
@@ -72,7 +73,7 @@ public class SingleValueScope implements Scope {
 
   @Override
   public EntityPrototypeStore getPrototypeStore() {
-    return prototypeStore;
+    return prototypes;
   }
 
 }

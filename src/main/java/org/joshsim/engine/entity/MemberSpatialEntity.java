@@ -8,7 +8,6 @@ package org.joshsim.engine.entity;
 
 import java.util.Map;
 import java.util.Optional;
-
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 

@@ -1,11 +1,10 @@
 package org.joshsim.lang.interpret.fragment;
 
+import java.util.List;
 import org.joshsim.engine.value.Conversion;
 
-import java.util.List;
 
-
-public class ConversionsFragment extends Fragment{
+public class ConversionsFragment extends Fragment {
 
   private final Iterable<Conversion> conversions;
 

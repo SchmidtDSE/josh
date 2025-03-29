@@ -110,6 +110,6 @@ public interface EngineBridge {
    *
    * @return Replicate being manipulated by this bridge.
    */
-  Replicate getReplicate() ;
+  Replicate getReplicate();
 
 }

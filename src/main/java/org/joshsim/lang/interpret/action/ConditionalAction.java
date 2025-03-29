@@ -1,9 +1,8 @@
 package org.joshsim.lang.interpret.action;
 
 
-import org.joshsim.lang.interpret.machine.EventHandlerMachine;
-
 import java.util.Optional;
+import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 
 public class ConditionalAction implements EventHandlerAction {
 
@@ -11,7 +10,8 @@ public class ConditionalAction implements EventHandlerAction {
   private final EventHandlerAction positive;
   private final Optional<EventHandlerAction> negative;
 
-  public ConditionalAction(EventHandlerAction conditional, EventHandlerAction positive, EventHandlerAction negative) {
+  public ConditionalAction(EventHandlerAction conditional, EventHandlerAction positive,
+      EventHandlerAction negative) {
     this.conditional = conditional;
     this.positive = positive;
     this.negative = Optional.of(negative);

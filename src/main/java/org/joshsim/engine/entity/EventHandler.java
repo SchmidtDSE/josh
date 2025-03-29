@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity;
 
 import java.util.Optional;
-
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 
@@ -40,7 +39,7 @@ public class EventHandler {
   }
 
   /**
-   * Create a new event handler with a conditional
+   * Create a new event handler with a conditional.
    *
    * @param callable The callable to execute on this event.
    * @param attributeName The name of the attribute associated with this event handler.

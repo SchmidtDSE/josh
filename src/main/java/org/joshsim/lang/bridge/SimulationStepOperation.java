@@ -1,12 +1,11 @@
 package org.joshsim.lang.bridge;
 
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.value.EngineValue;
-
-import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 
 public class SimulationStepOperation implements EngineBridgeOperation {

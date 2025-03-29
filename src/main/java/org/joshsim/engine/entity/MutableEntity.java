@@ -13,7 +13,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -66,7 +65,7 @@ public abstract class MutableEntity implements Entity, Lockable {
   /**
    * Get event handlers for a specific attribute and event.
    *
-   * @param event The event for which handler groups should be returned.
+   * @param eventKey The event for which handler groups should be returned.
    * @return the event handler group, or empty if it does not exist
    */
   public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
@@ -111,4 +110,3 @@ public abstract class MutableEntity implements Entity, Lockable {
         .collect(Collectors.toSet());
   }
 }
-
