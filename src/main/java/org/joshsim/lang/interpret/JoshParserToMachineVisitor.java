@@ -41,6 +41,10 @@ import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 
 
+/**
+ * Visitor which parses Josh soruce by using Fragments.
+ */
+@SuppressWarnings("checkstyle:MissingJavaDocMethod")  // Can't use override because of generics.
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   private final EngineValueFactory engineValueFactory;
@@ -48,6 +52,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final EngineValue allString;
   private final EngineValue trueValue;
 
+  /**
+   * Create a new visitor which has some commonly used values cached.
+   */
   public JoshParserToMachineVisitor() {
     super();
     engineValueFactory = new EngineValueFactory();
