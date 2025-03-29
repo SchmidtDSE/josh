@@ -20,7 +20,7 @@ import java.util.Stack;
  * <p>Push-down automaton which uses stack operations to implement EventHandlerMachine under
  * assumption that it is not shared across threads.</p>
  */
-public class UnsafeEventHandlerMachine implements EventHandlerMachine {
+public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final Stack<EngineValue> memory;
 
@@ -29,7 +29,7 @@ public class UnsafeEventHandlerMachine implements EventHandlerMachine {
    *
    * @param scope The scope in which to have this automaton perform its operations.
    */
-  public UnsafeEventHandlerMachine(Scope scope) {
+  public SingleThreadEventHandlerMachine(Scope scope) {
     memory = new Stack<>();
   }
 

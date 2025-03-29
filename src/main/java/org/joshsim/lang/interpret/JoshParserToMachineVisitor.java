@@ -235,7 +235,14 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       default -> throw new IllegalArgumentException(opStr + " is not a valid comparator.");
     };
 
-    return new ActionFragment(innerAction);
+    EventHandlerAction action = (machine) -> {
+      leftAction.apply(machine);
+      rightAction.apply(machine);
+      innerAction.apply(machine);
+      return machine;
+    };
+
+    return new ActionFragment(action);
   }
 
   public Fragment visitConditional(JoshLangParser.ConditionalContext ctx) {

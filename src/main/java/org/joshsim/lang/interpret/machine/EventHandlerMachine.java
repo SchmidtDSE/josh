@@ -82,20 +82,75 @@ public interface EventHandlerMachine {
   /**
    * Pop the top two EngineNumbers on the stack and perform a logical and.
    *
+   * <p>Pop the top two EngineNumbers on the stack and perform a logical and between them, putting
+   * the result on the top of the stack.</p>
+   *
    * @return Reference to this machine for chaining.
    */
   EventHandlerMachine and();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a logical or.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform a logical or between them, putting
+   * the result on the top of the stack.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine or();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a logical xor.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform a logical exclusive or between them,
+   * putting the result on the top of the stack.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine xor();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a not equals test.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform a not equals test between them,
+   * putting the result on the top of the stack.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine neq();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a greater than test.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform a greater than test between them. The
+   * first pop will give the right side operand. The second pop will give the left side operand. The
+   * result should be compared such that an EngineValue of true will be pushed if left is larger
+   * than right and false otherwise.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine gt();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a less than test.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform a less than test between them. The
+   * first pop will give the right side operand. The second pop will give the left side operand. The
+   * result should be compared such that an EngineValue of true will be pushed if left is smaller
+   * than right and false otherwise.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine lt();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform an equals test.
+   *
+   * <p>Pop the top two EngineNumbers on the stack and perform an equals test between them, putting
+   * the result on the top of the stack.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine eq();
 
   EventHandlerMachine lteq();
