@@ -30,7 +30,6 @@ public class SimulationStepOperation implements EngineBridgeOperation {
     return Optional.empty();  // TODO
   }
 
-  
   /**
    * Updates the target shadowing entity based on the specified sub-step.
    *
@@ -42,7 +41,6 @@ public class SimulationStepOperation implements EngineBridgeOperation {
     // TODO
     return target;
   }
-
   
   /**
    * Set up necessary state or configuration before simulation start.
