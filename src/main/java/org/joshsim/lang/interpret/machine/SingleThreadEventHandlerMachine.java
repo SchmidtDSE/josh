@@ -22,6 +22,8 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
  */
 public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
+  // TODO
+
   private final Stack<EngineValue> memory;
 
   /**

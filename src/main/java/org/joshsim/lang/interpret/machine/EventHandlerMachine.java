@@ -17,8 +17,6 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
  */
 public interface EventHandlerMachine {
 
-  // TODO
-
   /**
    * Resolve a value through a value resolver and push it at the top of the stack.
    *
