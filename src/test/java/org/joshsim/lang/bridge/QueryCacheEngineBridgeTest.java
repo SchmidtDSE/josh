@@ -15,8 +15,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
+import org.joshsim.engine.entity.GeoKey;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
@@ -41,7 +44,7 @@ public class QueryCacheEngineBridgeTest {
   @Mock(lenient = true) private Patch mockPatch;
   @Mock(lenient = true) private Geometry mockGeometry;
   @Mock(lenient = true) private GeometryMomento mockGeometryMomento;
-  @Mock(lenient = true) private PatchKey mockPatchKey;
+  @Mock(lenient = true) private GeoKey mockGeoKey;
 
   private QueryCacheEngineBridge bridge;
 
@@ -57,13 +60,13 @@ public class QueryCacheEngineBridgeTest {
   void testGetPriorPatchesWithoutCache() {
     // Setup
     when(mockGeometryMomento.build()).thenReturn(mockGeometry);
-    when(mockPatch.getKey()).thenReturn(mockPatchKey);
-    List<Patch> patches = Arrays.asList(mockPatch);
+    when(mockPatch.getKey()).thenReturn(Optional.of(mockGeoKey));
+    List<Entity> patches = Arrays.asList(mockPatch);
     when(mockReplicate.query(any(Query.class))).thenReturn(patches);
-    when(mockReplicate.getPatchByKey(eq(mockPatchKey), eq(-1L))).thenReturn(mockPatch);
+    when(mockReplicate.getPatchByKey(eq(mockGeoKey), eq(-1L))).thenReturn(mockPatch);
 
     // First call - should query and cache
-    Iterable<ShadowingEntity> result = bridge.getPriorPatches(mockGeometryMomento);
+    Iterable<Entity> result = bridge.getPriorPatches(mockGeometryMomento);
 
     // Verify
     verify(mockReplicate, times(1)).query(any(Query.class));
@@ -74,10 +77,10 @@ public class QueryCacheEngineBridgeTest {
   void testGetPriorPatchesWithCache() {
     // Setup
     when(mockGeometryMomento.build()).thenReturn(mockGeometry);
-    when(mockPatch.getKey()).thenReturn(mockPatchKey);
-    List<Patch> patches = Arrays.asList(mockPatch);
+    when(mockPatch.getKey()).thenReturn(Optional.of(mockGeoKey));
+    List<Entity> patches = Arrays.asList(mockPatch);
     when(mockReplicate.query(any(Query.class))).thenReturn(patches);
-    when(mockReplicate.getPatchByKey(eq(mockPatchKey), eq(-1L))).thenReturn(mockPatch);
+    when(mockReplicate.getPatchByKey(eq(mockGeoKey), eq(-1L))).thenReturn(mockPatch);
 
     // First call - should query and cache
     bridge.getPriorPatches(mockGeometryMomento);
@@ -88,6 +91,6 @@ public class QueryCacheEngineBridgeTest {
     // Verify
     verify(mockReplicate, times(1)).query(any(Query.class));
     verify(mockGeometryMomento, times(1)).build();
-    verify(mockReplicate, times(1)).getPatchByKey(eq(mockPatchKey), eq(-1L));
+    verify(mockReplicate, times(1)).getPatchByKey(eq(mockGeoKey), eq(-1L));
   }
 }

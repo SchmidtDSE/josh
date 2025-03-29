@@ -7,6 +7,7 @@
 package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.value.EngineValue;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
 
@@ -17,22 +18,72 @@ public interface EventHandlerMachine {
 
   // TODO
 
-  EventHandlerMachine pushIdentifier(String name);
+  /**
+   * Resolve a value through a value resolver and push it at the top of the stack.
+   *
+   * @param valueResolver The resolver to use in finding the value to push.
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine push(ValueResolver valueResolver);
 
+  /**
+   * Push an already resolved value onto the top of the stack for this automaton.
+   *
+   * @param value The value to push onto the top of the stack.
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine push(EngineValue value);
 
-  EventHandlerMachine applyMap(String strategy);
-
+  /**
+   * Pop the top two EngineNumbers on the stack and add them together, pushing the result.
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine add();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and subtract, pushing the result.
+   *
+   * <p>Pop the top two EngineNumbers where the first pop is the right side operand and the second
+   * pop is the left hand operand. Then, subtract right from left. Finally, push the result.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine subtract();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and mulitiply them together, pushing the result.
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine multiply();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and divide, pushing the result.
+   *
+   * <p>Pop the top two EngineNumbers where the first pop is the right side operand and the second
+   * pop is the left hand operand. Then, divide right from left. Finally, push the result.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine divide();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and raise to power, pushing the result.
+   *
+   * <p>Pop the top two EngineNumbers where the first pop is the right side operand and the second
+   * pop is the left hand operand. Then, raise left to the power of right. Finally, push the result
+   * to the top of the stack.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine pow();
 
+  /**
+   * Pop the top two EngineNumbers on the stack and perform a logical and.
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine and();
 
   EventHandlerMachine or();
@@ -50,6 +101,22 @@ public interface EventHandlerMachine {
   EventHandlerMachine lteq();
 
   EventHandlerMachine gteq();
+
+  /**
+   * Apply a map command based on the given strategy.
+   *
+   * <p>Apply a map operation using the given strategy. For example, a linear map will determine
+   * what percentage a value is between a "from" low and high. This will then return a value that is
+   * the same percentage between a "to" high and low. Expects the following on the top of the stack
+   * where each is under the other: operand, from low, from high, to low, and to high. After popping
+   * these parameters, the result of the map will be pushed to the top of the stack.</p>
+   *
+   * @param strategy Name of strategy to use in this map operation where, currently, only linear is
+   *     valid.
+   * @throws IllegalArgumentException if unrecognized strategy
+   * @return
+   */
+  EventHandlerMachine applyMap(String strategy);
 
   EventHandlerMachine slice();
 

@@ -8,6 +8,8 @@ package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
 import java.util.Optional;
+
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.func.CompiledCallable;
@@ -55,7 +57,7 @@ public interface EngineBridge {
    * @return Optional containing the patch if found, empty Optional otherwise.
    * @throws IllegalStateException if zero or multiple patches found at the point.
    */
-  Optional<ShadowingEntity> getPatch(GeoPoint point);
+  Optional<Entity> getPatch(GeoPoint point);
 
   /**
    * Get all patches in the current simulation step.
@@ -70,7 +72,7 @@ public interface EngineBridge {
    * @param geometry the geometric area to query.
    * @return Iterable of patches from the previous step within the specified geometry.
    */
-  Iterable<ShadowingEntity> getPriorPatches(Geometry geometry);
+  Iterable<Entity> getPriorPatches(Geometry geometry);
 
   /**
    * Get patches from the previous step within a specific geometry momento.
@@ -78,7 +80,7 @@ public interface EngineBridge {
    * @param geometryMomento with the momento for the geometric area to query.
    * @return Iterable of patches from the previous step within the specified geometry.
    */
-  Iterable<ShadowingEntity> getPriorPatches(GeometryMomento geometryMomento);
+  Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento);
 
   /**
    * Convert an engine value to different units.

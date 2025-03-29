@@ -14,7 +14,7 @@ import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.EventKey;
 import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
+import org.joshsim.engine.entity.GeoKey;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
@@ -217,9 +217,9 @@ public class ShadowingEntity {
    *
    * @return the PatchKey of the patch that contains this entity.
    */
-  public PatchKey getPatchKey() {
+  public GeoKey getGeoKey() {
     Patch patch = (Patch) getHere().getInner();
-    return patch.getKey();
+    return patch.getKey().orElseThrow();
   }
 
   /**

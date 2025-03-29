@@ -8,6 +8,8 @@ package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
 import java.util.Optional;
+
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.func.CompiledCallable;
@@ -95,44 +97,42 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Optional<ShadowingEntity> getPatch(GeoPoint point) {
+  public Optional<Entity> getPatch(GeoPoint point) {
     Query query = new Query(currentStep.getAsInt(), point);
-    Iterable<Patch> patches = replicate.query(query);
+    Iterable<Entity> patches = replicate.query(query);
 
-    Iterator<Patch> iterator = patches.iterator();
+    Iterator<Entity> iterator = patches.iterator();
 
     if (!iterator.hasNext()) {
       throw new IllegalStateException("Expected exactly one Patch, but found none.");
     }
 
-    Patch patch = iterator.next();
-    ShadowingEntity decorated = new ShadowingEntity(patch, simulation);
+    Entity patch = iterator.next();
 
     if (iterator.hasNext()) {
       throw new IllegalStateException("Expected exactly one Patch, but found more.");
     }
 
-    return Optional.of(decorated);
+    return Optional.of(patch);
   }
 
   @Override
   public Iterable<ShadowingEntity> getCurrentPatches() {
     Query query = new Query(getCurrentTimestep());
-    Iterable<Patch> patches = replicate.query(query);
+    Iterable<Patch> patches = replicate.getCurrentPatches();
     Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
   }
 
   @Override
-  public Iterable<ShadowingEntity> getPriorPatches(Geometry geometry) {
+  public Iterable<Entity> getPriorPatches(Geometry geometry) {
     Query query = new Query(getPriorTimestep(), geometry);
-    Iterable<Patch> patches = replicate.query(query);
-    Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
-    return decorated;
+    Iterable<Entity> patches = replicate.query(query);
+    return patches;
   }
 
   @Override
-  public Iterable<ShadowingEntity> getPriorPatches(GeometryMomento geometryMomento) {
+  public Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento) {
     return getPriorPatches(geometryMomento.build());
   }
 

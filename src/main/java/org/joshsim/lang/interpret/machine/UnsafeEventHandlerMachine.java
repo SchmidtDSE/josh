@@ -8,25 +8,33 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+
+import java.util.Stack;
 
 
 /**
  * Push-down automaton which uses stack operations to implement EventHandlerMachine.
+ *
+ * <p>Push-down automaton which uses stack operations to implement EventHandlerMachine under
+ * assumption that it is not shared across threads.</p>
  */
-public class PushDownEventHandlerMachine implements EventHandlerMachine {
+public class UnsafeEventHandlerMachine implements EventHandlerMachine {
+
+  private final Stack<EngineValue> memory;
 
   /**
    * Create a new pushdown automaton which operates on the given scope.
    *
    * @param scope The scope in which to have this automaton perform its operations.
    */
-  public PushDownEventHandlerMachine(Scope scope) {
-
+  public UnsafeEventHandlerMachine(Scope scope) {
+    memory = new Stack<>();
   }
 
   @Override
-  public EventHandlerMachine pushIdentifier(String name) {
+  public EventHandlerMachine push(ValueResolver valueResolver) {
     return null;
   }
 

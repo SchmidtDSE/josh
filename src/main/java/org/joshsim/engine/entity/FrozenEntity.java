@@ -66,4 +66,13 @@ public class FrozenEntity implements Entity {
   public Optional<Geometry> getGeometry() {
     return geometry;
   }
+
+  @Override
+  public Optional<GeoKey> getKey() {
+    if (getGeometry().isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.of(new GeoKey(this));
+    }
+  }
 }

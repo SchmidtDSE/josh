@@ -109,4 +109,14 @@ public abstract class MutableEntity implements Entity, Lockable {
         .map(EventHandler::getAttributeName)
         .collect(Collectors.toSet());
   }
+
+  @Override
+  public Optional<GeoKey> getKey() {
+    if (getGeometry().isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.of(new GeoKey(this));
+    }
+  }
+
 }

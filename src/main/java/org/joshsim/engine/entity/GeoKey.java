@@ -12,27 +12,27 @@ import org.joshsim.engine.geometry.Geometry;
 /**
  * Represents a key to uniquely identify a Patch within a simulation across time steps.
  */
-public class PatchKey {
+public class GeoKey {
 
-  private final Patch patch;
+  private final Entity entity;
 
   /**
-   * Constructs a Key with the specified patch.
+   * Constructs a Key with the specified entity.
    *
-   * @param patch The patch to be keyed.
+   * @param entity The patch to be keyed.
    */
-  public PatchKey(Patch patch) {
-    this.patch = patch;
+  public GeoKey(Entity entity) {
+    this.entity = entity;
   }
 
   @Override
   public String toString() {
-    Geometry geometry = patch.getGeometry().orElseThrow();
+    Geometry geometry = entity.getGeometry().orElseThrow();
     return String.format(
-      "Patch of type %s at (%.6f, %.6f)",
-      patch.getName(),
-      geometry.getCenterX(),
-      geometry.getCenterY()
+        "Entity of type %s at (%.6f, %.6f)",
+        entity.getName(),
+        geometry.getCenterX(),
+        geometry.getCenterY()
     );
   }
 }

@@ -7,8 +7,9 @@
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
+import org.joshsim.engine.entity.GeoKey;
 
 
 /**
@@ -24,12 +25,15 @@ public interface Replicate {
   // TODO
 
   /**
-   * Add a time step to this replicate.
+   * Save the current state as the given step number.
    *
-   * @param timeStep the new time step to this replicate.
+   * <p>Save the current state as the given step number, freezing all entities as immutable such
+   * that further changes are not reflected into those immutable copies.</p>
+   *
+   * @param stepNumber the number of the step to have current state saved as.
    * @throws IllegalArgumentException if a TimeStep of the given step number already exists.
    */
-  void addTimeStep(TimeStep timeStep);
+  void saveTimestep(long stepNumber);
 
   /**
    * Get a time step by its step number.
@@ -37,15 +41,15 @@ public interface Replicate {
    * @param stepNumber the unique step number corresponding to the TimeStep to retrieve.
    * @return an Optional containing the time step if found, or empty if not found.
    */
-  Optional<TimeStep> getTimeStep(int stepNumber);
+  Optional<TimeStep> getTimeStep(long stepNumber);
 
   /**
    * Query patches across space and / or time based on the provided query description.
    *
    * @param query the query defining spatial and / or temporal bounds.
-   * @return an iterable of matching patches.
+   * @return an iterable of matching patches as immutable entities.
    */
-  Iterable<Patch> query(Query query);
+  Iterable<Entity> query(Query query);
 
   /**
    * Lookup a Patch at the given step number.
@@ -53,5 +57,12 @@ public interface Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Patch getPatchByKey(PatchKey key, long stepNumber);
+  Patch getPatchByKey(GeoKey key, long stepNumber);
+
+  /**
+   * Get all patches in current state.
+   *
+   * @return Iterable over mutable Patches.
+   */
+  Iterable<Patch> getCurrentPatches();
 }

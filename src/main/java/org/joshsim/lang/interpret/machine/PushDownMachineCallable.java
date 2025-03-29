@@ -30,7 +30,7 @@ public class PushDownMachineCallable implements CompiledCallable {
 
   @Override
   public EngineValue evaluate(Scope scope) {
-    EventHandlerMachine machine = new PushDownEventHandlerMachine(scope);
+    EventHandlerMachine machine = new UnsafeEventHandlerMachine(scope);
     handlerAction.apply(machine);
     return machine.getResult();
   }

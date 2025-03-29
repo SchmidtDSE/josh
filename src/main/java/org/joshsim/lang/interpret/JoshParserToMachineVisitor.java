@@ -65,7 +65,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
-    EventHandlerAction action = (machine) -> machine.pushIdentifier(identifierName);
+    ValueResolver resolver = new ValueResolver(identifierName);
+    EventHandlerAction action = (machine) -> machine.push(resolver);
     return new ActionFragment(action);
   }
 
