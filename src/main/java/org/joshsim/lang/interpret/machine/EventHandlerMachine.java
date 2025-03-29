@@ -341,16 +341,61 @@ public interface EventHandlerMachine {
    */
   EventHandlerMachine randNorm();
 
+  /**
+   * Calculate the absolute value of a number.
+   *
+   * <p>Pop a value from the top of the stack, calculate its absolute value, and push the result
+   * back to the top of the stack. If the popped value is a distribution, it will be sampled once
+   * to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine abs();
 
+  /**
+   * Round a number up to the nearest integer.
+   *
+   * <p>Pop a value from the top of the stack, round it up to the nearest integer, and push the
+   * result back to the top of the stack. If the popped value is a distribution, it will be sampled
+   * once to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine ceil();
 
   EventHandlerMachine count();
 
+  /**
+   * Round a number down to the nearest integer.
+   *
+   * <p>Pop a value from the top of the stack, round it down to the nearest integer, and push the
+   * result back to the top of the stack. If the popped value is a distribution, it will be sampled
+   * once to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine floor();
 
+  /**
+   * Calculate the base-10 logarithm of a number.
+   *
+   * <p>Pop a value from the top of the stack, calculate its base-10 logarithm, and push the result
+   * back to the top of the stack. If the popped value is a distribution, it will be sampled once
+   * to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine log10();
 
+  /**
+   * Calculate the natural logarithm (base e) of a number.
+   *
+   * <p>Pop a value from the top of the stack, calculate its natural logarithm, and push the result
+   * back to the top of the stack. If the popped value is a distribution, it will be sampled once
+   * to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine ln();
 
   EventHandlerMachine max();
@@ -359,6 +404,15 @@ public interface EventHandlerMachine {
 
   EventHandlerMachine min();
 
+  /**
+   * Round a number to the nearest integer.
+   *
+   * <p>Pop a value from the top of the stack, round it to the nearest integer, and push the result
+   * back to the top of the stack. If the popped value is a distribution, it will be sampled once
+   * to get a scalar value before the operation.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine round();
 
   EventHandlerMachine std();
