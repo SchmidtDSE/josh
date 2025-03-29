@@ -8,8 +8,8 @@ package org.joshsim.engine.simulation;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.GeoKey;
+import org.joshsim.engine.entity.Patch;
 
 
 /**
