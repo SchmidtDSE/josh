@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.Units;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -139,7 +140,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine cast(String newUnits, boolean force) {
+  public EventHandlerMachine cast(Units newUnits, boolean force) {
     return null;
   }
 

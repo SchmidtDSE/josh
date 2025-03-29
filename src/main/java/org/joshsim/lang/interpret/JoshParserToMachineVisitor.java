@@ -403,7 +403,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitCast(JoshLangParser.CastContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    String newUnits = ctx.target.getText();
+    Units newUnits = new Units(ctx.target.getText());
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -416,7 +416,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitCastForce(JoshLangParser.CastForceContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    String newUnits = ctx.target.getText();
+    Units newUnits = new Units(ctx.target.getText());
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -442,9 +442,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
+    EventHandlerAction expressionAction = ctx.getChild(0).accept(this).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
 
     EventHandlerAction action = (machine) -> {
+      expressionAction.apply(machine);
       machine.pushAttribute(attrName);
       return machine;
     };
