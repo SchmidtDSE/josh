@@ -292,7 +292,7 @@ public interface EventHandlerMachine {
    * @param entityType The name of the entity type corresponding to the prototype to use.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine makeEntity(String entityType);
+  EventHandlerMachine createEntity(String entityType);
 
   /**
    * Execute a spatial query and push the result to the top of the stack.
@@ -473,14 +473,45 @@ public interface EventHandlerMachine {
    */
   EventHandlerMachine sum();
 
-  EventHandlerMachine create(String entityName);
-
+  /**
+   * Check that a local variable does not yet exist and save it.
+   *
+   * <p>Pop the top of the stack and save that value as a new local variable in the current scope.
+   * This will first check that a local variable of that name is not already present in the scope,
+   * throwing an exception if it is already there.</p>
+   *
+   * @param identifierName The name of the variable to be created if a variable of that name does
+   *     not already exist.
+   * @throws IllegalStateException Thrown if a variable of the given name already exists in the
+   *     scope.
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine saveLocalVariable(String identifierName);
 
+  /**
+   * Indicate that no additional actions should be taken on this machine.
+   *
+   * <p>End this machine such that any additional actions taken on it will throw an
+   * IllegalStateException.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine end();
 
+  /**
+   * Check if this machine has ended.
+   *
+   * @return True if this machine has ended such that additional actions taken within this machine
+   *     will cause an IllegalStateException or false otherwise.
+   */
   boolean isEnded();
 
+  /**
+   * Peek at the top of the stack.
+   *
+   * @return Returns the EngineValue currently at the top of the stack without removing that element
+   *     from the top of the stack.
+   */
   EngineValue getResult();
 
 }

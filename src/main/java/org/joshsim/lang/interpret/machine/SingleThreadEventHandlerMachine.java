@@ -150,7 +150,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine makeEntity(String entityType) {
+  public EventHandlerMachine createEntity(String entityType) {
     return null;
   }
 
@@ -231,11 +231,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine sum() {
-    return null;
-  }
-
-  @Override
-  public EventHandlerMachine create(String entityName) {
     return null;
   }
 

@@ -434,7 +434,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.makeEntity(entityType);
+      machine.createEntity(entityType);
       return machine;
     };
 
@@ -517,7 +517,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
-      machine.create(entityName);
+      machine.createEntity(entityName);
       return machine;
     };
 
