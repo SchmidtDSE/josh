@@ -64,15 +64,25 @@ public abstract class HierarchyConfig {
   }
 
   /**
+   * Gets the cached JSON configuration.
+   */
+  protected JsonNode getCachedJsonConfig() {
+    return cachedJsonConfig;
+  }
+
+  /**
    * Gets a value from the JSON configuration file.
    */
   private String getValueFromJsonFile(String key) {
     try {
-      if (cachedJsonConfig == null) {
+      if (getCachedJsonConfig() == null) {
         loadConfigJsonFile();
       }
 
-      if (cachedJsonConfig != null && cachedJsonConfig.has(key)) {
+      if (
+          getCachedJsonConfig() != null
+          && getCachedJsonConfig().has(key)
+      ) {
         JsonNode value = cachedJsonConfig.get(key);
         return value.isTextual() ? value.asText() : null;
       }
@@ -104,7 +114,7 @@ public abstract class HierarchyConfig {
    * Updates the configuration file path and clears the cache.
    */
   protected void setConfigJsonFilePath(String path) {
-    this.configJsonFilePath = path;
-    this.cachedJsonConfig = null;
+    configJsonFilePath = path;
+    cachedJsonConfig = null;
   }
 }
