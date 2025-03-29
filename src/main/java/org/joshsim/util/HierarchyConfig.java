@@ -58,17 +58,18 @@ public abstract class HierarchyConfig {
       return envValue;
     }
 
-    if (required) {
+    valueSources.put(key, ValueSource.NOT_FOUND);
+    String outValue = null;
+    if (defaultValue != null) {
+      outValue = defaultValue;
+    } 
+
+    if (required && outValue == null) {
       throw new IllegalStateException(
           "Required configuration value '" + key + "' not found in any source");
     }
 
-    valueSources.put(key, ValueSource.NOT_FOUND);
-    if (defaultValue != null) {
-      return defaultValue;
-    } else {
-      return null;
-    }
+    return outValue;
 
   }
 

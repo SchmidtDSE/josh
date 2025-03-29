@@ -1,225 +1,163 @@
 package org.joshsim.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.mockStatic;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.minio.MinioClient;
-import java.io.File;
-import java.io.IOException;
+
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Path;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.MockedStatic;
 
-/**
- * Unit tests for the {@link MinioOptions} class.
- * This class tests various functionalities of MinioOptions, including
- * bucket name extraction, object name extraction, credentials retrieval,
- * and Minio client creation.
- */
 public class MinioOptionsTest {
 
   private MinioOptions options;
+  private ObjectMapper mapper = new ObjectMapper();
 
   @BeforeEach
   void setUp() {
-    options = new MinioOptions();
+    // Use a spy on the real MinioOptions to only mock specific methods
+    options = spy(new MinioOptions());
   }
 
   @Test
-  void isMinioOutput_withNullOutput_returnsFalse() {
-    assertFalse(options.isMinioOutput());
-  }
-
-  @Test
-  void isMinioOutput_withMinioUrl_returnsTrue() throws Exception {
-    setField(options, "output", "minio://bucket/path");
+  void isMinioOutput_withValidEndpoint_returnsTrue() {
+    // Mock getMinioEndpoint to return a valid endpoint
+    doReturn("http://minio.example.com").when(options).getMinioEndpoint();
+    
     assertTrue(options.isMinioOutput());
   }
-
+  
   @Test
-  void isMinioOutput_withNonMinioUrl_returnsFalse() throws Exception {
-    setField(options, "output", "http://example.com/file");
+  void isMinioOutput_withEmptyEndpoint_returnsFalse() {
+    doReturn("").when(options).getMinioEndpoint();
+    
+    assertFalse(options.isMinioOutput());
+  }
+  
+  @Test
+  void isMinioOutput_withNullEndpoint_returnsFalse() {
+    doReturn(null).when(options).getMinioEndpoint();
+    
+    assertFalse(options.isMinioOutput());
+  }
+  
+  @Test
+  void isMinioOutput_withException_returnsFalse() {
+    doThrow(new IllegalStateException("No endpoint")).when(options).getMinioEndpoint();
+    
     assertFalse(options.isMinioOutput());
   }
 
   @Test
-  void getBucketName_withNullOutput_returnsNull() {
-    assertNull(options.getBucketName());
+  void getMinioEndpoint_fromDirectValue() throws Exception {
+    setField(options, "minioEndpointMaybe", "http://direct.example.com");
+    
+    assertEquals("http://direct.example.com", options.getMinioEndpoint());
+    
+    // Verify source was marked correctly
+    Map<String, ValueSource> sources = options.getSources();
+    assertEquals(ValueSource.DIRECT, sources.get("minio_endpoint"));
   }
-
+  
   @Test
-  void getBucketName_withValidUrl_returnsBucketName() throws Exception {
-    setField(options, "output", "minio://mybucket/path/to/file");
-    assertEquals("mybucket", options.getBucketName());
+  void getMinioEndpoint_fromJsonConfig() {
+    // Create mock JSON config with endpoint
+    ObjectNode configNode = mapper.createObjectNode();
+    configNode.put("minio_endpoint", "http://json.example.com");
+    doReturn(configNode).when(options).getJsonConfig();
+    
+    assertEquals("http://json.example.com", options.getMinioEndpoint());
+    
+    // Verify source was marked correctly
+    Map<String, ValueSource> sources = options.getSources();
+    assertEquals(ValueSource.CONFIG_FILE, sources.get("minio_endpoint"));
   }
-
+  
   @Test
-  void getBucketName_withNoPaths_returnsBucketName() throws Exception {
-    setField(options, "output", "minio://mybucket");
-    assertEquals("mybucket", options.getBucketName());
+  void getMinioEndpoint_fromEnvironment() {
+    // Mock environment variable
+    doReturn("http://env.example.com").when(options).getEnvValue("MINIO_ENDPOINT");
+    
+    assertEquals("http://env.example.com", options.getMinioEndpoint());
+    
+    // Verify source was marked correctly
+    Map<String, ValueSource> sources = options.getSources();
+    assertEquals(ValueSource.ENVIRONMENT, sources.get("minio_endpoint"));
   }
-
+  
   @Test
-  void getObjectName_withNullOutput_returnsNull() {
-    assertNull(options.getObjectName());
+  void getMinioEndpoint_priorityOrder() throws Exception {
+    // Set up all three sources - direct should win
+    setField(options, "minioEndpointMaybe", "http://direct.example.com");
+    
+    ObjectNode configNode = mapper.createObjectNode();
+    configNode.put("minio_endpoint", "http://json.example.com");
+    doReturn(configNode).when(options).getJsonConfig();
+    
+    doReturn("http://env.example.com").when(options).getEnvValue("MINIO_ENDPOINT");
+    
+    assertEquals("http://direct.example.com", options.getMinioEndpoint());
   }
-
+  
   @Test
-  void getObjectName_withValidUrl_returnsPath() throws Exception {
-    setField(options, "output", "minio://mybucket/path/to/file");
-    assertEquals("path/to/file", options.getObjectName());
-  }
-
-  @Test
-  void getObjectName_withNoPaths_returnsEmptyString() throws Exception {
-    setField(options, "output", "minio://mybucket");
-    assertEquals("", options.getObjectName());
-  }
-
-  @Test
-  void getMinioEndpoint_returnsConfiguredValue() throws Exception {
-    setField(options, "minioEndpoint", "https://minio.example.com");
-    assertEquals("https://minio.example.com", options.getMinioEndpoint());
-  }
-
-  @Test
-  void getCredentials_withCommandLineArgs_usesCommandLineArgs() throws Exception {
-    // Set up command line args
-    setField(options, "minioKey", "cli-key");
-    setField(options, "minioSecret", "cli-secret");
-
-    // Use reflection to call private getCredentials method
-    String[] credentials = invokeGetCredentials(options);
-
-    assertEquals("cli-key", credentials[0]);
-    assertEquals("cli-secret", credentials[1]);
-  }
-
-  @Test
-  void getCredentials_withEnvironmentVars_usesEnvironmentVars() throws Exception {
-    try (MockedStatic<System> mockedSystem = mockStatic(System.class)) {
-      // Mock environment variables
-      mockedSystem.when(() -> System.getenv("MINIO_ACCESS_KEY")).thenReturn("env-key");
-      mockedSystem.when(() -> System.getenv("MINIO_SECRET_KEY")).thenReturn("env-secret");
-      mockedSystem.when(() -> System.getenv(anyString())).thenCallRealMethod();
-
-      String[] credentials = invokeGetCredentials(options);
-
-      assertEquals("env-key", credentials[0]);
-      assertEquals("env-secret", credentials[1]);
-    }
-  }
-
-  @Test
-  void getCredentials_withJsonFile_usesJsonFile(@TempDir Path tempDir) throws Exception {
-    // Create a temporary credentials file
-    File credFile = createCredentialsFile(tempDir, "json-key", "json-secret");
-
-    // Set the credentials file in the options
-    setField(options, "credentialsFile", credFile);
-
-    String[] credentials = invokeGetCredentials(options);
-
-    assertEquals("json-key", credentials[0]);
-    assertEquals("json-secret", credentials[1]);
-  }
-
-  @Test
-  void getCredentials_withNoValidSource_throwsException() {
-    assertThrows(InvocationTargetException.class, () -> invokeGetCredentials(options));
-  }
-
-  @Test
-  void getCredentials_prioritizesCommandLineOverEnvironment() throws Exception {
-    // Set up command line args
-    setField(options, "minioKey", "cli-key");
-    setField(options, "minioSecret", "cli-secret");
-
-    try (MockedStatic<System> mockedSystem = mockStatic(System.class)) {
-      // Mock environment variables
-      mockedSystem.when(() -> System.getenv("MINIO_ACCESS_KEY")).thenReturn("env-key");
-      mockedSystem.when(() -> System.getenv("MINIO_SECRET_KEY")).thenReturn("env-secret");
-      mockedSystem.when(() -> System.getenv(anyString())).thenCallRealMethod();
-
-      String[] credentials = invokeGetCredentials(options);
-
-      assertEquals("cli-key", credentials[0]);
-      assertEquals("cli-secret", credentials[1]);
-    }
-  }
-
-  @Test
-  void getCredentials_prioritizesEnvironmentOverJsonFile(@TempDir Path tempDir) throws Exception {
-    // Create a temporary credentials file
-    File credFile = createCredentialsFile(tempDir, "json-key", "json-secret");
-
-    // Set the credentials file in the options
-    setField(options, "credentialsFile", credFile);
-
-    try (MockedStatic<System> mockedSystem = mockStatic(System.class)) {
-      // Mock environment variables
-      mockedSystem.when(() -> System.getenv("MINIO_ACCESS_KEY")).thenReturn("env-key");
-      mockedSystem.when(() -> System.getenv("MINIO_SECRET_KEY")).thenReturn("env-secret");
-      mockedSystem.when(() -> System.getenv(anyString())).thenCallRealMethod();
-
-      String[] credentials = invokeGetCredentials(options);
-
-      assertEquals("env-key", credentials[0]);
-      assertEquals("env-secret", credentials[1]);
-    }
-  }
-
-  @Test
-  void getMinioClient_buildsClientWithCredentials() throws Exception {
-    // Create a MinioOptions with command line credentials
-    MinioOptions testOptions = new MinioOptions();
-    setField(testOptions, "minioKey", "test-key");
-    setField(testOptions, "minioSecret", "test-secret");
-    setField(testOptions, "minioEndpoint", "http://localhost:9000");
-
-    // Call getMinioClient
-    MinioClient client = testOptions.getMinioClient();
-
-    // We can't directly inspect MinioClient fields as they're private
-    // This is more of an integration test to ensure it builds without exceptions
+  void getCredentials_fromAllSources() throws Exception {
+    // Set direct values for endpoint, access key and secret key
+    setField(options, "minioEndpointMaybe", "http://localhost:9000");
+    setField(options, "minioAccessKeyMaybe", "direct-access");
+    setField(options, "minioSecretKeyMaybe", "direct-secret");
+    
+    // Build MinioClient to verify it works without errors
+    MinioClient client = options.getMinioClient();
     assertNotNull(client);
   }
-
-  // Helper methods
-
+  
+  @Test
+  void getBucketName_withDefaultValue() {
+    // No values set explicitly - should return default
+    String bucketName = options.getBucketName();
+    assertEquals("default", bucketName);
+  }
+  
+  @Test
+  void getObjectName_withDefaultValue() {
+    // No values set explicitly - should return default
+    assertEquals("", options.getObjectName());
+  }
+  
+  @Test
+  void toString_includesSourceInfo() throws Exception {
+    // Set up values from different sources
+    setField(options, "minioEndpointMaybe", "http://localhost:9000");
+    
+    ObjectNode configNode = mapper.createObjectNode();
+    configNode.put("minio_access_key", "json-access");
+    doReturn(configNode).when(options).getJsonConfig();
+    
+    doReturn("env-secret").when(options).getEnvValue("MINIO_SECRET_KEY");
+    
+    String result = options.toString();
+    
+    // Verify endpoint and source info are included
+    assertTrue(result.contains("Minio Endpoint: http://localhost:9000"));
+    assertTrue(result.contains("from DIRECT"));
+    
+    // Verify sensitive information is redacted
+    assertTrue(result.contains("[REDACTED]"));
+    
+    // Verify source tracking info is included
+    assertTrue(result.contains("from CONFIG_FILE"));
+    assertTrue(result.contains("from ENVIRONMENT"));
+  }
+  
+  // Helper method for setting private fields
   private void setField(Object obj, String fieldName, Object value) throws Exception {
     Field field = obj.getClass().getDeclaredField(fieldName);
     field.setAccessible(true);
     field.set(obj, value);
-  }
-
-  private String[] invokeGetCredentials(MinioOptions options) throws Exception {
-    var method = MinioOptions.class.getDeclaredMethod("getCredentials");
-    method.setAccessible(true);
-    return (String[]) method.invoke(options);
-  }
-
-  private File createCredentialsFile(Path tempDir, String key, String secret) throws IOException {
-    File credFile = tempDir.resolve("credentials.json").toFile();
-
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode rootNode = mapper.createObjectNode();
-    rootNode.put("minio_access_key", key);
-    rootNode.put("minio_secret_key", secret);
-
-    mapper.writeValue(credFile, rootNode);
-    return credFile;
   }
 }
