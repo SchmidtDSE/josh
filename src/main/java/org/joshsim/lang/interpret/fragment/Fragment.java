@@ -22,42 +22,101 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
  */
 public abstract class Fragment {
 
+  /**
+   * Gets the current event handler action from this fragment.
+   *
+   * @return The current event handler action
+   * @throws RuntimeException if this fragment type does not contain an event handler action
+   */
   public EventHandlerAction getCurrentAction() {
     throw new RuntimeException("This fragment does not have an event handler action;");
   }
 
+  /**
+   * Gets the compiled callable from this fragment.
+   *
+   * @return The compiled callable
+   * @throws RuntimeException if this fragment type does not contain a compiled callable
+   */
   public CompiledCallable getCompiledCallable() {
     throw new RuntimeException("This fragment does not have an compiled callable.");
   }
 
+  /**
+   * Gets the compiled selector from this fragment.
+   *
+   * @return The compiled selector, if present
+   * @throws RuntimeException if this fragment type does not contain a compiled selector
+   */
   public Optional<CompiledSelector> getCompiledSelector() {
     throw new RuntimeException("This fragment does not have an compiled selector.");
   }
 
+  /**
+   * Gets the event handler group builder from this fragment.
+   *
+   * @return The event handler group builder
+   * @throws RuntimeException if this fragment type does not contain an event handler group
+   */
   public EventHandlerGroupBuilder getEventHandlerGroup() {
     throw new RuntimeException("This fragment does not have an event handler group.");
   }
 
+  /**
+   * Gets all event handler groups from this fragment.
+   * By default, returns a single group from {@link #getEventHandlerGroup()}.
+   *
+   * @return An iterable of event handler group builders
+   */
   public Iterable<EventHandlerGroupBuilder> getEventHandlerGroups() {
     return List.of(getEventHandlerGroup());
   }
 
+  /**
+   * Gets the entity prototype from this fragment.
+   *
+   * @return The entity prototype
+   * @throws RuntimeException if this fragment type does not contain an entity
+   */
   public EntityPrototype getEntity() {
     throw new RuntimeException("This fragment does not have an entity.");
   }
 
+  /**
+   * Gets the conversion from this fragment.
+   *
+   * @return The conversion
+   * @throws RuntimeException if this fragment type does not contain a conversion
+   */
   public Conversion getConversion() {
     throw new RuntimeException("This fragment does not have a conversion.");
   }
 
+  /**
+   * Gets all conversions from this fragment.
+   * By default, returns a single conversion from {@link #getConversion()}.
+   *
+   * @return An iterable of conversions
+   */
   public Iterable<Conversion> getConversions() {
     return List.of(getConversion());
   }
 
+  /**
+   * Gets the Josh program from this fragment.
+   *
+   * @return The Josh program
+   * @throws RuntimeException if this fragment type does not contain a program
+   */
   public JoshProgram getProgram() {
     throw new RuntimeException("This fragment does not have a program.");
   }
 
+  /**
+   * Gets the type of this fragment.
+   *
+   * @return The fragment type
+   */
   public abstract FragmentType getFragmentType();
 
 }
