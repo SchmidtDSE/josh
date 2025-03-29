@@ -69,7 +69,7 @@ public abstract class HierarchyConfig {
   private String getValueFromJsonFile(String key) {
     try {
       if (cachedJsonConfig == null) {
-        loadJsonConfigFile();
+        loadConfigJsonFile();
       }
 
       if (cachedJsonConfig != null && cachedJsonConfig.has(key)) {
