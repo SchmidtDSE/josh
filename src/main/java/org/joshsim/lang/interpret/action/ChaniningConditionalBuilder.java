@@ -1,8 +1,6 @@
 
 /**
  * Builder for creating chains of conditional actions.
- * Allows building a sequence of conditional actions that are chained together,
- * with each action potentially having both positive and negative branches.
  *
  * @license BSD-3-Clause
  */
@@ -14,16 +12,16 @@ import java.util.List;
 
 /**
  * Builder pattern implementation for creating chains of conditional actions.
- * Maintains an ordered list of conditional actions and builds them into a
- * properly chained sequence.
+ *
+ * <p>Builder which maintains an ordered list of conditional actions and builds them into a properly
+ * chained sequence of ConditionalActions.</p>
  */
 public class ChaniningConditionalBuilder {
 
   private final List<ConditionalAction> actions;
 
   /**
-   * Creates a new builder for chaining conditional actions.
-   * Initializes an empty list to store the conditional actions.
+   * Creates a new builder for chaining conditional actions which is empty.
    */
   public ChaniningConditionalBuilder() {
     actions = new ArrayList<>();
@@ -31,7 +29,6 @@ public class ChaniningConditionalBuilder {
 
   /**
    * Adds an event handler action to the chain.
-   * The action must be a ConditionalAction.
    *
    * @param action The event handler action to add
    * @throws IllegalArgumentException if the action is not a ConditionalAction
@@ -55,7 +52,9 @@ public class ChaniningConditionalBuilder {
 
   /**
    * Builds the chain of conditional actions.
-   * Creates a chain by linking each action to the next one in reverse order.
+   * 
+   * <p>Create a chain by linking each action to the next one in reverse order, returning the action
+   * at the start of that chain.</p>
    *
    * @return The first conditional action in the completed chain
    * @throws IllegalStateException if no conditional actions have been added
