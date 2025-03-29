@@ -363,6 +363,15 @@ public interface EventHandlerMachine {
    */
   EventHandlerMachine ceil();
 
+  /**
+   * Count the number of values in a distribution.
+   *
+   * <p>Pop a value from the top of the stack, count its values, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine count();
 
   /**
@@ -415,8 +424,26 @@ public interface EventHandlerMachine {
    */
   EventHandlerMachine round();
 
+  /**
+   * Calculate the standard deviation of a distribution.
+   *
+   * <p>Pop a value from the top of the stack, calculate its standard deviation, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine std();
 
+  /**
+   * Calculate the sum of all values in a distribution.
+   *
+   * <p>Pop a value from the top of the stack, sum its values, and push the result back
+   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
+   * distribution. The pushed result will be a scalar.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
   EventHandlerMachine sum();
 
   EventHandlerMachine create(String entityName);
