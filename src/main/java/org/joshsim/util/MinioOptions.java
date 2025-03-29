@@ -6,7 +6,7 @@ import picocli.CommandLine.Option;
 /**
  * Configuration options for Minio operations.
  */
-public class MinioOptions extends Config {
+public class MinioOptions extends HierarchyConfig {
   
   // Direct command line options
   @Option(names = "--minio-endpoint", description = "Minio server endpoint URL")

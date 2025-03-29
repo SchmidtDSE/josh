@@ -9,7 +9,7 @@ import java.io.IOException;
  * Abstract base class for configuration that retrieves values from multiple sources
  * in priority order: direct values → config file → environment variables.
  */
-public abstract class Config {
+public abstract class HierarchyConfig {
 
   protected String configJsonFilePath;
   private JsonNode cachedJsonConfig;
