@@ -22,10 +22,10 @@ public abstract class HierarchyConfig {
    * @param configKey Key to look for in config file
    * @param envVarName Environment variable name
    * @param required Whether to throw an exception if not found
-   * @return The value or null if not required and not found
+   * @return ConfigValue containing the value and its source
    * @throws IllegalStateException if required value not found
    */
-  protected String getValue(
+  protected ConfigValue getValue(
         String directValue,
         String configKey,
         String envVarName,
@@ -33,19 +33,19 @@ public abstract class HierarchyConfig {
   ) {
     // 1. Direct value (e.g., command line argument)
     if (directValue != null && !directValue.isEmpty()) {
-      return directValue;
+      return new ConfigValue(directValue, ValueSource.DIRECT);
     }
 
     // 2. Config file
     String fileValue = getValueFromJsonFile(configKey);
     if (fileValue != null && !fileValue.isEmpty()) {
-      return fileValue;
+      return new ConfigValue(fileValue, ValueSource.CONFIG_FILE);
     }
 
     // 3. Environment variable
     String envValue = getEnvVar(envVarName);
     if (envValue != null && !envValue.isEmpty()) {
-      return envValue;
+      return new ConfigValue(envValue, ValueSource.ENVIRONMENT);
     }
 
     if (required) {
@@ -53,7 +53,23 @@ public abstract class HierarchyConfig {
           "Required configuration value '" + configKey + "' not found in any source");
     }
 
-    return null;
+    return new ConfigValue(null, ValueSource.NOT_FOUND);
+  }
+
+  /**
+   * Retrieves a configuration value with a default if not found elsewhere.
+   */
+  protected ConfigValue getValueWithDefault(
+        String directValue,
+        String configKey,
+        String envVarName,
+        String defaultValue
+  ) {
+    ConfigValue result = getValue(directValue, configKey, envVarName, false);
+    if (result.getValue() == null) {
+      return new ConfigValue(defaultValue, ValueSource.DEFAULT);
+    }
+    return result;
   }
 
   /**
