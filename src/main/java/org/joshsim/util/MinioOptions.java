@@ -8,30 +8,36 @@ import picocli.CommandLine.Option;
  */
 public class MinioOptions extends HierarchyConfig {
   
-  // Direct command line options
+  // Value keys for source tracking (also used for JSON config and basis for ENV vars)
+  private static final String MINIO_ENDPOINT = "minio_endpoint";
+  private static final String MINIO_ACCESS_KEY = "minio_access_key";
+  private static final String MINIO_SECRET_KEY = "minio_secret_key";
+  
+  // Direct command line options (Maybe suffix indicates they might be null/empty)
   @Option(names = "--minio-endpoint", description = "Minio server endpoint URL")
-  private String minioEndpoint;
+  private String minioEndpointMaybe;
   
   @Option(names = "--minio-access-key", description = "Minio access key")
-  private String minioAccessKey;
+  private String minioAccessKeyMaybe;
   
   @Option(names = "--minio-secret-key", description = "Minio secret key")
-  private String minioSecretKey;
+  private String minioSecretKeyMaybe;
   
   @Option(names = "--minio-bucket", description = "Minio bucket name")
-  private String bucketName;
+  private String bucketNameMaybe;
   
   @Option(names = "--minio-object", description = "Base object name/path within bucket")
-  private String objectName;
+  private String objectNameMaybe;
   
-  // Expected credential keys and environment variable names
-  private static final String MINIO_ENDPOINT_KEY = "minio_server_endpoint";
-  private static final String MINIO_ACCESS_KEY_KEY = "minio_access_key";
-  private static final String MINIO_SECRET_KEY_KEY = "minio_secret_key";
-  
-  private static final String MINIO_ENDPOINT_ENV = "MINIO_SERVER_ENDPOINT";
-  private static final String MINIO_ACCESS_KEY_ENV = "MINIO_ACCESS_KEY";
-  private static final String MINIO_SECRET_KEY_ENV = "MINIO_SECRET_KEY";
+  /**
+   * Sets the path to the JSON configuration file.
+   *
+   * @param path the path to the JSON configuration file
+   */
+  @Option(names = "--config-file", description = "Path to JSON configuration file")
+  public void setConfigFile(String path) {
+    setConfigJsonFilePath(path);
+  }
   
   /**
    * Checks if Minio output is configured with a valid endpoint.
@@ -49,35 +55,35 @@ public class MinioOptions extends HierarchyConfig {
    * Gets the Minio endpoint URL.
    */
   public String getMinioEndpoint() {
-    return getCredential(minioEndpoint, MINIO_ENDPOINT_KEY, MINIO_ENDPOINT_ENV, true);
+    return getValue(MINIO_ENDPOINT, minioEndpointMaybe, true, null);
   }
   
   /**
    * Gets the Minio access key.
    */
   private String getMinioAccessKey() {
-    return getCredential(minioAccessKey, MINIO_ACCESS_KEY_KEY, MINIO_ACCESS_KEY_ENV, true);
+    return getValue(MINIO_ACCESS_KEY, minioAccessKeyMaybe, true, null);
   }
   
   /**
    * Gets the Minio secret key.
    */
   private String getMinioSecretKey() {
-    return getCredential(minioSecretKey, MINIO_SECRET_KEY_KEY, MINIO_SECRET_KEY_ENV, true);
+    return getValue(MINIO_SECRET_KEY, minioSecretKeyMaybe, true, null);
   }
   
   /**
    * Gets the bucket name.
    */
   public String getBucketName() {
-    return bucketName != null && !bucketName.isEmpty() ? bucketName : "default";
+    return getValue("minio_bucket", bucketNameMaybe, true, 'default');
   }
   
   /**
    * Gets the base object name/path within the bucket.
    */
   public String getObjectName() {
-    return objectName != null ? objectName : "";
+    return getValue("minio_object", objectNameMaybe, true, "");
   }
   
   /**
@@ -88,5 +94,32 @@ public class MinioOptions extends HierarchyConfig {
       .endpoint(getMinioEndpoint())
       .credentials(getMinioAccessKey(), getMinioSecretKey())
       .build();
+  }
+  
+  @Override
+  public String toString() {
+    // Force retrieval of all values to populate the sources
+    String endpoint = getMinioEndpoint();
+    getMinioAccessKey();  // Values not used but sources recorded
+    getMinioSecretKey();  // Values not used but sources recorded
+    
+    Map<String, ValueSource> sources = getSources();
+    
+    StringBuilder sb = new StringBuilder("MinioOptions:\n");
+    sb.append("  Minio Endpoint: ").append(endpoint)
+      .append(" (from ").append(sources.get(MINIO_ENDPOINT)).append(")\n");
+    
+    // Redact sensitive information
+    sb.append("  Minio Access Key: [REDACTED]")
+      .append(" (from ").append(sources.get(MINIO_ACCESS_KEY)).append(")\n");
+    
+    sb.append("  Minio Secret Key: [REDACTED]")
+      .append(" (from ").append(sources.get(MINIO_SECRET_KEY)).append(")\n");
+    
+    // Add bucket and object name
+    sb.append("  Bucket Name: ").append(getBucketName()).append("\n");
+    sb.append("  Object Name: ").append(getObjectName());
+    
+    return sb.toString();
   }
 }

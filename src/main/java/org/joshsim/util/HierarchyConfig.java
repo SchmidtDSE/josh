@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Collections;
 
 /**
  * Abstract base class for configuration that retrieves values from multiple sources
@@ -14,76 +17,91 @@ public abstract class HierarchyConfig {
   protected String configJsonFilePath;
   private JsonNode cachedJsonConfig;
   private final ObjectMapper mapper = new ObjectMapper();
+  
+  // Map to track sources of retrieved values
+  private final Map<String, ValueSource> valueSources = new HashMap<>();
 
   /**
    * Retrieves a configuration value from available sources in priority order.
+   * Uses conventions: config file key = key, env var = KEY
    *
+   * @param key A unique identifier for this value (used for source tracking) 
    * @param directValue Value passed directly (highest priority)
-   * @param configKey Key to look for in config file
-   * @param envVarName Environment variable name
    * @param required Whether to throw an exception if not found
-   * @return ConfigValue containing the value and its source
+   * @return The value or null if not required and not found
    * @throws IllegalStateException if required value not found
    */
-  protected ConfigValue getValue(
+  protected String getValue(
+        String key,
         String directValue,
-        String configKey,
-        String envVarName,
-        boolean required
+        boolean required,
+        String defaultValue
   ) {
     // 1. Direct value (e.g., command line argument)
     if (directValue != null && !directValue.isEmpty()) {
-      return new ConfigValue(directValue, ValueSource.DIRECT);
+      valueSources.put(key, ValueSource.DIRECT);
+      return directValue;
     }
 
-    // 2. Config file
-    String fileValue = getValueFromJsonFile(configKey);
+    // 2. Config file - use key as is
+    String fileValue = getValueFromJsonFile(key);
     if (fileValue != null && !fileValue.isEmpty()) {
-      return new ConfigValue(fileValue, ValueSource.CONFIG_FILE);
+      valueSources.put(key, ValueSource.CONFIG_FILE);
+      return fileValue;
     }
 
-    // 3. Environment variable
-    String envValue = getEnvVar(envVarName);
+    // 3. Environment variable - convert key to UPPER_CASE
+    String envVarName = toEnvironmentVariableName(key);
+    String envValue = getEnvValue(envVarName);
     if (envValue != null && !envValue.isEmpty()) {
-      return new ConfigValue(envValue, ValueSource.ENVIRONMENT);
+      valueSources.put(key, ValueSource.ENVIRONMENT);
+      return envValue;
     }
 
     if (required) {
       throw new IllegalStateException(
-          "Required configuration value '" + configKey + "' not found in any source");
+          "Required configuration value '" + key + "' not found in any source");
     }
 
-    return new ConfigValue(null, ValueSource.NOT_FOUND);
+    valueSources.put(key, ValueSource.NOT_FOUND);
+    if (defaultValue != null) {
+      return defaultValue;
+    } else {
+      return null;
+    }
+    
   }
 
   /**
-   * Retrieves a configuration value with a default if not found elsewhere.
+   * Gets a value with a default if not found elsewhere.
    */
-  protected ConfigValue getValueWithDefault(
+  protected String getValueWithDefault(
+        String key,
         String directValue,
-        String configKey,
-        String envVarName,
         String defaultValue
   ) {
-    ConfigValue result = getValue(directValue, configKey, envVarName, false);
-    if (result.getValue() == null) {
-      return new ConfigValue(defaultValue, ValueSource.DEFAULT);
+    String result = getValue(key, directValue, false);
+    if (result == null) {
+      valueSources.put(key, ValueSource.DEFAULT);
+      return defaultValue;
     }
     return result;
   }
 
   /**
-   * Gets a value from an environment variable.
+   * Converts a key to environment variable format.
+   * Example: "minio_endpoint" -> "MINIO_ENDPOINT"
    */
-  private String getEnvVar(String name) {
-    return System.getenv(name);
+  private String toEnvironmentVariableName(String key) {
+    return key.toUpperCase();
   }
 
   /**
-   * Gets the cached JSON configuration.
+   * Gets a value from an environment variable.
+   * Protected to allow overriding in tests.
    */
-  protected JsonNode getCachedJsonConfig() {
-    return cachedJsonConfig;
+  protected String getEnvValue(String name) {
+    return System.getenv(name);
   }
 
   /**
@@ -91,14 +109,11 @@ public abstract class HierarchyConfig {
    */
   private String getValueFromJsonFile(String key) {
     try {
-      if (getCachedJsonConfig() == null) {
-        loadConfigJsonFile();
+      if (cachedJsonConfig == null) {
+        loadJsonConfigFile();
       }
 
-      if (
-          getCachedJsonConfig() != null
-          && getCachedJsonConfig().has(key)
-      ) {
+      if (cachedJsonConfig != null && cachedJsonConfig.has(key)) {
         JsonNode value = cachedJsonConfig.get(key);
         return value.isTextual() ? value.asText() : null;
       }
@@ -111,7 +126,7 @@ public abstract class HierarchyConfig {
   /**
    * Loads configuration from the JSON file.
    */
-  private void loadConfigJsonFile() {
+  private void loadJsonConfigFile() {
     if (configJsonFilePath == null) {
       return;
     }
@@ -130,7 +145,16 @@ public abstract class HierarchyConfig {
    * Updates the configuration file path and clears the cache.
    */
   protected void setConfigJsonFilePath(String path) {
-    configJsonFilePath = path;
-    cachedJsonConfig = null;
+    this.configJsonFilePath = path;
+    this.cachedJsonConfig = null;
+  }
+  
+  /**
+   * Returns a map of all value sources.
+   *
+   * @return An unmodifiable map of value keys to their sources
+   */
+  public Map<String, ValueSource> getSources() {
+    return Collections.unmodifiableMap(valueSources);
   }
 }
