@@ -19,7 +19,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;

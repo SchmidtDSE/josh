@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.joshsim.engine.entity.EntityBuilder;
 import org.joshsim.engine.entity.EntityType;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
