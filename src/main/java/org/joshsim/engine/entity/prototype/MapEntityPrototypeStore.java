@@ -9,10 +9,18 @@ package org.joshsim.engine.entity.prototype;
 import java.util.Map;
 
 
+/**
+ * Collection of entity prototypes indexed by name.
+ */
 public class MapEntityPrototypeStore implements EntityPrototypeStore {
 
   private final Map<String, EntityPrototype> prototypes;
 
+  /**
+   * Create a new immutable store.
+   *
+   * @param prototypes Collection of entity prototypes indexed by name to be decorated.
+   */
   public MapEntityPrototypeStore(Map<String, EntityPrototype> prototypes) {
     this.prototypes = prototypes;
   }
