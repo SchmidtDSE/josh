@@ -1,3 +1,9 @@
+/**
+ * Fragment representing a potentially completed program.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.interpret.fragment;
 
 

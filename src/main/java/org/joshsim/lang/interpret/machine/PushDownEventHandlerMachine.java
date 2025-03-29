@@ -1,11 +1,26 @@
+/**
+ * Simple stack-based implementation of EventHandlerMachine.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
+
+/**
+ * Push-down automaton which uses stack operations to implement EventHandlerMachine.
+ */
 public class PushDownEventHandlerMachine implements EventHandlerMachine {
 
+  /**
+   * Create a new pushdown automaton which operates on the given scope.
+   *
+   * @param scope The scope in which to have this automaton perform its operations.
+   */
   public PushDownEventHandlerMachine(Scope scope) {
 
   }

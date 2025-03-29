@@ -14,6 +14,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.value.Conversion;
+import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
 /**
@@ -51,6 +52,10 @@ public abstract class Fragment {
 
   public Iterable<Conversion> getConversions() {
     return List.of(getConversion());
+  }
+
+  public JoshProgram getProgram() {
+    throw new RuntimeException("This fragment does not have a program.");
   }
 
   public abstract FragmentType getFragmentType();

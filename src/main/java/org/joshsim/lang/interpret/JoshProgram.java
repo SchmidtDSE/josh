@@ -28,8 +28,9 @@ public class JoshProgram {
   /**
    * Creates a new Josh program instance.
    *
-   * @param converter The converter used for unit conversions within the program
-   * @param simulations The store containing all simulations for this program
+   * @param converter The converter to use for unit conversions within the program.
+   * @param simulations The store which contains all simulations required for running for this
+   *     program.
    */
   public JoshProgram(Converter converter, EngineBridgeSimulationStore simulations) {
     this.converter = converter;
@@ -39,7 +40,7 @@ public class JoshProgram {
   /**
    * Gets the converter used for unit conversions.
    *
-   * @return The converter instance used by this program
+   * @return The converter instance to use when executing this program.
    */
   public Converter getConverter() {
     return converter;
@@ -48,7 +49,7 @@ public class JoshProgram {
   /**
    * Gets the simulation store containing all program simulations.
    *
-   * @return The simulation store for this program
+   * @return The simulation store to use when executing this program.
    */
   public EngineBridgeSimulationStore getSimulations() {
     return simulations;
