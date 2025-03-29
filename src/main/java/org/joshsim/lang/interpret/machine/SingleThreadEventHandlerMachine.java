@@ -6,13 +6,12 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.Stack;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.Units;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-
-import java.util.Stack;
 
 
 /**

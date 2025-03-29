@@ -190,8 +190,8 @@ public interface EventHandlerMachine {
    *
    * @param strategy Name of strategy to use in this map operation where, currently, only linear is
    *     valid.
-   * @throws IllegalArgumentException if unrecognized strategy
    * @return Reference to this machine for chaining.
+   * @throws IllegalArgumentException if unrecognized strategy
    */
   EventHandlerMachine applyMap(String strategy);
 
@@ -454,9 +454,9 @@ public interface EventHandlerMachine {
   /**
    * Calculate the standard deviation of a distribution.
    *
-   * <p>Pop a value from the top of the stack, calculate its standard deviation, and push the result back
-   * to the top of the stack. If the popped value is a scalar, it will be treated as a single-value
-   * distribution. The pushed result will be a scalar.</p>
+   * <p>Pop a value from the top of the stack, calculate its standard deviation, and push the result
+   * back to the top of the stack. If the popped value is a scalar, it will be treated as a single-
+   * value distribution. The pushed result will be a scalar.</p>
    *
    * @return Reference to this machine for chaining.
    */
@@ -482,9 +482,9 @@ public interface EventHandlerMachine {
    *
    * @param identifierName The name of the variable to be created if a variable of that name does
    *     not already exist.
+   * @return Reference to this machine for chaining.
    * @throws IllegalStateException Thrown if a variable of the given name already exists in the
    *     scope.
-   * @return Reference to this machine for chaining.
    */
   EventHandlerMachine saveLocalVariable(String identifierName);
 
