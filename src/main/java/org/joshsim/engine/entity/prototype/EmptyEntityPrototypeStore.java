@@ -1,6 +1,13 @@
+/**
+ * Structure to manage a collection of entity prototypes.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.entity.prototype;
 
 public class EmptyEntityPrototypeStore implements EntityPrototypeStore {
+  
   @Override
   public EntityPrototype get(String entityName) {
     throw new IllegalArgumentException(entityName + " is not a known entity.");

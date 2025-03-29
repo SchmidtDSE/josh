@@ -1,3 +1,9 @@
+/**
+ * Structures which aid in building Entities given cached information.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.Entity;
@@ -6,6 +12,13 @@ import org.joshsim.engine.entity.EntityType;
 import org.joshsim.engine.geometry.Geometry;
 
 
+/**
+ * Prototype which can be used to build entities.
+ *
+ * <p>Prototype which holds onto metadata about an Entity similar to a class definition that can be
+ * used to create instances of that Entity given information required for constructing that
+ * individual.</p>
+ */
 public class EntityPrototype {
 
   private final String identifier;
@@ -26,7 +39,7 @@ public class EntityPrototype {
     return entityType;
   }
 
-  Entity build() {
+  public Entity build() {
     return switch (entityType) {
       case EXTERNAL_RESOURCE -> throw new RuntimeException("External resources yet implemented.");
       case SIMULATION -> entityBuilder.buildSimulation();
@@ -34,7 +47,7 @@ public class EntityPrototype {
     };
   }
 
-  Entity buildSpatial(Entity parent) {
+  public Entity buildSpatial(Entity parent) {
     return switch (entityType) {
       case AGENT -> entityBuilder.buildAgent(parent);
       case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
@@ -42,7 +55,7 @@ public class EntityPrototype {
     };
   }
 
-  Entity buildSpatial(Geometry parent) {
+  public Entity buildSpatial(Geometry parent) {
     return switch (entityType) {
       case PATCH -> entityBuilder.buildPatch(parent);
       default -> throw new RuntimeException("Cannot instantiate with a geometry: " + entityType);

@@ -1,3 +1,9 @@
+/**
+ * Structure to assist in constructing an EntityPrototypeStore.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.entity.prototype;
 
 import java.util.HashMap;
