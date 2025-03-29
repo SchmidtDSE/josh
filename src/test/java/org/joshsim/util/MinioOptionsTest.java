@@ -123,9 +123,9 @@ public class MinioOptionsTest {
   }
 
   @Test
-  void getObjectName_withDefaultValue() {
+  void getObjectPath_withDefaultValue() {
     // No values set explicitly - should return default
-    assertEquals("", options.getObjectName());
+    assertEquals("", options.getObjectPath());
   }
 
   @Test

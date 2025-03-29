@@ -134,7 +134,7 @@ public class JoshSimCommander {
         // Create MinioClient and get bucket and object names
         MinioClient minioClient = minioOptions.getMinioClient();
         String bucketName = minioOptions.getBucketName();
-        
+
         // Use the method that supports subdirectories - store in the "validate" subdirectory
         String objectName = minioOptions.getObjectName(subDirectories, file.getName());
 

@@ -35,7 +35,7 @@ public class MinioHandler {
 
     this.minioClient = options.getMinioClient();
     this.bucketName = options.getBucketName();
-    this.basePath = options.getObjectName(); // Base directory in the bucket
+    this.basePath = options.getObjectPath();
     this.output = output;
 
     // Ensure the bucket exists

@@ -96,7 +96,7 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getObjectName(String filename) {
     String basePath = getObjectPath();
-    basePath = basePath.endsWith("/") ? basePath : basePath + "/";    
+    basePath = basePath.endsWith("/") ? basePath : basePath + "/";
     return basePath + "/" + filename;
   }
 
