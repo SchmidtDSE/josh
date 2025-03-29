@@ -71,7 +71,7 @@ public class JoshSimCommander {
     private OutputOptions output = new OutputOptions();
 
     @Mixin
-    private MinioOptions minioOptions;
+    private MinioOptions minioOptions = new MinioOptions();
 
     /**
      * Validates the simulation file specified.
@@ -117,7 +117,7 @@ public class JoshSimCommander {
         output.printInfo("Validated Josh code at " + file);
 
         if (minioOptions.isMinioOutput()) {
-          return saveToMinio(file);
+          return saveToMinio("validate", file);
         }
 
         return 0;
@@ -129,12 +129,14 @@ public class JoshSimCommander {
      *
      * @param file the file to save to Minio
      */
-    private Integer saveToMinio(File file) {
+    private Integer saveToMinio(String subDirectories, File file) {
       try {
         // Create MinioClient and get bucket and object names
         MinioClient minioClient = minioOptions.getMinioClient();
         String bucketName = minioOptions.getBucketName();
-        String objectName = minioOptions.getObjectName();
+        
+        // Use the method that supports subdirectories - store in the "validate" subdirectory
+        String objectName = minioOptions.getObjectName(subDirectories, file.getName());
 
         // Check if bucket exists, create if it doesn't
         boolean bucketExists = minioClient.bucketExists(
@@ -145,6 +147,9 @@ public class JoshSimCommander {
               MakeBucketArgs.builder().bucket(bucketName).build());
           output.printInfo("Created bucket: " + bucketName);
         }
+
+        // Display configuration details for debugging purposes
+        output.printInfo(minioOptions.toString());
 
         // Upload the file
         minioClient.uploadObject(

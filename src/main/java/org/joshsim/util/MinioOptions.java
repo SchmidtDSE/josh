@@ -27,8 +27,8 @@ public class MinioOptions extends HierarchyConfig {
   @Option(names = "--minio-bucket", description = "Minio bucket name")
   private String bucketNameMaybe;
 
-  @Option(names = "--minio-object", description = "Base object name/path within bucket")
-  private String objectNameMaybe;
+  @Option(names = "--minio-path", description = "Base object name/path within bucket")
+  private String objectPathMaybe;
 
   /**
    * Sets the path to the JSON configuration file.
@@ -83,8 +83,38 @@ public class MinioOptions extends HierarchyConfig {
   /**
    * Gets the base object name/path within the bucket.
    */
-  public String getObjectName() {
-    return getValue("minio_object", objectNameMaybe, true, "");
+  public String getObjectPath() {
+    return getValue("minio_object_path", objectPathMaybe, true, "");
+  }
+
+  /**
+   * Gets the complete object name by combining base path and filename.
+   * Follows the pattern: [minio-path]/[filename]
+   *
+   * @param filename The name of the file being processed
+   * @return The complete object name to use in MinIO
+   */
+  public String getObjectName(String filename) {
+    String basePath = getObjectPath();
+    basePath = basePath.endsWith("/") ? basePath : basePath + "/";    
+    return basePath + "/" + filename;
+  }
+
+  /**
+   * Gets the complete object name by combining base path and filename,
+   * including extra subdirectories.
+   * Follows the pattern: [minio-path]/[subDirectories]/[filename]
+   *
+   * @param subDirectories The subdirectories to include in the object name
+   * @param filename The name of the file being processed
+   * @return The complete object name to use in MinIO
+   */
+  public String getObjectName(String subDirectories, String filename) {
+    String basePath = getObjectPath();
+    basePath = basePath.endsWith("/") ? basePath : basePath + "/";
+    String completePath = basePath + subDirectories;
+    completePath = completePath.endsWith("/") ? completePath : completePath + "/";
+    return completePath + filename;
   }
 
   /**
@@ -119,7 +149,7 @@ public class MinioOptions extends HierarchyConfig {
 
     // Add bucket and object name
     sb.append("  Bucket Name: ").append(getBucketName()).append("\n");
-    sb.append("  Object Name: ").append(getObjectName());
+    sb.append("  Object Path: ").append(getObjectPath());
 
     return sb.toString();
   }
