@@ -159,8 +159,8 @@ public class JoshSimCommander {
             .filename(file.getAbsolutePath())
             .build());
 
-        output.printInfo("Successfully uploaded " + file.getName() +
-              " to minio://" + bucketName + "/" + objectName);
+        output.printInfo("Successfully uploaded " + file.getName()
+              + " to minio://" + bucketName + "/" + objectName);
         return 0;
       } catch (Exception e) {
         output.printError("Failed to upload to Minio: " + e.getMessage());
