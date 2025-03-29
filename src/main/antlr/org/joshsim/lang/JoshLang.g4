@@ -153,9 +153,9 @@ return: RETURN_ expression;
 
 fullConditional: IF_ LPAREN_ cond=expression RPAREN_ target=fullBody fullElifBranch* fullElseBranch?;
 
-fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ target=fullBody;
-
 fullElseBranch: ELSE_ target=fullBody;
+
+fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ target=fullBody;
 
 statement: (assignment | return | fullConditional);
 
@@ -179,7 +179,7 @@ conditionalIfEventHandlerGroupMember: COLON_ IF_ LPAREN_ target=expression RPARE
 
 conditionalElifEventHandlerGroupMember: COLON_ ELIF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-conditionalElseEventHandlerGroupMember: COLON_ ELSE_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
+conditionalElseEventHandlerGroupMember: COLON_ ELSE_ inner=eventHandlerGroupMemberInner;
 
 eventHandlerGroupSingle: name=identifier eventHandlerGroupMemberInner;
 
