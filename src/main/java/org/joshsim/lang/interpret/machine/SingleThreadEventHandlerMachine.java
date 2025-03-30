@@ -15,6 +15,7 @@ import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -31,6 +32,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   // TODO
 
   private static final Units EMPTY_UNITS = new Units("");
+  private static final Units COUNT_UNITS = new Units("count");
 
   private final Stack<EngineValue> memory;
   private final Scope scope;
@@ -274,17 +276,48 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine condition(EventHandlerAction positive) {
-    return null;
+    EngineValue conditionValue = pop();
+    boolean conditionResult = conditionValue.getAsBoolean();
+
+    if (conditionResult) {
+      positive.execute(this);
+    }
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine branch(EventHandlerAction posAction, EventHandlerAction negAction) {
-    return null;
+    EngineValue conditionValue = pop();
+    boolean conditionResult = conditionValue.getAsBoolean();
+
+    if (conditionResult) {
+      posAction.execute(this);
+    } else {
+      negAction.execute(this);
+    }
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine sample(boolean withReplacement) {
-    return null;
+    EngineValue countValue = convert(pop(), COUNT_UNITS);
+    long count = countValue.getAsInt();
+
+    EngineValue subject = pop();
+    Distribution subjectDistribution = subject.getAsDistribution();
+
+    EngineValue sampled;
+    if (count == 1) {
+      sampled = subjectDistribution.sample();
+    } else {
+      sampled = subjectDistribution.sampleMultiple(count, withReplacement);
+    }
+
+    memory.push(sampled);
+
+    return this;
   }
 
   @Override
@@ -423,8 +456,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       return valueUncast;
     }
 
+    return convert(valueUncast, conversionTarget.get());
+  }
+
+  private EngineValue convert(EngineValue valueUncast, Units endUnits) {
     Units startUnits = valueUncast.getUnits();
-    Units endUnits = conversionTarget.get();
 
     if (startUnits.equals(endUnits)) {
       return valueUncast;

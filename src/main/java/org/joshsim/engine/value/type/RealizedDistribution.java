@@ -195,6 +195,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Scalar sample() {
+    // TODO
     return null;
   }
 
