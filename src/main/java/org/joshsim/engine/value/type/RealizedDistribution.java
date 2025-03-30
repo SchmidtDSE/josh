@@ -7,7 +7,11 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;

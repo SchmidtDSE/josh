@@ -280,7 +280,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     boolean conditionResult = conditionValue.getAsBoolean();
 
     if (conditionResult) {
-      positive.execute(this);
+      positive.apply(this);
     }
 
     return this;
@@ -292,9 +292,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     boolean conditionResult = conditionValue.getAsBoolean();
 
     if (conditionResult) {
-      posAction.execute(this);
+      posAction.apply(this);
     } else {
-      negAction.execute(this);
+      negAction.apply(this);
     }
 
     return this;
