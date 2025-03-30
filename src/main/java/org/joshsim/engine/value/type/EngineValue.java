@@ -295,6 +295,78 @@ public abstract class EngineValue {
   }
 
   /**
+   * Determine if this is engine value is greater than another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   * values otherwise.
+   */
+  public EngineValue greaterThan(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeLessThan(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeGreaterThan(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Determine if this is engine value is greater than or equal to another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   * values otherwise.
+   */
+  public EngineValue greaterThanOrEqualTo(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeLessThanOrEqualTo(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeGreaterThanOrEqualTo(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Determine if this is engine value is less than another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   * values otherwise.
+   */
+  public EngineValue lessThan(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeGreaterThan(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeLessThan(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Determine if this is engine value is less than or equal to another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   * values otherwise.
+   */
+  public EngineValue lessThanOrEqualTo(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeGreaterThanOrEqualTo(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeLessThanOrEqualTo(safeTuple.getSecond());
+    }
+  }
+
+  /**
    * Add this value to another value assuming that the units and type are compatible.
    *
    * @param other the other value.
@@ -379,6 +451,46 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if exponent has non-count units.
    */
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
+
+  /**
+   * Compare this value with another for greater-than assuming that the units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeGreaterThan(EngineValue other);
+
+  /**
+   * Compare this value with another for greater-than-or-equal-to assuming that the units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeGreaterThanOrEqualTo(EngineValue other);
+
+  /**
+   * Compare this value with another for less-than assuming that the units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeLessThan(EngineValue other);
+
+  /**
+   * Compare this value with another for less-than-or-equal-to assuming that the units and type are compatible.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeLessThanOrEqualTo(EngineValue other);
 
   /**
    * Determine if this value can be used to raise another value to a power.

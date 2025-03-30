@@ -36,8 +36,8 @@ class DecimalScalarTest {
   @Test
   void testGetAsBoolean() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar nonZeroScalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units(""));
-    DecimalScalar zeroScalar = new DecimalScalar(caster, BigDecimal.ZERO, new Units(""));
+    DecimalScalar nonZeroScalar = new DecimalScalar(caster, new BigDecimal("42.5"), Units.EMPTY);
+    DecimalScalar zeroScalar = new DecimalScalar(caster, BigDecimal.ZERO, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> nonZeroScalar.getAsBoolean());
     assertThrows(UnsupportedOperationException.class, () -> zeroScalar.getAsBoolean());
@@ -46,7 +46,7 @@ class DecimalScalarTest {
   @Test
   void testGetAsInt() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units(""));
+    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), Units.EMPTY);
 
     assertEquals(42L, scalar.getAsInt());
   }
@@ -126,7 +126,7 @@ class DecimalScalarTest {
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), new Units(""));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), Units.EMPTY);
 
     DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal("8.0"), result.getAsDecimal());
@@ -145,8 +145,8 @@ class DecimalScalarTest {
   @Test
   void testRaiseToPowerWithUncoercableDecimal() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units(""));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.5"), new Units(""));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.EMPTY);
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.5"), Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
@@ -154,7 +154,7 @@ class DecimalScalarTest {
   @Test
   void testGetAsEntityThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
   }
@@ -174,9 +174,11 @@ class DecimalScalarTest {
   @Test
   void testScaleAndPrecision() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("123.456789"), new Units(""));
+    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("123.456789"), Units.EMPTY);
 
     assertEquals(new BigDecimal("123.456789"), scalar.getAsDecimal());
     assertEquals("123.456789", scalar.getAsString());
   }
+
+
 }

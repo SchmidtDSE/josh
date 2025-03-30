@@ -23,7 +23,7 @@ class BooleanScalarTest {
   @Test
   void testConstructorAndGetters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertEquals(true, scalar.getAsBoolean());
     assertEquals(new LanguageType("boolean"), scalar.getLanguageType());
@@ -34,8 +34,8 @@ class BooleanScalarTest {
   @Test
   void testGetAsInt() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar trueScalar = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar falseScalar = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar trueScalar = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar falseScalar = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertEquals(1L, trueScalar.getAsInt());
     assertEquals(0L, falseScalar.getAsInt());
@@ -44,8 +44,8 @@ class BooleanScalarTest {
   @Test
   void testGetAsDecimal() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar trueScalar = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar falseScalar = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar trueScalar = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar falseScalar = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertEquals(new BigDecimal(1), trueScalar.getAsDecimal());
     assertEquals(new BigDecimal(0), falseScalar.getAsDecimal());
@@ -54,8 +54,8 @@ class BooleanScalarTest {
   @Test
   void testGetAsString() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar trueScalar = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar falseScalar = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar trueScalar = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar falseScalar = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertEquals("true", trueScalar.getAsString());
     assertEquals("false", falseScalar.getAsString());
@@ -64,8 +64,8 @@ class BooleanScalarTest {
   @Test
   void testAddThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.add(scalar2));
   }
@@ -73,8 +73,8 @@ class BooleanScalarTest {
   @Test
   void testSubtractThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.subtract(scalar2));
   }
@@ -82,8 +82,8 @@ class BooleanScalarTest {
   @Test
   void testMultiplyThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.multiply(scalar2));
   }
@@ -91,8 +91,8 @@ class BooleanScalarTest {
   @Test
   void testDivideThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, new Units(""));
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, new Units(""));
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, Units.EMPTY);
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.divide(scalar2));
   }
@@ -120,7 +120,7 @@ class BooleanScalarTest {
   @Test
   void testGetAsEntityThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
   }
@@ -132,4 +132,6 @@ class BooleanScalarTest {
 
     assertEquals(new Units("meters"), scalar.getUnits());
   }
+
+
 }
