@@ -6,8 +6,13 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.Optional;
 import java.util.Stack;
+import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.func.SingleValueScope;
+import org.joshsim.engine.value.Conversion;
+import org.joshsim.engine.value.Converter;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.Units;
 import org.joshsim.lang.interpret.ValueResolver;
@@ -25,6 +30,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   // TODO
 
   private final Stack<EngineValue> memory;
+  private final Scope scope;
+  
+  private boolean inConversionGroup;
+  private Optional<Units> conversionTarget;
 
   /**
    * Create a new pushdown automaton which operates on the given scope.
@@ -32,91 +41,107 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param scope The scope in which to have this automaton perform its operations.
    */
   public SingleThreadEventHandlerMachine(Scope scope) {
+    this.scope = scope;
+
     memory = new Stack<>();
+    inConversionGroup = false;
+    conversionTarget = Optional.empty();
   }
 
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
-    if (valueResolver != null) {
-      memory.push(valueResolver.resolve());
-    }
+    Optional<EngineValue> value = valueResolver.get(scope);
+    memory.push(value.orElseThrow());
     return this;
   }
 
   @Override
   public EventHandlerMachine push(EngineValue value) {
-    if (value != null) {
-      memory.push(value);
-    }
+    memory.push(value);
     return this;
   }
 
   @Override
   public EventHandlerMachine applyMap(String strategy) {
-    if (strategy == null || strategy.isEmpty()) {
-      throw new IllegalArgumentException("Strategy cannot be null or empty");
-    }
-    
-    EngineValue toHigh = memory.pop();
-    EngineValue toLow = memory.pop();
-    EngineValue fromHigh = memory.pop();
-    EngineValue fromLow = memory.pop();
-    EngineValue operand = memory.pop();
-    
     if (!"linear".equals(strategy)) {
       throw new IllegalArgumentException("Unsupported map strategy: " + strategy);
     }
+
+    startConversionGroup();
+    EngineValue toHigh = pop();
+    EngineValue toLow = pop();
+    EngineValue fromHigh = pop();
+    EngineValue fromLow = pop();
+    EngineValue operand = pop();
+    endConversionGroup();
+
+    EngineValue fromSpan = fromHigh.subtract(fromLow);
+    EngineValue toSpan = toHigh.subtract(toLow);
+    EngineValue operandDiff = operand.subtract(fromLow);
+    EngineValue percent = operandDiff.divide(fromSpan);
+    EngineValue result = toSpan.multiply(percent).add(toLow);
     
-    // Linear mapping calculation
-    double percentage = (operand.getNumericValue() - fromLow.getNumericValue()) / 
-                       (fromHigh.getNumericValue() - fromLow.getNumericValue());
-    double result = toLow.getNumericValue() + percentage * 
-                   (toHigh.getNumericValue() - toLow.getNumericValue());
+    memory.push(result);
     
-    memory.push(new EngineValue(result, operand.getUnits()));
     return this;
   }
 
   @Override
   public EventHandlerMachine add() {
-    EngineValue right = memory.pop();
-    EngineValue left = memory.pop();
+
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+    
     memory.push(left.add(right));
+    
     return this;
   }
 
   @Override
   public EventHandlerMachine subtract() {
-    EngineValue right = memory.pop();
-    EngineValue left = memory.pop();
+
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+    
     memory.push(left.subtract(right));
     return this;
   }
 
   @Override
   public EventHandlerMachine multiply() {
-    EngineValue right = memory.pop();
-    EngineValue left = memory.pop();
+
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+    
     memory.push(left.multiply(right));
+    
     return this;
   }
 
   @Override
   public EventHandlerMachine divide() {
-    EngineValue right = memory.pop();
-    EngineValue left = memory.pop();
-    if (Math.abs(right.getNumericValue()) < 1e-10) {
-      throw new ArithmeticException("Division by zero");
-    }
+
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+    
     memory.push(left.divide(right));
+    
     return this;
   }
 
   @Override
   public EventHandlerMachine pow() {
-    EngineValue exponent = memory.pop();
-    EngineValue base = memory.pop();
-    memory.push(base.pow(exponent));
+    EngineValue exponent = pop();
+    EngineValue base = pop();
+    memory.push(base.raiseToPower(exponent));
     return this;
   }
 
@@ -298,5 +323,40 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EngineValue getResult() {
     return null;
+  }
+
+  private EngineValue pop() {
+    EngineValue valueUncast = memory.pop();
+
+    if (!inConversionGroup) {
+      return valueUncast;
+    }
+    
+    if (conversionTarget.isEmpty()) {
+      conversionTarget = Optional.of(valueUncast.getUnits());
+      return valueUncast;
+    }
+
+    Units startUnits = valueUncast.getUnits();
+    Units endUnits = conversionTarget.get();
+
+    if (startUnits.equals(endUnits)) {
+      return valueUncast;
+    }
+    
+    Converter converter = scope.getConverter();
+    Conversion conversion = converter.getConversion(startUnits, endUnits);
+    CompiledCallable callable = conversion.getConversionCallable();
+    Scope innerScope = new SingleValueScope(valueUncast);
+    return callable.evaluate(innerScope);
+  }
+
+  private void startConversionGroup() {
+    inConversionGroup = true;
+    conversionTarget = Optional.empty();
+  }
+
+  private void endConversionGroup() {
+    inConversionGroup = false;
   }
 }
