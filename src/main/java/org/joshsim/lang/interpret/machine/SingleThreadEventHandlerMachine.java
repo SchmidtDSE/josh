@@ -216,26 +216,59 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine gt() {
-    return null;
-  }
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
 
-  @Override
-  public EventHandlerMachine lt() {
-    return null;
-  }
+    EngineValue result = left.greaterThan(right);
+    memory.push(result);
 
-  @Override
-  public EventHandlerMachine lteq() {
-    return null;
+    return this;
   }
 
   @Override
   public EventHandlerMachine gteq() {
-    return null;
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    EngineValue result = left.greaterThanOrEqualTo(right);
+    memory.push(result);
+
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine lt() {
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    EngineValue result = left.lessThan(right);
+    memory.push(result);
+
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine lteq() {
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    EngineValue result = left.lessThanOrEqualTo(right);
+    memory.push(result);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine slice() {
+    // TODO: requires pairwise operations on distribution
     return null;
   }
 
