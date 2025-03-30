@@ -1,4 +1,4 @@
-package org.joshsim.engine.entity;
+package org.joshsim.engine.entity.base;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,9 +8,6 @@ import static org.mockito.Mockito.mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityBuilder;
-import org.joshsim.engine.entity.base.Simulation;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Agent;

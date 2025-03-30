@@ -1,4 +1,4 @@
-package org.joshsim.engine.entity;
+package org.joshsim.engine.entity.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;

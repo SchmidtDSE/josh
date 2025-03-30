@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.entity;
+package org.joshsim.engine.entity.handler;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,9 +14,6 @@ import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.joshsim.engine.entity.handler.EventHandler;
-import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +66,7 @@ public class EventHandlerGroupBuilderTest {
     EventHandlerGroup group = builder.build();
     int count = 0;
     for (EventHandler handler : group.getEventHandlers()) {
+      handler.toString(); // To avoid style warning
       count++;
     }
     assertEquals(2, count);

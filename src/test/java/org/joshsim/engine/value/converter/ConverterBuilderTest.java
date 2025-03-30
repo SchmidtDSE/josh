@@ -5,17 +5,12 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.value;
+package org.joshsim.engine.value.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import org.joshsim.engine.value.converter.Conversion;
-import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.converter.ConverterBuilder;
-import org.joshsim.engine.value.converter.TransitiveConversion;
-import org.joshsim.engine.value.converter.Units;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.value;
+package org.joshsim.engine.value.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,11 +13,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.joshsim.engine.value.converter.Conversion;
-import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.converter.MapConverter;
-import org.joshsim.engine.value.converter.NoopConversion;
-import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueTuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

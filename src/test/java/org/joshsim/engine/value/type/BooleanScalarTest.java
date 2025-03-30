@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.value;
+package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,8 +13,6 @@ import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
-import org.joshsim.engine.value.type.BooleanScalar;
-import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.Test;
 
 /**
