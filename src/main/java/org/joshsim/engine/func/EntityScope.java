@@ -26,8 +26,6 @@ public class EntityScope implements Scope {
 
   private final Entity value;
   private final Set<String> expectedAttrs;
-  private final Converter converter;
-  private final EntityPrototypeStore prototypes;
 
   /**
    * Create a scope decorator around this entity.
@@ -37,21 +35,6 @@ public class EntityScope implements Scope {
   public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = getAttributes(value);
-
-    converter = new EmptyConverter();
-    prototypes = new EmptyEntityPrototypeStore();
-  }
-
-  /**
-   * Create a scope decorator around this entity with context.
-   *
-   * @param value EngineValue to use for current.
-   */
-  public EntityScope(MutableEntity value, Converter converter, EntityPrototypeStore prototypes) {
-    this.value = value;
-    this.expectedAttrs = getAttributes(value);
-    this.converter = converter;
-    this.prototypes = prototypes;
   }
 
   @Override
@@ -86,15 +69,5 @@ public class EntityScope implements Scope {
     return StreamSupport
             .stream(value.getAttributeNames().spliterator(), false)
             .collect(Collectors.toSet());
-  }
-
-  @Override
-  public Converter getConverter() {
-    return converter;
-  }
-
-  @Override
-  public EntityPrototypeStore getPrototypeStore() {
-    return prototypes;
   }
 }

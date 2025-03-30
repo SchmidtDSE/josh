@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -296,13 +297,13 @@ public interface EventHandlerMachine {
    * Execute a spatial query and push the result to the top of the stack.
    *
    * <p>Execute a spatial query and push the result as an EngineValue to the top of the stack. This
-   * query requires a distance which is a distance from center and a target which is an entity from
-   * which the center geometry will be read. Before pushing the result, the distance will be
-   * popped followed by the target.</p>
+   * query requires a distance which is a distance from center which is at the top of the stack.</p>
    *
+   * @param bridge The bridge to use in executing this spatial query.
+   * @param targetResolver The ValueResolver to use after getting patches at the location.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine executeSpatialQuery();
+  EventHandlerMachine executeSpatialQuery(EngineBridge bridge, ValueResolver targetResolver);
 
   /**
    * Push an attribute onto the top of the stack.

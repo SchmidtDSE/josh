@@ -10,18 +10,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.stream.StreamSupport;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.func.SingleValueScope;
+import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.GeometryFactory;
 import org.joshsim.engine.value.converter.Conversion;
-import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -38,11 +43,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private static final Units EMPTY_UNITS = new Units("");
   private static final Units COUNT_UNITS = new Units("count");
+  private static final Units METER_UNITS = new Units("meters");
+  private static final ValueResolver CURRENT_VALUE_RESOLVER = new ValueResolver("current");
 
   private final Stack<EngineValue> memory;
   private final Scope scope;
   private final EngineValueFactory valueFactory;
-  private final EntityPrototypeStore prototypeStore;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -59,7 +65,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     inConversionGroup = false;
     conversionTarget = Optional.empty();
     valueFactory = new EngineValueFactory();
-    prototypeStore = scope.getPrototypeStore();
   }
 
   @Override
@@ -384,7 +389,30 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine executeSpatialQuery() {
+  public EventHandlerMachine executeSpatialQuery(EngineBridge bridge, ValueResolver resolver) {
+    EngineValue distance = convert(pop(), METER_UNITS);
+
+    Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
+    Geometry centerGeometry = executingEntity.getGeometry().orElseThrow();
+    Geometry queryGeometry = GeometryFactory.createCircle(
+        distance.getAsDecimal(),
+        centerGeometry.getCenterX(),
+        centerGeometry.getCenterY(),
+        centerGeometry.getSpatialContext()
+    );
+
+    Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);
+    List<EngineValue> resolved = StreamSupport.stream(patches.spliterator(), false)
+        .map(EntityScope::new)
+        .map(scope -> resolver.get(scope).orElseThrow())
+        .toList();
+
+    EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
+        resolved,
+        !resolved.isEmpty() ? EMPTY_UNITS : resolved.get(0).getUnits()
+    );
+    memory.push(resolvedDistribution);
+
     return null;
   }
 
@@ -514,7 +542,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       return valueUncast;
     }
 
-    Converter converter = scope.getConverter();
     Conversion conversion = converter.getConversion(startUnits, endUnits);
     CompiledCallable callable = conversion.getConversionCallable();
     Scope innerScope = new SingleValueScope(valueUncast);

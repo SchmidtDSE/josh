@@ -48,6 +48,7 @@ import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 @SuppressWarnings("checkstyle:MissingJavaDocMethod")  // Can't use override because of generics.
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
+  private final BridgeGetter bridgeGetter;
   private final EngineValueFactory engineValueFactory;
   private final EngineValue singleCount;
   private final EngineValue allString;
@@ -56,8 +57,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   /**
    * Create a new visitor which has some commonly used values cached.
    */
-  public JoshParserToMachineVisitor() {
+  public JoshParserToMachineVisitor(BridgeGetter bridgeGetter) {
     super();
+
+    this.bridgeGetter = bridgeGetter;
+
     engineValueFactory = new EngineValueFactory();
     singleCount = engineValueFactory.build(1, new Units("count"));
     allString = engineValueFactory.build("all", new Units(""));
@@ -456,13 +460,12 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
+    ValueResolver targetResolver = new ValueResolver(ctx.target.toString());
     EventHandlerAction distanceAction = ctx.distance.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
-      targetAction.apply(machine);
       distanceAction.apply(machine);
-      machine.executeSpatialQuery();
+      machine.executeSpatialQuery(bridgeGetter.get(), targetResolver);
       return machine;
     };
 
