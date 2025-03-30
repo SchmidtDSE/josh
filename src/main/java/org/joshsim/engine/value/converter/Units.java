@@ -18,6 +18,8 @@ import java.util.TreeMap;
  */
 public class Units {
 
+  public static final Units EMPTY = new Units("");
+
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;
 

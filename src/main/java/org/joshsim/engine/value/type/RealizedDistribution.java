@@ -127,6 +127,38 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  protected EngineValue unsafeGreaterThan(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.greaterThan(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeGreaterThanOrEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.greaterThanOrEqualTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeLessThan(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.lessThan(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeLessThanOrEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.lessThanOrEqualTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Cannot convert multiple values to a single scalar.");
   }

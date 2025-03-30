@@ -39,9 +39,9 @@ class IntScalarTest {
   @Test
   void testGetAsBoolean() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar nonZeroScalar = new IntScalar(caster, 10L, new Units(""));
-    IntScalar zeroScalar = new IntScalar(caster, 0L, new Units(""));
-    IntScalar oneScalar = new IntScalar(caster, 1L, new Units(""));
+    IntScalar nonZeroScalar = new IntScalar(caster, 10L, Units.EMPTY);
+    IntScalar zeroScalar = new IntScalar(caster, 0L, Units.EMPTY);
+    IntScalar oneScalar = new IntScalar(caster, 1L, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> nonZeroScalar.getAsBoolean());
     assertFalse(zeroScalar.getAsBoolean());
@@ -134,7 +134,7 @@ class IntScalarTest {
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 2L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 3L, new Units(""));
+    IntScalar scalar2 = new IntScalar(caster, 3L, Units.EMPTY);
 
     DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal(8), result.getAsDecimal());
@@ -153,7 +153,7 @@ class IntScalarTest {
   @Test
   void testGetAsEntityThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
   }
@@ -183,7 +183,7 @@ class IntScalarTest {
   void testMaxIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long maxValue = Long.MAX_VALUE;
-    IntScalar scalar = new IntScalar(caster, maxValue, new Units(""));
+    IntScalar scalar = new IntScalar(caster, maxValue, Units.EMPTY);
 
     assertEquals(maxValue, scalar.getAsInt());
     assertEquals(new BigDecimal(maxValue), scalar.getAsDecimal());
@@ -193,9 +193,47 @@ class IntScalarTest {
   void testMinIntValue() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     long minValue = Long.MIN_VALUE;
-    IntScalar scalar = new IntScalar(caster, minValue, new Units(""));
+    IntScalar scalar = new IntScalar(caster, minValue, Units.EMPTY);
 
     assertEquals(minValue, scalar.getAsInt());
     assertEquals(new BigDecimal(minValue), scalar.getAsDecimal());
+  }
+
+  @Test
+  void testCompareToSameUnitsDifferentValues() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar scalar2 = new IntScalar(caster, 20L, new Units("m"));
+
+    assertTrue(scalar1.compareTo(scalar2) < 0);
+    assertTrue(scalar2.compareTo(scalar1) > 0);
+  }
+
+  @Test
+  void testCompareToIncompatibleUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar scalar2 = new IntScalar(caster, 10L, new Units("s"));
+
+    assertThrows(IllegalArgumentException.class, () -> scalar1.compareTo(scalar2));
+  }
+
+  @Test
+  void testCompareToEqualValues() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar scalar2 = new IntScalar(caster, 10L, new Units("m"));
+
+    assertEquals(0, scalar1.compareTo(scalar2));
+  }
+
+  @Test
+  void testCompareToDifferentValuesSameOrder() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    IntScalar scalar1 = new IntScalar(caster, 15L, new Units("s"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("s"));
+
+    assertTrue(scalar1.compareTo(scalar2) > 0);
+    assertTrue(scalar2.compareTo(scalar1) < 0);
   }
 }

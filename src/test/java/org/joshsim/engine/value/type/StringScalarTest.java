@@ -26,7 +26,7 @@ class StringScalarTest {
   @Test
   void testConstructorAndGetters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "hello", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "hello", Units.EMPTY);
 
     assertEquals("hello", scalar.getAsString());
     assertEquals(new LanguageType("string"), scalar.getLanguageType());
@@ -45,8 +45,8 @@ class StringScalarTest {
   @Test
   void testAdd() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, " world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, " world", Units.EMPTY);
 
     StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
@@ -55,18 +55,18 @@ class StringScalarTest {
   @Test
   void testAddWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, " world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, " world", Units.EMPTY);
 
     StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hello world", result.getAsString());
-    assertEquals(new Units(""), result.getUnits());
+    assertEquals(Units.EMPTY, result.getUnits());
   }
 
   @Test
   void testGetAsBooleanThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "hello", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "hello", Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsBoolean);
   }
@@ -74,8 +74,8 @@ class StringScalarTest {
   @Test
   void testGetAsBooleanWithTrueFalseStrings() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar trueScalar = new StringScalar(caster, "true", new Units(""));
-    StringScalar falseScalar = new StringScalar(caster, "false", new Units(""));
+    StringScalar trueScalar = new StringScalar(caster, "true", Units.EMPTY);
+    StringScalar falseScalar = new StringScalar(caster, "false", Units.EMPTY);
 
     // This assumes StringScalar.getAsBoolean() considers "true"/"false" strings
     // If not implemented yet, comment these out and keep the exception test above
@@ -86,7 +86,7 @@ class StringScalarTest {
   @Test
   void testGetAsDecimalThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "hello", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "hello", Units.EMPTY);
 
     assertThrows(NumberFormatException.class, scalar::getAsDecimal);
   }
@@ -94,7 +94,7 @@ class StringScalarTest {
   @Test
   void testGetAsDecimalWithValidNumber() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "42.5", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "42.5", Units.EMPTY);
 
     assertEquals(new BigDecimal("42.5"), scalar.getAsDecimal());
   }
@@ -102,7 +102,7 @@ class StringScalarTest {
   @Test
   void testGetAsIntThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "hello", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "hello", Units.EMPTY);
 
     assertThrows(NumberFormatException.class, scalar::getAsInt);
   }
@@ -110,7 +110,7 @@ class StringScalarTest {
   @Test
   void testGetAsIntWithValidNumber() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "42", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "42", Units.EMPTY);
 
     assertEquals(42L, scalar.getAsInt());
   }
@@ -118,8 +118,8 @@ class StringScalarTest {
   @Test
   void testSubtractThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, "world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, "world", Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.subtract(scalar2));
   }
@@ -127,8 +127,8 @@ class StringScalarTest {
   @Test
   void testMultiplyThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, "world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, "world", Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.multiply(scalar2));
   }
@@ -136,8 +136,8 @@ class StringScalarTest {
   @Test
   void testDivideThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, "world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, "world", Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.divide(scalar2));
   }
@@ -145,8 +145,8 @@ class StringScalarTest {
   @Test
   void testRaiseToPowerThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, "world", new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, "world", Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
@@ -154,7 +154,7 @@ class StringScalarTest {
   @Test
   void testGetAsEntityThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units(""));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
   }
@@ -173,7 +173,7 @@ class StringScalarTest {
   @Test
   void testEmptyString() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "", Units.EMPTY);
 
     assertEquals("", scalar.getAsString());
     assertEquals("", scalar.getInnerValue());
@@ -182,7 +182,7 @@ class StringScalarTest {
   @Test
   void testSpecialCharacters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "!@#$%^&*() _+", new Units(""));
+    StringScalar scalar = new StringScalar(caster, "!@#$%^&*() _+", Units.EMPTY);
 
     assertEquals("!@#$%^&*() _+", scalar.getAsString());
   }
@@ -190,8 +190,8 @@ class StringScalarTest {
   @Test
   void testAddWithNull() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar1 = new StringScalar(caster, "hello", new Units(""));
-    StringScalar scalar2 = new StringScalar(caster, null, new Units(""));
+    StringScalar scalar1 = new StringScalar(caster, "hello", Units.EMPTY);
+    StringScalar scalar2 = new StringScalar(caster, null, Units.EMPTY);
 
     StringScalar result = (StringScalar) scalar1.add(scalar2);
     assertEquals("hellonull", result.getAsString());
