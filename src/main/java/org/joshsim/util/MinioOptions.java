@@ -30,6 +30,12 @@ public class MinioOptions extends HierarchyConfig {
   @Option(names = "--minio-path", description = "Base object name/path within bucket")
   private String objectPathMaybe;
 
+  @Option(
+      names = "--ensure-bucket-exists",
+      description = "Ensure the bucket exists before uploading"
+  )
+  private boolean ensureBucketExists = false;
+
   /**
    * Sets the path to the JSON configuration file.
    *
@@ -50,6 +56,15 @@ public class MinioOptions extends HierarchyConfig {
     } catch (IllegalStateException e) {
       return false;
     }
+  }
+
+  /**
+   * Determines whether the bucket should be created if it doesnt exist.
+   *
+   * @return true if bucket creation is enforced, false otherwise
+   */
+  public boolean isEnsureBucketExists() {
+    return ensureBucketExists;
   }
 
   /**

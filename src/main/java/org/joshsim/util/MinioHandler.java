@@ -38,8 +38,8 @@ public class MinioHandler {
     this.basePath = options.getObjectPath();
     this.output = output;
 
-    // Ensure the bucket exists
-    ensureBucketExists();
+    validateOrCreateBucket(options.isEnsureBucketExists());
+
   }
 
   /**
@@ -47,13 +47,18 @@ public class MinioHandler {
    *
    * @throws Exception If bucket operations fail
    */
-  private void ensureBucketExists() throws Exception {
+  private void validateOrCreateBucket(boolean createIfNotExists) throws Exception {
     boolean bucketExists = minioClient.bucketExists(
-        BucketExistsArgs.builder().bucket(bucketName).build());
+        BucketExistsArgs.builder().bucket(bucketName).build()
+    );
 
     if (!bucketExists) {
-      minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-      output.printInfo("Created bucket: " + bucketName);
+      if (createIfNotExists) {
+        minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        output.printInfo("Created bucket: " + bucketName);
+      } else {
+        throw new IllegalArgumentException("Bucket " + bucketName + " does not exist");
+      }
     }
   }
 
