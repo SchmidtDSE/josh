@@ -366,11 +366,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine count() {
-    return null;
-  }
-
-  @Override
   public EventHandlerMachine floor() {
     return null;
   }
@@ -382,6 +377,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine ln() {
+    return null;
+  }
+
+  @Override
+  public EventHandlerMachine count() {
     return null;
   }
 
