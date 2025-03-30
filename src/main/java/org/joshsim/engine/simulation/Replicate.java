@@ -16,7 +16,7 @@ import org.joshsim.engine.entity.type.Patch;
  * A full simulation replicate.
  *
  * <p>A single replicate of a simulation which, in Monte Carlo, may have multiple replicates. This
- * extends  across all timesteps in a replicate such that replicates may be created in distribution.
+ * extends across all timesteps in a replicate such that replicates may be created in distribution.
  * This provides methods to access time steps and query entities across time steps.
  * </p>
  */
