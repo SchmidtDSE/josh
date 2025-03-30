@@ -57,7 +57,7 @@ public interface Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Patch getPatchByKey(GeoKey key, long stepNumber);
+  Entity getPatchByKey(GeoKey key, long stepNumber);
 
   /**
    * Get all patches in current state.
