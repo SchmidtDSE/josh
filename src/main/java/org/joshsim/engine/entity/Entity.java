@@ -6,11 +6,8 @@
 
 package org.joshsim.engine.entity;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -19,66 +16,57 @@ import org.joshsim.engine.value.EngineValue;
  * This class provides mechanisms for managing attributes and event handlers,
  * and supports locking to be thread-safe.
  */
-public abstract class Entity implements Lockable, AttributeContainer {
-
-  private final String name;
-  private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
-  private final Map<String, EngineValue> attributes;
-  private final Lock lock;
+public interface Entity {
 
   /**
-   * Constructor for Entity.
+   * Get the geographic location of this spatial entity.
    *
-   * @param name Name of the entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
-   * @param attributes A map of attribute names to their corresponding EngineValues.
+   * @return The geographic point representing this entity's location.
    */
-  public Entity(
-      String name,
-      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
-  ) {
-    this.name = name;
-    this.eventHandlerGroups = eventHandlerGroups != null
-        ? eventHandlerGroups : new HashMap<>();
-    this.attributes = attributes != null
-        ? attributes : new HashMap<>();
-    lock = new ReentrantLock();
-  }
+  Optional<Geometry> getGeometry();
 
-  @Override
-  public String getName() {
-    return name;
-  }
+  /**
+   * Get the name of this type of entity.
+   *
+   * @returns unique name of this entity type.
+   */
+  String getName();
 
-  @Override
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    return eventHandlerGroups.values();
-  }
+  /**
+   * Get the value of an attribute by name.
+   *
+   * @param name the attribute name
+   * @return an Optional containing the attribute value, or empty if not found
+   */
+  Optional<EngineValue> getAttributeValue(String name);
 
-  @Override
-  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
-    return Optional.ofNullable(eventHandlerGroups.get(eventKey));
-  }
+  /**
+   * Get the names of all attributes associated with this entity.
+   *
+   * @return All attribute names available on this entity as strings. This may include non-
+   *     initialized names.
+   */
+  Iterable<String> getAttributeNames();
 
-  @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    return Optional.ofNullable(attributes.get(name));
-  }
+  /**
+   * Get the type of this entity.
+   *
+   * @return The EntityType for this entity.
+   */
+  EntityType getEntityType();
 
-  @Override
-  public void setAttributeValue(String name, EngineValue value) {
-    attributes.put(name, value);
-  }
+  /**
+   * An immutable copy of this entity's attributes or a reference to this entity if already frozen.
+   *
+   * @return An immutable FrozenEntity containing the attributes of this entity.
+   */
+  Entity freeze();
 
-  @Override
-  public void lock() {
-    lock.lock();
-  }
-
-  @Override
-  public void unlock() {
-    lock.unlock();
-  }
-
+  /**
+   * Get a key that uniquely identifies the location of this entity within a replicate.
+   *
+   * @return Uniquely identifying key which can be hashed and used in equality operations or empty
+   *     if there is no location associated with this entity.
+   */
+  Optional<GeoKey> getKey();
 }

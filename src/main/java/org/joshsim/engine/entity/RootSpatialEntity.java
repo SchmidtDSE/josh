@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -16,7 +17,7 @@ import org.joshsim.engine.value.EngineValue;
  * <p>RootSpatialEntity is a type of SpatialEntity which has its own geometry as opposed to
  * inhering that geometry by being part of another entity.</p>
  */
-public abstract class RootSpatialEntity extends SpatialEntity {
+public abstract class RootSpatialEntity extends MutableEntity {
   private final Geometry geometry;
 
   /**
@@ -38,7 +39,7 @@ public abstract class RootSpatialEntity extends SpatialEntity {
   }
 
   @Override
-  public Geometry getGeometry() {
-    return geometry;
+  public Optional<Geometry> getGeometry() {
+    return Optional.of(geometry);
   }
 }

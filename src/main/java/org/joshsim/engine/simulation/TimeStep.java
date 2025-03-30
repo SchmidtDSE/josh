@@ -17,12 +17,15 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public interface TimeStep {
+
+  // TODO
+
   /**
    * Get the time step number.
    *
    * @return the integer time step number
    */
-  int getTimeStep();
+  long getTimeStep();
 
   /**
    * Get entities within the specified geometry at this time step.

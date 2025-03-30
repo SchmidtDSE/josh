@@ -18,9 +18,9 @@ import java.util.Optional;
 import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.EventKey;
+import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ShadowingEntityTest {
 
   @Mock(lenient = true) private Patch mockPatch;
-  @Mock(lenient = true) private SpatialEntity mockSpatialEntity;
+  @Mock(lenient = true) private MutableEntity mockSpatialEntity;
   @Mock(lenient = true) private Simulation mockSimulation;
   @Mock(lenient = true) private EventHandlerGroup mockEventHandlerGroup;
   @Mock(lenient = true) private EventHandler mockEventHandler;
@@ -50,6 +50,7 @@ public class ShadowingEntityTest {
     when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
@@ -87,7 +88,7 @@ public class ShadowingEntityTest {
     String attrName = "testAttr";
     String substepName = "testSubstep";
 
-    EventKey eventKey = new EventKey("", attrName, substepName);
+    EventKey eventKey = new EventKey(attrName, substepName);
     when(mockSpatialEntity.getEventHandlers(eventKey))
         .thenReturn(Optional.of(mockEventHandlerGroup));
 

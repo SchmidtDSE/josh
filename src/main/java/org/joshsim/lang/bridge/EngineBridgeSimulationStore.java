@@ -7,6 +7,7 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Map;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 
 
 /**
@@ -15,6 +16,7 @@ import java.util.Map;
 public class EngineBridgeSimulationStore {
 
   private final Map<String, EngineBridgeOperation> simulationSteps;
+  private final Map<String, EntityPrototype> simulationProtoypes;
 
   /**
    * Create a new immutable record of available simulations.
@@ -22,14 +24,16 @@ public class EngineBridgeSimulationStore {
    * @param simulationSteps EngineBridgeOperations by simulation name where each operation
    *     execute a single time step when given an EngineBridge on which to operate.
    */
-  public EngineBridgeSimulationStore(Map<String, EngineBridgeOperation> simulationSteps) {
+  public EngineBridgeSimulationStore(Map<String, EngineBridgeOperation> simulationSteps,
+      Map<String, EntityPrototype> simulationProtoypes) {
     this.simulationSteps = simulationSteps;
+    this.simulationProtoypes = simulationProtoypes;
   }
 
   /**
    * Retrieves the step function for the specified simulation name.
    *
-   * @param name the name of the simulation step to retrieve.
+   * @param name The name of the simulation for which to retrieve a simulation step function.
    * @return the EngineBridgeOperation corresponding to the given name which, when executed, runs
    *     a single time step.
    * @throws UnsupportedOperationException if logic for the simulation specified by name is not
@@ -41,6 +45,23 @@ public class EngineBridgeSimulationStore {
     }
 
     return simulationSteps.get(name);
+  }
+
+  /**
+   * Retrieves the prototype for making the simulation entity.
+   *
+   * @param name The name of the simulation for which to retrieve a prototype.
+   * @return The Prototype corresponding to the given name which, when executed, runs
+   *     a single time step.
+   * @throws UnsupportedOperationException Thrown if logic for the simulation specified by name is
+   *     not found.
+   */
+  public EntityPrototype getProtoype(String name) {
+    if (!simulationProtoypes.containsKey(name)) {
+      throw new UnsupportedOperationException("Unknown simulation: " + name);
+    }
+
+    return simulationProtoypes.get(name);
   }
 
 }

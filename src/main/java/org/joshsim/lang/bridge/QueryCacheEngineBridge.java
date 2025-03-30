@@ -9,21 +9,22 @@ package org.joshsim.lang.bridge;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
+import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.GeoKey;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.Converter;
 
 
 /**
- * Bridge that caches query calls.
+ * Bridge decorator that caches query calls.
  */
-public class QueryCacheEngineBridge extends EngineBridge {
+public class QueryCacheEngineBridge extends MinimalEngineBridge {
 
-  private final Map<GeometryMomento, List<PatchKey>> cachedPatchesByGeometry;
+  private final Map<GeometryMomento, List<GeoKey>> cachedPatchesByGeometry;
 
   /**
    * Constructs a caching EngineBridge to manipulate simulation, replicate, and converter.
@@ -42,25 +43,26 @@ public class QueryCacheEngineBridge extends EngineBridge {
   }
 
   @Override
-  public Iterable<ShadowingEntity> getPriorPatches(GeometryMomento geometryMomento) {
+  public Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento) {
     if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
-      List<PatchKey> keys = cachedPatchesByGeometry.get(geometryMomento);
+      List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
 
       Simulation simulation = null;
       long priorTimestep = getPriorTimestep();
 
       return keys.stream()
           .map((key) -> getReplicate().getPatchByKey(key, priorTimestep))
-          .map((entity) -> new ShadowingEntity(entity, simulation))
           .collect(Collectors.toList());
     } else {
-      Iterable<ShadowingEntity> entities = getPriorPatches(geometryMomento.build());
+      Iterable<Entity> entities = getPriorPatches(geometryMomento.build());
 
-      List<PatchKey> patchKeys = StreamSupport.stream(entities.spliterator(), false)
-          .map((entity) -> entity.getPatchKey())
+      List<GeoKey> geoKeys = StreamSupport.stream(entities.spliterator(), false)
+          .map(Entity::getKey)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
           .collect(Collectors.toList());
 
-      cachedPatchesByGeometry.put(geometryMomento, patchKeys);
+      cachedPatchesByGeometry.put(geometryMomento, geoKeys);
       return entities;
     }
   }

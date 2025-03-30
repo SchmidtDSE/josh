@@ -113,7 +113,7 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed agent entity
    */
-  public Agent buildAgent(SpatialEntity parent) {
+  public Agent buildAgent(Entity parent) {
     Agent agent = new Agent(
         parent,
         getName(),
@@ -128,7 +128,7 @@ public class EntityBuilder {
    * @param parent The entity like Patch that this will be part of.
    * @return A constructed disturbance entity
    */
-  public Disturbance buildDisturbance(SpatialEntity parent) {
+  public Disturbance buildDisturbance(Entity parent) {
     Disturbance disturbance = new Disturbance(
         parent,
         getName(),
@@ -164,4 +164,5 @@ public class EntityBuilder {
         createImmutableAttributesCopy());
     return simulation;
   }
+
 }

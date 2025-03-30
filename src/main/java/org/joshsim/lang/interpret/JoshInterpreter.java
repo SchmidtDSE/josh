@@ -21,6 +21,6 @@ public interface JoshInterpreter {
    * @param source String source code for the Josh simulation to interpret.
    * @return Parsed simulation.
    */
-  EngineBridgeSimulationStore interpret(String source);
+  JoshProgram interpret(String source);
 
 }

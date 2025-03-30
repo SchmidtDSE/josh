@@ -56,7 +56,7 @@ public class ValueResolver {
       return Optional.of(resolved);
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
-      return continuationResolver.get(new EntityScope(resolved.getAsEntity()));
+      return continuationResolver.get(new EntityScope(resolved.getAsMutableEntity()));
     }
   }
 

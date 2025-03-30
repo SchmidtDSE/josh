@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
@@ -18,9 +19,9 @@ import org.joshsim.engine.value.EngineValue;
  * entities and spatial information. This specifically refers to those which recieve geometry by
  * being part of another entity like a Patch.</p>
  */
-public abstract class MemberSpatialEntity extends SpatialEntity {
+public abstract class MemberSpatialEntity extends MutableEntity {
 
-  private final SpatialEntity parent;
+  private final Entity parent;
 
   /**
    * Create a new spatial entity with the given location.
@@ -31,7 +32,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    */
   public MemberSpatialEntity(
-      SpatialEntity parent,
+      Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes
@@ -46,7 +47,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    * @return the geographic point representing this entity's location
    */
   @Override
-  public Geometry getGeometry() {
+  public Optional<Geometry> getGeometry() {
     return parent.getGeometry();
   }
 
@@ -56,7 +57,7 @@ public abstract class MemberSpatialEntity extends SpatialEntity {
    *
    * @return The parent which houses this entity.
    */
-  public SpatialEntity getParent() {
+  public Entity getParent() {
     return parent;
   }
 }

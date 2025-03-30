@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.func;
 
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.value.Converter;
 import org.joshsim.engine.value.EngineValue;
 
 
@@ -39,5 +41,19 @@ public interface Scope {
    * @return all attributes within this scope.
    */
   Iterable<String> getAttributes();
+
+  /**
+   * Get converter to use in operations within this scope.
+   *
+   * @return Converter to use in completing operations within this scope.
+   */
+  Converter getConverter();
+
+  /**
+   * Get prototypes to use in constructing entities.
+   *
+   * @return Store of indexed prototypes.
+   */
+  EntityPrototypeStore getPrototypeStore();
 
 }

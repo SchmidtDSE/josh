@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 public class EntityBuilderTest {
 
   private EntityBuilder builder;
-  private SpatialEntity mockParent;
+  private Entity mockParent;
   private Geometry mockGeometry;
   private EventKey mockEventKey;
   private EventHandlerGroup mockHandlerGroup;
@@ -31,7 +31,7 @@ public class EntityBuilderTest {
   @BeforeEach
   public void setUp() {
     builder = new EntityBuilder();
-    mockParent = mock(SpatialEntity.class);
+    mockParent = mock(Entity.class);
     mockGeometry = mock(Geometry.class);
     mockEventKey = new EventKey("testState", "testAttribute", "testEvent");
     mockHandlerGroup = mock(EventHandlerGroup.class);
@@ -85,7 +85,7 @@ public class EntityBuilderTest {
 
     assertNotNull(patch);
     assertEquals(patchName, patch.getName());
-    assertEquals(mockGeometry, patch.getGeometry());
+    assertEquals(mockGeometry, patch.getGeometry().get());
     assertTrue(patch.getAttributeValue("patchAttr").isPresent());
   }
 

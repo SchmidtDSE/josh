@@ -37,12 +37,8 @@ public class Patch extends RootSpatialEntity {
     super(geometry, name, eventHandlerGroups, attributes);
   }
 
-  /**
-   * Get a key that uniquely identifies this patch within a replicate.
-   *
-   * @return Uniquely identifying key which can be hashed and used in equality operations.
-   */
-  public PatchKey getKey() {
-    return new PatchKey(this);
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.PATCH;
   }
 }

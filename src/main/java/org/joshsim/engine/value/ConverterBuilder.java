@@ -55,7 +55,7 @@ public class ConverterBuilder {
    * @return a new Converter instance
    */
   public Converter build() {
-    return new Converter(conversions);
+    return new MapConverter(conversions);
   }
 
   /**

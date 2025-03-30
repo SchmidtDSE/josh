@@ -9,12 +9,13 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandlerGroup;
 import org.joshsim.engine.entity.EventKey;
+import org.joshsim.engine.entity.GeoKey;
+import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.PatchKey;
 import org.joshsim.engine.entity.Simulation;
-import org.joshsim.engine.entity.SpatialEntity;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.EngineValue;
@@ -34,7 +35,7 @@ public class ShadowingEntity {
 
   private static final String DEFAULT_STATE_STR = "";
 
-  private final SpatialEntity inner;
+  private final MutableEntity inner;
   private final ShadowingEntity here;
   private final Simulation meta;
   private final Set<String> resolvedAttributes;
@@ -64,7 +65,7 @@ public class ShadowingEntity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(SpatialEntity inner, ShadowingEntity here, Simulation meta) {
+  public ShadowingEntity(MutableEntity inner, ShadowingEntity here, Simulation meta) {
     this.inner = inner;
     this.here = here;
     this.meta = meta;
@@ -212,13 +213,13 @@ public class ShadowingEntity {
   }
 
   /**
-   * Get the key of the patch that contians this entity.
+   * Get the key of the patch that contains this entity.
    *
    * @return the PatchKey of the patch that contains this entity.
    */
-  public PatchKey getPatchKey() {
+  public GeoKey getGeoKey() {
     Patch patch = (Patch) getHere().getInner();
-    return patch.getKey();
+    return patch.getKey().orElseThrow();
   }
 
   /**
@@ -235,7 +236,7 @@ public class ShadowingEntity {
    *
    * @return entity that is decorated by this object.
    */
-  protected SpatialEntity getInner() {
+  protected MutableEntity getInner() {
     return inner;
   }
 
@@ -273,4 +274,14 @@ public class ShadowingEntity {
     }
   }
 
+  /**
+   * Get an immutable copy of the decorated entity for record keeping.
+   *
+   * @return Entity that is an immutable snapshot such that further edits to this entity are not
+   *     reflected on past frozen entities.
+   */
+  public Entity freeze() {
+    // TODO: propagate freeze
+    return inner.freeze();
+  }
 }

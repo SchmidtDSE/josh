@@ -9,13 +9,37 @@ package org.joshsim.engine.entity;
 import java.util.Objects;
 
 /**
- * Represents a composite key for mapping state, attribute, and event
- * to an EventHandlerGroup.
+ * Composite key for mapping state, attribute, and event.
  */
 public class EventKey {
   private final String state;
   private final String attribute;
   private final String event;
+
+  /**
+   * Key for mapping attribute x event to an EventHandlerGroup using empty default state.
+   *
+   * @param attribute attribute string
+   * @param event event string
+   */
+  public EventKey(String attribute, String event) {
+    this.state = "";
+    this.attribute = attribute;
+    this.event = event;
+  }
+
+  /**
+   * Composite key class for mapping state x attribute x event to an EventHandlerGroup.
+   *
+   * @param state state string or empty if default state
+   * @param attribute attribute string
+   * @param event event string
+   */
+  public EventKey(String state, String attribute, String event) {
+    this.state = state;
+    this.attribute = attribute;
+    this.event = event;
+  }
 
   /**
    * Gets the state component of this event key.
@@ -42,19 +66,6 @@ public class EventKey {
    */
   public String getEvent() {
     return event;
-  }
-
-  /**
-   * Composite key class for mapping state x attribute x event to an EventHandlerGroup.
-   *
-   * @param state state string or empty if default state
-   * @param attribute attribute string
-   * @param event event string
-   */
-  public EventKey(String state, String attribute, String event) {
-    this.state = state;
-    this.attribute = attribute;
-    this.event = event;
   }
 
   @Override

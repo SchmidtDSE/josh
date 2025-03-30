@@ -119,10 +119,10 @@ expression: unitsValue # simpleExpression
   | identifier # identifierExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
-  | expression LBRAC_ expression RBRAC_ # slice
+  | subject=expression LBRAC_ selection=expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
-  | name=funcName LPAREN_ expression (COMMA_ expression)* RPAREN_ # functionCall
+  | name=funcName LPAREN_ operand=expression RPAREN_ # singleParamFunctionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
@@ -131,8 +131,8 @@ expression: unitsValue # simpleExpression
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam
   | SAMPLE_ count=expression FROM_ target=expression replace=(WITH_ | WITHOUT_) REPLACEMENT_ # sampleParamReplacement
-  | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMaxExpression
-  | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMinExpression
+  | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMinExpression
+  | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMaxExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
@@ -147,11 +147,15 @@ funcName: (MEAN_ | STD_) # reservedFuncName
   | identifier # identifierFuncName
   ;
 
-assignment: CONST_ identifier EQ_ expression;
+assignment: CONST_ name=identifier EQ_ val=expression;
 
 return: RETURN_ expression;
 
-fullConditional: IF_ LPAREN_ expression RPAREN_ fullBody (ELIF_ LPAREN_ expression RPAREN_ fullBody)* (ELSE_ fullBody)?;
+fullConditional: IF_ LPAREN_ cond=expression RPAREN_ target=fullBody fullElifBranch* fullElseBranch?;
+
+fullElseBranch: ELSE_ target=fullBody;
+
+fullElifBranch: ELIF_ LPAREN_ cond=expression RPAREN_ target=fullBody;
 
 statement: (assignment | return | fullConditional);
 
@@ -169,24 +173,28 @@ fullBody: LCURLY_ statement* RCURLY_;
 callable: (fullBody | lambda);
 
 // Event handlers
-eventHandler: identifier EQ_ callable;
+eventHandlerGroupMemberInner: EQ_ target=callable;
 
-conditionalEventSelector: COLON_ (IF_|ELIF_) LPAREN_ expression RPAREN_;
+conditionalIfEventHandlerGroupMember: COLON_ IF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-elseEventSelector: COLON_ ELSE_;
+conditionalElifEventHandlerGroupMember: COLON_ ELIF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
 
-eventHandlerGroupMember: (conditionalEventSelector|elseEventSelector)? EQ_ callable;
+conditionalElseEventHandlerGroupMember: COLON_ ELSE_ inner=eventHandlerGroupMemberInner;
 
-eventHandlerGroup: identifier eventHandlerGroupMember*;
+eventHandlerGroupSingle: name=identifier eventHandlerGroupMemberInner;
 
-eventHandlerGeneral: (eventHandler | eventHandlerGroup);
+eventHandlerGroupMultiple: name=identifier conditionalIfEventHandlerGroupMember conditionalElifEventHandlerGroupMember* conditionalElseEventHandlerGroupMember?;
+
+eventHandlerGroup: (eventHandlerGroupSingle | eventHandlerGroupMultiple);
+
+eventHandlerGeneral: eventHandlerGroup;
 
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-agentStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
+entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-agentStanza: START_ agentStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ agentStanzaType;
+entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
@@ -201,4 +209,4 @@ configStatement: CONFIG_ expression AS_ identifier;
 importStatement: IMPORT_ expression;
 
 // Program
-program: (configStatement | importStatement | unitStanza | agentStanza)*;
+program: (configStatement | importStatement | unitStanza | entityStanza)*;

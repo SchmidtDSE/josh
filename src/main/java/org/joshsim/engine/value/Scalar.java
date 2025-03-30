@@ -8,6 +8,7 @@ package org.joshsim.engine.value;
 
 import java.util.List;
 import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.MutableEntity;
 
 
 /**
@@ -46,6 +47,16 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   @Override
   public Entity getAsEntity() {
+    throw new UnsupportedOperationException("Non-entity scalar conversion to entity not defined");
+  }
+
+  /**
+   * Indicate that non-entity conversion to entity for single values is not defined.
+   *
+   * @throws UnsupportedOperationException on all calls.
+   */
+  @Override
+  public MutableEntity getAsMutableEntity() {
     throw new UnsupportedOperationException("Non-entity scalar conversion to entity not defined");
   }
 

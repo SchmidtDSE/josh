@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Rectangle;
+import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.ShapeFactory;
 
 /**
@@ -230,6 +231,43 @@ public class GeometryFactory {
         centerY,
         getDefaultSpatialContext()
     );
+  }
+
+  /**
+   * Creates a point geometry with the specified center.
+   *
+   * @param centerLatitude The center latitude
+   * @param centerLongitude The center longitude
+   * @param spatialContext The context to use in creating the shape
+   * @return A Geometry object representing a point
+   */
+  public static Geometry createPoint(
+          BigDecimal centerLatitude,
+          BigDecimal centerLongitude,
+          SpatialContext spatialContext
+  ) {
+    double centerLat = centerLatitude.doubleValue();
+    double centerLon = centerLongitude.doubleValue();
+
+    ShapeFactory shapeFactory = spatialContext.getShapeFactory();
+
+    Shape point = shapeFactory.pointLatLon(centerLat, centerLon);
+    Geometry geometry = new Geometry(point);
+    return geometry;
+  }
+
+  /**
+   * Creates a circular geometry with the specified radius and center.
+   *
+   * @param centerLatitude The center latitude
+   * @param centerLongitude The center longitude
+   * @return A Geometry object representing a circle
+   */
+  public static Geometry createPoint(
+          BigDecimal centerLatitude,
+          BigDecimal centerLongitude
+  ) {
+    return createPoint(centerLatitude, centerLongitude, getDefaultSpatialContext());
   }
 
   private GeometryFactory() {}

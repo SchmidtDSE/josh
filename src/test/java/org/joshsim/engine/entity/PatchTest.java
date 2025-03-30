@@ -50,7 +50,7 @@ public class PatchTest {
   @Test
   public void testConstructor() {
     assertEquals(patchName, patch.getName());
-    assertEquals(mockGeometry, patch.getGeometry());
+    assertEquals(mockGeometry, patch.getGeometry().get());
     assertTrue(patch.getAttributeValue("testAttribute").isPresent());
   }
 
@@ -70,7 +70,7 @@ public class PatchTest {
    */
   @Test
   public void testGetPatchGeometry() {
-    assertEquals(mockGeometry, patch.getGeometry());
+    assertEquals(mockGeometry, patch.getGeometry().get());
   }
 
   /**

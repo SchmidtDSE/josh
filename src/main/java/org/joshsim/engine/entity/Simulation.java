@@ -7,12 +7,14 @@
 package org.joshsim.engine.entity;
 
 import java.util.Map;
+import java.util.Optional;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.EngineValue;
 
 /**
  * Simulation entity with cross-timestep attributes.
  */
-public class Simulation extends Entity {
+public class Simulation extends MutableEntity {
 
   /**
    * Constructor for a Simulation, which contains 'meta' attributes and event handlers.
@@ -27,5 +29,15 @@ public class Simulation extends Entity {
       Map<String, EngineValue> attributes
   ) {
     super(name, eventHandlerGroups, attributes);
+  }
+
+  @Override
+  public EntityType getEntityType() {
+    return EntityType.SIMULATION;
+  }
+
+  @Override
+  public Optional<Geometry> getGeometry() {
+    return Optional.empty();
   }
 }

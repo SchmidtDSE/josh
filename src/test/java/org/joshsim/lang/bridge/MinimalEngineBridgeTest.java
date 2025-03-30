@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.Patch;
 import org.joshsim.engine.entity.Simulation;
 import org.joshsim.engine.geometry.GeoPoint;
@@ -43,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Test for EngineBridge which helps decouple the engine from interpreter.
  */
 @ExtendWith(MockitoExtension.class)
-public class EngineBridgeTest {
+public class MinimalEngineBridgeTest {
 
   @Mock private Simulation mockSimulation;
   @Mock private Replicate mockReplicate;
@@ -61,7 +62,7 @@ public class EngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
-    bridge = new EngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new MinimalEngineBridge(mockSimulation, mockReplicate, mockConverter);
   }
 
   @Test
@@ -86,7 +87,7 @@ public class EngineBridgeTest {
   void testGetPatch() {
     expectQuery(new Query(0, mockPoint), Arrays.asList(mockPatch));
 
-    Optional<ShadowingEntity> result = bridge.getPatch(mockPoint);
+    Optional<Entity> result = bridge.getPatch(mockPoint);
     assertTrue(result.isPresent(), "Should return a patch");
   }
 
@@ -114,7 +115,7 @@ public class EngineBridgeTest {
 
   @Test
   void testGetCurrentPatches() {
-    expectQuery(new Query(0), Arrays.asList(mockPatch, mockPatch));
+    when(mockReplicate.getCurrentPatches()).thenReturn(Arrays.asList(mockPatch, mockPatch));
 
     Iterable<ShadowingEntity> results = bridge.getCurrentPatches();
     assertTrue(results.iterator().hasNext(), "Should return patches");
@@ -126,7 +127,7 @@ public class EngineBridgeTest {
 
     bridge.startStep();
     bridge.endStep();
-    Iterable<ShadowingEntity> results = bridge.getPriorPatches(mockGeometry);
+    Iterable<Entity> results = bridge.getPriorPatches(mockGeometry);
     assertTrue(results.iterator().hasNext(), "Should return prior patches");
   }
 

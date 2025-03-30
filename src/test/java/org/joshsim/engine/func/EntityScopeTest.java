@@ -17,6 +17,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.Entity;
 import org.joshsim.engine.entity.EventHandler;
 import org.joshsim.engine.entity.EventHandlerGroup;
+import org.joshsim.engine.entity.MutableEntity;
 import org.joshsim.engine.value.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,10 +31,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EntityScopeTest {
 
-  @Mock private Entity mockEntity;
-  @Mock private EngineValue mockValue;
-  @Mock private EventHandlerGroup mockGroup;
-  @Mock private EventHandler mockHandler;
+  @Mock(lenient = true) private MutableEntity mockEntity;
+  @Mock(lenient = true) private EngineValue mockValue;
+  @Mock(lenient = true) private EventHandlerGroup mockGroup;
+  @Mock(lenient = true) private EventHandler mockHandler;
 
   private EntityScope scope;
 
@@ -43,6 +44,7 @@ class EntityScopeTest {
   @BeforeEach
   void setUp() {
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup));
+    when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
 
