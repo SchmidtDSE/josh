@@ -37,42 +37,87 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
-    return null;
+    if (valueResolver != null) {
+      memory.push(valueResolver.resolve());
+    }
+    return this;
   }
 
   @Override
   public EventHandlerMachine push(EngineValue value) {
-    return null;
+    if (value != null) {
+      memory.push(value);
+    }
+    return this;
   }
 
   @Override
   public EventHandlerMachine applyMap(String strategy) {
-    return null;
+    if (strategy == null || strategy.isEmpty()) {
+      throw new IllegalArgumentException("Strategy cannot be null or empty");
+    }
+    
+    EngineValue toHigh = memory.pop();
+    EngineValue toLow = memory.pop();
+    EngineValue fromHigh = memory.pop();
+    EngineValue fromLow = memory.pop();
+    EngineValue operand = memory.pop();
+    
+    if (!"linear".equals(strategy)) {
+      throw new IllegalArgumentException("Unsupported map strategy: " + strategy);
+    }
+    
+    // Linear mapping calculation
+    double percentage = (operand.getNumericValue() - fromLow.getNumericValue()) / 
+                       (fromHigh.getNumericValue() - fromLow.getNumericValue());
+    double result = toLow.getNumericValue() + percentage * 
+                   (toHigh.getNumericValue() - toLow.getNumericValue());
+    
+    memory.push(new EngineValue(result, operand.getUnits()));
+    return this;
   }
 
   @Override
   public EventHandlerMachine add() {
-    return null;
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
+    memory.push(left.add(right));
+    return this;
   }
 
   @Override
   public EventHandlerMachine subtract() {
-    return null;
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
+    memory.push(left.subtract(right));
+    return this;
   }
 
   @Override
   public EventHandlerMachine multiply() {
-    return null;
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
+    memory.push(left.multiply(right));
+    return this;
   }
 
   @Override
   public EventHandlerMachine divide() {
-    return null;
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
+    if (Math.abs(right.getNumericValue()) < 1e-10) {
+      throw new ArithmeticException("Division by zero");
+    }
+    memory.push(left.divide(right));
+    return this;
   }
 
   @Override
   public EventHandlerMachine pow() {
-    return null;
+    EngineValue exponent = memory.pop();
+    EngineValue base = memory.pop();
+    memory.push(base.pow(exponent));
+    return this;
   }
 
   @Override
