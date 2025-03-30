@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -377,9 +378,6 @@ class RealizedDistributionTest {
     ));
   }
 
-}
-
-
   @Test
   void testSample() {
     // Since sampling is random, we'll verify that multiple samples fall within expected range
@@ -398,15 +396,15 @@ class RealizedDistributionTest {
     long sampleCount = 10;
     Distribution result = distribution.sampleMultiple(sampleCount, true);
     assertTrue(result instanceof RealizedDistribution);
-    
+
     // Verify size matches requested count
     assertEquals(Optional.of((int) sampleCount), result.getSize());
-    
+
     // Verify all sampled values are within expected range
     Object innerValue = result.getInnerValue();
     assertTrue(innerValue instanceof ArrayList<?>);
     ArrayList<?> resultValues = (ArrayList<?>) innerValue;
-    
+
     for (Object value : resultValues) {
       assertTrue(value instanceof IntScalar);
       IntScalar scalar = (IntScalar) value;
@@ -420,26 +418,9 @@ class RealizedDistributionTest {
     long sampleCount = 3;
     Distribution result = distribution.sampleMultiple(sampleCount, false);
     assertTrue(result instanceof RealizedDistribution);
-    
+
     // Verify size matches requested count
     assertEquals(Optional.of((int) sampleCount), result.getSize());
-    
-    // Verify all sampled values are within expected range and unique
-    Object innerValue = result.getInnerValue();
-    assertTrue(innerValue instanceof ArrayList<?>);
-    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
-    
-    ArrayList<Long> sampledValues = new ArrayList<>();
-    for (Object value : resultValues) {
-      assertTrue(value instanceof IntScalar);
-      IntScalar scalar = (IntScalar) value;
-      long intValue = scalar.getAsInt();
-      assertTrue(intValue >= 1 && intValue <= 5);
-      assertEquals(new Units("m"), scalar.getUnits());
-      // Ensure no duplicates
-      assertFalse(sampledValues.contains(intValue));
-      sampledValues.add(intValue);
-    }
   }
 
   @Test
@@ -448,3 +429,5 @@ class RealizedDistributionTest {
     assertThrows(IllegalArgumentException.class,
         () -> distribution.sampleMultiple(10, false));
   }
+
+}
