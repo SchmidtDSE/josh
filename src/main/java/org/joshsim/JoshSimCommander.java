@@ -13,15 +13,21 @@
 
 package org.joshsim;
 
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import io.minio.UploadObjectArgs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.Callable;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.util.MinioOptions;
+import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -58,14 +64,14 @@ public class JoshSimCommander {
   )
   static class ValidateCommand implements Callable<Integer> {
 
-    @Option(names = "--suppress-info", description = "Suppress standard output messages")
-    private boolean suppressInfo;
-
-    @Option(names = "--suppress-errors", description = "Suppress error messages")
-    private boolean suppressErrors;
-
     @Parameters(index = "0", description = "Path to file to validate")
     private File file;
+
+    @Mixin
+    private OutputOptions output = new OutputOptions();
+
+    @Mixin
+    private MinioOptions minioOptions = new MinioOptions();
 
     /**
      * Validates the simulation file specified.
@@ -79,7 +85,7 @@ public class JoshSimCommander {
     @Override
     public Integer call() {
       if (!file.exists()) {
-        printError("Could not find file: " + file);
+        output.printError("Could not find file: " + file);
         return 1;
       }
 
@@ -87,7 +93,7 @@ public class JoshSimCommander {
       try {
         fileContent = new String(Files.readAllBytes(file.toPath()));
       } catch (IOException e) {
-        printError("Error in reading input file: " + e.getMessage());
+        output.printError("Error in reading input file: " + e.getMessage());
         return 2;
       }
 
@@ -95,7 +101,7 @@ public class JoshSimCommander {
 
       if (result.hasErrors()) {
         String leadMessage = String.format("Found errors in Josh code at %s:", file);
-        printError(leadMessage);
+        output.printError(leadMessage);
 
         for (ParseError error : result.getErrors()) {
           String lineMessage = String.format(
@@ -103,40 +109,63 @@ public class JoshSimCommander {
               error.getLine(),
               error.getMessage()
           );
-          printError(lineMessage);
+          output.printError(lineMessage);
         }
 
         return 3;
       } else {
-        printOut("Validated Josh code at " + file);
+        output.printInfo("Validated Josh code at " + file);
+
+        if (minioOptions.isMinioOutput()) {
+          return saveToMinio("validate", file);
+        }
+
         return 0;
       }
     }
 
     /**
-     * Print a message to standard out if quiet is not enabled.
+     * Saves a file to Minio storage.
      *
-     * @param message the message to print to standard out.
+     * @param file the file to save to Minio
      */
-    private void printOut(String message) {
-      if (suppressInfo) {
-        return;
+    private Integer saveToMinio(String subDirectories, File file) {
+      try {
+        // Create MinioClient and get bucket and object names
+        MinioClient minioClient = minioOptions.getMinioClient();
+        String bucketName = minioOptions.getBucketName();
+
+        // Use the method that supports subdirectories - store in the "validate" subdirectory
+        String objectName = minioOptions.getObjectName(subDirectories, file.getName());
+
+        // Check if bucket exists, create if it doesn't
+        boolean bucketExists = minioClient.bucketExists(
+            BucketExistsArgs.builder().bucket(bucketName).build());
+
+        if (!bucketExists) {
+          minioClient.makeBucket(
+              MakeBucketArgs.builder().bucket(bucketName).build());
+          output.printInfo("Created bucket: " + bucketName);
+        }
+
+        // Display configuration details for debugging purposes
+        output.printInfo(minioOptions.toString());
+
+        // Upload the file
+        minioClient.uploadObject(
+            UploadObjectArgs.builder()
+            .bucket(bucketName)
+            .object(objectName)
+            .filename(file.getAbsolutePath())
+            .build());
+
+        output.printInfo("Successfully uploaded " + file.getName()
+              + " to minio://" + bucketName + "/" + objectName);
+        return 0;
+      } catch (Exception e) {
+        output.printError("Failed to upload to Minio: " + e.getMessage());
+        return 2; // Special error code for Minio issues
       }
-
-      System.out.println(message);
-    }
-
-    /**
-     * Print a message to standard error if quiet is not enabled.
-     *
-     * @param message the message to print to standard error.
-     */
-    private void printError(String message) {
-      if (suppressErrors) {
-        return;
-      }
-
-      System.err.println(message);
     }
   }
 

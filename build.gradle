@@ -38,6 +38,9 @@ dependencies {
 
   // Command line parsing
   implementation("info.picocli:picocli:4.7.6")
+
+  // Minio for S3 storage
+  implementation 'io.minio:minio:8.5.2'
 }
 
 teavm {
