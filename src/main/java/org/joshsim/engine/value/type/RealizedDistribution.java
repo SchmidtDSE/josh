@@ -8,6 +8,7 @@ package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
@@ -195,8 +196,13 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Scalar sample() {
-    // TODO
-    return null;
+    int index = (int) (Math.random() * values.size());
+    return values.get(index).getAsScalar();
+  }
+
+  @Override
+  public Distribution sampleMultiple(long count, boolean withReplacement) {
+    return withReplacement ? sampleWithReplacement(count) : sampleWithoutReplacement(count);
   }
 
   @Override
@@ -244,6 +250,46 @@ public class RealizedDistribution extends Distribution {
   @Override
   public Optional<Scalar> getSum() {
     return null;
+  }
+
+  /**
+   * Samples a specified number of elements from the current distribution without replacement.
+   *
+   * <p>Randomly select a subset of elements from the distribution without replacement,
+   * meaning each selected element is removed from the pool of potential subsequent selections.</p>
+   *
+   * @param count The number of elements to sample. Must not exceed the total number of elements
+   *              in the distribution.
+   * @return A new Distribution containing the sampled elements.
+   * @throws IllegalArgumentException if {@code count} is greater than the total size of elements
+   *     in the distribution.
+   */
+  private Distribution sampleWithoutReplacement(long count) {
+    if (count > values.size()) {
+      String message = String.format(
+          "Cannot sample %d elements from a distribution with %d elements without replacement.",
+          count,
+          values.size()
+      );
+      throw new IllegalArgumentException(message);
+    }
+    List<EngineValue> sampledValues = new ArrayList<>(values);
+    Collections.shuffle(sampledValues);
+    return new RealizedDistribution(getCaster(), sampledValues.subList(0, (int) count), getUnits());
+  }
+
+  /**
+   * Generates a new distribution by sampling values from the current distribution with replacement.
+   *
+   * @param count The number of samples to be drawn randomly from the distribution.
+   * @return A new distribution containing the sampled values.
+   */
+  private Distribution sampleWithReplacement(long count) {
+    List<EngineValue> sampledValues = new ArrayList<>();
+    for (long i = 0; i < count; i++) {
+      sampledValues.add(sample());
+    }
+    return new RealizedDistribution(getCaster(), sampledValues, getUnits());
   }
 
 }

@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -375,6 +376,58 @@ class RealizedDistributionTest {
         emptyValues,
         new Units("m")
     ));
+  }
+
+  @Test
+  void testSample() {
+    // Since sampling is random, we'll verify that multiple samples fall within expected range
+    for (int i = 0; i < 100; i++) {
+      Scalar result = distribution.sample();
+      assertTrue(result instanceof IntScalar);
+      IntScalar scalar = (IntScalar) result;
+      // Values should be between 1 and 5 inclusive
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithReplacement() {
+    long sampleCount = 10;
+    Distribution result = distribution.sampleMultiple(sampleCount, true);
+    assertTrue(result instanceof RealizedDistribution);
+
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+
+    // Verify all sampled values are within expected range
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+
+    for (Object value : resultValues) {
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacement() {
+    long sampleCount = 3;
+    Distribution result = distribution.sampleMultiple(sampleCount, false);
+    assertTrue(result instanceof RealizedDistribution);
+
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacementExceedingSize() {
+    // Attempting to sample more elements than available without replacement should throw exception
+    assertThrows(IllegalArgumentException.class,
+        () -> distribution.sampleMultiple(10, false));
   }
 
 }
