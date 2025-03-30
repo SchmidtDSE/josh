@@ -378,3 +378,73 @@ class RealizedDistributionTest {
   }
 
 }
+
+
+  @Test
+  void testSample() {
+    // Since sampling is random, we'll verify that multiple samples fall within expected range
+    for (int i = 0; i < 100; i++) {
+      Scalar result = distribution.sample();
+      assertTrue(result instanceof IntScalar);
+      IntScalar scalar = (IntScalar) result;
+      // Values should be between 1 and 5 inclusive
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithReplacement() {
+    long sampleCount = 10;
+    Distribution result = distribution.sampleMultiple(sampleCount, true);
+    assertTrue(result instanceof RealizedDistribution);
+    
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+    
+    // Verify all sampled values are within expected range
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    
+    for (Object value : resultValues) {
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacement() {
+    long sampleCount = 3;
+    Distribution result = distribution.sampleMultiple(sampleCount, false);
+    assertTrue(result instanceof RealizedDistribution);
+    
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+    
+    // Verify all sampled values are within expected range and unique
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+    
+    ArrayList<Long> sampledValues = new ArrayList<>();
+    for (Object value : resultValues) {
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      long intValue = scalar.getAsInt();
+      assertTrue(intValue >= 1 && intValue <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+      // Ensure no duplicates
+      assertFalse(sampledValues.contains(intValue));
+      sampledValues.add(intValue);
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacementExceedingSize() {
+    // Attempting to sample more elements than available without replacement should throw exception
+    assertThrows(IllegalArgumentException.class,
+        () -> distribution.sampleMultiple(10, false));
+  }
