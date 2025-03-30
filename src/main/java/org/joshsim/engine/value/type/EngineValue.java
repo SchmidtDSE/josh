@@ -183,6 +183,18 @@ public abstract class EngineValue {
   }
 
   /**
+   * Get a copy of this EngineValue which has the same data but different units label.
+   *
+   * <p>Create a new copy of this EngineValue that has the same inner value as this EngineValue but
+   * with different units.</p>
+   *
+   * @param newUnits The new units to specify in the returned EngineValue. This will not change this
+   *     original EngineValue.
+   * @return Newly created independent EngineValue with the specified units.
+   */
+  public abstract EngineValue replaceUnits(Units newUnits);
+
+  /**
    * Add another value to this value.
    *
    * <p>Performs addition after ensuring type and unit compatibility through casting.

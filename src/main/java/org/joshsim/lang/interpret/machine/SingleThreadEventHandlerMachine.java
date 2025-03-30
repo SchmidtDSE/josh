@@ -322,7 +322,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine cast(Units newUnits, boolean force) {
-    return null;
+    if (force) {
+      forceCast(newUnits);
+    } else {
+      convertCast(newUnits);
+    }
+
+    return this;
   }
 
   @Override
@@ -501,5 +507,38 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     inConversionGroup = false;
+  }
+
+  /**
+   * Forces the unit conversion of the value at the top of the memory stack to the specified units.
+   *
+   * <p>Retrieve the top value from the memory stack, performs a unit replacement operation based on
+   * the provided units, and then pushes the resulting value back onto the memory stack.</p>
+   *
+   * @param newUnits The new unit specification to which the value should be forcibly cast.
+   */
+  private void forceCast(Units newUnits) {
+    EngineValue subject = pop();
+    memory.push(subject.replaceUnits(newUnits));
+  }
+
+  /**
+   * Convert a value at the top of th ememory stack and push the result.
+   *
+   * <p>Convert the units of the current subject to the specified new units and  push the result
+   * onto the memory stack. If the subject's current units are  the same as the specified new units,
+   * the subject is directly pushed onto the memory stack without conversion. Otherwise, the subject
+   * is converted to the new units before being pushed.</p>
+   *
+   * @param newUnits The target units to which the subject should be converted.
+   */
+  private void convertCast(Units newUnits) {
+    EngineValue subject = pop();
+
+    if (subject.getUnits().equals(newUnits)) {
+      memory.push(subject);
+    } else {
+      memory.push(convert(subject, newUnits));
+    }
   }
 }

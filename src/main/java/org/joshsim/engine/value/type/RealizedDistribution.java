@@ -195,6 +195,11 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new RealizedDistribution(getCaster(), values, newUnits);
+  }
+
+  @Override
   public Scalar sample() {
     int index = (int) (Math.random() * values.size());
     return values.get(index).getAsScalar();

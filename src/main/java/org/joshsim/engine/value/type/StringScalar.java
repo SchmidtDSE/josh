@@ -66,6 +66,11 @@ public class StringScalar extends Scalar {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new StringScalar(getCaster(), getAsString(), newUnits);
+  }
+
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new StringScalar(getCaster(), getAsString() + other.getAsString(), getUnits());

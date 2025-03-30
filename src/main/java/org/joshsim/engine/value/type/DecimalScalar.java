@@ -61,6 +61,11 @@ public class DecimalScalar extends Scalar {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new DecimalScalar(getCaster(), getAsDecimal(), newUnits);
+  }
+
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     assertScalarCompatible(other);
     return new DecimalScalar(getCaster(), getAsDecimal().add(other.getAsDecimal()), getUnits());
