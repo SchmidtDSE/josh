@@ -325,6 +325,15 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     return null;
   }
 
+  /**
+   * Get a value from the top of the stack, converting it if in a conversion group.
+   *
+   * <p>Get a value from the top of the memory stack and, if in a coversion group, either use this
+   * value as the target units if target units have not yet been found or convert to the active
+   * target units if required.</p>
+   *
+   * @return EngineValue after checking for and applying a conversion if required.
+   */
   private EngineValue pop() {
     EngineValue valueUncast = memory.pop();
 
@@ -351,12 +360,33 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     return callable.evaluate(innerScope);
   }
 
+  /**
+   * Start a conversion group.
+   *
+   * <p>Indicate that a conversion group is starting such that all values popped while in the
+   * conversion group will be converted to the same type. This target type is determined by the
+   * first popped value while in the conversion group.</p>
+   */
   private void startConversionGroup() {
+    if (inConversionGroup) {
+      throw new IllegalStateException("Already in conversion group.");
+    }
+    
     inConversionGroup = true;
     conversionTarget = Optional.empty();
   }
 
+  /**
+   * Indicate that the conversion group is over.
+   *
+   * <p>Stop automatically converting all values to the same units and clear the target units for
+   * conversion.</p>
+   */
   private void endConversionGroup() {
+    if (!inConversionGroup) {
+      throw new IllegalStateException("Not in conversion group.");
+    }
+
     inConversionGroup = false;
   }
 }
