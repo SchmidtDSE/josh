@@ -128,6 +128,26 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  protected EngineValue unsafeGreaterThan(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeGreaterThanOrEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeLessThan(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeLessThanOrEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
   protected boolean canBePower() {
     return false;
   }

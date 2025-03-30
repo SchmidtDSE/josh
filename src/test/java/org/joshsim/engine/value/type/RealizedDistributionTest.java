@@ -42,11 +42,11 @@ class RealizedDistributionTest {
     // Add some test values (integers 1-5)
     for (int i = 1; i <= 5; i++) {
       values.add(new IntScalar(caster, (long) i, new Units("m")));
-      nakedValues.add(new IntScalar(caster, (long) i, new Units("")));
+      nakedValues.add(new IntScalar(caster, (long) i, Units.EMPTY));
     }
 
     distribution = new RealizedDistribution(caster, values, new Units("m"));
-    nakedDistribution = new RealizedDistribution(caster, values, new Units(""));
+    nakedDistribution = new RealizedDistribution(caster, values, Units.EMPTY);
   }
 
   @Test
@@ -228,7 +228,7 @@ class RealizedDistributionTest {
 
   @Test
   void testRaiseToPower() {
-    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
+    IntScalar exponent = new IntScalar(caster, 2L, Units.EMPTY);
     RealizedDistribution result = (RealizedDistribution) distribution.raiseToPower(exponent);
 
     Object innerValue = result.getInnerValue();
@@ -249,7 +249,7 @@ class RealizedDistributionTest {
 
   @Test
   void testRaiseToPowerReverse() {
-    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
+    IntScalar exponent = new IntScalar(caster, 2L, Units.EMPTY);
     RealizedDistribution result = (RealizedDistribution) exponent.raiseToPower(nakedDistribution);
 
     Object innerValue = result.getInnerValue();
@@ -265,7 +265,7 @@ class RealizedDistributionTest {
       assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
     }
 
-    assertEquals(new Units(""), result.getUnits());
+    assertEquals(Units.EMPTY, result.getUnits());
   }
 
   @Test
