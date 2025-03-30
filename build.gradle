@@ -9,6 +9,16 @@ plugins {
   id "com.diffplug.spotless" version "7.0.2" // Autoformatting
 }
 
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                entries.add(new org.gradle.plugins.ide.eclipse.model.SourceFolder('src-generated/main/java', null))
+            }
+        }
+    }
+}
+
 java {
   sourceCompatibility = JavaVersion.VERSION_19
   targetCompatibility = JavaVersion.VERSION_19
@@ -122,6 +132,7 @@ checkstyleTest {
   source = "src/test/java/org/joshsim"
 }
 
+// Formatting configuration
 spotless {
   java {
     target 'src/main/java/**/*.java', 'src/test/java/**/*.java'

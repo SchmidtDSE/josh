@@ -8,7 +8,6 @@ package org.joshsim.engine.simulation;
 
 import java.util.Map;
 import java.util.Optional;
-
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
