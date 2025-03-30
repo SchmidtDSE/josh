@@ -7,8 +7,14 @@
 package org.joshsim.engine.simulation;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.FrozenEntity;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.type.Patch;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -18,18 +24,18 @@ import java.util.stream.Collectors;
  * </p>
  */
 public class TimeStep {
-  private long timeStep;
-  private List<Entity> entities;
+  private long stepNumber;
+  private HashMap<GeoKey, Entity> patches;
 
   /**
    * Create a new time step.
    *
    * @param timeStep the integer time step number
-   * @param entities the entities at this time step
+   * @param patches the patches at this time step
    */
-  TimeStep(long timeStep, List<Entity> entities) {
-    this.timeStep = timeStep;
-    this.entities = entities;
+  TimeStep(long stepNumber, HashMap<GeoKey, Entity> patches) {
+    this.stepNumber = stepNumber;
+    this.patches = patches;
   }
 
   /**
@@ -37,8 +43,8 @@ public class TimeStep {
    *
    * @return the integer time step number
    */
-  long getTimeStep() {
-    return timeStep;
+  long getStep() {
+    return stepNumber;
   }
 
   /**
@@ -48,8 +54,8 @@ public class TimeStep {
    * @return an iterable of entities within the geometry
    */
   Iterable<Entity> getEntities(Geometry geometry) {
-    List<Entity> selectedEntities = entities.stream()
-        .filter(entity -> entity.getGeometry()
+    List<Entity> selectedEntities = patches.values().stream()
+        .filter(patch -> patch.getGeometry()
                   .map(geo -> geo.intersects(geometry))
                   .orElse(false))
         .collect(Collectors.toList());
@@ -64,9 +70,9 @@ public class TimeStep {
    * @return an iterable of matching entities
    */
   Iterable<Entity> getEntities(Geometry geometry, String name) {
-    List<Entity> selectedEntities = entities.stream()
-        .filter(entity -> entity.getName().equals(name))
-        .filter(entity -> entity.getGeometry()
+    List<Entity> selectedEntities = patches.values().stream()
+        .filter(patch -> patch.getName().equals(name))
+        .filter(patch -> patch.getGeometry()
                   .map(geo -> geo.intersects(geometry))
                   .orElse(false))
         .collect(Collectors.toList());
@@ -79,6 +85,33 @@ public class TimeStep {
    * @return an iterable of all entities
    */
   Iterable<Entity> getEntities() {
-    return entities;
+    return patches.values().stream().collect(Collectors.toList());
+  }
+
+  /**
+   * Get a patch by its key.
+   *
+   * @param key the GeoKey to look up
+   * @return the patch associated with the key, or null if not found
+   */
+  Entity getPatchByKey(GeoKey key) {
+    return patches.get(key);
+  }
+
+  /**
+   * Create a frozen copy of this time step with immutable entities.
+   *
+   * @return A new TimeStep with frozen entities.
+   */
+  TimeStep freeze() {
+    HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
+
+    for (Map.Entry<GeoKey, Entity> entry : patches.entrySet()) {
+      Entity frozenEntity = entry.getValue().freeze();
+      frozenPatches.put(entry.getKey(), frozenEntity);
+    }
+
+    TimeStep frozenTimeStep = new TimeStep(getStep(), frozenPatches);
+    return frozenTimeStep;
   }
 }
