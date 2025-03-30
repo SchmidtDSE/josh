@@ -8,7 +8,7 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
 

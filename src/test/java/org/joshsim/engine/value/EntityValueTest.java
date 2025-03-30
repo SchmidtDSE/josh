@@ -11,7 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.engine.value.type.EntityValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

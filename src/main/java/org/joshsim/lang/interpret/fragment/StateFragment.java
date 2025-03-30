@@ -7,7 +7,7 @@
 package org.joshsim.lang.interpret.fragment;
 
 import java.util.List;
-import org.joshsim.engine.entity.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 
 
 /**

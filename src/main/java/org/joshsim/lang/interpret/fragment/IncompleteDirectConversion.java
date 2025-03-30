@@ -8,8 +8,8 @@
 package org.joshsim.lang.interpret.fragment;
 
 import org.joshsim.engine.func.CompiledCallable;
-import org.joshsim.engine.value.Conversion;
-import org.joshsim.engine.value.Units;
+import org.joshsim.engine.value.converter.Conversion;
+import org.joshsim.engine.value.converter.Units;
 
 /**
  * Represents an incomplete direct conversion between units.

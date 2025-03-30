@@ -8,20 +8,20 @@ package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
 import java.util.Optional;
-import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.Simulation;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
-import org.joshsim.engine.value.Conversion;
-import org.joshsim.engine.value.Converter;
-import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
-import org.joshsim.engine.value.Units;
+import org.joshsim.engine.value.converter.Conversion;
+import org.joshsim.engine.value.converter.Converter;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

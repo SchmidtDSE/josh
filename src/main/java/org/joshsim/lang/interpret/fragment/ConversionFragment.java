@@ -7,7 +7,7 @@
 
 package org.joshsim.lang.interpret.fragment;
 
-import org.joshsim.engine.value.Conversion;
+import org.joshsim.engine.value.converter.Conversion;
 
 /**
  * Fragment representing a single unit conversion operation.

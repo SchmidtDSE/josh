@@ -2,7 +2,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -41,7 +41,7 @@ public class SimulationStepOperation implements EngineBridgeOperation {
     // TODO
     return target;
   }
-  
+
   /**
    * Set up necessary state or configuration before simulation start.
    */

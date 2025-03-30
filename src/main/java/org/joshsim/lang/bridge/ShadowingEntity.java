@@ -9,16 +9,16 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.EventHandlerGroup;
-import org.joshsim.engine.entity.EventKey;
-import org.joshsim.engine.entity.GeoKey;
-import org.joshsim.engine.entity.MutableEntity;
-import org.joshsim.engine.entity.Patch;
-import org.joshsim.engine.entity.Simulation;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
+import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

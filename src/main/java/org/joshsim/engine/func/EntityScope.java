@@ -10,13 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.Entity;
-import org.joshsim.engine.entity.MutableEntity;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.value.Converter;
-import org.joshsim.engine.value.EmptyConverter;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.converter.Converter;
+import org.joshsim.engine.value.converter.EmptyConverter;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

@@ -8,11 +8,11 @@ package org.joshsim.lang.interpret.fragment;
 
 import java.util.List;
 import java.util.Optional;
-import org.joshsim.engine.entity.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
-import org.joshsim.engine.value.Conversion;
+import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 

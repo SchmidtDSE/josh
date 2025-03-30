@@ -7,7 +7,7 @@
 
 package org.joshsim.lang.interpret.fragment;
 
-import org.joshsim.engine.entity.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 
 /**
  * Fragment representing a group of event handlers.

@@ -8,7 +8,7 @@
 package org.joshsim.lang.interpret.fragment;
 
 import java.util.List;
-import org.joshsim.engine.value.Conversion;
+import org.joshsim.engine.value.converter.Conversion;
 
 /**
  * Fragment representing a collection of unit conversions.

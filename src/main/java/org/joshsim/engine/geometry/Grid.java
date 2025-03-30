@@ -2,7 +2,7 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import java.util.List;
-import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.type.Patch;
 
 /**
  * The Grid class contains a list of patches and a cell width for conveniences.

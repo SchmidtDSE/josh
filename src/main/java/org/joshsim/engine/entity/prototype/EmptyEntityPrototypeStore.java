@@ -11,7 +11,7 @@ package org.joshsim.engine.entity.prototype;
  * A store which contains no entity prototypes.
  */
 public class EmptyEntityPrototypeStore implements EntityPrototypeStore {
-  
+
   @Override
   public EntityPrototype get(String entityName) {
     throw new IllegalArgumentException(entityName + " is not a known entity.");

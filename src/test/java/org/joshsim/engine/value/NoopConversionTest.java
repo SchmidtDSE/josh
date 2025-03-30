@@ -10,6 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.value.converter.NoopConversion;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

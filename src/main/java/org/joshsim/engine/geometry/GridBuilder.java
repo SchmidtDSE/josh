@@ -9,7 +9,7 @@ import org.apache.sis.geometry.GeneralDirectPosition;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
-import org.joshsim.engine.entity.Patch;
+import org.joshsim.engine.entity.type.Patch;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
 import org.opengis.geometry.DirectPosition;

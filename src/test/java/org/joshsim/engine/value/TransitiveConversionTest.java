@@ -14,6 +14,10 @@ import static org.mockito.Mockito.when;
 
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.value.converter.Conversion;
+import org.joshsim.engine.value.converter.TransitiveConversion;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

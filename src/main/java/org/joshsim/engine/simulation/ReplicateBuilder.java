@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.simulation;
 
-import org.joshsim.engine.entity.EntityBuilder;
+import org.joshsim.engine.entity.base.EntityBuilder;
 
 
 /**

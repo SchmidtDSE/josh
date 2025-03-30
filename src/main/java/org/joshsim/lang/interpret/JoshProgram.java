@@ -10,13 +10,13 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.engine.value.Converter;
+import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 
 
 /**
  * Represents a parsed and executable Josh program.
- * 
+ *
  * <p>This class holds the essential components required for executing a Josh program,
  * including facilities for value conversion and simulation management.</p>
  */

@@ -7,7 +7,7 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Optional;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

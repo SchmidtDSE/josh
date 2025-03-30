@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 /**
  * Helper which resolves a value within a scope, memoizing the path after resolution.

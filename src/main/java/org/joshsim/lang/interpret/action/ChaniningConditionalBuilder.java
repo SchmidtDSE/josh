@@ -52,7 +52,7 @@ public class ChaniningConditionalBuilder {
 
   /**
    * Builds the chain of conditional actions.
-   * 
+   *
    * <p>Create a chain by linking each action to the next one in reverse order, returning the action
    * at the start of that chain.</p>
    *

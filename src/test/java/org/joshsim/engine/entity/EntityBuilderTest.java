@@ -8,8 +8,16 @@ import static org.mockito.Mockito.mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.EntityBuilder;
+import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
+import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.entity.type.Agent;
+import org.joshsim.engine.entity.type.Disturbance;
+import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
