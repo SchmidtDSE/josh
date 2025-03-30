@@ -8,6 +8,7 @@ package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
@@ -180,5 +181,43 @@ class DecimalScalarTest {
     assertEquals("123.456789", scalar.getAsString());
   }
 
+
+  @Test
+  void testCompareToSameUnitsDifferentValues() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(20), new Units("m"));
+
+    assertTrue(scalar1.compareTo(scalar2) < 0);
+    assertTrue(scalar2.compareTo(scalar1) > 0);
+  }
+
+  @Test
+  void testCompareToIncompatibleUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), new Units("s"));
+
+    assertThrows(IllegalArgumentException.class, () -> scalar1.compareTo(scalar2));
+  }
+
+  @Test
+  void testCompareToEqualValues() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
+
+    assertEquals(0, scalar1.compareTo(scalar2));
+  }
+
+  @Test
+  void testCompareToDifferentValuesSameOrder() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(15), new Units("s"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(5), new Units("s"));
+
+    assertTrue(scalar1.compareTo(scalar2) > 0);
+    assertTrue(scalar2.compareTo(scalar1) < 0);
+  }
 
 }

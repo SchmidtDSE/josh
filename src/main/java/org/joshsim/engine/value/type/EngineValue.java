@@ -299,7 +299,7 @@ public abstract class EngineValue {
    *
    * @param other The other engine value to compare.
    * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
-   * values otherwise.
+   *     values otherwise.
    */
   public EngineValue greaterThan(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -317,7 +317,7 @@ public abstract class EngineValue {
    *
    * @param other The other engine value to compare.
    * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
-   * values otherwise.
+   *     values otherwise.
    */
   public EngineValue greaterThanOrEqualTo(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -335,7 +335,7 @@ public abstract class EngineValue {
    *
    * @param other The other engine value to compare.
    * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
-   * values otherwise.
+   *     values otherwise.
    */
   public EngineValue lessThan(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -353,7 +353,7 @@ public abstract class EngineValue {
    *
    * @param other The other engine value to compare.
    * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
-   * values otherwise.
+   *     values otherwise.
    */
   public EngineValue lessThanOrEqualTo(EngineValue other) {
     EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
@@ -453,7 +453,7 @@ public abstract class EngineValue {
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
 
   /**
-   * Compare this value with another for greater-than assuming that the units and type are compatible.
+   * Compare this value with another for greater-than assuming that units and type are compatible.
    *
    * @param other the other value.
    * @return the result of the comparison.
@@ -463,7 +463,7 @@ public abstract class EngineValue {
   protected abstract EngineValue unsafeGreaterThan(EngineValue other);
 
   /**
-   * Compare this value with another for greater-than-or-equal-to assuming that the units and type are compatible.
+   * Compare this value with another for greater-than-or-equal-to assuming compatible units / type.
    *
    * @param other the other value.
    * @return the result of the comparison.
@@ -483,7 +483,7 @@ public abstract class EngineValue {
   protected abstract EngineValue unsafeLessThan(EngineValue other);
 
   /**
-   * Compare this value with another for less-than-or-equal-to assuming that the units and type are compatible.
+   * Compare this value with another for less-than-or-equal-to assuming compatible units / type.
    *
    * @param other the other value.
    * @return the result of the comparison.
