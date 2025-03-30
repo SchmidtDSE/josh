@@ -1,5 +1,5 @@
 /**
- * Structures which aid in building Entities given cached information.
+ * Description of structures which aid in building Entities given cached information.
  *
  * @license BSD-3-Clause
  */
@@ -19,42 +19,21 @@ import org.joshsim.engine.geometry.Geometry;
  * used to create instances of that Entity given information required for constructing that
  * individual.</p>
  */
-public class EntityPrototype {
-
-  private final String identifier;
-  private final EntityType entityType;
-  private final EntityBuilder entityBuilder;
-
-  /**
-   * Creates a new EntityPrototype with the specified identifier, type, and builder.
-   *
-   * @param identifier The unique identifier for this entity prototype.
-   * @param entityType The type of entity this prototype can build.
-   * @param entityBuilder The builder used to construct instances of this entity.
-   */
-  public EntityPrototype(String identifier, EntityType entityType, EntityBuilder entityBuilder) {
-    this.identifier = identifier;
-    this.entityType = entityType;
-    this.entityBuilder = entityBuilder;
-  }
+public interface EntityPrototype {
 
   /**
    * Gets the unique identifier of this entity prototype.
    *
    * @return The identifier string with which entities will be built from this prototype.
    */
-  public String getIdentifier() {
-    return identifier;
-  }
+  String getIdentifier();
 
   /**
    * Gets the type of entity this prototype will build.
    *
    * @return The EntityType enum value with which entities will be built from this prototype.
    */
-  public EntityType getEntityType() {
-    return entityType;
-  }
+  EntityType getEntityType();
 
   /**
    * Builds a non-spatial entity instance from this prototype.
@@ -63,13 +42,7 @@ public class EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built without spatial context.
    */
-  public Entity build() {
-    return switch (entityType) {
-      case EXTERNAL_RESOURCE -> throw new RuntimeException("External resources yet implemented.");
-      case SIMULATION -> entityBuilder.buildSimulation();
-      default -> throw new RuntimeException("Cannot instantiate without a location: " + entityType);
-    };
-  }
+  Entity build();
 
   /**
    * Builds a spatial entity instance from this prototype with a parent entity.
@@ -79,13 +52,7 @@ public class EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built with a parent entity.
    */
-  public Entity buildSpatial(Entity parent) {
-    return switch (entityType) {
-      case AGENT -> entityBuilder.buildAgent(parent);
-      case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
-      default -> throw new RuntimeException("Cannot instantiate with a parent: " + entityType);
-    };
-  }
+  Entity buildSpatial(Entity parent);
 
   /**
    * Builds a spatial entity instance from this prototype with a geometry parent.
@@ -95,11 +62,20 @@ public class EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built with a geometry parent.
    */
-  public Entity buildSpatial(Geometry parent) {
-    return switch (entityType) {
-      case PATCH -> entityBuilder.buildPatch(parent);
-      default -> throw new RuntimeException("Cannot instantiate with a geometry: " + entityType);
-    };
-  }
+  Entity buildSpatial(Geometry parent);
+
+  /**
+   * Determine if this entity prototype requires a parent to be provided to be constructed.
+   *
+   * @return True if a parent is required and false otherwise.
+   */
+  boolean requiresParent();
+
+  /**
+   * Determine if this entity prototype requires a geometry to be provided to be constructed.
+   *
+   * @return True if a geometry is required and false otherwise.
+   */
+  boolean requiresGeometry();
 
 }

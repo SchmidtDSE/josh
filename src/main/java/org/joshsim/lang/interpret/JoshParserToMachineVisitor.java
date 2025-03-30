@@ -15,6 +15,7 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
@@ -738,7 +739,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
     }
 
-    EntityPrototype prototype = new EntityPrototype(
+    EntityPrototype prototype = new ParentlessEntityPrototype(
         identifier,
         getEntityType(entityType),
         entityBuilder

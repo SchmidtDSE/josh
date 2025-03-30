@@ -6,8 +6,13 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
+import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.func.SingleValueScope;
@@ -37,6 +42,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final Stack<EngineValue> memory;
   private final Scope scope;
   private final EngineValueFactory valueFactory;
+  private final EntityPrototypeStore prototypeStore;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -53,6 +59,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     inConversionGroup = false;
     conversionTarget = Optional.empty();
     valueFactory = new EngineValueFactory();
+    prototypeStore = scope.getPrototypeStore();
   }
 
   @Override
@@ -333,12 +340,47 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine bound(boolean hasLower, boolean hasUpper) {
-    return null;
+    startConversionGroup();
+    EngineValue upperBound = hasUpper ? pop() : null;
+    EngineValue lowerBound = hasLower ? pop() : null;
+    EngineValue target = pop();
+    endConversionGroup();
+
+    if (hasLower && target.lessThan(lowerBound).getAsBoolean()) {
+      memory.push(lowerBound);
+    } else if (hasUpper && target.greaterThan(upperBound).getAsBoolean()) {
+      memory.push(upperBound);
+    } else {
+      memory.push(target);
+    }
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine createEntity(String entityType) {
-    return null;
+    EntityPrototype prototype = prototypeStore.get(entityType);
+    EmbeddedParentEntityPrototype decoratedPrototype = new EmbeddedParentEntityPrototype(
+        prototype,
+        scope.get("current").getAsEntity()
+    );
+
+    EngineValue countValue = convert(pop(), COUNT_UNITS);
+    long count = countValue.getAsInt();
+
+    EngineValue result;
+    if (count == 1) {
+      result = valueFactory.build(decoratedPrototype.build());
+    } else {
+      List<EngineValue> values = new ArrayList<>();
+      for (int i = 0; i < count; i++) {
+        values.add(valueFactory.build(decoratedPrototype.build()));
+      }
+      result = valueFactory.buildRealizedDistribution(values, new Units(entityType));
+    }
+
+    memory.push(result);
+    return this;
   }
 
   @Override
