@@ -14,6 +14,7 @@ import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -29,14 +30,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   // TODO
 
+  private static final Units EMPTY_UNITS = new Units("");
+
   private final Stack<EngineValue> memory;
   private final Scope scope;
+  private final EngineValueFactory valueFactory;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
 
   /**
-   * Create a new pushdown automaton which operates on the given scope.
+   * Create a new push-down automaton which operates on the given scope.
    *
    * @param scope The scope in which to have this automaton perform its operations.
    */
@@ -46,6 +50,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
+    valueFactory = new EngineValueFactory();
   }
 
   @Override
@@ -88,7 +93,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine add() {
-
     startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
@@ -101,7 +105,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine subtract() {
-
     startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
@@ -113,7 +116,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine multiply() {
-
     startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
@@ -126,7 +128,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine divide() {
-
     startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
@@ -147,22 +148,70 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine and() {
-    return null;
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    boolean result = right.getAsBoolean() && left.getAsBoolean();
+    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
+    memory.push(resultDecorated);
+    
+    return this;
   }
 
   @Override
   public EventHandlerMachine or() {
-    return null;
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    boolean result = right.getAsBoolean() || left.getAsBoolean();
+    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
+    memory.push(resultDecorated);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine xor() {
-    return null;
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    boolean result = right.getAsBoolean() ^ left.getAsBoolean();
+    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
+    memory.push(resultDecorated);
+
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine eq() {
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    EngineValue resultDecorated = valueFactory.build(left.equals(right), EMPTY_UNITS);
+    memory.push(resultDecorated);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine neq() {
-    return null;
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    EngineValue resultDecorated = valueFactory.build(!left.equals(right), EMPTY_UNITS);
+    memory.push(resultDecorated);
+
+    return this;
   }
 
   @Override
@@ -172,11 +221,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine lt() {
-    return null;
-  }
-
-  @Override
-  public EventHandlerMachine eq() {
     return null;
   }
 
