@@ -30,13 +30,27 @@ public class Replicate {
   private List<EntityBuilder> entityBuilders;
   private HashMap<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private TimeStep presentTimeStep;
- 
 
+
+  /**
+   * Construct a replicate with the given entity builders.
+   *
+   * @param entityBuilders the entity builders to use for creating entities.
+   */
   public Replicate(List<EntityBuilder> entityBuilders){ {
     this.entityBuilders = entityBuilders;
     this.presentTimeStep = timeStepBuilder.buildInitial(entityBuilders);
   }
-  
+
+  /**
+   * Advance this replicate by one time step, saving the current timestep as a frozen
+   * immutable copy into `pastTimeSteps`, and incrementing the current timestep.
+   */
+  public void incrementStep() {
+    saveTimeStep(presentTimeStep.getStep());
+    presentTimeStep.incrementStep();
+  }
+
   /**
    * Save the current state as the given step number.
    *
@@ -83,7 +97,7 @@ public class Replicate {
     assert timeStep.getStep() == query.getStep();
 
     Optional<Geometry> geometry = query.getGeometry();
-    if (query.getGeometry().isPresent()) {  
+    if (query.getGeometry().isPresent()) {
       return timeStep.getEntities(geometry.get());
     } else {
       return timeStep.getEntities();
