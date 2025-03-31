@@ -37,7 +37,40 @@ public class SingleThreadEventHandlerMachineTest {
    */
   @BeforeEach
   void setUp() {
-    machine = new SingleThreadEventHandlerMachine();
+    machine = new SingleThreadEventHandlerMachine(null, mockScope);
+  }
+
+  @Test
+  void push_shouldPushValueOntoStack() {
+    // When
+    machine.push(mockValue);
+
+    // Then
+    assertEquals(mockValue, machine.getResult());
+  }
+
+  @Test
+  void end_shouldMarkMachineAsEnded() {
+    // When
+    machine.end();
+
+    // Then
+    assertTrue(machine.isEnded());
+  }
+
+  @Test
+  void isEnded_shouldReturnFalseInitially() {
+    // Then
+    assertTrue(!machine.isEnded());
+  }
+
+  @Test
+  void getResult_shouldReturnPushedValue() {
+    // Given
+    machine.push(mockValue);
+
+    // Then
+    assertEquals(mockValue, machine.getResult());
   }
 
 }
