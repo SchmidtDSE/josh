@@ -36,13 +36,6 @@ public interface Replicate {
   void saveTimestep(long stepNumber);
 
   /**
-   * Get the largest step number so far reported as complete in this replicate.
-   *
-   * @return Highest step number for which a fully completed timestep has been saved.
-   */
-  long getMaxTimestep();
-
-  /**
    * Get a time step by its step number.
    *
    * @param stepNumber the unique step number corresponding to the TimeStep to retrieve.
