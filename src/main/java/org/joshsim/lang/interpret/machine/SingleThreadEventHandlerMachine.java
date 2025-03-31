@@ -6,10 +6,8 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -46,6 +44,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final Stack<EngineValue> memory;
   private final Scope scope;
   private final EngineValueFactory valueFactory;
+  private final Random random;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -64,6 +63,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     inConversionGroup = false;
     conversionTarget = Optional.empty();
     valueFactory = new EngineValueFactory();
+    random = new Random();
   }
 
   @Override
@@ -426,12 +426,37 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine randUniform() {
-    return null;
+    startConversionGroup();
+    EngineValue max = pop();
+    EngineValue min = pop();
+    endConversionGroup();
+
+    double minDouble = min.getAsDecimal().doubleValue();
+    double maxDouble = max.getAsDecimal().doubleValue();
+    double doubleResult = random.nextDouble(minDouble, maxDouble);
+    BigDecimal result = BigDecimal.valueOf(doubleResult);
+
+    EngineValue decoratedResult = valueFactory.build(result, min.getUnits());
+    memory.push(decoratedResult);
+    return this;
   }
 
   @Override
   public EventHandlerMachine randNorm() {
-    return null;
+    startConversionGroup();
+    EngineValue std = pop();
+    EngineValue mean = pop();
+    endConversionGroup();
+
+    double stdDouble = std.getAsDecimal().doubleValue();
+    double randGauss = random.nextGaussian();
+    double offsetDouble = stdDouble * randGauss;
+    BigDecimal offset = BigDecimal.valueOf(offsetDouble);
+    BigDecimal randomValue = mean.getAsDecimal().add(offset);
+
+    EngineValue result = valueFactory.build(randomValue, mean.getUnits());
+    memory.push(result);
+    return this;
   }
 
   @Override
