@@ -305,4 +305,82 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new BooleanScalar(true), machine.getResult());
   }
+
+  @Test
+  void abs_shouldCalculateAbsoluteValue() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("-5.5"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.abs();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("5.5"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void ceil_shouldRoundUpToNearestInteger() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("5.3"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.ceil();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("6"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void floor_shouldRoundDownToNearestInteger() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("5.7"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.floor();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("5"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void round_shouldRoundToNearestInteger() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("5.7"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.round();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("6"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void log10_shouldCalculateBase10Logarithm() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("100"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.log10();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("2"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void ln_shouldCalculateNaturalLogarithm() {
+    // Given
+    EngineValue value = new DecimalScalar(null, new BigDecimal("1"), Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.ln();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("0"), Units.EMPTY), machine.getResult());
+  }
 }
