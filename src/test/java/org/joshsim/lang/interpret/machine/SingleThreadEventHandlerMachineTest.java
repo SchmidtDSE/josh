@@ -31,6 +31,10 @@ public class SingleThreadEventHandlerMachineTest {
 
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private EngineValue mockValue;
+  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private Entity mockEntity;
+  @Mock(lenient = true) private Query mockQuery;
+  @Mock(lenient = true) private Distribution mockDistribution;
 
   private SingleThreadEventHandlerMachine machine;
 
@@ -628,11 +632,6 @@ public class SingleThreadEventHandlerMachineTest {
     assertTrue(machine.getResult() instanceof Distribution);
   }
 
-  @Mock private Geometry mockGeometry;
-  @Mock private Entity mockEntity;
-  @Mock private Query mockQuery;
-  @Mock private Distribution mockDistribution;
-
   @Test
   void executeSpatialQuery_shouldReturnQueryResults() {
     // Given
@@ -653,4 +652,6 @@ public class SingleThreadEventHandlerMachineTest {
     verify(mockScope).createDistribution(queryResults);
     assertEquals(mockDistribution, machine.getResult());
   }
+
+  
 }
