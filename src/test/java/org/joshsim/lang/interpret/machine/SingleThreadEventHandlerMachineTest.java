@@ -215,4 +215,94 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new BooleanScalar(false), machine.getResult());
   }
+
+  @Test
+  void eq_shouldTestEquality() {
+    // Given
+    EngineValue value1 = new IntScalar(5);
+    EngineValue value2 = new IntScalar(5);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.eq();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void neq_shouldTestInequality() {
+    // Given
+    EngineValue value1 = new IntScalar(5);
+    EngineValue value2 = new IntScalar(3);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.neq();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void gt_shouldTestGreaterThan() {
+    // Given
+    EngineValue value1 = new IntScalar(5);
+    EngineValue value2 = new IntScalar(3);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.gt();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void gteq_shouldTestGreaterThanOrEqual() {
+    // Given
+    EngineValue value1 = new IntScalar(5);
+    EngineValue value2 = new IntScalar(5);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.gteq();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void lt_shouldTestLessThan() {
+    // Given
+    EngineValue value1 = new IntScalar(3);
+    EngineValue value2 = new IntScalar(5);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.lt();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void lteq_shouldTestLessThanOrEqual() {
+    // Given
+    EngineValue value1 = new IntScalar(3);
+    EngineValue value2 = new IntScalar(3);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.lteq();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
 }
