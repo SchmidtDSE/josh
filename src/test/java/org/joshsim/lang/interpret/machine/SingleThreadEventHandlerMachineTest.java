@@ -653,5 +653,40 @@ public class SingleThreadEventHandlerMachineTest {
     assertEquals(mockDistribution, machine.getResult());
   }
 
-  
+  @Test
+  void randUniform_shouldGenerateNumberWithinRange() {
+    // Given
+    EngineValue low = new DecimalScalar(null, new BigDecimal("0.0"), Units.EMPTY);
+    EngineValue high = new DecimalScalar(null, new BigDecimal("10.0"), Units.EMPTY);
+
+    // When
+    machine.push(low);
+    machine.push(high);
+    machine.randUniform();
+
+    // Then
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    BigDecimal value = result.getAsDecimal();
+    assertTrue(value.compareTo(new BigDecimal("0.0")) >= 0);
+    assertTrue(value.compareTo(new BigDecimal("10.0")) <= 0);
+  }
+
+  @Test
+  void randNorm_shouldGenerateNumberFromNormalDistribution() {
+    // Given
+    EngineValue mean = new DecimalScalar(null, new BigDecimal("5.0"), Units.EMPTY);
+    EngineValue stdDev = new DecimalScalar(null, new BigDecimal("1.0"), Units.EMPTY);
+
+    // When
+    machine.push(mean);
+    machine.push(stdDev);
+    machine.randNorm();
+
+    // Then
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    BigDecimal value = result.getAsDecimal();
+    // Most values in a normal distribution fall within 3 standard deviations
+    assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
+    assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
+  }
 }
