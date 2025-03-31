@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.IntScalar;
+import org.joshsim.engine.value.type.BooleanScalar;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -162,5 +163,50 @@ public class SingleThreadEventHandlerMachineTest {
 
     // Then
     assertEquals(new IntScalar(20), machine.getResult());
+  }
+
+  @Test
+  void and_shouldPerformLogicalAnd() {
+    // Given
+    EngineValue value1 = new BooleanScalar(true);
+    EngineValue value2 = new BooleanScalar(false);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.and();
+
+    // Then
+    assertEquals(new BooleanScalar(false), machine.getResult());
+  }
+
+  @Test
+  void or_shouldPerformLogicalOr() {
+    // Given
+    EngineValue value1 = new BooleanScalar(true);
+    EngineValue value2 = new BooleanScalar(false);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.or();
+
+    // Then
+    assertEquals(new BooleanScalar(true), machine.getResult());
+  }
+
+  @Test
+  void xor_shouldPerformLogicalXor() {
+    // Given
+    EngineValue value1 = new BooleanScalar(true);
+    EngineValue value2 = new BooleanScalar(true);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.xor();
+
+    // Then
+    assertEquals(new BooleanScalar(false), machine.getResult());
   }
 }
