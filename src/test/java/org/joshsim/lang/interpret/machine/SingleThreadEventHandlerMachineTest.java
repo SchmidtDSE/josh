@@ -73,4 +73,105 @@ public class SingleThreadEventHandlerMachineTest {
     assertEquals(mockValue, machine.getResult());
   }
 
+  @Test
+  void add_shouldAddTwoValues() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.add(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.add();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
+
+  @Test
+  void subtract_shouldSubtractTwoValues() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.subtract(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.subtract();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
+
+  @Test
+  void multiply_shouldMultiplyTwoValues() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.multiply(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.multiply();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
+
+  @Test
+  void divide_shouldDivideTwoValues() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.divide(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.divide();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
+
+  @Test
+  void pow_shouldRaiseToPower() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.pow(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.pow();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
+
+  @Test
+  void applyMap_shouldApplyMapOperation() {
+    // Given
+    EngineValue value1 = mock(EngineValue.class);
+    EngineValue value2 = mock(EngineValue.class);
+    EngineValue result = mock(EngineValue.class);
+    when(value1.applyMap(value2)).thenReturn(result);
+
+    // When
+    machine.push(value1);
+    machine.push(value2);
+    machine.applyMap();
+
+    // Then
+    assertEquals(result, machine.getResult());
+  }
 }
