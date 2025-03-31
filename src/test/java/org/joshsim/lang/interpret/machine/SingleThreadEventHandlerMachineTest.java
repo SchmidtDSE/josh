@@ -689,4 +689,61 @@ public class SingleThreadEventHandlerMachineTest {
     assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
     assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
+
+  @Test
+  void condition_shouldExecutePositivePath() {
+    // Given
+    EngineValue condition = new BooleanScalar(null, true, Units.EMPTY);
+    EventHandlerAction mockPositivePath = mock(EventHandlerAction.class);
+    EventHandlerAction mockNegativePath = mock(EventHandlerAction.class);
+    when(mockPositivePath.apply(any())).thenReturn(machine);
+    when(mockNegativePath.apply(any())).thenReturn(machine);
+
+    // When
+    machine.push(condition);
+    machine.condition(mockPositivePath, Optional.of(mockNegativePath));
+
+    // Then
+    verify(mockPositivePath).apply(machine);
+    verify(mockNegativePath, never()).apply(machine);
+  }
+
+  @Test
+  void condition_shouldExecuteNegativePath() {
+    // Given
+    EngineValue condition = new BooleanScalar(null, false, Units.EMPTY);
+    EventHandlerAction mockPositivePath = mock(EventHandlerAction.class);
+    EventHandlerAction mockNegativePath = mock(EventHandlerAction.class);
+    when(mockPositivePath.apply(any())).thenReturn(machine);
+    when(mockNegativePath.apply(any())).thenReturn(machine);
+
+    // When
+    machine.push(condition);
+    machine.condition(mockPositivePath, Optional.of(mockNegativePath));
+
+    // Then
+    verify(mockPositivePath, never()).apply(machine);
+    verify(mockNegativePath).apply(machine);
+  }
+
+  @Test
+  void branch_shouldExecuteSelectedPath() {
+    // Given
+    EngineValue selector = new IntScalar(null, 1L, Units.EMPTY);
+    List<EventHandlerAction> mockPaths = new ArrayList<>();
+    EventHandlerAction mockPath1 = mock(EventHandlerAction.class);
+    EventHandlerAction mockPath2 = mock(EventHandlerAction.class);
+    mockPaths.add(mockPath1);
+    mockPaths.add(mockPath2);
+    when(mockPath1.apply(any())).thenReturn(machine);
+    when(mockPath2.apply(any())).thenReturn(machine);
+
+    // When
+    machine.push(selector);
+    machine.branch(mockPaths);
+
+    // Then
+    verify(mockPath2).apply(machine);
+    verify(mockPath1, never()).apply(machine);
+  }
 }
