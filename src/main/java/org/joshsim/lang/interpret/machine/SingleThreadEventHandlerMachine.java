@@ -7,7 +7,12 @@
 package org.joshsim.lang.interpret.machine;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Stack;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -20,6 +25,7 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -48,6 +54,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
+  private boolean isEnded;
 
   /**
    * Create a new push-down automaton which operates on the given scope.
@@ -64,6 +71,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     conversionTarget = Optional.empty();
     valueFactory = new EngineValueFactory();
     random = new Random();
+    isEnded = false;
   }
 
   @Override
@@ -506,6 +514,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
+  public EventHandlerMachine round() {
+    EngineValue value = pop();
+
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply round to a distribution.");
+    }
+
+    BigDecimal roundedValue = value.getAsDecimal().setScale(0, RoundingMode.HALF_UP);
+    EngineValue result = valueFactory.build(roundedValue, value.getUnits());
+    memory.push(result);
+
+    return this;
+  }
+
+  @Override
   public EventHandlerMachine log10() {
     EngineValue value = pop();
 
@@ -534,7 +557,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Natural logarithm can only be applied to positive numbers.");
+      throw new IllegalArgumentException(
+          "Natural logarithm can only be applied to positive numbers."
+      );
     }
 
     double lnValue = Math.log(value.getAsDecimal().doubleValue());
@@ -547,37 +572,89 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine count() {
-    return null;
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Integer> size = distribution.getSize();
+    
+    if (!size.isPresent()) {
+      throw new IllegalArgumentException("Cannot count a virtualized distribution.");
+    }
+    
+    EngineValue result = valueFactory.build(size.get(), EMPTY_UNITS);
+    memory.push(result);
+    return this;
   }
 
   @Override
   public EventHandlerMachine max() {
-    return null;
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Scalar> max = distribution.getMax();
+    
+    if (max.isEmpty()) {
+      throw new IllegalArgumentException("Cannot find max of a virtualized distribution.");
+    }
+    
+    memory.push(max.get());
+    return this;
   }
 
   @Override
   public EventHandlerMachine mean() {
-    return null;
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Scalar> mean = distribution.getMean();
+
+    if (mean.isEmpty()) {
+      throw new IllegalArgumentException("Cannot calculate mean of a virtualized distribution.");
+    }
+
+    memory.push(mean.get());
+    return this;
   }
 
   @Override
   public EventHandlerMachine min() {
-    return null;
-  }
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Scalar> min = distribution.getMin();
 
-  @Override
-  public EventHandlerMachine round() {
-    return null;
+    if (min.isEmpty()) {
+      throw new IllegalArgumentException("Cannot find min of a virtualized distribution.");
+    }
+
+    memory.push(min.get());
+    return this;
   }
 
   @Override
   public EventHandlerMachine std() {
-    return null;
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Scalar> std = distribution.getStd();
+
+    if (std.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Cannot calculate standard deviation of a virtualized distribution."
+      );
+    }
+
+    memory.push(std.get());
+    return this;
   }
 
   @Override
   public EventHandlerMachine sum() {
-    return null;
+    EngineValue value = pop();
+    Distribution distribution = value.getAsDistribution();
+    Optional<Scalar> sum = distribution.getSum();
+
+    if (sum.isEmpty()) {
+      throw new IllegalArgumentException("Cannot calculate sum of a virtualized distribution.");
+    }
+
+    memory.push(sum.get());
+    return this;
   }
 
   @Override
@@ -587,17 +664,30 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine end() {
-    return null;
+    if (isEnded) {
+      throw new IllegalStateException("Machine already ended.");
+    }
+    
+    this.isEnded = true;
+    return this;
   }
 
   @Override
   public boolean isEnded() {
-    return false;
+    return this.isEnded;
   }
 
   @Override
   public EngineValue getResult() {
-    return null;
+    if (memory.isEmpty()) {
+      throw new IllegalStateException("No result available or the machine has ended.");
+    }
+
+    if (!isEnded) {
+      throw new IllegalStateException("Machine has not ended yet.");
+    }
+
+    return memory.peek();
   }
 
   /**

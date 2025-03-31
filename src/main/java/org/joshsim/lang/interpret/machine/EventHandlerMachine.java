@@ -489,10 +489,11 @@ public interface EventHandlerMachine {
   /**
    * Indicate that no additional actions should be taken on this machine.
    *
-   * <p>End this machine such that any additional actions taken on it will throw an
-   * IllegalStateException.</p>
+   * <p>Indicate that no additional actions should be taken on this machine though this is only
+   * advisory and exceptions will not be thrown if ignored.</p>
    *
    * @return Reference to this machine for chaining.
+   * @throws IllegalStateException if already ended.
    */
   EventHandlerMachine end();
 
@@ -509,6 +510,7 @@ public interface EventHandlerMachine {
    *
    * @return Returns the EngineValue currently at the top of the stack without removing that element
    *     from the top of the stack.
+   * @throws IllegalStateException if not yet ended.
    */
   EngineValue getResult();
 
