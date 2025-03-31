@@ -628,16 +628,29 @@ public class SingleThreadEventHandlerMachineTest {
     assertTrue(machine.getResult() instanceof Distribution);
   }
 
+  @Mock private Geometry mockGeometry;
+  @Mock private Entity mockEntity;
+  @Mock private Query mockQuery;
+  @Mock private Distribution mockDistribution;
+
   @Test
   void executeSpatialQuery_shouldReturnQueryResults() {
     // Given
     EngineValue distance = new DecimalScalar(null, new BigDecimal("10.0"), Units.EMPTY);
-    machine.push(distance);
+    List<Entity> queryResults = Arrays.asList(mockEntity);
+    
+    when(mockGeometry.buildQuery(any(BigDecimal.class))).thenReturn(mockQuery);
+    when(mockScope.executeSpatialQuery(mockQuery)).thenReturn(queryResults);
+    when(mockScope.createDistribution(queryResults)).thenReturn(mockDistribution);
 
     // When
-    machine.executeSpatialQuery(value -> value);
+    machine.push(distance);
+    machine.executeSpatialQuery(mockGeometry);
 
     // Then
-    assertNotNull(machine.getResult());
+    verify(mockGeometry).buildQuery(new BigDecimal("10.0"));
+    verify(mockScope).executeSpatialQuery(mockQuery);
+    verify(mockScope).createDistribution(queryResults);
+    assertEquals(mockDistribution, machine.getResult());
   }
 }
