@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.util.Optional;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.IntScalar;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,10 +77,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void add_shouldAddTwoValues() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.add(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(5);
+    EngineValue value2 = new IntScalar(3);
 
     // When
     machine.push(value1);
@@ -87,16 +86,14 @@ public class SingleThreadEventHandlerMachineTest {
     machine.add();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(8), machine.getResult());
   }
 
   @Test
   void subtract_shouldSubtractTwoValues() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.subtract(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(10);
+    EngineValue value2 = new IntScalar(4);
 
     // When
     machine.push(value1);
@@ -104,16 +101,14 @@ public class SingleThreadEventHandlerMachineTest {
     machine.subtract();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(6), machine.getResult());
   }
 
   @Test
   void multiply_shouldMultiplyTwoValues() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.multiply(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(6);
+    EngineValue value2 = new IntScalar(7);
 
     // When
     machine.push(value1);
@@ -121,16 +116,14 @@ public class SingleThreadEventHandlerMachineTest {
     machine.multiply();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(42), machine.getResult());
   }
 
   @Test
   void divide_shouldDivideTwoValues() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.divide(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(15);
+    EngineValue value2 = new IntScalar(3);
 
     // When
     machine.push(value1);
@@ -138,16 +131,14 @@ public class SingleThreadEventHandlerMachineTest {
     machine.divide();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(5), machine.getResult());
   }
 
   @Test
   void pow_shouldRaiseToPower() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.pow(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(2);
+    EngineValue value2 = new IntScalar(3);
 
     // When
     machine.push(value1);
@@ -155,16 +146,14 @@ public class SingleThreadEventHandlerMachineTest {
     machine.pow();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(8), machine.getResult());
   }
 
   @Test
   void applyMap_shouldApplyMapOperation() {
     // Given
-    EngineValue value1 = mock(EngineValue.class);
-    EngineValue value2 = mock(EngineValue.class);
-    EngineValue result = mock(EngineValue.class);
-    when(value1.applyMap(value2)).thenReturn(result);
+    EngineValue value1 = new IntScalar(10);
+    EngineValue value2 = new IntScalar(2);
 
     // When
     machine.push(value1);
@@ -172,6 +161,6 @@ public class SingleThreadEventHandlerMachineTest {
     machine.applyMap();
 
     // Then
-    assertEquals(result, machine.getResult());
+    assertEquals(new IntScalar(20), machine.getResult());
   }
 }
