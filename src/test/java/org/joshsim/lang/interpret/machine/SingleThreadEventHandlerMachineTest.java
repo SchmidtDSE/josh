@@ -769,15 +769,15 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
     String variableName = "testVar";
-    when(mockScope.hasLocalVariable(variableName)).thenReturn(false);
+    when(mockScope.has(variableName)).thenReturn(false);
 
     // When
     machine.push(value);
     machine.saveLocalVariable(variableName);
 
     // Then
-    verify(mockScope).hasLocalVariable(variableName);
-    verify(mockScope).saveLocalVariable(variableName, value);
+    verify(mockScope).has(variableName);
+    verify(mockScope).set(variableName, value);
   }
 
   @Test
@@ -785,7 +785,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
     String variableName = "existingVar";
-    when(mockScope.hasLocalVariable(variableName)).thenReturn(true);
+    when(mockScope.has(variableName)).thenReturn(true);
 
     // When/Then
     machine.push(value);
