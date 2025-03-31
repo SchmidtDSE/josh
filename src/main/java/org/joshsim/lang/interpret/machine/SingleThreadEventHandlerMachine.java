@@ -462,27 +462,87 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine abs() {
-    return null;
+    EngineValue value = pop();
+    
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply abs to a distribution.");
+    }
+    
+    BigDecimal absValue = value.getAsDecimal().abs();
+    EngineValue result = valueFactory.build(absValue, value.getUnits());
+    memory.push(result);
+    
+    return this;
   }
 
   @Override
   public EventHandlerMachine ceil() {
-    return null;
+    EngineValue value = pop();
+
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply ceil to a distribution.");
+    }
+
+    BigDecimal ceilValue = value.getAsDecimal().setScale(0, RoundingMode.CEILING);
+    EngineValue result = valueFactory.build(ceilValue, value.getUnits());
+    memory.push(result);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine floor() {
-    return null;
+    EngineValue value = pop();
+
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply floor to a distribution.");
+    }
+
+    BigDecimal floorValue = value.getAsDecimal().setScale(0, RoundingMode.FLOOR);
+    EngineValue result = valueFactory.build(floorValue, value.getUnits());
+    memory.push(result);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine log10() {
-    return null;
+    EngineValue value = pop();
+
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply log10 to a distribution.");
+    }
+
+    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
+    }
+
+    double logValue = Math.log10(value.getAsDecimal().doubleValue());
+    BigDecimal resultValue = BigDecimal.valueOf(logValue);
+    EngineValue result = valueFactory.build(resultValue, value.getUnits());
+    memory.push(result);
+
+    return this;
   }
 
   @Override
   public EventHandlerMachine ln() {
-    return null;
+    EngineValue value = pop();
+
+    if (value.getLanguageType().isDistribution()) {
+      throw new IllegalArgumentException("Cannot apply natural log (ln) to a distribution.");
+    }
+
+    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Natural logarithm can only be applied to positive numbers.");
+    }
+
+    double lnValue = Math.log(value.getAsDecimal().doubleValue());
+    BigDecimal resultValue = BigDecimal.valueOf(lnValue);
+    EngineValue result = valueFactory.build(resultValue, value.getUnits());
+    memory.push(result);
+
+    return this;
   }
 
   @Override
