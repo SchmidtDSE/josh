@@ -438,6 +438,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue decoratedResult = valueFactory.build(result, min.getUnits());
     memory.push(decoratedResult);
+
     return this;
   }
 
@@ -448,14 +449,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue mean = pop();
     endConversionGroup();
 
+    double meanDouble = mean.getAsDecimal().doubleValue();
     double stdDouble = std.getAsDecimal().doubleValue();
-    double randGauss = random.nextGaussian();
-    double offsetDouble = stdDouble * randGauss;
-    BigDecimal offset = BigDecimal.valueOf(offsetDouble);
-    BigDecimal randomValue = mean.getAsDecimal().add(offset);
+    double randGauss = random.nextGaussian(meanDouble, stdDouble);
+    BigDecimal randomValue = BigDecimal.valueOf(randGauss);
 
     EngineValue result = valueFactory.build(randomValue, mean.getUnits());
     memory.push(result);
+
     return this;
   }
 
