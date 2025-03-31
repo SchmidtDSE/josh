@@ -526,4 +526,6 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new IntScalar(null, 15L, Units.EMPTY), machine.getResult());
   }
+
+  
 }
