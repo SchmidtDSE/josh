@@ -14,6 +14,7 @@ import org.joshsim.engine.entity.type.Agent;
 import org.joshsim.engine.entity.type.Disturbance;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

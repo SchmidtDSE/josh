@@ -1,10 +1,8 @@
 package org.joshsim.engine.entity.base;
 
 import java.util.HashMap;
-import java.util.Map;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.value.type.EngineValue;
 
 /**
  * Geometric entity that serves as a reference to a generic geometry.
