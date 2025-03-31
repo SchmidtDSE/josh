@@ -311,11 +311,11 @@ public interface EventHandlerMachine {
    * stack to get the result of the expression before looking up the attribute by the given name
    * and pushing the result to the top of the stack. </p>
    *
-   * @param attrName The name of the attribute to be read from the value currently at the top of
-   *     the stack.
+   * @param resolver Getter for the attribute to be read from the value currently at the top of the
+   *     stack.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine pushAttribute(String attrName);
+  EventHandlerMachine pushAttribute(ValueResolver resolver);
 
   /**
    * Draw a single value randomly from a uniform distribution.

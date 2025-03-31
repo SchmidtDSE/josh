@@ -14,14 +14,10 @@ import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
-import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.geometry.GeometryFactory;
-import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
@@ -420,8 +416,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine pushAttribute(String attrName) {
-    return null;
+  public EventHandlerMachine pushAttribute(ValueResolver resolver) {
+    Entity entity = pop().getAsEntity();
+    Scope scope = new EntityScope(entity);
+    EngineValue attributeValue = resolver.get(scope).orElseThrow();
+    memory.push(attributeValue);
+    return this;
   }
 
   @Override

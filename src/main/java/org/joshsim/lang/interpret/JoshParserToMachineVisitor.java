@@ -451,10 +451,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(this).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
+    ValueResolver resolver = new ValueResolver(attrName);
 
     EventHandlerAction action = (machine) -> {
       expressionAction.apply(machine);
-      machine.pushAttribute(attrName);
+      machine.pushAttribute(resolver);
       return machine;
     };
 
