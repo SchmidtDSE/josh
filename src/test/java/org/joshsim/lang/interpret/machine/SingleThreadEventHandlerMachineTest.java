@@ -746,4 +746,49 @@ public class SingleThreadEventHandlerMachineTest {
     verify(mockPath2).apply(machine);
     verify(mockPath1, never()).apply(machine);
   }
+
+  @Test
+  void pushAttribute_shouldResolveAndPushValue() {
+    // Given
+    EngineValue baseValue = new IntScalar(null, 42L, Units.EMPTY);
+    EngineValue resolvedValue = new IntScalar(null, 100L, Units.EMPTY);
+    ValueResolver mockResolver = mock(ValueResolver.class);
+    when(mockResolver.resolve(baseValue)).thenReturn(resolvedValue);
+
+    // When
+    machine.push(baseValue);
+    machine.pushAttribute(mockResolver);
+
+    // Then
+    verify(mockResolver).resolve(baseValue);
+    assertEquals(resolvedValue, machine.getResult());
+  }
+
+  @Test
+  void saveLocalVariable_shouldSaveVariableToScope() {
+    // Given
+    EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
+    String variableName = "testVar";
+    when(mockScope.hasLocalVariable(variableName)).thenReturn(false);
+
+    // When
+    machine.push(value);
+    machine.saveLocalVariable(variableName);
+
+    // Then
+    verify(mockScope).hasLocalVariable(variableName);
+    verify(mockScope).saveLocalVariable(variableName, value);
+  }
+
+  @Test
+  void saveLocalVariable_shouldThrowExceptionIfVariableExists() {
+    // Given
+    EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
+    String variableName = "existingVar";
+    when(mockScope.hasLocalVariable(variableName)).thenReturn(true);
+
+    // When/Then
+    machine.push(value);
+    assertThrows(IllegalStateException.class, () -> machine.saveLocalVariable(variableName));
+  }
 }
