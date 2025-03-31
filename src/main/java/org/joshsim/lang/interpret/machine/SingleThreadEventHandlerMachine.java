@@ -46,6 +46,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private static final Units METER_UNITS = new Units("meters");
   private static final ValueResolver CURRENT_VALUE_RESOLVER = new ValueResolver("current");
 
+  private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
   private final Scope scope;
   private final EngineValueFactory valueFactory;
@@ -56,9 +57,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   /**
    * Create a new push-down automaton which operates on the given scope.
    *
+   * @param bridge The EngineBridge through which to interact with the engine.
    * @param scope The scope in which to have this automaton perform its operations.
    */
-  public SingleThreadEventHandlerMachine(Scope scope) {
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+    this.bridge = bridge;
     this.scope = scope;
 
     memory = new Stack<>();
@@ -364,7 +367,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine createEntity(String entityType) {
-    EntityPrototype prototype = prototypeStore.get(entityType);
+    EntityPrototype prototype = bridge.getPrototype(entityType);
     EmbeddedParentEntityPrototype decoratedPrototype = new EmbeddedParentEntityPrototype(
         prototype,
         scope.get("current").getAsEntity()
@@ -389,7 +392,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine executeSpatialQuery(EngineBridge bridge, ValueResolver resolver) {
+  public EventHandlerMachine executeSpatialQuery(ValueResolver resolver) {
     EngineValue distance = convert(pop(), METER_UNITS);
 
     Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
@@ -542,10 +545,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       return valueUncast;
     }
 
-    Conversion conversion = converter.getConversion(startUnits, endUnits);
-    CompiledCallable callable = conversion.getConversionCallable();
-    Scope innerScope = new SingleValueScope(valueUncast);
-    return callable.evaluate(innerScope);
+    return bridge.convert(valueUncast, endUnits);
   }
 
   /**

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
@@ -43,14 +44,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class MinimalEngineBridgeTest {
 
-  @Mock private Simulation mockSimulation;
-  @Mock private Replicate mockReplicate;
-  @Mock private Converter mockConverter;
-  @Mock private Patch mockPatch;
-  @Mock private EngineValue mockEngineValue;
-  @Mock private EngineValue mockEngineValueConverted;
-  @Mock private GeoPoint mockPoint;
-  @Mock private Geometry mockGeometry;
+  @Mock(lenient = true) private Simulation mockSimulation;
+  @Mock(lenient = true) private Replicate mockReplicate;
+  @Mock(lenient = true) private Converter mockConverter;
+  @Mock(lenient = true) private Patch mockPatch;
+  @Mock(lenient = true) private EngineValue mockEngineValue;
+  @Mock(lenient = true) private EngineValue mockEngineValueConverted;
+  @Mock(lenient = true) private GeoPoint mockPoint;
+  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
   private EngineBridge bridge;
 
@@ -59,7 +61,12 @@ public class MinimalEngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
-    bridge = new MinimalEngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new MinimalEngineBridge(
+        mockSimulation,
+        mockReplicate,
+        mockConverter,
+        mockPrototypeStore
+    );
   }
 
   @Test

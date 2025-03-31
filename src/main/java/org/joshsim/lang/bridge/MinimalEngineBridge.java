@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
@@ -37,6 +39,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
   private final Converter converter;
+  private final EntityPrototypeStore prototypeStore;
 
   private long absoluteStep;
   private EngineValue currentStep;
@@ -55,10 +58,12 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
    */
-  public MinimalEngineBridge(Simulation simulation, Replicate replicate, Converter converter) {
+  public MinimalEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
+      EntityPrototypeStore prototypeStore) {
     this.simulation = simulation;
     this.replicate = replicate;
     this.converter = converter;
+    this.prototypeStore = prototypeStore;
 
     engineValueFactory = new EngineValueFactory();
 
@@ -160,6 +165,15 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Replicate getReplicate() {
     return replicate;
+  }
+
+  @Override
+  public EntityPrototype getPrototype(String name) {
+    if (!prototypeStore.has(name)) {
+      throw new IllegalArgumentException("Unknown entity type: " + name);
+    }
+
+    return prototypeStore.get(name);
   }
 
   /**

@@ -54,6 +54,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final EngineValue allString;
   private final EngineValue trueValue;
 
+  // TODO: make percent, count, counts all syntactic sugar
+
   /**
    * Create a new visitor which has some commonly used values cached.
    */
@@ -465,7 +467,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EventHandlerAction action = (machine) -> {
       distanceAction.apply(machine);
-      machine.executeSpatialQuery(bridgeGetter.get(), targetResolver);
+      machine.executeSpatialQuery(targetResolver);
       return machine;
     };
 
@@ -617,8 +619,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
     EventHandlerAction conditionAction = ctx.target.accept(this).getCurrentAction();
 
-    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
-    CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
+    CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
+    CompiledCallable decoratedConditionAction = makeCallableMachine(conditionAction);
     CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(
         decoratedConditionAction
     );
@@ -631,8 +633,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
     EventHandlerAction conditionAction = ctx.target.accept(this).getCurrentAction();
 
-    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
-    CompiledCallable decoratedConditionAction = new PushDownMachineCallable(conditionAction);
+    CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
+    CompiledCallable decoratedConditionAction = makeCallableMachine(conditionAction);
     CompiledSelector decoratedConditionSelector = new CompiledSelectorFromCallable(
         decoratedConditionAction
     );
@@ -643,7 +645,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitConditionalElseEventHandlerGroupMember(
       JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
-    CompiledCallable decoratedInterpreterAction = new PushDownMachineCallable(innerAction);
+    CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
     return new CompiledCallableFragment(decoratedInterpreterAction);
   }
 
@@ -761,7 +763,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String destinationUnitsName = ctx.getChild(0).getText();
     Units destinationUnits = new Units(destinationUnitsName);
     EventHandlerAction action = ctx.getChild(2).accept(this).getCurrentAction();
-    CompiledCallable conversionLogic = new PushDownMachineCallable(action);
+    CompiledCallable conversionLogic = makeCallableMachine(action);
 
     Conversion conversion = new DirectConversion(
         destinationUnits,
@@ -852,5 +854,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       case "simulation" -> EntityType.SIMULATION;
       default -> throw new IllegalArgumentException("Unknown entity type: " + entityType);
     };
+  }
+
+  private PushDownMachineCallable makeCallableMachine(EventHandlerAction action) {
+    return new PushDownMachineCallable(action, bridgeGetter);
   }
 }

@@ -299,11 +299,10 @@ public interface EventHandlerMachine {
    * <p>Execute a spatial query and push the result as an EngineValue to the top of the stack. This
    * query requires a distance which is a distance from center which is at the top of the stack.</p>
    *
-   * @param bridge The bridge to use in executing this spatial query.
-   * @param targetResolver The ValueResolver to use after getting patches at the location.
+   * @param resolver The ValueResolver to use after getting patches at the location.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine executeSpatialQuery(EngineBridge bridge, ValueResolver targetResolver);
+  EventHandlerMachine executeSpatialQuery(ValueResolver resolver);
 
   /**
    * Push an attribute onto the top of the stack.
