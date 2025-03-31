@@ -7,22 +7,22 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.engine.value.type.*;
-import org.joshsim.lang.interpret.ValueResolver;
+import org.joshsim.engine.value.type.DecimalScalar;
+import org.joshsim.engine.value.type.Distribution;
+import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.RealizedDistribution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
