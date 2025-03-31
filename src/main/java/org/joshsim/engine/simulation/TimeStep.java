@@ -1,41 +1,26 @@
-/**
- * Structures describing an individual timestep within a replicate.
- *
- * @license BSD-3-Clause
- */
-
 package org.joshsim.engine.simulation;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.Geometry;
 
 /**
- * Structure representing a discrete time step within a simulation.
- *
- * <p>Provides methods to retrieve entities at a specific point in time.
- * </p>
+ * Represents a single time step in the simulation, containing mutable or immutable
+ * entries depending on whether it is frozen.
  */
 public class TimeStep {
-  private long stepNumber;
-  private HashMap<GeoKey, Entity> patches;
-  private Boolean isFrozen;
+  protected long stepNumber;
+  protected HashMap<GeoKey, Entity> patches;
 
   /**
-   * Create a new time step. If it is frozen, the entities are immutable, and the 
-   * step number cannot be incremented.
-   *
-   * @param timeStep the integer time step number
-   * @param patches the patches at this time step
+   * Create a new TimeStep, which contains entities that are frozen / immutable.
    */
-  TimeStep(long stepNumber, HashMap<GeoKey, Entity> patches, Boolean isFrozen) {
+  public TimeStep(long stepNumber, HashMap<GeoKey, Entity> patches) {
     this.stepNumber = stepNumber;
     this.patches = patches;
-    this.isFrozen = isFrozen;
   }
 
   /**
@@ -48,54 +33,44 @@ public class TimeStep {
   }
 
   /**
-   * Increment the time step number.   *
-   */
-  public void incrementStep() {
-    if (isFrozen) {
-      throw new IllegalStateException("Cannot increment a frozen time step.");
-    }
-    stepNumber = stepNumber + 1;
-  }
-
-  /**
-   * Get entities within the specified geometry at this time step.
+   * Get patches within the specified geometry at this time step.
    *
    * @param geometry the spatial bounds to query
-   * @return an iterable of entities within the geometry
+   * @return an iterable of patches within the geometry
    */
-  public Iterable<Entity> getEntities(Geometry geometry) {
-    List<Entity> selectedEntities = patches.values().stream()
+  public Iterable<Entity> getPatches(Geometry geometry) {
+    List<Entity> selectedPatches = patches.values().stream()
         .filter(patch -> patch.getGeometry()
-                  .map(geo -> geo.intersects(geometry))
-                  .orElse(false))
+              .map(geo -> geo.intersects(geometry))
+              .orElse(false))
         .collect(Collectors.toList());
-    return selectedEntities;
+    return selectedPatches;
   }
 
   /**
-   * Get entities with the specified name within the geometry at this time step.
+   * Get patches with the specified name within the geometry at this time step.
    *
    * @param geometry the spatial bounds to query
-   * @param name the entity name to filter by
-   * @return an iterable of matching entities
+   * @param name the patch name to filter by
+   * @return an iterable of matching patches
    */
-  public Iterable<Entity> getEntities(Geometry geometry, String name) {
-    List<Entity> selectedEntities = patches.values().stream()
+  public Iterable<Entity> getPatches(Geometry geometry, String name) {
+    List<Entity> selectedPatches = patches.values().stream()
         .filter(patch -> patch.getName().equals(name))
         .filter(patch -> patch.getGeometry()
-                  .map(geo -> geo.intersects(geometry))
-                  .orElse(false))
+              .map(geo -> geo.intersects(geometry))
+              .orElse(false))
         .collect(Collectors.toList());
-    return selectedEntities;
+    return selectedPatches;
   }
 
   /**
-   * Get all entities at this time step.
+   * Get all patches at this time step.
    *
-   * @return an iterable of all entities
+   * @return an iterable of all patches
    */
-  public Iterable<Entity> getEntities() {
-    return patches.values().stream().collect(Collectors.toList());
+  public Iterable<Entity> getPatches() {
+    return patches.values();
   }
 
   /**
@@ -108,20 +83,4 @@ public class TimeStep {
     return patches.get(key);
   }
 
-  /**
-   * Create a frozen copy of this time step with immutable entities.
-   *
-   * @return A new TimeStep with frozen entities.
-   */
-  public TimeStep freeze() {
-    HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
-
-    for (Map.Entry<GeoKey, Entity> entry : patches.entrySet()) {
-      Entity frozenEntity = entry.getValue().freeze();
-      frozenPatches.put(entry.getKey(), frozenEntity);
-    }
-
-    TimeStep frozenTimeStep = new TimeStep(getStep(), frozenPatches, true);
-    return frozenTimeStep;
-  }
 }

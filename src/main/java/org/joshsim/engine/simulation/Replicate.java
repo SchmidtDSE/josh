@@ -6,12 +6,9 @@
 
 package org.joshsim.engine.simulation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
@@ -26,29 +23,26 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public class Replicate {
-  private TimeStepBuilder timeStepBuilder = new TimeStepBuilder();
-  private List<EntityBuilder> entityBuilders;
   private HashMap<Long, TimeStep> pastTimeSteps = new HashMap<>();
-  private TimeStep presentTimeStep;
-
+  private HashMap<GeoKey, Patch> presentTimeStep;
+  private long stepNumber = 0;
 
   /**
    * Construct a replicate with the given entity builders.
    *
    * @param entityBuilders the entity builders to use for creating entities.
    */
-  public Replicate(List<EntityBuilder> entityBuilders){ {
-    this.entityBuilders = entityBuilders;
-    this.presentTimeStep = timeStepBuilder.buildInitial(entityBuilders);
+  public Replicate(HashMap<GeoKey, Patch> patches){
+    this.presentTimeStep = patches;
   }
 
   /**
-   * Advance this replicate by one time step, saving the current timestep as a frozen
-   * immutable copy into `pastTimeSteps`, and incrementing the current timestep.
+   * Get the current step number.
+   *
+   * @return the current step number.
    */
-  public void incrementStep() {
-    saveTimeStep(presentTimeStep.getStep());
-    presentTimeStep.incrementStep();
+  long getStepNumber(){
+    return stepNumber;
   }
 
   /**
@@ -64,7 +58,11 @@ public class Replicate {
     if(pastTimeSteps.containsKey(stepNumber)){
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
-    TimeStep frozenTimeStep = presentTimeStep.freeze();
+    HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
+    for(Patch patch : presentTimeStep.values()){
+      frozenPatches.put(patch.getKey().orElseThrow(), patch.freeze());
+    }
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 
@@ -86,7 +84,7 @@ public class Replicate {
    * @return an iterable of matching patches as immutable entities.
    */
   Iterable<Entity> query(Query query) {
-    if(query.getStep() == presentTimeStep.getStep()){
+    if(query.getStep() == getStepNumber()){
       throw new IllegalArgumentException("Querying current state is not allowed.");
     }
 
@@ -98,32 +96,33 @@ public class Replicate {
 
     Optional<Geometry> geometry = query.getGeometry();
     if (query.getGeometry().isPresent()) {
-      return timeStep.getEntities(geometry.get());
+      return timeStep.getPatches(geometry.get());
     } else {
-      return timeStep.getEntities();
+      return timeStep.getPatches();
     }
   }
 
   /**
-   * Lookup a Patch at the given step number. This is allowed for current patches as well as past
-   * patches.
+   * Lookup a Patch at the given step number. This is only allowed for current patches.
+   * Past patches will be queried using the query method.
    *
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Entity getPatchByKey(GeoKey key, long stepNumber) {
-    if(stepNumber == presentTimeStep.getStep()){
-      return presentTimeStep.getPatchByKey(key);
+  Patch getPatchByKey(GeoKey key, long stepNumber) {
+    if(stepNumber != getStepNumber()){
+      throw new IllegalArgumentException("Cannot lookup Patch at step number " + stepNumber);
     }
-    return pastTimeSteps.get(stepNumber).getPatchByKey(key);
+    return presentTimeStep.get(key);
   }
 
   /**
-   * Get all patches in current state.
+   * Get all patches in current state. This is functionally equivalent to querying all patches
+   * for the current step number, except that this returns mutable Patch objects.
    *
    * @return Iterable over mutable Patches.
    */
-  Iterable<Entity> getCurrentPatches(){
-    return presentTimeStep.getEntities();
+  Iterable<Patch> getCurrentPatches(){
+    return presentTimeStep.values();
   }
 }
