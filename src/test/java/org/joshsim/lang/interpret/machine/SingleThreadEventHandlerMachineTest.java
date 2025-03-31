@@ -383,4 +383,147 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new DecimalScalar(null, new BigDecimal("0"), Units.EMPTY), machine.getResult());
   }
+
+  @Test
+  void count_shouldReturnDistributionSize() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.count();
+
+    // Then
+    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void slice_shouldReturnSubsetOfDistribution() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+    EngineValue start = new IntScalar(null, 1L, Units.EMPTY);
+    EngineValue end = new IntScalar(null, 3L, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.push(start);
+    machine.push(end);
+    machine.slice();
+
+    // Then
+    RealizedDistribution result = (RealizedDistribution) machine.getResult();
+    assertEquals(Optional.of(2), result.getSize());
+  }
+
+  @Test
+  void sample_shouldReturnRandomValue() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.sample();
+
+    // Then
+    IntScalar result = (IntScalar) machine.getResult();
+    assertTrue(result.getAsInt() >= 1 && result.getAsInt() <= 5);
+  }
+
+  @Test
+  void max_shouldReturnMaximumValue() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.max();
+
+    // Then
+    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void mean_shouldReturnAverageValue() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.mean();
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("3.0"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void min_shouldReturnMinimumValue() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.min();
+
+    // Then
+    assertEquals(new IntScalar(null, 1L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void std_shouldReturnStandardDeviation() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.std();
+
+    // Then
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.4142) < 0.0001);
+  }
+
+  @Test
+  void sum_shouldReturnTotalValue() {
+    // Given
+    ArrayList<EngineValue> values = new ArrayList<>();
+    for (int i = 1; i <= 5; i++) {
+      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+    }
+    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
+
+    // When
+    machine.push(distribution);
+    machine.sum();
+
+    // Then
+    assertEquals(new IntScalar(null, 15L, Units.EMPTY), machine.getResult());
+  }
 }
