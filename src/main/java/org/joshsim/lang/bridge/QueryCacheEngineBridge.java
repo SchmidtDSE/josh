@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Converter;
@@ -36,9 +38,11 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    *     data.
    * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.s
    */
-  public QueryCacheEngineBridge(Simulation simulation, Replicate replicate, Converter converter) {
-    super(simulation, replicate, converter);
+  public QueryCacheEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
+      EntityPrototypeStore prototypeStore) {
+    super(simulation, replicate, converter, prototypeStore);
     cachedPatchesByGeometry = new HashMap<>();
   }
 

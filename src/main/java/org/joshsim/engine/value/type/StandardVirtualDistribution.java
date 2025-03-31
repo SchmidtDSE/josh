@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.value.type;
 
+import java.math.BigDecimal;
+
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
@@ -15,7 +17,10 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
  * <p>A standard or normal distribution as described by a mean and standard deviation but which
  * does not have a specific range.</p>
  */
-public abstract class StandardVirtualDistribution extends VirtualDistribution {
+public class StandardVirtualDistribution extends VirtualDistribution {
+  private final BigDecimal mu;
+  private final BigDecimal sigma;
+
 
   /**
    * Create a new standard virtual distribution.
@@ -26,4 +31,5 @@ public abstract class StandardVirtualDistribution extends VirtualDistribution {
   public StandardVirtualDistribution(EngineValueCaster caster, Units units) {
     super(caster, units);
   }
+
 }

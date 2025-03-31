@@ -9,6 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.Simulation;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
@@ -117,5 +119,13 @@ public interface EngineBridge {
    * @return Replicate being manipulated by this bridge.
    */
   Replicate getReplicate();
+
+  /**
+   * Get the prototype for an entity.
+   *
+   * @param name The name of the entity type like ForeverTree.
+   * @return The prototype for constructing that entity.
+   */
+  EntityPrototype getPrototype(String name);
 
 }

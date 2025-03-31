@@ -61,4 +61,9 @@ public class BooleanScalar extends Scalar {
     return innerValue;
   }
 
+  @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new BooleanScalar(getCaster(), getAsBoolean(), newUnits);
+  }
+
 }
