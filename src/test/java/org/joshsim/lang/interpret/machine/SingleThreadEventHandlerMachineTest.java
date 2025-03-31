@@ -153,16 +153,22 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void applyMap_shouldApplyMapOperation() {
     // Given
-    EngineValue value1 = new IntScalar(10);
-    EngineValue value2 = new IntScalar(2);
+    EngineValue operand = new IntScalar(5);      // Value to map
+    EngineValue fromLow = new IntScalar(0);      // Original range start
+    EngineValue fromHigh = new IntScalar(10);    // Original range end
+    EngineValue toLow = new IntScalar(0);        // Target range start
+    EngineValue toHigh = new IntScalar(100);     // Target range end
 
-    // When
-    machine.push(value1);
-    machine.push(value2);
-    machine.applyMap();
+    // When - stack order: operand, fromLow, fromHigh, toLow, toHigh
+    machine.push(operand);
+    machine.push(fromLow);
+    machine.push(fromHigh);
+    machine.push(toLow);
+    machine.push(toHigh);
+    machine.applyMap("linear");
 
-    // Then
-    assertEquals(new IntScalar(20), machine.getResult());
+    // Then - 5 is 50% of way from 0 to 10, so result should be 50 (50% of way from 0 to 100)
+    assertEquals(new IntScalar(50), machine.getResult());
   }
 
   @Test
