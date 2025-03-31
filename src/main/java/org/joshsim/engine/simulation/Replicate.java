@@ -14,6 +14,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.geometry.Geometry;
 
 
 /**
@@ -74,7 +75,19 @@ public class Replicate {
     if(query.getStep() == presentTimeStep.getStep()){
       throw new IllegalArgumentException("Querying current state is not allowed.");
     }
-    return pastTimeSteps.get(query.getStep()).getEntities(query.getGeometry());
+
+    TimeStep timeStep = pastTimeSteps.get(query.getStep());
+    if(timeStep == null){
+      throw new IllegalArgumentException("No TimeStep found for step number " + query.getStep());
+    }
+    assert timeStep.getStep() == query.getStep();
+
+    Optional<Geometry> geometry = query.getGeometry();
+    if (query.getGeometry().isPresent()) {  
+      return timeStep.getEntities(geometry.get());
+    } else {
+      return timeStep.getEntities();
+    }
   }
 
   /**
@@ -85,7 +98,7 @@ public class Replicate {
    * @param stepNumber of the timestep at which to return the patch.
    */
   Entity getPatchByKey(GeoKey key, long stepNumber) {
-    if(stepNumber == presentTimeStep.getStepNumber()){
+    if(stepNumber == presentTimeStep.getStep()){
       return presentTimeStep.getPatchByKey(key);
     }
     return pastTimeSteps.get(stepNumber).getPatchByKey(key);
