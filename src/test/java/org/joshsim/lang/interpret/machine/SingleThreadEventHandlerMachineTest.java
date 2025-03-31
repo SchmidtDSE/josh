@@ -527,5 +527,78 @@ public class SingleThreadEventHandlerMachineTest {
     assertEquals(new IntScalar(null, 15L, Units.EMPTY), machine.getResult());
   }
 
-  
+  @Test
+  void cast_shouldConvertIntToDecimal() {
+    // Given
+    EngineValue value = new IntScalar(null, 5L, Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.cast("decimal");
+
+    // Then
+    assertEquals(new DecimalScalar(null, new BigDecimal("5.0"), Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void cast_shouldConvertBooleanToInt() {
+    // Given
+    EngineValue value = new BooleanScalar(null, true, Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.cast("int");
+
+    // Then
+    assertEquals(new IntScalar(null, 1L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void bound_shouldConstrainValueWithinRange() {
+    // Given
+    EngineValue value = new IntScalar(null, 15L, Units.EMPTY);
+    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
+    EngineValue max = new IntScalar(null, 10L, Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.push(min);
+    machine.push(max);
+    machine.bound(true, true);
+
+    // Then
+    assertEquals(new IntScalar(null, 10L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void bound_shouldNotConstrainValueWithinRange() {
+    // Given
+    EngineValue value = new IntScalar(null, 5L, Units.EMPTY);
+    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
+    EngineValue max = new IntScalar(null, 10L, Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.push(min);
+    machine.push(max);
+    machine.bound(true, true);
+
+    // Then
+    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
+  }
+
+  @Test
+  void bound_shouldConstrainValueWithLowerBoundOnly() {
+    // Given
+    EngineValue value = new IntScalar(null, -5L, Units.EMPTY);
+    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
+
+    // When
+    machine.push(value);
+    machine.push(min);
+    machine.bound(true, false);
+
+    // Then
+    assertEquals(new IntScalar(null, 0L, Units.EMPTY), machine.getResult());
+  }
 }
