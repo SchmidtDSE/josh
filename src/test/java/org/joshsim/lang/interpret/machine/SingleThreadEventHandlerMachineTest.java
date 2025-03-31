@@ -601,4 +601,43 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new IntScalar(null, 0L, Units.EMPTY), machine.getResult());
   }
+
+  @Test
+  void createEntity_shouldCreateSingleEntity() {
+    // Given
+    EngineValue count = new IntScalar(null, 1L, Units.EMPTY);
+    machine.push(count);
+
+    // When
+    machine.createEntity("agent");
+
+    // Then
+    assertTrue(machine.getResult() instanceof Scalar);
+  }
+
+  @Test
+  void createEntity_shouldCreateMultipleEntities() {
+    // Given
+    EngineValue count = new IntScalar(null, 3L, Units.EMPTY);
+    machine.push(count);
+
+    // When
+    machine.createEntity("patch");
+
+    // Then
+    assertTrue(machine.getResult() instanceof Distribution);
+  }
+
+  @Test
+  void executeSpatialQuery_shouldReturnQueryResults() {
+    // Given
+    EngineValue distance = new DecimalScalar(null, new BigDecimal("10.0"), Units.EMPTY);
+    machine.push(distance);
+
+    // When
+    machine.executeSpatialQuery(value -> value);
+
+    // Then
+    assertNotNull(machine.getResult());
+  }
 }
