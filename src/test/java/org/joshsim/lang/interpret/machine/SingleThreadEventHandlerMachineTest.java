@@ -305,4 +305,82 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     assertEquals(new BooleanScalar(true), machine.getResult());
   }
+
+  @Test
+  void abs_shouldCalculateAbsoluteValue() {
+    // Given
+    EngineValue value = new IntScalar(-5);
+
+    // When
+    machine.push(value);
+    machine.abs();
+
+    // Then
+    assertEquals(new IntScalar(5), machine.getResult());
+  }
+
+  @Test
+  void ceil_shouldRoundUpToNearestInteger() {
+    // Given
+    EngineValue value = new IntScalar(5);
+
+    // When
+    machine.push(value);
+    machine.ceil();
+
+    // Then
+    assertEquals(new IntScalar(5), machine.getResult());
+  }
+
+  @Test
+  void floor_shouldRoundDownToNearestInteger() {
+    // Given
+    EngineValue value = new IntScalar(5);
+
+    // When
+    machine.push(value);
+    machine.floor();
+
+    // Then
+    assertEquals(new IntScalar(5), machine.getResult());
+  }
+
+  @Test
+  void round_shouldRoundToNearestInteger() {
+    // Given
+    EngineValue value = new IntScalar(5);
+
+    // When
+    machine.push(value);
+    machine.round();
+
+    // Then
+    assertEquals(new IntScalar(5), machine.getResult());
+  }
+
+  @Test
+  void log10_shouldCalculateBase10Logarithm() {
+    // Given
+    EngineValue value = new IntScalar(100);
+
+    // When
+    machine.push(value);
+    machine.log10();
+
+    // Then
+    assertEquals(new IntScalar(2), machine.getResult());
+  }
+
+  @Test
+  void ln_shouldCalculateNaturalLogarithm() {
+    // Given
+    EngineValue value = new IntScalar(1);
+
+    // When
+    machine.push(value);
+    machine.ln();
+
+    // Then
+    assertEquals(new IntScalar(0), machine.getResult());
+  }
 }
