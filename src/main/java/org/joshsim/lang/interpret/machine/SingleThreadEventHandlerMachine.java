@@ -99,10 +99,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
+    EngineValue zero = valueFactory.build(BigDecimal.ZERO, EMPTY_UNITS);
+
     EngineValue fromSpan = fromHigh.subtract(fromLow);
     EngineValue toSpan = toHigh.subtract(toLow);
     EngineValue operandDiff = operand.subtract(fromLow);
-    EngineValue percent = operandDiff.divide(fromSpan);
+    EngineValue percent = operandDiff.add(zero).divide(fromSpan);
     EngineValue result = toSpan.multiply(percent).add(toLow);
 
     memory.push(result);

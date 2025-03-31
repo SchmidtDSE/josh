@@ -345,26 +345,26 @@ class RealizedDistributionTest {
 
   @Test
   void testGetStd() {
-    // Current implementation returns null
-    assertNull(distribution.getStd());
+    assertEquals(
+        1.4142,
+        distribution.getStd().orElseThrow().getAsDecimal().doubleValue(),
+        0.0001
+    );
   }
 
   @Test
   void testGetMin() {
-    // Current implementation returns null
-    assertNull(distribution.getMin());
+    assertEquals(1, distribution.getMin().orElseThrow().getAsInt());
   }
 
   @Test
   void testGetMax() {
-    // Current implementation returns null
-    assertNull(distribution.getMax());
+    assertEquals(5, distribution.getMax().orElseThrow().getAsInt());
   }
 
   @Test
   void testGetSum() {
-    // Current implementation returns null
-    assertNull(distribution.getSum());
+    assertEquals(1 + 2 + 3 + 4 + 5, distribution.getSum().orElseThrow().getAsInt());
   }
 
   @Test

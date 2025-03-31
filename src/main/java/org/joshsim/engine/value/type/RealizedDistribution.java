@@ -42,7 +42,7 @@ public class RealizedDistribution extends Distribution {
       Units units
   ) {
     super(caster, units);
-    if (values.size() == 0) {
+    if (values.isEmpty()) {
       throw new IllegalArgumentException("Cannot create a distribution with no values.");
     }
     this.values = values;
@@ -239,22 +239,59 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getStd() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    double mean = stats.get().getAverage();
+    double variance = values.stream()
+        .map(EngineValue::getAsScalar)
+        .map(Scalar::getAsDecimal)
+        .mapToDouble(BigDecimal::doubleValue)
+        .map(value -> Math.pow(value - mean, 2))
+        .average()
+        .orElse(0.0);
+    double stdDev = Math.sqrt(variance);
+    DecimalScalar result = new DecimalScalar(getCaster(), BigDecimal.valueOf(stdDev), getUnits());
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getMin() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getMin()),
+        getUnits()
+    );
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getMax() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getMax()),
+        getUnits()
+    );
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getSum() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getSum()),
+        getUnits()
+    );
+    return Optional.of(result);
   }
 
   /**

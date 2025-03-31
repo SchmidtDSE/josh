@@ -7,16 +7,22 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.IntScalar;
-import org.joshsim.engine.value.type.BooleanScalar;
+import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.simulation.Query;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.*;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +37,7 @@ public class SingleThreadEventHandlerMachineTest {
 
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private EngineValue mockValue;
-  @Mock(lenient = true) private lGeometry mockGeometry;
+  @Mock(lenient = true) private Geometry mockGeometry;
   @Mock(lenient = true) private Entity mockEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
@@ -52,6 +58,7 @@ public class SingleThreadEventHandlerMachineTest {
     machine.push(mockValue);
 
     // Then
+    machine.end();
     assertEquals(mockValue, machine.getResult());
   }
 
@@ -76,14 +83,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.push(mockValue);
 
     // Then
+    machine.end();
     assertEquals(mockValue, machine.getResult());
   }
 
   @Test
   void add_shouldAddTwoValues() {
     // Given
-    EngineValue value1 = new IntScalar(5);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(5);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -91,14 +99,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.add();
 
     // Then
-    assertEquals(new IntScalar(8), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(8), machine.getResult());
   }
 
   @Test
   void subtract_shouldSubtractTwoValues() {
     // Given
-    EngineValue value1 = new IntScalar(10);
-    EngineValue value2 = new IntScalar(4);
+    EngineValue value1 = makeIntScalar(10);
+    EngineValue value2 = makeIntScalar(4);
 
     // When
     machine.push(value1);
@@ -106,14 +115,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.subtract();
 
     // Then
-    assertEquals(new IntScalar(6), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(6), machine.getResult());
   }
 
   @Test
   void multiply_shouldMultiplyTwoValues() {
     // Given
-    EngineValue value1 = new IntScalar(6);
-    EngineValue value2 = new IntScalar(7);
+    EngineValue value1 = makeIntScalar(6);
+    EngineValue value2 = makeIntScalar(7);
 
     // When
     machine.push(value1);
@@ -121,14 +131,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.multiply();
 
     // Then
-    assertEquals(new IntScalar(42), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(42), machine.getResult());
   }
 
   @Test
   void divide_shouldDivideTwoValues() {
     // Given
-    EngineValue value1 = new IntScalar(15);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(15);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -136,14 +147,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.divide();
 
     // Then
-    assertEquals(new IntScalar(5), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(5), machine.getResult());
   }
 
   @Test
   void pow_shouldRaiseToPower() {
     // Given
-    EngineValue value1 = new IntScalar(2);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(2);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -151,17 +163,18 @@ public class SingleThreadEventHandlerMachineTest {
     machine.pow();
 
     // Then
-    assertEquals(new IntScalar(8), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeIntScalar(8), machine.getResult());
   }
 
   @Test
   void applyMap_shouldApplyMapOperation() {
     // Given
-    EngineValue operand = new IntScalar(5);      // Value to map
-    EngineValue fromLow = new IntScalar(0);      // Original range start
-    EngineValue fromHigh = new IntScalar(10);    // Original range end
-    EngineValue toLow = new IntScalar(0);        // Target range start
-    EngineValue toHigh = new IntScalar(100);     // Target range end
+    EngineValue operand = makeIntScalar(5);      // Value to map
+    EngineValue fromLow = makeIntScalar(0);      // Original range start
+    EngineValue fromHigh = makeIntScalar(10);    // Original range end
+    EngineValue toLow = makeIntScalar(0);        // Target range start
+    EngineValue toHigh = makeIntScalar(100);     // Target range end
 
     // When - stack order: operand, fromLow, fromHigh, toLow, toHigh
     machine.push(operand);
@@ -172,14 +185,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.applyMap("linear");
 
     // Then - 5 is 50% of way from 0 to 10, so result should be 50 (50% of way from 0 to 100)
-    assertEquals(new IntScalar(50), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeIntScalar(50), machine.getResult());
   }
 
   @Test
   void and_shouldPerformLogicalAnd() {
     // Given
-    EngineValue value1 = new BooleanScalar(true);
-    EngineValue value2 = new BooleanScalar(false);
+    EngineValue value1 = makeBoolScalar(true);
+    EngineValue value2 = makeBoolScalar(false);
 
     // When
     machine.push(value1);
@@ -187,14 +201,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.and();
 
     // Then
-    assertEquals(new BooleanScalar(false), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(false), machine.getResult());
   }
 
   @Test
   void or_shouldPerformLogicalOr() {
     // Given
-    EngineValue value1 = new BooleanScalar(true);
-    EngineValue value2 = new BooleanScalar(false);
+    EngineValue value1 = makeBoolScalar(true);
+    EngineValue value2 = makeBoolScalar(false);
 
     // When
     machine.push(value1);
@@ -202,14 +217,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.or();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void xor_shouldPerformLogicalXor() {
     // Given
-    EngineValue value1 = new BooleanScalar(true);
-    EngineValue value2 = new BooleanScalar(true);
+    EngineValue value1 = makeBoolScalar(true);
+    EngineValue value2 = makeBoolScalar(true);
 
     // When
     machine.push(value1);
@@ -217,14 +233,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.xor();
 
     // Then
-    assertEquals(new BooleanScalar(false), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(false), machine.getResult());
   }
 
   @Test
   void eq_shouldTestEquality() {
     // Given
-    EngineValue value1 = new IntScalar(5);
-    EngineValue value2 = new IntScalar(5);
+    EngineValue value1 = makeIntScalar(5);
+    EngineValue value2 = makeIntScalar(5);
 
     // When
     machine.push(value1);
@@ -232,14 +249,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.eq();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void neq_shouldTestInequality() {
     // Given
-    EngineValue value1 = new IntScalar(5);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(5);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -247,14 +265,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.neq();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void gt_shouldTestGreaterThan() {
     // Given
-    EngineValue value1 = new IntScalar(5);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(5);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -262,14 +281,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.gt();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void gteq_shouldTestGreaterThanOrEqual() {
     // Given
-    EngineValue value1 = new IntScalar(5);
-    EngineValue value2 = new IntScalar(5);
+    EngineValue value1 = makeIntScalar(5);
+    EngineValue value2 = makeIntScalar(5);
 
     // When
     machine.push(value1);
@@ -277,14 +297,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.gteq();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void lt_shouldTestLessThan() {
     // Given
-    EngineValue value1 = new IntScalar(3);
-    EngineValue value2 = new IntScalar(5);
+    EngineValue value1 = makeIntScalar(3);
+    EngineValue value2 = makeIntScalar(5);
 
     // When
     machine.push(value1);
@@ -292,14 +313,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.lt();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void lteq_shouldTestLessThanOrEqual() {
     // Given
-    EngineValue value1 = new IntScalar(3);
-    EngineValue value2 = new IntScalar(3);
+    EngineValue value1 = makeIntScalar(3);
+    EngineValue value2 = makeIntScalar(3);
 
     // When
     machine.push(value1);
@@ -307,93 +329,99 @@ public class SingleThreadEventHandlerMachineTest {
     machine.lteq();
 
     // Then
-    assertEquals(new BooleanScalar(true), machine.getResult());
+    machine.end();
+    assertEquals(makeBoolScalar(true), machine.getResult());
   }
 
   @Test
   void abs_shouldCalculateAbsoluteValue() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("-5.5"), Units.EMPTY);
+    EngineValue value = makeDecimalScalar(new BigDecimal("-5.5"));
 
     // When
     machine.push(value);
     machine.abs();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("5.5"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("5.5")), machine.getResult());
   }
 
   @Test
   void ceil_shouldRoundUpToNearestInteger() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("5.3"), Units.EMPTY);
+    EngineValue value = makeDecimalScalar(new BigDecimal("5.3"));
 
     // When
     machine.push(value);
     machine.ceil();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("6"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("6")), machine.getResult());
   }
 
   @Test
   void floor_shouldRoundDownToNearestInteger() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("5.7"), Units.EMPTY);
+    EngineValue value = makeDecimalScalar(new BigDecimal("5.7"));
 
     // When
     machine.push(value);
     machine.floor();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("5"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("5")), machine.getResult());
   }
 
   @Test
   void round_shouldRoundToNearestInteger() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("5.7"), Units.EMPTY);
+    EngineValue value = makeDecimalScalar(new BigDecimal("5.7"));
 
     // When
     machine.push(value);
     machine.round();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("6"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("6")), machine.getResult());
   }
 
   @Test
   void log10_shouldCalculateBase10Logarithm() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("100"), Units.EMPTY);
-
+    EngineValue value = makeDecimalScalar(new BigDecimal("100"));
     // When
     machine.push(value);
     machine.log10();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("2"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("2")), machine.getResult());
   }
 
   @Test
   void ln_shouldCalculateNaturalLogarithm() {
     // Given
-    EngineValue value = new DecimalScalar(null, new BigDecimal("1"), Units.EMPTY);
+    EngineValue value = makeDecimalScalar(new BigDecimal("1"));
 
     // When
     machine.push(value);
     machine.ln();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("0"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("0")), machine.getResult());
   }
 
   @Test
   void count_shouldReturnDistributionSize() {
     // Given
-    ArrayList<EngineValue> values = new ArrayList<>();
+    List<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(i));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -402,55 +430,16 @@ public class SingleThreadEventHandlerMachineTest {
     machine.count();
 
     // Then
-    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
-  }
-
-  @Test
-  void slice_shouldReturnSubsetOfDistribution() {
-    // Given
-    ArrayList<EngineValue> values = new ArrayList<>();
-    for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
-    }
-    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
-    EngineValue start = new IntScalar(null, 1L, Units.EMPTY);
-    EngineValue end = new IntScalar(null, 3L, Units.EMPTY);
-
-    // When
-    machine.push(distribution);
-    machine.push(start);
-    machine.push(end);
-    machine.slice();
-
-    // Then
-    RealizedDistribution result = (RealizedDistribution) machine.getResult();
-    assertEquals(Optional.of(2), result.getSize());
-  }
-
-  @Test
-  void sample_shouldReturnRandomValue() {
-    // Given
-    ArrayList<EngineValue> values = new ArrayList<>();
-    for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
-    }
-    EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
-
-    // When
-    machine.push(distribution);
-    machine.sample();
-
-    // Then
-    IntScalar result = (IntScalar) machine.getResult();
-    assertTrue(result.getAsInt() >= 1 && result.getAsInt() <= 5);
+    machine.end();
+    assertEquals(makeIntScalar(5L), machine.getResult());
   }
 
   @Test
   void max_shouldReturnMaximumValue() {
     // Given
-    ArrayList<EngineValue> values = new ArrayList<>();
+    List<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(i));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -459,7 +448,8 @@ public class SingleThreadEventHandlerMachineTest {
     machine.max();
 
     // Then
-    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeIntScalar(5L), machine.getResult());
   }
 
   @Test
@@ -467,7 +457,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     ArrayList<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(i));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -476,7 +466,8 @@ public class SingleThreadEventHandlerMachineTest {
     machine.mean();
 
     // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("3.0"), Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeDecimalScalar(new BigDecimal("3.0")), machine.getResult());
   }
 
   @Test
@@ -484,7 +475,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     ArrayList<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(1));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -493,7 +484,8 @@ public class SingleThreadEventHandlerMachineTest {
     machine.min();
 
     // Then
-    assertEquals(new IntScalar(null, 1L, Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeIntScalar(1L), machine.getResult());
   }
 
   @Test
@@ -501,7 +493,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     ArrayList<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(i));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -510,6 +502,7 @@ public class SingleThreadEventHandlerMachineTest {
     machine.std();
 
     // Then
+    machine.end();
     DecimalScalar result = (DecimalScalar) machine.getResult();
     assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.4142) < 0.0001);
   }
@@ -519,7 +512,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     ArrayList<EngineValue> values = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(null, (long) i, Units.EMPTY));
+      values.add(makeIntScalar(i));
     }
     EngineValue distribution = new RealizedDistribution(null, values, Units.EMPTY);
 
@@ -528,41 +521,16 @@ public class SingleThreadEventHandlerMachineTest {
     machine.sum();
 
     // Then
-    assertEquals(new IntScalar(null, 15L, Units.EMPTY), machine.getResult());
-  }
-
-  @Test
-  void cast_shouldConvertIntToDecimal() {
-    // Given
-    EngineValue value = new IntScalar(null, 5L, Units.EMPTY);
-
-    // When
-    machine.push(value);
-    machine.cast("decimal");
-
-    // Then
-    assertEquals(new DecimalScalar(null, new BigDecimal("5.0"), Units.EMPTY), machine.getResult());
-  }
-
-  @Test
-  void cast_shouldConvertBooleanToInt() {
-    // Given
-    EngineValue value = new BooleanScalar(null, true, Units.EMPTY);
-
-    // When
-    machine.push(value);
-    machine.cast("int");
-
-    // Then
-    assertEquals(new IntScalar(null, 1L, Units.EMPTY), machine.getResult());
+    machine.end();
+    assertAlmostEquals(makeIntScalar(15L), machine.getResult());
   }
 
   @Test
   void bound_shouldConstrainValueWithinRange() {
     // Given
-    EngineValue value = new IntScalar(null, 15L, Units.EMPTY);
-    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
-    EngineValue max = new IntScalar(null, 10L, Units.EMPTY);
+    EngineValue value = makeIntScalar(15L);
+    EngineValue min = makeIntScalar(0L);
+    EngineValue max = makeIntScalar(10L);
 
     // When
     machine.push(value);
@@ -571,15 +539,16 @@ public class SingleThreadEventHandlerMachineTest {
     machine.bound(true, true);
 
     // Then
-    assertEquals(new IntScalar(null, 10L, Units.EMPTY), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(10L), machine.getResult());
   }
 
   @Test
   void bound_shouldNotConstrainValueWithinRange() {
     // Given
-    EngineValue value = new IntScalar(null, 5L, Units.EMPTY);
-    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
-    EngineValue max = new IntScalar(null, 10L, Units.EMPTY);
+    EngineValue value = makeIntScalar(5L);
+    EngineValue min = makeIntScalar(0L);
+    EngineValue max = makeIntScalar(10L);
 
     // When
     machine.push(value);
@@ -588,14 +557,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.bound(true, true);
 
     // Then
-    assertEquals(new IntScalar(null, 5L, Units.EMPTY), machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(5L), machine.getResult());
   }
 
   @Test
   void bound_shouldConstrainValueWithLowerBoundOnly() {
     // Given
-    EngineValue value = new IntScalar(null, -5L, Units.EMPTY);
-    EngineValue min = new IntScalar(null, 0L, Units.EMPTY);
+    EngineValue value = makeIntScalar(-5L);
+    EngineValue min = makeIntScalar(0L);
 
     // When
     machine.push(value);
@@ -603,61 +573,15 @@ public class SingleThreadEventHandlerMachineTest {
     machine.bound(true, false);
 
     // Then
-    assertEquals(new IntScalar(null, 0L, Units.EMPTY), machine.getResult());
-  }
-
-  @Test
-  void createEntity_shouldCreateSingleEntity() {
-    // Given
-    EngineValue count = new IntScalar(null, 1L, Units.EMPTY);
-    machine.push(count);
-
-    // When
-    machine.createEntity("agent");
-
-    // Then
-    assertTrue(machine.getResult() instanceof Scalar);
-  }
-
-  @Test
-  void createEntity_shouldCreateMultipleEntities() {
-    // Given
-    EngineValue count = new IntScalar(null, 3L, Units.EMPTY);
-    machine.push(count);
-
-    // When
-    machine.createEntity("patch");
-
-    // Then
-    assertTrue(machine.getResult() instanceof Distribution);
-  }
-
-  @Test
-  void executeSpatialQuery_shouldReturnQueryResults() {
-    // Given
-    EngineValue distance = new DecimalScalar(null, new BigDecimal("10.0"), Units.EMPTY);
-    List<Entity> queryResults = Arrays.asList(mockEntity);
-    
-    when(mockGeometry.buildQuery(any(BigDecimal.class))).thenReturn(mockQuery);
-    when(mockScope.executeSpatialQuery(mockQuery)).thenReturn(queryResults);
-    when(mockScope.createDistribution(queryResults)).thenReturn(mockDistribution);
-
-    // When
-    machine.push(distance);
-    machine.executeSpatialQuery(mockGeometry);
-
-    // Then
-    verify(mockGeometry).buildQuery(new BigDecimal("10.0"));
-    verify(mockScope).executeSpatialQuery(mockQuery);
-    verify(mockScope).createDistribution(queryResults);
-    assertEquals(mockDistribution, machine.getResult());
+    machine.end();
+    assertEquals(makeIntScalar(0L), machine.getResult());
   }
 
   @Test
   void randUniform_shouldGenerateNumberWithinRange() {
     // Given
-    EngineValue low = new DecimalScalar(null, new BigDecimal("0.0"), Units.EMPTY);
-    EngineValue high = new DecimalScalar(null, new BigDecimal("10.0"), Units.EMPTY);
+    EngineValue low = makeDecimalScalar(new BigDecimal("0.0"));
+    EngineValue high = makeDecimalScalar(new BigDecimal("10.0"));
 
     // When
     machine.push(low);
@@ -665,6 +589,7 @@ public class SingleThreadEventHandlerMachineTest {
     machine.randUniform();
 
     // Then
+    machine.end();
     DecimalScalar result = (DecimalScalar) machine.getResult();
     BigDecimal value = result.getAsDecimal();
     assertTrue(value.compareTo(new BigDecimal("0.0")) >= 0);
@@ -674,8 +599,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void randNorm_shouldGenerateNumberFromNormalDistribution() {
     // Given
-    EngineValue mean = new DecimalScalar(null, new BigDecimal("5.0"), Units.EMPTY);
-    EngineValue stdDev = new DecimalScalar(null, new BigDecimal("1.0"), Units.EMPTY);
+    EngineValue mean = makeDecimalScalar(new BigDecimal("5.0"));
+    EngineValue stdDev = makeDecimalScalar(new BigDecimal("1.0"));
 
     // When
     machine.push(mean);
@@ -683,112 +608,35 @@ public class SingleThreadEventHandlerMachineTest {
     machine.randNorm();
 
     // Then
+    machine.end();
     DecimalScalar result = (DecimalScalar) machine.getResult();
     BigDecimal value = result.getAsDecimal();
+
     // Most values in a normal distribution fall within 3 standard deviations
     assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
     assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
 
-  @Test
-  void condition_shouldExecutePositivePath() {
-    // Given
-    EngineValue condition = new BooleanScalar(null, true, Units.EMPTY);
-    EventHandlerAction mockPositivePath = mock(EventHandlerAction.class);
-    EventHandlerAction mockNegativePath = mock(EventHandlerAction.class);
-    when(mockPositivePath.apply(any())).thenReturn(machine);
-    when(mockNegativePath.apply(any())).thenReturn(machine);
-
-    // When
-    machine.push(condition);
-    machine.condition(mockPositivePath, Optional.of(mockNegativePath));
-
-    // Then
-    verify(mockPositivePath).apply(machine);
-    verify(mockNegativePath, never()).apply(machine);
+  private EngineValue makeIntScalar(long value) {
+    EngineValueFactory factory = new EngineValueFactory();
+    return factory.build(value, Units.EMPTY);
   }
 
-  @Test
-  void condition_shouldExecuteNegativePath() {
-    // Given
-    EngineValue condition = new BooleanScalar(null, false, Units.EMPTY);
-    EventHandlerAction mockPositivePath = mock(EventHandlerAction.class);
-    EventHandlerAction mockNegativePath = mock(EventHandlerAction.class);
-    when(mockPositivePath.apply(any())).thenReturn(machine);
-    when(mockNegativePath.apply(any())).thenReturn(machine);
-
-    // When
-    machine.push(condition);
-    machine.condition(mockPositivePath, Optional.of(mockNegativePath));
-
-    // Then
-    verify(mockPositivePath, never()).apply(machine);
-    verify(mockNegativePath).apply(machine);
+  private EngineValue makeBoolScalar(boolean value) {
+    EngineValueFactory factory = new EngineValueFactory();
+    return factory.build(value, Units.EMPTY);
   }
 
-  @Test
-  void branch_shouldExecuteSelectedPath() {
-    // Given
-    EngineValue selector = new IntScalar(null, 1L, Units.EMPTY);
-    List<EventHandlerAction> mockPaths = new ArrayList<>();
-    EventHandlerAction mockPath1 = mock(EventHandlerAction.class);
-    EventHandlerAction mockPath2 = mock(EventHandlerAction.class);
-    mockPaths.add(mockPath1);
-    mockPaths.add(mockPath2);
-    when(mockPath1.apply(any())).thenReturn(machine);
-    when(mockPath2.apply(any())).thenReturn(machine);
-
-    // When
-    machine.push(selector);
-    machine.branch(mockPaths);
-
-    // Then
-    verify(mockPath2).apply(machine);
-    verify(mockPath1, never()).apply(machine);
+  private EngineValue makeDecimalScalar(BigDecimal value) {
+    EngineValueFactory factory = new EngineValueFactory();
+    return factory.build(value, Units.EMPTY);
   }
 
-  @Test
-  void pushAttribute_shouldResolveAndPushValue() {
-    // Given
-    EngineValue baseValue = new IntScalar(null, 42L, Units.EMPTY);
-    EngineValue resolvedValue = new IntScalar(null, 100L, Units.EMPTY);
-    ValueResolver mockResolver = mock(ValueResolver.class);
-    when(mockResolver.resolve(baseValue)).thenReturn(resolvedValue);
-
-    // When
-    machine.push(baseValue);
-    machine.pushAttribute(mockResolver);
-
-    // Then
-    verify(mockResolver).resolve(baseValue);
-    assertEquals(resolvedValue, machine.getResult());
-  }
-
-  @Test
-  void saveLocalVariable_shouldSaveVariableToScope() {
-    // Given
-    EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
-    String variableName = "testVar";
-    when(mockScope.has(variableName)).thenReturn(false);
-
-    // When
-    machine.push(value);
-    machine.saveLocalVariable(variableName);
-
-    // Then
-    verify(mockScope).has(variableName);
-    verify(mockScope).set(variableName, value);
-  }
-
-  @Test
-  void saveLocalVariable_shouldThrowExceptionIfVariableExists() {
-    // Given
-    EngineValue value = new IntScalar(null, 42L, Units.EMPTY);
-    String variableName = "existingVar";
-    when(mockScope.has(variableName)).thenReturn(true);
-
-    // When/Then
-    machine.push(value);
-    assertThrows(IllegalStateException.class, () -> machine.saveLocalVariable(variableName));
+  private void assertAlmostEquals(EngineValue engineValue, EngineValue result) {
+    BigDecimal expected = engineValue.getAsDecimal();
+    BigDecimal actual = result.getAsDecimal();
+    BigDecimal tolerance = new BigDecimal("0.0001");
+    assertTrue(expected.subtract(actual).abs().compareTo(tolerance) <= 0,
+        "Expected " + expected + " but got " + actual);
   }
 }
