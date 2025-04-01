@@ -46,7 +46,7 @@ public interface Replicate {
   /**
    * Query patches across space and / or time based on the provided query description.
    *
-   * @param query the query defining spatial and / or temporal bounds.
+   * @param queryn the query defining spatial and / or temporal bounds.
    * @return an iterable of matching patches as immutable entities.
    */
   Iterable<Entity> query(Query query);
@@ -57,7 +57,7 @@ public interface Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Patch getPatchByKey(GeoKey key, long stepNumber);
+  Entity getPatchByKey(GeoKey key, long stepNumber);
 
   /**
    * Get all patches in current state.
