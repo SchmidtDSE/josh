@@ -40,7 +40,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param prototypeStore The set of prototypes to use to build new entities.s
    */
   public QueryCacheEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
-      EntityPrototypeStore prototypeStore) {
+                                EntityPrototypeStore prototypeStore) {
     super(simulation, replicate, converter, prototypeStore);
     cachedPatchesByGeometry = new HashMap<>();
   }
