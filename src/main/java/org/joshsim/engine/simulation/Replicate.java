@@ -30,9 +30,9 @@ public class Replicate {
   /**
    * Construct a replicate with the given entity builders.
    *
-   * @param entityBuilders the entity builders to use for creating entities.
+   * @param patches the patches to be included in the replicate.
    */
-  public Replicate(HashMap<GeoKey, Patch> patches){
+  public Replicate(HashMap<GeoKey, Patch> patches) {
     this.presentTimeStep = patches;
   }
 
@@ -41,7 +41,7 @@ public class Replicate {
    *
    * @return the current step number.
    */
-  long getStepNumber(){
+  public long getStepNumber() {
     return stepNumber;
   }
 
@@ -54,12 +54,12 @@ public class Replicate {
    * @param stepNumber the number of the step to have current state saved as.
    * @throws IllegalArgumentException if a TimeStep of the given step number already exists.
    */
-  void saveTimeStep(long stepNumber){
-    if(pastTimeSteps.containsKey(stepNumber)){
+  public void saveTimeStep(long stepNumber) {
+    if (pastTimeSteps.containsKey(stepNumber)) {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
     HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
-    for(Patch patch : presentTimeStep.values()){
+    for (Patch patch : presentTimeStep.values()) {
       frozenPatches.put(patch.getKey().orElseThrow(), patch.freeze());
     }
     TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
@@ -72,7 +72,7 @@ public class Replicate {
    * @param stepNumber the unique step number corresponding to the TimeStep to retrieve.
    * @return an Optional containing the time step if found, or empty if not found.
    */
-  Optional<TimeStep> getTimeStep(long stepNumber){
+  public Optional<TimeStep> getTimeStep(long stepNumber) {
     return Optional.ofNullable(pastTimeSteps.get(stepNumber));
   }
 
@@ -83,13 +83,13 @@ public class Replicate {
    * @param query the query defining spatial and / or temporal bounds.
    * @return an iterable of matching patches as immutable entities.
    */
-  Iterable<Entity> query(Query query) {
-    if(query.getStep() == getStepNumber()){
+  public Iterable<Entity> query(Query query) {
+    if (query.getStep() == getStepNumber()) {
       throw new IllegalArgumentException("Querying current state is not allowed.");
     }
 
     TimeStep timeStep = pastTimeSteps.get(query.getStep());
-    if(timeStep == null){
+    if (timeStep == null) {
       throw new IllegalArgumentException("No TimeStep found for step number " + query.getStep());
     }
     assert timeStep.getStep() == query.getStep();
@@ -109,8 +109,8 @@ public class Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  Patch getPatchByKey(GeoKey key, long stepNumber) {
-    if(stepNumber != getStepNumber()){
+  public Patch getPatchByKey(GeoKey key, long stepNumber) {
+    if (stepNumber != getStepNumber()) {
       throw new IllegalArgumentException("Cannot lookup Patch at step number " + stepNumber);
     }
     return presentTimeStep.get(key);
@@ -122,7 +122,7 @@ public class Replicate {
    *
    * @return Iterable over mutable Patches.
    */
-  Iterable<Patch> getCurrentPatches(){
+  public Iterable<Patch> getCurrentPatches() {
     return presentTimeStep.values();
   }
 }
