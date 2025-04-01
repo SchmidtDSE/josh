@@ -31,11 +31,15 @@ public abstract class VirtualDistribution extends Distribution {
     super(caster, units);
   }
 
-  @Override
-  public Scalar sample() {
-    throw new NotImplementedError("Implementations of VirtualDistribution must override"
-        + " the sample() method.");
-  }
+  /**
+   * Samples a single value from the virtual distribution. Implementations
+   * should provide a way to sample a scalar value from the distribution,
+   * everything else is handled by the parent class assuming that this method
+   * is implemented correctly.
+   *
+   * @return A sampled scalar value.
+   */
+  public abstract Scalar sample();
 
   @Override
   public Distribution sampleMultiple(long count, boolean withReplacement) {
@@ -147,7 +151,7 @@ public abstract class VirtualDistribution extends Distribution {
       "Cannot calculate sum of a virtual distribution, unless defined mathematically."
     );
   }
-  
+
   @Override
   public Optional<Integer> getSize() {
     return Optional.empty();

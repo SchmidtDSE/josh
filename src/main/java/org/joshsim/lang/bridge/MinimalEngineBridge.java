@@ -9,12 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
-<<<<<<< HEAD
-=======
-import org.joshsim.engine.entity.base.Simulation;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
->>>>>>> feat/pda-try-2
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;

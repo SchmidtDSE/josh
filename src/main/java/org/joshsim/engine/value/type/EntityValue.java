@@ -8,6 +8,7 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
@@ -30,6 +31,11 @@ public class EntityValue extends EngineValue {
   public EntityValue(EngineValueCaster caster, Entity innerValue) {
     super(caster, new Units(innerValue.getName()));
     this.innerValue = innerValue;
+  }
+
+  @Override
+  public Optional<Integer> getSize() {
+    return Optional.of(1);
   }
 
   @Override

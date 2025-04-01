@@ -9,7 +9,6 @@ package org.joshsim.lang.bridge;
 import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.Simulation;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
