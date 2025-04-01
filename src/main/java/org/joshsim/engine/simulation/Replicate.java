@@ -46,7 +46,7 @@ public interface Replicate {
   /**
    * Query patches across space and / or time based on the provided query description.
    *
-   * @param queryn the query defining spatial and / or temporal bounds.
+   * @param query the query defining spatial and / or temporal bounds.
    * @return an iterable of matching patches as immutable entities.
    */
   Iterable<Entity> query(Query query);
