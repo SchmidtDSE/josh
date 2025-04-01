@@ -786,5 +786,5 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       memory.push(convert(subject, newUnits));
     }
   }
-  
+
 }

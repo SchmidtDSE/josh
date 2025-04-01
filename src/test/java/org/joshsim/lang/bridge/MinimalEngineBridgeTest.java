@@ -17,20 +17,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
-<<<<<<< HEAD
-=======
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
->>>>>>> origin/dev
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
-<<<<<<< HEAD
-import org.joshsim.engine.value.converter.Conversion;
-=======
->>>>>>> origin/dev
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
