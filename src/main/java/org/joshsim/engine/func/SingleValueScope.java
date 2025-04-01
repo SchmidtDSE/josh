@@ -19,8 +19,6 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SingleValueScope implements Scope {
 
   private final EngineValue value;
-  private final Converter converter;
-  private final EntityPrototypeStore prototypes;
 
   /**
    * Create a scope containing only current.
@@ -29,22 +27,6 @@ public class SingleValueScope implements Scope {
    */
   public SingleValueScope(EngineValue value) {
     this.value = value;
-
-    converter = new EmptyConverter();
-    prototypes = new EmptyEntityPrototypeStore();
-  }
-
-  /**
-   * Create a scope containing only current with access to conversion and other entity prototypes.
-   *
-   * @param value EngineValue to use for current.
-   * @param converter Converter to use to convert between values in operations on variables in this
-   *     scope.
-   */
-  public SingleValueScope(EngineValue value, Converter converter, EntityPrototypeStore prototypes) {
-    this.value = value;
-    this.converter = converter;
-    this.prototypes = prototypes;
   }
 
   @Override
@@ -64,16 +46,6 @@ public class SingleValueScope implements Scope {
   @Override
   public Iterable<String> getAttributes() {
     return java.util.Collections.singletonList("current");
-  }
-
-  @Override
-  public Converter getConverter() {
-    return converter;
-  }
-
-  @Override
-  public EntityPrototypeStore getPrototypeStore() {
-    return prototypes;
   }
 
 }

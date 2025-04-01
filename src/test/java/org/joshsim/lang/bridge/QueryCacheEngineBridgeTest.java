@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
@@ -43,6 +44,7 @@ public class QueryCacheEngineBridgeTest {
   @Mock(lenient = true) private Geometry mockGeometry;
   @Mock(lenient = true) private GeometryMomento mockGeometryMomento;
   @Mock(lenient = true) private GeoKey mockGeoKey;
+  @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
   private QueryCacheEngineBridge bridge;
 
@@ -51,7 +53,12 @@ public class QueryCacheEngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
-    bridge = new QueryCacheEngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new QueryCacheEngineBridge(
+        mockSimulation,
+        mockReplicate,
+        mockConverter,
+        mockPrototypeStore
+    );
   }
 
   @Test

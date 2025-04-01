@@ -65,6 +65,10 @@ public class IntScalar extends Scalar {
     return innerValue;
   }
 
+  @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new IntScalar(getCaster(), getAsInt(), newUnits);
+  }
 
   @Override
   protected EngineValue unsafeAdd(EngineValue other) {

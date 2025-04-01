@@ -183,6 +183,18 @@ public abstract class EngineValue {
   }
 
   /**
+   * Get a copy of this EngineValue which has the same data but different units label.
+   *
+   * <p>Create a new copy of this EngineValue that has the same inner value as this EngineValue but
+   * with different units.</p>
+   *
+   * @param newUnits The new units to specify in the returned EngineValue. This will not change this
+   *     original EngineValue.
+   * @return Newly created independent EngineValue with the specified units.
+   */
+  public abstract EngineValue replaceUnits(Units newUnits);
+
+  /**
    * Add another value to this value.
    *
    * <p>Performs addition after ensuring type and unit compatibility through casting.
@@ -371,7 +383,7 @@ public abstract class EngineValue {
    *
    * @param other the other value.
    * @return the result of the addition.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeAdd(EngineValue other);
@@ -381,7 +393,7 @@ public abstract class EngineValue {
    *
    * @param other the other value.
    * @return the result of the subtraction.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeSubtract(EngineValue other);
@@ -391,7 +403,7 @@ public abstract class EngineValue {
    *
    * @param other the other value.
    * @return the result of the multiplication.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeMultiply(EngineValue other);
@@ -401,7 +413,7 @@ public abstract class EngineValue {
    *
    * @param other the other value.
    * @return the result of the division.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeDivide(EngineValue other);
@@ -411,7 +423,7 @@ public abstract class EngineValue {
    *
    * @param other the other value.
    * @return the result of raising to power.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible or exponent has non-count units.
    */
   protected abstract EngineValue unsafeRaiseToPower(EngineValue other);
@@ -424,7 +436,7 @@ public abstract class EngineValue {
    *
    * @param other the value to subtract this value from
    * @return the result of the subtraction
-   * @throws NotImplementedException if the operation is not supported for this data type
+   * @throws RuntimeException if the operation is not supported for this data type
    * @throws IllegalArgumentException if units are incompatible
    */
   protected abstract EngineValue unsafeSubtractFrom(EngineValue other);
@@ -437,7 +449,7 @@ public abstract class EngineValue {
    *
    * @param other the value to be divided by this value.
    * @return the result of the division.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeDivideFrom(EngineValue other);
@@ -447,7 +459,7 @@ public abstract class EngineValue {
    *
    * @param other the distribution of exponents.
    * @return the result of raising this value to all powers in the distribution.
-   * @throws NotImplementedException if the operation is not supported for this data type.
+   * @throws RuntimeException if the operation is not supported for this data type.
    * @throws IllegalArgumentException if exponent has non-count units.
    */
   protected abstract EngineValue unsafeRaiseAllToPower(EngineValue other);
@@ -499,5 +511,28 @@ public abstract class EngineValue {
    */
   protected boolean canBePower() {
     return getUnits().equals("") || getUnits().equals("count");
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null) {
+      return false;
+    }
+
+    if (other == this) {
+      return true;
+    }
+
+    if (!(other instanceof EngineValue)) {
+      return false;
+    }
+
+    EngineValue otherValue = (EngineValue) other;
+
+    if (!getUnits().equals(otherValue.getUnits())) {
+      return false;
+    }
+
+    return getInnerValue().equals(otherValue.getInnerValue());
   }
 }

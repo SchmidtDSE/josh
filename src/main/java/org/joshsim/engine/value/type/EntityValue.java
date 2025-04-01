@@ -88,6 +88,11 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    throw new UnsupportedOperationException("Entity name and type cannot be changed.");
+  }
+
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     throw new UnsupportedOperationException("Entity addition is not defined.");
   }

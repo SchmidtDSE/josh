@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ public class EngineBridgeSimulationStoreTest {
     simulationSteps.put("testSimulation", mockOperation);
 
     simulationPrototypes = new HashMap<>();
-    simulationPrototypes.put("testSimulation", new EntityPrototype(
+    simulationPrototypes.put("testSimulation", new ParentlessEntityPrototype(
         "testSimluation",
         EntityType.SIMULATION,
         new EntityBuilder())

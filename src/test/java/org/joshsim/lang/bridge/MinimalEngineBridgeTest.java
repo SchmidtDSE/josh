@@ -17,13 +17,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
-import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
@@ -31,9 +31,7 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
@@ -43,14 +41,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class MinimalEngineBridgeTest {
 
-  @Mock private Simulation mockSimulation;
-  @Mock private Replicate mockReplicate;
-  @Mock private Converter mockConverter;
-  @Mock private Patch mockPatch;
-  @Mock private EngineValue mockEngineValue;
-  @Mock private EngineValue mockEngineValueConverted;
-  @Mock private GeoPoint mockPoint;
-  @Mock private Geometry mockGeometry;
+  @Mock(lenient = true) private Simulation mockSimulation;
+  @Mock(lenient = true) private Replicate mockReplicate;
+  @Mock(lenient = true) private Converter mockConverter;
+  @Mock(lenient = true) private Patch mockPatch;
+  @Mock(lenient = true) private EngineValue mockEngineValue;
+  @Mock(lenient = true) private EngineValue mockEngineValueConverted;
+  @Mock(lenient = true) private GeoPoint mockPoint;
+  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
   private EngineBridge bridge;
 
@@ -59,7 +58,12 @@ public class MinimalEngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
-    bridge = new MinimalEngineBridge(mockSimulation, mockReplicate, mockConverter);
+    bridge = new MinimalEngineBridge(
+        mockSimulation,
+        mockReplicate,
+        mockConverter,
+        mockPrototypeStore
+    );
   }
 
   @Test
