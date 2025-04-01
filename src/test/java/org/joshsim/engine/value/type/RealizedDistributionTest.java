@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,11 +43,11 @@ class RealizedDistributionTest {
     // Add some test values (integers 1-5)
     for (int i = 1; i <= 5; i++) {
       values.add(new IntScalar(caster, (long) i, new Units("m")));
-      nakedValues.add(new IntScalar(caster, (long) i, new Units("")));
+      nakedValues.add(new IntScalar(caster, (long) i, Units.EMPTY));
     }
 
     distribution = new RealizedDistribution(caster, values, new Units("m"));
-    nakedDistribution = new RealizedDistribution(caster, values, new Units(""));
+    nakedDistribution = new RealizedDistribution(caster, values, Units.EMPTY);
   }
 
   @Test
@@ -228,7 +229,7 @@ class RealizedDistributionTest {
 
   @Test
   void testRaiseToPower() {
-    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
+    IntScalar exponent = new IntScalar(caster, 2L, Units.EMPTY);
     RealizedDistribution result = (RealizedDistribution) distribution.raiseToPower(exponent);
 
     Object innerValue = result.getInnerValue();
@@ -249,7 +250,7 @@ class RealizedDistributionTest {
 
   @Test
   void testRaiseToPowerReverse() {
-    IntScalar exponent = new IntScalar(caster, 2L, new Units(""));
+    IntScalar exponent = new IntScalar(caster, 2L, Units.EMPTY);
     RealizedDistribution result = (RealizedDistribution) exponent.raiseToPower(nakedDistribution);
 
     Object innerValue = result.getInnerValue();
@@ -265,7 +266,7 @@ class RealizedDistributionTest {
       assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
     }
 
-    assertEquals(new Units(""), result.getUnits());
+    assertEquals(Units.EMPTY, result.getUnits());
   }
 
   @Test
@@ -344,26 +345,26 @@ class RealizedDistributionTest {
 
   @Test
   void testGetStd() {
-    // Current implementation returns null
-    assertNull(distribution.getStd());
+    assertEquals(
+        1.4142,
+        distribution.getStd().orElseThrow().getAsDecimal().doubleValue(),
+        0.0001
+    );
   }
 
   @Test
   void testGetMin() {
-    // Current implementation returns null
-    assertNull(distribution.getMin());
+    assertEquals(1, distribution.getMin().orElseThrow().getAsInt());
   }
 
   @Test
   void testGetMax() {
-    // Current implementation returns null
-    assertNull(distribution.getMax());
+    assertEquals(5, distribution.getMax().orElseThrow().getAsInt());
   }
 
   @Test
   void testGetSum() {
-    // Current implementation returns null
-    assertNull(distribution.getSum());
+    assertEquals(1 + 2 + 3 + 4 + 5, distribution.getSum().orElseThrow().getAsInt());
   }
 
   @Test
@@ -375,6 +376,58 @@ class RealizedDistributionTest {
         emptyValues,
         new Units("m")
     ));
+  }
+
+  @Test
+  void testSample() {
+    // Since sampling is random, we'll verify that multiple samples fall within expected range
+    for (int i = 0; i < 100; i++) {
+      Scalar result = distribution.sample();
+      assertTrue(result instanceof IntScalar);
+      IntScalar scalar = (IntScalar) result;
+      // Values should be between 1 and 5 inclusive
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithReplacement() {
+    long sampleCount = 10;
+    Distribution result = distribution.sampleMultiple(sampleCount, true);
+    assertTrue(result instanceof RealizedDistribution);
+
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+
+    // Verify all sampled values are within expected range
+    Object innerValue = result.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> resultValues = (ArrayList<?>) innerValue;
+
+    for (Object value : resultValues) {
+      assertTrue(value instanceof IntScalar);
+      IntScalar scalar = (IntScalar) value;
+      assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
+      assertEquals(new Units("m"), scalar.getUnits());
+    }
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacement() {
+    long sampleCount = 3;
+    Distribution result = distribution.sampleMultiple(sampleCount, false);
+    assertTrue(result instanceof RealizedDistribution);
+
+    // Verify size matches requested count
+    assertEquals(Optional.of((int) sampleCount), result.getSize());
+  }
+
+  @Test
+  void testSampleMultipleWithoutReplacementExceedingSize() {
+    // Attempting to sample more elements than available without replacement should throw exception
+    assertThrows(IllegalArgumentException.class,
+        () -> distribution.sampleMultiple(10, false));
   }
 
 }

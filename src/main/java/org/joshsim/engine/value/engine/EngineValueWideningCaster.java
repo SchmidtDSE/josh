@@ -91,7 +91,7 @@ public class EngineValueWideningCaster implements EngineValueCaster {
       EngineValue newFirst = operands.getFirst().cast(strategies.get(types));
       return new EngineValueTuple(newFirst, operands.getSecond());
     } else if (strategies.containsKey(typesReversed)) {
-      EngineValue newSecond = operands.getSecond().cast(strategies.get(types));
+      EngineValue newSecond = operands.getSecond().cast(strategies.get(typesReversed));
       return new EngineValueTuple(operands.getFirst(), newSecond);
     } else {
       String message = String.format(

@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -296,13 +297,12 @@ public interface EventHandlerMachine {
    * Execute a spatial query and push the result to the top of the stack.
    *
    * <p>Execute a spatial query and push the result as an EngineValue to the top of the stack. This
-   * query requires a distance which is a distance from center and a target which is an entity from
-   * which the center geometry will be read. Before pushing the result, the distance will be
-   * popped followed by the target.</p>
+   * query requires a distance which is a distance from center which is at the top of the stack.</p>
    *
+   * @param resolver The ValueResolver to use after getting patches at the location.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine executeSpatialQuery();
+  EventHandlerMachine executeSpatialQuery(ValueResolver resolver);
 
   /**
    * Push an attribute onto the top of the stack.
@@ -311,11 +311,11 @@ public interface EventHandlerMachine {
    * stack to get the result of the expression before looking up the attribute by the given name
    * and pushing the result to the top of the stack. </p>
    *
-   * @param attrName The name of the attribute to be read from the value currently at the top of
-   *     the stack.
+   * @param resolver Getter for the attribute to be read from the value currently at the top of the
+   *     stack.
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine pushAttribute(String attrName);
+  EventHandlerMachine pushAttribute(ValueResolver resolver);
 
   /**
    * Draw a single value randomly from a uniform distribution.
@@ -489,10 +489,11 @@ public interface EventHandlerMachine {
   /**
    * Indicate that no additional actions should be taken on this machine.
    *
-   * <p>End this machine such that any additional actions taken on it will throw an
-   * IllegalStateException.</p>
+   * <p>Indicate that no additional actions should be taken on this machine though this is only
+   * advisory and exceptions will not be thrown if ignored.</p>
    *
    * @return Reference to this machine for chaining.
+   * @throws IllegalStateException if already ended.
    */
   EventHandlerMachine end();
 
@@ -509,6 +510,7 @@ public interface EventHandlerMachine {
    *
    * @return Returns the EngineValue currently at the top of the stack without removing that element
    *     from the top of the stack.
+   * @throws IllegalStateException if not yet ended.
    */
   EngineValue getResult();
 

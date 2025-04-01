@@ -90,4 +90,13 @@ public class Geometry implements Spatial {
     return BigDecimal.valueOf(getCenter().getY());
   }
 
+  /**
+   * Get the spatial context of this geometry.
+   *
+   * @return Spatial context which should be used for any geometries derived from this one.
+   */
+  public SpatialContext getSpatialContext() {
+    return spatialContext;
+  }
+
 }

@@ -44,6 +44,20 @@ public abstract class Distribution extends EngineValue {
   public abstract Scalar sample();
 
   /**
+   * Sample multiple values from this distribution.
+   *
+   * <p>Sample multiple values from this distribution where each element has a probability of
+   * selection propotional to the frequency with which that value appears in the distribution.</p>
+   *
+   * @param count The number of samples to be sampled randomly and returned.
+   * @param withReplacement Flag indicating if sampling should happen with or without replacement.
+   *     True for sample with replacement and false otherwise.
+   * @return Scalar value which is sampled from this distribution with frequency-proportional
+   *      selection probability.
+   */
+  public abstract Distribution sampleMultiple(long count, boolean withReplacement);
+
+  /**
    * Get the size of the distribution if known.
    *
    * @return the number of elements in the distribution, or empty if virtualized

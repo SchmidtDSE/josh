@@ -8,6 +8,7 @@ package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,7 @@ public class RealizedDistribution extends Distribution {
       Units units
   ) {
     super(caster, units);
-    if (values.size() == 0) {
+    if (values.isEmpty()) {
       throw new IllegalArgumentException("Cannot create a distribution with no values.");
     }
     this.values = values;
@@ -127,6 +128,38 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  protected EngineValue unsafeGreaterThan(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.greaterThan(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeGreaterThanOrEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.greaterThanOrEqualTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeLessThan(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.lessThan(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeLessThanOrEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.lessThanOrEqualTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Cannot convert multiple values to a single scalar.");
   }
@@ -162,8 +195,19 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    return new RealizedDistribution(getCaster(), values, newUnits);
+  }
+
+  @Override
   public Scalar sample() {
-    return null;
+    int index = (int) (Math.random() * values.size());
+    return values.get(index).getAsScalar();
+  }
+
+  @Override
+  public Distribution sampleMultiple(long count, boolean withReplacement) {
+    return withReplacement ? sampleWithReplacement(count) : sampleWithoutReplacement(count);
   }
 
   @Override
@@ -195,22 +239,99 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getStd() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    double mean = stats.get().getAverage();
+    double variance = values.stream()
+        .map(EngineValue::getAsScalar)
+        .map(Scalar::getAsDecimal)
+        .mapToDouble(BigDecimal::doubleValue)
+        .map(value -> Math.pow(value - mean, 2))
+        .average()
+        .orElse(0.0);
+    double stdDev = Math.sqrt(variance);
+    DecimalScalar result = new DecimalScalar(getCaster(), BigDecimal.valueOf(stdDev), getUnits());
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getMin() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getMin()),
+        getUnits()
+    );
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getMax() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getMax()),
+        getUnits()
+    );
+    return Optional.of(result);
   }
 
   @Override
   public Optional<Scalar> getSum() {
-    return null;
+    if (stats.isEmpty()) {
+      computeStats();
+    }
+    DecimalScalar result = new DecimalScalar(
+        getCaster(),
+        BigDecimal.valueOf(stats.get().getSum()),
+        getUnits()
+    );
+    return Optional.of(result);
+  }
+
+  /**
+   * Samples a specified number of elements from the current distribution without replacement.
+   *
+   * <p>Randomly select a subset of elements from the distribution without replacement,
+   * meaning each selected element is removed from the pool of potential subsequent selections.</p>
+   *
+   * @param count The number of elements to sample. Must not exceed the total number of elements
+   *              in the distribution.
+   * @return A new Distribution containing the sampled elements.
+   * @throws IllegalArgumentException if {@code count} is greater than the total size of elements
+   *     in the distribution.
+   */
+  private Distribution sampleWithoutReplacement(long count) {
+    if (count > values.size()) {
+      String message = String.format(
+          "Cannot sample %d elements from a distribution with %d elements without replacement.",
+          count,
+          values.size()
+      );
+      throw new IllegalArgumentException(message);
+    }
+    List<EngineValue> sampledValues = new ArrayList<>(values);
+    Collections.shuffle(sampledValues);
+    return new RealizedDistribution(getCaster(), sampledValues.subList(0, (int) count), getUnits());
+  }
+
+  /**
+   * Generates a new distribution by sampling values from the current distribution with replacement.
+   *
+   * @param count The number of samples to be drawn randomly from the distribution.
+   * @return A new distribution containing the sampled values.
+   */
+  private Distribution sampleWithReplacement(long count) {
+    List<EngineValue> sampledValues = new ArrayList<>();
+    for (long i = 0; i < count; i++) {
+      sampledValues.add(sample());
+    }
+    return new RealizedDistribution(getCaster(), sampledValues, getUnits());
   }
 
 }

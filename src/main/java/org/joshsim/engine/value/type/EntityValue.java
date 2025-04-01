@@ -88,6 +88,11 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  public EngineValue replaceUnits(Units newUnits) {
+    throw new UnsupportedOperationException("Entity name and type cannot be changed.");
+  }
+
+  @Override
   protected EngineValue unsafeAdd(EngineValue other) {
     throw new UnsupportedOperationException("Entity addition is not defined.");
   }
@@ -125,6 +130,26 @@ public class EntityValue extends EngineValue {
   @Override
   protected EngineValue unsafeRaiseAllToPower(EngineValue other) {
     throw new UnsupportedOperationException("Entity exponentiation is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeGreaterThan(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeGreaterThanOrEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeLessThan(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeLessThanOrEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
   }
 
   @Override

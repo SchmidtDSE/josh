@@ -246,7 +246,7 @@ class UnitsTest {
 
   @Test
   void testEmptyString() {
-    Units units = new Units("");
+    Units units = Units.EMPTY;
 
     assertEquals(0, units.getNumeratorUnits().size());
     assertEquals(0, units.getDenominatorUnits().size());

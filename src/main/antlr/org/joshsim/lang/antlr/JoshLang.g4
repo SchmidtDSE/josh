@@ -138,7 +138,7 @@ expression: unitsValue # simpleExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
   | CREATE_ target=identifier # createSingleExpression
   | CREATE_ count=expression OF_ target=identifier # createVariableExpression
-  | target=expression WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
+  | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
   | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;

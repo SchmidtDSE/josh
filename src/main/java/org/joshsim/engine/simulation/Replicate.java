@@ -109,12 +109,16 @@ public class Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
+<<<<<<< HEAD
   public Patch getPatchByKey(GeoKey key, long stepNumber) {
     if (stepNumber != getStepNumber()) {
       throw new IllegalArgumentException("Cannot lookup Patch at step number " + stepNumber);
     }
     return presentTimeStep.get(key);
   }
+=======
+  Entity getPatchByKey(GeoKey key, long stepNumber);
+>>>>>>> origin/dev
 
   /**
    * Get all patches in current state. This is functionally equivalent to querying all patches
