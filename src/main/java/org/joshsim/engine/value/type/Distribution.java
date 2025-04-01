@@ -57,12 +57,6 @@ public abstract class Distribution extends EngineValue {
    */
   public abstract Distribution sampleMultiple(long count, boolean withReplacement);
 
-  /**
-   * Get the size of the distribution if known.
-   *
-   * @return the number of elements in the distribution, or empty if virtualized
-   */
-  public abstract Optional<Integer> getSize();
 
   /**
    * Get a specified number of values from the distribution.
