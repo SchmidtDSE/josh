@@ -7,6 +7,8 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
@@ -44,6 +46,14 @@ public abstract class EngineValue {
   public Units getUnits() {
     return units;
   }
+
+  /**
+   * Get the size of this EngineValue if known. Scalars will always have a size of 1,
+   * while RealizedDistribution will have a size according to the elements within.
+   *
+   * @return the number of elements in the distribution, or empty if virtualized
+   */
+  public abstract Optional<Integer> getSize();
 
   /**
    * Convert this EngineValue to a Scalar.

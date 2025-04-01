@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import java.util.List;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
@@ -28,6 +29,10 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   public Scalar(EngineValueCaster caster, Units units) {
     super(caster, units);
+  }
+
+  public Optional<Integer> getSize() {
+    return Optional.of(1);
   }
 
   /**
