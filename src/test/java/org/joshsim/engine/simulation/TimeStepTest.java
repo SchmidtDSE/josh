@@ -1,10 +1,14 @@
 package org.joshsim.engine.simulation;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -56,7 +60,7 @@ class TimeStepTest {
   @Test
   void getPatchesReturnsAllPatches() {
     Iterable<Entity> result = timeStep.getPatches();
-    
+
     assertNotNull(result);
     assertEquals(2, countElements(result));
     assertTrue(containsEntity(result, mockPatch1));
@@ -70,7 +74,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry);
-    
+
     assertNotNull(result);
     assertEquals(2, countElements(result));
   }
@@ -82,7 +86,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry);
-    
+
     assertNotNull(result);
     assertEquals(1, countElements(result));
     assertTrue(containsEntity(result, mockPatch1));
@@ -96,7 +100,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry);
-    
+
     assertNotNull(result);
     assertEquals(0, countElements(result));
   }
@@ -108,7 +112,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry, "Patch1");
-    
+
     assertNotNull(result);
     assertEquals(1, countElements(result));
     assertTrue(containsEntity(result, mockPatch1));
@@ -121,7 +125,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry, "NonExistentName");
-    
+
     assertNotNull(result);
     assertEquals(0, countElements(result));
   }
@@ -133,7 +137,7 @@ class TimeStepTest {
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
     Iterable<Entity> result = timeStep.getPatches(queryGeometry, "Patch1");
-    
+
     assertNotNull(result);
     assertEquals(0, countElements(result));
   }
@@ -141,7 +145,7 @@ class TimeStepTest {
   @Test
   void getPatchByExistingKey() {
     Entity result = timeStep.getPatchByKey(mockKey1);
-    
+
     assertEquals(mockPatch1, result);
   }
 
@@ -149,7 +153,7 @@ class TimeStepTest {
   void getPatchByNonExistingKey() {
     GeoKey nonExistingKey = mock(GeoKey.class);
     Entity result = timeStep.getPatchByKey(nonExistingKey);
-    
+
     assertNull(result);
   }
 
@@ -160,19 +164,19 @@ class TimeStepTest {
     GeoKey keyNoGeo = mock(GeoKey.class);
     when(patchNoGeo.getGeometry()).thenReturn(Optional.empty());
     when(patchNoGeo.getName()).thenReturn("PatchNoGeo");
-    
+
     // Add to a new map and create a new timestep
     HashMap<GeoKey, Entity> patchesWithNoGeo = new HashMap<>(patches);
     patchesWithNoGeo.put(keyNoGeo, patchNoGeo);
     TimeStep timeStepWithNoGeo = new TimeStep(42, patchesWithNoGeo);
-    
+
     // Should not include patch with no geometry in results
     Geometry queryGeometry = mock(Geometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
-    
+
     Iterable<Entity> result = timeStepWithNoGeo.getPatches(queryGeometry);
-    
+
     assertEquals(2, countElements(result));
     assertFalse(containsEntity(result, patchNoGeo));
   }
