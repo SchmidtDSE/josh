@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -41,17 +42,29 @@ public class GeometryTest {
   @Test
   public void testConstructor() {
     Shape mockShape = mock(Shape.class);
+    SpatialContext mockContext = mock(SpatialContext.class);
+    when(mockShape.getContext()).thenReturn(mockContext);
+    
     Geometry geometry = new Geometry(mockShape);
 
     assertNotNull(geometry, "Geometry should be initialized");
-    assertEquals(ctx, geometry.spatialContext, "SpatialContext should be initialized to GEO");
     assertEquals(mockShape, geometry.shape, "Shape should be set in constructor");
+    assertEquals(
+        mockContext,
+        geometry.getSpatialContext(),
+        "SpatialContext should come from the shape"
+    );
   }
 
   @Test
   public void testWithNullShape() {
     Geometry nullGeometry = new Geometry(null);
 
+    // Test getSpatialContext with null shape
+    Exception exception = assertThrows(NullPointerException.class, () -> {
+      nullGeometry.getSpatialContext();
+    });
+    
     // Test intersects with coordinates
     Exception exception1 = assertThrows(IllegalStateException.class, () -> {
       nullGeometry.intersects(BigDecimal.valueOf(10.0), BigDecimal.valueOf(20.0));
