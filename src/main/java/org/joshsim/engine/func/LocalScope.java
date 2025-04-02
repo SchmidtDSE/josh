@@ -84,7 +84,7 @@ public class LocalScope implements Scope {
     private final Iterable<String> firstIterable;
     private final Iterable<String> secondIterable;
 
-    public CombinedIterable(Iterable<String> firstIterable, Iterable<String> secondIterable) {
+    public CombinedAttributeNameIterable(Iterable<String> firstIterable, Iterable<String> secondIterable) {
       this.firstIterable = firstIterable;
       this.secondIterable = secondIterable;
     }
