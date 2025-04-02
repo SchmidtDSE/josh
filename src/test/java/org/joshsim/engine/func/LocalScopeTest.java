@@ -22,8 +22,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+
 /**
- * Tests for the LocalScope which provides a temporary local variable scope within an enclosing scope.
+ * Tests for the LocalScope which provides a temporary local variable scope with an enclosing scope.
  */
 @ExtendWith(MockitoExtension.class)
 class LocalScopeTest {
@@ -42,63 +43,42 @@ class LocalScopeTest {
     scope = new LocalScope(mockContainingScope);
   }
 
-  /**
-   * Test getting a locally defined value.
-   */
   @Test
   void testGetLocalValue() {
     scope.defineConstant("localVar", mockValue);
     assertEquals(mockValue, scope.get("localVar"));
   }
 
-  /**
-   * Test getting a value from the containing scope.
-   */
   @Test
   void testGetContainingValue() {
     when(mockContainingScope.get("outerVar")).thenReturn(mockOuterValue);
     assertEquals(mockOuterValue, scope.get("outerVar"));
   }
 
-  /**
-   * Test has() method for local values.
-   */
   @Test
   void testHasLocalValue() {
     scope.defineConstant("localVar", mockValue);
     assertTrue(scope.has("localVar"));
   }
 
-  /**
-   * Test has() method for containing scope values.
-   */
   @Test
   void testHasContainingValue() {
     when(mockContainingScope.has("outerVar")).thenReturn(true);
     assertTrue(scope.has("outerVar"));
   }
 
-  /**
-   * Test defining a constant with an already existing name throws exception.
-   */
   @Test
   void testDefineConstantExists() {
     scope.defineConstant("testVar", mockValue);
     assertThrows(RuntimeException.class, () -> scope.defineConstant("testVar", mockValue));
   }
 
-  /**
-   * Test defining a constant when name exists in containing scope throws exception.
-   */
   @Test
   void testDefineConstantExistsInContaining() {
     when(mockContainingScope.has("outerVar")).thenReturn(true);
     assertThrows(RuntimeException.class, () -> scope.defineConstant("outerVar", mockValue));
   }
 
-  /**
-   * Test getAttributes() combines local and containing scope attributes.
-   */
   @Test
   void testGetAttributes() {
     when(mockContainingScope.getAttributes())
