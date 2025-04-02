@@ -25,6 +25,12 @@ public class LocalScope implements Scope {
   private final Map<String, EngineValue> localValues;
   private final Scope containingScope;
 
+  /**
+   * Creates a new local scope with an enclosing scope.
+   *
+   * @param containingScope The enclosing scope that this local scope will delegate to
+   *                       when a value is not found locally.
+   */
   public LocalScope(Scope containingScope) {
     this.containingScope = containingScope;
     localValues = new HashMap<>();
@@ -59,6 +65,13 @@ public class LocalScope implements Scope {
     }
   }
 
+  /**
+   * Defines a constant value in the local scope.
+   *
+   * @param name The name of the constant to define
+   * @param value The value to associate with the constant
+   * @throws RuntimeException if a variable with the given name already exists in this scope
+   */
   public void defineConstant(String name, EngineValue value) {
     if (has(name)) {
       String message = String.format("The variable %s already exists in this scope.", name);
@@ -80,10 +93,20 @@ public class LocalScope implements Scope {
     return new CombinedAttributeNameIterable(outerAttributes, innerAttributes);
   }
 
+  /**
+   * An iterable that combines two iterables of attribute names.
+   * It iterates through the first iterable completely before moving to the second one.
+   */
   private class CombinedAttributeNameIterable implements Iterable<String> {
     private final Iterable<String> firstIterable;
     private final Iterable<String> secondIterable;
 
+    /**
+     * Creates a new iterable that combines two existing iterables of attribute names.
+     *
+     * @param firstIterable The first iterable to traverse
+     * @param secondIterable The second iterable to traverse after the first one is complete
+     */
     public CombinedAttributeNameIterable(Iterable<String> firstIterable, Iterable<String> secondIterable) {
       this.firstIterable = firstIterable;
       this.secondIterable = secondIterable;
