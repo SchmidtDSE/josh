@@ -23,11 +23,13 @@ import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 
 /**
  * Tests for the SingleThreadEventHandlerMachine implementation.
@@ -617,8 +619,24 @@ public class SingleThreadEventHandlerMachineTest {
     assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
 
-  
+  @Test
+  void saveLocalVariable_makesVisible() {
+    // Given
+    EngineValue value = makeIntScalar(5L);
 
+    // When
+    machine.push(value);
+    machine.saveLocalVariable("localConstant");
+    machine.push(new ValueResolver("localConstant"));
+
+    // Then
+    machine.end();
+    EngineValue result = machine.getResult();
+    long valueReturned = result.getAsInt();
+
+    // Check value returned.
+    assertEquals(valueReturned, 5L);
+  }
 
   private EngineValue makeIntScalar(long value) {
     EngineValueFactory factory = new EngineValueFactory();
