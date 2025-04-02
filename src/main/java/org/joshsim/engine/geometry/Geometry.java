@@ -17,7 +17,6 @@ import org.locationtech.spatial4j.shape.Shape;
  */
 public class Geometry implements Spatial {
 
-  protected SpatialContext spatialContext = SpatialContext.GEO;
   protected Shape shape;
 
   /**
@@ -43,7 +42,7 @@ public class Geometry implements Spatial {
    * @return Distance in degrees
    */
   public BigDecimal centerDistanceTo(Geometry other) {
-    return new BigDecimal(spatialContext.calcDistance(shape.getCenter(), other.getCenter()));
+    return new BigDecimal(getSpatialContext().calcDistance(shape.getCenter(), other.getCenter()));
   }
 
   /**
@@ -58,7 +57,7 @@ public class Geometry implements Spatial {
       throw new IllegalStateException("Shape not initialized");
     }
 
-    Point point = spatialContext.getShapeFactory().pointXY(
+    Point point = getSpatialContext().getShapeFactory().pointXY(
         locationX.doubleValue(),
         locationY.doubleValue()
     );
@@ -96,7 +95,7 @@ public class Geometry implements Spatial {
    * @return Spatial context which should be used for any geometries derived from this one.
    */
   public SpatialContext getSpatialContext() {
-    return spatialContext;
+    return shape.getContext();
   }
 
 }
