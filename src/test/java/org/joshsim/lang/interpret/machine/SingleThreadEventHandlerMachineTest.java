@@ -617,6 +617,9 @@ public class SingleThreadEventHandlerMachineTest {
     assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
 
+  
+
+
   private EngineValue makeIntScalar(long value) {
     EngineValueFactory factory = new EngineValueFactory();
     return factory.build(value, Units.EMPTY);
