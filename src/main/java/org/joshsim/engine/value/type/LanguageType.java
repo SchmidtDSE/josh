@@ -19,19 +19,34 @@ public class LanguageType {
 
   private final Collection<String> distributionTypes;
   private final String rootType;
+  private final boolean containsAttributes;
 
   /**
-   * Creates a new LanguageType for a value that is not in a distribution.
+   * Creates a new LanguageType for a value not in a distribution without inner attributes.
    *
    * @param rootType The base type (e.g., "decimal", "string", etc.).
    */
   public LanguageType(String rootType) {
     this.rootType = rootType;
     this.distributionTypes = new ArrayList<>();
+    containsAttributes = false;
   }
 
   /**
-   * Creates a new LanguageType with distribution types and a root type.
+   * Creates a new LanguageType for a value that is not in a distribution.
+   *
+   * @param rootType The base type (e.g., "decimal", "string", etc.).
+   * @param containsAttributes A flag indicating if this type contains other attributes. True if
+   *     contains attributes and false if is a simple primitive.
+   */
+  public LanguageType(String rootType, boolean containsAttributes) {
+    this.rootType = rootType;
+    this.distributionTypes = new ArrayList<>();
+    this.containsAttributes = containsAttributes;
+  }
+
+  /**
+   * Creates a new LanguageType with distribution types and a root type without inner attributes.
    *
    * @param distributionTypes Collection of distribution type identifiers.
    * @param rootType The base type (e.g., "decimal", "string", etc.).
@@ -39,6 +54,22 @@ public class LanguageType {
   public LanguageType(Collection<String> distributionTypes, String rootType) {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
+    this.containsAttributes = false;
+  }
+
+  /**
+   * Creates a new LanguageType with distribution types and a root type.
+   *
+   * @param distributionTypes Collection of distribution type identifiers.
+   * @param rootType The base type (e.g., "decimal", "string", etc.).
+   * @param containsAttributes A flag indicating if this type contains other attributes. True if
+   *     contains attributes and false if is a distribution of simple primitives.
+   */
+  public LanguageType(Collection<String> distributionTypes, String rootType,
+      boolean containsAttributes) {
+    this.distributionTypes = distributionTypes;
+    this.rootType = rootType;
+    this.containsAttributes = containsAttributes;
   }
 
   /**
@@ -66,6 +97,17 @@ public class LanguageType {
    */
   public Iterable<String> getDistributionTypes() {
     return distributionTypes;
+  }
+
+  /**
+   * Determine if this type contains attributes.
+   *
+   * @return True if this contains attributes or contains a distribution of values that contains
+   *     attributes. False if this is a simple value / primitives or a distribution of simple
+   *     values.
+   */
+  public boolean containsAttributes() {
+    return containsAttributes;
   }
 
   @Override
