@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * cached resources to avoid repeated loading. This _should_ be generic to the
  * way that external resource is fulfilled to work with any external resource.
  */
-public abstract class ExternalPathCacheLayer extends ExternalLayerDecorator {
+public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   private final Map<Request, RealizedDistribution> cache = new HashMap<>();
 
   /**
@@ -47,12 +47,16 @@ public abstract class ExternalPathCacheLayer extends ExternalLayerDecorator {
   /**
    * Clears any cached resources.
    */
-  abstract void clearCache();
+  void clearCache() {
+    cache.clear();
+  }
 
   /**
    * Returns the number of cached resources.
    *
    * @return Number of cached resources
    */
-  abstract int getCacheSize();
+  int getCacheSize() {
+    return cache.size();
+  }
 }
