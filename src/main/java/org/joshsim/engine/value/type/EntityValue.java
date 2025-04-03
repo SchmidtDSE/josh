@@ -162,4 +162,9 @@ public class EntityValue extends EngineValue {
   protected boolean canBePower() {
     return false;
   }
+
+  @Override
+  public EngineValue freeze() {
+    return new EntityValue(caster, innerValue.freeze());
+  }
 }

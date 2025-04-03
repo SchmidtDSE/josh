@@ -102,7 +102,20 @@ public abstract class MutableEntity implements Entity, Lockable {
 
   @Override
   public Entity freeze() {
-    return new FrozenEntity(getEntityType(), name, new HashMap<>(attributes), getGeometry());
+    Map<String, EngineValue> frozenAttributes = new HashMap<>();
+    
+    for (String attributeName : attributes.keySet()) {
+      EngineValue unfrozenValue = attributes.get(attributeName);
+      EngineValue frozenValue = unfrozenValue.freeze();
+      frozenAttributes.put(attributeName, frozenValue);
+    }
+    
+    return new FrozenEntity(
+        getEntityType(),
+        name,
+        frozenAttributes,
+        getGeometry()
+    );
   }
 
   @Override

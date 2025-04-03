@@ -48,7 +48,7 @@ public class GeometryTest {
     Geometry geometry = new Geometry(mockShape);
 
     assertNotNull(geometry, "Geometry should be initialized");
-    assertEquals(mockShape, geometry.shape, "Shape should be set in constructor");
+    assertEquals(mockShape, geometry.getShape(), "Shape should be set in constructor");
     assertEquals(
         mockContext,
         geometry.getSpatialContext(),

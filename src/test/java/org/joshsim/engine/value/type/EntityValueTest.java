@@ -76,4 +76,15 @@ class EntityValueTest {
 
     assertFalse(value.canBePower());
   }
+
+  @Test
+  void testFreeze() {
+    when(mockEntity.freeze()).thenReturn(mockEntity);
+    EntityValue value = new EntityValue(mockCaster, mockEntity);
+
+    EngineValue frozenValue = value.freeze();
+
+    assertEquals(mockEntity, frozenValue.getInnerValue());
+    assertEquals(value.getUnits(), frozenValue.getUnits());
+  }
 }

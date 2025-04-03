@@ -8,6 +8,7 @@ package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -418,6 +419,34 @@ class RealizedDistributionTest {
     // Attempting to sample more elements than available without replacement should throw exception
     assertThrows(IllegalArgumentException.class,
         () -> distribution.sampleMultiple(10, false));
+  }
+
+  @Test
+  void testFreeze() {
+    RealizedDistribution distributionWithMutable = new RealizedDistribution(
+        caster,
+        values,
+        Units.EMPTY
+    );
+
+    // Freeze the distribution
+    EngineValue frozenResult = distributionWithMutable.freeze();
+
+    // Verify the result is a RealizedDistribution
+    assertTrue(frozenResult instanceof RealizedDistribution);
+    RealizedDistribution frozenDistribution = (RealizedDistribution) frozenResult;
+
+    // Verify the frozen distribution has the same size
+    assertEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
+
+    // Verify the units are preserved
+    assertEquals(distributionWithMutable.getUnits(), frozenDistribution.getUnits());
+
+    // Check that changes do not propogate
+    values.add(new IntScalar(caster, 0L, new Units("m")));
+
+    // Verify the frozen distribution has the same size
+    assertNotEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
   }
 
 }

@@ -61,7 +61,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
       assertEquals(9.0, rect.getMinY(), 0.000001);
@@ -85,7 +85,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
       assertEquals(9.0, rect.getMinY(), 0.000001);
@@ -108,7 +108,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
       assertEquals(9.0, rect.getMinY(), 0.000001);
@@ -133,7 +133,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       assertEquals(20.0, rect.getMinX(), 0.000001, "minX should equal centerX for zero width");
       assertEquals(20.0, rect.getMaxX(), 0.000001, "maxX should equal centerX for zero width");
@@ -155,7 +155,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       assertEquals(20.0, rect.getMinX(), 0.000001, "minX should equal centerX for zero width");
       assertEquals(20.0, rect.getMaxX(), 0.000001, "maxX should equal centerX for zero width");
@@ -175,7 +175,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       double halfWidth = width.doubleValue() / 2.0;
       assertEquals(20.123456789 - halfWidth, rect.getMinX(), 0.000001);
@@ -198,7 +198,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       double halfWidth = width.doubleValue() / 2.0;
       assertEquals(20.123456789 - halfWidth, rect.getMinX(), 0.000001);
@@ -281,7 +281,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
@@ -305,7 +305,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
@@ -329,7 +329,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Rectangle rect = (Rectangle) geometry.shape;
+      Rectangle rect = (Rectangle) geometry.getShape();
 
       assertEquals(19.0, rect.getMinX(), 0.000001);
       assertEquals(21.0, rect.getMaxX(), 0.000001);
@@ -412,7 +412,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Circle circle = (Circle) geometry.shape;
+      Circle circle = (Circle) geometry.getShape();
       assertEquals(20.0, circle.getCenter().getX(), 0.000001);
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001);
@@ -431,7 +431,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Circle circle = (Circle) geometry.shape;
+      Circle circle = (Circle) geometry.getShape();
       assertEquals(20.0, circle.getCenter().getX(), 0.000001);
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001);
@@ -451,7 +451,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Circle circle = (Circle) geometry.shape;
+      Circle circle = (Circle) geometry.getShape();
       assertEquals(20.0, circle.getCenter().getX(), 0.000001);
       assertEquals(10.0, circle.getCenter().getY(), 0.000001);
       assertEquals(1.0, circle.getRadius(), 0.000001); // Distance from (20,10) to (21,10) is 1.0
@@ -473,7 +473,7 @@ public class GeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Circle circle = (Circle) geometry.shape;
+      Circle circle = (Circle) geometry.getShape();
       double expectedRadius = Math.sqrt(
           Math.pow(22.0 - 20.0, 2) + Math.pow(14.0 - 10.0, 2)
       ); // √(2² + 4²) = √20 = 4.47...
