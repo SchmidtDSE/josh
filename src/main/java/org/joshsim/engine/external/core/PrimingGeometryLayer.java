@@ -67,10 +67,8 @@ public class PrimingGeometryLayer extends ExternalLayerDecorator {
     Geometry requestGeometry = request.getGeometry().orElseThrow();
     
     // Update our priming geometry to include this request
-    if (requestGeometry != null) {
-      extendPrimingGeometry(requestGeometry);
-    }
-    
+    extendPrimingGeometry(requestGeometry);
+
     // Pass the request to the decorated layer
     return super.fulfill(request);
   }
