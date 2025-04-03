@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.external;
+package org.joshsim.engine.external.core;
 
 
 /**
