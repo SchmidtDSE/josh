@@ -297,8 +297,8 @@ public class RealizedDistribution extends Distribution {
   @Override
   public EngineValue freeze() {
     List<EngineValue> frozenValues = values.stream()
-      .map((x) -> x.freeze())
-      .collect(Collectors.toList());
+        .map((x) -> x.freeze())
+        .collect(Collectors.toList());
 
     return new RealizedDistribution(caster, frozenValues, units);
   }
