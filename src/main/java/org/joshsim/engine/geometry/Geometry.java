@@ -27,6 +27,13 @@ public class Geometry implements Spatial {
   }
 
   /**
+   * Gets the shape of this geometry.
+   */
+  public Shape getShape() {
+    return shape;
+  }
+
+  /**
    * Gets the center point of this geometry, calculating from the shape.
    *
    * @return The center point

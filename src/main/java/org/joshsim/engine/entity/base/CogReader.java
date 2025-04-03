@@ -1,5 +1,7 @@
 package org.joshsim.engine.entity.base;
 
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -9,7 +11,7 @@ import java.util.List;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridGeometry;
-import org.apache.sis.geometry.Envelope2D;
+import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.geometry.GeneralEnvelope;
 import org.apache.sis.storage.Aggregate;
 import org.apache.sis.storage.DataStore;
@@ -25,6 +27,9 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.datum.PixelInCell;
+import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Reads Cloud Optimized GeoTIFF (COG) files and extracts values
@@ -55,26 +60,7 @@ public class CogReader {
    */
   public RealizedDistribution readValues(String cogPath, Geometry geometry) throws IOException {
     try (DataStore store = DataStores.open(new File(cogPath))) {
-      // Extract the envelope from the geometry shape's bounding box
-      GeneralEnvelope envelope = shapeToEnvelope(geometry.getShape());
-
-      // Get the first grid coverage resource in the store
-      GridCoverageResource resource = findFirstCoverageResource(store);
-      if (resource == null) {
-        throw new IOException("No grid coverage resource found in " + cogPath);
-      }
-
-      // Read only the data within our envelope
-      GridCoverage coverage = resource.read(new GridGeometry(envelope), null);
-
-      // Extract values that intersect with the geometry
-      List<EngineValue> values = extractValues(coverage, geometry);
-
-      if (values.isEmpty()) {
-        throw new IOException("No values found within the specified geometry");
-      }
-
-      return new RealizedDistribution(caster, values, units);
+      return readFromStore(store, geometry, cogPath);
     } catch (DataStoreException e) {
       throw new IOException("Failed to read COG file: " + e.getMessage(), e);
     }
@@ -90,25 +76,47 @@ public class CogReader {
    */
   public RealizedDistribution readValues(URL cogUrl, Geometry geometry) throws IOException {
     try (DataStore store = DataStores.open(cogUrl)) {
-      // Implementation similar to the path-based method
-      GeneralEnvelope envelope = shapeToEnvelope(geometry.shape);
-      GridCoverageResource resource = findFirstCoverageResource(store);
-
-      if (resource == null) {
-        throw new IOException("No grid coverage resource found at " + cogUrl);
-      }
-
-      GridCoverage coverage = resource.read(new GridGeometry(envelope), null);
-      List<EngineValue> values = extractValues(coverage, geometry);
-
-      if (values.isEmpty()) {
-        throw new IOException("No values found within the specified geometry");
-      }
-
-      return new RealizedDistribution(caster, values, units);
+      return readFromStore(store, geometry, cogUrl.toString());
     } catch (DataStoreException e) {
       throw new IOException("Failed to read COG file: " + e.getMessage(), e);
     }
+  }
+  
+  /**
+   * Common logic for reading values from a data store.
+   *
+   * @param store The data store containing grid coverage data
+   * @param geometry The geometry defining the area to extract values from
+   * @param sourceName Name of the source for error messages
+   * @return A RealizedDistribution of values within the geometry
+   * @throws IOException If an error occurs reading the data
+   * @throws DataStoreException If an error occurs accessing the data store
+   */
+  private RealizedDistribution readFromStore(
+      DataStore store, 
+      Geometry geometry, 
+      String sourceName
+  ) throws IOException, DataStoreException {
+    // Extract the envelope from the geometry shape's bounding box
+    GeneralEnvelope envelope = shapeToEnvelope(geometry.getShape());
+
+    // Get the first grid coverage resource in the store
+    GridCoverageResource resource = findFirstCoverageResource(store);
+    if (resource == null) {
+      throw new IOException("No grid coverage resource found in " + sourceName);
+    }
+
+    // Read only the data within our envelope
+    GridCoverage coverage = resource.read(new GridGeometry(envelope), null);
+
+    // Extract values that intersect with the geometry
+    List<EngineValue> values = extractValues(coverage, geometry);
+
+    if (values.isEmpty()) {
+      throw new IOException("No values found within the specified geometry");
+    }
+
+    return new RealizedDistribution(caster, values, units);
   }
 
   /**
@@ -121,7 +129,7 @@ public class CogReader {
   private GridCoverageResource findFirstCoverageResource(
       DataStore store
   ) throws DataStoreException {
-    // If the store is an aggregate (like a GeoTIFF with multiple images)
+    // If the store is an aggregate (like a GeoTIFF with multiple images/bands)
     if (store instanceof Aggregate) {
       for (Resource resource : ((Aggregate) store).components()) {
         if (resource instanceof GridCoverageResource) {
@@ -129,7 +137,7 @@ public class CogReader {
         }
       }
     }
-    // Try to cast the store itself if it's a direct resource
+    // Try to cast the store itself if it's a direct resource (single-band GeoTIFF)
     if (store instanceof GridCoverageResource) {
       return (GridCoverageResource) store;
     }
@@ -163,36 +171,59 @@ public class CogReader {
   private List<EngineValue> extractValues(GridCoverage coverage, Geometry geometry) {
     List<EngineValue> values = new ArrayList<>();
 
-    // Get the extent of the grid coverage
-    GridExtent extent = coverage.getGridGeometry().getExtent();
-    int width = (int) extent.getSize(0);
-    int height = (int) extent.getSize(1);
+    try {
+      // Get the grid geometry and extent
+      GridGeometry gridGeometry = coverage.getGridGeometry();
+      GridExtent extent = gridGeometry.getExtent();
 
-    // Get the envelope of the grid coverage
-    Envelope2D envelope = coverage.getGridGeometry().getEnvelope2D();
-    double cellWidth = envelope.getWidth() / width;
-    double cellHeight = envelope.getHeight() / height;
+      // Get a rendered image of the coverage
+      RenderedImage image = coverage.render(extent);
 
-    // Iterate through each cell in the grid
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        // Convert grid coordinates to world coordinates
-        double worldX = envelope.getMinX() + (x + 0.5) * cellWidth;
-        double worldY = envelope.getMinY() + (y + 0.5) * cellHeight;
+      int minX = image.getMinX();
+      int minY = image.getMinY();
+      int width = image.getWidth();
+      int height = image.getHeight();
+      
+      // Get the transform from grid to world coordinates
+      MathTransform gridToWorld = gridGeometry.getGridToCRS(PixelInCell.CELL_CENTER);
 
-        // Check if the point is within the geometry using the geometry's intersects method
-        if (geometry.intersects(BigDecimal.valueOf(worldX), BigDecimal.valueOf(worldY))) {
-          // Get the value at this point
-          double[] valueArray = new double[1];
-          coverage.render(x, y, valueArray);
+      // Get raster data for efficient access
+      Raster raster = image.getData();
 
-          // Only add non-NaN values
-          if (!Double.isNaN(valueArray[0])) {
-            DecimalScalar value = new DecimalScalar(caster, BigDecimal.valueOf(valueArray[0]), units);
-            values.add(value);
+      // Position object for coordinate transformation
+      DirectPosition2D gridPos = new DirectPosition2D();
+      DirectPosition worldPos = new DirectPosition2D();
+
+      // Iterate through each pixel in the image
+      for (int y = minY; y < minY + height; y++) {
+        for (int x = minX; x < minX + width; x++) {
+          // Convert grid coordinates to world coordinates using the transform
+          gridPos.setLocation(x + 0.5, y + 0.5);  // Center of the cell
+          worldPos = gridToWorld.transform(gridPos, worldPos);
+          
+          double worldX = worldPos.getOrdinate(0);
+          double worldY = worldPos.getOrdinate(1);
+
+          // Check if the point is within the geometry
+          if (geometry.intersects(BigDecimal.valueOf(worldX), BigDecimal.valueOf(worldY))) {
+            // Get the pixel value - get the first band if multi-band
+            double pixelValue = raster.getSampleDouble(x, y, 0);
+
+            // Only add non-NaN values
+            if (!Double.isNaN(pixelValue)) {
+              DecimalScalar value = new DecimalScalar(
+                  caster,
+                  BigDecimal.valueOf(pixelValue),
+                  units
+              );
+              values.add(value);
+            }
           }
         }
       }
+    } catch (Exception e) {
+      // Handle exceptions - log or return partial results
+      e.printStackTrace();
     }
 
     return values;
