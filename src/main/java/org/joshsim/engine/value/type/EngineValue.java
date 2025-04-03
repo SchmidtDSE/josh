@@ -150,6 +150,17 @@ public abstract class EngineValue {
   public abstract Object getInnerValue();
 
   /**
+   * Create an immutable version of this EngineValue.
+   *
+   * @return An immutable version of this EngineValue that may still participate in operations but
+   *      where its inner decorated value cannot change such that references held will resolve to
+   *      the same value.
+   */
+  public EngineValue freeze() {
+    return this;
+  }
+
+  /**
    * Determine the new units string having multipled two units together.
    *
    * @param left units from the left side operand.

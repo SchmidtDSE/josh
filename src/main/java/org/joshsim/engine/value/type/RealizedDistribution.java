@@ -294,6 +294,15 @@ public class RealizedDistribution extends Distribution {
     return Optional.of(result);
   }
 
+  @Override
+  public EngineValue freeze() {
+    List<EngineValue> frozenValues = values.stream()
+      .map((x) -> x.freeze())
+      .collect(Collectors.toList());
+
+    return new RealizedDistribution(caster, frozenValues, units);
+  }
+
   /**
    * Samples a specified number of elements from the current distribution without replacement.
    *
