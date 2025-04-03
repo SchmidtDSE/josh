@@ -86,6 +86,15 @@ public class Geometry implements Spatial {
     return shape.relate(other.shape).intersects();
   }
 
+  /**
+   * Returns a new geometry that is the intersection of this geometry and another.
+   *
+   * @param other Geometry to intersect with
+   */
+  public Geometry getIntersect(Geometry other) {
+    throw new UnsupportedOperationException("Intersection not supported for this geometry type");
+  }
+
   @Override
   public BigDecimal getCenterX() {
     return BigDecimal.valueOf(getCenter().getX());
