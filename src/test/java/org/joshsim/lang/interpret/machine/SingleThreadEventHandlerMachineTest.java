@@ -1,4 +1,3 @@
-
 /**
  * Tests for SingleThreadEventHandlerMachine.
  *
@@ -15,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
@@ -47,9 +47,11 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
   @Mock(lenient = true) private EngineBridge mockBridge;
+  @Mock(lenient = true) private EntityPrototype mockPrototype;
+  @Mock(lenient = true) private Entity mockCreatedEntity;
 
   private SingleThreadEventHandlerMachine machine;
-  private EngineValueFactory factory;
+  private final EngineValueFactory factory = new EngineValueFactory();
 
   /**
    * Setup test environment before each test.
@@ -779,5 +781,20 @@ public class SingleThreadEventHandlerMachineTest {
     machine.end();
     assertEquals(100L, machine.getResult().getAsInt());
     assertEquals(targetUnits, machine.getResult().getUnits());
+  }
+
+  @Test
+  void createEntity_shouldCreateEntityFromPrototype() {
+    // Given
+    when(mockBridge.getPrototype("myPrototype")).thenReturn(mockPrototype);
+    when(mockPrototype.createEntity(mockScope)).thenReturn(mockCreatedEntity);
+
+    // When
+    machine.push(factory.build("myPrototype", Units.EMPTY));
+    machine.createEntity();
+
+    // Then
+    machine.end();
+    assertEquals(mockCreatedEntity, machine.getResult());
   }
 }
