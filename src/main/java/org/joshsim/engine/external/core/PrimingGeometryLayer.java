@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * The priming geometry is typically the intersection of all geometries added to the priming extent.
  */
 public class PrimingGeometryLayer extends ExternalLayerDecorator {
-  private Optional<Geometry> primingGeometry;
+  private Optional<Geometry> primingGeometry = Optional.empty();
 
   /**
    * Constructs a PrimingGeometryLayer with the specified decorated layer.

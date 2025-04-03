@@ -42,7 +42,7 @@ public class Request {
    *
    * @return Protocol used for the request (file, http, etc.)
    */
-  String getProtocol() {
+  public String getProtocol() {
     return protocol;
   }
 
@@ -51,7 +51,7 @@ public class Request {
    *
    * @return Host or location to query
    */
-  String getHost() {
+  public String getHost() {
     return host;
   }
 
@@ -60,7 +60,7 @@ public class Request {
    *
    * @return Path to the resource
    */
-  String getPath() {
+  public String getPath() {
     return path;
   }
 
@@ -69,7 +69,7 @@ public class Request {
    *
    * @return Geometry defining the area of interest
    */
-  Optional<Geometry> getGeometry() {
+  public Optional<Geometry> getGeometry() {
     return geometry;
   }
 
@@ -78,7 +78,7 @@ public class Request {
    *
    * @return Optional resource identifier or name
    */
-  Optional<String> getResource() {
+  public Optional<String> getResource() {
     return resource;
   }
 }

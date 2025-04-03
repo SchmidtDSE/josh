@@ -29,4 +29,14 @@ public abstract class ExternalLayerDecorator implements ExternalLayer {
   public RealizedDistribution fulfill(Request request) {
     return decoratedLayer.fulfill(request);
   }
+
+  /**
+   * Returns the decorated ExternalLayer instance.
+   *
+   * @return the decorated ExternalLayer
+   */
+  public ExternalLayer getDecoratedLayer() {
+    return decoratedLayer;
+  }
+
 }

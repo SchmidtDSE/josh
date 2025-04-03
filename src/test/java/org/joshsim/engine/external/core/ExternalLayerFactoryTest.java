@@ -1,20 +1,16 @@
 package org.joshsim.engine.external.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Optional;
 import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.external.cog.CogReader;
-import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.spatial4j.context.SpatialContext;
@@ -28,8 +24,16 @@ public class ExternalLayerFactoryTest {
   private Units units;
   private ExternalLayerFactory factory;
   private SpatialContext spatialContext;
-  private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
-  private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
+  private static final String COG_NOV_2021 = 
+      "assets/test/cog/nclimgrid-prcp-202111.tif";
+  private static final String COG_DEC_2021 =
+      "assets/test/cog/nclimgrid-prcp-202112.tif";
+  
+  @BeforeAll
+  static void setHeadlessMode() {
+    // Enable headless mode to avoid X11 dependencies
+    System.setProperty("java.awt.headless", "true");
+  }
   
   @BeforeEach
   void setup() {
@@ -42,12 +46,31 @@ public class ExternalLayerFactoryTest {
   private Geometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
     return new Geometry(spatialContext.getShapeFactory().rect(minX, maxX, minY, maxY));
   }
+  
+  private Request createFileRequest(String path, Geometry geometry) {
+    return new Request("file", "", path, Optional.of(geometry), Optional.empty());
+  }
+
+  @Test
+  void testChainStructureIsCorrect() {
+    ExternalLayer chain = factory.createCogExternalLayerChain();
+    
+    // Verify the chain structure using instanceof checks
+    assertTrue(chain instanceof PrimingGeometryLayer, "Outer layer should be PrimingGeometryLayer");
+    ExternalLayer inner1 = ((ExternalLayerDecorator) chain).getDecoratedLayer();
+    assertTrue(
+        inner1 instanceof ExternalPathCacheLayer,
+        "Middle layer should be ExternalPathCacheLayer"
+    );
+    ExternalLayer inner2 = ((ExternalLayerDecorator) inner1).getDecoratedLayer();
+    assertTrue(inner2 instanceof CogExternalLayer, "Inner layer should be CogExternalLayer");
+  }
 
   @Test
   void testChainReadsCogFiles() {
     // Create a geometry in the US where the test data has coverage
     Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = new Request(COG_NOV_2021, Optional.of(testArea));
+    Request request = createFileRequest(COG_NOV_2021, testArea);
     
     // Test the entire chain
     ExternalLayer chain = factory.createCogExternalLayerChain();
@@ -62,7 +85,7 @@ public class ExternalLayerFactoryTest {
   @Test
   void testCachingLayer() {
     Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = new Request(COG_NOV_2021, Optional.of(testArea));
+    Request request = createFileRequest(COG_NOV_2021, testArea);
     ExternalLayer chain = factory.createCogExternalLayerChain();
     
     // First request should read from file
@@ -86,10 +109,11 @@ public class ExternalLayerFactoryTest {
     assertEquals(0, mean1.get().getAsDecimal().compareTo(mean2.get().getAsDecimal()));
   }
   
+  
   @Test
   void testIndividualLayers() {
     Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = new Request(COG_NOV_2021, Optional.of(testArea));
+    Request request = createFileRequest(COG_NOV_2021, testArea);
     
     // Test CogExternalLayer directly
     CogReader cogReader = new CogReader(caster, units);
@@ -122,7 +146,7 @@ public class ExternalLayerFactoryTest {
     
     // Test with a second geometry
     Geometry testArea2 = createBoxGeometry(-98.0, 39.0, -97.0, 40.0);
-    Request request2 = new Request(COG_DEC_2021, Optional.of(testArea2));
+    Request request2 = createFileRequest(COG_DEC_2021, testArea2);
     primingLayer.fulfill(request2);
     assertTrue(primingLayer.getPrimingGeometry().isPresent());
   }
@@ -134,8 +158,8 @@ public class ExternalLayerFactoryTest {
     // Create requests for different areas and months
     Geometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
     Geometry area2 = createBoxGeometry(-98.0, 39.0, -97.0, 40.0);
-    Request request1 = new Request(COG_NOV_2021, Optional.of(area1));
-    Request request2 = new Request(COG_DEC_2021, Optional.of(area2));
+    Request request1 = createFileRequest(COG_NOV_2021, area1);
+    Request request2 = createFileRequest(COG_DEC_2021, area2);
     
     // Get results
     RealizedDistribution result1 = chain.fulfill(request1);
