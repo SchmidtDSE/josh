@@ -1,3 +1,9 @@
+/**
+ * Class for reading Cloud Optimized GeoTIFF (COG) files using Apache SIS and spatial4j.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.external;
 
 import java.awt.image.Raster;
