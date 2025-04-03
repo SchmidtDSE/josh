@@ -1,3 +1,9 @@
+/**
+ * Decorator allowing a shadowing entity to provide prior values like a frozen entity.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.bridge;
 
 import java.util.Optional;
@@ -8,10 +14,18 @@ import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 
+/**
+ * Decorator allowing a shadowing entity to provide prior attribute values.
+ */
 public class PriorShadowingEntityDecorator implements Entity {
 
   private final ShadowingEntity inner;
-  
+
+  /**
+   * Constructs a PriorShadowingEntityDecorator with the specified inner ShadowingEntity.
+   *
+   * @param inner the ShadowingEntity to be decorated and used to provide prior attribute values.
+   */
   public PriorShadowingEntityDecorator(ShadowingEntity inner) {
     this.inner = inner;
   }
