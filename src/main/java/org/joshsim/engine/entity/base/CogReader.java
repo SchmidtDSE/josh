@@ -27,6 +27,7 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
+import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
 
@@ -54,7 +55,7 @@ public class CogReader {
     this.bandIndex = bandIndex;
     this.resourceIndex = resourceIndex;
   }
-  
+
   /**
    * Creates a new CogReader with default band (0) and resource (0) selection.
    *
@@ -96,7 +97,7 @@ public class CogReader {
       throw new IOException("Failed to read COG file: " + e.getMessage(), e);
     }
   }
-  
+
   /**
    * Common logic for reading values from a data store.
    *
@@ -108,8 +109,8 @@ public class CogReader {
    * @throws DataStoreException If an error occurs accessing the data store
    */
   private RealizedDistribution readFromStore(
-      DataStore store, 
-      Geometry geometry, 
+      DataStore store,
+      Geometry geometry,
       String sourceName
   ) throws IOException, DataStoreException {
     // Extract the envelope from the geometry shape's bounding box
@@ -118,7 +119,7 @@ public class CogReader {
     // Get the specified grid coverage resource from the store
     GridCoverageResource resource = findGridCoverageResource(store, resourceIndex);
     if (resource == null) {
-      throw new IOException("No grid coverage resource found at index " + resourceIndex + 
+      throw new IOException("No grid coverage resource found at index " + resourceIndex +
                            " in " + sourceName);
     }
 
@@ -145,26 +146,26 @@ public class CogReader {
    * @throws IOException If the requested resource index is out of bounds
    */
   private GridCoverageResource findGridCoverageResource(
-      DataStore store, 
+      DataStore store,
       int index
   ) throws DataStoreException, IOException {
     // For stores that contain multiple resources
     if (store instanceof Aggregate) {
       Aggregate aggregate = (Aggregate) store;
       List<GridCoverageResource> resources = new ArrayList<>();
-      
+
       // Find all grid coverage resources
       for (Resource resource : aggregate.components()) {
         if (resource instanceof GridCoverageResource) {
           resources.add((GridCoverageResource) resource);
         }
       }
-      
+
       // Provide detailed information about available resources
       if (resources.isEmpty()) {
         throw new IOException("No grid coverage resources found in the data store.");
       }
-      
+
       // Validate requested index
       if (index < 0 || index >= resources.size()) {
         throw new IOException(String.format(
@@ -173,7 +174,7 @@ public class CogReader {
             index, resources.size(), resources.size() - 1)
         );
       }
-      
+
       // Return the requested resource by index
       return resources.get(index);
     } else if (store instanceof GridCoverageResource) {
@@ -253,7 +254,7 @@ public class CogReader {
           // Convert grid coordinates to world coordinates using the transform
           gridPos.setLocation(x + 0.5, y + 0.5);  // Center of the cell
           worldPos = gridToWorld.transform(gridPos, worldPos);
-          
+
           double worldX = worldPos.getOrdinate(0);
           double worldY = worldPos.getOrdinate(1);
 
