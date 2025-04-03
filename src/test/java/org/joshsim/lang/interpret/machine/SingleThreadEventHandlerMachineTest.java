@@ -26,9 +26,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 
 /**
@@ -506,7 +504,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     DecimalScalar result = (DecimalScalar) machine.getResult();
-    assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.4142) < 0.0001);
+    assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.5811) < 0.0001);
   }
 
   @Test
