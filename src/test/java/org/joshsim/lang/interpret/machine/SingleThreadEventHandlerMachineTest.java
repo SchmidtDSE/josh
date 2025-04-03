@@ -506,7 +506,7 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     DecimalScalar result = (DecimalScalar) machine.getResult();
-    assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.4142) < 0.0001);
+    assertTrue(Math.abs(result.getAsDecimal().doubleValue() - 1.5811) < 0.0001);
   }
 
   @Test

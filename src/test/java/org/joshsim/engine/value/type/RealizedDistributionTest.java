@@ -346,7 +346,7 @@ class RealizedDistributionTest {
   @Test
   void testGetStd() {
     assertEquals(
-        1.4142,
+        1.5811,
         distribution.getStd().orElseThrow().getAsDecimal().doubleValue(),
         0.0001
     );
