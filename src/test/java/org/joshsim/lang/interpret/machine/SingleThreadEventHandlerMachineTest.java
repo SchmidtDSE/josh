@@ -123,6 +123,53 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+
+
+  @Test
+  void branch_shouldExecutePositiveActionWhenConditionIsTrue() {
+    // Given
+    EngineValue condition = makeBoolScalar(true);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+    EventHandlerAction negativeAction = machine -> {
+      machine.push(makeIntScalar(-42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.branch(positiveAction, negativeAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(42), machine.getResult());
+  }
+
+  @Test
+  void branch_shouldExecuteNegativeActionWhenConditionIsFalse() {
+    // Given
+    EngineValue condition = makeBoolScalar(false);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+    EventHandlerAction negativeAction = machine -> {
+      machine.push(makeIntScalar(-42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.branch(positiveAction, negativeAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(-42), machine.getResult());
+  }
+
+
   void multiply_shouldMultiplyTwoValues() {
     // Given
     EngineValue value1 = makeIntScalar(6);
