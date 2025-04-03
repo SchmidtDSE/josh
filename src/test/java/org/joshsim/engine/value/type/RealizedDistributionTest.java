@@ -431,3 +431,40 @@ class RealizedDistributionTest {
   }
 
 }
+
+
+
+  @Test
+  void testFreeze() {
+    // Create a mutable value to verify freezing
+    MutableEntity mutableEntity = new MutableEntity(caster);
+    values.add(mutableEntity);
+    RealizedDistribution distributionWithMutable = new RealizedDistribution(caster, values, Units.EMPTY);
+
+    // Freeze the distribution
+    EngineValue frozenResult = distributionWithMutable.freeze();
+
+    // Verify the result is a RealizedDistribution
+    assertTrue(frozenResult instanceof RealizedDistribution);
+    RealizedDistribution frozenDistribution = (RealizedDistribution) frozenResult;
+
+    // Verify the frozen distribution has the same size
+    assertEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
+
+    // Verify the units are preserved
+    assertEquals(distributionWithMutable.getUnits(), frozenDistribution.getUnits());
+
+    // Get the inner values
+    Object innerValue = frozenDistribution.getInnerValue();
+    assertTrue(innerValue instanceof ArrayList<?>);
+    ArrayList<?> frozenValues = (ArrayList<?>) innerValue;
+
+    // Verify all values in the frozen distribution are frozen
+    for (Object value : frozenValues) {
+      assertTrue(value instanceof EngineValue);
+      EngineValue engineValue = (EngineValue) value;
+      // Verify that mutable entities are converted to immutable entities
+      assertFalse(engineValue instanceof MutableEntity);
+    }
+  }
+
