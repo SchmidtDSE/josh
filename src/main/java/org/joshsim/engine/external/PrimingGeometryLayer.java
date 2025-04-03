@@ -42,10 +42,11 @@ public abstract class PrimingGeometryLayer extends ExternalLayerDecorator {
    * @param geometry The geometry to add to the priming extent
    */
   void extendPrimingGeometry(Geometry geometry) {
+    // TODO: getIntersect() is not implemented yet, and may be kind of a pain with Spatial4j
     if (primingGeometry.isPresent()) {
       primingGeometry = Optional.of(primingGeometry.get().getIntersect(geometry));
     } else {
-      primingGeometry = Optional.of(geometry);
+      setPrimingGeometry(geometry);
     }
   }
 
