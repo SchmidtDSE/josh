@@ -248,8 +248,7 @@ public class RealizedDistribution extends Distribution {
         .map(Scalar::getAsDecimal)
         .mapToDouble(BigDecimal::doubleValue)
         .map(value -> Math.pow(value - mean, 2))
-        .average()
-        .orElse(0.0);
+        .sum() / (values.size() - 1);
     double stdDev = Math.sqrt(variance);
     DecimalScalar result = new DecimalScalar(getCaster(), BigDecimal.valueOf(stdDev), getUnits());
     return Optional.of(result);
