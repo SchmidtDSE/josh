@@ -13,11 +13,11 @@ import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Shape;
 
 /**
- * Represents a geometric object that implements the Spatial interface.
+ * Represents an immutable geometric object that implements the Spatial interface.
  */
 public class Geometry implements Spatial {
 
-  protected Shape shape;
+  private final Shape shape;
 
   /**
    * Constructs a Geometry with a provided spatial4j shape.
@@ -33,6 +33,15 @@ public class Geometry implements Spatial {
    */
   protected Point getCenter() {
     return shape.getCenter();
+  }
+
+  /**
+   * Get the shape decorated by this geometry.
+   *
+   * @return shape decorated by this geometry.
+   */
+  protected Shape getShape() {
+    return shape;
   }
 
   /**
