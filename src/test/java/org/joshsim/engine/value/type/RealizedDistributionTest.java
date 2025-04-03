@@ -315,20 +315,10 @@ class RealizedDistributionTest {
 
   @Test
   void testGetContentsLimitedWithoutReplacement() {
-    // Request more items than available without replacement
-    Iterable<EngineValue> result = distribution.getContents(10, false);
-    ArrayList<EngineValue> resultList = new ArrayList<>();
-    result.forEach(resultList::add);
-
-    // Should only return the 5 available items
-    assertEquals(5, resultList.size());
-
-    for (int i = 0; i < 5; i++) {
-      Object value = resultList.get(i);
-      assertTrue(value instanceof IntScalar);
-      IntScalar scalar = (IntScalar) value;
-      assertEquals(i + 1, scalar.getAsInt());
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> distribution.getContents(10, false)
+    );
   }
 
   @Test

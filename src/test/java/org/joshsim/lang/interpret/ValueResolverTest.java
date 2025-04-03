@@ -69,6 +69,7 @@ public class ValueResolverTest {
     // Configure mocks for nested value test
     when(mockScope.get("entity")).thenReturn(mockEntityValue);
     when(mockScope.has("entity")).thenReturn(true);
+    when(mockEntityValue.getSize()).thenReturn(Optional.of(1));
     when(mockEntityValue.getAsMutableEntity()).thenReturn(mockEntity);
 
     // Setup nested entity value.
