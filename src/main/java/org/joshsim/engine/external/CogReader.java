@@ -1,4 +1,4 @@
-package org.joshsim.engine.entity.base;
+package org.joshsim.engine.external;
 
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
