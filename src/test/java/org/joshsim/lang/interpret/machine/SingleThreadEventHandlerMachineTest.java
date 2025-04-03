@@ -123,18 +123,15 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
-
-
-  @Test
   void branch_shouldExecutePositiveActionWhenConditionIsTrue() {
     // Given
     EngineValue condition = makeBoolScalar(true);
     EventHandlerAction positiveAction = machine -> {
-      machine.push(makeIntScalar(42));
+      machine.push(makeIntScalar(5));
       return machine;
     };
     EventHandlerAction negativeAction = machine -> {
-      machine.push(makeIntScalar(-42));
+      machine.push(makeIntScalar(10));
       return machine;
     };
 
@@ -144,7 +141,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     // Then
     machine.end();
-    assertEquals(makeIntScalar(42), machine.getResult());
+    assertEquals(makeIntScalar(5), machine.getResult());
   }
 
   @Test
@@ -152,11 +149,11 @@ public class SingleThreadEventHandlerMachineTest {
     // Given
     EngineValue condition = makeBoolScalar(false);
     EventHandlerAction positiveAction = machine -> {
-      machine.push(makeIntScalar(42));
+      machine.push(makeIntScalar(5));
       return machine;
     };
     EventHandlerAction negativeAction = machine -> {
-      machine.push(makeIntScalar(-42));
+      machine.push(makeIntScalar(10));
       return machine;
     };
 
@@ -166,10 +163,10 @@ public class SingleThreadEventHandlerMachineTest {
 
     // Then
     machine.end();
-    assertEquals(makeIntScalar(-42), machine.getResult());
+    assertEquals(makeIntScalar(10), machine.getResult());
   }
 
-
+  @Test
   void multiply_shouldMultiplyTwoValues() {
     // Given
     EngineValue value1 = makeIntScalar(6);
