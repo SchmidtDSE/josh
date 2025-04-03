@@ -26,7 +26,9 @@ import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 
 /**
