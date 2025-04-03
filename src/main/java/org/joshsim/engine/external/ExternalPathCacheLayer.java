@@ -12,7 +12,7 @@ package org.joshsim.engine.external;
  */
 public abstract class ExternalPathCacheLayer extends ExternalLayerDecorator {
   /**
-   * Constructor.
+   * Decorates an external layer with caching functionality.
    *
    * @param decoratedLayer The layer to decorate
    */
