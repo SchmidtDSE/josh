@@ -19,6 +19,7 @@ import java.util.TreeMap;
 public class Units {
 
   public static final Units EMPTY = new Units("");
+  public static final Units COUNT = new Units("count");
 
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;

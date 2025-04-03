@@ -8,11 +8,13 @@ package org.joshsim.lang.interpret.machine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
@@ -51,7 +53,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private Entity mockCreatedEntity;
 
   private SingleThreadEventHandlerMachine machine;
-  private final EngineValueFactory factory = new EngineValueFactory();
+  private EngineValueFactory factory;
 
   /**
    * Setup test environment before each test.
@@ -786,33 +788,41 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void createEntity_shouldCreateEntityFromPrototype() {
     // Given
-    when(mockBridge.getPrototype("myPrototype")).thenReturn(mockPrototype);
-    when(mockPrototype.createEntity(mockScope)).thenReturn(mockCreatedEntity);
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
+    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockCreatedEntity.getName()).thenReturn("Test");
+    when(mockPrototype.requiresParent()).thenReturn(true);
 
     // When
-    machine.push(factory.build("myPrototype", Units.EMPTY));
-    machine.createEntity();
+    machine.push(factory.build(1, Units.COUNT));
+    machine.createEntity("Test");
 
     // Then
     machine.end();
-    assertEquals(mockCreatedEntity, machine.getResult());
+    assertEquals(mockCreatedEntity, machine.getResult().getAsEntity());
   }
 
   @Test
   void createEntity_shouldCreateMultipleEntitiesFromPrototype() {
     // Given
-    when(mockBridge.getPrototype("myPrototype")).thenReturn(mockPrototype);
-    when(mockPrototype.createEntity(mockScope)).thenReturn(mockCreatedEntity);
-    int count = 3;
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
+    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockCreatedEntity.getName()).thenReturn("Test");
+    when(mockPrototype.requiresParent()).thenReturn(true);
 
     // When
-    machine.push(factory.build("myPrototype", Units.EMPTY));
-    machine.push(factory.build(count, Units.COUNT));
-    machine.createEntity();
+    machine.push(factory.build(3, Units.COUNT));
+    machine.createEntity("Test");
 
     // Then
     machine.end();
     Distribution result = machine.getResult().getAsDistribution();
-    assertEquals(Optional.of(count), result.getSize());
+    assertEquals(Optional.of(3), result.getSize());
   }
 }
