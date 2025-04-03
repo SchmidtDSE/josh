@@ -604,6 +604,45 @@ public class SingleThreadEventHandlerMachineTest {
     EngineValue mean = makeDecimalScalar(new BigDecimal("5.0"));
     EngineValue stdDev = makeDecimalScalar(new BigDecimal("1.0"));
 
+
+
+  @Test
+  void condition_shouldExecuteActionWhenConditionIsTrue() {
+    // Given
+    EngineValue condition = makeBoolScalar(true);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.condition(positiveAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(42), machine.getResult());
+  }
+
+  @Test
+  void condition_shouldNotExecuteActionWhenConditionIsFalse() {
+    // Given
+    EngineValue condition = makeBoolScalar(false);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.condition(positiveAction);
+
+    // Then
+    machine.end();
+    assertTrue(machine.isEnded());
+  }
+
+
     // When
     machine.push(mean);
     machine.push(stdDev);
