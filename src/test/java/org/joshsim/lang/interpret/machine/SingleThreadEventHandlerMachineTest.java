@@ -797,4 +797,22 @@ public class SingleThreadEventHandlerMachineTest {
     machine.end();
     assertEquals(mockCreatedEntity, machine.getResult());
   }
+
+  @Test
+  void createEntity_shouldCreateMultipleEntitiesFromPrototype() {
+    // Given
+    when(mockBridge.getPrototype("myPrototype")).thenReturn(mockPrototype);
+    when(mockPrototype.createEntity(mockScope)).thenReturn(mockCreatedEntity);
+    int count = 3;
+
+    // When
+    machine.push(factory.build("myPrototype", Units.EMPTY));
+    machine.push(factory.build(count, Units.COUNT));
+    machine.createEntity();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(Optional.of(count), result.getSize());
+  }
 }
