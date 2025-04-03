@@ -47,6 +47,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private EngineBridge mockBridge;
 
   private SingleThreadEventHandlerMachine machine;
+  private final EngineValueFactory factory = new EngineValueFactory();
 
   /**
    * Setup test environment before each test.
@@ -741,5 +742,39 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal tolerance = new BigDecimal("0.0001");
     assertTrue(expected.subtract(actual).abs().compareTo(tolerance) <= 0,
         "Expected " + expected + " but got " + actual);
+  }
+
+  @Test
+  void cast_withForceTrue_shouldKeepOriginalValue() {
+    // Given
+    EngineValue intValue = factory.build(1L, new Units("m"));
+    Units targetUnits = new Units("cm");
+
+    // When
+    machine.push(intValue);
+    machine.cast(targetUnits, true);
+
+    // Then
+    machine.end();
+    assertEquals(1L, machine.getResult().getAsInt());
+    assertEquals(targetUnits, machine.getResult().getUnits());
+  }
+
+  @Test
+  void cast_withForceFalse_shouldConvertValue() {
+    // Given
+    EngineValue intValue = factory.build(1L, new Units("m"));
+    Units targetUnits = new Units("cm");
+    EngineValue convertedValue = factory.build(100L, targetUnits);
+    when(mockBridge.convert(intValue, targetUnits)).thenReturn(convertedValue);
+
+    // When
+    machine.push(intValue);
+    machine.cast(targetUnits, false);
+
+    // Then
+    machine.end();
+    assertEquals(100L, machine.getResult().getAsInt());
+    assertEquals(targetUnits, machine.getResult().getUnits());
   }
 }
