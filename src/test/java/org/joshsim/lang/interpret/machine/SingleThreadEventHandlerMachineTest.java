@@ -44,6 +44,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private Entity mockEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
+  @Mock(lenient = true) private EngineBridge mockBridge;
 
   private SingleThreadEventHandlerMachine machine;
 
@@ -52,7 +53,7 @@ public class SingleThreadEventHandlerMachineTest {
    */
   @BeforeEach
   void setUp() {
-    machine = new SingleThreadEventHandlerMachine(null, mockScope);
+    machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
   }
 
   @Test
