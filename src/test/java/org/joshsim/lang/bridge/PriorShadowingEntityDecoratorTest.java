@@ -1,3 +1,8 @@
+/**
+ * Tests for the decorator allowing ShadowingEntity to provide prior values like a frozen entity.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.lang.bridge;
 
@@ -11,7 +16,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,18 +23,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+
+/**
+ * Tests for the decorator allowing ShadowingEntity to provide prior values like a frozen entity.
+ */
 @ExtendWith(MockitoExtension.class)
 public class PriorShadowingEntityDecoratorTest {
 
-    @Mock private ShadowingEntity mockInner;
-    @Mock private Geometry mockGeometry;
-    @Mock private EntityType mockEntityType;
-    @Mock private Entity mockFrozenEntity;
-    @Mock private GeoKey mockGeoKey;
-    @Mock private EngineValue mockEngineValue;
+    @Mock(lenient = true) private ShadowingEntity mockInner;
+    @Mock(lenient = true) private Geometry mockGeometry;
+    @Mock(lenient = true) private EntityType mockEntityType;
+    @Mock(lenient = true) private Entity mockFrozenEntity;
+    @Mock(lenient = true) private GeoKey mockGeoKey;
+    @Mock(lenient = true) private EngineValue mockEngineValue;
 
     private PriorShadowingEntityDecorator decorator;
 
+    /**
+     * Mock the inner ShadowingEntity.
+     */
     @BeforeEach
     void setUp() {
         when(mockInner.getName()).thenReturn("TestEntity");
