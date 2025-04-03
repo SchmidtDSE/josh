@@ -8,6 +8,7 @@
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
+import org.apache.sis.geometry.GeneralEnvelope;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Shape;
@@ -112,6 +113,26 @@ public class Geometry implements Spatial {
    */
   public SpatialContext getSpatialContext() {
     return shape.getContext();
+  }
+
+  /**
+   * Creates an envelope from this geometry's bounds.
+   *
+   * @return A GeneralEnvelope representing the geometry's bounds
+   */
+  public GeneralEnvelope getEnvelope() {
+    // Extract bounds from the geometry
+    GeneralEnvelope envelope = new GeneralEnvelope(2);
+    
+    double minX = getShape().getBoundingBox().getMinX();
+    double minY = getShape().getBoundingBox().getMinY();
+    double maxX = getShape().getBoundingBox().getMaxX();
+    double maxY = getShape().getBoundingBox().getMaxY();
+    
+    envelope.setRange(0, minX, maxX);  // X min/max
+    envelope.setRange(1, minY, maxY);  // Y min/max
+    
+    return envelope;
   }
 
 }
