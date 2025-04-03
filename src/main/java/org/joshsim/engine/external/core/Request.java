@@ -12,39 +12,73 @@ import org.joshsim.engine.geometry.Geometry;
 /**
  * Interface representing a request to fetch external data.
  */
-public interface Request {
+public class Request {
+  private String protocol;
+  private String host;
+  private String path;
+  private Optional<Geometry> geometry;
+  private Optional<String> resource;
+
+  /**
+   * Constructor for the Request class.
+   *
+   * @param protocol Protocol used for the request (file, http, etc.)
+   * @param host Host or location to query
+   * @param path Path to the resource (e.g., file path, URL)
+   * @param geometry Geometry for which to fetch data
+   * @param resource Resource identifier or name
+   */
+  public Request(String protocol, String host, String path, Optional<Geometry> geometry,
+      Optional<String> resource) {
+    this.protocol = protocol;
+    this.host = host;
+    this.path = path;
+    this.geometry = geometry;
+    this.resource = resource;
+  }
+
   /**
    * Returns the protocol used for the request.
    *
    * @return Protocol used for the request (file, http, etc.)
    */
-  String getProtocol();
+  String getProtocol() {
+    return protocol;
+  }
 
   /**
    * Returns the host or location to query.
    *
    * @return Host or location to query
    */
-  String getHost();
+  String getHost() {
+    return host;
+  }
 
   /**
    * Returns the path to the resource (e.g., file path, URL).
    *
    * @return Path to the resource
    */
-  String getPath();
+  String getPath() {
+    return path;
+  }
 
   /**
    * Returns the geometry for which to fetch data.
    *
    * @return Geometry defining the area of interest
    */
-  Optional<Geometry> getGeometry();
+  Optional<Geometry> getGeometry() {
+    return geometry;
+  }
 
   /**
    * Returns the resource identifier or name, for further subsetting the data if needed.
    *
    * @return Optional resource identifier or name
    */
-  Optional<String> getResource();
+  Optional<String> getResource() {
+    return resource;
+  }
 }

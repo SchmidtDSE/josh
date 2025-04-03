@@ -37,7 +37,7 @@ public class ExternalLayerFactory {
    *
    * @return the initialized external layer chain
    */
-  public ExternalLayer createExternalLayerChain() {
+  public ExternalLayer createCogExternalLayerChain() {
     // Create the base layer with COG reader
     CogReader cogReader = new CogReader(caster, units);
     ExternalLayer cogLayer = new CogExternalLayer(cogReader);
