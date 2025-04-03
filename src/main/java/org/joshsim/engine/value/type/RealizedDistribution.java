@@ -217,6 +217,12 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Iterable<EngineValue> getContents(int count, boolean withReplacement) {
+    // If exactly all requested, can return immediately to save some memory and time.
+    if (values.size() == count) {
+      return values;
+    }
+
+    // Otherwise, sublist or wrap.
     if (withReplacement) {
       ArrayList<EngineValue> result = new ArrayList<>();
       for (int i = 0; i < count; i++) {
@@ -224,7 +230,12 @@ public class RealizedDistribution extends Distribution {
       }
       return result;
     } else {
-      return values.subList(0, Math.min(count, values.size()));
+      if (values.size() < count) {
+        throw new IllegalArgumentException(
+          "Cannot get more elements than present in a realized distribution without replacement."
+        );
+      }
+      return values.subList(0, count);
     }
   }
 

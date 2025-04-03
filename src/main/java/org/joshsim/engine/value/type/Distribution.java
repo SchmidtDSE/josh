@@ -61,11 +61,12 @@ public abstract class Distribution extends EngineValue {
   /**
    * Get a specified number of values from the distribution.
    *
-   * <p>Sample repeatedly from this distribution given a number of samples to retrieve. In each
-   * sampling this draw can either happen with or without replacement. With replacement, each
+   * <p>Get a subset of elements from this distribution given a number of samples to retrieve. In
+   * each draw, this operation can either happen with or without replacement. With replacement, each
    * value has a probability of selection proportional to the frequency of that value. Without
    * replacement, each value has a probability of selection proprotion to the frequency of that
-   * value minus the number of times it was drawn in this invocation of getContents.</p>
+   * value minus the number of times it was drawn in this invocation of getContents. Unlike sample,
+   * this does not guarantee random ordering but may be more performant.</p>
    *
    * @param count number of values to retrieve.
    * @param withReplacement boolean flag indicating whether to sample with replacement. True if
