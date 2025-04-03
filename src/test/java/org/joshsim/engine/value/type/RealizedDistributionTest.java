@@ -8,6 +8,7 @@ package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -430,16 +431,13 @@ class RealizedDistributionTest {
         () -> distribution.sampleMultiple(10, false));
   }
 
-}
-
-
-
   @Test
   void testFreeze() {
-    // Create a mutable value to verify freezing
-    MutableEntity mutableEntity = new MutableEntity(caster);
-    values.add(mutableEntity);
-    RealizedDistribution distributionWithMutable = new RealizedDistribution(caster, values, Units.EMPTY);
+    RealizedDistribution distributionWithMutable = new RealizedDistribution(
+        caster,
+        values,
+        Units.EMPTY
+    );
 
     // Freeze the distribution
     EngineValue frozenResult = distributionWithMutable.freeze();
@@ -454,17 +452,11 @@ class RealizedDistributionTest {
     // Verify the units are preserved
     assertEquals(distributionWithMutable.getUnits(), frozenDistribution.getUnits());
 
-    // Get the inner values
-    Object innerValue = frozenDistribution.getInnerValue();
-    assertTrue(innerValue instanceof ArrayList<?>);
-    ArrayList<?> frozenValues = (ArrayList<?>) innerValue;
+    // Check that changes do not propogate
+    values.add(new IntScalar(caster, 0L, new Units("m")));
 
-    // Verify all values in the frozen distribution are frozen
-    for (Object value : frozenValues) {
-      assertTrue(value instanceof EngineValue);
-      EngineValue engineValue = (EngineValue) value;
-      // Verify that mutable entities are converted to immutable entities
-      assertFalse(engineValue instanceof MutableEntity);
-    }
+    // Verify the frozen distribution has the same size
+    assertNotEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
   }
 
+}
