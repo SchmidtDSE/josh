@@ -1,4 +1,3 @@
-
 /**
  * Tests for SingleThreadEventHandlerMachine.
  *
@@ -9,11 +8,15 @@ package org.joshsim.lang.interpret.machine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
@@ -23,10 +26,13 @@ import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
+import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.spatial4j.context.SpatialContext;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,15 +49,20 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private Entity mockEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
+  @Mock(lenient = true) private EngineBridge mockBridge;
+  @Mock(lenient = true) private EntityPrototype mockPrototype;
+  @Mock(lenient = true) private Entity mockCreatedEntity;
 
   private SingleThreadEventHandlerMachine machine;
+  private EngineValueFactory factory;
 
   /**
    * Setup test environment before each test.
    */
   @BeforeEach
   void setUp() {
-    machine = new SingleThreadEventHandlerMachine(null, mockScope);
+    machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
+    factory = new EngineValueFactory();
   }
 
   @Test
@@ -119,6 +130,50 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     assertEquals(makeIntScalar(6), machine.getResult());
+  }
+
+  @Test
+  void branch_shouldExecutePositiveActionWhenConditionIsTrue() {
+    // Given
+    EngineValue condition = makeBoolScalar(true);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(5));
+      return machine;
+    };
+    EventHandlerAction negativeAction = machine -> {
+      machine.push(makeIntScalar(10));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.branch(positiveAction, negativeAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(5), machine.getResult());
+  }
+
+  @Test
+  void branch_shouldExecuteNegativeActionWhenConditionIsFalse() {
+    // Given
+    EngineValue condition = makeBoolScalar(false);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(5));
+      return machine;
+    };
+    EventHandlerAction negativeAction = machine -> {
+      machine.push(makeIntScalar(10));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.branch(positiveAction, negativeAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(10), machine.getResult());
   }
 
   @Test
@@ -620,6 +675,42 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+  void condition_shouldExecuteActionWhenConditionIsTrue() {
+    // Given
+    EngineValue condition = makeBoolScalar(true);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.condition(positiveAction);
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(42), machine.getResult());
+  }
+
+  @Test
+  void condition_shouldNotExecuteActionWhenConditionIsFalse() {
+    // Given
+    EngineValue condition = makeBoolScalar(false);
+    EventHandlerAction positiveAction = machine -> {
+      machine.push(makeIntScalar(42));
+      return machine;
+    };
+
+    // When
+    machine.push(condition);
+    machine.condition(positiveAction);
+
+    // Then
+    machine.end();
+    assertTrue(machine.isEnded());
+  }
+
+  @Test
   void saveLocalVariable_makesVisible() {
     // Given
     EngineValue value = makeIntScalar(5L);
@@ -659,5 +750,114 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal tolerance = new BigDecimal("0.0001");
     assertTrue(expected.subtract(actual).abs().compareTo(tolerance) <= 0,
         "Expected " + expected + " but got " + actual);
+  }
+
+  @Test
+  void cast_withForceTrue_shouldKeepOriginalValue() {
+    // Given
+    EngineValue intValue = factory.build(1L, new Units("m"));
+    Units targetUnits = new Units("cm");
+
+    // When
+    machine.push(intValue);
+    machine.cast(targetUnits, true);
+
+    // Then
+    machine.end();
+    assertEquals(1L, machine.getResult().getAsInt());
+    assertEquals(targetUnits, machine.getResult().getUnits());
+  }
+
+  @Test
+  void cast_withForceFalse_shouldConvertValue() {
+    // Given
+    EngineValue intValue = factory.build(1L, new Units("m"));
+    Units targetUnits = new Units("cm");
+    EngineValue convertedValue = factory.build(100L, targetUnits);
+    when(mockBridge.convert(intValue, targetUnits)).thenReturn(convertedValue);
+
+    // When
+    machine.push(intValue);
+    machine.cast(targetUnits, false);
+
+    // Then
+    machine.end();
+    assertEquals(100L, machine.getResult().getAsInt());
+    assertEquals(targetUnits, machine.getResult().getUnits());
+  }
+
+  @Test
+  void createEntity_shouldCreateEntityFromPrototype() {
+    // Given
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
+    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockCreatedEntity.getName()).thenReturn("Test");
+    when(mockPrototype.requiresParent()).thenReturn(true);
+
+    // When
+    machine.push(factory.build(1, Units.COUNT));
+    machine.createEntity("Test");
+
+    // Then
+    machine.end();
+    assertEquals(mockCreatedEntity, machine.getResult().getAsEntity());
+  }
+
+  @Test
+  void createEntity_shouldCreateMultipleEntitiesFromPrototype() {
+    // Given
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
+    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockCreatedEntity.getName()).thenReturn("Test");
+    when(mockPrototype.requiresParent()).thenReturn(true);
+
+    // When
+    machine.push(factory.build(3, Units.COUNT));
+    machine.createEntity("Test");
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(Optional.of(3), result.getSize());
+  }
+
+  @Test
+  void executeSpatialQuery_shouldReturnPatchesWithinDistance() {
+    // Given
+    List<String> mockAttrs = new ArrayList<>();
+    mockAttrs.add("testAttr");
+
+    when(mockScope.has("current")).thenReturn(true);
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockScope.has("testAttr")).thenReturn(true);
+    when(mockScope.get("testAttr")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockEntity.getGeometry()).thenReturn(Optional.of(mockGeometry));
+    when(mockEntity.getAttributeNames()).thenReturn(mockAttrs);
+    when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
+    when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getSpatialContext()).thenReturn(SpatialContext.GEO);
+
+    List<Entity> queryResults = List.of(mockEntity);
+    when(mockBridge.getPriorPatches(any(Geometry.class))).thenReturn(queryResults);
+    when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
+
+    // When
+    BigDecimal queryDistance = BigDecimal.valueOf(10.0);
+    EngineValue distanceValue = factory.build(queryDistance, new Units("meters"));
+    machine.push(distanceValue);
+    machine.executeSpatialQuery(new ValueResolver("testAttr"));
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(1, result.getSize().get());
   }
 }
