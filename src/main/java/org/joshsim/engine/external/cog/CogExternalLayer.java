@@ -3,6 +3,7 @@ package org.joshsim.engine.external.cog;
 import java.io.IOException;
 import org.joshsim.engine.external.core.ExternalLayer;
 import org.joshsim.engine.external.core.Request;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -23,7 +24,8 @@ public class CogExternalLayer implements ExternalLayer {
   @Override
   public RealizedDistribution fulfill(Request request) {
     try {
-      return cogReader.readValues(request.getPath(), request.getGeometry());
+      Geometry geometry = request.getGeometry().orElseThrow();
+      return cogReader.readValues(request.getPath(), geometry);
     } catch (IOException e) {
       throw new RuntimeException("Failed to read COG file: " + request.getPath(), e);
     }
