@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.external;
+package org.joshsim.engine.external.cog;
 
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
@@ -126,7 +126,7 @@ public class CogReader {
     GridCoverageResource resource = findGridCoverageResource(store, resourceIndex);
     if (resource == null) {
       throw new IOException("No grid coverage resource found at index " + resourceIndex +
-                           " in " + sourceName);
+                          " in " + sourceName);
     }
 
     // Read only the data within our envelope

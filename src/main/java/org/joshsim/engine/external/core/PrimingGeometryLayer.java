@@ -4,16 +4,17 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.external;
+package org.joshsim.engine.external.core;
 
 import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
  * An abstract class that decorates an external layer and manages a priming geometry.
  * The priming geometry is typically the intersection of all geometries added to the priming extent.
  */
-public abstract class PrimingGeometryLayer extends ExternalLayerDecorator {
+public class PrimingGeometryLayer extends ExternalLayerDecorator {
   private Optional<Geometry> primingGeometry;
 
   /**
@@ -57,5 +58,20 @@ public abstract class PrimingGeometryLayer extends ExternalLayerDecorator {
    */
   void setPrimingGeometry(Geometry geometry) {
     this.primingGeometry = Optional.of(geometry);
+  }
+
+  @Override
+  public RealizedDistribution fulfill(Request request) {
+    // Get the geometry from the request
+    // TODO: Revisit proper times to throw here
+    Geometry requestGeometry = request.getGeometry().orElseThrow();
+    
+    // Update our priming geometry to include this request
+    if (requestGeometry != null) {
+      extendPrimingGeometry(requestGeometry);
+    }
+    
+    // Pass the request to the decorated layer
+    return super.fulfill(request);
   }
 }
