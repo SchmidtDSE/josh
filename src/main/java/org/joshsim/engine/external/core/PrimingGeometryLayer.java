@@ -35,7 +35,7 @@ public class PrimingGeometryLayer extends ExternalLayerDecorator {
   Optional<Geometry> getPrimingGeometry() {
     return primingGeometry;
   }
-  
+
   /**
    * Updates the priming geometry to include a new geometry, which will be the intersection of
    * the current priming geometry and the new geometry.
@@ -65,7 +65,7 @@ public class PrimingGeometryLayer extends ExternalLayerDecorator {
     // Get the geometry from the request
     // TODO: Revisit proper times to throw here
     Geometry requestGeometry = request.getGeometry().orElseThrow();
-    
+
     // Update our priming geometry to include this request
     extendPrimingGeometry(requestGeometry);
 

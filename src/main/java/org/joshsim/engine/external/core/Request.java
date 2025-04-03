@@ -19,21 +19,21 @@ public interface Request {
    * @return Protocol used for the request (file, http, etc.)
    */
   String getProtocol();
-  
+
   /**
    * Returns the host or location to query.
    *
    * @return Host or location to query
    */
   String getHost();
-  
+
   /**
    * Returns the path to the resource (e.g., file path, URL).
    *
    * @return Path to the resource
    */
   String getPath();
-  
+
   /**
    * Returns the geometry for which to fetch data.
    *

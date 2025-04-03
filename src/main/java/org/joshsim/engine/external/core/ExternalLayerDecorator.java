@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public abstract class ExternalLayerDecorator implements ExternalLayer {
   protected final ExternalLayer decoratedLayer;
-  
+
   /**
    * Constructs an ExternalLayerDecorator with the specified ExternalLayer.
    *
@@ -24,7 +24,7 @@ public abstract class ExternalLayerDecorator implements ExternalLayer {
   public ExternalLayerDecorator(ExternalLayer decoratedLayer) {
     this.decoratedLayer = decoratedLayer;
   }
-  
+
   @Override
   public RealizedDistribution fulfill(Request request) {
     return decoratedLayer.fulfill(request);

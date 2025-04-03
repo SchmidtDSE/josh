@@ -11,7 +11,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class CogExternalLayer implements ExternalLayer {
   private final CogReader cogReader;
-  
+
   /**
    * Creates a new COG external layer.
    *
@@ -20,7 +20,7 @@ public class CogExternalLayer implements ExternalLayer {
   public CogExternalLayer(CogReader cogReader) {
     this.cogReader = cogReader;
   }
-  
+
   @Override
   public RealizedDistribution fulfill(Request request) {
     try {
