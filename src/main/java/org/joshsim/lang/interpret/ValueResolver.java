@@ -56,7 +56,24 @@ public class ValueResolver {
       return Optional.of(resolved);
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
-      return continuationResolver.get(new EntityScope(resolved.getAsMutableEntity()));
+      Optional<Integer> innerSize = resolved.getSize();
+      
+      if (innerSize.isEmpty()) {
+        String message = String.format(
+          "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",
+          resolved.getLanguageType()
+        );
+        throw new IllegalArgumentException(message);
+      }
+
+      Scope newScope;
+      if (innerSize.get() == 1) {
+        newScope = new EntityScope(resolved.getAsMutableEntity()));
+      } else {
+        newScope = new DistributionScope(resolved.getAsDistribution());
+      }
+
+      return continuationResolver.get(newScope);
     }
   }
 
