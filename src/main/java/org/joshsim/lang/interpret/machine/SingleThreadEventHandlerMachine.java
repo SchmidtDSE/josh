@@ -18,6 +18,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
+import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.geometry.GeometryFactory;
@@ -46,7 +47,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
-  private final Scope scope;
+  private final LocalScope scope;
   private final EngineValueFactory valueFactory;
   private final Random random;
 
@@ -62,7 +63,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
     this.bridge = bridge;
-    this.scope = scope;
+    this.scope = new LocalScope(scope);
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -659,7 +660,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine saveLocalVariable(String identifierName) {
-    return null;
+    EngineValue value = pop();
+    scope.defineConstant(identifierName, value);
+    return this;
   }
 
   @Override
