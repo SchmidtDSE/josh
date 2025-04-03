@@ -24,6 +24,7 @@ import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.interpret.ValueResolver;
+import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -604,7 +605,20 @@ public class SingleThreadEventHandlerMachineTest {
     EngineValue mean = makeDecimalScalar(new BigDecimal("5.0"));
     EngineValue stdDev = makeDecimalScalar(new BigDecimal("1.0"));
 
+    // When
+    machine.push(mean);
+    machine.push(stdDev);
+    machine.randNorm();
 
+    // Then
+    machine.end();
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    BigDecimal value = result.getAsDecimal();
+
+    // Most values in a normal distribution fall within 3 standard deviations
+    assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
+    assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
+  }
 
   @Test
   void condition_shouldExecuteActionWhenConditionIsTrue() {
@@ -640,22 +654,6 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     assertTrue(machine.isEnded());
-  }
-
-
-    // When
-    machine.push(mean);
-    machine.push(stdDev);
-    machine.randNorm();
-
-    // Then
-    machine.end();
-    DecimalScalar result = (DecimalScalar) machine.getResult();
-    BigDecimal value = result.getAsDecimal();
-
-    // Most values in a normal distribution fall within 3 standard deviations
-    assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
-    assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
 
   @Test
