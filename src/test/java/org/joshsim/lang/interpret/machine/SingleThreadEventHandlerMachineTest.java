@@ -32,6 +32,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.spatial4j.context.SpatialContext;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -824,5 +825,39 @@ public class SingleThreadEventHandlerMachineTest {
     machine.end();
     Distribution result = machine.getResult().getAsDistribution();
     assertEquals(Optional.of(3), result.getSize());
+  }
+
+  @Test
+  void executeSpatialQuery_shouldReturnPatchesWithinDistance() {
+    // Given
+    List<String> mockAttrs = new ArrayList<>();
+    mockAttrs.add("testAttr");
+
+    when(mockScope.has("current")).thenReturn(true);
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockScope.has("testAttr")).thenReturn(true);
+    when(mockScope.get("testAttr")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockEntity.getGeometry()).thenReturn(Optional.of(mockGeometry));
+    when(mockEntity.getAttributeNames()).thenReturn(mockAttrs);
+    when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
+    when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getSpatialContext()).thenReturn(SpatialContext.GEO);
+
+    List<Entity> queryResults = List.of(mockEntity);
+    when(mockBridge.getPriorPatches(any(Geometry.class))).thenReturn(queryResults);
+    when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
+
+    // When
+    BigDecimal queryDistance = BigDecimal.valueOf(10.0);
+    EngineValue distanceValue = factory.build(queryDistance, new Units("meters"));
+    machine.push(distanceValue);
+    machine.executeSpatialQuery(new ValueResolver("testAttr"));
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(1, result.getSize().get());
   }
 }
