@@ -9,6 +9,7 @@ package org.joshsim.lang.interpret.machine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +49,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private EngineBridge mockBridge;
 
   private SingleThreadEventHandlerMachine machine;
-  private final EngineValueFactory factory = new EngineValueFactory();
+  private EngineValueFactory factory;
 
   /**
    * Setup test environment before each test.
@@ -55,6 +57,7 @@ public class SingleThreadEventHandlerMachineTest {
   @BeforeEach
   void setUp() {
     machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
+    factory = new EngineValueFactory();
   }
 
   @Test
