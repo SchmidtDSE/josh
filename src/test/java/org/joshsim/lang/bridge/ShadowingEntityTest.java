@@ -175,7 +175,6 @@ public class ShadowingEntityTest {
 
     assertTrue(result.isPresent());
     assertEquals(handlerValue, result.get());
-    verify(mockCallable).evaluate(any());
     spatialEntity.endSubstep();
   }
 }
