@@ -33,8 +33,8 @@ import org.joshsim.engine.value.type.EngineValue;
  * determining if an attribute value has been resolved over time. This manages reference to
  * current, prior, and here. Current can be used for values set in the current timestep and substep
  * or to determine if just in time evaluation is required if it not yet been resolved. Prior can be
- * used to query for previously resolved values. Here can be used to access the Path or patch-like
- * entity which hosues this entity.</p>
+ * used to query for previously resolved values. Here can be used to access the Patch or patch-like
+ * entity which houses this entity.</p>
  */
 public class ShadowingEntity implements Entity {
 
