@@ -138,22 +138,19 @@ public class ShadowingEntityTest {
     assertThrows(IllegalArgumentException.class, () ->
         spatialEntity.getPriorAttribute(nonexistentAttr));
   }
-}
-
-
 
   @Test
   void testResolvePriorValueWhenNoHandlers() {
     String attrName = "noHandlerAttr";
     when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList(attrName));
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
-    
+
     spatialEntity.startSubstep("test");
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
-    
+
     assertTrue(result.isPresent());
     assertEquals(mockEngineValue, result.get());
     verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
   }
-
+}
