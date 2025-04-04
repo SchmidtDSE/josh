@@ -73,7 +73,6 @@ public class SyntheticScope implements Scope {
     }
   }
 
-
   @Override
   public Iterable<String> getAttributes() {
     return new CombinedAttributeNameIterable(inner.getAttributeNames(), SYNTHETIC_ATTRS);
