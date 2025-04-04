@@ -50,7 +50,7 @@ public class ShadowingEntityTest {
     when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
-    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr", "noHandlerAttr"));
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
