@@ -413,4 +413,5 @@ public class ShadowingEntity implements Entity {
   private void resolveAttributeFromPrior(String name) {
     setCurrentAttribute(name, getPriorAttribute(name));
   }
+
 }
