@@ -158,10 +158,10 @@ public class ShadowingEntity implements Entity {
    */
   public void resolveAllAttributes() {
     StreamSupport.stream(getAttributeNames().spliterator(), false)
-      .map(this::getHandlers)
-      .filter((x) -> x.isPresent())
-      .map((x) -> x.get())
-      .forEach(this::executeHandlers);
+        .map(this::getHandlers)
+        .filter((x) -> x.isPresent())
+        .map((x) -> x.get())
+            .forEach(this::executeHandlers);
   }
 
   /**

@@ -102,9 +102,7 @@ public class ShadowingEntityTest {
   void testGetCurrentAttributeUnresolved() {
     String attrName = "testAttr";
     spatialEntity.startSubstep("test");
-    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
-    assertTrue(result.isEmpty());
-    spatialEntity.endSubstep();
+    assertThrows(IllegalStateException.class, () -> spatialEntity.getAttributeValue(attrName));
   }
 
   @Test
