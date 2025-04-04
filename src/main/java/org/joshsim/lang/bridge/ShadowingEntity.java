@@ -9,13 +9,16 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
@@ -30,8 +33,8 @@ import org.joshsim.engine.value.type.EngineValue;
  * determining if an attribute value has been resolved over time. This manages reference to
  * current, prior, and here. Current can be used for values set in the current timestep and substep
  * or to determine if just in time evaluation is required if it not yet been resolved. Prior can be
- * used to query for previously resolved values. Here can be used to access the Path or patch-like
- * entity which hosues this entity.</p>
+ * used to query for previously resolved values. Here can be used to access the Patch or patch-like
+ * entity which houses this entity.</p>
  */
 public class ShadowingEntity implements Entity {
 
@@ -41,6 +44,7 @@ public class ShadowingEntity implements Entity {
   private final ShadowingEntity here;
   private final Simulation meta;
   private final Set<String> resolvedAttributes;
+  private final Set<String> resolvingAttributes;
   private final Scope scope;
   private Optional<String> substep;
 
@@ -56,6 +60,7 @@ public class ShadowingEntity implements Entity {
     this.meta = meta;
 
     resolvedAttributes = new HashSet<>();
+    resolvingAttributes = new HashSet<>();
     substep = Optional.empty();
     scope = new EntityScope(inner);
   }
@@ -73,6 +78,7 @@ public class ShadowingEntity implements Entity {
     this.meta = meta;
 
     resolvedAttributes = new HashSet<>();
+    resolvingAttributes = new HashSet<>();
     substep = Optional.empty();
     scope = new EntityScope(inner);
   }
@@ -107,6 +113,7 @@ public class ShadowingEntity implements Entity {
    */
   public void endSubstep() {
     resolvedAttributes.clear();
+    resolvingAttributes.clear();
     substep = Optional.empty();
     inner.unlock();
   }
@@ -140,6 +147,23 @@ public class ShadowingEntity implements Entity {
     return inner.getEventHandlers(eventKey);
   }
 
+  
+
+  /**
+   * Resolve all attributes by executing their associated event handlers.
+   *
+   * <p>This method fetches the attribute names, retrieves the corresponding event handlers,
+   * and executes them if present. Execution is done in the context of the current substep, and
+   * each handler resolves an attribute to its current value.</p>
+   */
+  public void resolveAllAttributes() {
+    StreamSupport.stream(getAttributeNames().spliterator(), false)
+        .map(this::getHandlers)
+        .filter((x) -> x.isPresent())
+        .map((x) -> x.get())
+            .forEach(this::executeHandlers);
+  }
+
   /**
    * Get the current value of an attribute if it has been resolved in the current substep.
    *
@@ -150,17 +174,10 @@ public class ShadowingEntity implements Entity {
    */
   public Optional<EngineValue> getAttributeValue(String name) {
     if (!resolvedAttributes.contains(name)) {
-      return Optional.empty();
+      resolveAttribute(name);
     }
 
-    Optional<EngineValue> valueMaybe = inner.getAttributeValue(name);
-    if (valueMaybe.isEmpty()) {
-      assertAttributePresent(name);
-      String message = String.format("A value for %s has not been initialized.", name);
-      throw new IllegalStateException(message);
-    }
-
-    return valueMaybe;
+    return inner.getAttributeValue(name);
   }
 
   /**
@@ -308,5 +325,92 @@ public class ShadowingEntity implements Entity {
   @Override
   public Optional<GeoKey> getKey() {
     return inner.getKey();
+  }
+
+  /**
+   * Attempt to resolve this attribute.
+   *
+   * <p>Resolve the given attribute to its current value, whether by current substep resolution,
+   * previous state, or through handlers. If no conditions for handlers match, previous state is
+   * used.</p>
+   *
+   * @param name unique identifier of the attribute to resolve.
+   */
+  private void resolveAttribute(String name) {
+    if (resolvingAttributes.contains(name)) {
+      throw new RuntimeException("Encountered a loop when resolving " + name);
+    }
+
+    resolvingAttributes.add(name);
+    resolveAttributeUnsafe(name);
+    resolvingAttributes.remove(name);
+  }
+
+  /**
+   * Attempt to resolve this attribute without checking for circular dependency.
+   *
+   * @param name unique identifier of the attribute to resolve.
+   */
+  private void resolveAttributeUnsafe(String name) {
+    // If outside substep, use prior
+    if (substep.isEmpty()) {
+      resolveAttributeFromPrior(name);
+      return;
+    }
+
+    // If no handlers, use prior
+    Optional<EventHandlerGroup> handlersMaybe = getHandlers(name);
+    if (handlersMaybe.isEmpty()) {
+      resolveAttributeFromPrior(name);
+      return;
+    }
+
+    // Attempt to match a handler for updated value
+    boolean executed = executeHandlers(handlersMaybe.get());
+
+    // If failed to match, use prior
+    if (!executed) {
+      resolveAttributeFromPrior(name);
+    }
+  }
+
+  
+  /**
+   * Execute an event handler group.
+   *
+   * @param handlers The set of handlers to attempt to execute, trying each conditional in order and
+   *     stopping execution upon encountering one that matches.
+   * @return True if a handler was found to match and was executed. False if no handlers executed.
+   */
+  private boolean executeHandlers(EventHandlerGroup handlers) {
+    Scope decoratedScope = new SyntheticScope(this);
+    for (EventHandler handler : handlers.getEventHandlers()) {
+      Optional<CompiledSelector> conditionalMaybe = handler.getConditional();
+
+      boolean matches;
+      if (conditionalMaybe.isPresent()) {
+        CompiledSelector conditional = conditionalMaybe.get();
+        matches = conditional.evaluate(decoratedScope);
+      } else {
+        matches = true;
+      }
+
+      if (matches) {
+        EngineValue value = handler.getCallable().evaluate(decoratedScope);
+        setCurrentAttribute(handler.getAttributeName(), value);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Set the current attribute to the value from the previous substep.
+   *
+   * @param name the unique identifier of the attribute to resolve from prior.
+   */
+  private void resolveAttributeFromPrior(String name) {
+    setCurrentAttribute(name, getPriorAttribute(name));
   }
 }
