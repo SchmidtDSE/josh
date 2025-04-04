@@ -252,8 +252,8 @@ public class Units {
    */
   private boolean isFormOfCount(String unit) {
     return switch(unit) {
-      case("unit") -> true;
-      case("units") -> true;
+      case("count") -> true;
+      case("counts") -> true;
       case("percent") -> true;
       case("%") -> true;
       default -> false;
