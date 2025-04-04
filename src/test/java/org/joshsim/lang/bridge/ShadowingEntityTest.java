@@ -176,7 +176,6 @@ public class ShadowingEntityTest {
     );
     when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockSpatialEntity.getAttributeValue(attrName))
-        .thenReturn(Optional.empty())
         .thenReturn(Optional.of(handlerValue));
 
     spatialEntity.startSubstep(substepName);
