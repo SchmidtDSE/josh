@@ -15,6 +15,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.joshsim.engine.func.CompiledCallable;
+
 import java.util.Arrays;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -163,13 +165,17 @@ public class ShadowingEntityTest {
     EngineValue handlerValue = mock(EngineValue.class);
 
     EventKey eventKey = new EventKey(attrName, substepName);
-    when(mockEventHandler.evaluate(any())).thenReturn(handlerValue);
+    CompiledCallable mockCallable = mock(CompiledCallable.class);
+    when(mockEventHandler.getCallable()).thenReturn(mockCallable);
+    when(mockCallable.evaluate(any())).thenReturn(handlerValue);
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(Optional.of(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertTrue(result.isPresent());
+    assertEquals(handlerValue, result.get());
+    verify(mockCallable).evaluate(any());
     spatialEntity.endSubstep();
   }
 }
