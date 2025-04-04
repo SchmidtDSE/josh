@@ -80,7 +80,7 @@ public class EntityValue extends EngineValue {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType(innerValue.getName());
+    return new LanguageType(innerValue.getName(), true);
   }
 
   @Override

@@ -14,9 +14,11 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -31,7 +33,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * used to query for previously resolved values. Here can be used to access the Path or patch-like
  * entity which hosues this entity.</p>
  */
-public class ShadowingEntity {
+public class ShadowingEntity implements Entity {
 
   private static final String DEFAULT_STATE_STR = "";
 
@@ -114,7 +116,7 @@ public class ShadowingEntity {
    *
    * @return Iterable over attribute names as Strings.
    */
-  public Iterable<String> getAttributes() {
+  public Iterable<String> getAttributeNames() {
     return scope.getAttributes();
   }
 
@@ -146,7 +148,7 @@ public class ShadowingEntity {
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    * @throws IllegalStateException if the attribute exists but has not been initialized.
    */
-  public Optional<EngineValue> getCurrentAttribute(String name) {
+  public Optional<EngineValue> getAttributeValue(String name) {
     if (!resolvedAttributes.contains(name)) {
       return Optional.empty();
     }
@@ -231,6 +233,10 @@ public class ShadowingEntity {
     return meta;
   }
 
+  public Entity getPrior() {
+    return new PriorShadowingEntityDecorator(this);
+  }
+
   /**
    * Get the underlying entity.
    *
@@ -266,7 +272,7 @@ public class ShadowingEntity {
       return DEFAULT_STATE_STR;
     }
 
-    Optional<EngineValue> stateValueMaybe = getCurrentAttribute("state");
+    Optional<EngineValue> stateValueMaybe = getAttributeValue("state");
     if (stateValueMaybe.isPresent()) {
       return stateValueMaybe.get().getAsString();
     } else {
@@ -281,7 +287,26 @@ public class ShadowingEntity {
    *     reflected on past frozen entities.
    */
   public Entity freeze() {
-    // TODO: propagate freeze
     return inner.freeze();
+  }
+
+  @Override
+  public Optional<Geometry> getGeometry() {
+    return inner.getGeometry();
+  }
+
+  @Override
+  public String getName() {
+    return inner.getName();
+  }
+
+  @Override
+  public EntityType getEntityType() {
+    return inner.getEntityType();
+  }
+
+  @Override
+  public Optional<GeoKey> getKey() {
+    return inner.getKey();
   }
 }
