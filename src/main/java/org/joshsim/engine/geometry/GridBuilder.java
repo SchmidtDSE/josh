@@ -256,7 +256,8 @@ public class GridBuilder {
         BigDecimal.valueOf(topY),
         BigDecimal.valueOf(rightX),
         BigDecimal.valueOf(bottomY),
-        context
+        context,
+        targetCoordinateReferenceSystem
     );
   }
 

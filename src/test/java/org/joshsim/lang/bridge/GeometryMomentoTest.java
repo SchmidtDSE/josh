@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.apache.sis.referencing.CRS;
 
 /**
  * Tests for a momento structure for Geometry.
@@ -34,6 +36,7 @@ public class GeometryMomentoTest {
   private BigDecimal centerX;
   private BigDecimal centerY;
   private BigDecimal diameter;
+  private CoordinateReferenceSystem crs;
 
   /**
    * Create common structures for tests.
@@ -43,8 +46,9 @@ public class GeometryMomentoTest {
     centerX = new BigDecimal("10.0");
     centerY = new BigDecimal("20.0");
     diameter = new BigDecimal("5.0");
-    squareMomento = new GeometryMomento("square", centerX, centerY, diameter);
-    circleMomento = new GeometryMomento("circle", centerX, centerY, diameter);
+    crs = CRS.forCode("EPSG:32611");
+    squareMomento = new GeometryMomento("square", centerX, centerY, diameter, crs);
+    circleMomento = new GeometryMomento("circle", centerX, centerY, diameter, crs);
   }
 
   @Test

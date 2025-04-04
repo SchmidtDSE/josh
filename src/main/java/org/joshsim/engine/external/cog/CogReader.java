@@ -98,7 +98,9 @@ public class CogReader {
     // Get the CRS from the coverage
     CoordinateReferenceSystem coverageCrs = coverage.getCoordinateReferenceSystem();
     // Ensure consistent X,Y ordering (same as GridBuilder)
-    coverageCrs = AbstractCRS.castOrCopy(coverageCrs).forConvention(AxesConvention.RIGHT_HANDED);
+    AbstractCRS abstractCoverageCrs = AbstractCRS
+        .castOrCopy(coverageCrs)
+        .forConvention(AxesConvention.RIGHT_HANDED);
 
     // Create an evaluator to get pixel values
     GridCoverage.Evaluator evaluator = coverage.evaluator();
@@ -108,7 +110,7 @@ public class CogReader {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           // Convert grid coordinates to CRS coordinates
-          DirectPosition2D gridPos = new DirectPosition2D(coverageCrs, x, y);
+          DirectPosition2D gridPos = new DirectPosition2D(abstractCoverageCrs, x, y);
 
           // Get direct position in the coverage's CRS
           DirectPosition2D worldPos = convertGridToWorld(coverage, gridPos);

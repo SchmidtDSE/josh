@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.geometry.GeometryFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 
 /**
@@ -24,6 +25,7 @@ public class GeometryMomento {
   private final BigDecimal centerX;
   private final BigDecimal centerY;
   private final BigDecimal diameter;
+  private final CoordinateReferenceSystem crs;
 
   /**
    * Constructs a GeometryMomento with the specified shape parameters.
@@ -35,11 +37,12 @@ public class GeometryMomento {
    * @throws IllegalArgumentException if the shape name is not supported.
    */
   public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY,
-      BigDecimal diameter) {
+      BigDecimal diameter, CoordinateReferenceSystem crs) {
     this.shapeName = shapeName;
     this.centerX = centerX;
     this.centerY = centerY;
     this.diameter = diameter;
+    this.crs = crs;
 
     if (getBuilder().isEmpty()) {
       throw new IllegalArgumentException("Unsupported momento shape: " + shapeName);
@@ -85,10 +88,10 @@ public class GeometryMomento {
   private Optional<MomentoShapeBuilder> getBuilder() {
     return switch (shapeName) {
       case "square" -> Optional.of(
-        () -> GeometryFactory.createSquare(diameter, centerX, centerY)
+        () -> GeometryFactory.createSquare(diameter, centerX, centerY, crs)
       );
       case "circle" -> Optional.of(
-        () -> GeometryFactory.createCircle(diameter, centerX, centerY)
+        () -> GeometryFactory.createCircle(diameter, centerX, centerY, crs)
       );
       default -> Optional.empty();
     };

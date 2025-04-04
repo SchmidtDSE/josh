@@ -12,6 +12,7 @@ import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.ShapeFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Factory methods for creating geometric shapes. By default, the shapes are
@@ -38,7 +39,8 @@ public class GeometryFactory {
       BigDecimal width,
       BigDecimal centerX,
       BigDecimal centerY,
-      SpatialContext spatialContext
+      SpatialContext spatialContext,
+      CoordinateReferenceSystem crs
   ) {
 
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
@@ -50,7 +52,7 @@ public class GeometryFactory {
     double maxY = centerY.doubleValue() + halfWidth;
 
     Rectangle rectangle = shapeFactory.rect(minX, maxX, minY, maxY);
-    Geometry geometry = new Geometry(rectangle);
+    Geometry geometry = new Geometry(rectangle, crs);
     return geometry;
   }
 
@@ -65,9 +67,10 @@ public class GeometryFactory {
   public static Geometry createSquare(
       BigDecimal width,
       BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerY,
+      CoordinateReferenceSystem crs
   ) {
-    return createSquare(width, centerX, centerY, getDefaultSpatialContext());
+    return createSquare(width, centerX, centerY, getDefaultSpatialContext(), crs);
   }
 
   /**
@@ -86,7 +89,8 @@ public class GeometryFactory {
       BigDecimal topLeftY,
       BigDecimal bottomRightX,
       BigDecimal bottomRightY,
-      SpatialContext spatialContext
+      SpatialContext spatialContext,
+      CoordinateReferenceSystem crs
   ) {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
@@ -104,7 +108,7 @@ public class GeometryFactory {
     }
 
     Rectangle rectangle = shapeFactory.rect(minX, maxX, minY, maxY);
-    Geometry geometry = new Geometry(rectangle);
+    Geometry geometry = new Geometry(rectangle, crs);
     return geometry;
   }
 
@@ -122,14 +126,16 @@ public class GeometryFactory {
       BigDecimal topLeftX,
       BigDecimal topLeftY,
       BigDecimal bottomRightX,
-      BigDecimal bottomRightY
+      BigDecimal bottomRightY,
+      CoordinateReferenceSystem crs
   ) {
     return createSquare(
         topLeftX,
         topLeftY,
         bottomRightX,
         bottomRightY,
-        getDefaultSpatialContext()
+        getDefaultSpatialContext(),
+        crs
     );
   }
 
@@ -146,7 +152,8 @@ public class GeometryFactory {
       BigDecimal radius,
       BigDecimal centerX,
       BigDecimal centerY,
-      SpatialContext spatialContext
+      SpatialContext spatialContext,
+      CoordinateReferenceSystem crs
   ) {
     double radiusVal = radius.doubleValue();
     double centerValX = centerX.doubleValue();
@@ -155,7 +162,7 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Circle circle = shapeFactory.circle(centerValX, centerValY, radiusVal);
-    Geometry geometry = new Geometry(circle);
+    Geometry geometry = new Geometry(circle, crs);
     return geometry;
   }
 
@@ -170,9 +177,10 @@ public class GeometryFactory {
   public static Geometry createCircle(
       BigDecimal radius,
       BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerY,
+      CoordinateReferenceSystem crs
   ) {
-    return createCircle(radius, centerX, centerY, getDefaultSpatialContext());
+    return createCircle(radius, centerX, centerY, getDefaultSpatialContext(), crs);
   }
 
   /**
@@ -190,7 +198,8 @@ public class GeometryFactory {
       BigDecimal pointY,
       BigDecimal centerX,
       BigDecimal centerY,
-      SpatialContext spatialContext
+      SpatialContext spatialContext,
+      CoordinateReferenceSystem crs
   ) {
     double pointValX = pointX.doubleValue();
     double pointValY = pointY.doubleValue();
@@ -205,7 +214,7 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Circle circle = shapeFactory.circle(centerValX, centerValY, radius);
-    Geometry geometry = new Geometry(circle);
+    Geometry geometry = new Geometry(circle, crs);
     return geometry;
   }
 
@@ -222,14 +231,16 @@ public class GeometryFactory {
       BigDecimal pointX,
       BigDecimal pointY,
       BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerY,
+      CoordinateReferenceSystem crs
   ) {
     return createCircle(
         pointX,
         pointY,
         centerX,
         centerY,
-        getDefaultSpatialContext()
+        getDefaultSpatialContext(),
+        crs
     );
   }
 
@@ -244,7 +255,8 @@ public class GeometryFactory {
   public static Geometry createPoint(
           BigDecimal centerLatitude,
           BigDecimal centerLongitude,
-          SpatialContext spatialContext
+          SpatialContext spatialContext,
+          CoordinateReferenceSystem crs
   ) {
     double centerLat = centerLatitude.doubleValue();
     double centerLon = centerLongitude.doubleValue();
@@ -252,7 +264,7 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Shape point = shapeFactory.pointLatLon(centerLat, centerLon);
-    Geometry geometry = new Geometry(point);
+    Geometry geometry = new Geometry(point, crs);
     return geometry;
   }
 
@@ -265,9 +277,10 @@ public class GeometryFactory {
    */
   public static Geometry createPoint(
           BigDecimal centerLatitude,
-          BigDecimal centerLongitude
+          BigDecimal centerLongitude,
+          CoordinateReferenceSystem crs
   ) {
-    return createPoint(centerLatitude, centerLongitude, getDefaultSpatialContext());
+    return createPoint(centerLatitude, centerLongitude, getDefaultSpatialContext(), crs);
   }
 
   private GeometryFactory() {}

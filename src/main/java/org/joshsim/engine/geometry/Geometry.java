@@ -12,6 +12,7 @@ import org.apache.sis.geometry.GeneralEnvelope;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Shape;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Represents a geometric object that implements the Spatial interface.
@@ -19,12 +20,14 @@ import org.locationtech.spatial4j.shape.Shape;
 public class Geometry implements Spatial {
 
   protected Shape shape;
+  protected CoordinateReferenceSystem crs;
 
   /**
    * Constructs a Geometry with a provided spatial4j shape.
    */
-  public Geometry(Shape shape) {
+  public Geometry(Shape shape, CoordinateReferenceSystem crs) {
     this.shape = shape;
+    this.crs = crs;
   }
 
   /**
