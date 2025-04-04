@@ -21,7 +21,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * entities and spatial information. This specifically refers to those which recieve geometry by
  * being part of another entity like a Patch.</p>
  */
-public abstract class MemberSpatialEntity extends MutableEntity {
+public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
 
   private final Entity parent;
 
