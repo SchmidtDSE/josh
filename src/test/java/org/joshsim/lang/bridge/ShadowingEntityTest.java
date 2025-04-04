@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.bridge;
 
-import org.joshsim.engine.func.CompiledSelector;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,8 +15,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.joshsim.engine.func.CompiledCallable;
-
 import java.util.Arrays;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -25,6 +22,8 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +54,9 @@ public class ShadowingEntityTest {
     when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
-    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr", "noHandlerAttr"));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(
+        Arrays.asList("testAttr", "noHandlerAttr")
+    );
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
