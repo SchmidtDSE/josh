@@ -223,7 +223,10 @@ public class Units {
       if (unit.isEmpty()) {
         continue;
       }
-      unitCounts.put(unit, unitCounts.getOrDefault(unit, 0L) + 1);
+
+      if (!isFormOfCount(unit)) {
+        unitCounts.put(unit, unitCounts.getOrDefault(unit, 0L) + 1);
+      }
     }
     return unitCounts;
   }
@@ -239,6 +242,20 @@ public class Units {
     }
 
     return joiner.toString();
+  }
+
+  /**
+   * Determine if the given unit is a form of count.
+   *
+   * @param unit The single component unit String to check if it is a form of count.
+   * @return True if the given unit is a form of count and can be ignored.
+   */
+  private boolean isFormOfCount(String unit) {
+    return switch (unit) {
+      case ("count") -> true;
+      case ("counts") -> true;
+      default -> false;
+    };
   }
 
 }

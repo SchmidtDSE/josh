@@ -810,9 +810,22 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {
-    BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
+    String numberStr = ctx.getChild(0).getText();
     String unitsText = ctx.getChild(1).getText();
-    return engineValueFactory.build(number, new Units(unitsText));
+    boolean hasDecimal = numberStr.contains(".");
+    boolean isPercent = unitsText.equals("percent") || unitsText.equals("%");
+
+    if (isPercent) {
+      BigDecimal percent = BigDecimal.valueOf(Double.parseDouble(numberStr));
+      BigDecimal converted = percent.divide(BigDecimal.valueOf(100));
+      return engineValueFactory.build(converted, new Units(unitsText));
+    } else if (hasDecimal) {
+      BigDecimal number = BigDecimal.valueOf(Double.parseDouble(numberStr));
+      return engineValueFactory.build(number, new Units(unitsText));
+    } else {
+      long number = Long.parseLong(numberStr);
+      return engineValueFactory.build(number, new Units(unitsText));
+    }
   }
 
   private boolean isEventName(String candidate) {
