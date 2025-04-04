@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -150,6 +152,26 @@ public class ShadowingEntityTest {
 
     assertTrue(result.isPresent());
     assertEquals(mockEngineValue, result.get());
+    verify(mockSpatialEntity).getAttributeValue(attrName);
+    spatialEntity.endSubstep();
+  }
+
+  @Test
+  void testResolveValueThroughEventHandlerGroup() {
+    String attrName = "testAttr";
+    String substepName = "test";
+    EngineValue handlerValue = mock(EngineValue.class);
+
+    EventKey eventKey = new EventKey(attrName, substepName);
+    when(mockEventHandler.evaluate(any())).thenReturn(handlerValue);
+    when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(Optional.of(mockEventHandlerGroup));
+
+    spatialEntity.startSubstep(substepName);
+    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
+
+    assertTrue(result.isPresent());
+    assertEquals(handlerValue, result.get());
+    verify(mockEventHandler).evaluate(any());
     spatialEntity.endSubstep();
   }
 }
