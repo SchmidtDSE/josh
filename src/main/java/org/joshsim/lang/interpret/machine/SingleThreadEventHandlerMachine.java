@@ -28,6 +28,7 @@ import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.ShadowingEntityPrototype;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -373,9 +374,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine createEntity(String entityType) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
-    EmbeddedParentEntityPrototype decoratedPrototype = new EmbeddedParentEntityPrototype(
+    EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
         prototype,
         scope.get("current").getAsEntity()
+    );
+    EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
+        innerDecorated,
+        scope
     );
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);

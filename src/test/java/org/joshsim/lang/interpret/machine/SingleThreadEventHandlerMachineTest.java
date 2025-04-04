@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
@@ -51,7 +52,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private Distribution mockDistribution;
   @Mock(lenient = true) private EngineBridge mockBridge;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
-  @Mock(lenient = true) private Entity mockCreatedEntity;
+  @Mock(lenient = true) private MutableEntity mockCreatedEntity;
 
   private SingleThreadEventHandlerMachine machine;
   private EngineValueFactory factory;

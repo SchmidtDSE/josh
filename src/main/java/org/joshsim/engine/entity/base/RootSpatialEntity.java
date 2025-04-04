@@ -19,7 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * <p>RootSpatialEntity is a type of SpatialEntity which has its own geometry as opposed to
  * inhering that geometry by being part of another entity.</p>
  */
-public abstract class RootSpatialEntity extends MutableEntity {
+public abstract class RootSpatialEntity extends DirectLockMutableEntity {
   private final Geometry geometry;
 
   /**

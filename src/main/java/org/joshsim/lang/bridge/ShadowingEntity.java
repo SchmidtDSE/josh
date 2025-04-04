@@ -22,7 +22,6 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -36,13 +35,13 @@ import org.joshsim.engine.value.type.EngineValue;
  * used to query for previously resolved values. Here can be used to access the Patch or patch-like
  * entity which houses this entity.</p>
  */
-public class ShadowingEntity implements Entity {
+public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
 
   private final MutableEntity inner;
-  private final ShadowingEntity here;
-  private final Simulation meta;
+  private final Entity here;
+  private final Entity meta;
   private final Set<String> resolvedAttributes;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
@@ -54,7 +53,7 @@ public class ShadowingEntity implements Entity {
    * @param inner entity to decorate.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(Patch inner, Simulation meta) {
+  public ShadowingEntity(Patch inner, Entity meta) {
     this.inner = inner;
     this.here = this;
     this.meta = meta;
@@ -72,7 +71,7 @@ public class ShadowingEntity implements Entity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(MutableEntity inner, ShadowingEntity here, Simulation meta) {
+  public ShadowingEntity(MutableEntity inner, Entity here, Entity meta) {
     this.inner = inner;
     this.here = here;
     this.meta = meta;
@@ -133,7 +132,7 @@ public class ShadowingEntity implements Entity {
    * @param attribute name of the attribute for which event handlers are requested.
    * @throws IllegalStateException if not currently in a substep.
    */
-  public Optional<EventHandlerGroup> getHandlers(String attribute) {
+  public Optional<EventHandlerGroup> getHandlersForAttribute(String attribute) {
     if (substep.isEmpty()) {
       String message = String.format(
           "Cannot get handler for %s while not within a substep.",
@@ -147,8 +146,6 @@ public class ShadowingEntity implements Entity {
     return inner.getEventHandlers(eventKey);
   }
 
-  
-
   /**
    * Resolve all attributes by executing their associated event handlers.
    *
@@ -158,7 +155,7 @@ public class ShadowingEntity implements Entity {
    */
   public void resolveAllAttributes() {
     StreamSupport.stream(getAttributeNames().spliterator(), false)
-        .map(this::getHandlers)
+        .map(this::getHandlersForAttribute)
         .filter((x) -> x.isPresent())
         .map((x) -> x.get())
             .forEach(this::executeHandlers);
@@ -187,7 +184,7 @@ public class ShadowingEntity implements Entity {
    * @param value new value to assign to the attribute.
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    */
-  public void setCurrentAttribute(String name, EngineValue value) {
+  public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
     resolvedAttributes.add(name);
     inner.setAttributeValue(name, value);
@@ -227,18 +224,8 @@ public class ShadowingEntity implements Entity {
    *
    * @return the ShadowingEntity representing the containing patch.
    */
-  public ShadowingEntity getHere() {
+  public Entity getHere() {
     return here;
-  }
-
-  /**
-   * Get the key of the patch that contains this entity.
-   *
-   * @return the PatchKey of the patch that contains this entity.
-   */
-  public GeoKey getGeoKey() {
-    Patch patch = (Patch) getHere().getInner();
-    return patch.getKey().orElseThrow();
   }
 
   /**
@@ -246,7 +233,7 @@ public class ShadowingEntity implements Entity {
    *
    * @return the Simulation object that provides context for this entity.
    */
-  public Simulation getMeta() {
+  public Entity getMeta() {
     return meta;
   }
 
@@ -359,7 +346,7 @@ public class ShadowingEntity implements Entity {
     }
 
     // If no handlers, use prior
-    Optional<EventHandlerGroup> handlersMaybe = getHandlers(name);
+    Optional<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name);
     if (handlersMaybe.isEmpty()) {
       resolveAttributeFromPrior(name);
       return;
@@ -397,7 +384,7 @@ public class ShadowingEntity implements Entity {
 
       if (matches) {
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
-        setCurrentAttribute(handler.getAttributeName(), value);
+        setAttributeValue(handler.getAttributeName(), value);
         return true;
       }
     }
@@ -411,7 +398,26 @@ public class ShadowingEntity implements Entity {
    * @param name the unique identifier of the attribute to resolve from prior.
    */
   private void resolveAttributeFromPrior(String name) {
-    setCurrentAttribute(name, getPriorAttribute(name));
+    setAttributeValue(name, getPriorAttribute(name));
   }
 
+  @Override
+  public void lock() {
+    inner.lock();
+  }
+
+  @Override
+  public void unlock() {
+    inner.unlock();
+  }
+
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    return inner.getEventHandlers();
+  }
+
+  @Override
+  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
+    return inner.getEventHandlers(eventKey);
+  }
 }

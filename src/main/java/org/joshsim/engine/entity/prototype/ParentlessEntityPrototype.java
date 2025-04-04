@@ -8,6 +8,7 @@ package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.EntityBuilder;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.Geometry;
 
@@ -50,7 +51,7 @@ public class ParentlessEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity build() {
+  public MutableEntity build() {
     return switch (entityType) {
       case EXTERNAL_RESOURCE -> throw new RuntimeException("External resources yet implemented.");
       case SIMULATION -> entityBuilder.buildSimulation();
@@ -59,7 +60,7 @@ public class ParentlessEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity buildSpatial(Entity parent) {
+  public MutableEntity buildSpatial(Entity parent) {
     return switch (entityType) {
       case AGENT -> entityBuilder.buildAgent(parent);
       case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
@@ -68,7 +69,7 @@ public class ParentlessEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity buildSpatial(Geometry parent) {
+  public MutableEntity buildSpatial(Geometry parent) {
     return switch (entityType) {
       case PATCH -> entityBuilder.buildPatch(parent);
       default -> throw new RuntimeException("Cannot instantiate with a geometry: " + entityType);

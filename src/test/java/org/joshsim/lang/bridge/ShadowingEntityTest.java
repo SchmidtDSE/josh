@@ -81,13 +81,16 @@ public class ShadowingEntityTest {
     EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
     assertEquals(mockEngineValue, priorValue);
 
-    spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
+    spatialEntity.setAttributeValue(attrName, mockEngineValue);
     verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
   }
 
   @Test
   void testGetHandlersFailsOutsideSubstep() {
-    assertThrows(IllegalStateException.class, () -> spatialEntity.getHandlers("testAttr"));
+    assertThrows(
+        IllegalStateException.class,
+        () -> spatialEntity.getHandlersForAttribute("testAttr")
+    );
   }
 
   @Test
@@ -100,7 +103,7 @@ public class ShadowingEntityTest {
         .thenReturn(Optional.of(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
-    Optional<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
+    Optional<EventHandlerGroup> handlers = spatialEntity.getHandlersForAttribute(attrName);
     assertTrue(handlers.isPresent());
     spatialEntity.endSubstep();
   }
@@ -119,7 +122,7 @@ public class ShadowingEntityTest {
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
     spatialEntity.startSubstep(substepName);
-    spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
+    spatialEntity.setAttributeValue(attrName, mockEngineValue);
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertFalse(result.isEmpty());
@@ -141,7 +144,7 @@ public class ShadowingEntityTest {
   void testNonexistentAttributeAccess() {
     String nonexistentAttr = "nonexistent";
     assertThrows(IllegalArgumentException.class, () ->
-        spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
+        spatialEntity.setAttributeValue(nonexistentAttr, mockEngineValue));
     assertThrows(IllegalArgumentException.class, () ->
         spatialEntity.getPriorAttribute(nonexistentAttr));
   }
