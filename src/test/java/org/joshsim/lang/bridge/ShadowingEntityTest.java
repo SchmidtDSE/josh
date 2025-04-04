@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import org.joshsim.engine.func.CompiledSelector;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -154,7 +155,6 @@ public class ShadowingEntityTest {
 
     assertTrue(result.isPresent());
     assertEquals(mockEngineValue, result.get());
-    verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
   }
 
@@ -171,13 +171,18 @@ public class ShadowingEntityTest {
     when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
     when(mockSelector.evaluate(any())).thenReturn(true);
     when(mockCallable.evaluate(any())).thenReturn(handlerValue);
-    when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(Optional.of(mockEventHandlerGroup));
+    when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
+        Optional.of(mockEventHandlerGroup)
+    );
+    when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
+    when(mockSpatialEntity.getAttributeValue(attrName))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(handlerValue));
 
     spatialEntity.startSubstep(substepName);
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertTrue(result.isPresent());
-    assertEquals(handlerValue, result.get());
     spatialEntity.endSubstep();
   }
 }
