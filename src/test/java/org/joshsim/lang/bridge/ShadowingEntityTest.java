@@ -69,6 +69,7 @@ public class ShadowingEntityTest {
   @Test
   void testSetAttribute() {
     String attrName = "testAttr";
+t co
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
     EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
