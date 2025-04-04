@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Geometry;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class EmbeddedParentEntityPrototypeTest {
         innerPrototype,
         parentEntity
     );
-    Entity expectedEntity = mock(Entity.class);
+    MutableEntity expectedEntity = mock(MutableEntity.class);
 
     when(innerPrototype.requiresParent()).thenReturn(true);
     when(innerPrototype.buildSpatial(parentEntity)).thenReturn(expectedEntity);
@@ -49,7 +50,7 @@ class EmbeddedParentEntityPrototypeTest {
         innerPrototype,
         parentEntity
     );
-    Entity expectedEntity = mock(Entity.class);
+    MutableEntity expectedEntity = mock(MutableEntity.class);
 
     when(innerPrototype.requiresParent()).thenReturn(false);
     when(innerPrototype.requiresGeometry()).thenReturn(true);
@@ -71,7 +72,7 @@ class EmbeddedParentEntityPrototypeTest {
         innerPrototype,
         parentEntity
     );
-    Entity expectedEntity = mock(Entity.class);
+    MutableEntity expectedEntity = mock(MutableEntity.class);
 
     when(innerPrototype.requiresParent()).thenReturn(false);
     when(innerPrototype.requiresGeometry()).thenReturn(false);
