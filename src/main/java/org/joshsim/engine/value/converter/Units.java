@@ -251,9 +251,9 @@ public class Units {
    * @return True if the given unit is a form of count and can be ignored.
    */
   private boolean isFormOfCount(String unit) {
-    return switch(unit) {
-      case("count") -> true;
-      case("counts") -> true;
+    return switch (unit) {
+      case ("count") -> true;
+      case ("counts") -> true;
       default -> false;
     };
   }
