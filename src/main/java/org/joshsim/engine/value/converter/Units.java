@@ -254,8 +254,6 @@ public class Units {
     return switch(unit) {
       case("count") -> true;
       case("counts") -> true;
-      case("percent") -> true;
-      case("%") -> true;
       default -> false;
     };
   }
