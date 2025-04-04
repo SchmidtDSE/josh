@@ -166,7 +166,10 @@ public class ShadowingEntityTest {
 
     EventKey eventKey = new EventKey(attrName, substepName);
     CompiledCallable mockCallable = mock(CompiledCallable.class);
+    CompiledSelector mockSelector = mock(CompiledSelector.class);
     when(mockEventHandler.getCallable()).thenReturn(mockCallable);
+    when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
+    when(mockSelector.evaluate(any())).thenReturn(true);
     when(mockCallable.evaluate(any())).thenReturn(handlerValue);
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(Optional.of(mockEventHandlerGroup));
 
