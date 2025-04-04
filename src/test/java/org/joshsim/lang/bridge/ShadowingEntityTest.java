@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +22,8 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.func.CompiledCallable;
+import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +54,9 @@ public class ShadowingEntityTest {
     when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
-    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(
+        Arrays.asList("testAttr", "noHandlerAttr")
+    );
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
@@ -102,9 +108,7 @@ public class ShadowingEntityTest {
   void testGetCurrentAttributeUnresolved() {
     String attrName = "testAttr";
     spatialEntity.startSubstep("test");
-    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
-    assertTrue(result.isEmpty());
-    spatialEntity.endSubstep();
+    assertThrows(IllegalStateException.class, () -> spatialEntity.getAttributeValue(attrName));
   }
 
   @Test
@@ -139,5 +143,46 @@ public class ShadowingEntityTest {
         spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
     assertThrows(IllegalArgumentException.class, () ->
         spatialEntity.getPriorAttribute(nonexistentAttr));
+  }
+
+  @Test
+  void testResolvePriorValueWhenNoHandlers() {
+    String attrName = "noHandlerAttr";
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList(attrName));
+    when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
+
+    spatialEntity.startSubstep("test");
+    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
+
+    assertTrue(result.isPresent());
+    assertEquals(mockEngineValue, result.get());
+    spatialEntity.endSubstep();
+  }
+
+  @Test
+  void testResolveValueThroughEventHandlerGroup() {
+    String attrName = "testAttr";
+    String substepName = "test";
+    EngineValue handlerValue = mock(EngineValue.class);
+
+    EventKey eventKey = new EventKey(attrName, substepName);
+    CompiledCallable mockCallable = mock(CompiledCallable.class);
+    CompiledSelector mockSelector = mock(CompiledSelector.class);
+    when(mockEventHandler.getCallable()).thenReturn(mockCallable);
+    when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
+    when(mockSelector.evaluate(any())).thenReturn(true);
+    when(mockCallable.evaluate(any())).thenReturn(handlerValue);
+    when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
+        Optional.of(mockEventHandlerGroup)
+    );
+    when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
+    when(mockSpatialEntity.getAttributeValue(attrName))
+        .thenReturn(Optional.of(handlerValue));
+
+    spatialEntity.startSubstep(substepName);
+    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
+
+    assertTrue(result.isPresent());
+    spatialEntity.endSubstep();
   }
 }
