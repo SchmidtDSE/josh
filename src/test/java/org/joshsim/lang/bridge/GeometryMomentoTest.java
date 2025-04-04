@@ -19,7 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
 import org.apache.sis.referencing.CRS;
 
 /**
@@ -40,9 +42,11 @@ public class GeometryMomentoTest {
 
   /**
    * Create common structures for tests.
+   * @throws FactoryException 
+   * @throws NoSuchAuthorityCodeException 
    */
   @BeforeEach
-  void setUp() {
+  void setUp() throws NoSuchAuthorityCodeException, FactoryException {
     centerX = new BigDecimal("10.0");
     centerY = new BigDecimal("20.0");
     diameter = new BigDecimal("5.0");
@@ -60,7 +64,7 @@ public class GeometryMomentoTest {
   @Test
   void testConstructorInvalidShape() {
     assertThrows(IllegalArgumentException.class, () ->
-      new GeometryMomento("triangle", centerX, centerY, diameter));
+      new GeometryMomento("triangle", centerX, centerY, diameter, crs));
   }
 
   @Test
@@ -85,19 +89,25 @@ public class GeometryMomentoTest {
 
   @Test
   void testEquals() {
-    GeometryMomento sameMomento = new GeometryMomento("square", centerX, centerY, diameter);
+    GeometryMomento sameMomento = new GeometryMomento(
+        "square", centerX, centerY, diameter, crs
+    );
     assertEquals(squareMomento, sameMomento);
 
-    GeometryMomento differentMomento = new GeometryMomento("circle", centerX, centerY, diameter);
+    GeometryMomento differentMomento = new GeometryMomento(
+        "circle", centerX, centerY, diameter, crs
+    );
     assertNotEquals(squareMomento, differentMomento);
   }
 
   @Test
   void testHashCode() {
-    GeometryMomento sameMomento = new GeometryMomento("square", centerX, centerY, diameter);
+    GeometryMomento sameMomento = new GeometryMomento("square", centerX, centerY, diameter, crs);
     assertEquals(squareMomento.hashCode(), sameMomento.hashCode());
 
-    GeometryMomento differentMomento = new GeometryMomento("circle", centerX, centerY, diameter);
+    GeometryMomento differentMomento = new GeometryMomento(
+        "circle", centerX, centerY, diameter, crs
+    );
     assertNotEquals(squareMomento.hashCode(), differentMomento.hashCode());
   }
 }
