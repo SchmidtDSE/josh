@@ -24,7 +24,7 @@ import org.joshsim.lang.antlr.JoshLangParser;
  * <p>Facade acting as an entry point to the parser machinery for the Josh DSL (Domain Specific
  * Language). It leverages ANTLR for, capturing any syntax errors encountered during parsing.</p>
  */
-public class Parser {
+public class JoshParser {
 
   /**
    * Attempt to parse a Josh source.

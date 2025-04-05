@@ -64,4 +64,13 @@ public class EngineBridgeSimulationStore {
     return simulationProtoypes.get(name);
   }
 
+  /**
+   * Get simulations for which prototypes are available.
+   *
+   * @return List of prototype names.
+   */
+  public Iterable<String> getSimulations() {
+    return simulationProtoypes.keySet();
+  }
+
 }

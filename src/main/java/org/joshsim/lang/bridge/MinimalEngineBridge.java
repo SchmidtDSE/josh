@@ -18,7 +18,6 @@ import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
-import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
@@ -34,7 +33,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private static final long DEFAULT_START_STEP = 0;
   private static final long DEFAULT_END_STEP = 100;
 
-  private final Simulation simulation;
+  private final Entity simulation;
   private final Replicate replicate;
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
@@ -58,7 +57,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
    */
-  public MinimalEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
+  public MinimalEngineBridge(Entity simulation, Replicate replicate, Converter converter,
       EntityPrototypeStore prototypeStore) {
     this.simulation = simulation;
     this.replicate = replicate;

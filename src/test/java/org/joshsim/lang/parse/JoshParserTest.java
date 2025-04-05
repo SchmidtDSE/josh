@@ -16,16 +16,16 @@ import org.junit.jupiter.api.Test;
 /**
  * Test for the Parser facade.
  */
-public class ParserTest {
+public class JoshParserTest {
 
-  private Parser parser;
+  private JoshParser parser;
 
   /**
    * Create a new parser before each test.
    */
   @BeforeEach
   public void setUp() {
-    parser = new Parser();
+    parser = new JoshParser();
   }
 
   @Test

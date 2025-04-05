@@ -6,8 +6,10 @@
 
 package org.joshsim;
 
+import org.joshsim.lang.interpret.JoshInterpreter;
+import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.parse.Parser;
 
 
 /**
@@ -25,12 +27,23 @@ public class JoshSimFacade {
    * developer tools.</p>
    *
    * @param code String code to parse as a Josh source.
-   * @returns the result of parsing the code where hasErrors and getErrors can report on syntax
+   * @return The result of parsing the code where hasErrors and getErrors can report on syntax
    *     issues found.
    */
   public static ParseResult parse(String code) {
-    Parser parser = new Parser();
+    JoshParser parser = new JoshParser();
     return parser.parse(code);
+  }
+
+  /**
+   * Interpret a parsed Josh script to Java objects which can run the simulation.
+   *
+   * @param parsed The result of parsing the Josh source successfully.
+   * @return The parsed JoshProgram which can be used to run a specific simulation.
+   */
+  public static JoshProgram interpret(ParseResult parsed) {
+    JoshInterpreter interpreter = new JoshInterpreter();
+    return interpreter.interpret(parsed);
   }
 
 }
