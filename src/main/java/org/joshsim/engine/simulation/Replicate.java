@@ -7,6 +7,7 @@
 package org.joshsim.engine.simulation;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -23,8 +24,8 @@ import org.joshsim.engine.geometry.Geometry;
  * </p>
  */
 public class Replicate {
-  private HashMap<Long, TimeStep> pastTimeSteps = new HashMap<>();
-  private HashMap<GeoKey, Patch> presentTimeStep;
+  private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
+  private Map<GeoKey, Patch> presentTimeStep;
   private long stepNumber = 0;
 
   /**
@@ -32,7 +33,7 @@ public class Replicate {
    *
    * @param patches the patches to be included in the replicate.
    */
-  public Replicate(HashMap<GeoKey, Patch> patches) {
+  public Replicate(Map<GeoKey, Patch> patches) {
     this.presentTimeStep = patches;
   }
 

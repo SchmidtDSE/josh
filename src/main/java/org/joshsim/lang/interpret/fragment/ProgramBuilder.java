@@ -62,7 +62,7 @@ public class ProgramBuilder {
    * @return The constructed JoshProgram instance
    */
   public JoshProgram build() {
-    return new JoshProgram(converter.build(), buildSimulationStore());
+    return new JoshProgram(converter.build(), buildSimulationStore(), entities.build());
   }
 
   /**
