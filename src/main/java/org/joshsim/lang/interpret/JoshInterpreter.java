@@ -21,7 +21,15 @@ public class JoshInterpreter {
    * @return Parsed simulations.
    */
   public JoshProgram interpret(ParseResult parseResult) {
+    if (parseResult.hasErrors()) {
+      throw new RuntimeException("Cannot interpret program with parse errors: " + parseResult.getErrors());
+    }
+
+    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor();
+    Fragment fragment = visitor.visit(parseResult.getProgram()
+        .orElseThrow(() -> new RuntimeException("Program context missing from parse result")));
     
+    return fragment.getProgram();
   }
 
 }
