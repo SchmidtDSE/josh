@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.Callable;
+import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
@@ -113,15 +114,18 @@ public class JoshSimCommander {
         }
 
         return 3;
-      } else {
-        output.printInfo("Validated Josh code at " + file);
-
-        if (minioOptions.isMinioOutput()) {
-          return saveToMinio("validate", file);
-        }
-
-        return 0;
       }
+
+      JoshProgram program = JoshSimFacade.interpret(result);
+      assert program != null;
+      
+      output.printInfo("Validated Josh code at " + file);
+
+      if (minioOptions.isMinioOutput()) {
+        return saveToMinio("validate", file);
+      }
+
+      return 0;
     }
 
     /**

@@ -654,13 +654,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String fullName = ctx.name.getText();
     Fragment innerFragment = ctx.getChild(1).accept(this);
 
-    if (innerFragment.getCompiledSelector().isPresent()) {
-      throw new RuntimeException("Unexpected selector on non-conditional event handler");
-    }
+    CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
     EventKey eventKey = buildEventKey(fullName);
     EventHandler eventHandler = new EventHandler(
-        innerFragment.getCompiledCallable(),
+        innerCallable,
         eventKey.getAttribute(),
         eventKey.getEvent()
     );
