@@ -6,6 +6,8 @@
  */
 
 package org.joshsim.lang.interpret.fragment;
+
+import java.util.Optional;
 import org.joshsim.lang.interpret.JoshProgram;
 
 /**
@@ -17,9 +19,16 @@ import org.joshsim.lang.interpret.JoshProgram;
 public class ProgramFragment extends Fragment {
 
   private final ProgramBuilder builder;
-  
+  private Optional<JoshProgram> builtProgram;
+
+  /**
+   * Create a fragment which builds programs.
+   *
+   * @param builder The builder to decorate wuch that this can be used for building programs.
+   */
   public ProgramFragment(ProgramBuilder builder) {
     this.builder = builder;
+    builtProgram = Optional.empty();
   }
 
   @Override
@@ -29,7 +38,11 @@ public class ProgramFragment extends Fragment {
 
   @Override
   public JoshProgram getProgram() {
-    return builder.build();
+    if (builtProgram.isEmpty()) {
+      builtProgram = Optional.of(builder.build());
+    }
+
+    return builtProgram.get();
   }
 
 }

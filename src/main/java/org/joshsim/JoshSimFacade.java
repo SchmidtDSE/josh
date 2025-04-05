@@ -6,8 +6,8 @@
 
 package org.joshsim;
 
-import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.lang.parse.JoshParser;
+import org.joshsim.lang.parse.ParseResult;
 
 
 /**

@@ -19,6 +19,10 @@ import org.joshsim.lang.bridge.MinimalEngineBridge;
 
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
+ *
+ * <p>Stuctures which allow the interpreter to pre-compile statements into Java prior to the 
+ * simulation being fully constructed. This allows Josh to stop string manipulation as soon as
+ * possible for efficiency.</p>
  */
 public class FutureBridgeGetter implements BridgeGetter {
 
