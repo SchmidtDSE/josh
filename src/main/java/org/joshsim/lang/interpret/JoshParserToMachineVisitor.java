@@ -26,8 +26,6 @@ import org.joshsim.engine.value.converter.NoopConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.antlr.JoshLangBaseVisitor;
-import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -53,8 +51,6 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final EngineValue singleCount;
   private final EngineValue allString;
   private final EngineValue trueValue;
-
-  // TODO: make percent, count, counts all syntactic sugar
 
   /**
    * Create a new visitor which has some commonly used values cached.
