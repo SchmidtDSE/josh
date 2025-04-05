@@ -6,21 +6,22 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
-
+import org.joshsim.lang.parse.ParseResult;
 
 
 /**
- * Strategy to interpret a Josh program into a single EngineBridgeSimulation.
+ * Strategy to interpret a Josh program into a single JoshProgram.
  */
-public interface JoshInterpreter {
+public class JoshInterpreter {
 
   /**
-   * Interpret a Josh source into a simulation.
+   * Interpret a Josh source into a JoshProgram.
    *
-   * @param source String source code for the Josh simulation to interpret.
-   * @return Parsed simulation.
+   * @param parseResult The result of parsing to interpret.
+   * @return Parsed simulations.
    */
-  JoshProgram interpret(String source);
+  public JoshProgram interpret(ParseResult parseResult) {
+    
+  }
 
 }

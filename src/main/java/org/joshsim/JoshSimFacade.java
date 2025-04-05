@@ -7,7 +7,7 @@
 package org.joshsim;
 
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.parse.Parser;
+import org.joshsim.lang.parse.JoshParser;
 
 
 /**
@@ -29,7 +29,7 @@ public class JoshSimFacade {
    *     issues found.
    */
   public static ParseResult parse(String code) {
-    Parser parser = new Parser();
+    JoshParser parser = new JoshParser();
     return parser.parse(code);
   }
 
