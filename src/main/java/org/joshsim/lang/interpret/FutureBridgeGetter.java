@@ -32,30 +32,31 @@ public class FutureBridgeGetter implements BridgeGetter {
   public FutureBridgeGetter() {
     this.program = Optional.empty();
     this.simulationName = Optional.empty();
+    this.builtBridge = Optional.empty();
   }
 
   /**
    * Set the program to use when getting the bridge.
    *
-   * @param program The program to use when getting the bridge.
+   * @param newProgram The program to use when getting the bridge.
    */
-  public void setProgram(JoshProgram program) {
-    if (builtBridge.isPresent()) {
+  public void setProgram(JoshProgram newProgram) {
+    if (program.isPresent()) {
       throw new IllegalStateException("Bridge already built.");
     }
-    this.program = Optional.of(program);
+    this.program = Optional.of(newProgram);
   }
 
   /**
    * Set the simulation name to use when getting the bridge.
    *
-   * @param simulationName The name of the simulation to use when getting the bridge.
+   * @param newName The name of the simulation to use when getting the bridge.
    */
-  public void setSimulationName(String simulationName) {
-    if (builtBridge.isPresent()) {
+  public void setSimulationName(String newName) {
+    if (simulationName.isPresent()) {
       throw new IllegalStateException("Bridge already built.");
     }
-    this.simulationName = Optional.of(simulationName);
+    this.simulationName = Optional.of(newName);
   }
 
   @Override

@@ -7,13 +7,14 @@
 
 package org.joshsim.lang.interpret;
 
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
-import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.lang.bridge.EngineBridge;
@@ -28,11 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class FutureBridgeGetterTest {
 
-    @Mock private JoshProgram mockProgram;
-    @Mock private EngineBridgeSimulationStore mockSimStore;
-    @Mock private EntityPrototypeStore mockPrototypeStore;
-    @Mock private Converter mockConverter;
-    @Mock private Entity mockSimulation;
+    @Mock(lenient = true) private JoshProgram mockProgram;
+    @Mock(lenient = true) private EngineBridgeSimulationStore mockSimStore;
+    @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
+    @Mock(lenient = true) private Converter mockConverter;
+    @Mock(lenient = true) private MutableEntity mockSimulation;
+    @Mock(lenient = true) private EntityPrototype mockPrototype;
     private FutureBridgeGetter bridgeGetter;
     
     @BeforeEach
@@ -42,7 +44,8 @@ public class FutureBridgeGetterTest {
         when(mockProgram.getSimulations()).thenReturn(mockSimStore);
         when(mockProgram.getPrototypes()).thenReturn(mockPrototypeStore);
         when(mockProgram.getConverter()).thenReturn(mockConverter);
-        when(mockSimStore.getProtoype("testSim")).thenReturn(() -> mockSimulation);
+        when(mockSimStore.getProtoype("testSim")).thenReturn(mockPrototype);
+        when(mockPrototype.build()).thenReturn(mockSimulation);
     }
 
     @Test
