@@ -49,7 +49,7 @@ public class Slicer {
     }
 
     Iterable<EngineValue> subjectIterable = subjectDistribution.getContents(
-      subjectSize,
+        subjectSize,
         false
     );
 
@@ -64,9 +64,9 @@ public class Slicer {
     );
 
     List<EngineValue> values = StreamSupport.stream(sliceIterator.spliterator(), false)
-      .filter((x) -> x.isPresent())
-      .map((x) -> x.get())
-      .collect(Collectors.toList());
+        .filter((x) -> x.isPresent())
+        .map((x) -> x.get())
+        .collect(Collectors.toList());
 
     return new RealizedDistribution(subject.getCaster(), values, subject.getUnits());
   }

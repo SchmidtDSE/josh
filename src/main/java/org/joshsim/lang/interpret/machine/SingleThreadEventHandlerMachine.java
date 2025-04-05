@@ -24,6 +24,7 @@ import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.geometry.GeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.Slicer;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.Scalar;
@@ -294,7 +295,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue selections = pop();
     EngineValue subject = pop();
 
-    
+    Slicer slicer = new Slicer();
+    EngineValue result = slicer.slice(subject, selections);
+
+    memory.push(result);
+
+    return this;
   }
 
   @Override
