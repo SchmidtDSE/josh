@@ -291,8 +291,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine slice() {
-    // TODO: requires pairwise operations on distribution
-    return null;
+    EngineValue selections = pop();
+    EngineValue subject = pop();
+
+    
   }
 
   @Override
