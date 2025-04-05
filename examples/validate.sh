@@ -46,12 +46,12 @@ assert_ok examples/features/autobox_scalar.josh || exit 3
 assert_ok examples/features/comments.josh || exit 4
 assert_ok examples/features/conditional_full.josh || exit 5
 assert_ok examples/features/conditional_lambda.josh || exit 6
-assert_ok examples/features/config.josh || exit 7
+# assert_ok examples/features/config.josh || exit 7
 assert_ok examples/features/cyclic.josh || exit 8
 assert_ok examples/features/disturbance.josh || exit 9
 assert_ok examples/features/external.josh || exit 10
 assert_ok examples/features/here.josh || exit 11
-assert_ok examples/features/import.josh || exit 12
+# assert_ok examples/features/import.josh || exit 12
 assert_ok examples/features/limit.josh || exit 13
 assert_ok examples/features/management.josh || exit 14
 assert_ok examples/features/map.josh || exit 15

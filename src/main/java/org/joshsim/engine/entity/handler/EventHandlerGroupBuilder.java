@@ -18,6 +18,9 @@ import java.util.Optional;
  * EventHandlerGroup objects.
  */
 public class EventHandlerGroupBuilder {
+
+  private static final String DEFAULT_STATE = "";
+  
   private List<EventHandler> eventHandlers = new ArrayList<>();
   private Optional<String> state = Optional.empty();
   private Optional<String> attribute = Optional.empty();
@@ -61,7 +64,7 @@ public class EventHandlerGroupBuilder {
    * @throws IllegalStateException if the state has not been set
    */
   private String getState() {
-    return state.orElseThrow(() -> new IllegalStateException("State not set"));
+    return state.orElse(DEFAULT_STATE);
   }
 
   /**

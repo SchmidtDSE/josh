@@ -79,19 +79,19 @@ public class ProgramBuilder {
   }
 
   private EngineBridgeSimulationStore buildSimulationStore() {
-    Map<String, EngineBridgeOperation> simulationSteps = new HashMap<>();
+    Map<String, EngineBridgeOperation> steps = new HashMap<>();
     Map<String, EntityPrototype> prototypes = new HashMap<>();
 
     for (String simulationName : simulationNames) {
       EntityPrototype prototype = entities.get(simulationName);
       prototypes.put(simulationName, prototype);
-      /*simulationSteps.put(
+      /*steps.put(
           simulationName,
           new SimulationInitOperation(prototype, entities)
       );*/
     }
 
-    return null;
+    return new EngineBridgeSimulationStore(steps, prototypes);  // TODO
   }
 
 }

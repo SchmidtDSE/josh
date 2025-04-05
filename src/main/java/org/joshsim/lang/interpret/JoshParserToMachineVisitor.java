@@ -192,6 +192,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new ActionFragment(action);
   }
 
+  public Fragment visitParenExpression(JoshLangParser.ParenExpressionContext ctx) {
+    return ctx.getChild(1).accept(this);
+  }
+
   public Fragment visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
@@ -395,7 +399,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new ActionFragment(action);
   }
 
-  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMinExpressionContext ctx) {
+  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMaxExpressionContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
     EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
     EventHandlerAction action = (machine) -> {
@@ -580,7 +584,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     int numChildren = ctx.getChildCount();
     int numStatements = numChildren - 2;
     for (int statementIndex = 0; statementIndex < numStatements; statementIndex++) {
-      int childIndex = statementIndex + 2;
+      int childIndex = statementIndex + 1;
 
       EventHandlerAction statementAction = ctx
           .getChild(childIndex)
@@ -644,7 +648,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitConditionalElseEventHandlerGroupMember(
-      JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
+      JoshLangParser.ConditionalElseEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
     CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
     return new CompiledCallableFragment(decoratedInterpreterAction);
@@ -676,6 +680,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventKey eventKey = buildEventKey(fullName);
 
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
+    groupBuilder.setEventKey(eventKey);
 
     int numBranches = ctx.getChildCount() - 1;
     for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
@@ -739,8 +744,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       Fragment childFragment = ctx.getChild(childIndex).accept(this);
-      EventHandlerGroupBuilder groupBuilder = childFragment.getEventHandlerGroup();
-      entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+      
+      for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {
+        entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+      }
     }
 
     EntityPrototype prototype = new ParentlessEntityPrototype(
@@ -853,6 +860,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private EntityType getEntityType(String entityType) {
     return switch (entityType) {
       case "agent" -> EntityType.AGENT;
+      case "organism" -> EntityType.AGENT;
+      case "management" -> EntityType.AGENT;
       case "disturbance" -> EntityType.DISTURBANCE;
       case "external" -> EntityType.EXTERNAL_RESOURCE;
       case "patch" -> EntityType.PATCH;

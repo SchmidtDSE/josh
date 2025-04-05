@@ -7,6 +7,7 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
+import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.parse.ParseResult;
 
@@ -35,7 +36,8 @@ public class JoshInterpreter {
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);
 
-    Iterator<String> simulationNames = program.getSimulations().getSimulations().iterator();
+    EngineBridgeSimulationStore simulationStore = program.getSimulations();
+    Iterator<String> simulationNames = simulationStore.getSimulations().iterator();
     if (simulationNames.hasNext()) {
       bridgeGetter.setSimulationName(simulationNames.next());
     }
