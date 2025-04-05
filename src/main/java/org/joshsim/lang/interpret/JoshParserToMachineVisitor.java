@@ -26,6 +26,7 @@ import org.joshsim.engine.value.converter.NoopConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -36,6 +37,8 @@ import org.joshsim.lang.interpret.fragment.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.EntityFragment;
 import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
 import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.ProgramBuilder;
+import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 
@@ -802,7 +805,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitProgram(JoshLangParser.ProgramContext ctx) {
-    return null;  // TODO
+    ProgramBuilder builder = new ProgramBuilder();
+    int numChildren = ctx.getChildCount();
+    for (int i = 0; i < numChildren; i++) {
+      Fragment childFragment = ctx.getChild(i).accept(this);
+      builder.add(childFragment);
+    }
+    return new ProgramFragment(builder);
   }
 
   private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {
