@@ -374,7 +374,8 @@ public class ShadowingEntity implements MutableEntity {
     // Attempt to match a handler for updated value
     boolean executed = false;
     while (handlersMaybe.hasNext()) {
-      executed = executed || executeHandlers(handlersMaybe.next());
+      boolean localExecuted = executeHandlers(handlersMaybe.next());
+      executed = executed || localExecuted;
     }
 
     // If failed to match, use prior
