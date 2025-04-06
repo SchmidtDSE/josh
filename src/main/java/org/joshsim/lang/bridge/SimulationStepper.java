@@ -1,17 +1,24 @@
 package org.joshsim.lang.bridge;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.entity.base.Entity;
 
 
 /**
  * Operation on an EngineBridge which completes a full step in a simulation.
  */
-public class SimulationStepOperation implements EngineBridgeOperation {
+public class SimulationStepper {
 
-  @Override
-  public Optional<EngineValue> perform(EngineBridge target) {
+  /**
+   * Operation to take a setp within an EngineBridge.
+   *
+   * @param target EngineBridge in which to perform this operation.
+   * @return Iterable of frozen patches from the just completed timestep.
+   */
+  public static Iterable<Entity> perform(EngineBridge target) {
     target.startStep();
 
     if (target.getAbsoluteTimestep() == 0) {
@@ -19,15 +26,16 @@ public class SimulationStepOperation implements EngineBridgeOperation {
     }
 
     Iterable<ShadowingEntity> patches = target.getCurrentPatches();
-    StreamSupport.stream(patches.spliterator(), true)
+    List<Entity> results = StreamSupport.stream(patches.spliterator(), true)
         .map((x) -> updateEntity(x, "start"))
         .map((x) -> updateEntity(x, "step"))
         .map((x) -> updateEntity(x, "end"))
-        .map(ShadowingEntity::freeze);
+        .map(ShadowingEntity::freeze)
+        .collect(Collectors.toList());
 
     target.endStep();
 
-    return Optional.empty();  // TODO
+    return results;
   }
 
   /**
@@ -37,7 +45,7 @@ public class SimulationStepOperation implements EngineBridgeOperation {
    * @param subStep the sub-step name, which can be "start", "step", or "end"
    * @return the updated shadowing entity
    */
-  private ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
+  private static ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
     // TODO
     return target;
   }
@@ -45,7 +53,7 @@ public class SimulationStepOperation implements EngineBridgeOperation {
   /**
    * Set up necessary state or configuration before simulation start.
    */
-  private void initSimulation() {
+  private static void initSimulation() {
     // TODO
   }
 }
