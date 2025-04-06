@@ -75,6 +75,13 @@ public class GridFromSimFactory {
     return builder.build();
   }
 
+  /**
+   * Returns the string value of an optional EngineValue or a default value if empty.
+   *
+   * @param target the optional EngineValue to check
+   * @param defaultVal the default value to return if target is empty
+   * @return the string value from the EngineValue or the default value
+   */
   private String getOrDefault(Optional<EngineValue> target, String defaultVal) {
     if (target.isEmpty()) {
       return defaultVal;
@@ -83,6 +90,13 @@ public class GridFromSimFactory {
     }
   }
 
+  /**
+   * Builds grid extents from start and end coordinate strings.
+   *
+   * @param startStr the starting coordinate string in format "X latitude/longitude, Y latitude/longitude"
+   * @param endStr the ending coordinate string in format "X latitude/longitude, Y latitude/longitude"
+   * @return GridBuilderExtents object containing the parsed coordinates
+   */
   private GridBuilderExtents buildExtents(String startStr, String endStr) {
     GridBuilderExtentsBuilder builder = new GridBuilderExtentsBuilder();
     addExtents(builder, startStr, true);
@@ -90,6 +104,13 @@ public class GridFromSimFactory {
     return builder.build();
   }
 
+  /**
+   * Adds coordinate extents to a GridBuilderExtentsBuilder.
+   *
+   * @param builder the GridBuilderExtentsBuilder to add coordinates to
+   * @param target the coordinate string to parse
+   * @param start true if these are start coordinates, false if end coordinates
+   */
   private void addExtents(GridBuilderExtentsBuilder builder, String target, boolean start) {
     String[] pieces = target.split(",");
     
@@ -112,12 +133,24 @@ public class GridFromSimFactory {
     }
   }
 
+  /**
+   * Parses a coordinate component string into an EngineValue.
+   *
+   * @param target the coordinate component string in format "X latitude/longitude"
+   * @return EngineValue containing the parsed value and units
+   */
   private EngineValue parseExtentComponent(String target) {
     String engineValStr = target.strip().replaceAll(" latitude", "").replaceAll(" longitude", "");
     String[] pieces = engineValStr.split(" ");
     return valueFactory.build(new BigDecimal(pieces[0]), new Units(pieces[1]));
   }
 
+  /**
+   * Converts an EngineValue to expected units (meters) if not already in count units.
+   *
+   * @param target the EngineValue to potentially convert
+   * @return the original EngineValue if in count units, otherwise converted to meters
+   */
   private EngineValue convertToExpectedUnits(EngineValue target) {
     if (target.getUnits().equals("count")) {
       return target;
