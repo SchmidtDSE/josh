@@ -16,6 +16,7 @@ import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Conversion;
@@ -195,7 +196,9 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Replicate getReplicate() {
     if (replicate.isEmpty()) {
-      
+      GridFromSimFactory factory = new GridFromSimFactory(this);
+      Grid grid = factory.build(simulation);
+      replicate = Optional.of(new Replicate(grid));
     }
 
     return replicate.get();
