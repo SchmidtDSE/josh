@@ -49,7 +49,7 @@ public class GridBuilder {
    * @throws TransformException if coordinate transformation fails
    */
   public GridBuilder(String inputCrsCode, String targetCrsCode,
-                    Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
+                    GridBuilderExtents extents, BigDecimal cellWidth)
       throws FactoryException, TransformException {
 
     // Validate cell width
@@ -72,17 +72,10 @@ public class GridBuilder {
     this.targetCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
 
-    // Extract with consistent X,Y keys regardless of CRS type
-    BigDecimal topLeftX = cornerCoords.get("topLeftX");
-    BigDecimal topLeftY = cornerCoords.get("topLeftY");
-    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
-    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
-
-    // Validate corners
-    validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
-
     // Transform coordinates immediately
-    transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    transformCornerCoordinates(
+        extents.getTopLeftX(), extents.getTopLeftY(),
+        extents.getBottomRightX(), extents.getBottomRightY());
   }
 
   /**
@@ -96,7 +89,7 @@ public class GridBuilder {
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @throws TransformException if coordinate transformation fails
    */
-  public GridBuilder(Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
+  public GridBuilder(GridBuilderExtents extents, BigDecimal cellWidth)
       throws TransformException {
 
     // Validate cell width
@@ -107,17 +100,10 @@ public class GridBuilder {
 
     usingVirutalCoordinates = true;
 
-    // Extract with consistent X,Y keys regardless of CRS type
-    BigDecimal topLeftX = cornerCoords.get("topLeftX");
-    BigDecimal topLeftY = cornerCoords.get("topLeftY");
-    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
-    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
-
-    // Validate corners
-    validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
-
     // Transform coordinates immediately
-    transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    transformCornerCoordinates(
+        extents.getTopLeftX(), extents.getTopLeftY(),
+        extents.getBottomRightX(), extents.getBottomRightY());
   }
 
   /**
