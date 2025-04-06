@@ -40,7 +40,7 @@ dependencies {
   implementation("org.apache.sis.core:sis-referencing:1.4")
   implementation("org.apache.sis.storage:sis-storage:1.4")
   implementation("org.apache.sis.storage:sis-geotiff:1.4")
-  implementation("org.apache.sis.core:sis-coverage:1.4")
+  // implementation("org.apache.sis.core:sis-coverage:1.4")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))

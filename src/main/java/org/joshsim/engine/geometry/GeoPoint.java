@@ -7,6 +7,7 @@
 package org.joshsim.engine.geometry;
 
 import org.locationtech.spatial4j.shape.Shape;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Interface representing a geographical point on Earth.
@@ -18,7 +19,7 @@ public class GeoPoint extends Geometry {
    *
    * @param shape the shape representing the geographical point
    */
-  public GeoPoint(Shape shape) {
-    super(shape);
+  public GeoPoint(Shape shape, CoordinateReferenceSystem crs) {
+    super(shape, crs);
   }
 }

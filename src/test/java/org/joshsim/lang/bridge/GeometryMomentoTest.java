@@ -42,6 +42,7 @@ public class GeometryMomentoTest {
 
   /**
    * Create common structures for tests.
+   *
    * @throws FactoryException 
    * @throws NoSuchAuthorityCodeException 
    */

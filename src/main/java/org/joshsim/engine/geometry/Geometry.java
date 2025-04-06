@@ -47,6 +47,15 @@ public class Geometry implements Spatial {
   }
 
   /**
+   * Gets the coordinate reference system of this geometry.
+   *
+   * @return The coordinate reference system
+   */
+  public CoordinateReferenceSystem getCrs() {
+    return crs;
+  }
+
+  /**
    * Calculates the distance between this geometry's center and another point.
    *
    * @param other geometry to calculate distance to

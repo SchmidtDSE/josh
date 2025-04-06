@@ -405,7 +405,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         distance.getAsDecimal(),
         centerGeometry.getCenterX(),
         centerGeometry.getCenterY(),
-        centerGeometry.getSpatialContext()
+        centerGeometry.getSpatialContext(),
+        centerGeometry.getCrs()
     );
 
     Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);
