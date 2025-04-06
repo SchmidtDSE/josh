@@ -79,7 +79,7 @@ public class SimulationStepper {
     if (state.isPresent()) {
       String stateRealized = state.get().getAsString();
       Stream<EventKey> eventKeysState = StreamSupport.stream(attributeNames.spliterator(), false)
-        .map((name) -> new EventKey(stateRealized, name, subStep));
+          .map((name) -> new EventKey(stateRealized, name, subStep));
 
       eventKeys = Stream.concat(eventKeysNoState, eventKeysState);
     } else {

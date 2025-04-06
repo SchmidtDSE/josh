@@ -25,7 +25,7 @@ public interface EngineBridge {
   
   /**
    * Get the current simulation entity.
-   * 
+   *
    * @return the current simulation entity.
    */
   MutableEntity getSimulation();
