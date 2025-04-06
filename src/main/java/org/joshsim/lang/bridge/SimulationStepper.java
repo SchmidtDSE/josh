@@ -28,7 +28,7 @@ public class SimulationStepper {
     ShadowingEntity simulation = target.getSimulation();
     Iterable<ShadowingEntity> patches = target.getCurrentPatches();
     
-    List<Entity> results = StreamSupport.stream(, true)
+    List<Entity> results = StreamSupport.stream(new SimAndPatchIterable(simulation, patches), true)
         .map((x) -> updateEntity(x, "start"))
         .map((x) -> updateEntity(x, "step"))
         .map((x) -> updateEntity(x, "end"))
@@ -62,3 +62,40 @@ public class SimulationStepper {
   
 
 }
+
+
+
+  /**
+   * Iterable that first returns the simulation entity and then iterates through patches.
+   */
+  private static class SimAndPatchIterable implements Iterable<ShadowingEntity> {
+    private final ShadowingEntity simulation;
+    private final Iterable<ShadowingEntity> patches;
+
+    public SimAndPatchIterable(ShadowingEntity simulation, Iterable<ShadowingEntity> patches) {
+      this.simulation = simulation;
+      this.patches = patches;
+    }
+
+    @Override
+    public Iterator<ShadowingEntity> iterator() {
+      return new Iterator<ShadowingEntity>() {
+        private boolean simulationReturned = false;
+        private final Iterator<ShadowingEntity> patchIterator = patches.iterator();
+
+        @Override
+        public boolean hasNext() {
+          return !simulationReturned || patchIterator.hasNext();
+        }
+
+        @Override
+        public ShadowingEntity next() {
+          if (!simulationReturned) {
+            simulationReturned = true;
+            return simulation;
+          }
+          return patchIterator.next();
+        }
+      };
+    }
+  }
