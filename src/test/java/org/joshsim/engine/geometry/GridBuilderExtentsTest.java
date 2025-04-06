@@ -1,4 +1,8 @@
-
+/**
+ * Tests for the GridBuilderExtents structure.
+ *
+ * @license BSD-3-Clause
+ */
 package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -9,6 +13,10 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+
+/**
+ * Tests for the GridBuilderExtents structure.
+ */
 class GridBuilderExtentsTest {
 
   @Test
