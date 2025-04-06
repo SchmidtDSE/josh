@@ -15,7 +15,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStoreBuilder;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.value.converter.ConverterBuilder;
-import org.joshsim.lang.bridge.EngineBridgeOperation;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.JoshProgram;
 
@@ -79,19 +78,14 @@ public class ProgramBuilder {
   }
 
   private EngineBridgeSimulationStore buildSimulationStore() {
-    Map<String, EngineBridgeOperation> steps = new HashMap<>();
     Map<String, EntityPrototype> prototypes = new HashMap<>();
 
     for (String simulationName : simulationNames) {
       EntityPrototype prototype = entities.get(simulationName);
       prototypes.put(simulationName, prototype);
-      /*steps.put(
-          simulationName,
-          new SimulationInitOperation(prototype, entities)
-      );*/
     }
 
-    return new EngineBridgeSimulationStore(steps, prototypes);  // TODO
+    return new EngineBridgeSimulationStore(prototypes);
   }
 
 }
