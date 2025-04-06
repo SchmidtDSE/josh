@@ -20,6 +20,8 @@ public class Units {
 
   public static final Units EMPTY = new Units("");
   public static final Units COUNT = new Units("count");
+  public static final Units METERS = new Units("meters");
+  public static final Units DEGREES = new Units("degrees");
 
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;

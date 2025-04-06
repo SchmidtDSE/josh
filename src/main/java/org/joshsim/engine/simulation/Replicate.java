@@ -13,6 +13,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.Grid;
 
 
 /**
@@ -29,12 +30,24 @@ public class Replicate {
   private long stepNumber = 0;
 
   /**
-   * Construct a replicate with the given entity builders.
+   * Construct a replicate with the given patches.
    *
    * @param patches the patches to be included in the replicate.
    */
   public Replicate(Map<GeoKey, Patch> patches) {
     this.presentTimeStep = patches;
+  }
+
+  /**
+   * Construct a replicate with the given grid.
+   *
+   * @param grid Grid with the the patches to be included in the replicate.
+   */
+  public Replicate(Grid grid) {
+    presentTimeStep = new HashMap<>();
+    for (Patch patch : grid.getPatches()) {
+      presentTimeStep.put(patch.getKey().orElseThrow(), patch);
+    }
   }
 
   /**

@@ -28,20 +28,33 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   private final Map<GeometryMomento, List<GeoKey>> cachedPatchesByGeometry;
 
   /**
-   * Constructs a caching EngineBridge to manipulate simulation, replicate, and converter.
+   * Constructs a caching EngineBridge to manipulate simulation and converter.
    *
    * <p>Version of EngineBridge which caches patches found in queries that cross the bridge,
    * speeding up geospatial operations in exchange for some in-memory space.</p>
    *
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
-   * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.s
    */
-  public QueryCacheEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
-                                EntityPrototypeStore prototypeStore) {
-    super(simulation, replicate, converter, prototypeStore);
+  public QueryCacheEngineBridge(Simulation simulation, Converter converter,
+        EntityPrototypeStore prototypeStore) {
+    super(simulation, converter, prototypeStore);
+    cachedPatchesByGeometry = new HashMap<>();
+  }
+
+  /**
+   * Constructs a caching EngineBridge with a given Replicate for testing.
+   *
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.s
+   */
+  QueryCacheEngineBridge(Simulation simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, Replicate replicate) {
+    super(simulation, converter, prototypeStore, replicate);
     cachedPatchesByGeometry = new HashMap<>();
   }
 

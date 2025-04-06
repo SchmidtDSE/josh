@@ -29,6 +29,7 @@ public class GridBuilder {
   private BigDecimal cellWidth;
 
   // CRS-related fields
+  private boolean usingVirutalCoordinates;
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
   private CoordinateReferenceSystem targetCoordinateReferenceSystem;
 
@@ -41,15 +42,14 @@ public class GridBuilder {
    *
    * @param inputCrsCode EPSG code for the input CRS
    * @param targetCrsCode EPSG code for the target CRS
-   * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
-   *                    "bottomRightX", "bottomRightY"
+   * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
   public GridBuilder(String inputCrsCode, String targetCrsCode,
-                    Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
-      throws FactoryException, TransformException {
+      GridBuilderExtents extents, BigDecimal cellWidth) throws FactoryException,
+      TransformException {
 
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
@@ -60,6 +60,7 @@ public class GridBuilder {
     // Set up CRS and ensure X,Y (longitude/easting, latitude/northing) ordering
     CoordinateReferenceSystem inputCrs = CRS.forCode(inputCrsCode);
     CoordinateReferenceSystem targetCrs = CRS.forCode(targetCrsCode);
+    usingVirutalCoordinates = false;
 
     // Ensure consistent X,Y ordering using Apache SIS's recommendation
     // https://sis.apache.org/faq.html#axisOrderInTransforms
@@ -70,17 +71,37 @@ public class GridBuilder {
     this.targetCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
 
-    // Extract with consistent X,Y keys regardless of CRS type
-    BigDecimal topLeftX = cornerCoords.get("topLeftX");
-    BigDecimal topLeftY = cornerCoords.get("topLeftY");
-    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
-    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
+    // Transform coordinates immediately
+    transformCornerCoordinates(
+        extents.getTopLeftX(), extents.getTopLeftY(),
+        extents.getBottomRightX(), extents.getBottomRightY());
+  }
 
-    // Validate corners
-    validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+  /**
+   * Creates a new GridBuilder with the given corner coordinates.
+   *
+   * <p>Create a new GridBuilder in "virtual space" which does not correspond to an actual
+   * Earth geographic location.</p>
+   *
+   * @param extents Structure describing the extents or bounds of the grid to be built.
+   * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @throws TransformException if coordinate transformation fails
+   */
+  public GridBuilder(GridBuilderExtents extents, BigDecimal cellWidth)
+      throws TransformException {
+
+    // Validate cell width
+    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
+    this.cellWidth = cellWidth;
+
+    usingVirutalCoordinates = true;
 
     // Transform coordinates immediately
-    transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    transformCornerCoordinates(
+        extents.getTopLeftX(), extents.getTopLeftY(),
+        extents.getBottomRightX(), extents.getBottomRightY());
   }
 
   /**
@@ -317,11 +338,11 @@ public class GridBuilder {
       throw new IllegalStateException("Cell width not specified");
     }
 
-    if (inputCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoordinates && inputCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Input CRS not specified");
     }
 
-    if (targetCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoordinates && targetCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Target CRS not specified");
     }
 

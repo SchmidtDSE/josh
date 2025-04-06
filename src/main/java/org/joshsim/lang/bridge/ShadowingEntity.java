@@ -280,7 +280,7 @@ public class ShadowingEntity implements MutableEntity {
     if (stateValueMaybe.isPresent()) {
       return stateValueMaybe.get().getAsString();
     } else {
-      return DEFAULT_STATE_STR;  // TODO: Need to do just in time resolution later merge request.
+      return DEFAULT_STATE_STR;
     }
   }
 
