@@ -165,7 +165,7 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Replicate getReplicate() {
     if (replicate.isEmpty()) {
-      // TODO
+      
     }
 
     return replicate.get();

@@ -29,6 +29,7 @@ public class GridBuilder {
   private BigDecimal cellWidth;
 
   // CRS-related fields
+  private boolean usingVirutalCoordinates;
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
   private CoordinateReferenceSystem targetCoordinateReferenceSystem;
 
@@ -60,6 +61,7 @@ public class GridBuilder {
     // Set up CRS and ensure X,Y (longitude/easting, latitude/northing) ordering
     CoordinateReferenceSystem inputCrs = CRS.forCode(inputCrsCode);
     CoordinateReferenceSystem targetCrs = CRS.forCode(targetCrsCode);
+    usingVirutalCoordinates = false;
 
     // Ensure consistent X,Y ordering using Apache SIS's recommendation
     // https://sis.apache.org/faq.html#axisOrderInTransforms
@@ -69,6 +71,41 @@ public class GridBuilder {
         AbstractCRS.castOrCopy(inputCrs).forConvention(AxesConvention.RIGHT_HANDED);
     this.targetCoordinateReferenceSystem =
         AbstractCRS.castOrCopy(targetCrs).forConvention(AxesConvention.RIGHT_HANDED);
+
+    // Extract with consistent X,Y keys regardless of CRS type
+    BigDecimal topLeftX = cornerCoords.get("topLeftX");
+    BigDecimal topLeftY = cornerCoords.get("topLeftY");
+    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
+    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
+
+    // Validate corners
+    validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+
+    // Transform coordinates immediately
+    transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+  }
+
+  /**
+   * Creates a new GridBuilder with the given corner coordinates.
+   *
+   * <p>Create a new GridBuilder in "virtual space" which does not correspond to an actual
+   * Earth geographic location.</p>
+   *
+   * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
+   *                    "bottomRightX", "bottomRightY"
+   * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @throws TransformException if coordinate transformation fails
+   */
+  public GridBuilder(Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
+      throws TransformException {
+
+    // Validate cell width
+    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
+    this.cellWidth = cellWidth;
+
+    usingVirutalCoordinates = true;
 
     // Extract with consistent X,Y keys regardless of CRS type
     BigDecimal topLeftX = cornerCoords.get("topLeftX");
@@ -317,11 +354,11 @@ public class GridBuilder {
       throw new IllegalStateException("Cell width not specified");
     }
 
-    if (inputCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoorindates && inputCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Input CRS not specified");
     }
 
-    if (targetCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoorindates && targetCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Target CRS not specified");
     }
 

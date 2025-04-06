@@ -13,7 +13,7 @@ import org.joshsim.engine.geometry.GridBuilder;
 public class GridFromSimFactory {
 
   public static Grid getBuilder(Entity simulation, EngineBridge bridge) {
-    // TODO
+    
   }
   
 }
