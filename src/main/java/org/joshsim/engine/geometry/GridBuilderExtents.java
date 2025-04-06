@@ -73,11 +73,9 @@ public class GridBuilderExtents {
   }
 
   /**
-   * Validates corner coordinates based on coordinate system type.
-   * For both geographic and projected coordinates, we expect Y to increase northward
-   * and X to increase eastward.
+   * Validates corner coordinate valididity.
    */
-  public void validateCornerCoordinates() {
+  private void validateCornerCoordinates() {
     if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
       throw new IllegalArgumentException("Missing corner coordinates");
     }

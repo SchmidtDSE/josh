@@ -1,14 +1,19 @@
+/**
+ * Structure to help in constructing a GridBuilderExtents.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 
+
 /**
  * Builder class for creating {@link GridBuilderExtents} instances.
- * This builder allows for step-by-step construction of grid extents
- * by setting individual coordinate values.
  */
 public class GridBuilderExtentsBuilder {
+  
   private BigDecimal topLeftX;
   private BigDecimal topLeftY;
   private BigDecimal bottomRightX;

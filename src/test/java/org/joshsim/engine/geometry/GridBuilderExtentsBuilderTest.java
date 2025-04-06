@@ -1,19 +1,31 @@
+/**
+ * Tests for aid in constructing a GridBuilderExtents.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+
+/**
+ * Test for GridBuilderExtentsBuilder.
+ */
 class GridBuilderExtentsBuilderTest {
 
   private GridBuilderExtentsBuilder builder;
 
+  /**
+   * Create common structures for tests.
+   */
   @BeforeEach
   void setUp() {
     builder = new GridBuilderExtentsBuilder();

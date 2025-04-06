@@ -3,6 +3,7 @@
  *
  * @license BSD-3-Clause
  */
+
 package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -59,7 +60,9 @@ class GridBuilderExtentsTest {
 
     // Verify exception message
     assertTrue(
-        exception.getMessage().contains("Top-left Y-coordinate must be greater than bottom-right Y-coordinate")
+        exception.getMessage().contains(
+            "Top-left Y-coordinate must be greater than bottom-right Y-coordinate"
+        )
     );
   }
 }
