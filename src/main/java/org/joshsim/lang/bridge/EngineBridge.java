@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
@@ -27,7 +28,7 @@ public interface EngineBridge {
    * 
    * @return the current simulation entity.
    */
-  Entity getSimulation();
+  MutableEntity getSimulation();
 
   /**
    * Start a new simulation step.

@@ -6,9 +6,13 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -132,7 +136,7 @@ public class ShadowingEntity implements MutableEntity {
    * @param attribute name of the attribute for which event handlers are requested.
    * @throws IllegalStateException if not currently in a substep.
    */
-  public Optional<EventHandlerGroup> getHandlersForAttribute(String attribute) {
+  public Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute) {
     if (substep.isEmpty()) {
       String message = String.format(
           "Cannot get handler for %s while not within a substep.",
@@ -142,8 +146,23 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     String state = getState();
-    EventKey eventKey = new EventKey(state, attribute, substep.get());
-    return inner.getEventHandlers(eventKey);
+
+    EventKey eventKeyWithoutState = new EventKey(attribute, substep.get());
+    Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
+    
+    EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
+    Optional<EventHandlerGroup> withState = inner.getEventHandlers(eventKeyWithState);
+
+    List<EventHandlerGroup> matching = new ArrayList<>();
+    if (withoutState.isPresent()) {
+      matching.add(withoutState.get());
+    }
+
+    if (withState.isPresent()) {
+      matching.add(withState.get());
+    }
+
+    return matching;
   }
 
   /**
@@ -154,11 +173,11 @@ public class ShadowingEntity implements MutableEntity {
    * each handler resolves an attribute to its current value.</p>
    */
   public void resolveAllAttributes() {
-    StreamSupport.stream(getAttributeNames().spliterator(), false)
-        .map(this::getHandlersForAttribute)
-        .filter((x) -> x.isPresent())
-        .map((x) -> x.get())
-            .forEach(this::executeHandlers);
+    Stream<String> names = StreamSupport.stream(getAttributeNames().spliterator(), false);
+    Stream<EventHandlerGroup> handlerGroups = names.flatMap(
+        (x) -> StreamSupport.stream(getHandlersForAttribute(x).spliterator(), false)
+    );
+    handlerGroups.forEach(this::executeHandlers);
   }
 
   /**
@@ -346,14 +365,17 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     // If no handlers, use prior
-    Optional<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name);
-    if (handlersMaybe.isEmpty()) {
+    Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
+    if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPrior(name);
       return;
     }
 
     // Attempt to match a handler for updated value
-    boolean executed = executeHandlers(handlersMaybe.get());
+    boolean executed = false;
+    while (handlersMaybe.hasNext()) {
+      executed = executed || executeHandlers(handlersMaybe.next());
+    }
 
     // If failed to match, use prior
     if (!executed) {

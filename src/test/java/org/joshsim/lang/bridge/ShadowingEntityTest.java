@@ -103,8 +103,8 @@ public class ShadowingEntityTest {
         .thenReturn(Optional.of(mockEventHandlerGroup));
 
     spatialEntity.startSubstep(substepName);
-    Optional<EventHandlerGroup> handlers = spatialEntity.getHandlersForAttribute(attrName);
-    assertTrue(handlers.isPresent());
+    Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlersForAttribute(attrName);
+    assertTrue(handlers.iterator().hasNext());
     spatialEntity.endSubstep();
   }
 

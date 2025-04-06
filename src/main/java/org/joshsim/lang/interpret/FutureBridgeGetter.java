@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.simulation.Replicate;
@@ -88,7 +89,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     }
 
     String simulationNameRealized = simulationName.get();
-    Entity simulation = simulations.getProtoype(simulationNameRealized).build();
+    MutableEntity simulation = simulations.getProtoype(simulationNameRealized).build();
     
     Converter converter = programRealized.getConverter();
     EntityPrototypeStore prototypeStore = programRealized.getPrototypes();
