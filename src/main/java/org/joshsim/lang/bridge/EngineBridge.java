@@ -21,6 +21,14 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public interface EngineBridge {
 
+  
+  /**
+   * Get the current simulation entity.
+   * 
+   * @return the current simulation entity.
+   */
+  Entity getSimulation();
+
   /**
    * Start a new simulation step.
    *

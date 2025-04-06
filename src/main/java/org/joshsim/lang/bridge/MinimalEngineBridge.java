@@ -110,6 +110,11 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public Entity getSimulation() {
+    return simulation;
+  }
+
+  @Override
   public void startStep() {
     if (inStep) {
       throw new IllegalStateException("Tried to start a step before finishing the current one.");

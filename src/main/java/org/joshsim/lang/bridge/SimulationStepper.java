@@ -18,15 +18,17 @@ public class SimulationStepper {
    * @param target EngineBridge in which to perform this operation.
    * @return Iterable of frozen patches from the just completed timestep.
    */
-  public static Iterable<Entity> perform(EngineBridge target) {
+  public Iterable<Entity> perform(EngineBridge target) {
     target.startStep();
 
     if (target.getAbsoluteTimestep() == 0) {
       initSimulation();
     }
 
+    ShadowingEntity simulation = target.getSimulation();
     Iterable<ShadowingEntity> patches = target.getCurrentPatches();
-    List<Entity> results = StreamSupport.stream(patches.spliterator(), true)
+    
+    List<Entity> results = StreamSupport.stream(, true)
         .map((x) -> updateEntity(x, "start"))
         .map((x) -> updateEntity(x, "step"))
         .map((x) -> updateEntity(x, "end"))
@@ -45,7 +47,7 @@ public class SimulationStepper {
    * @param subStep the sub-step name, which can be "start", "step", or "end"
    * @return the updated shadowing entity
    */
-  private static ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
+  private ShadowingEntity updateEntity(ShadowingEntity target, String subStep) {
     // TODO
     return target;
   }
@@ -53,7 +55,10 @@ public class SimulationStepper {
   /**
    * Set up necessary state or configuration before simulation start.
    */
-  private static void initSimulation() {
+  private void initSimulation() {
     // TODO
   }
+
+  
+
 }
