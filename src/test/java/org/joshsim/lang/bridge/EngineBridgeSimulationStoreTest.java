@@ -37,7 +37,7 @@ public class EngineBridgeSimulationStoreTest {
         new EntityBuilder())
     );
 
-    store = new EngineBridgeSimulationStore(simulationSteps, simulationPrototypes);
+    store = new EngineBridgeSimulationStore(simulationPrototypes);
   }
 
   @Test
