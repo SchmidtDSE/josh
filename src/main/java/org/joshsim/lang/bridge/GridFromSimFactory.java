@@ -69,7 +69,7 @@ public class GridFromSimFactory {
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
 
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
-    EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw);
+    EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
 
     GridBuilderExtents extents = buildExtents(startStr, endStr);
     try {
@@ -132,15 +132,28 @@ public class GridFromSimFactory {
     EngineValue latitude = latitudeFirst ? value1 : value2;
     EngineValue longitude = latitudeFirst ? value2 : value1;
 
-    EngineValue latitudeConverted = convertToExpectedUnits(latitude);
-    EngineValue longitudeConverted = convertToExpectedUnits(longitude);
+    EngineValue latitudeConverted = convertToExpectedUnits(latitude, Units.DEGREES);
+    EngineValue longitudeConverted = convertToExpectedUnits(longitude, Units.DEGREES);
+
+    boolean reversed = value1.getUnits().equals(Units.COUNT);
 
     if (start) {
       builder.setTopLeftX(longitudeConverted.getAsDecimal());
-      builder.setTopLeftY(latitudeConverted.getAsDecimal());
+
+      if (reversed) {
+        builder.setBottomRightY(latitudeConverted.getAsDecimal());
+      } else {
+        builder.setTopLeftY(latitudeConverted.getAsDecimal());
+      }
     } else {
       builder.setBottomRightX(longitudeConverted.getAsDecimal());
-      builder.setBottomRightY(latitudeConverted.getAsDecimal());
+
+      if (reversed) {
+        builder.setTopLeftY(latitudeConverted.getAsDecimal());
+      } else {
+        builder.setBottomRightY(latitudeConverted.getAsDecimal());
+      }
+      
     }
   }
 
@@ -160,13 +173,15 @@ public class GridFromSimFactory {
    * Converts an EngineValue to expected units (meters) if not already in count units.
    *
    * @param target the EngineValue to potentially convert
+   * @param allowed The type of units other than count which is allowed.
    * @return the original EngineValue if in count units, otherwise converted to meters
    */
-  private EngineValue convertToExpectedUnits(EngineValue target) {
-    if (target.getUnits().equals("count")) {
+  private EngineValue convertToExpectedUnits(EngineValue target, Units allowed) {
+    Units targetUnits = target.getUnits();
+    if (targetUnits.equals(Units.COUNT) || targetUnits.equals(allowed)) {
       return target;
     } else {
-      return bridge.convert(target, new Units("meters"));
+      return bridge.convert(target, allowed);
     }
   }
   

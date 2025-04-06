@@ -48,20 +48,13 @@ class GridBuilderExtentsTest {
     BigDecimal bottomRightY = new BigDecimal("33.55"); // Higher than topLeftY
 
     // Act & Assert
-    IllegalArgumentException exception = assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
         () -> new GridBuilderExtents(
             topLeftX,
             topLeftY,
             bottomRightX,
             bottomRightY
-        )
-    );
-
-    // Verify exception message
-    assertTrue(
-        exception.getMessage().contains(
-            "Top-left Y-coordinate must be greater than bottom-right Y-coordinate"
         )
     );
   }

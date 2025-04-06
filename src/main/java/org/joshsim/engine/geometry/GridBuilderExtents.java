@@ -83,16 +83,22 @@ public class GridBuilderExtents {
     // Consistent validation for both geographic and projected coordinates
     // Y-coordinate (latitude/northing) should decrease from top to bottom
     if (topLeftY.compareTo(bottomRightY) <= 0) {
-      throw new IllegalArgumentException(
-          "Top-left Y-coordinate must be greater than bottom-right Y-coordinate"
+      String message = String.format(
+        "Top-left Y-coordinate (%.2f) must be greater than bottom-right Y-coordinate (%.2f).",
+        topLeftY.doubleValue(),
+        bottomRightY.doubleValue()
       );
+      throw new IllegalArgumentException(message);
     }
 
     // X-coordinate (longitude/easting) should increase from left to right
     if (topLeftX.compareTo(bottomRightX) >= 0) {
-      throw new IllegalArgumentException(
-          "Top-left X-coordinate must be less than bottom-right X-coordinate"
+      String message = String.format(
+        "Top-left X-coordinate (%.2f) must be less than bottom-right X-coordinate (%.2f).",
+        topLeftX.doubleValue(),
+        bottomRightX.doubleValue()
       );
+      throw new IllegalArgumentException(message);
     }
   }
 }
