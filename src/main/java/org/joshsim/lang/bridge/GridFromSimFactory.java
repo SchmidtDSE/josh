@@ -16,6 +16,8 @@ import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 
 /**
@@ -25,6 +27,7 @@ public class GridFromSimFactory {
 
   private final EngineBridge bridge;
   private final EngineValueFactory valueFactory;
+  
   /**
    * Constructs a GridFromSimFactory with the specified EngineBridge.
    *
@@ -51,7 +54,6 @@ public class GridFromSimFactory {
    * Builds a Grid from a simulation entity using the provided EngineBridge.
    *
    * @param simulation the simulation entity used to build the Grid
-   * @param bridge the bridge to use to build the Grid
    * @return the built Grid
    */
   public Grid build(Entity simulation) {
@@ -70,9 +72,18 @@ public class GridFromSimFactory {
     EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw);
 
     GridBuilderExtents extents = buildExtents(startStr, endStr);
-    GridBuilder builder = new GridBuilder(inputCrs, targetCrs, extents, sizeValue.getAsDecimal());
+    try {
+      GridBuilder builder = new GridBuilder(
+          inputCrs,
+          targetCrs,
+          extents,
+          sizeValue.getAsDecimal()
+      );
 
-    return builder.build();
+      return builder.build();
+    } catch (FactoryException | TransformException e) {
+      throw new RuntimeException("Error instantiating grid from script: " + e);
+    }
   }
 
   /**
@@ -93,8 +104,8 @@ public class GridFromSimFactory {
   /**
    * Builds grid extents from start and end coordinate strings.
    *
-   * @param startStr the starting coordinate string in format "X latitude/longitude, Y latitude/longitude"
-   * @param endStr the ending coordinate string in format "X latitude/longitude, Y latitude/longitude"
+   * @param startStr the starting coordinate string in format "X latitude, Y longitude"
+   * @param endStr the ending coordinate string in format "X latitude, Y longitude"
    * @return GridBuilderExtents object containing the parsed coordinates
    */
   private GridBuilderExtents buildExtents(String startStr, String endStr) {
