@@ -34,12 +34,12 @@ public class MinimalEngineBridge implements EngineBridge {
   private static final long DEFAULT_END_STEP = 100;
 
   private final Entity simulation;
-  private final Replicate replicate;
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
   private final Converter converter;
   private final EntityPrototypeStore prototypeStore;
 
+  private Optional<Replicate> replicate;
   private long absoluteStep;
   private EngineValue currentStep;
   private boolean inStep;
@@ -54,15 +54,15 @@ public class MinimalEngineBridge implements EngineBridge {
    *
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
-   * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
    */
-  public MinimalEngineBridge(Entity simulation, Replicate replicate, Converter converter,
+  public MinimalEngineBridge(Entity simulation, Converter converter,
       EntityPrototypeStore prototypeStore) {
     this.simulation = simulation;
-    this.replicate = replicate;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
+
+    replicate = Optional.empty();
 
     engineValueFactory = new EngineValueFactory();
 
@@ -102,7 +102,7 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Optional<Entity> getPatch(GeoPoint point) {
     Query query = new Query(currentStep.getAsInt(), point);
-    Iterable<Entity> patches = replicate.query(query);
+    Iterable<Entity> patches = getReplicate().query(query);
 
     Iterator<Entity> iterator = patches.iterator();
 
@@ -122,7 +122,7 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Iterable<ShadowingEntity> getCurrentPatches() {
     Query query = new Query(getCurrentTimestep());
-    Iterable<Patch> patches = replicate.getCurrentPatches();
+    Iterable<Patch> patches = getReplicate().getCurrentPatches();
     Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
   }
@@ -130,7 +130,7 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Iterable<Entity> getPriorPatches(Geometry geometry) {
     Query query = new Query(getPriorTimestep(), geometry);
-    Iterable<Entity> patches = replicate.query(query);
+    Iterable<Entity> patches = getReplicate().query(query);
     return patches;
   }
 
@@ -163,7 +163,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public Replicate getReplicate() {
-    return replicate;
+    if (replicate.isEmpty()) {
+      // TODO
+    }
+
+    return replicate.get();
   }
 
   @Override
