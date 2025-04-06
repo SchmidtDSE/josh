@@ -428,7 +428,7 @@ public class GeometryFactoryTest {
         );
       }, "Should throw NullPointerException when context is null");
     }
-    
+
     @Test
     public void testNullCrsWithCornersThrowsException() {
       // Given
@@ -558,7 +558,7 @@ public class GeometryFactoryTest {
       assertEquals(expectedRadius, circle.getRadius(), 0.000001);
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
     }
-    
+
     @Test
     public void testNullCrsWithCircleThrowsException() {
       // Given

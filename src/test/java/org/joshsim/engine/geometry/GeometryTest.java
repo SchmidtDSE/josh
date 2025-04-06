@@ -90,7 +90,7 @@ public class GeometryTest {
   @Test
   public void testWithNullCrs() {
     Shape mockShape = mock(Shape.class);
-    
+
     Exception exception = assertThrows(NullPointerException.class, () -> {
       new Geometry(mockShape, null);
     });
@@ -320,29 +320,29 @@ public class GeometryTest {
       verify(mockedShape1).relate(mockedShape2);
       verify(mockedRelation).intersects();
     }
-    
+
     @Test
     public void testWithDifferentCrs() {
       Shape mockedShape1 = mock(Shape.class);
       Shape mockedShape2 = mock(Shape.class);
-      
+
       Geometry geom1 = new Geometry(mockedShape1, wgs84);
       Geometry geom2 = new Geometry(mockedShape2, utm11n);
-      
+
       assertEquals(wgs84, geom1.getCrs(), "First geometry should have WGS84 CRS");
       assertEquals(utm11n, geom2.getCrs(), "Second geometry should have UTM11N CRS");
     }
   }
-  
+
   @Nested
   class EnvelopeTests {
     @Test
     public void testGetEnvelope() {
       Rectangle rect = ctx.getShapeFactory().rect(10.0, 12.0, 20.0, 22.0);
       Geometry rectGeometry = new Geometry(rect, wgs84);
-      
+
       var envelope = rectGeometry.getEnvelope();
-      
+
       assertEquals(10.0, envelope.getLower(0), 0.000001);
       assertEquals(12.0, envelope.getUpper(0), 0.000001);
       assertEquals(20.0, envelope.getLower(1), 0.000001);

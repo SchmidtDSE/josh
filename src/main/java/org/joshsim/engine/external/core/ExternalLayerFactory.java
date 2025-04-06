@@ -30,7 +30,7 @@ public class ExternalLayerFactory {
     this.caster = caster;
     this.units = units;
   }
-  
+
   /**
    * Creates and initializes various decorators into a chain for processing.
    * This chain includes a COG reader layer, a cache layer, and a priming geometry layer.
@@ -41,10 +41,10 @@ public class ExternalLayerFactory {
     // Create the base layer with COG reader
     CogReader cogReader = new CogReader(caster, units);
     ExternalLayer cogLayer = new CogExternalLayer(cogReader);
-    
+
     // Add cache layer
     ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
-    
+
     // Add priming geometry layer
     ExternalLayer primingLayer = new PrimingGeometryLayer(cacheLayer);
 

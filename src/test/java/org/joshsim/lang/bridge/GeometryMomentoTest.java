@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 import java.math.BigDecimal;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.Geometry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
-import org.apache.sis.referencing.CRS;
 
 /**
  * Tests for a momento structure for Geometry.
@@ -43,8 +43,8 @@ public class GeometryMomentoTest {
   /**
    * Create common structures for tests.
    *
-   * @throws FactoryException 
-   * @throws NoSuchAuthorityCodeException 
+   * @throws FactoryException
+   * @throws NoSuchAuthorityCodeException
    */
   @BeforeEach
   void setUp() throws NoSuchAuthorityCodeException, FactoryException {
