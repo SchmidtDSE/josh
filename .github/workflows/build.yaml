@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy to SFTP
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    needs: [buildJava, buildWasm]
+    needs: [buildJava, testJava, validateExamples, buildWasm]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
