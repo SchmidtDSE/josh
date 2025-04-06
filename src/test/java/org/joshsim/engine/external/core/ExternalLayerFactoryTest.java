@@ -1,8 +1,13 @@
 package org.joshsim.engine.external.core;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Optional;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.geometry.Geometry;
@@ -14,6 +19,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.spatial4j.context.SpatialContext;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
 
 /**
  * Unit tests for the ExternalLayerFactory class, ensuring that it correctly
@@ -24,6 +31,7 @@ public class ExternalLayerFactoryTest {
   private Units units;
   private ExternalLayerFactory factory;
   private SpatialContext spatialContext;
+  private CoordinateReferenceSystem wgs84;
   private static final String COG_NOV_2021 = 
       "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 =
@@ -36,15 +44,16 @@ public class ExternalLayerFactoryTest {
   }
   
   @BeforeEach
-  void setup() {
+  void setup() throws FactoryException {
     caster = new EngineValueWideningCaster();
     units = new Units("mm");
     factory = new ExternalLayerFactory(caster, units);
     spatialContext = SpatialContext.GEO;
+    wgs84 = CRS.forCode("EPSG:4326"); // WGS84
   }
   
   private Geometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
-    return new Geometry(spatialContext.getShapeFactory().rect(minX, maxX, minY, maxY));
+    return new Geometry(spatialContext.getShapeFactory().rect(minX, maxX, minY, maxY), wgs84);
   }
   
   private Request createFileRequest(String path, Geometry geometry) {
@@ -176,5 +185,13 @@ public class ExternalLayerFactoryTest {
     Optional<Scalar> mean2 = result2.getMean();
     assertTrue(mean1.isPresent() && mean2.isPresent());
     assertNotEquals(0, mean1.get().getAsDecimal().compareTo(mean2.get().getAsDecimal()));
+  }
+  
+  @Test
+  void testGeometryHasCorrectCrs() {
+    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    
+    // Verify the geometry has the correct CRS
+    assertEquals(wgs84, testArea.getCrs(), "Geometry should have WGS84 CRS");
   }
 }
