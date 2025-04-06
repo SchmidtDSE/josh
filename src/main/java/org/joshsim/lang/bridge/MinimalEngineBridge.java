@@ -93,9 +93,10 @@ public class MinimalEngineBridge implements EngineBridge {
       throw new IllegalStateException("Tried to end a step before starting the current one.");
     }
 
+    getReplicate().saveTimeStep(currentStep.getAsInt());
+
     currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, new Units("count"));
     absoluteStep++;
-    // TODO: TimeStep
     inStep = false;
   }
 
