@@ -84,9 +84,9 @@ public class GridBuilderExtents {
     // Y-coordinate (latitude/northing) should decrease from top to bottom
     if (topLeftY.compareTo(bottomRightY) <= 0) {
       String message = String.format(
-        "Top-left Y-coordinate (%.2f) must be greater than bottom-right Y-coordinate (%.2f).",
-        topLeftY.doubleValue(),
-        bottomRightY.doubleValue()
+          "Top-left Y-coordinate (%.2f) must be greater than bottom-right Y-coordinate (%.2f).",
+          topLeftY.doubleValue(),
+          bottomRightY.doubleValue()
       );
       throw new IllegalArgumentException(message);
     }
@@ -94,9 +94,9 @@ public class GridBuilderExtents {
     // X-coordinate (longitude/easting) should increase from left to right
     if (topLeftX.compareTo(bottomRightX) >= 0) {
       String message = String.format(
-        "Top-left X-coordinate (%.2f) must be less than bottom-right X-coordinate (%.2f).",
-        topLeftX.doubleValue(),
-        bottomRightX.doubleValue()
+          "Top-left X-coordinate (%.2f) must be less than bottom-right X-coordinate (%.2f).",
+          topLeftX.doubleValue(),
+          bottomRightX.doubleValue()
       );
       throw new IllegalArgumentException(message);
     }
