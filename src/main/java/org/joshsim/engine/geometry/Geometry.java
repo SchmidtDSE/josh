@@ -13,6 +13,8 @@ import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Shape;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import java.util.Objects;
+
 
 /**
  * Represents a geometric object that implements the Spatial interface.
@@ -26,8 +28,8 @@ public class Geometry implements Spatial {
    * Constructs a Geometry with a provided spatial4j shape.
    */
   public Geometry(Shape shape, CoordinateReferenceSystem crs) {
-    this.shape = shape;
-    this.crs = crs;
+    this.shape = Objects.requireNonNull(shape, "Shape cannot be null");
+    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
   }
 
   /**
