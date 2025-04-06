@@ -60,9 +60,9 @@ public class MinimalEngineBridgeTest {
   void setUp() {
     bridge = new MinimalEngineBridge(
         mockSimulation,
-        mockReplicate,
         mockConverter,
-        mockPrototypeStore
+        mockPrototypeStore,
+        mockReplicate
     );
   }
 

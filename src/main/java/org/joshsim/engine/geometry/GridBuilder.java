@@ -42,15 +42,14 @@ public class GridBuilder {
    *
    * @param inputCrsCode EPSG code for the input CRS
    * @param targetCrsCode EPSG code for the target CRS
-   * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
-   *                    "bottomRightX", "bottomRightY"
+   * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
   public GridBuilder(String inputCrsCode, String targetCrsCode,
-                    GridBuilderExtents extents, BigDecimal cellWidth)
-      throws FactoryException, TransformException {
+      GridBuilderExtents extents, BigDecimal cellWidth) throws FactoryException,
+      TransformException {
 
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
@@ -84,8 +83,7 @@ public class GridBuilder {
    * <p>Create a new GridBuilder in "virtual space" which does not correspond to an actual
    * Earth geographic location.</p>
    *
-   * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
-   *                    "bottomRightX", "bottomRightY"
+   * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @throws TransformException if coordinate transformation fails
    */
@@ -340,11 +338,11 @@ public class GridBuilder {
       throw new IllegalStateException("Cell width not specified");
     }
 
-    if (!usingVirutalCoorindates && inputCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoordinates && inputCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Input CRS not specified");
     }
 
-    if (!usingVirutalCoorindates && targetCoordinateReferenceSystem == null) {
+    if (!usingVirutalCoordinates && targetCoordinateReferenceSystem == null) {
       throw new IllegalStateException("Target CRS not specified");
     }
 

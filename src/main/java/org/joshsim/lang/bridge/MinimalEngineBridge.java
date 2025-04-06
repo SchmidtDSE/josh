@@ -78,6 +78,36 @@ public class MinimalEngineBridge implements EngineBridge {
     inStep = false;
   }
 
+  /**
+   * Constructs an EngineBridge with a given Replicate for testing.
+   *
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param replicate The replicate to use for testing.
+   */
+  public MinimalEngineBridge(Entity simulation, Converter converter,
+      EntityPrototypeStore prototypeStore, Replicate replicate) {
+    this.simulation = simulation;
+    this.converter = converter;
+    this.prototypeStore = prototypeStore;
+
+    this.replicate = Optional.of(replicate);
+
+    engineValueFactory = new EngineValueFactory();
+
+    currentStep = simulation
+      .getAttributeValue("step.start")
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+
+    endStep = simulation
+      .getAttributeValue("step.end")
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
+
+    absoluteStep = 0;
+    inStep = false;
+  }
+
   @Override
   public void startStep() {
     if (inStep) {

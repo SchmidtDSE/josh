@@ -112,10 +112,18 @@ class GridBuilderTest {
           AbstractCRS.castOrCopy(utm11n).forConvention(AxesConvention.RIGHT_HANDED));
 
       // Verify transformed coordinates match the expected UTM 11N values
-      assertTrue(Math.abs(transformed[0].getOrdinate(0) - utmExtents.getTopLeftX().doubleValue()) < 2.0);
-      assertTrue(Math.abs(transformed[0].getOrdinate(1) - utmExtents.getTopLeftY().doubleValue()) < 1.0);
-      assertTrue(Math.abs(transformed[1].getOrdinate(0) - utmExtents.getBottomRightX().doubleValue()) < 2.0);
-      assertTrue(Math.abs(transformed[1].getOrdinate(1) - utmExtents.getBottomRightY().doubleValue()) < 1.0);
+      assertTrue(
+          Math.abs(transformed[0].getOrdinate(0) - utmExtents.getTopLeftX().doubleValue()) < 2.0
+      );
+      assertTrue(
+          Math.abs(transformed[0].getOrdinate(1) - utmExtents.getTopLeftY().doubleValue()) < 1.0
+      );
+      assertTrue(
+          Math.abs(transformed[1].getOrdinate(0) - utmExtents.getBottomRightX().doubleValue()) < 2.0
+      );
+      assertTrue(
+          Math.abs(transformed[1].getOrdinate(1) - utmExtents.getBottomRightY().doubleValue()) < 1.0
+      );
 
     }
   }
@@ -148,10 +156,18 @@ class GridBuilderTest {
     @Test
     @DisplayName("GridBuilderExtents should validate corner coordinate relationships")
     void gridBuilderExtentsValidatesCornerRelationships() {
-      assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilderExtents(BigDecimal.ONE, BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO));
-      assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilderExtents(BigDecimal.TEN, BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ONE));
+      assertThrows(IllegalArgumentException.class, () -> new GridBuilderExtents(
+          BigDecimal.ONE,
+          BigDecimal.TEN,
+          BigDecimal.ONE,
+          BigDecimal.ZERO
+      ));
+      assertThrows(IllegalArgumentException.class, () -> new GridBuilderExtents(
+          BigDecimal.TEN,
+          BigDecimal.ONE,
+          BigDecimal.ZERO,
+          BigDecimal.ONE
+      ));
     }
 
     @Test
