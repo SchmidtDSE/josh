@@ -127,4 +127,11 @@ public interface EngineBridge {
    */
   EntityPrototype getPrototype(String name);
 
+  /**
+   * Determine if the simulation has surpassed its final step.
+   *
+   * @return True if the simulation has surpassed the final step and false otherwise.
+   */
+  boolean isComplete();
+
 }

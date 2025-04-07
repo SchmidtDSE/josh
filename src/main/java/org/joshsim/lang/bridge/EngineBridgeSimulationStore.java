@@ -44,6 +44,16 @@ public class EngineBridgeSimulationStore {
   }
 
   /**
+   * Determine if a prototype is known.
+   *
+   * @param name The name of the prototype for which this store will be checked.
+   * @return True if a prototype is available for this entity type or False otherwise.
+   */
+  public boolean hasPrototype(String name) {
+    return simulationProtoypes.containsKey(name);
+  }
+
+  /**
    * Get simulations for which prototypes are available.
    *
    * @return List of prototype names.

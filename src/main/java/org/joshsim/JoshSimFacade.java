@@ -6,6 +6,10 @@
 
 package org.joshsim;
 
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.QueryCacheEngineBridge;
+import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
@@ -44,6 +48,46 @@ public class JoshSimFacade {
   public static JoshProgram interpret(ParseResult parsed) {
     JoshInterpreter interpreter = new JoshInterpreter();
     return interpreter.interpret(parsed);
+  }
+
+  /**
+   * Runs a simulation from the provided program.
+   *
+   * <p>Creates and executes a simulation using the provided program and simulation name. 
+   * The callback is invoked after each simulation step is completed.</p>
+   *
+   * @param program The Josh program containing the simulation to run. This is the program in which
+   *     the simulation will be initalized.
+   * @param simulationName The name of the simulation to execute from the program. This will be
+   *     initalized from the given program.
+   * @param callback A callback that will be invoked after each simulation step. This is called
+   *     as blocking.
+   */
+  public static void runSimulation(JoshProgram program, String simulationName,
+      SimulationStepCallback callback) {
+    MutableEntity simEntity = program.getSimulations().getProtoype(simulationName).build();
+    EngineBridge bridge = new QueryCacheEngineBridge(
+        simEntity,
+        program.getConverter(),
+        program.getPrototypes()
+    );
+    SimulationStepper stepper = new SimulationStepper(bridge);
+    while (!bridge.isComplete()) {
+      long completedStep = stepper.perform();
+      callback.onStep(completedStep);
+    }
+  }
+
+  /**
+   * Callback interface for receiving simulation step completion notifications.
+   */
+  public interface SimulationStepCallback {
+    /**
+     * Called when a simulation step is completed.
+     *
+     * @param stepNumber The number of the step that was just completed
+     */
+    void onStep(long stepNumber);
   }
 
 }

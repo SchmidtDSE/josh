@@ -93,8 +93,7 @@ public class SimulationStepper {
         .map((x) -> x.get())
         .map((x) -> x.getEventKey().getAttribute())
         .distinct()
-        .map((x) -> target.getAttributeValue(x))
-        .forEach((x) -> x.orElseThrow());
+        .map((x) -> target.getAttributeValue(x));
 
     return target;
   }
