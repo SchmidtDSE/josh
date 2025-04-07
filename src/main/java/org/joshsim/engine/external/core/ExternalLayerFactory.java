@@ -33,11 +33,13 @@ public class ExternalLayerFactory {
 
   /**
    * Creates and initializes various decorators into a chain for processing.
-   * This chain includes a COG reader layer, a cache layer, and a priming geometry layer.
+   * This chain includes a COG reader layer, a cache layer, and a priming geometry layer which
+   * iteratively builds the priming layer as a running intersection of all of the geometry
+   * it has seen.
    *
    * @return the initialized external layer chain
    */
-  public ExternalLayer createCogExternalLayerChain() {
+  public ExternalLayer createExtendingPrimingCogLayer() {
     // Create the base layer with COG reader
     CogReader cogReader = new CogReader(caster, units);
     ExternalLayer cogLayer = new CogExternalLayer(cogReader);
@@ -46,7 +48,33 @@ public class ExternalLayerFactory {
     ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
 
     // Add priming geometry layer
-    ExternalLayer primingLayer = new PrimingGeometryLayer(cacheLayer);
+    ExternalLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
+
+    // Return decorated layers
+    return primingLayer;
+  }
+
+
+  /**
+   * Creates and initializes a static priming geometry layer chain.
+   * This chain includes a COG reader layer, a cache layer, and a static
+   * priming geometry layer which does not change after initialization. This
+   * can be used to create a very conservative layer (for eg, the simulation bounds)
+   * as a primer, which may use more memory than absolutely necessary but reduce
+   * unnessecary repeated hits to the COG itself. 
+   *
+   * @return the initialized external layer chain
+   */
+  public ExternalLayer createStaticPrimingGeometryLayer() {
+    // Create the base layer with COG reader
+    CogReader cogReader = new CogReader(caster, units);
+    ExternalLayer cogLayer = new CogExternalLayer(cogReader);
+
+    // Add cache layer
+    ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+
+    // Add priming geometry layer
+    ExternalLayer primingLayer = new StaticPrimingGeometryLayer(cacheLayer);
 
     // Return decorated layers
     return primingLayer;

@@ -14,7 +14,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * An abstract class that decorates an external layer and manages a priming geometry.
  * The priming geometry is typically the intersection of all geometries added to the priming extent.
  */
-public class PrimingGeometryLayer extends ExternalLayerDecorator {
+public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
   private Optional<Geometry> primingGeometry = Optional.empty();
 
   /**
@@ -22,7 +22,7 @@ public class PrimingGeometryLayer extends ExternalLayerDecorator {
    *
    * @param decoratedLayer The external layer to be decorated
    */
-  public PrimingGeometryLayer(ExternalLayer decoratedLayer) {
+  public ExtendingPrimingGeometryLayer(ExternalLayer decoratedLayer) {
     super(decoratedLayer);
   }
 
@@ -68,6 +68,9 @@ public class PrimingGeometryLayer extends ExternalLayerDecorator {
 
     // Update our priming geometry to include this request
     extendPrimingGeometry(requestGeometry);
+
+    // Update request with new priming geometry
+    request.setPrimingGeometry(primingGeometry);
 
     // Pass the request to the decorated layer
     return super.fulfill(request);

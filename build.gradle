@@ -40,7 +40,9 @@ dependencies {
   implementation("org.apache.sis.core:sis-referencing:1.4")
   implementation("org.apache.sis.storage:sis-storage:1.4")
   implementation("org.apache.sis.storage:sis-geotiff:1.4")
-  // implementation("org.apache.sis.core:sis-coverage:1.4")
+
+  // Apache Commons Collections for LRUMap
+  implementation("org.apache.commons:commons-collections4:4.5.0-M3")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))

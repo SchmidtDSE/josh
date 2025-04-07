@@ -6,8 +6,10 @@
 
 package org.joshsim.engine.external.core;
 
-import java.util.HashMap;
+
 import java.util.Map;
+import org.apache.commons.collections4.map.LRUMap;
+import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -16,12 +18,13 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * way that external resource is fulfilled to work with any external resource.
  */
 public class ExternalPathCacheLayer extends ExternalLayerDecorator {
-  private final Map<Request, RealizedDistribution> cache = new HashMap<>();
+  // Cache GridCoverage objects by path instead of Request->RealizedDistribution
+  private final Map<Geometry, GridCoverageCache> coverageCache = new LRUMap<>();
 
   /**
-   * Constructs a patch cache layer.
+   * Constructs an ExternalPathCacheLayer with a decorated external layer.
    *
-   * @param decoratedLayer The layer to decorate
+   * @param decoratedLayer the external layer to be decorated
    */
   public ExternalPathCacheLayer(ExternalLayer decoratedLayer) {
     super(decoratedLayer);
@@ -29,34 +32,55 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
 
   @Override
   public RealizedDistribution fulfill(Request request) {
+    String path = request.getPath();
+    Geometry requestGeometry = request.getGeometry().orElseThrow();
+    Geometry primingGeometry = request.getPrimingGeometry().orElse(null);
 
-    // Check if we have this resource in cache
-    if (cache.containsKey(request)) {
-      return cache.get(request);
+    // Check if we have a coverage cache for this path
+    if (coverageCache.containsKey(path)) {
+      GridCoverageCache cache = coverageCache.get(path);
+      
+      // If current geometry is contained in cached coverage, extract values
+      if (cache.containsGeometry(requestGeometry)) {
+        return extractValuesFromCache(cache, request);
+      } else {
+        // Need to expand cache - delegate to decorated layer and update cache
+        RealizedDistribution result = super.fulfill(request);
+        cache.expandWithGeometry(requestGeometry);
+        return result;
+      }
+    } else {
+      // First time seeing this path, delegate to decorated layer
+      RealizedDistribution result = super.fulfill(request);
+      
+      // Create new cache entry
+      GridCoverageCache newCache = new GridCoverageCache(path, requestGeometry);
+      coverageCache.put(path, newCache);
+      return result;
     }
-
-    // Not in cache, delegate to decorated layer
-    RealizedDistribution result = super.fulfill(request);
-
-    // Cache the result
-    cache.put(request, result);
-
-    return result;
   }
-
-  /**
-   * Clears any cached resources.
-   */
-  void clearCache() {
-    cache.clear();
+  
+  // Helper class to manage cached coverage and its extent
+  private static class GridCoverageCache {
+    private final String path;
+    private Geometry cachedExtent;
+    
+    GridCoverageCache(String path, Geometry initialGeometry) {
+      this.path = path;
+      this.cachedExtent = initialGeometry;
+    }
+    
+    boolean containsGeometry(Geometry geometry) {
+      // Check if the cached extent fully contains the requested geometry
+      return cachedExtent.intersects(geometry);
+    }
+    
+    void expandWithGeometry(Geometry geometry) {
+      cachedExtent.getIntersect(geometry);
+    }
   }
-
-  /**
-   * Returns the number of cached resources.
-   *
-   * @return Number of cached resources
-   */
-  int getCacheSize() {
-    return cache.size();
+  
+  private RealizedDistribution extractValuesFromCache(GridCoverageCache cache, Request request) {
+    return super.fulfill(request);
   }
 }
