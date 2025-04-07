@@ -17,6 +17,7 @@ public class Request {
   private String host;
   private String path;
   private Optional<Geometry> geometry;
+  private Optional<Geometry> primingGeometry;
   private Optional<String> resource;
 
   /**
@@ -28,8 +29,13 @@ public class Request {
    * @param geometry Geometry for which to fetch data
    * @param resource Resource identifier or name
    */
-  public Request(String protocol, String host, String path, Optional<Geometry> geometry,
-      Optional<String> resource) {
+  public Request(
+      String protocol,
+      String host,
+      String path,
+      Optional<Geometry> geometry,
+      Optional<String> resource
+  ) {
     this.protocol = protocol;
     this.host = host;
     this.path = path;
@@ -80,5 +86,21 @@ public class Request {
    */
   public Optional<String> getResource() {
     return resource;
+  }
+
+  /**
+   * Sets the priming geometry, which is assumed to be a superset of the current request's
+   * geometry, to be used in caching operations.
+   */
+  public void setPrimingGeometry(Geometry geometry) {
+    primingGeometry = Optional.of(geometry);
+  }
+
+  /**
+   * Returns the priming geometry, which is assumed to be a superset of the current request's
+   * geometry, to be used in caching operations.
+   */
+  public Optional<Geometry> getPrimingGeometry() {
+    return primingGeometry;
   }
 }
