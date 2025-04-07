@@ -9,6 +9,7 @@ package org.joshsim.lang.bridge;
 import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
@@ -34,7 +35,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private static final long DEFAULT_START_STEP = 0;
   private static final long DEFAULT_END_STEP = 100;
 
-  private final Entity simulation;
+  private final MutableEntity simulation;
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
   private final Converter converter;
@@ -57,7 +58,7 @@ public class MinimalEngineBridge implements EngineBridge {
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    */
-  public MinimalEngineBridge(Entity simulation, Converter converter,
+  public MinimalEngineBridge(MutableEntity simulation, Converter converter,
       EntityPrototypeStore prototypeStore) {
     this.simulation = simulation;
     this.converter = converter;
@@ -87,7 +88,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    * @param replicate The replicate to use for testing.
    */
-  public MinimalEngineBridge(Entity simulation, Converter converter,
+  public MinimalEngineBridge(MutableEntity simulation, Converter converter,
       EntityPrototypeStore prototypeStore, Replicate replicate) {
     this.simulation = simulation;
     this.converter = converter;
@@ -107,6 +108,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
+  }
+
+  @Override
+  public MutableEntity getSimulation() {
+    return simulation;
   }
 
   @Override
