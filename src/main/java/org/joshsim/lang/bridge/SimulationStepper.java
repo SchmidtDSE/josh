@@ -31,9 +31,9 @@ public class SimulationStepper {
   /**
    * Operation to take a setp within an EngineBridge.
    *
-   * @return Iterable of frozen patches from the just completed timestep.
+   * @return The timestep completed.
    */
-  public Iterable<Entity> perform() {
+  public long perform() {
     target.startStep();
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
@@ -54,11 +54,13 @@ public class SimulationStepper {
         .map((x) -> updateEntity(x, "step"))
         .map((x) -> updateEntity(x, "end"));
 
-    List<Entity> results = steppedStream.map(Entity::freeze).collect(Collectors.toList());
-    
+    long numCompleted = steppedStream.filter((x) -> x != null).count();
+    assert numCompleted > 0;
+
+    long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
 
-    return results;
+    return timestepCompleted;
   }
 
   /**
@@ -91,7 +93,8 @@ public class SimulationStepper {
         .map((x) -> x.get())
         .map((x) -> x.getEventKey().getAttribute())
         .distinct()
-        .forEach((x) -> target.getAttributeValue(x));
+        .map((x) -> target.getAttributeValue(x))
+        .forEach((x) -> x.orElseThrow());
 
     return target;
   }

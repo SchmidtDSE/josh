@@ -153,7 +153,7 @@ public class ShadowingEntity implements MutableEntity {
     EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
     Optional<EventHandlerGroup> withState = inner.getEventHandlers(eventKeyWithState);
 
-    List<EventHandlerGroup> matching = new ArrayList<>();
+    List<EventHandlerGroup> matching = new ArrayList<>(2);
     if (withoutState.isPresent()) {
       matching.add(withoutState.get());
     }
