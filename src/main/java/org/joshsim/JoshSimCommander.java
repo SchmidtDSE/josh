@@ -52,7 +52,8 @@ import picocli.CommandLine.Parameters;
     version = "1.0",
     description = "JoshSim command line interface",
     subcommands = {
-        JoshSimCommander.ValidateCommand.class
+        JoshSimCommander.ValidateCommand.class,
+        JoshSimCommander.RunCommand.class
     }
 )
 public class JoshSimCommander {

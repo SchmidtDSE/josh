@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 if [ ! -f build/libs/joshsim-fat.jar ]; then
@@ -68,5 +67,6 @@ assert_ok examples/features/units_default.josh || exit 24
 assert_ok examples/simulations/external.josh || exit 25
 assert_ok examples/simulations/interaction.josh || exit 26
 assert_ok examples/simulations/query.josh || exit 27
-assert_ok examples/simulations/state.josh || exit 28
-assert_ok examples/simulations/variables.josh || exit 29
+assert_ok examples/simulations/simple.josh || exit 28
+assert_ok examples/simulations/state.josh || exit 29
+assert_ok examples/simulations/variables.josh || exit 30
