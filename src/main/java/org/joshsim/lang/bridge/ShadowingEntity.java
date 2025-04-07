@@ -190,7 +190,11 @@ public class ShadowingEntity implements MutableEntity {
    */
   public Optional<EngineValue> getAttributeValue(String name) {
     if (!resolvedAttributes.contains(name)) {
-      resolveAttribute(name);
+      if (hasAttribute(name)) {
+        resolveAttribute(name);
+      } else {
+        return Optional.empty();
+      }
     }
 
     return inner.getAttributeValue(name);

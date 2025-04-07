@@ -119,12 +119,33 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
+  runTests:
+    needs: validateExamples
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Run Josh examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Run examples
+        run: bash examples/test.sh
   deploy:
     environment: Build
     runs-on: ubuntu-latest
     name: Deploy to SFTP
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    needs: [buildJava, testJava, validateExamples, buildWasm]
+    needs: [checkJava, buildJava, testJava, validateExamples, runTests, buildWasm]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
