@@ -74,10 +74,10 @@ public class CogReader {
    * @param geometry The geometry used for filtering points (optional)
    * @return A list of EngineValue objects
    */
-  public static List<EngineValue> extractValuesFromCoverage(
+  public static List<BigDecimal> extractValuesFromCoverage(
       GridCoverage coverage, Geometry geometry
   ) {
-    List<EngineValue> values = new ArrayList<>();
+    List<BigDecimal> values = new ArrayList<>();
 
     // Get the grid extent
     GridExtent extent = coverage.getGridGeometry().getExtent();
@@ -120,8 +120,7 @@ public class CogReader {
             if (!Double.isNaN(value) && Double.isFinite(value)) {
               // Create a scalar value and add it to the list
               BigDecimal decimalValue = BigDecimal.valueOf(value);
-              DecimalScalar scalar = new DecimalScalar(caster, decimalValue, units);
-              values.add(scalar);
+              values.add(decimalValue);
             }
           }
         }

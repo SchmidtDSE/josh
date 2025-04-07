@@ -8,6 +8,7 @@ package org.joshsim.engine.external.core;
 
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
@@ -38,8 +39,8 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   @Override
   public RealizedDistribution fulfill(Request request) {
 
-    if (request.getGeometry().isEmpty()) {
-      // If the request has no geometry, we can just use the decorated layer
+    if (request.getPrimingGeometry().isEmpty()) {
+      // If the request has no primingGeometry, we can just use the decorated layer
       return super.fulfill(request);
     }
 
@@ -55,13 +56,19 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
     Geometry requestGeometry = request.getGeometry().orElseThrow();
 
     // Extract values from the cached coverage using the (subset) request geometry
-    List<EngineValue> values = CogReader.extractValuesFromCoverage(
+    List<BigDecimal> decimalValuesWithinGeometry = CogReader.extractValuesFromCoverage(
         cachedCoverage,
         requestGeometry
     );
+    
+    RealizedDistribution realizedDistribution = RealizedDistribution.fromDecimalValues(
+        getCaster(),
+        decimalValuesWithinGeometry,
+        getUnits()
+    );
 
     // Create a new RealizedDistribution with the results
-    return new RealizedDistribution(getCaster(), values, getUnits());
+    return realizedDistribution;
   }
 
   /**

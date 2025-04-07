@@ -1,14 +1,18 @@
 package org.joshsim.engine.external.cog;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.apache.sis.coverage.grid.GridCoverage;
 import org.joshsim.engine.external.core.ExternalLayer;
 import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
@@ -43,9 +47,18 @@ public class CogExternalLayer implements ExternalLayer {
   public RealizedDistribution fulfill(Request request) {
     try {
       Geometry geometry = request.getGeometry().orElseThrow();
-      List<EngineValue> valuesWithinGeometry =
-          CogReader.extractValuesFromDisk(request.getPath(), geometry);
-      return new RealizedDistribution(caster, valuesWithinGeometry, units);
+      GridCoverage gridCoverage = CogReader.getCoverageFromDisk(request.getPath(), geometry);
+      List<BigDecimal> decimalValuesWithinGeometry =
+          CogReader.extractValuesFromCoverage(gridCoverage, geometry);
+      
+      RealizedDistribution realizedDistribution = RealizedDistribution.fromDecimalValues(
+          caster,
+          decimalValuesWithinGeometry,
+          units
+      );
+
+      return realizedDistribution;
+
     } catch (IOException e) {
       throw new RuntimeException("Failed to read COG file: " + request.getPath(), e);
     }

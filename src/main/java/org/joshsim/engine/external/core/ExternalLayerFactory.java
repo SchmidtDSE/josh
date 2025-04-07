@@ -7,7 +7,6 @@
 package org.joshsim.engine.external.core;
 
 import org.joshsim.engine.external.cog.CogExternalLayer;
-import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
