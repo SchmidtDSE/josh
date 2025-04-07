@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for the shadowing entity decorator which deals with queries and progressive creation.
-  */
+ */
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 

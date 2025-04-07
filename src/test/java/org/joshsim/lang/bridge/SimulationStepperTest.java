@@ -25,11 +25,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SimulationStepperTest {
 
-  @Mock private EngineBridge mockBridge;
-  @Mock private MutableEntity mockSimulation;
-  @Mock private ShadowingEntity mockPatch;
-  @Mock private EventHandlerGroup mockHandlerGroup;
-  @Mock private EngineValue mockValue;
+  @Mock(lenient = true) private EngineBridge mockBridge;
+  @Mock(lenient = true) private MutableEntity mockSimulation;
+  @Mock(lenient = true) private ShadowingEntity mockPatch;
+  @Mock(lenient = true) private EventHandlerGroup mockHandlerGroup;
+  @Mock(lenient = true) private EngineValue mockValue;
   
   private SimulationStepper stepper;
 
@@ -64,6 +64,7 @@ class SimulationStepperTest {
     
     when(mockHandlerGroup.getEventKey()).thenReturn(eventKey);
     when(mockSimulation.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
+    when(mockSimulation.getAttributeValue("state")).thenReturn(Optional.empty());
     when(mockPatch.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
 
     // Perform the step
