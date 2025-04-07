@@ -138,6 +138,11 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public boolean isComplete() {
+    return currentStep.greaterThan(endStep).getAsBoolean();
+  }
+
+  @Override
   public Optional<Entity> getPatch(GeoPoint point) {
     Query query = new Query(currentStep.getAsInt(), point);
     Iterable<Entity> patches = getReplicate().query(query);

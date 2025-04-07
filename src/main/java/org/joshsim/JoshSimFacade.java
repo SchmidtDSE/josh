@@ -6,6 +6,10 @@
 
 package org.joshsim;
 
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.QueryCacheEngineBridge;
+import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
@@ -44,6 +48,25 @@ public class JoshSimFacade {
   public static JoshProgram interpret(ParseResult parsed) {
     JoshInterpreter interpreter = new JoshInterpreter();
     return interpreter.interpret(parsed);
+  }
+
+  public static void runSimulation(JoshProgram program, String simulationName,
+      SimulationStepCallback callback) {
+    MutableEntity simEntity = program.getSimulations().getProtoype(simulationName).build();
+    EngineBridge bridge = new QueryCacheEngineBridge(
+        simEntity,
+        program.getConverter(),
+        program.getPrototypes()
+    );
+    SimulationStepper stepper = new SimulationStepper(bridge);
+    while (!bridge.isComplete()) {
+      long completedStep = stepper.perform();
+      callback.onStep(completedStep);
+    }
+  }
+
+  public interface SimulationStepCallback {
+    void onStep(long stepNumber);
   }
 
 }
