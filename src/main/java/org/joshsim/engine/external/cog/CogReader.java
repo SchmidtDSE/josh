@@ -22,6 +22,7 @@ import org.apache.sis.storage.Resource;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.engine.value.engine.EngineValueWideningCaster;
 import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
@@ -35,19 +36,7 @@ import org.opengis.referencing.operation.TransformException;
  * based on specified geometries.
  */
 public class CogReader {
-  private final EngineValueCaster caster;
-  private final Units units;
-
-  /**
-   * Constructs a CogReader with specified caster and units.
-   *
-   * @param caster The engine value caster to use for creating scalar values
-   * @param units The units for the returned distribution
-   */
-  public CogReader(EngineValueCaster caster, Units units) {
-    this.caster = caster;
-    this.units = units;
-  }
+  private static final EngineValueCaster caster = new EngineValueWideningCaster();
 
   /**
    * Read values from a COG file for the specified geometry.
@@ -57,7 +46,10 @@ public class CogReader {
    * @return Distribution of values from the COG within the geometry
    * @throws IOException if there is an error reading the file
    */
-  public RealizedDistribution readValues(String path, Geometry geometry) throws IOException {
+  public static List<EngineValue> extractValuesFromDisk(
+      String path,
+      Geometry geometry
+  ) throws IOException {
     try (DataStore store = DataStores.open(new File(path))) {
       // Get the first image in the GeoTIFF file
       // TODO: Hacky casting and assumption of first image
@@ -73,8 +65,8 @@ public class CogReader {
       // Convert the grid coverage to a list of engine values
       List<EngineValue> values = extractValuesFromCoverage(coverage, geometry);
 
-      // Create and return a realized distribution
-      return new RealizedDistribution(caster, values, units);
+      // Create and return extracted EngineValues
+      return values;
     } catch (DataStoreException e) {
       throw new IOException("Failed to read COG file: " + path, e);
     }
@@ -87,7 +79,9 @@ public class CogReader {
    * @param geometry The geometry used for filtering points (optional)
    * @return A list of EngineValue objects
    */
-  private List<EngineValue> extractValuesFromCoverage(GridCoverage coverage, Geometry geometry) {
+  private static List<EngineValue> extractValuesFromCoverage(
+      GridCoverage coverage, Geometry geometry
+  ) {
     List<EngineValue> values = new ArrayList<>();
 
     // Get the grid extent
@@ -140,7 +134,6 @@ public class CogReader {
     } catch (Exception e) {
       throw new RuntimeException("Error extracting values from coverage", e);
     }
-
     return values;
   }
 
@@ -151,7 +144,10 @@ public class CogReader {
    * @param gridPos The grid position
    * @return The world position
    */
-  private DirectPosition2D convertGridToWorld(GridCoverage coverage, DirectPosition2D gridPos) {
+  private static DirectPosition2D convertGridToWorld(
+      GridCoverage coverage,
+      DirectPosition2D gridPos
+  ) {
     try {
       // Get the transform from grid to CRS coordinates, specifying CELL_CENTER
       MathTransform gridToCrs = coverage.getGridGeometry()
