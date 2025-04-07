@@ -149,4 +149,13 @@ public class Geometry implements Spatial {
     return envelope;
   }
 
+  /**
+   * Returns the convex hull of this geometry and another geometry.
+   *
+   * @param other The other geometry to compute the convex hull with
+   * @return A new Geometry representing the convex hull
+   */
+  public Geometry getConvexHull(Geometry other) {
+    throw new UnsupportedOperationException("Convex hull not yet implemented");
+  }
 }

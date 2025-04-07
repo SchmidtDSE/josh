@@ -41,8 +41,7 @@ public class ExternalLayerFactory {
    */
   public ExternalLayer createExtendingPrimingCogLayer() {
     // Create the base layer with COG reader
-    CogReader cogReader = new CogReader(caster, units);
-    ExternalLayer cogLayer = new CogExternalLayer(cogReader);
+    ExternalLayer cogLayer = new CogExternalLayer(units, caster);
 
     // Add cache layer
     ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
@@ -66,17 +65,6 @@ public class ExternalLayerFactory {
    * @return the initialized external layer chain
    */
   public ExternalLayer createStaticPrimingGeometryLayer() {
-    // Create the base layer with COG reader
-    CogReader cogReader = new CogReader(caster, units);
-    ExternalLayer cogLayer = new CogExternalLayer(cogReader);
-
-    // Add cache layer
-    ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
-
-    // Add priming geometry layer
-    ExternalLayer primingLayer = new StaticPrimingGeometryLayer(cacheLayer);
-
-    // Return decorated layers
-    return primingLayer;
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 }

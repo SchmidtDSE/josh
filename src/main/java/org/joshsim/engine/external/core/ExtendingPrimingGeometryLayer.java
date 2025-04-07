@@ -43,9 +43,9 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
    * @param geometry The geometry to add to the priming extent
    */
   void extendPrimingGeometry(Geometry geometry) {
-    // TODO: getIntersect() is not implemented yet, and may be kind of a pain with Spatial4j
+    // TODO: getConvexHull() is not implemented yet, and may be kind of a pain with Spatial4j
     if (primingGeometry.isPresent()) {
-      primingGeometry = Optional.of(primingGeometry.get().getIntersect(geometry));
+      primingGeometry = Optional.of(primingGeometry.get().getConvexHull(geometry));
     } else {
       setPrimingGeometry(geometry);
     }
@@ -69,7 +69,7 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
     // Update our priming geometry to include this request
     extendPrimingGeometry(requestGeometry);
 
-    // Update request with new priming geometry
+    // Set the priming geometry in the request for later cache checking
     request.setPrimingGeometry(primingGeometry);
 
     // Pass the request to the decorated layer

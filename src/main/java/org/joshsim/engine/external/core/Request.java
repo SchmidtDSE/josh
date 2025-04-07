@@ -92,8 +92,8 @@ public class Request {
    * Sets the priming geometry, which is assumed to be a superset of the current request's
    * geometry, to be used in caching operations.
    */
-  public void setPrimingGeometry(Geometry geometry) {
-    primingGeometry = Optional.of(geometry);
+  public void setPrimingGeometry(Optional<Geometry> geometry) {
+    primingGeometry = geometry;
   }
 
   /**

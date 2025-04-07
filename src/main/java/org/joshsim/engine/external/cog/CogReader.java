@@ -36,7 +36,6 @@ import org.opengis.referencing.operation.TransformException;
  * based on specified geometries.
  */
 public class CogReader {
-  private static final EngineValueCaster caster = new EngineValueWideningCaster();
 
   /**
    * Read values from a COG file for the specified geometry.
@@ -46,7 +45,7 @@ public class CogReader {
    * @return Distribution of values from the COG within the geometry
    * @throws IOException if there is an error reading the file
    */
-  public static List<EngineValue> extractValuesFromDisk(
+  public static GridCoverage getCoverageFromDisk(
       String path,
       Geometry geometry
   ) throws IOException {
@@ -61,12 +60,8 @@ public class CogReader {
 
       // Read data from the file for the specified area
       GridCoverage coverage = firstImage.read(new GridGeometry(areaOfInterest), null);
+      return coverage;
 
-      // Convert the grid coverage to a list of engine values
-      List<EngineValue> values = extractValuesFromCoverage(coverage, geometry);
-
-      // Create and return extracted EngineValues
-      return values;
     } catch (DataStoreException e) {
       throw new IOException("Failed to read COG file: " + path, e);
     }
@@ -79,7 +74,7 @@ public class CogReader {
    * @param geometry The geometry used for filtering points (optional)
    * @return A list of EngineValue objects
    */
-  private static List<EngineValue> extractValuesFromCoverage(
+  public static List<EngineValue> extractValuesFromCoverage(
       GridCoverage coverage, Geometry geometry
   ) {
     List<EngineValue> values = new ArrayList<>();

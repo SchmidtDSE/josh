@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.external.core;
 
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -39,4 +41,13 @@ public abstract class ExternalLayerDecorator implements ExternalLayer {
     return decoratedLayer;
   }
 
+  @Override
+  public Units getUnits() {
+    return decoratedLayer.getUnits();
+  }
+
+  @Override
+  public EngineValueCaster getCaster() {
+    return decoratedLayer.getCaster();
+  }
 }

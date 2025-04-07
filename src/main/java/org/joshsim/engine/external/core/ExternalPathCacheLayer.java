@@ -7,9 +7,14 @@
 package org.joshsim.engine.external.core;
 
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
+import org.joshsim.engine.external.cog.CogReader;
+import org.apache.sis.coverage.grid.GridCoverage;
 import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -19,7 +24,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   // Cache GridCoverage objects by path instead of Request->RealizedDistribution
-  private final Map<Geometry, GridCoverageCache> coverageCache = new LRUMap<>();
+  private final Map<Geometry, GridCoverage> coverageCache = new LRUMap<>();
 
   /**
    * Constructs an ExternalPathCacheLayer with a decorated external layer.
@@ -32,55 +37,46 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
 
   @Override
   public RealizedDistribution fulfill(Request request) {
-    String path = request.getPath();
-    Geometry requestGeometry = request.getGeometry().orElseThrow();
-    Geometry primingGeometry = request.getPrimingGeometry().orElse(null);
 
-    // Check if we have a coverage cache for this path
-    if (coverageCache.containsKey(path)) {
-      GridCoverageCache cache = coverageCache.get(path);
-      
-      // If current geometry is contained in cached coverage, extract values
-      if (cache.containsGeometry(requestGeometry)) {
-        return extractValuesFromCache(cache, request);
-      } else {
-        // Need to expand cache - delegate to decorated layer and update cache
-        RealizedDistribution result = super.fulfill(request);
-        cache.expandWithGeometry(requestGeometry);
-        return result;
-      }
-    } else {
-      // First time seeing this path, delegate to decorated layer
-      RealizedDistribution result = super.fulfill(request);
-      
-      // Create new cache entry
-      GridCoverageCache newCache = new GridCoverageCache(path, requestGeometry);
-      coverageCache.put(path, newCache);
-      return result;
+    if (request.getGeometry().isEmpty()) {
+      // If the request has no geometry, we can just use the decorated layer
+      return super.fulfill(request);
     }
+
+    // If the request has a priming geometry, we need to check if it's already cached
+    Geometry primingGeometry = request.getPrimingGeometry().orElseThrow();
+    if (!coverageCache.containsKey(primingGeometry)) {
+      loadCoverageIntoCache(request.getPath(), primingGeometry);
+    }
+    // Get the cached coverage, either from the cache or newly loaded
+    GridCoverage cachedCoverage = coverageCache.get(primingGeometry);
+
+    // Get the request geometry, which is the subset area for which we want to extract values
+    Geometry requestGeometry = request.getGeometry().orElseThrow();
+
+    // Extract values from the cached coverage using the (subset) request geometry
+    List<EngineValue> values = CogReader.extractValuesFromCoverage(
+        cachedCoverage,
+        requestGeometry
+    );
+
+    // Create a new RealizedDistribution with the results
+    return new RealizedDistribution(getCaster(), values, getUnits());
   }
-  
-  // Helper class to manage cached coverage and its extent
-  private static class GridCoverageCache {
-    private final String path;
-    private Geometry cachedExtent;
-    
-    GridCoverageCache(String path, Geometry initialGeometry) {
-      this.path = path;
-      this.cachedExtent = initialGeometry;
+
+  /**
+   * Loads a GridCoverage from disk and caches it.
+   *
+   * @param path the path to the coverage file
+   * @param primingGeometry the geometry used to prime the cache
+   */
+  private void loadCoverageIntoCache(String path, Geometry primingGeometry) {
+    GridCoverage newCoverage;
+    try {
+      newCoverage = CogReader.getCoverageFromDisk(path, primingGeometry);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load coverage from disk", e);
     }
-    
-    boolean containsGeometry(Geometry geometry) {
-      // Check if the cached extent fully contains the requested geometry
-      return cachedExtent.intersects(geometry);
-    }
-    
-    void expandWithGeometry(Geometry geometry) {
-      cachedExtent.getIntersect(geometry);
-    }
-  }
-  
-  private RealizedDistribution extractValuesFromCache(GridCoverageCache cache, Request request) {
-    return super.fulfill(request);
+    coverageCache.put(primingGeometry, newCoverage);
   }
 }

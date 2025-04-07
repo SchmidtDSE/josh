@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.external.core;
 
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -21,4 +23,18 @@ public interface ExternalLayer {
    * @return Distribution of values within the requested geometry
    */
   RealizedDistribution fulfill(Request request);
+
+  /**
+   * Returns the units used by this external layer.
+   *
+   * @return the units for value processing
+   */
+  Units getUnits();
+
+  /**
+   * Returns the caster used by this external layer.
+   *
+   * @return the caster for value processing
+   */
+  EngineValueCaster getCaster();
 }
