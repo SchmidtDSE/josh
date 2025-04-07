@@ -97,10 +97,10 @@ public class JoshSimCommander {
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
-            case LOAD -> 1;
-            case READ -> 2;
-            case PARSE -> 3;
-            default -> UNKNOWN_ERROR_CODE;
+          case LOAD -> 1;
+          case READ -> 2;
+          case PARSE -> 3;
+          default -> UNKNOWN_ERROR_CODE;
         };
       }
       
@@ -159,10 +159,10 @@ public class JoshSimCommander {
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
-            case LOAD -> 1;
-            case READ -> 2;
-            case PARSE -> 3;
-            default -> UNKNOWN_ERROR_CODE;
+          case LOAD -> 1;
+          case READ -> 2;
+          case PARSE -> 3;
+          default -> UNKNOWN_ERROR_CODE;
         };
       }
 

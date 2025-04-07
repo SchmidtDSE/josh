@@ -56,9 +56,12 @@ public class JoshSimFacade {
    * <p>Creates and executes a simulation using the provided program and simulation name. 
    * The callback is invoked after each simulation step is completed.</p>
    *
-   * @param program The Josh program containing the simulation to run
-   * @param simulationName The name of the simulation to execute from the program
-   * @param callback A callback that will be invoked after each simulation step
+   * @param program The Josh program containing the simulation to run. This is the program in which
+   *     the simulation will be initalized.
+   * @param simulationName The name of the simulation to execute from the program. This will be
+   *     initalized from the given program.
+   * @param callback A callback that will be invoked after each simulation step. This is called
+   *     as blocking.
    */
   public static void runSimulation(JoshProgram program, String simulationName,
       SimulationStepCallback callback) {
