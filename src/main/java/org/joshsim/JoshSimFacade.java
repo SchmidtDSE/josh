@@ -50,6 +50,16 @@ public class JoshSimFacade {
     return interpreter.interpret(parsed);
   }
 
+  /**
+   * Runs a simulation from the provided program.
+   *
+   * <p>Creates and executes a simulation using the provided program and simulation name. 
+   * The callback is invoked after each simulation step is completed.</p>
+   *
+   * @param program The Josh program containing the simulation to run
+   * @param simulationName The name of the simulation to execute from the program
+   * @param callback A callback that will be invoked after each simulation step
+   */
   public static void runSimulation(JoshProgram program, String simulationName,
       SimulationStepCallback callback) {
     MutableEntity simEntity = program.getSimulations().getProtoype(simulationName).build();
@@ -65,7 +75,15 @@ public class JoshSimFacade {
     }
   }
 
+  /**
+   * Callback interface for receiving simulation step completion notifications.
+   */
   public interface SimulationStepCallback {
+    /**
+     * Called when a simulation step is completed.
+     *
+     * @param stepNumber The number of the step that was just completed
+     */
     void onStep(long stepNumber);
   }
 
