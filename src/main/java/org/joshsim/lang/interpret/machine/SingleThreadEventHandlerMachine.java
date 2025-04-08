@@ -124,6 +124,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
+    System.out.println(left.add(right));
     memory.push(left.add(right));
 
     return this;
