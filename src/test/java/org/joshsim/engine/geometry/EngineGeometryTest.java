@@ -47,7 +47,7 @@ public class EngineGeometryTest {
   @Test
   public void testConstructor() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    EngineGeometry EngineGeometry = new EngineGeometry(point, wgs84);
+    EngineGeometry geometry = new EngineGeometry(point, wgs84);
 
     assertNotNull(geometry, "EngineGeometry should be initialized");
     assertEquals(point, geometry.getInnerGeometry(), "Inner EngineGeometry should be set correctly");
@@ -59,7 +59,7 @@ public class EngineGeometryTest {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
     Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers = 
         Optional.of(new HashMap<>());
-    EngineGeometry EngineGeometry = new EngineGeometry(point, wgs84, transformers);
+    EngineGeometry geometry = new EngineGeometry(point, wgs84, transformers);
 
     assertNotNull(geometry, "EngineGeometry should be initialized");
     assertEquals(point, geometry.getInnerGeometry(), "Inner EngineGeometry should be set correctly");
@@ -237,7 +237,7 @@ public class EngineGeometryTest {
     @Test
     public void testAsTargetCrs() throws FactoryException {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-      EngineGeometry EngineGeometry = new EngineGeometry(point, wgs84);
+      EngineGeometry geometry = new EngineGeometry(point, wgs84);
       
       EngineGeometry transformed = geometry.asTargetCrs(utm11n);
       
@@ -250,7 +250,7 @@ public class EngineGeometryTest {
     @Test
     public void testAsTargetCrsWithSameCrs() {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-      EngineGeometry EngineGeometry = new EngineGeometry(point, wgs84);
+      EngineGeometry geometry = new EngineGeometry(point, wgs84);
       
       EngineGeometry transformed = geometry.asTargetCrs(wgs84);
       
@@ -266,7 +266,7 @@ public class EngineGeometryTest {
       
       // Create point in UTM11N that corresponds to same location
       MathTransform transform = CRS.findMathTransform(wgs84, utm11n, true);
-      EngineGeometry utmPoint = JTS.transform(wgs84Point, transform);
+      Geometry utmPoint = JTS.transform(wgs84Point, transform);
       EngineGeometry utmGeometry = new EngineGeometry(utmPoint, utm11n);
       
       // They should intersect despite different CRS

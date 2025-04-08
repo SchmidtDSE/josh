@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.junit.jupiter.api.Test;
 
 
