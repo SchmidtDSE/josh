@@ -8,14 +8,10 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.func.CombinedAttributeNameIterable;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.bridge.ShadowingEntity;
 
 
 /**

@@ -9,7 +9,6 @@ package org.joshsim.engine.value.converter;
 
 import java.util.Map;
 import org.joshsim.engine.value.engine.EngineValueTuple;
-import org.joshsim.engine.value.engine.EngineValueTuple.UnitsTuple;
 
 
 /**

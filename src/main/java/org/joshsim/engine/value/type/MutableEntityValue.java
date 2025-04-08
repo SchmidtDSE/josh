@@ -7,8 +7,6 @@
 
 package org.joshsim.engine.value.type;
 
-import java.math.BigDecimal;
-import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 

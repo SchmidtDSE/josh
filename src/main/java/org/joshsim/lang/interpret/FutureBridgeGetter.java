@@ -7,15 +7,9 @@
 
 package org.joshsim.lang.interpret;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.entity.type.Patch;
-import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
