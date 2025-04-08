@@ -1,15 +1,15 @@
 start simulation Example
 
   grid.size = 1 count
-  grid.start = 1 count latitude, 1 count longitude
-  grid.end = 2 count latitude, 2 count longitude
+  grid.low = 1 count latitude, 1 count longitude
+  grid.high = 2 count latitude, 2 count longitude
 
-  steps.start = 0 count
-  steps.end = 100 count
+  steps.low = 0 count
+  steps.high = 100 count
  
   randSeed = 1234
 
-  assert.seedDensity
+  assert.seedDensity.step
     :if(meta.stepCount == 0) = max(all.seedDensity) == 0 count
     :if(meta.stepCount == 100) = max(all.seedDensity) > 0 count
 
@@ -17,8 +17,6 @@ end simulation
 
 
 start patch Default
-
-  location = all
 
   carryingCapacity.init = 100 count
   remainingRoom.step = current.carryingCapacity - count(current.QueryTrees)

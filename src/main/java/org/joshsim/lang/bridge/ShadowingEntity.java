@@ -6,10 +6,12 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -17,12 +19,10 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -36,32 +36,38 @@ import org.joshsim.engine.value.type.EngineValue;
  * used to query for previously resolved values. Here can be used to access the Patch or patch-like
  * entity which houses this entity.</p>
  */
-public class ShadowingEntity implements Entity {
+public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
 
   private final MutableEntity inner;
-  private final ShadowingEntity here;
-  private final Simulation meta;
+  private final Entity here;
+  private final Entity meta;
   private final Set<String> resolvedAttributes;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
-  private Optional<String> substep;
+  private boolean checkAssertions;
 
   /**
-   * Create a new ShadowingEntity for a Patch.
+   * Create a new ShadowingEntity for a Patch or Simulation.
    *
    * @param inner entity to decorate.
-   * @param meta reference to simulation or simulation-like entity.
+   * @param meta reference to simulation or simulation-like entity. May be self.
    */
-  public ShadowingEntity(Patch inner, Simulation meta) {
+  public ShadowingEntity(MutableEntity inner, Entity meta) {
     this.inner = inner;
     this.here = this;
     this.meta = meta;
 
+    Optional<EngineValue> checkAssertionsMaybe = meta.getAttributeValue("checkAssertions");
+    if (checkAssertionsMaybe.isPresent()) {
+      checkAssertions = checkAssertionsMaybe.get().getAsBoolean();
+    } else {
+      checkAssertions = true;
+    }
+
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
-    substep = Optional.empty();
     scope = new EntityScope(inner);
   }
 
@@ -72,50 +78,14 @@ public class ShadowingEntity implements Entity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(MutableEntity inner, ShadowingEntity here, Simulation meta) {
+  public ShadowingEntity(MutableEntity inner, Entity here, Entity meta) {
     this.inner = inner;
     this.here = here;
     this.meta = meta;
 
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
-    substep = Optional.empty();
     scope = new EntityScope(inner);
-  }
-
-  /**
-   * Indicate that this entity is starting a substep or step phase like step.
-   *
-   * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
-   * acquiring a global lock on this entity for thread safety.</p>
-   *
-   * @param name name of the substep or phase like start which is beginning.
-   */
-  public void startSubstep(String name) {
-    if (substep.isPresent()) {
-      String message = String.format(
-          "Cannot start %s before %s is completed.",
-          substep.get(),
-          name
-      );
-      throw new IllegalStateException(message);
-    }
-
-    inner.lock();
-    substep = Optional.of(name);
-  }
-
-  /**
-   * Indicate that this entity is finishing with a substep or step phase like start.
-   *
-   * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
-   * releasing a global lock on this entity for thread safety.</p>
-   */
-  public void endSubstep() {
-    resolvedAttributes.clear();
-    resolvingAttributes.clear();
-    substep = Optional.empty();
-    inner.unlock();
   }
 
   /**
@@ -133,7 +103,8 @@ public class ShadowingEntity implements Entity {
    * @param attribute name of the attribute for which event handlers are requested.
    * @throws IllegalStateException if not currently in a substep.
    */
-  public Optional<EventHandlerGroup> getHandlers(String attribute) {
+  public Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute) {
+    Optional<String> substep = getSubstep();
     if (substep.isEmpty()) {
       String message = String.format(
           "Cannot get handler for %s while not within a substep.",
@@ -143,25 +114,28 @@ public class ShadowingEntity implements Entity {
     }
 
     String state = getState();
-    EventKey eventKey = new EventKey(state, attribute, substep.get());
-    return inner.getEventHandlers(eventKey);
-  }
 
-  
+    EventKey eventKeyWithoutState = new EventKey(attribute, substep.get());
+    Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
 
-  /**
-   * Resolve all attributes by executing their associated event handlers.
-   *
-   * <p>This method fetches the attribute names, retrieves the corresponding event handlers,
-   * and executes them if present. Execution is done in the context of the current substep, and
-   * each handler resolves an attribute to its current value.</p>
-   */
-  public void resolveAllAttributes() {
-    StreamSupport.stream(getAttributeNames().spliterator(), false)
-        .map(this::getHandlers)
-        .filter((x) -> x.isPresent())
-        .map((x) -> x.get())
-            .forEach(this::executeHandlers);
+    Optional<EventHandlerGroup> withState;
+    if (!state.isBlank()) {
+      EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
+      withState = inner.getEventHandlers(eventKeyWithState);
+    } else {
+      withState = Optional.empty();
+    }
+
+    List<EventHandlerGroup> matching = new ArrayList<>(2);
+    if (withoutState.isPresent()) {
+      matching.add(withoutState.get());
+    }
+
+    if (withState.isPresent()) {
+      matching.add(withState.get());
+    }
+
+    return matching;
   }
 
   /**
@@ -172,9 +146,14 @@ public class ShadowingEntity implements Entity {
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    * @throws IllegalStateException if the attribute exists but has not been initialized.
    */
+  @Override
   public Optional<EngineValue> getAttributeValue(String name) {
     if (!resolvedAttributes.contains(name)) {
-      resolveAttribute(name);
+      if (hasAttribute(name)) {
+        resolveAttribute(name);
+      } else {
+        return Optional.empty();
+      }
     }
 
     return inner.getAttributeValue(name);
@@ -187,7 +166,8 @@ public class ShadowingEntity implements Entity {
    * @param value new value to assign to the attribute.
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    */
-  public void setCurrentAttribute(String name, EngineValue value) {
+  @Override
+  public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
     resolvedAttributes.add(name);
     inner.setAttributeValue(name, value);
@@ -201,15 +181,13 @@ public class ShadowingEntity implements Entity {
    * @throws IllegalStateException if the attribute exists but has not been initalized.
    * @throws IllegalArgumentException if the attribute does not exist on this entity.
    */
-  public EngineValue getPriorAttribute(String name) {
+  public Optional<EngineValue> getPriorAttribute(String name) {
     Optional<EngineValue> valueMaybe = inner.getAttributeValue(name);
     if (valueMaybe.isEmpty()) {
       assertAttributePresent(name);
-      String message = String.format("A value for %s is not available.", name);
-      throw new IllegalStateException(message);
     }
 
-    return valueMaybe.get();
+    return valueMaybe;
   }
 
   /**
@@ -227,18 +205,8 @@ public class ShadowingEntity implements Entity {
    *
    * @return the ShadowingEntity representing the containing patch.
    */
-  public ShadowingEntity getHere() {
+  public Entity getHere() {
     return here;
-  }
-
-  /**
-   * Get the key of the patch that contains this entity.
-   *
-   * @return the PatchKey of the patch that contains this entity.
-   */
-  public GeoKey getGeoKey() {
-    Patch patch = (Patch) getHere().getInner();
-    return patch.getKey().orElseThrow();
   }
 
   /**
@@ -246,7 +214,7 @@ public class ShadowingEntity implements Entity {
    *
    * @return the Simulation object that provides context for this entity.
    */
-  public Simulation getMeta() {
+  public Entity getMeta() {
     return meta;
   }
 
@@ -293,7 +261,7 @@ public class ShadowingEntity implements Entity {
     if (stateValueMaybe.isPresent()) {
       return stateValueMaybe.get().getAsString();
     } else {
-      return DEFAULT_STATE_STR;  // TODO: Need to do just in time resolution later merge request.
+      return DEFAULT_STATE_STR;
     }
   }
 
@@ -352,6 +320,8 @@ public class ShadowingEntity implements Entity {
    * @param name unique identifier of the attribute to resolve.
    */
   private void resolveAttributeUnsafe(String name) {
+    Optional<String> substep = getSubstep();
+
     // If outside substep, use prior
     if (substep.isEmpty()) {
       resolveAttributeFromPrior(name);
@@ -359,22 +329,37 @@ public class ShadowingEntity implements Entity {
     }
 
     // If no handlers, use prior
-    Optional<EventHandlerGroup> handlersMaybe = getHandlers(name);
-    if (handlersMaybe.isEmpty()) {
+    Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
+    if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPrior(name);
       return;
     }
 
     // Attempt to match a handler for updated value
-    boolean executed = executeHandlers(handlersMaybe.get());
+    boolean executed = false;
+    while (handlersMaybe.hasNext()) {
+      EventHandlerGroup handlers = handlersMaybe.next();
+      boolean localExecuted = executeHandlers(handlers);
+      executed = executed || localExecuted;
+    }
 
     // If failed to match, use prior
-    if (!executed) {
+    if (executed) {
+      if (name.startsWith("assert.")) {
+        Optional<EngineValue> result = getAttributeValue(name);
+        if (result.isPresent()) {
+          boolean value = result.get().getAsBoolean();
+          if (!value) {
+            throw new RuntimeException("Assertion failed for " + name);
+          }
+        }
+      }
+    } else {
       resolveAttributeFromPrior(name);
     }
   }
 
-  
+
   /**
    * Execute an event handler group.
    *
@@ -397,7 +382,7 @@ public class ShadowingEntity implements Entity {
 
       if (matches) {
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
-        setCurrentAttribute(handler.getAttributeName(), value);
+        setAttributeValue(handler.getAttributeName(), value);
         return true;
       }
     }
@@ -411,7 +396,46 @@ public class ShadowingEntity implements Entity {
    * @param name the unique identifier of the attribute to resolve from prior.
    */
   private void resolveAttributeFromPrior(String name) {
-    setCurrentAttribute(name, getPriorAttribute(name));
+    Optional<EngineValue> prior = getPriorAttribute(name);
+    if (prior.isPresent()) {
+      setAttributeValue(name, prior.get());
+    }
   }
 
+  @Override
+  public void lock() {
+    inner.lock();
+  }
+
+  @Override
+  public void unlock() {
+    inner.unlock();
+  }
+
+  @Override
+  public Iterable<EventHandlerGroup> getEventHandlers() {
+    return inner.getEventHandlers();
+  }
+
+  @Override
+  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
+    return inner.getEventHandlers(eventKey);
+  }
+
+  @Override
+  public void startSubstep(String name) {
+    inner.startSubstep(name);
+    resolvedAttributes.clear();
+  }
+
+  @Override
+  public void endSubstep() {
+    resolvingAttributes.clear();
+    inner.endSubstep();
+  }
+
+  @Override
+  public Optional<String> getSubstep() {
+    return inner.getSubstep();
+  }
 }

@@ -7,16 +7,9 @@
 package org.joshsim.engine.func;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
-import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.converter.EmptyConverter;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -47,7 +40,7 @@ public class DistributionScope implements Scope {
 
     ValueResolver innerResolver = new ValueResolver(name);
     EngineValueFactory valueFactory = new EngineValueFactory();
-    
+
     List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
         .map((x) -> new EntityScope(x.getAsEntity()))
         .map(innerResolver::get)

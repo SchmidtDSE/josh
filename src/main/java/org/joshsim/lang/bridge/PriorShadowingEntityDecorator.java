@@ -42,7 +42,7 @@ public class PriorShadowingEntityDecorator implements Entity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    return Optional.of(inner.getPriorAttribute(name));
+    return inner.getPriorAttribute(name);
   }
 
   @Override

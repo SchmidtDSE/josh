@@ -1,10 +1,10 @@
 start simulation Example
 
   grid.size = 1 count
-  grid.start = 1 count latitude, 1 count longitude
-  grid.end = 2 count latitude, 2 count longitude
-  steps.start = 0 count
-  steps.end = 100 count
+  grid.low = 1 count latitude, 1 count longitude
+  grid.high = 2 count latitude, 2 count longitude
+  steps.low = 0 count
+  steps.high = 100 count
   randSeed = 1234
 
 end simulation
@@ -12,12 +12,11 @@ end simulation
 
 start patch Default
 
-  location = all
   Shrubs.init = create Shrubs
   TreeAs.init = create TreeA
   TreeBs.init = create TreeB
 
-  assert.heightTreeB
+  assert.heightTreeB.step
     :if(meta.stepCount == 0 count) = max(here.TreeB.height) == 0 m
     :elif(meta.stepCount == 100 count) = max(here.TreeB.height) > 0 m
 

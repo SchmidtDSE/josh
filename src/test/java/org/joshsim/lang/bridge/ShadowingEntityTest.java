@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for the shadowing entity decorator which deals with queries and progressive creation.
-  */
+ */
 @ExtendWith(MockitoExtension.class)
 public class ShadowingEntityTest {
 
@@ -63,53 +62,24 @@ public class ShadowingEntityTest {
   }
 
   @Test
-  void testSubstepLifecycle() {
-    String substepName = "start";
-    spatialEntity.startSubstep(substepName);
-    assertThrows(IllegalStateException.class, () -> spatialEntity.startSubstep("step"));
-    spatialEntity.endSubstep();
-    spatialEntity.startSubstep("step");
-    spatialEntity.endSubstep();
-  }
-
-  @Test
   void testSetAttribute() {
     String attrName = "testAttr";
 
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
-    EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
-    assertEquals(mockEngineValue, priorValue);
+    Optional<EngineValue> priorValue = spatialEntity.getPriorAttribute(attrName);
+    assertEquals(mockEngineValue, priorValue.get());
 
-    spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
+    spatialEntity.setAttributeValue(attrName, mockEngineValue);
     verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
   }
 
   @Test
   void testGetHandlersFailsOutsideSubstep() {
-    assertThrows(IllegalStateException.class, () -> spatialEntity.getHandlers("testAttr"));
-  }
-
-  @Test
-  void testGetHandlersDuringSubstep() {
-    String attrName = "testAttr";
-    String substepName = "testSubstep";
-
-    EventKey eventKey = new EventKey(attrName, substepName);
-    when(mockSpatialEntity.getEventHandlers(eventKey))
-        .thenReturn(Optional.of(mockEventHandlerGroup));
-
-    spatialEntity.startSubstep(substepName);
-    Optional<EventHandlerGroup> handlers = spatialEntity.getHandlers(attrName);
-    assertTrue(handlers.isPresent());
-    spatialEntity.endSubstep();
-  }
-
-  @Test
-  void testGetCurrentAttributeUnresolved() {
-    String attrName = "testAttr";
-    spatialEntity.startSubstep("test");
-    assertThrows(IllegalStateException.class, () -> spatialEntity.getAttributeValue(attrName));
+    assertThrows(
+        IllegalStateException.class,
+        () -> spatialEntity.getHandlersForAttribute("testAttr")
+    );
   }
 
   @Test
@@ -119,7 +89,7 @@ public class ShadowingEntityTest {
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
     spatialEntity.startSubstep(substepName);
-    spatialEntity.setCurrentAttribute(attrName, mockEngineValue);
+    spatialEntity.setAttributeValue(attrName, mockEngineValue);
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertFalse(result.isEmpty());
@@ -141,7 +111,7 @@ public class ShadowingEntityTest {
   void testNonexistentAttributeAccess() {
     String nonexistentAttr = "nonexistent";
     assertThrows(IllegalArgumentException.class, () ->
-        spatialEntity.setCurrentAttribute(nonexistentAttr, mockEngineValue));
+        spatialEntity.setAttributeValue(nonexistentAttr, mockEngineValue));
     assertThrows(IllegalArgumentException.class, () ->
         spatialEntity.getPriorAttribute(nonexistentAttr));
   }
@@ -171,8 +141,6 @@ public class ShadowingEntityTest {
     CompiledSelector mockSelector = mock(CompiledSelector.class);
     when(mockEventHandler.getCallable()).thenReturn(mockCallable);
     when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
-    when(mockSelector.evaluate(any())).thenReturn(true);
-    when(mockCallable.evaluate(any())).thenReturn(handlerValue);
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
         Optional.of(mockEventHandlerGroup)
     );

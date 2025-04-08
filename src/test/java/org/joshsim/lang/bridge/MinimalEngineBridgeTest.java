@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.GeoPoint;
@@ -60,9 +61,9 @@ public class MinimalEngineBridgeTest {
   void setUp() {
     bridge = new MinimalEngineBridge(
         mockSimulation,
-        mockReplicate,
         mockConverter,
-        mockPrototypeStore
+        mockPrototypeStore,
+        mockReplicate
     );
   }
 
@@ -118,7 +119,7 @@ public class MinimalEngineBridgeTest {
   void testGetCurrentPatches() {
     when(mockReplicate.getCurrentPatches()).thenReturn(Arrays.asList(mockPatch, mockPatch));
 
-    Iterable<ShadowingEntity> results = bridge.getCurrentPatches();
+    Iterable<MutableEntity> results = bridge.getCurrentPatches();
     assertTrue(results.iterator().hasNext(), "Should return patches");
   }
 
@@ -137,6 +138,7 @@ public class MinimalEngineBridgeTest {
     Units oldUnits = new Units("old");
     Units newUnits = new Units("test");
     when(mockEngineValue.getUnits()).thenReturn(oldUnits);
+    when(mockEngineValueConverted.replaceUnits(any())).thenReturn(mockEngineValueConverted);
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
         .thenReturn(new DirectConversion(newUnits, newUnits, (x) -> mockEngineValueConverted));
 

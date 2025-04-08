@@ -8,7 +8,6 @@ package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -470,6 +469,16 @@ public interface EventHandlerMachine {
    * @return Reference to this machine for chaining.
    */
   EventHandlerMachine sum();
+
+  /**
+   * Create a position from a set of popped values.
+   *
+   * <p>Create a position from the values where each appears under the following: units 1, type 1,
+   * units 2, type 2. Pushes the result as a string.</p>
+   *
+   * @reutrn Reference to this machine for chaining.
+   */
+  EventHandlerMachine makePosition();
 
   /**
    * Check that a local variable does not yet exist and save it.

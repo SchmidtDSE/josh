@@ -177,9 +177,9 @@ public class RealizedDistribution extends Distribution {
     List<String> distributions = new ArrayList<>();
     distributions.add("RealizedDistribution");
     innerDistributions.forEach(distributions::add);
-    
+
     LanguageType innerLanguageType = exampleValue.getLanguageType();
-    
+
     return new LanguageType(
         distributions,
         innerLanguageType.getRootType(),

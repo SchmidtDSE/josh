@@ -44,7 +44,7 @@ public class GeometryTest {
     Shape mockShape = mock(Shape.class);
     SpatialContext mockContext = mock(SpatialContext.class);
     when(mockShape.getContext()).thenReturn(mockContext);
-    
+
     Geometry geometry = new Geometry(mockShape);
 
     assertNotNull(geometry, "Geometry should be initialized");
@@ -64,7 +64,7 @@ public class GeometryTest {
     Exception exception = assertThrows(NullPointerException.class, () -> {
       nullGeometry.getSpatialContext();
     });
-    
+
     // Test intersects with coordinates
     Exception exception1 = assertThrows(IllegalStateException.class, () -> {
       nullGeometry.intersects(BigDecimal.valueOf(10.0), BigDecimal.valueOf(20.0));

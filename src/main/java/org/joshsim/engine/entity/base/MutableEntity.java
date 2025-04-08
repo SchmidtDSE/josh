@@ -6,64 +6,23 @@
 
 package org.joshsim.engine.entity.base;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
- * Represents a base entity that is mutable.
- * This class provides mechanisms for managing attributes and event handlers,
- * and supports locking to be thread-safe.
+ * An entity whose state can be mutated in-place.
  */
-public abstract class MutableEntity implements Entity, Lockable {
-
-  private final String name;
-  private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
-  private final Map<String, EngineValue> attributes;
-  private final Lock lock;
-
-  /**
-   * Constructor for Entity.
-   *
-   * @param name Name of the entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
-   * @param attributes A map of attribute names to their corresponding EngineValues.
-   */
-  public MutableEntity(
-      String name,
-      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
-  ) {
-    this.name = name;
-    this.eventHandlerGroups = eventHandlerGroups != null
-        ? eventHandlerGroups : new HashMap<>();
-    this.attributes = attributes != null
-        ? attributes : new HashMap<>();
-    lock = new ReentrantLock();
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
+public interface MutableEntity extends Entity, Lockable {
 
   /**
    * Get event handlers for all attributes and events.
    *
    * @returns Hashmap of (state x attribute x event) to EventHandlerGroups.
    */
-  public Iterable<EventHandlerGroup> getEventHandlers() {
-    return eventHandlerGroups.values();
-  }
+  Iterable<EventHandlerGroup> getEventHandlers();
 
   /**
    * Get event handlers for a specific attribute and event.
@@ -71,14 +30,10 @@ public abstract class MutableEntity implements Entity, Lockable {
    * @param eventKey The event for which handler groups should be returned.
    * @return the event handler group, or empty if it does not exist
    */
-  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
-    return Optional.ofNullable(eventHandlerGroups.get(eventKey));
-  }
+  Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey);
 
   @Override
-  public Optional<EngineValue> getAttributeValue(String name) {
-    return Optional.ofNullable(attributes.get(name));
-  }
+  Optional<EngineValue> getAttributeValue(String name);
 
   /**
    * Set the value of an attribute by name.
@@ -86,53 +41,37 @@ public abstract class MutableEntity implements Entity, Lockable {
    * @param name the attribute name
    * @param value the value to set
    */
-  public void setAttributeValue(String name, EngineValue value) {
-    attributes.put(name, value);
-  }
+  void setAttributeValue(String name, EngineValue value);
 
-  @Override
-  public void lock() {
-    lock.lock();
-  }
+  /**
+   * Indicate that this entity is starting a substep or step phase like step.
+   *
+   * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
+   * acquiring a global lock on this entity for thread safety.</p>
+   *
+   * @param name name of the substep or phase like start which is beginning.
+   */
+  void startSubstep(String name);
 
-  @Override
-  public void unlock() {
-    lock.unlock();
-  }
+  /**
+   * Indicate that this entity is finishing with a substep or step phase like start.
+   *
+   * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
+   * releasing a global lock on this entity for thread safety.</p>
+   */
+  void endSubstep();
 
-  @Override
-  public Entity freeze() {
-    Map<String, EngineValue> frozenAttributes = new HashMap<>();
-    
-    for (String attributeName : attributes.keySet()) {
-      EngineValue unfrozenValue = attributes.get(attributeName);
-      EngineValue frozenValue = unfrozenValue.freeze();
-      frozenAttributes.put(attributeName, frozenValue);
-    }
-    
-    return new FrozenEntity(
-        getEntityType(),
-        name,
-        frozenAttributes,
-        getGeometry()
-    );
-  }
 
-  @Override
-  public Iterable<String> getAttributeNames() {
-    return StreamSupport.stream(getEventHandlers().spliterator(), false)
-        .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
-        .map(EventHandler::getAttributeName)
-        .collect(Collectors.toSet());
-  }
-
-  @Override
-  public Optional<GeoKey> getKey() {
-    if (getGeometry().isEmpty()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
-    }
-  }
+  /**
+   * Get the name of the current substep or phase.
+   *
+   * <p>Return the name of the substep or phase that is currently in progress, if any, as an
+   * Optional string. This can be useful for debugging or logging purposes to know which stage the
+   * entity is in during its lifecycle. The returned value can be empty if no substep is currently
+   * active.</p>
+   *
+   * @return the name of the current substep, or an empty Optional if no substep currently active.
+   */
+  Optional<String> getSubstep();
 
 }

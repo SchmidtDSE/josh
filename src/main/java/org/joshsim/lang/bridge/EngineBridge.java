@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.geometry.Geometry;
@@ -20,6 +21,14 @@ import org.joshsim.engine.value.type.EngineValue;
  * Bridge that decouples the engine from the language interpreter.
  */
 public interface EngineBridge {
+
+
+  /**
+   * Get the current simulation entity.
+   *
+   * @return the current simulation entity.
+   */
+  MutableEntity getSimulation();
 
   /**
    * Start a new simulation step.
@@ -55,7 +64,7 @@ public interface EngineBridge {
    *
    * @return Iterable of all patches in the current step.
    */
-  Iterable<ShadowingEntity> getCurrentPatches();
+  Iterable<MutableEntity> getCurrentPatches();
 
   /**
    * Get patches from the previous step within a specific geometry.
@@ -117,5 +126,12 @@ public interface EngineBridge {
    * @return The prototype for constructing that entity.
    */
   EntityPrototype getPrototype(String name);
+
+  /**
+   * Determine if the simulation has surpassed its final step.
+   *
+   * @return True if the simulation has surpassed the final step and false otherwise.
+   */
+  boolean isComplete();
 
 }

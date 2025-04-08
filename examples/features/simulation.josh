@@ -1,7 +1,7 @@
 start simulation Detailed
 
   grid.size = 1km
-  grid.start = 34 degrees latitude, -116 degrees longitude
-  grid.end = 35 degrees latitude, -115 degrees longitude
+  grid.low = 34 degrees latitude, -116 degrees longitude
+  grid.high = 35 degrees latitude, -115 degrees longitude
 
 end simulation

@@ -32,7 +32,7 @@ class LocalScopeTest {
   @Mock private Scope mockContainingScope;
   @Mock private EngineValue mockValue;
   @Mock private EngineValue mockOuterValue;
-  
+
   private LocalScope scope;
 
   /**

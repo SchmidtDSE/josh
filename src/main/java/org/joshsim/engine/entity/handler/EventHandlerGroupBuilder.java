@@ -18,6 +18,7 @@ import java.util.Optional;
  * EventHandlerGroup objects.
  */
 public class EventHandlerGroupBuilder {
+
   private List<EventHandler> eventHandlers = new ArrayList<>();
   private Optional<String> state = Optional.empty();
   private Optional<String> attribute = Optional.empty();

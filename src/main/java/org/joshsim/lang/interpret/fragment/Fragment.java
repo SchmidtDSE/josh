@@ -49,7 +49,7 @@ public abstract class Fragment {
    * @throws RuntimeException if this fragment type does not contain a compiled selector
    */
   public Optional<CompiledSelector> getCompiledSelector() {
-    throw new RuntimeException("This fragment does not have an compiled selector.");
+    return Optional.empty();
   }
 
   /**

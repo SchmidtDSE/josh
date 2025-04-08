@@ -36,7 +36,7 @@ public class EntityScope implements Scope {
   public EngineValue get(String name) {
     Optional<EngineValue> attrValue = value.getAttributeValue(name);
     if (attrValue.isEmpty()) {
-      String message = String.format("Cannot find %s on this entity. May be uninitalized.", name);
+      String message = String.format("Cannot find %s on %s. May be uninitalized.", name, value);
       throw new IllegalArgumentException(message);
     } else {
       return attrValue.get();
