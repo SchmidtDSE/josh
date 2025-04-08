@@ -441,11 +441,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitCreateVariableExpression(
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
-    String entityType = ctx.target.getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.createEntity(entityType);
+      machine.createEntity(entityName);
       return machine;
     };
 
@@ -524,7 +524,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
-    String entityName = ctx.getChild(0).getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);

@@ -48,7 +48,6 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvedAttributes;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
-  private Optional<String> substep;
   private boolean checkAssertions;
 
   /**
@@ -71,7 +70,6 @@ public class ShadowingEntity implements MutableEntity {
 
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
-    substep = Optional.empty();
     scope = new EntityScope(inner);
   }
 
@@ -89,43 +87,7 @@ public class ShadowingEntity implements MutableEntity {
 
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
-    substep = Optional.empty();
     scope = new EntityScope(inner);
-  }
-
-  /**
-   * Indicate that this entity is starting a substep or step phase like step.
-   *
-   * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
-   * acquiring a global lock on this entity for thread safety.</p>
-   *
-   * @param name name of the substep or phase like start which is beginning.
-   */
-  public void startSubstep(String name) {
-    if (substep.isPresent()) {
-      String message = String.format(
-          "Cannot start %s before %s is completed.",
-          substep.get(),
-          name
-      );
-      throw new IllegalStateException(message);
-    }
-
-    inner.lock();
-    substep = Optional.of(name);
-  }
-
-  /**
-   * Indicate that this entity is finishing with a substep or step phase like start.
-   *
-   * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
-   * releasing a global lock on this entity for thread safety.</p>
-   */
-  public void endSubstep() {
-    resolvedAttributes.clear();
-    resolvingAttributes.clear();
-    substep = Optional.empty();
-    inner.unlock();
   }
 
   /**
@@ -144,6 +106,7 @@ public class ShadowingEntity implements MutableEntity {
    * @throws IllegalStateException if not currently in a substep.
    */
   public Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute) {
+    Optional<String> substep = getSubstep();
     if (substep.isEmpty()) {
       String message = String.format(
           "Cannot get handler for %s while not within a substep.",
@@ -371,6 +334,8 @@ public class ShadowingEntity implements MutableEntity {
    * @param name unique identifier of the attribute to resolve.
    */
   private void resolveAttributeUnsafe(String name) {
+    Optional<String> substep = getSubstep();
+    
     // If outside substep, use prior
     if (substep.isEmpty()) {
       resolveAttributeFromPrior(name);
@@ -465,5 +430,22 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey) {
     return inner.getEventHandlers(eventKey);
+  }
+
+  @Override
+  public void startSubstep(String name) {
+    inner.startSubstep(name);
+  }
+
+  @Override
+  public void endSubstep() {
+    resolvedAttributes.clear();
+    resolvingAttributes.clear();
+    inner.endSubstep();
+  }
+
+  @Override
+  public Optional<String> getSubstep() {
+    return inner.getSubstep();
   }
 }

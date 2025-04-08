@@ -43,4 +43,35 @@ public interface MutableEntity extends Entity, Lockable {
    */
   void setAttributeValue(String name, EngineValue value);
 
+  /**
+   * Indicate that this entity is starting a substep or step phase like step.
+   *
+   * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
+   * acquiring a global lock on this entity for thread safety.</p>
+   *
+   * @param name name of the substep or phase like start which is beginning.
+   */
+  void startSubstep(String name);
+
+  /**
+   * Indicate that this entity is finishing with a substep or step phase like start.
+   *
+   * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
+   * releasing a global lock on this entity for thread safety.</p>
+   */
+  void endSubstep();
+
+  
+  /**
+   * Get the name of the current substep or phase.
+   *
+   * <p>Return the name of the substep or phase that is currently in progress, if any, as an
+   * Optional string. This can be useful for debugging or logging purposes to know which stage the
+   * entity is in during its lifecycle. The returned value can be empty if no substep is currently
+   * active.</p>
+   *
+   * @return the name of the current substep, or an empty Optional if no substep is currently active.
+   */
+  Optional<String> getSubstep();
+
 }

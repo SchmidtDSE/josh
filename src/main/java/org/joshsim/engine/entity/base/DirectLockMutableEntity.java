@@ -28,6 +28,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private final Map<String, EngineValue> attributes;
   private final Lock lock;
+  
+  private Optional<String> substep;
 
   /**
    * Constructor for Entity.
@@ -42,11 +44,10 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       Map<String, EngineValue> attributes
   ) {
     this.name = name;
-    this.eventHandlerGroups = eventHandlerGroups != null
-        ? eventHandlerGroups : new HashMap<>();
-    this.attributes = attributes != null
-        ? attributes : new HashMap<>();
+    this.eventHandlerGroups = new HashMap<>(eventHandlerGroups);
+    this.attributes = new HashMap<>(attributes);
     lock = new ReentrantLock();
+    substep = Optional.empty();
   }
 
   @Override
@@ -117,6 +118,31 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     } else {
       return Optional.of(new GeoKey(this));
     }
+  }
+
+  @Override
+  public void startSubstep(String name) {
+    if (substep.isPresent()) {
+      String message = String.format(
+          "Cannot start %s before %s is completed.",
+          substep.get(),
+          name
+      );
+      throw new IllegalStateException(message);
+    }
+
+    lock();
+    substep = Optional.of(name);
+  }
+
+  @Override
+  public void endSubstep() {
+    substep = Optional.empty();
+    unlock();
+  }
+
+  public Optional<String> getSubstep() {
+    return substep;
   }
 
 }

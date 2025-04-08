@@ -12,7 +12,7 @@ end simulation
 
 start patch Default
 
-  ForeverTree.init = create TreeA
+  ForeverTree.init = create ForeverTree
 
 end patch
 

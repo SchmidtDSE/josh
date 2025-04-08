@@ -68,6 +68,8 @@ public class SimulationStepper {
    * @return the updated shadowing entity
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
+    target.startSubstep(subStep);
+    
     Iterable<String> attributeNames = target.getAttributeNames();
 
     Stream<EventKey> eventKeysNoState = StreamSupport.stream(attributeNames.spliterator(), false)
@@ -95,6 +97,8 @@ public class SimulationStepper {
           assert x != null;
         });
 
+    target.endSubstep();
+    
     return target;
   }
 

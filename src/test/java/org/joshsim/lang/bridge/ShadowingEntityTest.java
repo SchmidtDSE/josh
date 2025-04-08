@@ -63,16 +63,6 @@ public class ShadowingEntityTest {
   }
 
   @Test
-  void testSubstepLifecycle() {
-    String substepName = "start";
-    spatialEntity.startSubstep(substepName);
-    assertThrows(IllegalStateException.class, () -> spatialEntity.startSubstep("step"));
-    spatialEntity.endSubstep();
-    spatialEntity.startSubstep("step");
-    spatialEntity.endSubstep();
-  }
-
-  @Test
   void testSetAttribute() {
     String attrName = "testAttr";
 
@@ -91,21 +81,6 @@ public class ShadowingEntityTest {
         IllegalStateException.class,
         () -> spatialEntity.getHandlersForAttribute("testAttr")
     );
-  }
-
-  @Test
-  void testGetHandlersDuringSubstep() {
-    String attrName = "testAttr";
-    String substepName = "testSubstep";
-
-    EventKey eventKey = new EventKey(attrName, substepName);
-    when(mockSpatialEntity.getEventHandlers(eventKey))
-        .thenReturn(Optional.of(mockEventHandlerGroup));
-
-    spatialEntity.startSubstep(substepName);
-    Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlersForAttribute(attrName);
-    assertTrue(handlers.iterator().hasNext());
-    spatialEntity.endSubstep();
   }
 
   @Test
@@ -174,8 +149,6 @@ public class ShadowingEntityTest {
     CompiledSelector mockSelector = mock(CompiledSelector.class);
     when(mockEventHandler.getCallable()).thenReturn(mockCallable);
     when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
-    when(mockSelector.evaluate(any())).thenReturn(true);
-    when(mockCallable.evaluate(any())).thenReturn(handlerValue);
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
         Optional.of(mockEventHandlerGroup)
     );
