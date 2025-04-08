@@ -12,8 +12,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
-import org.joshsim.engine.external.cog.CogReader;
 import org.apache.sis.coverage.grid.GridCoverage;
+import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
@@ -60,7 +60,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
         cachedCoverage,
         requestGeometry
     );
-    
+
     RealizedDistribution realizedDistribution = RealizedDistribution.fromDecimalValues(
         getCaster(),
         decimalValuesWithinGeometry,
@@ -110,5 +110,5 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
    */
   public void clearCache() {
     coverageCache.clear();
-  } 
+  }
 }

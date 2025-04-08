@@ -59,7 +59,7 @@ public class ExternalLayerFactory {
    * priming geometry layer which does not change after initialization. This
    * can be used to create a very conservative layer (for eg, the simulation bounds)
    * as a primer, which may use more memory than absolutely necessary but reduce
-   * unnessecary repeated hits to the COG itself. 
+   * unnessecary repeated hits to the COG itself.
    *
    * @return the initialized external layer chain
    */

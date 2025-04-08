@@ -49,8 +49,8 @@ public class RealizedDistribution extends Distribution {
   }
 
   /**
-   * Creates a new RealizedDistribution from a list of BigDecimal values. This is 
-   * useful for converting a list of decimal values into a distribution format when 
+   * Creates a new RealizedDistribution from a list of BigDecimal values. This is
+   * useful for converting a list of decimal values into a distribution format when
    * reading external resources, where we know the units of the target.
    *
    * @param caster The EngineValueCaster to use for casting.
@@ -66,12 +66,12 @@ public class RealizedDistribution extends Distribution {
     if (decimalValues.isEmpty()) {
       throw new IllegalArgumentException("Cannot create a distribution with no values.");
     }
-    
+
     List<EngineValue> engineValues = new ArrayList<>();
     for (BigDecimal decimalValue : decimalValues) {
       engineValues.add(new DecimalScalar(caster, decimalValue, units));
     }
-    
+
     return new RealizedDistribution(caster, engineValues, units);
   }
 
