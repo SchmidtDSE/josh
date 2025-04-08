@@ -106,6 +106,32 @@ public class EngineGeometry implements Spatial {
     return getInnerGeometry().intersects(other.getInnerGeometry());
   }
 
+  /**
+   * Computes the convex hull of this geometry and another geometry.
+   * Ensures both geometries are in the same CRS before computation.
+   *
+   * @param other The other geometry to compute the convex hull with.
+   * @return A new EngineGeometry representing the convex hull.
+   */
+  public EngineGeometry getConvexHull(EngineGeometry other) {
+    // Ensure both geometries use the same CRS
+    if (!CRS.equalsIgnoreMetadata(crs, other.getCrs())) {
+      other = other.asTargetCrs(crs);
+    }
+    Geometry convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
+    return new EngineGeometry(convexHull, crs);
+  }
+
+  /**
+   * Computes the convex hull of this geometry.
+   *
+   * @return A new EngineGeometry representing the convex hull.
+   */
+  public EngineGeometry getConvexHull() {
+    Geometry convexHull = getInnerGeometry().convexHull();
+    return new EngineGeometry(convexHull, crs);
+  }
+
   @Override
   public BigDecimal getCenterX() {
     return BigDecimal.valueOf(getInnerGeometry().getCentroid().getX());

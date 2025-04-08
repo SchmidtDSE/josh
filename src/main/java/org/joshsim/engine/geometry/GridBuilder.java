@@ -14,7 +14,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.api.referencing.FactoryException;
-import org.opengis.referencing.crs.GeographicCRS;
 import org.geotools.api.referencing.operation.TransformException;
 
 /**
@@ -187,43 +186,29 @@ public class GridBuilder {
       validateParameters();
 
       // Calculate grid dimensions
-      GridDimensions dimensions = calculateGridDimensions();
+      int colCells = getColCells();
+      int rowCells = getRowCells();
+      double cellWidthDouble = cellWidth.doubleValue();
 
       // Create all patches
-      List<Patch> patches = createPatchGrid(dimensions);
-
+      List<Patch> patches = createPatchGrid(colCells, rowCells, cellWidthDouble);
       return new Grid(patches, cellWidth);
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
     }
   }
 
-  private boolean isGeographic() {
-    return targetCoordinateReferenceSystem instanceof GeographicCRS;
-  }
-
-  private static class GridDimensions {
-    final int colCells;
-    final int rowCells;
-    final double cellWidthUnits;
-
-    GridDimensions(int colCells, int rowCells, double cellWidthUnits) {
-      this.colCells = colCells;
-      this.rowCells = rowCells;
-      this.cellWidthUnits = cellWidthUnits;
-    }
-  }
-
-  private GridDimensions calculateGridDimensions() {
-    double cellWidthUnits = this.cellWidth.doubleValue();
-
-    double colDiff = bottomRightTransformed.getOrdinate(0) - topLeftTransformed.getOrdinate(0);
+  private int getRowCells() {
     double rowDiff = topLeftTransformed.getOrdinate(1) - bottomRightTransformed.getOrdinate(1);
+    int rowCells = (int) Math.ceil(rowDiff / cellWidth.doubleValue());
+    return rowCells;
+  }
 
-    int rowCells = (int) Math.ceil(rowDiff / cellWidthUnits);
-    int colCells = (int) Math.ceil(colDiff / cellWidthUnits);
-
-    return new GridDimensions(colCells, rowCells, cellWidthUnits);
+  private int getColCells() {
+    double colDiff = bottomRightTransformed.getOrdinate(0) - topLeftTransformed.getOrdinate(0);
+    int colCells = (int) Math.ceil(colDiff / cellWidth.doubleValue());
+    return colCells;
   }
 
   /**
@@ -245,17 +230,17 @@ public class GridBuilder {
   /**
    * Creates all patches in the grid.
    */
-  private List<Patch> createPatchGrid(GridDimensions dimensions) {
+  private List<Patch> createPatchGrid(int colCells, int rowCells, double cellWidth) {
     List<Patch> patches = new ArrayList<>();
-    for (int rowIdx = 0; rowIdx < dimensions.rowCells; rowIdx++) {
-      for (int colIdx = 0; colIdx < dimensions.colCells; colIdx++) {
+    for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
+      for (int colIdx = 0; colIdx < colCells; colIdx++) {
         double cellTopLeftX = 
-            topLeftTransformed.getOrdinate(0) + (colIdx * dimensions.cellWidthUnits);
+            topLeftTransformed.getOrdinate(0) + (colIdx * cellWidth);
         double cellTopLeftY =
-            topLeftTransformed.getOrdinate(1) - (rowIdx * dimensions.cellWidthUnits);
+            topLeftTransformed.getOrdinate(1) - (rowIdx * cellWidth);
 
-        double cellBottomRightX = cellTopLeftX + dimensions.cellWidthUnits;
-        double cellBottomRightY = cellTopLeftY - dimensions.cellWidthUnits;
+        double cellBottomRightX = cellTopLeftX + cellWidth;
+        double cellBottomRightY = cellTopLeftY - cellWidth;
 
         // Ensure we don't exceed grid boundaries
         cellBottomRightX = Math.min(cellBottomRightX, bottomRightTransformed.getOrdinate(0));
