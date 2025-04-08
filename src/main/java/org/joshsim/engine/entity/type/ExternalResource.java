@@ -10,7 +10,7 @@ import java.util.HashMap;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -43,7 +43,7 @@ public abstract class ExternalResource extends MutableEntity {
    * @param geometry the geometry to query values for
    * @return the distribution of values for the given geometry
    */
-  abstract Distribution getDistribution(Geometry geometry);
+  abstract Distribution getDistribution(EngineGeometry geometry);
 
   @Override
   public EntityType getEntityType() {

@@ -21,7 +21,6 @@ import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.external.cog.CogReader;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;

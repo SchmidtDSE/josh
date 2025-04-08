@@ -238,7 +238,7 @@ public class GridBuilder {
   }
 
   /**
-   * Creates a single patch geometry for a specific cell.
+   * Creates a single patch EngineGeometry for a specific cell.
    *
    * @param leftX The left X coordinate
    * @param topY The top Y coordinate
@@ -246,7 +246,7 @@ public class GridBuilder {
    * @param bottomY The bottom Y coordinate
    * @param context The spatial context
    */
-  private Geometry createCellGeometry(
+  private EngineGeometry createCellGeometry(
         double leftX, double topY,
         double rightX, double bottomY,
         SpatialContext context
@@ -282,7 +282,7 @@ public class GridBuilder {
         cellBottomRightY = Math.max(cellBottomRightY, bottomRightTransformed.y);
 
         // Create geometry for this cell
-        Geometry cellGeometry = createCellGeometry(
+        EngineGeometry cellGeometry = createCellGeometry(
             cellTopLeftX, cellTopLeftY,
             cellBottomRightX, cellBottomRightY,
             context

@@ -14,7 +14,6 @@ import static org.mockito.Mockito.mock;
 
 import java.math.BigDecimal;
 import org.apache.sis.referencing.CRS;
-import org.joshsim.engine.geometry.Geometry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

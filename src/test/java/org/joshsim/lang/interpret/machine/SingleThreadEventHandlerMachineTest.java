@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;

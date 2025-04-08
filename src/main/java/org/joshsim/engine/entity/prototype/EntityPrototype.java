@@ -7,9 +7,8 @@
 package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 
 /**
@@ -58,11 +57,11 @@ public interface EntityPrototype {
    * Builds a spatial entity instance from this prototype with a geometry parent.
    * Valid only for PATCH type entities.
    *
-   * @param parent The parent Geometry that houses this entity.
+   * @param parent The parent EngineGeometry that houses this entity.
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built with a geometry parent.
    */
-  Entity buildSpatial(Geometry parent);
+  Entity buildSpatial(EngineGeometry parent);
 
   /**
    * Determine if this entity prototype requires a parent to be provided to be constructed.

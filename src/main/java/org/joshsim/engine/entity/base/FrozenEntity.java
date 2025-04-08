@@ -3,7 +3,6 @@ package org.joshsim.engine.entity.base;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 

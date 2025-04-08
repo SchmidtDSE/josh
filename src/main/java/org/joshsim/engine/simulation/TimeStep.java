@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
+
 
 /**
  * Represents a single time step in the simulation, containing mutable or immutable
@@ -38,7 +39,7 @@ public class TimeStep {
    * @param geometry the spatial bounds to query
    * @return an iterable of patches within the geometry
    */
-  public Iterable<Entity> getPatches(Geometry geometry) {
+  public Iterable<Entity> getPatches(EngineGeometry geometry) {
     List<Entity> selectedPatches = patches.values().stream()
         .filter(patch -> patch.getGeometry()
               .map(geo -> geo.intersects(geometry))
@@ -54,7 +55,7 @@ public class TimeStep {
    * @param name the patch name to filter by
    * @return an iterable of matching patches
    */
-  public Iterable<Entity> getPatches(Geometry geometry, String name) {
+  public Iterable<Entity> getPatches(EngineGeometry geometry, String name) {
     List<Entity> selectedPatches = patches.values().stream()
         .filter(patch -> patch.getName().equals(name))
         .filter(patch -> patch.getGeometry()

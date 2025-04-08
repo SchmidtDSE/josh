@@ -14,8 +14,8 @@ import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
@@ -129,7 +129,7 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Iterable<Entity> getPriorPatches(Geometry geometry) {
+  public Iterable<Entity> getPriorPatches(EngineGeometry geometry) {
     Query query = new Query(getPriorTimestep(), geometry);
     Iterable<Entity> patches = replicate.query(query);
     return patches;

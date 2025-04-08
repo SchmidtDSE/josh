@@ -2,7 +2,8 @@ package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
+
 
 /**
  * Create a decorator that embeds a parent for an entity prototype.
@@ -53,7 +54,7 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity buildSpatial(Geometry parent) {
+  public Entity buildSpatial(EngineGeometry parent) {
     return inner.buildSpatial(parent);
   }
 

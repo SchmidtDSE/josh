@@ -9,8 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
@@ -63,7 +63,7 @@ public interface EngineBridge {
    * @param geometry the geometric area to query.
    * @return Iterable of patches from the previous step within the specified geometry.
    */
-  Iterable<Entity> getPriorPatches(Geometry geometry);
+  Iterable<Entity> getPriorPatches(EngineGeometry geometry);
 
   /**
    * Get patches from the previous step within a specific geometry momento.

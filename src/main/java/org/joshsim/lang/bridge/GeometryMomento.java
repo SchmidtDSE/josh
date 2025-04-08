@@ -8,16 +8,16 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.GeometryFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 
 /**
- * Momento which represents a Geometry that can be keyed and converted back to a Geometry.
+ * Momento which represents a EngineGeometry that can be keyed and converted back to a Geometry.
  *
- * <p>Momento which represents a subset of possible Geometry objects such that the momento can be
- * serialized and compared to other momentos to support caching operations.</p>
+ * <p>Momento which represents a subset of possible EngineGeometry objects such that the
+ * momento can be serialized and compared to other momentos to support caching operations.</p>
  */
 public class GeometryMomento {
 
@@ -50,11 +50,11 @@ public class GeometryMomento {
   }
 
   /**
-   * Builds and returns a Geometry object from this momento.
+   * Builds and returns a EngineGeometry object from this momento.
    *
-   * @return A new Geometry instance representing the shape described by this momento.
+   * @return A new EngineGeometry instance representing the shape described by this momento.
    */
-  public Geometry build() {
+  public EngineGeometry build() {
     return getBuilder().get().build();
   }
 
@@ -105,9 +105,9 @@ public class GeometryMomento {
     /**
      * Builds a geometry from the momento's parameters.
      *
-     * @return A new Geometry instance.
+     * @return A new EngineGeometry instance.
      */
-    Geometry build();
+    EngineGeometry build();
 
   }
 

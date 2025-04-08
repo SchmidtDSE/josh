@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.joshsim.engine.external.core.ExternalLayer;
 import org.joshsim.engine.external.core.Request;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
@@ -45,7 +45,7 @@ public class CogExternalLayer implements ExternalLayer {
   @Override
   public RealizedDistribution fulfill(Request request) {
     try {
-      Geometry geometry = request.getGeometry().orElseThrow();
+      EngineGeometry geometry = request.getGeometry().orElseThrow();
       GridCoverage gridCoverage = CogReader.getCoverageFromDisk(request.getPath(), geometry);
       List<BigDecimal> decimalValuesWithinGeometry =
           CogReader.extractValuesFromCoverage(gridCoverage, geometry);

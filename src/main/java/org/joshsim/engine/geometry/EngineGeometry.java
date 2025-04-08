@@ -4,8 +4,6 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-// import org.apache.sis.geometry.GeneralEnvelope;
-// import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.geometry.jts.JTS;
@@ -13,9 +11,9 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Geometry;
 
 /**
  * A geometric object using JTS geometry implementation.
@@ -31,7 +29,7 @@ public class EngineGeometry implements Spatial {
    * Constructs a Geometry with a provided JTS geometry and CRS.
    */
   public EngineGeometry(
-        Geometry innerGeometry, 
+        Geometry innerGeometry,
         CoordinateReferenceSystem crs,
         Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers
   ) {
@@ -68,7 +66,7 @@ public class EngineGeometry implements Spatial {
     if (CRS.equalsIgnoreMetadata(crs, targetCrs)) {
       return this;
     }
-    
+
     try {
       MathTransform transform;
       if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
@@ -76,7 +74,7 @@ public class EngineGeometry implements Spatial {
       } else {
         transform = CRS.findMathTransform(crs, targetCrs, true);
       }
-      
+
       Geometry transformedGeometry = JTS.transform(
           innerGeometry,
           transform
@@ -96,7 +94,7 @@ public class EngineGeometry implements Spatial {
     );
     return innerGeometry.intersects(point);
   }
-  
+
   /**
    * Checks if this geometry intersects with another.
    */
@@ -107,7 +105,7 @@ public class EngineGeometry implements Spatial {
     }
     return getInnerGeometry().intersects(other.getInnerGeometry());
   }
-  
+
   @Override
   public BigDecimal getCenterX() {
     return BigDecimal.valueOf(getInnerGeometry().getCentroid().getX());
@@ -117,7 +115,7 @@ public class EngineGeometry implements Spatial {
   public BigDecimal getCenterY() {
     return BigDecimal.valueOf(getInnerGeometry().getCentroid().getY());
   }
-  
+
   /**
    * Gets the envelope of this geometry as a GeneralEnvelope.
    */

@@ -27,15 +27,15 @@ public class GeometryFactory {
   }
 
   /**
-   * Creates a square geometry with the specified width and center.
+   * Creates a square EngineGeometry with the specified width and center.
    *
    * @param width The width of the square
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
    * @param spatialContext The context to use in creating the shape
-   * @return A Geometry object representing a square
+   * @return A EngineGeometry object representing a square
    */
-  public static Geometry createSquare(
+  public static EngineGeometry createSquare(
       BigDecimal width,
       BigDecimal centerX,
       BigDecimal centerY,
@@ -52,19 +52,19 @@ public class GeometryFactory {
     double maxY = centerY.doubleValue() + halfWidth;
 
     Rectangle rectangle = shapeFactory.rect(minX, maxX, minY, maxY);
-    Geometry geometry = new Geometry(rectangle, crs);
-    return geometry;
+    EngineGeometry engineGeometry = new EngineGeometry(rectangle, crs);
+    return engineGeometry;
   }
 
   /**
-   * Creates a square geometry with the specified width and center.
+   * Creates a square EngineGeometry with the specified width and center.
    *
    * @param width The width of the square
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
-   * @return A Geometry object representing a square
+   * @return A EngineGeometry object representing a square
    */
-  public static Geometry createSquare(
+  public static EngineGeometry createSquare(
       BigDecimal width,
       BigDecimal centerX,
       BigDecimal centerY,
@@ -74,17 +74,17 @@ public class GeometryFactory {
   }
 
   /**
-   * Creates a square geometry from topLeft and bottomRight coordinates.
+   * Creates a square EngineGeometry from topLeft and bottomRight coordinates.
    *
    * @param topLeftX The X position (longitude, easting) of the top-left corner
    * @param topLeftY The Y position (latitude, northing) of the top-left corner
    * @param bottomRightX The X position (longitude, easting) of the bottom-right corner
    * @param bottomRightY The Y position (latitude, northing) of the bottom-right corner
    * @param spatialContext The context to use in creating the shape
-   * @return A Geometry object representing a square
+   * @return A EngineGeometry object representing a square
    * @throws IllegalArgumentException if the coordinates don't form a square
    */
-  public static Geometry createSquare(
+  public static EngineGeometry createSquare(
       BigDecimal topLeftX,
       BigDecimal topLeftY,
       BigDecimal bottomRightX,
@@ -108,21 +108,21 @@ public class GeometryFactory {
     }
 
     Rectangle rectangle = shapeFactory.rect(minX, maxX, minY, maxY);
-    Geometry geometry = new Geometry(rectangle, crs);
-    return geometry;
+    EngineGeometry engineGeometry = new EngineGeometry(rectangle, crs);
+    return engineGeometry;
   }
 
   /**
-   * Creates a square geometry from topLeft and bottomRight coordinates.
+   * Creates a square EngineGeometry from topLeft and bottomRight coordinates.
    *
    * @param topLeftX The X position (longitude, easting) of the top-left corner
    * @param topLeftY The Y position (latitude, northing) of the top-left corner
    * @param bottomRightX The X position (longitude, easting) of the bottom-right corner
    * @param bottomRightY The Y position (latitude, northing) of the bottom-right corner
-   * @return A Geometry object representing a square
+   * @return A EngineGeometry object representing a square
    * @throws IllegalArgumentException if the coordinates don't form a square
    */
-  public static Geometry createSquare(
+  public static EngineGeometry createSquare(
       BigDecimal topLeftX,
       BigDecimal topLeftY,
       BigDecimal bottomRightX,
@@ -140,15 +140,15 @@ public class GeometryFactory {
   }
 
   /**
-   * Creates a circular geometry with the specified radius and center.
+   * Creates a circular EngineGeometry with the specified radius and center.
    *
    * @param radius The radius of the circle
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
    * @param spatialContext The context to use in creating the shape
-   * @return A Geometry object representing a circle
+   * @return A EngineGeometry object representing a circle
    */
-  public static Geometry createCircle(
+  public static EngineGeometry createCircle(
       BigDecimal radius,
       BigDecimal centerX,
       BigDecimal centerY,
@@ -162,19 +162,19 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Circle circle = shapeFactory.circle(centerValX, centerValY, radiusVal);
-    Geometry geometry = new Geometry(circle, crs);
-    return geometry;
+    EngineGeometry engineGeometry = new EngineGeometry(circle, crs);
+    return engineGeometry;
   }
 
   /**
-   * Creates a circular geometry with the specified radius and center.
+   * Creates a circular EngineGeometry with the specified radius and center.
    *
    * @param radius The radius of the circle
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
-   * @return A Geometry object representing a circle
+   * @return A EngineGeometry object representing a circle
    */
-  public static Geometry createCircle(
+  public static EngineGeometry createCircle(
       BigDecimal radius,
       BigDecimal centerX,
       BigDecimal centerY,
@@ -184,16 +184,16 @@ public class GeometryFactory {
   }
 
   /**
-   * Creates a circular geometry from radius and a point on the circumference.
+   * Creates a circular EngineGeometry from radius and a point on the circumference.
    *
    * @param pointX The X position (longitude, easting) of a point on the circle's circumference
    * @param pointY The Y position (latitude, northing) of a point on the circle's circumference
    * @param centerX The X position (longitude, easting) of the circle's center
    * @param centerY The Y position (latitude, northing) of the circle's center
    * @param spatialContext The context to use in creating the shape
-   * @return A Geometry object representing a circle
+   * @return A EngineGeometry object representing a circle
    */
-  public static Geometry createCircle(
+  public static EngineGeometry createCircle(
       BigDecimal pointX,
       BigDecimal pointY,
       BigDecimal centerX,
@@ -214,20 +214,20 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Circle circle = shapeFactory.circle(centerValX, centerValY, radius);
-    Geometry geometry = new Geometry(circle, crs);
-    return geometry;
+    EngineGeometry engineGeometry = new EngineGeometry(circle, crs);
+    return engineGeometry;
   }
 
   /**
-   * Creates a circular geometry from radius and a point on the circumference.
+   * Creates a circular EngineGeometry from radius and a point on the circumference.
    *
    * @param pointX The X position (longitude, easting) of a point on the circle's circumference
    * @param pointY The Y position (latitude, northing) of a point on the circle's circumference
    * @param centerX The X position (longitude, easting) of the circle's center
    * @param centerY The Y position (latitude, northing) of the circle's center
-   * @return A Geometry object representing a circle
+   * @return A EngineGeometry object representing a circle
    */
-  public static Geometry createCircle(
+  public static EngineGeometry createCircle(
       BigDecimal pointX,
       BigDecimal pointY,
       BigDecimal centerX,
@@ -245,14 +245,14 @@ public class GeometryFactory {
   }
 
   /**
-   * Creates a point geometry with the specified center.
+   * Creates a point EngineGeometry with the specified center.
    *
    * @param centerLatitude The center latitude
    * @param centerLongitude The center longitude
    * @param spatialContext The context to use in creating the shape
-   * @return A Geometry object representing a point
+   * @return A EngineGeometry object representing a point
    */
-  public static Geometry createPoint(
+  public static EngineGeometry createPoint(
           BigDecimal centerLatitude,
           BigDecimal centerLongitude,
           SpatialContext spatialContext,
@@ -264,18 +264,18 @@ public class GeometryFactory {
     ShapeFactory shapeFactory = spatialContext.getShapeFactory();
 
     Shape point = shapeFactory.pointLatLon(centerLat, centerLon);
-    Geometry geometry = new Geometry(point, crs);
-    return geometry;
+    EngineGeometry engineGeometry = new Geometry(point, crs);
+    return engineGeometry;
   }
 
   /**
-   * Creates a circular geometry with the specified radius and center.
+   * Creates a circular EngineGeometry with the specified radius and center.
    *
    * @param centerLatitude The center latitude
    * @param centerLongitude The center longitude
-   * @return A Geometry object representing a circle
+   * @return A EngineGeometry object representing a circle
    */
-  public static Geometry createPoint(
+  public static EngineGeometry createPoint(
           BigDecimal centerLatitude,
           BigDecimal centerLongitude,
           CoordinateReferenceSystem crs

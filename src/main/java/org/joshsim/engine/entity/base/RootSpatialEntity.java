@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -20,7 +20,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * inhering that geometry by being part of another entity.</p>
  */
 public abstract class RootSpatialEntity extends MutableEntity {
-  private final Geometry geometry;
+  private final EngineGeometry geometry;
 
   /**
    * Constructs a RootSpatialEntity with the specified geometry.
@@ -31,7 +31,7 @@ public abstract class RootSpatialEntity extends MutableEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    */
   public RootSpatialEntity(
-      Geometry geometry,
+      EngineGeometry geometry,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes
@@ -41,7 +41,7 @@ public abstract class RootSpatialEntity extends MutableEntity {
   }
 
   @Override
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return Optional.of(geometry);
   }
 }

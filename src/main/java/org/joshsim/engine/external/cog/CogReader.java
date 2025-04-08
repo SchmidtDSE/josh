@@ -15,7 +15,7 @@ import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
  * Reader for Cloud Optimized GeoTIFF (COG) files that extracts data
@@ -28,13 +28,13 @@ public class CogReader {
    * Read a coverage from a COG file for the specified geometry.
    *
    * @param path Path to the COG file
-   * @param geometry Geometry defining the area of interest
+   * @param geometry EngineGeometry defining the area of interest
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
   public static GridCoverage2D getCoverageFromDisk(
       String path,
-      Geometry geometry
+      EngineGeometry geometry
   ) throws IOException {
     File file = new File(path);
     GeoTiffReader reader = new GeoTiffReader(file);
@@ -100,7 +100,7 @@ public class CogReader {
    * @return A list of BigDecimal values
    */
   public static List<BigDecimal> extractValuesFromCoverage(
-      GridCoverage2D coverage, Geometry geometry
+      GridCoverage2D coverage, EngineGeometry geometry
   ) {
     List<BigDecimal> values = new ArrayList<>();
 

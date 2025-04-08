@@ -12,7 +12,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 /**
  * Interface representing a geographical point on Earth.
  */
-public class GeoPoint extends Geometry {
+public class GeoPoint extends EngineGeometry {
 
   /**
    * Constructs a GeoPoint with the specified shape.

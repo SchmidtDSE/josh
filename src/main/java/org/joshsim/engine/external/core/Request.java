@@ -7,7 +7,8 @@
 package org.joshsim.engine.external.core;
 
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
+
 
 /**
  * Interface representing a request to fetch external data.
@@ -16,8 +17,8 @@ public class Request {
   private String protocol;
   private String host;
   private String path;
-  private Optional<Geometry> geometry;
-  private Optional<Geometry> primingGeometry;
+  private Optional<EngineGeometry> geometry;
+  private Optional<EngineGeometry> primingGeometry;
   private Optional<String> resource;
 
   /**
@@ -26,14 +27,14 @@ public class Request {
    * @param protocol Protocol used for the request (file, http, etc.)
    * @param host Host or location to query
    * @param path Path to the resource (e.g., file path, URL)
-   * @param geometry Geometry for which to fetch data
+   * @param geometry EngineGeometry for which to fetch data
    * @param resource Resource identifier or name
    */
   public Request(
       String protocol,
       String host,
       String path,
-      Optional<Geometry> geometry,
+      Optional<EngineGeometry> geometry,
       Optional<String> resource
   ) {
     this.protocol = protocol;
@@ -73,9 +74,9 @@ public class Request {
   /**
    * Returns the geometry for which to fetch data.
    *
-   * @return Geometry defining the area of interest
+   * @return EngineGeometry defining the area of interest
    */
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return geometry;
   }
 
@@ -92,7 +93,7 @@ public class Request {
    * Sets the priming geometry, which is assumed to be a superset of the current request's
    * geometry, to be used in caching operations.
    */
-  public void setPrimingGeometry(Optional<Geometry> geometry) {
+  public void setPrimingGeometry(Optional<EngineGeometry> geometry) {
     primingGeometry = geometry;
   }
 
@@ -100,7 +101,7 @@ public class Request {
    * Returns the priming geometry, which is assumed to be a superset of the current request's
    * geometry, to be used in caching operations.
    */
-  public Optional<Geometry> getPrimingGeometry() {
+  public Optional<EngineGeometry> getPrimingGeometry() {
     return primingGeometry;
   }
 }

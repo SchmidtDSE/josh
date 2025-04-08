@@ -7,7 +7,7 @@
 package org.joshsim.engine.external.core;
 
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * The priming geometry is typically the intersection of all geometries added to the priming extent.
  */
 public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
-  private Optional<Geometry> primingGeometry = Optional.empty();
+  private Optional<EngineGeometry> primingGeometry = Optional.empty();
 
   /**
    * Constructs a PrimingGeometryLayer with the specified decorated layer.
@@ -32,7 +32,7 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
    *
    * @return The current priming geometry, or an empty optional if no geometry has been set
    */
-  Optional<Geometry> getPrimingGeometry() {
+  Optional<EngineGeometry> getPrimingGeometry() {
     return primingGeometry;
   }
 
@@ -42,7 +42,7 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
    *
    * @param geometry The geometry to add to the priming extent
    */
-  void extendPrimingGeometry(Geometry geometry) {
+  void extendPrimingGeometry(EngineGeometry geometry) {
     // TODO: getConvexHull() is not implemented yet, and may be kind of a pain with Spatial4j
     if (primingGeometry.isPresent()) {
       primingGeometry = Optional.of(primingGeometry.get().getConvexHull(geometry));
@@ -56,7 +56,7 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
    *
    * @param geometry The new geometry to set as the priming geometry
    */
-  void setPrimingGeometry(Geometry geometry) {
+  void setPrimingGeometry(EngineGeometry geometry) {
     this.primingGeometry = Optional.of(geometry);
   }
 
@@ -64,7 +64,7 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
   public RealizedDistribution fulfill(Request request) {
     // Get the geometry from the request
     // TODO: Revisit proper times to throw here
-    Geometry requestGeometry = request.getGeometry().orElseThrow();
+    EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
 
     // Update our priming geometry to include this request
     extendPrimingGeometry(requestGeometry);

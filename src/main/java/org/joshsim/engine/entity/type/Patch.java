@@ -10,7 +10,7 @@ import java.util.Map;
 import org.joshsim.engine.entity.base.RootSpatialEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -32,7 +32,7 @@ public class Patch extends RootSpatialEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    */
   public Patch(
-      Geometry geometry,
+      EngineGeometry geometry,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes

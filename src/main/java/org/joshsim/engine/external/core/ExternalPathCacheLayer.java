@@ -14,7 +14,7 @@ import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.joshsim.engine.external.cog.CogReader;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
@@ -25,7 +25,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   // Cache GridCoverage objects by path instead of Request->RealizedDistribution
-  private final Map<Geometry, GridCoverage> coverageCache = new LRUMap<>();
+  private final Map<EngineGeometry, GridCoverage> coverageCache = new LRUMap<>();
 
   /**
    * Constructs an ExternalPathCacheLayer with a decorated external layer.
@@ -45,7 +45,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
     }
 
     // If the request has a priming geometry, we need to check if it's already cached
-    Geometry primingGeometry = request.getPrimingGeometry().orElseThrow();
+    EngineGeometry primingGeometry = request.getPrimingGeometry().orElseThrow();
     if (!coverageCache.containsKey(primingGeometry)) {
       loadCoverageIntoCache(request.getPath(), primingGeometry);
     }
@@ -53,7 +53,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
     GridCoverage cachedCoverage = coverageCache.get(primingGeometry);
 
     // Get the request geometry, which is the subset area for which we want to extract values
-    Geometry requestGeometry = request.getGeometry().orElseThrow();
+    EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
 
     // Extract values from the cached coverage using the (subset) request geometry
     List<BigDecimal> decimalValuesWithinGeometry = CogReader.extractValuesFromCoverage(
@@ -77,7 +77,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
    * @param path the path to the coverage file
    * @param primingGeometry the geometry used to prime the cache
    */
-  private void loadCoverageIntoCache(String path, Geometry primingGeometry) {
+  private void loadCoverageIntoCache(String path, EngineGeometry primingGeometry) {
     GridCoverage newCoverage;
     try {
       newCoverage = CogReader.getCoverageFromDisk(path, primingGeometry);
@@ -101,7 +101,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
    *
    * @return the cache of GridCoverage objects
    */
-  public Map<Geometry, GridCoverage> getCoverageCache() {
+  public Map<EngineGeometry, GridCoverage> getCoverageCache() {
     return coverageCache;
   }
 
