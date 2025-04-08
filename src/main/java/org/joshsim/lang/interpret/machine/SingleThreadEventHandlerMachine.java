@@ -78,7 +78,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
     Optional<EngineValue> value = valueResolver.get(scope);
-    memory.push(value.orElseThrow());
+    memory.push(value.orElseThrow(
+        () -> new IllegalStateException("Unable to get value for " + valueResolver)
+    ));
     return this;
   }
 

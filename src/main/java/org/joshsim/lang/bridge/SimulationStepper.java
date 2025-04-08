@@ -1,7 +1,9 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -35,24 +37,13 @@ public class SimulationStepper {
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
     MutableEntity simulation = target.getSimulation();
-    Iterable<ShadowingEntity> patches = target.getCurrentPatches();
-    Iterable<MutableEntity> entities = new SimAndPatchIterable(simulation, patches);
+    Iterable<MutableEntity> patches = target.getCurrentPatches();
 
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+    Stream<MutableEntity> simStream = Stream.of(simulation);
+    Stream<MutableEntity> entityStream = StreamSupport.stream(patches.spliterator(), true);
 
-    Stream<MutableEntity> initalizedStream;
-    if (isFirstStep) {
-      initalizedStream = entityStream.map((x) -> updateEntity(x, "init"));
-    } else {
-      initalizedStream = entityStream;
-    }
-
-    Stream<MutableEntity> steppedStream = initalizedStream.map((x) -> updateEntity(x, "start"))
-        .map((x) -> updateEntity(x, "step"))
-        .map((x) -> updateEntity(x, "end"));
-
-    long numCompleted = steppedStream.filter((x) -> x != null).count();
-    assert numCompleted > 0;
+    performStream(simStream, isFirstStep);
+    performStream(entityStream, isFirstStep);
 
     long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
@@ -69,32 +60,29 @@ public class SimulationStepper {
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     target.startSubstep(subStep);
-    
-    Iterable<String> attributeNames = target.getAttributeNames();
 
-    Stream<EventKey> eventKeysNoState = StreamSupport.stream(attributeNames.spliterator(), false)
-        .map((name) -> new EventKey(name, subStep));
-
-    Stream<EventKey> eventKeys;
-    Optional<EngineValue> state = target.getAttributeValue("state");
-    if (state.isPresent()) {
-      String stateRealized = state.get().getAsString();
-      Stream<EventKey> eventKeysState = StreamSupport.stream(attributeNames.spliterator(), false)
-          .map((name) -> new EventKey(stateRealized, name, subStep));
-
-      eventKeys = Stream.concat(eventKeysNoState, eventKeysState);
-    } else {
-      eventKeys = eventKeysNoState;
-    }
-
-    eventKeys.map((x) -> target.getEventHandlers(x))
+    StreamSupport.stream(target.getAttributeNames().spliterator(), false)
+        .map((x) -> {
+          return target.getAttributeValue(x);
+        })
         .filter((x) -> x.isPresent())
         .map((x) -> x.get())
-        .map((x) -> x.getEventKey().getAttribute())
-        .distinct()
-        .map((x) -> target.getAttributeValue(x))
+        .filter((x) -> x.getLanguageType().containsAttributes())
         .forEach((x) -> {
-          assert x != null;
+          Optional<Integer> sizeMaybe = x.getSize();
+          if (sizeMaybe.isEmpty()) {
+            return;
+          }
+
+          int size = sizeMaybe.get();
+          if (size == 1) {
+            updateEntity(x.getAsMutableEntity(), subStep);
+          } else {
+            Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
+            for (EngineValue value : values) {
+              updateEntity(value.getAsMutableEntity(), subStep);
+            }
+          }
         });
 
     target.endSubstep();
@@ -102,45 +90,32 @@ public class SimulationStepper {
     return target;
   }
 
+  
   /**
-   * Iterable that first returns the simulation entity and then iterates through patches.
+   * Performs a series of entity updates on a stream of entities.
+   *
+   * <p>If it is the first step of the simulation, each entity in the stream
+   * will be initialized. The stream is processed in parallel using Java Streams.
+   * Each entity undergoes a sequence of updates corresponding to sub-steps
+   * "start", "step", and "end".</p>
+   *
+   * @param entityStream the stream of entities to perform updates on
+   * @param isFirstStep boolean indicating if this is the first step of the simulation
    */
-  private static class SimAndPatchIterable implements Iterable<MutableEntity> {
-    private final MutableEntity simulation;
-    private final Iterable<ShadowingEntity> patches;
-
-    /**
-     * Create an iterable over a simulation followed by patches.
-     *
-     * @param simulation The simulation to return first before returning patches.
-     * @param patches The patches to return after returning the simulation.
-     */
-    public SimAndPatchIterable(MutableEntity simulation, Iterable<ShadowingEntity> patches) {
-      this.simulation = simulation;
-      this.patches = patches;
+  private void performStream(Stream<MutableEntity> entityStream, boolean isFirstStep) {
+    Stream<MutableEntity> initalizedStream;
+    if (isFirstStep) {
+      initalizedStream = entityStream.map((x) -> updateEntity(x, "init"));
+    } else {
+      initalizedStream = entityStream;
     }
 
-    @Override
-    public Iterator<MutableEntity> iterator() {
-      return new Iterator<MutableEntity>() {
-        private boolean simulationReturned = false;
-        private final Iterator<ShadowingEntity> patchIterator = patches.iterator();
+    Stream<MutableEntity> steppedStream = initalizedStream.map((x) -> updateEntity(x, "start"))
+        .map((x) -> updateEntity(x, "step"))
+        .map((x) -> updateEntity(x, "end"));
 
-        @Override
-        public boolean hasNext() {
-          return !simulationReturned || patchIterator.hasNext();
-        }
-
-        @Override
-        public MutableEntity next() {
-          if (!simulationReturned) {
-            simulationReturned = true;
-            return simulation;
-          }
-          return patchIterator.next();
-        }
-      };
-    }
+    long numCompleted = steppedStream.filter((x) -> x != null).count();
+    assert numCompleted > 0;
   }
 
 }

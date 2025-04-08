@@ -68,8 +68,8 @@ public class ShadowingEntityTest {
 
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
-    EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
-    assertEquals(mockEngineValue, priorValue);
+    Optional<EngineValue> priorValue = spatialEntity.getPriorAttribute(attrName);
+    assertEquals(mockEngineValue, priorValue.get());
 
     spatialEntity.setAttributeValue(attrName, mockEngineValue);
     verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
@@ -81,13 +81,6 @@ public class ShadowingEntityTest {
         IllegalStateException.class,
         () -> spatialEntity.getHandlersForAttribute("testAttr")
     );
-  }
-
-  @Test
-  void testGetCurrentAttributeUnresolved() {
-    String attrName = "testAttr";
-    spatialEntity.startSubstep("test");
-    assertThrows(IllegalStateException.class, () -> spatialEntity.getAttributeValue(attrName));
   }
 
   @Test

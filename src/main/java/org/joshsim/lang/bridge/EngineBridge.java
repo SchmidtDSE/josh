@@ -64,7 +64,7 @@ public interface EngineBridge {
    *
    * @return Iterable of all patches in the current step.
    */
-  Iterable<ShadowingEntity> getCurrentPatches();
+  Iterable<MutableEntity> getCurrentPatches();
 
   /**
    * Get patches from the previous step within a specific geometry.

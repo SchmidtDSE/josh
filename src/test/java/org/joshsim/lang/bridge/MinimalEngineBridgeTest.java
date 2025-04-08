@@ -7,6 +7,7 @@
 
 package org.joshsim.lang.bridge;
 
+import org.joshsim.engine.entity.base.MutableEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,7 +119,7 @@ public class MinimalEngineBridgeTest {
   void testGetCurrentPatches() {
     when(mockReplicate.getCurrentPatches()).thenReturn(Arrays.asList(mockPatch, mockPatch));
 
-    Iterable<ShadowingEntity> results = bridge.getCurrentPatches();
+    Iterable<MutableEntity> results = bridge.getCurrentPatches();
     assertTrue(results.iterator().hasNext(), "Should return patches");
   }
 

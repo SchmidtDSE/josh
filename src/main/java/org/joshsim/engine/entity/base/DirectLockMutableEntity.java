@@ -44,8 +44,19 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       Map<String, EngineValue> attributes
   ) {
     this.name = name;
-    this.eventHandlerGroups = new HashMap<>(eventHandlerGroups);
-    this.attributes = new HashMap<>(attributes);
+
+    if (eventHandlerGroups == null) {
+      this.eventHandlerGroups = new HashMap<>();
+    } else {
+      this.eventHandlerGroups = new HashMap<>(eventHandlerGroups);
+    }
+
+    if (attributes == null) {
+      this.attributes = new HashMap<>();
+    } else {
+      this.attributes = new HashMap<>(attributes);
+    }
+    
     lock = new ReentrantLock();
     substep = Optional.empty();
   }

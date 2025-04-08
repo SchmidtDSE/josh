@@ -10,6 +10,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +38,7 @@ class SimulationStepperTest {
    */
   @BeforeEach
   void setUp() {
-    ArrayList<ShadowingEntity> patches = new ArrayList<>();
+    ArrayList<MutableEntity> patches = new ArrayList<>();
     patches.add(mockPatch);
 
     when(mockBridge.getSimulation()).thenReturn(mockSimulation);
@@ -65,6 +66,8 @@ class SimulationStepperTest {
     when(mockSimulation.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
     when(mockSimulation.getAttributeValue("state")).thenReturn(Optional.empty());
     when(mockPatch.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
+
+    when(mockValue.getLanguageType()).thenReturn(new LanguageType("test", true));
 
     // Perform the step
     long result = stepper.perform();

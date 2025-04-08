@@ -69,13 +69,18 @@ public class ValueResolver {
 
       Scope newScope;
       if (innerSize.get() == 1) {
-        newScope = new EntityScope(resolved.getAsMutableEntity());
+        newScope = new EntityScope(resolved.getAsEntity());
       } else {
         newScope = new DistributionScope(resolved.getAsDistribution());
       }
 
       return continuationResolver.get(newScope);
     }
+  }
+
+  @Override
+  public String toString() {
+    return String.format("ValueResolver(%s)", path);
   }
 
   /**

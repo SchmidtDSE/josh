@@ -9,6 +9,7 @@ package org.joshsim;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -65,7 +66,8 @@ public class JoshSimFacade {
    */
   public static void runSimulation(JoshProgram program, String simulationName,
       SimulationStepCallback callback) {
-    MutableEntity simEntity = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
         simEntity,
         program.getConverter(),

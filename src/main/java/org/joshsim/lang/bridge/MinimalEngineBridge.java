@@ -162,10 +162,10 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Iterable<ShadowingEntity> getCurrentPatches() {
+  public Iterable<MutableEntity> getCurrentPatches() {
     Query query = new Query(getCurrentTimestep());
     Iterable<MutableEntity> patches = getReplicate().getCurrentPatches();
-    Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
+    Iterable<MutableEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
   }
 
@@ -226,7 +226,7 @@ public class MinimalEngineBridge implements EngineBridge {
   /**
    * Iterator that decorates patches with shadow tracking.
    */
-  private class DecoratingShadowIterator implements Iterator<ShadowingEntity> {
+  private class DecoratingShadowIterator implements Iterator<MutableEntity> {
 
     private final Iterator<MutableEntity> patches;
 
@@ -245,7 +245,7 @@ public class MinimalEngineBridge implements EngineBridge {
     }
 
     @Override
-    public ShadowingEntity next() {
+    public MutableEntity next() {
       MutableEntity patch = patches.next();
       return new ShadowingEntity(patch, simulation);
     }

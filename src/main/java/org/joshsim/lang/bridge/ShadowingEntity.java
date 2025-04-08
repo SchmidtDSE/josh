@@ -51,10 +51,10 @@ public class ShadowingEntity implements MutableEntity {
   private boolean checkAssertions;
 
   /**
-   * Create a new ShadowingEntity for a Patch.
+   * Create a new ShadowingEntity for a Patch or Simulation.
    *
    * @param inner entity to decorate.
-   * @param meta reference to simulation or simulation-like entity.
+   * @param meta reference to simulation or simulation-like entity. May be self.
    */
   public ShadowingEntity(MutableEntity inner, Entity meta) {
     this.inner = inner;
@@ -193,15 +193,13 @@ public class ShadowingEntity implements MutableEntity {
    * @throws IllegalStateException if the attribute exists but has not been initalized.
    * @throws IllegalArgumentException if the attribute does not exist on this entity.
    */
-  public EngineValue getPriorAttribute(String name) {
+  public Optional<EngineValue> getPriorAttribute(String name) {
     Optional<EngineValue> valueMaybe = inner.getAttributeValue(name);
     if (valueMaybe.isEmpty()) {
       assertAttributePresent(name);
-      String message = String.format("A value for %s is not available.", name);
-      throw new IllegalStateException(message);
     }
 
-    return valueMaybe.get();
+    return valueMaybe;
   }
 
   /**
@@ -409,7 +407,10 @@ public class ShadowingEntity implements MutableEntity {
    * @param name the unique identifier of the attribute to resolve from prior.
    */
   private void resolveAttributeFromPrior(String name) {
-    setAttributeValue(name, getPriorAttribute(name));
+    Optional<EngineValue> prior = getPriorAttribute(name);
+    if (prior.isPresent()) {
+      setAttributeValue(name, prior.get());
+    }
   }
 
   @Override
@@ -435,11 +436,11 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public void startSubstep(String name) {
     inner.startSubstep(name);
+    resolvedAttributes.clear();
   }
 
   @Override
   public void endSubstep() {
-    resolvedAttributes.clear();
     resolvingAttributes.clear();
     inner.endSubstep();
   }

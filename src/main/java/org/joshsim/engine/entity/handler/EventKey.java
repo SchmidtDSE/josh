@@ -84,6 +84,11 @@ public class EventKey {
 
   @Override
   public int hashCode() {
-    return Objects.hash(state, attribute, event);
+    return toString().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return String.format("EventKey(%s, %s, %s)", state, attribute, event);
   }
 }
