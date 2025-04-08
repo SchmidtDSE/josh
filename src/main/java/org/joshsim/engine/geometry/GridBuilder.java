@@ -320,7 +320,6 @@ public class GridBuilder {
         );
 
         if (!(cellGeometry == null)) {
-          String cellName = String.format("cell_%d_%d", rowIdx, colIdx);
           MutableEntity patch = prototype.buildSpatial(cellGeometry);
           patches.add(patch);
         }
