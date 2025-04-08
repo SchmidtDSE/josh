@@ -39,13 +39,13 @@ dependencies {
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
 
-  // Spatial4j for spatial context / operations
-  implementation("org.locationtech.spatial4j:spatial4j:0.8")
+  // // Spatial4j for spatial context / operations
+  // implementation("org.locationtech.spatial4j:spatial4j:0.8")
 
-  // Apache SIS for coordinate system transformations and COG support
-  implementation("org.apache.sis.core:sis-referencing:1.4")
-  implementation("org.apache.sis.storage:sis-storage:1.4")
-  implementation("org.apache.sis.storage:sis-geotiff:1.4")
+  // // Apache SIS for coordinate system transformations and COG support
+  // implementation("org.apache.sis.core:sis-referencing:1.4")
+  // implementation("org.apache.sis.storage:sis-storage:1.4")
+  // implementation("org.apache.sis.storage:sis-geotiff:1.4")
 
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0-M3")
