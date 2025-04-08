@@ -48,7 +48,7 @@ class DistributionScopeTest {
   void setUp() {
     EngineValueFactory factory = new EngineValueFactory();
     attributeValue = factory.build(5L, Units.EMPTY);
-    
+
     when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
     when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(attributeValue));

@@ -40,7 +40,7 @@ public class SimulationStepper {
     MutableEntity simulation = target.getSimulation();
     Iterable<ShadowingEntity> patches = target.getCurrentPatches();
     Iterable<MutableEntity> entities = new SimAndPatchIterable(simulation, patches);
-    
+
     Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
 
     Stream<MutableEntity> initalizedStream;
@@ -72,7 +72,7 @@ public class SimulationStepper {
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     Iterable<String> attributeNames = target.getAttributeNames();
-    
+
     Stream<EventKey> eventKeysNoState = StreamSupport.stream(attributeNames.spliterator(), false)
         .map((name) -> new EventKey(name, subStep));
 
@@ -93,7 +93,10 @@ public class SimulationStepper {
         .map((x) -> x.get())
         .map((x) -> x.getEventKey().getAttribute())
         .distinct()
-        .map((x) -> target.getAttributeValue(x));
+        .map((x) -> target.getAttributeValue(x))
+        .forEach((x) -> {
+          assert x != null;
+        });
 
     return target;
   }

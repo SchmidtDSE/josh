@@ -9,7 +9,7 @@ start simulation Example
  
   randSeed = 1234
 
-  assert.seedDensity
+  assert.seedDensity.step
     :if(meta.stepCount == 0) = max(all.seedDensity) == 0 count
     :if(meta.stepCount == 100) = max(all.seedDensity) > 0 count
 
@@ -17,8 +17,6 @@ end simulation
 
 
 start patch Default
-
-  location = all
 
   carryingCapacity.init = 100 count
   remainingRoom.step = current.carryingCapacity - count(current.QueryTrees)

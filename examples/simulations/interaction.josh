@@ -12,12 +12,11 @@ end simulation
 
 start patch Default
 
-  location = all
   Shrubs.init = create Shrubs
   TreeAs.init = create TreeA
   TreeBs.init = create TreeB
 
-  assert.heightTreeB
+  assert.heightTreeB.step
     :if(meta.stepCount == 0 count) = max(here.TreeB.height) == 0 m
     :elif(meta.stepCount == 100 count) = max(here.TreeB.height) > 0 m
 

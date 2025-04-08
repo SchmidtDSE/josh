@@ -29,8 +29,6 @@ end external
 
 start patch Default
 
-  location = all
-
   carryingCapacity.init = 30 count
   remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
 

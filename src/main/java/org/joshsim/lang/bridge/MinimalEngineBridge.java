@@ -7,11 +7,16 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
@@ -165,7 +170,7 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public Iterable<ShadowingEntity> getCurrentPatches() {
     Query query = new Query(getCurrentTimestep());
-    Iterable<Patch> patches = getReplicate().getCurrentPatches();
+    Iterable<MutableEntity> patches = getReplicate().getCurrentPatches();
     Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
   }
@@ -229,14 +234,14 @@ public class MinimalEngineBridge implements EngineBridge {
    */
   private class DecoratingShadowIterator implements Iterator<ShadowingEntity> {
 
-    private final Iterator<Patch> patches;
+    private final Iterator<MutableEntity> patches;
 
     /**
      * Create a new decorating iterator.
      *
      * @param patches the iterator of patches to decorate.
      */
-    public DecoratingShadowIterator(Iterator<Patch> patches) {
+    public DecoratingShadowIterator(Iterator<MutableEntity> patches) {
       this.patches = patches;
     }
 
@@ -247,7 +252,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     @Override
     public ShadowingEntity next() {
-      Patch patch = patches.next();
+      MutableEntity patch = patches.next();
       return new ShadowingEntity(patch, simulation);
     }
 

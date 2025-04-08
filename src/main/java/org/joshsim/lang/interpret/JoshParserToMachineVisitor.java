@@ -744,7 +744,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       Fragment childFragment = ctx.getChild(childIndex).accept(this);
-      
+
       for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {
         entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
       }

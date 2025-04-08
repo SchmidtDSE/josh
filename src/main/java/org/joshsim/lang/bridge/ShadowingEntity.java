@@ -21,7 +21,6 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
@@ -50,6 +49,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvingAttributes;
   private final Scope scope;
   private Optional<String> substep;
+  private boolean checkAssertions;
 
   /**
    * Create a new ShadowingEntity for a Patch.
@@ -57,10 +57,17 @@ public class ShadowingEntity implements MutableEntity {
    * @param inner entity to decorate.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(Patch inner, Entity meta) {
+  public ShadowingEntity(MutableEntity inner, Entity meta) {
     this.inner = inner;
     this.here = this;
     this.meta = meta;
+
+    Optional<EngineValue> checkAssertionsMaybe = meta.getAttributeValue("checkAssertions");
+    if (checkAssertionsMaybe.isPresent()) {
+      checkAssertions = checkAssertionsMaybe.get().getAsBoolean();
+    } else {
+      checkAssertions = true;
+    }
 
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
@@ -149,7 +156,7 @@ public class ShadowingEntity implements MutableEntity {
 
     EventKey eventKeyWithoutState = new EventKey(attribute, substep.get());
     Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
-    
+
     EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
     Optional<EventHandlerGroup> withState = inner.getEventHandlers(eventKeyWithState);
 
@@ -188,6 +195,7 @@ public class ShadowingEntity implements MutableEntity {
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    * @throws IllegalStateException if the attribute exists but has not been initialized.
    */
+  @Override
   public Optional<EngineValue> getAttributeValue(String name) {
     if (!resolvedAttributes.contains(name)) {
       if (hasAttribute(name)) {
@@ -207,6 +215,7 @@ public class ShadowingEntity implements MutableEntity {
    * @param value new value to assign to the attribute.
    * @throws IllegalArgumentException if the attribute is not known for this entity.
    */
+  @Override
   public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
     resolvedAttributes.add(name);
@@ -383,12 +392,22 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     // If failed to match, use prior
-    if (!executed) {
+    if (executed) {
+      if (name.startsWith("assert.")) {
+        Optional<EngineValue> result = getAttributeValue(name);
+        if (result.isPresent()) {
+          boolean value = result.get().getAsBoolean();
+          if (!value) {
+            throw new RuntimeException("Assertion failed for " + name);
+          }
+        }
+      }
+    } else {
       resolveAttributeFromPrior(name);
     }
   }
 
-  
+
   /**
    * Execute an event handler group.
    *

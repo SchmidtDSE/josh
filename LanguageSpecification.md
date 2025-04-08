@@ -155,6 +155,16 @@ start simulation Detailed
 end simulation
 ```
 
+This can specify patches but it uses `Default` if not otherwise specified:
+
+```
+start simulation Detailed
+
+  grid.patch = "Default"
+
+end simulation
+```
+
 This can include generalized sampling behavior:
 
 ```
@@ -206,7 +216,6 @@ Patches are the grid cells in which communities of organisms may be present.
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
   JoshuaTrees.step = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
@@ -226,7 +235,6 @@ Some simulations may represent simple occupancy as a binary where only one agent
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = {
     const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
     const new = create numNew JoshuaTree
@@ -240,8 +248,6 @@ Attributes may also be added to patches. This can be used in exporting and visua
 
 ```
 start patch Default
-
-  location = all
 
   # ...
 
@@ -407,7 +413,6 @@ New entities can be made through the create command. This is typically saved to 
 ```
 start patch Default
 
-  location = all
   Conifers.init = create Conifer
 
 end patch
@@ -924,7 +929,7 @@ start organism ForeverTree
     return newAge
   }
 
-  assert.age:if(meta.stepCount == 5) = mean(current.age) == 5 years
+  assert.age.step:if(meta.stepCount == 5) = mean(current.age) == 5 years
 
 end organism
 ```
@@ -933,13 +938,11 @@ These assertions can be placed on any entity type including patches.
 
 ```
 start patch Default
-
-  location = all
   
   SeedTree.init = create 100 count of LifeSeedTree
   SeedTree.end = here.SeedTree[here.SeedTree != "dead"]
   
-  assert.seed
+  assert.seed.step
     :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "seed"]) == 100 count
     :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "seed"]) > 0 count
 
@@ -1016,7 +1019,6 @@ Finally, uniform patches are defined with all species present.
 ```
 start patch Default
 
-  location = all
   Shrubs.init = create 1 count of Shrubs
   TreeAs.init = create 1 count of TreeA
   TreeBs.init = create 1 count of TreeB
@@ -1142,7 +1144,6 @@ Finally, uniform patches are defined.
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
 
 end patch
@@ -1215,8 +1216,6 @@ Seed dispersal means that new Joshua Trees may be created if the space is not to
 ```
 start patch Default
 
-  location = all
-
   carryingCapacity.init = 30 count
   remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
 
@@ -1259,8 +1258,6 @@ This is used as a simple marker:
 ```
 start patch Default
 
-  location = all
-
   JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
@@ -1298,8 +1295,6 @@ This second approach simply uses the patch itself.
 
 ```
 start patch Default
-
-  location = all
 
   JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
   JoshuaTrees.start = {

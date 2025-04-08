@@ -34,7 +34,7 @@ public class JoshProgram {
    * @param simulations The store which contains all simulations required for running for this
    *     program.
    */
-  public JoshProgram(Converter converter, EngineBridgeSimulationStore simulations, 
+  public JoshProgram(Converter converter, EngineBridgeSimulationStore simulations,
       EntityPrototypeStore prototypes) {
     this.converter = converter;
     this.simulations = simulations;

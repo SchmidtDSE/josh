@@ -30,7 +30,7 @@ class SimulationStepperTest {
   @Mock(lenient = true) private ShadowingEntity mockPatch;
   @Mock(lenient = true) private EventHandlerGroup mockHandlerGroup;
   @Mock(lenient = true) private EngineValue mockValue;
-  
+
   private SimulationStepper stepper;
 
   /**
@@ -54,14 +54,14 @@ class SimulationStepperTest {
     // Setup mock behavior
     ArrayList<String> attributes = new ArrayList<>();
     attributes.add("testAttribute");
-    
+
     when(mockSimulation.getAttributeNames()).thenReturn(attributes);
     when(mockPatch.getAttributeNames()).thenReturn(attributes);
-    
+
     EventKey eventKey = new EventKey("testAttribute", "init");
     when(mockSimulation.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
     when(mockPatch.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
-    
+
     when(mockHandlerGroup.getEventKey()).thenReturn(eventKey);
     when(mockSimulation.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
     when(mockSimulation.getAttributeValue("state")).thenReturn(Optional.empty());

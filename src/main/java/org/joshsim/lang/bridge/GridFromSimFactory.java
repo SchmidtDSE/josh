@@ -27,7 +27,7 @@ public class GridFromSimFactory {
 
   private final EngineBridge bridge;
   private final EngineValueFactory valueFactory;
-  
+
   /**
    * Constructs a GridFromSimFactory with the specified EngineBridge.
    *
@@ -35,10 +35,10 @@ public class GridFromSimFactory {
    */
   public GridFromSimFactory(EngineBridge bridge) {
     this.bridge = bridge;
-    
+
     valueFactory = new EngineValueFactory();
   }
-  
+
   /**
    * Constructs a GridFromSimFactory with the specified EngineBridge and EngineValueFactory.
    *
@@ -62,11 +62,13 @@ public class GridFromSimFactory {
     Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.start");
     Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.end");
     Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
+    Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
 
     String inputCrs = getOrDefault(inputCrsMaybe, "EPSG:4326");
     String targetCrs = getOrDefault(targetCrsMaybe, "EPSG:4326");
     String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
+    String patchName = getOrDefault(patchNameMaybe, "Default");
 
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
     EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
@@ -77,7 +79,8 @@ public class GridFromSimFactory {
           inputCrs,
           targetCrs,
           extents,
-          sizeValue.getAsDecimal()
+          sizeValue.getAsDecimal(),
+          bridge.getPrototype(patchName)
       );
 
       return builder.build();
@@ -124,7 +127,7 @@ public class GridFromSimFactory {
    */
   private void addExtents(GridBuilderExtentsBuilder builder, String target, boolean start) {
     String[] pieces = target.split(",");
-    
+
     EngineValue value1 = parseExtentComponent(pieces[0]);
     EngineValue value2 = parseExtentComponent(pieces[1]);
     boolean latitudeFirst = pieces[0].contains("latitude");
@@ -153,7 +156,7 @@ public class GridFromSimFactory {
       } else {
         builder.setBottomRightY(latitudeConverted.getAsDecimal());
       }
-      
+
     }
   }
 
@@ -184,5 +187,5 @@ public class GridFromSimFactory {
       return bridge.convert(target, allowed);
     }
   }
-  
+
 }

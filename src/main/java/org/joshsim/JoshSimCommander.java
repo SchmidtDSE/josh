@@ -104,7 +104,7 @@ public class JoshSimCommander {
           default -> UNKNOWN_ERROR_CODE;
         };
       }
-      
+
       output.printInfo("Validated Josh code at " + file);
 
       if (minioOptions.isMinioOutput()) {
@@ -322,7 +322,7 @@ public class JoshSimCommander {
     public Optional<JoshProgram> getProgram() {
       return program;
     }
-    
+
   }
-  
+
 }

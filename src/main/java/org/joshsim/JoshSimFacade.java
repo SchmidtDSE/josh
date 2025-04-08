@@ -53,7 +53,7 @@ public class JoshSimFacade {
   /**
    * Runs a simulation from the provided program.
    *
-   * <p>Creates and executes a simulation using the provided program and simulation name. 
+   * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
    * @param program The Josh program containing the simulation to run. This is the program in which

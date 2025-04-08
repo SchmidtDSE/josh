@@ -46,7 +46,7 @@ public class FutureBridgeGetterTest {
   @BeforeEach
   void setUp() {
     bridgeGetter = new FutureBridgeGetter();
-    
+
     when(mockProgram.getSimulations()).thenReturn(mockSimStore);
     when(mockProgram.getPrototypes()).thenReturn(mockPrototypeStore);
     when(mockProgram.getConverter()).thenReturn(mockConverter);
@@ -78,7 +78,7 @@ public class FutureBridgeGetterTest {
   void testSuccessfulBridgeCreation() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
-    
+
     EngineBridge bridge = bridgeGetter.get();
     assertEquals(bridge, bridgeGetter.get(), "Should return same bridge instance");
   }

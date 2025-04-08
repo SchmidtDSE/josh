@@ -29,4 +29,11 @@ public interface EntityPrototypeStore {
    */
   boolean has(String entityName);
 
+  /**
+   * Get all prorotypes in this store.
+   *
+   * @return Iterable over all registered prototypes within this EntityPrototypeStore.
+   */
+  Iterable<EntityPrototype> getAll();
+
 }

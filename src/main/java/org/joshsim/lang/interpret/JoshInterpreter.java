@@ -61,7 +61,7 @@ public class JoshInterpreter {
 
     JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter);
     Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
-    
+
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);
     bridgeGetter.setSimulationName(simulationName);

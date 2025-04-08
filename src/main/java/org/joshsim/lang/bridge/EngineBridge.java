@@ -22,7 +22,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public interface EngineBridge {
 
-  
+
   /**
    * Get the current simulation entity.
    *

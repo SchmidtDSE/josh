@@ -14,28 +14,26 @@ end simulation
 
 start patch Default
 
-  location = all
-
   SeedTree.init = create 100 count of LifeSeedTree
   SeedTree.end = here.SeedTree[here.SeedTree != "dead"]
 
-  assert.seed
+  assert.seed.step
     :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "seed"]) == 100 count
     :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "seed"]) > 0 count
 
-  assert.seedling
+  assert.seedling.step
     :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "seedling"]) == 0 count
     :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "seedling"]) > 0 count
 
-  assert.juvenile
+  assert.juvenile.step
     :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "juvenile"]) == 0 count
     :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "juvenile"]) > 0 count
  
-  assert.adult
+  assert.adult.step
     :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "adult"]) == 0 count
     :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "adult"]) > 0 count
 
-  assert.deleteDead
+  assert.deleteDead.step
     :if(meta.stepCount == 0) = count(here.SeedTree) == 100 count
     :elif(meta.stepCount == 100) = count(here.SeedTree) < 100 count
 

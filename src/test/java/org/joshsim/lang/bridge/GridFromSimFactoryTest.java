@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -32,9 +33,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GridFromSimFactoryTest {
 
-  @Mock private EngineBridge mockBridge;
-  @Mock private Entity mockSimulation;
-  
+  @Mock(lenient = true) private EngineBridge mockBridge;
+  @Mock(lenient = true) private Entity mockSimulation;
+  @Mock(lenient = true) private EntityPrototype mockPrototype;
+
   private EngineValueFactory valueFactory;
   private GridFromSimFactory factory;
 
@@ -45,6 +47,7 @@ class GridFromSimFactoryTest {
   void setUp() {
     valueFactory = new EngineValueFactory();
     factory = new GridFromSimFactory(mockBridge, valueFactory);
+    when(mockBridge.getPrototype("Default")).thenReturn(mockPrototype);
   }
 
   @Test
@@ -57,7 +60,7 @@ class GridFromSimFactoryTest {
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.empty());
 
     Grid result = factory.build(mockSimulation);
-    
+
     assertNotNull(result, "Grid should be created with default values");
     assertNotNull(result.getPatches(), "Grid should contain patches");
     assertNotNull(result.getSpacing(), "Grid should have spacing defined");
@@ -88,7 +91,7 @@ class GridFromSimFactoryTest {
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
 
     Grid result = factory.build(mockSimulation);
-    
+
     assertNotNull(result, "Grid should be created with custom values");
     assertFalse(result.getPatches().isEmpty(), "Grid should contain patches");
   }

@@ -58,7 +58,7 @@ public class ValueResolver {
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
       Optional<Integer> innerSize = resolved.getSize();
-      
+
       if (innerSize.isEmpty()) {
         String message = String.format(
             "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",

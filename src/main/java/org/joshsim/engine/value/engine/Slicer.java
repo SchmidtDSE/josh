@@ -102,7 +102,7 @@ public class Slicer {
       boolean selectionBool = selection.getAsBoolean();
       return selectionBool ? Optional.of(subject) : Optional.empty();
     }
-    
+
   }
-  
+
 }

@@ -51,7 +51,7 @@ public class PriorShadowingEntityDecoratorTest {
     when(mockInner.getKey()).thenReturn(Optional.of(mockGeoKey));
     when(mockInner.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
     when(mockInner.getPriorAttribute("testAttr")).thenReturn(mockEngineValue);
-    
+
     decorator = new PriorShadowingEntityDecorator(mockInner);
   }
 

@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * Builder class for creating {@link GridBuilderExtents} instances.
  */
 public class GridBuilderExtentsBuilder {
-  
+
   private BigDecimal topLeftX;
   private BigDecimal topLeftY;
   private BigDecimal bottomRightX;
