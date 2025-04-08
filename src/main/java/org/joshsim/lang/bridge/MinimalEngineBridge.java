@@ -112,7 +112,7 @@ public class MinimalEngineBridge implements EngineBridge {
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
 
     simulation.endSubstep();
-    
+
     absoluteStep = 0;
     inStep = false;
   }

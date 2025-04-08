@@ -14,7 +14,6 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
-import org.joshsim.lang.bridge.ShadowingEntity;
 
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
