@@ -30,7 +30,7 @@ import org.opengis.util.FactoryException;
 public class GeometryMomentoTest {
 
   @Mock
-  private Geometry mockGeometry;
+  private EngineGeometry mockGeometry;
 
   private GeometryMomento squareMomento;
   private GeometryMomento circleMomento;
@@ -69,10 +69,10 @@ public class GeometryMomentoTest {
 
   @Test
   void testBuildGeometry() {
-    Geometry squareGeometry = squareMomento.build();
+    EngineGeometry squareGeometry = squareMomento.build();
     assertNotNull(squareGeometry);
 
-    Geometry circleGeometry = circleMomento.build();
+    EngineGeometry circleGeometry = circleMomento.build();
     assertNotNull(circleGeometry);
   }
 

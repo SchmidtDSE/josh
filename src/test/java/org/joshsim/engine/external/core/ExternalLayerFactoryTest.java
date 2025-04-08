@@ -63,11 +63,11 @@ public class ExternalLayerFactoryTest {
     wgs84 = CRS.forCode("EPSG:4326"); // WGS84
   }
 
-  private Geometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
+  private EngineGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
     return new Geometry(spatialContext.getShapeFactory().rect(minX, maxX, minY, maxY), wgs84);
   }
 
-  private Request createFileRequest(String path, Geometry geometry) {
+  private Request createFileRequest(String path, EngineGeometry geometry) {
     return new Request("file", "", path, Optional.of(geometry), Optional.empty());
   }
 
@@ -90,8 +90,8 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testChainReadsCogFiles() {
-    // Create a geometry in the US where the test data has coverage
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -97.0, 44.0);
+    // Create a EngineGeometry in the US where the test data has coverage
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -97.0, 44.0);
     Request request = createFileRequest(COG_NOV_2021, testArea);
 
     // Test the entire chain
@@ -106,7 +106,7 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testCachingPerformance() {
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
     Request request = createFileRequest(COG_NOV_2021, testArea);
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
 
@@ -133,8 +133,8 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testIndividualLayers() throws IOException {
-    // Create test geometry and requests
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    // Create test EngineGeometry and requests
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
     Request request = createFileRequest(COG_NOV_2021, testArea);
 
     // Test CogExternalLayer
@@ -168,8 +168,8 @@ public class ExternalLayerFactoryTest {
     primingLayer.fulfill(request);
     assertTrue(primingLayer.getPrimingGeometry().isPresent());
 
-    // Verify priming geometry matches our request geometry
-    Geometry primingGeom = primingLayer.getPrimingGeometry().get();
+    // Verify priming EngineGeometry matches our request geometry
+    EngineGeometry primingGeom = primingLayer.getPrimingGeometry().get();
     Rectangle primingRect = (Rectangle) primingGeom.getShape();
     assertEquals(-100.0, primingRect.getMinX(), 0.000001);
     assertEquals(-99.0, primingRect.getMaxX(), 0.000001);
@@ -180,8 +180,8 @@ public class ExternalLayerFactoryTest {
   @Test
   void testExtendingPrimingGeometry() {
     // Create two different but overlapping test areas
-    Geometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Geometry area2 = createBoxGeometry(-99.5, 40.5, -98.5, 41.5);
+    EngineGeometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry area2 = createBoxGeometry(-99.5, 40.5, -98.5, 41.5);
 
     Request request1 = createFileRequest(COG_NOV_2021, area1);
     Request request2 = createFileRequest(COG_NOV_2021, area2);
@@ -191,30 +191,30 @@ public class ExternalLayerFactoryTest {
     ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(mockCogLayer);
     ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
 
-    // First request should set priming geometry to area1
+    // First request should set priming EngineGeometry to area1
     primingLayer.fulfill(request1);
     assertTrue(primingLayer.getPrimingGeometry().isPresent());
 
-    // Save the first priming geometry for comparison
-    Geometry firstPrimingGeom = primingLayer.getPrimingGeometry().get();
+    // Save the first priming EngineGeometry for comparison
+    EngineGeometry firstPrimingGeom = primingLayer.getPrimingGeometry().get();
 
-    // Second request should extend priming geometry to include area2
+    // Second request should extend priming EngineGeometry to include area2
     primingLayer.fulfill(request2);
     assertTrue(primingLayer.getPrimingGeometry().isPresent());
 
-    // The new priming geometry should be different than the first
-    Geometry extendedPrimingGeom = primingLayer.getPrimingGeometry().get();
+    // The new priming EngineGeometry should be different than the first
+    EngineGeometry extendedPrimingGeom = primingLayer.getPrimingGeometry().get();
     assertNotEquals(firstPrimingGeom, extendedPrimingGeom);
 
-    // Verify the extended geometry contains both original areas
+    // Verify the extended EngineGeometry contains both original areas
     // Note: This test currently uses getConvexHull which isn't implemented yet
-    // So we're just verifying the geometry changed, not its specific shape
+    // So we're just verifying the EngineGeometry changed, not its specific shape
   }
 
   @Test
   void testPrimingGeometryPropagation() {
     // Create a test area
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
     Request request = createFileRequest(COG_NOV_2021, testArea);
 
     // Create mock layers to verify behavior
@@ -225,13 +225,13 @@ public class ExternalLayerFactoryTest {
     // Execute the request
     primingLayer.fulfill(request);
 
-    // Verify that the request received by the cache layer has the priming geometry set
+    // Verify that the request received by the cache layer has the priming EngineGeometry set
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     verify(cacheLayer).fulfill(requestCaptor.capture());
     Request capturedRequest = requestCaptor.getValue();
 
     assertTrue(capturedRequest.getPrimingGeometry().isPresent(),
-        "Request should have priming geometry set");
+        "Request should have priming EngineGeometry set");
   }
 
   @Test
@@ -239,8 +239,8 @@ public class ExternalLayerFactoryTest {
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
 
     // Create requests for different areas and months
-    Geometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Geometry area2 = createBoxGeometry(-98.0, 39.0, -97.0, 40.0);
+    EngineGeometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry area2 = createBoxGeometry(-98.0, 39.0, -97.0, 40.0);
     Request request1 = createFileRequest(COG_NOV_2021, area1);
     Request request2 = createFileRequest(COG_DEC_2021, area2);
 
@@ -263,16 +263,16 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testGeometryHasCorrectCrs() {
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
 
-    // Verify the geometry has the correct CRS
+    // Verify the EngineGeometry has the correct CRS
     assertEquals(wgs84, testArea.getCrs(), "Geometry should have WGS84 CRS");
   }
 
   @Test
   void testNoPrimingGeometryFallsBackToDirectIo() {
     // Create test area and request with no priming geometry
-    Geometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
+    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
     Request request = createFileRequest(COG_NOV_2021, testArea);
 
     // Create mock layers to verify behavior
@@ -297,7 +297,7 @@ public class ExternalLayerFactoryTest {
 
     // Create many different geometries to fill the cache
     for (int i = 0; i < 200; i++) {
-      Geometry area = createBoxGeometry(-100.0 + (i * 0.1), 40.0, -99.0 + (i * 0.1), 41.0);
+      EngineGeometry area = createBoxGeometry(-100.0 + (i * 0.1), 40.0, -99.0 + (i * 0.1), 41.0);
       Request request = createFileRequest(COG_NOV_2021, area);
       request.setPrimingGeometry(Optional.of(area)); // Set the area as its own priming geometry
       cacheLayer.fulfill(request);

@@ -40,7 +40,7 @@ public class QueryCacheEngineBridgeTest {
   @Mock(lenient = true) private Replicate mockReplicate;
   @Mock(lenient = true) private Converter mockConverter;
   @Mock(lenient = true) private Patch mockPatch;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private GeometryMomento mockGeometryMomento;
   @Mock(lenient = true) private GeoKey mockGeoKey;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;

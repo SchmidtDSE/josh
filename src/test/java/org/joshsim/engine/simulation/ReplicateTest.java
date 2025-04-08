@@ -34,7 +34,7 @@ public class ReplicateTest {
   @Mock private Entity frozenPatch2;
   @Mock private GeoKey mockKey1;
   @Mock private GeoKey mockKey2;
-  @Mock private Geometry mockGeometry;
+  @Mock private EngineGeometry mockGeometry;
   @Mock private Query mockQuery;
 
   private HashMap<GeoKey, Patch> patches;

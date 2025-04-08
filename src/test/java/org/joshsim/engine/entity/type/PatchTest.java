@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
  */
 public class PatchTest {
 
-  private Geometry mockGeometry;
+  private EngineGeometry mockGeometry;
   private String patchName;
   private HashMap<EventKey, EventHandlerGroup> eventHandlerGroups;
   private HashMap<String, EngineValue> attributes;
@@ -31,7 +32,7 @@ public class PatchTest {
    */
   @BeforeEach
   public void setUp() {
-    mockGeometry = mock(Geometry.class);
+    mockGeometry = mock(EngineGeometry.class);
     patchName = "testPatch";
     eventHandlerGroups = new HashMap<>();
     attributes = new HashMap<>();

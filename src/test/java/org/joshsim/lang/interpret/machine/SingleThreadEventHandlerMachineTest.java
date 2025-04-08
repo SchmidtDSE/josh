@@ -36,7 +36,7 @@ public class SingleThreadEventHandlerMachineTest {
 
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private EngineValue mockValue;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private Entity mockEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;

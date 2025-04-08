@@ -28,7 +28,7 @@ import org.opengis.util.FactoryException;
 /**
  * Unit tests for the GeometryFactory class.
  */
-public class GeometryFactoryTest {
+public class EngineGeometryFactoryTest {
 
   private SpatialContext geoContext;
   private SpatialContext projectedContext;
@@ -63,7 +63,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY,
+      EngineGeometry geometry = GeometryFactory.createSquare(width, centerX, centerY,
           GeometryFactory.getDefaultSpatialContext(), wgs84);
 
       // Then
@@ -89,7 +89,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext, wgs84);
+      EngineGeometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext, wgs84);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -111,7 +111,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           width, centerX, centerY, projectedContext, utm11n
       );
 
@@ -137,7 +137,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           width, centerX, centerY, geoContext, wgs84
       );
 
@@ -160,7 +160,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           width, centerX, centerY, projectedContext, utm11n
       );
 
@@ -183,7 +183,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = new BigDecimal("10.987654321"); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext, wgs84);
+      EngineGeometry geometry = GeometryFactory.createSquare(width, centerX, centerY, geoContext, wgs84);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -205,7 +205,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = new BigDecimal("10.987654321"); // northing (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           width, centerX, centerY, projectedContext, utm11n
       );
 
@@ -302,7 +302,7 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           topLeftX, topLeftY, bottomRightX, bottomRightY,
           GeometryFactory.getDefaultSpatialContext(),
           wgs84
@@ -329,7 +329,7 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           topLeftX, topLeftY, bottomRightX, bottomRightY, geoContext, wgs84
       );
 
@@ -354,7 +354,7 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
           topLeftX, topLeftY, bottomRightX, bottomRightY, projectedContext, utm11n
       );
 
@@ -379,7 +379,7 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When/Then
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
             topLeftX,
             topLeftY,
             bottomRightX,
@@ -400,7 +400,7 @@ public class GeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When/Then
-      Geometry geometry = GeometryFactory.createSquare(
+      EngineGeometry geometry = GeometryFactory.createSquare(
             topLeftX,
             topLeftY,
             bottomRightX,
@@ -459,7 +459,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, wgs84);
+      EngineGeometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, wgs84);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -479,7 +479,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, geoContext, wgs84);
+      EngineGeometry geometry = GeometryFactory.createCircle(radius, centerX, centerY, geoContext, wgs84);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -499,7 +499,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      Geometry geometry = GeometryFactory.createCircle(
+      EngineGeometry geometry = GeometryFactory.createCircle(
           radius, centerX, centerY, projectedContext, utm11n
       );
 
@@ -522,7 +522,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY, wgs84);
+      EngineGeometry geometry = GeometryFactory.createCircle(pointX, pointY, centerX, centerY, wgs84);
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -543,7 +543,7 @@ public class GeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      Geometry geometry = GeometryFactory.createCircle(
+      EngineGeometry geometry = GeometryFactory.createCircle(
           pointX, pointY, centerX, centerY, projectedContext, utm11n
       );
 
