@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
-import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.geometry.Grid;
 
@@ -26,7 +26,7 @@ import org.joshsim.engine.geometry.Grid;
  */
 public class Replicate {
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
-  private Map<GeoKey, Patch> presentTimeStep;
+  private Map<GeoKey, MutableEntity> presentTimeStep;
   private long stepNumber = 0;
 
   /**
@@ -34,7 +34,7 @@ public class Replicate {
    *
    * @param patches the patches to be included in the replicate.
    */
-  public Replicate(Map<GeoKey, Patch> patches) {
+  public Replicate(Map<GeoKey, MutableEntity> patches) {
     this.presentTimeStep = patches;
   }
 
@@ -45,7 +45,7 @@ public class Replicate {
    */
   public Replicate(Grid grid) {
     presentTimeStep = new HashMap<>();
-    for (Patch patch : grid.getPatches()) {
+    for (MutableEntity patch : grid.getPatches()) {
       presentTimeStep.put(patch.getKey().orElseThrow(), patch);
     }
   }
@@ -73,11 +73,23 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
     HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
-    for (Patch patch : presentTimeStep.values()) {
+    for (MutableEntity patch : presentTimeStep.values()) {
       frozenPatches.put(patch.getKey().orElseThrow(), patch.freeze());
     }
     TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
+  }
+
+  /**
+   * Remove a timestep from memory.
+   *
+   * <p>Remove a timestep from record if operating in a memory constrained environment. This could
+   * happen after writing to disk, for example.</p>
+   *
+   * @param stepNumber The step number to be removed.
+   */
+  public void deleteTimeStep(long stepNumber) {
+    pastTimeSteps.remove(stepNumber);
   }
 
   /**
@@ -123,7 +135,7 @@ public class Replicate {
    * @param key of the Patch to lookup.
    * @param stepNumber of the timestep at which to return the patch.
    */
-  public Patch getPatchByKey(GeoKey key, long stepNumber) {
+  public MutableEntity getPatchByKey(GeoKey key, long stepNumber) {
     if (stepNumber != getStepNumber()) {
       throw new IllegalArgumentException(
         "Cannot lookup Patch at past time steps using `getPatchByKey`, use `query` instead."
@@ -138,7 +150,7 @@ public class Replicate {
    *
    * @return Iterable over mutable Patches.
    */
-  public Iterable<Patch> getCurrentPatches() {
+  public Iterable<MutableEntity> getCurrentPatches() {
     return presentTimeStep.values();
   }
 }

@@ -9,6 +9,7 @@ package org.joshsim;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -53,7 +54,7 @@ public class JoshSimFacade {
   /**
    * Runs a simulation from the provided program.
    *
-   * <p>Creates and executes a simulation using the provided program and simulation name. 
+   * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
    * @param program The Josh program containing the simulation to run. This is the program in which
@@ -65,7 +66,8 @@ public class JoshSimFacade {
    */
   public static void runSimulation(JoshProgram program, String simulationName,
       SimulationStepCallback callback) {
-    MutableEntity simEntity = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
         simEntity,
         program.getConverter(),
@@ -75,6 +77,9 @@ public class JoshSimFacade {
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform();
       callback.onStep(completedStep);
+      if (completedStep > 2) {
+        bridge.getReplicate().deleteTimeStep(completedStep - 2);
+      }
     }
   }
 

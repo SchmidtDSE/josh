@@ -139,6 +139,7 @@ spotless {
 
     cleanthat().addMutator('SafeAndConsensual')
     importOrder()
+    removeUnusedImports()
     leadingTabsToSpaces(2)
     trimTrailingWhitespace()
     endWithNewline()

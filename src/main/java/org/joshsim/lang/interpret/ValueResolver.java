@@ -58,7 +58,7 @@ public class ValueResolver {
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
       Optional<Integer> innerSize = resolved.getSize();
-      
+
       if (innerSize.isEmpty()) {
         String message = String.format(
             "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",
@@ -69,7 +69,7 @@ public class ValueResolver {
 
       Scope newScope;
       if (innerSize.get() == 1) {
-        newScope = new EntityScope(resolved.getAsMutableEntity());
+        newScope = new EntityScope(resolved.getAsEntity());
       } else {
         newScope = new DistributionScope(resolved.getAsDistribution());
       }
@@ -78,13 +78,18 @@ public class ValueResolver {
     }
   }
 
+  @Override
+  public String toString() {
+    return String.format("ValueResolver(%s)", path);
+  }
+
   /**
    * Gets or creates a resolver for any remaining path segments after the longest matching prefix.
    *
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.
    * It then creates a resolver for any remaining path segments if needed. This is required because
    * some attributes may appear nested but not actually within an inner scope. This may be beacuse
-   * they are saved on the outer scope like for steps.start and steps.end which are within
+   * they are saved on the outer scope like for steps.low and steps.high which are within
    * Simulation. The "nesting" is simply syntatic sugar in this case for the Josh language.</p>
    *
    * @param target The scope to search for matching path prefixes.

@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.value.engine;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -102,7 +101,7 @@ public class Slicer {
       boolean selectionBool = selection.getAsBoolean();
       return selectionBool ? Optional.of(subject) : Optional.empty();
     }
-    
+
   }
-  
+
 }

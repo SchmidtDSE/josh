@@ -6,14 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
@@ -37,10 +30,10 @@ public interface MutableEntity extends Entity, Lockable {
    * @param eventKey The event for which handler groups should be returned.
    * @return the event handler group, or empty if it does not exist
    */
-  public Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey);
+  Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey);
 
   @Override
-  public Optional<EngineValue> getAttributeValue(String name);
+  Optional<EngineValue> getAttributeValue(String name);
 
   /**
    * Set the value of an attribute by name.
@@ -48,6 +41,37 @@ public interface MutableEntity extends Entity, Lockable {
    * @param name the attribute name
    * @param value the value to set
    */
-  public void setAttributeValue(String name, EngineValue value);
+  void setAttributeValue(String name, EngineValue value);
+
+  /**
+   * Indicate that this entity is starting a substep or step phase like step.
+   *
+   * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
+   * acquiring a global lock on this entity for thread safety.</p>
+   *
+   * @param name name of the substep or phase like start which is beginning.
+   */
+  void startSubstep(String name);
+
+  /**
+   * Indicate that this entity is finishing with a substep or step phase like start.
+   *
+   * <p>Indicate that this entity is ending a substep or step phase in which it may be mutated,
+   * releasing a global lock on this entity for thread safety.</p>
+   */
+  void endSubstep();
+
+
+  /**
+   * Get the name of the current substep or phase.
+   *
+   * <p>Return the name of the substep or phase that is currently in progress, if any, as an
+   * Optional string. This can be useful for debugging or logging purposes to know which stage the
+   * entity is in during its lifecycle. The returned value can be empty if no substep is currently
+   * active.</p>
+   *
+   * @return the name of the current substep, or an empty Optional if no substep currently active.
+   */
+  Optional<String> getSubstep();
 
 }

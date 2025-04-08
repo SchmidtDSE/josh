@@ -2,7 +2,6 @@
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -11,6 +10,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +30,7 @@ class SimulationStepperTest {
   @Mock(lenient = true) private ShadowingEntity mockPatch;
   @Mock(lenient = true) private EventHandlerGroup mockHandlerGroup;
   @Mock(lenient = true) private EngineValue mockValue;
-  
+
   private SimulationStepper stepper;
 
   /**
@@ -38,7 +38,7 @@ class SimulationStepperTest {
    */
   @BeforeEach
   void setUp() {
-    ArrayList<ShadowingEntity> patches = new ArrayList<>();
+    ArrayList<MutableEntity> patches = new ArrayList<>();
     patches.add(mockPatch);
 
     when(mockBridge.getSimulation()).thenReturn(mockSimulation);
@@ -54,18 +54,20 @@ class SimulationStepperTest {
     // Setup mock behavior
     ArrayList<String> attributes = new ArrayList<>();
     attributes.add("testAttribute");
-    
+
     when(mockSimulation.getAttributeNames()).thenReturn(attributes);
     when(mockPatch.getAttributeNames()).thenReturn(attributes);
-    
+
     EventKey eventKey = new EventKey("testAttribute", "init");
     when(mockSimulation.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
     when(mockPatch.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
-    
+
     when(mockHandlerGroup.getEventKey()).thenReturn(eventKey);
     when(mockSimulation.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
     when(mockSimulation.getAttributeValue("state")).thenReturn(Optional.empty());
     when(mockPatch.getAttributeValue("testAttribute")).thenReturn(Optional.of(mockValue));
+
+    when(mockValue.getLanguageType()).thenReturn(new LanguageType("test", true));
 
     // Perform the step
     long result = stepper.perform();

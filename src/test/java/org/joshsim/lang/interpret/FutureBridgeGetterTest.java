@@ -9,14 +9,11 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
@@ -46,7 +43,7 @@ public class FutureBridgeGetterTest {
   @BeforeEach
   void setUp() {
     bridgeGetter = new FutureBridgeGetter();
-    
+
     when(mockProgram.getSimulations()).thenReturn(mockSimStore);
     when(mockProgram.getPrototypes()).thenReturn(mockPrototypeStore);
     when(mockProgram.getConverter()).thenReturn(mockConverter);
@@ -78,7 +75,7 @@ public class FutureBridgeGetterTest {
   void testSuccessfulBridgeCreation() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
-    
+
     EngineBridge bridge = bridgeGetter.get();
     assertEquals(bridge, bridgeGetter.get(), "Should return same bridge instance");
   }

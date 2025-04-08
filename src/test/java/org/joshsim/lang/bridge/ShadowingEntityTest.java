@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,23 +62,13 @@ public class ShadowingEntityTest {
   }
 
   @Test
-  void testSubstepLifecycle() {
-    String substepName = "start";
-    spatialEntity.startSubstep(substepName);
-    assertThrows(IllegalStateException.class, () -> spatialEntity.startSubstep("step"));
-    spatialEntity.endSubstep();
-    spatialEntity.startSubstep("step");
-    spatialEntity.endSubstep();
-  }
-
-  @Test
   void testSetAttribute() {
     String attrName = "testAttr";
 
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
-    EngineValue priorValue = spatialEntity.getPriorAttribute(attrName);
-    assertEquals(mockEngineValue, priorValue);
+    Optional<EngineValue> priorValue = spatialEntity.getPriorAttribute(attrName);
+    assertEquals(mockEngineValue, priorValue.get());
 
     spatialEntity.setAttributeValue(attrName, mockEngineValue);
     verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
@@ -91,28 +80,6 @@ public class ShadowingEntityTest {
         IllegalStateException.class,
         () -> spatialEntity.getHandlersForAttribute("testAttr")
     );
-  }
-
-  @Test
-  void testGetHandlersDuringSubstep() {
-    String attrName = "testAttr";
-    String substepName = "testSubstep";
-
-    EventKey eventKey = new EventKey(attrName, substepName);
-    when(mockSpatialEntity.getEventHandlers(eventKey))
-        .thenReturn(Optional.of(mockEventHandlerGroup));
-
-    spatialEntity.startSubstep(substepName);
-    Iterable<EventHandlerGroup> handlers = spatialEntity.getHandlersForAttribute(attrName);
-    assertTrue(handlers.iterator().hasNext());
-    spatialEntity.endSubstep();
-  }
-
-  @Test
-  void testGetCurrentAttributeUnresolved() {
-    String attrName = "testAttr";
-    spatialEntity.startSubstep("test");
-    assertThrows(IllegalStateException.class, () -> spatialEntity.getAttributeValue(attrName));
   }
 
   @Test
@@ -174,8 +141,6 @@ public class ShadowingEntityTest {
     CompiledSelector mockSelector = mock(CompiledSelector.class);
     when(mockEventHandler.getCallable()).thenReturn(mockCallable);
     when(mockEventHandler.getConditional()).thenReturn(Optional.of(mockSelector));
-    when(mockSelector.evaluate(any())).thenReturn(true);
-    when(mockCallable.evaluate(any())).thenReturn(handlerValue);
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
         Optional.of(mockEventHandlerGroup)
     );

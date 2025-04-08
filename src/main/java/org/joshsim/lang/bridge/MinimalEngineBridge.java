@@ -12,7 +12,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.GeoPoint;
@@ -68,13 +67,17 @@ public class MinimalEngineBridge implements EngineBridge {
 
     engineValueFactory = new EngineValueFactory();
 
+    simulation.startSubstep("constant");
+
     currentStep = simulation
-      .getAttributeValue("step.start")
+      .getAttributeValue("step.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
 
     endStep = simulation
-      .getAttributeValue("step.end")
+      .getAttributeValue("step.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
+
+    simulation.endSubstep();
 
     absoluteStep = 0;
     inStep = false;
@@ -99,11 +102,11 @@ public class MinimalEngineBridge implements EngineBridge {
     engineValueFactory = new EngineValueFactory();
 
     currentStep = simulation
-      .getAttributeValue("step.start")
+      .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
 
     endStep = simulation
-      .getAttributeValue("step.end")
+      .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
 
     absoluteStep = 0;
@@ -163,10 +166,10 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Iterable<ShadowingEntity> getCurrentPatches() {
+  public Iterable<MutableEntity> getCurrentPatches() {
     Query query = new Query(getCurrentTimestep());
-    Iterable<Patch> patches = getReplicate().getCurrentPatches();
-    Iterable<ShadowingEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
+    Iterable<MutableEntity> patches = getReplicate().getCurrentPatches();
+    Iterable<MutableEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
   }
 
@@ -186,7 +189,8 @@ public class MinimalEngineBridge implements EngineBridge {
   public EngineValue convert(EngineValue current, Units newUnits) {
     Conversion conversion = converter.getConversion(current.getUnits(), newUnits);
     CompiledCallable callable = conversion.getConversionCallable();
-    return callable.evaluate(new SingleValueScope(current));
+    EngineValue newValue = callable.evaluate(new SingleValueScope(current));
+    return newValue.replaceUnits(newUnits);
   }
 
   @Override
@@ -227,16 +231,16 @@ public class MinimalEngineBridge implements EngineBridge {
   /**
    * Iterator that decorates patches with shadow tracking.
    */
-  private class DecoratingShadowIterator implements Iterator<ShadowingEntity> {
+  private class DecoratingShadowIterator implements Iterator<MutableEntity> {
 
-    private final Iterator<Patch> patches;
+    private final Iterator<MutableEntity> patches;
 
     /**
      * Create a new decorating iterator.
      *
      * @param patches the iterator of patches to decorate.
      */
-    public DecoratingShadowIterator(Iterator<Patch> patches) {
+    public DecoratingShadowIterator(Iterator<MutableEntity> patches) {
       this.patches = patches;
     }
 
@@ -246,8 +250,8 @@ public class MinimalEngineBridge implements EngineBridge {
     }
 
     @Override
-    public ShadowingEntity next() {
-      Patch patch = patches.next();
+    public MutableEntity next() {
+      MutableEntity patch = patches.next();
       return new ShadowingEntity(patch, simulation);
     }
 

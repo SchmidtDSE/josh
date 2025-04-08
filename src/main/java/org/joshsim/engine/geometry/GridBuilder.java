@@ -3,13 +3,13 @@ package org.joshsim.engine.geometry;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.geometry.GeneralDirectPosition;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
-import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.context.SpatialContextFactory;
 import org.opengis.geometry.DirectPosition;
@@ -26,12 +26,15 @@ import org.opengis.util.FactoryException;
  * converting them to the target CRS if needed.
  */
 public class GridBuilder {
-  private BigDecimal cellWidth;
+
+  private final BigDecimal cellWidth;
+
+  private final EntityPrototype prototype;
 
   // CRS-related fields
-  private boolean usingVirutalCoordinates;
-  private CoordinateReferenceSystem inputCoordinateReferenceSystem;
-  private CoordinateReferenceSystem targetCoordinateReferenceSystem;
+  private final boolean usingVirutalCoordinates;
+  private final CoordinateReferenceSystem inputCoordinateReferenceSystem;
+  private final CoordinateReferenceSystem targetCoordinateReferenceSystem;
 
   // Transformed coordinates stored directly as DirectPosition2D
   private DirectPosition2D topLeftTransformed;
@@ -44,12 +47,15 @@ public class GridBuilder {
    * @param targetCrsCode EPSG code for the target CRS
    * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @param prototype Prototype to use in building patches
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
   public GridBuilder(String inputCrsCode, String targetCrsCode,
-      GridBuilderExtents extents, BigDecimal cellWidth) throws FactoryException,
-      TransformException {
+      GridBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype) throws
+      FactoryException, TransformException {
+
+    this.prototype = prototype;
 
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
@@ -85,10 +91,15 @@ public class GridBuilder {
    *
    * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @param prototype Prototype to use in building patches
    * @throws TransformException if coordinate transformation fails
    */
-  public GridBuilder(GridBuilderExtents extents, BigDecimal cellWidth)
+  public GridBuilder(GridBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype)
       throws TransformException {
+
+    this.prototype = prototype;
+    inputCoordinateReferenceSystem = null;
+    targetCoordinateReferenceSystem = null;
 
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
@@ -220,7 +231,7 @@ public class GridBuilder {
       GridDimensions dimensions = calculateGridDimensions();
 
       // Create all patches
-      List<Patch> patches = createPatchGrid(dimensions, targetContext);
+      List<MutableEntity> patches = createPatchGrid(dimensions, targetContext);
 
       return new Grid(patches, cellWidth);
     } catch (Exception e) {
@@ -284,11 +295,11 @@ public class GridBuilder {
   /**
    * Creates all patches in the grid.
    */
-  private List<Patch> createPatchGrid(
+  private List<MutableEntity> createPatchGrid(
         GridDimensions dimensions,
         SpatialContext context
   ) {
-    List<Patch> patches = new ArrayList<>();
+    List<MutableEntity> patches = new ArrayList<>();
     for (int rowIdx = 0; rowIdx < dimensions.rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < dimensions.colCells; colIdx++) {
         double cellTopLeftX = topLeftTransformed.x + (colIdx * dimensions.cellWidthUnits);
@@ -310,12 +321,7 @@ public class GridBuilder {
 
         if (!(cellGeometry == null)) {
           String cellName = String.format("cell_%d_%d", rowIdx, colIdx);
-          Patch patch = new Patch(
-              cellGeometry,
-              cellName,
-              null,
-              null
-          );
+          MutableEntity patch = prototype.buildSpatial(cellGeometry);
           patches.add(patch);
         }
       }

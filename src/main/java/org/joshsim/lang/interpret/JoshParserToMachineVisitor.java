@@ -152,7 +152,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
     boolean isAddition = ctx.op.getText().equals("+");
 
     EventHandlerAction action = (machine) -> {
@@ -441,11 +441,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitCreateVariableExpression(
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
-    String entityType = ctx.target.getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.createEntity(entityType);
+      machine.createEntity(entityName);
       return machine;
     };
 
@@ -509,14 +509,18 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
-    String payload = ctx.getText();
-    EngineValue decoratedPayload = engineValueFactory.build(
-        payload,
-        new Units("position")
-    );
+    // unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_)
+    Fragment unitsFragment1 = ctx.getChild(0).accept(this);
+    String type1 = ctx.getChild(1).getText();
+    Fragment unitsFragment2 = ctx.getChild(3).accept(this);
+    String type2 = ctx.getChild(4).getText();
 
     EventHandlerAction action = (machine) -> {
-      machine.push(decoratedPayload);
+      unitsFragment1.getCurrentAction().apply(machine);
+      machine.push(engineValueFactory.build(type1, new Units("")));
+      unitsFragment2.getCurrentAction().apply(machine);
+      machine.push(engineValueFactory.build(type2, new Units("")));
+      machine.makePosition();
       return machine;
     };
 
@@ -524,7 +528,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
-    String entityName = ctx.getChild(0).getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
@@ -744,7 +748,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       Fragment childFragment = ctx.getChild(childIndex).accept(this);
-      
+
       for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {
         entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
       }

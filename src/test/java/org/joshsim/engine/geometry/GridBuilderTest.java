@@ -8,11 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +43,7 @@ class GridBuilderTest {
 
   private GridBuilderExtents wgs84Extents;
   private GridBuilderExtents utmExtents;
+  private EntityPrototype prototype;
 
   @BeforeEach
   void setUp() {
@@ -55,6 +59,8 @@ class GridBuilderTest {
     utmSouthY = new BigDecimal("3707726.0273103723");   // Southern Y-coordinate
     utmEastX = new BigDecimal("639334.3319327366");     // Eastern X-coordinate
 
+    prototype = new TestPatchEntityPrototype();
+
     // Set a reasonable cell width (30 meters)
     cellWidth = new BigDecimal(30); // 30 meters
 
@@ -69,7 +75,8 @@ class GridBuilderTest {
         "EPSG:4326",    // WGS84
         "EPSG:32611",   // UTM 11N
         wgs84Extents,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     // We can't directly test private fields, but we can test that build() works
@@ -92,7 +99,8 @@ class GridBuilderTest {
           "EPSG:4326",
           "EPSG:32611",
           wgs84Extents,
-          cellWidth
+          cellWidth,
+          prototype
       );
 
       // Create positions with consistent X,Y ordering using RIGHT_HANDED convention
@@ -139,7 +147,13 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder("EPSG:4326", "EPSG:32611", wgs84Extents, zeroCellWidth)
+          () -> new GridBuilder(
+              "EPSG:4326",
+              "EPSG:32611",
+              wgs84Extents,
+              zeroCellWidth,
+              prototype
+          )
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -147,7 +161,13 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder("EPSG:4326", "EPSG:32611", wgs84Extents, negativeCellWidth)
+          () -> new GridBuilder(
+              "EPSG:4326",
+              "EPSG:32611",
+              wgs84Extents,
+              negativeCellWidth,
+              prototype
+          )
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
@@ -178,7 +198,8 @@ class GridBuilderTest {
           "EPSG:4326",
           "EPSG:32611",
           wgs84Extents,
-          cellWidth
+          cellWidth,
+          new TestPatchEntityPrototype()
       );
 
       // Should work fine
@@ -197,17 +218,18 @@ class GridBuilderTest {
         "EPSG:4326",    // WGS84
         "EPSG:32611",   // UTM 11N
         wgs84Extents,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     Grid grid = builder.build();
     assertNotNull(grid, "Grid should be built successfully");
 
-    List<Patch> patches = grid.getPatches();
+    List<MutableEntity> patches = grid.getPatches();
     assertFalse(patches.isEmpty(), "Grid should contain patches");
 
     // Verify a patch exists
-    Patch firstPatch = patches.get(0);
+    MutableEntity firstPatch = patches.get(0);
     assertTrue(firstPatch.getGeometry().isPresent());
   }
 
@@ -218,13 +240,14 @@ class GridBuilderTest {
         "EPSG:32611",   // UTM 11N
         "EPSG:32611",   // UTM 11N
         utmExtents,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     Grid grid = builder.build();
     assertNotNull(grid, "Grid should be built successfully");
 
-    List<Patch> patches = grid.getPatches();
+    List<MutableEntity> patches = grid.getPatches();
     assertFalse(patches.isEmpty(), "Grid should contain patches");
 
     // Verify patches are created
@@ -240,13 +263,51 @@ class GridBuilderTest {
     void constructorWithInvalidCrsCode() {
       // Setting an invalid EPSG code
       assertThrows(FactoryException.class,
-          () -> new GridBuilder("EPSG:99999", "EPSG:4326", wgs84Extents, cellWidth));
+          () -> new GridBuilder("EPSG:99999", "EPSG:4326", wgs84Extents, cellWidth, prototype));
     }
 
     @Test
     @DisplayName("Constructor should throw exception for missing coordinates")
     void constructorWithMissingCoordinates() {
       //This test is no longer relevant given the use of GridBuilderExtents
+    }
+  }
+
+  class TestPatchEntityPrototype implements EntityPrototype {
+
+    @Override
+    public String getIdentifier() {
+      return "Test";
+    }
+
+    @Override
+    public EntityType getEntityType() {
+      return EntityType.PATCH;
+    }
+
+    @Override
+    public MutableEntity build() {
+      throw new RuntimeException("Requires use of spatial.");
+    }
+
+    @Override
+    public MutableEntity buildSpatial(Entity parent) {
+      throw new RuntimeException("Requires use of spatial.");
+    }
+
+    @Override
+    public MutableEntity buildSpatial(Geometry parent) {
+      return new Patch(parent, "test", new HashMap<>(), new HashMap<>());
+    }
+
+    @Override
+    public boolean requiresParent() {
+      return false;
+    }
+
+    @Override
+    public boolean requiresGeometry() {
+      return true;
     }
   }
 }

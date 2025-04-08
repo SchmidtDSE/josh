@@ -39,17 +39,17 @@ public class ShadowingEntityPrototype implements EntityPrototype {
 
   @Override
   public MutableEntity build() {
-    return inner.build();
+    return wrap(inner.build());
   }
 
   @Override
   public MutableEntity buildSpatial(Entity parent) {
-    return inner.buildSpatial(parent);
+    return wrap(inner.buildSpatial(parent));
   }
 
   @Override
   public MutableEntity buildSpatial(Geometry parent) {
-    return inner.buildSpatial(parent);
+    return wrap(inner.buildSpatial(parent));
   }
 
   @Override

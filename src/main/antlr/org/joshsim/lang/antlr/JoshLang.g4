@@ -175,9 +175,9 @@ callable: (fullBody | lambda);
 // Event handlers
 eventHandlerGroupMemberInner: EQ_ target=callable;
 
-conditionalIfEventHandlerGroupMember: COLON_ IF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
+conditionalIfEventHandlerGroupMember: COLON_ IF_ LPAREN_ target=callable RPAREN_ inner=eventHandlerGroupMemberInner;
 
-conditionalElifEventHandlerGroupMember: COLON_ ELIF_ LPAREN_ target=expression RPAREN_ inner=eventHandlerGroupMemberInner;
+conditionalElifEventHandlerGroupMember: COLON_ ELIF_ LPAREN_ target=callable RPAREN_ inner=eventHandlerGroupMemberInner;
 
 conditionalElseEventHandlerGroupMember: COLON_ ELSE_ inner=eventHandlerGroupMemberInner;
 

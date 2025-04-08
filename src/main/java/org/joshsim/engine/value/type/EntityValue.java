@@ -75,7 +75,7 @@ public class EntityValue extends EngineValue {
 
   @Override
   public MutableEntity getAsMutableEntity() {
-    throw new UnsupportedOperationException("Entity not mutable.");
+    throw new UnsupportedOperationException("Entity not mutable: " + innerValue);
   }
 
   @Override

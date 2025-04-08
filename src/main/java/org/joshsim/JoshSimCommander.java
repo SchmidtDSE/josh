@@ -22,9 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.lang.bridge.EngineBridge;
-import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -104,7 +101,7 @@ public class JoshSimCommander {
           default -> UNKNOWN_ERROR_CODE;
         };
       }
-      
+
       output.printInfo("Validated Josh code at " + file);
 
       if (minioOptions.isMinioOutput()) {
@@ -322,7 +319,7 @@ public class JoshSimCommander {
     public Optional<JoshProgram> getProgram() {
       return program;
     }
-    
+
   }
-  
+
 }

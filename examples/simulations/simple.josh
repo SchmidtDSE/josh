@@ -1,31 +1,32 @@
 start simulation TestSimpleSimulation
 
   grid.size = 1 count
-  grid.start = 1 count latitude, 1 count longitude
-  grid.end = 2 count latitude, 2 count longitude
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
 
-  steps.start = 0 count
-  steps.end = 100 count
+  steps.low = 0 count
+  steps.high = 10 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
 
 end simulation
 
 
 start patch Default
 
-  location = all
-
-  ForeverTree.init = create TreeA
+  ForeverTree.init = create ForeverTree
 
 end patch
 
 
 start organism ForeverTree
 
-  age.init = 1 year
+  age.init = 0 year
 
   age.step = prior.age + 1 year
 
-  assert.age:if(meta.stepCount == 5) = mean(current.age) == 5 years
+  assert.age.step:if(meta.stepCount == 5 count) = current.age == 5 years
 
 end organism
 

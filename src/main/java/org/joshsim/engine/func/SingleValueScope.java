@@ -6,10 +6,6 @@
 
 package org.joshsim.engine.func;
 
-import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
-import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.converter.EmptyConverter;
 import org.joshsim.engine.value.type.EngineValue;
 
 

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.joshsim.engine.value.engine.EngineValueTuple;
-import org.joshsim.engine.value.engine.EngineValueTuple.UnitsTuple;
 
 /**
  * Builder for Converters which can handle multiple conversions.

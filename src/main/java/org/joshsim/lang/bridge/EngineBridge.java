@@ -22,7 +22,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public interface EngineBridge {
 
-  
+
   /**
    * Get the current simulation entity.
    *
@@ -64,7 +64,7 @@ public interface EngineBridge {
    *
    * @return Iterable of all patches in the current step.
    */
-  Iterable<ShadowingEntity> getCurrentPatches();
+  Iterable<MutableEntity> getCurrentPatches();
 
   /**
    * Get patches from the previous step within a specific geometry.

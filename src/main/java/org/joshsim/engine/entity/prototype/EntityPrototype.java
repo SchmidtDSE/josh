@@ -7,7 +7,6 @@
 package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.Geometry;

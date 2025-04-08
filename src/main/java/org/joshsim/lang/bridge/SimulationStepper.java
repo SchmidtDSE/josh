@@ -1,14 +1,9 @@
 package org.joshsim.lang.bridge;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -38,29 +33,59 @@ public class SimulationStepper {
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
     MutableEntity simulation = target.getSimulation();
-    Iterable<ShadowingEntity> patches = target.getCurrentPatches();
-    Iterable<MutableEntity> entities = new SimAndPatchIterable(simulation, patches);
-    
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+    Iterable<MutableEntity> patches = target.getCurrentPatches();
 
-    Stream<MutableEntity> initalizedStream;
     if (isFirstStep) {
-      initalizedStream = entityStream.map((x) -> updateEntity(x, "init"));
-    } else {
-      initalizedStream = entityStream;
+      performStream(simulation, "init");
+      performStream(patches, "init");
     }
 
-    Stream<MutableEntity> steppedStream = initalizedStream.map((x) -> updateEntity(x, "start"))
-        .map((x) -> updateEntity(x, "step"))
-        .map((x) -> updateEntity(x, "end"));
+    performStream(simulation, "start");
+    performStream(patches, "start");
 
-    long numCompleted = steppedStream.filter((x) -> x != null).count();
-    assert numCompleted > 0;
+    performStream(simulation, "step");
+    performStream(patches, "step");
+
+    performStream(simulation, "end");
+    performStream(patches, "end");
 
     long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
 
     return timestepCompleted;
+  }
+
+  /**
+   * Performs a series of entity updates on a stream of entities from an iterable.
+   *
+   * @param entities the iterable of entities to perform updates on
+   * @param subStep the substep to perform
+   */
+  private void performStream(Iterable<MutableEntity> entities, String subStep) {
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+    performStream(entityStream, subStep);
+  }
+
+  /**
+   * Performs a series of entity updates on a single entity.
+   *
+   * @param entity the entity to perform updates on.
+   * @param subStep the substep to perform
+   */
+  private void performStream(MutableEntity entity, String subStep) {
+    performStream(Stream.of(entity), subStep);
+  }
+
+  /**
+   * Performs a series of entity updates on a stream of entities.
+   *
+   * @param entityStream the stream of entities to perform updates on
+   * @param subStep the substep to perform
+   */
+  private void performStream(Stream<MutableEntity> entityStream, String subStep) {
+    Stream<MutableEntity> steppedStream = entityStream.map((x) -> updateEntity(x, subStep));
+    long numCompleted = steppedStream.filter((x) -> x != null).count();
+    assert numCompleted > 0;
   }
 
   /**
@@ -71,72 +96,35 @@ public class SimulationStepper {
    * @return the updated shadowing entity
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
-    Iterable<String> attributeNames = target.getAttributeNames();
-    
-    Stream<EventKey> eventKeysNoState = StreamSupport.stream(attributeNames.spliterator(), false)
-        .map((name) -> new EventKey(name, subStep));
+    target.startSubstep(subStep);
 
-    Stream<EventKey> eventKeys;
-    Optional<EngineValue> state = target.getAttributeValue("state");
-    if (state.isPresent()) {
-      String stateRealized = state.get().getAsString();
-      Stream<EventKey> eventKeysState = StreamSupport.stream(attributeNames.spliterator(), false)
-          .map((name) -> new EventKey(stateRealized, name, subStep));
-
-      eventKeys = Stream.concat(eventKeysNoState, eventKeysState);
-    } else {
-      eventKeys = eventKeysNoState;
-    }
-
-    eventKeys.map((x) -> target.getEventHandlers(x))
+    StreamSupport.stream(target.getAttributeNames().spliterator(), false)
+        .map((x) -> {
+          return target.getAttributeValue(x);
+        })
         .filter((x) -> x.isPresent())
         .map((x) -> x.get())
-        .map((x) -> x.getEventKey().getAttribute())
-        .distinct()
-        .map((x) -> target.getAttributeValue(x));
+        .filter((x) -> x.getLanguageType().containsAttributes())
+        .forEach((x) -> {
+          Optional<Integer> sizeMaybe = x.getSize();
+          if (sizeMaybe.isEmpty()) {
+            return;
+          }
+
+          int size = sizeMaybe.get();
+          if (size == 1) {
+            updateEntity(x.getAsMutableEntity(), subStep);
+          } else {
+            Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
+            for (EngineValue value : values) {
+              updateEntity(value.getAsMutableEntity(), subStep);
+            }
+          }
+        });
+
+    target.endSubstep();
 
     return target;
-  }
-
-  /**
-   * Iterable that first returns the simulation entity and then iterates through patches.
-   */
-  private static class SimAndPatchIterable implements Iterable<MutableEntity> {
-    private final MutableEntity simulation;
-    private final Iterable<ShadowingEntity> patches;
-
-    /**
-     * Create an iterable over a simulation followed by patches.
-     *
-     * @param simulation The simulation to return first before returning patches.
-     * @param patches The patches to return after returning the simulation.
-     */
-    public SimAndPatchIterable(MutableEntity simulation, Iterable<ShadowingEntity> patches) {
-      this.simulation = simulation;
-      this.patches = patches;
-    }
-
-    @Override
-    public Iterator<MutableEntity> iterator() {
-      return new Iterator<MutableEntity>() {
-        private boolean simulationReturned = false;
-        private final Iterator<ShadowingEntity> patchIterator = patches.iterator();
-
-        @Override
-        public boolean hasNext() {
-          return !simulationReturned || patchIterator.hasNext();
-        }
-
-        @Override
-        public MutableEntity next() {
-          if (!simulationReturned) {
-            simulationReturned = true;
-            return simulation;
-          }
-          return patchIterator.next();
-        }
-      };
-    }
   }
 
 }

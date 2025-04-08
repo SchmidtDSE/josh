@@ -7,15 +7,9 @@
 
 package org.joshsim.lang.interpret;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.entity.type.Patch;
-import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
@@ -24,7 +18,7 @@ import org.joshsim.lang.bridge.MinimalEngineBridge;
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
  *
- * <p>Stuctures which allow the interpreter to pre-compile statements into Java prior to the 
+ * <p>Stuctures which allow the interpreter to pre-compile statements into Java prior to the
  * simulation being fully constructed. This allows Josh to stop string manipulation as soon as
  * possible for efficiency.</p>
  */
@@ -90,7 +84,7 @@ public class FutureBridgeGetter implements BridgeGetter {
 
     String simulationNameRealized = simulationName.get();
     MutableEntity simulation = simulations.getProtoype(simulationNameRealized).build();
-    
+
     Converter converter = programRealized.getConverter();
     EntityPrototypeStore prototypeStore = programRealized.getPrototypes();
 
@@ -99,7 +93,7 @@ public class FutureBridgeGetter implements BridgeGetter {
         converter,
         prototypeStore
     );
-    
+
     builtBridge = Optional.of(newBridge);
   }
 
