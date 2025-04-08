@@ -4,17 +4,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.geometry.GeneralPosition;
-import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.joshsim.engine.entity.type.Patch;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
+import org.geotools.referencing.CRS;
+import org.joshsim.engine.entity.type.Patch;
 
 /**
  * This class is responsible for building grid structures.
@@ -234,7 +231,7 @@ public class GridBuilder {
     List<Patch> patches = new ArrayList<>();
     for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < colCells; colIdx++) {
-        double cellTopLeftX = 
+        double cellTopLeftX =
             topLeftTransformed.getOrdinate(0) + (colIdx * cellWidth);
         double cellTopLeftY =
             topLeftTransformed.getOrdinate(1) - (rowIdx * cellWidth);

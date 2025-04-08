@@ -19,7 +19,7 @@ import org.locationtech.jts.util.GeometricShapeFactory;
  * Factory methods for creating geometric shapes using JTS geometry.
  */
 public class EngineGeometryFactory {
-  private static final GeometryFactory JTS_GEOMETRY_FACTORY = 
+  private static final GeometryFactory JTS_GEOMETRY_FACTORY =
       new GeometryFactory();
 
   public static GeometryFactory getGeometryFactory() {
@@ -58,7 +58,7 @@ public class EngineGeometryFactory {
 
     LinearRing ring = JTS_GEOMETRY_FACTORY.createLinearRing(coords);
     Polygon square = JTS_GEOMETRY_FACTORY.createPolygon(ring, null);
-    
+
     return new EngineGeometry(square, crs);
   }
 
@@ -101,7 +101,7 @@ public class EngineGeometryFactory {
 
     LinearRing ring = JTS_GEOMETRY_FACTORY.createLinearRing(coords);
     Polygon square = JTS_GEOMETRY_FACTORY.createPolygon(ring, null);
-    
+
     return new EngineGeometry(square, crs);
   }
 
@@ -128,7 +128,7 @@ public class EngineGeometryFactory {
     shapeFactory.setCentre(new Coordinate(centerValX, centerValY));
     shapeFactory.setSize(radiusVal * 2);
     Polygon circle = shapeFactory.createCircle();
-    
+
     return new EngineGeometry(circle, crs);
   }
 
@@ -163,7 +163,7 @@ public class EngineGeometryFactory {
     shapeFactory.setCentre(new Coordinate(centerValX, centerValY));
     shapeFactory.setSize(radius * 2);
     Polygon circle = shapeFactory.createCircle();
-    
+
     return new EngineGeometry(circle, crs);
   }
 
