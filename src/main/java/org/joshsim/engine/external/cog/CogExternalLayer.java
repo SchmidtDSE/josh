@@ -2,17 +2,13 @@ package org.joshsim.engine.external.cog;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.sis.coverage.grid.GridCoverage;
+import org.geotools.coverage.grid.GridCoverage2D;
 import org.joshsim.engine.external.core.ExternalLayer;
 import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueWideningCaster;
-import org.joshsim.engine.value.type.DecimalScalar;
-import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -46,7 +42,7 @@ public class CogExternalLayer implements ExternalLayer {
   public RealizedDistribution fulfill(Request request) {
     try {
       EngineGeometry geometry = request.getGeometry().orElseThrow();
-      GridCoverage gridCoverage = CogReader.getCoverageFromDisk(request.getPath(), geometry);
+      GridCoverage2D gridCoverage = CogReader.getCoverageFromDisk(request.getPath(), geometry);
       List<BigDecimal> decimalValuesWithinGeometry =
           CogReader.extractValuesFromCoverage(gridCoverage, geometry);
 

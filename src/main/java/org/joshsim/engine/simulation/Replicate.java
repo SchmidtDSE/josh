@@ -94,7 +94,7 @@ public class Replicate {
     }
     assert timeStep.getStep() == query.getStep();
 
-    Optional<Geometry> geometry = query.getGeometry();
+    Optional<EngineGeometry> geometry = query.getGeometry();
     if (query.getGeometry().isPresent()) {
       return timeStep.getPatches(geometry.get());
     } else {

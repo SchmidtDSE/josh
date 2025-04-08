@@ -6,8 +6,8 @@
 
 package org.joshsim.engine.geometry;
 
-import org.locationtech.spatial4j.shape.Shape;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Interface representing a geographical point on Earth.
@@ -15,11 +15,11 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class GeoPoint extends EngineGeometry {
 
   /**
-   * Constructs a GeoPoint with the specified shape.
+   * Constructs a GeoPoint with the specified geometry.
    *
-   * @param shape the shape representing the geographical point
+   * @param geometry the shape representing the geographical point
    */
-  public GeoPoint(Shape shape, CoordinateReferenceSystem crs) {
-    super(shape, crs);
+  public GeoPoint(Geometry geometry, CoordinateReferenceSystem crs) {
+    super(geometry, crs);
   }
 }

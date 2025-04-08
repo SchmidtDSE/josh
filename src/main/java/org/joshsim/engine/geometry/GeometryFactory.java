@@ -7,12 +7,12 @@
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.ShapeFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Factory methods for creating geometric shapes. By default, the shapes are

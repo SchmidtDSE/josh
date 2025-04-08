@@ -12,6 +12,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -40,7 +41,7 @@ public class Simulation extends MutableEntity {
   }
 
   @Override
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return Optional.empty();
   }
 }

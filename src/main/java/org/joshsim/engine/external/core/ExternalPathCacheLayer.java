@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
-import org.apache.sis.coverage.grid.GridCoverage;
 import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;

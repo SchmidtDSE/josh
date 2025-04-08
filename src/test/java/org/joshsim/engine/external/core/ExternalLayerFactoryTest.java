@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.referencing.CRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.value.converter.Units;
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.mockito.ArgumentCaptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
 
 /**
