@@ -86,4 +86,29 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
     }
     coverageCache.put(primingGeometry, newCoverage);
   }
+
+  /**
+   * Returns the size of the coverage cache.
+   *
+   * @return the size of the coverage cache
+   */
+  public int getCacheSize() {
+    return coverageCache.size();
+  }
+
+  /**
+   * Returns the cache of GridCoverage objects.
+   *
+   * @return the cache of GridCoverage objects
+   */
+  public Map<Geometry, GridCoverage> getCoverageCache() {
+    return coverageCache;
+  }
+
+  /**
+   * Clears the coverage cache.
+   */
+  public void clearCache() {
+    coverageCache.clear();
+  } 
 }

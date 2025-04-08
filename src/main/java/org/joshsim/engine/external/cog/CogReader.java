@@ -11,6 +11,7 @@ import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.geometry.GeneralEnvelope;
+import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
 import org.apache.sis.storage.Aggregate;
@@ -19,6 +20,7 @@ import org.apache.sis.storage.DataStoreException;
 import org.apache.sis.storage.DataStores;
 import org.apache.sis.storage.GridCoverageResource;
 import org.apache.sis.storage.Resource;
+import org.checkerframework.checker.units.qual.s;
 import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
@@ -55,6 +57,11 @@ public class CogReader {
       Collection<? extends Resource> allImages = ((Aggregate) store).components();
       GridCoverageResource firstImage = (GridCoverageResource) allImages.iterator().next();
 
+      CoordinateReferenceSystem cogCrs = firstImage
+          .getGridGeometry()
+          .getCoordinateReferenceSystem();
+
+
       // Create an envelope from the geometry bounds
       GeneralEnvelope areaOfInterest = geometry.getEnvelope();
 
@@ -65,6 +72,37 @@ public class CogReader {
     } catch (DataStoreException e) {
       throw new IOException("Failed to read COG file: " + path, e);
     }
+  }
+
+  /**
+   * Transforms a grid coverage from its native CRS to the specified target CRS.
+   *
+   * @param coverage The source grid coverage
+   * @param targetCrs The target coordinate reference system
+   * @return A new grid coverage in the target CRS
+   * @throws DataStoreException if the transformation cannot be performed
+   */
+  public static GridCoverage transformCoverage(
+      GridCoverage coverage, 
+      CoordinateReferenceSystem targetCrs
+  ) throws DataStoreException {
+      if (targetCrs == null) {
+          return coverage; // No transformation needed
+      }
+
+      CoordinateReferenceSystem sourceCrs = coverage.getCoordinateReferenceSystem();
+      
+      // If source and target CRS are the same, no transformation needed
+      if (CRS.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
+          return coverage;
+      }
+      
+      try {
+          // Transform the coverage to the target CRS
+          return coverage.resample(targetCrs, transform, null);
+      } catch (Exception e) {
+          throw new DataStoreException("Failed to transform coverage to target CRS", e);
+      }
   }
 
   /**
@@ -104,6 +142,12 @@ public class CogReader {
           // Get direct position in the coverage's CRS
           DirectPosition2D worldPos = convertGridToWorld(coverage, gridPos);
 
+          if (worldPos.getY() - geometry.getShape().getCenter().getY() < 4 &&
+              worldPos.getY() - geometry.getShape().getCenter().getY() > -4 &&
+              worldPos.getX() - geometry.getShape().getCenter().getX() < 4 &&
+              worldPos.getX() - geometry.getShape().getCenter().getX() > -4) {
+            worldPos.getX();
+          }
           // Check if this point is within our geometry
           if (geometry == null || geometry.intersects(
                   BigDecimal.valueOf(worldPos.getX()),
