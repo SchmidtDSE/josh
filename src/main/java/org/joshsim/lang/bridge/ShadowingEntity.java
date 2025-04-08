@@ -120,8 +120,13 @@ public class ShadowingEntity implements MutableEntity {
     EventKey eventKeyWithoutState = new EventKey(attribute, substep.get());
     Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
 
-    EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
-    Optional<EventHandlerGroup> withState = inner.getEventHandlers(eventKeyWithState);
+    Optional<EventHandlerGroup> withState;
+    if (!state.isBlank()) {
+      EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
+      withState = inner.getEventHandlers(eventKeyWithState);
+    } else {
+      withState = Optional.empty();
+    }
 
     List<EventHandlerGroup> matching = new ArrayList<>(2);
     if (withoutState.isPresent()) {
@@ -133,21 +138,6 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     return matching;
-  }
-
-  /**
-   * Resolve all attributes by executing their associated event handlers.
-   *
-   * <p>This method fetches the attribute names, retrieves the corresponding event handlers,
-   * and executes them if present. Execution is done in the context of the current substep, and
-   * each handler resolves an attribute to its current value.</p>
-   */
-  public void resolveAllAttributes() {
-    Stream<String> names = StreamSupport.stream(getAttributeNames().spliterator(), false);
-    Stream<EventHandlerGroup> handlerGroups = names.flatMap(
-        (x) -> StreamSupport.stream(getHandlersForAttribute(x).spliterator(), false)
-    );
-    handlerGroups.forEach(this::executeHandlers);
   }
 
   /**
@@ -350,7 +340,8 @@ public class ShadowingEntity implements MutableEntity {
     // Attempt to match a handler for updated value
     boolean executed = false;
     while (handlersMaybe.hasNext()) {
-      boolean localExecuted = executeHandlers(handlersMaybe.next());
+      EventHandlerGroup handlers = handlersMaybe.next();
+      boolean localExecuted = executeHandlers(handlers);
       executed = executed || localExecuted;
     }
 
@@ -393,6 +384,9 @@ public class ShadowingEntity implements MutableEntity {
 
       if (matches) {
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
+        if (handler.getAttributeName().equals("stepCount")) {
+          System.out.println(value.getInnerValue());
+        }
         setAttributeValue(handler.getAttributeName(), value);
         return true;
       }
