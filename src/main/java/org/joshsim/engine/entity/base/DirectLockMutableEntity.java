@@ -28,7 +28,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private final Map<String, EngineValue> attributes;
   private final Lock lock;
-  
+
   private Optional<String> substep;
 
   /**
@@ -56,7 +56,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     } else {
       this.attributes = new HashMap<>(attributes);
     }
-    
+
     lock = new ReentrantLock();
     substep = Optional.empty();
   }

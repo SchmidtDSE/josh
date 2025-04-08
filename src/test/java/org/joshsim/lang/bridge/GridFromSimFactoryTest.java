@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.value.converter.Units;
@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class GridFromSimFactoryTest {
 
   @Mock(lenient = true) private EngineBridge mockBridge;
-  @Mock(lenient = true) private Entity mockSimulation;
+  @Mock(lenient = true) private MutableEntity mockSimulation;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
 
   private EngineValueFactory valueFactory;
@@ -54,8 +54,8 @@ class GridFromSimFactoryTest {
     // Setup empty optional returns for all grid attributes
     when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.empty());
     when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.empty());
-    when(mockSimulation.getAttributeValue("grid.start")).thenReturn(Optional.empty());
-    when(mockSimulation.getAttributeValue("grid.end")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.empty());
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.empty());
 
     Grid result = factory.build(mockSimulation);
@@ -85,8 +85,8 @@ class GridFromSimFactoryTest {
     EngineValue size = valueFactory.build(new BigDecimal("30"), new Units("meters"));
     when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.of(crsStr));
     when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.of(crsStr));
-    when(mockSimulation.getAttributeValue("grid.start")).thenReturn(Optional.of(gridStartStr));
-    when(mockSimulation.getAttributeValue("grid.end")).thenReturn(Optional.of(gridEndStr));
+    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
+    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
 
     Grid result = factory.build(mockSimulation);

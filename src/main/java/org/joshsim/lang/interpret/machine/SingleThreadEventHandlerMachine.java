@@ -124,7 +124,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    System.out.println(left.add(right));
     memory.push(left.add(right));
 
     return this;
@@ -671,6 +670,37 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     memory.push(sum.get());
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine makePosition() {
+    EngineValue type2 = pop();
+    EngineValue val2 = pop();
+    EngineValue type1 = pop();
+    EngineValue val1 = pop();
+
+    String firstUnits = val1.getUnits().toString();
+    String secondUnits = val2.getUnits().toString();
+
+    boolean firstIsCount = firstUnits.isEmpty();
+    boolean secondIsCount = secondUnits.isEmpty();
+
+    String firstUnitsSafe = firstIsCount ? "count" : firstUnits;
+    String secondUnitsSafe = secondIsCount ? "count" : secondUnits;
+
+    String complete = String.format(
+        "%s %s %s, %s %s %s",
+        val1.getAsDecimal(),
+        firstUnitsSafe,
+        type1.getAsString(),
+        val2.getAsDecimal(),
+        secondUnitsSafe,
+        type2.getAsString()
+    );
+    EngineValue newValue = valueFactory.build(complete, new Units("position"));
+    push(newValue);
+
     return this;
   }
 

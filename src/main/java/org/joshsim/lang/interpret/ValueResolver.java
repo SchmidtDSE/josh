@@ -89,7 +89,7 @@ public class ValueResolver {
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.
    * It then creates a resolver for any remaining path segments if needed. This is required because
    * some attributes may appear nested but not actually within an inner scope. This may be beacuse
-   * they are saved on the outer scope like for steps.start and steps.end which are within
+   * they are saved on the outer scope like for steps.low and steps.high which are within
    * Simulation. The "nesting" is simply syntatic sugar in this case for the Josh language.</p>
    *
    * @param target The scope to search for matching path prefixes.

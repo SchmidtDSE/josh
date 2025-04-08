@@ -8,7 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.geometry.GridBuilder;
 import org.joshsim.engine.geometry.GridBuilderExtents;
@@ -56,13 +56,17 @@ public class GridFromSimFactory {
    * @param simulation the simulation entity used to build the Grid
    * @return the built Grid
    */
-  public Grid build(Entity simulation) {
+  public Grid build(MutableEntity simulation) {
+    simulation.startSubstep("constant");
+
     Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
     Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.start");
-    Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.end");
+    Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
+    Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
     Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
     Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
+
+    simulation.endSubstep();
 
     String inputCrs = getOrDefault(inputCrsMaybe, "EPSG:4326");
     String targetCrs = getOrDefault(targetCrsMaybe, "EPSG:4326");

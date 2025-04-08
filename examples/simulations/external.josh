@@ -1,8 +1,8 @@
 start simulation Example
 
   grid.size = 30 m
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
 
 end simulation
 

@@ -61,7 +61,7 @@ public interface MutableEntity extends Entity, Lockable {
    */
   void endSubstep();
 
-  
+
   /**
    * Get the name of the current substep or phase.
    *
@@ -70,7 +70,7 @@ public interface MutableEntity extends Entity, Lockable {
    * entity is in during its lifecycle. The returned value can be empty if no substep is currently
    * active.</p>
    *
-   * @return the name of the current substep, or an empty Optional if no substep is currently active.
+   * @return the name of the current substep, or an empty Optional if no substep currently active.
    */
   Optional<String> getSubstep();
 

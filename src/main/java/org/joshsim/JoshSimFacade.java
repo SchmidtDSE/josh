@@ -77,6 +77,9 @@ public class JoshSimFacade {
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform();
       callback.onStep(completedStep);
+      if (completedStep > 2) {
+        bridge.getReplicate().deleteTimeStep(completedStep - 2);
+      }
     }
   }
 

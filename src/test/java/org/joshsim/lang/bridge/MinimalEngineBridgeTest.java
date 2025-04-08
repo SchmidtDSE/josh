@@ -7,7 +7,6 @@
 
 package org.joshsim.lang.bridge;
 
-import org.joshsim.engine.entity.base.MutableEntity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.GeoPoint;
@@ -138,6 +138,7 @@ public class MinimalEngineBridgeTest {
     Units oldUnits = new Units("old");
     Units newUnits = new Units("test");
     when(mockEngineValue.getUnits()).thenReturn(oldUnits);
+    when(mockEngineValueConverted.replaceUnits(any())).thenReturn(mockEngineValueConverted);
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))
         .thenReturn(new DirectConversion(newUnits, newUnits, (x) -> mockEngineValueConverted));
 

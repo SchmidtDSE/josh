@@ -67,13 +67,17 @@ public class MinimalEngineBridge implements EngineBridge {
 
     engineValueFactory = new EngineValueFactory();
 
+    simulation.startSubstep("constant");
+
     currentStep = simulation
-      .getAttributeValue("step.start")
+      .getAttributeValue("step.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
 
     endStep = simulation
-      .getAttributeValue("step.end")
+      .getAttributeValue("step.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
+
+    simulation.endSubstep();
 
     absoluteStep = 0;
     inStep = false;
@@ -98,11 +102,11 @@ public class MinimalEngineBridge implements EngineBridge {
     engineValueFactory = new EngineValueFactory();
 
     currentStep = simulation
-      .getAttributeValue("step.start")
+      .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
 
     endStep = simulation
-      .getAttributeValue("step.end")
+      .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
 
     absoluteStep = 0;
@@ -185,7 +189,8 @@ public class MinimalEngineBridge implements EngineBridge {
   public EngineValue convert(EngineValue current, Units newUnits) {
     Conversion conversion = converter.getConversion(current.getUnits(), newUnits);
     CompiledCallable callable = conversion.getConversionCallable();
-    return callable.evaluate(new SingleValueScope(current));
+    EngineValue newValue = callable.evaluate(new SingleValueScope(current));
+    return newValue.replaceUnits(newUnits);
   }
 
   @Override

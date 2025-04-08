@@ -471,6 +471,16 @@ public interface EventHandlerMachine {
   EventHandlerMachine sum();
 
   /**
+   * Create a position from a set of popped values.
+   *
+   * <p>Create a position from the values where each appears under the following: units 1, type 1,
+   * units 2, type 2. Pushes the result as a string.</p>
+   *
+   * @reutrn Reference to this machine for chaining.
+   */
+  EventHandlerMachine makePosition();
+
+  /**
    * Check that a local variable does not yet exist and save it.
    *
    * <p>Pop the top of the stack and save that value as a new local variable in the current scope.

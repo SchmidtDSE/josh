@@ -149,8 +149,8 @@ Settings which dictate behavior of the entire simulation are dictated in a Simul
 start simulation Detailed
 
   grid.size = 1km
-  grid.start = 34 degrees latitude, -116 degrees longitude
-  grid.end = 35 degrees latitude, -115 degrees longitude
+  grid.low = 34 degrees latitude, -116 degrees longitude
+  grid.high = 35 degrees latitude, -115 degrees longitude
 
 end simulation
 ```
@@ -171,8 +171,8 @@ This can include generalized sampling behavior:
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
   
   sampling = 1%  # Sample 1% of individuals in each patch
 
@@ -185,8 +185,8 @@ Alternatively, sampling can be specified per agent:
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
   
   sampling.JoshuaTrees = 1%  # Sample 1% of individuals in each patch
   sampling.ShrubGrasses = 100 count  # Sample
@@ -200,8 +200,8 @@ These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute na
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees latitude -116 degrees longitude
-  grid.end = 35 degrees latitude -115 degrees longitude
+  grid.low = 34 degrees latitude -116 degrees longitude
+  grid.high = 35 degrees latitude -115 degrees longitude
   
   sampling.general = 1000 count
 
@@ -1099,8 +1099,8 @@ This implementation starts with a grid where each cell or patch is 30 meters by 
 start simulation Example
 
   grid.size = 30 m
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
 
 end simulation
 ```

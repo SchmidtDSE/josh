@@ -81,6 +81,18 @@ public class Replicate {
   }
 
   /**
+   * Remove a timestep from memory.
+   *
+   * <p>Remove a timestep from record if operating in a memory constrained environment. This could
+   * happen after writing to disk, for example.</p>
+   *
+   * @param stepNumber The step number to be removed.
+   */
+  public void deleteTimeStep(long stepNumber) {
+    pastTimeSteps.remove(stepNumber);
+  }
+
+  /**
    * Get a time step by its step number.
    *
    * @param stepNumber the unique step number corresponding to the TimeStep to retrieve.

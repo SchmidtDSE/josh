@@ -1,11 +1,11 @@
 start simulation TestStateSimulation
 
   grid.size = 1 count
-  grid.start = 1 count latitude, 1 count longitude
-  grid.end = 2 count latitude, 2 count longitude
+  grid.low = 1 count latitude, 1 count longitude
+  grid.high = 2 count latitude, 2 count longitude
 
-  steps.start = 0 count
-  steps.end = 100 count
+  steps.low = 0 count
+  steps.high = 100 count
 
   randSeed = 1234
 

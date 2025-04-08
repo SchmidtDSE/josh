@@ -1,13 +1,9 @@
 package org.joshsim.lang.bridge;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -39,16 +35,57 @@ public class SimulationStepper {
     MutableEntity simulation = target.getSimulation();
     Iterable<MutableEntity> patches = target.getCurrentPatches();
 
-    Stream<MutableEntity> simStream = Stream.of(simulation);
-    Stream<MutableEntity> entityStream = StreamSupport.stream(patches.spliterator(), true);
+    if (isFirstStep) {
+      performStream(simulation, "init");
+      performStream(patches, "init");
+    }
 
-    performStream(simStream, isFirstStep);
-    performStream(entityStream, isFirstStep);
+    performStream(simulation, "start");
+    performStream(patches, "start");
+
+    performStream(simulation, "step");
+    performStream(patches, "step");
+
+    performStream(simulation, "end");
+    performStream(patches, "end");
 
     long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
 
     return timestepCompleted;
+  }
+
+  /**
+   * Performs a series of entity updates on a stream of entities from an iterable.
+   *
+   * @param entities the iterable of entities to perform updates on
+   * @param subStep the substep to perform
+   */
+  private void performStream(Iterable<MutableEntity> entities, String subStep) {
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+    performStream(entityStream, subStep);
+  }
+
+  /**
+   * Performs a series of entity updates on a single entity.
+   *
+   * @param entity the entity to perform updates on.
+   * @param subStep the substep to perform
+   */
+  private void performStream(MutableEntity entity, String subStep) {
+    performStream(Stream.of(entity), subStep);
+  }
+
+  /**
+   * Performs a series of entity updates on a stream of entities.
+   *
+   * @param entityStream the stream of entities to perform updates on
+   * @param subStep the substep to perform
+   */
+  private void performStream(Stream<MutableEntity> entityStream, String subStep) {
+    Stream<MutableEntity> steppedStream = entityStream.map((x) -> updateEntity(x, subStep));
+    long numCompleted = steppedStream.filter((x) -> x != null).count();
+    assert numCompleted > 0;
   }
 
   /**
@@ -86,36 +123,8 @@ public class SimulationStepper {
         });
 
     target.endSubstep();
-    
+
     return target;
-  }
-
-  
-  /**
-   * Performs a series of entity updates on a stream of entities.
-   *
-   * <p>If it is the first step of the simulation, each entity in the stream
-   * will be initialized. The stream is processed in parallel using Java Streams.
-   * Each entity undergoes a sequence of updates corresponding to sub-steps
-   * "start", "step", and "end".</p>
-   *
-   * @param entityStream the stream of entities to perform updates on
-   * @param isFirstStep boolean indicating if this is the first step of the simulation
-   */
-  private void performStream(Stream<MutableEntity> entityStream, boolean isFirstStep) {
-    Stream<MutableEntity> initalizedStream;
-    if (isFirstStep) {
-      initalizedStream = entityStream.map((x) -> updateEntity(x, "init"));
-    } else {
-      initalizedStream = entityStream;
-    }
-
-    Stream<MutableEntity> steppedStream = initalizedStream.map((x) -> updateEntity(x, "start"))
-        .map((x) -> updateEntity(x, "step"))
-        .map((x) -> updateEntity(x, "end"));
-
-    long numCompleted = steppedStream.filter((x) -> x != null).count();
-    assert numCompleted > 0;
   }
 
 }

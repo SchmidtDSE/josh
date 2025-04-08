@@ -12,8 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -323,7 +321,7 @@ public class ShadowingEntity implements MutableEntity {
    */
   private void resolveAttributeUnsafe(String name) {
     Optional<String> substep = getSubstep();
-    
+
     // If outside substep, use prior
     if (substep.isEmpty()) {
       resolveAttributeFromPrior(name);
@@ -384,9 +382,6 @@ public class ShadowingEntity implements MutableEntity {
 
       if (matches) {
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
-        if (handler.getAttributeName().equals("stepCount")) {
-          System.out.println(value.getInnerValue());
-        }
         setAttributeValue(handler.getAttributeName(), value);
         return true;
       }
