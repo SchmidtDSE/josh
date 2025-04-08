@@ -20,7 +20,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.GeometryFactory;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
@@ -401,11 +401,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
-    EngineGeometry queryGeometry = GeometryFactory.createCircle(
+    EngineGeometry queryGeometry = EngineGeometryFactory.createCircle(
         distance.getAsDecimal(),
         centerGeometry.getCenterX(),
         centerGeometry.getCenterY(),
-        centerGeometry.getSpatialContext(),
         centerGeometry.getCrs()
     );
 

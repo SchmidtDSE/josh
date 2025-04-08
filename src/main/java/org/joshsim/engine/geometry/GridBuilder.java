@@ -233,7 +233,7 @@ public class GridBuilder {
       double leftX, double topY,
       double rightX, double bottomY
   ) {
-    return GeometryFactory.createSquare(
+    return EngineGeometryFactory.createSquare(
       BigDecimal.valueOf(leftX),
       BigDecimal.valueOf(topY),
       BigDecimal.valueOf(rightX),

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.GeometryFactory;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 
 
 /**
@@ -88,10 +88,10 @@ public class GeometryMomento {
   private Optional<MomentoShapeBuilder> getBuilder() {
     return switch (shapeName) {
       case "square" -> Optional.of(
-        () -> GeometryFactory.createSquare(diameter, centerX, centerY, crs)
+        () -> EngineGeometryFactory.createSquare(diameter, centerX, centerY, crs)
       );
       case "circle" -> Optional.of(
-        () -> GeometryFactory.createCircle(diameter, centerX, centerY, crs)
+        () -> EngineGeometryFactory.createCircle(diameter, centerX, centerY, crs)
       );
       default -> Optional.empty();
     };

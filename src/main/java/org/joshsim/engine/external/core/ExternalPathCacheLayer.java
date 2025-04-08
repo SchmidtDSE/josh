@@ -12,9 +12,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
+import org.geotools.coverage.grid.GridCoverage2D;
 import org.joshsim.engine.external.cog.CogReader;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -24,7 +24,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   // Cache GridCoverage objects by path instead of Request->RealizedDistribution
-  private final Map<EngineGeometry, GridCoverage> coverageCache = new LRUMap<>();
+  private final Map<EngineGeometry, GridCoverage2D> coverageCache = new LRUMap<>();
 
   /**
    * Constructs an ExternalPathCacheLayer with a decorated external layer.
@@ -49,7 +49,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
       loadCoverageIntoCache(request.getPath(), primingGeometry);
     }
     // Get the cached coverage, either from the cache or newly loaded
-    GridCoverage cachedCoverage = coverageCache.get(primingGeometry);
+    GridCoverage2D cachedCoverage = coverageCache.get(primingGeometry);
 
     // Get the request geometry, which is the subset area for which we want to extract values
     EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
@@ -77,7 +77,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
    * @param primingGeometry the geometry used to prime the cache
    */
   private void loadCoverageIntoCache(String path, EngineGeometry primingGeometry) {
-    GridCoverage newCoverage;
+    GridCoverage2D newCoverage;
     try {
       newCoverage = CogReader.getCoverageFromDisk(path, primingGeometry);
     } catch (IOException e) {
@@ -100,7 +100,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
    *
    * @return the cache of GridCoverage objects
    */
-  public Map<EngineGeometry, GridCoverage> getCoverageCache() {
+  public Map<EngineGeometry, GridCoverage2D> getCoverageCache() {
     return coverageCache;
   }
 

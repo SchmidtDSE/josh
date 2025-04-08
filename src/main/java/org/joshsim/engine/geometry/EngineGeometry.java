@@ -23,7 +23,7 @@ public class EngineGeometry implements Spatial {
   protected Geometry innerGeometry;
   protected CoordinateReferenceSystem crs;
   protected Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers;
-  protected static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+  protected static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
 
   /**
    * Constructs a Geometry with a provided JTS geometry and CRS.
@@ -89,7 +89,7 @@ public class EngineGeometry implements Spatial {
    * Checks if a point is contained within this geometry.
    */
   public boolean intersects(BigDecimal locationX, BigDecimal locationY) {
-    Point point = GEOMETRY_FACTORY.createPoint(
+    Point point = JTS_GEOMETRY_FACTORY.createPoint(
         new Coordinate(locationX.doubleValue(), locationY.doubleValue())
     );
     return innerGeometry.intersects(point);
