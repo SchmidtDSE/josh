@@ -12,9 +12,9 @@ fi
 
 assert_ok() {
   if [ "$verbose" = true ]; then
-    java -Xmx1024m -jar build/libs/joshsim-fat.jar run "$1" "$2"
+    java -jar build/libs/joshsim-fat.jar run "$1" "$2"
   else
-    java -Xmx1024m -jar build/libs/joshsim-fat.jar run --supress-info "$1" "$2"
+    java -jar build/libs/joshsim-fat.jar run --supress-info "$1" "$2"
   fi
   local status=$?
   if [ $status -eq 0 ]; then

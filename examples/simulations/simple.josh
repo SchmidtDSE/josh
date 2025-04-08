@@ -1,6 +1,6 @@
 start simulation TestSimpleSimulation
 
-  grid.size = 0.02 count
+  grid.size = 1 count
   grid.low = 0 count latitude, 0 count longitude
   grid.high = 10 count latitude, 10 count longitude
 
