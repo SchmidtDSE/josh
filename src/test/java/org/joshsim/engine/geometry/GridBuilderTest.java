@@ -14,11 +14,16 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.CRS;
+import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
 
 class GridBuilderTest {
 
@@ -38,6 +43,7 @@ class GridBuilderTest {
   private BigDecimal utmWestX;
   private BigDecimal utmSouthY;
   private BigDecimal utmEastX;
+  private EntityPrototype prototype;
 
   private Map<String, BigDecimal> wgs84CornerCoords;
   private Map<String, BigDecimal> utmCornerCoords;
@@ -59,6 +65,9 @@ class GridBuilderTest {
     utmWestX = new BigDecimal("634611.9480685203");     // Western X-coordinate
     utmSouthY = new BigDecimal("3707726.0273103723");   // Southern Y-coordinate
     utmEastX = new BigDecimal("639334.3319327366");     // Eastern X-coordinate
+
+    // Create a Test Prototype for the patches
+    prototype = new TestPatchEntityPrototype();
 
     // Set a reasonable cell width (30 meters)
     cellWidth = new BigDecimal(30); // 30 meters
@@ -84,7 +93,8 @@ class GridBuilderTest {
         wgs84,
         utm11n,
         wgs84CornerCoords,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     // We can't directly test private fields, but we can test that build() works
@@ -104,7 +114,8 @@ class GridBuilderTest {
           wgs84,
           utm11n,
           wgs84CornerCoords,
-          cellWidth
+          cellWidth,
+          prototype
       );
 
       // Create positions with consistent X,Y ordering
@@ -144,7 +155,7 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, zeroCellWidth)
+          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, zeroCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -152,7 +163,7 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, negativeCellWidth)
+          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, negativeCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
@@ -167,7 +178,7 @@ class GridBuilderTest {
 
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedCoordsY, cellWidth)
+          () -> new GridBuilder(wgs84, utm11n, invertedCoordsY, cellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Y-coordinate"));
 
@@ -178,7 +189,7 @@ class GridBuilderTest {
 
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedCoordsX, cellWidth)
+          () -> new GridBuilder(wgs84, utm11n, invertedCoordsX, cellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("X-coordinate"));
     }
@@ -191,7 +202,8 @@ class GridBuilderTest {
           wgs84,
           utm11n,
           wgs84CornerCoords,
-          cellWidth
+          cellWidth,
+          prototype
       );
 
       // Should work fine
@@ -208,17 +220,18 @@ class GridBuilderTest {
         wgs84,
         utm11n,
         wgs84CornerCoords,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     Grid grid = builder.build();
     assertNotNull(grid, "Grid should be built successfully");
 
-    List<Patch> patches = grid.getPatches();
+    List<MutableEntity> patches = grid.getPatches();
     assertFalse(patches.isEmpty(), "Grid should contain patches");
 
     // Verify a patch exists
-    Patch firstPatch = patches.get(0);
+    MutableEntity firstPatch = patches.get(0);
     assertTrue(firstPatch.getGeometry().isPresent());
   }
 
@@ -229,13 +242,14 @@ class GridBuilderTest {
         utm11n,
         utm11n,
         utmCornerCoords,
-        cellWidth
+        cellWidth,
+        prototype
     );
 
     Grid grid = builder.build();
     assertNotNull(grid, "Grid should be built successfully");
 
-    List<Patch> patches = grid.getPatches();
+    List<MutableEntity> patches = grid.getPatches();
     assertFalse(patches.isEmpty(), "Grid should contain patches");
 
     // Verify patches are created
@@ -250,10 +264,10 @@ class GridBuilderTest {
     @DisplayName("Constructor should throw exception for null CRS")
     void constructorWithNullCrs() {
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(null, utm11n, wgs84CornerCoords, cellWidth));
+          () -> new GridBuilder(null, utm11n, wgs84CornerCoords, cellWidth, prototype));
 
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, null, wgs84CornerCoords, cellWidth));
+          () -> new GridBuilder(wgs84, null, wgs84CornerCoords, cellWidth, prototype));
     }
 
     @Test
@@ -265,6 +279,44 @@ class GridBuilderTest {
 
       assertThrows(IllegalArgumentException.class,
           () -> new GridBuilder(wgs84, utm11n, incompleteCoords, cellWidth));
+    }
+  }
+
+  class TestPatchEntityPrototype implements EntityPrototype {
+
+    @Override
+    public String getIdentifier() {
+      return "Test";
+    }
+
+    @Override
+    public EntityType getEntityType() {
+      return EntityType.PATCH;
+    }
+
+    @Override
+    public MutableEntity build() {
+      throw new RuntimeException("Requires use of spatial.");
+    }
+
+    @Override
+    public MutableEntity buildSpatial(Entity parent) {
+      throw new RuntimeException("Requires use of spatial.");
+    }
+
+    @Override
+    public MutableEntity buildSpatial(EngineGeometry parent) {
+      return new Patch(parent, "test", new HashMap<>(), new HashMap<>());
+    }
+
+    @Override
+    public boolean requiresParent() {
+      return false;
+    }
+
+    @Override
+    public boolean requiresGeometry() {
+      return true;
     }
   }
 }
