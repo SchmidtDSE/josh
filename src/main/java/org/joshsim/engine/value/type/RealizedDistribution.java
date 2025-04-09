@@ -204,7 +204,13 @@ public class RealizedDistribution extends Distribution {
     distributions.add("RealizedDistribution");
     innerDistributions.forEach(distributions::add);
 
-    return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
+    LanguageType innerLanguageType = exampleValue.getLanguageType();
+
+    return new LanguageType(
+        distributions,
+        innerLanguageType.getRootType(),
+        innerLanguageType.containsAttributes()
+    );
   }
 
   @Override
@@ -243,6 +249,12 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Iterable<EngineValue> getContents(int count, boolean withReplacement) {
+    // If exactly all requested, can return immediately to save some memory and time.
+    if (values.size() == count) {
+      return values;
+    }
+
+    // Otherwise, sublist or wrap.
     if (withReplacement) {
       ArrayList<EngineValue> result = new ArrayList<>();
       for (int i = 0; i < count; i++) {
@@ -250,7 +262,12 @@ public class RealizedDistribution extends Distribution {
       }
       return result;
     } else {
-      return values.subList(0, Math.min(count, values.size()));
+      if (values.size() < count) {
+        throw new IllegalArgumentException(
+          "Cannot get more elements than present in a realized distribution without replacement."
+        );
+      }
+      return values.subList(0, count);
     }
   }
 
@@ -274,8 +291,7 @@ public class RealizedDistribution extends Distribution {
         .map(Scalar::getAsDecimal)
         .mapToDouble(BigDecimal::doubleValue)
         .map(value -> Math.pow(value - mean, 2))
-        .average()
-        .orElse(0.0);
+        .sum() / (values.size() - 1);
     double stdDev = Math.sqrt(variance);
     DecimalScalar result = new DecimalScalar(getCaster(), BigDecimal.valueOf(stdDev), getUnits());
     return Optional.of(result);
@@ -318,6 +334,15 @@ public class RealizedDistribution extends Distribution {
         getUnits()
     );
     return Optional.of(result);
+  }
+
+  @Override
+  public EngineValue freeze() {
+    List<EngineValue> frozenValues = values.stream()
+        .map((x) -> x.freeze())
+        .collect(Collectors.toList());
+
+    return new RealizedDistribution(caster, frozenValues, units);
   }
 
   /**

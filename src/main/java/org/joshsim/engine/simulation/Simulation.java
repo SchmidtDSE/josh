@@ -8,7 +8,7 @@ package org.joshsim.engine.simulation;
 
 import java.util.Map;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
@@ -18,7 +18,7 @@ import org.joshsim.engine.value.type.EngineValue;
 /**
  * Simulation entity with cross-timestep attributes.
  */
-public class Simulation extends MutableEntity {
+public class Simulation extends DirectLockMutableEntity {
 
   /**
    * Constructor for a Simulation, which contains 'meta' attributes and event handlers.

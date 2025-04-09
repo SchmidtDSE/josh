@@ -75,12 +75,12 @@ public class EntityValue extends EngineValue {
 
   @Override
   public MutableEntity getAsMutableEntity() {
-    throw new UnsupportedOperationException("Entity not mutable.");
+    throw new UnsupportedOperationException("Entity not mutable: " + innerValue);
   }
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType(innerValue.getName());
+    return new LanguageType(innerValue.getName(), true);
   }
 
   @Override
@@ -161,5 +161,10 @@ public class EntityValue extends EngineValue {
   @Override
   protected boolean canBePower() {
     return false;
+  }
+
+  @Override
+  public EngineValue freeze() {
+    return new EntityValue(caster, innerValue.freeze());
   }
 }

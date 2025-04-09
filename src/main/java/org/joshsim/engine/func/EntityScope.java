@@ -11,11 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.prototype.EmptyEntityPrototypeStore;
-import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
-import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.converter.EmptyConverter;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -30,7 +25,7 @@ public class EntityScope implements Scope {
   /**
    * Create a scope decorator around this entity.
    *
-   * @param value EngineValue to use for current.
+   * @param value EngineValue to use for the root.
    */
   public EntityScope(Entity value) {
     this.value = value;
@@ -41,7 +36,7 @@ public class EntityScope implements Scope {
   public EngineValue get(String name) {
     Optional<EngineValue> attrValue = value.getAttributeValue(name);
     if (attrValue.isEmpty()) {
-      String message = String.format("Cannot find %s on this entity. May be uninitalized.", name);
+      String message = String.format("Cannot find %s on %s. May be uninitalized.", name, value);
       throw new IllegalArgumentException(message);
     } else {
       return attrValue.get();

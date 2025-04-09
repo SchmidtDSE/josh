@@ -15,36 +15,15 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
  */
 public class EngineBridgeSimulationStore {
 
-  private final Map<String, EngineBridgeOperation> simulationSteps;
   private final Map<String, EntityPrototype> simulationProtoypes;
 
   /**
    * Create a new immutable record of available simulations.
    *
-   * @param simulationSteps EngineBridgeOperations by simulation name where each operation
-   *     execute a single time step when given an EngineBridge on which to operate.
+   * @param simulationProtoypes Prototypes to build the simulations.
    */
-  public EngineBridgeSimulationStore(Map<String, EngineBridgeOperation> simulationSteps,
-      Map<String, EntityPrototype> simulationProtoypes) {
-    this.simulationSteps = simulationSteps;
+  public EngineBridgeSimulationStore(Map<String, EntityPrototype> simulationProtoypes) {
     this.simulationProtoypes = simulationProtoypes;
-  }
-
-  /**
-   * Retrieves the step function for the specified simulation name.
-   *
-   * @param name The name of the simulation for which to retrieve a simulation step function.
-   * @return the EngineBridgeOperation corresponding to the given name which, when executed, runs
-   *     a single time step.
-   * @throws UnsupportedOperationException if logic for the simulation specified by name is not
-   *     found.
-   */
-  public EngineBridgeOperation getStepFunction(String name) {
-    if (!simulationSteps.containsKey(name)) {
-      throw new UnsupportedOperationException("Unknown simulation: " + name);
-    }
-
-    return simulationSteps.get(name);
   }
 
   /**
@@ -62,6 +41,25 @@ public class EngineBridgeSimulationStore {
     }
 
     return simulationProtoypes.get(name);
+  }
+
+  /**
+   * Determine if a prototype is known.
+   *
+   * @param name The name of the prototype for which this store will be checked.
+   * @return True if a prototype is available for this entity type or False otherwise.
+   */
+  public boolean hasPrototype(String name) {
+    return simulationProtoypes.containsKey(name);
+  }
+
+  /**
+   * Get simulations for which prototypes are available.
+   *
+   * @return List of prototype names.
+   */
+  public Iterable<String> getSimulations() {
+    return simulationProtoypes.keySet();
   }
 
 }

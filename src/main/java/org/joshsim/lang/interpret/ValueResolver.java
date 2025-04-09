@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret;
 
 import java.util.Optional;
 import java.util.StringJoiner;
+import org.joshsim.engine.func.DistributionScope;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.type.EngineValue;
@@ -56,8 +57,30 @@ public class ValueResolver {
       return Optional.of(resolved);
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
-      return continuationResolver.get(new EntityScope(resolved.getAsMutableEntity()));
+      Optional<Integer> innerSize = resolved.getSize();
+
+      if (innerSize.isEmpty()) {
+        String message = String.format(
+            "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",
+            resolved.getLanguageType()
+        );
+        throw new IllegalArgumentException(message);
+      }
+
+      Scope newScope;
+      if (innerSize.get() == 1) {
+        newScope = new EntityScope(resolved.getAsEntity());
+      } else {
+        newScope = new DistributionScope(resolved.getAsDistribution());
+      }
+
+      return continuationResolver.get(newScope);
     }
+  }
+
+  @Override
+  public String toString() {
+    return String.format("ValueResolver(%s)", path);
   }
 
   /**
@@ -66,7 +89,7 @@ public class ValueResolver {
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.
    * It then creates a resolver for any remaining path segments if needed. This is required because
    * some attributes may appear nested but not actually within an inner scope. This may be beacuse
-   * they are saved on the outer scope like for steps.start and steps.end which are within
+   * they are saved on the outer scope like for steps.low and steps.high which are within
    * Simulation. The "nesting" is simply syntatic sugar in this case for the Josh language.</p>
    *
    * @param target The scope to search for matching path prefixes.

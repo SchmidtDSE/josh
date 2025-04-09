@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +39,7 @@ public class ReplicateTest {
   @Mock private EngineGeometry mockGeometry;
   @Mock private Query mockQuery;
 
-  private HashMap<GeoKey, Patch> patches;
+  private HashMap<GeoKey, MutableEntity> patches;
   private Replicate replicate;
 
   @BeforeEach
@@ -122,15 +123,15 @@ public class ReplicateTest {
 
   @Test
   void testGetCurrentPatches() {
-    Iterable<Patch> currentPatches = replicate.getCurrentPatches();
+    Iterable<MutableEntity> currentPatches = replicate.getCurrentPatches();
 
     assertNotNull(currentPatches);
-    Iterator<Patch> iterator = currentPatches.iterator();
+    Iterator<MutableEntity> iterator = currentPatches.iterator();
     assertTrue(iterator.hasNext());
 
     // Verify the expected patch is returned
     boolean foundPatch1 = false;
-    for (Patch patch : currentPatches) {
+    for (MutableEntity patch : currentPatches) {
       if (patch.equals(mockPatch1)) {
         foundPatch1 = true;
         break;

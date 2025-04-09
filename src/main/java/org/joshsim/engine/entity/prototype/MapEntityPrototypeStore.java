@@ -38,4 +38,8 @@ public class MapEntityPrototypeStore implements EntityPrototypeStore {
     return prototypes.containsKey(entityName);
   }
 
+  @Override
+  public Iterable<EntityPrototype> getAll() {
+    return prototypes.values();
+  }
 }

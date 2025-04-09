@@ -38,6 +38,8 @@ import org.joshsim.lang.interpret.fragment.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.EntityFragment;
 import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
 import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.ProgramBuilder;
+import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 
@@ -53,8 +55,6 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final EngineValue singleCount;
   private final EngineValue allString;
   private final EngineValue trueValue;
-
-  // TODO: make percent, count, counts all syntactic sugar
 
   /**
    * Create a new visitor which has some commonly used values cached.
@@ -152,7 +152,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
     boolean isAddition = ctx.op.getText().equals("+");
 
     EventHandlerAction action = (machine) -> {
@@ -190,6 +190,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     };
 
     return new ActionFragment(action);
+  }
+
+  public Fragment visitParenExpression(JoshLangParser.ParenExpressionContext ctx) {
+    return ctx.getChild(1).accept(this);
   }
 
   public Fragment visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
@@ -395,7 +399,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new ActionFragment(action);
   }
 
-  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMinExpressionContext ctx) {
+  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMaxExpressionContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
     EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
     EventHandlerAction action = (machine) -> {
@@ -437,11 +441,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitCreateVariableExpression(
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
-    String entityType = ctx.target.getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.createEntity(entityType);
+      machine.createEntity(entityName);
       return machine;
     };
 
@@ -505,14 +509,18 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
-    String payload = ctx.getText();
-    EngineValue decoratedPayload = engineValueFactory.build(
-        payload,
-        new Units("position")
-    );
+    // unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_)
+    Fragment unitsFragment1 = ctx.getChild(0).accept(this);
+    String type1 = ctx.getChild(1).getText();
+    Fragment unitsFragment2 = ctx.getChild(3).accept(this);
+    String type2 = ctx.getChild(4).getText();
 
     EventHandlerAction action = (machine) -> {
-      machine.push(decoratedPayload);
+      unitsFragment1.getCurrentAction().apply(machine);
+      machine.push(engineValueFactory.build(type1, new Units("")));
+      unitsFragment2.getCurrentAction().apply(machine);
+      machine.push(engineValueFactory.build(type2, new Units("")));
+      machine.makePosition();
       return machine;
     };
 
@@ -520,7 +528,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
-    String entityName = ctx.getChild(0).getText();
+    String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
@@ -580,7 +588,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     int numChildren = ctx.getChildCount();
     int numStatements = numChildren - 2;
     for (int statementIndex = 0; statementIndex < numStatements; statementIndex++) {
-      int childIndex = statementIndex + 2;
+      int childIndex = statementIndex + 1;
 
       EventHandlerAction statementAction = ctx
           .getChild(childIndex)
@@ -644,7 +652,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitConditionalElseEventHandlerGroupMember(
-      JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
+      JoshLangParser.ConditionalElseEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(this).getCurrentAction();
     CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
     return new CompiledCallableFragment(decoratedInterpreterAction);
@@ -654,13 +662,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String fullName = ctx.name.getText();
     Fragment innerFragment = ctx.getChild(1).accept(this);
 
-    if (innerFragment.getCompiledSelector().isPresent()) {
-      throw new RuntimeException("Unexpected selector on non-conditional event handler");
-    }
+    CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
     EventKey eventKey = buildEventKey(fullName);
     EventHandler eventHandler = new EventHandler(
-        innerFragment.getCompiledCallable(),
+        innerCallable,
         eventKey.getAttribute(),
         eventKey.getEvent()
     );
@@ -678,6 +684,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventKey eventKey = buildEventKey(fullName);
 
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
+    groupBuilder.setEventKey(eventKey);
 
     int numBranches = ctx.getChildCount() - 1;
     for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
@@ -741,8 +748,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       Fragment childFragment = ctx.getChild(childIndex).accept(this);
-      EventHandlerGroupBuilder groupBuilder = childFragment.getEventHandlerGroup();
-      entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+
+      for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {
+        entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+      }
     }
 
     EntityPrototype prototype = new ParentlessEntityPrototype(
@@ -806,13 +815,32 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitProgram(JoshLangParser.ProgramContext ctx) {
-    return null;  // TODO
+    ProgramBuilder builder = new ProgramBuilder();
+    int numChildren = ctx.getChildCount();
+    for (int i = 0; i < numChildren; i++) {
+      Fragment childFragment = ctx.getChild(i).accept(this);
+      builder.add(childFragment);
+    }
+    return new ProgramFragment(builder);
   }
 
   private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {
-    BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
+    String numberStr = ctx.getChild(0).getText();
     String unitsText = ctx.getChild(1).getText();
-    return engineValueFactory.build(number, new Units(unitsText));
+    boolean hasDecimal = numberStr.contains(".");
+    boolean isPercent = unitsText.equals("percent") || unitsText.equals("%");
+
+    if (isPercent) {
+      BigDecimal percent = BigDecimal.valueOf(Double.parseDouble(numberStr));
+      BigDecimal converted = percent.divide(BigDecimal.valueOf(100));
+      return engineValueFactory.build(converted, new Units(unitsText));
+    } else if (hasDecimal) {
+      BigDecimal number = BigDecimal.valueOf(Double.parseDouble(numberStr));
+      return engineValueFactory.build(number, new Units(unitsText));
+    } else {
+      long number = Long.parseLong(numberStr);
+      return engineValueFactory.build(number, new Units(unitsText));
+    }
   }
 
   private boolean isEventName(String candidate) {
@@ -849,6 +877,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private EntityType getEntityType(String entityType) {
     return switch (entityType) {
       case "agent" -> EntityType.AGENT;
+      case "organism" -> EntityType.AGENT;
+      case "management" -> EntityType.AGENT;
       case "disturbance" -> EntityType.DISTURBANCE;
       case "external" -> EntityType.EXTERNAL_RESOURCE;
       case "patch" -> EntityType.PATCH;

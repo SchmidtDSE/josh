@@ -1,7 +1,5 @@
 start patch Default
 
-  location = all
-
   TreeA.init = {
     const countScalar = 5 count
     const count = sample countScalar

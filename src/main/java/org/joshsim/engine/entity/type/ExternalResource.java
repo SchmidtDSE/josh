@@ -7,7 +7,7 @@
 package org.joshsim.engine.entity.type;
 
 import java.util.HashMap;
-import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -21,7 +21,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * <p>Represents an external resource entity in the system which provides access to distributed
  * values based on a geometry and attribute-sensitive paths.</p>
  */
-public abstract class ExternalResource extends MutableEntity {
+public abstract class ExternalResource extends DirectLockMutableEntity {
   /**
    * Constructor for a ExternalResource, which allows access to external data to influence Entities.
    *

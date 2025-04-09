@@ -1,8 +1,10 @@
 package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
+
 
 
 /**
@@ -38,7 +40,7 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity build() {
+  public MutableEntity build() {
     if (inner.requiresParent()) {
       return inner.buildSpatial(parent);
     } else if (inner.requiresGeometry()) {
@@ -49,12 +51,12 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public Entity buildSpatial(Entity parent) {
+  public MutableEntity buildSpatial(Entity parent) {
     return inner.buildSpatial(parent);
   }
 
   @Override
-  public Entity buildSpatial(EngineGeometry parent) {
+  public MutableEntity buildSpatial(EngineGeometry parent) {
     return inner.buildSpatial(parent);
   }
 
@@ -67,5 +69,6 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   public boolean requiresGeometry() {
     return false;
   }
+
 
 }

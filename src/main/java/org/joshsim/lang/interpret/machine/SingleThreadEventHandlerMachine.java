@@ -18,15 +18,18 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
+import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.Slicer;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.ShadowingEntityPrototype;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 
@@ -46,7 +49,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
-  private final Scope scope;
+  private final LocalScope scope;
   private final EngineValueFactory valueFactory;
   private final Random random;
 
@@ -62,7 +65,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
     this.bridge = bridge;
-    this.scope = scope;
+    this.scope = new LocalScope(scope);
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -75,7 +78,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
     Optional<EngineValue> value = valueResolver.get(scope);
-    memory.push(value.orElseThrow());
+    memory.push(value.orElseThrow(
+        () -> new IllegalStateException("Unable to get value for " + valueResolver)
+    ));
     return this;
   }
 
@@ -289,8 +294,15 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine slice() {
-    // TODO: requires pairwise operations on distribution
-    return null;
+    EngineValue selections = pop();
+    EngineValue subject = pop();
+
+    Slicer slicer = new Slicer();
+    EngineValue result = slicer.slice(subject, selections);
+
+    memory.push(result);
+
+    return this;
   }
 
   @Override
@@ -372,9 +384,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine createEntity(String entityType) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
-    EmbeddedParentEntityPrototype decoratedPrototype = new EmbeddedParentEntityPrototype(
+    EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
         prototype,
         scope.get("current").getAsEntity()
+    );
+    EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
+        innerDecorated,
+        scope
     );
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);
@@ -658,8 +674,41 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
+  public EventHandlerMachine makePosition() {
+    EngineValue type2 = pop();
+    EngineValue val2 = pop();
+    EngineValue type1 = pop();
+    EngineValue val1 = pop();
+
+    String firstUnits = val1.getUnits().toString();
+    String secondUnits = val2.getUnits().toString();
+
+    boolean firstIsCount = firstUnits.isEmpty();
+    boolean secondIsCount = secondUnits.isEmpty();
+
+    String firstUnitsSafe = firstIsCount ? "count" : firstUnits;
+    String secondUnitsSafe = secondIsCount ? "count" : secondUnits;
+
+    String complete = String.format(
+        "%s %s %s, %s %s %s",
+        val1.getAsDecimal(),
+        firstUnitsSafe,
+        type1.getAsString(),
+        val2.getAsDecimal(),
+        secondUnitsSafe,
+        type2.getAsString()
+    );
+    EngineValue newValue = valueFactory.build(complete, new Units("position"));
+    push(newValue);
+
+    return this;
+  }
+
+  @Override
   public EventHandlerMachine saveLocalVariable(String identifierName) {
-    return null;
+    EngineValue value = pop();
+    scope.defineConstant(identifierName, value);
+    return this;
   }
 
   @Override

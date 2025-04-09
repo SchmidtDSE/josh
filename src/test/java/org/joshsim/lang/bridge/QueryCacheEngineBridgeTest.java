@@ -55,9 +55,9 @@ public class QueryCacheEngineBridgeTest {
   void setUp() {
     bridge = new QueryCacheEngineBridge(
         mockSimulation,
-        mockReplicate,
         mockConverter,
-        mockPrototypeStore
+        mockPrototypeStore,
+        mockReplicate
     );
   }
 

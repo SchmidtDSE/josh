@@ -7,7 +7,6 @@
 package org.joshsim.engine.value.converter;
 
 import org.joshsim.engine.value.engine.EngineValueTuple;
-import org.joshsim.engine.value.engine.EngineValueTuple.UnitsTuple;
 
 /**
  * Converter which can only convert between identical units.

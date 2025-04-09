@@ -15,17 +15,16 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStoreBuilder;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.value.converter.ConverterBuilder;
-import org.joshsim.lang.bridge.EngineBridgeOperation;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.JoshProgram;
 
 /**
- * Builder for constructing program fragments.
+ * Builder for constructing programs from fragments.
  *
  * <p>This class provides a builder pattern implementation for creating program fragments
  * by aggregating conversions, entities, and simulation components into a complete program.</p>
  */
-public class ProgramFragmentBuilder {
+public class ProgramBuilder {
 
   private final ConverterBuilder converter;
   private final EntityPrototypeStoreBuilder entities;
@@ -34,7 +33,7 @@ public class ProgramFragmentBuilder {
   /**
    * Creates a new builder for program fragments with empty conversion and entity stores.
    */
-  public ProgramFragmentBuilder() {
+  public ProgramBuilder() {
     converter = new ConverterBuilder();
     entities = new EntityPrototypeStoreBuilder();
     simulationNames = new ArrayList<>();
@@ -62,7 +61,7 @@ public class ProgramFragmentBuilder {
    * @return The constructed JoshProgram instance
    */
   public JoshProgram build() {
-    return new JoshProgram(converter.build(), buildSimulationStore());
+    return new JoshProgram(converter.build(), buildSimulationStore(), entities.build());
   }
 
   /**
@@ -79,13 +78,14 @@ public class ProgramFragmentBuilder {
   }
 
   private EngineBridgeSimulationStore buildSimulationStore() {
-    Map<String, EngineBridgeOperation> simulationSteps = new HashMap<>();
+    Map<String, EntityPrototype> prototypes = new HashMap<>();
 
     for (String simulationName : simulationNames) {
       EntityPrototype prototype = entities.get(simulationName);
+      prototypes.put(simulationName, prototype);
     }
 
-    return null;  // TODO
+    return new EngineBridgeSimulationStore(prototypes);
   }
 
 }

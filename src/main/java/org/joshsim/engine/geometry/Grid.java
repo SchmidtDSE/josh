@@ -2,7 +2,7 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import java.util.List;
-import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.entity.base.MutableEntity;
 
 /**
  * The Grid class contains a list of patches and a cell width for conveniences.
@@ -10,7 +10,7 @@ import org.joshsim.engine.entity.type.Patch;
  * are the basic unit of spatial representation.
  */
 public class Grid {
-  private final List<Patch> patches;
+  private final List<MutableEntity> patches;
   private final BigDecimal spacing;
 
 
@@ -20,7 +20,7 @@ public class Grid {
    * @param patches List of patches in the grid.
    * @param spacing Width of a cell in the grid.
    */
-  public Grid(List<Patch> patches, BigDecimal spacing) {
+  public Grid(List<MutableEntity> patches, BigDecimal spacing) {
     this.patches = patches;
     this.spacing = spacing;
   }
@@ -30,7 +30,7 @@ public class Grid {
    *
    * @return List of patches in the grid.
    */
-  public List<Patch> getPatches() {
+  public List<MutableEntity> getPatches() {
     return patches;
   }
 

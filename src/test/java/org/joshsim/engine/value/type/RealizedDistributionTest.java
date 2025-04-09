@@ -7,8 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -315,20 +314,10 @@ class RealizedDistributionTest {
 
   @Test
   void testGetContentsLimitedWithoutReplacement() {
-    // Request more items than available without replacement
-    Iterable<EngineValue> result = distribution.getContents(10, false);
-    ArrayList<EngineValue> resultList = new ArrayList<>();
-    result.forEach(resultList::add);
-
-    // Should only return the 5 available items
-    assertEquals(5, resultList.size());
-
-    for (int i = 0; i < 5; i++) {
-      Object value = resultList.get(i);
-      assertTrue(value instanceof IntScalar);
-      IntScalar scalar = (IntScalar) value;
-      assertEquals(i + 1, scalar.getAsInt());
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> distribution.getContents(10, false)
+    );
   }
 
   @Test
@@ -346,7 +335,7 @@ class RealizedDistributionTest {
   @Test
   void testGetStd() {
     assertEquals(
-        1.4142,
+        1.5811,
         distribution.getStd().orElseThrow().getAsDecimal().doubleValue(),
         0.0001
     );
@@ -428,6 +417,34 @@ class RealizedDistributionTest {
     // Attempting to sample more elements than available without replacement should throw exception
     assertThrows(IllegalArgumentException.class,
         () -> distribution.sampleMultiple(10, false));
+  }
+
+  @Test
+  void testFreeze() {
+    RealizedDistribution distributionWithMutable = new RealizedDistribution(
+        caster,
+        values,
+        Units.EMPTY
+    );
+
+    // Freeze the distribution
+    EngineValue frozenResult = distributionWithMutable.freeze();
+
+    // Verify the result is a RealizedDistribution
+    assertTrue(frozenResult instanceof RealizedDistribution);
+    RealizedDistribution frozenDistribution = (RealizedDistribution) frozenResult;
+
+    // Verify the frozen distribution has the same size
+    assertEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
+
+    // Verify the units are preserved
+    assertEquals(distributionWithMutable.getUnits(), frozenDistribution.getUnits());
+
+    // Check that changes do not propogate
+    values.add(new IntScalar(caster, 0L, new Units("m")));
+
+    // Verify the frozen distribution has the same size
+    assertNotEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());
   }
 
 }

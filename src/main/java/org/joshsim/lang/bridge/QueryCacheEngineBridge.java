@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.simulation.Replicate;
-import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Converter;
 
 
@@ -28,20 +28,33 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   private final Map<GeometryMomento, List<GeoKey>> cachedPatchesByGeometry;
 
   /**
-   * Constructs a caching EngineBridge to manipulate simulation, replicate, and converter.
+   * Constructs a caching EngineBridge to manipulate simulation and converter.
    *
    * <p>Version of EngineBridge which caches patches found in queries that cross the bridge,
    * speeding up geospatial operations in exchange for some in-memory space.</p>
    *
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
-   * @param replicate The replicate instance for querying patches and other simulation data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.s
    */
-  public QueryCacheEngineBridge(Simulation simulation, Replicate replicate, Converter converter,
-                                EntityPrototypeStore prototypeStore) {
-    super(simulation, replicate, converter, prototypeStore);
+  public QueryCacheEngineBridge(MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore) {
+    super(simulation, converter, prototypeStore);
+    cachedPatchesByGeometry = new HashMap<>();
+  }
+
+  /**
+   * Constructs a caching EngineBridge with a given Replicate for testing.
+   *
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.s
+   */
+  QueryCacheEngineBridge(MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, Replicate replicate) {
+    super(simulation, converter, prototypeStore, replicate);
     cachedPatchesByGeometry = new HashMap<>();
   }
 
@@ -50,7 +63,6 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
     if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
       List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
 
-      Simulation simulation = null;
       long priorTimestep = getPriorTimestep();
 
       return keys.stream()

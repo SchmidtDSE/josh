@@ -13,11 +13,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
-import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +67,9 @@ public class ValueResolverTest {
     // Configure mocks for nested value test
     when(mockScope.get("entity")).thenReturn(mockEntityValue);
     when(mockScope.has("entity")).thenReturn(true);
+    when(mockEntityValue.getSize()).thenReturn(Optional.of(1));
     when(mockEntityValue.getAsMutableEntity()).thenReturn(mockEntity);
+    when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
 
     // Setup nested entity value.
     when(mockEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));

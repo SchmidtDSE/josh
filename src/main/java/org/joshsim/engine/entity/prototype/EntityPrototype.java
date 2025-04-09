@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity.prototype;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 
@@ -41,7 +42,7 @@ public interface EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built without spatial context.
    */
-  Entity build();
+  MutableEntity build();
 
   /**
    * Builds a spatial entity instance from this prototype with a parent entity.
@@ -51,7 +52,7 @@ public interface EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built with a parent entity.
    */
-  Entity buildSpatial(Entity parent);
+  MutableEntity buildSpatial(Entity parent);
 
   /**
    * Builds a spatial entity instance from this prototype with a geometry parent.
@@ -61,7 +62,7 @@ public interface EntityPrototype {
    * @return A new Entity instance created from this prototype.
    * @throws RuntimeException if the entity type cannot be built with a geometry parent.
    */
-  Entity buildSpatial(EngineGeometry parent);
+  MutableEntity buildSpatial(EngineGeometry parent);
 
   /**
    * Determine if this entity prototype requires a parent to be provided to be constructed.

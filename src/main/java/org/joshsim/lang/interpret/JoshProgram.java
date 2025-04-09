@@ -10,6 +10,7 @@
 
 package org.joshsim.lang.interpret;
 
+import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 
@@ -24,6 +25,7 @@ public class JoshProgram {
 
   private final Converter converter;
   private final EngineBridgeSimulationStore simulations;
+  private final EntityPrototypeStore prototypes;
 
   /**
    * Creates a new Josh program instance.
@@ -32,9 +34,11 @@ public class JoshProgram {
    * @param simulations The store which contains all simulations required for running for this
    *     program.
    */
-  public JoshProgram(Converter converter, EngineBridgeSimulationStore simulations) {
+  public JoshProgram(Converter converter, EngineBridgeSimulationStore simulations,
+      EntityPrototypeStore prototypes) {
     this.converter = converter;
     this.simulations = simulations;
+    this.prototypes = prototypes;
   }
 
   /**
@@ -53,6 +57,15 @@ public class JoshProgram {
    */
   public EngineBridgeSimulationStore getSimulations() {
     return simulations;
+  }
+
+  /**
+   * Gets the store containing all entity prototypes required by the program.
+   *
+   * @return The entity prototype store to use when executing this program.
+   */
+  public EntityPrototypeStore getPrototypes() {
+    return prototypes;
   }
 
 }

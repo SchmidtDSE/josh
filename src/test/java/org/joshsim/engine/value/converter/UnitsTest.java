@@ -32,6 +32,15 @@ class UnitsTest {
   }
 
   @Test
+  void testConstructorWithCount() {
+    Units units = new Units("m * count");
+
+    assertEquals(1, units.getNumeratorUnits().size());
+    assertTrue(units.getNumeratorUnits().containsKey("m"));
+    assertEquals(1, units.getNumeratorUnits().get("m"));
+  }
+
+  @Test
   void testConstructorWithStringContainingDenominator() {
     Units units = new Units("m / s");
 
