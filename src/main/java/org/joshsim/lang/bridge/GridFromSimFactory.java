@@ -8,6 +8,9 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.geometry.GridBuilder;
@@ -16,8 +19,7 @@ import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.FactoryException;
+
 
 
 /**

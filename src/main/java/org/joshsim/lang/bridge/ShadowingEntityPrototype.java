@@ -5,7 +5,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 
 /**
@@ -48,7 +48,7 @@ public class ShadowingEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public MutableEntity buildSpatial(Geometry parent) {
+  public MutableEntity buildSpatial(EngineGeometry parent) {
     return wrap(inner.buildSpatial(parent));
   }
 
