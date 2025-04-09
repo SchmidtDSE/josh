@@ -47,11 +47,11 @@ public class ExternalLayerFactoryTest {
   private CoordinateReferenceSystem utm11n;
   private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
-  
+
   // Valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
   private double[][] validUtm11nCoordinates;
   private double[] defaultValidCoordinate;
-  
+
   // Test areas within UTM Zone 11N
   private EngineGeometry testArea1;
   private EngineGeometry testArea2;
@@ -71,7 +71,7 @@ public class ExternalLayerFactoryTest {
     caster = new EngineValueWideningCaster();
     units = new Units("mm");
     factory = new ExternalLayerFactory(caster, units);
-    
+
     wgs84 = CRS.decode("EPSG:4326", true); // WGS84, lefthanded (lon first)
     utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
 
@@ -83,33 +83,33 @@ public class ExternalLayerFactoryTest {
         {-119.8, 36.7},   // Central California
         {-115.0, 35.0}    // Mojave Desert area
     };
-    
+
     // Set up a default valid coordinate for simple tests
     defaultValidCoordinate = validUtm11nCoordinates[0];
-    
+
     // Create test areas for our tests
     double lonWidth1 = 0.5;
     double latHeight1 = 0.5;
     testArea1 = createBoxGeometry(
-        defaultValidCoordinate[0] - lonWidth1, 
-        defaultValidCoordinate[1] - latHeight1, 
-        defaultValidCoordinate[0] + lonWidth1, 
+        defaultValidCoordinate[0] - lonWidth1,
+        defaultValidCoordinate[1] - latHeight1,
+        defaultValidCoordinate[0] + lonWidth1,
         defaultValidCoordinate[1] + latHeight1
     );
-    
+
     // Second test area that overlaps with the first
     testArea2 = createBoxGeometry(
-        defaultValidCoordinate[0] - 0.25, 
-        defaultValidCoordinate[1], 
-        defaultValidCoordinate[0] + 0.75, 
+        defaultValidCoordinate[0] - 0.25,
+        defaultValidCoordinate[1],
+        defaultValidCoordinate[0] + 0.75,
         defaultValidCoordinate[1] + 1.0
     );
-    
+
     // Small test area for more precise tests
     testAreaSmall = createBoxGeometry(
-        defaultValidCoordinate[0] - 0.1, 
-        defaultValidCoordinate[1] - 0.1, 
-        defaultValidCoordinate[0] + 0.1, 
+        defaultValidCoordinate[0] - 0.1,
+        defaultValidCoordinate[1] - 0.1,
+        defaultValidCoordinate[0] + 0.1,
         defaultValidCoordinate[1] + 0.1
     );
   }
@@ -162,28 +162,28 @@ public class ExternalLayerFactoryTest {
   @Test
   void testCachingBehavior() {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
-    
+
     // Create a spy on the real CogExternalLayer
     CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
-    
+
     // Create the cache layer with our spy
     ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
-    
+
     // Create the full chain
     ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
-    
+
     // First request
     final RealizedDistribution result1 = chain.fulfill(request);
 
     // Check cache state
     assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
-    
+
     // Second request with the same parameters
     RealizedDistribution result2 = chain.fulfill(request);
 
     // Check cache state is still one
     assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
-    
+
     // Once more, to ensure cache is used
 
     RealizedDistribution result3 = chain.fulfill(request);
@@ -381,7 +381,7 @@ public class ExternalLayerFactoryTest {
       EngineGeometry area = createBoxGeometry(
           offsetLon - 0.05, offsetLat - 0.05,
           offsetLon + 0.05, offsetLat + 0.05);
-          
+
       Request request = createFileRequest(COG_NOV_2021, area);
       request.setPrimingGeometry(Optional.of(area)); // Set the area as its own priming geometry
       cacheLayer.fulfill(request);

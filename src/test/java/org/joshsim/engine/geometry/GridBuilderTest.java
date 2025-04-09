@@ -251,7 +251,7 @@ class GridBuilderTest {
     void constructorWithNullCrs() {
       assertThrows(IllegalArgumentException.class,
           () -> new GridBuilder(null, utm11n, wgs84CornerCoords, cellWidth));
-      
+
       assertThrows(IllegalArgumentException.class,
           () -> new GridBuilder(wgs84, null, wgs84CornerCoords, cellWidth));
     }

@@ -161,7 +161,7 @@ public class EngineGeometry implements Spatial {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    
+
     // Delegate to the type-specific equals method
     return equals((EngineGeometry) o);
   }
