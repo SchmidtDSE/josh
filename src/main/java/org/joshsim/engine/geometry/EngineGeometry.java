@@ -149,4 +149,43 @@ public class EngineGeometry implements Spatial {
     Envelope env = getInnerGeometry().getEnvelopeInternal();
     return new ReferencedEnvelope(env, crs);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    // Check if the object is the exact same instance
+    if (this == o) {
+      return true;
+    }
+
+    // Check if the object is null or not of the same class
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    
+    // Delegate to the type-specific equals method
+    return equals((EngineGeometry) o);
+  }
+
+  /**
+   * Type-specific equality check.
+   *
+   * @param other The other EngineGeometry to compare with
+   * @return true if the geometries are equal, false otherwise
+   */
+  public boolean equals(EngineGeometry other) {
+    // Compare innerGeometry using equals
+    if (!innerGeometry.equals(other.innerGeometry)) {
+      return false;
+    }
+    // Compare CRS using CRS.equalsIgnoreMetadata
+    return CRS.equalsIgnoreMetadata(crs, other.crs);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = innerGeometry.hashCode();
+    // Use a simple approach for CRS hashCode
+    result = 31 * result + crs.toString().hashCode();
+    return result;
+  }
 }

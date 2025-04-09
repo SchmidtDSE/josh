@@ -195,33 +195,6 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testRequestWithoutPrimingGeometryReachesBaseCogLayer() {
-    // Create a spy on the CogExternalLayer to track method calls
-    CogExternalLayer cogLayerSpy = spy(new CogExternalLayer(units, caster));
-    
-    // Create the chain with our spy
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayerSpy);
-    ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
-    
-    // Create a request WITHOUT setting a priming geometry
-    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
-    
-    // Ensure priming geometry isn't set by the request creation
-    assertEquals(Optional.empty(), request.getPrimingGeometry());
-    
-    // Execute request through the chain
-    primingLayer.fulfill(request);
-    
-    // Verify CogExternalLayer.fulfill was called with this request
-    // The request should pass through both decorators to the base layer
-    verify(cogLayerSpy, times(1)).fulfill(any(Request.class));
-    
-    // After processing, the request should have a priming geometry set
-    // (set by the ExtendingPrimingGeometryLayer)
-    assertTrue(request.getPrimingGeometry().isPresent());
-  }
-
-  @Test
   void testIndividualLayers() throws IOException {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 

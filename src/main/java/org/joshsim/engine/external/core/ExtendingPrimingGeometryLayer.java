@@ -63,7 +63,6 @@ public class ExtendingPrimingGeometryLayer extends ExternalLayerDecorator {
   @Override
   public RealizedDistribution fulfill(Request request) {
     // Get the geometry from the request
-    // TODO: Revisit proper times to throw here
     EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
 
     // Update our priming geometry to include this request
