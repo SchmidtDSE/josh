@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import java.util.stream.Collectors;
 
 /**
  * Distribution with a finite number of elements.
@@ -67,10 +68,9 @@ public class RealizedDistribution extends Distribution {
       throw new IllegalArgumentException("Cannot create a distribution with no values.");
     }
 
-    List<EngineValue> engineValues = new ArrayList<>();
-    for (BigDecimal decimalValue : decimalValues) {
-      engineValues.add(new DecimalScalar(caster, decimalValue, units));
-    }
+    List<EngineValue> engineValues = decimalValues.stream()
+        .map(value -> new DecimalScalar(caster, value, units))
+        .collect(Collectors.toList());
 
     return new RealizedDistribution(caster, engineValues, units);
   }
