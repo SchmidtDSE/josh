@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import java.util.stream.Collectors;
 
 /**
  * Distribution with a finite number of elements.
