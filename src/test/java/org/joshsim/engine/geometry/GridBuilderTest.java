@@ -9,19 +9,16 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.sis.geometry.DirectPosition2D;
-import org.apache.sis.referencing.CRS;
-import org.apache.sis.referencing.crs.AbstractCRS;
-import org.apache.sis.referencing.cs.AxesConvention;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.type.Patch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.FactoryException;
-
 
 class GridBuilderTest {
 
@@ -95,8 +92,8 @@ class GridBuilderTest {
     @Test
     @DisplayName("transformCornerCoordinates should correctly transform between different CRS")
     void transformCornerCoordinates() throws FactoryException, TransformException {
-      CoordinateReferenceSystem wgs84 = CRS.forCode("EPSG:4326");
-      CoordinateReferenceSystem utm11n = CRS.forCode("EPSG:32611");
+      CoordinateReferenceSystem wgs84 = CRS.decode("EPSG:4326");
+      CoordinateReferenceSystem utm11n = CRS.decode("EPSG:32611");
 
       GridBuilder builder = new GridBuilder(
           "EPSG:4326",
@@ -105,28 +102,29 @@ class GridBuilderTest {
           cellWidth
       );
 
-      // Create positions with consistent X,Y ordering using RIGHT_HANDED convention
-      DirectPosition2D topLeft = new DirectPosition2D(
+      // Create positions with consistent X,Y ordering
+      GeneralPosition topLeft = new GeneralPosition(
           wgs84WestLon.doubleValue(),
           wgs84NorthLat.doubleValue()
       );
-      DirectPosition2D bottomRight = new DirectPosition2D(
+      topLeft.setCoordinateReferenceSystem(wgs84);
+      
+      GeneralPosition bottomRight = new GeneralPosition(
           wgs84EastLon.doubleValue(),
           wgs84SouthLat.doubleValue()
       );
-      DirectPosition2D[] corners = {topLeft, bottomRight};
+      bottomRight.setCoordinateReferenceSystem(wgs84);
+      
+      GeneralPosition[] corners = {topLeft, bottomRight};
 
-      // Transform using normalized CRS (RIGHT_HANDED convention)
-      DirectPosition2D[] transformed = builder.transformCornerCoordinates(corners,
-          AbstractCRS.castOrCopy(wgs84).forConvention(AxesConvention.RIGHT_HANDED),
-          AbstractCRS.castOrCopy(utm11n).forConvention(AxesConvention.RIGHT_HANDED));
+      // Transform using CRS
+      GeneralPosition[] transformed = builder.transformCornerCoordinates(corners, wgs84, utm11n);
 
       // Verify transformed coordinates match the expected UTM 11N values
       assertTrue(Math.abs(transformed[0].getOrdinate(0) - utmWestX.doubleValue()) < 2.0);
       assertTrue(Math.abs(transformed[0].getOrdinate(1) - utmNorthY.doubleValue()) < 1.0);
       assertTrue(Math.abs(transformed[1].getOrdinate(0) - utmEastX.doubleValue()) < 2.0);
       assertTrue(Math.abs(transformed[1].getOrdinate(1) - utmSouthY.doubleValue()) < 1.0);
-
     }
   }
 
@@ -194,8 +192,6 @@ class GridBuilderTest {
       // Should work fine
       Grid grid = builder.build();
       assertNotNull(grid);
-
-      // Just test that build works - we know it calls validateParameters() internally now
       assertNotNull(grid.getPatches());
     }
   }
