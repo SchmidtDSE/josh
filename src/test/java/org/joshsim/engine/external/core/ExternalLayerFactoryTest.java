@@ -52,7 +52,7 @@ public class ExternalLayerFactoryTest {
 
     // // Disable native acceleration which can cause issues
     System.setProperty("javax.media.jai.disableMediaLib", "true");
-    
+
     // // Configure JAI memory settings
     // if (JAI.getDefaultInstance() != null) {
     //   JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256 * 1024 * 1024);

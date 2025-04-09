@@ -34,14 +34,56 @@ public class EngineGeometryTest {
   private CoordinateReferenceSystem wgs84;
   private CoordinateReferenceSystem utm11n;
 
+  private double[][] validUtm11nCoordinates;
+  private Coordinate defaultValidCoordinate;
+  private Point defaultValidPoint;
+  private Polygon defaultValidPolygon;
+
   /**
    * Set up test environment.
    */
   @BeforeEach
   public void setUp() throws FactoryException {
     geometryFactory = new GeometryFactory();
-    wgs84 = CRS.decode("EPSG:4326"); // WGS84
+    wgs84 = CRS.decode("EPSG:4326", true); // WGS84, lefthanded (lon first)
     utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
+
+    // Initialize valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
+    validUtm11nCoordinates = new double[][] {
+        {-117.0, 34.0},   // Southern California
+        {-118.2, 34.0},   // Los Angeles area
+        {-116.5, 33.8},   // Palm Springs area
+        {-119.8, 36.7},   // Central California
+        {-115.0, 35.0}    // Mojave Desert area
+    };
+
+    // Set up a default valid coordinate/point for simple tests
+    defaultValidCoordinate = new Coordinate(
+        validUtm11nCoordinates[0][0], validUtm11nCoordinates[0][1]
+    );
+    defaultValidPoint = geometryFactory.createPoint(defaultValidCoordinate);
+
+    // Create a valid rectangle that's within UTM Zone 11N
+    Coordinate[] coords = new Coordinate[5];
+    double lonWidth = 0.02;  // small lon/lat rectangle around the valid point
+    double latHeight = 0.02;
+    coords[0] = new Coordinate(
+      defaultValidCoordinate.x - lonWidth, defaultValidCoordinate.y - latHeight
+    );
+    coords[1] = new Coordinate(
+        defaultValidCoordinate.x + lonWidth,
+        defaultValidCoordinate.y - latHeight
+    );
+    coords[2] = new Coordinate(
+        defaultValidCoordinate.x + lonWidth,
+        defaultValidCoordinate.y + latHeight
+    );
+    coords[3] = new Coordinate(
+        defaultValidCoordinate.x - lonWidth,
+        defaultValidCoordinate.y + latHeight
+    );
+    coords[4] = coords[0]; // close the ring
+    defaultValidPolygon = geometryFactory.createPolygon(coords);
   }
 
   @Test
@@ -244,14 +286,14 @@ public class EngineGeometryTest {
   class CrsTransformationTests {
     @Test
     public void testAsTargetCrs() throws FactoryException {
-      Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-      EngineGeometry geometry = new EngineGeometry(point, wgs84);
+      EngineGeometry geometry = new EngineGeometry(defaultValidPoint, wgs84);
 
       EngineGeometry transformed = geometry.asTargetCrs(utm11n);
 
       assertNotNull(transformed, "Transformed EngineGeometry should not be null");
-      assertEquals(utm11n, transformed.getCrs(), "Transformed EngineGeometry should have target CRS");
-      assertFalse(point.equals(transformed.getInnerGeometry()),
+      assertEquals(utm11n, transformed.getCrs(),
+          "Transformed EngineGeometry should have target CRS");
+      assertFalse(defaultValidPoint.equals(transformed.getInnerGeometry()),
           "Transformed point should have different coordinates");
     }
 
@@ -268,13 +310,11 @@ public class EngineGeometryTest {
 
     @Test
     public void testIntersectionWithDifferentCrs() throws FactoryException, TransformException {
-      // Create point in WGS84
-      Point wgs84Point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-      EngineGeometry wgs84Geometry = new EngineGeometry(wgs84Point, wgs84);
+      EngineGeometry wgs84Geometry = new EngineGeometry(defaultValidPoint, wgs84);
 
       // Create point in UTM11N that corresponds to same location
       MathTransform transform = CRS.findMathTransform(wgs84, utm11n, true);
-      Geometry utmPoint = JTS.transform(wgs84Point, transform);
+      Geometry utmPoint = JTS.transform(defaultValidPoint, transform);
       EngineGeometry utmGeometry = new EngineGeometry(utmPoint, utm11n);
 
       // They should intersect despite different CRS

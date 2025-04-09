@@ -32,16 +32,20 @@ public class GridBuilder {
   /**
    * Creates a new GridBuilder with specified input and target CRS, and corner coordinates.
    *
-   * @param inputCrsCode EPSG code for the input CRS
-   * @param targetCrsCode EPSG code for the target CRS
+   * @param inputCrs input CRS
+   * @param targetCrs target CRS
    * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
    *          "bottomRightX", "bottomRightY"
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
-  public GridBuilder(String inputCrsCode, String targetCrsCode,
-            Map<String, BigDecimal> cornerCoords, BigDecimal cellWidth)
+  public GridBuilder(
+        CoordinateReferenceSystem inputCrs,
+        CoordinateReferenceSystem targetCrs,
+        Map<String, BigDecimal> cornerCoords,
+        BigDecimal cellWidth
+  )
       throws FactoryException, TransformException {
 
     // Validate cell width
@@ -49,10 +53,8 @@ public class GridBuilder {
       throw new IllegalArgumentException("Cell width must be positive");
     }
     this.cellWidth = cellWidth;
-
-    // Set up CRS
-    inputCoordinateReferenceSystem = CRS.decode(inputCrsCode);
-    targetCoordinateReferenceSystem = CRS.decode(targetCrsCode);
+    this.inputCoordinateReferenceSystem = inputCrs;
+    this.targetCoordinateReferenceSystem = targetCrs;
 
     // Force longitude/latitude ordering for geographic CRS
     inputCoordinateReferenceSystem = CRS.getHorizontalCRS(inputCoordinateReferenceSystem);
