@@ -184,9 +184,17 @@ public class ExternalLayerFactoryTest {
     // Check cache state is still one
     assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
     
+    // Once more, to ensure cache is used
+
+    RealizedDistribution result3 = chain.fulfill(request);
+
+    // Check cache state is still one
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+
     // Verify results match
     assertEquals(result1.getSize(), result2.getSize());
-    
+    assertEquals(result2.getSize(), result3.getSize());
+
     // Verify statistics match
     Optional<Scalar> mean1 = result1.getMean();
     Optional<Scalar> mean2 = result2.getMean();
@@ -195,55 +203,55 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testIndividualLayers() throws IOException {
+  void testDirectCallCogExternalLayer() throws IOException {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Test CogExternalLayer
-    CogExternalLayer cogLayer = new CogExternalLayer(units, caster);
+    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
     RealizedDistribution cogResult = cogLayer.fulfill(request);
     assertNotNull(cogResult);
     assertTrue(cogResult.getSize().isPresent() && cogResult.getSize().get() > 0);
+  }
+
+  @Test
+  void testCacheRespectsPrimingGeometryExistence() throws IOException {
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
+    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
 
     // Test ExternalPathCacheLayer
+    // Without an PrimingCacheLayer OR the Request having a priming geometry explicitly,
+    // the cache layer should not be used and the base CogExternalLayer should be called
+    // to fulfill a reqeuest.
     ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
     assertEquals(0, cacheLayer.getCacheSize());
 
-    // First request should populate cache
-    RealizedDistribution cacheResult1 = cacheLayer.fulfill(request);
-    assertEquals(1, cacheLayer.getCacheSize());
+    final RealizedDistribution cacheResult1 = cacheLayer.fulfill(request);
+    assertEquals(0, cacheLayer.getCacheSize());
+    verify(cogLayer, times(1)).fulfill(request);
 
-    // Second request should use cache
+    // Second request should still not use cache
     RealizedDistribution cacheResult2 = cacheLayer.fulfill(request);
+    assertEquals(0, cacheLayer.getCacheSize());
+    verify(cogLayer, times(2)).fulfill(request);
+
+    // Now, set an explicit priming geometry
+    request.setPrimingGeometry(Optional.of(testAreaSmall));
+
+    // Third request should use populate the cache, and should not reach base cog layer
+    RealizedDistribution cacheResult3 = cacheLayer.fulfill(request);
+    assertNotNull(cacheResult3);
     assertEquals(1, cacheLayer.getCacheSize());
-    assertEquals(cacheResult1.getSize(), cacheResult2.getSize());
+    verify(cogLayer, times(2)).fulfill(request);
+
+    // Fourth request should use the cache, not add a new entry, and not reach base cog layer
+    RealizedDistribution cacheResult4 = cacheLayer.fulfill(request);
+    assertNotNull(cacheResult4);
+    assertEquals(1, cacheLayer.getCacheSize());
+    verify(cogLayer, times(2)).fulfill(request);
 
     // Test cache clearing
     cacheLayer.clearCache();
     assertEquals(0, cacheLayer.getCacheSize());
-
-    // Test ExtendingPrimingGeometryLayer
-    ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
-    assertFalse(primingLayer.getPrimingGeometry().isPresent());
-
-    // First request should establish priming geometry
-    primingLayer.fulfill(request);
-    assertTrue(primingLayer.getPrimingGeometry().isPresent());
-
-    // Verify priming EngineGeometry matches our request geometry
-    EngineGeometry primingGeom = primingLayer.getPrimingGeometry().get();
-    Geometry geometry = primingGeom.getInnerGeometry();
-    Polygon polygon = (Polygon) geometry;
-
-    // Get the bounding box of the geometry and verify it matches our test area
-    double minX = defaultValidCoordinate[0] - 0.1;
-    double maxX = defaultValidCoordinate[0] + 0.1;
-    double minY = defaultValidCoordinate[1] - 0.1;
-    double maxY = defaultValidCoordinate[1] + 0.1;
-    
-    assertEquals(minX, polygon.getEnvelopeInternal().getMinX(), 0.000001);
-    assertEquals(maxX, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
-    assertEquals(minY, polygon.getEnvelopeInternal().getMinY(), 0.000001);
-    assertEquals(maxY, polygon.getEnvelopeInternal().getMaxY(), 0.000001);
   }
 
   @Test
