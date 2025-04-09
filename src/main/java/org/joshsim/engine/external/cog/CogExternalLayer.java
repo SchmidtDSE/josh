@@ -47,9 +47,9 @@ public class CogExternalLayer implements ExternalLayer {
           CogReader.extractValuesFromCoverage(gridCoverage, geometry);
 
       RealizedDistribution realizedDistribution = RealizedDistribution.fromDecimalValues(
-          caster,
+          getCaster(),
           decimalValuesWithinGeometry,
-          units
+          getUnits()
       );
 
       return realizedDistribution;

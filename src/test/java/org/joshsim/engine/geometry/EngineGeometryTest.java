@@ -277,7 +277,7 @@ public class EngineGeometryTest {
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(wgs84, hull.getCrs(), "Convex hull should have same CRS");
       // Rectangle is already convex
-      assertTrue(hull.getInnerGeometry().equalsExact(rectangle, 0.000001),
+      assertTrue(hull.getInnerGeometry().equals(rectangle),
           "Convex hull of rectangle should be the same rectangle");
     }
   }

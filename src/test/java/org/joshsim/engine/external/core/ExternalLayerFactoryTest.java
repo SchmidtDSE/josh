@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,29 +44,74 @@ public class ExternalLayerFactoryTest {
   private Units units;
   private ExternalLayerFactory factory;
   private CoordinateReferenceSystem wgs84;
+  private CoordinateReferenceSystem utm11n;
   private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
+  
+  // Valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
+  private double[][] validUtm11nCoordinates;
+  private double[] defaultValidCoordinate;
+  
+  // Test areas within UTM Zone 11N
+  private EngineGeometry testArea1;
+  private EngineGeometry testArea2;
+  private EngineGeometry testAreaSmall;
 
   @BeforeAll
   static void setHeadlessMode() {
     // Enable headless mode to avoid X11 dependencies
     System.setProperty("java.awt.headless", "true");
 
-    // // Disable native acceleration which can cause issues
+    // Disable native acceleration which can cause issues
     System.setProperty("javax.media.jai.disableMediaLib", "true");
-
-    // // Configure JAI memory settings
-    // if (JAI.getDefaultInstance() != null) {
-    //   JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256 * 1024 * 1024);
-    // }
   }
 
   @BeforeEach
-  void setup() throws FactoryException {
+  void setUp() throws FactoryException {
     caster = new EngineValueWideningCaster();
     units = new Units("mm");
     factory = new ExternalLayerFactory(caster, units);
-    wgs84 = CRS.decode("EPSG:4326"); // WGS84
+    
+    wgs84 = CRS.decode("EPSG:4326", true); // WGS84, lefthanded (lon first)
+    utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
+
+    // Initialize valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
+    validUtm11nCoordinates = new double[][] {
+        {-117.0, 34.0},   // Southern California
+        {-118.2, 34.0},   // Los Angeles area
+        {-116.5, 33.8},   // Palm Springs area
+        {-119.8, 36.7},   // Central California
+        {-115.0, 35.0}    // Mojave Desert area
+    };
+    
+    // Set up a default valid coordinate for simple tests
+    defaultValidCoordinate = validUtm11nCoordinates[0];
+    
+    // Create test areas for our tests
+    double lonWidth1 = 0.5;
+    double latHeight1 = 0.5;
+    testArea1 = createBoxGeometry(
+        defaultValidCoordinate[0] - lonWidth1, 
+        defaultValidCoordinate[1] - latHeight1, 
+        defaultValidCoordinate[0] + lonWidth1, 
+        defaultValidCoordinate[1] + latHeight1
+    );
+    
+    // Second test area that overlaps with the first
+    testArea2 = createBoxGeometry(
+        defaultValidCoordinate[0] - 0.25, 
+        defaultValidCoordinate[1], 
+        defaultValidCoordinate[0] + 0.75, 
+        defaultValidCoordinate[1] + 1.0
+    );
+    
+    // Small test area for more precise tests
+    testAreaSmall = createBoxGeometry(
+        defaultValidCoordinate[0] - 0.1, 
+        defaultValidCoordinate[1] - 0.1, 
+        defaultValidCoordinate[0] + 0.1, 
+        defaultValidCoordinate[1] + 0.1
+    );
   }
 
   private EngineGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
@@ -100,9 +147,7 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testChainReadsCogFiles() {
-    // Create a EngineGeometry in the US where the test data has coverage
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -97.0, 44.0);
-    Request request = createFileRequest(COG_NOV_2021, testArea);
+    Request request = createFileRequest(COG_NOV_2021, testArea1);
 
     // Test the entire chain
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
@@ -115,25 +160,33 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testCachingPerformance() {
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = createFileRequest(COG_NOV_2021, testArea);
-    ExternalLayer chain = factory.createExtendingPrimingCogLayer();
+  void testCachingBehavior() {
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
+    
+    // Create a spy on the real CogExternalLayer
+    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    
+    // Create the cache layer with our spy
+    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    
+    // Create the full chain
+    ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
+    
+    // First request
+    final RealizedDistribution result1 = chain.fulfill(request);
 
-    // First request should read from file
-    long startTime1 = System.currentTimeMillis();
-    RealizedDistribution result1 = chain.fulfill(request);
-    long duration1 = System.currentTimeMillis() - startTime1;
-
-    // Second request should use cache
-    long startTime2 = System.currentTimeMillis();
+    // Check cache state
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+    
+    // Second request with the same parameters
     RealizedDistribution result2 = chain.fulfill(request);
-    long duration2 = System.currentTimeMillis() - startTime2;
 
-    // Verify cache is working
-    assertTrue(duration2 < duration1, "Second request should be faster due to caching");
+    // Check cache state is still one
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+    
+    // Verify results match
     assertEquals(result1.getSize(), result2.getSize());
-
+    
     // Verify statistics match
     Optional<Scalar> mean1 = result1.getMean();
     Optional<Scalar> mean2 = result2.getMean();
@@ -143,9 +196,7 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testIndividualLayers() throws IOException {
-    // Create test EngineGeometry and requests
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = createFileRequest(COG_NOV_2021, testArea);
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Test CogExternalLayer
     CogExternalLayer cogLayer = new CogExternalLayer(units, caster);
@@ -183,21 +234,22 @@ public class ExternalLayerFactoryTest {
     Geometry geometry = primingGeom.getInnerGeometry();
     Polygon polygon = (Polygon) geometry;
 
-    // Get the bounding box of the geometry
-    assertEquals(-100.0, polygon.getEnvelopeInternal().getMinX(), 0.000001);
-    assertEquals(-99.0, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
-    assertEquals(40.0, polygon.getEnvelopeInternal().getMinY(), 0.000001);
-    assertEquals(41.0, polygon.getEnvelopeInternal().getMaxY(), 0.000001);
+    // Get the bounding box of the geometry and verify it matches our test area
+    double minX = defaultValidCoordinate[0] - 0.1;
+    double maxX = defaultValidCoordinate[0] + 0.1;
+    double minY = defaultValidCoordinate[1] - 0.1;
+    double maxY = defaultValidCoordinate[1] + 0.1;
+    
+    assertEquals(minX, polygon.getEnvelopeInternal().getMinX(), 0.000001);
+    assertEquals(maxX, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
+    assertEquals(minY, polygon.getEnvelopeInternal().getMinY(), 0.000001);
+    assertEquals(maxY, polygon.getEnvelopeInternal().getMaxY(), 0.000001);
   }
 
   @Test
   void testExtendingPrimingGeometry() {
-    // Create two different but overlapping test areas
-    EngineGeometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    EngineGeometry area2 = createBoxGeometry(-99.5, 40.5, -98.5, 41.5);
-
-    Request request1 = createFileRequest(COG_NOV_2021, area1);
-    Request request2 = createFileRequest(COG_NOV_2021, area2);
+    Request request1 = createFileRequest(COG_NOV_2021, testArea1);
+    Request request2 = createFileRequest(COG_NOV_2021, testArea2);
 
     // Create mock layers to verify behavior
     CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
@@ -220,29 +272,27 @@ public class ExternalLayerFactoryTest {
     assertNotEquals(firstPrimingGeom, extendedPrimingGeom);
 
     // Verify the extended EngineGeometry contains both original areas
-    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(area1.getInnerGeometry()),
+    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(testArea1.getInnerGeometry()),
         "Extended geometry should contain the first area");
-    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(area2.getInnerGeometry()),
+    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(testArea2.getInnerGeometry()),
         "Extended geometry should contain the second area");
 
     // Calculate expected convex hull manually and verify it matches
-    EngineGeometry expectedConvexHull = area1.getConvexHull(area2);
+    EngineGeometry expectedConvexHull = testArea1.getConvexHull(testArea2);
     assertTrue(expectedConvexHull.getInnerGeometry().equals(extendedPrimingGeom.getInnerGeometry()),
         "Extended geometry should equal the convex hull of both areas");
 
     // Verify envelope contains both areas
     ReferencedEnvelope envelope = extendedPrimingGeom.getEnvelope();
-    assertTrue(envelope.contains(area1.getInnerGeometry().getEnvelopeInternal()),
+    assertTrue(envelope.contains(testArea1.getInnerGeometry().getEnvelopeInternal()),
         "Envelope should contain the first area");
-    assertTrue(envelope.contains(area2.getInnerGeometry().getEnvelopeInternal()),
+    assertTrue(envelope.contains(testArea2.getInnerGeometry().getEnvelopeInternal()),
         "Envelope should contain the second area");
   }
 
   @Test
   void testPrimingGeometryPropagation() {
-    // Create a test area
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = createFileRequest(COG_NOV_2021, testArea);
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Create mock layers to verify behavior
     CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
@@ -266,10 +316,8 @@ public class ExternalLayerFactoryTest {
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
 
     // Create requests for different areas and months
-    EngineGeometry area1 = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    EngineGeometry area2 = createBoxGeometry(-98.0, 39.0, -97.0, 40.0);
-    Request request1 = createFileRequest(COG_NOV_2021, area1);
-    Request request2 = createFileRequest(COG_DEC_2021, area2);
+    Request request1 = createFileRequest(COG_NOV_2021, testArea1);
+    Request request2 = createFileRequest(COG_DEC_2021, testArea2);
 
     // Get results
     RealizedDistribution result1 = chain.fulfill(request1);
@@ -290,17 +338,13 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testGeometryHasCorrectCrs() {
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-
     // Verify the EngineGeometry has the correct CRS
-    assertEquals(wgs84, testArea.getCrs(), "Geometry should have WGS84 CRS");
+    assertEquals(wgs84, testArea1.getCrs(), "Geometry should have WGS84 CRS");
   }
 
   @Test
   void testNoPrimingGeometryFallsBackToDirectIo() {
-    // Create test area and request with no priming geometry
-    EngineGeometry testArea = createBoxGeometry(-100.0, 40.0, -99.0, 41.0);
-    Request request = createFileRequest(COG_NOV_2021, testArea);
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Create mock layers to verify behavior
     CogExternalLayer cogLayer = mock(CogExternalLayer.class);
@@ -324,7 +368,12 @@ public class ExternalLayerFactoryTest {
 
     // Create many different geometries to fill the cache
     for (int i = 0; i < 200; i++) {
-      EngineGeometry area = createBoxGeometry(-100.0 + (i * 0.1), 40.0, -99.0 + (i * 0.1), 41.0);
+      double offsetLon = validUtm11nCoordinates[0][0] + (i * 0.01);
+      double offsetLat = validUtm11nCoordinates[0][1];
+      EngineGeometry area = createBoxGeometry(
+          offsetLon - 0.05, offsetLat - 0.05,
+          offsetLon + 0.05, offsetLat + 0.05);
+          
       Request request = createFileRequest(COG_NOV_2021, area);
       request.setPrimingGeometry(Optional.of(area)); // Set the area as its own priming geometry
       cacheLayer.fulfill(request);

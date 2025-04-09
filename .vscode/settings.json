@@ -14,5 +14,6 @@
       "-Djava.awt.headless=true", 
       "-Djavax.media.jai.disableMediaLib=true"
     ]
-  }
+  },
+  "java.compile.nullAnalysis.mode": "disabled"
 }
