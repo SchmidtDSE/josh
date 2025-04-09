@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.GeoPoint;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
