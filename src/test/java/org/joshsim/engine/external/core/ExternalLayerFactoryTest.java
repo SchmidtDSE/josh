@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -14,14 +13,14 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import org.apache.sis.coverage.grid.GridCoverage;
-import org.apache.sis.referencing.CRS;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.external.cog.CogExternalLayer;
-import org.joshsim.engine.external.cog.CogReader;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
@@ -30,10 +29,9 @@ import org.joshsim.engine.value.type.Scalar;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.locationtech.spatial4j.context.SpatialContext;
-import org.locationtech.spatial4j.shape.Rectangle;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
 import org.mockito.ArgumentCaptor;
-import org.opengis.util.FactoryException;
 
 /**
  * Unit tests for the ExternalLayerFactory class, ensuring that it correctly
@@ -43,7 +41,6 @@ public class ExternalLayerFactoryTest {
   private EngineValueCaster caster;
   private Units units;
   private ExternalLayerFactory factory;
-  private SpatialContext spatialContext;
   private CoordinateReferenceSystem wgs84;
   private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
@@ -59,12 +56,17 @@ public class ExternalLayerFactoryTest {
     caster = new EngineValueWideningCaster();
     units = new Units("mm");
     factory = new ExternalLayerFactory(caster, units);
-    spatialContext = SpatialContext.GEO;
-    wgs84 = CRS.forCode("EPSG:4326"); // WGS84
+    wgs84 = CRS.decode("EPSG:4326"); // WGS84
   }
 
   private EngineGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
-    return new Geometry(spatialContext.getShapeFactory().rect(minX, maxX, minY, maxY), wgs84);
+    return EngineGeometryFactory.createSquare(
+        BigDecimal.valueOf(minX), 
+        BigDecimal.valueOf(maxY),  // topLeftY
+        BigDecimal.valueOf(maxX), 
+        BigDecimal.valueOf(minY),  // bottomRightY
+        wgs84
+    );
   }
 
   private Request createFileRequest(String path, EngineGeometry geometry) {
@@ -170,11 +172,14 @@ public class ExternalLayerFactoryTest {
 
     // Verify priming EngineGeometry matches our request geometry
     EngineGeometry primingGeom = primingLayer.getPrimingGeometry().get();
-    Rectangle primingRect = (Rectangle) primingGeom.getShape();
-    assertEquals(-100.0, primingRect.getMinX(), 0.000001);
-    assertEquals(-99.0, primingRect.getMaxX(), 0.000001);
-    assertEquals(40.0, primingRect.getMinY(), 0.000001);
-    assertEquals(41.0, primingRect.getMaxY(), 0.000001);
+    Geometry geometry = primingGeom.getInnerGeometry();
+    Polygon polygon = (Polygon) geometry;
+    
+    // Get the bounding box of the geometry
+    assertEquals(-100.0, polygon.getEnvelopeInternal().getMinX(), 0.000001);
+    assertEquals(-99.0, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
+    assertEquals(40.0, polygon.getEnvelopeInternal().getMinY(), 0.000001);
+    assertEquals(41.0, polygon.getEnvelopeInternal().getMaxY(), 0.000001);
   }
 
   @Test
@@ -207,8 +212,22 @@ public class ExternalLayerFactoryTest {
     assertNotEquals(firstPrimingGeom, extendedPrimingGeom);
 
     // Verify the extended EngineGeometry contains both original areas
-    // Note: This test currently uses getConvexHull which isn't implemented yet
-    // So we're just verifying the EngineGeometry changed, not its specific shape
+    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(area1.getInnerGeometry()),
+        "Extended geometry should contain the first area");
+    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(area2.getInnerGeometry()),
+        "Extended geometry should contain the second area");
+    
+    // Calculate expected convex hull manually and verify it matches
+    EngineGeometry expectedConvexHull = area1.getConvexHull(area2);
+    assertTrue(expectedConvexHull.getInnerGeometry().equals(extendedPrimingGeom.getInnerGeometry()),
+        "Extended geometry should equal the convex hull of both areas");
+    
+    // Verify envelope contains both areas
+    ReferencedEnvelope envelope = extendedPrimingGeom.getEnvelope();
+    assertTrue(envelope.contains(area1.getInnerGeometry().getEnvelopeInternal()),
+        "Envelope should contain the first area");
+    assertTrue(envelope.contains(area2.getInnerGeometry().getEnvelopeInternal()),
+        "Envelope should contain the second area");
   }
 
   @Test
