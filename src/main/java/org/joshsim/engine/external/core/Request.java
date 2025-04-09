@@ -18,7 +18,7 @@ public class Request {
   private String host;
   private String path;
   private Optional<EngineGeometry> geometry;
-  private Optional<EngineGeometry> primingGeometry;
+  private Optional<EngineGeometry> primingGeometry = Optional.empty();
   private Optional<String> resource;
 
   /**

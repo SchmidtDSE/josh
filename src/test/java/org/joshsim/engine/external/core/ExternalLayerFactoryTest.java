@@ -49,6 +49,14 @@ public class ExternalLayerFactoryTest {
   static void setHeadlessMode() {
     // Enable headless mode to avoid X11 dependencies
     System.setProperty("java.awt.headless", "true");
+
+    // // Disable native acceleration which can cause issues
+    System.setProperty("javax.media.jai.disableMediaLib", "true");
+    
+    // // Configure JAI memory settings
+    // if (JAI.getDefaultInstance() != null) {
+    //   JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256 * 1024 * 1024);
+    // }
   }
 
   @BeforeEach

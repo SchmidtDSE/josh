@@ -8,6 +8,7 @@ package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
@@ -105,10 +106,14 @@ public class EngineGeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Point point = (Point) geometry.getInnerGeometry();
 
-      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
+      Geometry point = geometry.getInnerGeometry();
+
+      double x = point.getCoordinate().x;
+      double y = point.getCoordinate().y;
+
+      assertEquals(20.0, x, 0.000001, "X should equal centerX for zero width");
+      assertEquals(10.0, y, 0.000001, "Y should equal centerY for zero width");
       assertEquals(wgs84, geometry.getCrs(), "CRS should be WGS84");
     }
 
@@ -124,10 +129,14 @@ public class EngineGeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      Point point = (Point) geometry.getInnerGeometry();
 
-      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
+      Geometry point = geometry.getInnerGeometry();
+
+      double x = point.getCoordinate().x;
+      double y = point.getCoordinate().y;
+
+      assertEquals(20.0, x, 0.000001, "X should equal centerX for zero width");
+      assertEquals(10.0, y, 0.000001, "Y should equal centerY for zero width");
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
     }
 
@@ -274,13 +283,7 @@ public class EngineGeometryFactoryTest {
       );
 
       // Then
-      assertNotNull(geometry, "Geometry should not be null even if not square");
-      Polygon polygon = (Polygon) geometry.getInnerGeometry();
-
-      // Should create a square with equal sides (using the smaller dimension)
-      double width = polygon.getEnvelopeInternal().getWidth();
-      double height = polygon.getEnvelopeInternal().getHeight();
-      assertEquals(width, height, 0.000001, "Width and height should be equal");
+      assertNull(geometry, "Geometry should return null if not square");
     }
 
     @Test

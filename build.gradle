@@ -54,6 +54,7 @@ dependencies {
   implementation("org.geotools:gt-main:32.2")
   implementation("org.geotools:gt-geotiff:32.2")
   implementation("org.geotools:gt-referencing:32.2")
+  implementation("org.geotools:gt-epsg-hsql:32.2")
 
   // JAI dependencies (requiredfor Geotools)
   implementation("javax.media:jai_core:1.1.3")

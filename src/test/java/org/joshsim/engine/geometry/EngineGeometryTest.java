@@ -24,6 +24,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
+
 /**
  * Tests for the EngineGeometry class, organized by EngineGeometry type.
  */
@@ -49,7 +50,11 @@ public class EngineGeometryTest {
     EngineGeometry geometry = new EngineGeometry(point, wgs84);
 
     assertNotNull(geometry, "EngineGeometry should be initialized");
-    assertEquals(point, geometry.getInnerGeometry(), "Inner EngineGeometry should be set correctly");
+    assertEquals(
+        point,
+        geometry.getInnerGeometry(),
+        "Inner EngineGeometry should be set correctly"
+    );
     assertEquals(wgs84, geometry.getCrs(), "CRS should be set correctly");
   }
 
@@ -61,7 +66,11 @@ public class EngineGeometryTest {
     EngineGeometry geometry = new EngineGeometry(point, wgs84, transformers);
 
     assertNotNull(geometry, "EngineGeometry should be initialized");
-    assertEquals(point, geometry.getInnerGeometry(), "Inner EngineGeometry should be set correctly");
+    assertEquals(
+        point,
+        geometry.getInnerGeometry(),
+        "Inner EngineGeometry should be set correctly"
+    );
     assertEquals(wgs84, geometry.getCrs(), "CRS should be set correctly");
   }
 

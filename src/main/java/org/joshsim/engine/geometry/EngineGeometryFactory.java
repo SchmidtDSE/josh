@@ -21,6 +21,7 @@ import org.locationtech.jts.util.GeometricShapeFactory;
 public class EngineGeometryFactory {
   private static final GeometryFactory JTS_GEOMETRY_FACTORY =
       new GeometryFactory();
+  private static final double SQUARE_TOLERANCE = 0.01;
 
   public static GeometryFactory getGeometryFactory() {
     return JTS_GEOMETRY_FACTORY;
@@ -85,10 +86,9 @@ public class EngineGeometryFactory {
     double minY = bottomRightY.doubleValue();
 
     // Check if it's a square (approximately, within reasonable precision)
-    double reasonableSquarePctDiff = .01;
     double width = Math.abs(maxX - minX);
     double height = Math.abs(maxY - minY);
-    if ((1 - (width / height)) > reasonableSquarePctDiff) {
+    if ((1 - (width / height)) > SQUARE_TOLERANCE) {
       return null;
     }
 
