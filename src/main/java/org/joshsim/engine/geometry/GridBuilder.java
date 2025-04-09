@@ -3,7 +3,6 @@ package org.joshsim.engine.geometry;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
@@ -37,8 +36,7 @@ public class GridBuilder {
    *
    * @param inputCrs input CRS
    * @param targetCrs target CRS
-   * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
-   *          "bottomRightX", "bottomRightY"
+   * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
    * @param prototype The entity prototype used to create grid cells
    * @throws FactoryException if any CRS code is invalid
@@ -47,7 +45,7 @@ public class GridBuilder {
   public GridBuilder(
         CoordinateReferenceSystem inputCrs,
         CoordinateReferenceSystem targetCrs,
-        Map<String, BigDecimal> cornerCoords,
+        GridBuilderExtents extents,
         BigDecimal cellWidth,
         EntityPrototype prototype
   )
@@ -66,17 +64,21 @@ public class GridBuilder {
     inputCoordinateReferenceSystem = CRS.getHorizontalCRS(inputCoordinateReferenceSystem);
     targetCoordinateReferenceSystem = CRS.getHorizontalCRS(targetCoordinateReferenceSystem);
 
-    // Extract with consistent X,Y keys regardless of CRS type
-    BigDecimal topLeftX = cornerCoords.get("topLeftX");
-    BigDecimal topLeftY = cornerCoords.get("topLeftY");
-    BigDecimal bottomRightX = cornerCoords.get("bottomRightX");
-    BigDecimal bottomRightY = cornerCoords.get("bottomRightY");
-
     // Validate corners
-    validateCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    validateCornerCoordinates(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getBottomRightY()
+    );
 
     // Transform coordinates immediately
-    transformCornerCoordinates(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    transformCornerCoordinates(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getBottomRightY()
+    );
   }
 
   /**

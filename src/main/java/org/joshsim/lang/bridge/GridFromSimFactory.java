@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
 import org.geotools.api.referencing.operation.TransformException;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Grid;
@@ -19,6 +22,7 @@ import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.locationtech.jts.geom.Coordinate;
 
 
 
@@ -75,6 +79,22 @@ public class GridFromSimFactory {
     String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
     String patchName = getOrDefault(patchNameMaybe, "Default");
+      
+    CoordinateReferenceSystem inputCrsRef;
+    try {
+      // Check if the input CRS is valid
+      inputCrsRef = CRS.decode(inputCrs, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid input CRS: " + inputCrs, e);
+    }
+
+    CoordinateReferenceSystem targetCrsRef;
+    try {
+      // Check if the target CRS is valid
+      targetCrsRef = CRS.decode(targetCrs, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid target CRS: " + targetCrs, e);
+    }
 
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
     EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
@@ -82,8 +102,8 @@ public class GridFromSimFactory {
     GridBuilderExtents extents = buildExtents(startStr, endStr);
     try {
       GridBuilder builder = new GridBuilder(
-          inputCrs,
-          targetCrs,
+          inputCrsRef,
+          targetCrsRef,
           extents,
           sizeValue.getAsDecimal(),
           bridge.getPrototype(patchName)
