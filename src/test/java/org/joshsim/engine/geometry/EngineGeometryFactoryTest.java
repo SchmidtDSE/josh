@@ -61,7 +61,7 @@ public class EngineGeometryFactoryTest {
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Polygon polygon = (Polygon) geometry.getInnerGeometry();
-      
+
       assertEquals(19.0, polygon.getEnvelopeInternal().getMinX(), 0.000001);
       assertEquals(21.0, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
       assertEquals(9.0, polygon.getEnvelopeInternal().getMinY(), 0.000001);
@@ -85,7 +85,7 @@ public class EngineGeometryFactoryTest {
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       Polygon polygon = (Polygon) geometry.getInnerGeometry();
-      
+
       assertEquals(19.0, polygon.getEnvelopeInternal().getMinX(), 0.000001);
       assertEquals(21.0, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
       assertEquals(9.0, polygon.getEnvelopeInternal().getMinY(), 0.000001);
@@ -276,7 +276,7 @@ public class EngineGeometryFactoryTest {
       // Then
       assertNotNull(geometry, "Geometry should not be null even if not square");
       Polygon polygon = (Polygon) geometry.getInnerGeometry();
-      
+
       // Should create a square with equal sides (using the smaller dimension)
       double width = polygon.getEnvelopeInternal().getWidth();
       double height = polygon.getEnvelopeInternal().getHeight();
@@ -322,7 +322,7 @@ public class EngineGeometryFactoryTest {
       assertEquals(20.0, circle.getCentroid().getX(), 0.000001);
       assertEquals(10.0, circle.getCentroid().getY(), 0.000001);
       assertEquals(wgs84, geometry.getCrs(), "CRS should be WGS84");
-      
+
       // Verify the distance from center to edge is approximately the radius
       Point center = geometryFactory.createPoint(new Coordinate(20.0, 10.0));
       double distance = center.distance(circle.getBoundary());
@@ -348,7 +348,7 @@ public class EngineGeometryFactoryTest {
       assertEquals(20.0, circle.getCentroid().getX(), 0.000001);
       assertEquals(10.0, circle.getCentroid().getY(), 0.000001);
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
-      
+
       // Verify the distance from center to edge is approximately the radius
       Point center = geometryFactory.createPoint(new Coordinate(20.0, 10.0));
       double distance = center.distance(circle.getBoundary());
@@ -375,7 +375,7 @@ public class EngineGeometryFactoryTest {
       assertEquals(20.0, circle.getCentroid().getX(), 0.000001);
       assertEquals(10.0, circle.getCentroid().getY(), 0.000001);
       assertEquals(wgs84, geometry.getCrs(), "CRS should be WGS84");
-      
+
       // Point is 1.0 units away from center (horizontal)
       Point center = geometryFactory.createPoint(new Coordinate(20.0, 10.0));
       double distance = center.distance(circle.getBoundary());
@@ -401,16 +401,16 @@ public class EngineGeometryFactoryTest {
       Geometry circle = geometry.getInnerGeometry();
       assertEquals(20.0, circle.getCentroid().getX(), 0.000001);
       assertEquals(10.0, circle.getCentroid().getY(), 0.000001);
-      
+
       // Expected radius is the Euclidean distance between points
       double expectedRadius = Math.sqrt(
           Math.pow(22.0 - 20.0, 2) + Math.pow(14.0 - 10.0, 2)
       ); // √(2² + 4²) = √20 = 4.47...
-      
+
       Point center = geometryFactory.createPoint(new Coordinate(20.0, 10.0));
       double distance = center.distance(circle.getBoundary());
       assertEquals(expectedRadius, distance, 0.01);
-      
+
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
     }
 

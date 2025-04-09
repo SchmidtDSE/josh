@@ -108,13 +108,13 @@ class GridBuilderTest {
           wgs84NorthLat.doubleValue()
       );
       topLeft.setCoordinateReferenceSystem(wgs84);
-      
+
       GeneralPosition bottomRight = new GeneralPosition(
           wgs84EastLon.doubleValue(),
           wgs84SouthLat.doubleValue()
       );
       bottomRight.setCoordinateReferenceSystem(wgs84);
-      
+
       GeneralPosition[] corners = {topLeft, bottomRight};
 
       // Transform using CRS

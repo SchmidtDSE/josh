@@ -61,9 +61,9 @@ public class ExternalLayerFactoryTest {
 
   private EngineGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
     return EngineGeometryFactory.createSquare(
-        BigDecimal.valueOf(minX), 
+        BigDecimal.valueOf(minX),
         BigDecimal.valueOf(maxY),  // topLeftY
-        BigDecimal.valueOf(maxX), 
+        BigDecimal.valueOf(maxX),
         BigDecimal.valueOf(minY),  // bottomRightY
         wgs84
     );
@@ -174,7 +174,7 @@ public class ExternalLayerFactoryTest {
     EngineGeometry primingGeom = primingLayer.getPrimingGeometry().get();
     Geometry geometry = primingGeom.getInnerGeometry();
     Polygon polygon = (Polygon) geometry;
-    
+
     // Get the bounding box of the geometry
     assertEquals(-100.0, polygon.getEnvelopeInternal().getMinX(), 0.000001);
     assertEquals(-99.0, polygon.getEnvelopeInternal().getMaxX(), 0.000001);
@@ -216,12 +216,12 @@ public class ExternalLayerFactoryTest {
         "Extended geometry should contain the first area");
     assertTrue(extendedPrimingGeom.getInnerGeometry().contains(area2.getInnerGeometry()),
         "Extended geometry should contain the second area");
-    
+
     // Calculate expected convex hull manually and verify it matches
     EngineGeometry expectedConvexHull = area1.getConvexHull(area2);
     assertTrue(expectedConvexHull.getInnerGeometry().equals(extendedPrimingGeom.getInnerGeometry()),
         "Extended geometry should equal the convex hull of both areas");
-    
+
     // Verify envelope contains both areas
     ReferencedEnvelope envelope = extendedPrimingGeom.getEnvelope();
     assertTrue(envelope.contains(area1.getInnerGeometry().getEnvelopeInternal()),

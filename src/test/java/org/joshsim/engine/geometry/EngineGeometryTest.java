@@ -10,11 +10,11 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +24,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.geotools.geometry.jts.JTS;
 /**
  * Tests for the EngineGeometry class, organized by EngineGeometry type.
  */
@@ -57,7 +56,7 @@ public class EngineGeometryTest {
   @Test
   public void testConstructorWithTransformers() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers = 
+    Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers =
         Optional.of(new HashMap<>());
     EngineGeometry geometry = new EngineGeometry(point, wgs84, transformers);
 
@@ -208,26 +207,26 @@ public class EngineGeometryTest {
       assertFalse(polygonGeometry.intersects(nonOverlappingGeometry),
           "Polygon should not intersect with non-overlapping polygon");
     }
-    
+
     @Test
     public void testGetEnvelope() {
       var envelope = polygonGeometry.getEnvelope();
-      
+
       assertEquals(10.0, envelope.getMinX(), 0.000001);
       assertEquals(12.0, envelope.getMaxX(), 0.000001);
       assertEquals(20.0, envelope.getMinY(), 0.000001);
       assertEquals(22.0, envelope.getMaxY(), 0.000001);
       assertEquals(wgs84, envelope.getCoordinateReferenceSystem(), "CRS should be WGS84");
     }
-    
+
     @Test
     public void testGetConvexHull() {
       EngineGeometry hull = polygonGeometry.getConvexHull();
-      
+
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(wgs84, hull.getCrs(), "Convex hull should have same CRS");
       // Rectangle is already convex
-      assertTrue(hull.getInnerGeometry().equalsExact(rectangle, 0.000001), 
+      assertTrue(hull.getInnerGeometry().equalsExact(rectangle, 0.000001),
           "Convex hull of rectangle should be the same rectangle");
     }
   }
@@ -238,39 +237,39 @@ public class EngineGeometryTest {
     public void testAsTargetCrs() throws FactoryException {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EngineGeometry geometry = new EngineGeometry(point, wgs84);
-      
+
       EngineGeometry transformed = geometry.asTargetCrs(utm11n);
-      
+
       assertNotNull(transformed, "Transformed EngineGeometry should not be null");
       assertEquals(utm11n, transformed.getCrs(), "Transformed EngineGeometry should have target CRS");
-      assertFalse(point.equals(transformed.getInnerGeometry()), 
+      assertFalse(point.equals(transformed.getInnerGeometry()),
           "Transformed point should have different coordinates");
     }
-    
+
     @Test
     public void testAsTargetCrsWithSameCrs() {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EngineGeometry geometry = new EngineGeometry(point, wgs84);
-      
+
       EngineGeometry transformed = geometry.asTargetCrs(wgs84);
-      
+
       // Should return the same instance when target CRS is the same
       assertEquals(geometry, transformed, "Should return same instance when CRS is unchanged");
     }
-    
+
     @Test
     public void testIntersectionWithDifferentCrs() throws FactoryException, TransformException {
       // Create point in WGS84
       Point wgs84Point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EngineGeometry wgs84Geometry = new EngineGeometry(wgs84Point, wgs84);
-      
+
       // Create point in UTM11N that corresponds to same location
       MathTransform transform = CRS.findMathTransform(wgs84, utm11n, true);
       Geometry utmPoint = JTS.transform(wgs84Point, transform);
       EngineGeometry utmGeometry = new EngineGeometry(utmPoint, utm11n);
-      
+
       // They should intersect despite different CRS
-      assertTrue(wgs84Geometry.intersects(utmGeometry), 
+      assertTrue(wgs84Geometry.intersects(utmGeometry),
           "Points at same location should intersect despite different CRS");
     }
   }
@@ -282,34 +281,34 @@ public class EngineGeometryTest {
       // Create two points
       Point point1 = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       Point point2 = geometryFactory.createPoint(new Coordinate(30.0, 40.0));
-      
+
       EngineGeometry geom1 = new EngineGeometry(point1, wgs84);
       EngineGeometry geom2 = new EngineGeometry(point2, wgs84);
-      
+
       // Get convex hull of the two points
       EngineGeometry hull = geom1.getConvexHull(geom2);
-      
+
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(wgs84, hull.getCrs(), "Convex hull should have same CRS");
-      
+
       // The convex hull of two points should be a line
       assertEquals(2, hull.getInnerGeometry().getCoordinates().length,
           "Convex hull of two points should be a line with 2 coordinates");
     }
-    
+
     @Test
     public void testGetConvexHullWithOtherGeometryDifferentCrs() throws FactoryException {
       // Create a point in WGS84
       Point wgs84Point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EngineGeometry wgs84Geometry = new EngineGeometry(wgs84Point, wgs84);
-      
+
       // Create a point in UTM11N
       Point utmPoint = geometryFactory.createPoint(new Coordinate(500000.0, 4000000.0));
       EngineGeometry utmGeometry = new EngineGeometry(utmPoint, utm11n);
-      
+
       // Get convex hull - should transform to same CRS first
       EngineGeometry hull = wgs84Geometry.getConvexHull(utmGeometry);
-      
+
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(wgs84, hull.getCrs(), "Convex hull should use the first geometry's CRS");
     }
