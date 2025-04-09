@@ -11,7 +11,8 @@ import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.CRS;
-import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 
 /**
  * This class is responsible for building grid structures.
@@ -19,7 +20,9 @@ import org.joshsim.engine.entity.type.Patch;
  * converting them to the target CRS if needed.
  */
 public class GridBuilder {
+
   private BigDecimal cellWidth;
+  private final EntityPrototype prototype;
 
   // CRS-related fields
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
@@ -37,6 +40,7 @@ public class GridBuilder {
    * @param cornerCoords Map containing corner coordinates with keys like "topLeftX", "topLeftY",
    *          "bottomRightX", "bottomRightY"
    * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @param prototype The entity prototype used to create grid cells
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
@@ -44,10 +48,12 @@ public class GridBuilder {
         CoordinateReferenceSystem inputCrs,
         CoordinateReferenceSystem targetCrs,
         Map<String, BigDecimal> cornerCoords,
-        BigDecimal cellWidth
+        BigDecimal cellWidth,
+        EntityPrototype prototype
   )
       throws FactoryException, TransformException {
 
+    this.prototype = prototype;
     // Validate cell width
     if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell width must be positive");
@@ -190,7 +196,7 @@ public class GridBuilder {
       double cellWidthDouble = cellWidth.doubleValue();
 
       // Create all patches
-      List<Patch> patches = createPatchGrid(colCells, rowCells, cellWidthDouble);
+      List<MutableEntity> patches = createPatchGrid(colCells, rowCells, cellWidthDouble);
       return new Grid(patches, cellWidth);
 
     } catch (Exception e) {
@@ -229,8 +235,8 @@ public class GridBuilder {
   /**
    * Creates all patches in the grid.
    */
-  private List<Patch> createPatchGrid(int colCells, int rowCells, double cellWidth) {
-    List<Patch> patches = new ArrayList<>();
+  private List<MutableEntity> createPatchGrid(int colCells, int rowCells, double cellWidth) {
+    List<MutableEntity> patches = new ArrayList<>();
     for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < colCells; colIdx++) {
         double cellTopLeftX =
@@ -252,13 +258,7 @@ public class GridBuilder {
         );
 
         if (cellGeometry != null) {
-          String cellName = String.format("cell_%d_%d", rowIdx, colIdx);
-          Patch patch = new Patch(
-              cellGeometry,
-              cellName,
-              null,
-              null
-          );
+          MutableEntity patch = prototype.buildSpatial(cellGeometry);
           patches.add(patch);
         }
       }
