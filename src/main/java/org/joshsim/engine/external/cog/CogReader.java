@@ -3,6 +3,7 @@ package org.joshsim.engine.external.cog;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import org.geotools.api.geometry.Position;
@@ -36,8 +37,8 @@ public class CogReader {
       String path,
       EngineGeometry geometry
   ) throws IOException {
-    File file = new File(path);
-    GeoTiffReader reader = new GeoTiffReader(file);
+
+    GeoTiffReader reader = getCogReader(path);
 
     try {
       // Get the full coverage
@@ -63,6 +64,19 @@ public class CogReader {
       reader.dispose();
     }
   }
+
+  private static GeoTiffReader getCogReader(String path) throws IOException {
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      // Path is already a URL
+      return new GeoTiffReader(path);
+    } else {
+      URL fileUrl = new File(path).toURI().toURL();
+      // Path is a local file
+      fileUrl = new File(path).toURI().toURL();
+      return new GeoTiffReader(fileUrl);
+    }
+  }
+
 
   /**
    * Transforms a grid coverage from its native CRS to the specified target CRS.

@@ -28,6 +28,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -122,6 +123,10 @@ public class ExternalLayerFactoryTest {
 
   private Request createFileRequest(String path, EngineGeometry geometry) {
     return new Request("file", "", path, Optional.of(geometry), Optional.empty());
+  }
+
+  private Request createUrlRequest(String url, EngineGeometry geometry) {
+    return new Request("url", "", url, Optional.of(geometry), Optional.empty());
   }
 
   @Test
@@ -386,5 +391,111 @@ public class ExternalLayerFactoryTest {
     // The cache should not grow indefinitely and should be capped by LRUMap
     assertTrue(cacheLayer.getCacheSize() < 200,
         "Cache should have evicted old entries, size: " + cacheLayer.getCacheSize());
+  }
+
+  @Test
+  @Tag("remote")
+  void testReadCogFromUrl() {
+    // Use the remote URL version of the same COG file we use locally
+    String cogUrl = "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif";
+
+    // Create a request with our test area - use the same test area as in local tests
+    Request request = createUrlRequest(cogUrl, testArea1);
+
+    // Create layer chain
+    ExternalLayer chain = factory.createExtendingPrimingCogLayer();
+
+    // Fulfill request
+    RealizedDistribution result = chain.fulfill(request);
+
+    // Verify result
+    assertNotNull(result, "Result should not be null");
+    assertTrue(result.getSize().isPresent(), "Result should have size");
+    assertTrue(result.getSize().get() > 0, "Result should have values");
+  }
+
+  @Test
+  @Tag("remote")
+  void testCachingWithUrlBasedCogs() {
+    // Use the remote URL version of the same COG file we use locally
+    String cogUrl = "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif";
+
+    // Use the same test area as in local tests for consistency
+    Request request = createUrlRequest(cogUrl, testAreaSmall);
+
+    // Create a layer chain for testing
+    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
+
+    // First request - this should populate the priming geometry
+    chain.fulfill(request);
+
+    // Second request with the same parameters
+    chain.fulfill(request);
+
+    // Cache should have one entry
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+  }
+
+  @Test
+  @Tag("remote")
+  void testMultipleUrlCogFiles() {
+    // Use the remote URL versions of the same COG files we use locally
+    String cogUrl1 = "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif";
+    String cogUrl2 = "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202112.tif";
+
+    // Create requests for different areas and months - match the local tests
+    Request request1 = createUrlRequest(cogUrl1, testArea1);
+    Request request2 = createUrlRequest(cogUrl2, testArea2);
+
+    // Create layer chain
+    ExternalLayer chain = factory.createExtendingPrimingCogLayer();
+
+    // Process both requests
+    RealizedDistribution result1 = chain.fulfill(request1);
+    RealizedDistribution result2 = chain.fulfill(request2);
+
+    // Verify we got different data
+    assertNotNull(result1);
+    assertNotNull(result2);
+    assertTrue(result1.getSize().isPresent() && result1.getSize().get() > 0);
+    assertTrue(result2.getSize().isPresent() && result2.getSize().get() > 0);
+
+    // Different months/areas should have different mean precipitation
+    Optional<Scalar> mean1 = result1.getMean();
+    Optional<Scalar> mean2 = result2.getMean();
+    assertTrue(mean1.isPresent() && mean2.isPresent());
+    assertNotEquals(0, mean1.get().getAsDecimal().compareTo(mean2.get().getAsDecimal()));
+  }
+
+  @Test
+  void testUrlVersusFileResults() {
+    // Create requests for the same area using both file and URL approaches
+    Request fileRequest = createFileRequest(COG_NOV_2021, testAreaSmall);
+    Request urlRequest = createUrlRequest(
+        "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif",
+        testAreaSmall);
+
+    // Create separate chains to avoid caching effects
+    ExternalLayer fileChain = factory.createExtendingPrimingCogLayer();
+    ExternalLayer urlChain = factory.createExtendingPrimingCogLayer();
+
+    // Get results from both sources
+    RealizedDistribution fileResult = fileChain.fulfill(fileRequest);
+    RealizedDistribution urlResult = urlChain.fulfill(urlRequest);
+
+    // Verify both results are valid
+    assertNotNull(fileResult);
+    assertNotNull(urlResult);
+    assertTrue(fileResult.getSize().isPresent() && fileResult.getSize().get() > 0);
+    assertTrue(urlResult.getSize().isPresent() && urlResult.getSize().get() > 0);
+
+    // The mean value should be identical since it's the same data
+    Optional<Scalar> fileMean = fileResult.getMean();
+    Optional<Scalar> urlMean = urlResult.getMean();
+    assertTrue(fileMean.isPresent() && urlMean.isPresent());
+    assertEquals(0, fileMean.get().getAsDecimal().compareTo(urlMean.get().getAsDecimal()),
+        "Mean values should be identical for the same data source whether via file or URL");
   }
 }
