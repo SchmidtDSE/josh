@@ -850,7 +850,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
 
     List<Entity> queryResults = List.of(mockEntity);
-    when(mockBridge.getPriorPatches(any(Geometry.class))).thenReturn(queryResults);
+    when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
     when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
 
     // When
