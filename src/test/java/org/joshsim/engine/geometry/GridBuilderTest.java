@@ -284,7 +284,7 @@ class GridBuilderTest {
       // so we need to verify that at the GridBuilderExtents constructor level
       assertThrows(IllegalArgumentException.class,
           () -> new GridBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
-      
+
       assertThrows(IllegalArgumentException.class,
           () -> new GridBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
     }
