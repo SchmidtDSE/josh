@@ -16,11 +16,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -34,7 +35,6 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.locationtech.spatial4j.context.SpatialContext;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,13 +47,14 @@ public class SingleThreadEventHandlerMachineTest {
 
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private EngineValue mockValue;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private Entity mockEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
   @Mock(lenient = true) private EngineBridge mockBridge;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
   @Mock(lenient = true) private MutableEntity mockCreatedEntity;
+  @Mock(lenient = true) private CoordinateReferenceSystem mockCrs;
 
   private SingleThreadEventHandlerMachine machine;
   private EngineValueFactory factory;
@@ -849,10 +850,10 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
-    when(mockGeometry.getSpatialContext()).thenReturn(SpatialContext.GEO);
+    when(mockGeometry.getCrs()).thenReturn(mockCrs);
 
     List<Entity> queryResults = List.of(mockEntity);
-    when(mockBridge.getPriorPatches(any(Geometry.class))).thenReturn(queryResults);
+    when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
     when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
 
     // When

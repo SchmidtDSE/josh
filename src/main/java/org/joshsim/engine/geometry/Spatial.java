@@ -34,7 +34,7 @@ public interface Spatial {
    * @param other the other spatial geometry to check for intersection
    * @return true if the geometries intersect, false otherwise
    */
-  boolean intersects(Geometry other);
+  boolean intersects(EngineGeometry other);
 
   /**
    * Determines if this geometry intersects with a specific geographic point.

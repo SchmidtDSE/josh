@@ -20,8 +20,8 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Geometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
@@ -49,7 +49,7 @@ public class MinimalEngineBridgeTest {
   @Mock(lenient = true) private EngineValue mockEngineValue;
   @Mock(lenient = true) private EngineValue mockEngineValueConverted;
   @Mock(lenient = true) private GeoPoint mockPoint;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
   private EngineBridge bridge;

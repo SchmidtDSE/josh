@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,8 +24,8 @@ class TimeStepTest {
   private GeoKey mockKey2;
   private Entity mockPatch1;
   private Entity mockPatch2;
-  private Geometry mockGeometry1;
-  private Geometry mockGeometry2;
+  private EngineGeometry mockGeometry1;
+  private EngineGeometry mockGeometry2;
 
   @BeforeEach
   void setUp() {
@@ -34,8 +34,8 @@ class TimeStepTest {
     mockKey2 = mock(GeoKey.class);
     mockPatch1 = mock(Entity.class);
     mockPatch2 = mock(Entity.class);
-    mockGeometry1 = mock(Geometry.class);
-    mockGeometry2 = mock(Geometry.class);
+    mockGeometry1 = mock(EngineGeometry.class);
+    mockGeometry2 = mock(EngineGeometry.class);
 
     // Configure mocks
     when(mockPatch1.getGeometry()).thenReturn(Optional.of(mockGeometry1));
@@ -69,7 +69,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithIntersectingGeometry() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
@@ -81,7 +81,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithPartiallyIntersectingGeometry() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
@@ -95,7 +95,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithNonIntersectingGeometry() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(false);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
@@ -107,7 +107,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithMatchingGeometryAndName() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
@@ -120,7 +120,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithNoMatchingName() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 
@@ -132,7 +132,7 @@ class TimeStepTest {
 
   @Test
   void getPatchesWithMatchingNameButNoIntersection() {
-    Geometry queryGeometry = mock(Geometry.class);
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(false);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(false);
 
@@ -170,8 +170,8 @@ class TimeStepTest {
     patchesWithNoGeo.put(keyNoGeo, patchNoGeo);
     TimeStep timeStepWithNoGeo = new TimeStep(42, patchesWithNoGeo);
 
-    // Should not include patch with no geometry in results
-    Geometry queryGeometry = mock(Geometry.class);
+    // Should not include patch with no EngineGeometry in results
+    EngineGeometry queryGeometry = mock(EngineGeometry.class);
     when(mockGeometry1.intersects(queryGeometry)).thenReturn(true);
     when(mockGeometry2.intersects(queryGeometry)).thenReturn(true);
 

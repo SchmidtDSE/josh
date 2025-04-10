@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -49,7 +49,7 @@ public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
    * @return the geographic point representing this entity's location
    */
   @Override
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return parent.getGeometry();
   }
 

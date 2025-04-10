@@ -15,7 +15,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class PriorShadowingEntityDecoratorTest {
 
   @Mock(lenient = true) private ShadowingEntity mockInner;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private EntityType mockEntityType;
   @Mock(lenient = true) private Entity mockFrozenEntity;
   @Mock(lenient = true) private GeoKey mockGeoKey;
@@ -57,7 +57,7 @@ public class PriorShadowingEntityDecoratorTest {
 
   @Test
   void testGetGeometry() {
-    Optional<Geometry> result = decorator.getGeometry();
+    Optional<EngineGeometry> result = decorator.getGeometry();
     assertTrue(result.isPresent());
     assertEquals(mockGeometry, result.get());
   }

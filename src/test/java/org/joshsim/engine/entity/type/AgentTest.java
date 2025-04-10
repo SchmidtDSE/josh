@@ -19,7 +19,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 public class AgentTest {
 
   private Entity mockParent;
-  private Geometry mockGeometry;
+  private EngineGeometry mockGeometry;
   private EngineValue mockValue;
   private HashMap<EventKey, EventHandlerGroup> eventHandlers;
   private HashMap<String, EngineValue> attributes;
@@ -47,7 +47,7 @@ public class AgentTest {
   public void setUp() {
     // Set up mocks
     mockParent = mock(Entity.class);
-    mockGeometry = mock(Geometry.class);
+    mockGeometry = mock(EngineGeometry.class);
     mockValue = mock(EngineValue.class);
 
     when(mockParent.getGeometry()).thenReturn(Optional.of(mockGeometry));

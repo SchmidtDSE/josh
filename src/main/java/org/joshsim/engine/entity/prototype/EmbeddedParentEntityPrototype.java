@@ -3,7 +3,8 @@ package org.joshsim.engine.entity.prototype;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
+
 
 
 /**
@@ -55,7 +56,7 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public MutableEntity buildSpatial(Geometry parent) {
+  public MutableEntity buildSpatial(EngineGeometry parent) {
     return inner.buildSpatial(parent);
   }
 

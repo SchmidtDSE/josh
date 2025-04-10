@@ -7,7 +7,7 @@
 package org.joshsim.engine.simulation;
 
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 
 /**
@@ -19,7 +19,7 @@ import org.joshsim.engine.geometry.Geometry;
 public class Query {
 
   private final long step;
-  private final Optional<Geometry> geometry;
+  private final Optional<EngineGeometry> geometry;
 
   /**
    * Create a query which selects for all Patches in a given time step.
@@ -37,7 +37,7 @@ public class Query {
    * @param step unique step count or time step ID for which to query.
    * @param geometry spatial bounds within which patches should be returned.
    */
-  public Query(long step, Geometry geometry) {
+  public Query(long step, EngineGeometry geometry) {
     this.step = step;
     this.geometry = Optional.of(geometry);
   }
@@ -56,7 +56,7 @@ public class Query {
    *
    * @return the geometry that defines the spatial bounds of the query.
    */
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return geometry;
   }
 

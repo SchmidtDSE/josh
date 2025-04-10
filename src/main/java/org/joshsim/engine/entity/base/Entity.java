@@ -8,7 +8,7 @@ package org.joshsim.engine.entity.base;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -24,7 +24,7 @@ public interface Entity {
    *
    * @return The geographic point representing this entity's location.
    */
-  Optional<Geometry> getGeometry();
+  Optional<EngineGeometry> getGeometry();
 
   /**
    * Get the name of this type of entity.

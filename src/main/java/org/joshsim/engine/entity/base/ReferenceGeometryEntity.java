@@ -2,7 +2,7 @@ package org.joshsim.engine.entity.base;
 
 import java.util.HashMap;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
  * Geometric entity that serves as a reference to a generic geometry.
@@ -14,7 +14,7 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
    *
    * @param geometry The geometry associated with this entity.
    */
-  public ReferenceGeometryEntity(Geometry geometry) {
+  public ReferenceGeometryEntity(EngineGeometry geometry) {
     super(geometry, "reference", new HashMap<>(), new HashMap<>());
   }
 

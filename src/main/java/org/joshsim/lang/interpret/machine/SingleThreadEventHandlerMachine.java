@@ -20,8 +20,8 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.geometry.GeometryFactory;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
@@ -416,12 +416,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue distance = convert(pop(), METER_UNITS);
 
     Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
-    Geometry centerGeometry = executingEntity.getGeometry().orElseThrow();
-    Geometry queryGeometry = GeometryFactory.createCircle(
+    EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
+    EngineGeometry queryGeometry = EngineGeometryFactory.createCircle(
         distance.getAsDecimal(),
         centerGeometry.getCenterX(),
         centerGeometry.getCenterY(),
-        centerGeometry.getSpatialContext()
+        centerGeometry.getCrs()
     );
 
     Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);

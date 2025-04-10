@@ -15,7 +15,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.Patch;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +36,7 @@ public class ReplicateTest {
   @Mock private Entity frozenPatch2;
   @Mock private GeoKey mockKey1;
   @Mock private GeoKey mockKey2;
-  @Mock private Geometry mockGeometry;
+  @Mock private EngineGeometry mockGeometry;
   @Mock private Query mockQuery;
 
   private HashMap<GeoKey, MutableEntity> patches;

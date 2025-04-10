@@ -12,7 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.junit.jupiter.api.Test;
 
 
@@ -36,13 +36,13 @@ class EmbeddedParentEntityPrototypeTest {
     assertEquals(expectedEntity, result);
     verify(innerPrototype).buildSpatial(parentEntity);
     verify(innerPrototype, never()).build();
-    verify(innerPrototype, never()).buildSpatial(any(Geometry.class));
+    verify(innerPrototype, never()).buildSpatial(any(EngineGeometry.class));
   }
 
   @Test
   void testBuildWhenInnerPrototypeRequiresGeometry() {
     EntityPrototype innerPrototype = mock(EntityPrototype.class);
-    Geometry parentGeometry = mock(Geometry.class);
+    EngineGeometry parentGeometry = mock(EngineGeometry.class);
     Entity parentEntity = mock(Entity.class);
     when(parentEntity.getGeometry()).thenReturn(Optional.of(parentGeometry));
 
@@ -83,7 +83,7 @@ class EmbeddedParentEntityPrototypeTest {
     assertEquals(expectedEntity, result);
     verify(innerPrototype).build();
     verify(innerPrototype, never()).buildSpatial(any(Entity.class));
-    verify(innerPrototype, never()).buildSpatial(any(Geometry.class));
+    verify(innerPrototype, never()).buildSpatial(any(EngineGeometry.class));
   }
 
   @Test
@@ -103,6 +103,6 @@ class EmbeddedParentEntityPrototypeTest {
     assertThrows(NoSuchElementException.class, prototype::build);
     verify(innerPrototype, never()).build();
     verify(innerPrototype, never()).buildSpatial(any(Entity.class));
-    verify(innerPrototype, never()).buildSpatial(any(Geometry.class));
+    verify(innerPrototype, never()).buildSpatial(any(EngineGeometry.class));
   }
 }

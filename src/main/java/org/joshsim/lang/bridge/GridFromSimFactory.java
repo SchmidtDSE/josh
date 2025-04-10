@@ -8,6 +8,10 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.Grid;
 import org.joshsim.engine.geometry.GridBuilder;
@@ -16,8 +20,7 @@ import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.FactoryException;
+
 
 
 /**
@@ -59,12 +62,12 @@ public class GridFromSimFactory {
   public Grid build(MutableEntity simulation) {
     simulation.startSubstep("constant");
 
-    Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
-    Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
-    Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
-    Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
+    final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
+    final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
+    final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
+    final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
+    final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
+    final Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
 
     simulation.endSubstep();
 
@@ -74,14 +77,30 @@ public class GridFromSimFactory {
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
     String patchName = getOrDefault(patchNameMaybe, "Default");
 
+    CoordinateReferenceSystem inputCrsRef;
+    try {
+      // Check if the input CRS is valid
+      inputCrsRef = CRS.decode(inputCrs, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid input CRS: " + inputCrs, e);
+    }
+
+    CoordinateReferenceSystem targetCrsRef;
+    try {
+      // Check if the target CRS is valid
+      targetCrsRef = CRS.decode(targetCrs, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid target CRS: " + targetCrs, e);
+    }
+
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
     EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
 
     GridBuilderExtents extents = buildExtents(startStr, endStr);
     try {
       GridBuilder builder = new GridBuilder(
-          inputCrs,
-          targetCrs,
+          inputCrsRef,
+          targetCrsRef,
           extents,
           sizeValue.getAsDecimal(),
           bridge.getPrototype(patchName)

@@ -10,7 +10,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 
 
 /**
@@ -69,7 +69,7 @@ public class ParentlessEntityPrototype implements EntityPrototype {
   }
 
   @Override
-  public MutableEntity buildSpatial(Geometry parent) {
+  public MutableEntity buildSpatial(EngineGeometry parent) {
     return switch (entityType) {
       case PATCH -> entityBuilder.buildPatch(parent);
       default -> throw new RuntimeException("Cannot instantiate with a geometry: " + entityType);

@@ -6,7 +6,8 @@
 
 package org.joshsim.engine.entity.base;
 
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
+
 
 
 /**
@@ -27,7 +28,7 @@ public class GeoKey {
 
   @Override
   public String toString() {
-    Geometry geometry = entity.getGeometry().orElseThrow();
+    EngineGeometry geometry = entity.getGeometry().orElseThrow();
     return String.format(
         "Entity of type %s at (%.6f, %.6f)",
         entity.getName(),

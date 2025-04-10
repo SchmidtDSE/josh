@@ -3,7 +3,7 @@ package org.joshsim.engine.entity.base;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -15,7 +15,7 @@ public class FrozenEntity implements Entity {
   private final EntityType type;
   private final String name;
   private final Map<String, EngineValue> attributes;
-  private final Optional<Geometry> geometry;
+  private final Optional<EngineGeometry> geometry;
 
 
   /**
@@ -27,7 +27,7 @@ public class FrozenEntity implements Entity {
    * @param geometry An optional geometry of the entity to be snapshot.
    */
   public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes,
-      Optional<Geometry> geometry) {
+      Optional<EngineGeometry> geometry) {
     this.type = type;
     this.name = name;
     this.attributes = attributes;
@@ -64,7 +64,7 @@ public class FrozenEntity implements Entity {
   }
 
   @Override
-  public Optional<Geometry> getGeometry() {
+  public Optional<EngineGeometry> getGeometry() {
     return geometry;
   }
 

@@ -12,7 +12,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.Grid;
 
 
@@ -120,7 +120,7 @@ public class Replicate {
     }
     assert timeStep.getStep() == query.getStep();
 
-    Optional<Geometry> geometry = query.getGeometry();
+    Optional<EngineGeometry> geometry = query.getGeometry();
     if (query.getGeometry().isPresent()) {
       return timeStep.getPatches(geometry.get());
     } else {

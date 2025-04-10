@@ -8,15 +8,16 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.joshsim.engine.geometry.Geometry;
-import org.joshsim.engine.geometry.GeometryFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 
 
 /**
- * Momento which represents a Geometry that can be keyed and converted back to a Geometry.
+ * Momento which represents a EngineGeometry that can be keyed and converted back to a Geometry.
  *
- * <p>Momento which represents a subset of possible Geometry objects such that the momento can be
- * serialized and compared to other momentos to support caching operations.</p>
+ * <p>Momento which represents a subset of possible EngineGeometry objects such that the
+ * momento can be serialized and compared to other momentos to support caching operations.</p>
  */
 public class GeometryMomento {
 
@@ -24,6 +25,7 @@ public class GeometryMomento {
   private final BigDecimal centerX;
   private final BigDecimal centerY;
   private final BigDecimal diameter;
+  private final CoordinateReferenceSystem crs;
 
   /**
    * Constructs a GeometryMomento with the specified shape parameters.
@@ -35,11 +37,12 @@ public class GeometryMomento {
    * @throws IllegalArgumentException if the shape name is not supported.
    */
   public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY,
-      BigDecimal diameter) {
+      BigDecimal diameter, CoordinateReferenceSystem crs) {
     this.shapeName = shapeName;
     this.centerX = centerX;
     this.centerY = centerY;
     this.diameter = diameter;
+    this.crs = crs;
 
     if (getBuilder().isEmpty()) {
       throw new IllegalArgumentException("Unsupported momento shape: " + shapeName);
@@ -47,11 +50,11 @@ public class GeometryMomento {
   }
 
   /**
-   * Builds and returns a Geometry object from this momento.
+   * Builds and returns a EngineGeometry object from this momento.
    *
-   * @return A new Geometry instance representing the shape described by this momento.
+   * @return A new EngineGeometry instance representing the shape described by this momento.
    */
-  public Geometry build() {
+  public EngineGeometry build() {
     return getBuilder().get().build();
   }
 
@@ -85,10 +88,10 @@ public class GeometryMomento {
   private Optional<MomentoShapeBuilder> getBuilder() {
     return switch (shapeName) {
       case "square" -> Optional.of(
-        () -> GeometryFactory.createSquare(diameter, centerX, centerY)
+        () -> EngineGeometryFactory.createSquare(diameter, centerX, centerY, crs)
       );
       case "circle" -> Optional.of(
-        () -> GeometryFactory.createCircle(diameter, centerX, centerY)
+        () -> EngineGeometryFactory.createCircle(diameter, centerX, centerY, crs)
       );
       default -> Optional.empty();
     };
@@ -102,9 +105,9 @@ public class GeometryMomento {
     /**
      * Builds a geometry from the momento's parameters.
      *
-     * @return A new Geometry instance.
+     * @return A new EngineGeometry instance.
      */
-    Geometry build();
+    EngineGeometry build();
 
   }
 

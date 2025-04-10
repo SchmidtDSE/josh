@@ -8,10 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
-import org.apache.sis.geometry.DirectPosition2D;
-import org.apache.sis.referencing.CRS;
-import org.apache.sis.referencing.crs.AbstractCRS;
-import org.apache.sis.referencing.cs.AxesConvention;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
@@ -21,12 +22,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.FactoryException;
-
 
 class GridBuilderTest {
+
+  // Coordinate Reference Systems
+  private CoordinateReferenceSystem wgs84;
+  private CoordinateReferenceSystem utm11n;
 
   // Joshua Tree National Park area (falls within UTM Zone 11N)
   private BigDecimal wgs84NorthLat;
@@ -40,13 +41,17 @@ class GridBuilderTest {
   private BigDecimal utmWestX;
   private BigDecimal utmSouthY;
   private BigDecimal utmEastX;
-
-  private GridBuilderExtents wgs84Extents;
-  private GridBuilderExtents utmExtents;
   private EntityPrototype prototype;
 
+  private GridBuilderExtents wgs84Extents;
+  private GridBuilderExtents utm11nExtents;
+
   @BeforeEach
-  void setUp() {
+  void setUp() throws FactoryException {
+    // Initialize Coordinate Reference Systems
+    wgs84 = CRS.decode("EPSG:4326", true); // WGS84, lefthanded (lon first)
+    utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
+
     // WGS84 coordinates (geographic)
     wgs84NorthLat = new BigDecimal("33.55");  // Northern latitude
     wgs84WestLon = new BigDecimal("-115.55"); // Western longitude
@@ -59,21 +64,35 @@ class GridBuilderTest {
     utmSouthY = new BigDecimal("3707726.0273103723");   // Southern Y-coordinate
     utmEastX = new BigDecimal("639334.3319327366");     // Eastern X-coordinate
 
+    // Create a Test Prototype for the patches
     prototype = new TestPatchEntityPrototype();
 
     // Set a reasonable cell width (30 meters)
     cellWidth = new BigDecimal(30); // 30 meters
 
-    wgs84Extents = new GridBuilderExtents(wgs84WestLon, wgs84NorthLat, wgs84EastLon, wgs84SouthLat);
-    utmExtents = new GridBuilderExtents(utmWestX, utmNorthY, utmEastX, utmSouthY);
+    // Grid Builder extents in X, Y order
+    wgs84Extents = new GridBuilderExtents(
+        wgs84WestLon,
+        wgs84NorthLat,
+        wgs84EastLon,
+        wgs84SouthLat
+    );
+
+    // UTM 11N extents in X, Y order
+    utm11nExtents = new GridBuilderExtents(
+        utmWestX,
+        utmNorthY,
+        utmEastX,
+        utmSouthY
+    );
   }
 
   @Test
   @DisplayName("Constructor should properly initialize GridBuilder")
   void constructorInitializesGridBuilder() throws FactoryException, TransformException {
     GridBuilder builder = new GridBuilder(
-        "EPSG:4326",    // WGS84
-        "EPSG:32611",   // UTM 11N
+        wgs84,
+        utm11n,
         wgs84Extents,
         cellWidth,
         prototype
@@ -92,47 +111,37 @@ class GridBuilderTest {
     @Test
     @DisplayName("transformCornerCoordinates should correctly transform between different CRS")
     void transformCornerCoordinates() throws FactoryException, TransformException {
-      CoordinateReferenceSystem wgs84 = CRS.forCode("EPSG:4326");
-      CoordinateReferenceSystem utm11n = CRS.forCode("EPSG:32611");
-
       GridBuilder builder = new GridBuilder(
-          "EPSG:4326",
-          "EPSG:32611",
+          wgs84,
+          utm11n,
           wgs84Extents,
           cellWidth,
           prototype
       );
 
-      // Create positions with consistent X,Y ordering using RIGHT_HANDED convention
-      DirectPosition2D topLeft = new DirectPosition2D(
-          wgs84Extents.getTopLeftX().doubleValue(),
-          wgs84Extents.getTopLeftY().doubleValue()
+      // Create positions with consistent X,Y ordering
+      GeneralPosition topLeft = new GeneralPosition(
+          wgs84WestLon.doubleValue(),
+          wgs84NorthLat.doubleValue()
       );
-      DirectPosition2D bottomRight = new DirectPosition2D(
-          wgs84Extents.getBottomRightX().doubleValue(),
-          wgs84Extents.getBottomRightY().doubleValue()
-      );
-      DirectPosition2D[] corners = {topLeft, bottomRight};
+      topLeft.setCoordinateReferenceSystem(wgs84);
 
-      // Transform using normalized CRS (RIGHT_HANDED convention)
-      DirectPosition2D[] transformed = builder.transformCornerCoordinates(corners,
-          AbstractCRS.castOrCopy(wgs84).forConvention(AxesConvention.RIGHT_HANDED),
-          AbstractCRS.castOrCopy(utm11n).forConvention(AxesConvention.RIGHT_HANDED));
+      GeneralPosition bottomRight = new GeneralPosition(
+          wgs84EastLon.doubleValue(),
+          wgs84SouthLat.doubleValue()
+      );
+      bottomRight.setCoordinateReferenceSystem(wgs84);
+
+      GeneralPosition[] corners = {topLeft, bottomRight};
+
+      // Transform using CRS
+      GeneralPosition[] transformed = builder.transformCornerCoordinates(corners, wgs84, utm11n);
 
       // Verify transformed coordinates match the expected UTM 11N values
-      assertTrue(
-          Math.abs(transformed[0].getOrdinate(0) - utmExtents.getTopLeftX().doubleValue()) < 2.0
-      );
-      assertTrue(
-          Math.abs(transformed[0].getOrdinate(1) - utmExtents.getTopLeftY().doubleValue()) < 1.0
-      );
-      assertTrue(
-          Math.abs(transformed[1].getOrdinate(0) - utmExtents.getBottomRightX().doubleValue()) < 2.0
-      );
-      assertTrue(
-          Math.abs(transformed[1].getOrdinate(1) - utmExtents.getBottomRightY().doubleValue()) < 1.0
-      );
-
+      assertTrue(Math.abs(transformed[0].getOrdinate(0) - utmWestX.doubleValue()) < 2.0);
+      assertTrue(Math.abs(transformed[0].getOrdinate(1) - utmNorthY.doubleValue()) < 1.0);
+      assertTrue(Math.abs(transformed[1].getOrdinate(0) - utmEastX.doubleValue()) < 2.0);
+      assertTrue(Math.abs(transformed[1].getOrdinate(1) - utmSouthY.doubleValue()) < 1.0);
     }
   }
 
@@ -147,13 +156,7 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(
-              "EPSG:4326",
-              "EPSG:32611",
-              wgs84Extents,
-              zeroCellWidth,
-              prototype
-          )
+          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -161,33 +164,36 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(
-              "EPSG:4326",
-              "EPSG:32611",
-              wgs84Extents,
-              negativeCellWidth,
-              prototype
-          )
+          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
 
-
     @Test
-    @DisplayName("GridBuilderExtents should validate corner coordinate relationships")
-    void gridBuilderExtentsValidatesCornerRelationships() {
-      assertThrows(IllegalArgumentException.class, () -> new GridBuilderExtents(
-          BigDecimal.ONE,
-          BigDecimal.TEN,
-          BigDecimal.ONE,
-          BigDecimal.ZERO
-      ));
-      assertThrows(IllegalArgumentException.class, () -> new GridBuilderExtents(
-          BigDecimal.TEN,
-          BigDecimal.ONE,
-          BigDecimal.ZERO,
-          BigDecimal.ONE
-      ));
+    @DisplayName("Constructor should validate corner coordinate relationships")
+    void constructorValidatesCornerRelationships() {
+      // Create inverted coordinates (top-left is below bottom-right)
+      IllegalArgumentException exception = assertThrows(
+          IllegalArgumentException.class,
+              () -> new GridBuilderExtents(
+              wgs84WestLon,
+              wgs84SouthLat, // Inverted Y (North/South)
+              wgs84EastLon,
+              wgs84NorthLat
+          )
+      );
+      assertTrue(exception.getMessage().contains("Y-coordinate"));
+
+      exception = assertThrows(
+          IllegalArgumentException.class,
+              () -> new GridBuilderExtents(
+              wgs84EastLon, // Inverted X (East/West)
+              wgs84NorthLat,
+              wgs84WestLon,
+              wgs84SouthLat
+          )
+      );
+      assertTrue(exception.getMessage().contains("X-coordinate"));
     }
 
     @Test
@@ -195,18 +201,16 @@ class GridBuilderTest {
     void buildValidatesParameters() throws FactoryException, TransformException {
       // Create a builder with valid parameters
       GridBuilder builder = new GridBuilder(
-          "EPSG:4326",
-          "EPSG:32611",
+          wgs84,
+          utm11n,
           wgs84Extents,
           cellWidth,
-          new TestPatchEntityPrototype()
+          prototype
       );
 
       // Should work fine
       Grid grid = builder.build();
       assertNotNull(grid);
-
-      // Just test that build works - we know it calls validateParameters() internally now
       assertNotNull(grid.getPatches());
     }
   }
@@ -215,8 +219,8 @@ class GridBuilderTest {
   @DisplayName("build() with WGS84 to UTM 11N transformation")
   void buildWithWgs84ToUtm11n() throws FactoryException, TransformException {
     GridBuilder builder = new GridBuilder(
-        "EPSG:4326",    // WGS84
-        "EPSG:32611",   // UTM 11N
+        wgs84,
+        utm11n,
         wgs84Extents,
         cellWidth,
         prototype
@@ -237,9 +241,9 @@ class GridBuilderTest {
   @DisplayName("build() with UTM 11N to UTM 11N (no transformation)")
   void buildWithUtm11nToUtm11n() throws FactoryException, TransformException {
     GridBuilder builder = new GridBuilder(
-        "EPSG:32611",   // UTM 11N
-        "EPSG:32611",   // UTM 11N
-        utmExtents,
+        utm11n,
+        utm11n,
+        utm11nExtents,
         cellWidth,
         prototype
     );
@@ -259,17 +263,25 @@ class GridBuilderTest {
   class ErrorCasesTests {
 
     @Test
-    @DisplayName("Constructor should throw exception for invalid CRS codes")
-    void constructorWithInvalidCrsCode() {
-      // Setting an invalid EPSG code
-      assertThrows(FactoryException.class,
-          () -> new GridBuilder("EPSG:99999", "EPSG:4326", wgs84Extents, cellWidth, prototype));
+    @DisplayName("Constructor should throw exception for null CRS")
+    void constructorWithNullCrs() {
+      assertThrows(IllegalArgumentException.class,
+          () -> new GridBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
+
+      assertThrows(IllegalArgumentException.class,
+          () -> new GridBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
     }
 
     @Test
     @DisplayName("Constructor should throw exception for missing coordinates")
     void constructorWithMissingCoordinates() {
-      //This test is no longer relevant given the use of GridBuilderExtents
+      // Note: GridBuilderExtents constructor will throw an exception for null values,
+      // so we need to verify that at the GridBuilderExtents constructor level
+      assertThrows(IllegalArgumentException.class,
+          () -> new GridBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
+
+      assertThrows(IllegalArgumentException.class,
+          () -> new GridBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
     }
   }
 
@@ -296,7 +308,7 @@ class GridBuilderTest {
     }
 
     @Override
-    public MutableEntity buildSpatial(Geometry parent) {
+    public MutableEntity buildSpatial(EngineGeometry parent) {
       return new Patch(parent, "test", new HashMap<>(), new HashMap<>());
     }
 

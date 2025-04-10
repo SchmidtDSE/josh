@@ -19,7 +19,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
-import org.joshsim.engine.geometry.Geometry;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
@@ -41,7 +41,7 @@ public class QueryCacheEngineBridgeTest {
   @Mock(lenient = true) private Replicate mockReplicate;
   @Mock(lenient = true) private Converter mockConverter;
   @Mock(lenient = true) private Patch mockPatch;
-  @Mock(lenient = true) private Geometry mockGeometry;
+  @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private GeometryMomento mockGeometryMomento;
   @Mock(lenient = true) private GeoKey mockGeoKey;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;

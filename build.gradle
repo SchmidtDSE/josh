@@ -25,6 +25,12 @@ java {
 }
 
 repositories {
+  maven {
+    url "https://repo.osgeo.org/repository/release/"
+  }
+  maven {
+    url "https://maven.geotoolkit.org/"
+  }
   mavenCentral()
 }
 
@@ -33,11 +39,14 @@ dependencies {
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
 
-  // Spatial4j for spatial context / operations
-  implementation("org.locationtech.spatial4j:spatial4j:0.8")
+  // Apache Commons Collections for LRUMap
+  implementation("org.apache.commons:commons-collections4:4.5.0-M3")
 
-  // Apache SIS for coordinate system transformations and COG support
-  implementation("org.apache.sis.core:sis-referencing:1.4")
+  // Geotools for Raster transformations and COG support
+  implementation("org.geotools:gt-main:32.2")
+  implementation("org.geotools:gt-geotiff:32.2")
+  implementation("org.geotools:gt-referencing:32.2")
+  implementation("org.geotools:gt-epsg-hsql:32.2")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
