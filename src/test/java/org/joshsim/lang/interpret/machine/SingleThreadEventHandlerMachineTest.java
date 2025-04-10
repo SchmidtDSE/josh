@@ -34,7 +34,6 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.locationtech.spatial4j.context.SpatialContext;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -849,7 +848,6 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
-    when(mockGeometry.getSpatialContext()).thenReturn(SpatialContext.GEO);
 
     List<Entity> queryResults = List.of(mockEntity);
     when(mockBridge.getPriorPatches(any(Geometry.class))).thenReturn(queryResults);

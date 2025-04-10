@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.TransformException;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Geometry;
 
 class GridBuilderTest {
 
@@ -45,8 +43,8 @@ class GridBuilderTest {
   private BigDecimal utmEastX;
   private EntityPrototype prototype;
 
-  private Map<String, BigDecimal> wgs84CornerCoords;
-  private Map<String, BigDecimal> utmCornerCoords;
+  private GridBuilderExtents wgs84Extents;
+  private GridBuilderExtents utm11nExtents;
 
   @BeforeEach
   void setUp() throws FactoryException {
@@ -72,18 +70,21 @@ class GridBuilderTest {
     // Set a reasonable cell width (30 meters)
     cellWidth = new BigDecimal(30); // 30 meters
 
-    // Create corner coordinate maps with consistent X,Y naming
-    wgs84CornerCoords = new HashMap<>();
-    wgs84CornerCoords.put("topLeftY", wgs84NorthLat);
-    wgs84CornerCoords.put("topLeftX", wgs84WestLon);
-    wgs84CornerCoords.put("bottomRightY", wgs84SouthLat);
-    wgs84CornerCoords.put("bottomRightX", wgs84EastLon);
+    // Grid Builder extents in X, Y order
+    wgs84Extents = new GridBuilderExtents(
+        wgs84WestLon,
+        wgs84NorthLat,
+        wgs84EastLon,
+        wgs84SouthLat
+    );
 
-    utmCornerCoords = new HashMap<>();
-    utmCornerCoords.put("topLeftY", utmNorthY);
-    utmCornerCoords.put("topLeftX", utmWestX);
-    utmCornerCoords.put("bottomRightY", utmSouthY);
-    utmCornerCoords.put("bottomRightX", utmEastX);
+    // UTM 11N extents in X, Y order
+    utm11nExtents = new GridBuilderExtents(
+        utmWestX,
+        utmNorthY,
+        utmEastX,
+        utmSouthY
+    );
   }
 
   @Test
@@ -92,7 +93,7 @@ class GridBuilderTest {
     GridBuilder builder = new GridBuilder(
         wgs84,
         utm11n,
-        wgs84CornerCoords,
+        wgs84Extents,
         cellWidth,
         prototype
     );
@@ -113,7 +114,7 @@ class GridBuilderTest {
       GridBuilder builder = new GridBuilder(
           wgs84,
           utm11n,
-          wgs84CornerCoords,
+          wgs84Extents,
           cellWidth,
           prototype
       );
@@ -155,7 +156,7 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, zeroCellWidth, prototype)
+          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -163,7 +164,7 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84CornerCoords, negativeCellWidth, prototype)
+          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
@@ -172,24 +173,30 @@ class GridBuilderTest {
     @DisplayName("Constructor should validate corner coordinate relationships")
     void constructorValidatesCornerRelationships() {
       // Create inverted coordinates (top-left is below bottom-right)
-      Map<String, BigDecimal> invertedCoordsY = new HashMap<>(wgs84CornerCoords);
-      invertedCoordsY.put("topLeftY", wgs84SouthLat);
-      invertedCoordsY.put("bottomRightY", wgs84NorthLat);
+      GridBuilderExtents invertedExtentsY = new GridBuilderExtents(
+          wgs84WestLon,
+          wgs84SouthLat, // Inverted Y (North/South)
+          wgs84EastLon,
+          wgs84NorthLat
+      );
 
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedCoordsY, cellWidth, prototype)
+          () -> new GridBuilder(wgs84, utm11n, invertedExtentsY, cellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Y-coordinate"));
 
       // Create inverted X coordinates (top-left is east of bottom-right)
-      Map<String, BigDecimal> invertedCoordsX = new HashMap<>(wgs84CornerCoords);
-      invertedCoordsX.put("topLeftX", wgs84EastLon);
-      invertedCoordsX.put("bottomRightX", wgs84WestLon);
+      GridBuilderExtents invertedExtentsX = new GridBuilderExtents(
+          wgs84EastLon, // Inverted X (East/West)
+          wgs84NorthLat,
+          wgs84WestLon,
+          wgs84SouthLat
+      );
 
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedCoordsX, cellWidth, prototype)
+          () -> new GridBuilder(wgs84, utm11n, invertedExtentsX, cellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("X-coordinate"));
     }
@@ -201,7 +208,7 @@ class GridBuilderTest {
       GridBuilder builder = new GridBuilder(
           wgs84,
           utm11n,
-          wgs84CornerCoords,
+          wgs84Extents,
           cellWidth,
           prototype
       );
@@ -219,7 +226,7 @@ class GridBuilderTest {
     GridBuilder builder = new GridBuilder(
         wgs84,
         utm11n,
-        wgs84CornerCoords,
+        wgs84Extents,
         cellWidth,
         prototype
     );
@@ -241,7 +248,7 @@ class GridBuilderTest {
     GridBuilder builder = new GridBuilder(
         utm11n,
         utm11n,
-        utmCornerCoords,
+        utm11nExtents,
         cellWidth,
         prototype
     );
@@ -264,21 +271,22 @@ class GridBuilderTest {
     @DisplayName("Constructor should throw exception for null CRS")
     void constructorWithNullCrs() {
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(null, utm11n, wgs84CornerCoords, cellWidth, prototype));
+          () -> new GridBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
 
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, null, wgs84CornerCoords, cellWidth, prototype));
+          () -> new GridBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
     }
 
     @Test
     @DisplayName("Constructor should throw exception for missing coordinates")
     void constructorWithMissingCoordinates() {
-      Map<String, BigDecimal> incompleteCoords = new HashMap<>();
-      incompleteCoords.put("topLeftY", wgs84NorthLat);
-      // Missing other coordinates
-
+      // Note: GridBuilderExtents constructor will throw an exception for null values,
+      // so we need to verify that at the GridBuilderExtents constructor level
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, incompleteCoords, cellWidth));
+          () -> new GridBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
+      
+      assertThrows(IllegalArgumentException.class,
+          () -> new GridBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
     }
   }
 
