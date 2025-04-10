@@ -62,12 +62,12 @@ public class GridFromSimFactory {
   public Grid build(MutableEntity simulation) {
     simulation.startSubstep("constant");
 
-    Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
-    Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
-    Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
-    Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
+    final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
+    final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
+    final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
+    final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
+    final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
+    final Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
 
     simulation.endSubstep();
 
