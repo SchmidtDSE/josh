@@ -41,7 +41,7 @@ public class EngineGeometryFactoryTest {
   @BeforeEach
   public void setUp() throws FactoryException {
     geometryFactory = new GeometryFactory();
-    wgs84 = CRS.decode("EPSG:4326"); // WGS84
+    wgs84 = CRS.decode("EPSG:4326", true); // WGS84
     utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
   }
 

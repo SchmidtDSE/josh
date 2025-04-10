@@ -173,30 +173,25 @@ class GridBuilderTest {
     @DisplayName("Constructor should validate corner coordinate relationships")
     void constructorValidatesCornerRelationships() {
       // Create inverted coordinates (top-left is below bottom-right)
-      GridBuilderExtents invertedExtentsY = new GridBuilderExtents(
-          wgs84WestLon,
-          wgs84SouthLat, // Inverted Y (North/South)
-          wgs84EastLon,
-          wgs84NorthLat
-      );
-
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedExtentsY, cellWidth, prototype)
+              () -> new GridBuilderExtents(
+              wgs84WestLon,
+              wgs84SouthLat, // Inverted Y (North/South)
+              wgs84EastLon,
+              wgs84NorthLat
+          )
       );
       assertTrue(exception.getMessage().contains("Y-coordinate"));
 
-      // Create inverted X coordinates (top-left is east of bottom-right)
-      GridBuilderExtents invertedExtentsX = new GridBuilderExtents(
-          wgs84EastLon, // Inverted X (East/West)
-          wgs84NorthLat,
-          wgs84WestLon,
-          wgs84SouthLat
-      );
-
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, invertedExtentsX, cellWidth, prototype)
+              () -> new GridBuilderExtents(
+              wgs84EastLon, // Inverted X (East/West)
+              wgs84NorthLat,
+              wgs84WestLon,
+              wgs84SouthLat
+          )
       );
       assertTrue(exception.getMessage().contains("X-coordinate"));
     }

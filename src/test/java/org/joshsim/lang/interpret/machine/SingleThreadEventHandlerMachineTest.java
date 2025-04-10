@@ -16,6 +16,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
@@ -53,6 +56,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private EngineBridge mockBridge;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
   @Mock(lenient = true) private MutableEntity mockCreatedEntity;
+  @Mock(lenient = true) private CoordinateReferenceSystem mockCrs;
 
   private SingleThreadEventHandlerMachine machine;
   private EngineValueFactory factory;
@@ -848,6 +852,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getCrs()).thenReturn(mockCrs);
 
     List<Entity> queryResults = List.of(mockEntity);
     when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
