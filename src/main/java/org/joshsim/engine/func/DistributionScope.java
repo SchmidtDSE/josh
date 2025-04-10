@@ -39,7 +39,7 @@ public class DistributionScope implements Scope {
     Iterable<EngineValue> values = value.getContents(value.getSize().orElseThrow(), false);
 
     ValueResolver innerResolver = new ValueResolver(name);
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    EngineValueFactory valueFactory = EngineValueFactory.getDefault();
 
     List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
         .map((x) -> new EntityScope(x.getAsEntity()))

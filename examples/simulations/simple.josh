@@ -1,11 +1,11 @@
 start simulation TestSimpleSimulation
 
-  grid.size = 1 count
+  grid.size = 0.01 count
   grid.low = 0 count latitude, 0 count longitude
   grid.high = 10 count latitude, 10 count longitude
 
   steps.low = 0 count
-  steps.high = 10 count
+  steps.high = 100 count
 
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
@@ -23,10 +23,11 @@ end patch
 start organism ForeverTree
 
   age.init = 0 year
-
   age.step = prior.age + 1 year
-
   assert.age.step:if(meta.stepCount == 5 count) = current.age == 5 years
+
+  height.init = 0 meters
+  height.step = prior.height + sample uniform from 0 to 1 meters
 
 end organism
 

@@ -28,7 +28,18 @@ import org.joshsim.engine.value.type.StringScalar;
  */
 public class EngineValueFactory {
 
+  private static final EngineValueFactory DEFAULT = new EngineValueFactory();
+
   private final EngineValueCaster caster;
+
+  /**
+   * Get the default engine value factory with the default caster.
+   *
+   * @return Shared engine value factory with the default caster.
+   */
+  public static EngineValueFactory getDefault() {
+    return DEFAULT;
+  }
 
   /**
    * Create a new EnigneValueFactory using a default casting strategy.

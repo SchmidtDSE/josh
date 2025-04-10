@@ -70,7 +70,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = new EngineValueFactory();
+    valueFactory = EngineValueFactory.getDefault();
     random = new Random();
     isEnded = false;
   }

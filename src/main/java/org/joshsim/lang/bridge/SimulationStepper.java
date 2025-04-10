@@ -1,9 +1,13 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
+import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -13,6 +17,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SimulationStepper {
 
   private final EngineBridge target;
+  private final Set<String> events;
 
   /**
    * Create a new stepper around a bridge.
@@ -21,6 +26,15 @@ public class SimulationStepper {
    */
   public SimulationStepper(EngineBridge target) {
     this.target = target;
+
+    MutableEntity simulation = target.getSimulation();
+    Iterable<MutableEntity> patches = target.getCurrentPatches();
+
+    events = StreamSupport.stream(patches.spliterator(), false)
+        .flatMap((x) -> StreamSupport.stream(x.getEventHandlers().spliterator(), false))
+        .map(EventHandlerGroup::getEventKey)
+        .map(EventKey::getEvent)
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -40,17 +54,25 @@ public class SimulationStepper {
       performStream(patches, "init");
     }
 
-    performStream(simulation, "start");
-    performStream(patches, "start");
+    if (events.contains("start")) {
+      performStream(simulation, "start");
+      performStream(patches, "start");
+    }
 
-    performStream(simulation, "step");
-    performStream(patches, "step");
+    if (events.contains("step")) {
+      performStream(simulation, "step");
+      performStream(patches, "step");
+    }
 
-    performStream(simulation, "end");
-    performStream(patches, "end");
+    if (events.contains("end")) {
+      performStream(simulation, "end");
+      performStream(patches, "end");
+    }
 
     long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
+
+    System.gc();
 
     return timestepCompleted;
   }

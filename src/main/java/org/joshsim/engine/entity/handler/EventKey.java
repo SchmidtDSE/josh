@@ -15,6 +15,8 @@ public class EventKey {
   private final String state;
   private final String attribute;
   private final String event;
+  private final String stringRepresentation;
+  private final int hashRepresentation;
 
   /**
    * Key for mapping attribute x event to an EventHandlerGroup using empty default state.
@@ -26,6 +28,8 @@ public class EventKey {
     this.state = "";
     this.attribute = attribute;
     this.event = event;
+    this.stringRepresentation = generateStringRepresentation();
+    this.hashRepresentation = stringRepresentation.hashCode();
   }
 
   /**
@@ -39,6 +43,8 @@ public class EventKey {
     this.state = state;
     this.attribute = attribute;
     this.event = event;
+    this.stringRepresentation = generateStringRepresentation();
+    this.hashRepresentation = stringRepresentation.hashCode();
   }
 
   /**
@@ -76,19 +82,22 @@ public class EventKey {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     EventKey eventKey = (EventKey) o;
-    return Objects.equals(state, eventKey.state)
-          && Objects.equals(attribute, eventKey.attribute)
-          && Objects.equals(event, eventKey.event);
+    return toString().equals(eventKey.toString());
   }
 
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    return hashRepresentation;
   }
 
   @Override
   public String toString() {
+    return stringRepresentation;
+  }
+
+  private String generateStringRepresentation() {
     return String.format("EventKey(%s, %s, %s)", state, attribute, event);
   }
 }
