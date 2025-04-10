@@ -79,7 +79,7 @@ public class ExternalPathCacheLayer extends ExternalLayerDecorator {
   private void loadCoverageIntoCache(String path, EngineGeometry primingGeometry) {
     GridCoverage2D newCoverage;
     try {
-      newCoverage = CogReader.getCoverageFromDisk(path, primingGeometry);
+      newCoverage = CogReader.getCoverageFromIo(path, primingGeometry);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load coverage from disk", e);
     }

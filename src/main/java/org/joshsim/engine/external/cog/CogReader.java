@@ -33,7 +33,7 @@ public class CogReader {
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
-  public static GridCoverage2D getCoverageFromDisk(
+  public static GridCoverage2D getCoverageFromIo(
       String path,
       EngineGeometry geometry
   ) throws IOException {

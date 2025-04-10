@@ -42,7 +42,7 @@ public class CogExternalLayer implements ExternalLayer {
   public RealizedDistribution fulfill(Request request) {
     try {
       EngineGeometry geometry = request.getGeometry().orElseThrow();
-      GridCoverage2D gridCoverage = CogReader.getCoverageFromDisk(request.getPath(), geometry);
+      GridCoverage2D gridCoverage = CogReader.getCoverageFromIo(request.getPath(), geometry);
       List<BigDecimal> decimalValuesWithinGeometry =
           CogReader.extractValuesFromCoverage(gridCoverage, geometry);
 
