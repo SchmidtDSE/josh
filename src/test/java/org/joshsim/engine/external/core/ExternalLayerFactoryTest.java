@@ -19,6 +19,7 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.external.cog.CogExternalLayer;
+import org.joshsim.engine.external.cog.CogCacheLayer;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
@@ -138,8 +139,8 @@ public class ExternalLayerFactoryTest {
         "Outer layer should be ExtendingPrimingGeometryLayer");
 
     ExternalLayer inner1 = ((ExternalLayerDecorator) chain).getDecoratedLayer();
-    assertTrue(inner1 instanceof ExternalPathCacheLayer,
-        "Middle layer should be ExternalPathCacheLayer");
+    assertTrue(inner1 instanceof CogCacheLayer,
+        "Middle layer should be CogCacheLayer");
 
     ExternalLayer inner2 = ((ExternalLayerDecorator) inner1).getDecoratedLayer();
     assertTrue(inner2 instanceof CogExternalLayer,
@@ -168,7 +169,7 @@ public class ExternalLayerFactoryTest {
     CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
 
     // Create the cache layer with our spy
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
 
     // Create the full chain
     ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
@@ -219,11 +220,11 @@ public class ExternalLayerFactoryTest {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
     CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
 
-    // Test ExternalPathCacheLayer
+    // Test CogCacheLayer
     // Without an PrimingCacheLayer OR the Request having a priming geometry explicitly,
     // the cache layer should not be used and the base CogExternalLayer should be called
     // to fulfill a reqeuest.
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
     assertEquals(0, cacheLayer.getCacheSize());
 
     final RealizedDistribution cacheResult1 = cacheLayer.fulfill(request);
@@ -262,7 +263,7 @@ public class ExternalLayerFactoryTest {
 
     // Create mock layers to verify behavior
     CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(mockCogLayer);
+    CogCacheLayer cacheLayer = new CogCacheLayer(mockCogLayer);
     ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
 
     // First request should set priming EngineGeometry to area1
@@ -305,7 +306,7 @@ public class ExternalLayerFactoryTest {
 
     // Create mock layers to verify behavior
     CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
-    ExternalPathCacheLayer cacheLayer = spy(new ExternalPathCacheLayer(mockCogLayer));
+    CogCacheLayer cacheLayer = spy(new CogCacheLayer(mockCogLayer));
     ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
 
     // Execute the request
@@ -360,7 +361,7 @@ public class ExternalLayerFactoryTest {
     RealizedDistribution mockResult = mock(RealizedDistribution.class);
     when(cogLayer.fulfill(any(Request.class))).thenReturn(mockResult);
 
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
 
     // When the request has no priming geometry, it should fall back to the decorated layer
     cacheLayer.fulfill(request);
@@ -371,9 +372,9 @@ public class ExternalLayerFactoryTest {
 
   @Test
   void testCacheClearsWhenMemoryPressureIsHigh() {
-    // This test verifies the LRUMap behavior in ExternalPathCacheLayer
-    ExternalPathCacheLayer cacheLayer =
-        new ExternalPathCacheLayer(new CogExternalLayer(units, caster));
+    // This test verifies the LRUMap behavior in CogCacheLayer
+    CogCacheLayer cacheLayer =
+        new CogCacheLayer(new CogExternalLayer(units, caster));
 
     // Create many different geometries to fill the cache
     for (int i = 0; i < 200; i++) {
@@ -425,7 +426,7 @@ public class ExternalLayerFactoryTest {
 
     // Create a layer chain for testing
     CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
-    ExternalPathCacheLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
     ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
 
     // First request - this should populate the priming geometry

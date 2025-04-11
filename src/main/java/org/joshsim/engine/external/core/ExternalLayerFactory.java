@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.external.core;
 
+import org.joshsim.engine.external.cog.CogCacheLayer;
 import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
@@ -43,7 +44,7 @@ public class ExternalLayerFactory {
     ExternalLayer cogLayer = new CogExternalLayer(units, caster);
 
     // Add cache layer
-    ExternalLayer cacheLayer = new ExternalPathCacheLayer(cogLayer);
+    ExternalLayer cacheLayer = new CogCacheLayer(cogLayer);
 
     // Add priming geometry layer
     ExternalLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);

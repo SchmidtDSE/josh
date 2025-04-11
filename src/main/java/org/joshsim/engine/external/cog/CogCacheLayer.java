@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.external.core;
+package org.joshsim.engine.external.cog;
 
 
 import java.io.IOException;
@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.joshsim.engine.external.cog.CogReader;
+import org.joshsim.engine.external.core.ExternalLayer;
+import org.joshsim.engine.external.core.ExternalLayerDecorator;
+import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
@@ -22,16 +24,16 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  * cached resources to avoid repeated loading. This _should_ be generic to the
  * way that external resource is fulfilled to work with any external resource.
  */
-public class ExternalPathCacheLayer extends ExternalLayerDecorator {
+public class CogCacheLayer extends ExternalLayerDecorator {
   // Cache GridCoverage objects by path instead of Request->RealizedDistribution
   private final Map<EngineGeometry, GridCoverage2D> coverageCache = new LRUMap<>();
 
   /**
-   * Constructs an ExternalPathCacheLayer with a decorated external layer.
+   * Constructs an CogCacheLayer with a decorated external layer.
    *
    * @param decoratedLayer the external layer to be decorated
    */
-  public ExternalPathCacheLayer(ExternalLayer decoratedLayer) {
+  public CogCacheLayer(ExternalLayer decoratedLayer) {
     super(decoratedLayer);
   }
 
