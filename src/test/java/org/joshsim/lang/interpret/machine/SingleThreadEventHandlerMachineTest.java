@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;

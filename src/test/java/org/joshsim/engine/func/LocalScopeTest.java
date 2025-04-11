@@ -13,10 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
-
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

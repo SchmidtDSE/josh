@@ -6,8 +6,15 @@
 
 package org.joshsim.lang.bridge;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;

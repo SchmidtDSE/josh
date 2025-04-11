@@ -39,7 +39,7 @@ public abstract class Distribution extends EngineValue {
    * selection propotional to the frequency with which that value appears in the distribution.</p>
    *
    * @return Scalar value which is sampled from this distribution with frequency-proportional
-   * selection probability.
+   *     selection probability.
    */
   public abstract EngineValue sample();
 

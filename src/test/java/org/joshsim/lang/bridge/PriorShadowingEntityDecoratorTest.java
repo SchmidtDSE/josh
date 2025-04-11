@@ -10,10 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.EntityType;

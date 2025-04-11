@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
-
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;

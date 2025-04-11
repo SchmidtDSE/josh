@@ -6,11 +6,8 @@
 
 package org.joshsim.engine.func;
 
-import org.joshsim.engine.value.type.EngineValue;
-
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

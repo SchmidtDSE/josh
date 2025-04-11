@@ -8,8 +8,6 @@ package org.joshsim.engine.func;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.value.type.EngineValue;
 

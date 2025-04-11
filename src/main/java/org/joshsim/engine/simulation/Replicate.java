@@ -6,18 +6,17 @@
 
 package org.joshsim.engine.simulation;
 
+import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.Grid;
-
-import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
 
 
 /**

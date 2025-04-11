@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.entity.handler;
 
-import java.util.Objects;
 
 /**
  * Composite key for mapping state, attribute, and event.
