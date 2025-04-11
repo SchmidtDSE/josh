@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
+
 public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
 
   @Override
@@ -18,22 +19,24 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
       
       // Get the first record to determine headers
       Map<String, String> firstRecord = records.findFirst().orElse(null);
-      if (firstRecord != null) {
-        // Write headers
-        printer.printRecord(firstRecord.keySet());
-        
-        // Write first record
-        printer.printRecord(firstRecord.values());
-        
-        // Write remaining records
-        records.forEach(record -> {
-          try {
-            printer.printRecord(record.values());
-          } catch (IOException e) {
-            throw new RuntimeException("Failed to write CSV record", e);
-          }
-        });
+      if (firstRecord == null) {
+        return;
       }
+      
+      // Write headers
+      printer.printRecord(firstRecord.keySet());
+      
+      // Write first record
+      printer.printRecord(firstRecord.values());
+      
+      // Write remaining records
+      records.forEach(record -> {
+        try {
+          printer.printRecord(record.values());
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to write CSV record due to: " + e);
+        }
+      });
     }
   }
 }
