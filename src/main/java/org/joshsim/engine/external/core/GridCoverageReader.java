@@ -36,7 +36,7 @@ public abstract class GridCoverageReader {
    * @param geometry The geometry used for filtering points
    * @return A list of BigDecimal values
    */
-  public static List<BigDecimal> extractValuesFromCoverage(
+  public List<BigDecimal> extractValuesFromCoverage(
       GridCoverage2D coverage, EngineGeometry geometry
   ) {
     List<BigDecimal> values = new ArrayList<>();

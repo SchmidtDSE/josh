@@ -1,31 +1,37 @@
-package org.joshsim.engine.external.cog;
+package org.joshsim.engine.external.core;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.joshsim.engine.external.core.ExternalLayer;
-import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
- * Concrete implementation of ExternalLayer that uses CogReader to read COG files.
+ * Implementation of ExternalLayer that uses GridCoverageReader to read files.
  */
-public class CogExternalLayer implements ExternalLayer {
+public class GridCoverageExternalLayer implements ExternalLayer {
   private final EngineValueCaster caster;
   private final Units units;
+  protected final GridCoverageReader reader;
 
   /**
-   * Creates a new COG external layer.
+   * Creates a new grid coverage external layer.
    *
-   * @param units the units to use for the values extracted from COG
+   * @param units the units to use for the values extracted
+   * @param caster the caster for converting values
+   * @param reader the reader to use for accessing grid coverage data
    */
-  public CogExternalLayer(Units units, EngineValueCaster caster) {
+  public GridCoverageExternalLayer(
+        Units units,
+        EngineValueCaster caster,
+        GridCoverageReader reader
+  ) {
     this.units = units;
     this.caster = caster;
+    this.reader = reader;
   }
 
   @Override
@@ -42,9 +48,9 @@ public class CogExternalLayer implements ExternalLayer {
   public RealizedDistribution fulfill(Request request) {
     try {
       EngineGeometry geometry = request.getGeometry().orElseThrow();
-      GridCoverage2D gridCoverage = CogReader.getCoverageFromIo(request.getPath(), geometry);
+      GridCoverage2D gridCoverage = reader.getCoverageFromIo(request.getPath(), geometry);
       List<BigDecimal> decimalValuesWithinGeometry =
-          CogReader.extractValuesFromCoverage(gridCoverage, geometry);
+          reader.extractValuesFromCoverage(gridCoverage, geometry);
 
       RealizedDistribution realizedDistribution = RealizedDistribution.fromDecimalValues(
           getCaster(),
@@ -53,9 +59,8 @@ public class CogExternalLayer implements ExternalLayer {
       );
 
       return realizedDistribution;
-
     } catch (IOException e) {
-      throw new RuntimeException("Failed to read COG file: " + request.getPath(), e);
+      throw new RuntimeException("Failed to read file: " + request.getPath(), e);
     }
   }
 }

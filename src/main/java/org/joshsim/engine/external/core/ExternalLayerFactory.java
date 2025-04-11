@@ -1,13 +1,10 @@
-/**
- * Factory class for creating external layer chains using decorators.
- *
- * @license BSD-3-Clause
- */
-
 package org.joshsim.engine.external.core;
 
 import org.joshsim.engine.external.cog.CogCacheLayer;
-import org.joshsim.engine.external.cog.CogExternalLayer;
+import org.joshsim.engine.external.cog.CogReader;
+import org.joshsim.engine.external.netcdf.NetCdfCacheLayer;
+import org.joshsim.engine.external.netcdf.NetCdfReader;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
@@ -41,7 +38,7 @@ public class ExternalLayerFactory {
    */
   public ExternalLayer createExtendingPrimingCogLayer() {
     // Create the base layer with COG reader
-    ExternalLayer cogLayer = new CogExternalLayer(units, caster);
+    ExternalLayer cogLayer = new GridCoverageExternalLayer(units, caster, new CogReader());
 
     // Add cache layer
     ExternalLayer cacheLayer = new CogCacheLayer(cogLayer);
@@ -53,18 +50,16 @@ public class ExternalLayerFactory {
     return primingLayer;
   }
 
-
   /**
-   * Creates and initializes a NetCDF layer chain.
-   * This chain includes a NetCdf reader layer, a cache layer, and a priming geometry layer which
-   * iteratively builds the priming layer as a running intersection of all of the geometry
-   * it has seen.
+   * Creates and initializes various decorators into a chain for NetCDF processing.
+   * This chain includes a NetCDF reader layer, a cache layer, and a priming geometry layer which
+   * iteratively builds the priming layer as a running intersection of all geometries it has seen.
    *
    * @return the initialized external layer chain
    */
   public ExternalLayer createExtendingPrimingNetcdfLayer() {
-    // Create the base layer with COG reader
-    ExternalLayer netcdfLayer = new NetCdfExternalLayer(units, caster);
+    // Create the base layer with NetCDF reader
+    ExternalLayer netcdfLayer = new GridCoverageExternalLayer(units, caster, new NetCdfReader());
 
     // Add cache layer
     ExternalLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
@@ -82,11 +77,46 @@ public class ExternalLayerFactory {
    * priming geometry layer which does not change after initialization. This
    * can be used to create a very conservative layer (for eg, the simulation bounds)
    * as a primer, which may use more memory than absolutely necessary but reduce
-   * unnessecary repeated hits to the COG itself.
+   * unnecessary repeated hits to the COG itself.
    *
+   * @param initialGeometry the geometry to use as a static primer
    * @return the initialized external layer chain
    */
-  public ExternalLayer createStaticPrimingGeometryLayer() {
-    throw new UnsupportedOperationException("Not implemented yet");
+  public ExternalLayer createStaticPrimingGeometryLayer(EngineGeometry initialGeometry) {
+    // Create the base layer with COG reader
+    ExternalLayer cogLayer = new GridCoverageExternalLayer(units, caster, new CogReader());
+
+    // Add cache layer
+    ExternalLayer cacheLayer = new CogCacheLayer(cogLayer);
+
+    // Add static priming geometry layer
+    StaticPrimingGeometryLayer staticPrimingLayer = new StaticPrimingGeometryLayer(cacheLayer);
+    staticPrimingLayer.setPrimingGeometry(initialGeometry);
+
+    // Return decorated layers
+    return staticPrimingLayer;
+  }
+
+  /**
+   * Creates and initializes a static priming geometry layer chain for NetCDF data.
+   * This chain includes a NetCDF reader layer, a cache layer, and a static
+   * priming geometry layer which does not change after initialization.
+   *
+   * @param initialGeometry the geometry to use as a static primer
+   * @return the initialized external layer chain
+   */
+  public ExternalLayer createStaticPrimingNetcdfLayer(EngineGeometry initialGeometry) {
+    // Create the base layer with NetCDF reader
+    ExternalLayer netcdfLayer = new GridCoverageExternalLayer(units, caster, new NetCdfReader());
+
+    // Add cache layer
+    ExternalLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
+
+    // Add static priming geometry layer
+    StaticPrimingGeometryLayer staticPrimingLayer = new StaticPrimingGeometryLayer(cacheLayer);
+    staticPrimingLayer.setPrimingGeometry(initialGeometry);
+
+    // Return decorated layers
+    return staticPrimingLayer;
   }
 }

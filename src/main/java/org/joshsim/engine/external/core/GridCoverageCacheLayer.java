@@ -10,17 +10,15 @@ import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
- * Abstract class for managing caching of grid coverage resources.
- * This allows different implementations to handle specific format details
- * while reusing the caching logic.
+ * Layer for managing caching of grid coverage resources.
  */
-public abstract class GridCoverageCacheLayer extends ExternalLayerDecorator {
+public class GridCoverageCacheLayer extends ExternalLayerDecorator {
   // Cache GridCoverage objects by geometry
   private final Map<EngineGeometry, GridCoverage2D> coverageCache = new LRUMap<>();
   protected final GridCoverageReader reader;
 
   /**
-   * Constructs a GridCoverageCacheLayer with a decorated external layer.
+   * Constructs a GridCoverageCacheLayer with a decorated external layer and a reader.
    *
    * @param decoratedLayer the external layer to be decorated
    * @param reader the grid coverage reader to use
