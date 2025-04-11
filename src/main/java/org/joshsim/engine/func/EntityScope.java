@@ -8,8 +8,6 @@ package org.joshsim.engine.func;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -29,7 +27,7 @@ public class EntityScope implements Scope {
    */
   public EntityScope(Entity value) {
     this.value = value;
-    this.expectedAttrs = getAttributes(value);
+    this.expectedAttrs = value.getAttributeNames();
   }
 
   @Override
@@ -50,19 +48,8 @@ public class EntityScope implements Scope {
 
 
   @Override
-  public Iterable<String> getAttributes() {
+  public Set<String> getAttributes() {
     return expectedAttrs;
   }
 
-  /**
-   * Extract all attribute names from an entity's event handlers or set attributes.
-   *
-   * @param target the Entity from which to extract attribute names.
-   * @return Set of attribute names found in the entity's event handlers or set attributes.
-   */
-  private Set<String> getAttributes(Entity target) {
-    return StreamSupport
-            .stream(value.getAttributeNames().spliterator(), false)
-            .collect(Collectors.toSet());
-  }
 }

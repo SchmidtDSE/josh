@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.simulation.Simulation;
@@ -53,7 +54,7 @@ public class SyntheticScopeTest {
    */
   @BeforeEach
   void setUp() {
-    when(mockInner.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
+    when(mockInner.getAttributeNames()).thenReturn(Set.of("testAttr"));
     when(mockInner.hasAttribute("testAttr")).thenReturn(true);
     when(mockInner.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockInner.getHere()).thenReturn(mockHere);

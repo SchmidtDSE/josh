@@ -6,9 +6,9 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.engine.func.CombinedAttributeNameIterable;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -35,7 +35,7 @@ public class SyntheticScope implements Scope {
    */
   public SyntheticScope(ShadowingEntity inner) {
     this.inner = inner;
-    this.valueFactory = new EngineValueFactory();
+    this.valueFactory = EngineValueFactory.getDefault();
   }
 
   /**
@@ -70,8 +70,10 @@ public class SyntheticScope implements Scope {
   }
 
   @Override
-  public Iterable<String> getAttributes() {
-    return new CombinedAttributeNameIterable(inner.getAttributeNames(), SYNTHETIC_ATTRS);
+  public Set<String> getAttributes() {
+    Set<String> newSet = new HashSet<>(SYNTHETIC_ATTRS);
+    newSet.addAll(inner.getAttributeNames());
+    return newSet;
   }
 
   private Optional<EngineValue> getSynthetic(String name) {

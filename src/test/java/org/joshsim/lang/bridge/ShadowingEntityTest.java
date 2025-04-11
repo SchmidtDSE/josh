@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -54,7 +55,7 @@ public class ShadowingEntityTest {
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getAttributeNames()).thenReturn(
-        Arrays.asList("testAttr", "noHandlerAttr")
+        Set.of("testAttr", "noHandlerAttr")
     );
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
@@ -119,7 +120,7 @@ public class ShadowingEntityTest {
   @Test
   void testResolvePriorValueWhenNoHandlers() {
     String attrName = "noHandlerAttr";
-    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList(attrName));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(Set.of(attrName));
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
     spatialEntity.startSubstep("test");

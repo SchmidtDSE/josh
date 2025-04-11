@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.func;
 
+import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -40,8 +41,8 @@ public class SingleValueScope implements Scope {
   }
 
   @Override
-  public Iterable<String> getAttributes() {
-    return java.util.Collections.singletonList("current");
+  public Set<String> getAttributes() {
+    return Set.of("current");
   }
 
 }

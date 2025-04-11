@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -42,9 +42,9 @@ class EntityScopeTest {
    */
   @BeforeEach
   void setUp() {
-    when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup));
-    when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
-    when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
+    when(mockEntity.getEventHandlers()).thenReturn(Set.of(mockGroup));
+    when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
+    when(mockGroup.getEventHandlers()).thenReturn(Set.of(mockHandler));
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
 
     scope = new EntityScope(mockEntity);

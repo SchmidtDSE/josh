@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 
@@ -23,6 +24,7 @@ public class Units {
   public static final Units METERS = new Units("meters");
   public static final Units DEGREES = new Units("degrees");
 
+  private final String description;
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;
 
@@ -34,6 +36,8 @@ public class Units {
    * @throws IllegalArgumentException if more than one denominator is specified.
    */
   public Units(String description) {
+    this.description = description;
+
     String numerator = "";
     String denominator = "";
 
@@ -66,6 +70,7 @@ public class Units {
   public Units(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
     this.numeratorUnits = numeratorUnits;
     this.denominatorUnits = denominatorUnits;
+    this.description = serializeString();
   }
 
   /**
@@ -207,10 +212,7 @@ public class Units {
 
   @Override
   public String toString() {
-    String numeratorString = serializeMultiplyString(numeratorUnits);
-    String denominatorString = serializeMultiplyString(denominatorUnits);
-    boolean noDenominator = denominatorString.isEmpty();
-    return noDenominator ? numeratorString : numeratorString + " / " + denominatorString;
+    return description;
   }
 
   @Override
@@ -221,7 +223,10 @@ public class Units {
   private Map<String, Long> parseMultiplyString(String target) {
     Map<String, Long> unitCounts = new TreeMap<>();
 
-    for (String unit : target.split("\\s*\\*\\s*")) {
+    StringTokenizer tokenizer = new StringTokenizer(target, " * ");
+    while (tokenizer.hasMoreTokens()) {
+      String unit = tokenizer.nextToken();
+
       if (unit.isEmpty()) {
         continue;
       }
@@ -244,6 +249,13 @@ public class Units {
     }
 
     return joiner.toString();
+  }
+
+  private String serializeString() {
+    String numeratorString = serializeMultiplyString(numeratorUnits);
+    String denominatorString = serializeMultiplyString(denominatorUnits);
+    boolean noDenominator = denominatorString.isEmpty();
+    return noDenominator ? numeratorString : numeratorString + " / " + denominatorString;
   }
 
   /**

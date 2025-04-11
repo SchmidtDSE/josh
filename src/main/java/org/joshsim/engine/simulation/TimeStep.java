@@ -1,7 +1,7 @@
 package org.joshsim.engine.simulation;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -14,12 +14,12 @@ import org.joshsim.engine.geometry.EngineGeometry;
  */
 public class TimeStep {
   protected long stepNumber;
-  protected HashMap<GeoKey, Entity> patches;
+  protected Map<GeoKey, Entity> patches;
 
   /**
    * Create a new TimeStep, which contains entities that are frozen / immutable.
    */
-  public TimeStep(long stepNumber, HashMap<GeoKey, Entity> patches) {
+  public TimeStep(long stepNumber, Map<GeoKey, Entity> patches) {
     this.stepNumber = stepNumber;
     this.patches = patches;
   }

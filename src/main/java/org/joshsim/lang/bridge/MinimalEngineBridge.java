@@ -65,7 +65,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     replicate = Optional.empty();
 
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
@@ -99,7 +99,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     this.replicate = Optional.of(replicate);
 
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
