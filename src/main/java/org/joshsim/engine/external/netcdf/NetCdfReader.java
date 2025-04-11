@@ -2,9 +2,7 @@ package org.joshsim.engine.external.netcdf;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URL;
-import java.util.List;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.io.netcdf.NetCDFReader;
 import org.geotools.coverage.processing.Operations;
@@ -27,7 +25,7 @@ public class NetCdfReader extends GridCoverageReader {
    */
   @Override
   public GridCoverage2D getCoverageFromIo(
-      String path, 
+      String path,
       EngineGeometry geometry
   ) throws IOException {
     NetCDFReader reader = getNetCdfReader(path);
@@ -38,21 +36,21 @@ public class NetCdfReader extends GridCoverageReader {
       if (names.length == 0) {
         throw new IOException("No coverages found in NetCDF file: " + path);
       }
-      
+
       // Get the first coverage (can be parameterized later if needed)
       GridCoverage2D coverage = reader.read(names[0], null);
-      
+
       // Create an envelope from the geometry bounds for subsetting
       ReferencedEnvelope envelope = new ReferencedEnvelope(
           geometry.getEnvelope().getMinimum(0), geometry.getEnvelope().getMaximum(0),
           geometry.getEnvelope().getMinimum(1), geometry.getEnvelope().getMaximum(1),
           coverage.getCoordinateReferenceSystem()
       );
-      
+
       // Crop the coverage to the bounds of the geometry
       Operations ops = new Operations(null);
       GridCoverage2D croppedCoverage = (GridCoverage2D) ops.crop(coverage, envelope);
-      
+
       return croppedCoverage;
     } finally {
       reader.dispose();

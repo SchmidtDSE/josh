@@ -18,8 +18,10 @@ import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
-import org.joshsim.engine.external.cog.CogExternalLayer;
 import org.joshsim.engine.external.cog.CogCacheLayer;
+import org.joshsim.engine.external.cog.CogReader;
+import org.joshsim.engine.external.netcdf.NetCdfCacheLayer;
+import org.joshsim.engine.external.netcdf.NetCdfReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
@@ -45,6 +47,8 @@ public class ExternalLayerFactoryTest {
   private CoordinateReferenceSystem utm11n;
   private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
+  private static final String NETCDF_TEST = "assets/test/netcdf/test-data.nc";
+  private static final String NETCDF_TEST2 = "assets/test/netcdf/test-data2.nc";
 
   // Valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
   private double[][] validUtm11nCoordinates;
@@ -130,8 +134,10 @@ public class ExternalLayerFactoryTest {
     return new Request("url", "", url, Optional.of(geometry), Optional.empty());
   }
 
+  // COG Layer Tests
+
   @Test
-  void testChainStructureIsCorrect() {
+  void testCogChainStructureIsCorrect() {
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
 
     // Verify the chain structure using instanceof checks
@@ -143,12 +149,12 @@ public class ExternalLayerFactoryTest {
         "Middle layer should be CogCacheLayer");
 
     ExternalLayer inner2 = ((ExternalLayerDecorator) inner1).getDecoratedLayer();
-    assertTrue(inner2 instanceof CogExternalLayer,
-        "Inner layer should be CogExternalLayer");
+    assertTrue(inner2 instanceof GridCoverageExternalLayer,
+        "Inner layer should be GridCoverageExternalLayer");
   }
 
   @Test
-  void testChainReadsCogFiles() {
+  void testCogChainReadsCogFiles() {
     Request request = createFileRequest(COG_NOV_2021, testArea1);
 
     // Test the entire chain
@@ -162,11 +168,12 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testCachingBehavior() {
+  void testCogCachingBehavior() {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Create a spy on the real CogExternalLayer
-    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    GridCoverageExternalLayer cogLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new CogReader()));
 
     // Create the cache layer with our spy
     CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
@@ -187,7 +194,6 @@ public class ExternalLayerFactoryTest {
     assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
 
     // Once more, to ensure cache is used
-
     RealizedDistribution result3 = chain.fulfill(request);
 
     // Check cache state is still one
@@ -208,22 +214,24 @@ public class ExternalLayerFactoryTest {
   void testDirectCallCogExternalLayer() throws IOException {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
-    // Test CogExternalLayer
-    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    // Test GridCoverageExternalLayer with CogReader
+    GridCoverageExternalLayer cogLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new CogReader()));
     RealizedDistribution cogResult = cogLayer.fulfill(request);
     assertNotNull(cogResult);
     assertTrue(cogResult.getSize().isPresent() && cogResult.getSize().get() > 0);
   }
 
   @Test
-  void testCacheRespectsPrimingGeometryExistence() throws IOException {
+  void testCogCacheRespectsPrimingGeometryExistence() throws IOException {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
-    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    GridCoverageExternalLayer cogLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new CogReader()));
 
     // Test CogCacheLayer
     // Without an PrimingCacheLayer OR the Request having a priming geometry explicitly,
-    // the cache layer should not be used and the base CogExternalLayer should be called
-    // to fulfill a reqeuest.
+    // the cache layer should not be used and the base GridCoverageExternalLayer should be called
+    // to fulfill a request.
     CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
     assertEquals(0, cacheLayer.getCacheSize());
 
@@ -262,7 +270,7 @@ public class ExternalLayerFactoryTest {
     Request request2 = createFileRequest(COG_NOV_2021, testArea2);
 
     // Create mock layers to verify behavior
-    CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
+    GridCoverageExternalLayer mockCogLayer = mock(GridCoverageExternalLayer.class);
     CogCacheLayer cacheLayer = new CogCacheLayer(mockCogLayer);
     ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
 
@@ -305,7 +313,7 @@ public class ExternalLayerFactoryTest {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Create mock layers to verify behavior
-    CogExternalLayer mockCogLayer = mock(CogExternalLayer.class);
+    GridCoverageExternalLayer mockCogLayer = mock(GridCoverageExternalLayer.class);
     CogCacheLayer cacheLayer = spy(new CogCacheLayer(mockCogLayer));
     ExtendingPrimingGeometryLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
 
@@ -322,7 +330,7 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testMultipleGeometriesWithDifferentFiles() {
+  void testMultipleGeometriesWithDifferentCogFiles() {
     ExternalLayer chain = factory.createExtendingPrimingCogLayer();
 
     // Create requests for different areas and months
@@ -357,7 +365,7 @@ public class ExternalLayerFactoryTest {
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
 
     // Create mock layers to verify behavior
-    CogExternalLayer cogLayer = mock(CogExternalLayer.class);
+    GridCoverageExternalLayer cogLayer = mock(GridCoverageExternalLayer.class);
     RealizedDistribution mockResult = mock(RealizedDistribution.class);
     when(cogLayer.fulfill(any(Request.class))).thenReturn(mockResult);
 
@@ -371,10 +379,10 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testCacheClearsWhenMemoryPressureIsHigh() {
-    // This test verifies the LRUMap behavior in CogCacheLayer
-    CogCacheLayer cacheLayer =
-        new CogCacheLayer(new CogExternalLayer(units, caster));
+  void testCogCacheClearsWhenMemoryPressureIsHigh() {
+    // This test verifies the LRUMap behavior in GridCoverageCacheLayer
+    CogCacheLayer cacheLayer = new CogCacheLayer(
+        new GridCoverageExternalLayer(units, caster, new CogReader()));
 
     // Create many different geometries to fill the cache
     for (int i = 0; i < 200; i++) {
@@ -417,7 +425,7 @@ public class ExternalLayerFactoryTest {
 
   @Test
   @Tag("remote")
-  void testCachingWithUrlBasedCogs() {
+  void testCogCachingWithUrlBasedCogs() {
     // Use the remote URL version of the same COG file we use locally
     String cogUrl = "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif";
 
@@ -425,7 +433,8 @@ public class ExternalLayerFactoryTest {
     Request request = createUrlRequest(cogUrl, testAreaSmall);
 
     // Create a layer chain for testing
-    CogExternalLayer cogLayer = spy(new CogExternalLayer(units, caster));
+    GridCoverageExternalLayer cogLayer = spy(
+        new GridCoverageExternalLayer(units, caster, new CogReader()));
     CogCacheLayer cacheLayer = new CogCacheLayer(cogLayer);
     ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
 
@@ -471,7 +480,7 @@ public class ExternalLayerFactoryTest {
   }
 
   @Test
-  void testUrlVersusFileResults() {
+  void testCogUrlVersusFileResults() {
     // Create requests for the same area using both file and URL approaches
     Request fileRequest = createFileRequest(COG_NOV_2021, testAreaSmall);
     Request urlRequest = createUrlRequest(
@@ -498,5 +507,232 @@ public class ExternalLayerFactoryTest {
     assertTrue(fileMean.isPresent() && urlMean.isPresent());
     assertEquals(0, fileMean.get().getAsDecimal().compareTo(urlMean.get().getAsDecimal()),
         "Mean values should be identical for the same data source whether via file or URL");
+  }
+  
+  // NetCDF Layer Tests
+  
+  @Test
+  void testNetcdfChainStructureIsCorrect() {
+    ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
+
+    // Verify the chain structure using instanceof checks
+    assertTrue(chain instanceof ExtendingPrimingGeometryLayer,
+        "Outer layer should be ExtendingPrimingGeometryLayer");
+
+    ExternalLayer inner1 = ((ExternalLayerDecorator) chain).getDecoratedLayer();
+    assertTrue(inner1 instanceof NetCdfCacheLayer,
+        "Middle layer should be NetCdfCacheLayer");
+
+    ExternalLayer inner2 = ((ExternalLayerDecorator) inner1).getDecoratedLayer();
+    assertTrue(inner2 instanceof GridCoverageExternalLayer,
+        "Inner layer should be GridCoverageExternalLayer");
+  }
+
+  @Test
+  void testNetcdfChainReadsNetcdfFiles() {
+    Request request = createFileRequest(NETCDF_TEST, testArea1);
+
+    // Test the entire chain
+    ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
+    RealizedDistribution result = chain.fulfill(request);
+
+    // Verify results
+    assertNotNull(result);
+    assertTrue(result.getSize().isPresent());
+    assertTrue(result.getSize().get() > 0);
+  }
+
+  @Test
+  void testNetcdfCachingBehavior() {
+    Request request = createFileRequest(NETCDF_TEST, testAreaSmall);
+
+    // Create a spy on the real NetCdfExternalLayer
+    GridCoverageExternalLayer netcdfLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new NetCdfReader()));
+
+    // Create the cache layer with our spy
+    NetCdfCacheLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
+
+    // Create the full chain
+    ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
+
+    // First request
+    final RealizedDistribution result1 = chain.fulfill(request);
+
+    // Check cache state
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+
+    // Second request with the same parameters
+    RealizedDistribution result2 = chain.fulfill(request);
+
+    // Check cache state is still one
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+
+    // Verify results match
+    assertEquals(result1.getSize(), result2.getSize());
+
+    // Verify statistics match
+    Optional<Scalar> mean1 = result1.getMean();
+    Optional<Scalar> mean2 = result2.getMean();
+    assertTrue(mean1.isPresent() && mean2.isPresent());
+    assertEquals(0, mean1.get().getAsDecimal().compareTo(mean2.get().getAsDecimal()));
+  }
+
+  @Test
+  void testDirectCallNetcdfExternalLayer() throws IOException {
+    Request request = createFileRequest(NETCDF_TEST, testAreaSmall);
+
+    // Test GridCoverageExternalLayer with NetCdfReader
+    GridCoverageExternalLayer netcdfLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new NetCdfReader()));
+    RealizedDistribution netcdfResult = netcdfLayer.fulfill(request);
+    assertNotNull(netcdfResult);
+    assertTrue(netcdfResult.getSize().isPresent() && netcdfResult.getSize().get() > 0);
+  }
+
+  @Test
+  void testNetcdfCacheRespectsPrimingGeometryExistence() throws IOException {
+    Request request = createFileRequest(NETCDF_TEST, testAreaSmall);
+    GridCoverageExternalLayer netcdfLayer = spy(new GridCoverageExternalLayer(
+        units, caster, new NetCdfReader()));
+
+    // Test NetCdfCacheLayer
+    NetCdfCacheLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
+    assertEquals(0, cacheLayer.getCacheSize());
+
+    final RealizedDistribution cacheResult1 = cacheLayer.fulfill(request);
+    assertEquals(0, cacheLayer.getCacheSize());
+    verify(netcdfLayer, times(1)).fulfill(request);
+
+    // Second request should still not use cache
+    RealizedDistribution cacheResult2 = cacheLayer.fulfill(request);
+    assertEquals(0, cacheLayer.getCacheSize());
+    verify(netcdfLayer, times(2)).fulfill(request);
+
+    // Now, set an explicit priming geometry
+    request.setPrimingGeometry(Optional.of(testAreaSmall));
+
+    // Third request should populate the cache, and should not reach base netcdf layer
+    RealizedDistribution cacheResult3 = cacheLayer.fulfill(request);
+    assertNotNull(cacheResult3);
+    assertEquals(1, cacheLayer.getCacheSize());
+    verify(netcdfLayer, times(2)).fulfill(request);
+
+    // Fourth request should use the cache, not add a new entry, and not reach base netcdf layer
+    RealizedDistribution cacheResult4 = cacheLayer.fulfill(request);
+    assertNotNull(cacheResult4);
+    assertEquals(1, cacheLayer.getCacheSize());
+    verify(netcdfLayer, times(2)).fulfill(request);
+
+    // Test cache clearing
+    cacheLayer.clearCache();
+    assertEquals(0, cacheLayer.getCacheSize());
+  }
+
+  @Test
+  void testMultipleGeometriesWithDifferentNetcdfFiles() {
+    ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
+
+    // Create requests for different areas and different NetCDF files
+    Request request1 = createFileRequest(NETCDF_TEST, testArea1);
+    Request request2 = createFileRequest(NETCDF_TEST2, testArea2);
+
+    // Get results
+    RealizedDistribution result1 = chain.fulfill(request1);
+    RealizedDistribution result2 = chain.fulfill(request2);
+
+    // Verify we got valid data from both requests
+    assertNotNull(result1);
+    assertNotNull(result2);
+    assertTrue(result1.getSize().isPresent() && result1.getSize().get() > 0);
+    assertTrue(result2.getSize().isPresent() && result2.getSize().get() > 0);
+  }
+
+  @Test
+  @Tag("remote")
+  void testReadNetcdfFromUrl() {
+    // Use the remote URL version of the NetCDF file
+    String netcdfUrl = "https://storage.googleapis.com/national_park_service/test-data.nc";
+
+    // Create a request with our test area
+    Request request = createUrlRequest(netcdfUrl, testArea1);
+
+    // Create layer chain
+    ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
+
+    // Fulfill request
+    RealizedDistribution result = chain.fulfill(request);
+
+    // Verify result
+    assertNotNull(result, "Result should not be null");
+    assertTrue(result.getSize().isPresent(), "Result should have size");
+    assertTrue(result.getSize().get() > 0, "Result should have values");
+  }
+
+  @Test
+  @Tag("remote")
+  void testNetcdfCachingWithUrlBasedFiles() {
+    // Use the remote URL version of the NetCDF file
+    String netcdfUrl = "https://storage.googleapis.com/national_park_service/test-data.nc";
+
+    // Use the test area
+    Request request = createUrlRequest(netcdfUrl, testAreaSmall);
+
+    // Create a layer chain for testing
+    GridCoverageExternalLayer netcdfLayer = spy(
+        new GridCoverageExternalLayer(units, caster, new NetCdfReader()));
+    NetCdfCacheLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
+    ExtendingPrimingGeometryLayer chain = new ExtendingPrimingGeometryLayer(cacheLayer);
+
+    // First request - this should populate the priming geometry
+    chain.fulfill(request);
+
+    // Second request with the same parameters
+    chain.fulfill(request);
+
+    // Cache should have one entry
+    assertEquals(1, cacheLayer.getCacheSize(), "Cache should contain one entry");
+  }
+
+  @Test
+  void testStaticPrimingNetcdfLayer() {
+    // Initialize the static priming layer with a predefined geometry
+    ExternalLayer staticLayer = factory.createStaticPrimingNetcdfLayer(testArea1);
+    
+    // Create a request for a smaller area within the primed area
+    Request request = createFileRequest(NETCDF_TEST, testAreaSmall);
+    
+    // Fulfill the request
+    RealizedDistribution result = staticLayer.fulfill(request);
+    
+    // Verify we got valid data
+    assertNotNull(result);
+    assertTrue(result.getSize().isPresent() && result.getSize().get() > 0);
+
+    // The layer should be properly structured
+    assertTrue(staticLayer instanceof StaticPrimingGeometryLayer);
+    ExternalLayer inner1 = ((ExternalLayerDecorator) staticLayer).getDecoratedLayer();
+    assertTrue(inner1 instanceof NetCdfCacheLayer);
+  }
+  
+  @Test
+  void testStaticPrimingCogLayer() {
+    // Initialize the static priming layer with a predefined geometry
+    ExternalLayer staticLayer = factory.createStaticPrimingGeometryLayer(testArea1);
+    
+    // Create a request for a smaller area within the primed area
+    Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
+    
+    // Fulfill the request
+    RealizedDistribution result = staticLayer.fulfill(request);
+    
+    // Verify we got valid data
+    assertNotNull(result);
+    assertTrue(result.getSize().isPresent() && result.getSize().get() > 0);
+
+    // The layer should be properly structured
+    assertTrue(staticLayer instanceof StaticPrimingGeometryLayer);
+    ExternalLayer inner1 = ((ExternalLayerDecorator) staticLayer).getDecoratedLayer();
+    assertTrue(inner1 instanceof CogCacheLayer);
   }
 }
