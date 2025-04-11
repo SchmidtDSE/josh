@@ -47,8 +47,8 @@ public class ExternalLayerFactoryTest {
   private CoordinateReferenceSystem utm11n;
   private static final String COG_NOV_2021 = "assets/test/cog/nclimgrid-prcp-202111.tif";
   private static final String COG_DEC_2021 = "assets/test/cog/nclimgrid-prcp-202112.tif";
-  private static final String NETCDF_TEST = "assets/test/netcdf/test-data.nc";
-  private static final String NETCDF_TEST2 = "assets/test/netcdf/test-data2.nc";
+  private static final String NETCDF_TEST = "assets/test/netcdf/MISR_AM1_JOINT_AS_FEB_2022_F02_0002.nc";
+  private static final String NETCDF_TEST2 = "assets/test/netcdf/MISR_AM1_JOINT_AS_MAR_2022_F02_0002.nc";
 
   // Valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
   private double[][] validUtm11nCoordinates;
