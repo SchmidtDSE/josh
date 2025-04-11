@@ -508,9 +508,9 @@ public class ExternalLayerFactoryTest {
     assertEquals(0, fileMean.get().getAsDecimal().compareTo(urlMean.get().getAsDecimal()),
         "Mean values should be identical for the same data source whether via file or URL");
   }
-  
+
   // NetCDF Layer Tests
-  
+
   @Test
   void testNetcdfChainStructureIsCorrect() {
     ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
@@ -698,13 +698,13 @@ public class ExternalLayerFactoryTest {
   void testStaticPrimingNetcdfLayer() {
     // Initialize the static priming layer with a predefined geometry
     ExternalLayer staticLayer = factory.createStaticPrimingNetcdfLayer(testArea1);
-    
+
     // Create a request for a smaller area within the primed area
     Request request = createFileRequest(NETCDF_TEST, testAreaSmall);
-    
+
     // Fulfill the request
     RealizedDistribution result = staticLayer.fulfill(request);
-    
+
     // Verify we got valid data
     assertNotNull(result);
     assertTrue(result.getSize().isPresent() && result.getSize().get() > 0);
@@ -714,18 +714,18 @@ public class ExternalLayerFactoryTest {
     ExternalLayer inner1 = ((ExternalLayerDecorator) staticLayer).getDecoratedLayer();
     assertTrue(inner1 instanceof NetCdfCacheLayer);
   }
-  
+
   @Test
   void testStaticPrimingCogLayer() {
     // Initialize the static priming layer with a predefined geometry
     ExternalLayer staticLayer = factory.createStaticPrimingGeometryLayer(testArea1);
-    
+
     // Create a request for a smaller area within the primed area
     Request request = createFileRequest(COG_NOV_2021, testAreaSmall);
-    
+
     // Fulfill the request
     RealizedDistribution result = staticLayer.fulfill(request);
-    
+
     // Verify we got valid data
     assertNotNull(result);
     assertTrue(result.getSize().isPresent() && result.getSize().get() > 0);
