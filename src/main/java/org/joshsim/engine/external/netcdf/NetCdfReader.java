@@ -1,72 +1,70 @@
-package org.joshsim.engine.external.cog;
+package org.joshsim.engine.external.netcdf;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.coverage.io.netcdf.NetCDFReader;
 import org.geotools.coverage.processing.Operations;
-import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.api.parameter.ParameterValueGroup;
 import org.joshsim.engine.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
- * Reader for Cloud Optimized GeoTIFF (COG) files that extends the GridCoverageReader.
+ * Reader for NetCDF files that extends the GridCoverageReader.
  */
-public class CogReader extends GridCoverageReader {
-  static final CoverageProcessor processor = CoverageProcessor.getInstance();
+public class NetCdfReader extends GridCoverageReader {
 
   /**
-   * Read a coverage from a COG file for the specified geometry.
+   * Read a coverage from a NetCDF file for the specified geometry.
    *
-   * @param path Path to the COG file
+   * @param path Path to the NetCDF file
    * @param geometry EngineGeometry defining the area of interest
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
   @Override
   public GridCoverage2D getCoverageFromIo(
-      String path,
+      String path, 
       EngineGeometry geometry
   ) throws IOException {
-
-    GeoTiffReader reader = getCogReader(path);
+    NetCDFReader reader = getNetCdfReader(path);
 
     try {
-      // Get the full coverage
-      GridCoverage2D coverage = reader.read(null);
-
+      // Get available coverages from the NetCDF file
+      String[] names = reader.getGridCoverageNames();
+      if (names.length == 0) {
+        throw new IOException("No coverages found in NetCDF file: " + path);
+      }
+      
+      // Get the first coverage (can be parameterized later if needed)
+      GridCoverage2D coverage = reader.read(names[0], null);
+      
       // Create an envelope from the geometry bounds for subsetting
       ReferencedEnvelope envelope = new ReferencedEnvelope(
           geometry.getEnvelope().getMinimum(0), geometry.getEnvelope().getMaximum(0),
           geometry.getEnvelope().getMinimum(1), geometry.getEnvelope().getMaximum(1),
           coverage.getCoordinateReferenceSystem()
       );
-
-      // Set up parameters for the crop operation
-      final ParameterValueGroup parameters = processor.getOperation("CoverageCrop").getParameters();
-      parameters.parameter("Source").setValue(coverage);
-      parameters.parameter("Envelope").setValue(envelope);
-
+      
       // Crop the coverage to the bounds of the geometry
-      GridCoverage2D croppedCoverage = (GridCoverage2D) processor.doOperation(parameters);
-
+      Operations ops = new Operations(null);
+      GridCoverage2D croppedCoverage = (GridCoverage2D) ops.crop(coverage, envelope);
+      
       return croppedCoverage;
     } finally {
       reader.dispose();
     }
   }
 
-  private static GeoTiffReader getCogReader(String path) throws IOException {
+  private static NetCDFReader getNetCdfReader(String path) throws IOException {
     if (path.startsWith("http://") || path.startsWith("https://")) {
       // Path is already a URL
-      return new GeoTiffReader(path);
+      return new NetCDFReader(path, null);
     } else {
-      URL fileUrl = new File(path).toURI().toURL();
       // Path is a local file
-      return new GeoTiffReader(fileUrl);
+      URL fileUrl = new File(path).toURI().toURL();
+      return new NetCDFReader(fileUrl, null);
     }
   }
 }

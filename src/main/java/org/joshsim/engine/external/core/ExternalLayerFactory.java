@@ -55,6 +55,28 @@ public class ExternalLayerFactory {
 
 
   /**
+   * Creates and initializes a NetCDF layer chain.
+   * This chain includes a NetCdf reader layer, a cache layer, and a priming geometry layer which
+   * iteratively builds the priming layer as a running intersection of all of the geometry
+   * it has seen.
+   *
+   * @return the initialized external layer chain
+   */
+  public ExternalLayer createExtendingPrimingNetcdfLayer() {
+    // Create the base layer with COG reader
+    ExternalLayer netcdfLayer = new NetCdfExternalLayer(units, caster);
+
+    // Add cache layer
+    ExternalLayer cacheLayer = new NetCdfCacheLayer(netcdfLayer);
+
+    // Add priming geometry layer
+    ExternalLayer primingLayer = new ExtendingPrimingGeometryLayer(cacheLayer);
+
+    // Return decorated layers
+    return primingLayer;
+  }
+
+  /**
    * Creates and initializes a static priming geometry layer chain.
    * This chain includes a COG reader layer, a cache layer, and a static
    * priming geometry layer which does not change after initialization. This
