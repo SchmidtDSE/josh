@@ -24,7 +24,7 @@ public abstract class GridCoverageReader {
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
-  abstract GridCoverage2D getCoverageFromIo(
+  public abstract GridCoverage2D getCoverageFromIo(
       String path,
       EngineGeometry geometry
   ) throws IOException;
