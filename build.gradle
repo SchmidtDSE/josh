@@ -41,6 +41,9 @@ dependencies {
 
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0-M3")
+  
+  // Apache Commons CSV for CSV handling
+  implementation("org.apache.commons:commons-csv:1.10.0")
 
   // Geotools for Raster transformations and COG support
   implementation("org.geotools:gt-main:32.2")
