@@ -42,7 +42,7 @@ public class StandardVirtualDistribution extends VirtualDistribution {
    * @return A sample from the distribution.
    */
   @Override
-  public Scalar sample() {
+  public EngineValue sample() {
     double baseValue = random.nextGaussian();
     double value = baseValue * sigma.doubleValue() + mu.doubleValue();
     return new DecimalScalar(caster, BigDecimal.valueOf(value), units);

@@ -60,7 +60,7 @@ public class DistributionScope implements Scope {
 
 
   @Override
-  public Iterable<String> getAttributes() {
+  public Set<String> getAttributes() {
     return expectedAttrs;
   }
 

@@ -12,7 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -49,7 +52,7 @@ class DistributionScopeTest {
     attributeValue = factory.build(5L, Units.EMPTY);
 
     when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
-    when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
+    when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(attributeValue));
     when(mockDistribution.sample()).thenReturn(mockEntityValue);
     when(mockDistribution.getSize()).thenReturn(Optional.of(3));

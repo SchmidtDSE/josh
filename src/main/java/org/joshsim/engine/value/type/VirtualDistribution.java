@@ -36,7 +36,7 @@ public abstract class VirtualDistribution extends Distribution {
    *
    * @return A sampled scalar value.
    */
-  public abstract Scalar sample();
+  public abstract EngineValue sample();
 
   @Override
   public Distribution sampleMultiple(long count, boolean withReplacement) {
@@ -156,7 +156,7 @@ public abstract class VirtualDistribution extends Distribution {
 
   @Override
   public Scalar getAsScalar() {
-    return sample();
+    return sample().getAsScalar();
   }
 
   @Override

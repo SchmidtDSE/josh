@@ -47,7 +47,7 @@ class VirtualDistributionTest {
     }
 
     @Override
-    public Scalar sample() {
+    public EngineValue sample() {
       return sampleValue;
     }
   }
@@ -156,6 +156,8 @@ class VirtualDistributionTest {
   @Test
   void testGetAsScalarReturnsSample() {
     // When
+    when(testScalar.getAsScalar()).thenReturn(testScalar);
+
     Scalar result = virtualDistribution.getAsScalar();
 
     // Then

@@ -7,6 +7,8 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Optional;
+import java.util.Set;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.EntityType;
@@ -46,7 +48,7 @@ public class PriorShadowingEntityDecorator implements Entity {
   }
 
   @Override
-  public Iterable<String> getAttributeNames() {
+  public Set<String> getAttributeNames() {
     return inner.getAttributeNames();
   }
 

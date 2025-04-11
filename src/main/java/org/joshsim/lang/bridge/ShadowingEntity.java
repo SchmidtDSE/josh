@@ -35,6 +35,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
+  private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
   private final MutableEntity inner;
   private final Entity here;
@@ -92,7 +93,7 @@ public class ShadowingEntity implements MutableEntity {
    *
    * @return Iterable over attribute names as Strings.
    */
-  public Iterable<String> getAttributeNames() {
+  public Set<String> getAttributeNames() {
     return scope.getAttributes();
   }
 
@@ -246,13 +247,13 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
-   * Verify that an attribute exists on this entity.
+   * Verify that an attribute exists on this entity if enabled.
    *
    * @param name unique identifier of the attribute to verify.
    * @throws IllegalArgumentException if the attribute is not found.
    */
   private void assertAttributePresent(String name) {
-    if (hasAttribute(name)) {
+    if (ASSERT_VALUE_PRESENT_DEBUG || hasAttribute(name)) {
       return;
     }
 

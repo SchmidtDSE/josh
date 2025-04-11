@@ -8,6 +8,8 @@ package org.joshsim.engine.func;
 
 import org.joshsim.engine.value.type.EngineValue;
 
+import java.util.Set;
+
 
 /**
  * Description of a variable scope.
@@ -38,6 +40,6 @@ public interface Scope {
    *
    * @return all attributes within this scope.
    */
-  Iterable<String> getAttributes();
+  Set<String> getAttributes();
 
 }

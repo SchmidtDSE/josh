@@ -9,6 +9,7 @@ package org.joshsim.engine.entity.base;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private final Lock lock;
 
   private Optional<String> substep;
+  private Set<String> attributeNames;
 
   /**
    * Constructor for Entity.
@@ -59,6 +61,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
     lock = new ReentrantLock();
     substep = Optional.empty();
+
+    attributeNames = computeAttributeNames();
   }
 
   @Override
@@ -115,11 +119,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   }
 
   @Override
-  public Iterable<String> getAttributeNames() {
-    return StreamSupport.stream(getEventHandlers().spliterator(), false)
-        .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
-        .map(EventHandler::getAttributeName)
-        .collect(Collectors.toSet());
+  public Set<String> getAttributeNames() {
+    return attributeNames;
   }
 
   @Override
@@ -154,6 +155,18 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   public Optional<String> getSubstep() {
     return substep;
+  }
+
+  /**
+   * Determine unique attribute names.
+   *
+   * @return Set of unique attribute names.
+   */
+  private Set<String> computeAttributeNames() {
+    return StreamSupport.stream(getEventHandlers().spliterator(), false)
+        .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
+        .map(EventHandler::getAttributeName)
+        .collect(Collectors.toSet());
   }
 
 }

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.type.EntityType;
@@ -49,7 +51,7 @@ public class PriorShadowingEntityDecoratorTest {
     when(mockInner.getEntityType()).thenReturn(mockEntityType);
     when(mockInner.freeze()).thenReturn(mockFrozenEntity);
     when(mockInner.getKey()).thenReturn(Optional.of(mockGeoKey));
-    when(mockInner.getAttributeNames()).thenReturn(Arrays.asList("testAttr"));
+    when(mockInner.getAttributeNames()).thenReturn(Set.of("testAttr"));
     when(mockInner.getPriorAttribute("testAttr")).thenReturn(Optional.of(mockEngineValue));
 
     decorator = new PriorShadowingEntityDecorator(mockInner);
@@ -77,7 +79,7 @@ public class PriorShadowingEntityDecoratorTest {
   @Test
   void testGetAttributeNames() {
     Iterable<String> names = decorator.getAttributeNames();
-    assertEquals(Arrays.asList("testAttr"), names);
+    assertEquals(Set.of("testAttr"), names);
   }
 
   @Test

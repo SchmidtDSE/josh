@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -837,8 +839,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void executeSpatialQuery_shouldReturnPatchesWithinDistance() {
     // Given
-    List<String> mockAttrs = new ArrayList<>();
-    mockAttrs.add("testAttr");
+    Set<String> mockAttrs = Set.of("testAttr");
 
     when(mockScope.has("current")).thenReturn(true);
     when(mockScope.get("current")).thenReturn(mockValue);

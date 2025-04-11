@@ -77,7 +77,6 @@ public class RealizedDistribution extends Distribution {
   /**
    * Compute statistics on demand using parallel stream.
    *
-   *
    * @return DoubleSummaryStatistics for the values
    */
   private void computeStats() {
@@ -232,9 +231,9 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
-  public Scalar sample() {
+  public EngineValue sample() {
     int index = (int) (Math.random() * values.size());
-    return values.get(index).getAsScalar();
+    return values.get(index);
   }
 
   @Override

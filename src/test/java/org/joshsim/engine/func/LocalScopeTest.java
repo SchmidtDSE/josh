@@ -15,6 +15,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Set;
+
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +84,7 @@ class LocalScopeTest {
   @Test
   void testGetAttributes() {
     when(mockContainingScope.getAttributes())
-        .thenReturn(Arrays.asList("outerVar1", "outerVar2"));
+        .thenReturn(Set.of("outerVar1", "outerVar2"));
     scope.defineConstant("localVar", mockValue);
 
     Iterator<String> attributes = scope.getAttributes().iterator();

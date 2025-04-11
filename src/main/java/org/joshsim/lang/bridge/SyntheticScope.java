@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.func.CombinedAttributeNameIterable;
@@ -70,8 +71,10 @@ public class SyntheticScope implements Scope {
   }
 
   @Override
-  public Iterable<String> getAttributes() {
-    return new CombinedAttributeNameIterable(inner.getAttributeNames(), SYNTHETIC_ATTRS);
+  public Set<String> getAttributes() {
+    Set<String> newSet = new HashSet<>(SYNTHETIC_ATTRS);
+    newSet.addAll(inner.getAttributeNames());
+    return newSet;
   }
 
   private Optional<EngineValue> getSynthetic(String name) {

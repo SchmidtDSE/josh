@@ -8,6 +8,10 @@ package org.joshsim.engine.func;
 
 import org.joshsim.engine.value.type.EngineValue;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * Simple scope which contains only a single current EngineValue.
@@ -40,8 +44,8 @@ public class SingleValueScope implements Scope {
   }
 
   @Override
-  public Iterable<String> getAttributes() {
-    return java.util.Collections.singletonList("current");
+  public Set<String> getAttributes() {
+    return Set.of("current");
   }
 
 }

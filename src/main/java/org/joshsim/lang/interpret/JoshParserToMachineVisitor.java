@@ -303,8 +303,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
-      machine.push(singleCount);
       targetAction.apply(machine);
+      machine.push(singleCount);
       machine.sample(true);
       return machine;
     };

@@ -84,7 +84,7 @@ public class SimulationStepper {
    * @param subStep the substep to perform
    */
   private void performStream(Iterable<MutableEntity> entities, String subStep) {
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), false);
     performStream(entityStream, subStep);
   }
 
