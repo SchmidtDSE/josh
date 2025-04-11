@@ -9,11 +9,15 @@ package org.joshsim.engine.simulation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.Grid;
+
+import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
 
 
 /**
@@ -72,10 +76,18 @@ public class Replicate {
     if (pastTimeSteps.containsKey(stepNumber)) {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
-    HashMap<GeoKey, Entity> frozenPatches = new HashMap<>();
-    for (MutableEntity patch : presentTimeStep.values()) {
-      frozenPatches.put(patch.getKey().orElseThrow(), patch.freeze());
-    }
+
+    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().parallelStream()
+        .collect(Collectors.toMap(
+            (x) -> x.getKey().orElseThrow(),
+            (original) -> {
+              original.lock();
+              Entity frozen = original.freeze();
+              original.unlock();
+              return frozen;
+            })
+        );
+
     TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }

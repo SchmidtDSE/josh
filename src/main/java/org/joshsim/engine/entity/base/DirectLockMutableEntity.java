@@ -6,10 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -27,8 +24,11 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   private final String name;
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
-  private final Map<String, EngineValue> attributes;
   private final Lock lock;
+
+  private Map<String, EngineValue> attributes;
+  private Map<String, EngineValue> priorAttributes;
+  private Set<String> onlyOnPrior;
 
   private Optional<String> substep;
   private Set<String> attributeNames;
@@ -61,6 +61,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
     lock = new ReentrantLock();
     substep = Optional.empty();
+    priorAttributes = new HashMap<>();
+    onlyOnPrior = new HashSet<>();
 
     attributeNames = computeAttributeNames();
   }
@@ -82,11 +84,16 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    return Optional.ofNullable(attributes.get(name));
+    if (attributes.containsKey(name)) {
+      return Optional.of(attributes.get(name));
+    } else {
+      return Optional.ofNullable(priorAttributes.get(name));
+    }
   }
 
   @Override
   public void setAttributeValue(String name, EngineValue value) {
+    onlyOnPrior.remove(name);
     attributes.put(name, value);
   }
 
@@ -102,18 +109,19 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Entity freeze() {
-    Map<String, EngineValue> frozenAttributes = new HashMap<>();
-
-    for (String attributeName : attributes.keySet()) {
-      EngineValue unfrozenValue = attributes.get(attributeName);
-      EngineValue frozenValue = unfrozenValue.freeze();
-      frozenAttributes.put(attributeName, frozenValue);
+    for (String key : onlyOnPrior) {
+      attributes.put(key, priorAttributes.get(key));
     }
+
+    priorAttributes = attributes;
+    attributes = new HashMap<>();
+
+    onlyOnPrior = new HashSet<>(priorAttributes.keySet());
 
     return new FrozenEntity(
         getEntityType(),
         name,
-        frozenAttributes,
+        priorAttributes,
         getGeometry()
     );
   }
