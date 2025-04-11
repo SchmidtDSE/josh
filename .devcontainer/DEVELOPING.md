@@ -1,3 +1,19 @@
+## Dev Container Setup
+
+This project includes a development container configuration (`devcontainer.json`) to streamline the setup process for Java development. The dev container is pre-configured to provide the following tools and features:
+
+#### Getting Started
+To start using the dev container:
+1. Open the project in VS Code.
+2. When prompted, reopen the project in the dev container.
+3. Once the container is built, you can start coding, running tests, and building the project without additional setup.
+
+#### Installed VS Code Extensions
+The dev container automatically installs the following VS Code extensions to aid Java development:
+- **[vscjava.vscode-java-pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)**: A comprehensive Java development pack that includes support for debugging, IntelliSense, and Maven/Gradle integration.
+- **[redhat.java](https://marketplace.visualstudio.com/items?itemName=redhat.java)**: Provides Java language support, including syntax highlighting, code navigation, and refactoring tools.
+- **[shengchen.vscode-checkstyle](https://marketplace.visualstudio.com/items?itemName=shengchen.vscode-checkstyle)**: Enables Checkstyle integration for enforcing Java code style guidelines.
+
 ## Validating `.josh` Model Configurations
 
 ### Example validation
@@ -23,8 +39,9 @@ Found errors in Josh code at examples/error.josh:
 Validation failed (exit code: 3)
 ```
 
-NOTES: 
+##### Notes 
 
 - The first run will be relatively slow, as under the hood, the script will compile the `java` codebase and start the gradle daemon. Subsequent runs will be faster!
 
 - A future iteration of this approach could probably use the gradle extension within VSCode to validate `.josh` files, which may be a bit cleaner - this works for now.
+

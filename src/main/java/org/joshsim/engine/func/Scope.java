@@ -6,12 +6,39 @@
 
 package org.joshsim.engine.func;
 
+import java.util.Set;
+import org.joshsim.engine.value.type.EngineValue;
+
 
 /**
  * Description of a variable scope.
- * 
+ *
  * <p>Structure maintaining state over local variables used in Josh simulation or Josh langage full
  * body evaluations or inlined lambdas.
  * </p>
  */
-public interface Scope {}
+public interface Scope {
+
+  /**
+   * Get a value within this scope.
+   *
+   * @param name of the attribute which must be accessible on this scope's root.
+   */
+  EngineValue get(String name);
+
+  /**
+   * Check if a value is within this scope.
+   *
+   * @param name of the attribute to look for.
+   * @return true if present and false otherwise.
+   */
+  boolean has(String name);
+
+  /**
+   * Determine what values are on this scope.
+   *
+   * @return all attributes within this scope.
+   */
+  Set<String> getAttributes();
+
+}

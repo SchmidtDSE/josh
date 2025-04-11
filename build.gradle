@@ -5,7 +5,18 @@ plugins {
   id "application" // for creating executable JARs
   id "checkstyle" // for code style checking
   id "antlr" // for ANTLR grammar
-  id "org.openrewrite.rewrite" version "7.2.0"
+  id "org.teavm" version "0.11.0" // TeaVM for WASM compilation
+  id "com.diffplug.spotless" version "7.0.2" // Autoformatting
+}
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                entries.add(new org.gradle.plugins.ide.eclipse.model.SourceFolder('src-generated/main/java', null))
+            }
+        }
+    }
 }
 
 java {
@@ -14,6 +25,12 @@ java {
 }
 
 repositories {
+  maven {
+    url "https://repo.osgeo.org/repository/release/"
+  }
+  maven {
+    url "https://maven.geotoolkit.org/"
+  }
   mavenCentral()
 }
 
@@ -21,53 +38,77 @@ dependencies {
   // ANTLR dependencies
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
-  
-  // Command line parsing
-  implementation("info.picocli:picocli:4.7.6")
-  
-  // Rewrite dependencies
-  rewrite("org.openrewrite:rewrite-java:7.46.0")
-  rewrite("org.openrewrite.recipe:rewrite-static-analysis:2.4.0")
-  
+
+  // Apache Commons Collections for LRUMap
+  implementation("org.apache.commons:commons-collections4:4.5.0-M3")
+
+  // Geotools for Raster transformations and COG support
+  implementation("org.geotools:gt-main:32.2")
+  implementation("org.geotools:gt-geotiff:32.2")
+  implementation("org.geotools:gt-referencing:32.2")
+  implementation("org.geotools:gt-epsg-hsql:32.2")
+
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
   testImplementation("org.junit.jupiter:junit-jupiter")
-  testImplementation("org.mockito:mockito-core:5.16.0")
+  testImplementation("org.mockito:mockito-core:5.16.1")
+  testImplementation("org.mockito:mockito-junit-jupiter:5.16.1")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+  // Command line parsing
+  implementation("info.picocli:picocli:4.7.6")
+
+  // Minio for S3 storage
+  implementation 'io.minio:minio:8.5.2'
 }
 
-application {
-  mainClass = "org.joshsim.JoshSim"
-}
-
-test {
-  useJUnitPlatform()
-  testLogging {
-    events "passed", "skipped", "failed"
+teavm {
+  wasm {
+    mainClass = "org.joshsim.JoshSimFacade"
   }
 }
 
+application {
+  mainClass = "org.joshsim.JoshSimCommander"
+}
+
+// JUnit target for al tests.
+test {
+  useJUnitPlatform()
+  testLogging {
+    events "skipped", "failed"
+    exceptionFormat = "full"
+  }
+}
+
+// Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
     attributes(
-      "Main-Class": "org.joshsim.JoshSim"
+      "Main-Class": "org.joshsim.JoshSimCommander"
     )
   }
   archiveBaseName = "joshsim"
   archiveClassifier = "fat"
-  
+
   // Include all dependencies
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
   }
-  
+
+  // Exclude duplicates
+  // TODO: What are implications of this?
+  // We are getting a `module-info.class` duplicate here.
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
   // Include the main classes
   with jar
-  
+
   // Exclude META-INF signatures to avoid security exceptions
   exclude "META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA"
 }
 
+// Standard JavaDoc target
 javadoc {
   options {
     outputLevel = JavadocOutputLevel.QUIET
@@ -76,10 +117,11 @@ javadoc {
     links "https://docs.oracle.com/en/java/javase/11/docs/api/"
     windowTitle = "JoshLang"
   }
-  
+
   destinationDir = file("${buildDir}/docs/javadoc")
 }
 
+// Shared configuration options for checkstyle
 checkstyle {
   toolVersion = "10.21.4"
   configFile = file("${rootDir}/config/checkstyle/google_checks.xml")
@@ -89,17 +131,45 @@ checkstyle {
   ignoreFailures = false
 }
 
+// Checkstyle target for main code
 checkstyleMain {
   source = "src/main/java/org/joshsim"
 }
 
+// Checkstyle target for test code
 checkstyleTest {
   source = "src/test/java/org/joshsim"
 }
 
-rewrite {
-  activeRecipe("org.openrewrite.staticanalysis.CodeCleanup")
-  checkstyleConfigFile = file("${rootDir}/config/checkstyle/google_checks.xml")
+// Formatting configuration
+spotless {
+  java {
+    target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+
+    cleanthat().addMutator('SafeAndConsensual')
+    importOrder()
+    removeUnusedImports()
+    leadingTabsToSpaces(2)
+    trimTrailingWhitespace()
+    endWithNewline()
+    
+    custom 'ensure empty line at end', {
+      def last = it[-1]
+      return last == '\n' ? it : it + '\n'
+    }
+    
+    custom 'ensure space after typecast', {
+      return it.replaceAll('\\)([a-zA-Z0-9_])', ') $1')
+    }
+    
+    custom 'ensure blank line after header', {
+      if (it.contains('*/')) {
+        return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
+      }
+      return it
+    }
+    
+  }
 }
 
 // Create directory and checkstyle config if it doesn"t exist
@@ -118,10 +188,10 @@ task setupCheckstyle {
 generateGrammarSource {
   // Set output directory for generated files
   outputDirectory = file("src-generated/main/java")
-  
+
   // Set package for the generated visitor and other classes
   arguments += ["-visitor"]
-  
+
   // To use direct left recursion
   arguments += ["-Dlanguage=Java"]
 }

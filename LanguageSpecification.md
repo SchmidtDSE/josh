@@ -149,8 +149,18 @@ Settings which dictate behavior of the entire simulation are dictated in a Simul
 start simulation Detailed
 
   grid.size = 1km
-  grid.start = 34 degrees latitude, -116 degrees longitude
-  grid.end = 35 degrees latitude, -115 degrees longitude
+  grid.low = 34 degrees latitude, -116 degrees longitude
+  grid.high = 35 degrees latitude, -115 degrees longitude
+
+end simulation
+```
+
+This can specify patches but it uses `Default` if not otherwise specified:
+
+```
+start simulation Detailed
+
+  grid.patch = "Default"
 
 end simulation
 ```
@@ -161,8 +171,8 @@ This can include generalized sampling behavior:
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
   
   sampling = 1%  # Sample 1% of individuals in each patch
 
@@ -175,8 +185,8 @@ Alternatively, sampling can be specified per agent:
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
   
   sampling.JoshuaTrees = 1%  # Sample 1% of individuals in each patch
   sampling.ShrubGrasses = 100 count  # Sample
@@ -190,8 +200,8 @@ These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute na
 start simulation Coarse
 
   grid.size = 1km
-  grid.start = 34 degrees latitude -116 degrees longitude
-  grid.end = 35 degrees latitude -115 degrees longitude
+  grid.low = 34 degrees latitude -116 degrees longitude
+  grid.high = 35 degrees latitude -115 degrees longitude
   
   sampling.general = 1000 count
 
@@ -206,7 +216,6 @@ Patches are the grid cells in which communities of organisms may be present.
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = create sum(here.LocationsGeotiff) JoshuaTree
   JoshuaTrees.step = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
@@ -226,7 +235,6 @@ Some simulations may represent simple occupancy as a binary where only one agent
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = {
     const numNew = 1 count if sum(here.LocationsGeotiff) > 0 count else 0 count
     const new = create numNew JoshuaTree
@@ -240,8 +248,6 @@ Attributes may also be added to patches. This can be used in exporting and visua
 
 ```
 start patch Default
-
-  location = all
 
   # ...
 
@@ -407,7 +413,6 @@ New entities can be made through the create command. This is typically saved to 
 ```
 start patch Default
 
-  location = all
   Conifers.init = create Conifer
 
 end patch
@@ -910,6 +915,42 @@ const a = config.val1 + 1 count
 
 This JSON may, in practice, be generated from user interface elements like sliders depending on the interpreter / compiler.
 
+## Assertions
+Variables starting with `assert` expect a value of true or false and are evaluated each time an event handler for that variable is executed.
+
+```
+start organism ForeverTree
+
+  age.init = 1 year
+
+  age.step = {
+    const currentAge = prior.age
+    const newAge = currentAge + 1 year
+    return newAge
+  }
+
+  assert.age.step:if(meta.stepCount == 5) = mean(current.age) == 5 years
+
+end organism
+```
+
+These assertions can be placed on any entity type including patches.
+
+```
+start patch Default
+  
+  SeedTree.init = create 100 count of LifeSeedTree
+  SeedTree.end = here.SeedTree[here.SeedTree != "dead"]
+  
+  assert.seed.step
+    :if(meta.stepCount == 0) = count(here.SeedTree[here.SeedTree.state == "seed"]) == 100 count
+    :elif(meta.stepCount == 100) = count(here.SeedTree[here.SeedTree.state == "seed"]) > 0 count
+
+end patch
+```
+
+Assertions will generate warnings in default execution of the engine but `--ignore-assertions` can be executed in which case they will generate warnings on standard out instead.
+
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
 
@@ -978,7 +1019,6 @@ Finally, uniform patches are defined with all species present.
 ```
 start patch Default
 
-  location = all
   Shrubs.init = create 1 count of Shrubs
   TreeAs.init = create 1 count of TreeA
   TreeBs.init = create 1 count of TreeB
@@ -1059,8 +1099,8 @@ This implementation starts with a grid where each cell or patch is 30 meters by 
 start simulation Example
 
   grid.size = 30 m
-  grid.start = 34 degrees longitude, -116 degrees latitude
-  grid.end = 35 degrees longitude, -115 degrees latitude
+  grid.low = 34 degrees longitude, -116 degrees latitude
+  grid.high = 35 degrees longitude, -115 degrees latitude
 
 end simulation
 ```
@@ -1104,7 +1144,6 @@ Finally, uniform patches are defined.
 ```
 start patch Default
 
-  location = all
   JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
 
 end patch
@@ -1177,8 +1216,6 @@ Seed dispersal means that new Joshua Trees may be created if the space is not to
 ```
 start patch Default
 
-  location = all
-
   carryingCapacity.init = 30 count
   remainingRoom.step = current.carryingCapacity - count(current.JoshuaTrees)
 
@@ -1221,8 +1258,6 @@ This is used as a simple marker:
 ```
 start patch Default
 
-  location = all
-
   JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
@@ -1260,8 +1295,6 @@ This second approach simply uses the patch itself.
 
 ```
 start patch Default
-
-  location = all
 
   JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
   JoshuaTrees.start = {

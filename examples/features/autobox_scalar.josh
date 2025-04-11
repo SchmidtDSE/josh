@@ -1,0 +1,9 @@
+start patch Default
+
+  TreeA.init = {
+    const countScalar = 5 count
+    const count = sample countScalar
+    return create count of TreeA
+  }
+
+end patch

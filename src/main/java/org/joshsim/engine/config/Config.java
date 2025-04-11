@@ -6,7 +6,7 @@
 
 package org.joshsim.engine.config;
 
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

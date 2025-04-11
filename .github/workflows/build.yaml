@@ -6,7 +6,7 @@ jobs:
     environment: Build
     runs-on: ubuntu-latest
     name: Build Paper
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,14 +37,12 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Check grammar
-        run: gradle generateGrammarSource
+        run: ./gradlew generateGrammarSource
       - name: Check main style
-        run: gradle checkstyleMain
+        run: ./gradlew checkstyleMain
       - name: Check test style
-        run: gradle checkstyleTest
+        run: ./gradlew checkstyleTest
   buildJava:
     environment: Build
     runs-on: ubuntu-latest
@@ -57,15 +55,34 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Build fat jar
-        run: gradle fatJar
+        run: ./gradlew fatJar
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
           name: fatJar
           path: build/libs/joshsim-fat.jar
+  buildWasm:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    name: Build WASM
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build fat jar
+        run: ./gradlew generateWasm
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: build/generated/teavm/wasm
   testJava:
     needs: buildJava
     environment: Build
@@ -79,10 +96,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
       - name: Run tests
-        run: gradle test
+        run: ./gradlew test
   validateExamples:
     needs: buildJava
     environment: Build
@@ -104,3 +119,59 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
+  runTests:
+    needs: validateExamples
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Run Josh examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Run examples
+        run: bash examples/test.sh
+  deploy:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Deploy to SFTP
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    needs: [checkJava, buildJava, testJava, validateExamples, runTests, buildWasm]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set branch name
+        id: branch
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "name=$BRANCH" >> $GITHUB_OUTPUT
+      - name: Download fatJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+          path: ./deploy
+      - name: Download WASM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm
+          path: ./deploy/wasm
+      - name: Create WASM zip
+        run: cd ./deploy && zip -r wasm.zip wasm/
+      - name: Upload to SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './deploy'
+          remotePath: './joshsim.org/dist/${{ steps.branch.outputs.name }}'

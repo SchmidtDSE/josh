@@ -26,7 +26,7 @@ public class ParseResultTest {
   public void testProgramConstructor() {
     JoshLangParser.ProgramContext mockProgram = Mockito.mock(JoshLangParser.ProgramContext.class);
     ParseResult result = new ParseResult(mockProgram);
-    
+
     assertTrue(result.getProgram().isPresent(), "Program should be present");
     assertEquals(mockProgram, result.getProgram().get(), "Program should match constructor value");
     assertFalse(result.hasErrors(), "Should not have errors");
@@ -40,7 +40,7 @@ public class ParseResultTest {
         new ParseError(2, "Error 2")
     );
     ParseResult result = new ParseResult(errors);
-    
+
     assertFalse(result.getProgram().isPresent(), "Program should not be present");
     assertTrue(result.hasErrors(), "Should have errors");
     assertEquals(errors.size(), result.getErrors().size(), "Error list size should match");

@@ -1,0 +1,6 @@
+start patch Default
+  
+  TreeA.init = create 2 count of TreeA
+  TreeB.init = create TreeB
+
+end patch

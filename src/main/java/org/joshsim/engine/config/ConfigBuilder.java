@@ -6,12 +6,12 @@
 
 package org.joshsim.engine.config;
 
-import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
  * Builder to construct a Config.
- * 
+ *
  * <p>Builder for creating Config instances, providiong methods to add configuration values by name
  * and build the final config.</p>
  */
@@ -24,7 +24,7 @@ public interface ConfigBuilder {
    * @return this builder for method chaining
    */
   ConfigBuilder addValue(String name, EngineValue value);
-  
+
   /**
    * Builds and returns a Config based on the added values.
    *

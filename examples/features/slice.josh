@@ -1,0 +1,9 @@
+start patch Default
+
+  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
+  JoshuaTrees.start = {
+    const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
+    return current.JoshuaTree - deadTrees
+  }
+
+end patch

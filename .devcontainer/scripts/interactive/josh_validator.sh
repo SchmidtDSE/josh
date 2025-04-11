@@ -5,15 +5,15 @@
 
 # Display usage information
 function usage {
-  echo "Usage: $0 [--quiet] <path_to_model_file>"
-  echo "  --quiet    Run validation with minimal output"
+  echo "Usage: $0 [--supress-info] <path_to_model_file>"
+  echo "  --supress-info    Run validation with minimal output"
   exit 1
 }
 
 # Parse arguments
-quiet=false
-if [[ "$1" == "--quiet" ]]; then
-  quiet=true
+supress-info=false
+if [[ "$1" == "--supress-info" ]]; then
+  supress-info=true
   shift
 fi
 
@@ -43,8 +43,8 @@ fi
 
 # Run validation
 echo "Validating: $model_file"
-if [[ "$quiet" == true ]]; then
-  java -jar build/libs/joshsim-fat.jar validate --quiet "$model_file"
+if [[ "$supress-info" == true ]]; then
+  java -jar build/libs/joshsim-fat.jar validate --supress-info "$model_file"
 else
   java -jar build/libs/joshsim-fat.jar validate "$model_file"
 fi
