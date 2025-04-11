@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URL;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
-import org.geotools.coverage.processing.Operations;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.api.parameter.ParameterValueGroup;
@@ -13,7 +12,7 @@ import org.joshsim.engine.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
- * Reader for Cloud Optimized GeoTIFF (COG) files that extends the GridCoverageReader.
+ * Reader for Cloud Optimized GeoTIFF (COG) files.
  */
 public class CogReader extends GridCoverageReader {
   static final CoverageProcessor processor = CoverageProcessor.getInstance();
@@ -26,7 +25,7 @@ public class CogReader extends GridCoverageReader {
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
-  @Override
+
   public GridCoverage2D getCoverageFromIo(
       String path,
       EngineGeometry geometry

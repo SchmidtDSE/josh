@@ -1,11 +1,4 @@
-/**
- * Manages caching for external path resources, to avoid repeated loading.
- *
- * @license BSD-3-Clause
- */
-
-package org.joshsim.engine.external.cog;
-
+package org.joshsim.engine.external.core;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -13,33 +6,32 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections4.map.LRUMap;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.joshsim.engine.external.core.ExternalLayer;
-import org.joshsim.engine.external.core.ExternalLayerDecorator;
-import org.joshsim.engine.external.core.Request;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
- * Class for managing caching of external path resources, matching requests to
- * cached resources to avoid repeated loading. This _should_ be generic to the
- * way that external resource is fulfilled to work with any external resource.
+ * Abstract class for managing caching of grid coverage resources.
+ * This allows different implementations to handle specific format details
+ * while reusing the caching logic.
  */
-public class CogCacheLayer extends ExternalLayerDecorator {
-  // Cache GridCoverage objects by path instead of Request->RealizedDistribution
+public abstract class GridCoverageCacheLayer extends ExternalLayerDecorator {
+  // Cache GridCoverage objects by geometry
   private final Map<EngineGeometry, GridCoverage2D> coverageCache = new LRUMap<>();
+  protected final GridCoverageReader reader;
 
   /**
-   * Constructs an CogCacheLayer with a decorated external layer.
+   * Constructs a GridCoverageCacheLayer with a decorated external layer.
    *
    * @param decoratedLayer the external layer to be decorated
+   * @param reader the grid coverage reader to use
    */
-  public CogCacheLayer(ExternalLayer decoratedLayer) {
+  public GridCoverageCacheLayer(ExternalLayer decoratedLayer, GridCoverageReader reader) {
     super(decoratedLayer);
+    this.reader = reader;
   }
 
   @Override
   public RealizedDistribution fulfill(Request request) {
-
     if (request.getPrimingGeometry().isEmpty()) {
       // If the request has no primingGeometry, we can just use the decorated layer
       return super.fulfill(request);
@@ -57,7 +49,7 @@ public class CogCacheLayer extends ExternalLayerDecorator {
     EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
 
     // Extract values from the cached coverage using the (subset) request geometry
-    List<BigDecimal> decimalValuesWithinGeometry = CogReader.extractValuesFromCoverage(
+    List<BigDecimal> decimalValuesWithinGeometry = reader.extractValuesFromCoverage(
         cachedCoverage,
         requestGeometry
     );
@@ -81,7 +73,7 @@ public class CogCacheLayer extends ExternalLayerDecorator {
   private void loadCoverageIntoCache(String path, EngineGeometry primingGeometry) {
     GridCoverage2D newCoverage;
     try {
-      newCoverage = CogReader.getCoverageFromIo(path, primingGeometry);
+      newCoverage = reader.getCoverageFromIo(path, primingGeometry);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load coverage from disk", e);
     }

@@ -5,18 +5,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.geotools.api.geometry.Position;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.processing.Operations;
 import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.referencing.CRS;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
- * Abstract base class for grid coverage readers that provides common functionality
- * for different file formats, with the assumption that implementations will
- * handle specific formats.
+ * Interface for grid coverage readers that provides common functionality
+ * for different file formats.
  */
 public abstract class GridCoverageReader {
 
@@ -28,36 +24,10 @@ public abstract class GridCoverageReader {
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
-  public abstract GridCoverage2D getCoverageFromIo(String path, EngineGeometry geometry)
-      throws IOException;
-
-  /**
-   * Transforms a grid coverage from its native CRS to the specified target CRS.
-   *
-   * @param coverage The source grid coverage
-   * @param targetCrs The target coordinate reference system
-   * @return A new grid coverage in the target CRS
-   * @throws Exception if the transformation cannot be performed
-   */
-  public GridCoverage2D transformCoverage(
-      GridCoverage2D coverage,
-      CoordinateReferenceSystem targetCrs
-  ) throws Exception {
-    if (targetCrs == null) {
-      return coverage; // No transformation needed
-    }
-
-    CoordinateReferenceSystem sourceCrs = coverage.getCoordinateReferenceSystem();
-
-    // If source and target CRS are the same, no transformation needed
-    if (CRS.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
-      return coverage;
-    }
-
-    // Use the resample operation with the transform
-    Operations ops = new Operations(null);
-    return (GridCoverage2D) ops.resample(coverage, targetCrs);
-  }
+  abstract GridCoverage2D getCoverageFromIo(
+      String path,
+      EngineGeometry geometry
+  ) throws IOException;
 
   /**
    * Extracts values from a grid coverage and converts them to BigDecimal values.
@@ -66,7 +36,7 @@ public abstract class GridCoverageReader {
    * @param geometry The geometry used for filtering points
    * @return A list of BigDecimal values
    */
-  public List<BigDecimal> extractValuesFromCoverage(
+  public static List<BigDecimal> extractValuesFromCoverage(
       GridCoverage2D coverage, EngineGeometry geometry
   ) {
     List<BigDecimal> values = new ArrayList<>();

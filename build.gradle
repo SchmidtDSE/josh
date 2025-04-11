@@ -48,6 +48,10 @@ dependencies {
   implementation("org.geotools:gt-referencing:32.2")
   implementation("org.geotools:gt-epsg-hsql:32.2")
 
+  // Add NetCDF support to Geotools
+  implementation("org.geotools:gt-netcdf:32.2")
+  implementation("org.geotools:gt-coverage-io:32.2")
+
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
   testImplementation("org.junit.jupiter:junit-jupiter")

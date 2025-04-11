@@ -2,7 +2,9 @@ package org.joshsim.engine.external.netcdf;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.util.List;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.io.netcdf.NetCDFReader;
 import org.geotools.coverage.processing.Operations;
@@ -11,7 +13,7 @@ import org.joshsim.engine.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
- * Reader for NetCDF files that extends the GridCoverageReader.
+ * Reader for NetCDF files.
  */
 public class NetCdfReader extends GridCoverageReader {
 
