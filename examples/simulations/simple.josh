@@ -1,11 +1,11 @@
 start simulation TestSimpleSimulation
 
-  grid.size = 0.05 count
+  grid.size = 1 count
   grid.low = 0 count latitude, 0 count longitude
   grid.high = 10 count latitude, 10 count longitude
 
   steps.low = 0 count
-  steps.high = 100 count
+  steps.high = 10 count
 
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
@@ -15,7 +15,7 @@ end simulation
 
 start patch Default
 
-  ForeverTree.init = create 10 count of ForeverTree
+  ForeverTree.init = create ForeverTree
 
   averageAge.step = mean(ForeverTree.age)
   averageHeight.step = mean(ForeverTree.height)
