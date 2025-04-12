@@ -1,3 +1,9 @@
+/**
+ * Structures to describe strategies for writing exports to an output stream.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.export;
 
 import java.io.IOException;

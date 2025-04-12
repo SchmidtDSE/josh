@@ -1,5 +1,7 @@
 /**
  * Definition of structures for exporting results from a simulation to a serialization format.
+ *
+ * @license BSD-3-Clause
  */
 
 package org.joshsim.lang.export;
