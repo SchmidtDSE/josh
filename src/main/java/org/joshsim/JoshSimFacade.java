@@ -6,6 +6,7 @@
 
 package org.joshsim;
 
+import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
@@ -21,8 +22,6 @@ import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
-
-import java.util.Optional;
 
 
 /**
