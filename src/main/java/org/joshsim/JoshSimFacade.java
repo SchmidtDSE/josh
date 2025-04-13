@@ -7,14 +7,22 @@
 package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.simulation.TimeStep;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
+import org.joshsim.lang.export.ExportFacade;
+import org.joshsim.lang.export.ExportFacadeFactory;
+import org.joshsim.lang.export.ExportTarget;
+import org.joshsim.lang.export.ExportTargetParser;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
+
+import java.util.Optional;
 
 
 /**
@@ -73,14 +81,47 @@ public class JoshSimFacade {
         program.getConverter(),
         program.getPrototypes()
     );
+
+    Optional<ExportFacade> patchExportFacade = getPatchExportFacade(simEntity);
     SimulationStepper stepper = new SimulationStepper(bridge);
+
+    patchExportFacade.ifPresent(ExportFacade::start);
+
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform();
       callback.onStep(completedStep);
+
+      if (patchExportFacade.isPresent()) {
+        TimeStep stepCompleted = bridge.getReplicate().getTimeStep(completedStep).orElseThrow();
+        stepCompleted.getPatches().forEach((x) -> patchExportFacade.get().write(x));
+      }
+
       if (completedStep > 2) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
+
+    patchExportFacade.ifPresent(ExportFacade::join);
+  }
+
+  private static Optional<ExportFacade> getPatchExportFacade(MutableEntity simEntity) {
+    return getExportFacade(simEntity, "exportFiles.patch");
+  }
+
+  private static Optional<ExportFacade> getExportFacade(MutableEntity simEntity, String attribute) {
+    simEntity.startSubstep("constant");
+    Optional<EngineValue> destination = simEntity.getAttributeValue(attribute);
+
+    Optional<ExportFacade> exportFacade;
+    if (destination.isPresent()) {
+      ExportTarget target = ExportTargetParser.parse(destination.get().toString());
+      exportFacade = Optional.of(ExportFacadeFactory.build(target));
+    } else {
+      exportFacade = Optional.empty();
+    }
+
+    simEntity.endSubstep();
+    return exportFacade;
   }
 
   /**

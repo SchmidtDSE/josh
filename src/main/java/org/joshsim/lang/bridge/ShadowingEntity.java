@@ -367,7 +367,7 @@ public class ShadowingEntity implements MutableEntity {
 
     // If failed to match, use prior
     if (executed) {
-      if (name.startsWith("assert.")) {
+      if (checkAssertions && name.startsWith("assert.")) {
         Optional<EngineValue> result = getAttributeValue(name);
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();

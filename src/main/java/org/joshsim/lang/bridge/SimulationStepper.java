@@ -120,12 +120,10 @@ public class SimulationStepper {
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     target.startSubstep(subStep);
 
-    StreamSupport.stream(target.getAttributeNames().spliterator(), false)
-        .map((x) -> {
-          return target.getAttributeValue(x);
-        })
-        .filter((x) -> x.isPresent())
-        .map((x) -> x.get())
+    target.getAttributeNames().stream()
+        .map(target::getAttributeValue)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
         .filter((x) -> x.getLanguageType().containsAttributes())
         .forEach((x) -> {
           Optional<Integer> sizeMaybe = x.getSize();
