@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.joshsim.engine.entity.base.Entity;
 import org.junit.jupiter.api.Test;
 
