@@ -24,4 +24,6 @@ assert_ok() {
   fi
 }
 
+rm -f /tmp/simple_josh.csv
 assert_ok examples/simulations/simple.josh TestSimpleSimulation || exit 1
+[ -f "/tmp/simple_josh.csv" ] || exit 2

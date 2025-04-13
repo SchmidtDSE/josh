@@ -26,7 +26,18 @@ public class ExportTargetParserTest {
 
   @Test
   public void testParseValidLocalScheme() {
-    String target = "local:/path/to/file";
+    String target = "file:/path/to/file";
+
+    ExportTarget result = ExportTargetParser.parse(target);
+
+    assertEquals("", result.getProtocol());
+    assertEquals("", result.getHost());
+    assertEquals("/path/to/file", result.getPath());
+  }
+
+  @Test
+  public void testParseValidLocalSchemeRoot() {
+    String target = "file:///path/to/file";
 
     ExportTarget result = ExportTargetParser.parse(target);
 

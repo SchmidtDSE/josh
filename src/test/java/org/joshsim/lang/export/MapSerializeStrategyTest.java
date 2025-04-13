@@ -7,13 +7,16 @@
 package org.joshsim.lang.export;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -39,6 +42,7 @@ class MapSerializeStrategyTest {
     when(nameValue.getAsString()).thenReturn("Sample Name");
     when(descriptionValue.getAsString()).thenReturn("Sample Description");
 
+    when(entity.getGeometry()).thenReturn(Optional.empty());
     when(entity.getAttributeValue("export.name")).thenReturn(Optional.of(nameValue));
     when(entity.getAttributeValue("export.description")).thenReturn(
         Optional.of(descriptionValue)
@@ -49,9 +53,41 @@ class MapSerializeStrategyTest {
     Map<String, String> result = mapSerializeStrategy.getRecord(entity);
 
     // Assert
-    assertEquals(2, result.size());
-    assertEquals("Sample Name", result.get("export.name"));
-    assertEquals("Sample Description", result.get("export.description"));
+    assertEquals("Sample Name", result.get("name"));
+    assertEquals("Sample Description", result.get("description"));
+  }
+
+  @Test
+  void testGetRecordWithGeometry() {
+    // Arrange
+    Entity entity = Mockito.mock(Entity.class);
+    EngineGeometry geometry = Mockito.mock(EngineGeometry.class);
+    MapSerializeStrategy mapSerializeStrategy = new MapSerializeStrategy();
+
+    when(geometry.getCenterX()).thenReturn(BigDecimal.valueOf(12));
+    when(geometry.getCenterY()).thenReturn(BigDecimal.valueOf(34));
+
+    Set<String> attributeNames = Set.of("export.name", "export.description", "other.attribute");
+    when(entity.getAttributeNames()).thenReturn(attributeNames);
+
+    EngineValue nameValue = Mockito.mock(EngineValue.class);
+    EngineValue descriptionValue = Mockito.mock(EngineValue.class);
+    when(nameValue.getAsString()).thenReturn("Sample Name");
+    when(descriptionValue.getAsString()).thenReturn("Sample Description");
+
+    when(entity.getGeometry()).thenReturn(Optional.of(geometry));
+    when(entity.getAttributeValue("export.name")).thenReturn(Optional.of(nameValue));
+    when(entity.getAttributeValue("export.description")).thenReturn(
+        Optional.of(descriptionValue)
+    );
+    when(entity.getAttributeValue("other.attribute")).thenReturn(Optional.empty());
+
+    // Act
+    Map<String, String> result = mapSerializeStrategy.getRecord(entity);
+
+    // Assert
+    assertTrue(result.containsKey("position.x"));
+    assertTrue(result.containsKey("position.y"));
   }
 
   @Test

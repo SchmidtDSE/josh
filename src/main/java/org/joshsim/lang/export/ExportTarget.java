@@ -19,7 +19,7 @@ public class ExportTarget {
   /**
    * Constructs an ExportTarget object with the specified protocol, host, and path.
    *
-   * @param protocol The protocol used for the export target (e.g., "minio", "local").
+   * @param protocol The protocol used for the export target (e.g., "minio", "file").
    * @param host The host of the export target, typically representing the domain or IP address.
    * @param path The path representing the location on the export target where the export should
    *     occur.
@@ -33,7 +33,7 @@ public class ExportTarget {
   /**
    * Constructs a target with an empty host.
    *
-   * @param protocol The protocol used for the export target (e.g., "minio", "local").
+   * @param protocol The protocol used for the export target (e.g., "minio", "file").
    * @param path The path representing the location on the export target where the export should
    *     occur.
    */

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +71,7 @@ class CsvExportFacadeTest {
     OutputStreamStrategy outputStrategyMock = mock(OutputStreamStrategy.class);
     OutputStream outputStreamMock = mock(OutputStream.class);
     Entity entityMock = mock(Entity.class);
+    CsvExportFacade.Task task = new CsvExportFacade.Task(entityMock, 1L);
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 
@@ -77,7 +79,7 @@ class CsvExportFacadeTest {
 
     // Act
     csvExportFacade.start();
-    csvExportFacade.write(entityMock);
+    csvExportFacade.write(task);
     csvExportFacade.join(); // Ensure the operation completes
 
     // Assert

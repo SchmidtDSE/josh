@@ -20,10 +20,10 @@ public interface ExportWriteStrategy<T> {
   /**
    * Write a record to the output stream.
    *
-   * @param records The record be written to the given output stream.
+   * @param record The record be written to the given output stream.
    * @param outputStream The stream to which the record as serialized should be written.
    */
-  void write(T records, OutputStream outputStream) throws IOException;
+  void write(T record, OutputStream outputStream) throws IOException;
 
   /**
    * Recommend flushing.

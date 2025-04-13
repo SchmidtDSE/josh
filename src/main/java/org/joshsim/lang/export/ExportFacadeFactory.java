@@ -25,7 +25,7 @@ public class ExportFacadeFactory {
       throw new IllegalArgumentException("Only CSV files are supported at this time.");
     }
 
-    if (!target.getProtocol().equals("local")) {
+    if (!target.getProtocol().isEmpty()) {
       throw new IllegalArgumentException("Only local file system is supported at this time.");
     }
 

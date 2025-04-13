@@ -40,6 +40,7 @@ RCURLY_: '}';
 RPAREN_: ')';
 
 // Keywords
+AGENT_: 'agent';
 ALIAS_: 'alias';
 ALL_: 'all';
 AND_: 'and';
@@ -99,7 +100,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_);
+nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values

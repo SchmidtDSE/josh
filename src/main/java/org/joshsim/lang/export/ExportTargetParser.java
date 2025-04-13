@@ -21,16 +21,17 @@ public class ExportTargetParser {
    * Parse an export target from a string describing the location where records should be written.
    *
    * @param target String description indicating where the file should be written. This could be,
-   *               for example, "local://path/to/file.geotiff" or "local:///path/to/file.avro" for
+   *               for example, "file://path/to/file.geotiff" or "file:///path/to/file.avro" for
    *               local or "minio://host-name/bucket/path.csv" minio remote.
    * @return The parsed ExportTarget.
    * @throws IllegalArgumentException if the target string is invalid or unsupported.
    */
   public static ExportTarget parse(String target) {
     try {
-      URI uri = new URI(target);
+      String targetClean = target.replaceAll("\"", "");
+      URI uri = new URI(targetClean);
       String scheme = uri.getScheme();
-      if ("local".equalsIgnoreCase(scheme)) {
+      if ("file".equalsIgnoreCase(scheme)) {
         return new ExportTarget(uri.getPath());
       } else if ("minio".equalsIgnoreCase(scheme)) {
         return new ExportTarget("minio", uri.getHost(), uri.getPath());

@@ -37,7 +37,8 @@ public interface ExportFacade {
    * Adds the specified entity to the queue for processing and writing to the export target.
    *
    * @param target The entity to be serialized and written to the output.
+   * @param step The step number from the simulation from which this entity snapshot was created.
    */
-  void write(Entity target);
+  void write(Entity target, long step);
 
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -19,15 +20,23 @@ public class MapSerializeStrategy implements ExportSerializeStrategy<Map<String,
 
   @Override
   public Map<String, String> getRecord(Entity entity) {
-    return entity.getAttributeNames().stream()
+    Map<String, String> result = entity.getAttributeNames().stream()
         .filter((x) -> x.startsWith("export."))
         .collect(Collectors.toMap(
-            (x) -> x,
+            (x) -> x.replaceFirst("export\\.", ""),
             (x) -> {
               Optional<EngineValue> value = entity.getAttributeValue(x);
               return value.isPresent() ? value.get().getAsString() : "";
             }
         ));
+
+    if (entity.getGeometry().isPresent()) {
+      EngineGeometry geometry = entity.getGeometry().get();
+      result.put("position.x", geometry.getCenterX().toString());
+      result.put("position.y", geometry.getCenterY().toString());
+    }
+
+    return result;
   }
 
 }

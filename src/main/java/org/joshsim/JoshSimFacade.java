@@ -92,7 +92,9 @@ public class JoshSimFacade {
 
       if (patchExportFacade.isPresent()) {
         TimeStep stepCompleted = bridge.getReplicate().getTimeStep(completedStep).orElseThrow();
-        stepCompleted.getPatches().forEach((x) -> patchExportFacade.get().write(x));
+        stepCompleted.getPatches().forEach(
+            (x) -> patchExportFacade.get().write(x, completedStep)
+        );
       }
 
       if (completedStep > 2) {
@@ -113,7 +115,7 @@ public class JoshSimFacade {
 
     Optional<ExportFacade> exportFacade;
     if (destination.isPresent()) {
-      ExportTarget target = ExportTargetParser.parse(destination.get().toString());
+      ExportTarget target = ExportTargetParser.parse(destination.get().getAsString());
       exportFacade = Optional.of(ExportFacadeFactory.build(target));
     } else {
       exportFacade = Optional.empty();
