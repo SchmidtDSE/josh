@@ -1,3 +1,9 @@
+/**
+ * Convenience facade to run zero or more exports.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.bridge;
 
 import java.util.Optional;
@@ -11,7 +17,11 @@ import org.joshsim.lang.export.ExportTargetParser;
 
 
 /**
- * Convenience function that manages zero or more exports.
+ * Convenience facade that manages zero or more exports.
+ *
+ * <p>Facade which constructs and manages individual export facades, one per requested export type
+ * where these types may include patch, simulation, and / or agent. If no export file locations are
+ * specified, this facade acts as a no-op.</p>
  */
 public class CombinedExportFacade {
 
