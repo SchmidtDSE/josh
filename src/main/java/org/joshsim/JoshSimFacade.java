@@ -6,18 +6,12 @@
 
 package org.joshsim;
 
-import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.simulation.TimeStep;
-import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.CombinedExportFacade;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
-import org.joshsim.lang.export.ExportFacade;
-import org.joshsim.lang.export.ExportFacadeFactory;
-import org.joshsim.lang.export.ExportTarget;
-import org.joshsim.lang.export.ExportTargetParser;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
@@ -81,49 +75,24 @@ public class JoshSimFacade {
         program.getPrototypes()
     );
 
-    Optional<ExportFacade> patchExportFacade = getPatchExportFacade(simEntity);
+    CombinedExportFacade exportFacade = new CombinedExportFacade(simEntity);
     SimulationStepper stepper = new SimulationStepper(bridge);
 
-    patchExportFacade.ifPresent(ExportFacade::start);
+    exportFacade.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform();
+      exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
       callback.onStep(completedStep);
-
-      if (patchExportFacade.isPresent()) {
-        TimeStep stepCompleted = bridge.getReplicate().getTimeStep(completedStep).orElseThrow();
-        stepCompleted.getPatches().forEach(
-            (x) -> patchExportFacade.get().write(x, completedStep)
-        );
-      }
 
       if (completedStep > 2) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
 
-    patchExportFacade.ifPresent(ExportFacade::join);
+    exportFacade.join();
   }
 
-  private static Optional<ExportFacade> getPatchExportFacade(MutableEntity simEntity) {
-    return getExportFacade(simEntity, "exportFiles.patch");
-  }
-
-  private static Optional<ExportFacade> getExportFacade(MutableEntity simEntity, String attribute) {
-    simEntity.startSubstep("constant");
-    Optional<EngineValue> destination = simEntity.getAttributeValue(attribute);
-
-    Optional<ExportFacade> exportFacade;
-    if (destination.isPresent()) {
-      ExportTarget target = ExportTargetParser.parse(destination.get().getAsString());
-      exportFacade = Optional.of(ExportFacadeFactory.build(target));
-    } else {
-      exportFacade = Optional.empty();
-    }
-
-    simEntity.endSubstep();
-    return exportFacade;
-  }
 
   /**
    * Callback interface for receiving simulation step completion notifications.
