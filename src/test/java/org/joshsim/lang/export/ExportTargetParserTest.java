@@ -1,8 +1,17 @@
+/**
+ * Test for ExportTargetParser.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.export;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the `ExportTargetParser` class.
@@ -16,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ExportTargetParserTest {
 
   @Test
-  public void testParse_ValidLocalScheme() {
+  public void testParseValidLocalScheme() {
     String target = "local:/path/to/file";
 
     ExportTarget result = ExportTargetParser.parse(target);
@@ -27,7 +36,7 @@ public class ExportTargetParserTest {
   }
 
   @Test
-  public void testParse_ValidMinioScheme() {
+  public void testParseValidMinioScheme() {
     String target = "minio://bucket.example.com/path/to/resource";
 
     ExportTarget result = ExportTargetParser.parse(target);
@@ -38,7 +47,7 @@ public class ExportTargetParserTest {
   }
 
   @Test
-  public void testParse_InvalidSchemeThrowsException() {
+  public void testParseInvalidSchemeThrowsException() {
     String target = "unsupported:/path/to/file";
 
     Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -49,7 +58,7 @@ public class ExportTargetParserTest {
   }
 
   @Test
-  public void testParse_InvalidURISyntaxThrowsException() {
+  public void testParseInvalidSyntaxThrowsException() {
     String target = "invalid-uri-format";
 
     Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -58,7 +67,7 @@ public class ExportTargetParserTest {
   }
 
   @Test
-  public void testParse_EmptyTargetThrowsException() {
+  public void testParseEmptyTargetThrowsException() {
     String target = "";
 
     Exception exception = assertThrows(IllegalArgumentException.class, () -> {

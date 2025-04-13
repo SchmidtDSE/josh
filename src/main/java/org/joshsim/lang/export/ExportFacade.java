@@ -1,32 +1,43 @@
+/**
+ * Structures describing high level strategies to write entities to persistence.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.export;
 
+import org.joshsim.engine.entity.base.Entity;
 
-import java.io.OutputStream;
 
-public class ExportFacade {
+/**
+ * Strategy to serialize and write entities to persistence in a separate writer thread.
+ */
+public interface ExportFacade {
 
-  private final ExportSerializeStrategy<?> serializeStrategy;
-  private final ExportWriteStrategy<?> writeStrategy;
-  private final OutputStream outputStream;
+  /**
+   * Starts the export process in a dedicated writer thread.
+   *
+   * <p>Begin processing entities to be written to the export target in a writer thread which
+   * operates in the background, serializing and writing entities to the output location as they are
+   * added to the queue. If the export process is already active, calling this method has no effect.
+   * </p>
+   */
+  void start();
 
-  public ExportFacade(ExportTarget exportTarget) {
-    if (!exportTarget.getFormat().equalsIgnoreCase("CSV")) {
-      throw new IllegalArgumentException("ExportTarget must have CSV format.");
-    }
+  /**
+   * Stops the export process and waits for the completion of the writer thread.
+   *
+   * <p>Ensure that all pending entities in the queue are processed and written to the output
+   * before shutting down the writer thread, blocking until the writer thread is fully terminated
+   * which occurs when its queue is empty.</p>
+   */
+  void join();
 
-    this.serializeStrategy = new MapSerializeStrategy();
-    this.writeStrategy = new CsvWriteStrategy(); // Assuming CsvWriteStrategy is implemented.
-
-    if (!exportTarget.isLocalPath()) {
-      throw new IllegalArgumentException("ExportTarget must have a local path.");
-    }
-
-    try {
-      this.outputStream = new FileOutputStream(exportTarget.getPath());
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to open file for writing: " + exportTarget.getPath(), e);
-    }
-
-  }
+  /**
+   * Adds the specified entity to the queue for processing and writing to the export target.
+   *
+   * @param target The entity to be serialized and written to the output.
+   */
+  void write(Entity target);
 
 }

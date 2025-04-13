@@ -8,7 +8,6 @@ package org.joshsim.lang.export;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.stream.Stream;
 
 
 /**
@@ -19,11 +18,20 @@ import java.util.stream.Stream;
 public interface ExportWriteStrategy<T> {
 
   /**
-   * Write the given set of records to the given output stream.
+   * Write a record to the output stream.
    *
-   * @param records The collection of serialized records to be written to the given output stream.
-   * @param outputStream The stream to which the records as serialized should be written.
+   * @param records The record be written to the given output stream.
+   * @param outputStream The stream to which the record as serialized should be written.
    */
-  void write(Stream<T> records, OutputStream outputStream) throws IOException;
+  void write(T records, OutputStream outputStream) throws IOException;
+
+  /**
+   * Recommend flushing.
+   *
+   * <p>Recommend that the write strategy flushes any waiting data like when a batch of data is
+   * completed and there may be a delay before further records. This is optional and will be
+   * interpreted by different strategies</p>
+   */
+  void flush();
 
 }

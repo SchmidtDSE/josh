@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.export;
 
-import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.Entity;
 
 
@@ -18,11 +17,11 @@ import org.joshsim.engine.entity.base.Entity;
 public interface ExportSerializeStrategy<T> {
 
   /**
-   * Get the serialization-ready records for
+   * Get the serialization-ready record for an entity.
    *
-   * @param target The entities to be converted to the serialization form.
-   * @return Stream (for performance) over the serialized records ready to be written.
+   * @param target The entity to be converted to the serialization form.
+   * @return Serialized record.
    */
-  Stream<T> getRecords(Stream<Entity> target);
+  T getRecord(Entity target);
 
 }
