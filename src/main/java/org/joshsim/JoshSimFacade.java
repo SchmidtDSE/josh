@@ -7,6 +7,7 @@
 package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.lang.bridge.CombinedExportFacade;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -73,15 +74,25 @@ public class JoshSimFacade {
         program.getConverter(),
         program.getPrototypes()
     );
+
+    CombinedExportFacade exportFacade = new CombinedExportFacade(simEntity);
     SimulationStepper stepper = new SimulationStepper(bridge);
+
+    exportFacade.start();
+
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform();
+      exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
       callback.onStep(completedStep);
+
       if (completedStep > 2) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
+
+    exportFacade.join();
   }
+
 
   /**
    * Callback interface for receiving simulation step completion notifications.
