@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.bridge;
 
-import org.joshsim.engine.value.type.LanguageType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,6 +26,7 @@ import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -136,7 +136,7 @@ public class ShadowingEntityTest {
   void testResolveValueThroughEventHandlerGroup() {
     String attrName = "testAttr";
     String substepName = "test";
-    
+
     EngineValue handlerValue = mock(EngineValue.class);
     when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
