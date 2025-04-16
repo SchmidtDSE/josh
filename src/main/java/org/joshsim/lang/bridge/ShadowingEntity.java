@@ -429,7 +429,6 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void lock() {
-    
     inner.lock();
   }
 
@@ -450,12 +449,14 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void startSubstep(String name) {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
     resolvedAttributes.clear();
   }
 
   @Override
   public void endSubstep() {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
     resolvingAttributes.clear();
     inner.endSubstep();
   }

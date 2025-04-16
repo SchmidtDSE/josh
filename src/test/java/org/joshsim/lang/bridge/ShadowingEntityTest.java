@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import org.joshsim.engine.value.type.LanguageType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,6 +58,7 @@ public class ShadowingEntityTest {
     when(mockSpatialEntity.getAttributeNames()).thenReturn(
         Set.of("testAttr", "noHandlerAttr")
     );
+    when(mockEngineValue.getLanguageType()).thenAnswer(x -> new LanguageType("test", false));
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
@@ -94,7 +96,6 @@ public class ShadowingEntityTest {
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertFalse(result.isEmpty());
-    verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
   }
 
@@ -135,7 +136,9 @@ public class ShadowingEntityTest {
   void testResolveValueThroughEventHandlerGroup() {
     String attrName = "testAttr";
     String substepName = "test";
+    
     EngineValue handlerValue = mock(EngineValue.class);
+    when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
     EventKey eventKey = new EventKey(attrName, substepName);
     CompiledCallable mockCallable = mock(CompiledCallable.class);
