@@ -119,32 +119,34 @@ public class SimulationStepper {
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     target.startSubstep(subStep);
-
-    target.getAttributeNames().stream()
-        .map(target::getAttributeValue)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .filter((x) -> x.getLanguageType().containsAttributes())
-        .forEach((x) -> {
-          Optional<Integer> sizeMaybe = x.getSize();
-          if (sizeMaybe.isEmpty()) {
-            return;
-          }
-
-          int size = sizeMaybe.get();
-          if (size == 1) {
-            updateEntity(x.getAsMutableEntity(), subStep);
-          } else {
-            Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
-            for (EngineValue value : values) {
-              updateEntity(value.getAsMutableEntity(), subStep);
-            }
-          }
-        });
-
+    updateEntityUnsafe(target);
     target.endSubstep();
 
     return target;
+  }
+
+  private void updateEntityUnsafe(MutableEntity target) {
+    target.getAttributeNames().stream()
+      .map(target::getAttributeValue)
+      .filter(Optional::isPresent)
+      .map(Optional::get)
+      .filter((x) -> x.getLanguageType().containsAttributes())
+      .forEach((x) -> {
+        Optional<Integer> sizeMaybe = x.getSize();
+        if (sizeMaybe.isEmpty()) {
+          return;
+        }
+
+        int size = sizeMaybe.get();
+        if (size == 1) {
+          updateEntityUnsafe(x.getAsMutableEntity());
+        } else {
+          Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
+          for (EngineValue value : values) {
+            updateEntityUnsafe(value.getAsMutableEntity());
+          }
+        }
+      });
   }
 
 }

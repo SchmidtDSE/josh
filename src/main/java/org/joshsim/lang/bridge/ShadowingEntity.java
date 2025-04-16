@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -51,6 +53,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvingAttributes;
   private final Scope scope;
   private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+  
   private boolean checkAssertions;
 
   /**
@@ -426,6 +429,7 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void lock() {
+    
     inner.lock();
   }
 
