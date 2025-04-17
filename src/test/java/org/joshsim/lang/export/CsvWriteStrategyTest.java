@@ -12,6 +12,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
+import java.util.Arrays;
+import java.util.List;
+
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -98,5 +102,28 @@ class CsvWriteStrategyTest {
 
     // When & Then
     assertThrows(RuntimeException.class, strategy::flush);
+
+
+  @Test
+  void shouldWriteBlankValuesForMissingHeaderColumns() throws IOException {
+    // Given
+    List<String> headers = Arrays.asList("Name", "Age", "City");
+    CsvWriteStrategy strategy = new CsvWriteStrategy(headers);
+    Map<String, String> record = new HashMap<>();
+    record.put("Name", "John");
+    record.put("Age", "25");
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+    // When
+    strategy.write(record, output);
+    strategy.flush();
+
+    // Then
+    String result = output.toString();
+    assertTrue(result.contains("Name,Age,City"));
+    assertTrue(result.contains("John,25,"));
+  }
+
+
   }
 }
