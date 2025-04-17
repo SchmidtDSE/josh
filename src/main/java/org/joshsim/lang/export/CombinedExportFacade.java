@@ -4,12 +4,19 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.bridge;
+package org.joshsim.lang.export;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.StringTokenizer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.InnerEntityGetter;
 import org.joshsim.lang.export.ExportFacade;
 import org.joshsim.lang.export.ExportFacadeFactory;
 import org.joshsim.lang.export.ExportTarget;
@@ -25,7 +32,9 @@ import org.joshsim.lang.export.ExportTargetParser;
  */
 public class CombinedExportFacade {
 
+  private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
+  private final Optional<ExportFacade> entityExportFacade;
 
   /**
    * Constructs a facade to manage export operations across multiple export files.
@@ -34,7 +43,9 @@ public class CombinedExportFacade {
    *     configure the patch export facade.
    */
   public CombinedExportFacade(MutableEntity simEntity) {
+    metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
+    entityExportFacade = getEntityExportFacade(simEntity);
   }
 
   /**
@@ -48,9 +59,24 @@ public class CombinedExportFacade {
    *     and the step number to associate with them.
    */
   public void write(TimeStep stepCompleted) {
+    metaExportFacade.ifPresent(exportFacade -> {
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep());
+    });
+
     patchExportFacade.ifPresent(exportFacade -> stepCompleted.getPatches().forEach(
         (x) -> exportFacade.write(x, stepCompleted.getStep())
     ));
+
+    entityExportFacade.ifPresent(exportFacade -> {
+      Stream<Entity> patches = StreamSupport.stream(
+          stepCompleted.getPatches().spliterator(),
+          false
+      );
+      
+      Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
+      
+      inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep()));
+    });
   }
 
   /**
@@ -88,6 +114,30 @@ public class CombinedExportFacade {
   }
 
   /**
+   * Retrieves the meta-specific export facade based on the provided simulation entity.
+   *
+   * @param simEntity the mutable entity representing the simulation context. It is used to fetch
+   *     the attribute configuration and initialize the export facades.
+   * @return an Optional containing the relevant ExportFacade or an empty Optional if configuration
+   *     is not found.
+   */
+  private Optional<ExportFacade> getMetaExportFacade(MutableEntity simEntity) {
+    return getExportFacade(simEntity, "exportFiles.meta");
+  }
+
+  /**
+   * Retrieves the sub-patch entity export facade based on the provided simulation entity.
+   *
+   * @param simEntity the mutable entity representing the simulation context. It is used to fetch
+   *     the attribute configuration and initialize the export facades.
+   * @return an Optional containing the relevant ExportFacade or an empty Optional if configuration
+   *     is not found.
+   */
+  private Optional<ExportFacade> getEntityExportFacade(MutableEntity simEntity) {
+    return getExportFacade(simEntity, "exportFiles.entity");
+  }
+
+  /**
    * Retrieves an ExportFacade instance based on the given simulation entity and attribute.
    *
    * <p>This method starts a substep within the simulation entity, attempts to retrieve the
@@ -108,13 +158,39 @@ public class CombinedExportFacade {
     Optional<ExportFacade> exportFacade;
     if (destination.isPresent()) {
       ExportTarget target = ExportTargetParser.parse(destination.get().getAsString());
-      exportFacade = Optional.of(ExportFacadeFactory.build(target));
+
+      Optional<EngineValue> headerVal = simEntity.getAttributeValue(attribute + ".columns");
+      if (headerVal.isPresent()) {
+        String headerStr = headerVal.get().getAsString();
+        Iterable<String> header = parseHeaderStr(headerStr);
+        exportFacade = Optional.of(ExportFacadeFactory.build(target, header));
+      } else {
+        exportFacade = Optional.of(ExportFacadeFactory.build(target));
+      }
     } else {
       exportFacade = Optional.empty();
     }
 
     simEntity.endSubstep();
     return exportFacade;
+  }
+
+  /**
+   * Parses a header string into an iterable collection of strings.
+   *
+   * <p>This method utilizes a comma as the delimiter to tokenize the provided header string
+   * and converts it into a list of strings that represent individual header elements.</p>
+   *
+   * @param headerStr the header string to be parsed.
+   * @return an iterable collection of strings parsed from the header string.
+   */
+  private Iterable<String> parseHeaderStr(String headerStr) {
+    StringTokenizer tokenizer = new StringTokenizer(headerStr, ",");
+    List<String> retVal = new ArrayList<>();
+    while (tokenizer.hasMoreTokens()) {
+      retVal.add(tokenizer.nextToken());
+    }
+    return retVal;
   }
 
 }

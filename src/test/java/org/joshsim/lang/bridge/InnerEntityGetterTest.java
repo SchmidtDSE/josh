@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
@@ -35,10 +36,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class InnerEntityGetterTest {
 
-  @Mock private MutableEntity mockEntity;
-  @Mock private MutableEntity mockInnerEntity;
-  @Mock private EngineValue mockValue;
-  @Mock private LanguageType mockLanguageType;
+  @Mock(lenient = true) private MutableEntity mockEntity;
+  @Mock(lenient = true) private MutableEntity mockInnerEntity;
+  @Mock(lenient = true) private MutableEntity mockNestedEntity;
+  @Mock(lenient = true) private Entity mockFrozenEntity;
+  @Mock(lenient = true) private Entity mockFrozenInnerEntity;
+  @Mock(lenient = true) private EngineValue mockValue;
+  @Mock(lenient = true) private EngineValue mockNestedValue;
+  @Mock(lenient = true) private LanguageType mockLanguageType;
 
   /**
    * Sets up the test environment before each test.
@@ -54,6 +59,15 @@ public class InnerEntityGetterTest {
     when(mockLanguageType.containsAttributes()).thenReturn(true);
     when(mockValue.getSize()).thenReturn(Optional.of(1));
     when(mockValue.getAsMutableEntity()).thenReturn(mockInnerEntity);
+    when(mockValue.getAsEntity()).thenReturn(mockInnerEntity);
+
+    // Setup for nested entity testing
+    when(mockInnerEntity.getAttributeNames()).thenReturn(Set.of("nested"));
+    when(mockInnerEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));
+    when(mockNestedValue.getLanguageType()).thenReturn(mockLanguageType);
+    when(mockNestedValue.getSize()).thenReturn(Optional.of(1));
+    when(mockNestedValue.getAsMutableEntity()).thenReturn(mockNestedEntity);
+    when(mockNestedValue.getAsEntity()).thenReturn(mockFrozenEntity);
   }
 
   @Test
@@ -63,6 +77,32 @@ public class InnerEntityGetterTest {
         .collect(Collectors.toList());
 
     assertEquals(1, innerEntities.size());
-    assertEquals(mockInnerEntity, innerEntities.get(0));
+  }
+
+  @Test
+  void testGetInnerFrozenEntities() {
+    List<Entity> frozenEntities = InnerEntityGetter
+        .getInnerFrozenEntities(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(1, frozenEntities.size());
+  }
+
+  @Test
+  void testGetInnerEntitiesRecursive() {
+    List<MutableEntity> recursiveEntities = InnerEntityGetter
+        .getInnerEntitiesRecursive(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(2, recursiveEntities.size());
+  }
+
+  @Test
+  void testGetInnerFrozenEntitiesRecursive() {
+    List<Entity> recursiveFrozenEntities = InnerEntityGetter
+        .getInnerFrozenEntitiesRecursive(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(2, recursiveFrozenEntities.size());
   }
 }

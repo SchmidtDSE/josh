@@ -217,7 +217,7 @@ public class MinimalEngineBridge implements EngineBridge {
     if (replicate.isEmpty()) {
       GridFromSimFactory factory = new GridFromSimFactory(this);
       Grid grid = factory.build(simulation);
-      replicate = Optional.of(new Replicate(grid));
+      replicate = Optional.of(new Replicate(simulation, grid));
     }
 
     return replicate.get();

@@ -7,11 +7,11 @@
 package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.lang.bridge.CombinedExportFacade;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
+import org.joshsim.lang.export.CombinedExportFacade;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
