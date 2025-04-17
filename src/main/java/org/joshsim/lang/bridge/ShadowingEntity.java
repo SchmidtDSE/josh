@@ -51,6 +51,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvingAttributes;
   private final Scope scope;
   private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+
   private boolean checkAssertions;
 
   /**
@@ -446,12 +447,14 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void startSubstep(String name) {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
     resolvedAttributes.clear();
   }
 
   @Override
   public void endSubstep() {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
     resolvingAttributes.clear();
     inner.endSubstep();
   }

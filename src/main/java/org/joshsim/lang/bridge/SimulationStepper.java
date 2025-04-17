@@ -1,6 +1,5 @@
 package org.joshsim.lang.bridge;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -8,7 +7,6 @@ import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
-import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -119,32 +117,24 @@ public class SimulationStepper {
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     target.startSubstep(subStep);
-
-    target.getAttributeNames().stream()
-        .map(target::getAttributeValue)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .filter((x) -> x.getLanguageType().containsAttributes())
-        .forEach((x) -> {
-          Optional<Integer> sizeMaybe = x.getSize();
-          if (sizeMaybe.isEmpty()) {
-            return;
-          }
-
-          int size = sizeMaybe.get();
-          if (size == 1) {
-            updateEntity(x.getAsMutableEntity(), subStep);
-          } else {
-            Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
-            for (EngineValue value : values) {
-              updateEntity(value.getAsMutableEntity(), subStep);
-            }
-          }
-        });
-
+    updateEntityUnsafe(target);
     target.endSubstep();
 
     return target;
+  }
+
+  /**
+   * Resolve all properties inside of a mutable entity, recursing to update on inner entities.
+   *
+   * <p>Resolve all attributes of a mutable entity and then look for inner entities found inside the
+   * target. Recurse on those targets afterwards to update. This method assumes that a substep has
+   * already started for target and its internal entities.</p>
+   *
+   * @param target The root MutableEntity to be updated and within which inner entities are
+   *     recursively updated.
+   */
+  private void updateEntityUnsafe(MutableEntity target) {
+    InnerEntityGetter.getInnerEntities(target).forEach(this::updateEntityUnsafe);
   }
 
 }
