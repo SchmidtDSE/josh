@@ -64,19 +64,6 @@ public class JoshSimFacade {
    *     initalized from the given program.
    * @param callback A callback that will be invoked after each simulation step. This is called
    *     as blocking.
-   */
-  /**
-   * Runs a simulation from the provided program.
-   *
-   * <p>Creates and executes a simulation using the provided program and simulation name.
-   * The callback is invoked after each simulation step is completed.</p>
-   *
-   * @param program The Josh program containing the simulation to run. This is the program in which
-   *     the simulation will be initalized.
-   * @param simulationName The name of the simulation to execute from the program. This will be
-   *     initalized from the given program.
-   * @param callback A callback that will be invoked after each simulation step. This is called
-   *     as blocking.
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    */
