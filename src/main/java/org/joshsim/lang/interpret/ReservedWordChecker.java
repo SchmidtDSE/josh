@@ -16,7 +16,7 @@ import java.util.StringTokenizer;
 public class ReservedWordChecker {
 
   private static final Set<String> ERROR_WORDS = Set.of("prior", "current", "here", "meta");
-  
+
   /**
    * Checks a variable declaration to ensure it does not shadow any reserved words.
    *
@@ -31,5 +31,5 @@ public class ReservedWordChecker {
       throw new IllegalArgumentException(message);
     }
   }
-  
+
 }

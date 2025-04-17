@@ -64,7 +64,7 @@ public class CsvExportFacade implements ExportFacade {
         }
 
         ExportSerializeStrategy<Map<String, String>> serializeStrategy = new MapSerializeStrategy();
-        
+
         ExportWriteStrategy<Map<String, String>> writeStrategy;
         if (header.isPresent()) {
           writeStrategy = new CsvWriteStrategy(header.get());

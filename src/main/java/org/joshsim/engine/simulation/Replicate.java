@@ -53,7 +53,7 @@ public class Replicate {
    */
   public Replicate(MutableEntity meta, Grid grid) {
     this.meta = meta;
-    
+
     presentTimeStep = new HashMap<>();
     for (MutableEntity patch : grid.getPatches()) {
       presentTimeStep.put(patch.getKey().orElseThrow(), patch);
@@ -95,7 +95,7 @@ public class Replicate {
         );
 
     Entity frozenMeta = meta.freeze();
-    
+
     TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMeta, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
