@@ -1,3 +1,9 @@
+/**
+ * Structure to describe a single time step after freezing.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.simulation;
 
 import java.util.List;
@@ -37,7 +43,7 @@ public class TimeStep {
   }
 
   /**
-   * Get simulation metadata
+   * Get simulation metadata.
    *
    * @return the simulation entity record with metadata
    */

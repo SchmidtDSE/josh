@@ -162,7 +162,6 @@ class TimeStepTest {
   @Test
   void getPatchesWithPatchHavingNoGeometry() {
     // Create a patch with no geometry
-    Entity meta = mock(Entity.class);
     Entity patchNoGeo = mock(Entity.class);
     GeoKey keyNoGeo = mock(GeoKey.class);
     when(patchNoGeo.getGeometry()).thenReturn(Optional.empty());
@@ -171,6 +170,8 @@ class TimeStepTest {
     // Add to a new map and create a new timestep
     HashMap<GeoKey, Entity> patchesWithNoGeo = new HashMap<>(patches);
     patchesWithNoGeo.put(keyNoGeo, patchNoGeo);
+
+    Entity meta = mock(Entity.class);
     TimeStep timeStepWithNoGeo = new TimeStep(42, meta, patchesWithNoGeo);
 
     // Should not include patch with no EngineGeometry in results
