@@ -52,5 +52,5 @@ public class JsExportFacade implements ExportFacade {
 
   @JSBody(params = { "reportRecord" }, script = "reportRecord(message)")
   private static native void reportRecord(String message);
-  
+
 }

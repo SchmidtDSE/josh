@@ -56,7 +56,7 @@ public class ExportFacadeFactory {
     };
   }
 
-  
+
   /**
    * Build an ExportFacade that writes to a JavaScript in-memory map callback.
    *

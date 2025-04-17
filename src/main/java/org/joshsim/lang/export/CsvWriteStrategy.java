@@ -67,24 +67,24 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
     }
 
     Iterable<String> headerVals = header.orElseThrow();
-    
+
     if (onFirstRecord) {
       String[] headerValsArray = convertIterableToArray(headerVals);
-      
+
       this.writer = new OutputStreamWriter(output);
-      
+
       this.printer = new CSVPrinter(writer, CSVFormat.DEFAULT
           .builder()
           .setHeader(headerValsArray)
           .build());
-      
+
       onFirstRecord = false;
     }
 
     String[] values = StreamSupport.stream(headerVals.spliterator(), false)
         .map((key) -> record.getOrDefault(key, ""))
         .toArray(String[]::new);
-    
+
     printer.printRecord(values);
   }
 

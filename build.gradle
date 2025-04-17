@@ -1,5 +1,6 @@
 plugins {
   id "java"
+  id "war"
   id "eclipse" // optional (to generate Eclipse project files)
   id "idea" // optional (to generate IntelliJ IDEA project files)
   id "application" // for creating executable JARs
@@ -71,6 +72,7 @@ dependencies {
 teavm {
   wasmGC {
     mainClass = "org.joshsim.JoshSimFacade"
+    addedToWebApp = true
   }
 }
 
