@@ -49,12 +49,26 @@ public class ExportFacadeFactory {
    *     target.
    */
   public static ExportFacade build(ExportTarget target, Optional<Iterable<String>> header) {
-    if (!target.getFileType().equals("csv")) {
-      throw new IllegalArgumentException("Only CSV files are supported at this time.");
+    return switch (target.getFileType()) {
+      case "csv" -> buildForCsv(target, header);
+      case "map" -> buildForMap(target, header);
+      default -> throw new IllegalArgumentException("Not supported: " + target.getFileType());
+    };
+  }
+
+  public static ExportFacade buildForMap(ExportTarget target, Optional<Iterable<String>> header) {
+    if (!target.getProtocol().equals("js")) {
+      throw new IllegalArgumentException("Can only write map to JS.");
     }
 
+    String path = target.getPath();
+    return new JsExportFacade(path);
+  }
+
+  private static ExportFacade buildForCsv(ExportTarget target, Optional<Iterable<String>> header) {
     if (!target.getProtocol().isEmpty()) {
-      throw new IllegalArgumentException("Only local file system is supported at this time.");
+      String message = "Only local file system is supported for CSV at this time.";
+      throw new IllegalArgumentException(message);
     }
 
     String path = target.getPath();
