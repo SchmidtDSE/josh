@@ -13,14 +13,17 @@ import org.joshsim.engine.geometry.EngineGeometry;
  * entries depending on whether it is frozen.
  */
 public class TimeStep {
+  
   protected long stepNumber;
+  protected Entity meta;
   protected Map<GeoKey, Entity> patches;
 
   /**
    * Create a new TimeStep, which contains entities that are frozen / immutable.
    */
-  public TimeStep(long stepNumber, Map<GeoKey, Entity> patches) {
+  public TimeStep(long stepNumber, Entity meta, Map<GeoKey, Entity> patches) {
     this.stepNumber = stepNumber;
+    this.meta = meta;
     this.patches = patches;
   }
 
@@ -31,6 +34,15 @@ public class TimeStep {
    */
   public long getStep() {
     return stepNumber;
+  }
+
+  /**
+   * Get simulation metadata
+   *
+   * @return the simulation entity record with metadata
+   */
+  public Entity getMeta() {
+    return meta;
   }
 
   /**

@@ -34,6 +34,7 @@ public class ReplicateTest {
   @Mock(lenient = true) private Patch mockPatch2;
   @Mock private Entity frozenPatch1;
   @Mock private Entity frozenPatch2;
+  @Mock private MutableEntity meta;
   @Mock private GeoKey mockKey1;
   @Mock private GeoKey mockKey2;
   @Mock private EngineGeometry mockGeometry;
@@ -53,7 +54,7 @@ public class ReplicateTest {
     patches.put(mockKey1, mockPatch1);
     patches.put(mockKey2, mockPatch2);
 
-    replicate = new Replicate(patches);
+    replicate = new Replicate(meta, patches);
   }
 
   @Test

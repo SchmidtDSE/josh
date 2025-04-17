@@ -24,6 +24,7 @@ class TimeStepTest {
   private GeoKey mockKey2;
   private Entity mockPatch1;
   private Entity mockPatch2;
+  private Entity mockMeta;
   private EngineGeometry mockGeometry1;
   private EngineGeometry mockGeometry2;
 
@@ -34,6 +35,7 @@ class TimeStepTest {
     mockKey2 = mock(GeoKey.class);
     mockPatch1 = mock(Entity.class);
     mockPatch2 = mock(Entity.class);
+    mockMeta = mock(Entity.class);
     mockGeometry1 = mock(EngineGeometry.class);
     mockGeometry2 = mock(EngineGeometry.class);
 
@@ -49,7 +51,7 @@ class TimeStepTest {
     patches.put(mockKey2, mockPatch2);
 
     // Create TimeStep instance
-    timeStep = new TimeStep(42, patches);
+    timeStep = new TimeStep(42, mockMeta, patches);
   }
 
   @Test
@@ -160,6 +162,7 @@ class TimeStepTest {
   @Test
   void getPatchesWithPatchHavingNoGeometry() {
     // Create a patch with no geometry
+    Entity meta = mock(Entity.class);
     Entity patchNoGeo = mock(Entity.class);
     GeoKey keyNoGeo = mock(GeoKey.class);
     when(patchNoGeo.getGeometry()).thenReturn(Optional.empty());
@@ -168,7 +171,7 @@ class TimeStepTest {
     // Add to a new map and create a new timestep
     HashMap<GeoKey, Entity> patchesWithNoGeo = new HashMap<>(patches);
     patchesWithNoGeo.put(keyNoGeo, patchNoGeo);
-    TimeStep timeStepWithNoGeo = new TimeStep(42, patchesWithNoGeo);
+    TimeStep timeStepWithNoGeo = new TimeStep(42, meta, patchesWithNoGeo);
 
     // Should not include patch with no EngineGeometry in results
     EngineGeometry queryGeometry = mock(EngineGeometry.class);

@@ -25,6 +25,7 @@ import org.joshsim.lang.export.ExportTargetParser;
  */
 public class CombinedExportFacade {
 
+  private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
 
   /**
@@ -34,6 +35,7 @@ public class CombinedExportFacade {
    *     configure the patch export facade.
    */
   public CombinedExportFacade(MutableEntity simEntity) {
+    metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
   }
 
@@ -48,6 +50,10 @@ public class CombinedExportFacade {
    *     and the step number to associate with them.
    */
   public void write(TimeStep stepCompleted) {
+    metaExportFacade.ifPresent(exportFacade -> {
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep());
+    });
+
     patchExportFacade.ifPresent(exportFacade -> stepCompleted.getPatches().forEach(
         (x) -> exportFacade.write(x, stepCompleted.getStep())
     ));
@@ -85,6 +91,18 @@ public class CombinedExportFacade {
    */
   private Optional<ExportFacade> getPatchExportFacade(MutableEntity simEntity) {
     return getExportFacade(simEntity, "exportFiles.patch");
+  }
+
+  /**
+   * Retrieves the meta-specific export facade based on the provided simulation entity.
+   *
+   * @param simEntity the mutable entity representing the simulation context. It is used to fetch
+   *     the attribute configuration and initialize the export facades.
+   * @return an Optional containing the relevant ExportFacade or an empty Optional if configuration
+   *     is not found.
+   */
+  private Optional<ExportFacade> getMetaExportFacade(MutableEntity simEntity) {
+    return getExportFacade(simEntity, "exportFiles.meta");
   }
 
   /**

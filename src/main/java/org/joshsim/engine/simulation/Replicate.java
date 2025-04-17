@@ -28,6 +28,8 @@ import org.joshsim.engine.geometry.Grid;
  * </p>
  */
 public class Replicate {
+
+  private MutableEntity meta;
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private Map<GeoKey, MutableEntity> presentTimeStep;
   private long stepNumber = 0;
@@ -35,18 +37,23 @@ public class Replicate {
   /**
    * Construct a replicate with the given patches.
    *
-   * @param patches the patches to be included in the replicate.
+   * @param meta The simulation metadata for which this replicate was created.
+   * @param patches The patches to be included in the replicate.
    */
-  public Replicate(Map<GeoKey, MutableEntity> patches) {
+  public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches) {
+    this.meta = meta;
     this.presentTimeStep = patches;
   }
 
   /**
    * Construct a replicate with the given grid.
    *
+   * @param meta The simulation metadata for which this replicate was created.
    * @param grid Grid with the the patches to be included in the replicate.
    */
-  public Replicate(Grid grid) {
+  public Replicate(MutableEntity meta, Grid grid) {
+    this.meta = meta;
+    
     presentTimeStep = new HashMap<>();
     for (MutableEntity patch : grid.getPatches()) {
       presentTimeStep.put(patch.getKey().orElseThrow(), patch);
@@ -87,7 +94,9 @@ public class Replicate {
             })
         );
 
-    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
+    Entity frozenMeta = meta.freeze();
+    
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMeta, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 
