@@ -38,11 +38,11 @@ public class SimulationStepper {
   /**
    * Operation to take a step within an EngineBridge.
    *
-   * @param parallelPatches If true, patches will be processed in parallel. If false, they will be
+   * @param serialPatches If false, patches will be processed in parallel. If true, they will be
    *     processed serially.
    * @return The timestep completed.
    */
-  public long perform(boolean parallelPatches) {
+  public long perform(boolean serialPatches) {
     target.startStep();
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
@@ -51,22 +51,22 @@ public class SimulationStepper {
 
     if (isFirstStep) {
       performStream(simulation, "init");
-      performStream(patches, "init", parallelPatches);
+      performStream(patches, "init", serialPatches);
     }
 
     if (events.contains("start")) {
       performStream(simulation, "start");
-      performStream(patches, "start", parallelPatches);
+      performStream(patches, "start", serialPatches);
     }
 
     if (events.contains("step")) {
       performStream(simulation, "step");
-      performStream(patches, "step", parallelPatches);
+      performStream(patches, "step", serialPatches);
     }
 
     if (events.contains("end")) {
       performStream(simulation, "end");
-      performStream(patches, "end", parallelPatches);
+      performStream(patches, "end", serialPatches);
     }
 
     long timestepCompleted = target.getCurrentTimestep();
@@ -82,10 +82,11 @@ public class SimulationStepper {
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
-   * @param parallel Flag indicating if entities should be executed in parallel. If true, will
+   * @param serial Flag indicating if entities should be executed in parallel. If false, will
    *     execute in parallel. Otherwise, will use a serial stream.
    */
-  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean parallel) {
+  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
+    boolean parallel = !serial;
     Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
     performStream(entityStream, subStep);
   }
