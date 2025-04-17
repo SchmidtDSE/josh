@@ -85,7 +85,7 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
         .map((key) -> record.getOrDefault(key, ""))
         .toArray(String[]::new);
 
-    printer.printRecord(values);
+    printer.printRecord((Object[]) values);
   }
 
   @Override
