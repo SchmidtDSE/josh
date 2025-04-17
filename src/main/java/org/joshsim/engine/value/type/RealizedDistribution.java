@@ -80,7 +80,7 @@ public class RealizedDistribution extends Distribution {
    * @return DoubleSummaryStatistics for the values
    */
   private void computeStats() {
-    DoubleSummaryStatistics newStats = values.parallelStream()
+    DoubleSummaryStatistics newStats = values.stream()
         .map(EngineValue::getAsScalar)
         .map(Scalar::getAsDecimal)
         .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));

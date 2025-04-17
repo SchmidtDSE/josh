@@ -76,7 +76,7 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().parallelStream()
+    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().stream()
         .collect(Collectors.toMap(
             (x) -> x.getKey().orElseThrow(),
             (original) -> {

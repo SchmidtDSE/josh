@@ -80,9 +80,11 @@ public class SimulationStepper {
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
+   * @param parallel Flag indicating if entities should be executed in parallel. If true, will
+   *     execute in parallel. Otherwise, will use a serial stream.
    */
-  private void performStream(Iterable<MutableEntity> entities, String subStep) {
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), false);
+  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean parallel) {
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
     performStream(entityStream, subStep);
   }
 
