@@ -9,6 +9,7 @@ package org.joshsim.lang.export;
 import java.util.Map;
 import java.util.StringJoiner;
 import org.joshsim.engine.entity.base.Entity;
+import org.teavm.jso.JSBody;
 
 
 /**
