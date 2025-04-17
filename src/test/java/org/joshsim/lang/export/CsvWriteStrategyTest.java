@@ -103,6 +103,7 @@ class CsvWriteStrategyTest {
     // When & Then
     assertThrows(RuntimeException.class, strategy::flush);
 
+  }
 
   @Test
   void shouldWriteBlankValuesForMissingHeaderColumns() throws IOException {
@@ -123,7 +124,5 @@ class CsvWriteStrategyTest {
     assertTrue(result.contains("Name,Age,City"));
     assertTrue(result.contains("John,25,"));
   }
-
-
-  }
+  
 }

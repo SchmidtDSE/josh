@@ -9,6 +9,7 @@ package org.joshsim.lang.export;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ public class CsvExportFacade implements ExportFacade {
   private final Queue<Task> entityQueue = new ConcurrentLinkedQueue<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final AtomicBoolean active = new AtomicBoolean(false);
+  private final Optional<Iterable<String>> header;
 
   /**
    * Constructs a CsvExportFacade object with the specified export target / output stream strategy.
@@ -35,6 +37,18 @@ public class CsvExportFacade implements ExportFacade {
    */
   public CsvExportFacade(OutputStreamStrategy outputStrategy) {
     this.outputStrategy = outputStrategy;
+    header = Optional.empty();
+  }
+
+  /**
+   * Constructs a CsvExportFacade with the specified export target / output stream and headers.
+   *
+   * @param outputStrategy The strategy to provide an output stream for writing the exported data.
+   * @param header Iterable over the header columns to use for the CSV output.
+   */
+  public CsvExportFacade(OutputStreamStrategy outputStrategy, Iterable<String> header) {
+    this.outputStrategy = outputStrategy;
+    this.header = Optional.of(header);
   }
 
   @Override
@@ -50,7 +64,13 @@ public class CsvExportFacade implements ExportFacade {
         }
 
         ExportSerializeStrategy<Map<String, String>> serializeStrategy = new MapSerializeStrategy();
-        ExportWriteStrategy<Map<String, String>> writeStrategy = new CsvWriteStrategy();
+        
+        ExportWriteStrategy<Map<String, String>> writeStrategy;
+        if (header.isPresent()) {
+          writeStrategy = new CsvWriteStrategy(header.get());
+        } else {
+          writeStrategy = new CsvWriteStrategy();
+        }
 
         while (active.get()) {
           Task task = entityQueue.poll();
