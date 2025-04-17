@@ -36,11 +36,13 @@ public class SimulationStepper {
   }
 
   /**
-   * Operation to take a setp within an EngineBridge.
+   * Operation to take a step within an EngineBridge.
    *
+   * @param serialPatches If false, patches will be processed in parallel. If true, they will be
+   *     processed serially.
    * @return The timestep completed.
    */
-  public long perform() {
+  public long perform(boolean serialPatches) {
     target.startStep();
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
@@ -49,22 +51,22 @@ public class SimulationStepper {
 
     if (isFirstStep) {
       performStream(simulation, "init");
-      performStream(patches, "init");
+      performStream(patches, "init", serialPatches);
     }
 
     if (events.contains("start")) {
       performStream(simulation, "start");
-      performStream(patches, "start");
+      performStream(patches, "start", serialPatches);
     }
 
     if (events.contains("step")) {
       performStream(simulation, "step");
-      performStream(patches, "step");
+      performStream(patches, "step", serialPatches);
     }
 
     if (events.contains("end")) {
       performStream(simulation, "end");
-      performStream(patches, "end");
+      performStream(patches, "end", serialPatches);
     }
 
     long timestepCompleted = target.getCurrentTimestep();
@@ -80,9 +82,12 @@ public class SimulationStepper {
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
+   * @param serial Flag indicating if entities should be executed in parallel. If false, will
+   *     execute in parallel. Otherwise, will use a serial stream.
    */
-  private void performStream(Iterable<MutableEntity> entities, String subStep) {
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), false);
+  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
+    boolean parallel = !serial;
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
     performStream(entityStream, subStep);
   }
 

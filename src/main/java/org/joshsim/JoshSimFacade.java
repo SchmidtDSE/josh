@@ -64,9 +64,11 @@ public class JoshSimFacade {
    *     initalized from the given program.
    * @param callback A callback that will be invoked after each simulation step. This is called
    *     as blocking.
+   * @param serialPatches If true, patches will be processed serially. If false, they will be
+   *     processed in parallel.
    */
   public static void runSimulation(JoshProgram program, String simulationName,
-      SimulationStepCallback callback) {
+      SimulationStepCallback callback, boolean serialPatches) {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
@@ -81,7 +83,7 @@ public class JoshSimFacade {
     exportFacade.start();
 
     while (!bridge.isComplete()) {
-      long completedStep = stepper.perform();
+      long completedStep = stepper.perform(!serialPatches);
       exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
       callback.onStep(completedStep);
 
