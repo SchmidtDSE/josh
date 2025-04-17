@@ -12,13 +12,12 @@
     <header>
       <div class="beta-warning">
         This tool is under development and currently in beta testing. We would love to hear from
-        you! Let us know your feedback at
-        <a href="mailto:hello@editor.joshsim.org">hello@editor.joshsim.org</a> and we are
-        here to help if you run into any issues.
+        you! Let us know your feedback at <a href="mailto:hello@joshsim.org">hello@joshsim.org</a>
+        and we are here to help if you run into any issues.
       </div>
       <h1>Josh Simulation Editor</h1>
       This web-based editor allows for rapid prototyping Josh agent-based simulations from your browser. These scripts are only saved within your browser and are not sent to external servers unless requested.
-      <div class="file-buttons buttons-panel">
+      <div class="file-buttons buttons-panel" id="file-buttons">
         <a href="#" id="new-file-button" class="secondary">New File</a>
         <a href="#" id="load-file-button" class="secondary">Load File</a>
         <a href="#" download="simulation.josh" id="save-file-button" class="secondary">Save File</a>
@@ -53,6 +52,7 @@
               <div id="available-panel">
                 <a class="primary" id="run-button" href="#loading">Run on Your Computer</a>
                 <a class="secondary" id="cloud-button" href="#cloud">Run in Cloud</a>
+                <a class="secondary" id="cli-button" href="#cli">Run on CLI</a>
               </div>
               <div id="loading">Loading please wait...</div>
             </div>
@@ -98,7 +98,9 @@
     <script type="importmap">
       {
         "imports": {
-          "main": "./js/main.js?v=EPOCH",
+          "editor": "./js/editor.js?v=EPOCH",
+          "file": "./js/file.js?v=EPOCH",
+          "main": "./js/main.js?v=EPOCH"
         }
       }
     </script>
