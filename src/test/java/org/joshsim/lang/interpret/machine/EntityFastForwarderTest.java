@@ -10,12 +10,11 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

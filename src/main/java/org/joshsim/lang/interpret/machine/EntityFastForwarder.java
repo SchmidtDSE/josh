@@ -7,7 +7,6 @@
 package org.joshsim.lang.interpret.machine;
 
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.lang.bridge.InnerEntityGetter;
 
 
 /**
@@ -67,11 +66,13 @@ public class EntityFastForwarder {
    */
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
-    
+
     entity.getAttributeNames().stream()
         .map(entity::getAttributeValue)
-        .forEach((x) -> {assert x != null;});
-    
+        .forEach((x) -> {
+          assert x != null;
+        });
+
     if (!leaveOpen) {
       entity.endSubstep();
     }
@@ -94,5 +95,5 @@ public class EntityFastForwarder {
       default -> throw new IllegalArgumentException("Cannot fast forward to " + subStep);
     };
   }
-  
+
 }
