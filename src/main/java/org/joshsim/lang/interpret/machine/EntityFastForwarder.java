@@ -26,7 +26,9 @@ public class EntityFastForwarder {
 
   /**
    * Fast forwards an entity through simulation steps up to the specified substep.
-   * This ensures entities created after simulation start are properly initialized.
+   *
+   * <p>Fast forwards an entity through simulation steps up to the specified substep, ensuring
+   * entities created after simulation start are properly initialized.</p>
    *
    * @param entity The entity to fast forward
    * @param subStep The target substep to reach
@@ -35,23 +37,23 @@ public class EntityFastForwarder {
   public static void fastForward(MutableEntity entity, String subStep) {
     int substepNum = getSubstepNum(subStep);
 
-    if (substepNum <= CONSTANT_SUBSTEP) {
+    if (substepNum >= CONSTANT_SUBSTEP) {
       runStep(entity, "constant", substepNum == CONSTANT_SUBSTEP);
     }
 
-    if (substepNum <= INIT_SUBSTEP) {
-      runStep(entity, "init", substepNum <= INIT_SUBSTEP);
+    if (substepNum >= INIT_SUBSTEP) {
+      runStep(entity, "init", substepNum == INIT_SUBSTEP);
     }
 
-    if (substepNum <= START_SUBSTEP) {
+    if (substepNum >= START_SUBSTEP) {
       runStep(entity, "start", substepNum == START_SUBSTEP);
     }
 
-    if (substepNum <= STEP_SUBSTEP) {
+    if (substepNum >= STEP_SUBSTEP) {
       runStep(entity, "step", substepNum == STEP_SUBSTEP);
     }
 
-    if (substepNum <= END_SUBSTEP) {
+    if (substepNum >= END_SUBSTEP) {
       runStep(entity, "end", substepNum == END_SUBSTEP);
     }
   }

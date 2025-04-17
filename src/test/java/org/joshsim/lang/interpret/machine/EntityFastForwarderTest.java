@@ -31,16 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class EntityFastForwarderTest {
 
-  @Mock private MutableEntity mockEntity;
-
-  /**
-   * Sets up test fixtures before each test method.
-   * Initializes mock objects and common test data.
-   */
-  @BeforeEach
-  void setUp() {
-    // Mock setup is handled by Mockito annotations
-  }
+  @Mock(lenient = true) private MutableEntity mockEntity;
 
   @Test
   void testFastForwardToConstant() {
