@@ -36,8 +36,10 @@ public class SimulationStepper {
   }
 
   /**
-   * Operation to take a setp within an EngineBridge.
+   * Operation to take a step within an EngineBridge.
    *
+   * @param parallelPatches If true, patches will be processed in parallel. If false, they will be
+   *     processed serially.
    * @return The timestep completed.
    */
   public long perform(boolean parallelPatches) {
