@@ -4,10 +4,11 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.compat;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.joshsim.lang.export.ExportTask;
 
 
 /**

@@ -19,6 +19,13 @@ import org.teavm.jso.JSExport;
  */
 public class JoshSimJsFacade {
 
+  /**
+   * Validates and interprets the provided code using the JoshParser and JoshInterpreter.
+   *
+   * @param code The source code to validate and interpret.
+   * @return A string containing parsing or interpretation error messages, or an empty string if
+   *     there are no errors.
+   */
   @JSExport
   public static String validate(String code) {
     JoshParser parser = new JoshParser();

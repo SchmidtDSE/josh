@@ -38,7 +38,7 @@ public class ExportTask {
    * @return The step value as a long.
    */
   public long getStep() {
-      return step;
-    }
+    return step;
+  }
 
 }

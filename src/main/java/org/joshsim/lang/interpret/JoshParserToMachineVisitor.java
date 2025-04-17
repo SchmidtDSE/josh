@@ -9,7 +9,6 @@ package org.joshsim.lang.interpret;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.joshsim.compat.UtilityLayer;
 import org.joshsim.compat.UtilityStringJoiner;
 import org.joshsim.engine.entity.base.EntityBuilder;

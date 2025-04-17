@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.joshsim.compat.ExportFacadeTaskQueue;
+import org.joshsim.compat.ThreadSafeExportFacadeTaskQueue;
 import org.joshsim.engine.entity.base.Entity;
 
 

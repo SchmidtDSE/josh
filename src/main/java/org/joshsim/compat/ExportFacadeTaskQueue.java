@@ -2,15 +2,16 @@
  * Interface for task queues for exporting.
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.compat;
 
+
+import org.joshsim.lang.export.ExportTask;
 
 /**
  * Interface representing a task queue for managing ExportTasks.
  */
 public interface ExportFacadeTaskQueue {
 
-  
   /**
    * Adds a new export task to the task queue for processing.
    *

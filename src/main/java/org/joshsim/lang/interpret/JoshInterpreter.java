@@ -7,7 +7,6 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
-
 import org.joshsim.compat.UtilityLayer;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
@@ -21,6 +20,11 @@ public class JoshInterpreter {
 
   private final UtilityLayer utilityLayer;
 
+  /**
+   * Constructs a new instance of the JoshInterpreter.
+   *
+   * @param utilityLayer The utility layer used for platform-specific operations.
+   */
   public JoshInterpreter(UtilityLayer utilityLayer) {
     this.utilityLayer = utilityLayer;
   }
