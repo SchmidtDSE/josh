@@ -24,6 +24,14 @@ public class EntityFastForwarder {
   private static final int STEP_SUBSTEP = 2;
   private static final int END_SUBSTEP = 3;
 
+  /**
+   * Fast forwards an entity through simulation steps up to the specified substep.
+   * This ensures entities created after simulation start are properly initialized.
+   *
+   * @param entity The entity to fast forward
+   * @param subStep The target substep to reach
+   * @throws IllegalArgumentException if subStep is invalid
+   */
   public static void fastForward(MutableEntity entity, String subStep) {
     int substepNum = getSubstepNum(subStep);
 
@@ -48,6 +56,13 @@ public class EntityFastForwarder {
     }
   }
 
+  /**
+   * Executes a single simulation step on the entity.
+   *
+   * @param entity The entity to run the step on
+   * @param subStep The substep name to execute
+   * @param leaveOpen Whether to leave the substep open after execution
+   */
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
     
@@ -60,6 +75,13 @@ public class EntityFastForwarder {
     }
   }
 
+  /**
+   * Converts a substep name to its corresponding numeric value.
+   *
+   * @param subStep The name of the substep
+   * @return The numeric value of the substep
+   * @throws IllegalArgumentException if the substep name is invalid
+   */
   private static int getSubstepNum(String subStep) {
     return switch (subStep) {
       case "constant" -> CONSTANT_SUBSTEP;
