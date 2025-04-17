@@ -37,7 +37,11 @@ public class InnerEntityGetterTest {
 
   @Mock private MutableEntity mockEntity;
   @Mock private MutableEntity mockInnerEntity;
+  @Mock private MutableEntity mockNestedEntity;
+  @Mock private Entity mockFrozenEntity;
+  @Mock private Entity mockFrozenInnerEntity;
   @Mock private EngineValue mockValue;
+  @Mock private EngineValue mockNestedValue;
   @Mock private LanguageType mockLanguageType;
 
   /**
@@ -54,6 +58,15 @@ public class InnerEntityGetterTest {
     when(mockLanguageType.containsAttributes()).thenReturn(true);
     when(mockValue.getSize()).thenReturn(Optional.of(1));
     when(mockValue.getAsMutableEntity()).thenReturn(mockInnerEntity);
+    when(mockValue.getAsEntity()).thenReturn(mockFrozenInnerEntity);
+
+    // Setup for nested entity testing
+    when(mockInnerEntity.getAttributeNames()).thenReturn(Set.of("nested"));
+    when(mockInnerEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));
+    when(mockNestedValue.getLanguageType()).thenReturn(mockLanguageType);
+    when(mockNestedValue.getSize()).thenReturn(Optional.of(1));
+    when(mockNestedValue.getAsMutableEntity()).thenReturn(mockNestedEntity);
+    when(mockNestedValue.getAsEntity()).thenReturn(mockFrozenEntity);
   }
 
   @Test
@@ -64,5 +77,37 @@ public class InnerEntityGetterTest {
 
     assertEquals(1, innerEntities.size());
     assertEquals(mockInnerEntity, innerEntities.get(0));
+  }
+
+  @Test
+  void testGetInnerFrozenEntities() {
+    List<Entity> frozenEntities = InnerEntityGetter
+        .getInnerFrozenEntities(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(1, frozenEntities.size());
+    assertEquals(mockFrozenInnerEntity, frozenEntities.get(0));
+  }
+
+  @Test
+  void testGetInnerEntitiesRecursive() {
+    List<MutableEntity> recursiveEntities = InnerEntityGetter
+        .getInnerEntitiesRecursive(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(2, recursiveEntities.size());
+    assertEquals(mockInnerEntity, recursiveEntities.get(0));
+    assertEquals(mockNestedEntity, recursiveEntities.get(1));
+  }
+
+  @Test
+  void testGetInnerFrozenEntitiesRecursive() {
+    List<Entity> recursiveFrozenEntities = InnerEntityGetter
+        .getInnerFrozenEntitiesRecursive(mockEntity)
+        .collect(Collectors.toList());
+
+    assertEquals(2, recursiveFrozenEntities.size());
+    assertEquals(mockFrozenInnerEntity, recursiveFrozenEntities.get(0));
+    assertEquals(mockFrozenEntity, recursiveFrozenEntities.get(1));
   }
 }
