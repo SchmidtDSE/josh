@@ -541,6 +541,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
+    ReservedWordChecker.checkVariableDeclaration(identifierName);
     EventHandlerAction valAction = ctx.val.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
@@ -708,6 +709,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     }
 
     return new EventHandlerGroupFragment(groupBuilder);
+  }
+
+  public Fragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
+    Fragment fragment = ctx.getChild(0).accept(this);
+    String attributeName = fragment.getEventHandlerGroup().getAttribute();
+    ReservedWordChecker.checkVariableDeclaration(attributeName);
+    return fragment;
   }
 
   public Fragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
