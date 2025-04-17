@@ -17,10 +17,6 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.InnerEntityGetter;
-import org.joshsim.lang.export.ExportFacade;
-import org.joshsim.lang.export.ExportFacadeFactory;
-import org.joshsim.lang.export.ExportTarget;
-import org.joshsim.lang.export.ExportTargetParser;
 
 
 /**
@@ -72,9 +68,9 @@ public class CombinedExportFacade {
           stepCompleted.getPatches().spliterator(),
           false
       );
-      
+
       Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
-      
+
       inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep()));
     });
   }

@@ -1,5 +1,6 @@
 plugins {
   id "java"
+  id "war"
   id "eclipse" // optional (to generate Eclipse project files)
   id "idea" // optional (to generate IntelliJ IDEA project files)
   id "application" // for creating executable JARs
@@ -51,6 +52,9 @@ dependencies {
   implementation("org.geotools:gt-referencing:32.2")
   implementation("org.geotools:gt-epsg-hsql:32.2")
 
+  // Interaction with browser
+  implementation("org.teavm:teavm-core:0.11.0")
+
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
   testImplementation("org.junit.jupiter:junit-jupiter")
@@ -62,12 +66,13 @@ dependencies {
   implementation("info.picocli:picocli:4.7.6")
 
   // Minio for S3 storage
-  implementation 'io.minio:minio:8.5.2'
+  implementation("io.minio:minio:8.5.2")
 }
 
 teavm {
-  wasm {
+  wasmGC {
     mainClass = "org.joshsim.JoshSimFacade"
+    addedToWebApp = true
   }
 }
 

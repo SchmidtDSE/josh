@@ -122,5 +122,5 @@ class CsvWriteStrategyTest {
     assertTrue(result.contains("Name,Age,City"));
     assertTrue(result.contains("John,25,"));
   }
-  
+
 }

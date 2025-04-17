@@ -19,7 +19,7 @@ import org.joshsim.engine.geometry.EngineGeometry;
  * entries depending on whether it is frozen.
  */
 public class TimeStep {
-  
+
   protected long stepNumber;
   protected Entity meta;
   protected Map<GeoKey, Entity> patches;
