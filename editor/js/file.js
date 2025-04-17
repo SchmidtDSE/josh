@@ -1,4 +1,3 @@
-
 /**
  * Logic for handling file operations in the code editor.
  * 
