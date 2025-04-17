@@ -63,27 +63,6 @@ jobs:
         run: ./gradlew checkstyleMain
       - name: Check test style
         run: ./gradlew checkstyleTest
-  buildWasm:
-    needs: buildJava
-    environment: Build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    name: Build WASM
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-      - name: Build everything
-        run: ./gradlew build
-      - name: Upload jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: war
-          path: build/libs/JoshSim.war
   testJava:
     needs: buildJava
     environment: Build
@@ -141,6 +120,27 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Run examples
         run: bash examples/test.sh
+  buildWasm:
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
+    environment: Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    name: Build WASM
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build everything
+        run: ./gradlew build
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: war
+          path: build/libs/JoshSim.war
   deploy:
     environment: Build
     runs-on: ubuntu-latest
@@ -163,10 +163,8 @@ jobs:
       - name: Download WASM artifact
         uses: actions/download-artifact@v4
         with:
-          name: wasm
-          path: ./deploy/wasm
-      - name: Create WASM zip
-        run: cd ./deploy && zip -r wasm.zip wasm/
+          name: war
+          path: ./deploy/war
       - name: Upload to SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
