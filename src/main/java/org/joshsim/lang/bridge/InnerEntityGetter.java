@@ -94,7 +94,7 @@ public class InnerEntityGetter {
   public static Stream<MutableEntity> getInnerEntitiesRecursive(MutableEntity target) {
     return getInnerEntities(target).flatMap((x) -> Stream.concat(
         Stream.of(x),
-        getInnerEntities(x)
+        getInnerEntitiesRecursive(x)
     ));
   }
 
@@ -111,7 +111,7 @@ public class InnerEntityGetter {
   public static Stream<Entity> getInnerFrozenEntitiesRecursive(Entity target) {
     return getInnerFrozenEntities(target).flatMap((x) -> Stream.concat(
         Stream.of(x),
-        getInnerFrozenEntities(x)
+        getInnerFrozenEntitiesRecursive(x)
     ));
   }
 
