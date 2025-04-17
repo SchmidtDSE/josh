@@ -9,7 +9,12 @@ package org.joshsim.lang.export;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -27,6 +32,7 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
   private boolean onFirstRecord;
   private CSVPrinter printer;
   private OutputStreamWriter writer;
+  private Optional<Iterable<String>> header;
 
   /**
    * Create a new CSV write strategy for Map inputs.
@@ -38,19 +44,48 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
     this.onFirstRecord = true;
     this.printer = null;
     this.writer = null;
+    this.header = Optional.empty();
+  }
+
+  /**
+   * Create a new CSV write strategy for Map inputs with a specified set of column names.
+   *
+   * @param header Iterable over the header columns to use. If a record is missing a value, it will
+   *     be an empty string.
+   */
+  public CsvWriteStrategy(Iterable<String> header) {
+    this.onFirstRecord = true;
+    this.printer = null;
+    this.writer = null;
+    this.header = Optional.of(header);
   }
 
   @Override
   public void write(Map<String, String> record, OutputStream output) throws IOException {
+    if (header.isEmpty()) {
+      header = Optional.of(convertIterableToList(record.keySet()));
+    }
+
+    Iterable<String> headerVals = header.orElseThrow();
+    
     if (onFirstRecord) {
+      String[] headerValsArray = convertIterableToArray(headerVals);
+      
       this.writer = new OutputStreamWriter(output);
+      
       this.printer = new CSVPrinter(writer, CSVFormat.DEFAULT
           .builder()
-          .setHeader(record.keySet().toArray(new String[0]))
+          .setHeader(headerValsArray)
           .build());
+      
       onFirstRecord = false;
     }
-    printer.printRecord(record.values());
+
+    String[] values = StreamSupport.stream(headerVals.spliterator(), false)
+      .map((key) -> record.getOrDefault(key, ""))
+      .toArray(String[]::new);
+    
+    printer.printRecord(values);
   }
 
   @Override
@@ -70,5 +105,15 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
         throw new RuntimeException("Failed to flush OutputStreamWriter", e);
       }
     }
+  }
+
+  private static List<String> convertIterableToList(Iterable<String> target) {
+    Stream<String> targetStream = StreamSupport.stream(target.spliterator(), false);
+    return targetStream.collect(Collectors.toList());
+  }
+
+  private static String[] convertIterableToArray(Iterable<String> target) {
+    Stream<String> targetStream = StreamSupport.stream(target.spliterator(), false);
+    return targetStream.toArray(String[]::new);
   }
 }
