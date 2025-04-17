@@ -6,6 +6,7 @@
 
 package org.joshsim;
 
+import org.joshsim.compat.JvmUtilityLayer;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
@@ -48,7 +49,7 @@ public class JoshSimFacade {
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
   public static JoshProgram interpret(ParseResult parsed) {
-    JoshInterpreter interpreter = new JoshInterpreter();
+    JoshInterpreter interpreter = new JoshInterpreter(new JvmUtilityLayer());
     return interpreter.interpret(parsed);
   }
 
@@ -94,7 +95,6 @@ public class JoshSimFacade {
 
     exportFacade.join();
   }
-
 
   /**
    * Callback interface for receiving simulation step completion notifications.

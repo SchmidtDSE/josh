@@ -98,9 +98,9 @@
     <script type="importmap">
       {
         "imports": {
-          "editor": "./js/editor.js?v=EPOCH",
-          "file": "./js/file.js?v=EPOCH",
-          "main": "./js/main.js?v=EPOCH"
+          "editor": "/js/editor.js?v=EPOCH",
+          "file": "/js/file.js?v=EPOCH",
+          "main": "/js/main.js?v=EPOCH"
         }
       }
     </script>
@@ -109,5 +109,16 @@
       import {main} from "main";
       main();
     </script>
+
+    <script type="text/javascript" charset="utf-8" src="/war/wasm-gc/JoshSim.wasm-runtime.js"></script>
+    <script>
+      async function mainJava() {
+        const teavm = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
+        console.log("here");
+      }
+
+      mainJava();
+    </script>
+
   </body>
 </html>

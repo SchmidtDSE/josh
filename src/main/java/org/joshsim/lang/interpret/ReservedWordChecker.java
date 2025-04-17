@@ -25,7 +25,7 @@ public class ReservedWordChecker {
    */
   public static void checkVariableDeclaration(String name) {
     StringTokenizer tokenizer = new StringTokenizer(name, ".");
-    String front = tokenizer.asIterator().next().toString();
+    String front = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
     if (ERROR_WORDS.contains(front)) {
       String message = String.format("Cannot shadow %s.", name);
       throw new IllegalArgumentException(message);

@@ -7,6 +7,8 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
+
+import org.joshsim.compat.UtilityLayer;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.parse.ParseResult;
@@ -16,6 +18,12 @@ import org.joshsim.lang.parse.ParseResult;
  * Strategy to interpret a Josh program into a single JoshProgram.
  */
 public class JoshInterpreter {
+
+  private final UtilityLayer utilityLayer;
+
+  public JoshInterpreter(UtilityLayer utilityLayer) {
+    this.utilityLayer = utilityLayer;
+  }
 
   /**
    * Interpret a Josh source into a JoshProgram.
@@ -30,7 +38,7 @@ public class JoshInterpreter {
 
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter();
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter);
+    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter, utilityLayer);
     Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();
@@ -59,7 +67,7 @@ public class JoshInterpreter {
 
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter();
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter);
+    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter, utilityLayer);
     Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();

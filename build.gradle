@@ -71,7 +71,7 @@ dependencies {
 
 teavm {
   wasmGC {
-    mainClass = "org.joshsim.JoshSimFacade"
+    mainClass = "org.joshsim.JoshSimJsFacade"
     addedToWebApp = true
   }
 }

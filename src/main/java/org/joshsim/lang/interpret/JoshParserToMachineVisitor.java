@@ -9,7 +9,9 @@ package org.joshsim.lang.interpret;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
+
+import org.joshsim.compat.UtilityLayer;
+import org.joshsim.compat.UtilityStringJoiner;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
@@ -55,14 +57,16 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final EngineValue singleCount;
   private final EngineValue allString;
   private final EngineValue trueValue;
+  private final UtilityLayer utilityLayer;
 
   /**
    * Create a new visitor which has some commonly used values cached.
    */
-  public JoshParserToMachineVisitor(BridgeGetter bridgeGetter) {
+  public JoshParserToMachineVisitor(BridgeGetter bridgeGetter, UtilityLayer utilityLayer) {
     super();
 
     this.bridgeGetter = bridgeGetter;
+    this.utilityLayer = utilityLayer;
 
     engineValueFactory = EngineValueFactory.getDefault();
     singleCount = engineValueFactory.build(1, new Units("count"));
@@ -863,7 +867,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String candidateEventName = namePieces[namePieces.length - 1];
     boolean endsWithEventName = isEventName(candidateEventName);
 
-    StringJoiner attributeNameJoiner = new StringJoiner(".");
+    UtilityStringJoiner attributeNameJoiner = utilityLayer.buildStringJoiner(".");
     for (int i = 0; i < namePieces.length - 1; i++) {
       attributeNameJoiner.add(namePieces[i]);
     }
@@ -875,7 +879,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       eventName = candidateEventName;
     } else {
       attributeNameJoiner.add(candidateEventName);
-      attributeName = attributeNameJoiner.toString();
+      attributeName = attributeNameJoiner.compile();
       eventName = "constant";
     }
 

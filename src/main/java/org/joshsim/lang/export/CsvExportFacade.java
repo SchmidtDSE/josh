@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,7 +23,7 @@ public class CsvExportFacade implements ExportFacade {
 
   private final OutputStreamStrategy outputStrategy;
 
-  private final Queue<Task> entityQueue = new ConcurrentLinkedQueue<>();
+  private final ExportFacadeTaskQueue entityQueue = new ThreadSafeExportFacadeTaskQueue();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final AtomicBoolean active = new AtomicBoolean(false);
   private final Optional<Iterable<String>> header;
@@ -73,7 +71,7 @@ public class CsvExportFacade implements ExportFacade {
         }
 
         while (active.get()) {
-          Task task = entityQueue.poll();
+          ExportTask task = entityQueue.dequeue();
 
           if (task == null) {
             writeStrategy.flush();
@@ -114,7 +112,7 @@ public class CsvExportFacade implements ExportFacade {
 
   @Override
   public void write(Entity entity, long step) {
-    Task task = new Task(entity, step);
+    ExportTask task = new ExportTask(entity, step);
     write(task);
   }
 
@@ -124,12 +122,12 @@ public class CsvExportFacade implements ExportFacade {
    * @param task The task containing an entity and step value to be queued for export processing.
    * @throws IllegalStateException If the export process is not active when this method is invoked.
    */
-  public void write(Task task) {
+  public void write(ExportTask task) {
     if (!active.get()) {
       throw new IllegalStateException("CsvExportFacade is not active. Cannot write entities.");
     }
 
-    entityQueue.add(task);
+    entityQueue.enqueue(task);
   }
 
   /**
@@ -145,42 +143,4 @@ public class CsvExportFacade implements ExportFacade {
     }
   }
 
-  /**
-   * Represents a task containing an entity and a step value.
-   */
-  public static class Task {
-
-    private final Entity entity;
-
-    private final long step;
-
-    /**
-     * Constructs a new Task with the specified entity and step value.
-     *
-     * @param entity The entity associated with this task.
-     * @param step   The step value representing additional metadata for this task.
-     */
-    public Task(Entity entity, long step) {
-      this.entity = entity;
-      this.step = step;
-    }
-
-    /**
-     * Get the entity associated with this task.
-     *
-     * @return The entity object.
-     */
-    public Entity getEntity() {
-      return entity;
-    }
-
-    /**
-     * Get the step value for this task.
-     *
-     * @return The step value as a long.
-     */
-    public long getStep() {
-      return step;
-    }
-  }
 }
