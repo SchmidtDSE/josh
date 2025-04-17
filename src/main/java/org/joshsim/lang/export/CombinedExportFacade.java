@@ -4,12 +4,16 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.bridge;
+package org.joshsim.lang.export;
 
 import java.util.Optional;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.InnerEntityGetter;
 import org.joshsim.lang.export.ExportFacade;
 import org.joshsim.lang.export.ExportFacadeFactory;
 import org.joshsim.lang.export.ExportTarget;
@@ -27,6 +31,7 @@ public class CombinedExportFacade {
 
   private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
+  private final Optional<ExportFacade> entityExportFacade;
 
   /**
    * Constructs a facade to manage export operations across multiple export files.
@@ -37,6 +42,7 @@ public class CombinedExportFacade {
   public CombinedExportFacade(MutableEntity simEntity) {
     metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
+    entityExportFacade = getEntityExportFacade(simEntity);
   }
 
   /**
@@ -57,6 +63,17 @@ public class CombinedExportFacade {
     patchExportFacade.ifPresent(exportFacade -> stepCompleted.getPatches().forEach(
         (x) -> exportFacade.write(x, stepCompleted.getStep())
     ));
+
+    entityExportFacade.ifPresent(exportFacade -> {
+      Stream<Entity> patches = StreamSupport.stream(
+          stepCompleted.getPatches().spliterator(),
+          false
+      );
+      
+      Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
+      
+      inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep()));
+    });
   }
 
   /**
@@ -103,6 +120,18 @@ public class CombinedExportFacade {
    */
   private Optional<ExportFacade> getMetaExportFacade(MutableEntity simEntity) {
     return getExportFacade(simEntity, "exportFiles.meta");
+  }
+
+  /**
+   * Retrieves the sub-patch entity export facade based on the provided simulation entity.
+   *
+   * @param simEntity the mutable entity representing the simulation context. It is used to fetch
+   *     the attribute configuration and initialize the export facades.
+   * @return an Optional containing the relevant ExportFacade or an empty Optional if configuration
+   *     is not found.
+   */
+  private Optional<ExportFacade> getEntityExportFacade(MutableEntity simEntity) {
+    return getExportFacade(simEntity, "exportFiles.entity");
   }
 
   /**
