@@ -82,8 +82,8 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
     }
 
     String[] values = StreamSupport.stream(headerVals.spliterator(), false)
-      .map((key) -> record.getOrDefault(key, ""))
-      .toArray(String[]::new);
+        .map((key) -> record.getOrDefault(key, ""))
+        .toArray(String[]::new);
     
     printer.printRecord(values);
   }
