@@ -1,3 +1,7 @@
 modules = ["java-graalvm22.3", "bash", "nix"]
+run = "./gradlew test"
 [nix]
 channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "./gradlew test"]
