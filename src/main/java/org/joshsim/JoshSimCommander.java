@@ -141,6 +141,13 @@ public class JoshSimCommander {
     @Mixin
     private MinioOptions minioOptions = new MinioOptions();
 
+    @CommandLine.Option(
+        names = "--serial-patches",
+        description = "Run patches in serial instead of parallel",
+        defaultValue = "false"
+    )
+    private boolean serialPatches;
+
     /**
      * Runs the simulation file specified.
      *

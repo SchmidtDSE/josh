@@ -40,7 +40,7 @@ public class SimulationStepper {
    *
    * @return The timestep completed.
    */
-  public long perform() {
+  public long perform(boolean parallelPatches) {
     target.startStep();
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
@@ -49,22 +49,22 @@ public class SimulationStepper {
 
     if (isFirstStep) {
       performStream(simulation, "init");
-      performStream(patches, "init");
+      performStream(patches, "init", parallelPatches);
     }
 
     if (events.contains("start")) {
       performStream(simulation, "start");
-      performStream(patches, "start");
+      performStream(patches, "start", parallelPatches);
     }
 
     if (events.contains("step")) {
       performStream(simulation, "step");
-      performStream(patches, "step");
+      performStream(patches, "step", parallelPatches);
     }
 
     if (events.contains("end")) {
       performStream(simulation, "end");
-      performStream(patches, "end");
+      performStream(patches, "end", parallelPatches);
     }
 
     long timestepCompleted = target.getCurrentTimestep();

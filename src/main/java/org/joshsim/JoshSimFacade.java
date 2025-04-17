@@ -81,7 +81,7 @@ public class JoshSimFacade {
     exportFacade.start();
 
     while (!bridge.isComplete()) {
-      long completedStep = stepper.perform();
+      long completedStep = stepper.perform(!serialPatches);
       exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
       callback.onStep(completedStep);
 
