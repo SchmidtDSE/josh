@@ -135,7 +135,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Build everything
-        run: ./gradlew build
+        run: ./gradlew war
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
