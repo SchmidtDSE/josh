@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
@@ -398,11 +399,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue result;
     if (count == 1) {
-      result = valueFactory.build(decoratedPrototype.build());
+      MutableEntity newEntity = decoratedPrototype.build();
+      
+      result = valueFactory.build(newEntity);
     } else {
       List<EngineValue> values = new ArrayList<>();
       for (int i = 0; i < count; i++) {
-        values.add(valueFactory.build(decoratedPrototype.build()));
+        MutableEntity newEntity = decoratedPrototype.build();
+        values.add(valueFactory.build(newEntity));
       }
       result = valueFactory.buildRealizedDistribution(values, new Units(entityType));
     }
