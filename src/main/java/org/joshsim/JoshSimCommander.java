@@ -182,7 +182,8 @@ public class JoshSimCommander {
       JoshSimFacade.runSimulation(
           program,
           simulation,
-          (step) -> output.printInfo(String.format("Completed step %d.", step))
+          (step) -> output.printInfo(String.format("Completed step %d.", step)),
+          serialPatches
       );
 
       if (minioOptions.isMinioOutput()) {
