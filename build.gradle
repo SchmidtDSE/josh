@@ -75,10 +75,7 @@ teavm {
   wasmGC {
     mainClass = "org.joshsim.JoshJsSimFacade"
     addedToWebApp = true
-    // Replace StringJoiner with custom implementation for WASM
-    minifying = true
-    optimizationLevel = "FULL"
-    targetType = "JAVASCRIPT"
+    
     classAlias = [
       "java.util.StringJoiner": "org.joshsim.compat.JsStringJoiner"
     ]
