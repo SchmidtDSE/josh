@@ -8,9 +8,9 @@ package org.joshsim.compat;
 
 import org.teavm.jso.JSObject;
 import org.teavm.jso.core.JSString;
-import org.teavm.javajs.api.ReplaceName;
+import org.teavm.jso.core.Rename;
 
-@ReplaceName("java.util.StringJoiner")
+@Rename("java.util.StringJoiner")
 
 
 /**
