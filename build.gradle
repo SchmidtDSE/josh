@@ -1,5 +1,3 @@
-import org.teavm.tooling.TeaVMTool
-
 plugins {
   id "java"
   id "war"
@@ -57,7 +55,6 @@ dependencies {
   // Interaction with browser
   implementation("org.teavm:teavm-core:0.11.0")
   implementation("org.teavm:teavm-jso:0.11.0")
-  implementation("org.teavm:teavm-javajs-api:0.11.0")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
