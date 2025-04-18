@@ -44,7 +44,7 @@ dependencies {
 
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0-M3")
-  
+
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 
@@ -75,8 +75,9 @@ teavm {
   wasmGC {
     mainClass = "org.joshsim.JoshJsSimFacade"
     addedToWebApp = true
-    
-    classAlias = [
+
+    // Replace StringJoiner with custom implementation for WASM
+    classAliases = [
       "java.util.StringJoiner": "org.joshsim.compat.JsStringJoiner"
     ]
   }
@@ -166,23 +167,23 @@ spotless {
     leadingTabsToSpaces(2)
     trimTrailingWhitespace()
     endWithNewline()
-    
+
     custom 'ensure empty line at end', {
       def last = it[-1]
       return last == '\n' ? it : it + '\n'
     }
-    
+
     custom 'ensure space after typecast', {
       return it.replaceAll('\\)([a-zA-Z0-9_])', ') $1')
     }
-    
+
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
       }
       return it
     }
-    
+
   }
 }
 
