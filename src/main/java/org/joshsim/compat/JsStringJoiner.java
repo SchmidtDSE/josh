@@ -6,6 +6,12 @@
 
 package org.joshsim.compat;
 
+import org.teavm.jso.JSObject;
+import org.teavm.jso.core.JSString;
+import org.teavm.javajs.api.ReplaceName;
+
+@ReplaceName("java.util.StringJoiner")
+
 
 /**
  * A compatibility implementation of the UtilityStringJoiner interface for WASM / JS runtimes.
