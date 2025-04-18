@@ -30,7 +30,7 @@ public class JoshJsSimFacade {
     JoshParser parser = new JoshParser();
     ParseResult result = parser.parse(code);
     if (result.hasErrors()) {
-      return result.getErrors().getFirst().toString();
+      return result.getErrors().get(0).toString();
     }
 
     JoshInterpreter interpreter = new JoshInterpreter();
