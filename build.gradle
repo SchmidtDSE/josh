@@ -1,3 +1,5 @@
+import org.teavm.tooling.TeaVMTool
+
 plugins {
   id "java"
   id "war"
@@ -71,7 +73,7 @@ dependencies {
 
 teavm {
   wasmGC {
-    mainClass = "org.joshsim.JoshSimFacade"
+    mainClass = "org.joshsim.JoshJsSimFacade"
     addedToWebApp = true
   }
 }
