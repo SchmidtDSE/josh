@@ -18,7 +18,7 @@ public class Grid {
    * Constructor for the Grid class.
    *
    * @param patches List of patches in the grid.
-   * @param spacing Width of a cell in the grid.
+   * @param spacing Width of a cell in the grid in meters.
    */
   public Grid(List<MutableEntity> patches, BigDecimal spacing) {
     this.patches = patches;
@@ -37,7 +37,7 @@ public class Grid {
   /**
    * Returns the width of a cell in the grid.
    *
-   * @return Width of a cell in the grid.
+   * @return Width of a cell in the grid in meters.
    */
   public BigDecimal getSpacing() {
     return spacing;

@@ -1,4 +1,4 @@
-package org.joshsim.engine.external.cog;
+package org.joshsim.geo.external.cog;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.joshsim.engine.external.core.GridCoverageReader;
+import org.joshsim.geo.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**

@@ -1,9 +1,9 @@
-package org.joshsim.engine.external.core;
+package org.joshsim.geo.external.core;
 
-import org.joshsim.engine.external.cog.CogCacheLayer;
-import org.joshsim.engine.external.cog.CogReader;
-import org.joshsim.engine.external.netcdf.NetCdfCacheLayer;
-import org.joshsim.engine.external.netcdf.NetCdfReader;
+import org.joshsim.geo.external.cog.CogCacheLayer;
+import org.joshsim.geo.external.cog.CogReader;
+import org.joshsim.geo.external.netcdf.NetCdfCacheLayer;
+import org.joshsim.geo.external.netcdf.NetCdfReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;

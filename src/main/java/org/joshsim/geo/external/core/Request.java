@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.external.core;
+package org.joshsim.geo.external.core;
 
 import java.util.Optional;
 import org.joshsim.engine.geometry.EngineGeometry;

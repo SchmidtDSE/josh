@@ -1,7 +1,7 @@
-package org.joshsim.engine.external.cog;
+package org.joshsim.geo.external.cog;
 
-import org.joshsim.engine.external.core.ExternalLayer;
-import org.joshsim.engine.external.core.GridCoverageCacheLayer;
+import org.joshsim.geo.external.core.ExternalLayer;
+import org.joshsim.geo.external.core.GridCoverageCacheLayer;
 
 /**
  * Concrete implementation of GridCoverageCacheLayer for COG files.

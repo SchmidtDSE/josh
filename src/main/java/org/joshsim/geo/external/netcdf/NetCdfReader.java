@@ -1,4 +1,4 @@
-package org.joshsim.engine.external.netcdf;
+package org.joshsim.geo.external.netcdf;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.io.netcdf.NetCDFReader;
 import org.geotools.coverage.processing.Operations;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.joshsim.engine.external.core.GridCoverageReader;
+import org.joshsim.geo.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
