@@ -7,6 +7,7 @@
 package org.joshsim;
 
 import org.joshsim.lang.interpret.JoshInterpreter;
+import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
 import org.teavm.jso.JSBody;
@@ -43,7 +44,7 @@ public class JoshJsSimFacade {
     return "";
   }
 
-  /*@JSExport
+  @JSExport
   public static void runSimulation(String code, String simulationName) {
     ParseResult result = JoshSimFacade.parse(code);
     if (result.hasErrors()) {
@@ -55,10 +56,10 @@ public class JoshJsSimFacade {
     JoshSimFacade.runSimulation(
         program,
         simulationName,
-        (x) -> JoshSimJsFacade.reportStepComplete((int) x),
+        (x) -> JoshJsSimFacade.reportStepComplete((int) x),
         true
     );
-  }*/
+  }
 
   /**
    * Required entrypoint for wasm.
