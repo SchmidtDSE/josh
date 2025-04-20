@@ -16,7 +16,6 @@ public class CompatibilityLayerKeeper {
 
   /**
    * Sets the platform-specific CompatabilityLayer implementation.
-   * This can only be done once; subsequent attempts will throw an exception.
    *
    * @param newLayer The CompatabilityLayer implementation to use
    * @throws IllegalStateException if a layer has already been set
@@ -30,8 +29,7 @@ public class CompatibilityLayerKeeper {
   }
 
   /**
-   * Returns the current CompatabilityLayer implementation.
-   * If no layer has been set, creates and returns an EmulatedCompatabilityLayer.
+   * Returns the current CompatabilityLayer implementation or a default.
    *
    * @return The current CompatabilityLayer implementation
    */

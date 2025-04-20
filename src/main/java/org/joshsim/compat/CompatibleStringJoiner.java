@@ -1,5 +1,9 @@
 package org.joshsim.compat;
 
+
+/**
+ *
+ */
 public interface CompatibleStringJoiner {
 
   /**
