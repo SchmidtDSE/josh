@@ -1,11 +1,31 @@
+
+/**
+ * Structures describing a square shape in grid space.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry.shape;
 
 import java.math.BigDecimal;
 
+/**
+ * Geometric shape representing a square in grid coordinates.
+ *
+ * <p>This class defines a square by its center point and width, providing a basic
+ * rectangular shape with equal sides for grid-based spatial operations.</p>
+ */
 public class GridSquare extends GridShape {
 
   private final BigDecimal width;
 
+  /**
+   * Create a new square in grid space.
+   *
+   * @param x The x-coordinate of the square's center point
+   * @param y The y-coordinate of the square's center point
+   * @param width The width of the square's sides
+   */
   public GridSquare(BigDecimal x, BigDecimal y, BigDecimal width) {
     super(x, y);
     this.width = width;
@@ -35,5 +55,4 @@ public class GridSquare extends GridShape {
         getWidth().toString()
     );
   }
-
 }

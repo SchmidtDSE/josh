@@ -1,12 +1,31 @@
+
+/**
+ * Structures describing a circular shape in grid space.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry.shape;
 
 import java.math.BigDecimal;
 
-
+/**
+ * Geometric shape representing a circle in grid coordinates.
+ *
+ * <p>This class defines a circle by its center point and diameter, allowing for precise
+ * circular representations in grid-based spatial systems.</p>
+ */
 public class GridCircle extends GridShape {
 
   private final BigDecimal diameter;
 
+  /**
+   * Create a new circle in grid space.
+   *
+   * @param x The x-coordinate of the circle's center point
+   * @param y The y-coordinate of the circle's center point
+   * @param radius The radius of the circle
+   */
   public GridCircle(BigDecimal x, BigDecimal y, BigDecimal radius) {
     super(x, y);
     diameter = radius.multiply(BigDecimal.TWO);
@@ -36,5 +55,4 @@ public class GridCircle extends GridShape {
         getWidth().toString()
     );
   }
-
 }
