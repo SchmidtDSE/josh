@@ -70,7 +70,7 @@ public class JoshSimFacade {
    *     processed in parallel.
    */
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
-        String simulationName, SimulationStepCallback callback) {
+        String simulationName, SimulationStepCallback callback, boolean serialPatches) {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
