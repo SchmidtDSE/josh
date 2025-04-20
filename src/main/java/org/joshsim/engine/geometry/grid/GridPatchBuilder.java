@@ -43,21 +43,16 @@ public class GridPatchBuilder implements PatchBuilder {
    */
   @Override
   public PatchSet build() {
-    // Get the corner coordinates
     BigDecimal minX = extents.getTopLeftX();
     BigDecimal maxX = extents.getBottomRightX();
     BigDecimal minY = extents.getTopLeftY();
     BigDecimal maxY = extents.getBottomRightY();
     
-    // Calculate number of cells in each direction
     long numCellsX = maxX.subtract(minX).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
     long numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
     
     List<MutableEntity> patches = new ArrayList<>();
-
     BigDecimal halfWidth = cellWidth.divide(BigDecimal.TWO);
-    
-    // Create grid cells
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
         BigDecimal offsetX = cellWidth.multiply(new BigDecimal(x));
