@@ -1,14 +1,18 @@
+/**
+ * StringJoiner for WASM.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.compat;
+
 
 /**
  * A WebAssembly-compatible implementation of CompatibleStringJoiner.
  *
- * <p>This implementation provides string joining functionality for WebAssembly environments
- * where Java's StringJoiner is not available. It maintains internal state to track the
- * first element and builds the joined string incrementally.</p>
+ * <p>This implementation provides string joining functionality for WebAssembly environments where
+ * Java's StringJoiner is not available.</p>
  */
-package org.joshsim.compat;
-
-
 public class EmulatedStringJoiner implements CompatibleStringJoiner {
 
   private final String delim;

@@ -1,3 +1,13 @@
+/**
+ * WASM-compatible queue service implementation.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.compat;
+
+import java.util.Optional;
+
 
 /**
  * A WebAssembly-compatible implementation of QueueService.
@@ -6,11 +16,6 @@
  * where traditional JVM threading and queuing mechanisms are not available. It directly
  * forwards events to the callback handler without actual queuing.</p>
  */
-package org.joshsim.compat;
-
-import java.util.Optional;
-
-
 public class EmulatedQueueService implements QueueService {
 
   private final QueueServiceCallback callback;

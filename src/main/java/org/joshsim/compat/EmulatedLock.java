@@ -1,3 +1,11 @@
+/**
+ * WASM-compatible lock.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.compat;
+
 
 /**
  * A WebAssembly-compatible implementation of CompatibleLock.
@@ -6,9 +14,6 @@
  * where traditional JVM synchronization primitives are not available. The lock operations
  * are currently no-ops since WebAssembly is single-threaded.</p>
  */
-package org.joshsim.compat;
-
-
 public class EmulatedLock implements CompatibleLock {
 
   @Override
