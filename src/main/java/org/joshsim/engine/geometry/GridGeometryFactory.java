@@ -1,3 +1,9 @@
+/**
+ * Structures describing geometric shapes and their properties in grid space.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
@@ -5,6 +11,13 @@ import org.joshsim.engine.geometry.shape.GridCircle;
 import org.joshsim.engine.geometry.shape.GridPoint;
 import org.joshsim.engine.geometry.shape.GridSquare;
 
+/**
+ * Factory for creating geometric shapes in grid space.
+ *
+ * <p>This factory provides methods to create basic geometric shapes like squares,
+ * circles and points in a grid-based coordinate system. All measurements and
+ * coordinates use BigDecimal for precise calculations.</p>
+ */
 public class GridGeometryFactory implements EngineGeometryFactory {
 
   @Override
