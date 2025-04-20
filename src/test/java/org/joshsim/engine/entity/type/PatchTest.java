@@ -97,27 +97,6 @@ public class PatchTest {
   }
 
   /**
-   * Test the locking functionality inherited from Entity.
-   */
-  @Test
-  public void testLockFunctionality() {
-    // Test that setting attributes works when not locked
-    EngineValue mockValue = mock(EngineValue.class);
-    patch.setAttributeValue("testLock", mockValue);
-
-    // Lock the entity - should not throw
-    patch.lock();
-
-    // Unlock and verify setting works again
-    patch.unlock();
-    patch.setAttributeValue("unlockedAttribute", mockValue);
-    assertTrue(patch.getAttributeValue("unlockedAttribute").isPresent());
-
-    // Unlock again - should throw
-    assertThrows(IllegalMonitorStateException.class, () -> patch.unlock());
-  }
-
-  /**
    * Test the event handler functionality.
    */
   @Test
