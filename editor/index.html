@@ -50,36 +50,59 @@
             </div>
             <div id="code-buttons-panel" class="buttons-panel">
               <div id="available-panel">
-                <a class="primary" id="run-button" href="#loading">Run on Your Computer</a>
-                <a class="secondary" id="cloud-button" href="#cloud">Run in Cloud</a>
-                <a class="secondary" id="cli-button" href="#cli">Run on CLI</a>
+                <a class="primary" id="open-run-dialog-button" href="#loading">Run on Your Computer</a>
+                <a class="secondary" id="open-cloud-dialog-button" href="#cloud">Run in Cloud</a>
+                <a class="secondary" id="open-cli-dialog-button" href="#cli">Run on CLI</a>
               </div>
-              <div id="loading">Loading please wait...</div>
+              <dialog id="run-local-dialog">
+                <h2>Run Local</h2>
+                <p>This will run your simulation in your browser using your computer.</p>
+                <div class="form-group">
+                  <div><label for="simulation-name">Simulation:</label></div>
+                  <div class="sel long">
+                    <select class="simulation-select"></select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div><label for="simulation-name">Replicates:</label></div>
+                  <div class="sel long">
+                    <input class="replicates-input" type="number" value="1">
+                  </div>
+                </div>
+                <div class="dialog-buttons bold-buttons">
+                  <a href="#" class="run-button primary">Open</a>
+                  <a href="#" class="cancel-button destructive">Cancel</a>
+                </div>
+              </dialog>
             </div>
           </div>
         </section>
         <section id="results">
           <h2>Results</h2>
           <ul data-tabs>
-            <li><a data-tabby-default href="#status">Status</a></li>
-            <li><a href="#simulation">Simulation</a></li>
-            <li><a href="#patches">Patches</a></li>
-            <li><a href="#entites">Entites</a></li>
+            <li><a data-tabby-default href="#status-tab">Status</a></li>
+            <li><a href="#simulation-tab">Simulation</a></li>
+            <li><a href="#patches-tab">Patches</a></li>
+            <li><a href="#entites-tab">Entites</a></li>
           </ul>
 
-          <div id="status">
+          <div class="status-tab tab" id="status-tab">
             <h3>Execution status</h3>
-            <div>In progress.</div>
+            <div>
+              <div class="running-indicator">
+                ⌛ Completed <span class="completed-count"></span> timesteps...
+              </div>
+            </div>
           </div>
-          <div id="simulation">
+          <div class="simulation-tab tab" id="simulation-tab">
             <h3>Simulation-wide results</h3>
             <div>In progress.</div>
           </div>
-          <div id="patches">
+          <div class="patches-tab tab" id="patches-tab">
             <h3>Patch-level results</h3>
             <div>In progress.</div>
           </div>
-          <div id="entities">
+          <div class="entities-tab tab" id="entites-tab">
             <h3>Entity-level results</h3>
             <div>In progress.</div>
           </div>
@@ -100,14 +123,33 @@
         "imports": {
           "editor": "./js/editor.js?v=EPOCH",
           "file": "./js/file.js?v=EPOCH",
-          "main": "./js/main.js?v=EPOCH"
+          "main": "./js/main.js?v=EPOCH",
+          "results": "./js/results.js?v=EPOCH",
+          "run": "./js/run.js?v=EPOCH",
+          "wasm": "./js/wasm.js?v=EPOCH"
         }
+      }
+    </script>
+
+    <script type="text/javascript" charset="utf-8" src="/war/wasm-gc/JoshSim.wasm-runtime.js"></script>
+    
+    <script>
+      var globalMainPresenter = null;
+
+      function reportStepComplete(completed) {
+        globalMainPresenter.onStepCompleted(completed);
       }
     </script>
 
     <script type="module">
       import {main} from "main";
-      main();
+
+      async function scaffold() {
+        const teavm = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
+        globalMainPresenter = main(teavm);
+      }
+
+      setTimeout(scaffold, 500);
     </script>
   </body>
 </html>

@@ -185,6 +185,19 @@ main {
   background-color: #5050C0;
 }
 
+.buttons-panel a.destructive, .buttons-panel a.destructive:link, .buttons-panel a.destructive:visited {
+  background-color: #F0B0B0;
+  color: black;
+  border-radius: 10px;
+  padding: 7px;
+  text-decoration: none;
+}
+
+.buttons-panel a.destructive:focus, .buttons-panel a.destructive:hover, .buttons-panel a.destructive:active {
+  background-color: #F01010;
+  color: white;
+}
+
 .buttons-panel a.secondary, .buttons-panel a.secondary:link, .buttons-panel a.secondary:visited {
   background-color: #E0E0E0;
   color: black;
@@ -266,6 +279,10 @@ main {
 .sel:hover::after {
   transform: translateY(-50%) rotate(90deg);
   color: #ff1212;
+}
+
+.tab {
+  padding: 5px;
 }
 
 .tos section.major {

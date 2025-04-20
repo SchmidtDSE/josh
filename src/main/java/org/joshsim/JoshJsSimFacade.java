@@ -6,11 +6,15 @@
 
 package org.joshsim;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
+import org.joshsim.compat.EmulatedCompatabilityLayer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
+import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.teavm.jso.JSBody;
 import org.teavm.jso.JSExport;
@@ -30,10 +34,18 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String validate(String code) {
+    setupForWasm();
+
     JoshParser parser = new JoshParser();
     ParseResult result = parser.parse(code);
     if (result.hasErrors()) {
-      return result.getErrors().get(0).toString();
+      ParseError first = result.getErrors().get(0);
+      String lineMessage = String.format(
+          "On line %d: %s",
+          first.getLine(),
+          first.getMessage()
+      );
+      return lineMessage;
     }
 
     JoshInterpreter interpreter = new JoshInterpreter();
@@ -44,6 +56,33 @@ public class JoshJsSimFacade {
     }
 
     return "";
+  }
+
+  /**
+   * Get a list of simulations found within the given code.
+   *
+   * @param code The Josh source code to parse and extract simulations.
+   * @throws RuntimeException If parsing the code results in errors.
+   */
+  @JSExport
+  public static String getSimulations(String code) {
+    setupForWasm();
+
+    ParseResult result = JoshSimFacadeUtil.parse(code);
+    if (result.hasErrors()) {
+      throw new RuntimeException("Failed on: " + result.getErrors().getFirst().toString());
+    }
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+
+    CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
+    for (String name : program.getSimulations().getSimulations()) {
+      stringJoiner.add(name);
+    }
+
+    return stringJoiner.toString();
   }
 
   /**
@@ -60,22 +99,35 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static void runSimulation(String code, String simulationName) {
-    ParseResult result = JoshSimFacade.parse(code);
+    setupForWasm();
+
+    ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
       throw new RuntimeException("Failed on: " + result.getErrors().getFirst().toString());
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
 
-    JoshSimFacade.runSimulation(
+    JoshSimFacadeUtil.runSimulation(
         geometryFactory,
         program,
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),
         true
     );
+  }
+
+  /**
+   * Configures the system for execution within a WebAssembly (Wasm) environment.
+   *
+   * <p>This method sets the platform-specific compatibility layer to an instance of
+   * EmulatedCompatabilityLaye}, which provides the necessary abstractions to enable simulations to
+   * run within the WebAssembly virtual machine.</p>
+   */
+  private static void setupForWasm() {
+    CompatibilityLayerKeeper.set(new EmulatedCompatabilityLayer());
   }
 
   /**

@@ -26,10 +26,6 @@ public class CompatibilityLayerKeeper {
    * @throws IllegalStateException if a layer has already been set
    */
   public static void set(CompatabilityLayer newLayer) {
-    if (layer.isPresent()) {
-      throw new IllegalStateException("Layer already set");
-    }
-
     layer = Optional.of(newLayer);
   }
 
