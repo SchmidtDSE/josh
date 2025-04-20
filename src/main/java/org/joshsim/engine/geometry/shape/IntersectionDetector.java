@@ -14,32 +14,29 @@ import java.math.BigDecimal;
  */
 public class IntersectionDetector {
 
-  
   /**
- * Determines if two grid shapes intersect by delegating to the appropriate
- * intersection detection method based on shape types.
- *
- * <p>This method serves as the main entry point for intersection detection,
- * routing the calculation to specialized methods based on the geometric types
- * involved.</p>
- *
- * @param shape1 The first shape to check for intersection
- * @param shape2 The second shape to check for intersection
- * @return true if the shapes intersect, false otherwise
- */
-public static boolean intersect(GridShape shape1, GridShape shape2) {
-    return switch(shape1.getGridShapeType()) {
-      case POINT -> switch(shape2.getGridShapeType()) {
+   * Determines if two grid shapes intersect.
+   *
+   * <p>This method serves as the main entry point for intersection detection, routing the
+   * calculation to specialized methods based on the geometric types involved.</p>
+   *
+   * @param shape1 The first shape to check for intersection
+   * @param shape2 The second shape to check for intersection
+   * @return true if the shapes intersect, false otherwise
+   */
+  public static boolean intersect(GridShape shape1, GridShape shape2) {
+    return switch (shape1.getGridShapeType()) {
+      case POINT -> switch (shape2.getGridShapeType()) {
         case POINT -> pointPointIntersection(shape1, shape2);
         case SQUARE -> squareSquareIntersection(shape1, shape2);
         case CIRCLE -> circleCircleIntersection(shape1, shape2);
       };
-      case SQUARE -> switch(shape2.getGridShapeType()) {
+      case SQUARE -> switch (shape2.getGridShapeType()) {
         case POINT -> squareSquareIntersection(shape1, shape2);
         case SQUARE -> squareSquareIntersection(shape1, shape2);
         case CIRCLE -> squareCircleIntersection(shape1, shape2);
       };
-      case CIRCLE -> switch(shape2.getGridShapeType()) {
+      case CIRCLE -> switch (shape2.getGridShapeType()) {
         case POINT -> shape1.equals(shape2);
         case SQUARE -> squareCircleIntersection(shape2, shape1);
         case CIRCLE -> circleCircleIntersection(shape1, shape2);
@@ -80,10 +77,10 @@ public static boolean intersect(GridShape shape1, GridShape shape2) {
     BigDecimal y2Min = square2.getCenterY().subtract(radius2);
     BigDecimal y2Max = square2.getCenterY().add(radius2);
 
-    boolean xInRange = x1Min.compareTo(x2Max) < 0 && x1Max.compareTo(x2Min) > 0;
-    boolean yInRange = y1Min.compareTo(y2Max) < 0 && y1Max.compareTo(y2Min) > 0;
+    boolean inRangeX = x1Min.compareTo(x2Max) < 0 && x1Max.compareTo(x2Min) > 0;
+    boolean inRangeY = y1Min.compareTo(y2Max) < 0 && y1Max.compareTo(y2Min) > 0;
 
-    return xInRange && yInRange;
+    return inRangeX && inRangeY;
   }
 
   /**
@@ -94,11 +91,11 @@ public static boolean intersect(GridShape shape1, GridShape shape2) {
    * @return true if the circles overlap, false otherwise
    */
   private static boolean circleCircleIntersection(GridShape circle1, GridShape circle2) {
-    BigDecimal distanceX = circle1.getCenterX().subtract(circle2.getCenterX());
-    BigDecimal distanceXSquared = distanceX.multiply(distanceX);
-    BigDecimal distanceY = circle1.getCenterY().subtract(circle2.getCenterY());
-    BigDecimal distanceYSquared = distanceY.multiply(distanceY);
-    BigDecimal distanceSquared = distanceXSquared.add(distanceYSquared);
+    BigDecimal distanceForX = circle1.getCenterX().subtract(circle2.getCenterX());
+    BigDecimal distanceSquaredForX = distanceForX.multiply(distanceForX);
+    BigDecimal distanceForY = circle1.getCenterY().subtract(circle2.getCenterY());
+    BigDecimal distanceSquaredForY = distanceForY.multiply(distanceForY);
+    BigDecimal distanceSquared = distanceSquaredForX.add(distanceSquaredForY);
 
     BigDecimal radius1 = circle1.getWidth().divide(BigDecimal.TWO);
     BigDecimal radius2 = circle2.getWidth().divide(BigDecimal.TWO);

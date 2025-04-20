@@ -98,6 +98,20 @@ public class EarthGeometry implements EngineGeometry {
     return innerGeometry.intersects(point);
   }
 
+  /**
+   * Checks if this geometry intersects with another.
+   */
+  public boolean intersects(EngineGeometry other) {
+    // TODO: Remove cast
+    EarthGeometry otherEarth = other.getOnEarth();
+
+    // Ensure both geometries use the same CRS
+    if (!CRS.equalsIgnoreMetadata(crs, otherEarth.getCrs())) {
+      otherEarth = otherEarth.asTargetCrs(crs);
+    }
+    return getInnerGeometry().intersects(otherEarth.getInnerGeometry());
+  }
+
   @Override
   public EarthGeometry getOnEarth() {
     return this;
@@ -113,20 +127,6 @@ public class EarthGeometry implements EngineGeometry {
   @Override
   public EnginePoint getCenter() {
     return null;
-  }
-
-  /**
-   * Checks if this geometry intersects with another.
-   */
-  public boolean intersects(EngineGeometry other) {
-    // TODO: Remove cast
-    EarthGeometry otherEarth = other.getOnEarth();
-
-    // Ensure both geometries use the same CRS
-    if (!CRS.equalsIgnoreMetadata(crs, otherEarth.getCrs())) {
-      otherEarth = otherEarth.asTargetCrs(crs);
-    }
-    return getInnerGeometry().intersects(otherEarth.getInnerGeometry());
   }
 
   /**

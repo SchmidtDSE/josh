@@ -1,3 +1,9 @@
+/**
+ * Test for grid space intersection.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry.shape;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,10 +17,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
+/**
+ * Tests for grid space intersection.
+ */
 public class IntersectionDetectorTest {
 
   private EngineGeometryFactory factory;
 
+  /**
+   * Make common structures for intersection detector tests.
+   */
   @BeforeEach
   public void setUp() {
     factory = new GridGeometryFactory();
