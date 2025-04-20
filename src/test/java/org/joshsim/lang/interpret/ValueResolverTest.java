@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -58,7 +59,7 @@ public class ValueResolverTest {
     when(mockHandler.getAttributeName()).thenReturn("testAttr");
     when(mockGroup.getEventHandlers()).thenReturn(Arrays.asList(mockHandler));
     when(mockEntity.getEventHandlers()).thenReturn(Arrays.asList(mockGroup, mockNestedGroup));
-    when(mockEntity.getAttributeNames()).thenReturn(Arrays.asList("nested"));
+    when(mockEntity.getAttributeNames()).thenReturn(Set.of("nested"));
 
     // Configure mock for direct value test
     when(mockScope.get("direct")).thenReturn(mockDirectValue);

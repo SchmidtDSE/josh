@@ -7,11 +7,14 @@
 package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -39,6 +42,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
+  private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
   private final MutableEntity inner;
   private final Entity here;
@@ -46,6 +50,8 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvedAttributes;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
+  private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+
   private boolean checkAssertions;
 
   /**
@@ -69,6 +75,7 @@ public class ShadowingEntity implements MutableEntity {
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
+    handlersForAttribute = new HashMap<>();
   }
 
   /**
@@ -86,6 +93,7 @@ public class ShadowingEntity implements MutableEntity {
     resolvedAttributes = new HashSet<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
+    handlersForAttribute = new HashMap<>();
   }
 
   /**
@@ -93,7 +101,7 @@ public class ShadowingEntity implements MutableEntity {
    *
    * @return Iterable over attribute names as Strings.
    */
-  public Iterable<String> getAttributeNames() {
+  public Set<String> getAttributeNames() {
     return scope.getAttributes();
   }
 
@@ -115,27 +123,42 @@ public class ShadowingEntity implements MutableEntity {
 
     String state = getState();
 
-    EventKey eventKeyWithoutState = new EventKey(attribute, substep.get());
-    Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
+    return getHandlersForAttribute(attribute, substep.get(), state);
+  }
 
-    Optional<EventHandlerGroup> withState;
-    if (!state.isBlank()) {
-      EventKey eventKeyWithState = new EventKey(state, attribute, substep.get());
-      withState = inner.getEventHandlers(eventKeyWithState);
-    } else {
-      withState = Optional.empty();
+  private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
+      String state) {
+    StringJoiner keyJoiner = new StringJoiner("\t");
+    keyJoiner.add(attribute);
+    keyJoiner.add(substep);
+    keyJoiner.add(state);
+    String key = keyJoiner.toString();
+
+    if (!handlersForAttribute.containsKey(key)) {
+      EventKey eventKeyWithoutState = new EventKey(attribute, substep);
+      Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
+
+      Optional<EventHandlerGroup> withState;
+      if (!state.isBlank()) {
+        EventKey eventKeyWithState = new EventKey(state, attribute, substep);
+        withState = inner.getEventHandlers(eventKeyWithState);
+      } else {
+        withState = Optional.empty();
+      }
+
+      List<EventHandlerGroup> matching = new ArrayList<>(2);
+      if (withoutState.isPresent()) {
+        matching.add(withoutState.get());
+      }
+
+      if (withState.isPresent()) {
+        matching.add(withState.get());
+      }
+
+      handlersForAttribute.put(key, matching);
     }
 
-    List<EventHandlerGroup> matching = new ArrayList<>(2);
-    if (withoutState.isPresent()) {
-      matching.add(withoutState.get());
-    }
-
-    if (withState.isPresent()) {
-      matching.add(withState.get());
-    }
-
-    return matching;
+    return handlersForAttribute.get(key);
   }
 
   /**
@@ -232,13 +255,13 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
-   * Verify that an attribute exists on this entity.
+   * Verify that an attribute exists on this entity if enabled.
    *
    * @param name unique identifier of the attribute to verify.
    * @throws IllegalArgumentException if the attribute is not found.
    */
   private void assertAttributePresent(String name) {
-    if (hasAttribute(name)) {
+    if (ASSERT_VALUE_PRESENT_DEBUG || hasAttribute(name)) {
       return;
     }
 
@@ -345,7 +368,7 @@ public class ShadowingEntity implements MutableEntity {
 
     // If failed to match, use prior
     if (executed) {
-      if (name.startsWith("assert.")) {
+      if (checkAssertions && name.startsWith("assert.")) {
         Optional<EngineValue> result = getAttributeValue(name);
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();
@@ -424,12 +447,14 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void startSubstep(String name) {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
     resolvedAttributes.clear();
   }
 
   @Override
   public void endSubstep() {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
     resolvingAttributes.clear();
     inner.endSubstep();
   }

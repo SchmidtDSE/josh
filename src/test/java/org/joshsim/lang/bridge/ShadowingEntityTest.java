@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -25,6 +26,7 @@ import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,8 +56,9 @@ public class ShadowingEntityTest {
     when(mockPatch.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandlerGroup));
     when(mockSpatialEntity.getAttributeNames()).thenReturn(
-        Arrays.asList("testAttr", "noHandlerAttr")
+        Set.of("testAttr", "noHandlerAttr")
     );
+    when(mockEngineValue.getLanguageType()).thenAnswer(x -> new LanguageType("test", false));
 
     patchEntity = new ShadowingEntity(mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(mockSpatialEntity, patchEntity, mockSimulation);
@@ -93,7 +96,6 @@ public class ShadowingEntityTest {
     Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
 
     assertFalse(result.isEmpty());
-    verify(mockSpatialEntity).getAttributeValue(attrName);
     spatialEntity.endSubstep();
   }
 
@@ -119,7 +121,7 @@ public class ShadowingEntityTest {
   @Test
   void testResolvePriorValueWhenNoHandlers() {
     String attrName = "noHandlerAttr";
-    when(mockSpatialEntity.getAttributeNames()).thenReturn(Arrays.asList(attrName));
+    when(mockSpatialEntity.getAttributeNames()).thenReturn(Set.of(attrName));
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
 
     spatialEntity.startSubstep("test");
@@ -134,7 +136,9 @@ public class ShadowingEntityTest {
   void testResolveValueThroughEventHandlerGroup() {
     String attrName = "testAttr";
     String substepName = "test";
+
     EngineValue handlerValue = mock(EngineValue.class);
+    when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
     EventKey eventKey = new EventKey(attrName, substepName);
     CompiledCallable mockCallable = mock(CompiledCallable.class);

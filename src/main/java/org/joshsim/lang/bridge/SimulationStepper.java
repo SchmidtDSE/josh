@@ -1,10 +1,12 @@
 package org.joshsim.lang.bridge;
 
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
+import org.joshsim.engine.entity.handler.EventKey;
 
 
 /**
@@ -13,6 +15,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SimulationStepper {
 
   private final EngineBridge target;
+  private final Set<String> events;
 
   /**
    * Create a new stepper around a bridge.
@@ -21,14 +24,25 @@ public class SimulationStepper {
    */
   public SimulationStepper(EngineBridge target) {
     this.target = target;
+
+    MutableEntity simulation = target.getSimulation();
+    Iterable<MutableEntity> patches = target.getCurrentPatches();
+
+    events = StreamSupport.stream(patches.spliterator(), false)
+        .flatMap((x) -> StreamSupport.stream(x.getEventHandlers().spliterator(), false))
+        .map(EventHandlerGroup::getEventKey)
+        .map(EventKey::getEvent)
+        .collect(Collectors.toSet());
   }
 
   /**
-   * Operation to take a setp within an EngineBridge.
+   * Operation to take a step within an EngineBridge.
    *
+   * @param serialPatches If false, patches will be processed in parallel. If true, they will be
+   *     processed serially.
    * @return The timestep completed.
    */
-  public long perform() {
+  public long perform(boolean serialPatches) {
     target.startStep();
 
     boolean isFirstStep = target.getAbsoluteTimestep() == 0;
@@ -37,20 +51,28 @@ public class SimulationStepper {
 
     if (isFirstStep) {
       performStream(simulation, "init");
-      performStream(patches, "init");
+      performStream(patches, "init", serialPatches);
     }
 
-    performStream(simulation, "start");
-    performStream(patches, "start");
+    if (events.contains("start")) {
+      performStream(simulation, "start");
+      performStream(patches, "start", serialPatches);
+    }
 
-    performStream(simulation, "step");
-    performStream(patches, "step");
+    if (events.contains("step")) {
+      performStream(simulation, "step");
+      performStream(patches, "step", serialPatches);
+    }
 
-    performStream(simulation, "end");
-    performStream(patches, "end");
+    if (events.contains("end")) {
+      performStream(simulation, "end");
+      performStream(patches, "end", serialPatches);
+    }
 
     long timestepCompleted = target.getCurrentTimestep();
     target.endStep();
+
+    System.gc();
 
     return timestepCompleted;
   }
@@ -60,9 +82,12 @@ public class SimulationStepper {
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
+   * @param serial Flag indicating if entities should be executed in parallel. If false, will
+   *     execute in parallel. Otherwise, will use a serial stream.
    */
-  private void performStream(Iterable<MutableEntity> entities, String subStep) {
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), true);
+  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
+    boolean parallel = !serial;
+    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
     performStream(entityStream, subStep);
   }
 
@@ -97,34 +122,24 @@ public class SimulationStepper {
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
     target.startSubstep(subStep);
-
-    StreamSupport.stream(target.getAttributeNames().spliterator(), false)
-        .map((x) -> {
-          return target.getAttributeValue(x);
-        })
-        .filter((x) -> x.isPresent())
-        .map((x) -> x.get())
-        .filter((x) -> x.getLanguageType().containsAttributes())
-        .forEach((x) -> {
-          Optional<Integer> sizeMaybe = x.getSize();
-          if (sizeMaybe.isEmpty()) {
-            return;
-          }
-
-          int size = sizeMaybe.get();
-          if (size == 1) {
-            updateEntity(x.getAsMutableEntity(), subStep);
-          } else {
-            Iterable<EngineValue> values = x.getAsDistribution().getContents(size, false);
-            for (EngineValue value : values) {
-              updateEntity(value.getAsMutableEntity(), subStep);
-            }
-          }
-        });
-
+    updateEntityUnsafe(target);
     target.endSubstep();
 
     return target;
+  }
+
+  /**
+   * Resolve all properties inside of a mutable entity, recursing to update on inner entities.
+   *
+   * <p>Resolve all attributes of a mutable entity and then look for inner entities found inside the
+   * target. Recurse on those targets afterwards to update. This method assumes that a substep has
+   * already started for target and its internal entities.</p>
+   *
+   * @param target The root MutableEntity to be updated and within which inner entities are
+   *     recursively updated.
+   */
+  private void updateEntityUnsafe(MutableEntity target) {
+    InnerEntityGetter.getInnerEntities(target).forEach(this::updateEntityUnsafe);
   }
 
 }

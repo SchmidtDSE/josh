@@ -161,7 +161,7 @@ class RealizedDistributionTest {
       assertEquals((i + 1) * 2, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m*s"), result.getUnits());
+    assertEquals(new Units("m * s"), result.getUnits());
   }
 
   void testMultiplyReverse() {
@@ -371,7 +371,7 @@ class RealizedDistributionTest {
   void testSample() {
     // Since sampling is random, we'll verify that multiple samples fall within expected range
     for (int i = 0; i < 100; i++) {
-      Scalar result = distribution.sample();
+      EngineValue result = distribution.sample();
       assertTrue(result instanceof IntScalar);
       IntScalar scalar = (IntScalar) result;
       // Values should be between 1 and 5 inclusive

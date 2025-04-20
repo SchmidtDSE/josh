@@ -21,3 +21,6 @@ src-generated
 
 # Log files
 *.log
+
+# Editor third-party files
+editor/third_party

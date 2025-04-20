@@ -1,5 +1,6 @@
 plugins {
   id "java"
+  id "war"
   id "eclipse" // optional (to generate Eclipse project files)
   id "idea" // optional (to generate IntelliJ IDEA project files)
   id "application" // for creating executable JARs
@@ -41,15 +42,21 @@ dependencies {
 
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0-M3")
+  
+  // Apache Commons CSV for CSV handling
+  implementation("org.apache.commons:commons-csv:1.10.0")
 
   // Geotools for Raster transformations and COG support
   implementation("org.geotools:gt-main:32.2")
   implementation("org.geotools:gt-geotiff:32.2")
   implementation("org.geotools:gt-referencing:32.2")
   implementation("org.geotools:gt-epsg-hsql:32.2")
-
+  
   // Add NetCDF support to Geotools
   implementation("org.geotools:gt-netcdf:32.2")
+
+  // Interaction with browser
+  implementation("org.teavm:teavm-core:0.11.0")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
@@ -62,12 +69,13 @@ dependencies {
   implementation("info.picocli:picocli:4.7.6")
 
   // Minio for S3 storage
-  implementation 'io.minio:minio:8.5.2'
+  implementation("io.minio:minio:8.5.2")
 }
 
 teavm {
-  wasm {
+  wasmGC {
     mainClass = "org.joshsim.JoshSimFacade"
+    addedToWebApp = true
   }
 }
 

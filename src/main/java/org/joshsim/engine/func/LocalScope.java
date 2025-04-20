@@ -7,7 +7,9 @@
 package org.joshsim.engine.func;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -87,10 +89,14 @@ public class LocalScope implements Scope {
    * @return all attributes within this scope.
    */
   @Override
-  public Iterable<String> getAttributes() {
-    Iterable<String> outerAttributes = containingScope.getAttributes();
-    Iterable<String> innerAttributes = localValues.keySet();
-    return new CombinedAttributeNameIterable(outerAttributes, innerAttributes);
+  public Set<String> getAttributes() {
+    Set<String> outerAttributes = containingScope.getAttributes();
+    Set<String> innerAttributes = localValues.keySet();
+
+    Set<String> combined = new HashSet<>();
+    combined.addAll(outerAttributes);
+    combined.addAll(innerAttributes);
+    return combined;
   }
 
 }

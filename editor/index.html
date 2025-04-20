@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Josh Web Editor</title>
+    <link href="/third_party/tabby-ui.min.css" rel="stylesheet" type="text/css" />
+    <link href="/style/style.css?v=EPOCH" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <header>
+      <div class="beta-warning">
+        This tool is under development and currently in beta testing. We would love to hear from
+        you! Let us know your feedback at <a href="mailto:hello@joshsim.org">hello@joshsim.org</a>
+        and we are here to help if you run into any issues.
+      </div>
+      <h1>Josh Simulation Editor</h1>
+      This web-based editor allows for rapid prototyping Josh agent-based simulations from your browser. These scripts are only saved within your browser and are not sent to external servers unless requested.
+      <div class="file-buttons buttons-panel" id="file-buttons">
+        <a href="#" id="new-file-button" class="secondary">New File</a>
+        <a href="#" id="load-file-button" class="secondary">Load File</a>
+        <a href="#" download="simulation.josh" id="save-file-button" class="secondary">Save File</a>
+
+        <dialog id="load-file-dialog">
+          <h2>Open File</h2>
+          <p>Note that this will override code currently entered into the application.</p>
+          <div><label for="upload-file">File (.josh recommended):</label></div>
+          <div><input type="file" class="upload-file" id="upload-file" name="upload-file" /></div>
+          <div class="dialog-buttons bold-buttons">
+            <a href="#" class="load-button primary">Open</a>
+            <a href="#" class="cancel-button destructive">Cancel</a>
+          </div>
+        </dialog>
+      </div>
+    </header>
+
+    <section id="loading">
+      <img src="/style/90-ring.svg" alt="Loading indicator" /> Loading please wait...
+    </section>
+
+    <div id="main-holder">
+      <main id="main">
+        <section id="editor">
+          <h2>Simulation</h2>
+          <div id="code-editor-pane">
+            <div id="code-editor">
+              <div id="code-editor-inner" class="inner"></div>
+              <div class="error-display"></div>
+            </div>
+            <div id="code-buttons-panel" class="buttons-panel">
+              <div id="available-panel">
+                <a class="primary" id="run-button" href="#loading">Run on Your Computer</a>
+                <a class="secondary" id="cloud-button" href="#cloud">Run in Cloud</a>
+                <a class="secondary" id="cli-button" href="#cli">Run on CLI</a>
+              </div>
+              <div id="loading">Loading please wait...</div>
+            </div>
+          </div>
+        </section>
+        <section id="results">
+          <h2>Results</h2>
+          <ul data-tabs>
+            <li><a data-tabby-default href="#status">Status</a></li>
+            <li><a href="#simulation">Simulation</a></li>
+            <li><a href="#patches">Patches</a></li>
+            <li><a href="#entites">Entites</a></li>
+          </ul>
+
+          <div id="status">
+            <h3>Execution status</h3>
+            <div>In progress.</div>
+          </div>
+          <div id="simulation">
+            <h3>Simulation-wide results</h3>
+            <div>In progress.</div>
+          </div>
+          <div id="patches">
+            <h3>Patch-level results</h3>
+            <div>In progress.</div>
+          </div>
+          <div id="entities">
+            <h3>Entity-level results</h3>
+            <div>In progress.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="text/javascript" src="/third_party/ace.min.js"></script>
+    <script type="text/javascript" src="/third_party/ext-language_tools.js"></script>
+    <script type="text/javascript" src="/third_party/ext-options.js"></script>
+    <script type="text/javascript" src="/third_party/ext-prompt.js"></script>
+    <script type="text/javascript" src="/third_party/ext-searchbox.js"></script>
+
+    <script type="text/javascript" src="/third_party/tabby.min.js"></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "editor": "./js/editor.js?v=EPOCH",
+          "file": "./js/file.js?v=EPOCH",
+          "main": "./js/main.js?v=EPOCH"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import {main} from "main";
+      main();
+    </script>
+  </body>
+</html>

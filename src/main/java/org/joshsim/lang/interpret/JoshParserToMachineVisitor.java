@@ -64,7 +64,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     this.bridgeGetter = bridgeGetter;
 
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = EngineValueFactory.getDefault();
     singleCount = engineValueFactory.build(1, new Units("count"));
     allString = engineValueFactory.build("all", new Units(""));
     trueValue = engineValueFactory.build(true, new Units(""));
@@ -303,8 +303,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
-      machine.push(singleCount);
       targetAction.apply(machine);
+      machine.push(singleCount);
       machine.sample(true);
       return machine;
     };
@@ -541,6 +541,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
+    ReservedWordChecker.checkVariableDeclaration(identifierName);
     EventHandlerAction valAction = ctx.val.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
@@ -708,6 +709,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     }
 
     return new EventHandlerGroupFragment(groupBuilder);
+  }
+
+  public Fragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
+    Fragment fragment = ctx.getChild(0).accept(this);
+    String attributeName = fragment.getEventHandlerGroup().getAttribute();
+    ReservedWordChecker.checkVariableDeclaration(attributeName);
+    return fragment;
   }
 
   public Fragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {

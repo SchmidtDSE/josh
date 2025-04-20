@@ -68,7 +68,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     replicate = Optional.empty();
 
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
@@ -103,7 +103,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     this.replicate = Optional.of(replicate);
 
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
@@ -226,7 +226,7 @@ public class MinimalEngineBridge implements EngineBridge {
     if (replicate.isEmpty()) {
       GridFromSimFactory factory = new GridFromSimFactory(this);
       Grid grid = factory.build(simulation);
-      replicate = Optional.of(new Replicate(grid));
+      replicate = Optional.of(new Replicate(simulation, grid));
     }
 
     return replicate.get();

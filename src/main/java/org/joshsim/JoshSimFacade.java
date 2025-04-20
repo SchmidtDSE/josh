@@ -12,6 +12,7 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
+import org.joshsim.lang.export.CombinedExportFacade;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
@@ -65,6 +66,8 @@ public class JoshSimFacade {
    *     initalized from the given program.
    * @param callback A callback that will be invoked after each simulation step. This is called
    *     as blocking.
+   * @param serialPatches If true, patches will be processed serially. If false, they will be
+   *     processed in parallel.
    */
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
         String simulationName, SimulationStepCallback callback) {
@@ -76,15 +79,25 @@ public class JoshSimFacade {
         program.getConverter(),
         program.getPrototypes()
     );
+
+    CombinedExportFacade exportFacade = new CombinedExportFacade(simEntity);
     SimulationStepper stepper = new SimulationStepper(bridge);
+
+    exportFacade.start();
+
     while (!bridge.isComplete()) {
-      long completedStep = stepper.perform();
+      long completedStep = stepper.perform(!serialPatches);
+      exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
       callback.onStep(completedStep);
+
       if (completedStep > 2) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
+
+    exportFacade.join();
   }
+
 
   /**
    * Callback interface for receiving simulation step completion notifications.

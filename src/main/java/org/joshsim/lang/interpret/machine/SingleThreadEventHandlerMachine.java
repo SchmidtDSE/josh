@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.EntityScope;
@@ -69,7 +70,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = new EngineValueFactory();
+    valueFactory = EngineValueFactory.getDefault();
     random = new Random();
     isEnded = false;
   }
@@ -383,9 +384,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine createEntity(String entityType) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
+    MutableEntity parent = scope.get("current").getAsMutableEntity();
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
         prototype,
-        scope.get("current").getAsEntity()
+        parent
     );
     EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
         innerDecorated,
@@ -395,13 +397,19 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue countValue = convert(pop(), COUNT_UNITS);
     long count = countValue.getAsInt();
 
+    String substep = parent.getSubstep().orElseThrow();
+
     EngineValue result;
     if (count == 1) {
-      result = valueFactory.build(decoratedPrototype.build());
+      MutableEntity newEntity = decoratedPrototype.build();
+      EntityFastForwarder.fastForward(newEntity, substep);
+      result = valueFactory.build(newEntity);
     } else {
       List<EngineValue> values = new ArrayList<>();
       for (int i = 0; i < count; i++) {
-        values.add(valueFactory.build(decoratedPrototype.build()));
+        MutableEntity newEntity = decoratedPrototype.build();
+        EntityFastForwarder.fastForward(newEntity, substep);
+        values.add(valueFactory.build(newEntity));
       }
       result = valueFactory.buildRealizedDistribution(values, new Units(entityType));
     }

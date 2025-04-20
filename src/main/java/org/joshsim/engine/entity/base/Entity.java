@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity.base;
 
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
@@ -47,7 +48,7 @@ public interface Entity {
    * @return All attribute names available on this entity as strings. This may include non-
    *     initialized names.
    */
-  Iterable<String> getAttributeNames();
+  Set<String> getAttributeNames();
 
   /**
    * Get the type of this entity.

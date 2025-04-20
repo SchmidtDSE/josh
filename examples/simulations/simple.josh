@@ -10,6 +10,8 @@ start simulation TestSimpleSimulation
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
 
+  exportFiles.patch = "file:///tmp/simple_josh.csv"
+
 end simulation
 
 
@@ -17,16 +19,20 @@ start patch Default
 
   ForeverTree.init = create ForeverTree
 
+  export.averageAge.step = mean(ForeverTree.age)
+  export.averageHeight.step = mean(ForeverTree.height)
+
 end patch
 
 
 start organism ForeverTree
 
   age.init = 0 year
-
   age.step = prior.age + 1 year
-
   assert.age.step:if(meta.stepCount == 5 count) = current.age == 5 years
+
+  height.init = 0 meters
+  height.step = prior.height + sample uniform from 0 meters to 1 meters
 
 end organism
 
