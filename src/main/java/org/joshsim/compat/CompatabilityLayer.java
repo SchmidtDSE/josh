@@ -4,10 +4,10 @@ package org.joshsim.compat;
 import java.math.BigDecimal;
 
 /**
- * The CompatabilityLayer interface provides platform-independent implementations
- * of common utilities and services. This allows the simulation engine to run
- * consistently across different environments (JVM, Web, etc.) by abstracting
- * platform-specific implementations.
+ * Layer which offers access to platform-specific functionality (JVM vs WASM).
+ *
+ * <p>Layer which allows abstraction over different runtime virtual machines, specifically offering
+ * compatability objects which work on either a plain old JVM or in WebAssembly.</p>
  */
 public interface CompatabilityLayer {
 
