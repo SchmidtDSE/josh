@@ -1,7 +1,7 @@
 package org.joshsim.engine.geometry.shape;
 
-
 import java.math.BigDecimal;
+
 
 public class IntersectionDetector {
 
