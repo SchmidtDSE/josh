@@ -1,3 +1,8 @@
+/**
+ * Logic for a cross-VM compatability layer.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.compat;
 

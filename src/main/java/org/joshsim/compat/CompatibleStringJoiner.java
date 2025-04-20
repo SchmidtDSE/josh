@@ -1,5 +1,10 @@
-package org.joshsim.compat;
+/**
+ * Interface for a cross-VM compatability string joiner.
+ *
+ * @license BSD-3-Clause
+ */
 
+package org.joshsim.compat;
 
 /**
  *

@@ -1,5 +1,11 @@
+/**
+ * Interface for a cross-VM compatability lock.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.compat;
+
 
 /**
  * Platform-independent interface for thread synchronization locks.

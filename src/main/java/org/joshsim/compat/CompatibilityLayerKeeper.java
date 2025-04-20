@@ -1,3 +1,8 @@
+/**
+ * Logic for a singleton offering access to a compatability layer.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.compat;
 
