@@ -10,6 +10,7 @@ import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.joshsim.geo.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Reader for Cloud Optimized GeoTIFF (COG) files.
@@ -28,7 +29,7 @@ public class CogReader extends GridCoverageReader {
 
   public GridCoverage2D getCoverageFromIo(
       String path,
-      EngineGeometry geometry
+      EarthGeometry geometry
   ) throws IOException {
 
     GeoTiffReader reader = getCogReader(path);

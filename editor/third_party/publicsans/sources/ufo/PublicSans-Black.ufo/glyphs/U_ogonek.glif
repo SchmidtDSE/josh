@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Uogonek" format="2">
+  <advance width="1491"/>
+  <unicode hex="0172"/>
+  <anchor x="917" y="24" name="_ogonek"/>
+  <anchor x="759" y="0" name="bottom"/>
+  <anchor x="1314" y="1094" name="horn"/>
+  <anchor x="917" y="24" name="ogonek"/>
+  <anchor x="759" y="1446" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="749" y="-336" type="curve" smooth="yes"/>
+      <enginePoint x="849" y="-336"/>
+      <enginePoint x="941" y="-308"/>
+      <enginePoint x="981" y="-282" type="curve"/>
+      <enginePoint x="981" y="-118" type="line"/>
+      <enginePoint x="933" y="-146"/>
+      <enginePoint x="893" y="-168"/>
+      <enginePoint x="835" y="-168" type="curve" smooth="yes"/>
+      <enginePoint x="799" y="-168"/>
+      <enginePoint x="781" y="-150"/>
+      <enginePoint x="781" y="-112" type="curve" smooth="yes"/>
+      <enginePoint x="781" y="-68"/>
+      <enginePoint x="815" y="-32"/>
+      <enginePoint x="961" y="16" type="curve"/>
+      <enginePoint x="695" y="16" type="line"/>
+      <enginePoint x="543" y="-38"/>
+      <enginePoint x="513" y="-100"/>
+      <enginePoint x="513" y="-166" type="curve" smooth="yes"/>
+      <enginePoint x="513" y="-282"/>
+      <enginePoint x="607" y="-336"/>
+    </contour>
+    <component base="U"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0.97,1,0,1</string>
+    </dict>
+  </lib>
+</glyph>

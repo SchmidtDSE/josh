@@ -25,7 +25,7 @@ public class GeometryMomento {
   private final BigDecimal centerX;
   private final BigDecimal centerY;
   private final BigDecimal diameter;
-  private final CoordinateReferenceSystem crs;
+  private final EngineGeometryFactory factory;
 
   /**
    * Constructs a GeometryMomento with the specified shape parameters.
@@ -34,15 +34,16 @@ public class GeometryMomento {
    * @param centerX The x-coordinate of the shape's center.
    * @param centerY The y-coordinate of the shape's center.
    * @param diameter The diameter or width of the shape.
+   * @param factory The geometry factory to use in realizing this momento.
    * @throws IllegalArgumentException if the shape name is not supported.
    */
   public GeometryMomento(String shapeName, BigDecimal centerX, BigDecimal centerY,
-      BigDecimal diameter, CoordinateReferenceSystem crs) {
+      BigDecimal diameter, EngineGeometryFactory factory) {
     this.shapeName = shapeName;
     this.centerX = centerX;
     this.centerY = centerY;
     this.diameter = diameter;
-    this.crs = crs;
+    this.factory = factory;
 
     if (getBuilder().isEmpty()) {
       throw new IllegalArgumentException("Unsupported momento shape: " + shapeName);
@@ -61,11 +62,12 @@ public class GeometryMomento {
   @Override
   public String toString() {
     return String.format(
-      "%s momento at (%.6f, %.6f) of diameter %.6f.",
-      shapeName,
-      centerX.doubleValue(),
-      centerY.doubleValue(),
-      diameter.doubleValue()
+        "%s momento at (%.6f, %.6f) of diameter %.6f on %s.",
+        shapeName,
+        centerX.doubleValue(),
+        centerY.doubleValue(),
+        diameter.doubleValue(),
+        factory.toString()
     );
   }
 
@@ -88,10 +90,10 @@ public class GeometryMomento {
   private Optional<MomentoShapeBuilder> getBuilder() {
     return switch (shapeName) {
       case "square" -> Optional.of(
-        () -> EngineGeometryFactory.createSquare(diameter, centerX, centerY, crs)
+        () -> factory.createSquare(diameter, centerX, centerY)
       );
       case "circle" -> Optional.of(
-        () -> EngineGeometryFactory.createCircle(diameter, centerX, centerY, crs)
+        () -> factory.createCircle(diameter, centerX, centerY)
       );
       default -> Optional.empty();
     };

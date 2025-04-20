@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="one" format="2">
+  <advance width="739"/>
+  <unicode hex="0031"/>
+  <outline>
+    <contour>
+      <enginePoint x="303" y="0" type="line"/>
+      <enginePoint x="381" y="0" type="line"/>
+      <enginePoint x="585" y="1446" type="line"/>
+      <enginePoint x="522" y="1446" type="line"/>
+      <enginePoint x="505" y="1336"/>
+      <enginePoint x="457" y="1296"/>
+      <enginePoint x="209" y="1296" type="curve"/>
+      <enginePoint x="199" y="1218" type="line"/>
+      <enginePoint x="475" y="1218" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

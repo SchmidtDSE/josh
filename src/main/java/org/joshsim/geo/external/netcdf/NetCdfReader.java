@@ -9,6 +9,7 @@ import org.geotools.coverage.processing.Operations;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.joshsim.geo.external.core.GridCoverageReader;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Reader for NetCDF files.
@@ -26,7 +27,7 @@ public class NetCdfReader extends GridCoverageReader {
   @Override
   public GridCoverage2D getCoverageFromIo(
       String path,
-      EngineGeometry geometry
+      EarthGeometry geometry
   ) throws IOException {
     NetCDFReader reader = getNetCdfReader(path);
 

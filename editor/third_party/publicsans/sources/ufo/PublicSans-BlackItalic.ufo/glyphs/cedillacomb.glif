@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="cedillacomb" format="2">
+  <unicode hex="0327"/>
+  <anchor x="222" y="0" name="_bottom"/>
+  <outline>
+    <contour>
+      <enginePoint x="166" y="-438" type="curve" smooth="yes"/>
+      <enginePoint x="302" y="-438"/>
+      <enginePoint x="434" y="-372"/>
+      <enginePoint x="450" y="-268" type="curve" smooth="yes"/>
+      <enginePoint x="460" y="-194"/>
+      <enginePoint x="414" y="-104"/>
+      <enginePoint x="252" y="-104" type="curve"/>
+      <enginePoint x="310" y="10" type="line"/>
+      <enginePoint x="154" y="10" type="line"/>
+      <enginePoint x="54" y="-162" type="line" smooth="yes"/>
+      <enginePoint x="40" y="-184"/>
+      <enginePoint x="50" y="-186"/>
+      <enginePoint x="70" y="-186" type="curve" smooth="yes"/>
+      <enginePoint x="204" y="-186"/>
+      <enginePoint x="242" y="-214"/>
+      <enginePoint x="236" y="-262" type="curve" smooth="yes"/>
+      <enginePoint x="230" y="-294"/>
+      <enginePoint x="190" y="-314"/>
+      <enginePoint x="136" y="-314" type="curve" smooth="yes"/>
+      <enginePoint x="78" y="-314"/>
+      <enginePoint x="18" y="-288"/>
+      <enginePoint x="-24" y="-262" type="curve"/>
+      <enginePoint x="-90" y="-380" type="line"/>
+      <enginePoint x="-20" y="-426"/>
+      <enginePoint x="72" y="-438"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>620</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

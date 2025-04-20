@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="euro" format="2">
+  <advance width="1010"/>
+  <unicode hex="20AC"/>
+  <outline>
+    <contour>
+      <enginePoint x="587" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="689" y="-20"/>
+      <enginePoint x="789" y="14"/>
+      <enginePoint x="877" y="70" type="curve"/>
+      <enginePoint x="843" y="138" type="line"/>
+      <enginePoint x="773" y="92"/>
+      <enginePoint x="691" y="64"/>
+      <enginePoint x="605" y="64" type="curve" smooth="yes"/>
+      <enginePoint x="295" y="64"/>
+      <enginePoint x="175" y="298"/>
+      <enginePoint x="233" y="718" type="curve" smooth="yes"/>
+      <enginePoint x="295" y="1152"/>
+      <enginePoint x="483" y="1382"/>
+      <enginePoint x="775" y="1382" type="curve" smooth="yes"/>
+      <enginePoint x="863" y="1382"/>
+      <enginePoint x="931" y="1346"/>
+      <enginePoint x="987" y="1292" type="curve"/>
+      <enginePoint x="1049" y="1368" type="line"/>
+      <enginePoint x="975" y="1430"/>
+      <enginePoint x="881" y="1466"/>
+      <enginePoint x="783" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="447" y="1466"/>
+      <enginePoint x="211" y="1190"/>
+      <enginePoint x="145" y="718" type="curve" smooth="yes"/>
+      <enginePoint x="79" y="248"/>
+      <enginePoint x="239" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="-37" y="534" type="line"/>
+      <enginePoint x="641" y="536" type="line"/>
+      <enginePoint x="651" y="610" type="line"/>
+      <enginePoint x="-27" y="608" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="7" y="846" type="line"/>
+      <enginePoint x="685" y="848" type="line"/>
+      <enginePoint x="695" y="922" type="line"/>
+      <enginePoint x="17" y="920" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

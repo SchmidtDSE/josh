@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Uhorn" format="2">
+  <advance width="1813"/>
+  <unicode hex="01AF"/>
+  <anchor x="675" y="0" name="bottom"/>
+  <anchor x="1394" y="1094" name="horn"/>
+  <anchor x="837" y="24" name="ogonek"/>
+  <anchor x="894" y="1446" name="top"/>
+  <anchor x="1632" y="1274" name="topright"/>
+  <outline>
+    <contour>
+      <enginePoint x="673" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="1135" y="-20"/>
+      <enginePoint x="1331" y="230"/>
+      <enginePoint x="1387" y="598" type="curve" smooth="yes"/>
+      <enginePoint x="1461" y="1088" type="line"/>
+      <enginePoint x="1758" y="1070"/>
+      <enginePoint x="1852" y="1188"/>
+      <enginePoint x="1902" y="1492" type="curve"/>
+      <enginePoint x="1668" y="1492" type="line"/>
+      <enginePoint x="1622" y="1297"/>
+      <enginePoint x="1580" y="1273"/>
+      <enginePoint x="1489" y="1271" type="curve"/>
+      <enginePoint x="1515" y="1446" type="line"/>
+      <enginePoint x="1123" y="1446" type="line"/>
+      <enginePoint x="993" y="582" type="line" smooth="yes"/>
+      <enginePoint x="963" y="382"/>
+      <enginePoint x="841" y="306"/>
+      <enginePoint x="723" y="306" type="curve" smooth="yes"/>
+      <enginePoint x="601" y="306"/>
+      <enginePoint x="505" y="382"/>
+      <enginePoint x="535" y="582" type="curve" smooth="yes"/>
+      <enginePoint x="667" y="1446" type="line"/>
+      <enginePoint x="274" y="1446" type="line"/>
+      <enginePoint x="146" y="598" type="line" smooth="yes"/>
+      <enginePoint x="91" y="230"/>
+      <enginePoint x="209" y="-20"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>U</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=U-60</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

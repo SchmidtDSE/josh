@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="thorn" format="2">
+  <advance width="1150"/>
+  <unicode hex="00FE"/>
+  <outline>
+    <contour>
+      <enginePoint x="180" y="-322" type="line"/>
+      <enginePoint x="258" y="-322" type="line"/>
+      <enginePoint x="258" y="64" type="line" smooth="yes"/>
+      <enginePoint x="258" y="90"/>
+      <enginePoint x="264" y="96"/>
+      <enginePoint x="284" y="78" type="curve" smooth="yes"/>
+      <enginePoint x="342" y="32"/>
+      <enginePoint x="437" y="-20"/>
+      <enginePoint x="571" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="857" y="-20"/>
+      <enginePoint x="1040" y="204"/>
+      <enginePoint x="1040" y="536" type="curve" smooth="yes"/>
+      <enginePoint x="1040" y="882"/>
+      <enginePoint x="844" y="1054"/>
+      <enginePoint x="594" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="376" y="1054"/>
+      <enginePoint x="286" y="918"/>
+      <enginePoint x="254" y="880" type="curve"/>
+      <enginePoint x="254" y="1446" type="line"/>
+      <enginePoint x="180" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="569" y="54" type="curve" smooth="yes"/>
+      <enginePoint x="450" y="54"/>
+      <enginePoint x="351" y="112"/>
+      <enginePoint x="258" y="202" type="curve"/>
+      <enginePoint x="258" y="710" type="line" smooth="yes"/>
+      <enginePoint x="258" y="826"/>
+      <enginePoint x="390" y="978"/>
+      <enginePoint x="584" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="779" y="978"/>
+      <enginePoint x="958" y="838"/>
+      <enginePoint x="958" y="528" type="curve" smooth="yes"/>
+      <enginePoint x="958" y="232"/>
+      <enginePoint x="794" y="54"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>n</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>o</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

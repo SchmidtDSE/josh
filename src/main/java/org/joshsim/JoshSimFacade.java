@@ -7,6 +7,7 @@
 package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -57,6 +58,7 @@ public class JoshSimFacade {
    * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
+   * @param engineGeometryFactory Factory with which to build engine geometries.
    * @param program The Josh program containing the simulation to run. This is the program in which
    *     the simulation will be initalized.
    * @param simulationName The name of the simulation to execute from the program. This will be
@@ -64,11 +66,12 @@ public class JoshSimFacade {
    * @param callback A callback that will be invoked after each simulation step. This is called
    *     as blocking.
    */
-  public static void runSimulation(JoshProgram program, String simulationName,
-      SimulationStepCallback callback) {
+  public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
+        String simulationName, SimulationStepCallback callback) {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
+        engineGeometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes()

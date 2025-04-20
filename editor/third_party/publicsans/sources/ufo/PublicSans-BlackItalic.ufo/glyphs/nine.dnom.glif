@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="nine.dnom" format="2">
+  <advance width="862"/>
+  <outline>
+    <contour>
+      <enginePoint x="334" y="-24" type="curve" smooth="yes"/>
+      <enginePoint x="581" y="-24"/>
+      <enginePoint x="762" y="125"/>
+      <enginePoint x="810" y="468" type="curve" smooth="yes"/>
+      <enginePoint x="848" y="733"/>
+      <enginePoint x="725" y="912"/>
+      <enginePoint x="473" y="912" type="curve" smooth="yes"/>
+      <enginePoint x="257" y="912"/>
+      <enginePoint x="87" y="781"/>
+      <enginePoint x="62" y="605" type="curve" smooth="yes"/>
+      <enginePoint x="38" y="434"/>
+      <enginePoint x="161" y="322"/>
+      <enginePoint x="351" y="322" type="curve" smooth="yes"/>
+      <enginePoint x="440" y="322"/>
+      <enginePoint x="506" y="345"/>
+      <enginePoint x="552" y="386" type="curve"/>
+      <enginePoint x="545" y="220"/>
+      <enginePoint x="453" y="165"/>
+      <enginePoint x="350" y="165" type="curve" smooth="yes"/>
+      <enginePoint x="286" y="165"/>
+      <enginePoint x="252" y="206"/>
+      <enginePoint x="250" y="266" type="curve"/>
+      <enginePoint x="19" y="266" type="line"/>
+      <enginePoint x="-3" y="93"/>
+      <enginePoint x="146" y="-24"/>
+    </contour>
+    <contour>
+      <enginePoint x="425" y="511" type="curve" smooth="yes"/>
+      <enginePoint x="367" y="511"/>
+      <enginePoint x="316" y="546"/>
+      <enginePoint x="326" y="616" type="curve" smooth="yes"/>
+      <enginePoint x="335" y="686"/>
+      <enginePoint x="394" y="733"/>
+      <enginePoint x="458" y="733" type="curve" smooth="yes"/>
+      <enginePoint x="528" y="733"/>
+      <enginePoint x="570" y="684"/>
+      <enginePoint x="555" y="577" type="curve"/>
+      <enginePoint x="552" y="555"/>
+      <enginePoint x="482" y="511"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>nine.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>nine.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

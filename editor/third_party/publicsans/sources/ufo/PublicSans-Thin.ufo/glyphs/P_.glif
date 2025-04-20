@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="P" format="2">
+  <advance width="1241"/>
+  <unicode hex="0050"/>
+  <outline>
+    <contour>
+      <enginePoint x="220" y="0" type="line"/>
+      <enginePoint x="306" y="0" type="line"/>
+      <enginePoint x="306" y="554" type="line"/>
+      <enginePoint x="678" y="554" type="line" smooth="yes"/>
+      <enginePoint x="974" y="554"/>
+      <enginePoint x="1186" y="716"/>
+      <enginePoint x="1186" y="1006" type="curve" smooth="yes"/>
+      <enginePoint x="1186" y="1296"/>
+      <enginePoint x="970" y="1446"/>
+      <enginePoint x="666" y="1446" type="curve" smooth="yes"/>
+      <enginePoint x="220" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="306" y="640" type="line"/>
+      <enginePoint x="306" y="1362" type="line"/>
+      <enginePoint x="664" y="1362" type="line" smooth="yes"/>
+      <enginePoint x="928" y="1362"/>
+      <enginePoint x="1098" y="1252"/>
+      <enginePoint x="1098" y="1012" type="curve" smooth="yes"/>
+      <enginePoint x="1098" y="772"/>
+      <enginePoint x="928" y="640"/>
+      <enginePoint x="678" y="640" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>H</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=O</string>
+      <key>com.schriftgestaltung.Glyphs.layer.rightMetricsKey</key>
+      <string>=X/2</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

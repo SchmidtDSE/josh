@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="literSign" format="2">
+  <advance width="1257"/>
+  <unicode hex="2113"/>
+  <outline>
+    <contour>
+      <enginePoint x="670" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="1012" y="-20"/>
+      <enginePoint x="1147" y="207"/>
+      <enginePoint x="1182" y="302" type="curve"/>
+      <enginePoint x="1062" y="430" type="line"/>
+      <enginePoint x="959" y="319"/>
+      <enginePoint x="864" y="262"/>
+      <enginePoint x="766" y="262" type="curve" smooth="yes"/>
+      <enginePoint x="632" y="262"/>
+      <enginePoint x="606" y="317"/>
+      <enginePoint x="606" y="458" type="curve"/>
+      <enginePoint x="852" y="650"/>
+      <enginePoint x="1066" y="816"/>
+      <enginePoint x="1066" y="1110" type="curve" smooth="yes"/>
+      <enginePoint x="1066" y="1302"/>
+      <enginePoint x="976" y="1466"/>
+      <enginePoint x="692" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="402" y="1466"/>
+      <enginePoint x="208" y="1292"/>
+      <enginePoint x="208" y="940" type="curve" smooth="yes"/>
+      <enginePoint x="208" y="550" type="line"/>
+      <enginePoint x="40" y="422" type="line"/>
+      <enginePoint x="120" y="218" type="line"/>
+      <enginePoint x="212" y="280" type="line"/>
+      <enginePoint x="269" y="78"/>
+      <enginePoint x="409" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="606" y="754" type="curve"/>
+      <enginePoint x="606" y="974" type="line" smooth="yes"/>
+      <enginePoint x="606" y="1192"/>
+      <enginePoint x="658" y="1248"/>
+      <enginePoint x="726" y="1248" type="curve" smooth="yes"/>
+      <enginePoint x="792" y="1248"/>
+      <enginePoint x="818" y="1198"/>
+      <enginePoint x="818" y="1126" type="curve" smooth="yes"/>
+      <enginePoint x="818" y="1000"/>
+      <enginePoint x="742" y="886"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

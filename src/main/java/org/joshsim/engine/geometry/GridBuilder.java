@@ -12,6 +12,7 @@ import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 
 /**
  * This class is responsible for building grid structures.
@@ -20,8 +21,9 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
  */
 public class GridBuilder {
 
-  private BigDecimal cellWidth;
+  private final BigDecimal cellWidth;
   private final EntityPrototype prototype;
+  private final EngineGeometryFactory geometryFactory;
 
   // CRS-related fields
   private CoordinateReferenceSystem inputCoordinateReferenceSystem;
@@ -59,6 +61,8 @@ public class GridBuilder {
     this.cellWidth = cellWidth;
     this.inputCoordinateReferenceSystem = inputCrs;
     this.targetCoordinateReferenceSystem = targetCrs;
+
+    geometryFactory = new EarthGeometryFactory(targetCrs);
 
     // Force longitude/latitude ordering for geographic CRS
     inputCoordinateReferenceSystem = CRS.getHorizontalCRS(inputCoordinateReferenceSystem);
@@ -225,12 +229,11 @@ public class GridBuilder {
       double leftX, double topY,
       double rightX, double bottomY
   ) {
-    return EngineGeometryFactory.createSquare(
+    return geometryFactory.createSquare(
       BigDecimal.valueOf(leftX),
       BigDecimal.valueOf(topY),
       BigDecimal.valueOf(rightX),
-      BigDecimal.valueOf(bottomY),
-      targetCoordinateReferenceSystem
+      BigDecimal.valueOf(bottomY)
     );
   }
 

@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="dong" format="2">
+  <advance width="1122"/>
+  <unicode hex="20AB"/>
+  <outline>
+    <contour>
+      <enginePoint x="394" y="250" type="curve" smooth="yes"/>
+      <enginePoint x="506" y="250"/>
+      <enginePoint x="574" y="288"/>
+      <enginePoint x="644" y="362" type="curve"/>
+      <enginePoint x="644" y="266" type="line"/>
+      <enginePoint x="962" y="266" type="line"/>
+      <enginePoint x="962" y="1446" type="line"/>
+      <enginePoint x="640" y="1446" type="line"/>
+      <enginePoint x="640" y="1064" type="line" smooth="yes"/>
+      <enginePoint x="640" y="1040"/>
+      <enginePoint x="626" y="1040"/>
+      <enginePoint x="608" y="1052" type="curve" smooth="yes"/>
+      <enginePoint x="544" y="1116"/>
+      <enginePoint x="482" y="1134"/>
+      <enginePoint x="410" y="1134" type="curve" smooth="yes"/>
+      <enginePoint x="232" y="1134"/>
+      <enginePoint x="70" y="960"/>
+      <enginePoint x="70" y="688" type="curve" smooth="yes"/>
+      <enginePoint x="70" y="398"/>
+      <enginePoint x="204" y="250"/>
+    </contour>
+    <contour>
+      <enginePoint x="132" y="0" type="line"/>
+      <enginePoint x="962" y="0" type="line"/>
+      <enginePoint x="962" y="174" type="line"/>
+      <enginePoint x="132" y="174" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="526" y="442" type="curve" smooth="yes"/>
+      <enginePoint x="442" y="442"/>
+      <enginePoint x="396" y="506"/>
+      <enginePoint x="396" y="690" type="curve" smooth="yes"/>
+      <enginePoint x="396" y="878"/>
+      <enginePoint x="450" y="936"/>
+      <enginePoint x="526" y="936" type="curve" smooth="yes"/>
+      <enginePoint x="576" y="936"/>
+      <enginePoint x="604" y="914"/>
+      <enginePoint x="638" y="874" type="curve"/>
+      <enginePoint x="638" y="550" type="line" smooth="yes"/>
+      <enginePoint x="638" y="486"/>
+      <enginePoint x="590" y="442"/>
+    </contour>
+    <contour>
+      <enginePoint x="450" y="1192" type="line"/>
+      <enginePoint x="1082" y="1192" type="line"/>
+      <enginePoint x="1082" y="1348" type="line"/>
+      <enginePoint x="450" y="1348" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

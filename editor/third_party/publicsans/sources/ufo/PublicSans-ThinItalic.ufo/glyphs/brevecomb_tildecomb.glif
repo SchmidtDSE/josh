@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="brevecomb_tildecomb" format="2">
+  <anchor x="331" y="1034" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="357" y="1155" type="curve" smooth="yes"/>
+      <enginePoint x="503" y="1155"/>
+      <enginePoint x="593" y="1265"/>
+      <enginePoint x="621" y="1333" type="curve"/>
+      <enginePoint x="531" y="1333" type="line"/>
+      <enginePoint x="503" y="1295"/>
+      <enginePoint x="453" y="1235"/>
+      <enginePoint x="369" y="1235" type="curve" smooth="yes"/>
+      <enginePoint x="273" y="1235"/>
+      <enginePoint x="251" y="1305"/>
+      <enginePoint x="239" y="1333" type="curve"/>
+      <enginePoint x="151" y="1333" type="line"/>
+      <enginePoint x="157" y="1253"/>
+      <enginePoint x="215" y="1155"/>
+    </contour>
+    <contour>
+      <enginePoint x="167" y="1471" type="line"/>
+      <enginePoint x="197" y="1489"/>
+      <enginePoint x="229" y="1519"/>
+      <enginePoint x="289" y="1519" type="curve" smooth="yes"/>
+      <enginePoint x="363" y="1519"/>
+      <enginePoint x="393" y="1471"/>
+      <enginePoint x="485" y="1471" type="curve" smooth="yes"/>
+      <enginePoint x="557" y="1471"/>
+      <enginePoint x="597" y="1499"/>
+      <enginePoint x="625" y="1517" type="curve"/>
+      <enginePoint x="607" y="1585" type="line"/>
+      <enginePoint x="569" y="1559"/>
+      <enginePoint x="543" y="1543"/>
+      <enginePoint x="497" y="1543" type="curve" smooth="yes"/>
+      <enginePoint x="417" y="1543"/>
+      <enginePoint x="369" y="1593"/>
+      <enginePoint x="291" y="1593" type="curve" smooth="yes"/>
+      <enginePoint x="233" y="1593"/>
+      <enginePoint x="195" y="1567"/>
+      <enginePoint x="153" y="1531" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>515</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="horncomb" format="2">
+  <unicode hex="031B"/>
+  <anchor x="65" y="980" name="_horn"/>
+  <anchor x="193" y="1060" name="_topright"/>
+  <anchor x="193" y="1060" name="topright"/>
+  <outline>
+    <contour>
+      <enginePoint x="65" y="980" type="line"/>
+      <enginePoint x="221" y="962"/>
+      <enginePoint x="311" y="1048"/>
+      <enginePoint x="337" y="1238" type="curve"/>
+      <enginePoint x="243" y="1238" type="line"/>
+      <enginePoint x="219" y="1092"/>
+      <enginePoint x="179" y="1060"/>
+      <enginePoint x="77" y="1062" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>236</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

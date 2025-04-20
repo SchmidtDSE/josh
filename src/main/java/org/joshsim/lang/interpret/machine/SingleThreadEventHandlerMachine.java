@@ -417,11 +417,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
-    EngineGeometry queryGeometry = EngineGeometryFactory.createCircle(
+    EngineGeometry queryGeometry = bridge.getGeometryFactory().createCircle(
         distance.getAsDecimal(),
         centerGeometry.getCenterX(),
-        centerGeometry.getCenterY(),
-        centerGeometry.getCrs()
+        centerGeometry.getCenterY()
     );
 
     Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);

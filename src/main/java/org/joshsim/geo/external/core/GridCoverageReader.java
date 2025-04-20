@@ -8,7 +8,7 @@ import org.geotools.api.geometry.Position;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Interface for grid coverage readers that provides common functionality
@@ -20,13 +20,13 @@ public abstract class GridCoverageReader {
    * Read a coverage from a file for the specified geometry.
    *
    * @param path Path to the file
-   * @param geometry EngineGeometry defining the area of interest
+   * @param geometry EarthGeometry defining the area of interest
    * @return GridCoverage2D containing the data within the geometry's bounds
    * @throws IOException if there is an error reading the file
    */
   public abstract GridCoverage2D getCoverageFromIo(
       String path,
-      EngineGeometry geometry
+      EarthGeometry geometry
   ) throws IOException;
 
   /**
@@ -37,7 +37,7 @@ public abstract class GridCoverageReader {
    * @return A list of BigDecimal values
    */
   public List<BigDecimal> extractValuesFromCoverage(
-      GridCoverage2D coverage, EngineGeometry geometry
+      GridCoverage2D coverage, EarthGeometry geometry
   ) {
     List<BigDecimal> values = new ArrayList<>();
 

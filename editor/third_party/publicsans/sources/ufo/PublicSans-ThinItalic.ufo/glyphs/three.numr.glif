@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="three.numr" format="2">
+  <advance width="704"/>
+  <outline>
+    <contour>
+      <enginePoint x="345" y="544" type="curve" smooth="yes"/>
+      <enginePoint x="526" y="542"/>
+      <enginePoint x="658" y="649"/>
+      <enginePoint x="680" y="802" type="curve" smooth="yes"/>
+      <enginePoint x="696" y="915"/>
+      <enginePoint x="643" y="1003"/>
+      <enginePoint x="520" y="1041" type="curve"/>
+      <enginePoint x="635" y="1083"/>
+      <enginePoint x="705" y="1164"/>
+      <enginePoint x="718" y="1255" type="curve" smooth="yes"/>
+      <enginePoint x="736" y="1390"/>
+      <enginePoint x="643" y="1480"/>
+      <enginePoint x="482" y="1480" type="curve" smooth="yes"/>
+      <enginePoint x="341" y="1480"/>
+      <enginePoint x="206" y="1374"/>
+      <enginePoint x="184" y="1217" type="curve"/>
+      <enginePoint x="235" y="1217" type="line"/>
+      <enginePoint x="255" y="1358"/>
+      <enginePoint x="376" y="1429"/>
+      <enginePoint x="477" y="1429" type="curve" smooth="yes"/>
+      <enginePoint x="621" y="1429"/>
+      <enginePoint x="679" y="1340"/>
+      <enginePoint x="667" y="1255" type="curve" smooth="yes"/>
+      <enginePoint x="652" y="1156"/>
+      <enginePoint x="534" y="1062"/>
+      <enginePoint x="403" y="1062" type="curve" smooth="yes"/>
+      <enginePoint x="332" y="1062" type="line"/>
+      <enginePoint x="324" y="1011" type="line"/>
+      <enginePoint x="396" y="1011" type="line" smooth="yes"/>
+      <enginePoint x="539" y="1011"/>
+      <enginePoint x="648" y="940"/>
+      <enginePoint x="628" y="798" type="curve" smooth="yes"/>
+      <enginePoint x="611" y="678"/>
+      <enginePoint x="502" y="596"/>
+      <enginePoint x="358" y="596" type="curve" smooth="yes"/>
+      <enginePoint x="231" y="596"/>
+      <enginePoint x="158" y="678"/>
+      <enginePoint x="160" y="800" type="curve"/>
+      <enginePoint x="108" y="800" type="line"/>
+      <enginePoint x="94" y="647"/>
+      <enginePoint x="200" y="547"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>eight.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>eight.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

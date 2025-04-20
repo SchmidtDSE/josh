@@ -8,6 +8,7 @@ import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Implementation of ExternalLayer that uses GridCoverageReader to read files.
@@ -47,7 +48,7 @@ public class GridCoverageExternalLayer implements ExternalLayer {
   @Override
   public RealizedDistribution fulfill(Request request) {
     try {
-      EngineGeometry geometry = request.getGeometry().orElseThrow();
+      EarthGeometry geometry = request.getGeometry().orElseThrow().getOnEarth();
       GridCoverage2D gridCoverage = reader.getCoverageFromIo(request.getPath(), geometry);
       List<BigDecimal> decimalValuesWithinGeometry =
           reader.extractValuesFromCoverage(gridCoverage, geometry);

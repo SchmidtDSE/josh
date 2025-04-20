@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="l" format="2">
+  <advance width="536"/>
+  <unicode hex="006C"/>
+  <anchor x="182" y="2" name="bottom"/>
+  <anchor x="390" y="1486" name="caron"/>
+  <anchor x="351" y="1524" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="283" y="-8" type="curve" smooth="yes"/>
+      <enginePoint x="295" y="-8"/>
+      <enginePoint x="321" y="-6"/>
+      <enginePoint x="346" y="0" type="curve"/>
+      <enginePoint x="353" y="58" type="line"/>
+      <enginePoint x="295" y="58" type="line"/>
+      <enginePoint x="243" y="58"/>
+      <enginePoint x="195" y="108"/>
+      <enginePoint x="213" y="242" type="curve"/>
+      <enginePoint x="390" y="1486" type="line"/>
+      <enginePoint x="317" y="1486" type="line"/>
+      <enginePoint x="141" y="242" type="line"/>
+      <enginePoint x="121" y="100"/>
+      <enginePoint x="157" y="-8"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>n</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=u*.65</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

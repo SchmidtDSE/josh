@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="circumflexcomb_tildecomb" format="2">
+  <anchor x="428" y="1034" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="24" y="1155" type="line"/>
+      <enginePoint x="288" y="1155" type="line"/>
+      <enginePoint x="430" y="1304" type="line"/>
+      <enginePoint x="554" y="1155" type="line"/>
+      <enginePoint x="832" y="1155" type="line"/>
+      <enginePoint x="564" y="1446" type="line"/>
+      <enginePoint x="300" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="94" y="1523" type="line"/>
+      <enginePoint x="156" y="1578"/>
+      <enginePoint x="198" y="1595"/>
+      <enginePoint x="266" y="1595" type="curve" smooth="yes"/>
+      <enginePoint x="378" y="1595"/>
+      <enginePoint x="466" y="1536"/>
+      <enginePoint x="582" y="1536" type="curve" smooth="yes"/>
+      <enginePoint x="676" y="1536"/>
+      <enginePoint x="762" y="1575"/>
+      <enginePoint x="810" y="1617" type="curve"/>
+      <enginePoint x="770" y="1837" type="line"/>
+      <enginePoint x="726" y="1802"/>
+      <enginePoint x="658" y="1755"/>
+      <enginePoint x="580" y="1755" type="curve" smooth="yes"/>
+      <enginePoint x="488" y="1755"/>
+      <enginePoint x="380" y="1822"/>
+      <enginePoint x="256" y="1822" type="curve" smooth="yes"/>
+      <enginePoint x="152" y="1822"/>
+      <enginePoint x="92" y="1774"/>
+      <enginePoint x="40" y="1715" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>circumflexcomb</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>circumflexcomb</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>856</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

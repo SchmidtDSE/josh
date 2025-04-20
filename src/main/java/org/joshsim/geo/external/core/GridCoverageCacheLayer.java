@@ -8,6 +8,7 @@ import org.apache.commons.collections4.map.LRUMap;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Layer for managing caching of grid coverage resources.
@@ -36,7 +37,7 @@ public class GridCoverageCacheLayer extends ExternalLayerDecorator {
     }
 
     // If the request has a priming geometry, we need to check if it's already cached
-    EngineGeometry primingGeometry = request.getPrimingGeometry().orElseThrow();
+    EarthGeometry primingGeometry = request.getPrimingGeometry().orElseThrow().getOnEarth();
     if (!coverageCache.containsKey(primingGeometry)) {
       loadCoverageIntoCache(request.getPath(), primingGeometry);
     }
@@ -44,7 +45,7 @@ public class GridCoverageCacheLayer extends ExternalLayerDecorator {
     GridCoverage2D cachedCoverage = coverageCache.get(primingGeometry);
 
     // Get the request geometry, which is the subset area for which we want to extract values
-    EngineGeometry requestGeometry = request.getGeometry().orElseThrow();
+    EarthGeometry requestGeometry = request.getGeometry().orElseThrow().getOnEarth();
 
     // Extract values from the cached coverage using the (subset) request geometry
     List<BigDecimal> decimalValuesWithinGeometry = reader.extractValuesFromCoverage(
@@ -68,7 +69,7 @@ public class GridCoverageCacheLayer extends ExternalLayerDecorator {
    * @param path the path to the coverage file
    * @param primingGeometry the geometry used to prime the cache
    */
-  private void loadCoverageIntoCache(String path, EngineGeometry primingGeometry) {
+  private void loadCoverageIntoCache(String path, EarthGeometry primingGeometry) {
     GridCoverage2D newCoverage;
     try {
       newCoverage = reader.getCoverageFromIo(path, primingGeometry);

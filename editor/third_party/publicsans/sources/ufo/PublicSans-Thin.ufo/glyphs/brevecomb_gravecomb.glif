@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="brevecomb_gravecomb" format="2">
+  <anchor x="260" y="1038" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="263" y="1155" type="curve" smooth="yes"/>
+      <enginePoint x="401" y="1155"/>
+      <enginePoint x="496" y="1227"/>
+      <enginePoint x="521" y="1333" type="curve"/>
+      <enginePoint x="438" y="1333" type="line"/>
+      <enginePoint x="413" y="1272"/>
+      <enginePoint x="345" y="1228"/>
+      <enginePoint x="263" y="1228" type="curve" smooth="yes"/>
+      <enginePoint x="180" y="1228"/>
+      <enginePoint x="118" y="1272"/>
+      <enginePoint x="94" y="1333" type="curve"/>
+      <enginePoint x="10" y="1333" type="line"/>
+      <enginePoint x="36" y="1220"/>
+      <enginePoint x="136" y="1155"/>
+    </contour>
+    <contour>
+      <enginePoint x="236" y="1331" type="line"/>
+      <enginePoint x="321" y="1331" type="line"/>
+      <enginePoint x="161" y="1555" type="line"/>
+      <enginePoint x="41" y="1555" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>530</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="two.dnom" format="2">
+  <advance width="826"/>
+  <outline>
+    <contour>
+      <enginePoint x="-20" y="0" type="line"/>
+      <enginePoint x="702" y="0" type="line"/>
+      <enginePoint x="731" y="201" type="line"/>
+      <enginePoint x="282" y="201" type="line"/>
+      <enginePoint x="282" y="201" type="line" smooth="yes"/>
+      <enginePoint x="302" y="347"/>
+      <enginePoint x="753" y="315"/>
+      <enginePoint x="797" y="633" type="curve" smooth="yes"/>
+      <enginePoint x="822" y="805"/>
+      <enginePoint x="704" y="922"/>
+      <enginePoint x="480" y="922" type="curve" smooth="yes"/>
+      <enginePoint x="219" y="922"/>
+      <enginePoint x="76" y="777"/>
+      <enginePoint x="49" y="589" type="curve"/>
+      <enginePoint x="280" y="589" type="line"/>
+      <enginePoint x="312" y="689"/>
+      <enginePoint x="380" y="725"/>
+      <enginePoint x="447" y="725" type="curve" smooth="yes"/>
+      <enginePoint x="514" y="725"/>
+      <enginePoint x="548" y="684"/>
+      <enginePoint x="541" y="630" type="curve" smooth="yes"/>
+      <enginePoint x="519" y="476"/>
+      <enginePoint x="48" y="483"/>
+      <enginePoint x="4" y="164" type="curve" smooth="yes"/>
+      <enginePoint x="-5" y="108" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>two.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>two.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

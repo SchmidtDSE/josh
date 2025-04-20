@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="lira" format="2">
+  <advance width="1075"/>
+  <unicode hex="20A4"/>
+  <outline>
+    <contour>
+      <enginePoint x="-52" y="0" type="line"/>
+      <enginePoint x="560" y="0" type="line" smooth="yes"/>
+      <enginePoint x="720" y="0"/>
+      <enginePoint x="846" y="70"/>
+      <enginePoint x="922" y="214" type="curve"/>
+      <enginePoint x="860" y="244" type="line"/>
+      <enginePoint x="798" y="120"/>
+      <enginePoint x="704" y="78"/>
+      <enginePoint x="572" y="78" type="curve"/>
+      <enginePoint x="180" y="78" type="line"/>
+      <enginePoint x="282" y="186"/>
+      <enginePoint x="336" y="372"/>
+      <enginePoint x="342" y="514" type="curve"/>
+      <enginePoint x="632" y="514" type="line"/>
+      <enginePoint x="644" y="588" type="line"/>
+      <enginePoint x="342" y="586" type="line"/>
+      <enginePoint x="338" y="806" type="line"/>
+      <enginePoint x="674" y="808" type="line"/>
+      <enginePoint x="684" y="882" type="line"/>
+      <enginePoint x="354" y="880" type="line" smooth="yes"/>
+      <enginePoint x="344" y="880"/>
+      <enginePoint x="338" y="886"/>
+      <enginePoint x="338" y="896" type="curve" smooth="yes"/>
+      <enginePoint x="336" y="988"/>
+      <enginePoint x="336" y="1066"/>
+      <enginePoint x="340" y="1106" type="curve" smooth="yes"/>
+      <enginePoint x="366" y="1282"/>
+      <enginePoint x="508" y="1382"/>
+      <enginePoint x="664" y="1382" type="curve" smooth="yes"/>
+      <enginePoint x="798" y="1382"/>
+      <enginePoint x="864" y="1330"/>
+      <enginePoint x="896" y="1240" type="curve"/>
+      <enginePoint x="968" y="1278" type="line"/>
+      <enginePoint x="946" y="1370"/>
+      <enginePoint x="824" y="1466"/>
+      <enginePoint x="672" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="444" y="1466"/>
+      <enginePoint x="252" y="1332"/>
+      <enginePoint x="258" y="922" type="curve" smooth="yes"/>
+      <enginePoint x="260" y="880" type="line"/>
+      <enginePoint x="102" y="880" type="line"/>
+      <enginePoint x="92" y="806" type="line"/>
+      <enginePoint x="262" y="806" type="line"/>
+      <enginePoint x="266" y="586" type="line"/>
+      <enginePoint x="62" y="586" type="line"/>
+      <enginePoint x="52" y="512" type="line"/>
+      <enginePoint x="252" y="512" type="line" smooth="yes"/>
+      <enginePoint x="262" y="512"/>
+      <enginePoint x="264" y="510"/>
+      <enginePoint x="266" y="502" type="curve" smooth="yes"/>
+      <enginePoint x="262" y="466"/>
+      <enginePoint x="260" y="440"/>
+      <enginePoint x="258" y="418" type="curve" smooth="yes"/>
+      <enginePoint x="224" y="182"/>
+      <enginePoint x="128" y="74"/>
+      <enginePoint x="34" y="76" type="curve" smooth="yes"/>
+      <enginePoint x="-42" y="76" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>sterling</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>sterling</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

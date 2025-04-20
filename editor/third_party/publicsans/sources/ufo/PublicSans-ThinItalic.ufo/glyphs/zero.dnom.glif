@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="zero.dnom" format="2">
+  <advance width="664"/>
+  <outline>
+    <contour>
+      <enginePoint x="257" y="-24" type="curve" smooth="yes"/>
+      <enginePoint x="422" y="-24"/>
+      <enginePoint x="555" y="127"/>
+      <enginePoint x="600" y="443" type="curve" smooth="yes"/>
+      <enginePoint x="644" y="760"/>
+      <enginePoint x="554" y="912"/>
+      <enginePoint x="389" y="912" type="curve" smooth="yes"/>
+      <enginePoint x="225" y="912"/>
+      <enginePoint x="91" y="759"/>
+      <enginePoint x="47" y="440" type="curve" smooth="yes"/>
+      <enginePoint x="3" y="126"/>
+      <enginePoint x="91" y="-24"/>
+    </contour>
+    <contour>
+      <enginePoint x="266" y="28" type="curve" smooth="yes"/>
+      <enginePoint x="127" y="28"/>
+      <enginePoint x="59" y="154"/>
+      <enginePoint x="99" y="443" type="curve" smooth="yes"/>
+      <enginePoint x="140" y="735"/>
+      <enginePoint x="244" y="861"/>
+      <enginePoint x="382" y="861" type="curve" smooth="yes"/>
+      <enginePoint x="520" y="861"/>
+      <enginePoint x="586" y="736"/>
+      <enginePoint x="545" y="443" type="curve" smooth="yes"/>
+      <enginePoint x="504" y="152"/>
+      <enginePoint x="406" y="28"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>zero.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>zero.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

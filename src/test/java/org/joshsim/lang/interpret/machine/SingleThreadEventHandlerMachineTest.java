@@ -22,6 +22,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.GridGeometryFactory;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -850,10 +851,10 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
-    when(mockGeometry.getCrs()).thenReturn(mockCrs);
 
     List<Entity> queryResults = List.of(mockEntity);
     when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
     when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
 
     // When

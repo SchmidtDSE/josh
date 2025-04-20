@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="three" format="2">
+  <advance width="1394"/>
+  <unicode hex="0033"/>
+  <outline>
+    <contour>
+      <enginePoint x="594" y="-22" type="curve" smooth="yes"/>
+      <enginePoint x="935" y="-22"/>
+      <enginePoint x="1257" y="118"/>
+      <enginePoint x="1300" y="420" type="curve" smooth="yes"/>
+      <enginePoint x="1328" y="622"/>
+      <enginePoint x="1193" y="720"/>
+      <enginePoint x="1064" y="756" type="curve"/>
+      <enginePoint x="1258" y="818"/>
+      <enginePoint x="1341" y="922"/>
+      <enginePoint x="1361" y="1064" type="curve" smooth="yes"/>
+      <enginePoint x="1402" y="1352"/>
+      <enginePoint x="1155" y="1466"/>
+      <enginePoint x="811" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="472" y="1466"/>
+      <enginePoint x="193" y="1318"/>
+      <enginePoint x="145" y="980" type="curve"/>
+      <enginePoint x="511" y="980" type="line"/>
+      <enginePoint x="549" y="1134"/>
+      <enginePoint x="637" y="1174"/>
+      <enginePoint x="759" y="1174" type="curve" smooth="yes"/>
+      <enginePoint x="864" y="1174"/>
+      <enginePoint x="959" y="1136"/>
+      <enginePoint x="947" y="1046" type="curve" smooth="yes"/>
+      <enginePoint x="934" y="956"/>
+      <enginePoint x="860" y="908"/>
+      <enginePoint x="735" y="898" type="curve" smooth="yes"/>
+      <enginePoint x="607" y="888" type="line"/>
+      <enginePoint x="565" y="588" type="line"/>
+      <enginePoint x="709" y="580" type="line" smooth="yes"/>
+      <enginePoint x="832" y="574"/>
+      <enginePoint x="900" y="514"/>
+      <enginePoint x="889" y="436" type="curve" smooth="yes"/>
+      <enginePoint x="876" y="348"/>
+      <enginePoint x="785" y="284"/>
+      <enginePoint x="637" y="284" type="curve" smooth="yes"/>
+      <enginePoint x="535" y="284"/>
+      <enginePoint x="450" y="324"/>
+      <enginePoint x="442" y="476" type="curve"/>
+      <enginePoint x="74" y="476" type="line"/>
+      <enginePoint x="30" y="162"/>
+      <enginePoint x="202" y="-22"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>zero</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>zero</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

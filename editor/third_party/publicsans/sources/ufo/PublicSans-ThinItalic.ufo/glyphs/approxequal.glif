@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="approxequal" format="2">
+  <advance width="1004"/>
+  <unicode hex="2248"/>
+  <outline>
+    <contour>
+      <enginePoint x="195" y="816" type="line"/>
+      <enginePoint x="239" y="858"/>
+      <enginePoint x="303" y="900"/>
+      <enginePoint x="395" y="900" type="curve" smooth="yes"/>
+      <enginePoint x="529" y="900"/>
+      <enginePoint x="583" y="816"/>
+      <enginePoint x="717" y="816" type="curve" smooth="yes"/>
+      <enginePoint x="827" y="816"/>
+      <enginePoint x="897" y="864"/>
+      <enginePoint x="927" y="898" type="curve"/>
+      <enginePoint x="913" y="968" type="line"/>
+      <enginePoint x="875" y="930"/>
+      <enginePoint x="825" y="886"/>
+      <enginePoint x="729" y="886" type="curve" smooth="yes"/>
+      <enginePoint x="601" y="886"/>
+      <enginePoint x="529" y="974"/>
+      <enginePoint x="401" y="974" type="curve" smooth="yes"/>
+      <enginePoint x="299" y="974"/>
+      <enginePoint x="235" y="926"/>
+      <enginePoint x="181" y="880" type="curve"/>
+    </contour>
+    <contour>
+      <enginePoint x="143" y="442" type="line"/>
+      <enginePoint x="187" y="486"/>
+      <enginePoint x="249" y="528"/>
+      <enginePoint x="343" y="528" type="curve" smooth="yes"/>
+      <enginePoint x="471" y="528"/>
+      <enginePoint x="521" y="442"/>
+      <enginePoint x="665" y="442" type="curve" smooth="yes"/>
+      <enginePoint x="775" y="442"/>
+      <enginePoint x="845" y="492"/>
+      <enginePoint x="875" y="526" type="curve"/>
+      <enginePoint x="861" y="594" type="line"/>
+      <enginePoint x="823" y="558"/>
+      <enginePoint x="771" y="512"/>
+      <enginePoint x="677" y="512" type="curve" smooth="yes"/>
+      <enginePoint x="549" y="512"/>
+      <enginePoint x="477" y="600"/>
+      <enginePoint x="349" y="600" type="curve" smooth="yes"/>
+      <enginePoint x="247" y="600"/>
+      <enginePoint x="183" y="554"/>
+      <enginePoint x="129" y="508" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>plus</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>plus</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>
