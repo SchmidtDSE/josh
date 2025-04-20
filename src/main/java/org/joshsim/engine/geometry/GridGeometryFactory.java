@@ -14,9 +14,8 @@ import org.joshsim.engine.geometry.shape.GridSquare;
 /**
  * Factory for creating geometric shapes in grid space.
  *
- * <p>This factory provides methods to create basic geometric shapes like squares,
- * circles and points in a grid-based coordinate system. All measurements and
- * coordinates use BigDecimal for precise calculations.</p>
+ * <p>This factory provides methods to create basic geometric shapes like squares, circles and
+ * points in a grid space coordinates.</p>
  */
 public class GridGeometryFactory implements EngineGeometryFactory {
 
