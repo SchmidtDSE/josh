@@ -12,8 +12,8 @@ import java.util.StringJoiner;
 /**
  * A JVM-compatible implementation of CompatibleStringJoiner.
  *
- * <p>This implementation provides string joining functionality for JVM environments using
- * Java's built-in StringJoiner class.</p>
+ * <p>This implementation provides string joining functionality for JVM environments using Java's
+ * built-in StringJoiner class.</p>
  */
 public class JvmStringJoiner implements CompatibleStringJoiner {
 
@@ -29,6 +29,7 @@ public class JvmStringJoiner implements CompatibleStringJoiner {
     return this;
   }
 
+  @Override
   public String toString() {
     return inner.toString();
   }

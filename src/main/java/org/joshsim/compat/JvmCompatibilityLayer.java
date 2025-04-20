@@ -1,4 +1,3 @@
-
 /**
  * Logic for running a compatability layer on JVM.
  *

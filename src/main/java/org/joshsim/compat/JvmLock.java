@@ -1,4 +1,3 @@
-
 /**
  * JVM-compatible lock.
  *
@@ -13,8 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A JVM-compatible implementation of CompatibleLock.
  *
- * <p>This implementation provides standard JVM locking mechanisms for thread synchronization
- * using ReentrantLock as the underlying implementation.</p>
+ * <p>This implementation provides standard JVM locking mechanisms for thread synchronization using
+ * ReentrantLock as the underlying implementation.</p>
  */
 public class JvmLock implements CompatibleLock {
 

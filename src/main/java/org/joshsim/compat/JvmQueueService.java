@@ -1,4 +1,3 @@
-
 /**
  * JVM-compatible queue service implementation.
  *
