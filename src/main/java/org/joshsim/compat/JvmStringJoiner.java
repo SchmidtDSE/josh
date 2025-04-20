@@ -1,8 +1,21 @@
+
+/**
+ * StringJoiner for JVM.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.compat;
 
 import java.util.StringJoiner;
 
-public class JvmStringJoiner implements CompatibleStringJoiner{
+/**
+ * A JVM-compatible implementation of CompatibleStringJoiner.
+ *
+ * <p>This implementation provides string joining functionality for JVM environments using
+ * Java's built-in StringJoiner class.</p>
+ */
+public class JvmStringJoiner implements CompatibleStringJoiner {
 
   private final StringJoiner inner;
 

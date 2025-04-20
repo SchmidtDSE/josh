@@ -1,3 +1,10 @@
+
+/**
+ * JVM-compatible queue service implementation.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.compat;
 
 import java.util.Optional;
@@ -7,7 +14,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
+/**
+ * A JVM-compatible implementation of QueueService.
+ *
+ * <p>This implementation provides a full-featured queue service for JVM environments using
+ * concurrent data structures and thread management for asynchronous task processing.</p>
+ */
 public class JvmQueueService implements QueueService {
 
   private final Queue<Object> taskQueue = new ConcurrentLinkedQueue<>();
