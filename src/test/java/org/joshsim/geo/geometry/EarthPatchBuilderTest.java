@@ -1,4 +1,4 @@
-package org.joshsim.engine.geometry;
+package org.joshsim.geo.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,12 +18,18 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.geometry.EarthPatchBuilder;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class GridBuilderTest {
+
+class EarthPatchBuilderTest {
 
   // Coordinate Reference Systems
   private CoordinateReferenceSystem wgs84;
@@ -90,7 +96,7 @@ class GridBuilderTest {
   @Test
   @DisplayName("Constructor should properly initialize PatchBuilder")
   void constructorInitializesGridBuilder() throws FactoryException, TransformException {
-    PatchBuilder builder = new PatchBuilder(
+    PatchBuilder builder = new EarthPatchBuilder(
         wgs84,
         utm11n,
         wgs84Extents,
@@ -111,7 +117,7 @@ class GridBuilderTest {
     @Test
     @DisplayName("transformCornerCoordinates should correctly transform between different CRS")
     void transformCornerCoordinates() throws FactoryException, TransformException {
-      PatchBuilder builder = new PatchBuilder(
+      EarthPatchBuilder builder = new EarthPatchBuilder(
           wgs84,
           utm11n,
           wgs84Extents,
@@ -156,7 +162,7 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new PatchBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
+          () -> new EarthPatchBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -164,35 +170,49 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new PatchBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
+          () -> new EarthPatchBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
 
     @Test
     @DisplayName("Constructor should validate corner coordinate relationships")
-    void constructorValidatesCornerRelationships() {
+    void constructorValidatesCornerRelationships() throws TransformException {
+
       // Create inverted coordinates (top-left is below bottom-right)
-      IllegalArgumentException exception = assertThrows(
-          IllegalArgumentException.class,
-              () -> new PatchBuilderExtents(
-              wgs84WestLon,
-              wgs84SouthLat, // Inverted Y (North/South)
-              wgs84EastLon,
-              wgs84NorthLat
-          )
-      );
+      IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        PatchBuilderExtents extents = new PatchBuilderExtents(
+            wgs84WestLon,
+            wgs84SouthLat, // Inverted Y (North/South)
+            wgs84EastLon,
+            wgs84NorthLat
+        );
+        EarthPatchBuilder builder = new EarthPatchBuilder(
+            wgs84,
+            utm11n,
+            extents,
+            BigDecimal.ONE,
+            prototype
+        );
+      });
       assertTrue(exception.getMessage().contains("Y-coordinate"));
 
-      exception = assertThrows(
-          IllegalArgumentException.class,
-              () -> new PatchBuilderExtents(
-              wgs84EastLon, // Inverted X (East/West)
-              wgs84NorthLat,
-              wgs84WestLon,
-              wgs84SouthLat
-          )
-      );
+      exception = assertThrows(IllegalArgumentException.class, () -> {
+        PatchBuilderExtents extents = new PatchBuilderExtents(
+            wgs84EastLon, // Inverted X (East/West)
+            wgs84NorthLat,
+            wgs84WestLon,
+            wgs84SouthLat
+        );
+
+        EarthPatchBuilder builder = new EarthPatchBuilder(
+            wgs84,
+            utm11n,
+            extents,
+            BigDecimal.ONE,
+            prototype
+        );
+      });
       assertTrue(exception.getMessage().contains("X-coordinate"));
     }
 
@@ -200,7 +220,7 @@ class GridBuilderTest {
     @DisplayName("build() should validate parameters")
     void buildValidatesParameters() throws FactoryException, TransformException {
       // Create a builder with valid parameters
-      PatchBuilder builder = new PatchBuilder(
+      PatchBuilder builder = new EarthPatchBuilder(
           wgs84,
           utm11n,
           wgs84Extents,
@@ -218,7 +238,7 @@ class GridBuilderTest {
   @Test
   @DisplayName("build() with WGS84 to UTM 11N transformation")
   void buildWithWgs84ToUtm11n() throws FactoryException, TransformException {
-    PatchBuilder builder = new PatchBuilder(
+    PatchBuilder builder = new EarthPatchBuilder(
         wgs84,
         utm11n,
         wgs84Extents,
@@ -240,7 +260,7 @@ class GridBuilderTest {
   @Test
   @DisplayName("build() with UTM 11N to UTM 11N (no transformation)")
   void buildWithUtm11nToUtm11n() throws FactoryException, TransformException {
-    PatchBuilder builder = new PatchBuilder(
+    PatchBuilder builder = new EarthPatchBuilder(
         utm11n,
         utm11n,
         utm11nExtents,
@@ -266,22 +286,43 @@ class GridBuilderTest {
     @DisplayName("Constructor should throw exception for null CRS")
     void constructorWithNullCrs() {
       assertThrows(IllegalArgumentException.class,
-          () -> new PatchBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
+          () -> new EarthPatchBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
 
       assertThrows(IllegalArgumentException.class,
-          () -> new PatchBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
+          () -> new EarthPatchBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
     }
 
     @Test
     @DisplayName("Constructor should throw exception for missing coordinates")
-    void constructorWithMissingCoordinates() {
+    void constructorWithMissingCoordinates() throws TransformException {
+      PatchBuilder builder = new EarthPatchBuilder(
+          utm11n,
+          utm11n,
+          utm11nExtents,
+          cellWidth,
+          prototype
+      );
+
       // Note: PatchBuilderExtents constructor will throw an exception for null values,
       // so we need to verify that at the PatchBuilderExtents constructor level
-      assertThrows(IllegalArgumentException.class,
-          () -> new PatchBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
+      assertThrows(IllegalArgumentException.class, () -> {
+        PatchBuilderExtents extents = new PatchBuilderExtents(
+            null,
+            wgs84NorthLat,
+            wgs84EastLon,
+            wgs84SouthLat
+        );
+      });
 
-      assertThrows(IllegalArgumentException.class,
-          () -> new PatchBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
+      assertThrows(IllegalArgumentException.class, () -> {
+        PatchBuilderExtents extents = new PatchBuilderExtents(
+            wgs84WestLon,
+            null,
+            wgs84EastLon,
+            wgs84SouthLat
+        );
+
+      });
     }
   }
 

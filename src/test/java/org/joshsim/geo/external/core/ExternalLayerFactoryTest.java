@@ -1,5 +1,41 @@
 package org.joshsim.geo.external.core;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Optional;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.engine.value.type.Scalar;
+import org.joshsim.geo.external.cog.CogCacheLayer;
+import org.joshsim.geo.external.cog.CogReader;
+import org.joshsim.geo.external.netcdf.NetCdfCacheLayer;
+import org.joshsim.geo.external.netcdf.NetCdfReader;
+import org.joshsim.geo.geometry.EarthGeometry;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+
 
 /**
  * Unit tests for the ExternalLayerFactory class, ensuring that it correctly
@@ -7,7 +43,7 @@ package org.joshsim.geo.external.core;
  */
 public class ExternalLayerFactoryTest {
 
-  /*private EngineValueCaster caster;
+  private EngineValueCaster caster;
   private Units units;
   private ExternalLayerFactory factory;
   private CoordinateReferenceSystem wgs84;
@@ -85,14 +121,14 @@ public class ExternalLayerFactoryTest {
     );
   }
 
-  private EngineGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
-    return EngineGeometryFactory.createSquare(
+  private EarthGeometry createBoxGeometry(double minX, double minY, double maxX, double maxY) {
+    EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
+    return factory.createSquare(
         BigDecimal.valueOf(minX),
         BigDecimal.valueOf(maxY),  // topLeftY
         BigDecimal.valueOf(maxX),
-        BigDecimal.valueOf(minY),  // bottomRightY
-        wgs84
-    );
+        BigDecimal.valueOf(minY)  // bottomRightY
+    ).getOnEarth();
   }
 
   private Request createFileRequest(String path, EngineGeometry geometry) {
@@ -255,25 +291,39 @@ public class ExternalLayerFactoryTest {
     assertTrue(primingLayer.getPrimingGeometry().isPresent());
 
     // The new priming EngineGeometry should be different than the first
-    EngineGeometry extendedPrimingGeom = primingLayer.getPrimingGeometry().get();
+    EarthGeometry extendedPrimingGeom = primingLayer.getPrimingGeometry().get();
     assertNotEquals(firstPrimingGeom, extendedPrimingGeom);
 
     // Verify the extended EngineGeometry contains both original areas
-    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(testArea1.getInnerGeometry()),
-        "Extended geometry should contain the first area");
-    assertTrue(extendedPrimingGeom.getInnerGeometry().contains(testArea2.getInnerGeometry()),
-        "Extended geometry should contain the second area");
+    assertTrue(
+        extendedPrimingGeom.getInnerGeometry().contains(
+            testArea1.getOnEarth().getInnerGeometry()
+        ),
+        "Extended geometry should contain the first area"
+    );
+    assertTrue(
+        extendedPrimingGeom.getInnerGeometry().contains(
+            testArea2.getOnEarth().getInnerGeometry()
+        ),
+        "Extended geometry should contain the second area"
+    );
 
     // Calculate expected convex hull manually and verify it matches
-    EngineGeometry expectedConvexHull = testArea1.getConvexHull(testArea2);
-    assertTrue(expectedConvexHull.getInnerGeometry().equals(extendedPrimingGeom.getInnerGeometry()),
-        "Extended geometry should equal the convex hull of both areas");
+    EngineGeometry expectedConvexHull = testArea1.getOnEarth().getConvexHull(
+        testArea2.getOnEarth()
+    );
+    assertTrue(
+        expectedConvexHull.getOnEarth().getInnerGeometry().equals(
+            extendedPrimingGeom.getInnerGeometry()
+        ),
+        "Extended geometry should equal the convex hull of both areas"
+    );
 
     // Verify envelope contains both areas
     ReferencedEnvelope envelope = extendedPrimingGeom.getEnvelope();
-    assertTrue(envelope.contains(testArea1.getInnerGeometry().getEnvelopeInternal()),
+    assertTrue(envelope.contains(testArea1.getOnEarth().getInnerGeometry().getEnvelopeInternal()),
         "Envelope should contain the first area");
-    assertTrue(envelope.contains(testArea2.getInnerGeometry().getEnvelopeInternal()),
+    assertTrue(envelope.contains(testArea2.getOnEarth().getInnerGeometry().getEnvelopeInternal()),
         "Envelope should contain the second area");
   }
 
@@ -326,7 +376,7 @@ public class ExternalLayerFactoryTest {
   @Test
   void testGeometryHasCorrectCrs() {
     // Verify the EngineGeometry has the correct CRS
-    assertEquals(wgs84, testArea1.getCrs(), "Geometry should have WGS84 CRS");
+    assertEquals(wgs84, testArea1.getOnEarth().getCrs(), "Geometry should have WGS84 CRS");
   }
 
   @Test
@@ -424,7 +474,7 @@ public class ExternalLayerFactoryTest {
     // Use the remote URL versions of the same COG files we use locally
     String cogUrl1 =
         "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202111.tif";
-    
+
     String cogUrl2 =
         "https://storage.googleapis.com/national_park_service/nclimgrid-prcp-202112.tif";
 
@@ -501,7 +551,7 @@ public class ExternalLayerFactoryTest {
         "Inner layer should be GridCoverageExternalLayer");
   }
 
-  @Test
+  /*@Test
   void testNetcdfChainReadsNetcdfFiles() {
     Request request = createFileRequest(NETCDF_TEST, testArea1);
 
@@ -600,9 +650,9 @@ public class ExternalLayerFactoryTest {
     // Test cache clearing
     cacheLayer.clearCache();
     assertEquals(0, cacheLayer.getCacheSize());
-  }
+  }*/
 
-  @Test
+  /*@Test
   void testMultipleGeometriesWithDifferentNetcdfFiles() {
     ExternalLayer chain = factory.createExtendingPrimingNetcdfLayer();
 
@@ -686,7 +736,7 @@ public class ExternalLayerFactoryTest {
     assertTrue(staticLayer instanceof StaticPrimingGeometryLayer);
     ExternalLayer inner1 = ((ExternalLayerDecorator) staticLayer).getDecoratedLayer();
     assertTrue(inner1 instanceof NetCdfCacheLayer);
-  }
+  }*/
 
   @Test
   void testStaticPrimingCogLayer() {
@@ -707,6 +757,6 @@ public class ExternalLayerFactoryTest {
     assertTrue(staticLayer instanceof StaticPrimingGeometryLayer);
     ExternalLayer inner1 = ((ExternalLayerDecorator) staticLayer).getDecoratedLayer();
     assertTrue(inner1 instanceof CogCacheLayer);
-  }*/
+  }
 
 }

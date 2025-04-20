@@ -7,9 +7,16 @@
 package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.referencing.CRS;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.EarthPatchBuilder;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
@@ -22,6 +29,7 @@ import org.locationtech.jts.util.GeometricShapeFactory;
  * Factory methods for creating geometric shapes using JTS geometry.
  */
 public class EarthGeometryFactory implements EngineGeometryFactory {
+
   private static final GeometryFactory JTS_GEOMETRY_FACTORY =
       new GeometryFactory();
   private static final double SQUARE_TOLERANCE = 0.01;
@@ -152,6 +160,35 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   @Override
   public String toString() {
     return "EarthGeometryFactory with crs of " + crs + ".";
+  }
+
+  @Override
+  public PatchBuilder getPatchBuilder(
+      String sourceCrsStr,
+      String destinationCrsStr,
+      PatchBuilderExtents extents,
+      BigDecimal cellWidth,
+      EntityPrototype prototype
+  ) {
+    CoordinateReferenceSystem sourceCrs;
+    try {
+      sourceCrs = CRS.decode(sourceCrsStr, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid input CRS: " + sourceCrsStr, e);
+    }
+
+    CoordinateReferenceSystem destinationCrs;
+    try {
+      destinationCrs = CRS.decode(destinationCrsStr, true);
+    } catch (FactoryException e) {
+      throw new RuntimeException("Invalid target CRS: " + destinationCrsStr, e);
+    }
+
+    try {
+      return new EarthPatchBuilder(sourceCrs, destinationCrs, extents, cellWidth, prototype);
+    } catch (TransformException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

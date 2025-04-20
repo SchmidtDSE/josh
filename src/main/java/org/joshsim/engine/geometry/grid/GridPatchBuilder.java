@@ -1,3 +1,9 @@
+/**
+ * Logic to build grid space patches.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
@@ -10,7 +16,15 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 
 
+/**
+ * Builder which can create patches within grid space.
+ *
+ * <p>Builds a rectangular grid of spatial patches using specified grid extents, cell width, and an
+ * entity prototype within grid-space.</p>
+ */
 public class GridPatchBuilder implements PatchBuilder {
+
+  private static final BigDecimal ONE_THRESHOLD = new BigDecimal("0.00001");
 
   private final PatchBuilderExtents extents;
   private final BigDecimal cellWidth;
@@ -47,26 +61,33 @@ public class GridPatchBuilder implements PatchBuilder {
     BigDecimal maxX = extents.getBottomRightX();
     BigDecimal minY = extents.getTopLeftY();
     BigDecimal maxY = extents.getBottomRightY();
-    
-    long numCellsX = maxX.subtract(minX).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
-    long numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
-    
+
+    long numCellsX;
+    long numCellsY;
+    if (cellWidth.subtract(BigDecimal.ONE).abs().compareTo(ONE_THRESHOLD) <= 0) {
+      numCellsX = maxX.subtract(minX).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+      numCellsY = maxY.subtract(minY).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+    } else {
+      numCellsX = maxX.subtract(minX).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
+      numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
+    }
+
     List<MutableEntity> patches = new ArrayList<>();
     BigDecimal halfWidth = cellWidth.divide(BigDecimal.TWO);
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
         BigDecimal offsetX = cellWidth.multiply(new BigDecimal(x));
         BigDecimal offsetY = cellWidth.multiply(new BigDecimal(y));
-        
+
         BigDecimal centerX = minX.add(offsetX).add(halfWidth);
         BigDecimal centerY = minY.add(offsetY).add(halfWidth);
-        
+
         GridSquare square = new GridSquare(centerX, centerY, cellWidth);
         MutableEntity patch = prototype.buildSpatial(square);
         patches.add(patch);
       }
     }
-    
+
     return new PatchSet(patches, cellWidth);
   }
 
@@ -83,7 +104,7 @@ public class GridPatchBuilder implements PatchBuilder {
     if (extents.getTopLeftX().compareTo(extents.getBottomRightX()) >= 0) {
       throw new IllegalArgumentException("Top left X must be less than bottom right X");
     }
-    
+
     if (extents.getTopLeftY().compareTo(extents.getBottomRightY()) >= 0) {
       throw new IllegalArgumentException("Top left Y must be less than bottom right Y");
     }

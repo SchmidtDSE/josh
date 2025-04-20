@@ -7,9 +7,11 @@
 package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
-
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 /**
  * Factory for creating geometric shapes in grid space.
@@ -55,6 +57,17 @@ public class GridGeometryFactory implements EngineGeometryFactory {
   @Override
   public EngineGeometry createPoint(BigDecimal x, BigDecimal y) {
     return new GridPoint(x, y);
+  }
+
+  @Override
+  public PatchBuilder getPatchBuilder(String inputCrs, String targetCrs,
+        PatchBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype) {
+    boolean emptyCrs = inputCrs.isEmpty() && targetCrs.isEmpty();
+    if (!emptyCrs) {
+      throw new IllegalArgumentException("Grid-space expects an empty CRS.");
+    }
+
+    return new GridPatchBuilder(extents, cellWidth, prototype);
   }
 
 }

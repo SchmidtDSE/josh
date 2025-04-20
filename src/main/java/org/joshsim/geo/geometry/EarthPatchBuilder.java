@@ -20,7 +20,7 @@ import org.joshsim.geo.geometry.EarthGeometryFactory;
  * <p>Utility creating a rectangular grid of patches based on coordinates in any coordinate
  * reference system, converting them to the target CRS if needed.</p>
  */
-public class EarthPatchBuilder {
+public class EarthPatchBuilder implements PatchBuilder {
 
   private final BigDecimal cellWidth;
   private final EntityPrototype prototype;

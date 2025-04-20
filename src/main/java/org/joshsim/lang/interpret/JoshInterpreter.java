@@ -7,7 +7,6 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
-
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;

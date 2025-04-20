@@ -8,15 +8,11 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.TransformException;
-import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
-import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -71,45 +67,24 @@ public class GridFromSimFactory {
 
     simulation.endSubstep();
 
-    String inputCrs = getOrDefault(inputCrsMaybe, "EPSG:4326");
-    String targetCrs = getOrDefault(targetCrsMaybe, "EPSG:4326");
+    String inputCrs = getOrDefault(inputCrsMaybe, "");
+    String targetCrs = getOrDefault(targetCrsMaybe, "");
     String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
     String patchName = getOrDefault(patchNameMaybe, "Default");
 
-    CoordinateReferenceSystem inputCrsRef;
-    try {
-      // Check if the input CRS is valid
-      inputCrsRef = CRS.decode(inputCrs, true);
-    } catch (FactoryException e) {
-      throw new RuntimeException("Invalid input CRS: " + inputCrs, e);
-    }
-
-    CoordinateReferenceSystem targetCrsRef;
-    try {
-      // Check if the target CRS is valid
-      targetCrsRef = CRS.decode(targetCrs, true);
-    } catch (FactoryException e) {
-      throw new RuntimeException("Invalid target CRS: " + targetCrs, e);
-    }
-
-    EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
-    EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
-
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
-    try {
-      PatchBuilder builder = new PatchBuilder(
-          inputCrsRef,
-          targetCrsRef,
-          extents,
-          sizeValue.getAsDecimal(),
-          bridge.getPrototype(patchName)
-      );
+    EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
+    BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
-      return builder.build();
-    } catch (FactoryException | TransformException e) {
-      throw new RuntimeException("Error instantiating grid from script: " + e);
-    }
+    PatchBuilder builder = bridge.getGeometryFactory().getPatchBuilder(
+        inputCrs,
+        targetCrs,
+        extents,
+        sizeValuePrimitive,
+        bridge.getPrototype(patchName)
+    );
+    return builder.build();
   }
 
   /**
@@ -158,28 +133,12 @@ public class GridFromSimFactory {
     EngineValue latitude = latitudeFirst ? value1 : value2;
     EngineValue longitude = latitudeFirst ? value2 : value1;
 
-    EngineValue latitudeConverted = convertToExpectedUnits(latitude, Units.DEGREES);
-    EngineValue longitudeConverted = convertToExpectedUnits(longitude, Units.DEGREES);
-
-    boolean reversed = value1.getUnits().equals(Units.COUNT);
-
     if (start) {
-      builder.setTopLeftX(longitudeConverted.getAsDecimal());
-
-      if (reversed) {
-        builder.setBottomRightY(latitudeConverted.getAsDecimal());
-      } else {
-        builder.setTopLeftY(latitudeConverted.getAsDecimal());
-      }
+      builder.setTopLeftX(longitude.getAsDecimal());
+      builder.setTopLeftY(latitude.getAsDecimal());
     } else {
-      builder.setBottomRightX(longitudeConverted.getAsDecimal());
-
-      if (reversed) {
-        builder.setTopLeftY(latitudeConverted.getAsDecimal());
-      } else {
-        builder.setBottomRightY(latitudeConverted.getAsDecimal());
-      }
-
+      builder.setBottomRightX(longitude.getAsDecimal());
+      builder.setBottomRightY(latitude.getAsDecimal());
     }
   }
 

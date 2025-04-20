@@ -30,6 +30,12 @@ public class PatchBuilderExtents {
    */
   public PatchBuilderExtents(BigDecimal topLeftX, BigDecimal topLeftY, BigDecimal bottomRightX,
                              BigDecimal bottomRightY) {
+
+    assertNotNull(topLeftX, "top left x");
+    assertNotNull(topLeftY, "top left y");
+    assertNotNull(bottomRightX, "bottom right x");
+    assertNotNull(bottomRightY, "bottom right y");
+
     this.topLeftX = topLeftX;
     this.topLeftY = topLeftY;
     this.bottomRightX = bottomRightX;
@@ -70,6 +76,19 @@ public class PatchBuilderExtents {
    */
   public BigDecimal getBottomRightY() {
     return bottomRightY;
+  }
+
+  /**
+   * Validates that the provided value is not null, throwing an exception if the check fails.
+   *
+   * @param value The BigDecimal value to validate.
+   * @param description A description of the value being validated, used in the exception message.
+   * @throws IllegalArgumentException if the provided value is null.
+   */
+  private void assertNotNull(BigDecimal value, String description) {
+    if (value == null) {
+      throw new IllegalArgumentException(description + " cannot be null");
+    }
   }
 
 }

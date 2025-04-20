@@ -13,12 +13,17 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +56,8 @@ class GridFromSimFactoryTest {
 
   @Test
   void buildWithDefaultValues() {
-    // Setup empty optional returns for all grid attributes
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
+
     when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.empty());
     when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.empty());
     when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.empty());
@@ -66,8 +72,9 @@ class GridFromSimFactoryTest {
   }
 
   @Test
-  void buildWithCustomValues() {
-
+  void buildWithCustomValues() throws FactoryException {
+    CoordinateReferenceSystem crs = CRS.decode("EPSG:4326", true);
+    when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(crs));
 
     // Mock custom values for grid attributes
     EngineValueFactory defaultFactory = new EngineValueFactory();

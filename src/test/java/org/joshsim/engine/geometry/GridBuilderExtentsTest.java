@@ -7,7 +7,6 @@
 package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
@@ -35,26 +34,5 @@ class GridBuilderExtentsTest {
         bottomRightX,
         bottomRightY
     ));
-  }
-
-  @Test
-  @DisplayName("Constructor should fail with invalid coordinates")
-  void constructorFailsWithInvalidCoordinates() {
-    // Arrange
-    BigDecimal topLeftX = new BigDecimal("-115.55");
-    BigDecimal topLeftY = new BigDecimal("33.5"); // Lower than bottomRightY
-    BigDecimal bottomRightX = new BigDecimal("-115.5");
-    BigDecimal bottomRightY = new BigDecimal("33.55"); // Higher than topLeftY
-
-    // Act & Assert
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> new PatchBuilderExtents(
-            topLeftX,
-            topLeftY,
-            bottomRightX,
-            bottomRightY
-        )
-    );
   }
 }
