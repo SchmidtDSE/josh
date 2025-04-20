@@ -7,12 +7,10 @@
 
 package org.joshsim.engine.value.type;
 
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
-
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.StringJoiner;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 
 
 /**

@@ -46,6 +46,18 @@ public class JoshJsSimFacade {
     return "";
   }
 
+  /**
+   * Interpret and run a Josh simulation.
+   *
+   * <p>Parses the given Josh script, interprets it, and runs the specified simulation. This method
+   * performs various steps including syntax checking, program interpretation, and simulation
+   * execution. It uses a callback mechanism to signal completion of each simulation step.</p>
+   *
+   * @param code The Josh source code to parse, interpret, and run as a simulation.
+   * @param simulationName The name of the simulation to be executed as defined in the parsed
+   *     program.
+   * @throws RuntimeException If parsing the code results in errors.
+   */
   @JSExport
   public static void runSimulation(String code, String simulationName) {
     ParseResult result = JoshSimFacade.parse(code);

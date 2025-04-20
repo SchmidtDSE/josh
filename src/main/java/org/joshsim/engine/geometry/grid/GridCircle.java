@@ -6,9 +6,8 @@
 
 package org.joshsim.engine.geometry.grid;
 
-import org.joshsim.compat.CompatibilityLayerKeeper;
-
 import java.math.BigDecimal;
+import org.joshsim.compat.CompatibilityLayerKeeper;
 
 /**
  * Geometric shape representing a circle in grid coordinates.

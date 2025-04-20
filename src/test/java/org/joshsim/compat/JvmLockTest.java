@@ -1,11 +1,10 @@
 package org.joshsim.compat;
 
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import static org.mockito.Mockito.verify;
 
 import java.util.concurrent.locks.Lock;
-
-import static org.mockito.Mockito.verify;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class JvmLockTest {
 

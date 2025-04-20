@@ -7,7 +7,11 @@
 package org.joshsim.compat;
 
 /**
+ * Platform-compatible string joiner.
  *
+ * <p>This interface provides an abstraction for string joining functionality that can be
+ * implemented across different runtime environments, such as the JVM and WebAssembly. It supports
+ * adding strings sequentially and joining them with a specified delimiter.</p>
  */
 public interface CompatibleStringJoiner {
 
@@ -17,6 +21,6 @@ public interface CompatibleStringJoiner {
    * @param piece The new string to be added to the collection of strings where each has this
    *     joiner's delimiter in-between.
    */
-  CompatibleStringJoiner add(CharSequence newPiece);
+  CompatibleStringJoiner add(CharSequence piece);
 
 }

@@ -6,15 +6,13 @@
 
 package org.joshsim.engine.value.converter;
 
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 
 
 /**

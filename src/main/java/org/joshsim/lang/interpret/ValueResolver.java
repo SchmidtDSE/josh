@@ -7,8 +7,6 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
-import java.util.StringJoiner;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.func.DistributionScope;
