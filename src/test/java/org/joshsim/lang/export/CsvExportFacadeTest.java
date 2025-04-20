@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.export;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.joshsim.engine.entity.base.Entity;
 import org.junit.jupiter.api.Test;
 
@@ -23,27 +21,6 @@ import org.junit.jupiter.api.Test;
  * Unit test suite for the CsvExportFacade.
  */
 class CsvExportFacadeTest {
-
-  @Test
-  void testStartWhenAlreadyActiveNoActionPerformed() {
-    // Arrange
-    OutputStreamStrategy outputStrategyMock = mock(OutputStreamStrategy.class);
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
-
-    AtomicBoolean activeState = getActiveState(csvExportFacade);
-    activeState.set(true); // Simulate active state
-
-    // Act
-    csvExportFacade.start();
-
-    // Assert
-    assertTrue(activeState.get(), "Facade should remain active");
-    try {
-      verify(outputStrategyMock, times(0)).open();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   @Test
   void testStartWhenInactiveOpensOutputStream() throws IOException {
@@ -84,16 +61,6 @@ class CsvExportFacadeTest {
     // Assert
     verify(outputStrategyMock, times(1)).open();
     verify(outputStreamMock, times(1)).close();
-  }
-
-  private AtomicBoolean getActiveState(CsvExportFacade csvExportFacade) {
-    try {
-      var activeField = CsvExportFacade.class.getDeclaredField("active");
-      activeField.setAccessible(true);
-      return (AtomicBoolean) activeField.get(csvExportFacade);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException("Could not access active field", e);
-    }
   }
 
 }

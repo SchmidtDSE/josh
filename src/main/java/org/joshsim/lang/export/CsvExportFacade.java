@@ -10,11 +10,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.QueueService;
+import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 
 
@@ -24,11 +22,9 @@ import org.joshsim.engine.entity.base.Entity;
 public class CsvExportFacade implements ExportFacade {
 
   private final OutputStreamStrategy outputStrategy;
-
-  private final Queue<Task> entityQueue = new ConcurrentLinkedQueue<>();
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final AtomicBoolean active = new AtomicBoolean(false);
   private final Optional<Iterable<String>> header;
+  private final InnerWriter innerWriter;
+  private final QueueService queueService;
 
   /**
    * Constructs a CsvExportFacade object with the specified export target / output stream strategy.
@@ -38,6 +34,8 @@ public class CsvExportFacade implements ExportFacade {
   public CsvExportFacade(OutputStreamStrategy outputStrategy) {
     this.outputStrategy = outputStrategy;
     header = Optional.empty();
+    innerWriter = new InnerWriter(header, outputStrategy);
+    queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
   /**
@@ -49,67 +47,18 @@ public class CsvExportFacade implements ExportFacade {
   public CsvExportFacade(OutputStreamStrategy outputStrategy, Iterable<String> header) {
     this.outputStrategy = outputStrategy;
     this.header = Optional.of(header);
+    innerWriter = new InnerWriter(Optional.of(header), outputStrategy);
+    queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
   @Override
   public void start() {
-    if (active.compareAndSet(false, true)) {
-      executorService.submit(() -> {
-
-        OutputStream outputStream;
-        try {
-          outputStream = outputStrategy.open();
-        } catch (IOException e) {
-          throw new RuntimeException("Error opening output stream", e);
-        }
-
-        ExportSerializeStrategy<Map<String, String>> serializeStrategy = new MapSerializeStrategy();
-
-        ExportWriteStrategy<Map<String, String>> writeStrategy;
-        if (header.isPresent()) {
-          writeStrategy = new CsvWriteStrategy(header.get());
-        } else {
-          writeStrategy = new CsvWriteStrategy();
-        }
-
-        while (active.get()) {
-          Task task = entityQueue.poll();
-
-          if (task == null) {
-            writeStrategy.flush();
-            trySleep();
-          } else {
-            Entity entity = task.getEntity();
-            long step = task.getStep();
-
-            try {
-              Map<String, String> serialized = serializeStrategy.getRecord(entity);
-              serialized.put("step", Long.toString(step));
-              writeStrategy.write(serialized, outputStream);
-            } catch (IOException e) {
-              throw new RuntimeException("Error writing to output stream", e);
-            }
-          }
-        }
-
-        writeStrategy.flush();
-
-        try {
-          outputStream.close();
-        } catch (IOException e) {
-          throw new RuntimeException("Error closing output stream", e);
-        }
-      });
-    }
+    queueService.start();
   }
 
   @Override
   public void join() {
-    active.set(false);
-    executorService.shutdown();
-    while (!executorService.isTerminated()) {
-      trySleep();
-    }
+    queueService.join();
   }
 
   @Override
@@ -125,24 +74,7 @@ public class CsvExportFacade implements ExportFacade {
    * @throws IllegalStateException If the export process is not active when this method is invoked.
    */
   public void write(Task task) {
-    if (!active.get()) {
-      throw new IllegalStateException("CsvExportFacade is not active. Cannot write entities.");
-    }
-
-    entityQueue.add(task);
-  }
-
-  /**
-   * Causes the executing thread to sleep to avoid thrashing.
-   *
-   * @throws RuntimeException If the thread is interrupted during the sleep operation.
-   */
-  private void trySleep() {
-    try {
-      Thread.sleep(100);
-    } catch (InterruptedException e) {
-      throw new RuntimeException("Interrupted while sleeping", e);
-    }
+    queueService.add(task);
   }
 
   /**
@@ -183,4 +115,66 @@ public class CsvExportFacade implements ExportFacade {
       return step;
     }
   }
+
+  private static class InnerWriter implements QueueServiceCallback {
+
+    private final Optional<Iterable<String>> header;
+    private final OutputStream outputStream;
+    private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
+    private final ExportWriteStrategy<Map<String, String>> writeStrategy;
+
+    public InnerWriter(Optional<Iterable<String>> header, OutputStreamStrategy outputStrategy) {
+      this.header = header;
+
+      try {
+        outputStream = outputStrategy.open();
+      } catch (IOException e) {
+        throw new RuntimeException("Error opening output stream", e);
+      }
+
+      serializeStrategy = new MapSerializeStrategy();
+      ;
+      if (header.isPresent()) {
+        writeStrategy = new CsvWriteStrategy(header.get());
+      } else {
+        writeStrategy = new CsvWriteStrategy();
+      }
+    }
+
+    @Override
+    public void onStart() {}
+
+    @Override
+    public void onTask(Optional<Object> taskMaybe) {
+      if (taskMaybe.isEmpty()) {
+        writeStrategy.flush();
+        return;
+      }
+
+      Task task = (Task) taskMaybe.get();
+
+      Entity entity = task.getEntity();
+      long step = task.getStep();
+
+      try {
+        Map<String, String> serialized = serializeStrategy.getRecord(entity);
+        serialized.put("step", Long.toString(step));
+        writeStrategy.write(serialized, outputStream);
+      } catch (IOException e) {
+        throw new RuntimeException("Error writing to output stream", e);
+      }
+    }
+
+    @Override
+    public void onEnd() {
+      writeStrategy.flush();
+
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        throw new RuntimeException("Error closing output stream", e);
+      }
+    }
+  }
+
 }

@@ -26,7 +26,6 @@ import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.geo.external.cog.CogCacheLayer;
 import org.joshsim.geo.external.cog.CogReader;
 import org.joshsim.geo.external.netcdf.NetCdfCacheLayer;
-import org.joshsim.geo.external.netcdf.NetCdfReader;
 import org.joshsim.geo.geometry.EarthGeometry;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.junit.jupiter.api.BeforeAll;

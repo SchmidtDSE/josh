@@ -7,7 +7,8 @@
 package org.joshsim.lang.export;
 
 import java.util.Map;
-import java.util.StringJoiner;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.teavm.jso.JSBody;
 
@@ -40,7 +41,7 @@ public class JsExportFacade implements ExportFacade {
     record.put("step", ((Long) step).toString());
     record.put("path", path);
 
-    StringJoiner joiner = new StringJoiner(";");
+    CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(";");
 
     for (String name : record.keySet()) {
       String value = record.get(name);

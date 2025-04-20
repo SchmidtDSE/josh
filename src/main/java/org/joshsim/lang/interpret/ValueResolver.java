@@ -7,7 +7,8 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
-import java.util.StringJoiner;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.func.DistributionScope;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
@@ -106,7 +107,7 @@ public class ValueResolver {
     int numPieces = pieces.length;
 
     for (int numPiecesAttempt = numPieces; numPiecesAttempt > 0; numPiecesAttempt--) {
-      StringJoiner attemptJoiner = new StringJoiner(".");
+      CompatibleStringJoiner attemptJoiner = CompatibilityLayerKeeper.get().createStringJoiner(".");
 
       for (int i = 0; i < numPiecesAttempt; i++) {
         attemptJoiner.add(pieces[i]);
@@ -120,7 +121,10 @@ public class ValueResolver {
         if (numPiecesAttempt == numPieces) {
           memoizedContinuationResolver = Optional.empty();
         } else {
-          StringJoiner remainingJoiner = new StringJoiner(".");
+          CompatibleStringJoiner remainingJoiner = CompatibilityLayerKeeper
+              .get()
+              .createStringJoiner(".");
+
           for (int i = numPiecesAttempt; i < numPieces; i++) {
             remainingJoiner.add(pieces[i]);
           }
