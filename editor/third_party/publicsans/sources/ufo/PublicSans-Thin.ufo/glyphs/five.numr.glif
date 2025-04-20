@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="five.numr" format="2">
+  <advance width="749"/>
+  <outline>
+    <contour>
+      <enginePoint x="383" y="523" type="curve" smooth="yes"/>
+      <enginePoint x="568" y="523"/>
+      <enginePoint x="691" y="648"/>
+      <enginePoint x="691" y="836" type="curve" smooth="yes"/>
+      <enginePoint x="691" y="1032"/>
+      <enginePoint x="544" y="1132"/>
+      <enginePoint x="398" y="1132" type="curve" smooth="yes"/>
+      <enginePoint x="298" y="1132"/>
+      <enginePoint x="221" y="1102"/>
+      <enginePoint x="171" y="1042" type="curve"/>
+      <enginePoint x="197" y="1387" type="line"/>
+      <enginePoint x="643" y="1387" type="line"/>
+      <enginePoint x="643" y="1446" type="line"/>
+      <enginePoint x="137" y="1446" type="line"/>
+      <enginePoint x="96" y="956" type="line"/>
+      <enginePoint x="162" y="956" type="line"/>
+      <enginePoint x="162" y="956"/>
+      <enginePoint x="162" y="956"/>
+      <enginePoint x="162" y="953" type="curve"/>
+      <enginePoint x="237" y="1059"/>
+      <enginePoint x="305" y="1073"/>
+      <enginePoint x="398" y="1073" type="curve" smooth="yes"/>
+      <enginePoint x="518" y="1073"/>
+      <enginePoint x="628" y="985"/>
+      <enginePoint x="628" y="835" type="curve" smooth="yes"/>
+      <enginePoint x="628" y="677"/>
+      <enginePoint x="535" y="581"/>
+      <enginePoint x="386" y="581" type="curve" smooth="yes"/>
+      <enginePoint x="262" y="581"/>
+      <enginePoint x="162" y="657"/>
+      <enginePoint x="124" y="782" type="curve"/>
+      <enginePoint x="58" y="782" type="line"/>
+      <enginePoint x="92" y="626"/>
+      <enginePoint x="223" y="523"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>zero.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>zero.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

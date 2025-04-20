@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="rupeeIndian" format="2">
+  <advance width="1392"/>
+  <unicode hex="20B9"/>
+  <outline>
+    <contour>
+      <enginePoint x="698" y="0" type="line"/>
+      <enginePoint x="1178" y="0" type="line"/>
+      <enginePoint x="906" y="632" type="line" smooth="yes"/>
+      <enginePoint x="900" y="648"/>
+      <enginePoint x="900" y="664"/>
+      <enginePoint x="912" y="668" type="curve" smooth="yes"/>
+      <enginePoint x="1062" y="728"/>
+      <enginePoint x="1168" y="866"/>
+      <enginePoint x="1168" y="1044" type="curve" smooth="yes"/>
+      <enginePoint x="1168" y="1296"/>
+      <enginePoint x="948" y="1446"/>
+      <enginePoint x="574" y="1446" type="curve" smooth="yes"/>
+      <enginePoint x="60" y="1446" type="line"/>
+      <enginePoint x="60" y="1256" type="line"/>
+      <enginePoint x="506" y="1256" type="line" smooth="yes"/>
+      <enginePoint x="634" y="1256"/>
+      <enginePoint x="710" y="1198"/>
+      <enginePoint x="710" y="1058" type="curve" smooth="yes"/>
+      <enginePoint x="710" y="932"/>
+      <enginePoint x="656" y="870"/>
+      <enginePoint x="516" y="870" type="curve" smooth="yes"/>
+      <enginePoint x="60" y="870" type="line"/>
+      <enginePoint x="60" y="598" type="line"/>
+      <enginePoint x="490" y="598" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="60" y="976" type="line"/>
+      <enginePoint x="1332" y="976" type="line"/>
+      <enginePoint x="1332" y="1152" type="line"/>
+      <enginePoint x="60" y="1152" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="60" y="1270" type="line"/>
+      <enginePoint x="1332" y="1270" type="line"/>
+      <enginePoint x="1332" y="1446" type="line"/>
+      <enginePoint x="60" y="1446" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

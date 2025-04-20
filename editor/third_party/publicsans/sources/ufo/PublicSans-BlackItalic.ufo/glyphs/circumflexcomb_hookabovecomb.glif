@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="circumflexcomb_hookabovecomb" format="2">
+  <anchor x="506" y="1034" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="114" y="1155" type="line"/>
+      <enginePoint x="378" y="1155" type="line"/>
+      <enginePoint x="520" y="1304" type="line"/>
+      <enginePoint x="644" y="1155" type="line"/>
+      <enginePoint x="922" y="1155" type="line"/>
+      <enginePoint x="654" y="1446" type="line"/>
+      <enginePoint x="390" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="859" y="1354" type="line"/>
+      <enginePoint x="1021" y="1442"/>
+      <enginePoint x="1063" y="1568"/>
+      <enginePoint x="1003" y="1692" type="curve" smooth="yes"/>
+      <enginePoint x="953" y="1796"/>
+      <enginePoint x="813" y="1826"/>
+      <enginePoint x="671" y="1742" type="curve"/>
+      <enginePoint x="733" y="1616" type="line"/>
+      <enginePoint x="779" y="1644"/>
+      <enginePoint x="835" y="1638"/>
+      <enginePoint x="851" y="1602" type="curve" smooth="yes"/>
+      <enginePoint x="871" y="1556"/>
+      <enginePoint x="849" y="1514"/>
+      <enginePoint x="797" y="1484" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>circumflexcomb</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>circumflexcomb</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>905</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

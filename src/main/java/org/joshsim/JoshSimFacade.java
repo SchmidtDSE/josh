@@ -7,6 +7,7 @@
 package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -44,12 +45,14 @@ public class JoshSimFacade {
   /**
    * Interpret a parsed Josh script to Java objects which can run the simulation.
    *
+   * @param engineGeometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
-  public static JoshProgram interpret(ParseResult parsed) {
+  public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
+        ParseResult parsed) {
     JoshInterpreter interpreter = new JoshInterpreter();
-    return interpreter.interpret(parsed);
+    return interpreter.interpret(parsed, engineGeometryFactory);
   }
 
   /**
@@ -58,6 +61,7 @@ public class JoshSimFacade {
    * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
+   * @param engineGeometryFactory Factory with which to build engine geometries.
    * @param program The Josh program containing the simulation to run. This is the program in which
    *     the simulation will be initalized.
    * @param simulationName The name of the simulation to execute from the program. This will be
@@ -67,11 +71,12 @@ public class JoshSimFacade {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    */
-  public static void runSimulation(JoshProgram program, String simulationName,
-      SimulationStepCallback callback, boolean serialPatches) {
+  public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
+        String simulationName, SimulationStepCallback callback, boolean serialPatches) {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
+        engineGeometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes()

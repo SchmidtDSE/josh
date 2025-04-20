@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="brevecomb_hookabovecomb" format="2">
+  <anchor x="260" y="1038" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="263" y="1155" type="curve" smooth="yes"/>
+      <enginePoint x="401" y="1155"/>
+      <enginePoint x="496" y="1227"/>
+      <enginePoint x="521" y="1333" type="curve"/>
+      <enginePoint x="438" y="1333" type="line"/>
+      <enginePoint x="413" y="1272"/>
+      <enginePoint x="345" y="1228"/>
+      <enginePoint x="263" y="1228" type="curve" smooth="yes"/>
+      <enginePoint x="180" y="1228"/>
+      <enginePoint x="118" y="1272"/>
+      <enginePoint x="94" y="1333" type="curve"/>
+      <enginePoint x="10" y="1333" type="line"/>
+      <enginePoint x="36" y="1220"/>
+      <enginePoint x="136" y="1155"/>
+    </contour>
+    <contour>
+      <enginePoint x="274" y="1335" type="line"/>
+      <enginePoint x="376" y="1399"/>
+      <enginePoint x="422" y="1491"/>
+      <enginePoint x="362" y="1579" type="curve" smooth="yes"/>
+      <enginePoint x="334" y="1620"/>
+      <enginePoint x="290" y="1642"/>
+      <enginePoint x="238" y="1642" type="curve" smooth="yes"/>
+      <enginePoint x="196" y="1642"/>
+      <enginePoint x="150" y="1628"/>
+      <enginePoint x="104" y="1599" type="curve"/>
+      <enginePoint x="144" y="1537" type="line"/>
+      <enginePoint x="204" y="1577"/>
+      <enginePoint x="272" y="1585"/>
+      <enginePoint x="302" y="1537" type="curve" smooth="yes"/>
+      <enginePoint x="330" y="1493"/>
+      <enginePoint x="296" y="1435"/>
+      <enginePoint x="234" y="1395" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>brevecomb</string>
+      <key>com.schriftgestaltung.Glyphs.originalWidth</key>
+      <integer>530</integer>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

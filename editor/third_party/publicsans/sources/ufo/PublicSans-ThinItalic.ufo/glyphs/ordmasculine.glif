@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ordmasculine" format="2">
+  <advance width="770"/>
+  <unicode hex="00BA"/>
+  <outline>
+    <contour>
+      <enginePoint x="423" y="794" type="curve" smooth="yes"/>
+      <enginePoint x="602" y="794"/>
+      <enginePoint x="719" y="932"/>
+      <enginePoint x="746" y="1126" type="curve" smooth="yes"/>
+      <enginePoint x="774" y="1328"/>
+      <enginePoint x="688" y="1464"/>
+      <enginePoint x="518" y="1464" type="curve" smooth="yes"/>
+      <enginePoint x="348" y="1464"/>
+      <enginePoint x="224" y="1328"/>
+      <enginePoint x="196" y="1126" type="curve" smooth="yes"/>
+      <enginePoint x="169" y="932"/>
+      <enginePoint x="244" y="794"/>
+    </contour>
+    <contour>
+      <enginePoint x="432" y="858" type="curve" smooth="yes"/>
+      <enginePoint x="301" y="858"/>
+      <enginePoint x="246" y="966"/>
+      <enginePoint x="270" y="1132" type="curve" smooth="yes"/>
+      <enginePoint x="293" y="1288"/>
+      <enginePoint x="377" y="1396"/>
+      <enginePoint x="509" y="1396" type="curve" smooth="yes"/>
+      <enginePoint x="640" y="1396"/>
+      <enginePoint x="694" y="1288"/>
+      <enginePoint x="673" y="1132" type="curve" smooth="yes"/>
+      <enginePoint x="650" y="966"/>
+      <enginePoint x="564" y="858"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>o</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>o</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="OE" format="2">
+  <advance width="2074"/>
+  <unicode hex="0152"/>
+  <anchor x="1241" y="1446" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="2039" y="1446" type="line"/>
+      <enginePoint x="1275" y="1446" type="line"/>
+      <enginePoint x="1229" y="1117" type="line"/>
+      <enginePoint x="1178" y="1346"/>
+      <enginePoint x="1029" y="1466"/>
+      <enginePoint x="801" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="463" y="1466"/>
+      <enginePoint x="221" y="1204"/>
+      <enginePoint x="153" y="716" type="curve" smooth="yes"/>
+      <enginePoint x="85" y="236"/>
+      <enginePoint x="251" y="-20"/>
+      <enginePoint x="591" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="819" y="-20"/>
+      <enginePoint x="1002" y="99"/>
+      <enginePoint x="1117" y="325" type="curve"/>
+      <enginePoint x="1071" y="0" type="line"/>
+      <enginePoint x="1861" y="0" type="line"/>
+      <enginePoint x="1873" y="82" type="line"/>
+      <enginePoint x="1155" y="84" type="line"/>
+      <enginePoint x="1241" y="690" type="line"/>
+      <enginePoint x="1885" y="690" type="line"/>
+      <enginePoint x="1895" y="772" type="line"/>
+      <enginePoint x="1251" y="772" type="line"/>
+      <enginePoint x="1335" y="1366" type="line"/>
+      <enginePoint x="2027" y="1366" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="605" y="62" type="curve" smooth="yes"/>
+      <enginePoint x="307" y="62"/>
+      <enginePoint x="173" y="278"/>
+      <enginePoint x="235" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="297" y="1164"/>
+      <enginePoint x="493" y="1384"/>
+      <enginePoint x="789" y="1384" type="curve" smooth="yes"/>
+      <enginePoint x="1085" y="1384"/>
+      <enginePoint x="1215" y="1166"/>
+      <enginePoint x="1153" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="1091" y="276"/>
+      <enginePoint x="901" y="62"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>O</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>E</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

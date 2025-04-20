@@ -22,6 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -30,6 +36,7 @@ import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -91,7 +98,12 @@ public class JoshSimCommander {
     @Override
     public Integer call() {
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+          new GridGeometryFactory(),
+          file,
+          output
+      );
+
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -135,6 +147,9 @@ public class JoshSimCommander {
     @Parameters(index = "1", description = "Simulation to run")
     private String simulation;
 
+    @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
+    private String crs;
+
     @Mixin
     private OutputOptions output = new OutputOptions();
 
@@ -159,8 +174,20 @@ public class JoshSimCommander {
      */
     @Override
     public Integer call() {
+      EngineGeometryFactory geometryFactory;
+      if (crs.isEmpty()) {
+        geometryFactory = new GridGeometryFactory();
+      } else {
+        CoordinateReferenceSystem crsRealized;
+        try {
+          crsRealized = CRS.decode(crs);
+        } catch (FactoryException e) {
+          throw new RuntimeException(e);
+        }
+        geometryFactory = new EarthGeometryFactory(crsRealized);
+      }
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(geometryFactory, file, output);
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -180,6 +207,7 @@ public class JoshSimCommander {
       }
 
       JoshSimFacade.runSimulation(
+          geometryFactory,
           program,
           simulation,
           (step) -> output.printInfo(String.format("Completed step %d.", step)),
@@ -258,7 +286,8 @@ public class JoshSimCommander {
     }
   }
 
-  private static ProgramInitResult getJoshProgram(File file, OutputOptions output) {
+  private static ProgramInitResult getJoshProgram(EngineGeometryFactory geometryFactory, File file,
+        OutputOptions output) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -290,7 +319,7 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(result);
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
     assert program != null;
 
     return new ProgramInitResult(program);

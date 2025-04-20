@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.geotools.api.referencing.FactoryException;
@@ -17,6 +18,7 @@ import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,7 @@ public class GeometryMomentoTest {
   private BigDecimal centerY;
   private BigDecimal diameter;
   private CoordinateReferenceSystem crs;
+  private EarthGeometryFactory geometryFactory;
 
   /**
    * Create common structures for tests.
@@ -52,8 +55,9 @@ public class GeometryMomentoTest {
     centerY = new BigDecimal("20.0");
     diameter = new BigDecimal("5.0");
     crs = CRS.decode("EPSG:32611");
-    squareMomento = new GeometryMomento("square", centerX, centerY, diameter, crs);
-    circleMomento = new GeometryMomento("circle", centerX, centerY, diameter, crs);
+    geometryFactory = new EarthGeometryFactory(crs);
+    squareMomento = new GeometryMomento("square", centerX, centerY, diameter, geometryFactory);
+    circleMomento = new GeometryMomento("circle", centerX, centerY, diameter, geometryFactory);
   }
 
   @Test
@@ -65,7 +69,7 @@ public class GeometryMomentoTest {
   @Test
   void testConstructorInvalidShape() {
     assertThrows(IllegalArgumentException.class, () ->
-      new GeometryMomento("triangle", centerX, centerY, diameter, crs));
+      new GeometryMomento("triangle", centerX, centerY, diameter, geometryFactory));
   }
 
   @Test
@@ -80,34 +84,53 @@ public class GeometryMomentoTest {
   @Test
   void testToString() {
     String expectedSquareString = String.format(
-        "square momento at (%.6f, %.6f) of diameter %.6f.",
+        "square momento at (%.6f, %.6f) of diameter %.6f",
         centerX.doubleValue(),
         centerY.doubleValue(),
         diameter.doubleValue()
     );
-    assertEquals(expectedSquareString, squareMomento.toString());
+    assertTrue(squareMomento.toString().contains(expectedSquareString));
   }
 
   @Test
   void testEquals() {
     GeometryMomento sameMomento = new GeometryMomento(
-        "square", centerX, centerY, diameter, crs
+        "square",
+        centerX,
+        centerY,
+        diameter,
+        geometryFactory
     );
     assertEquals(squareMomento, sameMomento);
 
     GeometryMomento differentMomento = new GeometryMomento(
-        "circle", centerX, centerY, diameter, crs
+        "circle",
+        centerX,
+        centerY,
+        diameter,
+        geometryFactory
     );
     assertNotEquals(squareMomento, differentMomento);
   }
 
   @Test
   void testHashCode() {
-    GeometryMomento sameMomento = new GeometryMomento("square", centerX, centerY, diameter, crs);
+    GeometryMomento sameMomento = new GeometryMomento(
+        "square",
+        centerX,
+        centerY,
+        diameter,
+        geometryFactory
+    );
+
     assertEquals(squareMomento.hashCode(), sameMomento.hashCode());
 
     GeometryMomento differentMomento = new GeometryMomento(
-        "circle", centerX, centerY, diameter, crs
+        "circle",
+        centerX,
+        centerY,
+        diameter,
+        geometryFactory
     );
     assertNotEquals(squareMomento.hashCode(), differentMomento.hashCode());
   }

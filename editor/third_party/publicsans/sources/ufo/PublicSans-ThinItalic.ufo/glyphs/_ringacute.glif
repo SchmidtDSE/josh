@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="_ringacute" format="2">
+  <advance width="1358"/>
+  <anchor x="743" y="1034" name="_top"/>
+  <outline>
+    <contour>
+      <enginePoint x="923" y="1497" type="line"/>
+      <enginePoint x="827" y="1497" type="line"/>
+      <enginePoint x="781" y="1372" type="line"/>
+      <enginePoint x="689" y="1364"/>
+      <enginePoint x="606" y="1283"/>
+      <enginePoint x="594" y="1186" type="curve" smooth="yes"/>
+      <enginePoint x="579" y="1071"/>
+      <enginePoint x="641" y="985"/>
+      <enginePoint x="743" y="985" type="curve" smooth="yes"/>
+      <enginePoint x="845" y="985"/>
+      <enginePoint x="935" y="1069"/>
+      <enginePoint x="951" y="1182" type="curve" smooth="yes"/>
+      <enginePoint x="963" y="1268"/>
+      <enginePoint x="922" y="1339"/>
+      <enginePoint x="853" y="1364" type="curve"/>
+    </contour>
+    <contour>
+      <enginePoint x="873" y="1179" type="curve" smooth="yes"/>
+      <enginePoint x="863" y="1119"/>
+      <enginePoint x="811" y="1063"/>
+      <enginePoint x="753" y="1063" type="curve" smooth="yes"/>
+      <enginePoint x="697" y="1063"/>
+      <enginePoint x="655" y="1119"/>
+      <enginePoint x="663" y="1179" type="curve" smooth="yes"/>
+      <enginePoint x="672" y="1247"/>
+      <enginePoint x="729" y="1295"/>
+      <enginePoint x="785" y="1295" type="curve" smooth="yes"/>
+      <enginePoint x="844" y="1295"/>
+      <enginePoint x="884" y="1247"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

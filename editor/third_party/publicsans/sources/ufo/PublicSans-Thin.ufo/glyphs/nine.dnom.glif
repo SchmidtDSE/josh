@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="nine.dnom" format="2">
+  <advance width="729"/>
+  <outline>
+    <contour>
+      <enginePoint x="335" y="-15" type="curve" smooth="yes"/>
+      <enginePoint x="548" y="-15"/>
+      <enginePoint x="671" y="162"/>
+      <enginePoint x="671" y="462" type="curve" smooth="yes"/>
+      <enginePoint x="671" y="745"/>
+      <enginePoint x="551" y="920"/>
+      <enginePoint x="354" y="920" type="curve" smooth="yes"/>
+      <enginePoint x="177" y="920"/>
+      <enginePoint x="67" y="800"/>
+      <enginePoint x="67" y="608" type="curve" smooth="yes"/>
+      <enginePoint x="67" y="424"/>
+      <enginePoint x="179" y="309"/>
+      <enginePoint x="359" y="309" type="curve" smooth="yes"/>
+      <enginePoint x="477" y="309"/>
+      <enginePoint x="576" y="382"/>
+      <enginePoint x="612" y="491" type="curve"/>
+      <enginePoint x="616" y="197"/>
+      <enginePoint x="521" y="44"/>
+      <enginePoint x="335" y="44" type="curve" smooth="yes"/>
+      <enginePoint x="229" y="44"/>
+      <enginePoint x="144" y="107"/>
+      <enginePoint x="118" y="201" type="curve"/>
+      <enginePoint x="58" y="201" type="line"/>
+      <enginePoint x="84" y="71"/>
+      <enginePoint x="194" y="-15"/>
+    </contour>
+    <contour>
+      <enginePoint x="353" y="369" type="curve" smooth="yes"/>
+      <enginePoint x="210" y="369"/>
+      <enginePoint x="132" y="453"/>
+      <enginePoint x="132" y="610" type="curve" smooth="yes"/>
+      <enginePoint x="132" y="760"/>
+      <enginePoint x="220" y="859"/>
+      <enginePoint x="351" y="859" type="curve" smooth="yes"/>
+      <enginePoint x="489" y="859"/>
+      <enginePoint x="587" y="744"/>
+      <enginePoint x="584" y="587" type="curve" smooth="yes"/>
+      <enginePoint x="582" y="468"/>
+      <enginePoint x="479" y="369"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>nine.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>nine.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

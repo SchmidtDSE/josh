@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="guillemetleft" format="2">
+  <advance width="1080"/>
+  <unicode hex="00AB"/>
+  <outline>
+    <contour>
+      <enginePoint x="740" y="118" type="line"/>
+      <enginePoint x="940" y="118" type="line"/>
+      <enginePoint x="812" y="502" type="line"/>
+      <enginePoint x="940" y="902" type="line"/>
+      <enginePoint x="738" y="902" type="line"/>
+      <enginePoint x="524" y="502" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="334" y="118" type="line"/>
+      <enginePoint x="534" y="118" type="line"/>
+      <enginePoint x="406" y="502" type="line"/>
+      <enginePoint x="534" y="902" type="line"/>
+      <enginePoint x="332" y="902" type="line"/>
+      <enginePoint x="120" y="502" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

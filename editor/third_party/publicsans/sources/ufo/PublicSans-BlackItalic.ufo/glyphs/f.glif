@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="f" format="2">
+  <advance width="795"/>
+  <unicode hex="0066"/>
+  <outline>
+    <contour>
+      <enginePoint x="114" y="0" type="line"/>
+      <enginePoint x="500" y="0" type="line"/>
+      <enginePoint x="618" y="770" type="line"/>
+      <enginePoint x="805" y="770" type="line"/>
+      <enginePoint x="845" y="1034" type="line"/>
+      <enginePoint x="650" y="1034" type="line"/>
+      <enginePoint x="658" y="1094" type="line" smooth="yes"/>
+      <enginePoint x="671" y="1170"/>
+      <enginePoint x="696" y="1194"/>
+      <enginePoint x="761" y="1194" type="curve" smooth="yes"/>
+      <enginePoint x="879" y="1194" type="line"/>
+      <enginePoint x="916" y="1446" type="line"/>
+      <enginePoint x="641" y="1446" type="line" smooth="yes"/>
+      <enginePoint x="452" y="1446"/>
+      <enginePoint x="318" y="1342"/>
+      <enginePoint x="292" y="1172" type="curve" smooth="yes"/>
+      <enginePoint x="271" y="1034" type="line"/>
+      <enginePoint x="106" y="1034" type="line"/>
+      <enginePoint x="66" y="770" type="line"/>
+      <enginePoint x="231" y="770" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>=t*.75</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=t*.75</string>
+      <key>com.schriftgestaltung.Glyphs.layer.leftMetricsKey</key>
+      <string>=t</string>
+      <key>com.schriftgestaltung.Glyphs.layer.rightMetricsKey</key>
+      <string>=x</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

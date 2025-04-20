@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="question" format="2">
+  <advance width="1088"/>
+  <unicode hex="003F"/>
+  <outline>
+    <contour>
+      <enginePoint x="358" y="524" type="curve"/>
+      <enginePoint x="660" y="524" type="line"/>
+      <enginePoint x="704" y="804"/>
+      <enginePoint x="1078" y="818"/>
+      <enginePoint x="1124" y="1132" type="curve" smooth="yes"/>
+      <enginePoint x="1152" y="1308"/>
+      <enginePoint x="974" y="1466"/>
+      <enginePoint x="674" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="406" y="1466"/>
+      <enginePoint x="204" y="1340"/>
+      <enginePoint x="82" y="1102" type="curve"/>
+      <enginePoint x="394" y="1032" type="line"/>
+      <enginePoint x="456" y="1148"/>
+      <enginePoint x="544" y="1212"/>
+      <enginePoint x="632" y="1212" type="curve" smooth="yes"/>
+      <enginePoint x="700" y="1212"/>
+      <enginePoint x="754" y="1172"/>
+      <enginePoint x="744" y="1110" type="curve" smooth="yes"/>
+      <enginePoint x="720" y="956"/>
+      <enginePoint x="414" y="884"/>
+    </contour>
+    <contour>
+      <enginePoint x="226" y="0" type="line"/>
+      <enginePoint x="634" y="0" type="line"/>
+      <enginePoint x="692" y="384" type="line"/>
+      <enginePoint x="284" y="384" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>z</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

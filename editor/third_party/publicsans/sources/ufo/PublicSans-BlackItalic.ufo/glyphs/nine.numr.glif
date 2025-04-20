@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="nine.numr" format="2">
+  <advance width="862"/>
+  <outline>
+    <contour>
+      <enginePoint x="414" y="546" type="curve" smooth="yes"/>
+      <enginePoint x="661" y="546"/>
+      <enginePoint x="842" y="695"/>
+      <enginePoint x="890" y="1038" type="curve" smooth="yes"/>
+      <enginePoint x="928" y="1303"/>
+      <enginePoint x="805" y="1482"/>
+      <enginePoint x="553" y="1482" type="curve" smooth="yes"/>
+      <enginePoint x="337" y="1482"/>
+      <enginePoint x="167" y="1351"/>
+      <enginePoint x="142" y="1175" type="curve" smooth="yes"/>
+      <enginePoint x="118" y="1004"/>
+      <enginePoint x="241" y="892"/>
+      <enginePoint x="431" y="892" type="curve" smooth="yes"/>
+      <enginePoint x="520" y="892"/>
+      <enginePoint x="586" y="915"/>
+      <enginePoint x="632" y="956" type="curve"/>
+      <enginePoint x="625" y="790"/>
+      <enginePoint x="533" y="735"/>
+      <enginePoint x="430" y="735" type="curve" smooth="yes"/>
+      <enginePoint x="366" y="735"/>
+      <enginePoint x="332" y="776"/>
+      <enginePoint x="330" y="836" type="curve"/>
+      <enginePoint x="99" y="836" type="line"/>
+      <enginePoint x="77" y="663"/>
+      <enginePoint x="226" y="546"/>
+    </contour>
+    <contour>
+      <enginePoint x="505" y="1081" type="curve" smooth="yes"/>
+      <enginePoint x="447" y="1081"/>
+      <enginePoint x="396" y="1116"/>
+      <enginePoint x="406" y="1186" type="curve" smooth="yes"/>
+      <enginePoint x="415" y="1256"/>
+      <enginePoint x="474" y="1303"/>
+      <enginePoint x="538" y="1303" type="curve" smooth="yes"/>
+      <enginePoint x="608" y="1303"/>
+      <enginePoint x="650" y="1254"/>
+      <enginePoint x="635" y="1147" type="curve"/>
+      <enginePoint x="632" y="1125"/>
+      <enginePoint x="562" y="1081"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>zero.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>zero.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

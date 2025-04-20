@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="zero" format="2">
+  <advance width="1088"/>
+  <unicode hex="0030"/>
+  <outline>
+    <contour>
+      <enginePoint x="467" y="-22" type="curve" smooth="yes"/>
+      <enginePoint x="730" y="-22"/>
+      <enginePoint x="941" y="218"/>
+      <enginePoint x="1012" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="1082" y="1224"/>
+      <enginePoint x="939" y="1466"/>
+      <enginePoint x="678" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="416" y="1466"/>
+      <enginePoint x="204" y="1222"/>
+      <enginePoint x="133" y="716" type="curve" smooth="yes"/>
+      <enginePoint x="63" y="216"/>
+      <enginePoint x="204" y="-22"/>
+    </contour>
+    <contour>
+      <enginePoint x="482" y="60" type="curve" smooth="yes"/>
+      <enginePoint x="260" y="60"/>
+      <enginePoint x="153" y="260"/>
+      <enginePoint x="217" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="282" y="1184"/>
+      <enginePoint x="446" y="1384"/>
+      <enginePoint x="666" y="1384" type="curve" smooth="yes"/>
+      <enginePoint x="886" y="1384"/>
+      <enginePoint x="990" y="1186"/>
+      <enginePoint x="925" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="860" y="258"/>
+      <enginePoint x="704" y="60"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

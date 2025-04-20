@@ -21,7 +21,9 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.GeoPoint;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.EnginePoint;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
@@ -48,7 +50,7 @@ public class MinimalEngineBridgeTest {
   @Mock(lenient = true) private Patch mockPatch;
   @Mock(lenient = true) private EngineValue mockEngineValue;
   @Mock(lenient = true) private EngineValue mockEngineValueConverted;
-  @Mock(lenient = true) private GeoPoint mockPoint;
+  @Mock(lenient = true) private EnginePoint mockEnginePoint;
   @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
@@ -59,7 +61,9 @@ public class MinimalEngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     bridge = new MinimalEngineBridge(
+        geometryFactory,
         mockSimulation,
         mockConverter,
         mockPrototypeStore,
@@ -87,30 +91,30 @@ public class MinimalEngineBridgeTest {
 
   @Test
   void testGetPatch() {
-    expectQuery(new Query(0, mockPoint), Arrays.asList(mockPatch));
+    expectQuery(new Query(0, mockEnginePoint), Arrays.asList(mockPatch));
 
-    Optional<Entity> result = bridge.getPatch(mockPoint);
+    Optional<Entity> result = bridge.getPatch(mockEnginePoint);
     assertTrue(result.isPresent(), "Should return a patch");
   }
 
   @Test
   void testGetPatchThrowsOnNoPatch() {
-    expectQuery(new Query(0, mockPoint), Arrays.asList());
+    expectQuery(new Query(0, mockEnginePoint), Arrays.asList());
 
     assertThrows(
         IllegalStateException.class,
-        () -> bridge.getPatch(mockPoint),
+        () -> bridge.getPatch(mockEnginePoint),
         "Should throw when no patch found"
     );
   }
 
   @Test
   void testGetPatchThrowsOnMultiplePatches() {
-    expectQuery(new Query(0, mockPoint), Arrays.asList(mockPatch, mockPatch));
+    expectQuery(new Query(0, mockEnginePoint), Arrays.asList(mockPatch, mockPatch));
 
     assertThrows(
         IllegalStateException.class,
-        () -> bridge.getPatch(mockPoint),
+        () -> bridge.getPatch(mockEnginePoint),
         "Should throw when multiple patches found"
     );
   }

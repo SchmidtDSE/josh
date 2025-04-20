@@ -16,6 +16,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 
@@ -33,28 +34,30 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * <p>Version of EngineBridge which caches patches found in queries that cross the bridge,
    * speeding up geospatial operations in exchange for some in-memory space.</p>
    *
+   * @param geometryFactory Factory to use in constructing engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.s
    */
-  public QueryCacheEngineBridge(MutableEntity simulation, Converter converter,
-        EntityPrototypeStore prototypeStore) {
-    super(simulation, converter, prototypeStore);
+  public QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore) {
+    super(geometryFactory, simulation, converter, prototypeStore);
     cachedPatchesByGeometry = new HashMap<>();
   }
 
   /**
    * Constructs a caching EngineBridge with a given Replicate for testing.
    *
+   * @param geometryFactory Factory to use in constructing engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.s
    */
-  QueryCacheEngineBridge(MutableEntity simulation, Converter converter,
-        EntityPrototypeStore prototypeStore, Replicate replicate) {
-    super(simulation, converter, prototypeStore, replicate);
+  QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore, Replicate replicate) {
+    super(geometryFactory, simulation, converter, prototypeStore, replicate);
     cachedPatchesByGeometry = new HashMap<>();
   }
 

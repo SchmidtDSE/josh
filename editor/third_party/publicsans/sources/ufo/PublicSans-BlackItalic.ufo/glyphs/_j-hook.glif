@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="_j-hook" format="2">
+  <advance width="1202"/>
+  <outline>
+    <contour>
+      <enginePoint x="233" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="581" y="-20"/>
+      <enginePoint x="683" y="138"/>
+      <enginePoint x="731" y="458" type="curve" smooth="yes"/>
+      <enginePoint x="759" y="636" type="line"/>
+      <enginePoint x="371" y="636" type="line"/>
+      <enginePoint x="359" y="558" type="line" smooth="yes"/>
+      <enginePoint x="337" y="408"/>
+      <enginePoint x="293" y="340"/>
+      <enginePoint x="155" y="340" type="curve" smooth="yes"/>
+      <enginePoint x="113" y="340"/>
+      <enginePoint x="65" y="346"/>
+      <enginePoint x="29" y="350" type="curve"/>
+      <enginePoint x="-23" y="0" type="line"/>
+      <enginePoint x="35" y="-12"/>
+      <enginePoint x="153" y="-20"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

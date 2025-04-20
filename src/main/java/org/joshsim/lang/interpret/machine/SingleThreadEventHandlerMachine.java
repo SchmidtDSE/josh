@@ -22,7 +22,6 @@ import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
@@ -425,11 +424,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
-    EngineGeometry queryGeometry = EngineGeometryFactory.createCircle(
-        distance.getAsDecimal(),
-        centerGeometry.getCenterX(),
-        centerGeometry.getCenterY(),
-        centerGeometry.getCrs()
+    EngineGeometry queryGeometry = bridge.getGeometryFactory().createCircle(
+        centerGeometry.getCenterX(), centerGeometry.getCenterY(), distance.getAsDecimal()
     );
 
     Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);

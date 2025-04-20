@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Ohorn" format="2">
+  <advance width="1472"/>
+  <unicode hex="01A0"/>
+  <anchor x="712" y="0" name="bottom"/>
+  <anchor x="1088" y="1212" name="horn"/>
+  <anchor x="848" y="18" name="ogonek"/>
+  <anchor x="712" y="1446" name="top"/>
+  <anchor x="1232" y="1292" name="topright"/>
+  <outline>
+    <contour>
+      <enginePoint x="710" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="1074" y="-20"/>
+      <enginePoint x="1294" y="239"/>
+      <enginePoint x="1294" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="1294" y="925"/>
+      <enginePoint x="1255" y="1090"/>
+      <enginePoint x="1183" y="1211" type="curve"/>
+      <enginePoint x="1303" y="1225"/>
+      <enginePoint x="1362" y="1311"/>
+      <enginePoint x="1362" y="1470" type="curve"/>
+      <enginePoint x="1260" y="1470" type="line"/>
+      <enginePoint x="1256" y="1337"/>
+      <enginePoint x="1225" y="1287"/>
+      <enginePoint x="1134" y="1281" type="curve"/>
+      <enginePoint x="1034" y="1403"/>
+      <enginePoint x="890" y="1466"/>
+      <enginePoint x="710" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="345" y="1466"/>
+      <enginePoint x="120" y="1205"/>
+      <enginePoint x="120" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="120" y="237"/>
+      <enginePoint x="345" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="710" y="62" type="curve" smooth="yes"/>
+      <enginePoint x="390" y="62"/>
+      <enginePoint x="208" y="276"/>
+      <enginePoint x="208" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="208" y="1164"/>
+      <enginePoint x="390" y="1384"/>
+      <enginePoint x="710" y="1384" type="curve" smooth="yes"/>
+      <enginePoint x="1030" y="1384"/>
+      <enginePoint x="1206" y="1167"/>
+      <enginePoint x="1206" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="1206" y="277"/>
+      <enginePoint x="1034" y="62"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>O</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>
