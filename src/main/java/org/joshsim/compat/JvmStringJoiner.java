@@ -19,6 +19,11 @@ public class JvmStringJoiner implements CompatibleStringJoiner {
 
   private final StringJoiner inner;
 
+  /**
+   * Creates a new JvmStringJoiner with the specified delimiter.
+   *
+   * @param delimiter The delimiter to be used between joined strings
+   */
   public JvmStringJoiner(String delimiter) {
     inner = new StringJoiner(delimiter);
   }

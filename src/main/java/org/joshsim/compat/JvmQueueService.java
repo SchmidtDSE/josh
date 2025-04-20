@@ -26,6 +26,11 @@ public class JvmQueueService implements QueueService {
   private final AtomicBoolean active = new AtomicBoolean(false);
   private final QueueServiceCallback callback;
 
+  /**
+   * Creates a new JvmQueueService with the specified callback handler.
+   *
+   * @param callback The callback handler that will process queue events
+   */
   public JvmQueueService(QueueServiceCallback callback) {
     this.callback = callback;
   }

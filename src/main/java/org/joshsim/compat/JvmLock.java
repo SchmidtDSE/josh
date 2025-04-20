@@ -19,10 +19,18 @@ public class JvmLock implements CompatibleLock {
 
   private final Lock inner;
 
+  /**
+   * Creates a new JvmLock with a default ReentrantLock implementation.
+   */
   public JvmLock() {
     inner = new ReentrantLock();
   }
 
+  /**
+   * Creates a new JvmLock with a specified Lock implementation.
+   *
+   * @param inner The Lock implementation to use
+   */
   public JvmLock(Lock inner) {
     this.inner = inner;
   }
