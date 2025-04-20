@@ -39,9 +39,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
   @Override
   public EngineGeometry createSquare(
-      BigDecimal width,
-      BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerX, BigDecimal centerY, BigDecimal width
   ) {
     double halfWidth = width.doubleValue() / 2.0;
     double centerValX = centerX.doubleValue();
@@ -99,9 +97,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
   @Override
   public EngineGeometry createCircle(
-      BigDecimal radius,
-      BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerX, BigDecimal centerY, BigDecimal radius
   ) {
     double radiusVal = radius.doubleValue();
     double centerValX = centerX.doubleValue();
@@ -118,15 +114,15 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
   @Override
   public EngineGeometry createCircle(
-      BigDecimal pointX,
-      BigDecimal pointY,
-      BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal point1X,
+      BigDecimal point1Y,
+      BigDecimal point2X,
+      BigDecimal point2Y
   ) {
-    double pointValX = pointX.doubleValue();
-    double pointValY = pointY.doubleValue();
-    double centerValX = centerX.doubleValue();
-    double centerValY = centerY.doubleValue();
+    double pointValX = point1X.doubleValue();
+    double pointValY = point1Y.doubleValue();
+    double centerValX = point2X.doubleValue();
+    double centerValY = point2Y.doubleValue();
 
     // Calculate radius using distance between center and point
     double radius = Math.sqrt(

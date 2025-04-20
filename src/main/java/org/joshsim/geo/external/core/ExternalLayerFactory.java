@@ -1,12 +1,12 @@
 package org.joshsim.geo.external.core;
 
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.geo.external.cog.CogCacheLayer;
 import org.joshsim.geo.external.cog.CogReader;
 import org.joshsim.geo.external.netcdf.NetCdfCacheLayer;
 import org.joshsim.geo.external.netcdf.NetCdfReader;
-import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueCaster;
 
 /**
  * Factory class for creating external layer chains.

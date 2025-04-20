@@ -1,8 +1,8 @@
 package org.joshsim.engine.geometry;
 
-import org.joshsim.geo.geometry.EarthGeometry;
-
 import java.math.BigDecimal;
+import org.joshsim.engine.geometry.shape.GridShape;
+import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * A geometric object which defines if it is in Earth space or in grid space.
@@ -40,4 +40,10 @@ public interface EngineGeometry extends Spatial {
    */
   EarthGeometry getOnEarth();
 
+  /**
+   * Get this geometry on Grid sapce.
+   *
+   * @return A version of this geometry in Grid space.
+   */
+  GridShape getOnGrid();
 }

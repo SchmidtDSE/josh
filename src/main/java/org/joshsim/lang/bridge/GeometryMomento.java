@@ -8,7 +8,6 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 
@@ -90,10 +89,10 @@ public class GeometryMomento {
   private Optional<MomentoShapeBuilder> getBuilder() {
     return switch (shapeName) {
       case "square" -> Optional.of(
-        () -> factory.createSquare(diameter, centerX, centerY)
+        () -> factory.createSquare(centerX, centerY, diameter)
       );
       case "circle" -> Optional.of(
-        () -> factory.createCircle(diameter, centerX, centerY)
+        () -> factory.createCircle(centerX, centerY, diameter)
       );
       default -> Optional.empty();
     };

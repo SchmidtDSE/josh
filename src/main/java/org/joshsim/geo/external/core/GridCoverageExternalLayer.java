@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.type.RealizedDistribution;

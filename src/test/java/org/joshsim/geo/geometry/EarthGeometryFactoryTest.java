@@ -65,9 +65,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
-          width,
-          centerX,
-          centerY
+          centerX, centerY, width
       ).getOnEarth();
 
       // Then
@@ -91,9 +89,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryUtm11n.createSquare(
-          width,
-          centerX,
-          centerY
+          centerX, centerY, width
       ).getOnEarth();
 
       // Then
@@ -116,9 +112,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
-          width,
-          centerX,
-          centerY
+          centerX, centerY, width
       ).getOnEarth();
 
       // Then
@@ -143,9 +137,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryUtm11n.createSquare(
-          width,
-          centerX,
-          centerY
+          centerX, centerY, width
       ).getOnEarth();
 
       // Then
@@ -170,9 +162,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
-          width,
-          centerX,
-          centerY
+          centerX, centerY, width
       ).getOnEarth();
 
       // Then
@@ -196,7 +186,7 @@ public class EarthGeometryFactoryTest {
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        engineGeometryFactoryWgs84.createSquare(width, centerX, centerY);
+        engineGeometryFactoryWgs84.createSquare(centerX, centerY, width);
       }, "Should throw NullPointerException when width is null");
     }
 
@@ -209,7 +199,7 @@ public class EarthGeometryFactoryTest {
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        engineGeometryFactoryWgs84.createSquare(width, centerX, centerY);
+        engineGeometryFactoryWgs84.createSquare(centerX, centerY, width);
       }, "Should throw NullPointerException when centerX is null");
     }
 
@@ -222,7 +212,7 @@ public class EarthGeometryFactoryTest {
 
       // When/Then
       assertThrows(NullPointerException.class, () -> {
-        engineGeometryFactoryWgs84.createSquare(width, centerX, centerY);
+        engineGeometryFactoryWgs84.createSquare(centerX, centerY, width);
       }, "Should throw NullPointerException when centerY is null");
     }
   }
@@ -320,9 +310,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryWgs84.createCircle(
-          radius,
-          centerX,
-          centerY
+          centerX, centerY, radius
       ).getOnEarth();
 
       // Then
@@ -349,9 +337,7 @@ public class EarthGeometryFactoryTest {
 
       // When
       EarthGeometry geometry = engineGeometryFactoryUtm11n.createCircle(
-          radius,
-          centerX,
-          centerY
+          centerX, centerY, radius
       ).getOnEarth();
 
       // Then

@@ -17,15 +17,15 @@ public interface EngineGeometryFactory {
   /**
    * Create a square EngineGeometry with the specified width and center.
    *
-   * @param width The width of the square
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
+   * @param width   The width of the square
    * @return A EngineGeometry object representing a square
    */
   EngineGeometry createSquare(
-      BigDecimal width,
       BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerY,
+      BigDecimal width
   );
 
   /**
@@ -48,31 +48,31 @@ public interface EngineGeometryFactory {
   /**
    * Create a circular EngineGeometry with the specified radius and center.
    *
-   * @param radius The radius of the circle
    * @param centerX The X position (longitude, easting) of the center
    * @param centerY The Y position (latitude, northing) of the center
+   * @param radius  The radius of the circle
    * @return A EngineGeometry object representing a circle
    */
   EngineGeometry createCircle(
-      BigDecimal radius,
       BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal centerY,
+      BigDecimal radius
   );
 
   /**
    * Creates a circular EngineGeometry from radius and a point on the circumference.
    *
-   * @param pointX The X position (longitude, easting) of a point on the circle's circumference
-   * @param pointY The Y position (latitude, northing) of a point on the circle's circumference
-   * @param centerX The X position (longitude, easting) of the circle's center
-   * @param centerY The Y position (latitude, northing) of the circle's center
+   * @param point1X The X position (longitude, easting) of a point on the circle's circumference
+   * @param point1Y The Y position (latitude, northing) of a point on the circle's circumference
+   * @param point2X The X position (longitude, easting) of the circle's center
+   * @param point2Y The Y position (latitude, northing) of the circle's center
    * @return A EngineGeometry object representing a circle
    */
   EngineGeometry createCircle(
-      BigDecimal pointX,
-      BigDecimal pointY,
-      BigDecimal centerX,
-      BigDecimal centerY
+      BigDecimal point1X,
+      BigDecimal point1Y,
+      BigDecimal point2X,
+      BigDecimal point2Y
   );
 
   /**

@@ -1,35 +1,7 @@
 package org.joshsim.geo.external.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.referencing.CRS;
-import org.joshsim.geo.external.cog.CogCacheLayer;
-import org.joshsim.geo.external.cog.CogReader;
-import org.joshsim.geo.external.netcdf.NetCdfCacheLayer;
-import org.joshsim.geo.external.netcdf.NetCdfReader;
-import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueWideningCaster;
-import org.joshsim.engine.value.type.RealizedDistribution;
-import org.joshsim.engine.value.type.Scalar;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 
 /**
  * Unit tests for the ExternalLayerFactory class, ensuring that it correctly
