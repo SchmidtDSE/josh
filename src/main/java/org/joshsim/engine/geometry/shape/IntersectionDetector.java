@@ -15,7 +15,19 @@ import java.math.BigDecimal;
 public class IntersectionDetector {
 
   
-  public static boolean intersect(GridShape shape1, GridShape shape2) {
+  /**
+ * Determines if two grid shapes intersect by delegating to the appropriate
+ * intersection detection method based on shape types.
+ *
+ * <p>This method serves as the main entry point for intersection detection,
+ * routing the calculation to specialized methods based on the geometric types
+ * involved.</p>
+ *
+ * @param shape1 The first shape to check for intersection
+ * @param shape2 The second shape to check for intersection
+ * @return true if the shapes intersect, false otherwise
+ */
+public static boolean intersect(GridShape shape1, GridShape shape2) {
     return switch(shape1.getGridShapeType()) {
       case POINT -> switch(shape2.getGridShapeType()) {
         case POINT -> pointPointIntersection(shape1, shape2);
