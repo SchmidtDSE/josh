@@ -1,15 +1,14 @@
-/**
- * Compatibility implementation of StringJoiner for wasm / JS runtimes.
- *
- * @license BSD-3-Clause
- */
 
+/**
+ * A WebAssembly-compatible implementation of CompatibleStringJoiner.
+ *
+ * <p>This implementation provides string joining functionality for WebAssembly environments
+ * where Java's StringJoiner is not available. It maintains internal state to track the
+ * first element and builds the joined string incrementally.</p>
+ */
 package org.joshsim.compat;
 
 
-/**
- * A compatibility implementation of the UtilityStringJoiner interface for WASM / JS runtimes.
- */
 public class EmulatedStringJoiner implements CompatibleStringJoiner {
 
   private final String delim;
@@ -17,9 +16,9 @@ public class EmulatedStringJoiner implements CompatibleStringJoiner {
   private String value;
 
   /**
-   * Constructs a new UtilityStringJoiner instance with the specified delimiter.
+   * Constructs a new EmulatedStringJoiner with the specified delimiter.
    *
-   * @param delim the delimiter to be used between joined strings
+   * @param delim The delimiter to be used between joined strings
    */
   public EmulatedStringJoiner(CharSequence delim) {
     this.delim = delim.toString();
