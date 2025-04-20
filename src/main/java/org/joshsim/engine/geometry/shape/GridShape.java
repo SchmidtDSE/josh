@@ -14,10 +14,6 @@ import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
  * Abstract base class for all geometric shapes in grid space.
- *
- * <p>This class provides common functionality for geometric shapes in a grid-based
- * coordinate system, including center point tracking, intersection detection, and
- * equality comparison with tolerance for floating point precision.</p>
  */
 public abstract class GridShape implements EngineGeometry {
 
