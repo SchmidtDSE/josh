@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="six.dnom" format="2">
+  <advance width="871"/>
+  <outline>
+    <contour>
+      <enginePoint x="450" y="-8" type="curve" smooth="yes"/>
+      <enginePoint x="665" y="-8"/>
+      <enginePoint x="822" y="121"/>
+      <enginePoint x="822" y="296" type="curve" smooth="yes"/>
+      <enginePoint x="822" y="456"/>
+      <enginePoint x="695" y="567"/>
+      <enginePoint x="505" y="567" type="curve" smooth="yes"/>
+      <enginePoint x="439" y="567"/>
+      <enginePoint x="372" y="555"/>
+      <enginePoint x="322" y="525" type="curve"/>
+      <enginePoint x="303" y="631"/>
+      <enginePoint x="357" y="733"/>
+      <enginePoint x="461" y="733" type="curve" smooth="yes"/>
+      <enginePoint x="525" y="733"/>
+      <enginePoint x="565" y="704"/>
+      <enginePoint x="585" y="636" type="curve"/>
+      <enginePoint x="807" y="636" type="line"/>
+      <enginePoint x="807" y="816"/>
+      <enginePoint x="643" y="921"/>
+      <enginePoint x="455" y="921" type="curve" smooth="yes"/>
+      <enginePoint x="208" y="921"/>
+      <enginePoint x="49" y="739"/>
+      <enginePoint x="49" y="433" type="curve" smooth="yes"/>
+      <enginePoint x="49" y="169"/>
+      <enginePoint x="198" y="-8"/>
+    </contour>
+    <contour>
+      <enginePoint x="439" y="169" type="curve" smooth="yes"/>
+      <enginePoint x="369" y="169"/>
+      <enginePoint x="320" y="218"/>
+      <enginePoint x="320" y="324" type="curve"/>
+      <enginePoint x="320" y="346"/>
+      <enginePoint x="384" y="390"/>
+      <enginePoint x="440" y="390" type="curve" smooth="yes"/>
+      <enginePoint x="499" y="390"/>
+      <enginePoint x="565" y="363"/>
+      <enginePoint x="565" y="285" type="curve" smooth="yes"/>
+      <enginePoint x="565" y="217"/>
+      <enginePoint x="504" y="169"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>six.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>six.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

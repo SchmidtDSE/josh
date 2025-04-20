@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
@@ -54,6 +55,7 @@ public class FutureBridgeGetterTest {
   @Test
   void testGetBridgeWithoutProgram() {
     bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.get(),
@@ -64,6 +66,18 @@ public class FutureBridgeGetterTest {
   @Test
   void testGetBridgeWithoutSimulationName() {
     bridgeGetter.setProgram(mockProgram);
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridgeGetter.get(),
+        "Should throw when simulation name not set"
+    );
+  }
+
+  @Test
+  void testGetBridgeWithoutGridGeometryFactory() {
+    bridgeGetter.setProgram(mockProgram);
+    bridgeGetter.setSimulationName("testSim");
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.get(),
@@ -75,6 +89,7 @@ public class FutureBridgeGetterTest {
   void testSuccessfulBridgeCreation() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
 
     EngineBridge bridge = bridgeGetter.get();
     assertEquals(bridge, bridgeGetter.get(), "Should return same bridge instance");
@@ -84,6 +99,7 @@ public class FutureBridgeGetterTest {
   void testSetProgramAfterBridgeBuilt() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
     bridgeGetter.get();
 
     assertThrows(
@@ -97,11 +113,26 @@ public class FutureBridgeGetterTest {
   void testSetSimulationNameAfterBridgeBuilt() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
     bridgeGetter.get();
 
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.setSimulationName("testSim"),
+        "Should throw when setting simulation name after bridge built"
+    );
+  }
+
+  @Test
+  void testSetFactoryAfterBridgeBuilt() {
+    bridgeGetter.setProgram(mockProgram);
+    bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.get();
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridgeGetter.setGeometryFactory(new GridGeometryFactory()),
         "Should throw when setting simulation name after bridge built"
     );
   }

@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Thorn" format="2">
+  <advance width="1241"/>
+  <unicode hex="00DE"/>
+  <outline>
+    <contour>
+      <enginePoint x="220" y="0" type="line"/>
+      <enginePoint x="306" y="0" type="line"/>
+      <enginePoint x="306" y="354" type="line"/>
+      <enginePoint x="678" y="354" type="line" smooth="yes"/>
+      <enginePoint x="972" y="354"/>
+      <enginePoint x="1186" y="466"/>
+      <enginePoint x="1186" y="760" type="curve" smooth="yes"/>
+      <enginePoint x="1186" y="1018"/>
+      <enginePoint x="972" y="1130"/>
+      <enginePoint x="666" y="1130" type="curve" smooth="yes"/>
+      <enginePoint x="306" y="1130" type="line"/>
+      <enginePoint x="306" y="1446" type="line"/>
+      <enginePoint x="220" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="306" y="436" type="line"/>
+      <enginePoint x="306" y="1048" type="line"/>
+      <enginePoint x="664" y="1048" type="line" smooth="yes"/>
+      <enginePoint x="928" y="1048"/>
+      <enginePoint x="1104" y="976"/>
+      <enginePoint x="1104" y="760" type="curve" smooth="yes"/>
+      <enginePoint x="1104" y="522"/>
+      <enginePoint x="928" y="436"/>
+      <enginePoint x="678" y="436" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>P</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>P</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

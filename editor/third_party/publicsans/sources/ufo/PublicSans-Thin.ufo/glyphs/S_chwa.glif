@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Schwa" format="2">
+  <advance width="1413"/>
+  <unicode hex="018F"/>
+  <outline>
+    <contour>
+      <enginePoint x="711" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="1076" y="-20"/>
+      <enginePoint x="1293" y="240"/>
+      <enginePoint x="1293" y="720" type="curve" smooth="yes"/>
+      <enginePoint x="1293" y="1185"/>
+      <enginePoint x="1076" y="1466"/>
+      <enginePoint x="711" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="346" y="1466"/>
+      <enginePoint x="120" y="1185"/>
+      <enginePoint x="120" y="972" type="curve"/>
+      <enginePoint x="216" y="972" type="line"/>
+      <enginePoint x="216" y="1147"/>
+      <enginePoint x="386" y="1382"/>
+      <enginePoint x="711" y="1382" type="curve" smooth="yes"/>
+      <enginePoint x="1036" y="1382"/>
+      <enginePoint x="1205" y="1146"/>
+      <enginePoint x="1205" y="742" type="curve"/>
+      <enginePoint x="123" y="742" type="line"/>
+      <enginePoint x="123" y="238"/>
+      <enginePoint x="346" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="711" y="64" type="curve" smooth="yes"/>
+      <enginePoint x="386" y="64"/>
+      <enginePoint x="217" y="320"/>
+      <enginePoint x="217" y="660" type="curve"/>
+      <enginePoint x="1205" y="660" type="line"/>
+      <enginePoint x="1199" y="322"/>
+      <enginePoint x="1036" y="64"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>O</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>O</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

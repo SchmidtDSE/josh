@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="tcedilla" format="2">
+  <advance width="880"/>
+  <unicode hex="0163"/>
+  <anchor x="425" y="18" name="_bottom"/>
+  <anchor x="425" y="18" name="bottom"/>
+  <anchor x="675" y="1586" name="caron"/>
+  <anchor x="429" y="516" name="center"/>
+  <outline>
+    <contour>
+      <enginePoint x="369" y="-420" type="curve" smooth="yes"/>
+      <enginePoint x="505" y="-420"/>
+      <enginePoint x="637" y="-354"/>
+      <enginePoint x="653" y="-250" type="curve" smooth="yes"/>
+      <enginePoint x="663" y="-176"/>
+      <enginePoint x="617" y="-86"/>
+      <enginePoint x="455" y="-86" type="curve"/>
+      <enginePoint x="513" y="28" type="line"/>
+      <enginePoint x="357" y="28" type="line"/>
+      <enginePoint x="257" y="-144" type="line" smooth="yes"/>
+      <enginePoint x="243" y="-166"/>
+      <enginePoint x="253" y="-168"/>
+      <enginePoint x="273" y="-168" type="curve" smooth="yes"/>
+      <enginePoint x="407" y="-168"/>
+      <enginePoint x="445" y="-196"/>
+      <enginePoint x="439" y="-244" type="curve" smooth="yes"/>
+      <enginePoint x="433" y="-276"/>
+      <enginePoint x="393" y="-296"/>
+      <enginePoint x="339" y="-296" type="curve" smooth="yes"/>
+      <enginePoint x="281" y="-296"/>
+      <enginePoint x="221" y="-270"/>
+      <enginePoint x="179" y="-244" type="curve"/>
+      <enginePoint x="113" y="-362" type="line"/>
+      <enginePoint x="183" y="-408"/>
+      <enginePoint x="275" y="-420"/>
+    </contour>
+    <component base="t"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0.97,1,0,1</string>
+    </dict>
+  </lib>
+</glyph>

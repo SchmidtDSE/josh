@@ -11,7 +11,8 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.GeoPoint;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.EnginePoint;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
@@ -22,6 +23,12 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public interface EngineBridge {
 
+  /**
+   * Get the factory to use in building geometries.
+   *
+   * @return The factory to use in building engine geometries.
+   */
+  EngineGeometryFactory getGeometryFactory();
 
   /**
    * Get the current simulation entity.
@@ -53,11 +60,11 @@ public interface EngineBridge {
   /**
    * Get a patch at a specific geometric point.
    *
-   * @param point the geometric location to query.
+   * @param enginePoint the geometric location to query.
    * @return Optional containing the patch if found, empty Optional otherwise.
    * @throws IllegalStateException if zero or multiple patches found at the point.
    */
-  Optional<Entity> getPatch(GeoPoint point);
+  Optional<Entity> getPatch(EnginePoint enginePoint);
 
   /**
    * Get all patches in the current simulation step.

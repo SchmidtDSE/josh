@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="nine.dnom" format="2">
+  <advance width="676"/>
+  <outline>
+    <contour>
+      <enginePoint x="237" y="-24" type="curve" smooth="yes"/>
+      <enginePoint x="442" y="-24"/>
+      <enginePoint x="573" y="167"/>
+      <enginePoint x="613" y="453" type="curve" smooth="yes"/>
+      <enginePoint x="655" y="746"/>
+      <enginePoint x="561" y="912"/>
+      <enginePoint x="386" y="912" type="curve" smooth="yes"/>
+      <enginePoint x="216" y="912"/>
+      <enginePoint x="103" y="786"/>
+      <enginePoint x="77" y="600" type="curve" smooth="yes"/>
+      <enginePoint x="51" y="411"/>
+      <enginePoint x="143" y="303"/>
+      <enginePoint x="305" y="303" type="curve" smooth="yes"/>
+      <enginePoint x="423" y="303"/>
+      <enginePoint x="534" y="391"/>
+      <enginePoint x="576" y="516" type="curve"/>
+      <enginePoint x="540" y="182"/>
+      <enginePoint x="420" y="25"/>
+      <enginePoint x="244" y="25" type="curve" smooth="yes"/>
+      <enginePoint x="140" y="25"/>
+      <enginePoint x="69" y="89"/>
+      <enginePoint x="59" y="185" type="curve"/>
+      <enginePoint x="11" y="185" type="line"/>
+      <enginePoint x="20" y="52"/>
+      <enginePoint x="115" y="-24"/>
+    </contour>
+    <contour>
+      <enginePoint x="306" y="355" type="curve" smooth="yes"/>
+      <enginePoint x="159" y="355"/>
+      <enginePoint x="108" y="454"/>
+      <enginePoint x="129" y="603" type="curve" smooth="yes"/>
+      <enginePoint x="150" y="756"/>
+      <enginePoint x="250" y="861"/>
+      <enginePoint x="375" y="861" type="curve" smooth="yes"/>
+      <enginePoint x="511" y="861"/>
+      <enginePoint x="583" y="736"/>
+      <enginePoint x="559" y="579" type="curve"/>
+      <enginePoint x="541" y="450"/>
+      <enginePoint x="421" y="355"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>nine.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>nine.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

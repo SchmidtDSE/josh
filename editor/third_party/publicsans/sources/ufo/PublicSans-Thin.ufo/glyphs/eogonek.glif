@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="eogonek" format="2">
+  <advance width="1114"/>
+  <unicode hex="0119"/>
+  <anchor x="567" y="0" name="bottom"/>
+  <anchor x="755" y="36" name="ogonek"/>
+  <anchor x="569" y="1034" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="661" y="-316" type="curve" smooth="yes"/>
+      <enginePoint x="729" y="-316"/>
+      <enginePoint x="793" y="-298"/>
+      <enginePoint x="823" y="-282" type="curve"/>
+      <enginePoint x="823" y="-220" type="line"/>
+      <enginePoint x="805" y="-230"/>
+      <enginePoint x="747" y="-250"/>
+      <enginePoint x="681" y="-250" type="curve" smooth="yes"/>
+      <enginePoint x="601" y="-250"/>
+      <enginePoint x="569" y="-222"/>
+      <enginePoint x="569" y="-168" type="curve" smooth="yes"/>
+      <enginePoint x="569" y="-95"/>
+      <enginePoint x="626" y="-45"/>
+      <enginePoint x="749" y="9" type="curve" smooth="yes"/>
+      <enginePoint x="863" y="59"/>
+      <enginePoint x="953" y="138"/>
+      <enginePoint x="981" y="276" type="curve"/>
+      <enginePoint x="896" y="276" type="line"/>
+      <enginePoint x="872" y="140"/>
+      <enginePoint x="745" y="56"/>
+      <enginePoint x="581" y="56" type="curve" smooth="yes"/>
+      <enginePoint x="319" y="56"/>
+      <enginePoint x="206" y="264"/>
+      <enginePoint x="206" y="498" type="curve"/>
+      <enginePoint x="993" y="498" type="line"/>
+      <enginePoint x="993" y="554" type="line" smooth="yes"/>
+      <enginePoint x="993" y="872"/>
+      <enginePoint x="836" y="1054"/>
+      <enginePoint x="569" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="284" y="1054"/>
+      <enginePoint x="121" y="850"/>
+      <enginePoint x="121" y="508" type="curve" smooth="yes"/>
+      <enginePoint x="121" y="175"/>
+      <enginePoint x="304" y="-15"/>
+      <enginePoint x="570" y="-20" type="curve"/>
+      <enginePoint x="506" y="-59"/>
+      <enginePoint x="483" y="-107"/>
+      <enginePoint x="483" y="-164" type="curve" smooth="yes"/>
+      <enginePoint x="483" y="-252"/>
+      <enginePoint x="537" y="-316"/>
+    </contour>
+    <contour>
+      <enginePoint x="208" y="574" type="line"/>
+      <enginePoint x="206" y="768"/>
+      <enginePoint x="313" y="978"/>
+      <enginePoint x="567" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="801" y="978"/>
+      <enginePoint x="910" y="804"/>
+      <enginePoint x="910" y="574" type="curve"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

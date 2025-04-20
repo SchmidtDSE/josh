@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="partialdiff" format="2">
+  <advance width="1076"/>
+  <unicode hex="2202"/>
+  <outline>
+    <contour>
+      <enginePoint x="446" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="724" y="-20"/>
+      <enginePoint x="928" y="250"/>
+      <enginePoint x="996" y="734" type="curve" smooth="yes"/>
+      <enginePoint x="1064" y="1222"/>
+      <enginePoint x="930" y="1466"/>
+      <enginePoint x="644" y="1466" type="curve" smooth="yes"/>
+      <enginePoint x="522" y="1466"/>
+      <enginePoint x="374" y="1418"/>
+      <enginePoint x="296" y="1336" type="curve"/>
+      <enginePoint x="318" y="1278" type="line"/>
+      <enginePoint x="400" y="1332"/>
+      <enginePoint x="476" y="1380"/>
+      <enginePoint x="600" y="1380" type="curve" smooth="yes"/>
+      <enginePoint x="850" y="1380"/>
+      <enginePoint x="968" y="1182"/>
+      <enginePoint x="906" y="752" type="curve" smooth="yes"/>
+      <enginePoint x="906" y="744"/>
+      <enginePoint x="902" y="740"/>
+      <enginePoint x="884" y="750" type="curve" smooth="yes"/>
+      <enginePoint x="796" y="814"/>
+      <enginePoint x="736" y="850"/>
+      <enginePoint x="602" y="850" type="curve" smooth="yes"/>
+      <enginePoint x="322" y="850"/>
+      <enginePoint x="134" y="690"/>
+      <enginePoint x="98" y="434" type="curve" smooth="yes"/>
+      <enginePoint x="62" y="176"/>
+      <enginePoint x="206" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="440" y="64" type="line" smooth="yes"/>
+      <enginePoint x="272" y="64"/>
+      <enginePoint x="156" y="230"/>
+      <enginePoint x="184" y="428" type="curve" smooth="yes"/>
+      <enginePoint x="212" y="624"/>
+      <enginePoint x="370" y="766"/>
+      <enginePoint x="564" y="766" type="curve" smooth="yes"/>
+      <enginePoint x="692" y="766"/>
+      <enginePoint x="828" y="704"/>
+      <enginePoint x="880" y="626" type="curve" smooth="yes"/>
+      <enginePoint x="890" y="612"/>
+      <enginePoint x="890" y="598"/>
+      <enginePoint x="882" y="556" type="curve" smooth="yes"/>
+      <enginePoint x="814" y="260"/>
+      <enginePoint x="630" y="64"/>
+      <enginePoint x="442" y="64" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

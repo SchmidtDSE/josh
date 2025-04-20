@@ -10,6 +10,7 @@ package org.joshsim.lang.interpret;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
@@ -27,6 +28,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<JoshProgram> program;
   private Optional<String> simulationName;
   private Optional<EngineBridge> builtBridge;
+  private Optional<EngineGeometryFactory> geometryFactory;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -35,6 +37,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.program = Optional.empty();
     this.simulationName = Optional.empty();
     this.builtBridge = Optional.empty();
+    this.geometryFactory = Optional.empty();
   }
 
   /**
@@ -47,6 +50,18 @@ public class FutureBridgeGetter implements BridgeGetter {
       throw new IllegalStateException("Bridge already built.");
     }
     this.program = Optional.of(newProgram);
+  }
+
+  /**
+   * Set the geometry factory to use when getting the bridge.
+   *
+   * @param newFactory The geometry factory to use when getting the bridge.
+   */
+  public void setGeometryFactory(EngineGeometryFactory newFactory) {
+    if (geometryFactory.isPresent()) {
+      throw new IllegalStateException("Bridge already built.");
+    }
+    this.geometryFactory = Optional.of(newFactory);
   }
 
   /**
@@ -85,10 +100,17 @@ public class FutureBridgeGetter implements BridgeGetter {
     String simulationNameRealized = simulationName.get();
     MutableEntity simulation = simulations.getProtoype(simulationNameRealized).build();
 
+    if (geometryFactory.isEmpty()) {
+      throw new IllegalStateException("Geometry factory not provided to bridge.");
+    }
+
+    EngineGeometryFactory geometryFactoryRealized = geometryFactory.get();
+
     Converter converter = programRealized.getConverter();
     EntityPrototypeStore prototypeStore = programRealized.getPrototypes();
 
     EngineBridge newBridge = new MinimalEngineBridge(
+        geometryFactoryRealized,
         simulation,
         converter,
         prototypeStore

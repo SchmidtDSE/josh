@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="one.dnom" format="2">
+  <advance width="543"/>
+  <outline>
+    <contour>
+      <enginePoint x="190" y="-1" type="line"/>
+      <enginePoint x="436" y="-1" type="line"/>
+      <enginePoint x="436" y="909" type="line"/>
+      <enginePoint x="278" y="909" type="line"/>
+      <enginePoint x="265" y="827"/>
+      <enginePoint x="189" y="770"/>
+      <enginePoint x="39" y="770" type="curve"/>
+      <enginePoint x="39" y="642" type="line"/>
+      <enginePoint x="190" y="642" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>one.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>one.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

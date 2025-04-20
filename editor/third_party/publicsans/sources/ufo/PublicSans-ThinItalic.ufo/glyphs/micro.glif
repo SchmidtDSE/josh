@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="micro" format="2">
+  <advance width="1071"/>
+  <unicode hex="00B5"/>
+  <outline>
+    <contour>
+      <enginePoint x="41" y="-330" type="line"/>
+      <enginePoint x="115" y="-330" type="line"/>
+      <enginePoint x="171" y="74" type="line"/>
+      <enginePoint x="227" y="4"/>
+      <enginePoint x="299" y="-20"/>
+      <enginePoint x="391" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="507" y="-20"/>
+      <enginePoint x="601" y="30"/>
+      <enginePoint x="773" y="164" type="curve"/>
+      <enginePoint x="749" y="0" type="line"/>
+      <enginePoint x="817" y="0" type="line"/>
+      <enginePoint x="967" y="1060" type="line"/>
+      <enginePoint x="893" y="1060" type="line"/>
+      <enginePoint x="783" y="268" type="line"/>
+      <enginePoint x="645" y="138"/>
+      <enginePoint x="517" y="56"/>
+      <enginePoint x="397" y="56" type="curve" smooth="yes"/>
+      <enginePoint x="271" y="56"/>
+      <enginePoint x="183" y="158"/>
+      <enginePoint x="199" y="274" type="curve" smooth="yes"/>
+      <enginePoint x="311" y="1060" type="line"/>
+      <enginePoint x="237" y="1060" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>u</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>u</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

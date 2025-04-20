@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="liraTurkish" format="2">
+  <advance width="1472"/>
+  <unicode hex="20BA"/>
+  <outline>
+    <contour>
+      <enginePoint x="300" y="0" type="line"/>
+      <enginePoint x="616" y="0" type="line" smooth="yes"/>
+      <enginePoint x="1122" y="0"/>
+      <enginePoint x="1328" y="266"/>
+      <enginePoint x="1432" y="542" type="curve"/>
+      <enginePoint x="1094" y="612" type="line"/>
+      <enginePoint x="1028" y="434"/>
+      <enginePoint x="914" y="326"/>
+      <enginePoint x="790" y="320" type="curve" smooth="yes"/>
+      <enginePoint x="744" y="320" type="line"/>
+      <enginePoint x="744" y="1446" type="line"/>
+      <enginePoint x="300" y="1446" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="138" y="368" type="line"/>
+      <enginePoint x="1064" y="706" type="line"/>
+      <enginePoint x="998" y="892" type="line"/>
+      <enginePoint x="70" y="554" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="98" y="678" type="line"/>
+      <enginePoint x="1028" y="1018" type="line"/>
+      <enginePoint x="960" y="1202" type="line"/>
+      <enginePoint x="30" y="864" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="m" format="2">
+  <advance width="1668"/>
+  <unicode hex="006D"/>
+  <outline>
+    <contour>
+      <enginePoint x="180" y="0" type="line"/>
+      <enginePoint x="258" y="0" type="line"/>
+      <enginePoint x="258" y="720" type="line" smooth="yes"/>
+      <enginePoint x="258" y="906"/>
+      <enginePoint x="418" y="978"/>
+      <enginePoint x="548" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="664" y="978"/>
+      <enginePoint x="804" y="904"/>
+      <enginePoint x="804" y="752" type="curve" smooth="yes"/>
+      <enginePoint x="804" y="0" type="line"/>
+      <enginePoint x="882" y="0" type="line"/>
+      <enginePoint x="882" y="720" type="line" smooth="yes"/>
+      <enginePoint x="882" y="924"/>
+      <enginePoint x="1054" y="978"/>
+      <enginePoint x="1172" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="1307" y="978"/>
+      <enginePoint x="1430" y="920"/>
+      <enginePoint x="1430" y="670" type="curve" smooth="yes"/>
+      <enginePoint x="1430" y="0" type="line"/>
+      <enginePoint x="1508" y="0" type="line"/>
+      <enginePoint x="1508" y="670" type="line" smooth="yes"/>
+      <enginePoint x="1508" y="1002"/>
+      <enginePoint x="1311" y="1054"/>
+      <enginePoint x="1172" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="1032" y="1054"/>
+      <enginePoint x="918" y="990"/>
+      <enginePoint x="855" y="882" type="curve"/>
+      <enginePoint x="809" y="994"/>
+      <enginePoint x="670" y="1054"/>
+      <enginePoint x="550" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="390" y="1054"/>
+      <enginePoint x="302" y="972"/>
+      <enginePoint x="252" y="880" type="curve"/>
+      <enginePoint x="252" y="1034" type="line"/>
+      <enginePoint x="180" y="1034" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>n</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>n</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

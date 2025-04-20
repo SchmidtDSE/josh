@@ -15,8 +15,9 @@ import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.GeoPoint;
-import org.joshsim.engine.geometry.Grid;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.EnginePoint;
+import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Conversion;
@@ -34,6 +35,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private static final long DEFAULT_START_STEP = 0;
   private static final long DEFAULT_END_STEP = 100;
 
+  private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
   private final EngineValueFactory engineValueFactory;
   private final EngineValue endStep;
@@ -45,7 +47,6 @@ public class MinimalEngineBridge implements EngineBridge {
   private EngineValue currentStep;
   private boolean inStep;
 
-
   /**
    * Constructs an EngineBridge to manipulate the specified simulation, replicate, and converter.
    *
@@ -53,12 +54,14 @@ public class MinimalEngineBridge implements EngineBridge {
    * interpreter. It facilitates interactions with the engine's simulation and replicate components,
    * as well as value conversion.</p>
    *
+   * @param geometryFactory The factory to use for building engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    */
-  public MinimalEngineBridge(MutableEntity simulation, Converter converter,
-      EntityPrototypeStore prototypeStore) {
+  public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore) {
+    this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
@@ -91,8 +94,9 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    * @param replicate The replicate to use for testing.
    */
-  public MinimalEngineBridge(MutableEntity simulation, Converter converter,
-      EntityPrototypeStore prototypeStore, Replicate replicate) {
+  public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore, Replicate replicate) {
+    this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
@@ -115,6 +119,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
+  }
+
+  @Override
+  public EngineGeometryFactory getGeometryFactory() {
+    return geometryFactory;
   }
 
   @Override
@@ -150,8 +159,8 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Optional<Entity> getPatch(GeoPoint point) {
-    Query query = new Query(currentStep.getAsInt(), point);
+  public Optional<Entity> getPatch(EnginePoint enginePoint) {
+    Query query = new Query(currentStep.getAsInt(), enginePoint);
     Iterable<Entity> patches = getReplicate().query(query);
 
     Iterator<Entity> iterator = patches.iterator();
@@ -216,7 +225,7 @@ public class MinimalEngineBridge implements EngineBridge {
   public Replicate getReplicate() {
     if (replicate.isEmpty()) {
       GridFromSimFactory factory = new GridFromSimFactory(this);
-      Grid grid = factory.build(simulation);
+      PatchSet grid = factory.build(simulation);
       replicate = Optional.of(new Replicate(simulation, grid));
     }
 

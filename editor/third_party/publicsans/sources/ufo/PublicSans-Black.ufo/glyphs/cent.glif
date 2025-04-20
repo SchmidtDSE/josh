@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="cent" format="2">
+  <advance width="1155"/>
+  <unicode hex="00A2"/>
+  <anchor x="619" y="222" name="bottom"/>
+  <anchor x="618" y="1256" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="621" y="202" type="curve" smooth="yes"/>
+      <enginePoint x="904" y="202"/>
+      <enginePoint x="1070" y="402"/>
+      <enginePoint x="1070" y="622" type="curve"/>
+      <enginePoint x="764" y="622" type="line"/>
+      <enginePoint x="758" y="580"/>
+      <enginePoint x="730" y="470"/>
+      <enginePoint x="632" y="470" type="curve" smooth="yes"/>
+      <enginePoint x="531" y="470"/>
+      <enginePoint x="458" y="568"/>
+      <enginePoint x="458" y="738" type="curve" smooth="yes"/>
+      <enginePoint x="458" y="904"/>
+      <enginePoint x="524" y="988"/>
+      <enginePoint x="624" y="988" type="curve" smooth="yes"/>
+      <enginePoint x="724" y="988"/>
+      <enginePoint x="752" y="892"/>
+      <enginePoint x="760" y="834" type="curve"/>
+      <enginePoint x="1075" y="834" type="line"/>
+      <enginePoint x="1070" y="1066"/>
+      <enginePoint x="913" y="1276"/>
+      <enginePoint x="621" y="1276" type="curve" smooth="yes"/>
+      <enginePoint x="322" y="1276"/>
+      <enginePoint x="100" y="1054"/>
+      <enginePoint x="100" y="734" type="curve" smooth="yes"/>
+      <enginePoint x="100" y="418"/>
+      <enginePoint x="325" y="202"/>
+    </contour>
+    <contour>
+      <enginePoint x="500" y="0" type="line"/>
+      <enginePoint x="744" y="0" type="line"/>
+      <enginePoint x="744" y="382" type="line"/>
+      <enginePoint x="500" y="382" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="500" y="1064" type="line"/>
+      <enginePoint x="744" y="1064" type="line"/>
+      <enginePoint x="744" y="1446" type="line"/>
+      <enginePoint x="500" y="1446" type="line"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

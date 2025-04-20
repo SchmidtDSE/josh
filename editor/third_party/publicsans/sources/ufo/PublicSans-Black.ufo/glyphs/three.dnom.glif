@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="three.dnom" format="2">
+  <advance width="893"/>
+  <outline>
+    <contour>
+      <enginePoint x="430" y="-14" type="curve" smooth="yes"/>
+      <enginePoint x="645" y="-14"/>
+      <enginePoint x="834" y="73"/>
+      <enginePoint x="834" y="263" type="curve" smooth="yes"/>
+      <enginePoint x="834" y="391"/>
+      <enginePoint x="741" y="452"/>
+      <enginePoint x="656" y="475" type="curve"/>
+      <enginePoint x="773" y="514"/>
+      <enginePoint x="816" y="579"/>
+      <enginePoint x="816" y="669" type="curve" smooth="yes"/>
+      <enginePoint x="816" y="850"/>
+      <enginePoint x="650" y="921"/>
+      <enginePoint x="435" y="921" type="curve" smooth="yes"/>
+      <enginePoint x="221" y="921"/>
+      <enginePoint x="59" y="828"/>
+      <enginePoint x="59" y="616" type="curve"/>
+      <enginePoint x="289" y="616" type="line"/>
+      <enginePoint x="299" y="712"/>
+      <enginePoint x="351" y="737"/>
+      <enginePoint x="428" y="737" type="curve" smooth="yes"/>
+      <enginePoint x="493" y="737"/>
+      <enginePoint x="557" y="714"/>
+      <enginePoint x="557" y="657" type="curve" smooth="yes"/>
+      <enginePoint x="557" y="601"/>
+      <enginePoint x="515" y="570"/>
+      <enginePoint x="437" y="564" type="curve" smooth="yes"/>
+      <enginePoint x="357" y="558" type="line"/>
+      <enginePoint x="357" y="369" type="line"/>
+      <enginePoint x="449" y="364" type="line" smooth="yes"/>
+      <enginePoint x="527" y="360"/>
+      <enginePoint x="575" y="322"/>
+      <enginePoint x="575" y="273" type="curve" smooth="yes"/>
+      <enginePoint x="575" y="218"/>
+      <enginePoint x="523" y="178"/>
+      <enginePoint x="430" y="178" type="curve" smooth="yes"/>
+      <enginePoint x="366" y="178"/>
+      <enginePoint x="309" y="203"/>
+      <enginePoint x="290" y="298" type="curve"/>
+      <enginePoint x="59" y="298" type="line"/>
+      <enginePoint x="59" y="101"/>
+      <enginePoint x="184" y="-14"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>three.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>three.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

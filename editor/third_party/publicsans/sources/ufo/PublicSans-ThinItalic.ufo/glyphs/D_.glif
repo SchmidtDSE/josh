@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="D" format="2">
+  <advance width="1266"/>
+  <unicode hex="0044"/>
+  <anchor x="502" y="0" name="bottom"/>
+  <anchor x="658" y="724" name="center"/>
+  <anchor x="849" y="1446" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="150" y="0" type="line"/>
+      <enginePoint x="348" y="0" type="line" smooth="yes"/>
+      <enginePoint x="979" y="0"/>
+      <enginePoint x="1181" y="416"/>
+      <enginePoint x="1181" y="916" type="curve" smooth="yes"/>
+      <enginePoint x="1181" y="1273"/>
+      <enginePoint x="995" y="1442"/>
+      <enginePoint x="569" y="1444" type="curve" smooth="yes"/>
+      <enginePoint x="461" y="1444"/>
+      <enginePoint x="354" y="1446"/>
+      <enginePoint x="351" y="1446" type="curve"/>
+    </contour>
+    <contour>
+      <enginePoint x="240" y="82" type="line"/>
+      <enginePoint x="420" y="1364" type="line"/>
+      <enginePoint x="544" y="1364" type="line" smooth="yes"/>
+      <enginePoint x="900" y="1364"/>
+      <enginePoint x="1103" y="1259"/>
+      <enginePoint x="1103" y="904" type="curve" smooth="yes"/>
+      <enginePoint x="1103" y="423"/>
+      <enginePoint x="912" y="82"/>
+      <enginePoint x="349" y="82" type="curve" smooth="yes"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>H</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=O</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

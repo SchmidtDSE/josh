@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ohorn" format="2">
+  <advance width="1124"/>
+  <unicode hex="01A1"/>
+  <anchor x="560" y="0" name="bottom"/>
+  <anchor x="848" y="856" name="horn"/>
+  <anchor x="681" y="20" name="ogonek"/>
+  <anchor x="556" y="1034" name="top"/>
+  <anchor x="954" y="936" name="topright"/>
+  <outline>
+    <contour>
+      <enginePoint x="558" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="859" y="-20"/>
+      <enginePoint x="1000" y="194"/>
+      <enginePoint x="1000" y="514" type="curve" smooth="yes"/>
+      <enginePoint x="1000" y="658"/>
+      <enginePoint x="973" y="773"/>
+      <enginePoint x="923" y="858" type="curve"/>
+      <enginePoint x="1031" y="878"/>
+      <enginePoint x="1084" y="963"/>
+      <enginePoint x="1084" y="1114" type="curve"/>
+      <enginePoint x="982" y="1114" type="line"/>
+      <enginePoint x="979" y="990"/>
+      <enginePoint x="951" y="938"/>
+      <enginePoint x="874" y="927" type="curve"/>
+      <enginePoint x="797" y="1012"/>
+      <enginePoint x="688" y="1054"/>
+      <enginePoint x="558" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="253" y="1054"/>
+      <enginePoint x="110" y="838"/>
+      <enginePoint x="110" y="514" type="curve" smooth="yes"/>
+      <enginePoint x="110" y="151"/>
+      <enginePoint x="289" y="-20"/>
+    </contour>
+    <contour>
+      <enginePoint x="558" y="54" type="curve" smooth="yes"/>
+      <enginePoint x="309" y="54"/>
+      <enginePoint x="192" y="238"/>
+      <enginePoint x="192" y="514" type="curve" smooth="yes"/>
+      <enginePoint x="192" y="830"/>
+      <enginePoint x="338" y="978"/>
+      <enginePoint x="558" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="803" y="978"/>
+      <enginePoint x="919" y="792"/>
+      <enginePoint x="919" y="514" type="curve" smooth="yes"/>
+      <enginePoint x="919" y="201"/>
+      <enginePoint x="775" y="54"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

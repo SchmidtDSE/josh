@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="five.numr" format="2">
+  <advance width="881"/>
+  <outline>
+    <contour>
+      <enginePoint x="464" y="538" type="curve" smooth="yes"/>
+      <enginePoint x="696" y="538"/>
+      <enginePoint x="856" y="654"/>
+      <enginePoint x="883" y="849" type="curve" smooth="yes"/>
+      <enginePoint x="910" y="1036"/>
+      <enginePoint x="791" y="1146"/>
+      <enginePoint x="594" y="1146" type="curve" smooth="yes"/>
+      <enginePoint x="531" y="1146"/>
+      <enginePoint x="487" y="1134"/>
+      <enginePoint x="411" y="1114" type="curve"/>
+      <enginePoint x="445" y="1265" type="line"/>
+      <enginePoint x="869" y="1265" type="line"/>
+      <enginePoint x="907" y="1462" type="line"/>
+      <enginePoint x="285" y="1462" type="line"/>
+      <enginePoint x="180" y="1010" type="line"/>
+      <enginePoint x="332" y="921" type="line" smooth="yes"/>
+      <enginePoint x="349" y="912"/>
+      <enginePoint x="351" y="912"/>
+      <enginePoint x="369" y="919" type="curve" smooth="yes"/>
+      <enginePoint x="427" y="943"/>
+      <enginePoint x="458" y="952"/>
+      <enginePoint x="497" y="952" type="curve" smooth="yes"/>
+      <enginePoint x="592" y="952"/>
+      <enginePoint x="636" y="897"/>
+      <enginePoint x="627" y="840" type="curve" smooth="yes"/>
+      <enginePoint x="619" y="780"/>
+      <enginePoint x="553" y="731"/>
+      <enginePoint x="463" y="731" type="curve" smooth="yes"/>
+      <enginePoint x="364" y="731"/>
+      <enginePoint x="324" y="789"/>
+      <enginePoint x="280" y="858" type="curve"/>
+      <enginePoint x="80" y="734" type="line"/>
+      <enginePoint x="132" y="622"/>
+      <enginePoint x="275" y="538"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>zero.numr</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>zero.numr</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

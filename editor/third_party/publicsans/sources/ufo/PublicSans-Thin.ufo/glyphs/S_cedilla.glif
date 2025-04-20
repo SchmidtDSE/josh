@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="Scedilla" format="2">
+  <advance width="1296"/>
+  <unicode hex="015E"/>
+  <anchor x="625" y="0" name="_bottom"/>
+  <anchor x="625" y="0" name="bottom"/>
+  <anchor x="638" y="1446" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="573" y="-398" type="curve" smooth="yes"/>
+      <enginePoint x="679" y="-398"/>
+      <enginePoint x="767" y="-350"/>
+      <enginePoint x="767" y="-252" type="curve" smooth="yes"/>
+      <enginePoint x="767" y="-190"/>
+      <enginePoint x="733" y="-124"/>
+      <enginePoint x="611" y="-114" type="curve"/>
+      <enginePoint x="661" y="10" type="line"/>
+      <enginePoint x="595" y="10" type="line"/>
+      <enginePoint x="523" y="-154" type="line" smooth="yes"/>
+      <enginePoint x="521" y="-158"/>
+      <enginePoint x="521" y="-162"/>
+      <enginePoint x="531" y="-162" type="curve" smooth="yes"/>
+      <enginePoint x="633" y="-166"/>
+      <enginePoint x="681" y="-194"/>
+      <enginePoint x="681" y="-256" type="curve" smooth="yes"/>
+      <enginePoint x="681" y="-310"/>
+      <enginePoint x="647" y="-340"/>
+      <enginePoint x="565" y="-340" type="curve" smooth="yes"/>
+      <enginePoint x="505" y="-340"/>
+      <enginePoint x="473" y="-322"/>
+      <enginePoint x="445" y="-296" type="curve"/>
+      <enginePoint x="423" y="-352" type="line"/>
+      <enginePoint x="465" y="-382"/>
+      <enginePoint x="513" y="-398"/>
+    </contour>
+    <component base="S"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0.97,1,0,1</string>
+    </dict>
+  </lib>
+</glyph>

@@ -6,8 +6,6 @@
 
 package org.joshsim.engine.simulation;
 
-import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -16,7 +14,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.Grid;
+import org.joshsim.engine.geometry.PatchSet;
 
 
 /**
@@ -49,9 +47,9 @@ public class Replicate {
    * Construct a replicate with the given grid.
    *
    * @param meta The simulation metadata for which this replicate was created.
-   * @param grid Grid with the the patches to be included in the replicate.
+   * @param grid PatchSet with the the patches to be included in the replicate.
    */
-  public Replicate(MutableEntity meta, Grid grid) {
+  public Replicate(MutableEntity meta, PatchSet grid) {
     this.meta = meta;
 
     presentTimeStep = new HashMap<>();

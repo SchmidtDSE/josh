@@ -1,0 +1,1 @@
+/workspaces/josh/assets/test/netcdf/MISR_AM1_JOINT_AS_FEB_2022_F02_0002.nc

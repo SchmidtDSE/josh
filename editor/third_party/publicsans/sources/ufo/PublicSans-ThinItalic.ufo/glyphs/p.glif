@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="p" format="2">
+  <advance width="1108"/>
+  <unicode hex="0070"/>
+  <outline>
+    <contour>
+      <enginePoint x="77" y="-322" type="line"/>
+      <enginePoint x="151" y="-322" type="line"/>
+      <enginePoint x="221" y="219" type="line"/>
+      <enginePoint x="240" y="140"/>
+      <enginePoint x="301" y="-20"/>
+      <enginePoint x="521" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="798" y="-20"/>
+      <enginePoint x="958" y="202"/>
+      <enginePoint x="1001" y="536" type="curve" smooth="yes"/>
+      <enginePoint x="1047" y="888"/>
+      <enginePoint x="906" y="1054"/>
+      <enginePoint x="661" y="1054" type="curve" smooth="yes"/>
+      <enginePoint x="441" y="1054"/>
+      <enginePoint x="337" y="896"/>
+      <enginePoint x="300" y="822" type="curve"/>
+      <enginePoint x="323" y="1034" type="line"/>
+      <enginePoint x="253" y="1034" type="line"/>
+    </contour>
+    <contour>
+      <enginePoint x="531" y="54" type="curve" smooth="yes"/>
+      <enginePoint x="314" y="54"/>
+      <enginePoint x="223" y="254"/>
+      <enginePoint x="259" y="528" type="curve" smooth="yes"/>
+      <enginePoint x="294" y="802"/>
+      <enginePoint x="435" y="978"/>
+      <enginePoint x="651" y="978" type="curve" smooth="yes"/>
+      <enginePoint x="875" y="978"/>
+      <enginePoint x="958" y="798"/>
+      <enginePoint x="922" y="528" type="curve" smooth="yes"/>
+      <enginePoint x="881" y="206"/>
+      <enginePoint x="729" y="54"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>n</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>o</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

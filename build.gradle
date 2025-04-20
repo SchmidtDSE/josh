@@ -51,6 +51,9 @@ dependencies {
   implementation("org.geotools:gt-geotiff:32.2")
   implementation("org.geotools:gt-referencing:32.2")
   implementation("org.geotools:gt-epsg-hsql:32.2")
+  
+  // Add NetCDF support to Geotools
+  implementation("org.geotools:gt-netcdf:32.2")
 
   // Interaction with browser
   implementation("org.teavm:teavm-core:0.11.0")

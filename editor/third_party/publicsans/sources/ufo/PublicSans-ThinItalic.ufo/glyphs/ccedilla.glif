@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="ccedilla" format="2">
+  <advance width="1017"/>
+  <unicode hex="00E7"/>
+  <anchor x="464" y="0" name="_bottom"/>
+  <anchor x="464" y="0" name="bottom"/>
+  <anchor x="599" y="1034" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="362" y="-398" type="curve" smooth="yes"/>
+      <enginePoint x="458" y="-398"/>
+      <enginePoint x="546" y="-350"/>
+      <enginePoint x="560" y="-252" type="curve" smooth="yes"/>
+      <enginePoint x="568" y="-190"/>
+      <enginePoint x="546" y="-124"/>
+      <enginePoint x="436" y="-114" type="curve"/>
+      <enginePoint x="500" y="10" type="line"/>
+      <enginePoint x="438" y="10" type="line"/>
+      <enginePoint x="350" y="-154" type="line" smooth="yes"/>
+      <enginePoint x="346" y="-158"/>
+      <enginePoint x="346" y="-162"/>
+      <enginePoint x="356" y="-162" type="curve" smooth="yes"/>
+      <enginePoint x="448" y="-166"/>
+      <enginePoint x="490" y="-194"/>
+      <enginePoint x="480" y="-256" type="curve" smooth="yes"/>
+      <enginePoint x="472" y="-310"/>
+      <enginePoint x="438" y="-340"/>
+      <enginePoint x="362" y="-340" type="curve" smooth="yes"/>
+      <enginePoint x="306" y="-340"/>
+      <enginePoint x="280" y="-322"/>
+      <enginePoint x="258" y="-296" type="curve"/>
+      <enginePoint x="230" y="-352" type="line"/>
+      <enginePoint x="264" y="-382"/>
+      <enginePoint x="306" y="-398"/>
+    </contour>
+    <component base="c"/>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>c</string>
+      <key>public.markColor</key>
+      <string>0.97,1,0,1</string>
+    </dict>
+  </lib>
+</glyph>

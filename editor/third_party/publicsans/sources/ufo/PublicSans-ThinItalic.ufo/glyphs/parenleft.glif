@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="parenleft" format="2">
+  <advance width="517"/>
+  <unicode hex="0028"/>
+  <outline>
+    <contour>
+      <enginePoint x="300" y="-208" type="curve"/>
+      <enginePoint x="344" y="-208" type="line"/>
+      <enginePoint x="258" y="88"/>
+      <enginePoint x="228" y="370"/>
+      <enginePoint x="270" y="668" type="curve" smooth="yes"/>
+      <enginePoint x="314" y="982"/>
+      <enginePoint x="456" y="1302"/>
+      <enginePoint x="614" y="1560" type="curve"/>
+      <enginePoint x="570" y="1560" type="line"/>
+      <enginePoint x="384" y="1314"/>
+      <enginePoint x="228" y="998"/>
+      <enginePoint x="182" y="670" type="curve" smooth="yes"/>
+      <enginePoint x="136" y="332"/>
+      <enginePoint x="190" y="72"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

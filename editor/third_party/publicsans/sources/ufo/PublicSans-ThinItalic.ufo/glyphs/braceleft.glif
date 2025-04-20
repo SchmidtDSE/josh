@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="braceleft" format="2">
+  <advance width="503"/>
+  <unicode hex="007B"/>
+  <outline>
+    <contour>
+      <enginePoint x="295" y="-322" type="curve" smooth="yes"/>
+      <enginePoint x="345" y="-322" type="line"/>
+      <enginePoint x="355" y="-250" type="line"/>
+      <enginePoint x="305" y="-250" type="line" smooth="yes"/>
+      <enginePoint x="215" y="-250"/>
+      <enginePoint x="195" y="-216"/>
+      <enginePoint x="205" y="-142" type="curve" smooth="yes"/>
+      <enginePoint x="269" y="316" type="line" smooth="yes"/>
+      <enginePoint x="291" y="478"/>
+      <enginePoint x="225" y="548"/>
+      <enginePoint x="133" y="556" type="curve" smooth="yes"/>
+      <enginePoint x="117" y="558"/>
+      <enginePoint x="121" y="568"/>
+      <enginePoint x="135" y="570" type="curve" smooth="yes"/>
+      <enginePoint x="231" y="580"/>
+      <enginePoint x="317" y="660"/>
+      <enginePoint x="339" y="818" type="curve" smooth="yes"/>
+      <enginePoint x="403" y="1272" type="line" smooth="yes"/>
+      <enginePoint x="413" y="1344"/>
+      <enginePoint x="449" y="1374"/>
+      <enginePoint x="531" y="1374" type="curve" smooth="yes"/>
+      <enginePoint x="583" y="1374" type="line"/>
+      <enginePoint x="593" y="1446" type="line"/>
+      <enginePoint x="543" y="1446" type="line" smooth="yes"/>
+      <enginePoint x="409" y="1446"/>
+      <enginePoint x="339" y="1372"/>
+      <enginePoint x="325" y="1272" type="curve" smooth="yes"/>
+      <enginePoint x="261" y="818" type="line" smooth="yes"/>
+      <enginePoint x="243" y="700"/>
+      <enginePoint x="163" y="602"/>
+      <enginePoint x="23" y="600" type="curve"/>
+      <enginePoint x="11" y="524" type="line"/>
+      <enginePoint x="149" y="524"/>
+      <enginePoint x="203" y="410"/>
+      <enginePoint x="191" y="316" type="curve" smooth="yes"/>
+      <enginePoint x="125" y="-142" type="line" smooth="yes"/>
+      <enginePoint x="111" y="-242"/>
+      <enginePoint x="153" y="-322"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>

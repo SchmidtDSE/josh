@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<glyph name="u" format="2">
+  <advance width="1074"/>
+  <unicode hex="0075"/>
+  <anchor x="456" y="0" name="bottom"/>
+  <anchor x="874" y="856" name="horn"/>
+  <anchor x="815" y="22" name="ogonek"/>
+  <anchor x="601" y="1034" name="top"/>
+  <outline>
+    <contour>
+      <enginePoint x="456" y="-20" type="curve" smooth="yes"/>
+      <enginePoint x="614" y="-22"/>
+      <enginePoint x="724" y="62"/>
+      <enginePoint x="776" y="190" type="curve"/>
+      <enginePoint x="755" y="0" type="line"/>
+      <enginePoint x="821" y="0" type="line"/>
+      <enginePoint x="967" y="1034" type="line"/>
+      <enginePoint x="895" y="1034" type="line"/>
+      <enginePoint x="800" y="362" type="line"/>
+      <enginePoint x="771" y="154"/>
+      <enginePoint x="639" y="56"/>
+      <enginePoint x="462" y="56" type="curve" smooth="yes"/>
+      <enginePoint x="262" y="56"/>
+      <enginePoint x="184" y="172"/>
+      <enginePoint x="209" y="346" type="curve" smooth="yes"/>
+      <enginePoint x="306" y="1034" type="line"/>
+      <enginePoint x="233" y="1034" type="line"/>
+      <enginePoint x="137" y="346" type="line" smooth="yes"/>
+      <enginePoint x="103" y="100"/>
+      <enginePoint x="234" y="-17"/>
+    </contour>
+  </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.glyph.leftMetricsKey</key>
+      <string>=|n</string>
+      <key>com.schriftgestaltung.Glyphs.glyph.rightMetricsKey</key>
+      <string>=|n</string>
+      <key>public.markColor</key>
+      <string>0,0.67,0.91,1</string>
+    </dict>
+  </lib>
+</glyph>
