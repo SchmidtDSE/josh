@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
@@ -863,7 +866,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String candidateEventName = namePieces[namePieces.length - 1];
     boolean endsWithEventName = isEventName(candidateEventName);
 
-    StringJoiner attributeNameJoiner = new StringJoiner(".");
+    CompatibleStringJoiner attributeNameJoiner = CompatibilityLayerKeeper
+        .get()
+        .createStringJoiner(".");
+
     for (int i = 0; i < namePieces.length - 1; i++) {
       attributeNameJoiner.add(namePieces[i]);
     }

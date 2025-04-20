@@ -6,6 +6,8 @@
 
 package org.joshsim;
 
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.JoshParser;
@@ -36,7 +38,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      interpreter.interpret(result);
+      interpreter.interpret(result, new GridGeometryFactory());
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -51,9 +53,12 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().getFirst().toString());
     }
 
-    JoshProgram program = JoshSimFacade.interpret(result);
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
 
     JoshSimFacade.runSimulation(
+        geometryFactory,
         program,
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),

@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -128,7 +131,7 @@ public class ShadowingEntity implements MutableEntity {
 
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
-    StringJoiner keyJoiner = new StringJoiner("\t");
+    CompatibleStringJoiner keyJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\t");
     keyJoiner.add(attribute);
     keyJoiner.add(substep);
     keyJoiner.add(state);

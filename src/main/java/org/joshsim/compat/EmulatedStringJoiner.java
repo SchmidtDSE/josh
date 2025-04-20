@@ -4,15 +4,13 @@
  * @license BSD-3-Clause
  */
 
-package org.teavm.classlib.java.util;
+package org.joshsim.compat;
 
-
-import java.util.StringJoiner;
 
 /**
  * A compatibility implementation of the UtilityStringJoiner interface for WASM / JS runtimes.
  */
-public class TStringJoiner {
+public class EmulatedStringJoiner implements CompatibleStringJoiner {
 
   private final String delim;
   private boolean first;
@@ -23,19 +21,14 @@ public class TStringJoiner {
    *
    * @param delim the delimiter to be used between joined strings
    */
-  public TStringJoiner(CharSequence delim) {
+  public EmulatedStringJoiner(CharSequence delim) {
     this.delim = delim.toString();
     value = "";
     first = true;
   }
 
-  /**
-   * Add a new string to the collection of strings to be joined.
-   *
-   * @param piece The new string to be added to the collection of strings where each has this
-   *     joiner's delimiter in-between.
-   */
-  public TStringJoiner add(CharSequence piece) {
+  @Override
+  public EmulatedStringJoiner add(CharSequence piece) {
     String pieceStr = piece.toString();
     if (first) {
       value = pieceStr;

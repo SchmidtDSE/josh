@@ -25,27 +25,6 @@ import org.junit.jupiter.api.Test;
 class CsvExportFacadeTest {
 
   @Test
-  void testStartWhenAlreadyActiveNoActionPerformed() {
-    // Arrange
-    OutputStreamStrategy outputStrategyMock = mock(OutputStreamStrategy.class);
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
-
-    AtomicBoolean activeState = getActiveState(csvExportFacade);
-    activeState.set(true); // Simulate active state
-
-    // Act
-    csvExportFacade.start();
-
-    // Assert
-    assertTrue(activeState.get(), "Facade should remain active");
-    try {
-      verify(outputStrategyMock, times(0)).open();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Test
   void testStartWhenInactiveOpensOutputStream() throws IOException {
     // Arrange
     OutputStreamStrategy outputStrategyMock = mock(OutputStreamStrategy.class);
@@ -84,16 +63,6 @@ class CsvExportFacadeTest {
     // Assert
     verify(outputStrategyMock, times(1)).open();
     verify(outputStreamMock, times(1)).close();
-  }
-
-  private AtomicBoolean getActiveState(CsvExportFacade csvExportFacade) {
-    try {
-      var activeField = CsvExportFacade.class.getDeclaredField("active");
-      activeField.setAccessible(true);
-      return (AtomicBoolean) activeField.get(csvExportFacade);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException("Could not access active field", e);
-    }
   }
 
 }

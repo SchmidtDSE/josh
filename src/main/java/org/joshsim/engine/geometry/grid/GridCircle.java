@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.geometry.grid;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+
 import java.math.BigDecimal;
 
 /**
@@ -27,7 +29,7 @@ public class GridCircle extends GridShape {
    */
   public GridCircle(BigDecimal x, BigDecimal y, BigDecimal radius) {
     super(x, y);
-    diameter = radius.multiply(BigDecimal.TWO);
+    diameter = radius.multiply(CompatibilityLayerKeeper.get().getTwo());
   }
 
   @Override

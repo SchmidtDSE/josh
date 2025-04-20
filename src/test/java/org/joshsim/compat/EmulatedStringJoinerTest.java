@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.teavm.classlib.java.util;
+package org.joshsim.compat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,13 +14,13 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests for the JS compatibility string joiner.
  */
-class JsStringJoinerTest {
+class EmulatedStringJoinerTest {
 
   @Test
   void testAddMultipleStrings() {
     // Arrange
     String delimiter = ",";
-    TStringJoiner joiner = new TStringJoiner(delimiter);
+    EmulatedStringJoiner joiner = new EmulatedStringJoiner(delimiter);
 
     // Act
     joiner.add("first");

@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.geometry.grid;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+
 import java.math.BigDecimal;
 
 
@@ -64,14 +66,14 @@ public class IntersectionDetector {
    */
   private static boolean squareSquareIntersection(GridShape square1, GridShape square2) {
     BigDecimal width1 = square1.getWidth();
-    BigDecimal radius1 = width1.divide(BigDecimal.TWO);
+    BigDecimal radius1 = width1.divide(CompatibilityLayerKeeper.get().getTwo());
     BigDecimal x1Min = square1.getCenterX().subtract(radius1);
     BigDecimal x1Max = square1.getCenterX().add(radius1);
     BigDecimal y1Min = square1.getCenterY().subtract(radius1);
     BigDecimal y1Max = square1.getCenterY().add(radius1);
 
     BigDecimal width2 = square2.getWidth();
-    BigDecimal radius2 = width2.divide(BigDecimal.TWO);
+    BigDecimal radius2 = width2.divide(CompatibilityLayerKeeper.get().getTwo());
     BigDecimal x2Min = square2.getCenterX().subtract(radius2);
     BigDecimal x2Max = square2.getCenterX().add(radius2);
     BigDecimal y2Min = square2.getCenterY().subtract(radius2);
@@ -97,8 +99,8 @@ public class IntersectionDetector {
     BigDecimal distanceSquaredForY = distanceForY.multiply(distanceForY);
     BigDecimal distanceSquared = distanceSquaredForX.add(distanceSquaredForY);
 
-    BigDecimal radius1 = circle1.getWidth().divide(BigDecimal.TWO);
-    BigDecimal radius2 = circle2.getWidth().divide(BigDecimal.TWO);
+    BigDecimal radius1 = circle1.getWidth().divide(CompatibilityLayerKeeper.get().getTwo());
+    BigDecimal radius2 = circle2.getWidth().divide(CompatibilityLayerKeeper.get().getTwo());
     BigDecimal reach = radius1.add(radius2);
     BigDecimal reachSquared = reach.multiply(reach);
 
@@ -113,8 +115,8 @@ public class IntersectionDetector {
    * @return true if the square and circle overlap, false otherwise
    */
   private static boolean squareCircleIntersection(GridShape square, GridShape circle) {
-    BigDecimal squareRadius = square.getWidth().divide(BigDecimal.TWO);
-    BigDecimal circleRadius = circle.getWidth().divide(BigDecimal.TWO);
+    BigDecimal squareRadius = square.getWidth().divide(CompatibilityLayerKeeper.get().getTwo());
+    BigDecimal circleRadius = circle.getWidth().divide(CompatibilityLayerKeeper.get().getTwo());
 
     BigDecimal squareMinX = square.getCenterX().subtract(squareRadius);
     BigDecimal squareMaxX = square.getCenterX().add(squareRadius);

@@ -9,6 +9,8 @@ package org.joshsim.engine.geometry.grid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.PatchBuilder;
@@ -24,6 +26,7 @@ import org.joshsim.engine.geometry.PatchSet;
  */
 public class GridPatchBuilder implements PatchBuilder {
 
+  // Required for WASM build
   private static final BigDecimal ONE_THRESHOLD = new BigDecimal("0.00001");
 
   private final PatchBuilderExtents extents;
@@ -73,7 +76,7 @@ public class GridPatchBuilder implements PatchBuilder {
     }
 
     List<MutableEntity> patches = new ArrayList<>();
-    BigDecimal halfWidth = cellWidth.divide(BigDecimal.TWO);
+    BigDecimal halfWidth = cellWidth.divide(CompatibilityLayerKeeper.get().getTwo());
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
         BigDecimal offsetX = cellWidth.multiply(new BigDecimal(x));

@@ -6,6 +6,9 @@
 
 package org.joshsim.engine.value.converter;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -239,7 +242,7 @@ public class Units {
   }
 
   private String serializeMultiplyString(Map<String, Long> target) {
-    StringJoiner joiner = new StringJoiner(" * ");
+    CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(" * ");
 
     for (String unit : target.keySet()) {
       long numInstances = target.get(unit);

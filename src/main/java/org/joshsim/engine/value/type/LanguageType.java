@@ -7,6 +7,9 @@
 
 package org.joshsim.engine.value.type;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.StringJoiner;
@@ -113,7 +116,7 @@ public class LanguageType {
   @Override
   public String toString() {
     if (isDistribution()) {
-      StringJoiner joiner = new StringJoiner(" > ");
+      CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(" > ");
       for (String distributionType : getDistributionTypes()) {
         joiner.add(distributionType);
       }
