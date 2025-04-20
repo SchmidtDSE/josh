@@ -1,8 +1,21 @@
+/**
+ * Structures describing geometric intersection detection algorithms.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.engine.geometry.shape;
 
 import java.math.BigDecimal;
 
 
+/**
+ * Utility class for detecting intersections between different geometric shapes.
+ *
+ * <p>This class provides methods to detect intersections between points, squares,
+ * and circles in grid space. All calculations use BigDecimal for precise 
+ * geometric computations.</p>
+ */
 public class IntersectionDetector {
 
   public static boolean intersect(GridShape shape1, GridShape shape2) {
@@ -25,10 +38,24 @@ public class IntersectionDetector {
     };
   }
 
+  /**
+   * Determines if two points intersect (are at the same location).
+   *
+   * @param point1 The first point to check
+   * @param point2 The second point to check
+   * @return true if the points are at the same location, false otherwise
+   */
   private static boolean pointPointIntersection(GridShape point1, GridShape point2) {
     return point1.equals(point2);
   }
 
+  /**
+   * Determines if two squares intersect by checking for overlap in their ranges.
+   *
+   * @param square1 The first square to check
+   * @param square2 The second square to check
+   * @return true if the squares overlap, false otherwise
+   */
   private static boolean squareSquareIntersection(GridShape square1, GridShape square2) {
     BigDecimal width1 = square1.getWidth();
     BigDecimal radius1 = width1.divide(BigDecimal.TWO);
@@ -50,6 +77,14 @@ public class IntersectionDetector {
     return xInRange && yInRange;
   }
 
+  /**
+   * Determines if two circles intersect by comparing the distance between centers
+   * to the sum of their radii.
+   *
+   * @param circle1 The first circle to check
+   * @param circle2 The second circle to check
+   * @return true if the circles overlap, false otherwise
+   */
   private static boolean circleCircleIntersection(GridShape circle1, GridShape circle2) {
     BigDecimal distanceX = circle1.getCenterX().subtract(circle2.getCenterX());
     BigDecimal distanceXSquared = distanceX.multiply(distanceX);
@@ -65,6 +100,14 @@ public class IntersectionDetector {
     return distanceSquared.compareTo(reachSquared) < 0;
   }
 
+  /**
+   * Determines if a square and circle intersect by finding the closest point
+   * on the square to the circle's center.
+   *
+   * @param square The square to check
+   * @param circle The circle to check
+   * @return true if the square and circle overlap, false otherwise
+   */
   private static boolean squareCircleIntersection(GridShape square, GridShape circle) {
     BigDecimal squareRadius = square.getWidth().divide(BigDecimal.TWO);
     BigDecimal circleRadius = circle.getWidth().divide(BigDecimal.TWO);
