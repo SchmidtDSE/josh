@@ -1,11 +1,13 @@
 package org.joshsim.engine.geometry.grid;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
-
-import java.math.BigDecimal;
 
 
 public class GridPatchBuilder implements PatchBuilder {
@@ -52,12 +54,17 @@ public class GridPatchBuilder implements PatchBuilder {
     long numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
     
     List<MutableEntity> patches = new ArrayList<>();
+
+    BigDecimal halfWidth = cellWidth.divide(BigDecimal.TWO);
     
     // Create grid cells
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
-        BigDecimal centerX = minX.add(cellWidth.multiply(new BigDecimal(x))).add(cellWidth.divide(new BigDecimal(2)));
-        BigDecimal centerY = minY.add(cellWidth.multiply(new BigDecimal(y))).add(cellWidth.divide(new BigDecimal(2)));
+        BigDecimal offsetX = cellWidth.multiply(new BigDecimal(x));
+        BigDecimal offsetY = cellWidth.multiply(new BigDecimal(y));
+        
+        BigDecimal centerX = minX.add(offsetX).add(halfWidth);
+        BigDecimal centerY = minY.add(offsetY).add(halfWidth);
         
         GridSquare square = new GridSquare(centerX, centerY, cellWidth);
         MutableEntity patch = prototype.buildSpatial(square);
