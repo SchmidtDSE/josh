@@ -41,7 +41,31 @@ public class GridPatchBuilder implements PatchBuilder {
    */
   @Override
   public PatchSet build() {
-    return null;
+    // Get the corner coordinates
+    BigDecimal minX = extents.getTopLeftX();
+    BigDecimal maxX = extents.getBottomRightX();
+    BigDecimal minY = extents.getTopLeftY();
+    BigDecimal maxY = extents.getBottomRightY();
+    
+    // Calculate number of cells in each direction
+    long numCellsX = maxX.subtract(minX).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
+    long numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
+    
+    List<MutableEntity> patches = new ArrayList<>();
+    
+    // Create grid cells
+    for (long x = 0; x < numCellsX; x++) {
+      for (long y = 0; y < numCellsY; y++) {
+        BigDecimal centerX = minX.add(cellWidth.multiply(new BigDecimal(x))).add(cellWidth.divide(new BigDecimal(2)));
+        BigDecimal centerY = minY.add(cellWidth.multiply(new BigDecimal(y))).add(cellWidth.divide(new BigDecimal(2)));
+        
+        GridSquare square = new GridSquare(centerX, centerY, cellWidth);
+        MutableEntity patch = prototype.buildSpatial(square);
+        patches.add(patch);
+      }
+    }
+    
+    return new PatchSet(patches, cellWidth);
   }
 
   /**
@@ -54,7 +78,13 @@ public class GridPatchBuilder implements PatchBuilder {
    * @throws IllegalArgumentException Thrown if the extents are not valid in grid-space.
    */
   private void validate(PatchBuilderExtents extents) {
-
+    if (extents.getTopLeftX().compareTo(extents.getBottomRightX()) >= 0) {
+      throw new IllegalArgumentException("Top left X must be less than bottom right X");
+    }
+    
+    if (extents.getTopLeftY().compareTo(extents.getBottomRightY()) >= 0) {
+      throw new IllegalArgumentException("Top left Y must be less than bottom right Y");
+    }
   }
 
 }
