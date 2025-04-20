@@ -1,4 +1,3 @@
-
 /**
  * Interface for queue service event callbacks.
  *
@@ -12,9 +11,9 @@ import java.util.Optional;
 /**
  * Callback interface for handling queue service lifecycle and task processing events.
  *
- * <p>This interface defines methods that are called by the queue service to notify
- * implementers about various events in the queue service lifecycle, including service
- * startup, task processing, and service shutdown.</p>
+ * <p>This interface defines methods that are called by the queue service to notify implementers
+ * about various events in the queue service lifecycle, including service startup, task processing,
+ * and service shutdown.</p>
  */
 public interface QueueServiceCallback {
 

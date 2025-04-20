@@ -1,4 +1,3 @@
-
 /**
  * Interface for a cross-VM compatible queue service.
  *
@@ -12,8 +11,8 @@ package org.joshsim.compat;
  *
  * <p>This interface provides a common abstraction for queue processing across different platforms
  * (JVM and WebAssembly). It supports basic queue operations for task management and is implemented
- * by both {@link JvmQueueService} for standard JVM environments and {@link EmulatedQueueService}
- * for WebAssembly environments.</p>
+ * by both JvmQueueService for standard JVM environments and EmulatedQueueService for WebAssembly
+ * environments.</p>
  */
 public interface QueueService {
 
