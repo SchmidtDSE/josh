@@ -1,4 +1,3 @@
-
 /**
  * Structures describing a point in grid space.
  *
@@ -10,11 +9,9 @@ package org.joshsim.engine.geometry.shape;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EnginePoint;
 
+
 /**
- * Geometric shape representing a point in grid coordinates.
- *
- * <p>This class defines a dimensionless point in grid space, implementing both grid shape
- * and engine point interfaces for unified geometric operations.</p>
+ * Geometric shape representing a point in grid space coordinates.
  */
 public class GridPoint extends GridShape implements EnginePoint {
 

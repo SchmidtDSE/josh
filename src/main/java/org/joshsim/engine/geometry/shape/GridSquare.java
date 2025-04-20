@@ -11,9 +11,6 @@ import java.math.BigDecimal;
 
 /**
  * Geometric shape representing a square in grid coordinates.
- *
- * <p>This class defines a square by its center point and width, providing a basic
- * rectangular shape with equal sides for grid-based spatial operations.</p>
  */
 public class GridSquare extends GridShape {
 

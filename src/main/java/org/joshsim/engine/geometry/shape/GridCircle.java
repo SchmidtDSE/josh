@@ -1,4 +1,3 @@
-
 /**
  * Structures describing a circular shape in grid space.
  *
@@ -12,8 +11,8 @@ import java.math.BigDecimal;
 /**
  * Geometric shape representing a circle in grid coordinates.
  *
- * <p>This class defines a circle by its center point and diameter, allowing for precise
- * circular representations in grid-based spatial systems.</p>
+ * <p>This class defines a circle by its center point and diameter, allowing for precise circular
+ * representations in grid-based spatial systems like radial operations.</p>
  */
 public class GridCircle extends GridShape {
 
