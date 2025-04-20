@@ -98,7 +98,12 @@ public class JoshSimCommander {
     @Override
     public Integer call() {
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+          new GridGeometryFactory(),
+          file,
+          output
+      );
+
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -169,8 +174,20 @@ public class JoshSimCommander {
      */
     @Override
     public Integer call() {
+      EngineGeometryFactory geometryFactory;
+      if (crs.isEmpty()) {
+        geometryFactory = new GridGeometryFactory();
+      } else {
+        CoordinateReferenceSystem crsRealized;
+        try {
+          crsRealized = CRS.decode(crs);
+        } catch (FactoryException e) {
+          throw new RuntimeException(e);
+        }
+        geometryFactory = new EarthGeometryFactory(crsRealized);
+      }
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(geometryFactory, file, output);
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -187,19 +204,6 @@ public class JoshSimCommander {
       if (!program.getSimulations().hasPrototype(simulation)) {
         output.printError("Could not find simulation: " + simulation);
         return 4;
-      }
-
-      EngineGeometryFactory geometryFactory;
-      if (crs.isEmpty()) {
-        geometryFactory = new GridGeometryFactory();
-      } else {
-        CoordinateReferenceSystem crsRealized;
-        try {
-          crsRealized = CRS.decode(crs);
-        } catch (FactoryException e) {
-          throw new RuntimeException(e);
-        }
-        geometryFactory = new EarthGeometryFactory(crsRealized);
       }
 
       JoshSimFacade.runSimulation(
@@ -282,7 +286,8 @@ public class JoshSimCommander {
     }
   }
 
-  private static ProgramInitResult getJoshProgram(File file, OutputOptions output) {
+  private static ProgramInitResult getJoshProgram(EngineGeometryFactory geometryFactory, File file,
+        OutputOptions output) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -314,7 +319,7 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(result);
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
     assert program != null;
 
     return new ProgramInitResult(program);

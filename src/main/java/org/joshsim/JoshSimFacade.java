@@ -45,12 +45,14 @@ public class JoshSimFacade {
   /**
    * Interpret a parsed Josh script to Java objects which can run the simulation.
    *
+   * @param engineGeometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
-  public static JoshProgram interpret(ParseResult parsed) {
+  public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
+        ParseResult parsed) {
     JoshInterpreter interpreter = new JoshInterpreter();
-    return interpreter.interpret(parsed);
+    return interpreter.interpret(parsed, engineGeometryFactory);
   }
 
   /**
