@@ -1,7 +1,5 @@
 package org.joshsim.geo.external.core;
 
-import static org.mockito.Mockito.*;
-
 
 /**
  * Unit tests for the ExternalLayerFactory class, ensuring that it correctly
