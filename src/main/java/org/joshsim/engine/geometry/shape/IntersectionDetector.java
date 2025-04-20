@@ -11,13 +11,10 @@ import java.math.BigDecimal;
 
 /**
  * Utility class for detecting intersections between different geometric shapes.
- *
- * <p>This class provides methods to detect intersections between points, squares,
- * and circles in grid space. All calculations use BigDecimal for precise 
- * geometric computations.</p>
  */
 public class IntersectionDetector {
 
+  
   public static boolean intersect(GridShape shape1, GridShape shape2) {
     return switch(shape1.getGridShapeType()) {
       case POINT -> switch(shape2.getGridShapeType()) {
@@ -78,8 +75,7 @@ public class IntersectionDetector {
   }
 
   /**
-   * Determines if two circles intersect by comparing the distance between centers
-   * to the sum of their radii.
+   * Determines if two circles intersect by comparing the distance between centers.
    *
    * @param circle1 The first circle to check
    * @param circle2 The second circle to check
@@ -101,8 +97,7 @@ public class IntersectionDetector {
   }
 
   /**
-   * Determines if a square and circle intersect by finding the closest point
-   * on the square to the circle's center.
+   * Determines if a square and circle intersect.
    *
    * @param square The square to check
    * @param circle The circle to check
