@@ -9,10 +9,11 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 
+
 /**
  * Structure to store and validate corner coordinates for grid construction.
  */
-public class GridBuilderExtents {
+public class PatchBuilderExtents {
   private final BigDecimal topLeftX;
   private final BigDecimal topLeftY;
   private final BigDecimal bottomRightX;
@@ -27,13 +28,12 @@ public class GridBuilderExtents {
    * @param bottomRightY The y-coordinate of the bottom-right corner
    * @throws IllegalArgumentException if coordinates don't form a valid rectangle
    */
-  public GridBuilderExtents(BigDecimal topLeftX, BigDecimal topLeftY, BigDecimal bottomRightX,
-        BigDecimal bottomRightY) {
+  public PatchBuilderExtents(BigDecimal topLeftX, BigDecimal topLeftY, BigDecimal bottomRightX,
+                             BigDecimal bottomRightY) {
     this.topLeftX = topLeftX;
     this.topLeftY = topLeftY;
     this.bottomRightX = bottomRightX;
     this.bottomRightY = bottomRightY;
-    validateCornerCoordinates();
   }
 
   /**
@@ -72,33 +72,4 @@ public class GridBuilderExtents {
     return bottomRightY;
   }
 
-  /**
-   * Validates corner coordinate valididity.
-   */
-  private void validateCornerCoordinates() {
-    if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
-      throw new IllegalArgumentException("Missing corner coordinates");
-    }
-
-    // Consistent validation for both geographic and projected coordinates
-    // Y-coordinate (latitude/northing) should decrease from top to bottom
-    if (topLeftY.compareTo(bottomRightY) <= 0) {
-      String message = String.format(
-          "Top-left Y-coordinate (%.2f) must be greater than bottom-right Y-coordinate (%.2f).",
-          topLeftY.doubleValue(),
-          bottomRightY.doubleValue()
-      );
-      throw new IllegalArgumentException(message);
-    }
-
-    // X-coordinate (longitude/easting) should increase from left to right
-    if (topLeftX.compareTo(bottomRightX) >= 0) {
-      String message = String.format(
-          "Top-left X-coordinate (%.2f) must be less than bottom-right X-coordinate (%.2f).",
-          topLeftX.doubleValue(),
-          bottomRightX.doubleValue()
-      );
-      throw new IllegalArgumentException(message);
-    }
-  }
 }

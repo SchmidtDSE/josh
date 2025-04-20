@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.geometry.shape;
+package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -41,7 +41,7 @@ public abstract class GridShape implements EngineGeometry {
   @Override
   public EarthGeometry getOnEarth() {
     throw new UnsupportedOperationException(
-        "Conversion to Earth from Grid space reserved for future use."
+        "Conversion to Earth from PatchSet space reserved for future use."
     );
   }
 

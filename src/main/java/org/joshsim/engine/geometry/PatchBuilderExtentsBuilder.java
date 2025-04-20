@@ -1,5 +1,5 @@
 /**
- * Structure to help in constructing a GridBuilderExtents.
+ * Structure to help in constructing a PatchBuilderExtents.
  *
  * @license BSD-3-Clause
  */
@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 
 
 /**
- * Builder class for creating {@link GridBuilderExtents} instances.
+ * Builder class for creating {@link PatchBuilderExtents} instances.
  */
-public class GridBuilderExtentsBuilder {
+public class PatchBuilderExtentsBuilder {
 
   private BigDecimal topLeftX;
   private BigDecimal topLeftY;
@@ -25,7 +25,7 @@ public class GridBuilderExtentsBuilder {
    * @param topLeftX The x-coordinate as a BigDecimal
    * @return this builder instance
    */
-  public GridBuilderExtentsBuilder setTopLeftX(BigDecimal topLeftX) {
+  public PatchBuilderExtentsBuilder setTopLeftX(BigDecimal topLeftX) {
     this.topLeftX = topLeftX;
     return this;
   }
@@ -36,7 +36,7 @@ public class GridBuilderExtentsBuilder {
    * @param topLeftY The y-coordinate as a BigDecimal
    * @return this builder instance
    */
-  public GridBuilderExtentsBuilder setTopLeftY(BigDecimal topLeftY) {
+  public PatchBuilderExtentsBuilder setTopLeftY(BigDecimal topLeftY) {
     this.topLeftY = topLeftY;
     return this;
   }
@@ -47,7 +47,7 @@ public class GridBuilderExtentsBuilder {
    * @param bottomRightX The x-coordinate as a BigDecimal
    * @return this builder instance
    */
-  public GridBuilderExtentsBuilder setBottomRightX(BigDecimal bottomRightX) {
+  public PatchBuilderExtentsBuilder setBottomRightX(BigDecimal bottomRightX) {
     this.bottomRightX = bottomRightX;
     return this;
   }
@@ -58,21 +58,21 @@ public class GridBuilderExtentsBuilder {
    * @param bottomRightY The y-coordinate as a BigDecimal
    * @return this builder instance
    */
-  public GridBuilderExtentsBuilder setBottomRightY(BigDecimal bottomRightY) {
+  public PatchBuilderExtentsBuilder setBottomRightY(BigDecimal bottomRightY) {
     this.bottomRightY = bottomRightY;
     return this;
   }
 
   /**
-   * Builds a new {@link GridBuilderExtents} instance with the currently set coordinates.
+   * Builds a new {@link PatchBuilderExtents} instance with the currently set coordinates.
    *
-   * @return a new GridBuilderExtents instance
+   * @return a new PatchBuilderExtents instance
    * @throws IllegalStateException if any of the required coordinates are not set
    */
-  public GridBuilderExtents build() {
+  public PatchBuilderExtents build() {
     if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
       throw new IllegalStateException("All coordinates must be set before building");
     }
-    return new GridBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    return new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
   }
 }

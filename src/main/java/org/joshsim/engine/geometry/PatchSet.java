@@ -5,22 +5,22 @@ import java.util.List;
 import org.joshsim.engine.entity.base.MutableEntity;
 
 /**
- * The Grid class contains a list of patches and a cell width for conveniences.
+ * The PatchSet class contains a list of patches and a cell width for conveniences.
  * Spatial operations will be performed on the elements of the grid, Patches, which
  * are the basic unit of spatial representation.
  */
-public class Grid {
+public class PatchSet {
   private final List<MutableEntity> patches;
   private final BigDecimal spacing;
 
 
   /**
-   * Constructor for the Grid class.
+   * Constructor for the PatchSet class.
    *
    * @param patches List of patches in the grid.
    * @param spacing Width of a cell in the grid in meters.
    */
-  public Grid(List<MutableEntity> patches, BigDecimal spacing) {
+  public PatchSet(List<MutableEntity> patches, BigDecimal spacing) {
     this.patches = patches;
     this.spacing = spacing;
   }

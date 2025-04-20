@@ -1,4 +1,4 @@
-package org.joshsim.engine.geometry.shape;
+package org.joshsim.engine.geometry.grid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

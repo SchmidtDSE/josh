@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.geometry.shape;
+package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EnginePoint;

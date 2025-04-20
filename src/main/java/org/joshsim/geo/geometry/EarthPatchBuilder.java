@@ -15,11 +15,12 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 
 /**
- * This class is responsible for building grid structures.
- * It creates a rectangular grid of patches based on coordinates in any coordinate reference system,
- * converting them to the target CRS if needed.
+ * Utility responsible for building grid structures in Earth space.
+ *
+ * <p>Utility creating a rectangular grid of patches based on coordinates in any coordinate
+ * reference system, converting them to the target CRS if needed.</p>
  */
-public class GridBuilder {
+public class EarthPatchBuilder {
 
   private final BigDecimal cellWidth;
   private final EntityPrototype prototype;
@@ -34,7 +35,7 @@ public class GridBuilder {
   private GeneralPosition bottomRightTransformed;
 
   /**
-   * Creates a new GridBuilder with specified input and target CRS, and corner coordinates.
+   * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
    *
    * @param inputCrs input CRS
    * @param targetCrs target CRS
@@ -44,14 +45,13 @@ public class GridBuilder {
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
-  public GridBuilder(
-        CoordinateReferenceSystem inputCrs,
-        CoordinateReferenceSystem targetCrs,
-        GridBuilderExtents extents,
-        BigDecimal cellWidth,
-        EntityPrototype prototype
-  )
-      throws FactoryException, TransformException {
+  public EarthPatchBuilder(
+      CoordinateReferenceSystem inputCrs,
+      CoordinateReferenceSystem targetCrs,
+      PatchBuilderExtents extents,
+      BigDecimal cellWidth,
+      EntityPrototype prototype
+  ) throws TransformException {
 
     this.prototype = prototype;
     // Validate cell width
@@ -86,6 +86,30 @@ public class GridBuilder {
   }
 
   /**
+   * Builds and returns a PatchSet based on the transformed coordinates.
+   *
+   * @return a new PatchSet instance
+   */
+  public PatchSet build() {
+    try {
+      // Validate all required parameters first
+      validateParameters();
+
+      // Calculate grid dimensions
+      int colCells = getColCells();
+      int rowCells = getRowCells();
+      double cellWidthDouble = cellWidth.doubleValue();
+
+      // Create all patches
+      List<MutableEntity> patches = createPatchGrid(colCells, rowCells, cellWidthDouble);
+      return new PatchSet(patches, cellWidth);
+
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
+    }
+  }
+
+  /**
    * Validates corner coordinates based on coordinate system type.
    * For both geographic and projected coordinates, we expect Y to increase northward
    * and X to increase eastward.
@@ -105,13 +129,13 @@ public class GridBuilder {
     // Y-coordinate (latitude/northing) should decrease from top to bottom
     if (topLeftY.compareTo(bottomRightY) <= 0) {
       throw new IllegalArgumentException(
-        "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
+          "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
     }
 
     // X-coordinate (longitude/easting) should increase from left to right
     if (topLeftX.compareTo(bottomRightX) >= 0) {
       throw new IllegalArgumentException(
-        "Top-left X-coordinate must be less than bottom-right X-coordinate");
+          "Top-left X-coordinate must be less than bottom-right X-coordinate");
     }
   }
 
@@ -186,30 +210,6 @@ public class GridBuilder {
     return transformedCorners;
   }
 
-  /**
-   * Builds and returns a Grid based on the transformed coordinates.
-   *
-   * @return a new Grid instance
-   */
-  public Grid build() {
-    try {
-      // Validate all required parameters first
-      validateParameters();
-
-      // Calculate grid dimensions
-      int colCells = getColCells();
-      int rowCells = getRowCells();
-      double cellWidthDouble = cellWidth.doubleValue();
-
-      // Create all patches
-      List<MutableEntity> patches = createPatchGrid(colCells, rowCells, cellWidthDouble);
-      return new Grid(patches, cellWidth);
-
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
-    }
-  }
-
   private int getRowCells() {
     double rowDiff = topLeftTransformed.getOrdinate(1) - bottomRightTransformed.getOrdinate(1);
     int rowCells = (int) Math.ceil(rowDiff / cellWidth.doubleValue());
@@ -230,10 +230,10 @@ public class GridBuilder {
       double rightX, double bottomY
   ) {
     return geometryFactory.createSquare(
-      BigDecimal.valueOf(leftX),
-      BigDecimal.valueOf(topY),
-      BigDecimal.valueOf(rightX),
-      BigDecimal.valueOf(bottomY)
+        BigDecimal.valueOf(leftX),
+        BigDecimal.valueOf(topY),
+        BigDecimal.valueOf(rightX),
+        BigDecimal.valueOf(bottomY)
     );
   }
 
@@ -299,12 +299,12 @@ public class GridBuilder {
     // Validate that after transformation, the coordinates still make sense
     if (topLeftTransformed.getOrdinate(1) <= bottomRightTransformed.getOrdinate(1)) {
       throw new IllegalArgumentException(
-        "After transformation, top-left Y-coord must be greater than bottom-right Y-coord");
+          "After transformation, top-left Y-coord must be greater than bottom-right Y-coord");
     }
 
     if (topLeftTransformed.getOrdinate(0) >= bottomRightTransformed.getOrdinate(0)) {
       throw new IllegalArgumentException(
-        "After transformation, top-left X-coord must be less than bottom-right X-coord");
+          "After transformation, top-left X-coord must be less than bottom-right X-coord");
     }
   }
 }

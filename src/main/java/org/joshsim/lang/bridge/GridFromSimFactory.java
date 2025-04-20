@@ -1,5 +1,5 @@
 /**
- * Utility to seed a GridBuilder from a simulation entity.
+ * Utility to seed a PatchBuilder from a simulation entity.
  *
  * @license BSD-3-Clause
  */
@@ -13,10 +13,10 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.Grid;
-import org.joshsim.engine.geometry.GridBuilder;
-import org.joshsim.engine.geometry.GridBuilderExtents;
-import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -24,7 +24,7 @@ import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
- * Factory building a Grid from a simulation and bridge.
+ * Factory building a PatchSet from a simulation and bridge.
  */
 public class GridFromSimFactory {
 
@@ -54,12 +54,12 @@ public class GridFromSimFactory {
   }
 
   /**
-   * Builds a Grid from a simulation entity using the provided EngineBridge.
+   * Builds a PatchSet from a simulation entity using the provided EngineBridge.
    *
-   * @param simulation the simulation entity used to build the Grid
-   * @return the built Grid
+   * @param simulation the simulation entity used to build the PatchSet
+   * @return the built PatchSet
    */
-  public Grid build(MutableEntity simulation) {
+  public PatchSet build(MutableEntity simulation) {
     simulation.startSubstep("constant");
 
     final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
@@ -96,9 +96,9 @@ public class GridFromSimFactory {
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
     EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
 
-    GridBuilderExtents extents = buildExtents(startStr, endStr);
+    PatchBuilderExtents extents = buildExtents(startStr, endStr);
     try {
-      GridBuilder builder = new GridBuilder(
+      PatchBuilder builder = new PatchBuilder(
           inputCrsRef,
           targetCrsRef,
           extents,
@@ -132,23 +132,23 @@ public class GridFromSimFactory {
    *
    * @param startStr the starting coordinate string in format "X latitude, Y longitude"
    * @param endStr the ending coordinate string in format "X latitude, Y longitude"
-   * @return GridBuilderExtents object containing the parsed coordinates
+   * @return PatchBuilderExtents object containing the parsed coordinates
    */
-  private GridBuilderExtents buildExtents(String startStr, String endStr) {
-    GridBuilderExtentsBuilder builder = new GridBuilderExtentsBuilder();
+  private PatchBuilderExtents buildExtents(String startStr, String endStr) {
+    PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
     addExtents(builder, startStr, true);
     addExtents(builder, endStr, false);
     return builder.build();
   }
 
   /**
-   * Adds coordinate extents to a GridBuilderExtentsBuilder.
+   * Adds coordinate extents to a PatchBuilderExtentsBuilder.
    *
-   * @param builder the GridBuilderExtentsBuilder to add coordinates to
+   * @param builder the PatchBuilderExtentsBuilder to add coordinates to
    * @param target the coordinate string to parse
    * @param start true if these are start coordinates, false if end coordinates
    */
-  private void addExtents(GridBuilderExtentsBuilder builder, String target, boolean start) {
+  private void addExtents(PatchBuilderExtentsBuilder builder, String target, boolean start) {
     String[] pieces = target.split(",");
 
     EngineValue value1 = parseExtentComponent(pieces[0]);

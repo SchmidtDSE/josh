@@ -1,6 +1,6 @@
 
 /**
- * Tests for GridFromSimFactory which builds Grid objects from simulation entities.
+ * Tests for GridFromSimFactory which builds PatchSet objects from simulation entities.
  *
  * @license BSD-3-Clause
  */
@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
-import org.joshsim.engine.geometry.Grid;
+import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -27,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 
 /**
- * Test for GridFromSimFactory which helps create Grid objects from simulation entities.
+ * Test for GridFromSimFactory which helps create PatchSet objects from simulation entities.
  */
 @ExtendWith(MockitoExtension.class)
 class GridFromSimFactoryTest {
@@ -58,11 +58,11 @@ class GridFromSimFactoryTest {
     when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.empty());
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.empty());
 
-    Grid result = factory.build(mockSimulation);
+    PatchSet result = factory.build(mockSimulation);
 
-    assertNotNull(result, "Grid should be created with default values");
-    assertNotNull(result.getPatches(), "Grid should contain patches");
-    assertNotNull(result.getSpacing(), "Grid should have spacing defined");
+    assertNotNull(result, "PatchSet should be created with default values");
+    assertNotNull(result.getPatches(), "PatchSet should contain patches");
+    assertNotNull(result.getSpacing(), "PatchSet should have spacing defined");
   }
 
   @Test
@@ -89,9 +89,9 @@ class GridFromSimFactoryTest {
     when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
     when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
 
-    Grid result = factory.build(mockSimulation);
+    PatchSet result = factory.build(mockSimulation);
 
-    assertNotNull(result, "Grid should be created with custom values");
-    assertFalse(result.getPatches().isEmpty(), "Grid should contain patches");
+    assertNotNull(result, "PatchSet should be created with custom values");
+    assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
   }
 }

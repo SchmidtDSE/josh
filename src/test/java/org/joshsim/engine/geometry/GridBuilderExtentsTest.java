@@ -1,5 +1,5 @@
 /**
- * Tests for the GridBuilderExtents structure.
+ * Tests for the PatchBuilderExtents structure.
  *
  * @license BSD-3-Clause
  */
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 
 /**
- * Tests for the GridBuilderExtents structure.
+ * Tests for the PatchBuilderExtents structure.
  */
 class GridBuilderExtentsTest {
 
@@ -29,7 +29,7 @@ class GridBuilderExtentsTest {
     BigDecimal bottomRightY = new BigDecimal("33.5");
 
     // Act & Assert
-    assertDoesNotThrow(() -> new GridBuilderExtents(
+    assertDoesNotThrow(() -> new PatchBuilderExtents(
         topLeftX,
         topLeftY,
         bottomRightX,
@@ -49,7 +49,7 @@ class GridBuilderExtentsTest {
     // Act & Assert
     assertThrows(
         IllegalArgumentException.class,
-        () -> new GridBuilderExtents(
+        () -> new PatchBuilderExtents(
             topLeftX,
             topLeftY,
             bottomRightX,

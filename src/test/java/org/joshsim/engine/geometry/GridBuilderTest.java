@@ -43,8 +43,8 @@ class GridBuilderTest {
   private BigDecimal utmEastX;
   private EntityPrototype prototype;
 
-  private GridBuilderExtents wgs84Extents;
-  private GridBuilderExtents utm11nExtents;
+  private PatchBuilderExtents wgs84Extents;
+  private PatchBuilderExtents utm11nExtents;
 
   @BeforeEach
   void setUp() throws FactoryException {
@@ -70,8 +70,8 @@ class GridBuilderTest {
     // Set a reasonable cell width (30 meters)
     cellWidth = new BigDecimal(30); // 30 meters
 
-    // Grid Builder extents in X, Y order
-    wgs84Extents = new GridBuilderExtents(
+    // PatchSet Builder extents in X, Y order
+    wgs84Extents = new PatchBuilderExtents(
         wgs84WestLon,
         wgs84NorthLat,
         wgs84EastLon,
@@ -79,7 +79,7 @@ class GridBuilderTest {
     );
 
     // UTM 11N extents in X, Y order
-    utm11nExtents = new GridBuilderExtents(
+    utm11nExtents = new PatchBuilderExtents(
         utmWestX,
         utmNorthY,
         utmEastX,
@@ -88,9 +88,9 @@ class GridBuilderTest {
   }
 
   @Test
-  @DisplayName("Constructor should properly initialize GridBuilder")
+  @DisplayName("Constructor should properly initialize PatchBuilder")
   void constructorInitializesGridBuilder() throws FactoryException, TransformException {
-    GridBuilder builder = new GridBuilder(
+    PatchBuilder builder = new PatchBuilder(
         wgs84,
         utm11n,
         wgs84Extents,
@@ -99,7 +99,7 @@ class GridBuilderTest {
     );
 
     // We can't directly test private fields, but we can test that build() works
-    Grid grid = builder.build();
+    PatchSet grid = builder.build();
     assertNotNull(grid);
     assertFalse(grid.getPatches().isEmpty());
   }
@@ -111,7 +111,7 @@ class GridBuilderTest {
     @Test
     @DisplayName("transformCornerCoordinates should correctly transform between different CRS")
     void transformCornerCoordinates() throws FactoryException, TransformException {
-      GridBuilder builder = new GridBuilder(
+      PatchBuilder builder = new PatchBuilder(
           wgs84,
           utm11n,
           wgs84Extents,
@@ -156,7 +156,7 @@ class GridBuilderTest {
       BigDecimal zeroCellWidth = BigDecimal.ZERO;
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
+          () -> new PatchBuilder(wgs84, utm11n, wgs84Extents, zeroCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
 
@@ -164,7 +164,7 @@ class GridBuilderTest {
       BigDecimal negativeCellWidth = new BigDecimal(-30);
       exception = assertThrows(
           IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
+          () -> new PatchBuilder(wgs84, utm11n, wgs84Extents, negativeCellWidth, prototype)
       );
       assertTrue(exception.getMessage().contains("Cell width must be positive"));
     }
@@ -175,7 +175,7 @@ class GridBuilderTest {
       // Create inverted coordinates (top-left is below bottom-right)
       IllegalArgumentException exception = assertThrows(
           IllegalArgumentException.class,
-              () -> new GridBuilderExtents(
+              () -> new PatchBuilderExtents(
               wgs84WestLon,
               wgs84SouthLat, // Inverted Y (North/South)
               wgs84EastLon,
@@ -186,7 +186,7 @@ class GridBuilderTest {
 
       exception = assertThrows(
           IllegalArgumentException.class,
-              () -> new GridBuilderExtents(
+              () -> new PatchBuilderExtents(
               wgs84EastLon, // Inverted X (East/West)
               wgs84NorthLat,
               wgs84WestLon,
@@ -200,7 +200,7 @@ class GridBuilderTest {
     @DisplayName("build() should validate parameters")
     void buildValidatesParameters() throws FactoryException, TransformException {
       // Create a builder with valid parameters
-      GridBuilder builder = new GridBuilder(
+      PatchBuilder builder = new PatchBuilder(
           wgs84,
           utm11n,
           wgs84Extents,
@@ -209,7 +209,7 @@ class GridBuilderTest {
       );
 
       // Should work fine
-      Grid grid = builder.build();
+      PatchSet grid = builder.build();
       assertNotNull(grid);
       assertNotNull(grid.getPatches());
     }
@@ -218,7 +218,7 @@ class GridBuilderTest {
   @Test
   @DisplayName("build() with WGS84 to UTM 11N transformation")
   void buildWithWgs84ToUtm11n() throws FactoryException, TransformException {
-    GridBuilder builder = new GridBuilder(
+    PatchBuilder builder = new PatchBuilder(
         wgs84,
         utm11n,
         wgs84Extents,
@@ -226,11 +226,11 @@ class GridBuilderTest {
         prototype
     );
 
-    Grid grid = builder.build();
-    assertNotNull(grid, "Grid should be built successfully");
+    PatchSet grid = builder.build();
+    assertNotNull(grid, "PatchSet should be built successfully");
 
     List<MutableEntity> patches = grid.getPatches();
-    assertFalse(patches.isEmpty(), "Grid should contain patches");
+    assertFalse(patches.isEmpty(), "PatchSet should contain patches");
 
     // Verify a patch exists
     MutableEntity firstPatch = patches.get(0);
@@ -240,7 +240,7 @@ class GridBuilderTest {
   @Test
   @DisplayName("build() with UTM 11N to UTM 11N (no transformation)")
   void buildWithUtm11nToUtm11n() throws FactoryException, TransformException {
-    GridBuilder builder = new GridBuilder(
+    PatchBuilder builder = new PatchBuilder(
         utm11n,
         utm11n,
         utm11nExtents,
@@ -248,11 +248,11 @@ class GridBuilderTest {
         prototype
     );
 
-    Grid grid = builder.build();
-    assertNotNull(grid, "Grid should be built successfully");
+    PatchSet grid = builder.build();
+    assertNotNull(grid, "PatchSet should be built successfully");
 
     List<MutableEntity> patches = grid.getPatches();
-    assertFalse(patches.isEmpty(), "Grid should contain patches");
+    assertFalse(patches.isEmpty(), "PatchSet should contain patches");
 
     // Verify patches are created
     assertTrue(patches.size() > 0);
@@ -266,22 +266,22 @@ class GridBuilderTest {
     @DisplayName("Constructor should throw exception for null CRS")
     void constructorWithNullCrs() {
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
+          () -> new PatchBuilder(null, utm11n, wgs84Extents, cellWidth, prototype));
 
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
+          () -> new PatchBuilder(wgs84, null, wgs84Extents, cellWidth, prototype));
     }
 
     @Test
     @DisplayName("Constructor should throw exception for missing coordinates")
     void constructorWithMissingCoordinates() {
-      // Note: GridBuilderExtents constructor will throw an exception for null values,
-      // so we need to verify that at the GridBuilderExtents constructor level
+      // Note: PatchBuilderExtents constructor will throw an exception for null values,
+      // so we need to verify that at the PatchBuilderExtents constructor level
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
+          () -> new PatchBuilderExtents(null, wgs84NorthLat, wgs84EastLon, wgs84SouthLat));
 
       assertThrows(IllegalArgumentException.class,
-          () -> new GridBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
+          () -> new PatchBuilderExtents(wgs84WestLon, null, wgs84EastLon, wgs84SouthLat));
     }
   }
 

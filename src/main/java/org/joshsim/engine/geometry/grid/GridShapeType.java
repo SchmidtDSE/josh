@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.geometry.shape;
+package org.joshsim.engine.geometry.grid;
 
 /**
  * Defines the supported types of geometric shapes in the grid coordinate system.

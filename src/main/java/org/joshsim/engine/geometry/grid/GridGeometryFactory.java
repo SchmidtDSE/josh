@@ -4,12 +4,12 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.engine.geometry;
+package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
-import org.joshsim.engine.geometry.shape.GridCircle;
-import org.joshsim.engine.geometry.shape.GridPoint;
-import org.joshsim.engine.geometry.shape.GridSquare;
+
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 
 /**
  * Factory for creating geometric shapes in grid space.

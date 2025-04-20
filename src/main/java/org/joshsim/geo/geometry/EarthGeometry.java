@@ -11,7 +11,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EnginePoint;
-import org.joshsim.engine.geometry.shape.GridShape;
+import org.joshsim.engine.geometry.grid.GridShape;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -120,7 +120,7 @@ public class EarthGeometry implements EngineGeometry {
   @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
-        "Conversion from Earth to Grid space reserved for future use."
+        "Conversion from Earth to PatchSet space reserved for future use."
     );
   }
 

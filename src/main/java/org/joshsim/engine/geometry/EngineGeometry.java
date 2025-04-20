@@ -1,7 +1,7 @@
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
-import org.joshsim.engine.geometry.shape.GridShape;
+import org.joshsim.engine.geometry.grid.GridShape;
 import org.joshsim.geo.geometry.EarthGeometry;
 
 /**
@@ -41,9 +41,9 @@ public interface EngineGeometry extends Spatial {
   EarthGeometry getOnEarth();
 
   /**
-   * Get this geometry on Grid sapce.
+   * Get this geometry on PatchSet sapce.
    *
-   * @return A version of this geometry in Grid space.
+   * @return A version of this geometry in PatchSet space.
    */
   GridShape getOnGrid();
 }
