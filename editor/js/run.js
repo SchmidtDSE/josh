@@ -7,7 +7,6 @@
 
 /**
  * Presenter which manages the run control panel and dialogs.
- * Handles simulation selection and execution parameters.
  */
 class RunPanelPresenter {
 
@@ -95,8 +94,7 @@ class RunPanelPresenter {
 }
 
 /**
- * Class representing a simulation run request.
- * Contains parameters for executing a simulation.
+ * Record for a simulation run request.
  */
 class RunRequest {
 

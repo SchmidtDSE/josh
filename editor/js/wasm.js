@@ -7,7 +7,9 @@
 
 /**
  * Wrapper class for WebAssembly layer functionality.
- * Manages interaction with the WASM VM and exported functions.
+ *
+ * Wrapper around the TeaVM export to WASM, managing interaction with the WASM VM and exported
+ * functions.
  */
 class WasmLayer {
 
@@ -58,8 +60,7 @@ class WasmLayer {
 }
 
 /**
- * Class representing a possible code error.
- * Used to wrap error strings from validation.
+ * Class representing a possible code error or indication that no error was found.
  */
 class CodeErrorMaybe {
 
