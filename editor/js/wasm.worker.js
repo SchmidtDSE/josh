@@ -1,4 +1,6 @@
 
+importScripts('/war/wasm-gc/JoshSim.wasm-runtime.js');
+
 let wasmLayer = null;
 
 self.onmessage = async function(e) {
