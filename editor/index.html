@@ -131,6 +131,7 @@
       }
     </script>
 
+    <!-- Resources for WASM runtime. -->
     <script type="text/javascript" charset="utf-8" src="/war/wasm-gc/JoshSim.wasm-runtime.js"></script>
     
     <script>
@@ -144,6 +145,9 @@
     <script type="module">
       import {main} from "main";
 
+      /**
+       * Load the WASM resource.
+       */
       async function scaffold() {
         const teavm = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
         globalMainPresenter = main(teavm);
