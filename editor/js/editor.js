@@ -112,7 +112,7 @@ class EditorPresenter {
       if (self._timeout !== null) {
         clearTimeout(self._timeout);
       }
-      self._timeout = setTimeout(() => self._onChange(self.getCode()), 500);
+      self._timeout = setTimeout(() => self._onChange(self.getCode()), 1000);
     });
 
     ace.config.set("basePath", "/third_party");
