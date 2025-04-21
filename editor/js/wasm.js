@@ -107,7 +107,7 @@ class WasmLayer {
         if (type === "runSimulation" && success) {
           resolve();
         } else if (type === "reportStep") {
-          self._onStepCompleted();
+          self._onStepCompleted(e.data.result);
         }
       };
       self._worker.postMessage({ 
@@ -117,9 +117,9 @@ class WasmLayer {
     });
   }
 
-  _onStepCompleted() {
+  _onStepCompleted(numComplete) {
     const self = this;
-    self._stepCallback();
+    self._stepCallback(numComplete);
   }
 }
 

@@ -58,9 +58,9 @@ class MainPresenter {
   /**
    * Callback for when a simulation step is completed.
    */
-  _onStepCompleted() {
+  _onStepCompleted(stepsCompelted) {
     const self = this;
-    self._resultsPresenter.onStep();
+    self._resultsPresenter.onStep(stepsCompelted);
   }
 
   /**
