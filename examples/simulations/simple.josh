@@ -17,7 +17,7 @@ end simulation
 
 start patch Default
 
-  ForeverTree.init = create ForeverTreeF
+  ForeverTree.init = create ForeverTree
 
   export.averageAge.step = mean(ForeverTree.age)
   export.averageHeight.step = mean(ForeverTree.height)
