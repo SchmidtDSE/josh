@@ -2,8 +2,8 @@
 /**
  * Main entry point for the Josh web editor application.
  * 
- * Initializes and coordinates the different components of the editor including file handling,
- * code editing, run panel, and results display.
+ * Initializes and coordinates the different components of the editor including file handling, code
+ * editing, run panel, and results display.
  * 
  * @license BSD-3-Clause
  */
@@ -15,10 +15,7 @@ import {RunPanelPresenter} from "run";
 import {WasmLayer} from "wasm";
 
 /**
- * Main presenter class that coordinates all editor components.
- * 
- * Creates and manages the interactions between file handling, code editing,
- * run panel, and results display components.
+ * Main presenter class that coordinates all editor and results display components.
  */
 class MainPresenter {
 
@@ -68,10 +65,7 @@ class MainPresenter {
   }
 
   /**
-   * Shows the main editor interface by hiding the loading screen.
-   * 
-   * Hides the loading indicator and displays the main editor interface once initialization is
-   * complete.
+   * Shows the main editor interface and hide the loading screen.
    * 
    * @private
    */
@@ -83,9 +77,6 @@ class MainPresenter {
 
   /**
    * Callback for when code is changed in the editor.
-   * 
-   * Updates file storage and validates code, showing/hiding error messages and run buttons
-   * based on validation results.
    * 
    * @private
    * @param {string} code - The content of the editor.
@@ -123,9 +114,6 @@ class MainPresenter {
 
 /**
  * Initializes the editor and file handling components.
- * 
- * Creates and configures the file and editor presenters, sets up event handling, and loads any
- * previously saved code.
  * 
  * @param {Object} wasmLayer - The WASM VM and exported functions.
  * @returns {MainPresenter} The main presenter instance.

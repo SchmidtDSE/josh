@@ -1,9 +1,9 @@
-
 /**
  * Logic for presenters handling simulation results display.
  * 
  * @license BSD-3-Clause
  */
+
 
 /**
  * Presenter which manages the display of simulation results.
@@ -26,8 +26,7 @@ class ResultsPresenter {
   }
 
   /**
-   * Handles the start of a new simulation run.
-   * Resets progress and shows the results panel.
+   * Indicate the start of a new simulation run.
    */
   onSimStart() {
     const self = this;
