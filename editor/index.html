@@ -149,8 +149,7 @@
        * Load the WASM resource.
        */
       async function scaffold() {
-        const teavm = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
-        globalMainPresenter = main(teavm);
+        globalMainPresenter = main();
       }
 
       setTimeout(scaffold, 500);

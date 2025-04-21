@@ -17,7 +17,7 @@ class WasmLayer {
    */
   constructor() {
     const self = this;
-    self._worker = new Worker('/editor/js/wasm.worker.js');
+    self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
     self._initPromise = new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
@@ -26,13 +26,13 @@ class WasmLayer {
           reject(new Error(error));
           return;
         }
-        if (type === 'init' && success) {
+        if (type === "init" && success) {
           self._initialized = true;
           resolve();
         }
       };
     });
-    self._worker.postMessage({ type: 'init' });
+    self._worker.postMessage({ type: "init" });
   }
 
   /**
@@ -52,11 +52,11 @@ class WasmLayer {
           reject(new Error(error));
           return;
         }
-        if (type === 'validate') {
+        if (type === "validate") {
           resolve(new CodeErrorMaybe(result));
         }
       };
-      self._worker.postMessage({ type: 'validate', data: code });
+      self._worker.postMessage({ type: "validate", data: code });
     });
   }
 
@@ -77,11 +77,11 @@ class WasmLayer {
           reject(new Error(error));
           return;
         }
-        if (type === 'getSimulations') {
+        if (type === "getSimulations") {
           resolve(result.split(","));
         }
       };
-      self._worker.postMessage({ type: 'getSimulations', data: code });
+      self._worker.postMessage({ type: "getSimulations", data: code });
     });
   }
 
@@ -103,12 +103,12 @@ class WasmLayer {
           reject(new Error(error));
           return;
         }
-        if (type === 'runSimulation' && success) {
+        if (type === "runSimulation" && success) {
           resolve();
         }
       };
       self._worker.postMessage({ 
-        type: 'runSimulation', 
+        type: "runSimulation", 
         data: { code, simulationName } 
       });
     });

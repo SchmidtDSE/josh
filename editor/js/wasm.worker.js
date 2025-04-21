@@ -4,7 +4,7 @@ let wasmLayer = null;
 self.onmessage = async function(e) {
   const { type, data } = e.data;
   
-  if (type === 'init') {
+  if (type === "init") {
     await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
     wasmLayer = TeaVM;
     self.postMessage({ type: 'init', success: true });

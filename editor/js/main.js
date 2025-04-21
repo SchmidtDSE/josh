@@ -22,8 +22,6 @@ class MainPresenter {
 
   /**
    * Creates a new MainPresenter instance.
-   * 
-   * @param {Object} wasmLayerRaw - The raw WASM layer object containing VM and exported functions.
    */
   constructor(wasmLayerRaw) {
     const self = this;
@@ -86,15 +84,15 @@ class MainPresenter {
     const self = this;
     self._filePresenter.saveCodeToFile(code);
     
-    const errorMaybe = self._wasmLayer.getError(code);
-
-    if (errorMaybe.hasError()) {
-      self._editorPresenter.showError(errorMaybe.getError());
-      self._runPresenter.hideButtons();
-    } else {
-      self._editorPresenter.hideError();
-      self._runPresenter.showButtons();
-    }
+    self._wasmLayer.getError(code).then((errorMaybe) => {
+      if (errorMaybe.hasError()) {
+        self._editorPresenter.showError(errorMaybe.getError());
+        self._runPresenter.hideButtons();
+      } else {
+        self._editorPresenter.hideError();
+        self._runPresenter.showButtons();
+      }
+    });
   }
 
   /**
