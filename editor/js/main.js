@@ -12,7 +12,7 @@ import {EditorPresenter} from "editor";
 import {FilePresenter} from "file";
 import {ResultsPresenter} from "results";
 import {RunPanelPresenter} from "run";
-import {WasmLayer} from "wasm";
+import {getWasmLayer} from "wasm";
 
 
 /**
@@ -23,10 +23,12 @@ class MainPresenter {
   /**
    * Creates a new MainPresenter instance.
    */
-  constructor(wasmLayerRaw) {
+  constructor() {
     const self = this;
 
-    self._wasmLayer = new WasmLayer(wasmLayerRaw);
+    self._wasmLayer = getWasmLayer(
+      (numSteps) => self._onStepCompleted(numSteps)
+    );
 
     self._filePresenter = new FilePresenter("file-buttons", (code) => {
       self._editorPresenter.setCode(code);
@@ -55,10 +57,8 @@ class MainPresenter {
 
   /**
    * Callback for when a simulation step is completed.
-   * 
-   * @param {number} count - The number of steps completed.
    */
-  onStepCompleted(count) {
+  _onStepCompleted() {
     const self = this;
     self._resultsPresenter.onStep();
   }
@@ -104,21 +104,26 @@ class MainPresenter {
   _executeRunRequest(request) {
     const self = this;
     self._resultsPresenter.onSimStart();
+    self._runPresenter.hideButtons();
     self._wasmLayer.runSimulation(
         self._editorPresenter.getCode(),
         request.getSimName()
-    );
+    ).then(() => { self._onRunComplete(); })
+  }
+
+  _onRunComplete() {
+    const self = this;
+    self._runPresenter.showButtons();
   }
 }
 
 /**
  * Initializes the editor and file handling components.
  * 
- * @param {Object} wasmLayer - The WASM VM and exported functions.
  * @returns {MainPresenter} The main presenter instance.
  */
-function main(wasmLayer) {
-  return new MainPresenter(wasmLayer);
+function main() {
+  return new MainPresenter();
 }
 
 export {main};

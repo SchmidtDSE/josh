@@ -15,8 +15,9 @@ class WasmLayer {
   /**
    * Creates a new WASM layer wrapper.
    */
-  constructor() {
+  constructor(stepCallback) {
     const self = this;
+    self._stepCallback = stepCallback;
     self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
     self._initPromise = new Promise((resolve, reject) => {
@@ -105,6 +106,8 @@ class WasmLayer {
         }
         if (type === "runSimulation" && success) {
           resolve();
+        } else if (type === "reportStep") {
+          self._onStepCompleted();
         }
       };
       self._worker.postMessage({ 
@@ -112,6 +115,11 @@ class WasmLayer {
         data: { code, simulationName } 
       });
     });
+  }
+
+  _onStepCompleted() {
+    const self = this;
+    self._stepCallback();
   }
 }
 
@@ -135,4 +143,20 @@ class CodeErrorMaybe {
   }
 }
 
-export {WasmLayer};
+
+let wasmLayer = null;
+
+function getWasmLayer(stepCallback) {
+  if (wasmLayer === null) {
+    if (stepCallback === undefined) {
+      throw "Provide step callback to make a new wasm layer.";
+    }
+
+    wasmLayer = new WasmLayer(stepCallback);
+  }
+
+  return wasmLayer;
+}
+
+
+export {getWasmLayer};

@@ -133,14 +133,6 @@
 
     <!-- Resources for WASM runtime. -->
     <script type="text/javascript" charset="utf-8" src="/war/wasm-gc/JoshSim.wasm-runtime.js"></script>
-    
-    <script>
-      var globalMainPresenter = null;
-
-      function reportStepComplete(completed) {
-        globalMainPresenter.onStepCompleted(completed);
-      }
-    </script>
 
     <script type="module">
       import {main} from "main";
@@ -149,7 +141,7 @@
        * Load the WASM resource.
        */
       async function scaffold() {
-        globalMainPresenter = main();
+        main();
       }
 
       setTimeout(scaffold, 500);
