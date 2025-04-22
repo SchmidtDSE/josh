@@ -30,7 +30,7 @@ repositories {
     url "https://repo.osgeo.org/repository/release/"
   }
   maven {
-    url "https://maven.geotoolkit.org/"
+      url "https://artifacts.unidata.ucar.edu/repository/unidata-all/"
   }
   mavenCentral()
 }
@@ -46,14 +46,23 @@ dependencies {
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 
-  // Geotools for Raster transformations and COG support
-  implementation("org.geotools:gt-main:32.2")
-  implementation("org.geotools:gt-geotiff:32.2")
-  implementation("org.geotools:gt-referencing:32.2")
-  implementation("org.geotools:gt-epsg-hsql:32.2")
+  // UCAR NetCDF for Zarr and NetCDF support
+  implementation "edu.ucar:cdm-core:5.7.0"
+  runtimeOnly "org.slf4j:slf4j-jdk14:2.0.17"
+  runtimeOnly "edu.ucar:netcdf4:5.7.0"
+
+  // Apache SIS for coordinate system transformations and COG support
+  implementation("org.apache.sis.core:sis-referencing:1.4")
+  implementation("org.apache.sis.storage:sis-geotiff:1.4")
+
+  // // Geotools for Raster transformations and COG support
+  // implementation("org.geotools:gt-main:32.2")
+  // implementation("org.geotools:gt-geotiff:32.2")
+  // implementation("org.geotools:gt-referencing:32.2")
+  // implementation("org.geotools:gt-epsg-hsql:32.2")
   
-  // Add NetCDF support to Geotools
-  implementation("org.geotools:gt-netcdf:32.2")
+  // // Add NetCDF support to Geotools
+  // implementation("org.geotools:gt-netcdf:32.2")
 
   // Interaction with browser
   implementation("org.teavm:teavm-core:0.11.0")
