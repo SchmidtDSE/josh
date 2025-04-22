@@ -3,13 +3,8 @@ package org.joshsim.geo.geometry;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.api.geometry.MismatchedDimensionException;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.api.referencing.operation.TransformException;
-import org.geotools.geometry.GeneralPosition;
-import org.geotools.referencing.CRS;
+import org.apache.sis.geometry.DirectPosition2D;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -17,7 +12,12 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
-
+import org.opengis.geometry.MismatchedDimensionException;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.crs.GeographicCRS;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 /**
  * Utility responsible for building grid structures in Earth space.
@@ -27,6 +27,7 @@ import org.joshsim.engine.geometry.PatchSet;
  */
 public class EarthPatchBuilder implements PatchBuilder {
 
+  private static final int ESTIMATED_CELLS_WARNING_SIZE = 1_000_000;
   private final BigDecimal cellWidth;
   private final EntityPrototype prototype;
   private final EngineGeometryFactory geometryFactory;
@@ -36,8 +37,8 @@ public class EarthPatchBuilder implements PatchBuilder {
   private CoordinateReferenceSystem targetCoordinateReferenceSystem;
 
   // Transformed coordinates stored directly as Coordinates
-  private GeneralPosition topLeftTransformed;
-  private GeneralPosition bottomRightTransformed;
+  private DirectPosition2D topLeftTransformed;
+  private DirectPosition2D bottomRightTransformed;
 
   /**
    * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
@@ -59,19 +60,11 @@ public class EarthPatchBuilder implements PatchBuilder {
   ) throws TransformException {
 
     this.prototype = prototype;
-    // Validate cell width
-    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Cell width must be positive");
-    }
     this.cellWidth = cellWidth;
     this.inputCoordinateReferenceSystem = inputCrs;
     this.targetCoordinateReferenceSystem = targetCrs;
 
-    geometryFactory = new EarthGeometryFactory(targetCrs);
-
-    // Force longitude/latitude ordering for geographic CRS
-    inputCoordinateReferenceSystem = CRS.getHorizontalCRS(inputCoordinateReferenceSystem);
-    targetCoordinateReferenceSystem = CRS.getHorizontalCRS(targetCoordinateReferenceSystem);
+    geometryFactory = new EarthGeometryFactory(targetCoordinateReferenceSystem);
 
     // Validate corners
     validateCornerCoordinates(
@@ -155,59 +148,60 @@ public class EarthPatchBuilder implements PatchBuilder {
   ) throws TransformException {
 
     // Create DirectPosition2D objects for the corners using x,y order (longitude,latitude)
-    GeneralPosition topLeft = new GeneralPosition(topLeftX.doubleValue(), topLeftY.doubleValue());
-    topLeft.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
+    DirectPosition2D topLeft = new DirectPosition2D(
+        inputCoordinateReferenceSystem,
+        topLeftX.doubleValue(),
+        topLeftY.doubleValue()
+    );
 
-    GeneralPosition bottomRight = new GeneralPosition(
+    DirectPosition2D bottomRight = new DirectPosition2D(
+        inputCoordinateReferenceSystem,
         bottomRightX.doubleValue(),
         bottomRightY.doubleValue()
     );
-    bottomRight.setCoordinateReferenceSystem(inputCoordinateReferenceSystem);
 
-    GeneralPosition[] corners = {topLeft, bottomRight};
+    DirectPosition2D[] corners = {topLeft, bottomRight};
 
     // Transform the corners
-    GeneralPosition[] transformed = transformCornerCoordinates(
+    DirectPosition2D[] transformed = transformCornerCoordinates(
         corners,
         inputCoordinateReferenceSystem,
         targetCoordinateReferenceSystem
     );
 
-    // Store the transformed coordinates, with appropriate CRS
+    // Store the transformed coordinates
     this.topLeftTransformed = transformed[0];
-    this.topLeftTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
     this.bottomRightTransformed = transformed[1];
-    this.bottomRightTransformed.setCoordinateReferenceSystem(targetCoordinateReferenceSystem);
   }
 
   /**
    * Transforms corner coordinates to a target CRS.
    *
-   * @param corners Array of GeneralPosition objects representing corner points
+   * @param corners Array of DirectPosition2D objects representing corner points
    * @param sourceCrs The source Coordinate Reference System
    * @param targetCrs The target Coordinate Reference System
-   * @return Array of transformed GeneralPosition objects
+   * @return Array of transformed DirectPosition2D objects
    * @throws TransformException if transformation fails
    * @throws MismatchedDimensionException if dimensions don't match
    */
-  public GeneralPosition[] transformCornerCoordinates(
-      GeneralPosition[] corners,
+  public DirectPosition2D[] transformCornerCoordinates(
+      DirectPosition2D[] corners,
       CoordinateReferenceSystem sourceCrs,
       CoordinateReferenceSystem targetCrs
   ) throws MismatchedDimensionException, TransformException {
     // Get the transformation between the two CRS
     MathTransform transform;
     try {
-      transform = CRS.findMathTransform(sourceCrs, targetCrs, true);
+      transform = CRS.findOperation(sourceCrs, targetCrs, null).getMathTransform();
     } catch (FactoryException e) {
       throw new TransformException("Failed to find transformation between CRS: " + e.getMessage());
     }
 
-    GeneralPosition[] transformedCorners = new GeneralPosition[corners.length];
+    DirectPosition2D[] transformedCorners = new DirectPosition2D[corners.length];
 
     for (int i = 0; i < corners.length; i++) {
-      // Create a new position for the result
-      GeneralPosition result = new GeneralPosition(targetCrs);
+      // Create a new position for the result with the target CRS
+      DirectPosition2D result = new DirectPosition2D(targetCrs);
       transform.transform(corners[i], result);
       transformedCorners[i] = result;
     }
@@ -216,13 +210,13 @@ public class EarthPatchBuilder implements PatchBuilder {
   }
 
   private int getRowCells() {
-    double rowDiff = topLeftTransformed.getOrdinate(1) - bottomRightTransformed.getOrdinate(1);
+    double rowDiff = topLeftTransformed.getY() - bottomRightTransformed.getY();
     int rowCells = (int) Math.ceil(rowDiff / cellWidth.doubleValue());
     return rowCells;
   }
 
   private int getColCells() {
-    double colDiff = bottomRightTransformed.getOrdinate(0) - topLeftTransformed.getOrdinate(0);
+    double colDiff = bottomRightTransformed.getX() - topLeftTransformed.getX();
     int colCells = (int) Math.ceil(colDiff / cellWidth.doubleValue());
     return colCells;
   }
@@ -249,17 +243,15 @@ public class EarthPatchBuilder implements PatchBuilder {
     List<MutableEntity> patches = new ArrayList<>();
     for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < colCells; colIdx++) {
-        double cellTopLeftX =
-            topLeftTransformed.getOrdinate(0) + (colIdx * cellWidth);
-        double cellTopLeftY =
-            topLeftTransformed.getOrdinate(1) - (rowIdx * cellWidth);
+        double cellTopLeftX = topLeftTransformed.getX() + (colIdx * cellWidth);
+        double cellTopLeftY = topLeftTransformed.getY() - (rowIdx * cellWidth);
 
         double cellBottomRightX = cellTopLeftX + cellWidth;
         double cellBottomRightY = cellTopLeftY - cellWidth;
 
         // Ensure we don't exceed grid boundaries
-        cellBottomRightX = Math.min(cellBottomRightX, bottomRightTransformed.getOrdinate(0));
-        cellBottomRightY = Math.max(cellBottomRightY, bottomRightTransformed.getOrdinate(1));
+        cellBottomRightX = Math.min(cellBottomRightX, bottomRightTransformed.getX());
+        cellBottomRightY = Math.max(cellBottomRightY, bottomRightTransformed.getY());
 
         // Create geometry for this cell
         EngineGeometry cellGeometry = createCellGeometry(
@@ -278,15 +270,16 @@ public class EarthPatchBuilder implements PatchBuilder {
   }
 
   /**
-   * Validates that all required objects are properly initialized.
+   * Validates that all required objects are properly initialized and that
+   * the target CRS is projected as required for area/distance calculations.
    */
   private void validateParameters() {
     if (topLeftTransformed == null || bottomRightTransformed == null) {
       throw new IllegalStateException("Corner coordinates not transformed");
     }
 
-    if (cellWidth == null) {
-      throw new IllegalStateException("Cell width not specified");
+    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
     }
 
     if (inputCoordinateReferenceSystem == null) {
@@ -297,19 +290,36 @@ public class EarthPatchBuilder implements PatchBuilder {
       throw new IllegalStateException("Target CRS not specified");
     }
 
-    if (cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Cell width must be positive");
+    // Ensure target CRS is projected (not geographic) for proper distance calculations
+    if (targetCoordinateReferenceSystem instanceof GeographicCRS) {
+      throw new IllegalArgumentException(
+          "Target CRS must be projected for accurate area/distance calculations");
     }
 
-    // Validate that after transformation, the coordinates still make sense
-    if (topLeftTransformed.getOrdinate(1) <= bottomRightTransformed.getOrdinate(1)) {
+    // Verify coordinate orientation after transformation
+    if (topLeftTransformed.getY() <= bottomRightTransformed.getY()) {
       throw new IllegalArgumentException(
           "After transformation, top-left Y-coord must be greater than bottom-right Y-coord");
     }
 
-    if (topLeftTransformed.getOrdinate(0) >= bottomRightTransformed.getOrdinate(0)) {
+    if (topLeftTransformed.getX() >= bottomRightTransformed.getX()) {
       throw new IllegalArgumentException(
           "After transformation, top-left X-coord must be less than bottom-right X-coord");
     }
-  }
+
+    // Verify reasonable cell size for the target CRS
+    // Assumes most projected CRSs use meters, but doesn't enforce specific units
+    double cellWidthDouble = cellWidth.doubleValue();
+    double gridWidth = bottomRightTransformed.getX() - topLeftTransformed.getX();
+    double gridHeight = topLeftTransformed.getY() - bottomRightTransformed.getY();
+
+    // Warn if grid dimensions suggest unreasonably many cells
+    int estimatedCells =
+        (int) (gridWidth / cellWidthDouble) * (int) (gridHeight / cellWidthDouble);
+    if (estimatedCells > ESTIMATED_CELLS_WARNING_SIZE) {
+      // This is just a warning since some applications might legitimately need large grids
+      System.err.println("Warning: Grid configuration will create approximately "
+          + estimatedCells + " cells, which may impact performance");
+    }
+}
 }
