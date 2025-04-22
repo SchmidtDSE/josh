@@ -22,9 +22,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.referencing.CRS;
+import org.apache.sis.referencing.CRS;
+// import org.geotools.api.referencing.FactoryException;
+// import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+// import org.geotools.referencing.CRS;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
@@ -33,6 +34,8 @@ import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -180,7 +183,7 @@ public class JoshSimCommander {
       } else {
         CoordinateReferenceSystem crsRealized;
         try {
-          crsRealized = CRS.decode(crs);
+          crsRealized = CRS.forCode(crs);
         } catch (FactoryException e) {
           throw new RuntimeException(e);
         }

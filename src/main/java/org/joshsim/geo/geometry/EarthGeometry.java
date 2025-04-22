@@ -117,7 +117,7 @@ public class EarthGeometry implements EngineGeometry {
    * @param other The other geometry to check for intersection
    * @return true if the geometries intersect, false otherwise
    */
-  public boolean intersects(EngineGeometry other) {
+  public boolean intersects(EarthGeometry other) {
     // Transform to same CRS if needed
     EarthGeometry otherEarth = other.getOnEarth();
     if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
