@@ -18,7 +18,6 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.entity.type.Patch;
-import org.joshsim.engine.geometry.EarthPatchBuilder;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;

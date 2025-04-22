@@ -1,4 +1,4 @@
-package org.joshsim.engine.geometry;
+package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,7 +12,12 @@ import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchSet;
+
 
 /**
  * Utility responsible for building grid structures in Earth space.

@@ -12,7 +12,6 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
-import org.joshsim.engine.geometry.EarthPatchBuilder;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
