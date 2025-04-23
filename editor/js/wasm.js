@@ -9,42 +9,81 @@
  * Wrapper class for WebAssembly layer functionality.
  *
  * Wrapper around the TeaVM export to WASM, managing interaction with the WASM VM and exported
- * functions.
+ * functions through a WebWorker.
  */
 class WasmLayer {
-
   /**
    * Creates a new WASM layer wrapper.
-   * 
-   * @param {Object} rawWasmLayer - The raw WASM layer containing VM and exported functions.
    */
-  constructor(rawWasmLayer) {
+  constructor(stepCallback) {
     const self = this;
-    self._rawWasmLayer = rawWasmLayer;
+    self._stepCallback = stepCallback;
+    self._worker = new Worker("/js/wasm.worker.js");
+    self._initialized = false;
+    self._initPromise = new Promise((resolve, reject) => {
+      self._worker.onmessage = (e) => {
+        const { type, result, error, success } = e.data;
+        if (error) {
+          reject(new Error(error));
+          return;
+        }
+        if (type === "init" && success) {
+          self._initialized = true;
+          resolve();
+        }
+      };
+    });
+    self._worker.postMessage({ type: "init" });
   }
 
   /**
    * Validates code for errors using the WASM layer.
    * 
    * @param {string} code - The code to validate.
-   * @returns {CodeErrorMaybe} Object containing any validation errors.
+   * @returns {Promise<CodeErrorMaybe>} Object containing any validation errors.
    */
-  getError(code) {
+  async getError(code) {
     const self = this;
-    const errorStr = self._rawWasmLayer.exports.validate(code);
-    return new CodeErrorMaybe(errorStr);
+    await self._initPromise;
+    
+    return new Promise((resolve, reject) => {
+      self._worker.onmessage = (e) => {
+        const { type, result, error } = e.data;
+        if (error) {
+          reject(new Error(error));
+          return;
+        }
+        if (type === "validate") {
+          resolve(new CodeErrorMaybe(result));
+        }
+      };
+      self._worker.postMessage({ type: "validate", data: code });
+    });
   }
 
   /**
    * Gets available simulations from the provided code.
    * 
    * @param {string} code - The code to extract simulations from.
-   * @returns {Array<string>} Array of simulation names.
+   * @returns {Promise<Array<string>>} Array of simulation names.
    */
-  getSimulations(code) {
+  async getSimulations(code) {
     const self = this;
-    const simulationsStr = self._rawWasmLayer.exports.getSimulations(code);
-    return simulationsStr.split(",");
+    await self._initPromise;
+    
+    return new Promise((resolve, reject) => {
+      self._worker.onmessage = (e) => {
+        const { type, result, error } = e.data;
+        if (error) {
+          reject(new Error(error));
+          return;
+        }
+        if (type === "getSimulations") {
+          resolve(result.split(","));
+        }
+      };
+      self._worker.postMessage({ type: "getSimulations", data: code });
+    });
   }
 
   /**
@@ -52,10 +91,35 @@ class WasmLayer {
    * 
    * @param {string} code - The code containing the simulation.
    * @param {string} simulationName - Name of simulation to run.
+   * @returns {Promise<void>}
    */
-  runSimulation(code, simulationName) {
+  async runSimulation(code, simulationName) {
     const self = this;
-    self._rawWasmLayer.exports.runSimulation(code, simulationName);
+    await self._initPromise;
+    
+    return new Promise((resolve, reject) => {
+      self._worker.onmessage = (e) => {
+        const { type, error, success } = e.data;
+        if (error) {
+          reject(new Error(error));
+          return;
+        }
+        if (type === "runSimulation" && success) {
+          resolve();
+        } else if (type === "reportStep") {
+          self._onStepCompleted(e.data.result);
+        }
+      };
+      self._worker.postMessage({ 
+        type: "runSimulation", 
+        data: { code, simulationName } 
+      });
+    });
+  }
+
+  _onStepCompleted(numComplete) {
+    const self = this;
+    self._stepCallback(numComplete);
   }
 }
 
@@ -63,36 +127,36 @@ class WasmLayer {
  * Class representing a possible code error or indication that no error was found.
  */
 class CodeErrorMaybe {
-
-  /**
-   * Creates a new error wrapper.
-   * 
-   * @param {string} errorStr - The error message if any.
-   */
   constructor(errorStr) {
     const self = this;
     self._errorStr = errorStr;
   }
 
-  /**
-   * Checks if there is an error present.
-   * 
-   * @returns {boolean} True if there is an error.
-   */
   hasError() {
     const self = this;
     return self._errorStr !== "";
   }
 
-  /**
-   * Gets the error message if present.
-   * 
-   * @returns {string} The error message.
-   */
   getError() {
     const self = this;
     return self._errorStr;
   }
 }
 
-export {WasmLayer};
+
+let wasmLayer = null;
+
+function getWasmLayer(stepCallback) {
+  if (wasmLayer === null) {
+    if (stepCallback === undefined) {
+      throw "Provide step callback to make a new wasm layer.";
+    }
+
+    wasmLayer = new WasmLayer(stepCallback);
+  }
+
+  return wasmLayer;
+}
+
+
+export {getWasmLayer};

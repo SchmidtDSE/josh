@@ -56,18 +56,18 @@ class RunPanelPresenter {
     self._root.querySelector("#open-run-dialog-button").addEventListener("click", (event) => {
       event.preventDefault();
       self._runLocalDialog.showModal();
-      
-      const simulations = self._getSimulations();
-      const simSelect = self._runLocalDialog.querySelector(".simulation-select");
 
+      const simSelect = self._runLocalDialog.querySelector(".simulation-select");
       simSelect.innerHTML = "";
-      simulations.forEach((simulation) => {
-        const option = document.createElement("option");
-        option.text = simulation;
-        option.value = simulation;
-        simSelect.appendChild(option);
+      self._getSimulations().then((simulations) => {
+        simulations.forEach((simulation) => {
+          const option = document.createElement("option");
+          option.text = simulation;
+          option.value = simulation;
+          simSelect.appendChild(option);
+        });
       });
-    })
+    });
     
     self._runLocalDialog.querySelector(".cancel-button").addEventListener("click", (event) => {
       event.preventDefault();

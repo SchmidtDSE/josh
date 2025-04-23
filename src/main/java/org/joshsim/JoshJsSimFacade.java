@@ -70,7 +70,7 @@ public class JoshJsSimFacade {
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
-      throw new RuntimeException("Failed on: " + result.getErrors().getFirst().toString());
+      throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
@@ -103,7 +103,7 @@ public class JoshJsSimFacade {
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
-      throw new RuntimeException("Failed on: " + result.getErrors().getFirst().toString());
+      throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();

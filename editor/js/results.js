@@ -37,9 +37,9 @@ class ResultsPresenter {
   /**
    * Updates progress when a simulation step completes.
    */
-  onStep() {
+  onStep(numSteps) {
     const self = this;
-    self._statusPresenter.incrementProgress();
+    self._statusPresenter.updateProgress(numSteps);
   }
 }
 
@@ -65,17 +65,17 @@ class StatusPresenter {
   resetProgress() {
     const self = this;
     self._numComplete = 0;
-    self._updateProgress();
+    self.updateProgress(0);
     self._root.querySelector(".running-indicator").style.display = "block";
   }
 
   /**
    * Increments the progress counter and updates display.
    */
-  incrementProgress() {
+  updateProgress(numSteps) {
     const self = this;
-    self._numComplete++;
-    self._updateProgress();
+    self._numComplete = numSteps;
+    self._updateProgressDisplay();
   }
 
   /**
@@ -83,7 +83,7 @@ class StatusPresenter {
    * 
    * @private
    */
-  _updateProgress() {
+  _updateProgressDisplay() {
     const self = this;
     self._root.querySelector(".completed-count").innerHTML = self._numComplete;
   }
