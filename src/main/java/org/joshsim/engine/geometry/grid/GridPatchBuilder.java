@@ -20,7 +20,7 @@ import org.joshsim.engine.geometry.PatchSet;
 /**
  * Builder which can create patches within grid space.
  *
- * <p>Builds a rectangular grid of spatial patches using specified grid extents, cell width, and an
+ * <p>Builds a rectangular grid of spatial patches using specified grid CRS definition and an
  * entity prototype within grid-space.</p>
  */
 public class GridPatchBuilder implements PatchBuilder {
@@ -28,37 +28,36 @@ public class GridPatchBuilder implements PatchBuilder {
   // Required for WASM build
   private static final BigDecimal ONE_THRESHOLD = new BigDecimal("0.00001");
 
-  private final PatchBuilderExtents extents;
-  private final BigDecimal cellWidth;
+  private final GridCrsDefinition gridCrsDefinition;
   private final EntityPrototype prototype;
 
   /**
-   * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
+   * Creates a new PatchBuilder with specified grid CRS definition and entity prototype.
    *
-   * @param extents Structure describing the extents or bounds of the grid to be built.
-   * @param cellWidth The width of each cell in the grid (in units of count).
-   * @param prototype The entity prototype used to create grid cells
+   * @param gridCrsDefinition Definition of the grid CRS, including extents and cell size.
+   * @param prototype The entity prototype used to create grid cells.
    */
-  public GridPatchBuilder(PatchBuilderExtents extents, BigDecimal cellWidth,
-      EntityPrototype prototype) {
-    validate(extents);
-
-    this.extents = extents;
-    this.cellWidth = cellWidth;
+  public GridPatchBuilder(GridCrsDefinition gridCrsDefinition, EntityPrototype prototype) {
+    validate(gridCrsDefinition.getExtents());
+    this.gridCrsDefinition = gridCrsDefinition;
     this.prototype = prototype;
   }
 
   /**
    * Build a new set of patches in grid space.
    *
-   * <p>Using the given extents, create a grid of cells each with width and height of cellWidth
-   * where each cell is an instance built through the prototype given at construction.</p>
+   * <p>Using the given grid CRS definition, create a grid of cells each with width and height
+   * of the defined cell size where each cell is an instance built through the prototype
+   * given at construction.</p>
    *
    * @return Set of patches constructed where each patch is an instance built through the prototype
    *     given at construction.
    */
   @Override
   public PatchSet build() {
+    PatchBuilderExtents extents = gridCrsDefinition.getExtents();
+    BigDecimal cellWidth = gridCrsDefinition.getCellSize();
+    
     BigDecimal minX = extents.getTopLeftX();
     BigDecimal maxX = extents.getBottomRightX();
     BigDecimal minY = extents.getTopLeftY();
@@ -90,7 +89,7 @@ public class GridPatchBuilder implements PatchBuilder {
       }
     }
 
-    return new PatchSet(patches, cellWidth);
+    return new PatchSet(patches, gridCrsDefinition);
   }
 
   /**
@@ -111,5 +110,4 @@ public class GridPatchBuilder implements PatchBuilder {
       throw new IllegalArgumentException("Top left Y must be less than bottom right Y");
     }
   }
-
 }

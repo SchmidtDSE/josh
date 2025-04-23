@@ -1,5 +1,6 @@
 package org.joshsim.geo.geometry;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.apache.sis.referencing.CRS;
@@ -8,6 +9,7 @@ import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridPatchBuilder;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.locationtech.jts.geom.Coordinate;
@@ -16,6 +18,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.util.GeometricShapeFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
@@ -29,6 +32,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   private static final double DEFAULT_SQUARE_TOLERANCE_PCT = 0.01; // Default width for square
 
   private final CoordinateReferenceSystem crs;
+  private RealizedGridCrs gridCrs;
 
   /**
    * Create a new factory for the given coordinate reference system.
@@ -37,6 +41,26 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EarthGeometryFactory(CoordinateReferenceSystem crs) {
     this.crs = crs;
+  }
+
+  /**
+   * Create a new factory with both Earth CRS and Grid CRS support.
+   *
+   * @param crs The Earth coordinate reference system
+   * @param gridCrs The realized grid CRS for transformations
+   */
+  public EarthGeometryFactory(CoordinateReferenceSystem crs, RealizedGridCrs gridCrs) {
+    this.crs = crs;
+    this.gridCrs = gridCrs;
+  }
+  
+  /**
+   * Sets the realized grid CRS to use for transformations.
+   *
+   * @param gridCrs The realized grid CRS
+   */
+  public void setRealizedGridCrs(RealizedGridCrs gridCrs) {
+    this.gridCrs = gridCrs;
   }
 
   @Override
@@ -141,89 +165,126 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   }
 
   /**
-   * Creates geometry from a grid point, converting to target CRS coordinates.
+   * Creates geometry from a grid point, converting to target CRS coordinates using RealizedGridCrs.
    *
    * @param gridShape The grid shape to convert
-   * @param gridOriginX X coordinate in target CRS of grid origin
-   * @param gridOriginY Y coordinate in target CRS of grid origin
-   * @param cellWidth Width of a grid cell in target CRS units
    * @return A point geometry in the target CRS
    */
-  public EngineGeometry createPointFromGrid(
-      GridShape gridShape, BigDecimal gridOriginX, BigDecimal gridOriginY, BigDecimal cellWidth) {
-    // Transform grid coordinates to target CRS coordinates
-    double realX = gridOriginX.doubleValue()
-        + gridShape.getCenterX().doubleValue() * cellWidth.doubleValue();
-    double realY = gridOriginY.doubleValue()
-        - gridShape.getCenterY().doubleValue() * cellWidth.doubleValue();
-
-    Point point = JTS_GEOMETRY_FACTORY.createPoint(new Coordinate(realX, realY));
-    return new EarthGeometry(point, crs);
+  public EngineGeometry createPointFromGrid(GridShape gridShape) {
+    checkGridCrs();
+    
+    try {
+      // Create a point geometry in grid space
+      Point gridPoint = JTS_GEOMETRY_FACTORY.createPoint(
+          new Coordinate(
+              gridShape.getCenterX().doubleValue(),
+              gridShape.getCenterY().doubleValue()
+          ));
+          
+      // Transform from grid to Earth CRS
+      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      Geometry transformedPoint = JtsTransformUtility.transform(gridPoint, transform);
+      
+      return new EarthGeometry(transformedPoint, crs);
+    } catch (FactoryException | TransformException e) {
+      throw new RuntimeException("Failed to transform grid point: " + e.getMessage(), e);
+    }
   }
 
   /**
-   * Creates a circle geometry approximation from a grid shape.
+   * Creates a circle geometry approximation from a grid shape using RealizedGridCrs.
    *
    * @param gridShape The grid shape to convert
-   * @param gridOriginX X coordinate in target CRS of grid origin
-   * @param gridOriginY Y coordinate in target CRS of grid origin
-   * @param cellWidth Width of a grid cell in target CRS units
    * @return A polygon approximating a circle in the target CRS
    */
-  public EngineGeometry createCircleFromGrid(
-      GridShape gridShape, BigDecimal gridOriginX, BigDecimal gridOriginY, BigDecimal cellWidth) {
-    // Calculate center point in target CRS coordinates
-    double centerX = gridOriginX.doubleValue()
-        + gridShape.getCenterX().doubleValue() * cellWidth.doubleValue();
-    double centerY = gridOriginY.doubleValue()
-        - gridShape.getCenterY().doubleValue() * cellWidth.doubleValue();
-
-    // Calculate radius in target CRS units
-    double radius = gridShape.getWidth().multiply(cellWidth)
-        .divide(new BigDecimal(2), RoundingMode.HALF_UP).doubleValue();
-
-    // Use GeometricShapeFactory to create the circle
-    GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
-    shapeFactory.setCentre(new Coordinate(centerX, centerY));
-    shapeFactory.setWidth(radius * 2);
-    shapeFactory.setHeight(radius * 2);
-    shapeFactory.setNumPoints(DEFAULT_NUM_POINTS);
-
-    Geometry circle = shapeFactory.createCircle();
-    return new EarthGeometry(circle, crs);
+  public EngineGeometry createCircleFromGrid(GridShape gridShape) {
+    checkGridCrs();
+    
+    try {
+      // Create circle in grid space
+      double centerX = gridShape.getCenterX().doubleValue();
+      double centerY = gridShape.getCenterY().doubleValue();
+      double radius = gridShape.getWidth().divide(
+          new BigDecimal(2),
+          RoundingMode.HALF_UP
+      ).doubleValue();
+      
+      GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
+      shapeFactory.setCentre(new Coordinate(centerX, centerY));
+      shapeFactory.setWidth(radius * 2);
+      shapeFactory.setHeight(radius * 2);
+      shapeFactory.setNumPoints(DEFAULT_NUM_POINTS);
+      Geometry gridCircle = shapeFactory.createCircle();
+      
+      // Transform from grid to Earth CRS
+      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      Geometry transformedCircle = JtsTransformUtility.transform(gridCircle, transform);
+      
+      return new EarthGeometry(transformedCircle, crs);
+    } catch (FactoryException | TransformException e) {
+      throw new RuntimeException("Failed to transform grid circle: " + e.getMessage(), e);
+    }
   }
 
   /**
-   * Creates a rectangle geometry from a grid shape.
+   * Creates a rectangle geometry from a grid shape using RealizedGridCrs.
    *
    * @param gridShape The grid shape to convert
-   * @param gridOriginX X coordinate in target CRS of grid origin
-   * @param gridOriginY Y coordinate in target CRS of grid origin
-   * @param cellWidth Width of a grid cell in target CRS units
    * @return A polygon rectangle in the target CRS
    */
-  public EngineGeometry createRectangleFromGrid(
-      GridShape gridShape, BigDecimal gridOriginX, BigDecimal gridOriginY, BigDecimal cellWidth) {
-    // Get center in grid coordinates
-    double gridCenterX = gridShape.getCenterX().doubleValue();
-    double gridCenterY = gridShape.getCenterY().doubleValue();
-
-    // Calculate rectangle dimensions in target CRS units
-    double width = gridShape.getWidth().multiply(cellWidth).doubleValue();
-    double height = gridShape.getHeight().multiply(cellWidth).doubleValue();
-
-    // Calculate center in target CRS coordinates
-    double centerX = gridOriginX.doubleValue() + gridCenterX * cellWidth.doubleValue();
-    double centerY = gridOriginY.doubleValue() - gridCenterY * cellWidth.doubleValue();
-
-    // Use GeometricShapeFactory to create the rectangle
-    GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
-    shapeFactory.setCentre(new Coordinate(centerX, centerY));
-    shapeFactory.setWidth(width);
-    shapeFactory.setHeight(height);
-
-    Geometry rectangle = shapeFactory.createRectangle();
-    return new EarthGeometry(rectangle, crs);
+  public EngineGeometry createRectangleFromGrid(GridShape gridShape) {
+    checkGridCrs();
+    
+    try {
+      // Create rectangle in grid space
+      double centerX = gridShape.getCenterX().doubleValue();
+      double centerY = gridShape.getCenterY().doubleValue();
+      double width = gridShape.getWidth().doubleValue();
+      double height = gridShape.getHeight().doubleValue();
+      
+      GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
+      shapeFactory.setCentre(new Coordinate(centerX, centerY));
+      shapeFactory.setWidth(width);
+      shapeFactory.setHeight(height);
+      Geometry gridRectangle = shapeFactory.createRectangle();
+      
+      // Transform from grid to Earth CRS
+      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      Geometry transformedRectangle = JtsTransformUtility.transform(gridRectangle, transform);
+      
+      return new EarthGeometry(transformedRectangle, crs);
+    } catch (FactoryException | TransformException e) {
+      throw new RuntimeException("Failed to transform grid rectangle: " + e.getMessage(), e);
+    }
+  }
+  
+  /**
+   * Creates geometry from a grid shape, determining the appropriate shape type automatically.
+   *
+   * @param gridShape The grid shape to convert
+   * @return A geometry in the target CRS
+   */
+  public EngineGeometry createFromGrid(GridShape gridShape) {
+    switch (gridShape.getGridShapeType()) {
+      case POINT:
+        return createPointFromGrid(gridShape);
+      case CIRCLE:
+        return createCircleFromGrid(gridShape);
+      case SQUARE:
+        return createRectangleFromGrid(gridShape);
+      default:
+        throw new IllegalArgumentException(
+          "Unsupported grid shape type: " + gridShape.getGridShapeType());
+    }
+  }
+  
+  /**
+   * Ensures gridCrs is available before attempting transformations.
+   */
+  private void checkGridCrs() {
+    if (gridCrs == null) {
+      throw new IllegalStateException("Grid CRS not set. Call setRealizedGridCrs first.");
+    }
   }
 
   @Override
@@ -239,21 +300,43 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       BigDecimal cellWidth,
       EntityPrototype prototype) {
     try {
-      // If CRS strings are empty or null, use default Grid space behavior
-      if ((inputCrs == null || inputCrs.isEmpty()) && (targetCrs == null || targetCrs.isEmpty())) {
-        return new GridPatchBuilder(extents, cellWidth, prototype);
+      // Create GridCrsDefinition
+      GridCrsDefinition gridDef = new GridCrsDefinition(
+          "Grid_" + System.currentTimeMillis(),
+          inputCrs.isEmpty() ? "EPSG:4326" : inputCrs, // Default to WGS84 if not specified
+          extents,
+          cellWidth,
+          "m",  // Assuming cell size is in meters
+          inputCrs.isEmpty() ? "degrees" : getCrsUnits(inputCrs)
+      );
+      
+      // Create RealizedGridCrs if needed
+      if (gridCrs == null && !inputCrs.isEmpty()) {
+        try {
+          this.gridCrs = new RealizedGridCrs(gridDef);
+        } catch (IOException e) {
+          throw new IllegalArgumentException("Failed to create grid CRS: " + e.getMessage(), e);
+        }
       }
-
-      // Convert CRS strings to CoordinateReferenceSystem objects
-      CoordinateReferenceSystem sourceCrs = CRS.forCode(inputCrs);
-      CoordinateReferenceSystem destCrs = CRS.forCode(targetCrs);
-
-      // Create and return the EarthPatchBuilder
-      return new EarthPatchBuilder(sourceCrs, destCrs, extents, cellWidth, prototype);
+      
+      // Return appropriate patch builder
+      return new GridPatchBuilder(gridDef, prototype);
+      
     } catch (FactoryException e) {
       throw new IllegalArgumentException("Invalid CRS: " + e.getMessage(), e);
-    } catch (TransformException e) {
-      throw new IllegalArgumentException("Error transforming coordinates: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Gets the units of a CRS by code.
+   *
+   * @param crsCode The CRS code
+   * @return The units string
+   * @throws FactoryException If the CRS cannot be created
+   */
+  private String getCrsUnits(String crsCode) throws FactoryException {
+    CoordinateReferenceSystem referenceCrs = CRS.forCode(crsCode);
+    // This is a simplification - in a real implementation, you'd extract the actual units
+    return referenceCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
   }
 }

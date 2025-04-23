@@ -44,7 +44,44 @@ public final class JtsTransformUtility {
     }
     
     // Handle complex geometries
-    Coordinate[] coords = geometry.getCoordinates();
+    Coordinate[] transformedCoords = transformCoordinates(geometry.getCoordinates(), transform);
+    
+    // Create appropriate geometry type based on original
+    if (geometry instanceof Polygon) {
+      Polygon poly = (Polygon) geometry;
+      
+      // Transform exterior ring
+      LinearRing shell = GEOMETRY_FACTORY.createLinearRing(
+          transformCoordinates(poly.getExteriorRing().getCoordinates(), transform));
+      
+      // Transform interior rings (holes)
+      LinearRing[] holes = new LinearRing[poly.getNumInteriorRing()];
+      for (int i = 0; i < poly.getNumInteriorRing(); i++) {
+        holes[i] = GEOMETRY_FACTORY.createLinearRing(
+            transformCoordinates(poly.getInteriorRingN(i).getCoordinates(), transform));
+      }
+      
+      return GEOMETRY_FACTORY.createPolygon(shell, holes);
+    } else if (geometry instanceof LinearRing) {
+      return GEOMETRY_FACTORY.createLinearRing(transformedCoords);
+    } else if (geometry instanceof LineString) {
+      return GEOMETRY_FACTORY.createLineString(transformedCoords);
+    }
+    
+    // Default fallback
+    return GEOMETRY_FACTORY.createGeometry(geometry);
+  }
+  
+  /**
+   * Helper method to transform an array of coordinates using the provided transform.
+   *
+   * @param coords The coordinates to transform
+   * @param transform The transform to apply
+   * @return The transformed coordinates
+   * @throws TransformException If the transformation fails
+   */
+  private static Coordinate[] transformCoordinates(Coordinate[] coords, MathTransform transform) 
+      throws TransformException {
     Coordinate[] transformedCoords = new Coordinate[coords.length];
     
     for (int i = 0; i < coords.length; i++) {
@@ -54,16 +91,6 @@ public final class JtsTransformUtility {
       transformedCoords[i] = new Coordinate(dstPt[0], dstPt[1]);
     }
     
-    // Create appropriate geometry type based on original
-    if (geometry instanceof Polygon) {
-      throw new UnsupportedOperationException("Polygon transformation not supported");
-    } else if (geometry instanceof LinearRing) {
-      return GEOMETRY_FACTORY.createLinearRing(transformedCoords);
-    } else if (geometry instanceof LineString) {
-      return GEOMETRY_FACTORY.createLineString(transformedCoords);
-    }
-    
-    // Default fallback
-    return GEOMETRY_FACTORY.createGeometry(geometry);
+    return transformedCoords;
   }
 }
