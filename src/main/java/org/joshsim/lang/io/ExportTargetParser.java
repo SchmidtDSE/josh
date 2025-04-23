@@ -2,7 +2,7 @@
  * Tools to parse an ExportTarget.
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.lang.io;
 
 import java.net.URI;
 import java.net.URISyntaxException;

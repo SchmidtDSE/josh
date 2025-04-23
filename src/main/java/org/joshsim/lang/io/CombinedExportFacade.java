@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.lang.io;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,7 @@ import org.joshsim.lang.bridge.InnerEntityGetter;
  */
 public class CombinedExportFacade {
 
+  private final ExportFacadeFactory exportFactory;
   private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
   private final Optional<ExportFacade> entityExportFacade;
@@ -37,8 +38,11 @@ public class CombinedExportFacade {
    *
    * @param simEntity the mutable entity representing the simulation context, used to retrieve and
    *     configure the patch export facade.
+   * @param exportFactory The factory through which to build export facades which implement
+   *     functions inside of this template method.
    */
-  public CombinedExportFacade(MutableEntity simEntity) {
+  public CombinedExportFacade(MutableEntity simEntity, ExportFacadeFactory exportFactory) {
+    this.exportFactory = exportFactory;
     metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
     entityExportFacade = getEntityExportFacade(simEntity);
@@ -159,9 +163,9 @@ public class CombinedExportFacade {
       if (headerVal.isPresent()) {
         String headerStr = headerVal.get().getAsString();
         Iterable<String> header = parseHeaderStr(headerStr);
-        exportFacade = Optional.of(ExportFacadeFactory.build(target, header));
+        exportFacade = Optional.of(exportFactory.build(target, header));
       } else {
-        exportFacade = Optional.of(ExportFacadeFactory.build(target));
+        exportFacade = Optional.of(exportFactory.build(target));
       }
     } else {
       exportFacade = Optional.empty();

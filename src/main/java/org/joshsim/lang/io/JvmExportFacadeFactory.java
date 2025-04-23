@@ -5,13 +5,12 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.lang.io;
 
 import java.util.Optional;
 
 /**
  * Factory implementation for creating ExportFacade instances in a JVM environment.
- * This implementation supports both CSV and map-based exports with full functionality.
  */
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 

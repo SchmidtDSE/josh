@@ -12,9 +12,10 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
-import org.joshsim.lang.export.CombinedExportFacade;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.CombinedExportFacade;
+import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
 
@@ -68,8 +69,9 @@ public class JoshSimFacadeUtil {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    */
-  public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
-        String simulationName, SimulationStepCallback callback, boolean serialPatches) {
+  public static void runSimulation(EngineGeometryFactory engineGeometryFactory,
+        InputOutputLayer inputOutputLayer, JoshProgram program, String simulationName,
+        SimulationStepCallback callback, boolean serialPatches) {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
@@ -79,7 +81,10 @@ public class JoshSimFacadeUtil {
         program.getPrototypes()
     );
 
-    CombinedExportFacade exportFacade = new CombinedExportFacade(simEntity);
+    CombinedExportFacade exportFacade = new CombinedExportFacade(
+        simEntity,
+        inputOutputLayer.getExportFacadeFactory()
+    );
     SimulationStepper stepper = new SimulationStepper(bridge);
 
     exportFacade.start();

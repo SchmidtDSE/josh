@@ -5,14 +5,12 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.lang.io;
 
 import java.util.Optional;
 
 /**
  * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
- * This implementation is currently a placeholder and throws UnsupportedOperationException
- * for all operations.
  */
 public class WasmExportFacadeFactory implements ExportFacadeFactory {
 
