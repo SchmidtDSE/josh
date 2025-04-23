@@ -2,7 +2,6 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.joshsim.geo.geometry.EarthGeometry;
 import org.joshsim.geo.geometry.EarthShape;
 
 /**

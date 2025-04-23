@@ -4,11 +4,8 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.sis.geometry.Envelope2D;
-import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.EnginePoint;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -16,7 +13,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**

@@ -7,6 +7,7 @@
 package org.joshsim.engine.geometry.grid;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -15,7 +16,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
-
 
 /**
  * Builder which can create patches within grid space.
@@ -67,11 +67,11 @@ public class GridPatchBuilder implements PatchBuilder {
     long numCellsX;
     long numCellsY;
     if (cellWidth.subtract(BigDecimal.ONE).abs().compareTo(ONE_THRESHOLD) <= 0) {
-      numCellsX = maxX.subtract(minX).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
-      numCellsY = maxY.subtract(minY).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
+      numCellsX = maxX.subtract(minX).setScale(0, RoundingMode.HALF_UP).longValue();
+      numCellsY = maxY.subtract(minY).setScale(0, RoundingMode.HALF_UP).longValue();
     } else {
-      numCellsX = maxX.subtract(minX).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
-      numCellsY = maxY.subtract(minY).divide(cellWidth, BigDecimal.ROUND_CEILING).longValue();
+      numCellsX = maxX.subtract(minX).divide(cellWidth, RoundingMode.CEILING).longValue();
+      numCellsY = maxY.subtract(minY).divide(cellWidth, RoundingMode.CEILING).longValue();
     }
 
     List<MutableEntity> patches = new ArrayList<>();

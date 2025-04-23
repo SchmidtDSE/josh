@@ -17,6 +17,7 @@ import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 /**
  * A geometric object using JTS geometry implementation with Apache SIS for coordinate transforms.
@@ -119,31 +120,44 @@ public class EarthGeometry implements EngineGeometry {
    */
   public boolean intersects(EarthGeometry other) {
     // Transform to same CRS if needed
-    EarthGeometry otherEarth = other.getOnEarth();
+    EarthShape otherEarth = other.getOnEarth();
     if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
-      otherEarth = otherEarth.asTargetCrs(crs);
+      try {
+        otherEarth = otherEarth.asTargetCrs(crs);
+      } catch (FactoryException e) {
+        throw new RuntimeException("Failed to transform geometry to target CRS");
+      }
     }
     return getInnerGeometry().intersects(otherEarth.getInnerGeometry());
   }
 
   @Override
-  public EarthGeometry getOnEarth() {
-    return this;
+  public boolean intersects(EngineGeometry other) {
+    return intersects(other.getOnEarth());
   }
 
   @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
-        "Conversion from Earth to PatchSet space reserved for future use.");
+        "Conversion from Earth to PatchSet space reserved for future use."
+    );
   }
 
   @Override
-  public EnginePoint getCenter() {
+  public EarthShape getOnEarth() {
+    throw new UnsupportedOperationException(
+        "Conversion from PatchSet to Earth space reserved for future use."
+    );
+  }
+
+  @Override
+  public EngineGeometry getCenter() {
     Point centroid = getInnerGeometry().getCentroid();
-    return new EnginePoint(
-        BigDecimal.valueOf(centroid.getX()),
-        BigDecimal.valueOf(centroid.getY()),
-        crs);
+    return new EarthPoint(
+        centroid,
+        crs,
+        transformers
+    );
   }
 
   /**
@@ -290,4 +304,5 @@ public class EarthGeometry implements EngineGeometry {
     transform.transform(srcPt, 0, dstPt, 0, 1);
     return JTS_GEOMETRY_FACTORY.createPoint(new Coordinate(dstPt[0], dstPt[1]));
   }
+
 }
