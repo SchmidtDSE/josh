@@ -1,4 +1,4 @@
-
+importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
 
 let wasmLayer = null;
@@ -14,7 +14,17 @@ self.onmessage = async function(e) {
   postMessage = (x) => self.postMessage(x);
   
   if (type === "init") {
-    wasmLayer = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
+    try {
+      wasmLayer = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
+      console.log("Started engine thread with WASM.");
+    } catch {
+      wasmLayer = {"exports": {
+        "validate": validate,
+        "getSimulations": getSimulations,
+        "runSimulation": runSimulation
+      }};
+      console.log("Started ending thread with JS fallback.");
+    }
     self.postMessage({ type: "init", success: true });
     return;
   }
