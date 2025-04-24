@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import org.apache.sis.referencing.CRS;
@@ -59,7 +59,7 @@ public class EarthGeometryFactoryTest {
     engineGeometryFactoryWgs84 = new EarthGeometryFactory(wgs84);
     engineGeometryFactoryUtm11n = new EarthGeometryFactory(utm11n);
   }
-  
+
   @Test
   @DisplayName("Create GridCRS from definition")
   public void testCreateGridCrsFromDefinition() throws IOException, TransformException {
@@ -69,19 +69,19 @@ public class EarthGeometryFactoryTest {
     BigDecimal bottomRightX = new BigDecimal("-115.0");
     BigDecimal bottomRightY = new BigDecimal("34.0");
     BigDecimal cellSize = new BigDecimal("30");
-    
+
     // Create a custom CRS definition
     GridCrsDefinition definition = new GridCrsDefinition(
         "TestGrid",
-        "EPSG:4326", 
+        "EPSG:4326",
         new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
         cellSize,
         "m");
-    
+
     // Set up the EarthGeometryFactory with grid CRS
     EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
     factory.setRealizedGridCrsFromDefition(definition);
-    
+
     // Verify grid CRS is set
     assertNotNull(factory.getGridCrs(), "Grid CRS should be set");
     assertNotNull(factory.getEarthCrs(), "Earth CRS should be set");
@@ -154,9 +154,9 @@ public class EarthGeometryFactoryTest {
       // Then
       assertNotNull(geometry, "Geometry should not be null");
       // With zero width, we should get a point
-      assertTrue(geometry.getInnerGeometry() instanceof Point, 
+      assertTrue(geometry.getInnerGeometry() instanceof Point,
           "Zero width square should be represented as a Point");
-      
+
       Point point = (Point) geometry.getInnerGeometry();
       assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
       assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
@@ -177,9 +177,9 @@ public class EarthGeometryFactoryTest {
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-      assertTrue(geometry.getInnerGeometry() instanceof Point, 
+      assertTrue(geometry.getInnerGeometry() instanceof Point,
           "Zero width square should be represented as a Point");
-      
+
       Point point = (Point) geometry.getInnerGeometry();
       assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
       assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
@@ -450,10 +450,10 @@ public class EarthGeometryFactoryTest {
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
     }
   }
-  
+
   @Nested
   class GridCrsConversionTests {
-    
+
     private GridCrsDefinition createGridCrsDefinition() {
       // Define extents similar to the simulation example
       BigDecimal topLeftX = new BigDecimal("-116.0");
@@ -461,32 +461,32 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightX = new BigDecimal("-115.0");
       BigDecimal bottomRightY = new BigDecimal("34.0");
       BigDecimal cellSize = new BigDecimal("30");
-      
+
       return new GridCrsDefinition(
           "TestGrid",
-          "EPSG:4326", 
+          "EPSG:4326",
           new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
           cellSize,
           "m");
     }
-    
+
     @Test
     @DisplayName("Convert point from Grid to Earth CRS")
     public void testGridToEarthCrsPointConversion() throws IOException, TransformException {
       // Set up the factory with grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
       factory.setRealizedGridCrsFromDefition(createGridCrsDefinition());
-      
+
       // Create a point in grid coordinates (cell indices)
       BigDecimal gridX = BigDecimal.valueOf(10);  // 10th cell in X direction
       BigDecimal gridY = BigDecimal.valueOf(5);   // 5th cell in Y direction
-      
+
       // Create point geometry in grid space
       EngineGeometry gridGeometry = new GridGeometryFactory().createPoint(gridX, gridY);
-      
+
       // Convert to Earth CRS
       EngineGeometry earthGeometry = factory.createPointFromGrid((GridShape) gridGeometry);
-      
+
       // Verify result
       assertNotNull(earthGeometry, "Earth geometry should not be null");
       assertTrue(
@@ -494,34 +494,34 @@ public class EarthGeometryFactoryTest {
           "Result should be an EarthShape"
       );
       assertEquals(wgs84, earthGeometry.getOnEarth().getCrs(), "Result should use Earth CRS");
-      
+
       // The actual coordinate values will depend on the grid transformation,
       // so we just check that they're within reasonable bounds
       Point earthPoint = (Point) earthGeometry.getOnEarth().getInnerGeometry();
-      assertTrue(earthPoint.getX() >= -116.0 && earthPoint.getX() <= -115.0, 
+      assertTrue(earthPoint.getX() >= -116.0 && earthPoint.getX() <= -115.0,
           "X coordinate should be within bounds");
-      assertTrue(earthPoint.getY() >= 34.0 && earthPoint.getY() <= 35.0, 
+      assertTrue(earthPoint.getY() >= 34.0 && earthPoint.getY() <= 35.0,
           "Y coordinate should be within bounds");
     }
-    
+
     @Test
     @DisplayName("Convert square from Grid to Earth CRS")
     public void testGridToEarthCrsSquareConversion() throws IOException, TransformException {
       // Set up the factory with grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
       factory.setRealizedGridCrsFromDefition(createGridCrsDefinition());
-      
+
       // Create a square in grid coordinates (cell indices)
       BigDecimal centerX = BigDecimal.valueOf(10);
       BigDecimal centerY = BigDecimal.valueOf(5);
       BigDecimal width = BigDecimal.valueOf(2);  // 2 cells wide
-      
+
       // Create square geometry in grid space
       EngineGeometry gridGeometry = new GridGeometryFactory().createSquare(centerX, centerY, width);
-      
+
       // Convert to Earth CRS
       EngineGeometry earthGeometry = factory.createFromGrid((GridShape) gridGeometry);
-      
+
       // Verify result
       assertNotNull(earthGeometry, "Earth geometry should not be null");
       assertTrue(
@@ -529,7 +529,7 @@ public class EarthGeometryFactoryTest {
           "Result should be an EarthShape"
       );
       assertEquals(wgs84, earthGeometry.getOnEarth().getCrs(), "Result should use Earth CRS");
-      
+
       // The actual coordinate values will depend on the grid transformation,
       // but we can check that the result is a polygon
       Geometry earthGeom = earthGeometry.getOnEarth().getInnerGeometry();

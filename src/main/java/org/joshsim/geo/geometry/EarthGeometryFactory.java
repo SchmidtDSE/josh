@@ -1,7 +1,6 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
-import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.apache.sis.referencing.CRS;

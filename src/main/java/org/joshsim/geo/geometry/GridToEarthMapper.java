@@ -15,9 +15,9 @@ import org.opengis.util.FactoryException;
  * using RealizedGridCrs.
  */
 public class GridToEarthMapper {
-  private static final Map<String, CoordinateReferenceSystem> CRS_CACHE = 
+  private static final Map<String, CoordinateReferenceSystem> CRS_CACHE =
       new ConcurrentHashMap<>();
-  private static final Map<String, RealizedGridCrs> GRID_CRS_CACHE = 
+  private static final Map<String, RealizedGridCrs> GRID_CRS_CACHE =
       new ConcurrentHashMap<>();
 
   /**
@@ -36,21 +36,21 @@ public class GridToEarthMapper {
     try {
       // Get or create the target CRS
       CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
-      
+
       // Get or create a RealizedGridCrs from the definition
       RealizedGridCrs gridCrs = getRealizedGridCrs(definition);
-      
+
       // Create geometry factory with the realized grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, gridCrs);
-      
+
       // Use the factory to create the appropriate Earth geometry
       return (EarthGeometry) factory.createFromGrid(gridShape);
-      
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to convert grid shape to Earth coordinates", e);
     }
   }
-  
+
   /**
    * Converts a GridShape to EarthGeometry using an existing RealizedGridCrs.
    *
@@ -67,13 +67,13 @@ public class GridToEarthMapper {
     try {
       // Get or create the target CRS
       CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
-      
+
       // Create geometry factory with the realized grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, realizedGridCrs);
-      
+
       // Use the factory to create the appropriate Earth geometry
       return (EarthGeometry) factory.createFromGrid(gridShape);
-      
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to convert grid shape to Earth coordinates", e);
     }
@@ -86,16 +86,16 @@ public class GridToEarthMapper {
    * @return A RealizedGridCrs for transformation
    * @throws TransformException if transformation fails
    */
-  public static RealizedGridCrs getRealizedGridCrs(GridCrsDefinition definition) 
+  public static RealizedGridCrs getRealizedGridCrs(GridCrsDefinition definition)
       throws FactoryException, IOException, TransformException {
     // Create a cache key based on the definition
     String key = definition.toString();
-    
+
     // Check cache first
     if (GRID_CRS_CACHE.containsKey(key)) {
       return GRID_CRS_CACHE.get(key);
     }
-    
+
     // Create the realized grid CRS
     RealizedGridCrs realizedGridCrs = new RealizedGridCrs(definition);
     GRID_CRS_CACHE.put(key, realizedGridCrs);
