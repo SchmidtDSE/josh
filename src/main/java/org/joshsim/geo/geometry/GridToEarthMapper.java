@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
@@ -16,94 +19,90 @@ import org.opengis.util.FactoryException;
  * using RealizedGridCrs.
  */
 public class GridToEarthMapper {
-  private static final Map<String, CoordinateReferenceSystem> CRS_CACHE = new HashMap<>();
-  private static final Map<String, RealizedGridCrs> GRID_CRS_CACHE = new HashMap<>();
+  private static final Map<String, CoordinateReferenceSystem> CRS_CACHE = 
+      new ConcurrentHashMap<>();
+  private static final Map<String, RealizedGridCrs> GRID_CRS_CACHE = 
+      new ConcurrentHashMap<>();
 
   /**
-   * Converts a GridShape to EarthGeometry using RealizedGridCrs transformations.
+   * Converts a GridShape to EarthGeometry using a GridCrsDefinition.
    *
    * @param gridShape The grid shape to convert
+   * @param definition The grid CRS definition
    * @param targetCrsCode EPSG code for target coordinate system
-   * @param gridOriginX X coordinate in target CRS of grid origin (top left)
-   * @param gridOriginY Y coordinate in target CRS of grid origin (top left)
-   * @param cellWidth Width of a grid cell in target CRS units
    * @return New EarthGeometry representation
    */
   public static EarthGeometry gridToEarth(
       GridShape gridShape,
-      String targetCrsCode,
-      BigDecimal gridOriginX,
-      BigDecimal gridOriginY,
-      BigDecimal cellWidth
+      GridCrsDefinition definition,
+      String targetCrsCode
   ) {
     try {
       // Get or create the target CRS
       CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
-
-      // Create or get a RealizedGridCrs for this configuration
-      RealizedGridCrs gridCrs = getGridCrs(
-          targetCrsCode, gridOriginX, gridOriginY, cellWidth);
-
+      
+      // Get or create a RealizedGridCrs from the definition
+      RealizedGridCrs gridCrs = getRealizedGridCrs(definition);
+      
       // Create geometry factory with the realized grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, gridCrs);
-
+      
       // Use the factory to create the appropriate Earth geometry
       return (EarthGeometry) factory.createFromGrid(gridShape);
-
+      
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to convert grid shape to Earth coordinates", e);
+    }
+  }
+  
+  /**
+   * Converts a GridShape to EarthGeometry using an existing RealizedGridCrs.
+   *
+   * @param gridShape The grid shape to convert
+   * @param realizedGridCrs The realized grid CRS
+   * @param targetCrsCode EPSG code for target coordinate system
+   * @return New EarthGeometry representation
+   */
+  public static EarthGeometry gridToEarth(
+      GridShape gridShape,
+      RealizedGridCrs realizedGridCrs,
+      String targetCrsCode
+  ) {
+    try {
+      // Get or create the target CRS
+      CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
+      
+      // Create geometry factory with the realized grid CRS
+      EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, realizedGridCrs);
+      
+      // Use the factory to create the appropriate Earth geometry
+      return (EarthGeometry) factory.createFromGrid(gridShape);
+      
     } catch (Exception e) {
       throw new RuntimeException("Failed to convert grid shape to Earth coordinates", e);
     }
   }
 
   /**
-   * Gets or creates a RealizedGridCrs for the given parameters.
+   * Gets or creates a RealizedGridCrs from a GridCrsDefinition.
    *
-   * @param crsCode The target CRS code
-   * @param originX The grid origin X in target CRS
-   * @param originY The grid origin Y in target CRS
-   * @param cellWidth The cell width in target CRS units
+   * @param definition The grid CRS definition
    * @return A RealizedGridCrs for transformation
+   * @throws TransformException if transformation fails
    */
-  public static RealizedGridCrs getGridCrs(
-      String crsCode,
-      BigDecimal originX,
-      BigDecimal originY,
-      BigDecimal cellWidth) throws FactoryException, IOException {
-
-    // Create a cache key based on parameters
-    String key = crsCode + ":" + originX + ":" + originY + ":" + cellWidth;
-
+  public static RealizedGridCrs getRealizedGridCrs(GridCrsDefinition definition) 
+      throws FactoryException, IOException, TransformException {
+    // Create a cache key based on the definition
+    String key = definition.toString();
+    
     // Check cache first
     if (GRID_CRS_CACHE.containsKey(key)) {
       return GRID_CRS_CACHE.get(key);
     }
-
-    // Create extents for this grid (assuming a default grid size if not specified)
-    PatchBuilderExtents extents = new PatchBuilderExtents(
-        originX,                                  // topLeftX
-        originY,                                  // topLeftY
-        originX.add(cellWidth.multiply(new BigDecimal(100))), // bottomRightX (arbitrary grid size)
-        originY.add(cellWidth.multiply(new BigDecimal(100)))  // bottomRightY (arbitrary grid size)
-    );
-
-    // For simplicity, we'll use the units of the target CRS
-    CoordinateReferenceSystem targetCrs = getCrsFromCode(crsCode);
-    String crsUnits = targetCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
-
-    // Create grid CRS definition
-    GridCrsDefinition definition = new GridCrsDefinition(
-        "Grid_" + key.hashCode(),  // name
-        crsCode,                   // baseCrsCode
-        extents,                   // extents
-        cellWidth,                 // cellSize
-        crsUnits,                  // cellSizeUnit (same as CRS)
-        crsUnits                   // crsUnits
-    );
-
+    
     // Create the realized grid CRS
     RealizedGridCrs realizedGridCrs = new RealizedGridCrs(definition);
     GRID_CRS_CACHE.put(key, realizedGridCrs);
-
     return realizedGridCrs;
   }
 
@@ -121,7 +120,6 @@ public class GridToEarthMapper {
       CoordinateReferenceSystem crs = CRS.forCode(crsCode);
       CRS_CACHE.put(crsCode, crs);
       return crs;
-
     } catch (Exception e) {
       throw new RuntimeException("Failed to create CRS from code: " + crsCode, e);
     }
