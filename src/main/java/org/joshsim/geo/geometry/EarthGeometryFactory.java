@@ -31,36 +31,81 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   private static final int DEFAULT_NUM_POINTS = 32; // For circle approximation
   private static final double DEFAULT_SQUARE_TOLERANCE_PCT = 0.01; // Default width for square
 
-  private final CoordinateReferenceSystem crs;
-  private RealizedGridCrs gridCrs;
+  private final CoordinateReferenceSystem earthCrs;
+  private CoordinateReferenceSystem gridCrs;
 
   /**
    * Create a new factory for the given coordinate reference system.
    *
-   * @param crs The coordinate reference system to use in constructing these geometries.
+   * @param earthCrs The coordinate reference system to use in constructing these geometries.
    */
-  public EarthGeometryFactory(CoordinateReferenceSystem crs) {
-    this.crs = crs;
+  public EarthGeometryFactory(CoordinateReferenceSystem earthCrs) {
+    this.earthCrs = earthCrs;
   }
 
   /**
    * Create a new factory with both Earth CRS and Grid CRS support.
    *
-   * @param crs The Earth coordinate reference system
-   * @param gridCrs The realized grid CRS for transformations
+   * @param earthCrs The Earth coordinate reference system
+   * @param realizedGridCrs The realized grid CRS for transformations
    */
-  public EarthGeometryFactory(CoordinateReferenceSystem crs, RealizedGridCrs gridCrs) {
-    this.crs = crs;
-    this.gridCrs = gridCrs;
+  public EarthGeometryFactory(CoordinateReferenceSystem earthCrs, RealizedGridCrs realizedGridCrs) {
+    this.earthCrs = earthCrs;
+    this.gridCrs = realizedGridCrs.getGridCrs();
   }
   
   /**
+   * Sets the grid CRS to use for transformations, assuming a CRS is already instantiated.
+   *
+   * @param crs The grid CRS to set
+   */
+
+  public void setGridCrs(CoordinateReferenceSystem crs) {
+    this.gridCrs = crs;
+  }
+
+  /**
    * Sets the realized grid CRS to use for transformations.
    *
-   * @param gridCrs The realized grid CRS
+   * @param realizedGridCrs The realized grid CRS
    */
-  public void setRealizedGridCrs(RealizedGridCrs gridCrs) {
-    this.gridCrs = gridCrs;
+  public void setRealizedGridCrs(RealizedGridCrs realizedGridCrs) {
+    this.gridCrs = realizedGridCrs.getGridCrs();
+  }
+
+  /**
+   * Sets the realized grid CRS from the provided grid CRS definition.
+   *
+   * @param gridCrsDefinition The grid CRS definition to use for setting the realized grid CRS.
+   * @throws IOException If an error occurs while realizing the grid CRS.
+   */
+  public void setRealizedGridCrsFromDefition(
+      GridCrsDefinition gridCrsDefinition
+  ) throws IOException {
+    try {
+      RealizedGridCrs realizedGridCrs = new RealizedGridCrs(gridCrsDefinition);
+      this.gridCrs = realizedGridCrs.getGridCrs();
+    } catch (FactoryException e) {
+      throw new RuntimeException("Failed to realize and set grid CRS: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Gets the realized grid CRS.
+   *
+   * @return The realized grid CRS
+   */
+  public CoordinateReferenceSystem getGridCrs() {
+    return gridCrs;
+  }
+
+  /**
+   * Gets the Earth coordinate reference system.
+   *
+   * @return The Earth coordinate reference system
+   */
+  public CoordinateReferenceSystem getEarthCrs() {
+    return earthCrs;
   }
 
   @Override
@@ -76,7 +121,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
     // Create the square
     Geometry square = shapeFactory.createRectangle();
-    return new EarthGeometry(square, crs);
+    return new EarthGeometry(square, earthCrs);
   }
 
   @Override
@@ -107,7 +152,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
     // Create the rectangle
     Geometry rectangle = shapeFactory.createRectangle();
-    return new EarthGeometry(rectangle, crs);
+    return new EarthGeometry(rectangle, earthCrs);
   }
 
   @Override
@@ -133,7 +178,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
     // Create the circle
     Geometry circle = shapeFactory.createCircle();
-    return new EarthGeometry(circle, crs);
+    return new EarthGeometry(circle, earthCrs);
   }
 
   @Override
@@ -153,7 +198,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
     // Create the circle
     Geometry circle = shapeFactory.createCircle();
-    return new EarthGeometry(circle, crs);
+    return new EarthGeometry(circle, earthCrs);
   }
 
   @Override
@@ -161,7 +206,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     Point point = JTS_GEOMETRY_FACTORY.createPoint(
         new Coordinate(x.doubleValue(), y.doubleValue())
     );
-    return new EarthGeometry(point, crs);
+    return new EarthGeometry(point, earthCrs);
   }
 
   /**
@@ -182,10 +227,10 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
           ));
           
       // Transform from grid to Earth CRS
-      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedPoint = JtsTransformUtility.transform(gridPoint, transform);
       
-      return new EarthGeometry(transformedPoint, crs);
+      return new EarthGeometry(transformedPoint, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid point: " + e.getMessage(), e);
     }
@@ -217,10 +262,10 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       Geometry gridCircle = shapeFactory.createCircle();
       
       // Transform from grid to Earth CRS
-      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedCircle = JtsTransformUtility.transform(gridCircle, transform);
       
-      return new EarthGeometry(transformedCircle, crs);
+      return new EarthGeometry(transformedCircle, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid circle: " + e.getMessage(), e);
     }
@@ -249,10 +294,10 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       Geometry gridRectangle = shapeFactory.createRectangle();
       
       // Transform from grid to Earth CRS
-      MathTransform transform = gridCrs.createGridToTargetCrsTransform(crs);
+      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedRectangle = JtsTransformUtility.transform(gridRectangle, transform);
       
-      return new EarthGeometry(transformedRectangle, crs);
+      return new EarthGeometry(transformedRectangle, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid rectangle: " + e.getMessage(), e);
     }
@@ -289,54 +334,33 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
   @Override
   public String toString() {
-    return String.format("EarthGeometryFactory with crs of %s", crs);
-  }
-
-  @Override
-  public PatchBuilder getPatchBuilder(
-      String inputCrs,
-      String targetCrs,
-      PatchBuilderExtents extents,
-      BigDecimal cellWidth,
-      EntityPrototype prototype) {
-    try {
-      // Create GridCrsDefinition
-      GridCrsDefinition gridDef = new GridCrsDefinition(
-          "Grid_" + System.currentTimeMillis(),
-          inputCrs.isEmpty() ? "EPSG:4326" : inputCrs, // Default to WGS84 if not specified
-          extents,
-          cellWidth,
-          "m",  // Assuming cell size is in meters
-          inputCrs.isEmpty() ? "degrees" : getCrsUnits(inputCrs)
-      );
-      
-      // Create RealizedGridCrs if needed
-      if (gridCrs == null && !inputCrs.isEmpty()) {
-        try {
-          this.gridCrs = new RealizedGridCrs(gridDef);
-        } catch (IOException e) {
-          throw new IllegalArgumentException("Failed to create grid CRS: " + e.getMessage(), e);
-        }
-      }
-      
-      // Return appropriate patch builder
-      return new GridPatchBuilder(gridDef, prototype);
-      
-    } catch (FactoryException e) {
-      throw new IllegalArgumentException("Invalid CRS: " + e.getMessage(), e);
-    }
+    return String.format("EarthGeometryFactory with crs of %s", earthCrs);
   }
 
   /**
-   * Gets the units of a CRS by code.
+   * Creates a patch builder for the given grid CRS definition and entity prototype.
    *
-   * @param crsCode The CRS code
-   * @return The units string
-   * @throws FactoryException If the CRS cannot be created
+   * @param gridCrsDefinition The grid CRS definition
+   * @param prototype The entity prototype
+   * @return A patch builder for the specified grid CRS
    */
-  private String getCrsUnits(String crsCode) throws FactoryException {
-    CoordinateReferenceSystem referenceCrs = CRS.forCode(crsCode);
-    // This is a simplification - in a real implementation, you'd extract the actual units
-    return referenceCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
+  @Override
+  public PatchBuilder getPatchBuilder(
+      GridCrsDefinition gridCrsDefinition,
+      EntityPrototype prototype
+  ) {
+    try {      
+      
+      // Create Earth patch builder with the realized grid CRS
+      return new EarthPatchBuilder(
+          getGridCrs(),                    // Input CRS (from the grid definition)
+          getEarthCrs(),                   // Target CRS (factory's CRS)
+          gridCrsDefinition.getExtents(),  // Grid extents
+          gridCrsDefinition.getCellSize(), // Cell size
+          prototype                        // Entity prototype
+        );
+    } catch (FactoryException | TransformException e) {
+      throw new RuntimeException("Failed to create patch builder: " + e.getMessage(), e);
+    }
   }
 }

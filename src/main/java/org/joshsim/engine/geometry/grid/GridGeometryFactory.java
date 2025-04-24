@@ -11,7 +11,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
-import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 /**
  * Factory for creating geometric shapes in grid space.
@@ -59,15 +58,16 @@ public class GridGeometryFactory implements EngineGeometryFactory {
     return new GridPoint(x, y);
   }
 
-  @Override
-  public PatchBuilder getPatchBuilder(String inputCrs, String targetCrs,
-        PatchBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype) {
-    boolean emptyCrs = inputCrs.isEmpty() && targetCrs.isEmpty();
-    if (!emptyCrs) {
-      throw new IllegalArgumentException("Grid-space expects an empty CRS.");
-    }
-
-    return new GridPatchBuilder(extents, cellWidth, prototype);
+  /**
+   * Creates a patch builder with the specified grid CRS definition and entity prototype.
+   *
+   * @param gridCrsDefinition The grid CRS definition
+   * @param prototype The entity prototype used to create grid cells
+   * @return A patch builder
+   */
+  public PatchBuilder getPatchBuilder(
+        GridCrsDefinition gridCrsDefinition,
+        EntityPrototype prototype) {
+    return new GridPatchBuilder(gridCrsDefinition, prototype);
   }
-
 }
