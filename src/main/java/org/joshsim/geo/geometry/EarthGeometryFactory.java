@@ -1,6 +1,7 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
+import java.lang.UnsupportedOperationException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.apache.sis.referencing.CRS;
@@ -76,10 +77,11 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    *
    * @param gridCrsDefinition The grid CRS definition to use for setting the realized grid CRS.
    * @throws IOException If an error occurs while realizing the grid CRS.
+   * @throws TransformException if an error occurs during transformation
    */
   public void setRealizedGridCrsFromDefition(
-      GridCrsDefinition gridCrsDefinition
-  ) throws IOException {
+         GridCrsDefinition gridCrsDefinition
+  ) throws IOException, TransformException {
     try {
       RealizedGridCrs realizedGridCrs = new RealizedGridCrs(gridCrsDefinition);
       this.gridCrs = realizedGridCrs.getGridCrs();
@@ -347,18 +349,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   ) {
-    try {
-
-      // Create Earth patch builder with the realized grid CRS
-      return new EarthPatchBuilder(
-          getGridCrs(),                    // Input CRS (from the grid definition)
-          getEarthCrs(),                   // Target CRS (factory's CRS)
-          gridCrsDefinition.getExtents(),  // Grid extents
-          gridCrsDefinition.getCellSize(), // Cell size
-          prototype                        // Entity prototype
-        );
-    } catch (FactoryException | TransformException e) {
-      throw new RuntimeException("Failed to create patch builder: " + e.getMessage(), e);
-    }
+    throw new UnsupportedOperationException(
+      "getPatchBuilder is not supported in EarthGeometryFactory - use GridGeometryFactory instead");
   }
 }

@@ -1,13 +1,9 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.sis.referencing.CRS;
-import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;

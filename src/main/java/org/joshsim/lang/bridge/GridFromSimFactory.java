@@ -13,6 +13,7 @@ import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -59,7 +60,7 @@ public class GridFromSimFactory {
     simulation.startSubstep("constant");
 
     final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
+    // final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
     final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
     final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
     final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
@@ -68,7 +69,7 @@ public class GridFromSimFactory {
     simulation.endSubstep();
 
     String inputCrs = getOrDefault(inputCrsMaybe, "");
-    String targetCrs = getOrDefault(targetCrsMaybe, "");
+    // String targetCrs = getOrDefault(targetCrsMaybe, "");
     String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
     String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
     String patchName = getOrDefault(patchNameMaybe, "Default");
@@ -77,11 +78,15 @@ public class GridFromSimFactory {
     EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
+    // TODO: properly parse units for cell size
+    String sizeValueUnits = "m";
+
+    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
+        "GRID", inputCrs, extents, sizeValuePrimitive, sizeValueUnits
+    );
+
     PatchBuilder builder = bridge.getGeometryFactory().getPatchBuilder(
-        inputCrs,
-        targetCrs,
-        extents,
-        sizeValuePrimitive,
+        gridCrsDefinition,
         bridge.getPrototype(patchName)
     );
     return builder.build();
