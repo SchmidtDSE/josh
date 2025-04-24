@@ -1,5 +1,5 @@
 /**
- * Test cases for the GeometryFactory class.
+ * Test cases for the EarthGeometryFactory class.
  *
  * @license BSD-3-Clause
  */
@@ -8,15 +8,19 @@ package org.joshsim.geo.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.io.IOException;
 import java.math.BigDecimal;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.referencing.CRS;
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.CommonCRS;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.geometry.grid.GridShape;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,10 +30,12 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 /**
- * Unit tests for the EngineGeometryFactory class.
+ * Unit tests for the EarthGeometryFactory class.
  */
 public class EarthGeometryFactoryTest {
 
@@ -38,6 +44,7 @@ public class EarthGeometryFactoryTest {
   private GeometryFactory geometryFactory;
   private CoordinateReferenceSystem wgs84;
   private CoordinateReferenceSystem utm11n;
+  private RealizedGridCrs realizedGridCrs;
 
   /**
    * Set up contexts for each test.
@@ -45,11 +52,40 @@ public class EarthGeometryFactoryTest {
   @BeforeEach
   public void setUp() throws FactoryException {
     geometryFactory = new GeometryFactory();
-    wgs84 = CRS.decode("EPSG:4326", true); // WGS84
-    utm11n = CRS.decode("EPSG:32611");
+    // Using Apache SIS for CRS definitions
+    wgs84 = CommonCRS.WGS84.geographic();
+    utm11n = CRS.forCode("EPSG:32611"); // UTM Zone 11N
 
     engineGeometryFactoryWgs84 = new EarthGeometryFactory(wgs84);
     engineGeometryFactoryUtm11n = new EarthGeometryFactory(utm11n);
+  }
+  
+  @Test
+  @DisplayName("Create GridCRS from definition")
+  public void testCreateGridCrsFromDefinition() throws IOException, TransformException {
+    // Define extents similar to the simulation example
+    BigDecimal topLeftX = new BigDecimal("-116.0");
+    BigDecimal topLeftY = new BigDecimal("35.0");
+    BigDecimal bottomRightX = new BigDecimal("-115.0");
+    BigDecimal bottomRightY = new BigDecimal("34.0");
+    BigDecimal cellSize = new BigDecimal("30");
+    
+    // Create a custom CRS definition
+    GridCrsDefinition definition = new GridCrsDefinition(
+        "TestGrid",
+        "EPSG:4326", 
+        new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
+        cellSize,
+        "m");
+    
+    // Set up the EarthGeometryFactory with grid CRS
+    EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
+    factory.setRealizedGridCrsFromDefition(definition);
+    
+    // Verify grid CRS is set
+    assertNotNull(factory.getGridCrs(), "Grid CRS should be set");
+    assertNotNull(factory.getEarthCrs(), "Earth CRS should be set");
+    assertEquals(wgs84, factory.getEarthCrs(), "Earth CRS should match what was provided");
   }
 
   @Nested
@@ -64,7 +100,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
@@ -88,7 +124,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
@@ -111,20 +147,19 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-
-      Geometry point = geometry.getInnerGeometry();
-
-      double x = point.getCoordinate().x;
-      double y = point.getCoordinate().y;
-
-      assertEquals(20.0, x, 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, y, 0.000001, "Y should equal centerY for zero width");
+      // With zero width, we should get a point
+      assertTrue(geometry.getInnerGeometry() instanceof Point, 
+          "Zero width square should be represented as a Point");
+      
+      Point point = (Point) geometry.getInnerGeometry();
+      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
+      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
       assertEquals(wgs84, geometry.getCrs(), "CRS should be WGS84");
     }
 
@@ -136,20 +171,18 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
-
-      Geometry point = geometry.getInnerGeometry();
-
-      double x = point.getCoordinate().x;
-      double y = point.getCoordinate().y;
-
-      assertEquals(20.0, x, 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, y, 0.000001, "Y should equal centerY for zero width");
+      assertTrue(geometry.getInnerGeometry() instanceof Point, 
+          "Zero width square should be represented as a Point");
+      
+      Point point = (Point) geometry.getInnerGeometry();
+      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
+      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
     }
 
@@ -161,7 +194,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = new BigDecimal("10.987654321"); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
@@ -230,7 +263,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
           topLeftX,
           topLeftY,
           bottomRightX,
@@ -258,7 +291,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
           topLeftX,
           topLeftY,
           bottomRightX,
@@ -284,16 +317,15 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightX = BigDecimal.valueOf(21.0); // longitude (x)
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
-      // When
-      EngineGeometry geometry = engineGeometryFactoryWgs84.createSquare(
-          topLeftX,
-          topLeftY,
-          bottomRightX,
-          bottomRightY
-      );
-
-      // Then
-      assertNull(geometry, "Geometry should return null if not square");
+      // When/Then
+      assertThrows(IllegalArgumentException.class, () -> {
+        engineGeometryFactoryWgs84.createSquare(
+            topLeftX,
+            topLeftY,
+            bottomRightX,
+            bottomRightY
+        );
+      }, "Should throw IllegalArgumentException when shape is not square");
     }
   }
 
@@ -309,7 +341,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createCircle(
+      EarthShape geometry = engineGeometryFactoryWgs84.createCircle(
           centerX, centerY, radius
       ).getOnEarth();
 
@@ -336,7 +368,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryUtm11n.createCircle(
+      EarthShape geometry = engineGeometryFactoryUtm11n.createCircle(
           centerX, centerY, radius
       ).getOnEarth();
 
@@ -363,7 +395,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createCircle(
+      EarthShape geometry = engineGeometryFactoryWgs84.createCircle(
           pointX,
           pointY,
           centerX,
@@ -393,7 +425,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryUtm11n.createCircle(
+      EarthShape geometry = engineGeometryFactoryUtm11n.createCircle(
           pointX,
           pointY,
           centerX,
@@ -416,6 +448,92 @@ public class EarthGeometryFactoryTest {
       assertEquals(expectedRadius, distance, 0.01);
 
       assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
+    }
+  }
+  
+  @Nested
+  class GridCrsConversionTests {
+    
+    private GridCrsDefinition createGridCrsDefinition() {
+      // Define extents similar to the simulation example
+      BigDecimal topLeftX = new BigDecimal("-116.0");
+      BigDecimal topLeftY = new BigDecimal("35.0");
+      BigDecimal bottomRightX = new BigDecimal("-115.0");
+      BigDecimal bottomRightY = new BigDecimal("34.0");
+      BigDecimal cellSize = new BigDecimal("30");
+      
+      return new GridCrsDefinition(
+          "TestGrid",
+          "EPSG:4326", 
+          new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
+          cellSize,
+          "m");
+    }
+    
+    @Test
+    @DisplayName("Convert point from Grid to Earth CRS")
+    public void testGridToEarthCrsPointConversion() throws IOException, TransformException {
+      // Set up the factory with grid CRS
+      EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
+      factory.setRealizedGridCrsFromDefition(createGridCrsDefinition());
+      
+      // Create a point in grid coordinates (cell indices)
+      BigDecimal gridX = BigDecimal.valueOf(10);  // 10th cell in X direction
+      BigDecimal gridY = BigDecimal.valueOf(5);   // 5th cell in Y direction
+      
+      // Create point geometry in grid space
+      EngineGeometry gridGeometry = new GridGeometryFactory().createPoint(gridX, gridY);
+      
+      // Convert to Earth CRS
+      EngineGeometry earthGeometry = factory.createPointFromGrid((GridShape) gridGeometry);
+      
+      // Verify result
+      assertNotNull(earthGeometry, "Earth geometry should not be null");
+      assertTrue(
+          earthGeometry.getOnEarth() instanceof EarthShape,
+          "Result should be an EarthShape"
+      );
+      assertEquals(wgs84, earthGeometry.getOnEarth().getCrs(), "Result should use Earth CRS");
+      
+      // The actual coordinate values will depend on the grid transformation,
+      // so we just check that they're within reasonable bounds
+      Point earthPoint = (Point) earthGeometry.getOnEarth().getInnerGeometry();
+      assertTrue(earthPoint.getX() >= -116.0 && earthPoint.getX() <= -115.0, 
+          "X coordinate should be within bounds");
+      assertTrue(earthPoint.getY() >= 34.0 && earthPoint.getY() <= 35.0, 
+          "Y coordinate should be within bounds");
+    }
+    
+    @Test
+    @DisplayName("Convert square from Grid to Earth CRS")
+    public void testGridToEarthCrsSquareConversion() throws IOException, TransformException {
+      // Set up the factory with grid CRS
+      EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
+      factory.setRealizedGridCrsFromDefition(createGridCrsDefinition());
+      
+      // Create a square in grid coordinates (cell indices)
+      BigDecimal centerX = BigDecimal.valueOf(10);
+      BigDecimal centerY = BigDecimal.valueOf(5);
+      BigDecimal width = BigDecimal.valueOf(2);  // 2 cells wide
+      
+      // Create square geometry in grid space
+      EngineGeometry gridGeometry = new GridGeometryFactory().createSquare(centerX, centerY, width);
+      
+      // Convert to Earth CRS
+      EngineGeometry earthGeometry = factory.createFromGrid((GridShape) gridGeometry);
+      
+      // Verify result
+      assertNotNull(earthGeometry, "Earth geometry should not be null");
+      assertTrue(
+          earthGeometry.getOnEarth() instanceof EarthShape,
+          "Result should be an EarthShape"
+      );
+      assertEquals(wgs84, earthGeometry.getOnEarth().getCrs(), "Result should use Earth CRS");
+      
+      // The actual coordinate values will depend on the grid transformation,
+      // but we can check that the result is a polygon
+      Geometry earthGeom = earthGeometry.getOnEarth().getInnerGeometry();
+      assertTrue(earthGeom instanceof Polygon, "Result should be a polygon");
     }
   }
 }

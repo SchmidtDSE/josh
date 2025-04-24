@@ -13,18 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.NoSuchAuthorityCodeException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.referencing.CRS;
-import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.CommonCRS;
 
 /**
  * Tests for a momento structure for Geometry.
@@ -32,8 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class GeometryMomentoTest {
 
-  @Mock
-  private EngineGeometry mockGeometry;
+  @Mock private EngineGeometry mockGeometry;
 
   private GeometryMomento squareMomento;
   private GeometryMomento circleMomento;
@@ -46,15 +43,17 @@ public class GeometryMomentoTest {
   /**
    * Create common structures for tests.
    *
-   * @throws FactoryException if there is an error creating the Coordinate Reference System.
-   * @throws NoSuchAuthorityCodeException if the EPSG code is not recognized.
+   * @throws Exception if there is an error creating the Coordinate Reference System.
    */
   @BeforeEach
-  void setUp() throws NoSuchAuthorityCodeException, FactoryException {
+  void setUp() throws Exception {
     centerX = new BigDecimal("10.0");
     centerY = new BigDecimal("20.0");
     diameter = new BigDecimal("5.0");
-    crs = CRS.decode("EPSG:32611");
+    
+    // Using Apache SIS CRS.forCode instead of GeoTools CRS.decode
+    crs = CRS.forCode("EPSG:32611");
+    
     geometryFactory = new EarthGeometryFactory(crs);
     squareMomento = new GeometryMomento("square", centerX, centerY, diameter, geometryFactory);
     circleMomento = new GeometryMomento("circle", centerX, centerY, diameter, geometryFactory);
@@ -68,8 +67,9 @@ public class GeometryMomentoTest {
 
   @Test
   void testConstructorInvalidShape() {
-    assertThrows(IllegalArgumentException.class, () ->
-      new GeometryMomento("triangle", centerX, centerY, diameter, geometryFactory));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new GeometryMomento("triangle", centerX, centerY, diameter, geometryFactory));
   }
 
   @Test
@@ -83,55 +83,50 @@ public class GeometryMomentoTest {
 
   @Test
   void testToString() {
-    String expectedSquareString = String.format(
-        "square momento at (%.6f, %.6f) of diameter %.6f",
-        centerX.doubleValue(),
-        centerY.doubleValue(),
-        diameter.doubleValue()
-    );
+    String expectedSquareString =
+        String.format(
+            "square momento at (%.6f, %.6f) of diameter %.6f",
+            centerX.doubleValue(), centerY.doubleValue(), diameter.doubleValue());
     assertTrue(squareMomento.toString().contains(expectedSquareString));
   }
 
   @Test
   void testEquals() {
-    GeometryMomento sameMomento = new GeometryMomento(
-        "square",
-        centerX,
-        centerY,
-        diameter,
-        geometryFactory
-    );
+    GeometryMomento sameMomento =
+        new GeometryMomento("square", centerX, centerY, diameter, geometryFactory);
     assertEquals(squareMomento, sameMomento);
 
-    GeometryMomento differentMomento = new GeometryMomento(
-        "circle",
-        centerX,
-        centerY,
-        diameter,
-        geometryFactory
-    );
+    GeometryMomento differentMomento =
+        new GeometryMomento("circle", centerX, centerY, diameter, geometryFactory);
     assertNotEquals(squareMomento, differentMomento);
   }
 
   @Test
   void testHashCode() {
-    GeometryMomento sameMomento = new GeometryMomento(
-        "square",
-        centerX,
-        centerY,
-        diameter,
-        geometryFactory
-    );
-
+    GeometryMomento sameMomento =
+        new GeometryMomento("square", centerX, centerY, diameter, geometryFactory);
     assertEquals(squareMomento.hashCode(), sameMomento.hashCode());
 
-    GeometryMomento differentMomento = new GeometryMomento(
-        "circle",
-        centerX,
-        centerY,
-        diameter,
-        geometryFactory
-    );
+    GeometryMomento differentMomento =
+        new GeometryMomento("circle", centerX, centerY, diameter, geometryFactory);
     assertNotEquals(squareMomento.hashCode(), differentMomento.hashCode());
+  }
+  
+  @Test
+  void testCrsConversions() throws Exception {
+    // Test with a different CRS to confirm Grid to Target conversion works
+    CoordinateReferenceSystem targetCrs = CommonCRS.WGS84.geographic();
+    EarthGeometryFactory targetFactory = new EarthGeometryFactory(targetCrs);
+    
+    // Create momento in the target CRS
+    GeometryMomento targetMomento = 
+        new GeometryMomento("square", centerX, centerY, diameter, targetFactory);
+    
+    // Build geometry in target CRS
+    EngineGeometry targetGeometry = targetMomento.build();
+    assertNotNull(targetGeometry);
+    
+    // Verify that different CRS results in different momentos
+    assertNotEquals(squareMomento, targetMomento);
   }
 }
