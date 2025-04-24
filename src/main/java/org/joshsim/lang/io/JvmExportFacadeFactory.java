@@ -1,61 +1,37 @@
+
 /**
- * Logic to help construct ExportFacades.
+ * JVM-specific implementation of ExportFacadeFactory.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.export;
+package org.joshsim.lang.io;
 
 import java.util.Optional;
 
-
 /**
- * Factory responsible for creating instances of ExportFacade based on a provided target.
+ * Factory implementation for creating ExportFacade instances in a JVM environment.
  */
-public class ExportFacadeFactory {
+public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
-  /**
-   * Build an ExportFacade which is capable of writing to the given target.
-   *
-   * @param target Record describing where the export should be written and from which the format is
-   *     inferred.
-   * @return ExportFacade which, when given Entities, will write to the location described by
-   *     target.
-   */
-  public static ExportFacade build(ExportTarget target) {
+  @Override
+  public ExportFacade build(ExportTarget target) {
     return build(target, Optional.empty());
   }
 
-  /**
-   * Build an ExportFacade which is capable of writing to the given target with specified header.
-   *
-   * @param target Record describing where the export should be written and from which the format is
-   *     inferred.
-   * @param header The column names to use for the header.
-   * @return ExportFacade which, when given Entities, will write to the location described by
-   *     target.
-   */
-  public static ExportFacade build(ExportTarget target, Iterable<String> header) {
+  @Override
+  public ExportFacade build(ExportTarget target, Iterable<String> header) {
     return build(target, Optional.of(header));
   }
 
-  /**
-   * Build an ExportFacade which is capable of writing to the given target with specified headers.
-   *
-   * @param target Record describing where the export should be written and from which the format is
-   *     inferred.
-   * @param header The column names to use for the headers or empty optional if to be inferred.
-   * @return ExportFacade which, when given Entities, will write to the location described by
-   *     target.
-   */
-  public static ExportFacade build(ExportTarget target, Optional<Iterable<String>> header) {
+  @Override
+  public ExportFacade build(ExportTarget target, Optional<Iterable<String>> header) {
     return switch (target.getFileType()) {
       case "csv" -> buildForCsv(target, header);
       case "map" -> buildForMap(target, header);
       default -> throw new IllegalArgumentException("Not supported: " + target.getFileType());
     };
   }
-
 
   /**
    * Build an ExportFacade that writes to a JavaScript in-memory map callback.
@@ -68,7 +44,7 @@ public class ExportFacadeFactory {
    *     path.
    * @throws IllegalArgumentException if the target's protocol is not "js".
    */
-  public static ExportFacade buildForMap(ExportTarget target, Optional<Iterable<String>> header) {
+  private static ExportFacade buildForMap(ExportTarget target, Optional<Iterable<String>> header) {
     if (!target.getProtocol().equals("js")) {
       throw new IllegalArgumentException("Can only write map to JS.");
     }
@@ -76,7 +52,6 @@ public class ExportFacadeFactory {
     String path = target.getPath();
     return new JsExportFacade(path);
   }
-
 
   /**
    * Build an ExportFacade that writes to a CSV file.
@@ -104,5 +79,4 @@ public class ExportFacadeFactory {
       return new CsvExportFacade(outputStreamStrategy);
     }
   }
-
 }

@@ -13,6 +13,8 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.io.WasmInputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -107,11 +109,13 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer();
 
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
 
     JoshSimFacadeUtil.runSimulation(
         geometryFactory,
+        inputOutputLayer,
         program,
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),

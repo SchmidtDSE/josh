@@ -10,6 +10,7 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
 
 
@@ -71,6 +72,7 @@ public class JoshSimFacade {
     setupForJvm();
     JoshSimFacadeUtil.runSimulation(
         engineGeometryFactory,
+        new JvmInputOutputLayer(),
         program,
         simulationName,
         callback,
