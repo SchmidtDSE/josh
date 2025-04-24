@@ -8,7 +8,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 /**
  * Definition of a grid coordinate reference system.
  * Holds parameters needed to map between grid coordinates and a real-world CRS.
- * 
+ *
  * <p>The cell size is always specified in meters, regardless of the base CRS units.
  * When using a geographic CRS (such as EPSG:4326), the cell size will be applied
  * in the intermediate projected space.</p>
@@ -19,7 +19,7 @@ public class GridCrsDefinition {
   private final PatchBuilderExtents extents;
   private final BigDecimal cellSize;  // Always in meters
   private final String cellSizeUnits;      // For documentation only
-  
+
   /**
    * Creates a grid CRS definition with specified parameters.
    *
@@ -32,16 +32,16 @@ public class GridCrsDefinition {
   public GridCrsDefinition(
       String name,
       String baseCrsCode,
-      PatchBuilderExtents extents, 
+      PatchBuilderExtents extents,
       BigDecimal cellSize,
       String cellSizeUnits) {
-    
+
     this.name = Objects.requireNonNull(name, "Name cannot be null");
     this.baseCrsCode = Objects.requireNonNull(baseCrsCode, "Base CRS code cannot be null");
     this.extents = Objects.requireNonNull(extents, "Extents cannot be null");
     this.cellSize = Objects.requireNonNull(cellSize, "Cell size cannot be null");
     this.cellSizeUnits = Objects.requireNonNull(cellSizeUnits, "Cell size units cannot be null");
-    
+
     if (cellSize.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell size must be positive");
     }
@@ -82,7 +82,7 @@ public class GridCrsDefinition {
     BigDecimal crsY = extents.getTopLeftY().add(gridY.multiply(cellSize));
     return new BigDecimal[] {crsX, crsY};
   }
-  
+
   /**
    * Convert base CRS coordinates to grid position (cell x,y).
    * Note: This doesn't handle unit conversion - that happens in RealizedGridCrs.
@@ -102,8 +102,8 @@ public class GridCrsDefinition {
   @Override
   public String toString() {
     return String.format(
-      "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), cellSize=%s %s]", 
-      name, 
+      "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), cellSize=%s %s]",
+      name,
       extents.getTopLeftX(), extents.getTopLeftY(),
       extents.getBottomRightX(), extents.getBottomRightY(),
       cellSize, cellSizeUnits);

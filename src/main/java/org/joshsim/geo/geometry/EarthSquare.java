@@ -42,8 +42,8 @@ public class EarthSquare extends EarthShape {
    * @param transformers Optional pre-computed transformers to other CRS
    */
   protected EarthSquare(
-      Polygon polygon, 
-      double width, 
+      Polygon polygon,
+      double width,
       CoordinateReferenceSystem crs,
       Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
     super(polygon, crs, transformers);
@@ -86,12 +86,12 @@ public class EarthSquare extends EarthShape {
 
       // Transform the geometry
       Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
-      
+
       // Note: After transformation, the shape might not be a perfect square anymore
       // We'll use the average width as the new width value, but this will be inaccurate
       // with large transformations where distortion might be more extreme.
       double avgWidth = computeAverageWidth(transformedGeom);
-      
+
       return new EarthSquare(
           (Polygon) transformedGeom, avgWidth, targetCrs, transformers);
     } catch (TransformException e) {
@@ -109,14 +109,14 @@ public class EarthSquare extends EarthShape {
    */
   private static Polygon createSquarePolygon(double centerX, double centerY, double width) {
     double halfWidth = width / 2.0;
-    
+
     Coordinate[] coords = new Coordinate[5];
     coords[0] = new Coordinate(centerX - halfWidth, centerY - halfWidth);
     coords[1] = new Coordinate(centerX + halfWidth, centerY - halfWidth);
     coords[2] = new Coordinate(centerX + halfWidth, centerY + halfWidth);
     coords[3] = new Coordinate(centerX - halfWidth, centerY + halfWidth);
     coords[4] = new Coordinate(centerX - halfWidth, centerY - halfWidth); // Close the ring
-    
+
     LinearRing ring = JTS_GEOMETRY_FACTORY.createLinearRing(coords);
     return JTS_GEOMETRY_FACTORY.createPolygon(ring);
   }
@@ -134,10 +134,10 @@ public class EarthSquare extends EarthShape {
 
   @Override
   public String toString() {
-    return String.format("EarthSquare[center=(%.6f, %.6f), width=%.6f, %s]", 
-        innerGeometry.getCentroid().getX(), 
-        innerGeometry.getCentroid().getY(), 
-        width, 
+    return String.format("EarthSquare[center=(%.6f, %.6f), width=%.6f, %s]",
+        innerGeometry.getCentroid().getX(),
+        innerGeometry.getCentroid().getY(),
+        width,
         crs.getName().getCode());
   }
 }

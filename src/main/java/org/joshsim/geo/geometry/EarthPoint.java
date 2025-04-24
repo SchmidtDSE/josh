@@ -24,7 +24,7 @@ public class EarthPoint extends EarthShape {
    * @param transformers Optional pre-computed transformers to other CRS
    */
   public EarthPoint(
-      Point point, 
+      Point point,
       CoordinateReferenceSystem crs,
       Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
     super(point, crs, transformers);
@@ -67,10 +67,10 @@ public class EarthPoint extends EarthShape {
 
       // Use the utility for transformation
       Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
-      
+
       // Cast to Point since we know it's a point
       Point transformedPoint = (Point) transformedGeom;
-      
+
       return new EarthPoint(transformedPoint, targetCrs, transformers);
     } catch (TransformException e) {
       throw new RuntimeException("Failed to transform point to target CRS", e);
@@ -79,7 +79,7 @@ public class EarthPoint extends EarthShape {
 
   @Override
   public String toString() {
-    return String.format("EarthPoint[%.6f, %.6f, %s]", 
+    return String.format("EarthPoint[%.6f, %.6f, %s]",
         getPoint().getX(), getPoint().getY(), crs.getName().getCode());
   }
 }

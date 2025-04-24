@@ -8,9 +8,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
-import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
-import org.joshsim.engine.geometry.grid.GridPatchBuilder;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -53,7 +51,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     this.earthCrs = earthCrs;
     this.gridCrs = realizedGridCrs.getGridCrs();
   }
-  
+
   /**
    * Sets the grid CRS to use for transformations, assuming a CRS is already instantiated.
    *
@@ -217,7 +215,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createPointFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Create a point geometry in grid space
       Point gridPoint = JTS_GEOMETRY_FACTORY.createPoint(
@@ -225,11 +223,11 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
               gridShape.getCenterX().doubleValue(),
               gridShape.getCenterY().doubleValue()
           ));
-          
+
       // Transform from grid to Earth CRS
       MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedPoint = JtsTransformUtility.transform(gridPoint, transform);
-      
+
       return new EarthGeometry(transformedPoint, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid point: " + e.getMessage(), e);
@@ -244,7 +242,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createCircleFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Create circle in grid space
       double centerX = gridShape.getCenterX().doubleValue();
@@ -253,18 +251,18 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
           new BigDecimal(2),
           RoundingMode.HALF_UP
       ).doubleValue();
-      
+
       GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
       shapeFactory.setCentre(new Coordinate(centerX, centerY));
       shapeFactory.setWidth(radius * 2);
       shapeFactory.setHeight(radius * 2);
       shapeFactory.setNumPoints(DEFAULT_NUM_POINTS);
       Geometry gridCircle = shapeFactory.createCircle();
-      
+
       // Transform from grid to Earth CRS
       MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedCircle = JtsTransformUtility.transform(gridCircle, transform);
-      
+
       return new EarthGeometry(transformedCircle, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid circle: " + e.getMessage(), e);
@@ -279,30 +277,30 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createRectangleFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Create rectangle in grid space
       double centerX = gridShape.getCenterX().doubleValue();
       double centerY = gridShape.getCenterY().doubleValue();
       double width = gridShape.getWidth().doubleValue();
       double height = gridShape.getHeight().doubleValue();
-      
+
       GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
       shapeFactory.setCentre(new Coordinate(centerX, centerY));
       shapeFactory.setWidth(width);
       shapeFactory.setHeight(height);
       Geometry gridRectangle = shapeFactory.createRectangle();
-      
+
       // Transform from grid to Earth CRS
       MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
       Geometry transformedRectangle = JtsTransformUtility.transform(gridRectangle, transform);
-      
+
       return new EarthGeometry(transformedRectangle, earthCrs);
     } catch (FactoryException | TransformException e) {
       throw new RuntimeException("Failed to transform grid rectangle: " + e.getMessage(), e);
     }
   }
-  
+
   /**
    * Creates geometry from a grid shape, determining the appropriate shape type automatically.
    *
@@ -322,7 +320,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
           "Unsupported grid shape type: " + gridShape.getGridShapeType());
     }
   }
-  
+
   /**
    * Ensures gridCrs is available before attempting transformations.
    */
@@ -349,8 +347,8 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   ) {
-    try {      
-      
+    try {
+
       // Create Earth patch builder with the realized grid CRS
       return new EarthPatchBuilder(
           getGridCrs(),                    // Input CRS (from the grid definition)

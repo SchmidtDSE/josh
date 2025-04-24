@@ -102,7 +102,7 @@ public interface EngineGeometryFactory {
    * <p>Creates a new instance of a PatchBuilder for creating grid structures
    * based on the provided grid coordinate reference system definition.</p>
    *
-   * @param gridCrsDefinition The grid CRS definition containing extents, cell size, 
+   * @param gridCrsDefinition The grid CRS definition containing extents, cell size,
    *                         and reference system information
    * @param prototype The prototype through which to build patches representing cells
    * @return A PatchBuilder instance configured for the specified grid CRS

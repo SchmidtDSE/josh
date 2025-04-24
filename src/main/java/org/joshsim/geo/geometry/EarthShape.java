@@ -155,7 +155,7 @@ public abstract class EarthShape implements EngineGeometry {
       return false;
     }
     EarthShape other = (EarthShape) obj;
-    return innerGeometry.equals(other.innerGeometry) 
+    return innerGeometry.equals(other.innerGeometry)
         && Utilities.equalsIgnoreMetadata(crs, other.crs);
   }
 

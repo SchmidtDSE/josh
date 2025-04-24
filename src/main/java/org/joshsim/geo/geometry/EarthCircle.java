@@ -17,7 +17,7 @@ import org.opengis.util.FactoryException;
  * Represents a circle on Earth using a JTS Polygon approximation.
  */
 public class EarthCircle extends EarthShape {
-  
+
   private final double radius;
 
   /**
@@ -42,8 +42,8 @@ public class EarthCircle extends EarthShape {
    * @param transformers Optional pre-computed transformers to other CRS
    */
   protected EarthCircle(
-      Polygon polygon, 
-      double radius, 
+      Polygon polygon,
+      double radius,
       CoordinateReferenceSystem crs,
       Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
     super(polygon, crs, transformers);
@@ -85,12 +85,12 @@ public class EarthCircle extends EarthShape {
       }
 
       Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
-      
+
       // Since circle shape may be distorted after transformation,
       // we approximate the transformed shape as a circle with the same area
       double area = transformedGeom.getArea();
       double estimatedRadius = Math.sqrt(area / Math.PI);
-      
+
       return new EarthCircle(
           (Polygon) transformedGeom, estimatedRadius, targetCrs, transformers);
     } catch (FactoryException | TransformException e) {
@@ -110,7 +110,7 @@ public class EarthCircle extends EarthShape {
   @Override
   public String toString() {
     Coordinate center = innerGeometry.getCentroid().getCoordinate();
-    return String.format("EarthCircle[center=(%.6f, %.6f), radius=%.6f, %s]", 
+    return String.format("EarthCircle[center=(%.6f, %.6f), radius=%.6f, %s]",
         center.x, center.y, radius, crs.getName().getCode());
   }
 }
