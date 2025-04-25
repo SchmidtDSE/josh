@@ -57,21 +57,6 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
   }
 
   /**
-   * Interface defining the callback mechanism for WebAssembly export operations.
-   * This interface provides methods to handle output redirection in a WebAssembly context.
-   */
-  public interface WasmExportCallback {
-
-    /**
-     * Called when data needs to be written through the WebAssembly interface.
-     *
-     * @param value The string value to be written through the callback
-     */
-    void onWrite(String value);
-    
-  }
-
-  /**
    * An OutputStream implementation that redirects output through an in-memory callback.
    */
   public class RedirectOutputStream extends OutputStream {
