@@ -230,7 +230,7 @@ class SimulationResult {
 
   
 /**
- * Class representing a possible code error or indication that no error was found.
+ * Record of a possible code error or indication that no error was found.
  */
 class CodeErrorMaybe {
   constructor(errorStr) {
