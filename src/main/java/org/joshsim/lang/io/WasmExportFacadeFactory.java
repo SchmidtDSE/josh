@@ -14,10 +14,20 @@ import java.util.Optional;
 /**
  * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
  */
+/**
+ * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
+ * This class provides functionality to build export facades that can redirect output
+ * through WebAssembly callbacks.
+ */
 public class WasmExportFacadeFactory implements ExportFacadeFactory {
 
   private final WasmExportCallback callback;
   
+  /**
+   * Constructs a new WasmExportFacadeFactory with the specified callback.
+   *
+   * @param callback The WebAssembly callback interface used to handle output operations
+   */
   public WasmExportFacadeFactory(WasmExportCallback callback) {
     this.callback = callback;
   }
@@ -46,17 +56,36 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
     return build(target);
   }
 
+  /**
+   * Interface defining the callback mechanism for WebAssembly export operations.
+   * This interface provides methods to handle output redirection in a WebAssembly context.
+   */
   public interface WasmExportCallback {
 
+    /**
+     * Called when data needs to be written through the WebAssembly interface.
+     *
+     * @param value The string value to be written through the callback
+     */
     void onWrite(String value);
     
   }
 
+  /**
+   * An OutputStream implementation that redirects output through a WebAssembly callback.
+   * This class buffers output and forwards it to the callback when appropriate,
+   * such as when encountering newlines or when explicitly flushed.
+   */
   public class RedirectOutputStream extends OutputStream {
 
     private final WasmExportCallback callback;
     private final StringBuilder buffer;
     
+    /**
+     * Constructs a new RedirectOutputStream with the specified callback.
+     *
+     * @param callback The WebAssembly callback to use for output redirection
+     */
     public RedirectOutputStream(WasmExportCallback callback) {
       this.callback = callback;
       this.buffer = new StringBuilder();
