@@ -22,6 +22,8 @@ class ResultsPresenter {
 
     self._root = document.getElementById(rootId);
     self._statusPresenter = new StatusPresenter(self._root.querySelector(".status-tab"));
+
+    self._secondsOnStart = null;
   }
 
   /**
@@ -31,6 +33,7 @@ class ResultsPresenter {
     const self = this;
     self._statusPresenter.resetProgress();
     self._root.style.display = "block";
+    self._secondsOnStart = self._getEpochSeconds();
   }
 
   /**
@@ -42,6 +45,27 @@ class ResultsPresenter {
   onStep(numSteps, units) {
     const self = this;
     self._statusPresenter.updateProgress(numSteps, units);
+  }
+
+  onComplete(results) {
+    const self = this;
+
+    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
+    const numRecords = results.map((record) => {
+      return [
+        record.getSimResults().length,
+        record.getPatchResults().length,
+        record.getEntityResults().length
+      ].reduce((a, b) => a + b);
+    }).reduce((a, b) => a + b, 0);
+    
+    self._statusPresenter.showComplete(totalSeconds, numRecords);
+  }
+
+  _getEpochSeconds() {
+    const self = this;
+    const now = new Date();
+    return now.getTime() / 1000;
   }
 }
 
@@ -66,8 +90,10 @@ class StatusPresenter {
    */
   resetProgress() {
     const self = this;
-    self.updateProgress(0), "steps";
-    self._root.querySelector(".running-indicator").style.display = "block";
+    self.updateProgress(0, "steps");
+    self._root.querySelector(".running-icon").style.display = "inline-block";
+    self._root.querySelector(".complete-icon").style.display = "none";
+    self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "none");
   }
 
   /**
@@ -80,6 +106,20 @@ class StatusPresenter {
     const self = this;
     self._root.querySelector(".completed-count").innerHTML = numSteps;
     self._root.querySelector(".completed-type").innerHTML = units;
+  }
+
+  showComplete(totalSeconds, numRecords) {
+    const self = this;
+    
+    self._root.querySelector(".running-icon").style.display = "none";
+    self._root.querySelector(".complete-icon").style.display = "inline-block";
+    self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "block");
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds - 60 * minutes);
+    self._root.querySelector(".completed-minutes").innerHTML = minutes;
+    self._root.querySelector(".completed-seconds").innerHTML = seconds;
+    self._root.querySelector(".completed-records").innerHTML = numRecords;
   }
 
 } 

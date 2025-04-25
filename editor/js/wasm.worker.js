@@ -1,4 +1,3 @@
-importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
 
 const NUMBER_REGEX = /(\+|\-)?\d+(\.\d+)?/;

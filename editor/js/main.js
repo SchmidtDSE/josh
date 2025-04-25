@@ -136,6 +136,7 @@ class MainPresenter {
   _onRunComplete() {
     const self = this;
     self._runPresenter.showButtons();
+    self._resultsPresenter.onComplete(self._replicateResults);
   }
 
   /**
