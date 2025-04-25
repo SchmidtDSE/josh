@@ -184,7 +184,7 @@ class GridCrsDefinitionTest {
     BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridX, gridY);
     BigDecimal[] gridCoords = definition.crsToGridCoordinates(crsCoords[0], crsCoords[1]);
 
-    assertTrue(gridX.subtract(gridCoords[0]).abs().compareTo(epsilon) < 0, 
+    assertTrue(gridX.subtract(gridCoords[0]).abs().compareTo(epsilon) < 0,
         "X coordinates should be equal within tolerance");
     assertTrue(gridY.subtract(gridCoords[1]).abs().compareTo(epsilon) < 0,
         "Y coordinates should be equal within tolerance");
