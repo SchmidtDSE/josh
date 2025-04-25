@@ -13,12 +13,12 @@ package org.joshsim.lang.io;
  * This interface provides methods to handle output redirection in a WebAssembly context.
  */
 public interface WasmExportCallback {
-    
-    /**
-     * Called when data needs to be written through the WebAssembly interface.
-     *
-     * @param value The string value to be written through the callback
-     */
-    void onWrite(String value);
-    
+  
+  /**
+   * Called when data needs to be written through the WebAssembly interface.
+   *
+   * @param value The string value to be written through the callback
+   */
+  void onWrite(String value);
+  
 }

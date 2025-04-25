@@ -12,11 +12,18 @@ package org.joshsim.lang.io;
  */
 public class WasmInputOutputLayer implements InputOutputLayer {
 
-  
+  private final WasmExportCallback callback;
+
+  /**
+   * Create a new I/O layer using the given callback for when export data are generated.
+   */
+  public WasmInputOutputLayer(WasmExportCallback callback) {
+    this.callback = callback;
+  }
 
   @Override
   public ExportFacadeFactory getExportFacadeFactory() {
-    return new WasmExportFacadeFactory();
+    return new WasmExportFacadeFactory(callback);
   }
 
 }

@@ -109,7 +109,9 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer();
+    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer(
+        (payload) -> reportData(payload)
+    );
 
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
 

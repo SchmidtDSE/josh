@@ -14,11 +14,6 @@ import java.util.Optional;
 /**
  * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
  */
-/**
- * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
- * This class provides functionality to build export facades that can redirect output
- * through WebAssembly callbacks.
- */
 public class WasmExportFacadeFactory implements ExportFacadeFactory {
 
   private final WasmExportCallback callback;
