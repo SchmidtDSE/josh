@@ -22,6 +22,7 @@ class OutputDatum {
   constructor(target, attributes) {
     const self = this;
     self._target = target;
+    self._attributes = attributes;
   }
 
   /**
@@ -30,7 +31,7 @@ class OutputDatum {
    * @returns {string} The name of the target for this record.
    */
   getTarget() {
-    
+    return this._target;
   }
 
   /**
@@ -42,7 +43,10 @@ class OutputDatum {
    *     otherwise
    */
   getValue(name) {
-    
+    if (!this._attributes.has(name)) {
+      throw new Error(`Attribute '${name}' not found`);
+    }
+    return this._attributes.get(name);
   }
 
 }
@@ -54,7 +58,22 @@ function reportStepComplete(stepCount) {
 
 
 function reportData(source) {
+  const [target, attributesStr] = source.split(':', 2);
+  const attributes = new Map();
   
+  if (attributesStr) {
+    const pairs = attributesStr.split('\t');
+    for (const pair of pairs) {
+      const [key, value] = pair.split('=', 2);
+      if (key && value !== undefined) {
+        // Convert to number if matches number regex
+        attributes.set(key, NUMBER_REGEX.test(value) ? parseFloat(value) : value);
+      }
+    }
+  }
+  
+  const datum = new OutputDatum(target, attributes);
+  postMessage({ type: "outputDatum", success: true, result: datum });
 }
 
 
