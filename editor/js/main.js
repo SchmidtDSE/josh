@@ -144,7 +144,7 @@ class MainPresenter {
   _onStepCompleted(stepsCompleted) {
     const self = this;
 
-    const singleReplicate = self._currentRequest.getReplicates() > 1;
+    const singleReplicate = self._currentRequest.getReplicates() == 1;
     if (singleReplicate) {
       self._resultsPresenter.onStep(stepsCompleted, "steps");
     }
