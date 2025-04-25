@@ -7,6 +7,7 @@
 
 package org.joshsim.lang.io;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
 
@@ -15,6 +16,12 @@ import java.util.Optional;
  */
 public class WasmExportFacadeFactory implements ExportFacadeFactory {
 
+  private final WasmExportCallback callback;
+  
+  public WasmExportFacadeFactory(WasmExportCallback callback) {
+    this.callback = callback;
+  }
+  
   @Override
   public ExportFacade build(ExportTarget target) {
     if (!target.getProtocol().equals("memory")) {
@@ -26,7 +33,7 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
     }
 
     String path = target.getPath();
-    return new MemoryExportFacade(, path);
+    return new MemoryExportFacade(() -> new RedirectOutputStream(callback), path);
   }
 
   @Override
@@ -45,7 +52,7 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
     
   }
 
-  public class RedirectOutputStream implements OutputStream {
+  public class RedirectOutputStream extends OutputStream {
 
     private final WasmExportCallback callback;
     private final StringBuilder buffer;

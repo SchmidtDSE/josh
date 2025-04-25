@@ -53,6 +53,7 @@ public class MemoryWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
     String completeStr = String.format("%s:%s", name, joiner.toString());
     output.write(completeStr.getBytes(StandardCharsets.UTF_8));
+    output.flush();
   }
 
   @Override
