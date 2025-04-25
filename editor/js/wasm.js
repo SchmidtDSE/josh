@@ -133,8 +133,15 @@ class WasmLayer {
 }
 
 
+/**
+ * Builder class for constructing simulation results from individual output records.
+ * Collects and organizes simulation output data into separate collections based on target type.
+ */
 class SimulationResultBuilder {
 
+  /**
+   * Creates a new simulation result builder with empty collections.
+   */
   constructor() {
     const self = this;
     self._simResults = [];
@@ -142,6 +149,11 @@ class SimulationResultBuilder {
     self._entityResults = [];
   }
 
+  /**
+   * Adds a single output record to the appropriate collection based on its target type.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
   add(result) {
     const self = this;
     const targetName = result.getTarget();
@@ -153,6 +165,11 @@ class SimulationResultBuilder {
     targetCollection.push(result);
   }
 
+  /**
+   * Constructs and returns a SimulationResult from the collected output records.
+   * 
+   * @returns {SimulationResult} A new SimulationResult containing all collected records.
+   */
   build() {
     const self = this;
     return new SimulationResult(self._simResults, self._patchResults, self._entityResults);
@@ -161,8 +178,18 @@ class SimulationResultBuilder {
 }
 
 
+/**
+ * Container class for organized simulation results, separating outputs by their target type.
+ */
 class SimulationResult {
 
+  /**
+   * Creates a new simulation result container.
+   * 
+   * @param {Array<OutputDatum>} simResults - Collection of simulation-level output records.
+   * @param {Array<OutputDatum>} patchResults - Collection of patch-level output records.
+   * @param {Array<OutputDatum>} entityResults - Collection of entity-level output records.
+   */
   constructor(simResults, patchResults, entityResults) {
     const self = this;
     self._simResults = simResults;
@@ -170,16 +197,31 @@ class SimulationResult {
     self._entityResults = entityResults;
   }
 
+  /**
+   * Gets the collection of simulation-level output records.
+   * 
+   * @returns {Array<OutputDatum>} Array of simulation output records.
+   */
   getSimResults() {
     const self = this;
     return self._simResults;
   }
 
+  /**
+   * Gets the collection of patch-level output records.
+   * 
+   * @returns {Array<OutputDatum>} Array of patch output records.
+   */
   getPatchResults() {
     const self = this;
     return self._patchResults;
   }
 
+  /**
+   * Gets the collection of entity-level output records.
+   * 
+   * @returns {Array<OutputDatum>} Array of entity output records.
+   */
   getEntityResults() {
     const self = this;
     return self._entityResults;
