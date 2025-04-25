@@ -1,9 +1,9 @@
-
 /**
  * Logic for interfacing with WebAssembly components.
  * 
  * @license BSD-3-Clause
  */
+
 
 /**
  * Wrapper class for WebAssembly layer functionality.
@@ -21,7 +21,7 @@ class WasmLayer {
     self._stepCallback = stepCallback;
     self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
-    self._dataset = null;
+    self._datasetBuilder = null;
     self._initPromise = new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, result, error, success } = e.data;
@@ -100,7 +100,7 @@ class WasmLayer {
     const self = this;
     await self._initPromise;
 
-    self._dataset = [];
+    self._datasetBuilder = new SimulationResultBuilder();
     
     return new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
@@ -111,11 +111,11 @@ class WasmLayer {
         }
         if (type === "runSimulation" && success) {
           // Have to throw us on top of the event queue
-          const completedDataset = self._dataset;
-          setTimeout(() => { resolve(completedDataset); }, 100);
+          const completedBuilder = self._datasetBuilder;
+          setTimeout(() => { resolve(completedBuilder.build()); }, 100);
         } else if (type === "reportStep") {
           self._onStepCompleted(e.data.result);
-        } else if (type === "") {
+        } else if (type === "outputDatum") {
           self._dataset.push(e.data.result);
         }
       };
@@ -132,6 +132,62 @@ class WasmLayer {
   }
 }
 
+
+class SimulationResultBuilder {
+
+  constructor() {
+    const self = this;
+    self._simResults = [];
+    self._patchResults = [];
+    self._entityResults = [];
+  }
+
+  add(result) {
+    const self = this;
+    const targetName = result.getTarget();
+    const targetCollection = {
+      "simulation": self._simResults,
+      "patches": self._patchResults,
+      "entites": self._entityResults
+    }[targetName];
+    targetCollection.push(result);
+  }
+
+  build() {
+    const self = this;
+    return new SimulationResult(self._simResults, self._patchResults, self._entityResults);
+  }
+
+}
+
+
+class SimulationResult {
+
+  constructor(simResults, patchResults, entityResults) {
+    const self = this;
+    self._simResults = simResults;
+    self._patchResults = patchResults;
+    self._entityResults = entityResults;
+  }
+
+  getSimResults() {
+    const self = this;
+    return self._simResults;
+  }
+
+  getPatchResults() {
+    const self = this;
+    return self._patchResults;
+  }
+
+  getEntityResults() {
+    const self = this;
+    return self._entityResults;
+  }
+  
+}
+
+  
 /**
  * Class representing a possible code error or indication that no error was found.
  */
