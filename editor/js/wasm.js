@@ -236,6 +236,7 @@ class SimulationResult {
  * Record of a possible code error or indication that no error was found.
  */
 class CodeErrorMaybe {
+  
   /**
    * Creates a new code error wrapper.
    * 
@@ -247,7 +248,7 @@ class CodeErrorMaybe {
   }
 
   /**
-   * Checks if an error exists.
+   * Checks if an error was encountered..
    * 
    * @returns {boolean} True if there is an error message, false otherwise.
    */
@@ -273,7 +274,7 @@ let wasmLayer = null;
 /**
  * Gets or creates the WASM layer singleton.
  * 
- * @param {function} stepCallback - Callback function that will be called with the number of 
+ * @param {function} stepCallback - Callback function that will be called with the number of
  *     completed steps when a simulation step finishes. Required when creating a new layer.
  * @returns {WasmLayer} The WASM layer singleton instance.
  * @throws {Error} If stepCallback is undefined when creating a new layer.
