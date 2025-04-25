@@ -232,17 +232,35 @@ class SimulationResult {
 /**
  * Record of a possible code error or indication that no error was found.
  */
+/**
+ * Record of a possible code error or indication that no error was found.
+ */
 class CodeErrorMaybe {
+  /**
+   * Creates a new code error wrapper.
+   * 
+   * @param {string} errorStr - The error message if one exists, or empty string if no error.
+   */
   constructor(errorStr) {
     const self = this;
     self._errorStr = errorStr;
   }
 
+  /**
+   * Checks if an error exists.
+   * 
+   * @returns {boolean} True if there is an error message, false otherwise.
+   */
   hasError() {
     const self = this;
     return self._errorStr !== "";
   }
 
+  /**
+   * Gets the error message.
+   * 
+   * @returns {string} The error message or empty string if no error exists.
+   */
   getError() {
     const self = this;
     return self._errorStr;
@@ -252,6 +270,14 @@ class CodeErrorMaybe {
 
 let wasmLayer = null;
 
+/**
+ * Gets or creates the WASM layer singleton.
+ * 
+ * @param {function} stepCallback - Callback function that will be called with the number of 
+ *     completed steps when a simulation step finishes. Required when creating a new layer.
+ * @returns {WasmLayer} The WASM layer singleton instance.
+ * @throws {Error} If stepCallback is undefined when creating a new layer.
+ */
 function getWasmLayer(stepCallback) {
   if (wasmLayer === null) {
     if (stepCallback === undefined) {
