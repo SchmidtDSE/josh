@@ -134,8 +134,7 @@ class WasmLayer {
 
 
 /**
- * Builder class for constructing simulation results from individual output records.
- * Collects and organizes simulation output data into separate collections based on target type.
+ * Builder for constructing simulation results from individual output records.
  */
 class SimulationResultBuilder {
 
@@ -179,7 +178,7 @@ class SimulationResultBuilder {
 
 
 /**
- * Container class for organized simulation results, separating outputs by their target type.
+ * Record of a simulation's results by target type.
  */
 class SimulationResult {
 
