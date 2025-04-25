@@ -1,12 +1,62 @@
 importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
 
+const NUMBER_REGEX = /(\+|\-)?\d+(\.\d+)?/;
+
 let wasmLayer = null;
 let postMessage = null;
+
+
+/**
+ * Record describing an export from the engine running in WASM or JS emulation.
+ */
+class OutputDatum {
+
+  /**
+   * Create a new output record.
+   *
+   * @param {string} target - The name of the target as parsed from export URI.
+   * @param {Map} attributes - Map from string name of attribute to the value of that attribute,
+   *     either as a number if the input matched a number regex or a string otherwise.
+   */
+  constructor(target, attributes) {
+    const self = this;
+    self._target = target;
+  }
+
+  /**
+   * Get the name of the target that this output record was for as parsed from export URI.
+   *
+   * @returns {string} The name of the target for this record.
+   */
+  getTarget() {
+    
+  }
+
+  /**
+   * The value associated with the given attribute name.
+   *
+   * @throws Exception thrown if the value by the given name is not found.
+   * @param {string} name - Name of the attribute for which a value should be retrieved.
+   * @returns Attribute value Either as a number if the input matched a number regex or a string
+   *     otherwise
+   */
+  getValue(name) {
+    
+  }
+
+}
+
 
 function reportStepComplete(stepCount) {
   postMessage({ type: "reportStep", success: true, result: stepCount })
 }
+
+
+function reportData(source) {
+  
+}
+
 
 self.onmessage = async function(e) {
   const { type, data } = e.data;
