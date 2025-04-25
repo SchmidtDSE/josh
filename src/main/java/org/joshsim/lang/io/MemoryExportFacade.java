@@ -29,10 +29,11 @@ public class MemoryExportFacade implements ExportFacade {
    * Constructs a CsvExportFacade object with the specified export target / output stream strategy.
    *
    * @param outputStrategy The strategy to provide an output stream for writing the exported data.
+   * @param target The name of this export like "patches" as it should be tagged in memory.
    */
-  public MemoryExportFacade(OutputStreamStrategy outputStrategy) {
+  public MemoryExportFacade(OutputStreamStrategy outputStrategy, String target) {
     serializeStrategy = new MapSerializeStrategy();
-    writeStrategy = new MemoryWriteStrategy();
+    writeStrategy = new MemoryWriteStrategy(target);
 
     try {
       outputStream = outputStrategy.open();

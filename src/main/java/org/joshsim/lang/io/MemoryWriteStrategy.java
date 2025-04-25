@@ -28,6 +28,17 @@ import org.joshsim.compat.CompatibleStringJoiner;
  */
 public class MemoryWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
 
+  private final String name;
+
+  /**
+   * Create a new strategy which writes to a target using the in-memory format.
+   *
+   * @param name The name of the target for which records are being written.
+   */
+  public MemoryWriteStrategy(String name) {
+    this.name = name;
+  }
+  
   @Override
   public void write(Map<String, String> record, OutputStream output) throws IOException {
     CompatibilityLayer compatibilityLayer = CompatibilityLayerKeeper.get();
@@ -40,7 +51,8 @@ public class MemoryWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       joiner.add(assignment);
     }
 
-    output.write(joiner.toString().getBytes(StandardCharsets.UTF_8));
+    String completeStr = String.format("%s:%s", name, joiner.toString());
+    output.write(completeStr.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

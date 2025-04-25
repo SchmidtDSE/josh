@@ -26,7 +26,7 @@ class MemoryWriteStrategyTest {
   @Test
   void shouldWriteSingleRecordToOutputStream() throws IOException {
     // Given
-    MemoryWriteStrategy strategy = new MemoryWriteStrategy();
+    MemoryWriteStrategy strategy = new MemoryWriteStrategy("target");
     Map<String, String> record = new HashMap<>();
     record.put("type", "Forever");
     record.put("age", "30");
@@ -38,6 +38,7 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
+    assertTrue(result.contains("target:"));
     assertTrue(result.contains("type=Forever"));
     assertTrue(result.contains("age=30"));
   }
@@ -45,7 +46,7 @@ class MemoryWriteStrategyTest {
   @Test
   void shouldHandleEmptyRecord() throws IOException {
     // Given
-    MemoryWriteStrategy strategy = new MemoryWriteStrategy();
+    MemoryWriteStrategy strategy = new MemoryWriteStrategy("target");
     Map<String, String> record = new HashMap<>();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -55,13 +56,13 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
-    assertTrue(result.isEmpty());
+    assertTrue(result.contains("target:"));
   }
 
   @Test
   void shouldEscapeTabsAndNewlines() throws IOException {
     // Given
-    MemoryWriteStrategy strategy = new MemoryWriteStrategy();
+    MemoryWriteStrategy strategy = new MemoryWriteStrategy("target");
     Map<String, String> record = new HashMap<>();
     record.put("description", "Line 1\nLine 2\tTabbed");
     ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -72,13 +73,14 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
+    assertTrue(result.contains("target:"));
     assertTrue(result.contains("description=Line 1    Line 2    Tabbed"));
   }
 
   @Test
   void shouldHandleMultipleRecords() throws IOException {
     // Given
-    MemoryWriteStrategy strategy = new MemoryWriteStrategy();
+    MemoryWriteStrategy strategy = new MemoryWriteStrategy("target");
     Map<String, String> record1 = new HashMap<>();
     record1.put("type", "Type1");
     Map<String, String> record2 = new HashMap<>();
@@ -92,6 +94,7 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
+    assertTrue(result.contains("target:"));
     assertTrue(result.contains("type=Type1"));
     assertTrue(result.contains("type=Type2"));
   }

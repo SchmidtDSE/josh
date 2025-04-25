@@ -7,6 +7,7 @@
 
 package org.joshsim.lang.io;
 
+import java.io.OutputStream;
 import java.util.Optional;
 
 /**
@@ -16,16 +17,42 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
 
   @Override
   public ExportFacade build(ExportTarget target) {
-    throw new UnsupportedOperationException("WASM export facade not yet implemented");
+    if (!target.getProtocol().equals("memory")) {
+      throw new IllegalArgumentException("Only in-memory targets supported on WASM.");
+    }
+
+    if (!target.getHost().equals("editor")) {
+      throw new IllegalArgumentException("Only editor targets supported on WASM.");
+    }
+
+    String path = target.getPath();
+    return new MemoryExportFacade(, path);
   }
 
   @Override
   public ExportFacade build(ExportTarget target, Iterable<String> header) {
-    throw new UnsupportedOperationException("WASM export facade not yet implemented");
+    return build(target);
   }
 
   @Override
   public ExportFacade build(ExportTarget target, Optional<Iterable<String>> header) {
-    throw new UnsupportedOperationException("WASM export facade not yet implemented");
+    return build(target);
   }
+
+  public interface WasmExportCallback {
+
+    void onWrite(String value);
+    
+  }
+
+  public class RedirectOutputStream implements OutputStream {
+
+    private final WasmExportCallback callback;
+    
+    public RedirectOutputStream(WasmExportCallback callback) {
+      this.callback = callback;
+    }
+    
+  }
+  
 }
