@@ -28,7 +28,7 @@ class MemoryWriteStrategyTest {
     // Given
     MemoryWriteStrategy strategy = new MemoryWriteStrategy();
     Map<String, String> record = new HashMap<>();
-    record.put("name", "John");
+    record.put("type", "Forever");
     record.put("age", "30");
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -38,7 +38,7 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
-    assertTrue(result.contains("name=John"));
+    assertTrue(result.contains("type=Forever"));
     assertTrue(result.contains("age=30"));
   }
 
@@ -80,9 +80,9 @@ class MemoryWriteStrategyTest {
     // Given
     MemoryWriteStrategy strategy = new MemoryWriteStrategy();
     Map<String, String> record1 = new HashMap<>();
-    record1.put("name", "John");
+    record1.put("type", "Type1");
     Map<String, String> record2 = new HashMap<>();
-    record2.put("name", "Jane");
+    record2.put("type", "Type2");
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     // When
@@ -92,7 +92,7 @@ class MemoryWriteStrategyTest {
 
     // Then
     String result = output.toString();
-    assertTrue(result.contains("name=John"));
-    assertTrue(result.contains("name=Jane"));
+    assertTrue(result.contains("type=Type1"));
+    assertTrue(result.contains("type=Type2"));
   }
 }
