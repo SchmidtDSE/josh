@@ -44,7 +44,7 @@ class OutputDatum {
    */
   getValue(name) {
     if (!this._attributes.has(name)) {
-      throw new Error(`Attribute '${name}' not found`);
+      throw "Value for attribute " + name + " not found.";
     }
     return this._attributes.get(name);
   }
@@ -58,17 +58,26 @@ function reportStepComplete(stepCount) {
 
 
 function reportData(source) {
-  const [target, attributesStr] = source.split(':', 2);
+  const firstPieces = source.split(':', 2);
+  const target = firstPieces[0];
+  const attributesStr = firstPieces[1];
+  
   const attributes = new Map();
   
-  if (attributesStr) {
-    const pairs = attributesStr.split('\t');
-    for (const pair of pairs) {
-      const [key, value] = pair.split('=', 2);
-      if (key && value !== undefined) {
-        // Convert to number if matches number regex
-        attributes.set(key, NUMBER_REGEX.test(value) ? parseFloat(value) : value);
-      }
+  if (!attributesStr) {
+    return;
+  }
+  
+  for (const pair of pairs) {
+    const pairPieces = pair.split('=', 2);
+    const key = pairPieces[0];
+    const value = pairPieces[1];
+
+    const valid = key && value !== undefined;
+    
+    if (valid) {
+      const isNumber = NUMBER_REGEX.test(value);
+      attributes.set(key, isNumber ? parseFloat(value) : value);
     }
   }
   
