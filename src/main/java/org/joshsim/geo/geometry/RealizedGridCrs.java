@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.crs.DefaultDerivedCRS;
 import org.apache.sis.referencing.crs.DefaultProjectedCRS;
 import org.apache.sis.referencing.cs.DefaultCartesianCS;
 import org.apache.sis.referencing.cs.DefaultCoordinateSystemAxis;
@@ -23,8 +24,10 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.crs.DerivedCRS;
 import org.opengis.referencing.crs.GeographicCRS;
 import org.opengis.referencing.crs.ProjectedCRS;
+import org.opengis.referencing.crs.SingleCRS;
 import org.opengis.referencing.cs.AxisDirection;
 import org.opengis.referencing.cs.CartesianCS;
 import org.opengis.referencing.cs.CoordinateSystemAxis;
@@ -75,29 +78,40 @@ public class RealizedGridCrs {
   }
 
   private CartesianCS getGridCartesianCs() throws FactoryException {
-    // Create a GeodeticObjectFactory
-    GeodeticObjectFactory factory = new GeodeticObjectFactory();
-    
     // Create easting and northing axes using the factory
-    CoordinateSystemAxis eastingAxis = factory.createCoordinateSystemAxis(
+    CoordinateSystemAxis eastingAxis = geodeticObjectFactory.createCoordinateSystemAxis(
         Map.of("name", "Easting"),
         "E",
         AxisDirection.EAST, 
         Units.METRE);
     
-    CoordinateSystemAxis northingAxis = factory.createCoordinateSystemAxis(
+    CoordinateSystemAxis northingAxis = geodeticObjectFactory.createCoordinateSystemAxis(
         Map.of("name", "Northing"),
         "N",
         AxisDirection.NORTH,
         Units.METRE);
     
     // Create the cartesian CS with the axes using the factory
-    CartesianCS cartCs = factory.createCartesianCS(
+    CartesianCS cartCs = geodeticObjectFactory.createCartesianCS(
         Map.of("name", "Grid Cartesian CS"),
         eastingAxis,
         northingAxis);
         
     return cartCs;
+  }
+
+  /**
+   * Creates common CRS properties used by both CRS creation methods.
+   *
+   * @param name Name for the CRS
+   * @return Map with common properties
+   */
+  private Map<String, Object> createCrsProperties(String name) {
+    Map<String, Object> properties = new HashMap<>();
+    properties.put("name", name);
+    String uniqueId = generateGridCrsCode(definition);
+    properties.put("identifiers", uniqueId);
+    return properties;
   }
 
   /**
@@ -135,22 +149,17 @@ public class RealizedGridCrs {
     OperationMethod operationMethod = new DefaultOperationMethod(concatenated);
 
     // Create a conversion from the source CRS
-    Map<String, Object> properties = new HashMap<>();
-    properties.put("name", "Custom Grid Projection");
     Conversion conversion = coordinateOpsFactory.createDefiningConversion(
-        properties,
+        Map.of("name", "Custom Grid Projection"),
         operationMethod, 
         params
     );
 
-    // Create a cartesian coordinate system using the factory
+    // Create a cartesian coordinate system
     CartesianCS cartCs = getGridCartesianCs();
 
     // Create the projected CRS using the factory
-    Map<String, Object> crsProperties = new HashMap<>();
-    crsProperties.put("name", definition.getName());
-    String uniqueId = generateGridCrsCode(definition);
-    crsProperties.put("identifiers", uniqueId);
+    Map<String, Object> crsProperties = createCrsProperties(definition.getName());
     
     ProjectedCRS gridCrs = geodeticObjectFactory.createProjectedCRS(
         crsProperties,
@@ -161,6 +170,7 @@ public class RealizedGridCrs {
     
     return gridCrs;
   }
+  
   /**
    * Creates a grid CRS based on a projected CRS.
    *
@@ -175,11 +185,8 @@ public class RealizedGridCrs {
     final double topLeftY = extents.getTopLeftY().doubleValue();
     final double cellSize = getCellSize();
     
-    // Create a math transform factory
-    MathTransformFactory mtFactory = new DefaultMathTransformFactory();
-    
-    // Set up the Affine transform parameters
-    ParameterValueGroup params = mtFactory.getDefaultParameters("Affine");
+    // Set up the Affine transform parameters for our grid
+    ParameterValueGroup params = mathTransformFactory.getDefaultParameters("Affine");
     params.parameter("num_row").setValue(3);
     params.parameter("num_col").setValue(3);
     params.parameter("elt_0_0").setValue(cellSize);
@@ -191,31 +198,41 @@ public class RealizedGridCrs {
     params.parameter("elt_2_0").setValue(0.0);
     params.parameter("elt_2_1").setValue(0.0);
     params.parameter("elt_2_2").setValue(1.0);
-    
+      
     // Create the affine transform
-    MathTransform affineTransform = mtFactory.createParameterizedTransform(params);
+    MathTransform affineTransform = mathTransformFactory.createParameterizedTransform(params);
     
+    // Define operation method for our affine transform
+    OperationMethod operationMethod = new DefaultOperationMethod(affineTransform);
+
     // Create a cartesian coordinate system
-    DefaultCartesianCS cartCS = DefaultCartesianCS.PROJECTED;
+    CartesianCS cartCs = getGridCartesianCs();
     
-    // Create a conversion from the source CRS
-    Map<String, Object> properties = new HashMap<>();
-    properties.put("name", "Grid Mapping");
-    DefaultConversion conversion = new DefaultConversion(
-            properties,
-            affineTransform, params);
+    // Create a conversion using the factory
+    Conversion conversion = coordinateOpsFactory.createDefiningConversion(
+        Map.of("name", "Grid Mapping"),
+        operationMethod,
+        params
+    );
     
-    // Create the projected CRS
-    Map<String, Object> crsProperties = new HashMap<>();
-    crsProperties.put("name", definition.getName());
-    String uniqueId = generateGridCrsCode(definition);
-    crsProperties.put("identifiers", uniqueId);
+    // Create properties for the derived CRS
+    Map<String, Object> crsProperties = createCrsProperties(definition.getName());
     
-    DefaultProjectedCRS gridCRS = new DefaultProjectedCRS(
-            crsProperties,
-            projCrs, conversion, cartCS);
-    
-    return gridCRS;
+    // Add type check to prevent runtime errors
+    if (!(projCrs instanceof SingleCRS)) {
+      throw new FactoryException(
+          "Base CRS must be a SingleCRS for DefaultDerivedCRS");
+    }
+
+    // Create a derived CRS instead of a projected CRS
+    DerivedCRS derivedCrs = geodeticObjectFactory.createDerivedCRS(
+        crsProperties,
+        projCrs, 
+        conversion, 
+        cartCs
+    );
+
+    return derivedCrs;
   }
 
   /**
