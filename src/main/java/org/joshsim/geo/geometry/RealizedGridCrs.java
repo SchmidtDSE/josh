@@ -1,30 +1,56 @@
 package org.joshsim.geo.geometry;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import org.apache.sis.io.wkt.WKTDictionary;
-import org.apache.sis.metadata.iso.citation.DefaultCitation;
+import java.util.Map;
+import java.util.HashMap;
+
 import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.crs.DefaultProjectedCRS;
+import org.apache.sis.referencing.cs.DefaultCartesianCS;
+import org.apache.sis.referencing.cs.DefaultCoordinateSystemAxis;
+import org.apache.sis.referencing.factory.GeodeticAuthorityFactory;
+import org.apache.sis.referencing.factory.GeodeticObjectFactory;
+import org.apache.sis.referencing.operation.DefaultConversion;
+import org.apache.sis.referencing.operation.DefaultCoordinateOperationFactory;
+import org.apache.sis.referencing.operation.DefaultOperationMethod;
+import org.apache.sis.referencing.operation.transform.DefaultMathTransformFactory;
+import org.apache.sis.referencing.operation.transform.LinearTransform;
+import org.apache.sis.referencing.operation.transform.MathTransforms;
+import org.apache.sis.measure.Units;
+import org.apache.sis.parameter.DefaultParameterValueGroup;
+import org.opengis.referencing.operation.OperationMethod;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
+import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.crs.GeographicCRS;
+import org.opengis.referencing.crs.ProjectedCRS;
+import org.opengis.referencing.cs.AxisDirection;
+import org.opengis.referencing.cs.CartesianCS;
+import org.opengis.referencing.cs.CoordinateSystemAxis;
+import org.opengis.referencing.operation.Conversion;
 import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.MathTransformFactory;
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.util.FactoryException;
 
 /**
- * Real implementation of Grid CRS using SIS's preffered route for a custom CRS.
- * Uses a `Transverse Mercator` projection, with a custom origin to ensure that
- * we minimize the distortion of the grid in the area of interest.
- *
+ * Real implementation of Grid CRS using direct construction of coordinate reference systems.
+ * Uses a `Transverse Mercator` projection or affine transformation depending on the base CRS,
+ * with a custom origin to minimize distortion in the area of interest.
  */
 public class RealizedGridCrs {
   private final GridCrsDefinition definition;
   private final CoordinateReferenceSystem gridProjectedCrs;
   private final CoordinateReferenceSystem baseCrs;
   private static final String GRID_CRS_AUTH = "JOSHSIM_GRID";
+
+  // SIS factories
+  private final GeodeticObjectFactory geodeticObjectFactory = new GeodeticObjectFactory();
+  private final MathTransformFactory mathTransformFactory = new DefaultMathTransformFactory();
+  private final DefaultCoordinateOperationFactory coordinateOpsFactory = 
+      new DefaultCoordinateOperationFactory();
 
   /**
   * Creates a realized grid CRS from a grid CRS definition.
@@ -40,25 +66,157 @@ public class RealizedGridCrs {
     // Create the base CRS from the provided code
     this.baseCrs = CRS.forCode(definition.getBaseCrsCode());
 
-    // Generate a unique code for our grid CRS
-    String gridCrsCode = generateGridCrsCode(definition);
-
-    // Create appropriate WKT based on CRS type
-    String wkt;
+    // Create appropriate CRS based on base CRS type
     if (baseCrs instanceof GeographicCRS) {
-      wkt = createGridCrsWktFromGeo(definition, (GeographicCRS) baseCrs);
+      this.gridProjectedCrs = createGridCrsFromGeo((GeographicCRS) baseCrs);
     } else {
-      wkt = createGridCrsWktFromProj(definition, baseCrs);
+      this.gridProjectedCrs = createGridCrsFromProj(baseCrs);
     }
-
-    // Register and retrieve the custom CRS
-    WKTDictionary dictionary = new WKTDictionary(new DefaultCitation(GRID_CRS_AUTH));
-    dictionary.load(new BufferedReader(new StringReader(wkt)));
-
-    // Create the grid CRS from the WKT string
-    this.gridProjectedCrs = CRS.forCode(gridCrsCode);
   }
 
+  private CartesianCS getGridCartesianCs() throws FactoryException {
+    // Create a GeodeticObjectFactory
+    GeodeticObjectFactory factory = new GeodeticObjectFactory();
+    
+    // Create easting and northing axes using the factory
+    CoordinateSystemAxis eastingAxis = factory.createCoordinateSystemAxis(
+        Map.of("name", "Easting"),
+        "E",
+        AxisDirection.EAST, 
+        Units.METRE);
+    
+    CoordinateSystemAxis northingAxis = factory.createCoordinateSystemAxis(
+        Map.of("name", "Northing"),
+        "N",
+        AxisDirection.NORTH,
+        Units.METRE);
+    
+    // Create the cartesian CS with the axes using the factory
+    CartesianCS cartCs = factory.createCartesianCS(
+        Map.of("name", "Grid Cartesian CS"),
+        eastingAxis,
+        northingAxis);
+        
+    return cartCs;
+  }
+
+  /**
+   * Creates a grid CRS based on a geographic CRS using direct construction.
+   *
+   * @param geoCrs The base geographic CRS
+   * @return The projected grid CRS
+   * @throws FactoryException If CRS creation fails
+   */
+  private CoordinateReferenceSystem createGridCrsFromGeo(GeographicCRS geoCrs) 
+      throws FactoryException {
+    PatchBuilderExtents extents = definition.getExtents();
+    final double topLeftX = extents.getTopLeftX().doubleValue();
+    final double topLeftY = extents.getTopLeftY().doubleValue();
+    final double cellSize = getCellSize();
+
+    // Set up the Transverse Mercator parameters
+    ParameterValueGroup params = mathTransformFactory.getDefaultParameters("Transverse Mercator");
+    params.parameter("central_meridian").setValue(topLeftX);
+    params.parameter("latitude_of_origin").setValue(topLeftY);
+    params.parameter("scale_factor").setValue(1.0);
+    params.parameter("false_easting").setValue(0.0);
+    params.parameter("false_northing").setValue(0.0);
+    
+    // Create the projection transform
+    MathTransform projTransform = mathTransformFactory.createParameterizedTransform(params);
+
+    // Create the grid scaling transform
+    LinearTransform scaleTransform = MathTransforms.scale(cellSize, cellSize);
+    
+    // Chain the transforms: first project, then scale
+    MathTransform concatenated = MathTransforms.concatenate(projTransform, scaleTransform);
+    
+    // Define operation method for our concatenated transform
+    OperationMethod operationMethod = new DefaultOperationMethod(concatenated);
+
+    // Create a conversion from the source CRS
+    Map<String, Object> properties = new HashMap<>();
+    properties.put("name", "Custom Grid Projection");
+    Conversion conversion = coordinateOpsFactory.createDefiningConversion(
+        properties,
+        operationMethod, 
+        params
+    );
+
+    // Create a cartesian coordinate system using the factory
+    CartesianCS cartCs = getGridCartesianCs();
+
+    // Create the projected CRS using the factory
+    Map<String, Object> crsProperties = new HashMap<>();
+    crsProperties.put("name", definition.getName());
+    String uniqueId = generateGridCrsCode(definition);
+    crsProperties.put("identifiers", uniqueId);
+    
+    ProjectedCRS gridCrs = geodeticObjectFactory.createProjectedCRS(
+        crsProperties,
+        geoCrs, 
+        conversion, 
+        cartCs
+    );
+    
+    return gridCrs;
+  }
+  /**
+   * Creates a grid CRS based on a projected CRS.
+   *
+   * @param projCrs The base projected CRS
+   * @return The grid CRS
+   * @throws FactoryException If CRS creation fails
+   */
+  private CoordinateReferenceSystem createGridCrsFromProj(CoordinateReferenceSystem projCrs) 
+      throws FactoryException {
+    PatchBuilderExtents extents = definition.getExtents();
+    final double topLeftX = extents.getTopLeftX().doubleValue();
+    final double topLeftY = extents.getTopLeftY().doubleValue();
+    final double cellSize = getCellSize();
+    
+    // Create a math transform factory
+    MathTransformFactory mtFactory = new DefaultMathTransformFactory();
+    
+    // Set up the Affine transform parameters
+    ParameterValueGroup params = mtFactory.getDefaultParameters("Affine");
+    params.parameter("num_row").setValue(3);
+    params.parameter("num_col").setValue(3);
+    params.parameter("elt_0_0").setValue(cellSize);
+    params.parameter("elt_0_1").setValue(0.0);
+    params.parameter("elt_0_2").setValue(topLeftX);
+    params.parameter("elt_1_0").setValue(0.0);
+    params.parameter("elt_1_1").setValue(cellSize);
+    params.parameter("elt_1_2").setValue(topLeftY);
+    params.parameter("elt_2_0").setValue(0.0);
+    params.parameter("elt_2_1").setValue(0.0);
+    params.parameter("elt_2_2").setValue(1.0);
+    
+    // Create the affine transform
+    MathTransform affineTransform = mtFactory.createParameterizedTransform(params);
+    
+    // Create a cartesian coordinate system
+    DefaultCartesianCS cartCS = DefaultCartesianCS.PROJECTED;
+    
+    // Create a conversion from the source CRS
+    Map<String, Object> properties = new HashMap<>();
+    properties.put("name", "Grid Mapping");
+    DefaultConversion conversion = new DefaultConversion(
+            properties,
+            affineTransform, params);
+    
+    // Create the projected CRS
+    Map<String, Object> crsProperties = new HashMap<>();
+    crsProperties.put("name", definition.getName());
+    String uniqueId = generateGridCrsCode(definition);
+    crsProperties.put("identifiers", uniqueId);
+    
+    DefaultProjectedCRS gridCRS = new DefaultProjectedCRS(
+            crsProperties,
+            projCrs, conversion, cartCS);
+    
+    return gridCRS;
+  }
 
   /**
    * Generates a unique CRS code for the grid CRS.
@@ -74,151 +232,6 @@ public class RealizedGridCrs {
 
     // Format as authority:code
     return GRID_CRS_AUTH + ":" + uniqueId;
-  }
-
-  /**
-   * Creates a WKT string representing a projected CRS based on a geographic CRS.
-   * Uses a two-step approach for clarity:
-   * 1. First creates a Transverse Mercator projection from the geographic CRS
-   * 2. Then applies an affine transformation to incorporate the cell size
-   *
-   * @param definition The grid CRS definition
-   * @param geoCrs The base geographic CRS
-   * @return WKT string for the grid CRS
-   * @throws FactoryException If CRS creation fails
-   * @throws IOException If WKT parsing fails
-   */
-  private String createGridCrsWktFromGeo(
-      GridCrsDefinition definition,
-      GeographicCRS geoCrs
-  ) throws FactoryException, IOException {
-    PatchBuilderExtents extents = definition.getExtents();
-    final double topLeftX = extents.getTopLeftX().doubleValue();
-    final double topLeftY = extents.getTopLeftY().doubleValue();
-
-    // Generate a unique identifier for the intermediate and final CRSs
-    final String uniqueId = generateGridCrsCode(definition).split(":")[1];
-
-    // Step 1: Create intermediate Transverse Mercator projection
-    StringBuilder tmWkt = new StringBuilder();
-    tmWkt.append("ProjectedCRS[\"TM_").append(definition.getName()).append("\",\n");
-    tmWkt.append("  BaseGeodCRS[\"").append(geoCrs.getName().getCode()).append("\",\n");
-
-    // Add datum information
-    tmWkt.append("    Datum[\"").append(geoCrs.getDatum().getName().getCode()).append("\"],\n");
-    tmWkt.append("    CS[ellipsoidal, 2],\n");
-    tmWkt.append("      Axis[\"Latitude\", north],\n");
-    tmWkt.append("      Axis[\"Longitude\", east],\n");
-    tmWkt.append("      Unit[\"degree\", 0.017453292519943295]\n");
-    tmWkt.append("  ],\n");
-
-    // Add Transverse Mercator projection parameters
-    tmWkt.append("  Conversion[\"Transverse Mercator\",\n");
-    tmWkt.append("    Method[\"Transverse Mercator\"],\n");
-    tmWkt.append("    Parameter[\"central_meridian\", ").append(topLeftX).append("],\n");
-    tmWkt.append("    Parameter[\"latitude_of_origin\", ").append(topLeftY).append("],\n");
-    tmWkt.append("    Parameter[\"scale_factor\", 1.0],\n");
-    tmWkt.append("    Parameter[\"false_easting\", 0.0],\n");
-    tmWkt.append("    Parameter[\"false_northing\", 0.0]\n");
-    tmWkt.append("  ],\n");
-
-    // Add coordinate system for Transverse Mercator
-    tmWkt.append("  CS[Cartesian, 2],\n");
-    tmWkt.append("    Axis[\"Easting (E)\", east],\n");
-    tmWkt.append("    Axis[\"Northing (N)\", north],\n");
-    tmWkt.append("    Unit[\"metre\", 1],\n");
-
-    // Add identifier for TM CRS
-    tmWkt.append("  Id[\"").append(GRID_CRS_AUTH)
-      .append("\", \"TM_").append(uniqueId).append("\"]]");
-
-    // Register the Transverse Mercator CRS
-    WKTDictionary tmDict = new WKTDictionary(new DefaultCitation(GRID_CRS_AUTH));
-    tmDict.load(new BufferedReader(new StringReader(tmWkt.toString())));
-
-    // Step 2: Create the Grid CRS with affine transformation
-    StringBuilder gridWkt = new StringBuilder();
-    gridWkt.append("ProjectedCRS[\"").append(definition.getName()).append("\",\n");
-
-    // Reference the intermediate TM CRS
-    gridWkt.append("  BaseProjectedCRS[\"TM_").append(definition.getName()).append("\"],\n");
-
-    // Add affine transformation for cell size scaling
-    gridWkt.append("  Conversion[\"Cell Size Scaling\",\n");
-    gridWkt.append("    Method[\"Affine parametric transformation\"],\n");
-    gridWkt.append("    Parameter[\"num_row\", 3],\n");
-    gridWkt.append("    Parameter[\"num_col\", 3],\n");
-    gridWkt.append("    Parameter[\"elt_0_0\", ").append(getCellSize()).append("],\n");
-    gridWkt.append("    Parameter[\"elt_0_1\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_0_2\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_1_0\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_1_1\", ").append(getCellSize()).append("],\n");
-    gridWkt.append("    Parameter[\"elt_1_2\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_2_0\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_2_1\", 0.0],\n");
-    gridWkt.append("    Parameter[\"elt_2_2\", 1.0]\n");
-    gridWkt.append("  ],\n");
-
-    // Add coordinate system for final Grid CRS
-    gridWkt.append("  CS[Cartesian, 2],\n");
-    gridWkt.append("    Axis[\"Easting (E)\", east],\n");
-    gridWkt.append("    Axis[\"Northing (N)\", north],\n");
-    gridWkt.append("    Unit[\"metre\", 1],\n");
-
-    // Add identifier for final Grid CRS
-    gridWkt.append("  Id[\"").append(GRID_CRS_AUTH)
-      .append("\", \"").append(uniqueId).append("\"]]");
-
-    return gridWkt.toString();
-  }
-
-  /**
-   * Creates a WKT string for a grid CRS based on a projected CRS.
-   */
-  private String createGridCrsWktFromProj(
-        GridCrsDefinition definition,
-        CoordinateReferenceSystem projCrs
-  ) {
-    PatchBuilderExtents extents = definition.getExtents();
-    final double topLeftX = extents.getTopLeftX().doubleValue();
-    final double topLeftY = extents.getTopLeftY().doubleValue();
-
-    // Get a unique identifier for this grid CRS
-    final String uniqueId = generateGridCrsCode(definition).split(":")[1];
-
-    // Build the WKT string for a derived projected CRS
-    StringBuilder wkt = new StringBuilder();
-    wkt.append("ProjectedCRS[\"").append(definition.getName()).append("\",\n");
-
-    // Reference the base projected CRS (simpler than recreating it)
-    wkt.append("  BaseProjectedCRS[\"").append(projCrs.getName().getCode()).append("\"],\n");
-
-    // Define a simple coordinate operation that maps grid to projected space
-    wkt.append("  Conversion[\"Grid Mapping\",\n");
-    wkt.append("    Method[\"Affine parametric transformation\"],\n");
-    wkt.append("    Parameter[\"num_row\", 3],\n");
-    wkt.append("    Parameter[\"num_col\", 3],\n");
-    wkt.append("    Parameter[\"elt_0_0\", ").append(getCellSize()).append("],\n");
-    wkt.append("    Parameter[\"elt_0_1\", 0.0],\n");
-    wkt.append("    Parameter[\"elt_0_2\", ").append(topLeftX).append("],\n");
-    wkt.append("    Parameter[\"elt_1_0\", 0.0],\n");
-    wkt.append("    Parameter[\"elt_1_1\", ").append(getCellSize()).append("],\n");
-    wkt.append("    Parameter[\"elt_1_2\", ").append(topLeftY).append("],\n");
-    wkt.append("    Parameter[\"elt_2_0\", 0.0],\n");
-    wkt.append("    Parameter[\"elt_2_1\", 0.0],\n");
-    wkt.append("    Parameter[\"elt_2_2\", 1.0]\n");
-    wkt.append("  ],\n");
-
-    // Keep the same coordinate system
-    wkt.append("  CS[Cartesian, 2],\n");
-    wkt.append("    Axis[\"Easting (E)\", east],\n");
-    wkt.append("    Axis[\"Northing (N)\", north],\n");
-    wkt.append("    Unit[\"metre\", 1],\n");
-
-    // Add the identifier
-    wkt.append("  Id[\"").append(GRID_CRS_AUTH).append("\", \"").append(uniqueId).append("\"]]");
-
-    return wkt.toString();
   }
 
   /**

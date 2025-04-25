@@ -44,7 +44,7 @@ public class EarthGeometryFactoryTest {
   private GeometryFactory geometryFactory;
   private CoordinateReferenceSystem wgs84;
   private CoordinateReferenceSystem utm11n;
-  private RealizedGridCrs realizedGridCrs;
+  private RealizedGridCrsTest realizedGridCrs;
 
   /**
    * Set up contexts for each test.

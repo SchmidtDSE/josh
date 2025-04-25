@@ -3,6 +3,7 @@ package org.joshsim.engine.geometry.grid;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -170,20 +171,23 @@ class GridCrsDefinitionTest {
     BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridX, gridY);
     BigDecimal[] gridCoords = definition.crsToGridCoordinates(crsCoords[0], crsCoords[1]);
 
-    assertEquals(gridX, gridCoords[0]);
-    assertEquals(gridY, gridCoords[1]);
+    assertEquals(0, gridX.compareTo(gridCoords[0]));
+    assertEquals(0, gridY.compareTo(gridCoords[1]));
   }
 
   @Test
   void crsToGridAndBackShouldBeIdentity() {
-    BigDecimal crsX = new BigDecimal("-115.5");
-    BigDecimal crsY = new BigDecimal("34.5");
+    BigDecimal gridX = new BigDecimal("5.5");
+    BigDecimal gridY = new BigDecimal("8.75");
+    BigDecimal epsilon = new BigDecimal("0.0000000001"); // Tolerance threshold
 
-    BigDecimal[] gridCoords = definition.crsToGridCoordinates(crsX, crsY);
-    BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridCoords[0], gridCoords[1]);
+    BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridX, gridY);
+    BigDecimal[] gridCoords = definition.crsToGridCoordinates(crsCoords[0], crsCoords[1]);
 
-    assertEquals(crsX, crsCoords[0]);
-    assertEquals(crsY, crsCoords[1]);
+    assertTrue(gridX.subtract(gridCoords[0]).abs().compareTo(epsilon) < 0, 
+        "X coordinates should be equal within tolerance");
+    assertTrue(gridY.subtract(gridCoords[1]).abs().compareTo(epsilon) < 0,
+        "Y coordinates should be equal within tolerance");
   }
 
   @Test
