@@ -7,7 +7,6 @@
 
 /**
  * Presenter which manages the display of simulation results.
- * Handles tabs and status updates for simulation runs.
  */
 class ResultsPresenter {
 
@@ -36,12 +35,16 @@ class ResultsPresenter {
 
   /**
    * Updates progress when a simulation step completes.
+   *
+   * @param {Number} numSteps - The number of steps completed.
+   * @param {string} units - The units (timesteps, replicates) being reported.
    */
-  onStep(numSteps) {
+  onStep(numSteps, units) {
     const self = this;
-    self._statusPresenter.updateProgress(numSteps);
+    self._statusPresenter.updateProgress(numSteps, units);
   }
 }
+
 
 /**
  * Presenter which handles the status display for simulation progress.
@@ -55,7 +58,6 @@ class StatusPresenter {
    */
   constructor(selection) {
     const self = this;
-    self._numComplete = 0;
     self._root = selection;
   }
 
@@ -64,29 +66,23 @@ class StatusPresenter {
    */
   resetProgress() {
     const self = this;
-    self._numComplete = 0;
-    self.updateProgress(0);
+    self.updateProgress(0), "steps";
     self._root.querySelector(".running-indicator").style.display = "block";
   }
 
   /**
    * Increments the progress counter and updates display.
+   *
+   * @param {Number} numSteps - The number of steps completed.
+   * @param {string} units - The units (timesteps, replicates) being reported.
    */
-  updateProgress(numSteps) {
+  updateProgress(numSteps, units) {
     const self = this;
-    self._numComplete = numSteps;
-    self._updateProgressDisplay();
+    self._root.querySelector(".completed-count").innerHTML = numSteps;
+    self._root.querySelector(".completed-type").innerHTML = units;
   }
 
-  /**
-   * Updates the progress display with current count.
-   * 
-   * @private
-   */
-  _updateProgressDisplay() {
-    const self = this;
-    self._root.querySelector(".completed-count").innerHTML = self._numComplete;
-  }
 } 
+
 
 export {ResultsPresenter};

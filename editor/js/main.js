@@ -26,6 +26,10 @@ class MainPresenter {
   constructor() {
     const self = this;
 
+    self._currentRequest = null;
+    self._replicatesCompleted = 0;
+    self._replicateResults = [];
+
     self._wasmLayer = getWasmLayer(
       (numSteps) => self._onStepCompleted(numSteps)
     );
@@ -56,17 +60,7 @@ class MainPresenter {
   }
 
   /**
-   * Callback for when a simulation step is completed.
-   */
-  _onStepCompleted(stepsCompelted) {
-    const self = this;
-    self._resultsPresenter.onStep(stepsCompelted);
-  }
-
-  /**
    * Shows the main editor interface and hide the loading screen.
-   * 
-   * @private
    */
   _showContents() {
     const self = this;
@@ -76,8 +70,7 @@ class MainPresenter {
 
   /**
    * Callback for when code is changed in the editor.
-   * 
-   * @private
+   *
    * @param {string} code - The content of the editor.
    */
   _onCodeChange(code) {
@@ -97,23 +90,64 @@ class MainPresenter {
 
   /**
    * Executes a simulation run request.
-   * 
-   * @private
+   *
    * @param {Object} request - The run request containing simulation parameters.
    */
   _executeRunRequest(request) {
     const self = this;
+    
     self._resultsPresenter.onSimStart();
     self._runPresenter.hideButtons();
+
+    self._currentRequest = request;
+    self._replicatesCompleted = 0;
+    self._replicateResults = [];
+    
+    self._executeSingleReplicate();
+  }
+
+  _executeSingleReplicate() {
+    const self = this;
     self._wasmLayer.runSimulation(
         self._editorPresenter.getCode(),
-        request.getSimName()
-    ).then(() => { self._onRunComplete(); })
+        self._currentRequest.getSimName()
+    ).then((x) => { self._onSimulationComplete(x); });
+  }
+
+  _onSimulationComplete(results) {
+    const self = this;
+    
+    self._replicateResults.push(results);
+    self._replicatesCompleted++;
+
+    const multiReplicate = self._currentRequest.getReplicates() > 1;
+    if (multiReplicate) {
+      self._resultsPresenter.onStep(self._replicatesCompleted, "replicates");
+    }
+
+    const completed = self._replicatesCompleted >= self._currentRequest.getReplicates();
+    if (completed) {
+      self._onRunComplete();
+    } else {
+      self._executeSingleReplicate();
+    }
   }
 
   _onRunComplete() {
     const self = this;
     self._runPresenter.showButtons();
+  }
+
+  /**
+   * Callback for when a simulation step is completed.
+   */
+  _onStepCompleted(stepsCompleted) {
+    const self = this;
+
+    const singleReplicate = self._currentRequest.getReplicates() > 1;
+    if (singleReplicate) {
+      self._resultsPresenter.onStep(stepsCompleted, "steps");
+    }
   }
 }
 
