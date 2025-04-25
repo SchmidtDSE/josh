@@ -48,11 +48,46 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
   public class RedirectOutputStream implements OutputStream {
 
     private final WasmExportCallback callback;
+    private final StringBuilder buffer;
     
     public RedirectOutputStream(WasmExportCallback callback) {
       this.callback = callback;
+      this.buffer = new StringBuilder();
     }
-    
+
+    @Override
+    public void write(int b) throws IOException {
+      buffer.append((char) b);
+      if (b == '\n') {
+        flush();
+      }
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+      write(b, 0, b.length);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      buffer.append(new String(b, off, len));
+      if (buffer.indexOf("\n") != -1) {
+        flush();
+      }
+    }
+
+    @Override
+    public void flush() throws IOException {
+      if (buffer.length() > 0) {
+        callback.onWrite(buffer.toString());
+        buffer.setLength(0);
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      flush();
+    }
   }
   
 }
