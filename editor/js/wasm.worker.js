@@ -64,7 +64,6 @@ function reportStepComplete(stepCount) {
 
 /**
  * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
- * The string format is "name:key1=value1\tkey2=value2\t...".
  * 
  * @param {string} source - The formatted string containing target name and key-value pairs.
  */

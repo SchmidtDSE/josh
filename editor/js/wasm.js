@@ -12,6 +12,7 @@
  * functions through a WebWorker.
  */
 class WasmLayer {
+  
   /**
    * Creates a new WASM layer wrapper.
    */
@@ -20,6 +21,7 @@ class WasmLayer {
     self._stepCallback = stepCallback;
     self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
+    self._dataset = null;
     self._initPromise = new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, result, error, success } = e.data;
@@ -91,11 +93,14 @@ class WasmLayer {
    * 
    * @param {string} code - The code containing the simulation.
    * @param {string} simulationName - Name of simulation to run.
-   * @returns {Promise<void>}
+   * @returns {Promise} Promise which resolves to the complete dataset when the simulation is
+   *     concluded.
    */
   async runSimulation(code, simulationName) {
     const self = this;
     await self._initPromise;
+
+    self._dataset = [];
     
     return new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
@@ -105,9 +110,13 @@ class WasmLayer {
           return;
         }
         if (type === "runSimulation" && success) {
-          resolve();
+          // Have to throw us on top of the event queue
+          const completedDataset = self._dataset;
+          setTimeout(() => { resolve(completedDataset); }, 100);
         } else if (type === "reportStep") {
           self._onStepCompleted(e.data.result);
+        } else if (type === "") {
+          self._dataset.push(e.data.result);
         }
       };
       self._worker.postMessage({ 
