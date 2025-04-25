@@ -72,9 +72,7 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
   }
 
   /**
-   * An OutputStream implementation that redirects output through a WebAssembly callback.
-   * This class buffers output and forwards it to the callback when appropriate,
-   * such as when encountering newlines or when explicitly flushed.
+   * An OutputStream implementation that redirects output through an in-memory callback.
    */
   public class RedirectOutputStream extends OutputStream {
 
@@ -107,17 +105,20 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       buffer.append(new String(b, off, len));
-      if (buffer.indexOf("\n") != -1) {
+      boolean containsNewline = buffer.indexOf("\n") != -1;
+      if (containsNewline) {
         flush();
       }
     }
 
     @Override
     public void flush() throws IOException {
-      if (buffer.length() > 0) {
-        callback.onWrite(buffer.toString());
-        buffer.setLength(0);
+      if (buffer.length() == 0) {
+        return;
       }
+      
+      callback.onWrite(buffer.toString());
+      buffer.setLength(0);
     }
 
     @Override
