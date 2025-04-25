@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.measure.Unit;
+import javax.measure.quantity.Dimensionless;
 import org.apache.sis.measure.Units;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.factory.GeodeticObjectFactory;
@@ -40,7 +41,7 @@ public class RealizedGridCrs {
 
   // Custom grid cell auth / unit defintion for Grid CRS
   private static final String GRID_CRS_AUTH = "JOSHSIM_GRID";
-  private static final Unit<?> GRID_CELL = Units.valueOf("cell");
+  private static final Unit<?> GRID_CELL = Units.valueOf("1").alternate("cell");
 
   // SIS factories
   private final GeodeticObjectFactory geodeticObjectFactory = new GeodeticObjectFactory();
