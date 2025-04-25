@@ -8,7 +8,7 @@ package org.joshsim;
 
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
-import org.joshsim.compat.EmulatedCompatabilityLayer;
+import org.joshsim.compat.EmulatedCompatibilityLayer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshInterpreter;
@@ -127,11 +127,11 @@ public class JoshJsSimFacade {
    * Configures the system for execution within a WebAssembly (Wasm) environment.
    *
    * <p>This method sets the platform-specific compatibility layer to an instance of
-   * EmulatedCompatabilityLaye}, which provides the necessary abstractions to enable simulations to
+   * EmulatedCompatibilityLaye}, which provides the necessary abstractions to enable simulations to
    * run within the WebAssembly virtual machine.</p>
    */
   private static void setupForWasm() {
-    CompatibilityLayerKeeper.set(new EmulatedCompatabilityLayer());
+    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer());
   }
 
   /**
@@ -143,5 +143,8 @@ public class JoshJsSimFacade {
 
   @JSBody(params = { "count" }, script = "reportStepComplete(count)")
   private static native void reportStepComplete(int count);
+
+  @JSBody(params = { "payload" }, script = "reportData(payload)")
+  private static native void reportData(String payload);
 
 }

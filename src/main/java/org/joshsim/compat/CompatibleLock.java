@@ -1,5 +1,5 @@
 /**
- * Interface for a cross-VM compatability lock.
+ * Interface for a cross-VM Compatibility lock.
  *
  * @license BSD-3-Clause
  */
