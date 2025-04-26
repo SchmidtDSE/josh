@@ -18,10 +18,9 @@ class ResultsPresenter {
   constructor(rootId) {
     const self = this;
 
-    self._tabs = new Tabby("[data-tabs]");
-
     self._root = document.getElementById(rootId);
-    self._statusPresenter = new StatusPresenter(self._root.querySelector(".status-tab"));
+    self._statusPresenter = new StatusPresenter(self._root.querySelector("#status-panel"));
+    self._vizPresenter = new VizPresenter(self._root.querySelector("#viz-panel"));
 
     self._secondsOnStart = null;
   }
@@ -32,6 +31,7 @@ class ResultsPresenter {
   onSimStart() {
     const self = this;
     self._statusPresenter.resetProgress();
+    self._vizPresenter.hide();
     self._root.style.display = "block";
     self._secondsOnStart = self._getEpochSeconds();
   }
@@ -65,6 +65,12 @@ class ResultsPresenter {
     }).reduce((a, b) => a + b, 0);
     
     self._statusPresenter.showComplete(totalSeconds, numRecords);
+
+    if (numRecords == 0) {
+      self._vizPresenter.showNoData();
+    } else {
+      self._vizPresenter.show();
+    }
   }
 
   /**
@@ -155,7 +161,36 @@ class StatusPresenter {
     errorMessageHolder.appendChild(textNode);
   }
 
-} 
+}
+
+
+class VizPresenter {
+
+  constructor(selection) {
+    const self = this;
+    self._root = selection;
+  }
+
+  hide() {
+    const self = this;
+    self._root.style.display = "none";
+  }
+
+  showNoData() {
+    const self = this;
+    self._root.style.display = "block";
+    self._root.querySelector("#no-data-message").style.display = "block";
+    self._root.querySelector("#data-display").style.display = "none";
+  }
+
+  show() {
+    const self = this;
+    self._root.style.display = "block";
+    self._root.querySelector("#no-data-message").style.display = "none";
+    self._root.querySelector("#data-display").style.display = "block";
+  }
+  
+}
 
 
 export {ResultsPresenter};

@@ -324,6 +324,27 @@ main {
     margin-top: 10px;
   }
 
+  #results #viz-panel {
+    border-top: 1px solid #E0E0E0;
+    margin-top: 20px;
+  }
+
+  #results #viz-panel pre {
+    background-color: #505050;
+    color: white;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #33333;
+  }
+
+  #results-area {
+    border-top: 1px solid #C0C0C0;
+    border-bottom: 1px solid #C0C0C0;
+    max-height: 650px;
+    overflow-y: auto;
+  }
+
   #editor {
     padding-right: 10px;
   }

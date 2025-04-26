@@ -50,12 +50,11 @@
             </div>
             <div id="code-buttons-panel" class="buttons-panel">
               <div id="available-panel">
-                <a class="primary" id="open-run-dialog-button" href="#loading">Run on Browser</a>
-                <a class="secondary" id="open-cloud-dialog-button" href="#cloud">Run on Cloud</a>
-                <a class="secondary" id="open-cli-dialog-button" href="#cli">Run on CLI</a>
+                <a class="primary" id="open-run-dialog-button" href="#run">Run</a>
+                <a class="secondary" id="open-data-dialog-button" href="#data">Data Files</a>
               </div>
               <dialog id="run-local-dialog">
-                <h2>Run Local</h2>
+                <h2>Run</h2>
                 <p>This will run your simulation in your browser using your computer.</p>
                 <div class="form-group">
                   <div><label for="simulation-name">Simulation:</label></div>
@@ -78,47 +77,68 @@
           </div>
         </section>
         <section id="results">
-          <h2>Results</h2>
-          <ul data-tabs>
-            <li><a data-tabby-default href="#status-tab">Status</a></li>
-            <li><a href="#simulation-tab">Simulation</a></li>
-            <li><a href="#patches-tab">Patches</a></li>
-            <li><a href="#entites-tab">Entites</a></li>
-          </ul>
+          <h2>Run</h2>
 
-          <div class="status-tab tab" id="status-tab">
-            <h3>Execution status</h3>
-            <div>
-              <div class="running-indicator status-display">
-                <span class="running-icon">⌛</span>
-                <span class="complete-icon">✅</span>
-                Completed <span class="completed-count"></span> <span class="completed-type"></span>...
-              </div>
-              <div class="error-display status-display">
-                ⚠️ Encountered error: <span class="error-message"></span>.
-              </div>
-              <div class="timing-indicator finish-display status-display">
-                ⏰ Ran in <span class="completed-minutes"></span> minutes and <span class="completed-seconds"></span> seconds.
-              </div>
-              <div class="dataset-indicator finish-display status-display">
-                💾 Collected <span class="completed-records"></span> records.
-              </div>
-              <div class="dataset-indicator finish-display status-display">
-                🚀 Need to go faster? Run on <a href="#" class="cta-cloud">cloud</a> or <a href="#" class="cta-cli">CLI</a>.
+          <div id="results-area">
+            <div id="status-panel" class="results-panel">
+              <h3>Execution status</h3>
+              <div>
+                <div class="running-indicator status-display">
+                  <span class="running-icon">⌛</span>
+                  <span class="complete-icon">✅</span>
+                  Completed <span class="completed-count"></span> <span class="completed-type"></span>...
+                </div>
+                <div class="error-display status-display">
+                  ⚠️ Encountered error: <span class="error-message"></span>.
+                </div>
+                <div class="timing-indicator finish-display status-display">
+                  ⏰ Ran in <span class="completed-minutes"></span> minutes and <span class="completed-seconds"></span> seconds.
+                </div>
+                <div class="dataset-indicator finish-display status-display">
+                  💾 Collected <span class="completed-records"></span> records.
+                </div>
+                <div class="dataset-indicator finish-display status-display">
+                  🚀 Need to go faster? Run on <a href="#" class="cta-cloud">cloud</a> or <a href="#" class="cta-cli">CLI</a>.
+                </div>
               </div>
             </div>
-          </div>
-          <div class="simulation-tab tab" id="simulation-tab">
-            <h3>Simulation-wide results</h3>
-            <div>In progress.</div>
-          </div>
-          <div class="patches-tab tab" id="patches-tab">
-            <h3>Patch-level results</h3>
-            <div>In progress.</div>
-          </div>
-          <div class="entities-tab tab" id="entites-tab">
-            <h3>Entity-level results</h3>
-            <div>In progress.</div>
+            
+            <div id="viz-panel" class="results-panel">
+              <h3>Results</h3>
+              <div id="no-data-message">
+                No data were reported for this simulation. To add data to an export, consider adding code like this:
+  
+                <pre>
+start patch Default
+
+  # ...
+
+  export.averageAge.step = mean(ForeverTree.age)
+  export.averageHeight.step = mean(ForeverTree.height)
+
+  # ...
+
+end patch
+                </pre>
+
+              Then, specify that the results should be written to this editor's visualizations:
+
+                <pre>
+start simulation Simulation
+
+  # ...
+
+  exportFiles.patch = "memory://editor/patches"
+
+  # ...
+
+end simulation
+                </pre>
+              </div>
+              <div id="data-display">
+                Visualization coming soon...
+              </div>
+            </div>
           </div>
         </section>
       </main>
