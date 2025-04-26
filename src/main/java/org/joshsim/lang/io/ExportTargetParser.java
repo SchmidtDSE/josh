@@ -39,8 +39,9 @@ public class ExportTargetParser {
   /**
    * Parses a memory-based export target string.
    *
-   * @param target The target string starting with "memory://editor/"
-   * @return An ExportTarget configured for memory-based export
+   * @param target The target string starting with "memory://editor/" after which the path is
+   *     found.
+   * @return An ExportTarget configured for memory-based export.
    */
   private static ExportTarget parseMemory(String target) {
     String path = target.substring(16, target.length());
@@ -48,11 +49,13 @@ public class ExportTargetParser {
   }
 
   /**
-   * Parses a URI-based export target string.
+   * Parses a non-memory URI-based export target string.
    *
-   * @param target The target string in URI format (e.g., "file:/path/to/file" or "minio://host/path")
-   * @return An ExportTarget configured based on the URI scheme
-   * @throws IllegalArgumentException if the URI scheme is unsupported or the URI syntax is invalid
+   * @param target The target string in URI format (e.g., "file:/path/to/file" or 
+   *     "minio://host/path")
+   * @return An ExportTarget configured based on the URI scheme.
+   * @throws IllegalArgumentException if the URI scheme is unsupported or the URI syntax is 
+   *     invalid.
    */
   private static ExportTarget parseUri(String target) {
     try {
