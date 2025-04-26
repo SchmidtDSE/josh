@@ -116,7 +116,9 @@ class WasmLayer {
         } else if (type === "reportStep") {
           self._onStepCompleted(e.data.result);
         } else if (type === "outputDatum") {
-          self._dataset.push(e.data.result);
+          const rawInput = e.data.result;
+          const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
+          self._datasetBuilder.add(parsed);
         }
       };
       self._worker.postMessage({ 
@@ -172,6 +174,50 @@ class SimulationResultBuilder {
   build() {
     const self = this;
     return new SimulationResult(self._simResults, self._patchResults, self._entityResults);
+  }
+
+}
+
+/**
+ * Record describing an export from the engine running in WASM or JS emulation.
+ */
+class OutputDatum {
+
+  /**
+   * Create a new output record.
+   *
+   * @param {string} target - The name of the target as parsed from export URI.
+   * @param {Map} attributes - Map from string name of attribute to the value of that attribute,
+   *     either as a number if the input matched a number regex or a string otherwise.
+   */
+  constructor(target, attributes) {
+    const self = this;
+    self._target = target;
+    self._attributes = attributes;
+  }
+
+  /**
+   * Get the name of the target that this output record was for as parsed from export URI.
+   *
+   * @returns {string} The name of the target for this record.
+   */
+  getTarget() {
+    return this._target;
+  }
+
+  /**
+   * The value associated with the given attribute name.
+   *
+   * @throws Exception thrown if the value by the given name is not found.
+   * @param {string} name - Name of the attribute for which a value should be retrieved.
+   * @returns Attribute value Either as a number if the input matched a number regex or a string
+   *     otherwise
+   */
+  getValue(name) {
+    if (!this._attributes.has(name)) {
+      throw "Value for attribute " + name + " not found.";
+    }
+    return this._attributes.get(name);
   }
 
 }

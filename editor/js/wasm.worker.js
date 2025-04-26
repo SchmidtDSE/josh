@@ -7,51 +7,6 @@ let postMessage = null;
 
 
 /**
- * Record describing an export from the engine running in WASM or JS emulation.
- */
-class OutputDatum {
-
-  /**
-   * Create a new output record.
-   *
-   * @param {string} target - The name of the target as parsed from export URI.
-   * @param {Map} attributes - Map from string name of attribute to the value of that attribute,
-   *     either as a number if the input matched a number regex or a string otherwise.
-   */
-  constructor(target, attributes) {
-    const self = this;
-    self._target = target;
-    self._attributes = attributes;
-  }
-
-  /**
-   * Get the name of the target that this output record was for as parsed from export URI.
-   *
-   * @returns {string} The name of the target for this record.
-   */
-  getTarget() {
-    return this._target;
-  }
-
-  /**
-   * The value associated with the given attribute name.
-   *
-   * @throws Exception thrown if the value by the given name is not found.
-   * @param {string} name - Name of the attribute for which a value should be retrieved.
-   * @returns Attribute value Either as a number if the input matched a number regex or a string
-   *     otherwise
-   */
-  getValue(name) {
-    if (!this._attributes.has(name)) {
-      throw "Value for attribute " + name + " not found.";
-    }
-    return this._attributes.get(name);
-  }
-
-}
-
-
-/**
  * Reports the completion of a simulation step to the main thread.
  * 
  * @param {number} stepCount - The number of steps completed in the simulation.
@@ -76,7 +31,8 @@ function reportData(source) {
   if (!attributesStr) {
     return;
   }
-  
+
+  const pairs = attributesStr.split("\t");
   for (const pair of pairs) {
     const pairPieces = pair.split('=', 2);
     const key = pairPieces[0];
@@ -90,8 +46,18 @@ function reportData(source) {
     }
   }
   
-  const datum = new OutputDatum(target, attributes);
+  const datum = {"target": target, "attributes": attributes};
   postMessage({ type: "outputDatum", success: true, result: datum });
+}
+
+
+/**
+ * Report an error from the WASM execution.
+ *
+ * @param {string} message - Description of the message encountered.
+ */
+function reportError(message) {
+  postMessage({ type: "error", success: false, error: message });
 }
 
 

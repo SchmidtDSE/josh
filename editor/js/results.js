@@ -62,6 +62,11 @@ class ResultsPresenter {
     self._statusPresenter.showComplete(totalSeconds, numRecords);
   }
 
+  onError(message) {
+    const self =this;
+    self._statusPresenter.showError(message);
+  }
+
   _getEpochSeconds() {
     const self = this;
     const now = new Date();
@@ -93,6 +98,7 @@ class StatusPresenter {
     self.updateProgress(0, "steps");
     self._root.querySelector(".running-icon").style.display = "inline-block";
     self._root.querySelector(".complete-icon").style.display = "none";
+    self._root.querySelector(".error-display").style.display = "none";
     self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "none");
   }
 
@@ -116,10 +122,21 @@ class StatusPresenter {
     self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "block");
 
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.round(totalSeconds - 60 * minutes);
+    const seconds = Math.ceil(totalSeconds - 60 * minutes);
     self._root.querySelector(".completed-minutes").innerHTML = minutes;
     self._root.querySelector(".completed-seconds").innerHTML = seconds;
     self._root.querySelector(".completed-records").innerHTML = numRecords;
+  }
+
+  showError(message) {
+    const self = this;
+    self._root.querySelector(".error-display").style.display = "block";
+    
+    const errorMessageHolder = self._root.querySelector(".error-message");
+    errorMessageHolder.innerHTML = "";
+    
+    const textNode = document.createTextNode(message);
+    errorMessageHolder.appendChild(textNode);
   }
 
 } 

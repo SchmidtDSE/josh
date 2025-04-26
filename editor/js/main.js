@@ -111,7 +111,10 @@ class MainPresenter {
     self._wasmLayer.runSimulation(
         self._editorPresenter.getCode(),
         self._currentRequest.getSimName()
-    ).then((x) => { self._onSimulationComplete(x); });
+    ).then(
+        (x) => { self._onSimulationComplete(x); },
+        (x) => { self._onError(x); }
+    );
   }
 
   _onSimulationComplete(results) {
@@ -149,6 +152,13 @@ class MainPresenter {
     if (singleReplicate) {
       self._resultsPresenter.onStep(stepsCompleted, "steps");
     }
+  }
+
+  _onError(message) {
+    const self = this;
+    
+    self._runPresenter.showButtons();
+    self._resultsPresenter.onError(message);
   }
 }
 

@@ -27,9 +27,23 @@ public class ExportTargetParser {
    * @throws IllegalArgumentException if the target string is invalid or unsupported.
    */
   public static ExportTarget parse(String target) {
-    try {
-      String targetClean = target.replaceAll("\"", "");
-      URI uri = new URI(targetClean);
+    String targetClean = target.replaceAll("\"", "");
+
+    if (targetClean.startsWith("memory://editor/")) {
+      return parseMemory(targetClean);
+    } else {
+      return parseUri(targetClean);
+    }
+  }
+
+  private static ExportTarget parseMemory(String target) {
+    String path = target.substring(16, target.length());
+    return new ExportTarget("memory", "editor", path);
+  }
+
+  private static ExportTarget parseUri(String target) {
+    try{
+      URI uri = new URI(target);
       String scheme = uri.getScheme();
       if ("file".equalsIgnoreCase(scheme)) {
         return new ExportTarget(uri.getPath());
