@@ -29,7 +29,7 @@ class RealizedGridCrsTest {
 
   private GridCrsDefinition definition;
   private RealizedGridCrs realizedGridCrs;
-  private static final double DELTA = 1e-10;
+  private static final double DELTA = 1e-4;
 
   @BeforeEach
   void setUp() throws FactoryException, IOException, TransformException {

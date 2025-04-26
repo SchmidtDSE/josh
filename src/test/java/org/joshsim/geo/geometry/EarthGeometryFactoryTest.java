@@ -100,7 +100,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
@@ -124,7 +124,7 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthSquare geometry = engineGeometryFactoryUtm11n.createSquare(
           centerX, centerY, width
       ).getOnEarth();
 
