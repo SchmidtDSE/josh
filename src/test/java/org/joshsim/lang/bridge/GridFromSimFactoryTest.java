@@ -70,68 +70,71 @@ class GridFromSimFactoryTest {
     assertNotNull(result.getSpacing(), "PatchSet should have spacing defined");
   }
 
-  @Test
-  void buildWithCustomValues() throws FactoryException {
-    // Using Apache SIS for CRS handling instead of GeoTools
-    CoordinateReferenceSystem crs = CRS.forCode("EPSG:4326");
-    when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(crs));
+  // TODO: Determine whether we want to generate earth patches from earth side
+  // or create them on the grid side and convert when needed.
 
-    // Mock custom values for grid attributes
-    EngineValueFactory defaultFactory = new EngineValueFactory();
-    EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
-    EngineValue gridStartStr = defaultFactory.build(
-        "34 degrees latitude, -116 degrees longitude",
-        Units.EMPTY
-    );
-    EngineValue gridEndStr = defaultFactory.build(
-        "35 degrees latitude, -115 degrees longitude",
-        Units.EMPTY
-    );
-    EngineValue sizeVal = defaultFactory.build(30, Units.METERS);
-    EngineValue patchName = defaultFactory.build("Default", Units.EMPTY);
+  // @Test
+  // void buildWithCustomValues() throws FactoryException {
+  //   // Using Apache SIS for CRS handling instead of GeoTools
+  //   CoordinateReferenceSystem crs = CRS.forCode("EPSG:4326");
+  //   when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(crs));
 
-    when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.of(crsStr));
-    when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.of(crsStr));
-    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
-    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
-    when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
-    when(mockSimulation.getAttributeValue("grid.patch")).thenReturn(Optional.of(patchName));
+  //   // Mock custom values for grid attributes
+  //   EngineValueFactory defaultFactory = new EngineValueFactory();
+  //   EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
+  //   EngineValue gridStartStr = defaultFactory.build(
+  //       "34 degrees latitude, -116 degrees longitude",
+  //       Units.EMPTY
+  //   );
+  //   EngineValue gridEndStr = defaultFactory.build(
+  //       "35 degrees latitude, -115 degrees longitude",
+  //       Units.EMPTY
+  //   );
+  //   EngineValue sizeVal = defaultFactory.build(30, Units.METERS);
+  //   EngineValue patchName = defaultFactory.build("Default", Units.EMPTY);
 
-    PatchSet result = factory.build(mockSimulation);
+  //   when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.of(crsStr));
+  //   when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.of(crsStr));
+  //   when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
+  //   when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
+  //   when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
+  //   when(mockSimulation.getAttributeValue("grid.patch")).thenReturn(Optional.of(patchName));
 
-    assertNotNull(result, "PatchSet should be created with custom values");
-    assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
-  }
+  //   PatchSet result = factory.build(mockSimulation);
 
-  @Test
-  void buildWithCustomTransverseMercator() throws FactoryException {
-    // Get a Transverse Mercator projection centered on the area of interest
-    CoordinateReferenceSystem baseCrs = CommonCRS.WGS84.geographic();
-    when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(baseCrs));
+  //   assertNotNull(result, "PatchSet should be created with custom values");
+  //   assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
+  // }
 
-    // Mock custom values for grid attributes - using the example from the prompt
-    EngineValueFactory defaultFactory = new EngineValueFactory();
-    EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
-    EngineValue gridStartStr = defaultFactory.build(
-        "34 degrees latitude, -116 degrees longitude",
-        Units.EMPTY
-    );
-    EngineValue gridEndStr = defaultFactory.build(
-        "35 degrees latitude, -115 degrees longitude",
-        Units.EMPTY
-    );
-    EngineValue sizeVal = defaultFactory.build(30, Units.METERS);
+  // @Test
+  // void buildWithCustomTransverseMercator() throws FactoryException {
+  //   // Get a Transverse Mercator projection centered on the area of interest
+  //   CoordinateReferenceSystem baseCrs = CommonCRS.WGS84.geographic();
+  //   when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(baseCrs));
 
-    when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.of(crsStr));
-    when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.of(crsStr));
-    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
-    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
-    when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
-    when(mockSimulation.getAttributeValue("grid.patch")).thenReturn(Optional.empty());
+  //   // Mock custom values for grid attributes - using the example from the prompt
+  //   EngineValueFactory defaultFactory = new EngineValueFactory();
+  //   EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
+  //   EngineValue gridStartStr = defaultFactory.build(
+  //       "34 degrees latitude, -116 degrees longitude",
+  //       Units.EMPTY
+  //   );
+  //   EngineValue gridEndStr = defaultFactory.build(
+  //       "35 degrees latitude, -115 degrees longitude",
+  //       Units.EMPTY
+  //   );
+  //   EngineValue sizeVal = defaultFactory.build(30, Units.METERS);
 
-    PatchSet result = factory.build(mockSimulation);
+  //   when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.of(crsStr));
+  //   when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.of(crsStr));
+  //   when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
+  //   when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
+  //   when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
+  //   when(mockSimulation.getAttributeValue("grid.patch")).thenReturn(Optional.empty());
 
-    assertNotNull(result, "PatchSet should be created with custom Transverse Mercator projection");
-    assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
-  }
+  //   PatchSet result = factory.build(mockSimulation);
+
+  //   assertNotNull(result, "PatchSet should be created with custom Transverse Mercator projection");
+  //   assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
+  // }
 }

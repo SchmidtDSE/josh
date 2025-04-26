@@ -34,8 +34,6 @@ import org.opengis.referencing.operation.OperationMethod;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
-import com.google.errorprone.annotations.Immutable;
-
 /**
  * Real implementation of Grid CRS using direct construction of coordinate reference systems.
  * Uses a `Transverse Mercator` projection or affine transformation depending on the base CRS,
@@ -216,10 +214,25 @@ public class RealizedGridCrs {
     tmParams.parameter("semi_major").setValue(ellipsoid.getSemiMajorAxis());
     tmParams.parameter("semi_minor").setValue(ellipsoid.getSemiMinorAxis());
 
-    // Create transforms
+    // Create projection transform
     MathTransform projTransform = mathTransformFactory.createParameterizedTransform(tmParams);
-    LinearTransform scaleTransform = MathTransforms.scale(cellSize, cellSize);
-    MathTransform concatenated = MathTransforms.concatenate(projTransform, scaleTransform);
+
+    // BUG: This `scale` call seems to have no impact whatsoever
+    // on the transformed coordinates
+
+    // Create scale transform - scale by cellSize
+    LinearTransform scaleTransform = MathTransforms.scale(
+        1 / cellSize,  // Scale X by cell size (convert meters to grid units)
+        -1 / cellSize  // Negative Y to flip axis
+    );
+
+    // Concatenate transforms in correct order:
+    // 1. First, project to transverse mercator according to params
+    // 2. Then, scale to grid units (each number of {cellSize} meters is one grid cell)
+    MathTransform concatenated = MathTransforms.concatenate(
+        projTransform,
+        scaleTransform
+    );
 
     // Create method and conversion
     OperationMethod operationMethod = createOperationMethod(
@@ -255,21 +268,34 @@ public class RealizedGridCrs {
     double cellSize = params[2];
 
     // Set up the Affine transform parameters for our grid
+    // This defines a transformation matrix: | a b c |
+    //                                       | d e f |
+    //                                       | 0 0 1 |
+    // Where (a,b,c,d,e,f) correspond to (elt_0_0, elt_0_1, elt_0_2, elt_1_0, elt_1_1, elt_1_2)
+    
+    // For simplicity and clarity, let's build the transform using individual operations:
+    // 1. Scale by cell size (with Y flipped)
+    LinearTransform scaleTransform = MathTransforms.scale(cellSize, -cellSize);
+    
+    // 2. Translate to the top-left corner 
+    LinearTransform translateTransform = MathTransforms.translation(topLeftX, topLeftY);
+    
+    // 3. Combine the transforms (scale first, then translate)
+    MathTransform affineTransform = MathTransforms.concatenate(scaleTransform, translateTransform);
+    
+    // Create parameter group for documentation purposes
     ParameterValueGroup affineParams = mathTransformFactory.getDefaultParameters("Affine");
     affineParams.parameter("num_row").setValue(3);
     affineParams.parameter("num_col").setValue(3);
-    affineParams.parameter("elt_0_0").setValue(cellSize);
-    affineParams.parameter("elt_0_1").setValue(0.0);
-    affineParams.parameter("elt_0_2").setValue(topLeftX);
-    affineParams.parameter("elt_1_0").setValue(0.0);
-    affineParams.parameter("elt_1_1").setValue(cellSize);
-    affineParams.parameter("elt_1_2").setValue(topLeftY);
-    affineParams.parameter("elt_2_0").setValue(0.0);
-    affineParams.parameter("elt_2_1").setValue(0.0);
-    affineParams.parameter("elt_2_2").setValue(1.0);
-
-    // Create the affine transform
-    MathTransform affineTransform = mathTransformFactory.createParameterizedTransform(affineParams);
+    affineParams.parameter("elt_0_0").setValue(cellSize);        // X scale
+    affineParams.parameter("elt_0_1").setValue(0.0);       // No X-Y shear
+    affineParams.parameter("elt_0_2").setValue(topLeftX);        // X translation
+    affineParams.parameter("elt_1_0").setValue(0.0);       // No Y-X shear
+    affineParams.parameter("elt_1_1").setValue(-cellSize);       // Y scale (negative to flip Y axis)
+    affineParams.parameter("elt_1_2").setValue(topLeftY);        // Y translation
+    affineParams.parameter("elt_2_0").setValue(0.0);       // Homogeneous coordinates
+    affineParams.parameter("elt_2_1").setValue(0.0);       // Homogeneous coordinates
+    affineParams.parameter("elt_2_2").setValue(1.0);       // Homogeneous coordinates
 
     // Define operation method for our affine transform
     OperationMethod operationMethod = createOperationMethod(
@@ -345,7 +371,9 @@ public class RealizedGridCrs {
    */
   public MathTransform createGridToTargetCrsTransform(CoordinateReferenceSystem targetCrs)
       throws FactoryException {
-    return CRS.findOperation(gridProjectedCrs, targetCrs, null).getMathTransform();
+    // Get the transform from grid to target CRS
+    MathTransform transform = CRS.findOperation(gridProjectedCrs, targetCrs, null).getMathTransform();
+    return transform;
   }
 
   /**

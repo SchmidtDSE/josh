@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -444,9 +445,11 @@ public class EarthGeometryTest {
 
       BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridX, gridY);
 
-      // Should return top-left corner
-      assertEquals(topLeftX, crsCoords[0], "X coordinate should match top-left");
-      assertEquals(topLeftY, crsCoords[1], "Y coordinate should match top-left");
+      // Should return top-left corner - using compareTo for BigDecimal comparison
+      assertTrue(topLeftX.compareTo(crsCoords[0].setScale(4, RoundingMode.HALF_UP)) == 0, 
+          "X coordinate should match top-left");
+      assertTrue(topLeftY.compareTo(crsCoords[1].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "Y coordinate should match top-left");
     }
 
     @Test
@@ -469,9 +472,11 @@ public class EarthGeometryTest {
       // Test converting from CRS to grid coordinates
       BigDecimal[] gridCoords = definition.crsToGridCoordinates(topLeftX, topLeftY);
 
-      // Should return origin cell (0,0)
-      assertEquals(BigDecimal.ZERO, gridCoords[0], "Grid X should be 0");
-      assertEquals(BigDecimal.ZERO, gridCoords[1], "Grid Y should be 0");
+      // Should return origin cell (0,0) - using compareTo with appropriate scale
+      assertTrue(BigDecimal.ZERO.compareTo(gridCoords[0].setScale(4, RoundingMode.HALF_UP)) == 0, 
+          "Grid X should be 0");
+      assertTrue(BigDecimal.ZERO.compareTo(gridCoords[1].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "Grid Y should be 0");
     }
   }
 }

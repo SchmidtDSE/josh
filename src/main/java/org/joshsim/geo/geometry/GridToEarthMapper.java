@@ -1,12 +1,17 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
