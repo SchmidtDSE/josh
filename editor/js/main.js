@@ -23,7 +23,7 @@ class MainPresenter {
   /**
    * Creates a new MainPresenter instance.
    */
-  constructor() {
+  constructor(initalizationCallback) {
     const self = this;
 
     self._currentRequest = null;
@@ -44,9 +44,9 @@ class MainPresenter {
     });
 
     self._runPresenter = new RunPanelPresenter(
-        "code-buttons-panel",
-        () => self._wasmLayer.getSimulations(self._editorPresenter.getCode()),
-        (request) => { self._executeRunRequest(request); }
+      "code-buttons-panel",
+      () => self._wasmLayer.getSimulations(self._editorPresenter.getCode()),
+      (request) => { self._executeRunRequest(request); }
     );
 
     self._resultsPresenter = new ResultsPresenter("results");
@@ -109,11 +109,11 @@ class MainPresenter {
   _executeSingleReplicate() {
     const self = this;
     self._wasmLayer.runSimulation(
-        self._editorPresenter.getCode(),
-        self._currentRequest.getSimName()
+      self._editorPresenter.getCode(),
+      self._currentRequest.getSimName()
     ).then(
-        (x) => { self._onSimulationComplete(x); },
-        (x) => { self._onError(x); }
+      (x) => { self._onSimulationComplete(x); },
+      (x) => { self._onError(x); }
     );
   }
 

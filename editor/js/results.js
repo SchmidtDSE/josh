@@ -69,7 +69,7 @@ class ResultsPresenter {
     if (numRecords == 0) {
       self._vizPresenter.showNoData();
     } else {
-      self._vizPresenter.show();
+      self._vizPresenter.show(results);
     }
   }
 
@@ -136,6 +136,12 @@ class StatusPresenter {
     self._root.querySelector(".completed-type").innerHTML = units;
   }
 
+  /**
+   * Displays the completion status of the simulation.
+   *
+   * @param {number} totalSeconds - Total time taken by the simulation in seconds.
+   * @param {number} numRecords - Total number of records processed during the simulation.
+   */
   showComplete(totalSeconds, numRecords) {
     const self = this;
     
@@ -150,6 +156,11 @@ class StatusPresenter {
     self._root.querySelector(".completed-records").innerHTML = numRecords;
   }
 
+  /**
+   * Displays an error message encountered in runtime in the error display.
+   *
+   * @param {string} message - The error message to display in the status area.
+   */
   showError(message) {
     const self = this;
     self._root.querySelector(".error-display").style.display = "block";
@@ -164,18 +175,33 @@ class StatusPresenter {
 }
 
 
+/**
+ * Presenter which runs the in-editor visualization panel.
+ */
 class VizPresenter {
 
+  /**
+   * Create a new visualization presenter.
+   *
+   * @param {Element} selection - Selection over the div containing the visualization.
+   */
   constructor(selection) {
     const self = this;
     self._root = selection;
+    self._dataSelector = new DataQuerySelector(self._root.querySelector("#data-selector"));
   }
 
+  /**
+   * Hide the visualization display.
+   */
   hide() {
     const self = this;
     self._root.style.display = "none";
   }
 
+  /**
+   * Show the user a message indicating that no data were recieved.
+   */
   showNoData() {
     const self = this;
     self._root.style.display = "block";
@@ -183,11 +209,92 @@ class VizPresenter {
     self._root.querySelector("#data-display").style.display = "none";
   }
 
-  show() {
+  /**
+   * Show the visualization results.
+   *
+   * @param {Array<SimulationResult>} results - The results to be displayed where each element is a
+   *     replicate.
+   */
+  show(results) {
     const self = this;
+    
     self._root.style.display = "block";
     self._root.querySelector("#no-data-message").style.display = "none";
     self._root.querySelector("#data-display").style.display = "block";
+
+    const allVariables = new Set();
+    results.forEach(replicate => {
+      const variables = replicate.getPatchVariables();
+      variables.forEach(variable => allVariables.add(variable));
+    });
+
+    self._dataSelector.setVariables(allVariables);
+  }
+  
+}
+
+
+class DataQuerySelector {
+
+  constructor(selection) {
+    const self = this;
+    self._root = selection;
+    self._addEventListeners();
+    self._updateInternalDisplay();
+  }
+
+  setVariables(newVariables) {
+    const self = this;
+
+    const variableSelection = self._root.querySelector(".variable-select");
+    
+    const originalValue = variableSelection.value;
+    variableSelection.innerHTML = ""; // Clear current options
+
+    newVariables.forEach((variable) => {
+      const option = document.createElement("option");
+      option.text = variable;
+      option.value = variable;
+      variableSelection.add(option);
+    });
+
+    if (newVariables.has(originalValue)) {
+      variableSelection.value = originalValue;
+    }
+  }
+
+  _addEventListeners() {
+    const self = this;
+    self._root.querySelectorAll(".data-select-option").forEach(
+      (elem) => elem.addEventListener("click", (event) => {
+        event.preventDefault();
+        self._updateInternalDisplay();
+      })
+    );
+  }
+
+  _updateInternalDisplay() {
+    const self = this;
+    
+    const metricSelect = self._root.querySelector(".metric-select");
+    const metric = metricSelect.value;
+    const probabilityControls = self._root.querySelectorAll(".probability-controls");
+    const regularControls = self._root.querySelectorAll(".regular-metric-controls");
+    if (metric === "probability") {
+      probabilityControls.forEach((x) => x.style.display = "inline-block");
+      regularControls.forEach((x) => x.style.display = "none");
+    } else {
+      probabilityControls.forEach((x) => x.style.display = "none");
+      regularControls.forEach((x) => x.style.display = "inline-block");
+    }
+
+    const probabilityType = self._root.querySelector(".probability-range-target").value;
+    const secondTarget = self._root.querySelector(".target-b");
+    if (probabilityType === "is between") {
+      secondTarget.style.display = "inline-block";
+    } else {
+      secondTarget.style.display = "none";
+    }
   }
   
 }

@@ -104,8 +104,9 @@
             </div>
             
             <div id="viz-panel" class="results-panel">
-              <h3>Results</h3>
               <div id="no-data-message">
+                <h3>Results</h3>
+                
                 No data were reported for this simulation. To add data to an export, consider adding code like this:
   
                 <pre>
@@ -136,7 +137,59 @@ end simulation
                 </pre>
               </div>
               <div id="data-display">
-                Visualization coming soon...
+                <div class="header-button-grid">
+                  <h3>Results</h3>
+                
+                  <div id="download-buttons" class="buttons-panel">
+                    <div class="button-holder">
+                      <a class="primary" id="download-patches-button" href="#download-patches">Download Patch Exports</a>
+                    </div>
+                    <div class="button-holder">
+                      <a class="secondary" id="download-simulation-button" href="#download-simulation">Simulation</a>
+                    </div>
+                    <div class="button-holder">
+                      <a class="secondary" id="download-entity-button" href="#download-entities">Entities</a>
+                    </div>
+                  </div>
+                </div>
+                <div id="data-selector">
+                  Showing
+                  <span class="sel">
+                    <select class="metric-select data-select-option">
+                      <option value="mean" selected>mean</option>
+                      <option value="median">median</option>
+                      <option value="min">min</option>
+                      <option value="max">max</option>
+                      <option value="probability">probability</option>
+                    </select>
+                  </span>
+                  <span class="probability-controls">
+                    that
+                  </span>
+                  <span class="regular-metric-controls">
+                    of
+                  </span>
+                  <span class="sel long">
+                    <select class="variable-select data-select-option"></select>
+                  </span>
+                  <span class="probability-controls">
+                    <span class="sel">
+                      <select class="probability-range-target data-select-option">
+                        <option value="exceeds" selected>exceeds</option>
+                        <option value="falls below">falls below</option>
+                        <option value="is between">is between</option>
+                      </select>
+                    </span>
+                    <span class="target-a">
+                      <input type="number" class="target-a-input data-select-option">
+                    </span>
+                    <span class="target-b">
+                      to
+                      <input type="number" class="target-b-input data-select-option">
+                    </span>
+                  </span>
+                  .
+                </div>
               </div>
             </div>
           </div>
@@ -155,12 +208,13 @@ end simulation
     <script type="importmap">
       {
         "imports": {
-          "editor": "./js/editor.js?v=EPOCH",
-          "file": "./js/file.js?v=EPOCH",
-          "main": "./js/main.js?v=EPOCH",
-          "results": "./js/results.js?v=EPOCH",
-          "run": "./js/run.js?v=EPOCH",
-          "wasm": "./js/wasm.js?v=EPOCH"
+          "editor": "/js/editor.js?v=EPOCH",
+          "file": "/js/file.js?v=EPOCH",
+          "main": "/js/main.js?v=EPOCH",
+          "model": "/js/model.js?v=EPOCH",
+          "results": "/js/results.js?v=EPOCH",
+          "run": "/js/run.js?v=EPOCH",
+          "wasm": "/js/wasm.js?v=EPOCH"
         }
       }
     </script>
