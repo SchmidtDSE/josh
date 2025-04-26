@@ -1,5 +1,5 @@
 /**
- * Logic for running a compatability layer on WASM.
+ * Logic for running a Compatibility layer on WASM.
  *
  * @license BSD-3-Clause
  */
@@ -10,12 +10,12 @@ import java.math.BigDecimal;
 
 
 /**
- * Compatability layer providing the ability to run simulations within WebAssembly.
+ * Compatibility layer providing the ability to run simulations within WebAssembly.
  *
- * <p>Compatability layer providing access to compatability objects which afford the ability to run
+ * <p>Compatibility layer providing access to Compatibility objects which afford the ability to run
  * simulations in different host virutal machines, in this case within WebAssembly.</p>
  */
-public class EmulatedCompatabilityLayer implements CompatabilityLayer {
+public class EmulatedCompatibilityLayer implements CompatibilityLayer {
 
   private static final BigDecimal TWO = new BigDecimal("2");
 

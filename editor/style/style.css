@@ -281,6 +281,10 @@ main {
   color: #ff1212;
 }
 
+.status-display {
+  margin-bottom: 10px;
+}
+
 .tab {
   padding: 5px;
 }

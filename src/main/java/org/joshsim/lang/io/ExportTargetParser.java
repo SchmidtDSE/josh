@@ -27,9 +27,39 @@ public class ExportTargetParser {
    * @throws IllegalArgumentException if the target string is invalid or unsupported.
    */
   public static ExportTarget parse(String target) {
+    String targetClean = target.replaceAll("\"", "");
+
+    if (targetClean.startsWith("memory://editor/")) {
+      return parseMemory(targetClean);
+    } else {
+      return parseUri(targetClean);
+    }
+  }
+
+  /**
+   * Parses a memory-based export target string.
+   *
+   * @param target The target string starting with "memory://editor/" after which the path is
+   *     found.
+   * @return An ExportTarget configured for memory-based export.
+   */
+  private static ExportTarget parseMemory(String target) {
+    String path = target.substring(16, target.length());
+    return new ExportTarget("memory", "editor", path);
+  }
+
+  /**
+   * Parses a non-memory URI-based export target string.
+   *
+   * @param target The target string in URI format (e.g., "file:/path/to/file" or 
+   *     "minio://host/path")
+   * @return An ExportTarget configured based on the URI scheme.
+   * @throws IllegalArgumentException if the URI scheme is unsupported or the URI syntax is 
+   *     invalid.
+   */
+  private static ExportTarget parseUri(String target) {
     try {
-      String targetClean = target.replaceAll("\"", "");
-      URI uri = new URI(targetClean);
+      URI uri = new URI(target);
       String scheme = uri.getScheme();
       if ("file".equalsIgnoreCase(scheme)) {
         return new ExportTarget(uri.getPath());

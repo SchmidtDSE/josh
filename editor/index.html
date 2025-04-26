@@ -16,7 +16,7 @@
         and we are here to help if you run into any issues.
       </div>
       <h1>Josh Simulation Editor</h1>
-      This web-based editor allows for rapid prototyping Josh agent-based simulations from your browser. These scripts are only saved within your browser and are not sent to external servers unless requested.
+      This web-based editor allows for rapid prototyping Josh agent-based simulations from your browser. These scripts are only saved within your browser and are not sent to external servers unless requested. Try out small scripts in your browser. Then, run on cloud or CLI when ready to execute larger simulations.
       <div class="file-buttons buttons-panel" id="file-buttons">
         <a href="#" id="new-file-button" class="secondary">New File</a>
         <a href="#" id="load-file-button" class="secondary">Load File</a>
@@ -50,8 +50,8 @@
             </div>
             <div id="code-buttons-panel" class="buttons-panel">
               <div id="available-panel">
-                <a class="primary" id="open-run-dialog-button" href="#loading">Run on Your Computer</a>
-                <a class="secondary" id="open-cloud-dialog-button" href="#cloud">Run in Cloud</a>
+                <a class="primary" id="open-run-dialog-button" href="#loading">Run on Browser</a>
+                <a class="secondary" id="open-cloud-dialog-button" href="#cloud">Run on Cloud</a>
                 <a class="secondary" id="open-cli-dialog-button" href="#cli">Run on CLI</a>
               </div>
               <dialog id="run-local-dialog">
@@ -89,8 +89,22 @@
           <div class="status-tab tab" id="status-tab">
             <h3>Execution status</h3>
             <div>
-              <div class="running-indicator">
-                ⌛ Completed <span class="completed-count"></span> timesteps...
+              <div class="running-indicator status-display">
+                <span class="running-icon">⌛</span>
+                <span class="complete-icon">✅</span>
+                Completed <span class="completed-count"></span> <span class="completed-type"></span>...
+              </div>
+              <div class="error-display status-display">
+                ⚠️ Encountered error: <span class="error-message"></span>.
+              </div>
+              <div class="timing-indicator finish-display status-display">
+                ⏰ Ran in <span class="completed-minutes"></span> minutes and <span class="completed-seconds"></span> seconds.
+              </div>
+              <div class="dataset-indicator finish-display status-display">
+                💾 Collected <span class="completed-records"></span> records.
+              </div>
+              <div class="dataset-indicator finish-display status-display">
+                🚀 Need to go faster? Run on <a href="#" class="cta-cloud">cloud</a> or <a href="#" class="cta-cli">CLI</a>.
               </div>
             </div>
           </div>

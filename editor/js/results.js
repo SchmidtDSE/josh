@@ -7,7 +7,6 @@
 
 /**
  * Presenter which manages the display of simulation results.
- * Handles tabs and status updates for simulation runs.
  */
 class ResultsPresenter {
 
@@ -23,6 +22,8 @@ class ResultsPresenter {
 
     self._root = document.getElementById(rootId);
     self._statusPresenter = new StatusPresenter(self._root.querySelector(".status-tab"));
+
+    self._secondsOnStart = null;
   }
 
   /**
@@ -32,16 +33,63 @@ class ResultsPresenter {
     const self = this;
     self._statusPresenter.resetProgress();
     self._root.style.display = "block";
+    self._secondsOnStart = self._getEpochSeconds();
   }
 
   /**
    * Updates progress when a simulation step completes.
+   *
+   * @param {Number} numSteps - The number of steps completed.
+   * @param {string} units - The units (timesteps, replicates) being reported.
    */
-  onStep(numSteps) {
+  onStep(numSteps, units) {
     const self = this;
-    self._statusPresenter.updateProgress(numSteps);
+    self._statusPresenter.updateProgress(numSteps, units);
+  }
+
+  /**
+   * Handles completion of simulation run, calculating and displaying results.
+   * 
+   * @param {Array<SimulationResult>} results - Array of simulation results containing output records.
+   */
+  onComplete(results) {
+    const self = this;
+
+    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
+    const numRecords = results.map((record) => {
+      return [
+        record.getSimResults().length,
+        record.getPatchResults().length,
+        record.getEntityResults().length
+      ].reduce((a, b) => a + b);
+    }).reduce((a, b) => a + b, 0);
+    
+    self._statusPresenter.showComplete(totalSeconds, numRecords);
+  }
+
+  /**
+   * Displays an error message in the status display.
+   * 
+   * @param {string} message - The error message to display.
+   */
+  onError(message) {
+    const self =this;
+    self._statusPresenter.showError(message);
+  }
+
+  /**
+   * Gets the current time in epoch seconds.
+   * 
+   * @returns {number} Current time in seconds since epoch.
+   * @private
+   */
+  _getEpochSeconds() {
+    const self = this;
+    const now = new Date();
+    return now.getTime() / 1000;
   }
 }
+
 
 /**
  * Presenter which handles the status display for simulation progress.
@@ -55,7 +103,6 @@ class StatusPresenter {
    */
   constructor(selection) {
     const self = this;
-    self._numComplete = 0;
     self._root = selection;
   }
 
@@ -64,29 +111,51 @@ class StatusPresenter {
    */
   resetProgress() {
     const self = this;
-    self._numComplete = 0;
-    self.updateProgress(0);
-    self._root.querySelector(".running-indicator").style.display = "block";
+    self.updateProgress(0, "steps");
+    self._root.querySelector(".running-icon").style.display = "inline-block";
+    self._root.querySelector(".complete-icon").style.display = "none";
+    self._root.querySelector(".error-display").style.display = "none";
+    self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "none");
   }
 
   /**
    * Increments the progress counter and updates display.
+   *
+   * @param {Number} numSteps - The number of steps completed.
+   * @param {string} units - The units (timesteps, replicates) being reported.
    */
-  updateProgress(numSteps) {
+  updateProgress(numSteps, units) {
     const self = this;
-    self._numComplete = numSteps;
-    self._updateProgressDisplay();
+    self._root.querySelector(".completed-count").innerHTML = numSteps;
+    self._root.querySelector(".completed-type").innerHTML = units;
   }
 
-  /**
-   * Updates the progress display with current count.
-   * 
-   * @private
-   */
-  _updateProgressDisplay() {
+  showComplete(totalSeconds, numRecords) {
     const self = this;
-    self._root.querySelector(".completed-count").innerHTML = self._numComplete;
+    
+    self._root.querySelector(".running-icon").style.display = "none";
+    self._root.querySelector(".complete-icon").style.display = "inline-block";
+    self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "block");
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.ceil(totalSeconds - 60 * minutes);
+    self._root.querySelector(".completed-minutes").innerHTML = minutes;
+    self._root.querySelector(".completed-seconds").innerHTML = seconds;
+    self._root.querySelector(".completed-records").innerHTML = numRecords;
   }
+
+  showError(message) {
+    const self = this;
+    self._root.querySelector(".error-display").style.display = "block";
+    
+    const errorMessageHolder = self._root.querySelector(".error-message");
+    errorMessageHolder.innerHTML = "";
+    
+    const textNode = document.createTextNode(message);
+    errorMessageHolder.appendChild(textNode);
+  }
+
 } 
+
 
 export {ResultsPresenter};

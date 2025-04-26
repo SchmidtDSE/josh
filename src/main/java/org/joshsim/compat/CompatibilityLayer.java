@@ -1,5 +1,5 @@
 /**
- * Logic for a cross-VM compatability layer.
+ * Logic for a cross-VM Compatibility layer.
  *
  * @license BSD-3-Clause
  */
@@ -12,9 +12,9 @@ import java.math.BigDecimal;
  * Layer which offers access to platform-specific functionality (JVM vs WASM).
  *
  * <p>Layer which allows abstraction over different runtime virtual machines, specifically offering
- * compatability objects which work on either a plain old JVM or in WebAssembly.</p>
+ * Compatibility objects which work on either a plain old JVM or in WebAssembly.</p>
  */
-public interface CompatabilityLayer {
+public interface CompatibilityLayer {
 
   /**
    * Creates a platform-specific string joiner implementation.

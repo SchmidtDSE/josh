@@ -85,4 +85,15 @@ public class ExportTargetParserTest {
       ExportTargetParser.parse(target);
     });
   }
+
+  @Test
+  public void testMemory() {
+    String target = "memory://editor/test";
+
+    ExportTarget result = ExportTargetParser.parse(target);
+
+    assertEquals("memory", result.getProtocol());
+    assertEquals("editor", result.getHost());
+    assertEquals("test", result.getPath());
+  }
 }

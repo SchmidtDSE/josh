@@ -1,12 +1,66 @@
 importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
 
+const NUMBER_REGEX = /(\+|\-)?\d+(\.\d+)?/;
+
 let wasmLayer = null;
 let postMessage = null;
 
+
+/**
+ * Reports the completion of a simulation step to the main thread.
+ * 
+ * @param {number} stepCount - The number of steps completed in the simulation.
+ */
 function reportStepComplete(stepCount) {
   postMessage({ type: "reportStep", success: true, result: stepCount })
 }
+
+
+/**
+ * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
+ * 
+ * @param {string} source - The formatted string containing target name and key-value pairs.
+ */
+function reportData(source) {
+  const firstPieces = source.split(':', 2);
+  const target = firstPieces[0];
+  const attributesStr = firstPieces[1];
+  
+  const attributes = new Map();
+  
+  if (!attributesStr) {
+    return;
+  }
+
+  const pairs = attributesStr.split("\t");
+  for (const pair of pairs) {
+    const pairPieces = pair.split('=', 2);
+    const key = pairPieces[0];
+    const value = pairPieces[1];
+
+    const valid = key && value !== undefined;
+    
+    if (valid) {
+      const isNumber = NUMBER_REGEX.test(value);
+      attributes.set(key, isNumber ? parseFloat(value) : value);
+    }
+  }
+  
+  const datum = {"target": target, "attributes": attributes};
+  postMessage({ type: "outputDatum", success: true, result: datum });
+}
+
+
+/**
+ * Report an error from the WASM execution.
+ *
+ * @param {string} message - Description of the message encountered.
+ */
+function reportError(message) {
+  postMessage({ type: "error", success: false, error: message });
+}
+
 
 self.onmessage = async function(e) {
   const { type, data } = e.data;

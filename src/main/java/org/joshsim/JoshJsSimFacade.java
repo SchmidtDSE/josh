@@ -8,7 +8,7 @@ package org.joshsim;
 
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
-import org.joshsim.compat.EmulatedCompatabilityLayer;
+import org.joshsim.compat.EmulatedCompatibilityLayer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshInterpreter;
@@ -97,10 +97,40 @@ public class JoshJsSimFacade {
    * @param code The Josh source code to parse, interpret, and run as a simulation.
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
-   * @throws RuntimeException If parsing the code results in errors.
    */
   @JSExport
   public static void runSimulation(String code, String simulationName) {
+    try {
+      runSimulationUnsafe(code, simulationName);
+    } catch (Exception e) {
+      reportError(e.toString());
+    }
+  }
+
+  /**
+   * Configures the system for execution within a WebAssembly (Wasm) environment.
+   *
+   * <p>This method sets the platform-specific compatibility layer to an instance of
+   * EmulatedCompatibilityLaye}, which provides the necessary abstractions to enable simulations to
+   * run within the WebAssembly virtual machine.</p>
+   */
+  private static void setupForWasm() {
+    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer());
+  }
+
+  /**
+   * Interpret and run a Josh simulation without error handling.
+   *
+   * <p>Parses the given Josh script, interprets it, and runs the specified simulation. This method
+   * performs various steps including syntax checking, program interpretation, and simulation
+   * execution. It uses a callback mechanism to signal completion of each simulation step.</p>
+   *
+   * @param code The Josh source code to parse, interpret, and run as a simulation.
+   * @param simulationName The name of the simulation to be executed as defined in the parsed
+   *     program.
+   * @throws RuntimeException If parsing the code results in errors.
+   */
+  private static void runSimulationUnsafe(String code, String simulationName) {
     setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -109,7 +139,9 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer();
+    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer(
+        (payload) -> reportData(payload)
+    );
 
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
 
@@ -124,17 +156,6 @@ public class JoshJsSimFacade {
   }
 
   /**
-   * Configures the system for execution within a WebAssembly (Wasm) environment.
-   *
-   * <p>This method sets the platform-specific compatibility layer to an instance of
-   * EmulatedCompatabilityLaye}, which provides the necessary abstractions to enable simulations to
-   * run within the WebAssembly virtual machine.</p>
-   */
-  private static void setupForWasm() {
-    CompatibilityLayerKeeper.set(new EmulatedCompatabilityLayer());
-  }
-
-  /**
    * Required entrypoint for wasm.
    *
    * @param args ignored arguments
@@ -143,5 +164,11 @@ public class JoshJsSimFacade {
 
   @JSBody(params = { "count" }, script = "reportStepComplete(count)")
   private static native void reportStepComplete(int count);
+
+  @JSBody(params = { "payload" }, script = "reportData(payload)")
+  private static native void reportData(String payload);
+
+  @JSBody(params = { "message" }, script = "reportError(message)")
+  private static native void reportError(String payload);
 
 }
