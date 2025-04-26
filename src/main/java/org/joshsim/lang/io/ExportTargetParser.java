@@ -42,7 +42,7 @@ public class ExportTargetParser {
   }
 
   private static ExportTarget parseUri(String target) {
-    try{
+    try {
       URI uri = new URI(target);
       String scheme = uri.getScheme();
       if ("file".equalsIgnoreCase(scheme)) {
