@@ -47,6 +47,11 @@ class ResultsPresenter {
     self._statusPresenter.updateProgress(numSteps, units);
   }
 
+  /**
+   * Handles completion of simulation run, calculating and displaying results.
+   * 
+   * @param {Array<SimulationResult>} results - Array of simulation results containing output records.
+   */
   onComplete(results) {
     const self = this;
 
@@ -62,11 +67,22 @@ class ResultsPresenter {
     self._statusPresenter.showComplete(totalSeconds, numRecords);
   }
 
+  /**
+   * Displays an error message in the status display.
+   * 
+   * @param {string} message - The error message to display.
+   */
   onError(message) {
     const self =this;
     self._statusPresenter.showError(message);
   }
 
+  /**
+   * Gets the current time in epoch seconds.
+   * 
+   * @returns {number} Current time in seconds since epoch.
+   * @private
+   */
   _getEpochSeconds() {
     const self = this;
     const now = new Date();
