@@ -156,23 +156,21 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
 
   @Override
   public EngineGeometry createCircle(
-      BigDecimal point1X, BigDecimal point1Y, BigDecimal point2X, BigDecimal point2Y) {
-    double x1 = point1X.doubleValue();
-    double y1 = point1Y.doubleValue();
-    double x2 = point2X.doubleValue();
-    double y2 = point2Y.doubleValue();
+      BigDecimal centerX, BigDecimal centerY, BigDecimal circumX, BigDecimal circumY) {
+    double cenX = centerX.doubleValue();
+    double cenY = centerY.doubleValue();
+    double cirX = circumX.doubleValue();
+    double cirY = circumY.doubleValue();
 
-    // Calculate center and diameter
-    double centerX = (x1 + x2) / 2.0;
-    double centerY = (y1 + y2) / 2.0;
-    double diameter = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    // Calculate radius as distance from center to circumference point
+    double radius = Math.sqrt(Math.pow(cirX - cenX, 2) + Math.pow(cirY - cenY, 2));
 
     GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
 
-    // Set center, radius (via width) and number of points
-    shapeFactory.setCentre(new Coordinate(centerX, centerY));
-    shapeFactory.setWidth(diameter);
-    shapeFactory.setHeight(diameter);
+    // Set center and diameter (2 * radius)
+    shapeFactory.setCentre(new Coordinate(cenX, cenY));
+    shapeFactory.setWidth(radius * 2);
+    shapeFactory.setHeight(radius * 2);
     shapeFactory.setNumPoints(DEFAULT_NUM_POINTS);
 
     // Create the circle

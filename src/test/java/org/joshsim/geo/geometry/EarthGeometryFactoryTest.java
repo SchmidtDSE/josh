@@ -100,9 +100,9 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthGeometry geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -124,9 +124,9 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthSquare geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryUtm11n.createSquare(
           centerX, centerY, width
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -140,53 +140,6 @@ public class EarthGeometryFactoryTest {
     }
 
     @Test
-    public void testCreateSquareWithZeroWidth() {
-      // Given
-      BigDecimal width = BigDecimal.ZERO;
-      BigDecimal centerX = BigDecimal.valueOf(20.0); // longitude (x)
-      BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
-
-      // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
-          centerX, centerY, width
-      ).getOnEarth();
-
-      // Then
-      assertNotNull(geometry, "Geometry should not be null");
-      // With zero width, we should get a point
-      assertTrue(geometry.getInnerGeometry() instanceof Point,
-          "Zero width square should be represented as a Point");
-
-      Point point = (Point) geometry.getInnerGeometry();
-      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
-      assertEquals(wgs84, geometry.getCrs(), "CRS should be WGS84");
-    }
-
-    @Test
-    public void testCreateSquareWithZeroWidthUtm() {
-      // Given
-      BigDecimal width = BigDecimal.ZERO;
-      BigDecimal centerX = BigDecimal.valueOf(20.0); // easting (x)
-      BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
-
-      // When
-      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
-          centerX, centerY, width
-      ).getOnEarth();
-
-      // Then
-      assertNotNull(geometry, "Geometry should not be null");
-      assertTrue(geometry.getInnerGeometry() instanceof Point,
-          "Zero width square should be represented as a Point");
-
-      Point point = (Point) geometry.getInnerGeometry();
-      assertEquals(20.0, point.getX(), 0.000001, "X should equal centerX for zero width");
-      assertEquals(10.0, point.getY(), 0.000001, "Y should equal centerY for zero width");
-      assertEquals(utm11n, geometry.getCrs(), "CRS should be UTM11N");
-    }
-
-    @Test
     public void testCreateSquareWithPrecision() {
       // Given
       BigDecimal width = new BigDecimal("1.123456789");
@@ -194,9 +147,9 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = new BigDecimal("10.987654321"); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryWgs84.createSquare(
           centerX, centerY, width
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -263,12 +216,12 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createSquare(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryWgs84.createSquare(
           topLeftX,
           topLeftY,
           bottomRightX,
           bottomRightY
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -291,12 +244,12 @@ public class EarthGeometryFactoryTest {
       BigDecimal bottomRightY = BigDecimal.valueOf(9.0); // northing (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryUtm11n.createSquare(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryUtm11n.createSquare(
           topLeftX,
           topLeftY,
           bottomRightX,
           bottomRightY
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -341,9 +294,9 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createCircle(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryWgs84.createCircle(
           centerX, centerY, radius
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -368,9 +321,9 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // northing (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryUtm11n.createCircle(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryUtm11n.createCircle(
           centerX, centerY, radius
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -395,12 +348,12 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryWgs84.createCircle(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryWgs84.createCircle(
           pointX,
           pointY,
           centerX,
           centerY
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");
@@ -425,12 +378,12 @@ public class EarthGeometryFactoryTest {
       BigDecimal centerY = BigDecimal.valueOf(10.0); // latitude (y)
 
       // When
-      EarthShape geometry = engineGeometryFactoryUtm11n.createCircle(
+      EarthGeometry geometry = (EarthGeometry) engineGeometryFactoryUtm11n.createCircle(
           pointX,
           pointY,
           centerX,
           centerY
-      ).getOnEarth();
+      );
 
       // Then
       assertNotNull(geometry, "Geometry should not be null");

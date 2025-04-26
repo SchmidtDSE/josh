@@ -64,17 +64,17 @@ public interface EngineGeometryFactory {
   /**
    * Creates a circular EngineGeometry from radius and a point on the circumference.
    *
-   * @param point1X The X position (longitude, easting) of a point on the circle's circumference
-   * @param point1Y The Y position (latitude, northing) of a point on the circle's circumference
-   * @param point2X The X position (longitude, easting) of the circle's center
-   * @param point2Y The Y position (latitude, northing) of the circle's center
+   * @param centerX The X position (longitude, easting) of the circle's center
+   * @param centerY The Y position (latitude, northing) of the circle's center
+   * @param circumX The X position (longitude, easting) of the circle's center
+   * @param circumY The Y position (latitude, northing) of the circle's center
    * @return A EngineGeometry object representing a circle
    */
   EngineGeometry createCircle(
-      BigDecimal point1X,
-      BigDecimal point1Y,
-      BigDecimal point2X,
-      BigDecimal point2Y
+      BigDecimal centerX,
+      BigDecimal centerY,
+      BigDecimal circumX,
+      BigDecimal circumY
   );
 
   /**

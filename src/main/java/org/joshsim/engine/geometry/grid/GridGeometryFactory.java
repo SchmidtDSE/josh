@@ -43,13 +43,12 @@ public class GridGeometryFactory implements EngineGeometryFactory {
   }
 
   @Override
-  public EngineGeometry createCircle(BigDecimal point1X, BigDecimal point1Y, BigDecimal point2X,
-        BigDecimal point2Y) {
-    BigDecimal centerX = point1X.add(point2X).divide(BigDecimal.TWO);
-    BigDecimal centerY = point1Y.add(point2Y).divide(BigDecimal.TWO);
+  public EngineGeometry createCircle(BigDecimal centerX, BigDecimal centerY, BigDecimal circumX,
+        BigDecimal circumY) {
+    // Calculate radius as distance from center to circumference point
     BigDecimal radius = BigDecimal.valueOf(Math.sqrt(
-        point2X.subtract(point1X).pow(2).add(point2Y.subtract(point1Y).pow(2)).doubleValue()
-    )).divide(BigDecimal.TWO);
+        circumX.subtract(centerX).pow(2).add(circumY.subtract(centerY).pow(2)).doubleValue()
+    ));
     return new GridCircle(centerX, centerY, radius);
   }
 
