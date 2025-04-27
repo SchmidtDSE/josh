@@ -247,7 +247,11 @@ class SimulationResultBuilder {
       self._patchResults,
       self._patchAttributes,
       self._entityResults,
-      self._entityAttributes
+      self._entityAttributes,
+      self._minX,
+      self._minY,
+      self._maxX,
+      self._maxY
     );
   }
 
@@ -262,6 +266,8 @@ class SimulationResultBuilder {
    * @param {OutputDatum} result - The output record to add to the builder.
    */
   _updateBounds(result) {
+    const self = this;
+    
     const hasPosX = result.hasValue("position.x");
     const hasPosY = result.hasValue("position.y");
     const hasPos = hasPosX && hasPosY;
@@ -614,7 +620,7 @@ function summarizeDatasets(target, query) {
    * @returns {Map<string, Array<number>>} Mapping from key to values found for all records with the
    *     key and with the target attribute present.
    */
-  const getValuesByKey(keyGetter) => {
+  const getValuesByKey = (keyGetter) => {
     const keyedValuesUnsafe = targetFlat.map((x) => {
       return {"key": keyGetter(x), "value": x.getValue(variable)};
     });
@@ -643,7 +649,7 @@ function summarizeDatasets(target, query) {
    *     returned.
    * @returns {Map<string, number>} Mapping from key to metric value.
    */
-  const summarizeByKey(keyGetter) => {
+  const summarizeByKey = (keyGetter) => {
     const valuesByKey = getValuesByKey(keyGetter);
     const valueByKey = new Map();
 
@@ -669,10 +675,10 @@ function summarizeDatasets(target, query) {
 
 
 /**
- * Extracts the 'timestep' value from a given record.
+ * Extracts the timestep value from a given record.
  * 
- * @param {OutputDatum} record - The output record from which the 'timestep' will be retrieved.
- * @returns {?number} The 'timestep' value if it exists, or null if not present.
+ * @param {OutputDatum} record - The output record from which the step will be retrieved.
+ * @returns {?number} The step value if it exists, or null if not present.
  */
 function getTimestepKey(record) {
   if (!record.hasValue("step")) {

@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-import {DataQuery} from "model";
+import {DataQuery, summarizeDatasets} from "model";
 
 
 /**
@@ -77,6 +77,16 @@ class ResultsPresenter {
   }
 
   /**
+   * Build a query from the user's current query selection.
+   *
+   * @returns {DataQuery} Record describing the user's current query selection.
+   */
+  getCurrentQuerySelection() {
+    const self = this;
+    return self._resultsDisplayPresenter.getCurrentQuerySelection();
+  }
+
+  /**
    * Gets the current time in epoch seconds.
    * 
    * @returns {number} Current time in seconds since epoch.
@@ -93,7 +103,14 @@ class ResultsPresenter {
    */
   _renderDisplay() {
     const self = this;
-    // TODO
+
+    if (self._results === null) {
+      throw "No results available to display.";
+    }
+    
+    const query = self._resultsDisplayPresenter.getCurrentQuerySelection();
+    const summarized = summarizeDatasets(self._results, query);
+    self._resultsDisplayPresenter.render(summarized);
   }
 
   /**
@@ -272,6 +289,28 @@ class ResultsDisplayPresenter {
   setVariables(allVariables) {
     const self = this;
     self._dataSelector.setVariables(allVariables);
+  }
+
+  /**
+   * Build a query from the user's current query selection.
+   *
+   * @returns {DataQuery} Record describing the user's current query selection.
+   */
+  getCurrentQuerySelection() {
+    const self = this;
+    return self._dataSelector.getCurrentSelection();
+  }
+
+  /**
+   * Instruct the visualizations to display a summary.
+   *
+   * Instruct the visualizations to display a summary which was computed from the underlying raw
+   * data using user defined parameters.
+   */
+  render(summary) {
+    const self = this;
+    console.log(summary);
+    // TODO
   }
   
 }
