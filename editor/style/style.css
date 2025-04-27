@@ -308,6 +308,11 @@ main {
   margin-bottom: 10px;
 }
 
+#results #scrub-viz {
+  width: 100%;
+  height: 150px;
+}
+
 @media (max-width: 999px) {
 
   #download-buttons {
