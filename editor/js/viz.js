@@ -64,6 +64,10 @@ class ScrubPresenter {
         .domain(timesteps)
         .range([0, width])
         .padding(0);
+        
+      const yScale = d3.scaleLinear()
+        .domain([minValue, maxValue])
+        .range([height - 7, 7]);
       
       const groups = self._svgSelection.selectAll("g")
         .data(timesteps)
@@ -74,16 +78,9 @@ class ScrubPresenter {
       groups.append("rect")
         .attr("class", "display-bar")
         .attr("x", 1)
-        .attr("y", d => {
-          const value = summarized.getTimestepValue(d);
-          const barHeight = (value - minValue) / (maxValue - minValue) * height;
-          return height - barHeight;
-        })
+        .attr("y", d => yScale(summarized.getTimestepValue(d)))
         .attr("width", xScale.bandwidth() - 2)
-        .attr("height", d => {
-          const value = summarized.getTimestepValue(d);
-          return (value - minValue) / (maxValue - minValue) * height;
-        });
+        .attr("height", d => height - yScale(summarized.getTimestepValue(d)));
       
       groups.append("rect")
         .attr("class", "pointer-target")
