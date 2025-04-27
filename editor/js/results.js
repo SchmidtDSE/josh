@@ -305,6 +305,21 @@ class DataQuerySelector {
    */
   getCurrentSelection() {
     const self = this;
+    
+    const metric = self._metricSelect.value;
+    const variable = self._variableSelect.value;
+    
+    let targetA = null;
+    let targetB = null;
+    
+    if (metric === "probability") {
+      targetA = parseFloat(self._probabilityTargetA.value);
+      if (self._probabilityTypeSelect.value === "is between") {
+        targetB = parseFloat(self._probabilityTargetB.value);
+      }
+    }
+    
+    return new DataQuery(variable, metric, targetA, targetB);
   }
 
   /**
