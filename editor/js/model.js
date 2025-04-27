@@ -324,10 +324,16 @@ class SummarizedResult {
    */
   getGridValue(timestep, x, y) {
     const self = this;
-    const key = `${Math.round(timestep)},${Math.round(x)},${Math.round(y)}`;
+    
+    const timestepRounded = Math.round(timestep);
+    const xRounded = Math.round(x);
+    const yRounded = Math.round(y);
+    const key = `${timestepRounded},${xRounded},${yRounded}`;
+    
     if (!self._gridPerReplicate.has(key)) {
       throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
     }
+    
     return self._gridPerReplicate.get(key);
   }
   
