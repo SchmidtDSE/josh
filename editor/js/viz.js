@@ -48,15 +48,14 @@ class ScrubPresenter {
     const maxTimestep = summarized.getMaxTimestep();
     const numSteps = maxTimestep - minTimestep + 1;
     
-    const groupWidth = width / numSteps;
-    
     // Find min/max values for scaling
     const values = [];
     for (let step = minTimestep; step <= maxTimestep; step++) {
       values.push(summarized.getTimestepValue(step));
     }
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
+    const valuesNoNull = values.filter((x) => x !== null);
+    const minValue = Math.min(...valuesNoNull);
+    const maxValue = Math.max(...valuesNoNull);
     
     const createBody = () => {
       const timesteps = Array.from({length: numSteps}, (_, i) => minTimestep + i);
@@ -99,12 +98,12 @@ class ScrubPresenter {
     const addVerticalAxis = () => {
       self._svgSelection.append("text")
         .attr("x", width + 5)
-        .attr("y", 15)
+        .attr("y", 7)
         .text(maxValue.toFixed(2));
         
       self._svgSelection.append("text")
         .attr("x", width + 5)
-        .attr("y", height - 5)
+        .attr("y", height - 7)
        .text(minValue.toFixed(2));
     };
     
