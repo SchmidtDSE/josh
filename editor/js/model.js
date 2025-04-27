@@ -484,8 +484,73 @@ class SummarizedResult {
  *     value per patch per timestep (summarized across all replicates per patch / timestep).
  */
 function summarizeDataset(target, query) {
-  const self = this;
-  
+  // Get the metric strategy based on query
+  const metricStrategy = METRIC_STRATEGIES[query.getMetric()];
+  if (!metricStrategy) {
+    throw new Error(`Unknown metric type: ${query.getMetric()}`);
+  }
+
+  // Initialize bounds tracking
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  // Track values per replicate
+  const valuePerReplicate = [];
+  const gridPerReplicate = new Map();
+
+  // Process each replicate
+  for (let i = 0; i < target.length; i++) {
+    const replicate = target[i];
+    const patchResults = replicate.getPatchResults();
+    const values = [];
+
+    // Collect all values for this replicate
+    patchResults.forEach(result => {
+      if (result.getAttributeNames().includes(query.getVariable())) {
+        const value = result.getValue(query.getVariable());
+        values.push(value);
+
+        // Update bounds if x/y coordinates exist
+        if (result.getAttributeNames().includes('x') && result.getAttributeNames().includes('y')) {
+          const x = result.getValue('x');
+          const y = result.getValue('y');
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+
+          // Store grid value
+          if (result.getAttributeNames().includes('timestep')) {
+            const timestep = result.getValue('timestep');
+            const key = `${Math.round(timestep)},${Math.round(x)},${Math.round(y)}`;
+            gridPerReplicate.set(key, value);
+          }
+        }
+      }
+    });
+
+    // Calculate metric for this replicate
+    if (values.length > 0) {
+      const replicateValue = metricStrategy(
+        values,
+        query.getMetricType(),
+        query.getTargetA(),
+        query.getTargetB()
+      );
+      valuePerReplicate.push(replicateValue);
+    }
+  }
+
+  return new SummarizedResult(
+    minX === Infinity ? 0 : minX,
+    minY === Infinity ? 0 : minY,
+    maxX === -Infinity ? 0 : maxX,
+    maxY === -Infinity ? 0 : maxY,
+    valuePerReplicate,
+    gridPerReplicate
+  );
 }
 
 
