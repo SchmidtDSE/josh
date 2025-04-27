@@ -5,6 +5,4 @@ class ScrubPresenter {
     self._root = selection;
   }
 
-  update()
-
 }

@@ -18,10 +18,12 @@ class ResultsPresenter {
   constructor(rootId) {
     const self = this;
 
+    self._results = null;
     self._root = document.getElementById(rootId);
     self._statusPresenter = new StatusPresenter(self._root.querySelector("#status-panel"));
     self._resultsDisplayPresenter = new ResultsDisplayPresenter(
-      self._root.querySelector("#viz-panel")
+      self._root.querySelector("#viz-panel"),
+      () => self._renderDisplay()
     );
 
     self._secondsOnStart = null;
@@ -56,23 +58,10 @@ class ResultsPresenter {
    */
   onComplete(results) {
     const self = this;
-
-    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
-    const numRecords = results.map((record) => {
-      return [
-        record.getSimResults().length,
-        record.getPatchResults().length,
-        record.getEntityResults().length
-      ].reduce((a, b) => a + b);
-    }).reduce((a, b) => a + b, 0);
-    
-    self._statusPresenter.showComplete(totalSeconds, numRecords);
-
-    if (numRecords == 0) {
-      self._resultsDisplayPresenter.showNoData();
-    } else {
-      self._resultsDisplayPresenter.show(results);
-    }
+    self._results = results;
+    self._updateStatus();
+    self._updateVariables();
+    self._renderDisplay();
   }
 
   /**
@@ -95,6 +84,50 @@ class ResultsPresenter {
     const self = this;
     const now = new Date();
     return now.getTime() / 1000;
+  }
+
+  /**
+   * Re-render the internal display showing the results.
+   */
+  _renderDisplay() {
+    const self = this;
+    // TODO
+  }
+
+  /**
+   * Update the status display at the top of the results panel.
+   */
+  _updateStatus() {
+    const self = this;
+    
+    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
+    const numRecords = self._results.map((record) => {
+      return [
+        record.getSimResults().length,
+        record.getPatchResults().length,
+        record.getEntityResults().length
+      ].reduce((a, b) => a + b);
+    }).reduce((a, b) => a + b, 0);
+
+    self._statusPresenter.showComplete(totalSeconds, numRecords);
+
+    if (numRecords == 0) {
+      self._resultsDisplayPresenter.indiciateNoData();
+    } else {
+      self._resultsDisplayPresenter.indicateDataPresent();
+    }
+  }
+
+  _updateVariables() {
+    const self = this;
+
+    const allVariables = new Set();
+    self._results.forEach(replicate => {
+      const variables = replicate.getPatchVariables();
+      variables.forEach(variable => allVariables.add(variable));
+    });
+
+    self._resultsDisplayPresenter.setVariables(allVariables);
   }
 }
 
@@ -180,19 +213,21 @@ class StatusPresenter {
 /**
  * Presenter which runs the in-editor visualization panel.
  */
-class ReslutsDisplayPresenter {
+class ResultsDisplayPresenter {
 
   /**
    * Create a new visualization presenter.
    *
    * @param {Element} selection - Selection over the div containing the visualization.
+   * @param {function} callback - Callback to invoke when the user's requested data selection
+   *     changes.
    */
-  constructor(selection) {
+  constructor(selection, callback) {
     const self = this;
     self._root = selection;
     self._dataSelector = new DataQuerySelector(
       self._root.querySelector("#data-selector"),
-      
+      () => callback()
     );
   }
 
@@ -207,32 +242,27 @@ class ReslutsDisplayPresenter {
   /**
    * Show the user a message indicating that no data were recieved.
    */
-  showNoData() {
+  indiciateNoData() {
     const self = this;
     self._root.style.display = "block";
     self._root.querySelector("#no-data-message").style.display = "block";
     self._root.querySelector("#data-display").style.display = "none";
   }
 
-  /**
-   * Show the visualization results.
-   *
-   * @param {Array<SimulationResult>} results - The results to be displayed where each element is a
-   *     replicate.
-   */
-  show(results) {
+  indicateDataPresent() {
     const self = this;
-    
     self._root.style.display = "block";
     self._root.querySelector("#no-data-message").style.display = "none";
     self._root.querySelector("#data-display").style.display = "block";
+  }
 
-    const allVariables = new Set();
-    results.forEach(replicate => {
-      const variables = replicate.getPatchVariables();
-      variables.forEach(variable => allVariables.add(variable));
-    });
-
+  /**
+   * Indicate which variables are available in the dataset.
+   *
+   * @param {Set<string>} allVariables - Set of all variables available in the dataset.
+   */
+  setVariables(allVariables) {
+    const self = this;
     self._dataSelector.setVariables(allVariables);
   }
   
@@ -331,7 +361,7 @@ class DataQuerySelector {
       (elem) => elem.addEventListener("click", (event) => {
         event.preventDefault();
         self._updateInternalDisplay();
-        self._callaback(self.getCurrentSelection());
+        self._callback();
       })
     );
   }
@@ -351,7 +381,7 @@ class DataQuerySelector {
         self._regularControls.forEach((x) => x.style.display = "inline-block");
     }
 
-    const probabilityType = self._probablityTypeSelect.value;
+    const probabilityType = self._probabilityTypeSelect.value;
     if (probabilityType === "is between") {
       self._probabilityTargetBSpan.style.display = "inline-block";
     } else {
