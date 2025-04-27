@@ -248,32 +248,87 @@ class SummarizedResult {
     self._gridPerReplicate = gridPerReplicate;
   }
 
+  /**
+   * Gets the minimum x coordinate in the result set.
+   * 
+   * @returns {number} The minimum x coordinate.
+   */
   getMinX() {
     const self = this;
+    return self._minX;
   }
 
+  /**
+   * Gets the minimum y coordinate in the result set.
+   * 
+   * @returns {number} The minimum y coordinate.
+   */
   getMinY() {
     const self = this;
+    return self._minY;
   }
 
+  /**
+   * Gets the maximum x coordinate in the result set.
+   * 
+   * @returns {number} The maximum x coordinate.
+   */
   getMaxX() {
     const self = this;
+    return self._maxX;
   }
 
+  /**
+   * Gets the maximum y coordinate in the result set.
+   * 
+   * @returns {number} The maximum y coordinate.
+   */
   getMaxY() {
     const self = this;
+    return self._maxY;
   }
 
+  /**
+   * Gets the number of replicates in the result set.
+   * 
+   * @returns {number} The number of replicates.
+   */
   getNumReplicates() {
     const self = this;
+    return self._valuePerReplicate.length;
   }
 
+  /**
+   * Gets the value for a specific replicate.
+   * 
+   * @param {number} replicateIndex - The index of the replicate to retrieve.
+   * @returns {number} The value for the specified replicate.
+   * @throws {Error} If the replicate index is out of bounds.
+   */
   getReplicateValue(replicateIndex) {
     const self = this;
+    if (replicateIndex < 0 || replicateIndex >= self._valuePerReplicate.length) {
+      throw new Error("Replicate index out of bounds");
+    }
+    return self._valuePerReplicate[replicateIndex];
   }
 
+  /**
+   * Gets the grid value for a specific timestep and coordinate.
+   * 
+   * @param {number} timestep - The timestep to query.
+   * @param {number} x - The x coordinate.
+   * @param {number} y - The y coordinate.
+   * @returns {number} The value at the specified grid location.
+   * @throws {Error} If the grid location is not found.
+   */
   getGridValue(timestep, x, y) {
     const self = this;
+    const key = `${Math.round(timestep)},${Math.round(x)},${Math.round(y)}`;
+    if (!self._gridPerReplicate.has(key)) {
+      throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
+    }
+    return self._gridPerReplicate.get(key);
   }
   
 }
