@@ -5,4 +5,6 @@ class ScrubPresenter {
     self._root = selection;
   }
 
+  render()
+
 }
