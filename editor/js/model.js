@@ -589,8 +589,66 @@ class SummarizedResult {
  *     value per patch per timestep (summarized across all replicates per patch / timestep).
  */
 function summarizeDataset(target, query) {
-  const self = this;
+  // Get strategy for metric calculation
+  const strategy = METRIC_STRATEGIES[query.getMetric()];
+  if (!strategy) {
+    throw new Error(`Unknown metric: ${query.getMetric()}`);
+  }
+
+  // Process each replicate
+  const valuePerReplicate = target.map(replicate => {
+    const patchResults = replicate.getPatchResults();
+    const values = patchResults
+      .filter(record => record.hasValue(query.getVariable()))
+      .map(record => record.getValue(query.getVariable()));
+
+    // Calculate metric for this replicate
+    return strategy(values, query.getMetricType(), query.getTargetA(), query.getTargetB());
+  });
+
+  // Process grid values (patch by patch)
+  const gridPerReplicate = new Map();
   
+  // For each replicate
+  target.forEach(replicate => {
+    const patchResults = replicate.getPatchResults();
+    
+    // Group results by timestep and position
+    patchResults.forEach(record => {
+      if (!record.hasValue(query.getVariable())) return;
+      
+      if (record.hasValue("position.x") && record.hasValue("position.y") && record.hasValue("timestep")) {
+        const timestep = Math.round(record.getValue("timestep"));
+        const x = Math.round(record.getValue("position.x"));
+        const y = Math.round(record.getValue("position.y"));
+        const value = record.getValue(query.getVariable());
+        
+        const key = `${timestep},${x},${y}`;
+        
+        if (!gridPerReplicate.has(key)) {
+          gridPerReplicate.set(key, []);
+        }
+        gridPerReplicate.get(key).push(value);
+      }
+    });
+  });
+
+  // Calculate metrics for each grid position
+  for (const [key, values] of gridPerReplicate.entries()) {
+    const metricValue = strategy(values, query.getMetricType(), query.getTargetA(), query.getTargetB());
+    gridPerReplicate.set(key, metricValue);
+  }
+
+  // Get bounds from first replicate since they should all be the same
+  const firstReplicate = target[0];
+  return new SummarizedResult(
+    firstReplicate.getMinX(),
+    firstReplicate.getMinY(), 
+    firstReplicate.getMaxX(),
+    firstReplicate.getMaxY(),
+    valuePerReplicate,
+    gridPerReplicate
+  );
 }
 
 
