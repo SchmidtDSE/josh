@@ -18,10 +18,13 @@ class ResultsPresenter {
   constructor(rootId) {
     const self = this;
 
-    self._tabs = new Tabby("[data-tabs]");
-
+    self._results = null;
     self._root = document.getElementById(rootId);
-    self._statusPresenter = new StatusPresenter(self._root.querySelector(".status-tab"));
+    self._statusPresenter = new StatusPresenter(self._root.querySelector("#status-panel"));
+    self._resultsDisplayPresenter = new ResultsDisplayPresenter(
+      self._root.querySelector("#viz-panel"),
+      () => self._renderDisplay()
+    );
 
     self._secondsOnStart = null;
   }
@@ -32,6 +35,7 @@ class ResultsPresenter {
   onSimStart() {
     const self = this;
     self._statusPresenter.resetProgress();
+    self._resultsDisplayPresenter.hide();
     self._root.style.display = "block";
     self._secondsOnStart = self._getEpochSeconds();
   }
@@ -54,17 +58,10 @@ class ResultsPresenter {
    */
   onComplete(results) {
     const self = this;
-
-    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
-    const numRecords = results.map((record) => {
-      return [
-        record.getSimResults().length,
-        record.getPatchResults().length,
-        record.getEntityResults().length
-      ].reduce((a, b) => a + b);
-    }).reduce((a, b) => a + b, 0);
-    
-    self._statusPresenter.showComplete(totalSeconds, numRecords);
+    self._results = results;
+    self._updateStatus();
+    self._updateVariables();
+    self._renderDisplay();
   }
 
   /**
@@ -87,6 +84,53 @@ class ResultsPresenter {
     const self = this;
     const now = new Date();
     return now.getTime() / 1000;
+  }
+
+  /**
+   * Re-render the internal display showing the results.
+   */
+  _renderDisplay() {
+    const self = this;
+    // TODO
+  }
+
+  /**
+   * Update the status display at the top of the results panel.
+   */
+  _updateStatus() {
+    const self = this;
+    
+    const totalSeconds = self._getEpochSeconds() - self._secondsOnStart;
+    const numRecords = self._results.map((record) => {
+      return [
+        record.getSimResults().length,
+        record.getPatchResults().length,
+        record.getEntityResults().length
+      ].reduce((a, b) => a + b);
+    }).reduce((a, b) => a + b, 0);
+
+    self._statusPresenter.showComplete(totalSeconds, numRecords);
+
+    if (numRecords == 0) {
+      self._resultsDisplayPresenter.indiciateNoData();
+    } else {
+      self._resultsDisplayPresenter.indicateDataPresent();
+    }
+  }
+
+  /**
+   * Update the available patch variables in the results display presenter.
+   */
+  _updateVariables() {
+    const self = this;
+
+    const allVariables = new Set();
+    self._results.forEach(replicate => {
+      const variables = replicate.getPatchVariables();
+      variables.forEach(variable => allVariables.add(variable));
+    });
+
+    self._resultsDisplayPresenter.setVariables(allVariables);
   }
 }
 
@@ -130,6 +174,12 @@ class StatusPresenter {
     self._root.querySelector(".completed-type").innerHTML = units;
   }
 
+  /**
+   * Displays the completion status of the simulation.
+   *
+   * @param {number} totalSeconds - Total time taken by the simulation in seconds.
+   * @param {number} numRecords - Total number of records processed during the simulation.
+   */
   showComplete(totalSeconds, numRecords) {
     const self = this;
     
@@ -144,6 +194,11 @@ class StatusPresenter {
     self._root.querySelector(".completed-records").innerHTML = numRecords;
   }
 
+  /**
+   * Displays an error message encountered in runtime in the error display.
+   *
+   * @param {string} message - The error message to display in the status area.
+   */
   showError(message) {
     const self = this;
     self._root.querySelector(".error-display").style.display = "block";
@@ -155,7 +210,266 @@ class StatusPresenter {
     errorMessageHolder.appendChild(textNode);
   }
 
-} 
+}
+
+
+/**
+ * Presenter which runs the in-editor visualization panel.
+ */
+class ResultsDisplayPresenter {
+
+  /**
+   * Create a new visualization presenter.
+   *
+   * @param {Element} selection - Selection over the div containing the visualization.
+   * @param {function} callback - Callback to invoke when the user's requested data selection
+   *     changes.
+   */
+  constructor(selection, callback) {
+    const self = this;
+    self._root = selection;
+    self._dataSelector = new DataQuerySelector(
+      self._root.querySelector("#data-selector"),
+      () => callback()
+    );
+  }
+
+  /**
+   * Hide the visualization display.
+   */
+  hide() {
+    const self = this;
+    self._root.style.display = "none";
+  }
+
+  /**
+   * Show the user a message indicating that no data were recieved.
+   */
+  indiciateNoData() {
+    const self = this;
+    self._root.style.display = "block";
+    self._root.querySelector("#no-data-message").style.display = "block";
+    self._root.querySelector("#data-display").style.display = "none";
+  }
+  
+  /**
+   * Indicate to the user that data are available to visualize / review.
+   */
+  indicateDataPresent() {
+    const self = this;
+    self._root.style.display = "block";
+    self._root.querySelector("#no-data-message").style.display = "none";
+    self._root.querySelector("#data-display").style.display = "block";
+  }
+
+  /**
+   * Indicate which variables are available in the dataset.
+   *
+   * @param {Set<string>} allVariables - Set of all variables available in the dataset.
+   */
+  setVariables(allVariables) {
+    const self = this;
+    self._dataSelector.setVariables(allVariables);
+  }
+  
+}
+
+
+/**
+ * Presenter that handles the data query selector dropdown menus and inputs.
+ */
+class DataQuerySelector {
+
+  /**
+   * Create a new presenter for the data query selector dropdown menus and inputs.
+   *
+   * @param {Element} selection - The root element containing all of the data query selector
+   *     elements.
+   * @param {function} callaback - Function to call with a DataQuery when the user changes the
+   *     selection.
+   */
+  constructor(selection, callback) {
+    const self = this;
+    
+    self._root = selection;
+    self._callback = callback;
+
+    self._metricSelect = self._root.querySelector(".metric-select");
+    self._probabilityControls = self._root.querySelectorAll(".probability-controls");
+    self._regularControls = self._root.querySelectorAll(".regular-metric-controls");
+    self._variableSelect = self._root.querySelector(".variable-select");
+    self._probabilityTypeSelect = self._root.querySelector(".probability-range-target");
+    self._probabilityTargetASpan = self._root.querySelector(".target-a");
+    self._probabilityTargetA = self._probabilityTargetASpan.querySelector(".target-a-input");
+    self._probabilityTargetBSpan = self._root.querySelector(".target-b");
+    self._probabilityTargetB = self._probabilityTargetBSpan.querySelector(".target-a-input");
+    
+    self._addEventListeners();
+    self._updateInternalDisplay();
+  }
+
+  /**
+   * Set available variables in the selector.
+   *
+   * @param {Set<string>} newVariables - A set of new variable names to populate the selector.
+   */
+  setVariables(newVariables) {
+    const self = this;
+
+    const variableSelection = self._root.querySelector(".variable-select");
+    
+    const originalValue = variableSelection.value;
+    variableSelection.innerHTML = ""; // Clear current options
+
+    newVariables.forEach((variable) => {
+      const option = document.createElement("option");
+      option.text = variable;
+      option.value = variable;
+      variableSelection.add(option);
+    });
+
+    if (newVariables.has(originalValue)) {
+      variableSelection.value = originalValue;
+    }
+  }
+
+  /**
+   * Read the current state of the elements within this selector.
+   *
+   * @returns {DataQuery} Record describing the current selection made by the user within this
+   *     widget.
+   */
+  getCurrentSelection() {
+    const self = this;
+    
+    const metric = self._metricSelect.value;
+    const variable = self._variableSelect.value;
+    
+    let targetA = null;
+    let targetB = null;
+    
+    if (metric === "probability") {
+      targetA = parseFloat(self._probabilityTargetA.value);
+      if (self._probabilityTypeSelect.value === "is between") {
+        targetB = parseFloat(self._probabilityTargetB.value);
+      }
+    }
+    
+    return new DataQuery(variable, metric, targetA, targetB);
+  }
+
+  /**
+   * Adds event listeners to update visible elements and fire a callback on selection change.
+   */
+  _addEventListeners() {
+    const self = this;
+    self._root.querySelectorAll(".data-select-option").forEach(
+      (elem) => elem.addEventListener("click", (event) => {
+        event.preventDefault();
+        self._updateInternalDisplay();
+        self._callback();
+      })
+    );
+  }
+  
+  /**
+   * Updates the internal display elements based on selected metrics.
+   */
+  _updateInternalDisplay() {
+    const self = this;
+    
+    const metric = self._metricSelect.value;
+    if (metric === "probability") {
+      self._probabilityControls.forEach((x) => x.style.display = "inline-block");
+      self._regularControls.forEach((x) => x.style.display = "none");
+    } else {
+      self._probabilityControls.forEach((x) => x.style.display = "none");
+        self._regularControls.forEach((x) => x.style.display = "inline-block");
+    }
+
+    const probabilityType = self._probabilityTypeSelect.value;
+    if (probabilityType === "is between") {
+      self._probabilityTargetBSpan.style.display = "inline-block";
+    } else {
+      self._probabilityTargetBSpan.style.display = "none";
+    }
+  }
+  
+}
+
+
+/**
+ * Record describing which variable the user wants to analyze and how.
+ *
+ * Record describing which variable exported from the script that the user wants to analyze and
+ * indicate how those values should be reated (mean, median, etc). If the user is calculating
+ * probabilities, this will also have one or two target values.
+ */
+class DataQuery {
+
+  /**
+   * Create a new record of a user-requested DataQuery.
+   *
+   * @param {string} variable The name of the variable as exported from the user's script to be
+   *     analyzed.
+   * @param {string} metric The kind of metric to be calculated like mean. This will be applied both
+   *     at the simulation level (like mean across all patches across all timesteps) for the scrub
+   *     element or similar and patch level (like mean for each patch across all timesteps).
+   * @param {?number} targetA The first reference value to use for probability metrics like the
+   *     minimum threshold for proability of exceeds, maximum for probablity below, and minimum
+   *     for probability within range. Should be null if not a probability (value ignored).
+   * @param {?number} targetB The second reference value to use for probability metrics like the
+   *     maximum for probability within range. Should be null if not a probability within range.
+   */
+  constructor(variable, metric, targetA, targetB) {
+    const self = this;
+    self._variable = variable;
+    self._metric = metric;
+    self._targetA = targetA;
+    self._targetB = targetB;
+  }
+  
+  /**
+   * Get the variable name being analyzed.
+   * 
+   * @returns {string} The variable name.
+   */
+  getVariable() {
+    const self = this;
+    return self._variable;
+  }
+
+  /**
+   * Get the metric type being calculated.
+   * 
+   * @returns {string} The metric type.
+   */
+  getMetric() {
+    const self = this;
+    return self._metric;
+  }
+
+  /**
+   * Get the first target value for probability metrics.
+   * 
+   * @returns {?number} The first target value or null.
+   */
+  getTargetA() {
+    const self = this;
+    return self._targetA;
+  }
+
+  /**
+   * Get the second target value for probability metrics.
+   * 
+   * @returns {?number} The second target value or null.
+   */
+  getTargetB() {
+    const self = this;
+    return self._targetB;
+  }
+  
+}
 
 
 export {ResultsPresenter};
