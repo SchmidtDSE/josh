@@ -62,9 +62,13 @@ class SimulationResult {
    * @param {Array<OutputDatum>} entityResults - Collection of entity-level output records.
    * @param {Set<string>} entityAttributes - Set of all attributes found across all elements of
    *     entityResults.
+   * @param {number} minX - The minimum X coordinate encountered.
+   * @param {number} minY - The minimum Y coordinate encountered.
+   * @param {number} maxX - The maximum X coordinate encountered.
+   * @param {number} maxY - The maximum Y coordinate encountered.
    */
   constructor(simResults, simAttributes, patchResults, patchAttributes, entityResults,
-        entityAttributes) {
+        entityAttributes, minX, minY, maxX, maxY) {
     const self = this;
     self._simResults = simResults;
     self._simAttributes = simAttributes;
@@ -72,6 +76,10 @@ class SimulationResult {
     self._patchAttributes = patchAttributes;
     self._entityResults = entityResults;
     self._entityAttributes = entityAttributes;
+    self._minX = minX;
+    self._minY = minY;
+    self._maxX = maxX;
+    self._maxY = maxY;
   }
 
   /**
@@ -134,6 +142,46 @@ class SimulationResult {
     return self._entityAttributes;
   }
 
+  /**
+   * Gets the minimum X coordinate encountered.
+   *
+   * @returns {number} The minimum X coordinate.
+   */
+  getMinX() {
+    const self = this;
+    return self._minX;
+  }
+
+  /**
+   * Gets the minimum Y coordinate encountered.
+   *
+   * @returns {number} The minimum Y coordinate.
+   */
+  getMinY() {
+    const self = this;
+    return self._minY;
+  }
+
+  /**
+   * Gets the maximum X coordinate encountered.
+   *
+   * @returns {number} The maximum X coordinate.
+   */
+  getMaxX() {
+    const self = this;
+    return self._maxX;
+  }
+
+  /**
+   * Gets the maximum Y coordinate encountered.
+   *
+   * @returns {number} The maximum Y coordinate.
+   */
+  getMaxY() {
+    const self = this;
+    return self._maxY;
+  }
+
 }
 
 
@@ -153,6 +201,11 @@ class SimulationResultBuilder {
     self._patchAttributes = new Set();
     self._entityResults = [];
     self._entityAttributes = new Set();
+    
+    self._minX = null;
+    self._minY = null;
+    self._maxX = null;
+    self._maxY = null;
   }
 
   /**
@@ -177,6 +230,8 @@ class SimulationResultBuilder {
       "entites": self._entityAttributes
     }[targetName];
     result.getAttributeNames().forEach((x) => targetAttributes.add(x));
+
+    self._updateBounds(result);
   }
 
   /**
@@ -194,6 +249,44 @@ class SimulationResultBuilder {
       self._entityResults,
       self._entityAttributes
     );
+  }
+
+  /**
+   * Update the minimum and maximum x and y coordinates seen by this builder.
+   *
+   * Update the minimum and maximum x and y coordinates seen by this builder, using this result's
+   * x and y coordinates as the minimum and maximum if no prior values seen. Note that this uses
+   * position.x and position.y from result. If either position.x or position.y are not found, this
+   * record is ignored.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
+  _updateBounds(result) {
+    const hasPosX = result.hasValue("position.x");
+    const hasPosY = result.hasValue("position.y");
+    const hasPos = hasPosX && hasPosY;
+    if (!hasPos) {
+      return;
+    }
+    
+    const posX = result.getValue("position.x");
+    const posY = result.getValue("position.y");
+
+    if (self._minX === null || posX < self._minX) {
+      self._minX = posX;
+    }
+    
+    if (self._minY === null || posY < self._minY) {
+      self._minY = posY;
+    }
+    
+    if (self._maxX === null || posX > self._maxX) {
+      self._maxX = posX;
+    }
+    
+    if (self._maxY === null || posY > self._maxY) {
+      self._maxY = posY;
+    }
   }
 
 }
@@ -235,6 +328,18 @@ class OutputDatum {
     const self = this;
     return Array.from(self._attributes.keys());
   }
+  
+  /**
+   * Checks if the attribute with the given name exists in this record.
+   *
+   * @param {string} name - Name of the attribute to check.
+   * @returns {boolean} True if the attribute exists, false otherwise.
+   */
+  hasValue(name) {
+    const self = this;
+    return self._attributes.has(name);
+  }
+
 
   /**
    * The value associated with the given attribute name.
