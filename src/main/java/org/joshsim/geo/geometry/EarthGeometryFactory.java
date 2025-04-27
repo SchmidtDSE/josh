@@ -30,7 +30,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   private static final double DEFAULT_SQUARE_TOLERANCE_PCT = 0.01; // Default width for square
 
   private final CoordinateReferenceSystem earthCrs;
-  private CoordinateReferenceSystem gridCrs;
+  private GridCrsManager gridCrsManager;
 
   /**
    * Create a new factory for the given coordinate reference system.
@@ -45,47 +45,32 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    * Create a new factory with both Earth CRS and Grid CRS support.
    *
    * @param earthCrs The Earth coordinate reference system
-   * @param realizedGridCrs The realized grid CRS for transformations
+   * @param gridCrsManager The realized grid CRS for transformations
    */
-  public EarthGeometryFactory(CoordinateReferenceSystem earthCrs, RealizedGridCrs realizedGridCrs) {
+  public EarthGeometryFactory(CoordinateReferenceSystem earthCrs, GridCrsManager gridCrsManager) {
     this.earthCrs = earthCrs;
-    this.gridCrs = realizedGridCrs.getGridCrs();
-  }
-
-  /**
-   * Sets the grid CRS to use for transformations, assuming a CRS is already instantiated.
-   *
-   * @param crs The grid CRS to set
-   */
-
-  public void setGridCrs(CoordinateReferenceSystem crs) {
-    this.gridCrs = crs;
+    this.gridCrsManager = gridCrsManager;
   }
 
   /**
    * Sets the realized grid CRS to use for transformations.
    *
-   * @param realizedGridCrs The realized grid CRS
+   * @param gridCrsManager The realized grid CRS
    */
-  public void setRealizedGridCrs(RealizedGridCrs realizedGridCrs) {
-    this.gridCrs = realizedGridCrs.getGridCrs();
+  public void setGridCrsManager(GridCrsManager gridCrsManager) {
+    this.gridCrsManager = gridCrsManager;
   }
 
   /**
-   * Sets the realized grid CRS from the provided grid CRS definition.
+   * Sets the realized grid CRS from a grid CRS definition.
    *
-   * @param gridCrsDefinition The grid CRS definition to use for setting the realized grid CRS.
-   * @throws IOException If an error occurs while realizing the grid CRS.
-   * @throws TransformException if an error occurs during transformation
+   * @param gridCrsDefinition The grid CRS definition
    */
-  public void setRealizedGridCrsFromDefition(
-         GridCrsDefinition gridCrsDefinition
-  ) throws IOException, TransformException {
+  public void setGridCrsManager(GridCrsDefinition gridCrsDefinition) {
     try {
-      RealizedGridCrs realizedGridCrs = new RealizedGridCrs(gridCrsDefinition);
-      this.gridCrs = realizedGridCrs.getGridCrs();
-    } catch (FactoryException e) {
-      throw new RuntimeException("Failed to realize and set grid CRS: " + e.getMessage(), e);
+      this.gridCrsManager = new GridCrsManager(gridCrsDefinition);
+    } catch (FactoryException | TransformException | IOException e) {
+      throw new RuntimeException("Failed to create grid CRS manager: " + e.getMessage(), e);
     }
   }
 
@@ -94,8 +79,8 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    *
    * @return The realized grid CRS
    */
-  public CoordinateReferenceSystem getGridCrs() {
-    return gridCrs;
+  public GridCrsManager getGridCrsManager() {
+    return gridCrsManager;
   }
 
   /**
@@ -207,7 +192,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   }
 
   /**
-   * Creates geometry from a grid point, converting to target CRS coordinates using RealizedGridCrs.
+   * Creates geometry from a grid point, converting to target CRS coordinates using GridCrsManager.
    *
    * @param gridShape The grid shape to convert
    * @return A point geometry in the target CRS
@@ -224,7 +209,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
           ));
 
       // Transform from grid to Earth CRS
-      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
+      MathTransform transform = getGridCrsManager().createGridToTargetCrsTransform(earthCrs);
       Geometry transformedPoint = JtsTransformUtility.transform(gridPoint, transform);
 
       return new EarthGeometry(transformedPoint, earthCrs);
@@ -234,7 +219,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   }
 
   /**
-   * Creates a circle geometry approximation from a grid shape using RealizedGridCrs.
+   * Creates a circle geometry approximation from a grid shape using GridCrsManager.
    *
    * @param gridShape The grid shape to convert
    * @return A polygon approximating a circle in the target CRS
@@ -259,7 +244,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       Geometry gridCircle = shapeFactory.createCircle();
 
       // Transform from grid to Earth CRS
-      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
+      MathTransform transform = getGridCrsManager().createGridToTargetCrsTransform(earthCrs);
       Geometry transformedCircle = JtsTransformUtility.transform(gridCircle, transform);
 
       return new EarthGeometry(transformedCircle, earthCrs);
@@ -269,7 +254,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   }
 
   /**
-   * Creates a rectangle geometry from a grid shape using RealizedGridCrs.
+   * Creates a rectangle geometry from a grid shape using GridCrsManager.
    *
    * @param gridShape The grid shape to convert
    * @return A polygon rectangle in the target CRS
@@ -291,7 +276,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       Geometry gridRectangle = shapeFactory.createRectangle();
 
       // Transform from grid to Earth CRS
-      MathTransform transform = CRS.findOperation(gridCrs, earthCrs, null).getMathTransform();
+      MathTransform transform = getGridCrsManager().createGridToTargetCrsTransform(earthCrs);
       Geometry transformedRectangle = JtsTransformUtility.transform(gridRectangle, transform);
 
       return new EarthGeometry(transformedRectangle, earthCrs);
@@ -324,8 +309,8 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    * Ensures gridCrs is available before attempting transformations.
    */
   private void checkGridCrs() {
-    if (gridCrs == null) {
-      throw new IllegalStateException("Grid CRS not set. Call setRealizedGridCrs first.");
+    if (gridCrsManager == null) {
+      throw new IllegalStateException("Grid CRS not set. Call setGridCrsManager first.");
     }
   }
 

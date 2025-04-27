@@ -17,12 +17,12 @@ import org.opengis.util.FactoryException;
 
 /**
  * A utility class for mapping grid-based geometries to Earth-based coordinate systems
- * using RealizedGridCrs.
+ * using GridCrsManager.
  */
 public class GridToEarthMapper {
   private static final Map<String, CoordinateReferenceSystem> CRS_CACHE =
       new ConcurrentHashMap<>();
-  private static final Map<String, RealizedGridCrs> GRID_CRS_CACHE =
+  private static final Map<String, GridCrsManager> GRID_CRS_CACHE =
       new ConcurrentHashMap<>();
 
   /**
@@ -42,8 +42,8 @@ public class GridToEarthMapper {
       // Get or create the target CRS
       CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
 
-      // Get or create a RealizedGridCrs from the definition
-      RealizedGridCrs gridCrs = getRealizedGridCrs(definition);
+      // Get or create a GridCrsManager from the definition
+      GridCrsManager gridCrs = getGridCrsManager(definition);
 
       // Create geometry factory with the realized grid CRS
       EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, gridCrs);
@@ -57,16 +57,16 @@ public class GridToEarthMapper {
   }
 
   /**
-   * Converts a GridShape to EarthGeometry using an existing RealizedGridCrs.
+   * Converts a GridShape to EarthGeometry using an existing GridCrsManager.
    *
    * @param gridShape The grid shape to convert
-   * @param realizedGridCrs The realized grid CRS
+   * @param gridCrsManager The realized grid CRS
    * @param targetCrsCode EPSG code for target coordinate system
    * @return New EarthGeometry representation
    */
   public static EarthGeometry gridToEarth(
       GridShape gridShape,
-      RealizedGridCrs realizedGridCrs,
+      GridCrsManager gridCrsManager,
       String targetCrsCode
   ) {
     try {
@@ -74,7 +74,7 @@ public class GridToEarthMapper {
       CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
 
       // Create geometry factory with the realized grid CRS
-      EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, realizedGridCrs);
+      EarthGeometryFactory factory = new EarthGeometryFactory(targetCrs, gridCrsManager);
 
       // Use the factory to create the appropriate Earth geometry
       return (EarthGeometry) factory.createFromGrid(gridShape);
@@ -85,13 +85,13 @@ public class GridToEarthMapper {
   }
 
   /**
-   * Gets or creates a RealizedGridCrs from a GridCrsDefinition.
+   * Gets or creates a GridCrsManager from a GridCrsDefinition.
    *
    * @param definition The grid CRS definition
-   * @return A RealizedGridCrs for transformation
+   * @return A GridCrsManager for transformation
    * @throws TransformException if transformation fails
    */
-  public static RealizedGridCrs getRealizedGridCrs(GridCrsDefinition definition)
+  public static GridCrsManager getGridCrsManager(GridCrsDefinition definition)
       throws FactoryException, IOException, TransformException {
     // Create a cache key based on the definition
     String key = definition.toString();
@@ -102,9 +102,9 @@ public class GridToEarthMapper {
     }
 
     // Create the realized grid CRS
-    RealizedGridCrs realizedGridCrs = new RealizedGridCrs(definition);
-    GRID_CRS_CACHE.put(key, realizedGridCrs);
-    return realizedGridCrs;
+    GridCrsManager gridCrsManager = new GridCrsManager(definition);
+    GRID_CRS_CACHE.put(key, gridCrsManager);
+    return gridCrsManager;
   }
 
   /**

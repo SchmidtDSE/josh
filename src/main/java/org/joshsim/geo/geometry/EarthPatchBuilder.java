@@ -3,7 +3,7 @@ package org.joshsim.geo.geometry;
 import org.joshsim.engine.geometry.PatchBuilder;
 
 /**
- * Utility responsible for building grid structures in Earth space using RealizedGridCrs.
+ * Utility responsible for building grid structures in Earth space using GridCrsManager.
  *
  * <p>Utility creating a rectangular grid of patches based on coordinates in any coordinate
  * reference system, converting them to the target CRS if needed.</p>
@@ -15,7 +15,7 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
   // private final EntityPrototype prototype;
   // private final EarthGeometryFactory geometryFactory;
   // private final GridCrsDefinition gridCrsDefinition;
-  // private final RealizedGridCrs realizedGridCrs;
+  // private final GridCrsManager gridCrsManager;
   // private final PatchBuilderExtents extents;
 
   // // CRS-related fields
@@ -68,14 +68,14 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
   //   );
 
   //   try {
-  //     // Create RealizedGridCrs
-  //     this.realizedGridCrs = new RealizedGridCrs(gridCrsDefinition);
-  //     this.gridToTargetTransform = realizedGridCrs.createGridToTargetCrsTransform(targetCrs);
+  //     // Create GridCrsManager
+  //     this.gridCrsManager = new GridCrsManager(gridCrsDefinition);
+  //     this.gridToTargetTransform = gridCrsManager.createGridToTargetCrsTransform(targetCrs);
 
   //     // Create geometry factory
-  //     this.geometryFactory = new EarthGeometryFactory(targetCrs, realizedGridCrs);
+  //     this.geometryFactory = new EarthGeometryFactory(targetCrs, gridCrsManager);
   //   } catch (IOException e) {
-  //     throw new FactoryException("Failed to create RealizedGridCrs: " + e.getMessage(), e);
+  //     throw new FactoryException("Failed to create GridCrsManager: " + e.getMessage(), e);
   //   }
   // }
 
@@ -166,7 +166,7 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
   //       // Create grid square with center coordinates
   //       GridSquare gridSquare = new GridSquare(cellCenterX, cellCenterY, cellWidth);
 
-  //       // Transform to target CRS using RealizedGridCrs
+  //       // Transform to target CRS using GridCrsManager
   //       EngineGeometry cellGeometry = geometryFactory.createRectangleFromGrid(gridSquare);
 
   //       // Create patch using prototype
@@ -182,7 +182,7 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
   //  * Validates that all required objects are properly initialized.
   //  */
   // private void validateParameters() {
-  //   if (gridCrsDefinition == null || realizedGridCrs == null) {
+  //   if (gridCrsDefinition == null || gridCrsManager == null) {
   //     throw new IllegalStateException("Grid CRS not initialized");
   //   }
 

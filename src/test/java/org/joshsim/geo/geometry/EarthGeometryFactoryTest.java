@@ -44,7 +44,7 @@ public class EarthGeometryFactoryTest {
   private GeometryFactory geometryFactory;
   private CoordinateReferenceSystem wgs84;
   private CoordinateReferenceSystem utm11n;
-  private RealizedGridCrsTest realizedGridCrs;
+  private GridCrsManagerTest gridCrsManager;
 
   /**
    * Set up contexts for each test.
@@ -80,10 +80,10 @@ public class EarthGeometryFactoryTest {
 
     // Set up the EarthGeometryFactory with grid CRS
     EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);
-    factory.setRealizedGridCrsFromDefition(definition);
+    factory.setGridCrsManager(definition);
 
     // Verify grid CRS is set
-    assertNotNull(factory.getGridCrs(), "Grid CRS should be set");
+    assertNotNull(factory.getGridCrsManager(), "Grid CRS should be set");
     assertNotNull(factory.getEarthCrs(), "Earth CRS should be set");
     assertEquals(wgs84, factory.getEarthCrs(), "Earth CRS should match what was provided");
   }

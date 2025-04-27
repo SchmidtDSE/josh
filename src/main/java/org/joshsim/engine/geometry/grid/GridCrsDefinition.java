@@ -70,7 +70,7 @@ public class GridCrsDefinition {
 
   /**
    * Convert grid position (cell x,y) to base CRS coordinates.
-   * Note: This doesn't handle unit conversion - that happens in RealizedGridCrs.
+   * Note: This doesn't handle unit conversion - that happens in GridCrsManager.
    *
    * @param gridX Grid X position (cell index)
    * @param gridY Grid Y position (cell index)
@@ -85,7 +85,7 @@ public class GridCrsDefinition {
 
   /**
    * Convert base CRS coordinates to grid position (cell x,y).
-   * Note: This doesn't handle unit conversion - that happens in RealizedGridCrs.
+   * Note: This doesn't handle unit conversion - that happens in GridCrsManager.
    *
    * @param crsX X coordinate in base CRS
    * @param crsY Y coordinate in base CRS

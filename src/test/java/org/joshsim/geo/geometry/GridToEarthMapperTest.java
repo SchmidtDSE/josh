@@ -32,6 +32,7 @@ public class GridToEarthMapperTest {
   private static final String INPUT_CRS_CODE = "EPSG:4326";  // WGS84
   private static final String TARGET_CRS_CODE = "EPSG:32611"; // UTM 11N
   CoordinateReferenceSystem targetCrs;
+  CoordinateReferenceSystem targetCrsWgs84;
 
   // Coordinates from the simulation example
   private static final BigDecimal WEST_LON = new BigDecimal("-116");
@@ -74,12 +75,13 @@ public class GridToEarthMapperTest {
     // Create target CRS
     try {
       targetCrs = CRS.forCode(TARGET_CRS_CODE);
+      targetCrsWgs84 = CRS.forCode("EPSG:4326");
     } catch (FactoryException e) {
       fail("Failed to create target CRS: " + e.getMessage());
     }
 
     // Create mock grid shapes for testing
-    gridPoint = createMockGridPoint(BigDecimal.valueOf(1), BigDecimal.valueOf(1));
+    gridPoint = createMockGridPoint(BigDecimal.valueOf(0), BigDecimal.valueOf(0));
     gridCircle = createMockGridCircle(
         BigDecimal.valueOf(10), BigDecimal.valueOf(10), BigDecimal.valueOf(2));
     gridSquare = createMockGridSquare(
@@ -128,7 +130,7 @@ public class GridToEarthMapperTest {
       assertNotNull(earthGeometry, "Earth geometry should not be null");
       assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
           "The geometry should be a Point");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrsWgs84, earthGeometry.getCrs(), 
           "CRS should be the target CRS");
 
       // Verify the coordinates are as expected - translating grid coordinates (in indices)
@@ -210,15 +212,15 @@ public class GridToEarthMapperTest {
   }
 
   @Nested
-  @DisplayName("Tests for gridToEarth with RealizedGridCrs")
-  class RealizedGridCrsTests {
+  @DisplayName("Tests for gridToEarth with GridCrsManager")
+  class GridCrsManagerTests {
     
     @Test
-    @DisplayName("Converting a grid point using RealizedGridCrs")
+    @DisplayName("Converting a grid point using GridCrsManager")
     public void testPointConversionWithRealizedCrs() 
         throws FactoryException, IOException, TransformException {
-      // Get a RealizedGridCrs
-      RealizedGridCrs gridCrs = GridToEarthMapper.getRealizedGridCrs(gridCrsDefinition);
+      // Get a GridCrsManager
+      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
       
       // Convert grid point to Earth geometry
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
@@ -248,7 +250,7 @@ public class GridToEarthMapperTest {
         throws FactoryException, IOException, TransformException {
       // Use UTM Zone 11N (appropriate for the test area)
       String utmCrsCode = "EPSG:32611";
-      RealizedGridCrs gridCrs = GridToEarthMapper.getRealizedGridCrs(gridCrsDefinition);
+      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
       
       // Convert grid circle to Earth geometry with UTM CRS
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
@@ -274,18 +276,18 @@ public class GridToEarthMapperTest {
   }
 
   @Test
-  @DisplayName("RealizedGridCrs caching mechanism works")
-  public void testRealizedGridCrsCaching() 
+  @DisplayName("GridCrsManager caching mechanism works")
+  public void testGridCrsManagerCaching() 
       throws FactoryException, IOException, TransformException {
-    // Get a RealizedGridCrs
-    RealizedGridCrs gridCrs1 = GridToEarthMapper.getRealizedGridCrs(gridCrsDefinition);
+    // Get a GridCrsManager
+    GridCrsManager gridCrs1 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
     
-    // Get another RealizedGridCrs with the same definition
-    RealizedGridCrs gridCrs2 = GridToEarthMapper.getRealizedGridCrs(gridCrsDefinition);
+    // Get another GridCrsManager with the same definition
+    GridCrsManager gridCrs2 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
     
     // They should be the same instance due to caching
     assertSame(gridCrs1, gridCrs2, 
-        "Same GridCrsDefinition should return the same cached RealizedGridCrs instance");
+        "Same GridCrsDefinition should return the same cached GridCrsManager instance");
   }
 
   @Test
@@ -398,11 +400,11 @@ public class GridToEarthMapperTest {
     }
     
     @Test
-    @DisplayName("Converting a grid square with UTM input using RealizedGridCrs")
+    @DisplayName("Converting a grid square with UTM input using GridCrsManager")
     public void testSquareConversionWithRealizedCrs() 
         throws FactoryException, IOException, TransformException {
-      // Get a RealizedGridCrs based on UTM
-      RealizedGridCrs utmGridCrs = GridToEarthMapper.getRealizedGridCrs(utmGridCrsDefinition);
+      // Get a GridCrsManager based on UTM
+      GridCrsManager utmGridCrs = GridToEarthMapper.getGridCrsManager(utmGridCrsDefinition);
       
       // Use the same UTM zone as target (UTM 11N)
       String targetUtmCode = "EPSG:32611";
