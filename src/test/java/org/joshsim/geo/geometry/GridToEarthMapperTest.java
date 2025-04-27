@@ -7,9 +7,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.DisplayName;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.crs.AbstractCRS;
+import org.apache.sis.referencing.cs.AxesConvention;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
@@ -78,7 +82,11 @@ public class GridToEarthMapperTest {
     // Create target CRS
     try {
       targetCrs = CRS.forCode(TARGET_CRS_CODE);
-      targetCrsWgs84 = CRS.forCode("EPSG:4326");
+      CoordinateReferenceSystem unsafeTargetCrsWgs84 = CRS.forCode("EPSG:4326");
+      targetCrsWgs84 = 
+          AbstractCRS.castOrCopy(unsafeTargetCrsWgs84).forConvention(AxesConvention.RIGHT_HANDED);
+
+
     } catch (FactoryException e) {
       fail("Failed to create target CRS: " + e.getMessage());
     }
@@ -216,10 +224,10 @@ public class GridToEarthMapperTest {
       double expectedY = NORTH_NORTHING.doubleValue()
           - gridSquare.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
           
-      assertEquals(expectedX,
-          centroid.getX(), 1.0, "Square center X coordinate should match expected value");
-      assertEquals(expectedY,
-          centroid.getY(), 1.0, "Square center Y coordinate should match expected value");
+      assertEquals(expectedX, centroid.getX(), 1.0, 
+          "Square center X coordinate should match expected value");
+      assertEquals(expectedY, centroid.getY(), 1.0, 
+          "Square center Y coordinate should match expected value");
     }
   }
 
@@ -282,24 +290,115 @@ public class GridToEarthMapperTest {
       double expectedY = NORTH_NORTHING.doubleValue()
           - gridCircle.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
           
-      assertEquals(expectedX, centroid.getX(), 1.0, "Circle center X coordinate should match expected value");
-      assertEquals(expectedY, centroid.getY(), 1.0, "Circle center Y coordinate should match expected value");
+      assertEquals(expectedX, centroid.getX(), 1.0, 
+          "Circle center X coordinate should match expected value");
+      assertEquals(expectedY, centroid.getY(), 1.0, 
+          "Circle center Y coordinate should match expected value");
     }
   }
 
-  @Test
-  @DisplayName("GridCrsManager caching mechanism works")
-  public void testGridCrsManagerCaching() 
-      throws FactoryException, IOException, TransformException {
-    // Get a GridCrsManager
-    GridCrsManager gridCrs1 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+  @Nested
+  @DisplayName("Tests for caching mechanism")
+  class CachingTests {
+    @Test
+    @DisplayName("GridCrsManager caching mechanism works")
+    public void testGridCrsManagerCaching() 
+        throws FactoryException, IOException, TransformException {
+      // Get a GridCrsManager
+      GridCrsManager gridCrs1 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      
+      // Get another GridCrsManager with the same definition
+      GridCrsManager gridCrs2 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      
+      // They should be the same instance due to caching
+      assertSame(gridCrs1, gridCrs2, 
+          "Same GridCrsDefinition should return the same cached GridCrsManager instance");
+      
+      // Create a different definition
+      PatchBuilderExtents differentExtents = new PatchBuilderExtents(
+          WEST_LON,
+          NORTH_LAT.add(BigDecimal.ONE),
+          EAST_LON,
+          SOUTH_LAT
+      );
+      
+      GridCrsDefinition differentDefinition = new GridCrsDefinition(
+          "DifferentTestGrid",
+          INPUT_CRS_CODE,
+          differentExtents,
+          CELL_SIZE,
+          "m"
+      );
+      
+      // Get a GridCrsManager with different definition
+      GridCrsManager gridCrs3 = GridToEarthMapper.getGridCrsManager(differentDefinition);
+      
+      // Should be a different instance
+      assertNotSame(gridCrs1, gridCrs3, 
+          "Different GridCrsDefinition should return a different GridCrsManager instance");
+    }
     
-    // Get another GridCrsManager with the same definition
-    GridCrsManager gridCrs2 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+    @Test
+    @DisplayName("CRS caching mechanism works")
+    public void testCrsCaching() throws Exception {
+      // Access the private CRS_CACHE field using reflection
+      Field crsCacheField = GridToEarthMapper.class.getDeclaredField("CRS_CACHE");
+      crsCacheField.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      Map<String, CoordinateReferenceSystem> crsCache = 
+          (Map<String, CoordinateReferenceSystem>) crsCacheField.get(null);
+      
+      // Clear the cache to ensure a clean test
+      crsCache.clear();
+      
+      // First call should create and cache the CRS
+      GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
+      assertTrue(crsCache.containsKey(TARGET_CRS_CODE), 
+          "CRS should be cached after first use");
+      
+      // Get the cached CRS
+      CoordinateReferenceSystem cachedCrs = crsCache.get(TARGET_CRS_CODE);
+      
+      // Second call should reuse the cached CRS
+      GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
+      
+      // The CRS in cache should still be the same instance
+      assertSame(cachedCrs, crsCache.get(TARGET_CRS_CODE), 
+          "Cached CRS instance should be reused");
+    }
     
-    // They should be the same instance due to caching
-    assertSame(gridCrs1, gridCrs2, 
-        "Same GridCrsDefinition should return the same cached GridCrsManager instance");
+    @Test
+    @DisplayName("EarthGeometryFactory caching mechanism works")
+    public void testFactoryCaching() throws Exception {
+      // Access the private FACTORY_CACHE field using reflection
+      Field factoryCacheField = GridToEarthMapper.class.getDeclaredField("FACTORY_CACHE");
+      factoryCacheField.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      Map<String, EarthGeometryFactory> factoryCache = 
+          (Map<String, EarthGeometryFactory>) factoryCacheField.get(null);
+      
+      // Clear the cache to ensure a clean test
+      factoryCache.clear();
+      
+      // Get a GridCrsManager for testing
+      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      
+      // First call should create and cache the factory
+      GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
+      
+      // Verify at least one factory is cached
+      assertTrue(factoryCache.size() > 0, "Factory should be cached after first use");
+      
+      // Store the size to check no more factories are created
+      int cacheSize = factoryCache.size();
+      
+      // Second call should reuse the cached factory
+      GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
+      
+      // Cache size should remain the same (no new factories created)
+      assertEquals(cacheSize, factoryCache.size(), 
+          "No new factories should be created for the same parameters");
+    }
   }
 
   @Test
@@ -429,8 +528,10 @@ public class GridToEarthMapperTest {
       double expectedY = UTM_NORTH_NORTHING.doubleValue()
           - gridCircle.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
           
-      assertEquals(expectedX, centroid.getX(), 1.0, "Circle center X coordinate should match expected value");
-      assertEquals(expectedY, centroid.getY(), 1.0, "Circle center Y coordinate should match expected value");
+      assertEquals(expectedX, centroid.getX(), 1.0, 
+          "Circle center X coordinate should match expected value");
+      assertEquals(expectedY, centroid.getY(), 1.0, 
+          "Circle center Y coordinate should match expected value");
     }
     
     @Test
@@ -480,7 +581,8 @@ public class GridToEarthMapperTest {
     return point;
   }
 
-  private GridShape createMockGridCircle(BigDecimal centerX, BigDecimal centerY, BigDecimal radius) {
+  private GridShape createMockGridCircle(
+        BigDecimal centerX, BigDecimal centerY, BigDecimal radius) {
     GridShape circle = mock(GridShape.class);
     when(circle.getGridShapeType()).thenReturn(GridShapeType.CIRCLE);
     when(circle.getCenterX()).thenReturn(centerX);
