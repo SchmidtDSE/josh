@@ -4,14 +4,54 @@
  * @license BSD-3-Clause
  */
 
+/**
+ * Strategies for evaluating conditional statements within queries.
+ * 
+ * Set of conditional strateiges where x is the number to be checked, targetA is the first target
+ * from the query being fulfilled, and targetB is the second target from the query being fulfilled.
+ * The targetA will always be specified and acts as the threshold for exceeds and falls below.The
+ * targetB will only be specified for is between. For is between, targetA is the minimum and targetB
+ * is the maximum.
+ */
+const CONDITIONALS = {
+  "exceeds": (x, targetA, targetB) => x > targetA,
+  "falls below": (x, targetA, targetB) => x < targetA,
+  "is between": (x, targetA, targetB) => x >= targetA && x <= targetB
+}
 
 /**
- * Record of a simulation's results by target type.
+ * Strategies for generating a user-requested metric keyed by that metric name.
+ *
+ * Strategies for generating a user-requested metric keyed by that metric name where values are the
+ * Array<number>s for which a metric is to be generated, type is the metric type like "exceeds" to
+ * be used in parameterizing that metric, and targets A and B are used as inputs into that metric
+ * generation if applicable.
+ */
+const METRIC_STRATEGIES = {
+  "mean": (values, type, targetA, targetB) => math.mean(values),
+  "median": (values, type, targetA, targetB) => math.median(values),
+  "min": (values, type, targetA, targetB) => math.min(values),
+  "max": (values, type, targetA, targetB) => math.max(values),
+  "std": (values, type, targetA, targetB) => math.std(values),
+  "probability": (values, type, targetA, targetB) => {
+    const conditional = CONDITIONALS[type];
+    const countTotal = values.length;
+    
+    const matching = values.filter((candidate) => conditional(candidate, targetA, targetB));
+    const countMatching = matching.length;
+
+    return countMatching / countTotal;
+  }
+};
+
+
+/**
+ * Record of a simulation's results by target type for a single replicate.
  */
 class SimulationResult {
 
   /**
-   * Creates a new simulation result container.
+   * Creates a new simulation result container representing a single replicate.
    * 
    * @param {Array<OutputDatum>} simResults - Collection of simulation-level output records.
    * @param {Set<string>} simAttributes - Set of all attributes found across all elements of
@@ -216,6 +256,80 @@ class OutputDatum {
 
 
 /**
+ * Record describing which variable the user wants to analyze and how.
+ *
+ * Record describing which variable exported from the script that the user wants to analyze and
+ * indicate how those values should be reated (mean, median, etc). If the user is calculating
+ * probabilities, this will also have one or two target values.
+ */
+class DataQuery {
+
+  /**
+   * Create a new record of a user-requested DataQuery.
+   *
+   * @param {string} variable The name of the variable as exported from the user's script to be
+   *     analyzed.
+   * @param {string} metric The kind of metric to be calculated like mean. This will be applied both
+   *     at the simulation level (like mean across all patches across all timesteps) for the scrub
+   *     element or similar and patch level (like mean for each patch across all timesteps).
+   * @param {?number} targetA The first reference value to use for probability metrics like the
+   *     minimum threshold for proability of exceeds, maximum for probablity below, and minimum
+   *     for probability within range. Should be null if not a probability (value ignored).
+   * @param {?number} targetB The second reference value to use for probability metrics like the
+   *     maximum for probability within range. Should be null if not a probability within range.
+   */
+  constructor(variable, metric, targetA, targetB) {
+    const self = this;
+    self._variable = variable;
+    self._metric = metric;
+    self._targetA = targetA;
+    self._targetB = targetB;
+  }
+
+  /**
+   * Get the variable name being analyzed.
+   * 
+   * @returns {string} The variable name.
+   */
+  getVariable() {
+    const self = this;
+    return self._variable;
+  }
+
+  /**
+   * Get the metric type being calculated.
+   * 
+   * @returns {string} The metric type.
+   */
+  getMetric() {
+    const self = this;
+    return self._metric;
+  }
+
+  /**
+   * Get the first target value for probability metrics.
+   * 
+   * @returns {?number} The first target value or null.
+   */
+  getTargetA() {
+    const self = this;
+    return self._targetA;
+  }
+
+  /**
+   * Get the second target value for probability metrics.
+   * 
+   * @returns {?number} The second target value or null.
+   */
+  getTargetB() {
+    const self = this;
+    return self._targetB;
+  }
+
+}
+
+
+/**
  * Record describing a result which is summarized according to the instructions of the user.
  *
  * Record describing a result which is summarized according to the instructions of the user,
@@ -340,9 +454,20 @@ class SummarizedResult {
 }
 
 
-function summarizeDataset() {
+/**
+ * Summarize a dataset according to query specified by the user.
+ *
+ * @param {Array<SimulationResult>} target - The simulation results with one element per replicate.
+ * @param {DataQuery} query - Description of the query that the user is trying to execute with the
+ *     information for the metric to be generated or summarized.
+ * @returns {SummarizedResult} The target replicates summarized both where there is one overall
+ *     value per timestep (summarized across all patches and replicates) and where there is one
+ *     value per patch per timestep (summarized across all replicates per patch / timestep).
+ */
+function summarizeDataset(target, query) {
+  const self = this;
   
 }
 
 
-export {SimulationResult, SimulationResultBuilder, OutputDatum};
+export {DataQuery, OutputDatum, SimulationResult, SimulationResultBuilder};
