@@ -59,34 +59,41 @@ class ScrubPresenter {
     const maxValue = Math.max(...values);
     
     const createBody = () => {
-      for (let step = minTimestep; step <= maxTimestep; step++) {
-        const value = summarized.getTimestepValue(step);
-        const index = step - minTimestep;
-        const x = index * groupWidth;
-        
-        const group = self._svgSelection.append("g")
-          .attr("transform", `translate(${x},0)`);
-        
-        const barHeight = (value - minValue) / (maxValue - minValue) * height;
-        
-        // Display bar
-        group.append("rect")
-          .attr("class", "display-bar")
-          .attr("x", 1)
-          .attr("y", height - barHeight)
-          .attr("width", groupWidth - 2)
-          .attr("height", barHeight);
-        
-        // Pointer target
-        group.append("rect")
-          .attr("class", "pointer-target")
-          .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", groupWidth)
-          .attr("height", height)
-          .style("opacity", 0)
-          .on("click", () => self._onStepSelect(step));
-      }
+      const timesteps = Array.from({length: numSteps}, (_, i) => minTimestep + i);
+      
+      const xScale = d3.scaleBand()
+        .domain(timesteps)
+        .range([0, width])
+        .padding(0);
+      
+      const groups = self._svgSelection.selectAll("g")
+        .data(timesteps)
+        .enter()
+        .append("g")
+        .attr("transform", d => `translate(${xScale(d)},0)`);
+      
+      groups.append("rect")
+        .attr("class", "display-bar")
+        .attr("x", 1)
+        .attr("y", d => {
+          const value = summarized.getTimestepValue(d);
+          const barHeight = (value - minValue) / (maxValue - minValue) * height;
+          return height - barHeight;
+        })
+        .attr("width", xScale.bandwidth() - 2)
+        .attr("height", d => {
+          const value = summarized.getTimestepValue(d);
+          return (value - minValue) / (maxValue - minValue) * height;
+        });
+      
+      groups.append("rect")
+        .attr("class", "pointer-target")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", xScale.bandwidth())
+        .attr("height", height)
+        .style("opacity", 0)
+        .on("click", (_, d) => self._onStepSelect(d));
     };
     
     const addVerticalAxis = () => {
