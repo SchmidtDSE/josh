@@ -472,21 +472,22 @@ class SummarizedResult {
    * @param {number} minY - The minimum Y coordinate in the result set.
    * @param {number} maxX - The maximum x coordinate in the result set.
    * @param {number} maxY - The maximum Y coordinate in the result set.
-   * @param {Array<number>} valuePerReplicate - Array where each element corresponds to the value
-   *     requested by the user in which the zeroth element is the first replicate.
-   * @param {Map<string, number>} gridPerReplicate - Cell by cell (patch by patch) values requested
+   * @param {Map<string, number>} valuePerTimestep - Array where each element corresponds to the
+   *     value requested by the user in which the zeroth element is the first timestep.
+   * @param {Map<string, number>} gridPerTimestep - Cell by cell (patch by patch) values requested
    *     by the user in which the key is the integer timestep followed by a comma followed by the x
    *     coordinate followed by a comma followed by the y coordinate where x and y are rounded to
    *     the nearest integer.
    */
-  constructor(minX, minY, maxX, maxY, valuePerReplicate, gridPerReplicate) {
+  constructor(minX, minY, maxX, maxY, valuePerTimestep, gridPerTimestep) {
     const self = this;
     self._minX = minX;
     self._minY = minY;
     self._maxX = maxX;
     self._maxY = maxY;
-    self._valuePerReplicate = valuePerReplicate;
-    self._gridPerReplicate = gridPerReplicate;
+    self._valuePerTimestep = valuePerTimestep;
+    self._gridPerTimestep = gridPerTimestep;
+    self._timesteps = Array.of(...self._valuePerTimestep.keys());
   }
 
   /**
@@ -530,28 +531,44 @@ class SummarizedResult {
   }
 
   /**
-   * Gets the number of replicates in the result set.
+   * Gets the timesteps in the result set.
    * 
-   * @returns {number} The number of replicates.
+   * @returns {Array<number>} All timesteps found in this result set.
    */
-  getNumReplicates() {
+  getTimesteps() {
     const self = this;
-    return self._valuePerReplicate.length;
+    return self._timesteps;
+  }
+
+  /**
+   * Get the minimum timestep found within this dataset.
+   *
+   * @returns {number} Minimum timestep from this dataset.
+   */
+  getMinTimestep() {
+    const self = this;
+    return math.min(self._timesteps);
+  }
+
+  /**
+   * Get the maximum timestep found within this dataset.
+   *
+   * @returns {number} Maximum timestep from this dataset.
+   */
+  getMaxTimestep() {
+    const self = this;
+    return math.max(self._timesteps);
   }
 
   /**
    * Gets the value for a specific replicate.
    * 
-   * @param {number} replicateIndex - The index of the replicate to retrieve.
-   * @returns {number} The value for the specified replicate.
-   * @throws {Error} If the replicate index is out of bounds.
+   * @param {number} timestep - The timestep to retrieve.
+   * @returns {number} The value for the specified timestep.
    */
-  getReplicateValue(replicateIndex) {
+  getTimestepValue(timestep) {
     const self = this;
-    if (replicateIndex < 0 || replicateIndex >= self._valuePerReplicate.length) {
-      throw new Error("Replicate index out of bounds");
-    }
-    return self._valuePerReplicate[replicateIndex];
+    return self._valuePerTimestep.get(timestep);
   }
 
   /**
@@ -571,11 +588,11 @@ class SummarizedResult {
     const yRounded = Math.round(y);
     const key = `${timestepRounded},${xRounded},${yRounded}`;
     
-    if (!self._gridPerReplicate.has(key)) {
+    if (!self._gridPerTimestep.has(key)) {
       throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
     }
     
-    return self._gridPerReplicate.get(key);
+    return self._gridPerTimestep.get(key);
   }
   
 }
