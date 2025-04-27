@@ -118,6 +118,9 @@ class ResultsPresenter {
     }
   }
 
+  /**
+   * Update the available patch variables in the results display presenter.
+   */
   _updateVariables() {
     const self = this;
 
@@ -248,7 +251,10 @@ class ResultsDisplayPresenter {
     self._root.querySelector("#no-data-message").style.display = "block";
     self._root.querySelector("#data-display").style.display = "none";
   }
-
+  
+  /**
+   * Indicate to the user that data are available to visualize / review.
+   */
   indicateDataPresent() {
     const self = this;
     self._root.style.display = "block";
