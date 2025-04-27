@@ -215,4 +215,73 @@ class OutputDatum {
 }
 
 
+/**
+ * Record describing a result which is summarized according to the instructions of the user.
+ *
+ * Record describing a result which is summarized according to the instructions of the user,
+ * specifically a single metric on a single exported variable which is reported once per patch (cell
+ * within the simluation grid) per timestep.
+ */
+class SummarizedResult {
+
+  /**
+   * Create a new record of a summarized result.
+   *
+   * @param {number} minX - The minimum x coordinate in the result set.
+   * @param {number} minY - The minimum Y coordinate in the result set.
+   * @param {number} maxX - The maximum x coordinate in the result set.
+   * @param {number} maxY - The maximum Y coordinate in the result set.
+   * @param {Array<number>} valuePerReplicate - Array where each element corresponds to the value
+   *     requested by the user in which the zeroth element is the first replicate.
+   * @param {Map<string, number>} gridPerReplicate - Cell by cell (patch by patch) values requested
+   *     by the user in which the key is the integer timestep followed by a comma followed by the x
+   *     coordinate followed by a comma followed by the y coordinate where x and y are rounded to
+   *     the nearest integer.
+   */
+  constructor(minX, minY, maxX, maxY, valuePerReplicate, gridPerReplicate) {
+    const self = this;
+    self._minX = minX;
+    self._minY = minY;
+    self._maxX = maxX;
+    self._maxY = maxY;
+    self._valuePerReplicate = valuePerReplicate;
+    self._gridPerReplicate = gridPerReplicate;
+  }
+
+  getMinX() {
+    const self = this;
+  }
+
+  getMinY() {
+    const self = this;
+  }
+
+  getMaxX() {
+    const self = this;
+  }
+
+  getMaxY() {
+    const self = this;
+  }
+
+  getNumReplicates() {
+    const self = this;
+  }
+
+  getReplicateValue(replicateIndex) {
+    const self = this;
+  }
+
+  getGridValue(timestep, x, y) {
+    const self = this;
+  }
+  
+}
+
+
+function summarizeDataset() {
+  
+}
+
+
 export {SimulationResult, SimulationResultBuilder, OutputDatum};
