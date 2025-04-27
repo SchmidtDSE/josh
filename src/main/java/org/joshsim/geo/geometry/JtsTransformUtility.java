@@ -1,5 +1,8 @@
 package org.joshsim.geo.geometry;
 
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.crs.AbstractCRS;
+import org.apache.sis.referencing.cs.AxesConvention;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -7,8 +10,10 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 /**
  * Utility methods for transforming JTS geometries.
@@ -93,4 +98,25 @@ public final class JtsTransformUtility {
 
     return transformedCoords;
   }
+
+  /**
+   * Creates a right-handed coordinate reference system from the given CRS code.
+   *
+   * @param crsCode The CRS code
+   * @return The right-handed CRS
+   * @throws FactoryException If the CRS cannot be created
+   */
+  public static CoordinateReferenceSystem getRightHandedCrs(String crsCode) throws FactoryException{
+
+    CoordinateReferenceSystem unsafeBaseCrs = CRS.forCode(crsCode);
+    CoordinateReferenceSystem baseCrs = 
+        AbstractCRS.castOrCopy(unsafeBaseCrs).forConvention(AxesConvention.RIGHT_HANDED);
+
+    if (baseCrs == null) {
+      throw new FactoryException("Failed to create right-handed CRS for code: " + crsCode);
+    }
+
+    return baseCrs;
+  }
+
 }

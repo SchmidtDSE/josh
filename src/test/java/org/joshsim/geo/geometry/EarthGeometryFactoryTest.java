@@ -44,7 +44,7 @@ public class EarthGeometryFactoryTest {
   private GeometryFactory geometryFactory;
   private CoordinateReferenceSystem wgs84;
   private CoordinateReferenceSystem utm11n;
-  private GridCrsManagerTest gridCrsManager;
+  private GridCrsManager gridCrsManager;
 
   /**
    * Set up contexts for each test.
