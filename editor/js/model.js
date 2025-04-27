@@ -576,10 +576,10 @@ class SummarizedResult {
 
 
 /**
- * Summarize a dataset according to query specified by the user.
+ * Summarize datasets according to query specified by the user by operating on patch results.
  *
- * Summarize a dataset according to query specified by the user using the strategies specified in
- * METRIC_STRATEGIES and, if applicable, CONDITIONALS.
+ * Summarize datasets according to query specified by the user using the strategies specified in
+ * METRIC_STRATEGIES and, if applicable, CONDITIONALS. This will only summarize patch-level results.
  *
  * @param {Array<SimulationResult>} target - The simulation results with one element per replicate.
  * @param {DataQuery} query - Description of the query that the user is trying to execute with the
@@ -588,68 +588,122 @@ class SummarizedResult {
  *     value per timestep (summarized across all patches and replicates) and where there is one
  *     value per patch per timestep (summarized across all replicates per patch / timestep).
  */
-function summarizeDataset(target, query) {
-  // Get strategy for metric calculation
+function summarizeDatasets(target, query) {
+  if (target.length == 0) {
+    throw "Requires at least one replicate to summarize.";
+  }
+  
   const strategy = METRIC_STRATEGIES[query.getMetric()];
   if (!strategy) {
-    throw new Error(`Unknown metric: ${query.getMetric()}`);
+    throw `Unknown metric: ${query.getMetric()}`;
   }
 
-  // Process each replicate
-  const valuePerReplicate = target.map(replicate => {
-    const patchResults = replicate.getPatchResults();
-    const values = patchResults
-      .filter(record => record.hasValue(query.getVariable()))
-      .map(record => record.getValue(query.getVariable()));
+  const variable = query.getVariable();
+  const metricType = query.getMetricType();
+  const targetA = query.getTargetA();
+  const targetB = query.getTargetB();
+  const curriedStrategy = (values) => strategy(values, metricType, targetA, targetB);
 
-    // Calculate metric for this replicate
-    return strategy(values, query.getMetricType(), query.getTargetA(), query.getTargetB());
-  });
+  const targetFlat = target.flatMap((x) => x.getPatchResults()).filter((x) => x.hasValue(variable));
 
-  // Process grid values (patch by patch)
-  const gridPerReplicate = new Map();
-  
-  // For each replicate
-  target.forEach(replicate => {
-    const patchResults = replicate.getPatchResults();
-    
-    // Group results by timestep and position
-    patchResults.forEach(record => {
-      if (!record.hasValue(query.getVariable())) return;
-      
-      if (record.hasValue("position.x") && record.hasValue("position.y") && record.hasValue("timestep")) {
-        const timestep = Math.round(record.getValue("timestep"));
-        const x = Math.round(record.getValue("position.x"));
-        const y = Math.round(record.getValue("position.y"));
-        const value = record.getValue(query.getVariable());
-        
-        const key = `${timestep},${x},${y}`;
-        
-        if (!gridPerReplicate.has(key)) {
-          gridPerReplicate.set(key, []);
-        }
-        gridPerReplicate.get(key).push(value);
-      }
+  /**
+   * Get a map from key to all values from records with that key.
+   *
+   * @param {function} keyGetter - The funciton taking an OutputDatum from which the key should be
+   *     returned.
+   * @returns {Map<string, Array<number>>} Mapping from key to values found for all records with the
+   *     key and with the target attribute present.
+   */
+  const getValuesByKey(keyGetter) => {
+    const keyedValuesUnsafe = targetFlat.map((x) => {
+      return {"key": keyGetter(x), "value": x.getValue(variable)};
     });
-  });
 
-  // Calculate metrics for each grid position
-  for (const [key, values] of gridPerReplicate.entries()) {
-    const metricValue = strategy(values, query.getMetricType(), query.getTargetA(), query.getTargetB());
-    gridPerReplicate.set(key, metricValue);
+    const keyedValues = keyedValuesUnsafe.filter((x) => x["key"] !== null);
+    
+    const valuesByKey = new Map();
+    keyedValues.forEach((target) => {
+      const key = target["key"];
+      const value = target["value"];
+
+      if (!valuesByKey.has(key)) {
+        valuesByKey.set(key, []);
+      }
+
+      valuesByKey.get(key).push(value)
+    });
+
+    return valuesByKey;
   }
 
-  // Get bounds from first replicate since they should all be the same
+  /**
+   * Get a map from key to the metric value from records with that key.
+   *
+   * @param {function} keyGetter - The funciton taking an OutputDatum from which the key should be
+   *     returned.
+   * @returns {Map<string, number>} Mapping from key to metric value.
+   */
+  const summarizeByKey(keyGetter) => {
+    const valuesByKey = getValuesByKey(keyGetter);
+    const valueByKey = new Map();
+
+    valuesByKey.keys().forEach((key) => {
+      const values = valuesByKey.get(key);
+      const value = curriedStrategy(values);
+      valueByKey.set(key, value);
+    });
+
+    return valueByKey;
+  };
+
   const firstReplicate = target[0];
   return new SummarizedResult(
     firstReplicate.getMinX(),
     firstReplicate.getMinY(), 
     firstReplicate.getMaxX(),
     firstReplicate.getMaxY(),
-    valuePerReplicate,
-    gridPerReplicate
+    summarizeByKey(getTimestepKey),
+    summarizeByKey(getGridKey)
   );
 }
 
 
-export {DataQuery, OutputDatum, SimulationResult, SimulationResultBuilder};
+/**
+ * Extracts the 'timestep' value from a given record.
+ * 
+ * @param {OutputDatum} record - The output record from which the 'timestep' will be retrieved.
+ * @returns {?number} The 'timestep' value if it exists, or null if not present.
+ */
+function getTimestepKey(record) {
+  if (!record.hasValue("step")) {
+    return null;
+  }
+
+  return record.getValue("step");
+}
+
+
+/**
+ * Extracts a composite key from a given record based on its timestep and position.
+ *
+ * @param {OutputDatum} record - The output record from which the key will be constructed.
+ * @returns {?string} A string key in the format "timestep,x,y" if all values exist, or null if any
+ *     are missing.
+ */
+function getGridKey(record) {
+  const hasX = record.hasValue("position.x");
+  const hasY = record.hasValue("position.y");
+  const hasTime = record.hasValue("step");
+  const hasRequired = hasX && hasY && hasTime;
+  if (!hasRequired) {
+    return null;
+  }
+
+  const timestep = Math.round(record.getValue("step"));
+  const x = Math.round(record.getValue("position.x"));
+  const y = Math.round(record.getValue("position.y"));
+  return `${timestep},${x},${y}`;
+}
+
+
+export {DataQuery, OutputDatum, SimulationResult, SimulationResultBuilder, summarizeDatasets};
