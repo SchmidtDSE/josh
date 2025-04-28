@@ -200,7 +200,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
-      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs.getName().getCode());
+      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
     } catch (Exception e) {
       throw new RuntimeException("Failed to transform grid point: " + e.getMessage(), e);
     }
@@ -217,7 +217,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
-      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs.getName().getCode());
+      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
     } catch (Exception e) {
       throw new RuntimeException("Failed to transform grid circle: " + e.getMessage(), e);
     }
@@ -234,7 +234,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
-      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs.getName().getCode());
+      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
     } catch (Exception e) {
       throw new RuntimeException("Failed to transform grid rectangle: " + e.getMessage(), e);
     }
@@ -251,7 +251,8 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
     
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
-      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs.getName().getCode());
+      // BUG - THIS IS TAKING IN an INVALID CRS CODE (""WGS 84 / UTM zone 11N"", not "EPSG:32611")
+      return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
     } catch (Exception e) {
       throw new RuntimeException("Failed to transform grid shape: " + e.getMessage(), e);
     }
