@@ -18,17 +18,18 @@ function reportStepComplete(stepCount) {
 
 
 /**
- * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
- * 
- * @param {string} source - The formatted string containing target name and key-value pairs.
+ * Parse a single data point from an internal memory transfer string.
+ *
+ * @param {string} source - The internal memory transfer string to parse.
+ * @returns {Object} Record with the target name and attributes.
  */
-function reportData(source) {
+function parseDatum(source) {
   const firstPieces = source.split(':', 2);
   const target = firstPieces[0];
   const attributesStr = firstPieces[1];
-  
+
   const attributes = new Map();
-  
+
   if (!attributesStr) {
     return;
   }
@@ -40,14 +41,24 @@ function reportData(source) {
     const value = pairPieces[1];
 
     const valid = key && value !== undefined;
-    
+
     if (valid) {
       const isNumber = NUMBER_REGEX.test(value);
       attributes.set(key, isNumber ? parseFloat(value) : value);
     }
   }
-  
+
   const datum = {"target": target, "attributes": attributes};
+}
+
+
+/**
+ * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
+ * 
+ * @param {string} source - The formatted string containing target name and key-value pairs.
+ */
+function reportData(source) {
+  const datum = parseDatum(source);
   postMessage({ type: "outputDatum", success: true, result: datum });
 }
 
@@ -103,6 +114,12 @@ self.onmessage = async function(e) {
       case "runSimulation":
         wasmLayer.exports.runSimulation(data.code, data.simulationName);
         self.postMessage({ type: "runSimulation", success: true });
+        break;
+
+      case "getSimulationMetadata":
+        const resultRaw = wasmLayer.exports.getSimulationMetadata(data.code, data.simulationName);
+        const result = reportData(resultRaw);
+        self.postMessage({ type: "getSimulationMetadata", success: true, result: result });
         break;
     }
   } catch (error) {

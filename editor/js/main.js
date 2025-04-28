@@ -29,6 +29,7 @@ class MainPresenter {
     self._currentRequest = null;
     self._replicatesCompleted = 0;
     self._replicateResults = [];
+    self._metadata = null;
 
     self._wasmLayer = getWasmLayer(
       (numSteps) => self._onStepCompleted(numSteps)
@@ -102,16 +103,21 @@ class MainPresenter {
     self._currentRequest = request;
     self._replicatesCompleted = 0;
     self._replicateResults = [];
-    
-    self._executeSingleReplicate();
+
+    const simCode = self._editorPresenter.getCode();
+    const simName = self._currentRequest.getSimName();
+
+    self._wasmLayer.getSimulationMetadata(code, simName).then(
+      (x) => {
+        self._executeSingleReplicate(simCode, simName);
+      },
+      (x) => { self._onError(x); }
+    );
   }
 
-  _executeSingleReplicate() {
+  _executeSingleReplicate(simCode, simeName) {
     const self = this;
-    self._wasmLayer.runSimulation(
-      self._editorPresenter.getCode(),
-      self._currentRequest.getSimName()
-    ).then(
+    self._wasmLayer.runSimulation(simCode, simName.then(
       (x) => { self._onSimulationComplete(x); },
       (x) => { self._onError(x); }
     );

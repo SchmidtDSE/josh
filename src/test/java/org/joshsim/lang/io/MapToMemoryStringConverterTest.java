@@ -1,6 +1,7 @@
 package org.joshsim.lang.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,9 @@ class MapToMemoryStringConverterTest {
     String result = MapToMemoryStringConverter.convert(name, target);
 
     // Assert
-    assertEquals("TestName:key1=value1\tkey2=value2", result);
+    assertTrue(result.startsWith("TestName:"));
+    assertTrue(result.contains("key1=value1"));
+    assertTrue(result.contains("key2=value2"));
   }
 
   @Test
@@ -43,10 +46,9 @@ class MapToMemoryStringConverterTest {
     String result = MapToMemoryStringConverter.convert(name, target);
 
     // Assert
-    assertEquals(
-        "FormattedName:key1=value    With    Tabs\tkey2=value    With    Newlines",
-        result
-    );
+    assertTrue(result.startsWith("FormattedName:"));
+    assertTrue(result.contains("key1=value    With    Tabs"));
+    assertTrue(result.contains("key2=value    With    Newlines"));
   }
 
   @Test

@@ -91,12 +91,43 @@ class WasmLayer {
   }
 
   /**
-   * Runs a simulation using the WASM layer.
+   * Get metadata about a simulation like grid configuration.
+   *
+   * @param {string} code - The code from which to get the simulation metadata.
+   * @param {string} simulationName - The name of the simulation for which metadata is requested.
+   * @returns {Promise<OutputDatum>} Promise resolving to the metadata read.
+   */
+  async getSimulationMetadata(code, simulationName) {
+    const self = this;
+    await self._initPromise;
+
+    return new Promise((resolve, reject) => {
+      self._worker.onmessage = (e) => {
+        const { type, result, error } = e.data;
+        if (error) {
+          reject(new Error(error));
+          return;
+        }
+        if (type === "getSimulationMetadata") {
+          const rawInput = e.data.result;
+          const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
+          resolve(parsed);
+        }
+      };
+      self._worker.postMessage({
+        type: "getSimulationMetadata",
+        data: {code: code, simulationName: simulationName}
+      });
+    });
+  }
+
+  /**
+   * Runs a single simulation replicate using the WASM layer.
    * 
    * @param {string} code - The code containing the simulation.
    * @param {string} simulationName - Name of simulation to run.
-   * @returns {Promise} Promise which resolves to the complete dataset when the simulation is
-   *     concluded.
+   * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
+   *     simulation is concluded with data on this single replicate.
    */
   async runSimulation(code, simulationName) {
     const self = this;
@@ -125,7 +156,7 @@ class WasmLayer {
       };
       self._worker.postMessage({ 
         type: "runSimulation", 
-        data: { code, simulationName } 
+        data: { code: code, simulationName: simulationName } 
       });
     });
   }
