@@ -199,7 +199,7 @@ class WasmLayer {
   }
 
   /**
-   * Get the distance in meters between two coordinates provided in degrees.
+   * Get the distance in meters between two coordinates provided in degrees using Haversine.
    *
    * @param {number} startLongitude - The first point longitude in degrees.
    * @param {number} startLatitude - The first point latitude in degrees.
