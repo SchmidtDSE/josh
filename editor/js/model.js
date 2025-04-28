@@ -144,119 +144,6 @@ class SimulationResult {
 
 }
 
-
-/**
- * Builder for constructing simulation results from individual output records.
- */
-class SimulationResultBuilder {
-
-  /**
-   * Creates a new simulation result builder with empty collections.
-   */
-  constructor() {
-    const self = this;
-    self._simResults = [];
-    self._simAttributes = new Set();
-    self._patchResults = [];
-    self._patchAttributes = new Set();
-    self._entityResults = [];
-    self._entityAttributes = new Set();
-    
-    self._minX = null;
-    self._minY = null;
-    self._maxX = null;
-    self._maxY = null;
-  }
-
-  /**
-   * Adds a single output record to the appropriate collection based on its target type.
-   * 
-   * @param {OutputDatum} result - The output record to add to the builder.
-   */
-  add(result) {
-    const self = this;
-    const targetName = result.getTarget();
-    
-    const targetCollection = {
-      "simulation": self._simResults,
-      "patches": self._patchResults,
-      "entites": self._entityResults
-    }[targetName];
-    targetCollection.push(result);
-
-    const targetAttributes = {
-      "simulation": self._simAttributes,
-      "patches": self._patchAttributes,
-      "entites": self._entityAttributes
-    }[targetName];
-    result.getAttributeNames().forEach((x) => targetAttributes.add(x));
-
-    self._updateBounds(result);
-  }
-
-  /**
-   * Constructs and returns a SimulationResult from the collected output records.
-   * 
-   * @returns {SimulationResult} A new SimulationResult containing all collected records.
-   */
-  build() {
-    const self = this;
-    return new SimulationResult(
-      self._simResults,
-      self._simAttributes,
-      self._patchResults,
-      self._patchAttributes,
-      self._entityResults,
-      self._entityAttributes,
-      self._minX,
-      self._minY,
-      self._maxX,
-      self._maxY
-    );
-  }
-
-  /**
-   * Update the minimum and maximum x and y coordinates seen by this builder.
-   *
-   * Update the minimum and maximum x and y coordinates seen by this builder, using this result's
-   * x and y coordinates as the minimum and maximum if no prior values seen. Note that this uses
-   * position.x and position.y from result. If either position.x or position.y are not found, this
-   * record is ignored.
-   * 
-   * @param {OutputDatum} result - The output record to add to the builder.
-   */
-  _updateBounds(result) {
-    const self = this;
-    
-    const hasPosX = result.hasValue("position.x");
-    const hasPosY = result.hasValue("position.y");
-    const hasPos = hasPosX && hasPosY;
-    if (!hasPos) {
-      return;
-    }
-    
-    const posX = result.getValue("position.x");
-    const posY = result.getValue("position.y");
-
-    if (self._minX === null || posX < self._minX) {
-      self._minX = posX;
-    }
-    
-    if (self._minY === null || posY < self._minY) {
-      self._minY = posY;
-    }
-    
-    if (self._maxX === null || posX > self._maxX) {
-      self._maxX = posX;
-    }
-    
-    if (self._maxY === null || posY > self._maxY) {
-      self._maxY = posY;
-    }
-  }
-
-}
-
 /**
  * Record describing an export from the engine running in WASM or JS emulation.
  */
@@ -542,6 +429,119 @@ class SummarizedResult {
     }
 
     return self._gridPerTimestep.get(key);
+  }
+
+}
+
+
+/**
+ * Builder for constructing simulation results from individual output records.
+ */
+class SimulationResultBuilder {
+
+  /**
+   * Creates a new simulation result builder with empty collections.
+   */
+  constructor() {
+    const self = this;
+    self._simResults = [];
+    self._simAttributes = new Set();
+    self._patchResults = [];
+    self._patchAttributes = new Set();
+    self._entityResults = [];
+    self._entityAttributes = new Set();
+
+    self._minX = null;
+    self._minY = null;
+    self._maxX = null;
+    self._maxY = null;
+  }
+
+  /**
+   * Adds a single output record to the appropriate collection based on its target type.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
+  add(result) {
+    const self = this;
+    const targetName = result.getTarget();
+
+    const targetCollection = {
+      "simulation": self._simResults,
+      "patches": self._patchResults,
+      "entites": self._entityResults
+    }[targetName];
+    targetCollection.push(result);
+
+    const targetAttributes = {
+      "simulation": self._simAttributes,
+      "patches": self._patchAttributes,
+      "entites": self._entityAttributes
+    }[targetName];
+    result.getAttributeNames().forEach((x) => targetAttributes.add(x));
+
+    self._updateBounds(result);
+  }
+
+  /**
+   * Constructs and returns a SimulationResult from the collected output records.
+   * 
+   * @returns {SimulationResult} A new SimulationResult containing all collected records.
+   */
+  build() {
+    const self = this;
+    return new SimulationResult(
+      self._simResults,
+      self._simAttributes,
+      self._patchResults,
+      self._patchAttributes,
+      self._entityResults,
+      self._entityAttributes,
+      self._minX,
+      self._minY,
+      self._maxX,
+      self._maxY
+    );
+  }
+
+  /**
+   * Update the minimum and maximum x and y coordinates seen by this builder.
+   *
+   * Update the minimum and maximum x and y coordinates seen by this builder, using this result's
+   * x and y coordinates as the minimum and maximum if no prior values seen. Note that this uses
+   * position.x and position.y from result. If either position.x or position.y are not found, this
+   * record is ignored.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
+  _updateBounds(result) {
+    const self = this;
+
+    const hasPosX = result.hasValue("position.x");
+    const hasPosY = result.hasValue("position.y");
+    const hasPos = hasPosX && hasPosY;
+    if (!hasPos) {
+      return;
+    }
+
+    const posX = result.getValue("position.x");
+    const posY = result.getValue("position.y");
+
+    if (self._minX === null || posX < self._minX) {
+      self._minX = posX;
+    }
+
+    if (self._minY === null || posY < self._minY) {
+      self._minY = posY;
+    }
+
+    if (self._maxX === null || posX > self._maxX) {
+      self._maxX = posX;
+    }
+
+    if (self._maxY === null || posY > self._maxY) {
+      self._maxY = posY;
+    }
   }
 
 }

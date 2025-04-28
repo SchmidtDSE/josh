@@ -311,8 +311,11 @@ class ResultsDisplayPresenter {
    *
    * Instruct the visualizations to display a summary which was computed from the underlying raw
    * data using user defined parameters.
+   *
+   * @param {SummarizedResult} summary - The data summarized according to user instructions. 
+   * @param {SimulationMetadata} metadata - Metadata about the simulation to be displayed. 
    */
-  render(summary) {
+  render(summary, metadata) {
     const self = this;
     self._scrubPresenter.render(summary);
   }
