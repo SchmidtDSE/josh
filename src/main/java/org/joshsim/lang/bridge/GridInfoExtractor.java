@@ -1,3 +1,4 @@
+
 /**
  * Logic for gathering information from a simulation definition needed to construct a grid.
  *
@@ -12,7 +13,11 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
-
+/**
+ * Extracts and manages grid-related information from simulation configurations.
+ * This class handles coordinate reference systems, grid boundaries, patch names,
+ * and grid size information required for simulation setup.
+ */
 public class GridInfoExtractor {
 
   private final Optional<EngineValue> inputCrsMaybe;
@@ -23,6 +28,12 @@ public class GridInfoExtractor {
   private final Optional<EngineValue> sizeMaybe;
   private final EngineValueFactory valueFactory;
 
+  /**
+   * Creates a new GridInfoExtractor by extracting grid information from a simulation.
+   *
+   * @param simulation The mutable entity containing simulation configuration
+   * @param valueFactory Factory for creating engine values
+   */
   public GridInfoExtractor(MutableEntity simulation, EngineValueFactory valueFactory) {
     this.valueFactory = valueFactory;
 
@@ -38,50 +49,98 @@ public class GridInfoExtractor {
     simulation.endSubstep();
   }
 
+  /**
+   * Gets the optional input coordinate reference system.
+   * @return Optional containing the input CRS if defined
+   */
   public Optional<EngineValue> getInputCrsMaybe() {
     return inputCrsMaybe;
   }
 
+  /**
+   * Gets the optional target coordinate reference system.
+   * @return Optional containing the target CRS if defined
+   */
   public Optional<EngineValue> getTargetCrsMaybe() {
     return targetCrsMaybe;
   }
 
+  /**
+   * Gets the optional starting coordinates of the grid.
+   * @return Optional containing the starting point if defined
+   */
   public Optional<EngineValue> getStartStrMaybe() {
     return startStrMaybe;
   }
 
+  /**
+   * Gets the optional ending coordinates of the grid.
+   * @return Optional containing the ending point if defined
+   */
   public Optional<EngineValue> getEndStrMaybe() {
     return endStrMaybe;
   }
 
+  /**
+   * Gets the optional patch name for the grid.
+   * @return Optional containing the patch name if defined
+   */
   public Optional<EngineValue> getPatchNameMaybe() {
     return patchNameMaybe;
   }
 
+  /**
+   * Gets the optional size of the grid.
+   * @return Optional containing the grid size if defined
+   */
   public Optional<EngineValue> getSizeMaybe() {
     return sizeMaybe;
   }
 
+  /**
+   * Gets the input coordinate reference system or default empty string.
+   * @return The input CRS string or empty string if not defined
+   */
   public String getInputCrs() {
     return getOrDefault(getInputCrsMaybe(), "");
   }
 
+  /**
+   * Gets the target coordinate reference system or default empty string.
+   * @return The target CRS string or empty string if not defined
+   */
   public String getTargetCrs() {
     return getOrDefault(getTargetCrsMaybe(), "");
   }
 
+  /**
+   * Gets the starting coordinates string or default value.
+   * @return The starting coordinates string or default value if not defined
+   */
   public String getStartStr() {
     return getOrDefault(getStartStrMaybe(), "1 count latitude, 1 count longitude");
   }
 
+  /**
+   * Gets the ending coordinates string or default value.
+   * @return The ending coordinates string or default value if not defined
+   */
   public String getEndStr() {
     return getOrDefault(getEndStrMaybe(), "10 count latitude, 10 count longitude");
   }
 
+  /**
+   * Gets the patch name or default value.
+   * @return The patch name or "Default" if not defined
+   */
   public String getPatchName() {
     return getOrDefault(getPatchNameMaybe(), "Default");
   }
 
+  /**
+   * Gets the grid size or default value of 1 count.
+   * @return The grid size or default EngineValue of 1 count if not defined
+   */
   public EngineValue getSize() {
     return getSizeMaybe().orElse(valueFactory.build(1, Units.COUNT));
   }
