@@ -14,9 +14,10 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
- * Extracts and manages grid-related information from simulation configurations.
- * This class handles coordinate reference systems, grid boundaries, patch names,
- * and grid size information required for simulation setup.
+ * Extractor of grid-related information from simulation configurations.
+ * 
+ * <p>Utility to extract metadata from simulations required for constructing a grid including the
+ * coordinate reference systems, grid boundaries, patch names, and grid size information.</p>
  */
 public class GridInfoExtractor {
 
@@ -51,6 +52,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional input coordinate reference system.
+   *
    * @return Optional containing the input CRS if defined
    */
   public Optional<EngineValue> getInputCrsMaybe() {
@@ -59,6 +61,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional target coordinate reference system.
+   *
    * @return Optional containing the target CRS if defined
    */
   public Optional<EngineValue> getTargetCrsMaybe() {
@@ -67,6 +70,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional starting coordinates of the grid.
+   *
    * @return Optional containing the starting point if defined
    */
   public Optional<EngineValue> getStartStrMaybe() {
@@ -75,6 +79,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional ending coordinates of the grid.
+   *
    * @return Optional containing the ending point if defined
    */
   public Optional<EngineValue> getEndStrMaybe() {
@@ -83,6 +88,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional patch name for the grid.
+   *
    * @return Optional containing the patch name if defined
    */
   public Optional<EngineValue> getPatchNameMaybe() {
@@ -91,6 +97,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the optional size of the grid.
+   *
    * @return Optional containing the grid size if defined
    */
   public Optional<EngineValue> getSizeMaybe() {
@@ -99,6 +106,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the input coordinate reference system or default empty string.
+   *
    * @return The input CRS string or empty string if not defined
    */
   public String getInputCrs() {
@@ -107,6 +115,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the target coordinate reference system or default empty string.
+   *
    * @return The target CRS string or empty string if not defined
    */
   public String getTargetCrs() {
@@ -115,6 +124,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the starting coordinates string or default value.
+   *
    * @return The starting coordinates string or default value if not defined
    */
   public String getStartStr() {
@@ -123,6 +133,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the ending coordinates string or default value.
+   *
    * @return The ending coordinates string or default value if not defined
    */
   public String getEndStr() {
@@ -131,6 +142,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the patch name or default value.
+   *
    * @return The patch name or "Default" if not defined
    */
   public String getPatchName() {
@@ -139,6 +151,7 @@ public class GridInfoExtractor {
 
   /**
    * Gets the grid size or default value of 1 count.
+   *
    * @return The grid size or default EngineValue of 1 count if not defined
    */
   public EngineValue getSize() {
