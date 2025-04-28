@@ -28,29 +28,8 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   public ExportFacade build(ExportTarget target, Optional<Iterable<String>> header) {
     return switch (target.getFileType()) {
       case "csv" -> buildForCsv(target, header);
-      case "map" -> buildForMap(target, header);
       default -> throw new IllegalArgumentException("Not supported: " + target.getFileType());
     };
-  }
-
-  /**
-   * Build an ExportFacade that writes to a JavaScript in-memory map callback.
-   *
-   * @param target Record describing where the export should be written and the format information.
-   *               Must have a protocol of "js".
-   * @param header An optional list of column headers. This parameter is ignored as headers
-   *               are not applicable to map exports.
-   * @return JsExportFacade configured to write to the JavaScript callback specified in the target's
-   *     path.
-   * @throws IllegalArgumentException if the target's protocol is not "js".
-   */
-  private static ExportFacade buildForMap(ExportTarget target, Optional<Iterable<String>> header) {
-    if (!target.getProtocol().equals("js")) {
-      throw new IllegalArgumentException("Can only write map to JS.");
-    }
-
-    String path = target.getPath();
-    return new JsExportFacade(path);
   }
 
   /**

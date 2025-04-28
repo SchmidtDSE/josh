@@ -7,7 +7,6 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
@@ -56,25 +55,16 @@ public class GridFromSimFactory {
    * @return the built PatchSet
    */
   public PatchSet build(MutableEntity simulation) {
-    simulation.startSubstep("constant");
 
-    final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
-    final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
-    final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
-    final Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
-
-    simulation.endSubstep();
-
-    String inputCrs = getOrDefault(inputCrsMaybe, "");
-    String targetCrs = getOrDefault(targetCrsMaybe, "");
-    String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
-    String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
-    String patchName = getOrDefault(patchNameMaybe, "Default");
+    GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
+    String inputCrs = extractor.getInputCrs();
+    String targetCrs = extractor.getTargetCrs();
+    String startStr = extractor.getStartStr();
+    String endStr = extractor.getEndStr();
+    String patchName = extractor.getPatchName();
 
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
-    EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
+    EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
     PatchBuilder builder = bridge.getGeometryFactory().getPatchBuilder(
@@ -85,21 +75,6 @@ public class GridFromSimFactory {
         bridge.getPrototype(patchName)
     );
     return builder.build();
-  }
-
-  /**
-   * Returns the string value of an optional EngineValue or a default value if empty.
-   *
-   * @param target the optional EngineValue to check
-   * @param defaultVal the default value to return if target is empty
-   * @return the string value from the EngineValue or the default value
-   */
-  private String getOrDefault(Optional<EngineValue> target, String defaultVal) {
-    if (target.isEmpty()) {
-      return defaultVal;
-    } else {
-      return target.get().getAsString();
-    }
   }
 
   /**
