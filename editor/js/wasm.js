@@ -109,7 +109,8 @@ class WasmLayer {
           return;
         }
         if (type === "getSimulationMetadata") {
-          const parsed = new OutputDatum(result["target"], result["attributes"]);
+          const parsedToKeyValue = new OutputDatum(result["target"], result["attributes"]);
+          const parsed = self._parseMetadata(parsedToKeyValue);
           resolve(parsed);
         }
       };
@@ -160,9 +161,87 @@ class WasmLayer {
     });
   }
 
+  /**
+   * Internal callback for when a step within a replicate is completed.
+   *
+   * @param {number} numComplete - The number of steps completed in this replicate.
+   */
   _onStepCompleted(numComplete) {
     const self = this;
     self._stepCallback(numComplete);
+  }
+
+  /**
+   * Construct a metadata record from a parsed entity.
+   *
+   * Construct a metdata record from a entity which has raw data from the WASM worker parsed. It
+   * expects input to have the following:
+   *
+   *  - "grid.size" which has a value like "1 count" or "30 m" or "30 meters" or "0.5 degree" or
+   *    "0.5 degrees".
+   *  - "grid.low" which has a value like "0 count latitude, 0 count longitude" or
+   *    "34 degrees longitude, -116 degrees latitude".
+   *  - "grid.high" which has a value like "10 count latitude, 10 count longitude" or
+   *    "35 degrees longitude, -115 degrees latitude".
+   *
+   * If the start and end are indicated in degrees, they will be converted to count where x and y
+   * both start at 0, 0 in the upper left-hand corner. Note that patch or cell centers are used so,
+   * if the grid starts at 0, 0 count with a grid size of 1, then the first cell is at 0.5, 0.5.
+   * This will convert degrees to meters but will otherwise not perform unit conversions, raising an
+   * exception instead.
+   *
+   * @param {OutputDatum} input - Record which has parsed attributes and values returned by the WASM
+   *     worker.
+   * @returns {SimulationMetadata} Record summarizing input into a formalized metadata record.
+   */
+  _parseMetadata(input) {
+    const self = this;
+  }
+
+  /**
+   * Get the distance in meters between two coordinates provided in degrees.
+   *
+   * @param {number} startLongitude - The first point longitude in degrees.
+   * @param {number} startLatitude - The first point latitude in degrees.
+   * @param {number} endLongitude - The second point longitude in degrees.
+   * @param {number} endLatitude - The second point latitude in degrees.
+   * @return {number} Absolute approximate distance between these two points.
+   */
+  _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
+    const self = this;
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isCount(unitsStr) {
+    const self = this;
+    return unitsStr === "count" || unitsStr === "counts"
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isMeters(unitsStr) {
+    const self = this;
+    return unitsStr === "m" || unitsStr === "meter" || unitsStr === "meters";
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isDegrees(unitsStr) {
+    const self = this;
+    return unitsStr === "degree" || unitsStr === "degrees";
   }
 }
 
