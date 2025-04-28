@@ -477,7 +477,7 @@ class SummarizedResult {
    * @param {Map<string, number>} gridPerTimestep - Cell by cell (patch by patch) values requested
    *     by the user in which the key is the integer timestep followed by a comma followed by the x
    *     coordinate followed by a comma followed by the y coordinate where x and y are rounded to
-   *     the nearest integer.
+   *     the nearest hundredth.
    */
   constructor(minX, minY, maxX, maxY, valuePerTimestep, gridPerTimestep) {
     const self = this;
@@ -593,6 +593,58 @@ class SummarizedResult {
     }
     
     return self._gridPerTimestep.get(key);
+  }
+  
+}
+
+
+/**
+ * Information about the metadata from a simulation including grid initalization information.
+ */
+class SimulationMetadata {
+
+  /**
+   * Create a new metadata record.
+   *
+   * @param {number} startX - The minimum horizontal position of a patch in grid space where
+   *     coordinates in degrees are automatically converted to a grid with 0, 0 in upper left.
+   * @param {number} startY - The minimum vertical position of a patch in grid space where
+   *     coordinates in degrees are automatically converted to a grid with 0, 0 in upper left.
+   * @param {number} endX - The maximum horizontal position of a patch in grid space.
+   * @param {number} endY - The maximum vertical positoin of a patch in grid space.
+   * @param {number} patchSize - The size of each patch or cell, typically 1.
+   */
+  constructor(startX, startY, endX, endY, patchSize) {
+    const self = this;
+    self._startX = startX;
+    self._startY = startY;
+    self._endX = endX;
+    self._endY = endY;
+  }
+
+  getStartX() {
+    const self = this;
+    return self._startX;
+  }
+
+  getStartY() {
+    const self = this;
+    return self._startY;
+  }
+
+  getEndX() {
+    const self = this;
+    return self._endX;
+  }
+
+  getEndY() {
+    const self = this;
+    return self._endY;
+  }
+
+  getPatchSize() {
+    const self = this;
+    return self._patchSize;
   }
   
 }
@@ -723,8 +775,8 @@ function getGridKey(record) {
   }
 
   const timestep = Math.round(record.getValue("step"));
-  const x = Math.round(record.getValue("position.x"));
-  const y = Math.round(record.getValue("position.y"));
+  const x = record.getValue("position.x").toFixed(2);
+  const y = record.getValue("position.y").toFixed(2);
   return `${timestep},${x},${y}`;
 }
 
