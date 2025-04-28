@@ -109,7 +109,7 @@ public final class JtsTransformUtility {
   public static CoordinateReferenceSystem getRightHandedCrs(String crsCode) throws FactoryException{
 
     CoordinateReferenceSystem unsafeBaseCrs = CRS.forCode(crsCode);
-    CoordinateReferenceSystem baseCrs = 
+    CoordinateReferenceSystem baseCrs =
         AbstractCRS.castOrCopy(unsafeBaseCrs).forConvention(AxesConvention.RIGHT_HANDED);
 
     if (baseCrs == null) {

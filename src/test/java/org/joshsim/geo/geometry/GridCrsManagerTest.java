@@ -25,7 +25,7 @@ import org.opengis.util.FactoryException;
  * <p>These tests verify that the GridCrsManager correctly handles coordinate transformations
  * between grid coordinates and arbitrary coordinate reference systems.
  */
-class GridCrsManagerTest {
+public class GridCrsManagerTest {
 
   private GridCrsDefinition definition;
   private GridCrsManager gridCrsManager;
@@ -33,6 +33,7 @@ class GridCrsManagerTest {
 
   @BeforeEach
   void setUp() throws FactoryException, IOException, TransformException {
+    System.out.println("Setting up GridCrsManagerTest...");
     // Create a grid definition similar to the example in the prompt
     PatchBuilderExtents extents = new PatchBuilderExtents(
         new BigDecimal("-116.0"), // topLeftX (west longitude)

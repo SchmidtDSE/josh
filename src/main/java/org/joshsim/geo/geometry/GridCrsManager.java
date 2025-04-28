@@ -1,46 +1,22 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import javax.measure.Unit;
-
-import org.apache.sis.geometry.DirectPosition2D;
-import org.apache.sis.measure.Units;
-import org.apache.sis.metadata.iso.citation.AbstractParty;
-import org.apache.sis.metadata.iso.citation.DefaultCitation;
 import org.apache.sis.referencing.CRS;
-import org.apache.sis.referencing.ImmutableIdentifier;
-import org.apache.sis.referencing.crs.AbstractCRS;
-import org.apache.sis.referencing.cs.AxesConvention;
-import org.apache.sis.referencing.factory.GeodeticObjectFactory;
-import org.apache.sis.util.SimpleInternationalString;
-import org.apache.sis.referencing.operation.DefaultCoordinateOperationFactory;
-import org.apache.sis.referencing.operation.DefaultOperationMethod;
 import org.apache.sis.referencing.operation.transform.DefaultMathTransformFactory;
 import org.apache.sis.referencing.operation.transform.LinearTransform;
 import org.apache.sis.referencing.operation.transform.MathTransforms;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
-import org.opengis.metadata.Identifier;
 import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.SingleCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
 import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.operation.Conversion;
 import org.opengis.referencing.operation.CoordinateOperation;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.MathTransformFactory;
 import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.OperationMethod;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
-import org.opengis.geometry.DirectPosition;
-import org.apache.sis.referencing.CommonCRS;
 
 /**
  * Real implementation of Grid CRS using direct construction of coordinate reference systems.
@@ -94,34 +70,34 @@ public class GridCrsManager {
     double topLeftX = extents.getTopLeftX().doubleValue(); // longitude in degrees
     double topLeftY = extents.getTopLeftY().doubleValue(); // latitude in degrees
     double cellSize = getCellSize(); // in meters
-    
+
     if (baseCrs instanceof GeographicCRS) {
       // For geographic CRS, we need to:
       // 1. First establish a local projected space centered at our grid origin
       // 2. Scale grid indices to this projected space (in meters)
       // 3. Then convert back to geographic coordinates
-      
+
       // Step 1: Create a projection transform from geographic to local projected space
-      ParameterValueGroup tmParams = 
+      ParameterValueGroup tmParams =
           mathTransformFactory.getDefaultParameters("Transverse Mercator");
       tmParams.parameter("central_meridian").setValue(topLeftX);
       tmParams.parameter("latitude_of_origin").setValue(topLeftY);
       tmParams.parameter("scale_factor").setValue(1.0);
       tmParams.parameter("false_easting").setValue(0.0);
       tmParams.parameter("false_northing").setValue(0.0);
-      
+
       Ellipsoid ellipsoid = ((GeographicCRS) baseCrs).getDatum().getEllipsoid();
       tmParams.parameter("semi_major").setValue(ellipsoid.getSemiMajorAxis());
       tmParams.parameter("semi_minor").setValue(ellipsoid.getSemiMinorAxis());
-      
+
       // The forward transform: Geographic → Local Projected
       MathTransform geoToLocal = mathTransformFactory.createParameterizedTransform(tmParams);
-      
+
       // Step 2: Create transform from grid indices to local projected coordinates (meters)
       // This is a simple scaling: grid indices × cell size = meters
       // With Y flipped because grid Y increases downward, but projected Y increases upward
       LinearTransform gridToMeters = MathTransforms.scale(cellSize, -cellSize);
-      
+
       // Step 3: Create the inverse projection: Local Projected → Geographic
       MathTransform localToGeo;
       try {
@@ -129,7 +105,7 @@ public class GridCrsManager {
       } catch (NoninvertibleTransformException e) {
         throw new FactoryException("Failed to invert projection transform", e);
       }
-      
+
       // Step 4: Concatenate the transforms:
       // Grid indices → Local projected (meters) → Geographic coordinates
       return MathTransforms.concatenate(gridToMeters, localToGeo);
@@ -137,10 +113,10 @@ public class GridCrsManager {
       // For projected base CRS, create and concatenate transforms:
       // 1. Scale by cell size (with Y flipped)
       LinearTransform scaleTransform = MathTransforms.scale(cellSize, -cellSize);
-      
-      // 2. Translate to the top-left corner 
+
+      // 2. Translate to the top-left corner
       LinearTransform translateTransform = MathTransforms.translation(topLeftX, topLeftY);
-      
+
       // 3. Concatenate the transforms (scale first, then translate)
       return MathTransforms.concatenate(scaleTransform, translateTransform);
     }

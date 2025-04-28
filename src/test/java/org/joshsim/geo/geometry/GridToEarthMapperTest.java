@@ -1,16 +1,12 @@
 package org.joshsim.geo.geometry;
 
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.DisplayName;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.Map;
-
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
@@ -18,13 +14,15 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.joshsim.engine.geometry.grid.GridShapeType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for GridToEarthMapper that verify the correct conversion between
@@ -83,7 +81,7 @@ public class GridToEarthMapperTest {
     try {
       targetCrs = CRS.forCode(TARGET_CRS_CODE);
       CoordinateReferenceSystem unsafeTargetCrsWgs84 = CRS.forCode("EPSG:4326");
-      targetCrsWgs84 = 
+      targetCrsWgs84 =
           AbstractCRS.castOrCopy(unsafeTargetCrsWgs84).forConvention(AxesConvention.RIGHT_HANDED);
 
 
@@ -94,7 +92,7 @@ public class GridToEarthMapperTest {
     // Calculate meters to degrees conversion factors
     // 1 degree latitude ≈ 111320 meters
     metersToDegreesLat = CELL_SIZE.doubleValue() / 111320.0;
-    
+
     // 1 degree longitude depends on latitude: cos(lat) * 111320 meters
     double latRad = Math.toRadians(NORTH_LAT.doubleValue());
     metersToDegreesLon = CELL_SIZE.doubleValue() / (Math.cos(latRad) * 111320.0);
@@ -110,7 +108,7 @@ public class GridToEarthMapperTest {
   @Nested
   @DisplayName("Tests for gridToEarth with GridCrsDefinition")
   class GridCrsDefinitionTests {
-    
+
     @Test
     @DisplayName("Converting a grid point to Earth geometry")
     public void testPointConversionWgs84toUtm11n() {
@@ -120,9 +118,9 @@ public class GridToEarthMapperTest {
 
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Point,
           "The geometry should be a Point");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
 
       // Verify the coordinates are as expected - translating grid coordinates (in indices)
@@ -137,7 +135,7 @@ public class GridToEarthMapperTest {
       assertEquals(expectedX, point.getX(), 10, "X coordinate should match expected value");
       assertEquals(expectedY, point.getY(), 10, "Y coordinate should match expected value");
     }
-    
+
     @Test
     @DisplayName("Converting a grid point to Earth geometry (WGS84)")
     public void testPointConversionWgs84toWgs84() {
@@ -147,9 +145,9 @@ public class GridToEarthMapperTest {
 
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Point,
           "The geometry should be a Point");
-      assertEquals(targetCrsWgs84, earthGeometry.getCrs(), 
+      assertEquals(targetCrsWgs84, earthGeometry.getCrs(),
           "CRS should be the target CRS");
 
       // Calculate expected coordinates using degree-based cell size
@@ -173,20 +171,20 @@ public class GridToEarthMapperTest {
 
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon,
           "The geometry should be a Polygon (circle approximation)");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-          
+
       // Verify the center coordinates are as expected
       Polygon polygon = (Polygon) earthGeometry.getInnerGeometry();
       Point centroid = polygon.getCentroid();
-      
+
       double expectedX = WEST_EASTING.doubleValue()
           + gridCircle.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = NORTH_NORTHING.doubleValue()
           - gridCircle.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-          
+
       assertEquals(
           expectedX,
           centroid.getX(),
@@ -200,7 +198,7 @@ public class GridToEarthMapperTest {
           "Circle center Y coordinate should match expected value"
       );
     }
-    
+
     @Test
     @DisplayName("Converting a grid square to Earth geometry")
     public void testSquareConversion() {
@@ -210,23 +208,23 @@ public class GridToEarthMapperTest {
 
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon,
           "The geometry should be a Polygon");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-          
+
       // Verify the center coordinates are as expected
       Polygon polygon = (Polygon) earthGeometry.getInnerGeometry();
       Point centroid = polygon.getCentroid();
-      
+
       double expectedX = WEST_EASTING.doubleValue()
           + gridSquare.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = NORTH_NORTHING.doubleValue()
           - gridSquare.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-          
-      assertEquals(expectedX, centroid.getX(), 10.0, 
+
+      assertEquals(expectedX, centroid.getX(), 10.0,
           "Square center X coordinate should match expected value");
-      assertEquals(expectedY, centroid.getY(), 10.0, 
+      assertEquals(expectedY, centroid.getY(), 10.0,
           "Square center Y coordinate should match expected value");
     }
   }
@@ -234,25 +232,25 @@ public class GridToEarthMapperTest {
   @Nested
   @DisplayName("Tests for gridToEarth with GridCrsManager")
   class GridCrsManagerTests {
-    
+
     @Test
     @DisplayName("Converting a grid point using GridCrsManager")
-    public void testPointConversionWithRealizedCrs() 
+    public void testPointConversionWithRealizedCrs()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager
       GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
-      
+
       // Convert grid point to Earth geometry
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridPoint, gridCrs, TARGET_CRS_CODE);
 
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Point,
           "The geometry should be a Point");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-          
+
       // Verify the coordinates are as expected
       Point point = (Point) earthGeometry.getInnerGeometry();
       double expectedX = WEST_EASTING.doubleValue()
@@ -263,15 +261,15 @@ public class GridToEarthMapperTest {
       assertEquals(expectedX, point.getX(), 2, "X coordinate should match expected value");
       assertEquals(expectedY, point.getY(), 2, "Y coordinate should match expected value");
     }
-    
+
     @Test
     @DisplayName("Converting shapes with different target CRS")
-    public void testConversionWithDifferentTargetCrs() 
+    public void testConversionWithDifferentTargetCrs()
         throws FactoryException, IOException, TransformException {
       // Use UTM Zone 11N (appropriate for the test area)
       String utmCrsCode = "EPSG:32611";
       GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
-      
+
       // Convert grid circle to Earth geometry with UTM CRS
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridCircle, gridCrs, utmCrsCode);
@@ -279,19 +277,19 @@ public class GridToEarthMapperTest {
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
       assertEquals(targetCrs, earthGeometry.getCrs(), "CRS should be the UTM CRS");
-          
+
       // Verify the center coordinates are as expected
       Polygon polygon = (Polygon) earthGeometry.getInnerGeometry();
       Point centroid = polygon.getCentroid();
-      
+
       double expectedX = WEST_EASTING.doubleValue()
           + gridCircle.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = NORTH_NORTHING.doubleValue()
           - gridCircle.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-          
-      assertEquals(expectedX, centroid.getX(), 10.0, 
+
+      assertEquals(expectedX, centroid.getX(), 10.0,
           "Circle center X coordinate should match expected value");
-      assertEquals(expectedY, centroid.getY(), 10.0, 
+      assertEquals(expectedY, centroid.getY(), 10.0,
           "Circle center Y coordinate should match expected value");
     }
   }
@@ -301,18 +299,18 @@ public class GridToEarthMapperTest {
   class CachingTests {
     @Test
     @DisplayName("GridCrsManager caching mechanism works")
-    public void testGridCrsManagerCaching() 
+    public void testGridCrsManagerCaching()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager
       GridCrsManager gridCrs1 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
-      
+
       // Get another GridCrsManager with the same definition
       GridCrsManager gridCrs2 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
-      
+
       // They should be the same instance due to caching
-      assertSame(gridCrs1, gridCrs2, 
+      assertSame(gridCrs1, gridCrs2,
           "Same GridCrsDefinition should return the same cached GridCrsManager instance");
-      
+
       // Create a different definition
       PatchBuilderExtents differentExtents = new PatchBuilderExtents(
           WEST_LON,
@@ -320,7 +318,7 @@ public class GridToEarthMapperTest {
           EAST_LON,
           SOUTH_LAT
       );
-      
+
       GridCrsDefinition differentDefinition = new GridCrsDefinition(
           "DifferentTestGrid",
           INPUT_CRS_CODE,
@@ -328,15 +326,15 @@ public class GridToEarthMapperTest {
           CELL_SIZE,
           "m"
       );
-      
+
       // Get a GridCrsManager with different definition
       GridCrsManager gridCrs3 = GridToEarthMapper.getGridCrsManager(differentDefinition);
-      
+
       // Should be a different instance
-      assertNotSame(gridCrs1, gridCrs3, 
+      assertNotSame(gridCrs1, gridCrs3,
           "Different GridCrsDefinition should return a different GridCrsManager instance");
     }
-    
+
     @Test
     @DisplayName("CRS caching mechanism works")
     public void testCrsCaching() throws Exception {
@@ -344,28 +342,28 @@ public class GridToEarthMapperTest {
       Field crsCacheField = GridToEarthMapper.class.getDeclaredField("CRS_CACHE");
       crsCacheField.setAccessible(true);
       @SuppressWarnings("unchecked")
-      Map<String, CoordinateReferenceSystem> crsCache = 
+      Map<String, CoordinateReferenceSystem> crsCache =
           (Map<String, CoordinateReferenceSystem>) crsCacheField.get(null);
-      
+
       // Clear the cache to ensure a clean test
       crsCache.clear();
-      
+
       // First call should create and cache the CRS
       GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
-      assertTrue(crsCache.containsKey(TARGET_CRS_CODE), 
+      assertTrue(crsCache.containsKey(TARGET_CRS_CODE),
           "CRS should be cached after first use");
-      
+
       // Get the cached CRS
       CoordinateReferenceSystem cachedCrs = crsCache.get(TARGET_CRS_CODE);
-      
+
       // Second call should reuse the cached CRS
       GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
-      
+
       // The CRS in cache should still be the same instance
-      assertSame(cachedCrs, crsCache.get(TARGET_CRS_CODE), 
+      assertSame(cachedCrs, crsCache.get(TARGET_CRS_CODE),
           "Cached CRS instance should be reused");
     }
-    
+
     @Test
     @DisplayName("EarthGeometryFactory caching mechanism works")
     public void testFactoryCaching() throws Exception {
@@ -373,29 +371,29 @@ public class GridToEarthMapperTest {
       Field factoryCacheField = GridToEarthMapper.class.getDeclaredField("FACTORY_CACHE");
       factoryCacheField.setAccessible(true);
       @SuppressWarnings("unchecked")
-      Map<String, EarthGeometryFactory> factoryCache = 
+      Map<String, EarthGeometryFactory> factoryCache =
           (Map<String, EarthGeometryFactory>) factoryCacheField.get(null);
-      
+
       // Clear the cache to ensure a clean test
       factoryCache.clear();
-      
+
       // Get a GridCrsManager for testing
       GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
-      
+
       // First call should create and cache the factory
       GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
-      
+
       // Verify at least one factory is cached
       assertTrue(factoryCache.size() > 0, "Factory should be cached after first use");
-      
+
       // Store the size to check no more factories are created
       int cacheSize = factoryCache.size();
-      
+
       // Second call should reuse the cached factory
       GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
-      
+
       // Cache size should remain the same (no new factories created)
-      assertEquals(cacheSize, factoryCache.size(), 
+      assertEquals(cacheSize, factoryCache.size(),
           "No new factories should be created for the same parameters");
     }
   }
@@ -407,8 +405,8 @@ public class GridToEarthMapperTest {
     Exception exception = assertThrows(RuntimeException.class, () -> {
       GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, "INVALID_CRS_CODE");
     });
-    
-    assertTrue(exception.getMessage().contains("Failed to convert"), 
+
+    assertTrue(exception.getMessage().contains("Failed to convert"),
         "Exception should indicate conversion failure");
   }
 
@@ -420,15 +418,15 @@ public class GridToEarthMapperTest {
     private static final BigDecimal UTM_NORTH_NORTHING = new BigDecimal("3873499.8508478715");
     private static final BigDecimal UTM_EAST_EASTING = new BigDecimal("684709.8311321359");
     private static final BigDecimal UTM_SOUTH_NORTHING = new BigDecimal("3763959.1395987775");
-    
+
     private GridCrsDefinition utmGridCrsDefinition;
     private CoordinateReferenceSystem wgs84Crs;
-    
+
     @BeforeEach
     public void setUpUtm() {
       try {
         wgs84Crs = CRS.forCode("EPSG:4326"); // WGS84
-        
+
         // Create extents using UTM coordinates
         PatchBuilderExtents utmExtents = new PatchBuilderExtents(
             UTM_WEST_EASTING,    // Top left X (easting)
@@ -436,7 +434,7 @@ public class GridToEarthMapperTest {
             UTM_EAST_EASTING,    // Bottom right X (easting)
             UTM_SOUTH_NORTHING   // Bottom right Y (northing)
         );
-        
+
         // Create grid CRS definition based on UTM
         utmGridCrsDefinition = new GridCrsDefinition(
             "UtmTestGrid",
@@ -449,53 +447,53 @@ public class GridToEarthMapperTest {
         fail("Failed to create CRS: " + e.getMessage());
       }
     }
-    
+
     @Test
     @DisplayName("Converting a grid point with UTM input CRS to same UTM zone")
     public void testPointConversionFromUtmToSameUtm() {
       // Use the same UTM zone for input and output (UTM 11N)
       String targetUtmCode = "EPSG:32611";
-      
+
       // Convert grid point from UTM 11N to UTM 11N (through grid coordinate space)
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridPoint, utmGridCrsDefinition, targetUtmCode);
-      
+
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Point,
           "The geometry should be a Point");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-          
+
       // Verify the coordinates match expected values in UTM 11N
       Point point = (Point) earthGeometry.getInnerGeometry();
-      
+
       // Calculate expected position in UTM 11N based on gridPoint position
       double expectedX = UTM_WEST_EASTING.doubleValue()
           + gridPoint.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = UTM_NORTH_NORTHING.doubleValue()
           - gridPoint.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-      
-      assertEquals(expectedX, point.getX(), 0.01, 
+
+      assertEquals(expectedX, point.getX(), 0.01,
           "X coordinate should match expected UTM 11N easting");
-      assertEquals(expectedY, point.getY(), 0.01, 
+      assertEquals(expectedY, point.getY(), 0.01,
           "Y coordinate should match expected UTM 11N northing");
     }
-    
+
     @Test
     @DisplayName("Converting a grid point with UTM input to WGS84")
     public void testPointConversionFromUtmToWgs84() {
       // Convert grid point from UTM 11N to WGS84
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridPoint, utmGridCrsDefinition, "EPSG:4326");
-      
+
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Point, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Point,
           "The geometry should be a Point");
-      assertEquals(targetCrsWgs84, earthGeometry.getCrs(), 
+      assertEquals(targetCrsWgs84, earthGeometry.getCrs(),
           "CRS should be WGS84");
-      
+
       // We can only verify the point is within the expected bounding box
       Point point = (Point) earthGeometry.getInnerGeometry();
       assertTrue(point.getX() >= WEST_LON.doubleValue(), "Point should be east of west boundary");
@@ -503,67 +501,67 @@ public class GridToEarthMapperTest {
       assertTrue(point.getY() <= NORTH_LAT.doubleValue(), "Point should be south of north boundary");
       assertTrue(point.getY() >= SOUTH_LAT.doubleValue(), "Point should be north of south boundary");
     }
-    
+
     @Test
     @DisplayName("Converting shapes with UTM input and output CRS")
     public void testShapeConversionWithUtmInputAndOutput() {
       // Convert grid circle to Earth geometry with same UTM CRS
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridCircle, utmGridCrsDefinition, "EPSG:32611");
-      
+
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon,
           "The geometry should be a Polygon (circle approximation)");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-          
+
       // Verify the center coordinates are as expected
       Polygon polygon = (Polygon) earthGeometry.getInnerGeometry();
       Point centroid = polygon.getCentroid();
-      
+
       double expectedX = UTM_WEST_EASTING.doubleValue()
           + gridCircle.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = UTM_NORTH_NORTHING.doubleValue()
           - gridCircle.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-          
-      assertEquals(expectedX, centroid.getX(), 1.0, 
+
+      assertEquals(expectedX, centroid.getX(), 1.0,
           "Circle center X coordinate should match expected value");
-      assertEquals(expectedY, centroid.getY(), 1.0, 
+      assertEquals(expectedY, centroid.getY(), 1.0,
           "Circle center Y coordinate should match expected value");
     }
-    
+
     @Test
     @DisplayName("Converting a grid square with UTM input using GridCrsManager")
-    public void testSquareConversionWithRealizedCrs() 
+    public void testSquareConversionWithRealizedCrs()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager based on UTM
       GridCrsManager utmGridCrs = GridToEarthMapper.getGridCrsManager(utmGridCrsDefinition);
-      
+
       // Use the same UTM zone as target (UTM 11N)
       String targetUtmCode = "EPSG:32611";
-      
+
       // Convert grid square to Earth geometry in UTM 11N
       EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
           gridSquare, utmGridCrs, targetUtmCode);
-      
+
       // Verify results
       assertNotNull(earthGeometry, "Earth geometry should not be null");
-      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon, 
+      assertTrue(earthGeometry.getInnerGeometry() instanceof Polygon,
           "The geometry should be a Polygon");
-      assertEquals(targetCrs, earthGeometry.getCrs(), 
+      assertEquals(targetCrs, earthGeometry.getCrs(),
           "CRS should be the target CRS");
-      
+
       // Verify the center coordinates match expected values in UTM 11N
       Polygon polygon = (Polygon) earthGeometry.getInnerGeometry();
       Point centroid = polygon.getCentroid();
-      
+
       // Calculate expected position based on grid coordinates
       double expectedX = UTM_WEST_EASTING.doubleValue()
           + gridSquare.getCenterX().doubleValue() * CELL_SIZE.doubleValue();
       double expectedY = UTM_NORTH_NORTHING.doubleValue()
           - gridSquare.getCenterY().doubleValue() * CELL_SIZE.doubleValue();
-      
+
       assertEquals(expectedX, centroid.getX(), 1.0,
           "Square center X coordinate should match expected UTM 11N easting");
       assertEquals(expectedY, centroid.getY(), 1.0,

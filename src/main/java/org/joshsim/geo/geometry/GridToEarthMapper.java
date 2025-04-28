@@ -1,17 +1,11 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
@@ -21,11 +15,11 @@ import org.opengis.util.FactoryException;
  */
 public class GridToEarthMapper {
   private static final Map<String, CoordinateReferenceSystem> CRS_CACHE = new ConcurrentHashMap<>();
-  
+
   // Cache GridCrsManagers by their definition hash
-  private static final Map<Integer, GridCrsManager> GRID_CRS_MANAGER_CACHE = 
+  private static final Map<Integer, GridCrsManager> GRID_CRS_MANAGER_CACHE =
       new ConcurrentHashMap<>();
-  
+
   // Cache EarthGeometryFactories by combination of targetCRS and gridCrsManager
   private static final Map<String, EarthGeometryFactory> FACTORY_CACHE = new ConcurrentHashMap<>();
 
@@ -106,7 +100,7 @@ public class GridToEarthMapper {
       throws FactoryException, IOException, TransformException {
     // Use definition hashCode as a cache key
     int cacheKey = definition.hashCode();
-    
+
     // Check cache first
     GridCrsManager manager = GRID_CRS_MANAGER_CACHE.get(cacheKey);
     if (manager == null) {
@@ -114,7 +108,7 @@ public class GridToEarthMapper {
       manager = new GridCrsManager(definition);
       GRID_CRS_MANAGER_CACHE.put(cacheKey, manager);
     }
-    
+
     return manager;
   }
 
@@ -126,12 +120,12 @@ public class GridToEarthMapper {
    * @return A cached or new EarthGeometryFactory
    */
   private static EarthGeometryFactory getEarthGeometryFactory(
-      CoordinateReferenceSystem targetCrs, 
+      CoordinateReferenceSystem targetCrs,
       GridCrsManager gridCrsManager) {
-    
+
     // Create a unique cache key from both objects
     String cacheKey = targetCrs.getName().getCode() + "-" + gridCrsManager.hashCode();
-    
+
     // Check cache first
     EarthGeometryFactory factory = FACTORY_CACHE.get(cacheKey);
     if (factory == null) {
@@ -139,7 +133,7 @@ public class GridToEarthMapper {
       factory = new EarthGeometryFactory(targetCrs, gridCrsManager);
       FACTORY_CACHE.put(cacheKey, factory);
     }
-    
+
     return factory;
   }
 
