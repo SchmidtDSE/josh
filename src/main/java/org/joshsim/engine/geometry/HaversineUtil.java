@@ -1,26 +1,37 @@
+
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
-import java.util.List;
-import org.joshsim.engine.entity.base.MutableEntity;
 
 /**
- * Utility to perform calulations using the Haversine formula.
+ * Utility to perform calculations using the Haversine formula.
  */
 public class HaversineUtil {
+  private static final BigDecimal EARTH_RADIUS = new BigDecimal("6371000"); // Earth radius in meters
 
   /**
    * Get the distance between two points in meters.
    *
    * @param longitudeStart The longitude of the first point for which distance will be measured.
    * @param latitudeStart The latitude of the first point for which distance will be measured.
-   * @param longitudeStart The longitude of the second point for which distance will be measured.
-   * @param latitudeStart The latitude of the second point for which distance will be measured.
-   * @returns Distance in meters.
+   * @param longitudeEnd The longitude of the second point for which distance will be measured.
+   * @param latitudeEnd The latitude of the second point for which distance will be measured.
+   * @return Distance in meters.
    */
-  BigDecimal getDistance(BigDecimal longitudeStart, BigDecimal latitudeStart,
+  public BigDecimal getDistance(BigDecimal longitudeStart, BigDecimal latitudeStart,
       BigDecimal longitudeEnd, BigDecimal latitudeEnd) {
-    // TODO
+    
+    double angleLatitudeStart = Math.toRadians(latitudeStart.doubleValue());
+    double angleLatitudeEnd = Math.toRadians(latitudeEnd.doubleValue());
+    double deltaLatitude = Math.toRadians(latitudeEnd.subtract(latitudeStart).doubleValue());
+    double deltaLongitude = Math.toRadians(longitudeEnd.subtract(longitudeStart).doubleValue());
+
+    double a = Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+               Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
+               Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2);
+               
+    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    
+    return EARTH_RADIUS.multiply(BigDecimal.valueOf(c));
   }
-  
 }
