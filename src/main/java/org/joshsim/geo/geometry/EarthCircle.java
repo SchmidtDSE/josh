@@ -1,16 +1,11 @@
 package org.joshsim.geo.geometry;
 
-import java.util.Map;
-import java.util.Optional;
-import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.util.GeometricShapeFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
@@ -39,14 +34,9 @@ public class EarthCircle extends EarthShape {
    * @param polygon Circle polygon approximation
    * @param radius Radius of the circle
    * @param crs The coordinate reference system
-   * @param transformers Optional pre-computed transformers to other CRS
    */
-  protected EarthCircle(
-      Polygon polygon,
-      double radius,
-      CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
-    super(polygon, crs, transformers);
+  protected EarthCircle(Polygon polygon, double radius, CoordinateReferenceSystem crs) {
+    super(polygon, crs);
     this.radius = radius;
   }
 
@@ -69,35 +59,32 @@ public class EarthCircle extends EarthShape {
   }
 
   @Override
-  public EarthCircle asTargetCrs(CoordinateReferenceSystem targetCrs) {
+  public EarthCircle asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
     // If same CRS, return self
     if (Utilities.equalsIgnoreMetadata(crs, targetCrs)) {
       return this;
     }
 
-    try {
-      MathTransform transform;
-      // Check if we already have a transformer
-      if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
-        transform = transformers.get().get(targetCrs);
-      } else {
-        transform = CRS.findOperation(crs, targetCrs, null).getMathTransform();
-      }
+    // Use the EarthTransformer to handle the transformation
+    EarthGeometry transformed = EarthTransformer.earthToEarth(this, targetCrs);
+    Geometry transformedGeom = transformed.getInnerGeometry();
 
-      Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
+    // Since circle shape may be distorted after transformation,
+    // we approximate the transformed shape as a circle with the same area
+    double area = transformedGeom.getArea();
+    double estimatedRadius = Math.sqrt(area / Math.PI);
 
-      // Since circle shape may be distorted after transformation,
-      // we approximate the transformed shape as a circle with the same area
-      double area = transformedGeom.getArea();
-      double estimatedRadius = Math.sqrt(area / Math.PI);
-
-      return new EarthCircle(
-          (Polygon) transformedGeom, estimatedRadius, targetCrs, transformers);
-    } catch (FactoryException | TransformException e) {
-      throw new RuntimeException("Failed to transform circle to target CRS", e);
-    }
+    return new EarthCircle((Polygon) transformedGeom, estimatedRadius, targetCrs);
   }
 
+  /**
+   * Creates a polygon approximation of a circle.
+   *
+   * @param centerX Center X coordinate
+   * @param centerY Center Y coordinate
+   * @param radius Radius of the circle
+   * @return A JTS Polygon representing the circle
+   */
   private static Polygon createCirclePolygon(double centerX, double centerY, double radius) {
     GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
     shapeFactory.setCentre(new Coordinate(centerX, centerY));

@@ -1,10 +1,7 @@
 package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import org.apache.sis.util.Utilities;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridShape;
@@ -13,7 +10,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.util.FactoryException;
 
 /**
@@ -24,24 +20,7 @@ public abstract class EarthShape implements EngineGeometry {
 
   protected final Geometry innerGeometry;
   protected final CoordinateReferenceSystem crs;
-  protected final Map<CoordinateReferenceSystem, MathTransform> transformers;
   protected static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
-
-  /**
-   * Constructs an Earth shape with a provided JTS geometry and CRS.
-   *
-   * @param innerGeometry The JTS geometry
-   * @param crs The coordinate reference system
-   * @param transformers Optional pre-computed transformers to other CRS
-   */
-  protected EarthShape(
-      Geometry innerGeometry,
-      CoordinateReferenceSystem crs,
-      Map<CoordinateReferenceSystem, MathTransform> transformers) {
-    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
-    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
-    this.transformers = transformers;
-  }
 
   /**
    * Constructs an Earth shape with a provided JTS geometry and CRS.
@@ -50,7 +29,8 @@ public abstract class EarthShape implements EngineGeometry {
    * @param crs The coordinate reference system
    */
   protected EarthShape(Geometry innerGeometry, CoordinateReferenceSystem crs) {
-    this(innerGeometry, crs, new HashMap<>());
+    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
+    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
   }
 
   /**
@@ -126,8 +106,7 @@ public abstract class EarthShape implements EngineGeometry {
     Coordinate center = innerGeometry.getCentroid().getCoordinate();
     return new EarthPoint(
         JTS_GEOMETRY_FACTORY.createPoint(center),
-        crs,
-        transformers
+        crs
     );
   }
 

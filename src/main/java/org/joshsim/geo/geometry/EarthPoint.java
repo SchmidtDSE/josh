@@ -1,34 +1,15 @@
 package org.joshsim.geo.geometry;
 
-import java.util.Map;
-import java.util.Optional;
-import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
  * Represents a point on Earth using JTS Point geometry.
  */
 public class EarthPoint extends EarthShape {
-
-  /**
-   * Constructs an Earth point with a provided JTS point and CRS.
-   *
-   * @param point The JTS point
-   * @param crs The coordinate reference system
-   * @param transformers Optional pre-computed transformers to other CRS
-   */
-  public EarthPoint(
-      Point point,
-      CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
-    super(point, crs, transformers);
-  }
 
   /**
    * Constructs an Earth point with a provided JTS point and CRS.
@@ -49,6 +30,13 @@ public class EarthPoint extends EarthShape {
     return (Point) innerGeometry;
   }
 
+  /**
+   * Transforms point to target CRS using EarthTransformer.
+   *
+   * @param targetCrs The target coordinate reference system
+   * @return A new EarthPoint transformed to the target CRS
+   * @throws FactoryException if the transformation fails
+   */
   @Override
   public EarthPoint asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
     // If same CRS, return self
@@ -56,25 +44,11 @@ public class EarthPoint extends EarthShape {
       return this;
     }
 
-    try {
-      MathTransform transform;
-      // Check if we already have a transformer
-      if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
-        transform = transformers.get().get(targetCrs);
-      } else {
-        transform = CRS.findOperation(crs, targetCrs, null).getMathTransform();
-      }
-
-      // Use the utility for transformation
-      Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
-
-      // Cast to Point since we know it's a point
-      Point transformedPoint = (Point) transformedGeom;
-
-      return new EarthPoint(transformedPoint, targetCrs, transformers);
-    } catch (TransformException e) {
-      throw new RuntimeException("Failed to transform point to target CRS", e);
-    }
+    // Use the EarthTransformer to handle the transformation
+    EarthGeometry transformed = EarthTransformer.earthToEarth(this, targetCrs);
+    
+    // Since we know this is a point, cast to ensure we return an EarthPoint
+    return new EarthPoint((Point) transformed.getInnerGeometry(), targetCrs);
   }
 
   @Override

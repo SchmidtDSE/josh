@@ -8,9 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.CommonCRS;
@@ -106,11 +103,10 @@ public class EarthGeometryTest {
   }
 
   @Test
-  public void testConstructorWithTransformers() {
+  public void testBasicConstructor() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers =
-        Optional.of(new HashMap<>());
-    EarthGeometry geometry = new EarthGeometry(point, wgs84, transformers);
+
+    EarthGeometry geometry = new EarthGeometry(point, wgs84);
 
     assertNotNull(geometry, "EarthGeometry should be initialized");
     assertEquals(
@@ -123,17 +119,17 @@ public class EarthGeometryTest {
 
   @Test
   public void testWithNullGeometry() {
-    Exception exception = assertThrows(NullPointerException.class, () -> {
+    assertThrows(NullPointerException.class, () -> {
       new EarthGeometry(null, wgs84);
-    });
+    }, "Constructor should throw NullPointerException when geometry is null");
   }
 
   @Test
   public void testWithNullCrs() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    Exception exception = assertThrows(NullPointerException.class, () -> {
+    assertThrows(NullPointerException.class, () -> {
       new EarthGeometry(point, null);
-    });
+    }, "Constructor should throw NullPointerException when CRS is null");
   }
 
   @Nested
@@ -303,7 +299,7 @@ public class EarthGeometryTest {
     }
 
     @Test
-    public void testAsTargetCrsWithSameCrs() {
+    public void testAsTargetCrsWithSameCrs() throws FactoryException {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EarthGeometry geometry = new EarthGeometry(point, wgs84);
 
@@ -336,7 +332,7 @@ public class EarthGeometryTest {
   @Nested
   class ConvexHullTests {
     @Test
-    public void testGetConvexHullWithOtherGeometry() {
+    public void testGetConvexHullWithOtherGeometry() throws FactoryException {
       // Create two points
       Point point1 = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       Point point2 = geometryFactory.createPoint(new Coordinate(30.0, 40.0));
@@ -373,7 +369,7 @@ public class EarthGeometryTest {
     }
 
     @Test
-    public void testGetConvexHullWithMultipleGeometries() {
+    public void testGetConvexHullWithMultipleGeometries() throws FactoryException {
       // Create multiple points forming a polygon
       Point point1 = geometryFactory.createPoint(new Coordinate(10.0, 10.0));
       Point point2 = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
@@ -393,7 +389,7 @@ public class EarthGeometryTest {
 
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(5, hull.getInnerGeometry().getCoordinates().length,
-          "Convex hull should form a closed poly with 5 coordinates (first last are the same)");
+          "Convex hull should form a closed poly with 5 coordinates (first/last are the same)");
     }
   }
 

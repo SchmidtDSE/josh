@@ -1,15 +1,11 @@
 package org.joshsim.geo.geometry;
 
-import java.util.Map;
-import java.util.Optional;
-import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
@@ -39,14 +35,9 @@ public class EarthSquare extends EarthShape {
    * @param polygon Square polygon
    * @param width Width of the square
    * @param crs The coordinate reference system
-   * @param transformers Optional pre-computed transformers to other CRS
    */
-  protected EarthSquare(
-      Polygon polygon,
-      double width,
-      CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
-    super(polygon, crs, transformers);
+  protected EarthSquare(Polygon polygon, double width, CoordinateReferenceSystem crs) {
+    super(polygon, crs);
     this.width = width;
   }
 
@@ -75,28 +66,16 @@ public class EarthSquare extends EarthShape {
       return this;
     }
 
-    try {
-      MathTransform transform;
-      // Check if we already have a transformer
-      if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
-        transform = transformers.get().get(targetCrs);
-      } else {
-        transform = CRS.findOperation(crs, targetCrs, null).getMathTransform();
-      }
+    // Use the EarthTransformer to handle the transformation
+    EarthGeometry transformed = EarthTransformer.earthToEarth(this, targetCrs);
+    Geometry transformedGeom = transformed.getInnerGeometry();
 
-      // Transform the geometry
-      Geometry transformedGeom = JtsTransformUtility.transform(innerGeometry, transform);
+    // Note: After transformation, the shape might not be a perfect square anymore
+    // We'll use the average width as the new width value, but this will be inaccurate
+    // with large transformations where distortion might be more extreme.
+    double avgWidth = computeAverageWidth(transformedGeom);
 
-      // Note: After transformation, the shape might not be a perfect square anymore
-      // We'll use the average width as the new width value, but this will be inaccurate
-      // with large transformations where distortion might be more extreme.
-      double avgWidth = computeAverageWidth(transformedGeom);
-
-      return new EarthSquare(
-          (Polygon) transformedGeom, avgWidth, targetCrs, transformers);
-    } catch (TransformException e) {
-      throw new RuntimeException("Failed to transform square to target CRS", e);
-    }
+    return new EarthSquare((Polygon) transformedGeom, avgWidth, targetCrs);
   }
 
   /**

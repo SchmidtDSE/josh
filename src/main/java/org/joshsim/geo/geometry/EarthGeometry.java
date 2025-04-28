@@ -1,11 +1,8 @@
 package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import org.apache.sis.geometry.Envelope2D;
-import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridShape;
@@ -14,8 +11,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
@@ -25,25 +20,7 @@ public class EarthGeometry extends EarthShape {
 
   private final Geometry innerGeometry;
   private final CoordinateReferenceSystem crs;
-  private final Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers;
   private static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
-
-  /**
-   * Constructs a Geometry with a provided JTS geometry and CRS.
-   *
-   * @param innerGeometry The JTS geometry
-   * @param crs The coordinate reference system
-   * @param transformers Optional pre-computed transformers to other CRS
-   */
-  public EarthGeometry(
-      Geometry innerGeometry,
-      CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
-    super(innerGeometry, crs, transformers);
-    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
-    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
-    this.transformers = transformers;
-  }
 
   /**
    * Constructs a Geometry with a provided JTS geometry and CRS.
@@ -52,7 +29,9 @@ public class EarthGeometry extends EarthShape {
    * @param crs The coordinate reference system
    */
   public EarthGeometry(Geometry innerGeometry, CoordinateReferenceSystem crs) {
-    this(innerGeometry, crs, Optional.empty());
+    super(innerGeometry, crs);
+    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
+    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
   }
 
   /**
@@ -60,6 +39,7 @@ public class EarthGeometry extends EarthShape {
    *
    * @return The inner JTS geometry
    */
+  @Override
   public Geometry getInnerGeometry() {
     return innerGeometry;
   }
@@ -69,6 +49,7 @@ public class EarthGeometry extends EarthShape {
    *
    * @return The coordinate reference system
    */
+  @Override
   public CoordinateReferenceSystem getCrs() {
     return crs;
   }
@@ -84,7 +65,6 @@ public class EarthGeometry extends EarthShape {
   public EarthGeometry asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
     return EarthTransformer.earthToEarth(this, targetCrs);
   }
-
 
   /**
    * Checks if a point is contained within this geometry.
@@ -132,11 +112,7 @@ public class EarthGeometry extends EarthShape {
   @Override
   public EarthPoint getCenter() {
     Point centroid = getInnerGeometry().getCentroid();
-    return new EarthPoint(
-        centroid,
-        crs,
-        transformers
-    );
+    return new EarthPoint(centroid, crs);
   }
 
   /**
@@ -145,19 +121,14 @@ public class EarthGeometry extends EarthShape {
    *
    * @param other The other geometry to compute the convex hull with
    * @return A new EarthGeometry representing the convex hull
+   * @throws FactoryException if the transformation fails
    */
-  public EarthGeometry getConvexHull(EarthGeometry other) {
+  public EarthGeometry getConvexHull(EarthGeometry other) throws FactoryException {
     // Ensure both geometries use the same CRS
     if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
       other = other.asTargetCrs(crs);
     }
-    Geometry convexHull;
-    try {
-      convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    Geometry convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
     return new EarthGeometry(convexHull, crs);
   }
 

@@ -136,7 +136,7 @@ public final class JtsTransformUtility {
         AbstractCRS.castOrCopy(crs).forConvention(AxesConvention.RIGHT_HANDED);
 
     if (rightHandedCrs == null) {
-      throw new FactoryException("Failed to create right-handed CRS for code: " + crsCode);
+      throw new FactoryException("Failed to create right-handed CRS for code: " + crs);
     }
 
     return rightHandedCrs;
