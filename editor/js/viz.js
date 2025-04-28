@@ -221,8 +221,65 @@ class GridPresenter {
     const self = this;
     
     self._showIdleMessage(timestep);
-
-    // TODO
+    
+    self._d3SvgSelection.html("");
+    
+    const svgBounds = self._svgSelection.getBoundingClientRect();
+    const width = svgBounds.width;
+    const height = svgBounds.height;
+    
+    const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
+    const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
+    
+    const cellWidth = Math.floor((width - 20) / gridWidth);
+    const cellHeight = Math.floor((height - 20) / gridHeight);
+    
+    // Create grid cells
+    const cells = [];
+    for (let x = metadata.getStartX(); x <= metadata.getEndX(); x++) {
+      for (let y = metadata.getStartY(); y <= metadata.getEndY(); y++) {
+        try {
+          const value = summarized.getGridValue(timestep, x, y);
+          cells.push({x: x, y: y, value: value});
+        } catch (e) {
+          // Skip cells with no value
+          continue;
+        }
+      }
+    }
+    
+    // Create color scale
+    const values = cells.map(d => d.value);
+    const colorScale = d3.scaleSequential()
+      .domain([Math.min(...values), Math.max(...values)])
+      .interpolator(d3.interpolateBlues);
+      
+    // Draw grid
+    const grid = self._d3SvgSelection.selectAll("g")
+      .data(cells)
+      .enter()
+      .append("g")
+      .attr("transform", d => 
+        `translate(${(d.x - metadata.getStartX()) * cellWidth + 10},
+                  ${(d.y - metadata.getStartY()) * cellHeight + 10})`);
+    
+    grid.append("rect")
+      .attr("width", cellWidth - 1)
+      .attr("height", cellHeight - 1)
+      .attr("fill", d => colorScale(d.value))
+      .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
+      
+    // Add value text for larger cells
+    if (cellWidth >= 30 && cellHeight >= 30) {
+      grid.append("text")
+        .attr("x", cellWidth / 2)
+        .attr("y", cellHeight / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "#333333")
+        .attr("font-size", "11px")
+        .text(d => d.value.toFixed(2));
+    }
   }
 
   /**
