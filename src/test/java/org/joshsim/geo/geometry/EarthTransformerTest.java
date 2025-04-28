@@ -25,10 +25,10 @@ import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
- * Tests for GridToEarthMapper that verify the correct conversion between
+ * Tests for EarthTransformer that verify the correct conversion between
  * grid coordinates and Earth-based coordinate reference systems.
  */
-public class GridToEarthMapperTest {
+public class EarthTransformerTest {
 
   // Constants for the simulation example in the requirements
   private static final String INPUT_CRS_CODE = "EPSG:4326";  // WGS84
@@ -113,7 +113,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting a grid point to Earth geometry")
     public void testPointConversionWgs84toUtm11n() {
       // Convert grid point to Earth geometry
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
 
       // Verify results
@@ -140,7 +140,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting a grid point to Earth geometry (WGS84)")
     public void testPointConversionWgs84toWgs84() {
       // Convert grid point to Earth geometry
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridPoint, gridCrsDefinition, "EPSG:4326");
 
       // Verify results
@@ -166,7 +166,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting a grid circle to Earth geometry")
     public void testCircleConversion() {
       // Convert grid circle to Earth geometry
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridCircle, gridCrsDefinition, TARGET_CRS_CODE);
 
       // Verify results
@@ -203,7 +203,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting a grid square to Earth geometry")
     public void testSquareConversion() {
       // Convert grid square to Earth geometry
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridSquare, gridCrsDefinition, TARGET_CRS_CODE);
 
       // Verify results
@@ -238,10 +238,10 @@ public class GridToEarthMapperTest {
     public void testPointConversionWithRealizedCrs()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager
-      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      GridCrsManager gridCrs = EarthTransformer.getGridCrsManager(gridCrsDefinition);
 
       // Convert grid point to Earth geometry
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridPoint, gridCrs, TARGET_CRS_CODE);
 
       // Verify results
@@ -268,10 +268,10 @@ public class GridToEarthMapperTest {
         throws FactoryException, IOException, TransformException {
       // Use UTM Zone 11N (appropriate for the test area)
       String utmCrsCode = "EPSG:32611";
-      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      GridCrsManager gridCrs = EarthTransformer.getGridCrsManager(gridCrsDefinition);
 
       // Convert grid circle to Earth geometry with UTM CRS
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridCircle, gridCrs, utmCrsCode);
 
       // Verify results
@@ -302,10 +302,10 @@ public class GridToEarthMapperTest {
     public void testGridCrsManagerCaching()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager
-      GridCrsManager gridCrs1 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      GridCrsManager gridCrs1 = EarthTransformer.getGridCrsManager(gridCrsDefinition);
 
       // Get another GridCrsManager with the same definition
-      GridCrsManager gridCrs2 = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      GridCrsManager gridCrs2 = EarthTransformer.getGridCrsManager(gridCrsDefinition);
 
       // They should be the same instance due to caching
       assertSame(gridCrs1, gridCrs2,
@@ -328,7 +328,7 @@ public class GridToEarthMapperTest {
       );
 
       // Get a GridCrsManager with different definition
-      GridCrsManager gridCrs3 = GridToEarthMapper.getGridCrsManager(differentDefinition);
+      GridCrsManager gridCrs3 = EarthTransformer.getGridCrsManager(differentDefinition);
 
       // Should be a different instance
       assertNotSame(gridCrs1, gridCrs3,
@@ -339,7 +339,7 @@ public class GridToEarthMapperTest {
     @DisplayName("CRS caching mechanism works")
     public void testCrsCaching() throws Exception {
       // Access the private CRS_CACHE field using reflection
-      Field crsCacheField = GridToEarthMapper.class.getDeclaredField("CRS_CACHE");
+      Field crsCacheField = EarthTransformer.class.getDeclaredField("CRS_CACHE");
       crsCacheField.setAccessible(true);
       @SuppressWarnings("unchecked")
       Map<String, CoordinateReferenceSystem> crsCache =
@@ -349,7 +349,7 @@ public class GridToEarthMapperTest {
       crsCache.clear();
 
       // First call should create and cache the CRS
-      GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
+      EarthTransformer.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
       assertTrue(crsCache.containsKey(TARGET_CRS_CODE),
           "CRS should be cached after first use");
 
@@ -357,7 +357,7 @@ public class GridToEarthMapperTest {
       CoordinateReferenceSystem cachedCrs = crsCache.get(TARGET_CRS_CODE);
 
       // Second call should reuse the cached CRS
-      GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
+      EarthTransformer.gridToEarth(gridPoint, gridCrsDefinition, TARGET_CRS_CODE);
 
       // The CRS in cache should still be the same instance
       assertSame(cachedCrs, crsCache.get(TARGET_CRS_CODE),
@@ -368,7 +368,7 @@ public class GridToEarthMapperTest {
     @DisplayName("EarthGeometryFactory caching mechanism works")
     public void testFactoryCaching() throws Exception {
       // Access the private FACTORY_CACHE field using reflection
-      Field factoryCacheField = GridToEarthMapper.class.getDeclaredField("FACTORY_CACHE");
+      Field factoryCacheField = EarthTransformer.class.getDeclaredField("FACTORY_CACHE");
       factoryCacheField.setAccessible(true);
       @SuppressWarnings("unchecked")
       Map<String, EarthGeometryFactory> factoryCache =
@@ -378,10 +378,10 @@ public class GridToEarthMapperTest {
       factoryCache.clear();
 
       // Get a GridCrsManager for testing
-      GridCrsManager gridCrs = GridToEarthMapper.getGridCrsManager(gridCrsDefinition);
+      GridCrsManager gridCrs = EarthTransformer.getGridCrsManager(gridCrsDefinition);
 
       // First call should create and cache the factory
-      GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
+      EarthTransformer.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
 
       // Verify at least one factory is cached
       assertTrue(factoryCache.size() > 0, "Factory should be cached after first use");
@@ -390,7 +390,7 @@ public class GridToEarthMapperTest {
       int cacheSize = factoryCache.size();
 
       // Second call should reuse the cached factory
-      GridToEarthMapper.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
+      EarthTransformer.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
 
       // Cache size should remain the same (no new factories created)
       assertEquals(cacheSize, factoryCache.size(),
@@ -403,7 +403,7 @@ public class GridToEarthMapperTest {
   public void testInvalidCrsCodeHandling() {
     // Try to convert with an invalid CRS code
     Exception exception = assertThrows(RuntimeException.class, () -> {
-      GridToEarthMapper.gridToEarth(gridPoint, gridCrsDefinition, "INVALID_CRS_CODE");
+      EarthTransformer.gridToEarth(gridPoint, gridCrsDefinition, "INVALID_CRS_CODE");
     });
 
     assertTrue(exception.getMessage().contains("Failed to convert"),
@@ -455,7 +455,7 @@ public class GridToEarthMapperTest {
       String targetUtmCode = "EPSG:32611";
 
       // Convert grid point from UTM 11N to UTM 11N (through grid coordinate space)
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridPoint, utmGridCrsDefinition, targetUtmCode);
 
       // Verify results
@@ -484,7 +484,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting a grid point with UTM input to WGS84")
     public void testPointConversionFromUtmToWgs84() {
       // Convert grid point from UTM 11N to WGS84
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridPoint, utmGridCrsDefinition, "EPSG:4326");
 
       // Verify results
@@ -506,7 +506,7 @@ public class GridToEarthMapperTest {
     @DisplayName("Converting shapes with UTM input and output CRS")
     public void testShapeConversionWithUtmInputAndOutput() {
       // Convert grid circle to Earth geometry with same UTM CRS
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridCircle, utmGridCrsDefinition, "EPSG:32611");
 
       // Verify results
@@ -536,13 +536,13 @@ public class GridToEarthMapperTest {
     public void testSquareConversionWithRealizedCrs()
         throws FactoryException, IOException, TransformException {
       // Get a GridCrsManager based on UTM
-      GridCrsManager utmGridCrs = GridToEarthMapper.getGridCrsManager(utmGridCrsDefinition);
+      GridCrsManager utmGridCrs = EarthTransformer.getGridCrsManager(utmGridCrsDefinition);
 
       // Use the same UTM zone as target (UTM 11N)
       String targetUtmCode = "EPSG:32611";
 
       // Convert grid square to Earth geometry in UTM 11N
-      EarthGeometry earthGeometry = GridToEarthMapper.gridToEarth(
+      EarthGeometry earthGeometry = EarthTransformer.gridToEarth(
           gridSquare, utmGridCrs, targetUtmCode);
 
       // Verify results

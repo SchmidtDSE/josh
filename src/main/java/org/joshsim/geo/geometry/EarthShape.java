@@ -1,6 +1,7 @@
 package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,7 +24,7 @@ public abstract class EarthShape implements EngineGeometry {
 
   protected final Geometry innerGeometry;
   protected final CoordinateReferenceSystem crs;
-  protected final Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers;
+  protected final Map<CoordinateReferenceSystem, MathTransform> transformers;
   protected static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
 
   /**
@@ -36,7 +37,7 @@ public abstract class EarthShape implements EngineGeometry {
   protected EarthShape(
       Geometry innerGeometry,
       CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
+      Map<CoordinateReferenceSystem, MathTransform> transformers) {
     this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
     this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
     this.transformers = transformers;
@@ -49,7 +50,7 @@ public abstract class EarthShape implements EngineGeometry {
    * @param crs The coordinate reference system
    */
   protected EarthShape(Geometry innerGeometry, CoordinateReferenceSystem crs) {
-    this(innerGeometry, crs, Optional.empty());
+    this(innerGeometry, crs, new HashMap<>());
   }
 
   /**
@@ -71,14 +72,19 @@ public abstract class EarthShape implements EngineGeometry {
   }
 
   /**
-   * Transforms geometry to target CRS.
+   * Transforms geometry to target CRS using EarthTransformer.
    *
    * @param targetCrs The target coordinate reference system
    * @return A new EarthShape transformed to the target CRS
    * @throws FactoryException if the transformation fails
    */
-  public abstract EarthShape asTargetCrs(CoordinateReferenceSystem targetCrs)
-      throws FactoryException;
+  public EarthShape asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
+    // If same CRS, return self
+    if (Utilities.equalsIgnoreMetadata(crs, targetCrs)) {
+      return this;
+    }
+    return EarthTransformer.earthToEarth(this, targetCrs);
+  }
 
   /**
    * Checks if a point is contained within this geometry.
@@ -133,7 +139,7 @@ public abstract class EarthShape implements EngineGeometry {
   @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
-        "Conversion from Earth to Grid space requires a mapper. Use GridToEarthMapper.");
+        "Conversion from Earth to Grid space requires a mapper. Use EarthTransformer.");
   }
 
   @Override

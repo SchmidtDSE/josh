@@ -100,7 +100,9 @@ public final class JtsTransformUtility {
   }
 
   /**
-   * Creates a right-handed coordinate reference system from the given CRS code.
+   * Creates a right-handed coordinate reference system from the given CRS code. Note that, if a
+   * CoordinateReferenceSystem is already right-handed, this method will return an instantiation
+   * of the same CRS one would expect from the code passed in.
    *
    * @param crsCode The CRS code
    * @return The right-handed CRS
@@ -108,15 +110,36 @@ public final class JtsTransformUtility {
    */
   public static CoordinateReferenceSystem getRightHandedCrs(String crsCode) throws FactoryException{
 
-    CoordinateReferenceSystem unsafeBaseCrs = CRS.forCode(crsCode);
-    CoordinateReferenceSystem baseCrs =
-        AbstractCRS.castOrCopy(unsafeBaseCrs).forConvention(AxesConvention.RIGHT_HANDED);
+    CoordinateReferenceSystem unsafeCrs = CRS.forCode(crsCode);
+    CoordinateReferenceSystem rightHandedCrs =
+        AbstractCRS.castOrCopy(unsafeCrs).forConvention(AxesConvention.RIGHT_HANDED);
 
-    if (baseCrs == null) {
+    if (rightHandedCrs == null) {
       throw new FactoryException("Failed to create right-handed CRS for code: " + crsCode);
     }
 
-    return baseCrs;
+    return rightHandedCrs;
+  }
+
+  /**
+   * Creates a right-handed coordinate reference system from a given. Note that, if a 
+   * CoordinateReferenceSystem is already right-handed, this method will return the same CRS.
+   *
+   * @param crs The CRS 
+   * @return The right-handed CRS
+   * @throws FactoryException If the CRS cannot be created
+   */
+  public static CoordinateReferenceSystem getRightHandedCrs(
+      CoordinateReferenceSystem crs) throws FactoryException{
+
+    CoordinateReferenceSystem rightHandedCrs =
+        AbstractCRS.castOrCopy(crs).forConvention(AxesConvention.RIGHT_HANDED);
+
+    if (rightHandedCrs == null) {
+      throw new FactoryException("Failed to create right-handed CRS for code: " + crsCode);
+    }
+
+    return rightHandedCrs;
   }
 
 }

@@ -46,20 +46,4 @@ public interface EngineGeometry extends Spatial {
    * @return A version of this geometry in PatchSet space.
    */
   GridShape getOnGrid();
-
-  // /**
-  //  * Get the coordinate reference system of this geometry.
-  //  *
-  //  * <p>For GridShape objects, this will return Optional.empty().
-  //  *
-  //  * <p>For EarthGeometry objects, this will be the coordinate reference system of Earth space,
-  //  * which will be a projected coordinate reference system, for purpose of spatial operations.
-  //  *
-  //  * <p>For Geometries used to query external resources, this will be a projected coordinate
-  //  * reference system or a geographic coordinate reference system, depending on the nature of the
-  //  * external resource.
-  //  *
-  //  * @return The coordinate reference system of this geometry.
-  //  */
-  // CoordinateReferenceSystem getCrs();
 }

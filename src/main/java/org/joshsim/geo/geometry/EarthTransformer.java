@@ -3,17 +3,21 @@ package org.joshsim.geo.geometry;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.util.Utilities;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 /**
- * A utility class for mapping grid-based geometries to Earth-based coordinate systems
- * using GridCrsManager.
+ * A utility class that centralizes all coordinate transformation logic.
+ * Handles transformations between grid and Earth coordinates, and between different Earth CRS.
  */
-public class GridToEarthMapper {
+public class EarthTransformer {
   private static final Map<String, CoordinateReferenceSystem> CRS_CACHE = new ConcurrentHashMap<>();
 
   // Cache GridCrsManagers by their definition hash
@@ -22,10 +26,13 @@ public class GridToEarthMapper {
 
   // Cache EarthGeometryFactories by combination of targetCRS and gridCrsManager
   private static final Map<String, EarthGeometryFactory> FACTORY_CACHE = new ConcurrentHashMap<>();
+  
+  // Cache MathTransforms for CRS pairs
+  private static final Map<String, MathTransform> TRANSFORM_CACHE = new ConcurrentHashMap<>();
 
   // Private constructor to prevent instantiation
-  private GridToEarthMapper() {
-    throw new AssertionError("GridToEarthMapper is a utility class and should not be instantiated");
+  private EarthTransformer() {
+    throw new AssertionError("EarthTransformer is a utility class and should not be instantiated");
   }
 
   /**
@@ -85,6 +92,101 @@ public class GridToEarthMapper {
     } catch (Exception e) {
       throw new RuntimeException("Failed to convert grid shape to Earth coordinates", e);
     }
+  }
+
+  /**
+   * Transforms an EarthGeometry from its current CRS to a target CRS.
+   *
+   * @param sourceGeometry The source Earth geometry
+   * @param targetCrsCode EPSG code for target coordinate system
+   * @return New EarthGeometry in the target CRS
+   */
+  public static EarthGeometry earthToEarth(
+      EarthShape sourceGeometry,
+      String targetCrsCode
+  ) {
+    try {
+      CoordinateReferenceSystem sourceCrs = sourceGeometry.getCrs();
+      CoordinateReferenceSystem targetCrs = getCrsFromCode(targetCrsCode);
+      
+      // If same CRS, return the original geometry
+      if (Utilities.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
+        return (EarthGeometry) sourceGeometry;
+      }
+
+      // Get or create the transform between CRSes
+      MathTransform transform = getTransform(sourceCrs, targetCrs);
+      
+      // Transform the geometry
+      Geometry transformedGeom = JtsTransformUtility.transform(
+          sourceGeometry.getInnerGeometry(), transform);
+      
+      // Create new EarthGeometry with transformed geometry and target CRS
+      return new EarthGeometry(transformedGeom, targetCrs);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to transform Earth geometry to target CRS: " + targetCrsCode, e);
+    }
+  }
+  
+  /**
+   * Transforms an EarthGeometry from its current CRS to another CRS.
+   *
+   * @param sourceGeometry The source Earth geometry
+   * @param targetCrs The target coordinate reference system
+   * @return New EarthGeometry in the target CRS
+   */
+  public static EarthGeometry earthToEarth(
+      EarthShape sourceGeometry,
+      CoordinateReferenceSystem targetCrs
+  ) {
+    try {
+      CoordinateReferenceSystem sourceCrs = sourceGeometry.getCrs();
+      
+      // If same CRS, return the original geometry
+      if (Utilities.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
+        return (EarthGeometry) sourceGeometry;
+      }
+
+      // Get or create the transform between CRSes
+      MathTransform transform = getTransform(sourceCrs, targetCrs);
+      
+      // Transform the geometry
+      Geometry transformedGeom = JtsTransformUtility.transform(
+          sourceGeometry.getInnerGeometry(), transform);
+      
+      // Create new EarthGeometry with transformed geometry and target CRS
+      return new EarthGeometry(transformedGeom, targetCrs);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to transform Earth geometry to target CRS: " + targetCrs.getName().getCode(), e);
+    }
+  }
+  
+  /**
+   * Gets or creates a MathTransform between two coordinate reference systems, with caching.
+   *
+   * @param sourceCrs The source coordinate reference system
+   * @param targetCrs The target coordinate reference system
+   * @return A MathTransform for converting between the two CRSes
+   * @throws FactoryException if transform creation fails
+   */
+  public static MathTransform getTransform(
+      CoordinateReferenceSystem sourceCrs,
+      CoordinateReferenceSystem targetCrs
+  ) throws FactoryException {
+    // Create a unique cache key
+    String cacheKey = sourceCrs.getName().getCode() + "-TO-" + targetCrs.getName().getCode();
+    
+    // Check cache first
+    MathTransform transform = TRANSFORM_CACHE.get(cacheKey);
+    if (transform == null) {
+      // Create new transform and add to cache
+      transform = CRS.findOperation(sourceCrs, targetCrs, null).getMathTransform();
+      TRANSFORM_CACHE.put(cacheKey, transform);
+    }
+    
+    return transform;
   }
 
   /**

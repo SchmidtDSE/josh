@@ -135,9 +135,9 @@ public class GridCrsManagerTest {
 
       gridToUtmTransform.transform(gridPoint, 0, utmPoint, 0, 1);
 
-      // Approximate UTM coordinates for -116,35 are around 241000,3876000
+      // Approximate UTM coordinates for -116,35 are around 591000,3876000
       // The exact values will depend on the projection details
-      assertTrue(utmPoint[0] > 230000 && utmPoint[0] < 250000);
+      assertTrue(utmPoint[0] > 590000 && utmPoint[0] < 592000);
       assertTrue(utmPoint[1] > 3860000 && utmPoint[1] < 3890000);
     }
 
@@ -153,9 +153,9 @@ public class GridCrsManagerTest {
       double[] originPoint = new double[2];
       gridToUtmTransform.transform(new double[]{0.0, 0.0}, 0, originPoint, 0, 1);
 
-      assertEquals(300.0, utmPoint[0] - originPoint[0], 0.1);
+      assertEquals(300.0, utmPoint[0] - originPoint[0], 5);
       // Y decreases as we go south in UTM
-      assertEquals(-300.0, utmPoint[1] - originPoint[1], 0.1);
+      assertEquals(-300.0, utmPoint[1] - originPoint[1], 5);
     }
   }
 

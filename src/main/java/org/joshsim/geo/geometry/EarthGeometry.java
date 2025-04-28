@@ -21,7 +21,7 @@ import org.opengis.util.FactoryException;
 /**
  * A geometric object using JTS geometry implementation with Apache SIS for coordinate transforms.
  */
-public class EarthGeometry implements EngineGeometry {
+public class EarthGeometry extends EarthShape {
 
   private final Geometry innerGeometry;
   private final CoordinateReferenceSystem crs;
@@ -39,6 +39,7 @@ public class EarthGeometry implements EngineGeometry {
       Geometry innerGeometry,
       CoordinateReferenceSystem crs,
       Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers) {
+    super(innerGeometry, crs, transformers);
     this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
     this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
     this.transformers = transformers;
@@ -73,30 +74,17 @@ public class EarthGeometry implements EngineGeometry {
   }
 
   /**
-   * Transforms geometry to target CRS.
+   * Transforms geometry to target CRS using EarthTransformer.
    *
    * @param targetCrs The target coordinate reference system
-   * @return A new geometry transformed to the target CRS
+   * @return A new EarthGeometry transformed to the target CRS
+   * @throws FactoryException if the transformation fails
    */
-  public EarthGeometry asTargetCrs(CoordinateReferenceSystem targetCrs) {
-    if (Utilities.equalsIgnoreMetadata(crs, targetCrs)) {
-      return this;
-    }
-
-    try {
-      MathTransform transform;
-      if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
-        transform = transformers.get().get(targetCrs);
-      } else {
-        transform = CRS.findOperation(crs, targetCrs, null).getMathTransform();
-      }
-
-      Geometry transformedGeometry = transformGeometry(innerGeometry, transform);
-      return new EarthGeometry(transformedGeometry, targetCrs);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to transform geometry to target CRS", e);
-    }
+  @Override
+  public EarthGeometry asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
+    return EarthTransformer.earthToEarth(this, targetCrs);
   }
+
 
   /**
    * Checks if a point is contained within this geometry.
@@ -118,16 +106,11 @@ public class EarthGeometry implements EngineGeometry {
    * @return true if the geometries intersect, false otherwise
    */
   public boolean intersects(EarthGeometry other) {
-    // Transform to same CRS if needed
-    EarthShape otherEarth = other.getOnEarth();
     if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
-      try {
-        otherEarth = otherEarth.asTargetCrs(crs);
-      } catch (FactoryException e) {
-        throw new RuntimeException("Failed to transform geometry to target CRS");
-      }
+      EarthGeometry transformed = EarthTransformer.earthToEarth(other, crs);
+      return getInnerGeometry().intersects(transformed.getInnerGeometry());
     }
-    return getInnerGeometry().intersects(otherEarth.getInnerGeometry());
+    return getInnerGeometry().intersects(other.getInnerGeometry());
   }
 
   @Override
@@ -138,19 +121,16 @@ public class EarthGeometry implements EngineGeometry {
   @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
-        "Conversion from Earth to PatchSet space reserved for future use."
-    );
+        "EarthGeometry does not support conversion to GridShape");
   }
 
   @Override
   public EarthShape getOnEarth() {
-    throw new UnsupportedOperationException(
-        "Conversion from PatchSet to Earth space reserved for future use."
-    );
+    return this;
   }
 
   @Override
-  public EngineGeometry getCenter() {
+  public EarthPoint getCenter() {
     Point centroid = getInnerGeometry().getCentroid();
     return new EarthPoint(
         centroid,
@@ -171,7 +151,13 @@ public class EarthGeometry implements EngineGeometry {
     if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
       other = other.asTargetCrs(crs);
     }
-    Geometry convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
+    Geometry convexHull;
+    try {
+      convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     return new EarthGeometry(convexHull, crs);
   }
 
@@ -245,63 +231,4 @@ public class EarthGeometry implements EngineGeometry {
         getCenterY().toString(),
         crs);
   }
-
-  private Geometry transformGeometry(Geometry geometry, MathTransform transform)
-      throws TransformException {
-    if (geometry instanceof Point) {
-      return transformPoint((Point) geometry, transform);
-    }
-
-    // For other geometry types, transform each coordinate
-    Coordinate[] coords = geometry.getCoordinates();
-    Coordinate[] transformedCoords = new Coordinate[coords.length];
-
-    for (int i = 0; i < coords.length; i++) {
-      double[] src = new double[] {coords[i].x, coords[i].y};
-      double[] dest = new double[2];
-      transform.transform(src, 0, dest, 0, 1);
-
-      // Apply precision to each coordinate
-      Coordinate transformedCoord = new Coordinate(dest[0], dest[1]);
-      JTS_GEOMETRY_FACTORY.getPrecisionModel().makePrecise(transformedCoord);
-      transformedCoords[i] = transformedCoord;
-    }
-
-    // Use switch statement for different geometry types
-    GeometryFactory factory = JTS_GEOMETRY_FACTORY;
-
-    switch (geometry.getClass().getSimpleName()) {
-      case "LineString":
-        return factory.createLineString(transformedCoords);
-      case "Polygon":
-        return factory.createPolygon(transformedCoords);
-      case "LinearRing":
-        return factory.createLinearRing(transformedCoords);
-      case "MultiPoint":
-        Point[] points = new Point[transformedCoords.length];
-        for (int i = 0; i < transformedCoords.length; i++) {
-          points[i] = factory.createPoint(transformedCoords[i]);
-        }
-        return factory.createMultiPoint(points);
-      default:
-        throw new TransformException(
-            "Geometry type not supported for transformation: " + geometry.getClass());
-    }
-  }
-
-  /**
-   * Transforms a JTS Point using an Apache SIS MathTransform.
-   *
-   * @param point The point to transform
-   * @param transform The transform to apply
-   * @return The transformed point
-   * @throws TransformException If transformation fails
-   */
-  private Point transformPoint(Point point, MathTransform transform) throws TransformException {
-    double[] srcPt = new double[] {point.getX(), point.getY()};
-    double[] dstPt = new double[2];
-    transform.transform(srcPt, 0, dstPt, 0, 1);
-    return JTS_GEOMETRY_FACTORY.createPoint(new Coordinate(dstPt[0], dstPt[1]));
-  }
-
 }
