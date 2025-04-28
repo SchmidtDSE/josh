@@ -1,22 +1,14 @@
 package org.joshsim.geo.geometry;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.util.Utilities;
-import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.grid.GridCircle;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.geometry.grid.GridPoint;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.joshsim.engine.geometry.grid.GridSquare;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.util.GeometricShapeFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
@@ -35,7 +27,7 @@ public class EarthTransformer {
 
   // Cache EarthGeometryFactories by combination of targetCRS and gridCrsManager
   private static final GridGeometryFactory gridGeometryFactory = new GridGeometryFactory();
-  
+
   // Cache MathTransforms for CRS pairs
   private static final Map<String, MathTransform> TRANSFORM_CACHE = new ConcurrentHashMap<>();
 
@@ -118,15 +110,15 @@ public class EarthTransformer {
       GridCrsManager gridCrsManager,
       CoordinateReferenceSystem targetCrs
   ) {
-    
+
     try {
       // Create geometry in grid space first
       Geometry gridGeometry = createGridGeometry(gridShape);
-      
+
       // Then transform the coordinates using JtsTransformUtility
       MathTransform transform = gridCrsManager.createGridToTargetCrsTransform(targetCrs);
       Geometry transformedGeometry = JtsTransformUtility.transform(gridGeometry, transform);
-      
+
       // Return the result as EarthGeometry
       return new EarthGeometry(transformedGeometry, targetCrs);
     } catch (Exception e) {
@@ -142,86 +134,9 @@ public class EarthTransformer {
    * @return A JTS Geometry in grid coordinates
    */
   private static Geometry createGridGeometry(GridShape gridShape) {
-    EngineGeometry gridEngineGeometry;
-    
-    switch (gridShape.getGridShapeType()) {
-      case POINT:
-        gridEngineGeometry = gridGeometryFactory.createPoint(
-            gridShape.getCenterX(),
-            gridShape.getCenterY()
-        );
-        break;
-            
-      case CIRCLE:
-        gridEngineGeometry = gridGeometryFactory.createCircle(
-            gridShape.getCenterX(),
-            gridShape.getCenterY(),
-            gridShape.getWidth().divide(new BigDecimal(2))  
-        );
-        break;
-          
-      case SQUARE:
-        gridEngineGeometry = gridGeometryFactory.createSquare(
-            gridShape.getCenterX(),
-            gridShape.getCenterY(),
-            gridShape.getWidth()
-        );
-        break;
-          
-      default:
-        throw new UnsupportedOperationException(
-            "Unsupported grid shape type: " + gridShape.getGridShapeType());
-    }
-    
-    // Convert the grid geometry to JTS geometry
-    return convertToJtsGeometry(gridEngineGeometry);
+    return JtsTransformUtility.gridShapeToJts(gridShape);
   }
 
-  /**
-   * Converts a grid EngineGeometry to JTS Geometry. This is necessary because, by design,
-   * 'Grid Space' and the geometries within don't leverage any spatial libraries - they are 
-   * constructed from scratch and the description of how to convert them to 'Earth Space' is
-   * contained within the `GridCrsDefinition` and the instantiated `GridCrsManager`.
-   *
-   * @param gridGeometry The grid geometry to convert
-   * @return Equivalent JTS geometry
-   */
-  private static Geometry convertToJtsGeometry(EngineGeometry gridGeometry) {
-    GeometryFactory factory = new GeometryFactory();
-    
-    if (gridGeometry instanceof GridPoint) {
-      GridPoint point = (GridPoint) gridGeometry;
-      return factory.createPoint(
-          new Coordinate(point.getCenterX().doubleValue(), point.getCenterY().doubleValue())
-      );
-    } else if (gridGeometry instanceof GridCircle) {
-      GridCircle circle = (GridCircle) gridGeometry;
-      
-      GeometricShapeFactory shapeFactory = new GeometricShapeFactory(factory);
-      shapeFactory.setCentre(
-          new Coordinate(circle.getCenterX().doubleValue(), circle.getCenterY().doubleValue())
-      );
-      double radius = circle.getWidth().divide(new BigDecimal(2)).doubleValue();
-      shapeFactory.setWidth(radius * 2);
-      shapeFactory.setHeight(radius * 2);
-      shapeFactory.setNumPoints(32);
-      return shapeFactory.createCircle();
-    } else if (gridGeometry instanceof GridSquare) {
-      GridSquare square = (GridSquare) gridGeometry;
-      
-      GeometricShapeFactory shapeFactory = new GeometricShapeFactory(factory);
-      shapeFactory.setCentre(
-          new Coordinate(square.getCenterX().doubleValue(), square.getCenterY().doubleValue())
-      );
-      double width = square.getWidth().doubleValue();
-      shapeFactory.setWidth(width);
-      shapeFactory.setHeight(width);
-      return shapeFactory.createRectangle();
-    }
-    
-    throw new UnsupportedOperationException(
-        "Cannot convert grid geometry type: " + gridGeometry.getClass().getSimpleName());
-  }
 
   /**
    * Transforms an EarthGeometry from its current CRS to a target CRS.
@@ -241,7 +156,7 @@ public class EarthTransformer {
           "Failed to transform Earth geometry to target CRS: " + targetCrsCode, e);
     }
   }
-  
+
   /**
    * Transforms an EarthGeometry from its current CRS to another CRS.
    * This is the core implementation method that all other earthToEarth methods delegate to.
@@ -255,7 +170,7 @@ public class EarthTransformer {
       CoordinateReferenceSystem targetCrs) {
     try {
       CoordinateReferenceSystem sourceCrs = sourceGeometry.getCrs();
-      
+
       // If same CRS, return the original geometry
       if (Utilities.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
         return (EarthGeometry) sourceGeometry;
@@ -263,11 +178,11 @@ public class EarthTransformer {
 
       // Get or create the transform between CRSes
       MathTransform transform = getTransform(sourceCrs, targetCrs);
-      
+
       // Transform the geometry
       Geometry transformedGeom = JtsTransformUtility.transform(
           sourceGeometry.getInnerGeometry(), transform);
-      
+
       // Create new EarthGeometry with transformed geometry and target CRS
       return new EarthGeometry(transformedGeom, targetCrs);
     } catch (Exception e) {
@@ -275,7 +190,7 @@ public class EarthTransformer {
           "Failed to transform Earth geometry to target CRS: " + targetCrs.getName().getCode(), e);
     }
   }
-  
+
   /**
    * Gets or creates a MathTransform between two coordinate reference systems, with caching.
    *
@@ -289,7 +204,7 @@ public class EarthTransformer {
       CoordinateReferenceSystem targetCrs) throws FactoryException {
     // Create a unique cache key
     String cacheKey = sourceCrs.getName().getCode() + "-TO-" + targetCrs.getName().getCode();
-    
+
     // Check cache first
     MathTransform transform = TRANSFORM_CACHE.get(cacheKey);
     if (transform == null) {
@@ -297,7 +212,7 @@ public class EarthTransformer {
       transform = CRS.findOperation(sourceCrs, targetCrs, null).getMathTransform();
       TRANSFORM_CACHE.put(cacheKey, transform);
     }
-    
+
     return transform;
   }
 

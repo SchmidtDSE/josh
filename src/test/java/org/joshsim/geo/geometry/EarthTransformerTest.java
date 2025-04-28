@@ -363,39 +363,6 @@ public class EarthTransformerTest {
       assertSame(cachedCrs, crsCache.get(TARGET_CRS_CODE),
           "Cached CRS instance should be reused");
     }
-
-    @Test
-    @DisplayName("EarthGeometryFactory caching mechanism works")
-    public void testFactoryCaching() throws Exception {
-      // Access the private FACTORY_CACHE field using reflection
-      Field factoryCacheField = EarthTransformer.class.getDeclaredField("FACTORY_CACHE");
-      factoryCacheField.setAccessible(true);
-      @SuppressWarnings("unchecked")
-      Map<String, EarthGeometryFactory> factoryCache =
-          (Map<String, EarthGeometryFactory>) factoryCacheField.get(null);
-
-      // Clear the cache to ensure a clean test
-      factoryCache.clear();
-
-      // Get a GridCrsManager for testing
-      GridCrsManager gridCrs = EarthTransformer.getGridCrsManager(gridCrsDefinition);
-
-      // First call should create and cache the factory
-      EarthTransformer.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
-
-      // Verify at least one factory is cached
-      assertTrue(factoryCache.size() > 0, "Factory should be cached after first use");
-
-      // Store the size to check no more factories are created
-      int cacheSize = factoryCache.size();
-
-      // Second call should reuse the cached factory
-      EarthTransformer.gridToEarth(gridPoint, gridCrs, TARGET_CRS_CODE);
-
-      // Cache size should remain the same (no new factories created)
-      assertEquals(cacheSize, factoryCache.size(),
-          "No new factories should be created for the same parameters");
-    }
   }
 
   @Test
@@ -597,4 +564,5 @@ public class EarthTransformerTest {
     when(square.getHeight()).thenReturn(width);
     return square;
   }
+
 }

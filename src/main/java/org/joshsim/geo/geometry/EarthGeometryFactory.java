@@ -2,7 +2,6 @@ package org.joshsim.geo.geometry;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -197,7 +196,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createPointFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
       return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
@@ -214,7 +213,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createCircleFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
       return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
@@ -231,7 +230,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createRectangleFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
       return EarthTransformer.gridToEarth(gridShape, gridCrsManager, earthCrs);
@@ -248,7 +247,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
    */
   public EngineGeometry createFromGrid(GridShape gridShape) {
     checkGridCrs();
-    
+
     try {
       // Delegate to EarthTransformer for grid-to-earth conversion
       // BUG - THIS IS TAKING IN an INVALID CRS CODE (""WGS 84 / UTM zone 11N"", not "EPSG:32611")

@@ -1,7 +1,6 @@
 package org.joshsim.geo.geometry;
 
 import org.apache.sis.util.Utilities;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
@@ -46,7 +45,7 @@ public class EarthPoint extends EarthShape {
 
     // Use the EarthTransformer to handle the transformation
     EarthGeometry transformed = EarthTransformer.earthToEarth(this, targetCrs);
-    
+
     // Since we know this is a point, cast to ensure we return an EarthPoint
     return new EarthPoint((Point) transformed.getInnerGeometry(), targetCrs);
   }
