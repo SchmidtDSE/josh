@@ -48,7 +48,7 @@ function parseDatum(source) {
     }
   }
 
-  const datum = {"target": target, "attributes": attributes};
+  return {"target": target, "attributes": attributes};
 }
 
 
@@ -118,7 +118,7 @@ self.onmessage = async function(e) {
 
       case "getSimulationMetadata":
         const resultRaw = wasmLayer.exports.getSimulationMetadata(data.code, data.simulationName);
-        const result = reportData(resultRaw);
+        const result = parseDatum(resultRaw);
         self.postMessage({ type: "getSimulationMetadata", success: true, result: result });
         break;
     }

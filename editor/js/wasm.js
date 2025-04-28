@@ -104,13 +104,12 @@ class WasmLayer {
     return new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, result, error } = e.data;
-        if (error) {
+        if (e.data.error) {
           reject(new Error(error));
           return;
         }
         if (type === "getSimulationMetadata") {
-          const rawInput = e.data.result;
-          const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
+          const parsed = new OutputDatum(result["target"], result["attributes"]);
           resolve(parsed);
         }
       };
