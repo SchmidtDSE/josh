@@ -622,26 +622,53 @@ class SimulationMetadata {
     self._endY = endY;
   }
 
+  /**
+   * Gets the minimum horizontal position of a patch in grid space.
+   * 
+   * @returns {number} The starting X coordinate where coordinates in degrees are 
+   *     automatically converted to a grid with 0,0 in upper left.
+   */
   getStartX() {
     const self = this;
     return self._startX;
   }
 
+  /**
+   * Gets the minimum vertical position of a patch in grid space.
+   * 
+   * @returns {number} The starting Y coordinate where coordinates in degrees are
+   *     automatically converted to a grid with 0,0 in upper left.
+   */
   getStartY() {
     const self = this;
     return self._startY;
   }
 
+  /**
+   * Gets the maximum horizontal position of a patch in grid space.
+   * 
+   * @returns {number} The ending X coordinate in grid space.
+   */
   getEndX() {
     const self = this;
     return self._endX;
   }
 
+  /**
+   * Gets the maximum vertical position of a patch in grid space.
+   * 
+   * @returns {number} The ending Y coordinate in grid space.
+   */
   getEndY() {
     const self = this;
     return self._endY;
   }
 
+  /**
+   * Gets the size of each patch/cell in the grid.
+   * 
+   * @returns {number} The patch size, typically 1.
+   */
   getPatchSize() {
     const self = this;
     return self._patchSize;
