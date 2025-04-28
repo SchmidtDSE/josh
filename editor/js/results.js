@@ -5,6 +5,7 @@
  */
 
 import {DataQuery, summarizeDatasets} from "model";
+import {ScrubPresenter} from "viz";
 
 
 /**
@@ -251,6 +252,10 @@ class ResultsDisplayPresenter {
       self._root.querySelector("#data-selector"),
       () => callback()
     );
+    self._scrubPresenter = new ScrubPresenter(
+      self._root.querySelector("#scrub-viz-holder"),
+      (step) => self._onStepSelected(step)
+    );
   }
 
   /**
@@ -309,8 +314,11 @@ class ResultsDisplayPresenter {
    */
   render(summary) {
     const self = this;
-    console.log(summary);
-    // TODO
+    self._scrubPresenter.render(summary);
+  }
+
+  _onStepSelected(step) {
+    const self = this;
   }
   
 }

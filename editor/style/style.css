@@ -310,7 +310,74 @@ main {
 
 #results #scrub-viz {
   width: 100%;
-  height: 150px;
+  height: 100px;
+}
+
+#results #scrub-viz .horizontal-tick {
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-size: 13px;
+  fill: #757575;
+}
+
+#results #scrub-viz .scrub-group .display-bar {
+  fill: #00B0D0;
+}
+
+#results #scrub-viz .scrub-group .horizontal-embed-tick {
+  visibility: hidden;
+}
+
+#results #scrub-viz .scrub-group .pointer-target {
+  fill-opacity: 0;
+  stroke-opacity: 0;
+}
+
+#results #scrub-viz .scrub-group:hover {
+  cursor: pointer;
+}
+
+#results #scrub-viz .scrub-group:hover .display-bar {
+  fill: #0080A0;
+}
+
+#results #scrub-viz .scrub-group:hover .pointer-target {
+  stroke-opacity: 1;
+  stroke-width: 1;
+  stroke: #C0C0C0;
+}
+
+#results #scrub-viz .scrub-group.active .display-bar {
+  fill: #0080A0;
+}
+
+#results #scrub-viz .scrub-group.active .horizontal-embed-tick {
+  fill: #333333;
+  font-size: 13px;
+  visibility: visible;
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-weight: bold;
+}
+
+#results #scrub-viz .selected-value-display {
+  visibility: hidden;
+}
+
+#results #scrub-viz .selected-value-display.active {
+  fill: #333333;
+  font-weight: bold;
+  dominant-baseline: auto;
+  text-anchor: middle;
+  font-size: 11px;
+  visibility: visible;
+}
+
+#results #scrub-viz .vertical-tick {
+  text-anchor: left;
+  dominant-baseline: middle;
+  font-size: 13px;
+  fill: #757575;
 }
 
 @media (max-width: 999px) {
