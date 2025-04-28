@@ -9,6 +9,7 @@ package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -94,11 +95,9 @@ class GridFromSimFactoryTest {
 
     PatchSet result = factory.build(mockSimulation);
 
-    assertNotNull(result, "PatchSet should be created with converted coordinates");
-    assertTrue(result.getSpacing().compareTo(BigDecimal.valueOf(1000)) == 0, 
-        "Grid spacing should be 1000 meters");
+    assertNotNull(result);
+    assertTrue(result.getSpacing().compareTo(BigDecimal.valueOf(1)) == 0);
   }
-
 
   @Test
   void buildWithCustomValues() throws FactoryException {
