@@ -196,6 +196,36 @@ class WasmLayer {
    */
   _parseMetadata(input) {
     const self = this;
+    const gridSizeParts = input.getValue("grid.size").split(" ");
+    const gridSize = parseFloat(gridSizeParts[0]);
+    const gridUnits = gridSizeParts[1];
+
+    const gridLowParts = input.getValue("grid.low").split(", ");
+    const gridHighParts = input.getValue("grid.high").split(", ");
+    
+    let startX = 0, startY = 0, endX = 0, endY = 0;
+
+    if (self._isDegrees(gridUnits)) {
+      // Convert degrees to grid coordinates with 0,0 at top-left
+      const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
+      const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
+      const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
+      const highLon = parseFloat(gridHighParts[0].split(" ")[0]);
+      
+      const width = self._getDistanceMeters(lowLon, lowLat, highLon, lowLat);
+      const height = self._getDistanceMeters(lowLon, lowLat, lowLon, highLat);
+      
+      endX = Math.ceil(width / gridSize);
+      endY = Math.ceil(height / gridSize);
+    } else {
+      // For count or meters, use values directly
+      startX = parseFloat(gridLowParts[0].split(" ")[0]);
+      startY = parseFloat(gridLowParts[1].split(" ")[0]);
+      endX = parseFloat(gridHighParts[0].split(" ")[0]);
+      endY = parseFloat(gridHighParts[1].split(" ")[0]);
+    }
+
+    return new SimulationMetadata(startX, startY, endX, endY, gridSize);
   }
 
   /**
@@ -208,7 +238,18 @@ class WasmLayer {
    * @return {number} Absolute approximate distance between these two points.
    */
   _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
-    const self = this;
+    const R = 6371000; // Earth's radius in meters
+    const φ1 = startLatitude * Math.PI / 180;
+    const φ2 = endLatitude * Math.PI / 180;
+    const Δφ = (endLatitude - startLatitude) * Math.PI / 180;
+    const Δλ = (endLongitude - startLongitude) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
   }
 
   /**
