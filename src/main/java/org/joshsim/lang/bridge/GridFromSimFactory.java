@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
@@ -67,7 +68,24 @@ public class GridFromSimFactory {
     EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
-    PatchBuilder builder = bridge.getGeometryFactory().getPatchBuilder(
+    EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
+
+    String sizeUnits = sizeValueRaw.getUnits().toString();
+    boolean posDegrees = startStr.contains("degrees");
+    boolean sizeMeters = (
+        sizeUnits.equals("m") ||
+        sizeUnits.equals("meter") ||
+        sizeUnits.equals("meters")
+    );
+    boolean posSizeMismatch = posDegrees && sizeMeters;
+    boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
+    boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    if (requiresCountConversion) {
+      extents = convertToMeters(extents, sizeValuePrimitive);
+      sizeValuePrimitive = BigDecimal.valueOf(1);
+    }
+
+    PatchBuilder builder = geometryFactory.getPatchBuilder(
         inputCrs,
         targetCrs,
         extents,
@@ -143,6 +161,21 @@ public class GridFromSimFactory {
     } else {
       return bridge.convert(target, allowed);
     }
+  }
+
+  /**
+   * Convert a set of extents from degrees to meters.
+   *
+   * <p>Convert a set of extents from degrees to coordinates expressed in cell / patch counts via
+   * conversion to meters using Haverzine where the upper left corner is 0, 0 and the bottom right
+   * is positive. This is done using HaversineUtil.</p>
+   *
+   * @param extents Original extents expressed in degrees which should be converted to meters and
+   *     then cell counts.
+   * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
+   */
+  private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
+    
   }
 
 }
