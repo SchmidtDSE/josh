@@ -1,7 +1,13 @@
+/**
+ * Utilities to perform Haversine functions.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
+
 
 /**
  * Utility to perform calculations using the Haversine formula.
@@ -28,9 +34,9 @@ public class HaversineUtil {
     double deltaLongitude = Math.toRadians(longitudeEnd.subtract(longitudeStart).doubleValue());
 
     double a = (
-        Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
-        Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
-        Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2)
+        Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2)
+        + Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd)
+        * Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2)
     );
                
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));

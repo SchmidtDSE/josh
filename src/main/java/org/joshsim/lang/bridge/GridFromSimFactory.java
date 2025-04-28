@@ -74,9 +74,9 @@ public class GridFromSimFactory {
     String sizeUnits = sizeValueRaw.getUnits().toString();
     boolean posDegrees = startStr.contains("degrees");
     boolean sizeMeters = (
-        sizeUnits.equals("m") ||
-        sizeUnits.equals("meter") ||
-        sizeUnits.equals("meters")
+        sizeUnits.equals("m")
+        || sizeUnits.equals("meter")
+        || sizeUnits.equals("meters")
     );
     boolean posSizeMismatch = posDegrees && sizeMeters;
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
