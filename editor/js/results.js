@@ -256,6 +256,11 @@ class ResultsDisplayPresenter {
       self._root.querySelector("#scrub-viz-holder"),
       (step) => self._onStepSelected(step)
     );
+    self._gridPresenter = new GridPresenter(
+      self._root.querySelector("#grid-viz-holder")
+    );
+    self._currentTimestep = null;
+    self._metadata = null;
   }
 
   /**
@@ -264,6 +269,8 @@ class ResultsDisplayPresenter {
   hide() {
     const self = this;
     self._root.style.display = "none";
+    self._currentTimestep = null;
+    self._metadata = null;
   }
 
   /**
@@ -317,11 +324,20 @@ class ResultsDisplayPresenter {
    */
   render(summary, metadata) {
     const self = this;
+    self._metadata = metadata;
     self._scrubPresenter.render(summary);
+    if (self._currentTimestep === null) {
+      self._currentTimestep = summary.getMaxTimestep();
+    }
+    self._gridPresenter.render(metadata, summary, self._currentTimestep);
   }
 
   _onStepSelected(step) {
     const self = this;
+    self._currentTimestep = step;
+    if (self._metadata !== null) {
+      self._gridPresenter.render(self._metadata, summary, step);
+    }
   }
   
 }
