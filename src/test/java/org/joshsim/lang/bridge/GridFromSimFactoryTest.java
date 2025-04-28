@@ -126,7 +126,8 @@ class GridFromSimFactoryTest {
 
   //   PatchSet result = factory.build(mockSimulation);
 
-  //   assertNotNull(result, "PatchSet should be created with custom Transverse Mercator projection");
+  //   assertNotNull(result,
+  //      "PatchSet should be created with custom Transverse Mercator projection");
   //   assertFalse(result.getPatches().isEmpty(), "PatchSet should contain patches");
   // }
 }

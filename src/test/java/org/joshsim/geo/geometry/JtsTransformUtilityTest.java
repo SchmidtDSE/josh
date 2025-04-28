@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -44,6 +43,11 @@ public class JtsTransformUtilityTest {
 
   private GeometryFactory geometryFactory;
 
+  /**
+   * Sets up the test environment by initializing mocks and configuring test data.
+   *
+   * @throws Exception if an error occurs during setup
+   */
   @BeforeEach
   public void setUp() throws Exception {
     MockitoAnnotations.openMocks(this);
@@ -76,13 +80,13 @@ public class JtsTransformUtilityTest {
       double[] target = invocation.getArgument(2);
       int targetOffset = invocation.getArgument(3);
       int numPoints = invocation.getArgument(4);
-      
+
       for (int i = 0; i < numPoints; i++) {
         target[targetOffset + 2 * i] = source[sourceOffset + 2 * i] + 100;
         target[targetOffset + 2 * i + 1] = source[sourceOffset + 2 * i + 1] + 200;
       }
       return null;
-    }).when(mockTransform).transform(any(double[].class), anyInt(), any(double[].class), 
+    }).when(mockTransform).transform(any(double[].class), anyInt(), any(double[].class),
         anyInt(), anyInt()
     );
   }
@@ -90,7 +94,7 @@ public class JtsTransformUtilityTest {
   @Test
   public void gridShapeToJts_point_returnsCorrectPoint() {
     Geometry result = JtsTransformUtility.gridShapeToJts(mockPointShape);
-    
+
     assertTrue(result instanceof Point);
     Point point = (Point) result;
     assertEquals(10.0, point.getX(), 0.001);
@@ -100,11 +104,11 @@ public class JtsTransformUtilityTest {
   @Test
   public void gridShapeToJts_circle_returnsPolygon() {
     Geometry result = JtsTransformUtility.gridShapeToJts(mockCircleShape);
-    
+
     assertTrue(result instanceof Polygon);
     Polygon polygon = (Polygon) result;
     assertTrue(polygon.isValid());
-    
+
     // Check center point is approximately correct
     Coordinate centroid = polygon.getCentroid().getCoordinate();
     assertEquals(15.0, centroid.x, 0.1);
@@ -114,11 +118,11 @@ public class JtsTransformUtilityTest {
   @Test
   public void gridShapeToJts_square_returnsPolygon() {
     Geometry result = JtsTransformUtility.gridShapeToJts(mockSquareShape);
-    
+
     assertTrue(result instanceof Polygon);
     Polygon polygon = (Polygon) result;
     assertTrue(polygon.isValid());
-    
+
     // Check center point is approximately correct
     Coordinate centroid = polygon.getCentroid().getCoordinate();
     assertEquals(30.0, centroid.x, 0.1);
@@ -128,7 +132,7 @@ public class JtsTransformUtilityTest {
   @Test
   public void createJtsPoint_returnsPointWithCorrectCoordinates() {
     Point point = JtsTransformUtility.createJtsPoint(42.0, 84.0);
-    
+
     assertNotNull(point);
     assertEquals(42.0, point.getX(), 0.001);
     assertEquals(84.0, point.getY(), 0.001);
@@ -139,12 +143,12 @@ public class JtsTransformUtilityTest {
     double centerX = 100.0;
     double centerY = 200.0;
     double radius = 50.0;
-    
+
     Polygon circle = JtsTransformUtility.createJtsCircle(centerX, centerY, radius);
-    
+
     assertNotNull(circle);
     assertTrue(circle.isValid());
-    
+
     // Check center point is approximately correct
     Coordinate centroid = circle.getCentroid().getCoordinate();
     assertEquals(centerX, centroid.x, 0.1);
@@ -157,12 +161,12 @@ public class JtsTransformUtilityTest {
     double centerY = 300.0;
     double width = 100.0;
     double height = 50.0;
-    
+
     Polygon rectangle = JtsTransformUtility.createJtsRectangle(centerX, centerY, width, height);
-    
+
     assertNotNull(rectangle);
     assertTrue(rectangle.isValid());
-    
+
     // Check center point is approximately correct
     Coordinate centroid = rectangle.getCentroid().getCoordinate();
     assertEquals(centerX, centroid.x, 0.1);
@@ -172,9 +176,9 @@ public class JtsTransformUtilityTest {
   @Test
   public void transform_point_transformsCorrectly() throws TransformException {
     Point point = geometryFactory.createPoint(new Coordinate(0.0, 0.0));
-    
+
     Geometry result = JtsTransformUtility.transform(point, mockTransform);
-    
+
     assertTrue(result instanceof Point);
     Point transformedPoint = (Point) result;
     assertEquals(100.0, transformedPoint.getX(), 0.001);
@@ -188,9 +192,9 @@ public class JtsTransformUtilityTest {
         new Coordinate(10.0, 10.0)
     };
     LineString line = geometryFactory.createLineString(coords);
-    
+
     Geometry result = JtsTransformUtility.transform(line, mockTransform);
-    
+
     assertTrue(result instanceof LineString);
     LineString transformedLine = (LineString) result;
     assertEquals(100.0, transformedLine.getCoordinateN(0).x, 0.001);
@@ -211,12 +215,12 @@ public class JtsTransformUtilityTest {
     };
     LinearRing ring = geometryFactory.createLinearRing(coords);
     Polygon poly = geometryFactory.createPolygon(ring);
-    
+
     Geometry result = JtsTransformUtility.transform(poly, mockTransform);
-    
+
     assertTrue(result instanceof Polygon);
     Polygon transformedPoly = (Polygon) result;
-    
+
     // Check exterior ring coordinates
     LinearRing exterior = transformedPoly.getExteriorRing();
     assertEquals(5, exterior.getNumPoints());
@@ -225,7 +229,7 @@ public class JtsTransformUtilityTest {
     assertEquals(110.0, exterior.getCoordinateN(1).x, 0.001);
     assertEquals(200.0, exterior.getCoordinateN(1).y, 0.001);
   }
-  
+
   @Test
   public void transform_polygonWithHole_transformsCorrectly() throws TransformException {
     // Create exterior ring
@@ -237,7 +241,7 @@ public class JtsTransformUtilityTest {
         new Coordinate(0.0, 0.0) // Closing point
     };
     LinearRing exterior = geometryFactory.createLinearRing(exteriorCoords);
-    
+
     // Create interior ring (hole)
     Coordinate[] interiorCoords = new Coordinate[] {
         new Coordinate(5.0, 5.0),
@@ -247,16 +251,16 @@ public class JtsTransformUtilityTest {
         new Coordinate(5.0, 5.0) // Closing point
     };
     LinearRing interior = geometryFactory.createLinearRing(interiorCoords);
-    
+
     // Create polygon with hole
     Polygon poly = geometryFactory.createPolygon(exterior, new LinearRing[] { interior });
-    
+
     Geometry result = JtsTransformUtility.transform(poly, mockTransform);
-    
+
     assertTrue(result instanceof Polygon);
     Polygon transformedPoly = (Polygon) result;
     assertEquals(1, transformedPoly.getNumInteriorRing());
-    
+
     // Check one coordinate from hole to verify it was transformed
     LinearRing transformedHole = transformedPoly.getInteriorRingN(0);
     assertEquals(105.0, transformedHole.getCoordinateN(0).x, 0.001);
@@ -266,7 +270,7 @@ public class JtsTransformUtilityTest {
   @Test
   public void getRightHandedCrs_validCrsCode_returnsValidCrs() throws FactoryException {
     CoordinateReferenceSystem crs = JtsTransformUtility.getRightHandedCrs("EPSG:4326");
-    
+
     assertNotNull(crs);
     assertEquals("WGS 84", crs.getName().toString());
   }
@@ -282,7 +286,7 @@ public class JtsTransformUtilityTest {
   public void getRightHandedCrs_fromExistingCrs_returnsRightHandedCrs() throws FactoryException {
     CoordinateReferenceSystem originalCrs = CRS.forCode("EPSG:4326");
     CoordinateReferenceSystem rightHandedCrs = JtsTransformUtility.getRightHandedCrs(originalCrs);
-    
+
     assertNotNull(rightHandedCrs);
   }
 }

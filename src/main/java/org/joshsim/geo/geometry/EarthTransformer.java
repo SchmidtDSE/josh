@@ -173,7 +173,7 @@ public class EarthTransformer {
 
       // DEBUG: Transform gives NaN result for some transforms, but
       // tests still pass??
-      
+
       // If same CRS, return the original geometry
       if (Utilities.equalsIgnoreMetadata(sourceCrs, targetCrs)) {
         return (EarthGeometry) sourceGeometry;

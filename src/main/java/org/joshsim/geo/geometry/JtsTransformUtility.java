@@ -4,11 +4,7 @@ import java.math.BigDecimal;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.crs.AbstractCRS;
 import org.apache.sis.referencing.cs.AxesConvention;
-import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.grid.GridCircle;
-import org.joshsim.engine.geometry.grid.GridPoint;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.joshsim.engine.geometry.grid.GridSquare;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -241,7 +237,8 @@ public final class JtsTransformUtility {
    * @return The right-handed CRS
    * @throws FactoryException If the CRS cannot be created
    */
-  public static CoordinateReferenceSystem getRightHandedCrs(String crsCode) throws FactoryException{
+  public static CoordinateReferenceSystem getRightHandedCrs(String crsCode)
+      throws FactoryException {
 
     CoordinateReferenceSystem unsafeCrs = CRS.forCode(crsCode);
     CoordinateReferenceSystem rightHandedCrs =
@@ -263,7 +260,7 @@ public final class JtsTransformUtility {
    * @throws FactoryException If the CRS cannot be created
    */
   public static CoordinateReferenceSystem getRightHandedCrs(
-      CoordinateReferenceSystem crs) throws FactoryException{
+      CoordinateReferenceSystem crs) throws FactoryException {
 
     CoordinateReferenceSystem rightHandedCrs =
         AbstractCRS.castOrCopy(crs).forConvention(AxesConvention.RIGHT_HANDED);

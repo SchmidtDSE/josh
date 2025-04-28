@@ -1,7 +1,14 @@
 package org.joshsim.geo.geometry;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,6 +65,9 @@ public class EarthTransformerTest {
   private GridShape gridCircle;
   private GridShape gridSquare;
 
+  /**
+   * Sets up the test environment by initializing required objects and variables.
+   */
   @BeforeEach
   public void setUp() {
     // Create extents matching the simulation example
@@ -465,8 +475,10 @@ public class EarthTransformerTest {
       Point point = (Point) earthGeometry.getInnerGeometry();
       assertTrue(point.getX() >= WEST_LON.doubleValue(), "Point should be east of west boundary");
       assertTrue(point.getX() <= EAST_LON.doubleValue(), "Point should be west of east boundary");
-      assertTrue(point.getY() <= NORTH_LAT.doubleValue(), "Point should be south of north boundary");
-      assertTrue(point.getY() >= SOUTH_LAT.doubleValue(), "Point should be north of south boundary");
+      assertTrue(point.getY() <= NORTH_LAT.doubleValue(),
+          "Point should be south of north boundary");
+      assertTrue(point.getY() >= SOUTH_LAT.doubleValue(),
+          "Point should be north of south boundary");
     }
 
     @Test
