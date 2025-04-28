@@ -405,4 +405,152 @@ class SimulationMetadata {
 }
 
 
-export {OutputDatum, SimulationMetadata, SimulationResult, SimulationResultBuilder};
+/**
+ * Record describing a result which is summarized according to the instructions of the user.
+ *
+ * Record describing a result which is summarized according to the instructions of the user,
+ * specifically a single metric on a single exported variable which is reported once per patch (cell
+ * within the simluation grid) per timestep.
+ */
+class SummarizedResult {
+
+  /**
+   * Create a new record of a summarized result.
+   *
+   * @param {number} minX - The minimum x coordinate in the result set.
+   * @param {number} minY - The minimum Y coordinate in the result set.
+   * @param {number} maxX - The maximum x coordinate in the result set.
+   * @param {number} maxY - The maximum Y coordinate in the result set.
+   * @param {Map<string, number>} valuePerTimestep - Array where each element corresponds to the
+   *     value requested by the user in which the zeroth element is the first timestep.
+   * @param {Map<string, number>} gridPerTimestep - Cell by cell (patch by patch) values requested
+   *     by the user in which the key is the integer timestep followed by a comma followed by the x
+   *     coordinate followed by a comma followed by the y coordinate where x and y are rounded to
+   *     the nearest hundredth.
+   */
+  constructor(minX, minY, maxX, maxY, valuePerTimestep, gridPerTimestep) {
+    const self = this;
+    self._minX = minX;
+    self._minY = minY;
+    self._maxX = maxX;
+    self._maxY = maxY;
+    self._valuePerTimestep = valuePerTimestep;
+    self._gridPerTimestep = gridPerTimestep;
+    self._timesteps = Array.of(...self._valuePerTimestep.keys());
+  }
+
+  /**
+   * Gets the minimum x coordinate in the result set.
+   * 
+   * @returns {number} The minimum x coordinate.
+   */
+  getMinX() {
+    const self = this;
+    return self._minX;
+  }
+
+  /**
+   * Gets the minimum y coordinate in the result set.
+   * 
+   * @returns {number} The minimum y coordinate.
+   */
+  getMinY() {
+    const self = this;
+    return self._minY;
+  }
+
+  /**
+   * Gets the maximum x coordinate in the result set.
+   * 
+   * @returns {number} The maximum x coordinate.
+   */
+  getMaxX() {
+    const self = this;
+    return self._maxX;
+  }
+
+  /**
+   * Gets the maximum y coordinate in the result set.
+   * 
+   * @returns {number} The maximum y coordinate.
+   */
+  getMaxY() {
+    const self = this;
+    return self._maxY;
+  }
+
+  /**
+   * Gets the timesteps in the result set.
+   * 
+   * @returns {Array<number>} All timesteps found in this result set.
+   */
+  getTimesteps() {
+    const self = this;
+    return self._timesteps;
+  }
+
+  /**
+   * Get the minimum timestep found within this dataset.
+   *
+   * @returns {number} Minimum timestep from this dataset.
+   */
+  getMinTimestep() {
+    const self = this;
+    return math.min(self._timesteps);
+  }
+
+  /**
+   * Get the maximum timestep found within this dataset.
+   *
+   * @returns {number} Maximum timestep from this dataset.
+   */
+  getMaxTimestep() {
+    const self = this;
+    return math.max(self._timesteps);
+  }
+
+  /**
+   * Gets the value for a specific replicate.
+   * 
+   * @param {number} timestep - The timestep to retrieve.
+   * @returns {number} The value for the specified timestep.
+   */
+  getTimestepValue(timestep) {
+    const self = this;
+    return self._valuePerTimestep.get(timestep);
+  }
+
+  /**
+   * Gets the grid value for a specific timestep and coordinate.
+   * 
+   * @param {number} timestep - The timestep to query.
+   * @param {number} x - The x coordinate.
+   * @param {number} y - The y coordinate.
+   * @returns {number} The value at the specified grid location.
+   * @throws {Error} If the grid location is not found.
+   */
+  getGridValue(timestep, x, y) {
+    const self = this;
+
+    const timestepRounded = Math.round(timestep);
+    const xRounded = Math.round(x);
+    const yRounded = Math.round(y);
+    const key = `${timestepRounded},${xRounded},${yRounded}`;
+
+    if (!self._gridPerTimestep.has(key)) {
+      throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
+    }
+
+    return self._gridPerTimestep.get(key);
+  }
+
+}
+
+
+export {
+  OutputDatum,
+  SimulationMetadata,
+  SimulationResult,
+  SimulationResultBuilder,
+  SummarizedResult
+};
