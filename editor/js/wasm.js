@@ -209,7 +209,6 @@ class WasmLayer {
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
     if (self._isDegrees(gridUnits)) {
-      // Convert degrees to grid coordinates with 0,0 at top-left
       const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
       const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
       const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
@@ -221,7 +220,6 @@ class WasmLayer {
       endX = Math.ceil(width / gridSize);
       endY = Math.ceil(height / gridSize);
     } else {
-      // For count or meters, use values directly
       startX = parseFloat(gridLowParts[0].split(" ")[0]);
       startY = parseFloat(gridLowParts[1].split(" ")[0]);
       endX = parseFloat(gridHighParts[0].split(" ")[0]);
