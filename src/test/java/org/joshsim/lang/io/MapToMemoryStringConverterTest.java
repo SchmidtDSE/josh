@@ -16,7 +16,7 @@ class MapToMemoryStringConverterTest {
    */
 
   @Test
-  void testConvert_WithValidNameAndMap() {
+  void testConvertWithValidNameAndMap() {
     // Arrange
     String name = "TestName";
     Map<String, String> target = Map.of("key1", "value1", "key2", "value2");
@@ -29,7 +29,7 @@ class MapToMemoryStringConverterTest {
   }
 
   @Test
-  void testConvert_HandlesTabsAndNewlinesInValues() {
+  void testConvertHandlesTabsAndNewlinesInValues() {
     // Arrange
     String name = "FormattedName";
     Map<String, String> target = Map.of(
@@ -50,7 +50,7 @@ class MapToMemoryStringConverterTest {
   }
 
   @Test
-  void testConvert_EmptyMap() {
+  void testConvertEmptyMap() {
     // Arrange
     String name = "EmptyMapTest";
     Map<String, String> target = Map.of();
@@ -63,7 +63,7 @@ class MapToMemoryStringConverterTest {
   }
 
   @Test
-  void testConvert_SingleEntryMap() {
+  void testConvertSingleEntryMap() {
     // Arrange
     String name = "SingleEntry";
     Map<String, String> target = Map.of("keyOnly", "valueOnly");
