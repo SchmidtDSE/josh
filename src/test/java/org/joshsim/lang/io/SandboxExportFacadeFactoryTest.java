@@ -1,6 +1,6 @@
 
 /**
- * Tests for WasmExportFacadeFactory.
+ * Tests for SandboxExportFacadeFactory.
  *
  * @license BSD-3-Clause
  */
@@ -10,26 +10,23 @@ package org.joshsim.lang.io;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
 /**
- * Test suite for the WasmExportFacadeFactory class.
+ * Test suite for the SandboxExportFacadeFactory class.
  */
-class WasmExportFacadeFactoryTest {
+class SandboxExportFacadeFactoryTest {
 
-  private WasmExportCallback callbackMock;
-  private WasmExportFacadeFactory factory;
+  private SandboxExportCallback callbackMock;
+  private SandboxExportFacadeFactory factory;
 
   @BeforeEach
   void setUp() {
-    callbackMock = mock(WasmExportCallback.class);
-    factory = new WasmExportFacadeFactory(callbackMock);
+    callbackMock = mock(SandboxExportCallback.class);
+    factory = new SandboxExportFacadeFactory(callbackMock);
   }
 
   @Test

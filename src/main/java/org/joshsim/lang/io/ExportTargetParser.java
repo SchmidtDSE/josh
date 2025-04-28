@@ -51,10 +51,10 @@ public class ExportTargetParser {
   /**
    * Parses a non-memory URI-based export target string.
    *
-   * @param target The target string in URI format (e.g., "file:/path/to/file" or 
+   * @param target The target string in URI format (e.g., "file:/path/to/file" or
    *     "minio://host/path")
    * @return An ExportTarget configured based on the URI scheme.
-   * @throws IllegalArgumentException if the URI scheme is unsupported or the URI syntax is 
+   * @throws IllegalArgumentException if the URI scheme is unsupported or the URI syntax is
    *     invalid.
    */
   private static ExportTarget parseUri(String target) {

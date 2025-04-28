@@ -12,21 +12,24 @@ import java.io.OutputStream;
 import java.util.Optional;
 
 /**
- * Factory implementation for creating ExportFacade instances in a WebAssembly environment.
+ * Factory implementation for creating ExportFacade instances in a sandbox environment.
+ *
+ * <p>Factory implementation for creating ExportFacade instances in a sandbox environment which
+ * includes WebAssembly.</p>
  */
-public class WasmExportFacadeFactory implements ExportFacadeFactory {
+public class SandboxExportFacadeFactory implements ExportFacadeFactory {
 
-  private final WasmExportCallback callback;
-  
+  private final SandboxExportCallback callback;
+
   /**
-   * Constructs a new WasmExportFacadeFactory with the specified callback.
+   * Constructs a new SandboxExportFacadeFactory with the specified callback.
    *
    * @param callback The WebAssembly callback interface used to handle output operations
    */
-  public WasmExportFacadeFactory(WasmExportCallback callback) {
+  public SandboxExportFacadeFactory(SandboxExportCallback callback) {
     this.callback = callback;
   }
-  
+
   @Override
   public ExportFacade build(ExportTarget target) {
     if (!target.getProtocol().equals("memory")) {
@@ -56,15 +59,15 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
    */
   public class RedirectOutputStream extends OutputStream {
 
-    private final WasmExportCallback callback;
+    private final SandboxExportCallback callback;
     private final StringBuilder buffer;
-    
+
     /**
      * Constructs a new RedirectOutputStream with the specified callback.
      *
      * @param callback The WebAssembly callback to use for output redirection
      */
-    public RedirectOutputStream(WasmExportCallback callback) {
+    public RedirectOutputStream(SandboxExportCallback callback) {
       this.callback = callback;
       this.buffer = new StringBuilder();
     }
@@ -96,7 +99,7 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
       if (buffer.length() == 0) {
         return;
       }
-      
+
       callback.onWrite(buffer.toString());
       buffer.setLength(0);
     }
@@ -106,5 +109,5 @@ public class WasmExportFacadeFactory implements ExportFacadeFactory {
       flush();
     }
   }
-  
+
 }

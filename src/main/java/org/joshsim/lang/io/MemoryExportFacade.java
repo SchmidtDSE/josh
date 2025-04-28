@@ -9,10 +9,6 @@ package org.joshsim.lang.io;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
-import java.util.Optional;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.QueueService;
-import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 
 

@@ -6,15 +6,22 @@
 
 package org.joshsim;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.compat.EmulatedCompatibilityLayer;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.WasmInputOutputLayer;
+import org.joshsim.lang.io.MapToMemoryStringConverter;
+import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -108,6 +115,49 @@ public class JoshJsSimFacade {
   }
 
   /**
+   * Generates metadata for a specific simulation defined in the provided source code.
+   *
+   * <p>This method parses and interprets the given source code, extracts the simulation
+   * information, and generates a metadata map containing details such as coordinate reference
+   * systems, time ranges, and patch name. The metadata is then converted to the memory-passing
+   * string format.</p>
+   *
+   * @param code The Josh source code containing simulation definitions.
+   * @param simulationName The name of the simulation to extract metadata for.
+   * @return A string representation of the simulation metadata in memory-passing format.
+   * @throws RuntimeException If the source code has parsing errors or if the specified
+   *      simulation does not exist.
+   */
+  @JSExport
+  public static String getSimulationMetadata(String code, String simulationName) {
+    setupForWasm();
+
+    ParseResult result = JoshSimFacadeUtil.parse(code);
+    if (result.hasErrors()) {
+      throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
+    }
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    program.getSimulations().getProtoype(simulationName);
+
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, new EngineValueFactory());
+
+    Map<String, String> outputRecord = new HashMap<>();
+    outputRecord.put("name", simulationName);
+    outputRecord.put("inputCrs", extractor.getInputCrs());
+    outputRecord.put("targetCrs", extractor.getTargetCrs());
+    outputRecord.put("startStr", extractor.getStartStr());
+    outputRecord.put("endStr", extractor.getEndStr());
+    outputRecord.put("patchName", extractor.getPatchName());
+
+    return MapToMemoryStringConverter.convert("simulationMetadata", outputRecord);
+  }
+
+  /**
    * Configures the system for execution within a WebAssembly (Wasm) environment.
    *
    * <p>This method sets the platform-specific compatibility layer to an instance of
@@ -139,9 +189,7 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = new WasmInputOutputLayer(
-        (payload) -> reportData(payload)
-    );
+    InputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(JoshJsSimFacade::reportData);
 
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
 

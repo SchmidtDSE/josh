@@ -175,7 +175,7 @@ class StatusPresenter {
    */
   resetProgress() {
     const self = this;
-    self.updateProgress(0, "steps");
+    self._root.querySelector(".status-text").innerHTML = "Starting...";
     self._root.querySelector(".running-icon").style.display = "inline-block";
     self._root.querySelector(".complete-icon").style.display = "none";
     self._root.querySelector(".error-display").style.display = "none";
@@ -190,8 +190,8 @@ class StatusPresenter {
    */
   updateProgress(numSteps, units) {
     const self = this;
-    self._root.querySelector(".completed-count").innerHTML = numSteps;
-    self._root.querySelector(".completed-type").innerHTML = units;
+    const completedStr = `Completed ${numSteps} ${units}...`;
+    self._root.querySelector(".status-text").innerHTML = completedStr;
   }
 
   /**
