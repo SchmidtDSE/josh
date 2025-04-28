@@ -268,18 +268,6 @@ class GridPresenter {
       .attr("height", cellHeight - 1)
       .attr("fill", d => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
-      
-    // Add value text for larger cells
-    if (cellWidth >= 30 && cellHeight >= 30) {
-      grid.append("text")
-        .attr("x", cellWidth / 2)
-        .attr("y", cellHeight / 2)
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-        .attr("fill", "#333333")
-        .attr("font-size", "11px")
-        .text(d => d.value.toFixed(2));
-    }
   }
 
   /**
