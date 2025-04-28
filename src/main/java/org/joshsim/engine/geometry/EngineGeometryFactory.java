@@ -16,6 +16,20 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 public interface EngineGeometryFactory {
 
   /**
+   * Determine if this factory supports geo/earth-space.
+   *
+   * @returns True if Earth-space or geo-space is supported and false otherwise.
+   */
+  boolean supportsEarthSpace();
+
+  /**
+   * Determine if this factory supports grid-space.
+   *
+   * @returns True if grid-space is supported and false otherwise.
+   */
+  boolean supportsGridSpace();
+
+  /**
    * Create a square EngineGeometry with the specified width and center.
    *
    * @param centerX The X position (longitude, easting) of the center
@@ -93,6 +107,7 @@ public interface EngineGeometryFactory {
    *
    * @return String with information like the CRS used.
    */
+  @Override
   String toString();
 
   /**

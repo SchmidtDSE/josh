@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-import {DataQuery, summarizeDatasets} from "model";
+import {DataQuery, summarizeDatasets} from "summarize";
 import {ScrubPresenter} from "viz";
 
 

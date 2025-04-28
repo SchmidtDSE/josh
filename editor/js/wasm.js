@@ -4,7 +4,9 @@
  * @license BSD-3-Clause
  */
 
-import {SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
+import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
+
+const EARTH_RADIUS_METERS = 6371000;
 
 
 /**
@@ -109,7 +111,8 @@ class WasmLayer {
           return;
         }
         if (type === "getSimulationMetadata") {
-          const parsed = new OutputDatum(result["target"], result["attributes"]);
+          const parsedToKeyValue = new OutputDatum(result["target"], result["attributes"]);
+          const parsed = self._parseMetadata(parsedToKeyValue);
           resolve(parsed);
         }
       };
@@ -160,9 +163,131 @@ class WasmLayer {
     });
   }
 
+  /**
+   * Internal callback for when a step within a replicate is completed.
+   *
+   * @param {number} numComplete - The number of steps completed in this replicate.
+   */
   _onStepCompleted(numComplete) {
     const self = this;
     self._stepCallback(numComplete);
+  }
+
+  /**
+   * Construct a metadata record from a parsed entity.
+   *
+   * Construct a metdata record from a entity which has raw data from the WASM worker parsed. It
+   * expects input to have the following:
+   *
+   *  - "grid.size" which has a value like "1 count" or "30 m" or "30 meters" or "0.5 degree" or
+   *    "0.5 degrees".
+   *  - "grid.low" which has a value like "0 count latitude, 0 count longitude" or
+   *    "34 degrees longitude, -116 degrees latitude".
+   *  - "grid.high" which has a value like "10 count latitude, 10 count longitude" or
+   *    "35 degrees longitude, -115 degrees latitude".
+   *
+   * If the start and end are indicated in degrees, they will be converted to count where x and y
+   * both start at 0, 0 in the upper left-hand corner. Note that patch or cell centers are used so,
+   * if the grid starts at 0, 0 count with a grid size of 1, then the first cell is at 0.5, 0.5.
+   * This will convert degrees to meters but will otherwise not perform unit conversions, raising an
+   * exception instead.
+   *
+   * @param {OutputDatum} input - Record which has parsed attributes and values returned by the WASM
+   *     worker.
+   * @returns {SimulationMetadata} Record summarizing input into a formalized metadata record.
+   */
+  _parseMetadata(input) {
+    const self = this;
+
+    const gridSizeParts = input.getValue("sizeStr").split(" ");
+    const gridSize = parseFloat(gridSizeParts[0]);
+    const gridUnits = gridSizeParts[1];
+
+    const gridLowParts = input.getValue("startStr").split(", ");
+    const pointUnits = gridLowParts[0].split(" ")[1];
+    const gridHighParts = input.getValue("endStr").split(", ");
+    
+    let startX = 0, startY = 0, endX = 0, endY = 0;
+
+    if (self._isDegrees(pointUnits) && self._isMeters(gridUnits)) {
+      const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
+      const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
+      const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
+      const highLon = parseFloat(gridHighParts[0].split(" ")[0]);
+      
+      const width = self._getDistanceMeters(lowLon, lowLat, highLon, lowLat);
+      const height = self._getDistanceMeters(lowLon, lowLat, lowLon, highLat);
+      
+      endX = Math.ceil(width / gridSize);
+      endY = Math.ceil(height / gridSize);
+    } else if (gridUnits === pointUnits) {
+      startX = parseFloat(gridLowParts[0].split(" ")[0]);
+      startY = parseFloat(gridLowParts[1].split(" ")[0]);
+      endX = parseFloat(gridHighParts[0].split(" ")[0]);
+      endY = parseFloat(gridHighParts[1].split(" ")[0]);
+    } else {
+      throw `Cannot use web editor for grid with unequal units ${gridUnits} and ${pointUnits}.`;
+    }
+
+    return new SimulationMetadata(startX, startY, endX, endY, gridSize);
+  }
+
+  /**
+   * Get the distance in meters between two coordinates provided in degrees using Haversine.
+   *
+   * @param {number} startLongitude - The first point longitude in degrees.
+   * @param {number} startLatitude - The first point latitude in degrees.
+   * @param {number} endLongitude - The second point longitude in degrees.
+   * @param {number} endLatitude - The second point latitude in degrees.
+   * @return {number} Absolute approximate distance between these two points.
+   */
+  _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
+    const angleLatitudeStart = startLatitude * Math.PI / 180;
+    const angleLatitudeEnd = endLatitude * Math.PI / 180;
+    const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
+    const deltaLongitude = (endLongitude - startLongitude) * Math.PI / 180;
+
+    const a = (
+      Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
+      Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
+      Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2)
+    );
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return EARTH_RADIUS * c;
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isCount(unitsStr) {
+    const self = this;
+    return unitsStr === "count" || unitsStr === "counts"
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isMeters(unitsStr) {
+    const self = this;
+    return unitsStr === "m" || unitsStr === "meter" || unitsStr === "meters";
+  }
+
+  /**
+   * Get if a units string is describing count.
+   *
+   * @param {string} unitsStr - The units string to check.
+   * @returns {boolean} True if this units string represents count and false otherwise.
+   */
+  _isDegrees(unitsStr) {
+    const self = this;
+    return unitsStr === "degree" || unitsStr === "degrees";
   }
 }
 

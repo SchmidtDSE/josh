@@ -15,6 +15,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshInterpreter;
@@ -153,6 +154,13 @@ public class JoshJsSimFacade {
     outputRecord.put("startStr", extractor.getStartStr());
     outputRecord.put("endStr", extractor.getEndStr());
     outputRecord.put("patchName", extractor.getPatchName());
+
+    EngineValue size = extractor.getSize();
+    outputRecord.put("sizeStr", String.format(
+        "%s %s",
+        size.getAsDecimal().toString(),
+        size.getUnits().toString()
+    ));
 
     return MapToMemoryStringConverter.convert("simulationMetadata", outputRecord);
   }

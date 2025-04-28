@@ -1,7 +1,7 @@
 importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
 
-const NUMBER_REGEX = /(\+|\-)?\d+(\.\d+)?/;
+const NUMBER_REGEX = /^(\+|\-)?\d+(\.\d+)?$/;
 
 let wasmLayer = null;
 let postMessage = null;

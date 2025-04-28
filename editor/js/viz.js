@@ -182,4 +182,71 @@ class ScrubPresenter {
 }
 
 
+/**
+ * Heatmap visualization showing the results spatially, one timestep at a time.
+ * 
+ * Visualization showing a grid with one square per patch and which shows one timestep at any given
+ * moment. This is a heatmap with at least one pixel of padding between each cell rendered into an
+ * SVG element whose width in pixels defines the horizontal size of each square and the vertical
+ * size is set to be the same as the horizontal size with the SVG height dynamically updated to fit
+ * the entire graphic. Hovering over a square adds the active class and the value at that cell is
+ * displayed in the information panel. Uses d3.scaleSequential on d3.interpolateBlues.
+ */
+class GridPresenter {
+
+  /**
+   * Create a new heatmap visualization.
+   *
+   * @param {Element} selection - The containing element in which the SVG and info display is found.
+   */
+  constructor(selection) {
+    const self = this;
+    self._infoSelection = selection.querySelector("#grid-viz-info");
+    self._svgSelection = selection.querySelector("#grid-viz");
+    self._d3SvgSelection = d3.select(self._svgSelection);
+  }
+
+  /**
+   * Render the grid visualization.
+   *
+   * Render the grid visualization such that there is one square per patch with the color set
+   * according to value at the current timestep.
+   *
+   * @param {SimulationMetadata} metadata - Metadata about the grid dimensions as read from the
+   *     simulation definition.
+   * @param {SummarizedResult} summarized - The dataset to visualize.
+   * @param {number} timestep - The timestep to visualize.
+   */
+  render(metadata, summarized, timestep) {
+    const self = this;
+    
+    self._showIdleMessage(timestep);
+
+    // TODO
+  }
+
+  /**
+   * Show a message which should be displayed when the user is not hovering over any boxes.
+   *
+   * @param {number} timestep - The timestep for which a value is being displayed.
+   */
+  _showIdleMessage(timestep) {
+    const self = this;
+    self._infoSelection.innerHTML = `Showing results at ${timestep}.`;
+  }
+
+  /**
+   * Show information about a single patch.
+   *
+   * @param {}
+   */
+  _showInfoMessage(x, y, timestep, value) {
+    const self = this;
+    const rounded = value.toFixed(2);
+    self._infoSelection.innerHTML = `Patch ${x}, ${y} has value ${rounded} at time ${timestep}.`;
+  }
+  
+}
+
+
 export {ScrubPresenter};
