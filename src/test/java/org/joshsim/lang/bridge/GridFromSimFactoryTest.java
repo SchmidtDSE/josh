@@ -72,6 +72,35 @@ class GridFromSimFactoryTest {
   }
 
   @Test
+  void testConvertCoordinatesToMeters() {
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
+
+    EngineValueFactory testFactory = new EngineValueFactory();
+    EngineValue gridStartStr = testFactory.build(
+        "1.23 degrees latitude, 1.4 degrees longitude",
+        Units.EMPTY
+    );
+    EngineValue gridEndStr = testFactory.build(
+        "1.3 degrees latitude, 1.5 degrees longitude",
+        Units.EMPTY
+    );
+    EngineValue sizeVal = testFactory.build(1000, Units.METERS);
+
+    when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
+    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
+    when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
+
+    PatchSet result = factory.build(mockSimulation);
+
+    assertNotNull(result, "PatchSet should be created with converted coordinates");
+    assertTrue(result.getSpacing().compareTo(BigDecimal.valueOf(1000)) == 0, 
+        "Grid spacing should be 1000 meters");
+  }
+
+
+  @Test
   void buildWithCustomValues() throws FactoryException {
     CoordinateReferenceSystem crs = CRS.decode("EPSG:4326", true);
     when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(crs));

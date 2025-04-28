@@ -175,7 +175,28 @@ public class GridFromSimFactory {
    * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
    */
   private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
+    BigDecimal width = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getTopLeftY()
+    );
+    BigDecimal height = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getTopLeftX(),
+        extents.getBottomRightY()
+    );
     
+    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+    
+    return new PatchBuilderExtents(
+        BigDecimal.ZERO,
+        BigDecimal.ZERO,
+        gridWidth,
+        gridHeight
+    );
   }
 
 }
