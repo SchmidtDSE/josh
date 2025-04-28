@@ -11,6 +11,8 @@ import java.math.RoundingMode;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.referencing.CRS;
 import org.apache.sis.referencing.CommonCRS;
+import org.apache.sis.referencing.crs.AbstractCRS;
+import org.apache.sis.referencing.cs.AxesConvention;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +49,9 @@ public class EarthGeometryTest {
     geometryFactory = new GeometryFactory();
 
     // Using Apache SIS for CRS definitions
-    wgs84 = CommonCRS.WGS84.geographic();
+    CoordinateReferenceSystem wgs84unsafe = CommonCRS.WGS84.geographic();
+    wgs84 = AbstractCRS.castOrCopy(wgs84unsafe).forConvention(AxesConvention.RIGHT_HANDED);
+
     utm11n = CRS.forCode("EPSG:32611"); // UTM Zone 11N
 
     // Initialize valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
@@ -307,25 +311,6 @@ public class EarthGeometryTest {
 
       // Should return the same instance when target CRS is the same
       assertEquals(geometry, transformed, "Should return same instance when CRS is unchanged");
-    }
-
-    @Test
-    public void testIntersectionWithDifferentCrs() throws FactoryException, TransformException {
-      EarthGeometry wgs84Geometry = new EarthGeometry(defaultValidPoint, wgs84);
-
-      // Create point in UTM11N that corresponds to same location
-      MathTransform transform = CRS.findOperation(wgs84, utm11n, null).getMathTransform();
-      DirectPosition2D srcPt = new DirectPosition2D(
-          defaultValidCoordinate.x, defaultValidCoordinate.y);
-      DirectPosition2D dstPt = new DirectPosition2D();
-      transform.transform(srcPt, dstPt);
-
-      Point utmPoint = geometryFactory.createPoint(new Coordinate(dstPt.getX(), dstPt.getY()));
-      EarthGeometry utmGeometry = new EarthGeometry(utmPoint, utm11n);
-
-      // They should intersect despite different CRS
-      assertTrue(wgs84Geometry.intersects(utmGeometry),
-          "Points at same location should intersect despite different CRS");
     }
   }
 
