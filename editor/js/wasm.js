@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-import {SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
+import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
 
 const EARTH_RADIUS_METERS = 6371000;
 
@@ -198,17 +198,18 @@ class WasmLayer {
    */
   _parseMetadata(input) {
     const self = this;
-    
-    const gridSizeParts = input.getValue("grid.size").split(" ");
+
+    const gridSizeParts = input.getValue("sizeStr").split(" ");
     const gridSize = parseFloat(gridSizeParts[0]);
     const gridUnits = gridSizeParts[1];
 
-    const gridLowParts = input.getValue("grid.low").split(", ");
-    const gridHighParts = input.getValue("grid.high").split(", ");
+    const gridLowParts = input.getValue("startStr").split(", ");
+    const pointUnits = gridLowParts[0].split(" ")[1];
+    const gridHighParts = input.getValue("endStr").split(", ");
     
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
-    if (self._isDegrees(gridUnits)) {
+    if (self._isDegrees(pointUnits) && self._isMeters(gridUnits)) {
       const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
       const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
       const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
@@ -219,11 +220,13 @@ class WasmLayer {
       
       endX = Math.ceil(width / gridSize);
       endY = Math.ceil(height / gridSize);
-    } else {
+    } else if (gridUnits === pointUnits) {
       startX = parseFloat(gridLowParts[0].split(" ")[0]);
       startY = parseFloat(gridLowParts[1].split(" ")[0]);
       endX = parseFloat(gridHighParts[0].split(" ")[0]);
       endY = parseFloat(gridHighParts[1].split(" ")[0]);
+    } else {
+      throw `Cannot use web editor for grid with unequal units ${gridUnits} and ${pointUnits}.`;
     }
 
     return new SimulationMetadata(startX, startY, endX, endY, gridSize);
@@ -244,9 +247,11 @@ class WasmLayer {
     const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
     const deltaLongitude = (endLongitude - startLongitude) * Math.PI / 180;
 
-    const a = Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
-              Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
-              Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2);
+    const a = (
+      Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
+      Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
+      Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2)
+    );
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
     return EARTH_RADIUS * c;

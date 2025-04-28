@@ -4,6 +4,46 @@
  * @license BSD-3-Clause
  */
 
+/**
+ * Strategies for evaluating conditional statements within queries.
+ * 
+ * Set of conditional strateiges where x is the number to be checked, targetA is the first target
+ * from the query being fulfilled, and targetB is the second target from the query being fulfilled.
+ * The targetA will always be specified and acts as the threshold for exceeds and falls below.The
+ * targetB will only be specified for is between. For is between, targetA is the minimum and targetB
+ * is the maximum.
+ */
+const CONDITIONALS = {
+  "exceeds": (x, targetA, targetB) => x > targetA,
+  "falls below": (x, targetA, targetB) => x < targetA,
+  "is between": (x, targetA, targetB) => x >= targetA && x <= targetB
+}
+
+/**
+ * Strategies for generating a user-requested metric keyed by that metric name.
+ *
+ * Strategies for generating a user-requested metric keyed by that metric name where values are the
+ * Array<number>s for which a metric is to be generated, type is the metric type like "exceeds" to
+ * be used in parameterizing that metric, and targets A and B are used as inputs into that metric
+ * generation if applicable.
+ */
+const METRIC_STRATEGIES = {
+  "mean": (values, type, targetA, targetB) => math.mean(values),
+  "median": (values, type, targetA, targetB) => math.median(values),
+  "min": (values, type, targetA, targetB) => math.min(values),
+  "max": (values, type, targetA, targetB) => math.max(values),
+  "std": (values, type, targetA, targetB) => math.std(values),
+  "probability": (values, type, targetA, targetB) => {
+    const conditional = CONDITIONALS[type];
+    const countTotal = values.length;
+
+    const matching = values.filter((candidate) => conditional(candidate, targetA, targetB));
+    const countMatching = matching.length;
+
+    return countMatching / countTotal;
+  }
+};
+
 
 /**
  * Record describing which variable the user wants to analyze and how.
