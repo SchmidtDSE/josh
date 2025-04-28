@@ -6,6 +6,8 @@
 
 import {SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
 
+const EARTH_RADIUS_METERS = 6371000;
+
 
 /**
  * Wrapper class for WebAssembly layer functionality.
@@ -196,6 +198,7 @@ class WasmLayer {
    */
   _parseMetadata(input) {
     const self = this;
+    
     const gridSizeParts = input.getValue("grid.size").split(" ");
     const gridSize = parseFloat(gridSizeParts[0]);
     const gridUnits = gridSizeParts[1];
@@ -238,18 +241,17 @@ class WasmLayer {
    * @return {number} Absolute approximate distance between these two points.
    */
   _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
-    const R = 6371000; // Earth's radius in meters
-    const φ1 = startLatitude * Math.PI / 180;
-    const φ2 = endLatitude * Math.PI / 180;
-    const Δφ = (endLatitude - startLatitude) * Math.PI / 180;
-    const Δλ = (endLongitude - startLongitude) * Math.PI / 180;
+    const angleLatitudeStart = startLatitude * Math.PI / 180;
+    const angleLatitudeEnd = endLatitude * Math.PI / 180;
+    const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
+    const deltaLongitude = (endLongitude - startLongitude) * Math.PI / 180;
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const a = Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
+              Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
+              Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-    return R * c;
+    return EARTH_RADIUS * c;
   }
 
   /**
