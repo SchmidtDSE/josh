@@ -211,7 +211,7 @@ class GridPresenter {
       const outerRect = resultsSelection.getBoundingClientRect();
       const rect = self._svgSelection.getBoundingClientRect();
       const difference = rect.top - outerRect.top;
-      if (difference < 0) {
+      if (difference < 35) {
         self._infoSelection.classList.add("fixed");
         self._infoSelection.style.top = (difference * -1 + 37) + "px";
       } else {
@@ -245,7 +245,7 @@ class GridPresenter {
     const patchSize = metadata.getPatchSize();
     const patchSizeHalf = patchSize / 2;
 
-    const patchPixels = self._getPatchPixels(gridWidth);
+    const patchPixels = self._getPatchPixels(gridWidth, gridHeight);
 
     const totalWidth = (patchPixels + 1) * gridWidth;
     const totalHeight = (patchPixels + 1) * gridHeight;
@@ -256,7 +256,9 @@ class GridPresenter {
     for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
       for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
         const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
-        cells.push({x: x, y: y, value: value});
+        if (value !== null) {
+          cells.push({x: x, y: y, value: value});
+        }
       }
     }
 
@@ -330,20 +332,23 @@ class GridPresenter {
    * visualization, with smaller sizes for larger grids to fit the visualization area.
    *
    * @param {number} gridWidth - The total number of grid patches along the x-axis.
+   * @param {number} gridHeight - The total number of grid patches along the y-axis.
    * @returns {number} - The pixel size for each patch.
    */
-  _getPatchPixels(gridWidth) {
+  _getPatchPixels(gridWidth, gridHeight) {
     const self = this;
 
-    if (gridWidth <= 20) {
+    const largestAxis = Math.max(gridWidth, gridHeight);
+
+    if (largestAxis <= 20) {
       return 25;
-    } else if (gridWidth <= 50) {
+    } else if (largestAxis <= 50) {
       return 20;
-    } else if (gridWidth <= 100) {
+    } else if (largestAxis <= 100) {
       return 15;
-    } else if (gridWidth <= 200) {
+    } else if (largestAxis <= 200) {
       return 10;
-    } else if (gridWidth <= 500) {
+    } else if (largestAxis <= 500) {
       return 5;
     } else {
       return 3;

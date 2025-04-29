@@ -59,16 +59,16 @@
                 <div class="form-group">
                   <div><label for="simulation-name">Simulation:</label></div>
                   <div class="sel long">
-                    <select class="simulation-select"></select>
+                    <select id="simulation-name" name="simulation-name" class="simulation-select"></select>
                   </div>
                 </div>
                 <div class="form-group">
-                  <div><label for="simulation-name">Replicates:</label></div>
-                  <div class="sel long">
-                    <input class="replicates-input" type="number" value="1">
+                  <div><label for="replicates-input">Replicates:</label></div>
+                  <div>
+                    <input id="replicates-input" name="replicates-input" class="replicates-input" type="number" value="1">
                   </div>
                 </div>
-                <div class="dialog-buttons bold-buttons">
+                <div class="dialog-buttons buttons-panel bold-buttons">
                   <a href="#" class="run-button primary">Open</a>
                   <a href="#" class="cancel-button destructive">Cancel</a>
                 </div>
@@ -141,15 +141,70 @@ end simulation
                 <div class="header-button-grid">
                   <h3>Results</h3>
                 
-                  <div id="download-buttons" class="buttons-panel">
+                  <div id="sim-display-buttons" class="buttons-panel sim-wide-panel">
                     <div class="button-holder">
-                      <a class="primary" id="download-button" href="#download">Download</a>
+                      <a class="primary" id="export-button" href="#export">Export</a>
                     </div>
                     <div class="button-holder">
                       <a class="secondary" id="map-button" href="#map">Map</a>
                     </div>
                   </div>
                 </div>
+
+                <dialog id="download-dialog">
+                  <h2>Download Results</h2>
+
+                  <p>This will generate a download to continue analysis of simulation results oustide of this web editor.</p>
+                  
+                  <div class="form-group">
+                    <div>
+                      <label for="download-series-select">Series:</label>
+                    </div>
+                    <div class="sel long">
+                      <select name="download-series-select" id="download-series-select">
+                        <option value="patches" selected>patches</option>
+                        <option value="simulation">simulation</option>
+                        <option value="entities">entities</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div>
+                      <label for="download-type-select">Format:</label>
+                    </div>
+                    <div class="sel long">
+                      <select name="download-type-select" id="download-type-select">
+                        <option value="csv" selected>CSV</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div>
+                      <label for="timeseries-select">Steps:</label>
+                    </div>
+                    <div class="sel long">
+                      <select id="timeseries-select">
+                        <option value="final" selected>final only</option>
+                        <option value="all">all</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group" id="location-option">
+                    <div>
+                      <input type="checkbox" id="geo-export-check" name="geo-export-check">
+                      <label for="geo-export-check">Convert location to degrees</label>
+                    </div>
+                  </div>
+
+                  <div class="dialog-buttons buttons-panel bold-buttons">
+                    <a href="#" class="primary" id="download-uri-button">Download</a>
+                    <a href="#" class="cancel-button destructive">Close</a>
+                  </div>
+                  
+                </dialog>
                 
                 <div id="data-selector">
                   Showing
@@ -234,12 +289,14 @@ end simulation
       {
         "imports": {
           "editor": "/js/editor.js?v=EPOCH",
+          "exporter": "/js/exporter.js?v=EPOCH",
           "file": "/js/file.js?v=EPOCH",
           "main": "/js/main.js?v=EPOCH",
           "model": "/js/model.js?v=EPOCH",
           "results": "/js/results.js?v=EPOCH",
           "run": "/js/run.js?v=EPOCH",
           "summarize": "/js/summarize.js?v=EPOCH",
+          "util": "/js/util.js?v=EPOCH",
           "viz": "/js/viz.js?v=EPOCH",
           "wasm": "/js/wasm.js?v=EPOCH"
         }

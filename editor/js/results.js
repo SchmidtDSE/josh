@@ -4,6 +4,7 @@
  * @license BSD-3-Clause
  */
 
+import {ExportPresenter} from "exporter";
 import {DataQuery, summarizeDatasets} from "summarize";
 import {GridPresenter, ScrubPresenter} from "viz";
 
@@ -21,15 +22,19 @@ class ResultsPresenter {
   constructor(rootId) {
     const self = this;
 
-    self._results = null;
-    self._metadata = null;
     self._root = document.getElementById(rootId);
     self._statusPresenter = new StatusPresenter(self._root.querySelector("#status-panel"));
     self._resultsDisplayPresenter = new ResultsDisplayPresenter(
       self._root.querySelector("#viz-panel"),
       () => self._renderDisplay(self._metadata)
     );
+    self._exportPresenter = new ExportPresenter(
+      self._root.querySelector("#export-button"),
+      self._root.querySelector("#download-dialog")
+    );
 
+    self._results = null;
+    self._metadata = null;
     self._secondsOnStart = null;
   }
 
@@ -68,6 +73,7 @@ class ResultsPresenter {
     self._updateStatus();
     self._updateVariables();
     self._renderDisplay(metadata);
+    self._exportPresenter.setDataset(metadata, results);
   }
 
   /**
@@ -340,6 +346,11 @@ class ResultsDisplayPresenter {
     self._gridPresenter.render(metadata, summary, self._currentTimestep);
   }
 
+  /**
+   * Callback when a step is selected.
+   *
+   * @param {number} step - The timestep selected.
+   */
   _onStepSelected(step) {
     const self = this;
     self._currentTimestep = step;

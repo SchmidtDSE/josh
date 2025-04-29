@@ -30,6 +30,7 @@ class SimulationResult {
   constructor(simResults, simAttributes, patchResults, patchAttributes, entityResults,
         entityAttributes, minX, minY, maxX, maxY) {
     const self = this;
+    
     self._simResults = simResults;
     self._simAttributes = simAttributes;
     self._patchResults = patchResults;
@@ -40,6 +41,52 @@ class SimulationResult {
     self._minY = minY;
     self._maxX = maxX;
     self._maxY = maxY;
+
+    self._getterStrategies = {
+      "simulation": () => self.getSimResults(),
+      "patches": () => self.getPatchResults(),
+      "entities": () => self.getEntityResults()
+    };
+
+    self._variableGetterStrategies = {
+      "simulation": () => self.getSimVariables(),
+      "patches": () => self.getPatchVariables(),
+      "entities": () => self.getEntityVariables()
+    };
+  }
+  
+  /**
+   * Get a series from this replicate given the series' name.
+   *
+   * @param {string} name - The name of the series like simulation or patches.
+   * @returns {Array<OutputDatum>} Array of output records for the requested series.
+   */
+  getSeries(name) {
+    const self = this;
+    const getter = self._getterStrategies[name];
+
+    if (getter === undefined) {
+      throw "Unknown series: " + name;
+    }
+
+    return getter();
+  }
+
+  /**
+   * Get attributes on a series from this replicate given the series' name.
+   *
+   * @param {string} name - The name of the series like simulation or patches.
+   * @returns {Array<string>} Array of attributes on that series.
+   */
+  getVariables(name) {
+    const self = this;
+    const getter = self._variableGetterStrategies[name];
+
+    if (getter === undefined) {
+      throw "Unknown series: " + name;
+    }
+
+    return getter();
   }
 
   /**
@@ -228,14 +275,26 @@ class SimulationMetadata {
    * @param {number} endX - The maximum horizontal position of a patch in grid space.
    * @param {number} endY - The maximum vertical positoin of a patch in grid space.
    * @param {number} patchSize - The size of each patch or cell, typically 1.
+   * @param {?number} minLongitude - The minimum longitude within this grid. Defaults to null.
+   * @param {?number} minLatitude - The minimum latitude within this grid. Defaults to null.
+   * @param {?number} maxLongitude - The maximum longitude within this grid. Defaults to null.
+   * @param {?number} maxLatitude - The maximum latitude within this grid. Defaults to null.
    */
-  constructor(startX, startY, endX, endY, patchSize) {
+  constructor(startX, startY, endX, endY, patchSize, minLongitude, minLatitude, maxLongitude,
+        maxLatitude) {
     const self = this;
     self._startX = startX;
     self._startY = startY;
     self._endX = endX;
     self._endY = endY;
     self._patchSize = patchSize;
+
+    const defaultToNull = (x) => x === undefined ? null : x;
+    
+    self._minLongitude = defaultToNull(minLongitude);
+    self._minLatitude = defaultToNull(minLatitude);
+    self._maxLongitude = defaultToNull(maxLongitude);
+    self._maxLatitude = defaultToNull(maxLatitude);
   }
 
   /**
@@ -288,6 +347,58 @@ class SimulationMetadata {
   getPatchSize() {
     const self = this;
     return self._patchSize;
+  }
+
+  /**
+   * Gets the minimum longitude within this grid.
+   *
+   * @returns {?number} The minimum longitude, or null if grid not defined in degrees.
+   */
+  getMinLongitude() {
+    const self = this;
+    return self._minLongitude;
+  }
+
+  /**
+   * Gets the minimum latitude within this grid.
+   *
+   * @returns {?number} The minimum latitude, or null if grid not defined in degrees.
+   */
+  getMinLatitude() {
+    const self = this;
+    return self._minLatitude;
+  }
+
+  /**
+   * Gets the maximum longitude within this grid.
+   *
+   * @returns {?number} The maximum longitude, or null if grid not defined in degrees.
+   */
+  getMaxLongitude() {
+    const self = this;
+    return self._maxLongitude;
+  }
+
+  /**
+   * Gets the maximum latitude within this grid.
+   *
+   * @returns {?number} The maximum latitude, or null if grid not defined in degrees.
+   */
+  getMaxLatitude() {
+    const self = this;
+    return self._maxLatitude;
+  }
+
+  /**
+   * Determine if this record has latitude and longitude specified.
+   *
+   * @returns {boolean} True if latitude and longitudes are specified and false otherwise.
+   */
+  hasDegrees() {
+    const self = this;
+    const hasLongitude = self.getMinLongitude() !== null && self.getMaxLongitude() !== null;
+    const hasLatitude = self.getMinLatitude() !== null && self.getMaxLatitude() !== null;
+    return hasLongitude && hasLatitude;
   }
   
 }
@@ -414,8 +525,7 @@ class SummarizedResult {
    * @param {number} timestep - The timestep to query.
    * @param {number} x - The x coordinate.
    * @param {number} y - The y coordinate.
-   * @returns {number} The value at the specified grid location.
-   * @throws {Error} If the grid location is not found.
+   * @returns {?number} The value at the specified grid location.
    */
   getGridValue(timestep, x, y) {
     const self = this;
@@ -426,7 +536,7 @@ class SummarizedResult {
     const key = `${timestepRounded},${xRounded},${yRounded}`;
 
     if (!self._gridPerTimestep.has(key)) {
-      throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
+      return null;
     }
 
     return self._gridPerTimestep.get(key);

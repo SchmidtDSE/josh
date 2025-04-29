@@ -5,8 +5,7 @@
  */
 
 import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
-
-const EARTH_RADIUS_METERS = 6371000;
+import {getDistanceMeters} from "util";
 
 
 /**
@@ -209,27 +208,51 @@ class WasmLayer {
     
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
-    if (self._isDegrees(pointUnits) && self._isMeters(gridUnits)) {
-      const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
-      const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
-      const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
-      const highLon = parseFloat(gridHighParts[0].split(" ")[0]);
+    const usesDegrees = self._isDegrees(pointUnits);
+    if (usesDegrees && self._isMeters(gridUnits)) {
+      const lowLongitudeFirst = gridLowParts[0].split(" ")[2] === "longitude";
+      const highLongitudeFirst = gridHighParts[0].split(" ")[2] === "longitude";
+      
+      const lowFirst = parseFloat(gridLowParts[0].split(" ")[0]);
+      const lowSecond = parseFloat(gridLowParts[1].split(" ")[0]);
+      const highFirst = parseFloat(gridHighParts[0].split(" ")[0]);
+      const highSecond = parseFloat(gridHighParts[1].split(" ")[0]);
+
+      const lowLon = lowLongitudeFirst ? lowFirst : lowSecond;
+      const lowLat = lowLongitudeFirst ? lowSecond : lowFirst;
+      const highLon = highLongitudeFirst ? highFirst : highSecond;
+      const highLat = highLongitudeFirst ? highSecond : highFirst;
       
       const width = self._getDistanceMeters(lowLon, lowLat, highLon, lowLat);
       const height = self._getDistanceMeters(lowLon, lowLat, lowLon, highLat);
       
       endX = Math.ceil(width / gridSize);
       endY = Math.ceil(height / gridSize);
+      
+      if (usesDegrees) {
+        return new SimulationMetadata(
+          startX,
+          startY,
+          endX,
+          endY,
+          1,
+          Math.min(lowLon, highLon),
+          Math.min(lowLat, highLat),
+          Math.max(lowLon, highLon),
+          Math.max(lowLat, highLat)
+        );
+      } else {
+        return new SimulationMetadata(startX, startY, endX, endY, gridSize);
+      }
     } else if (gridUnits === pointUnits) {
       startX = parseFloat(gridLowParts[0].split(" ")[0]);
       startY = parseFloat(gridLowParts[1].split(" ")[0]);
       endX = parseFloat(gridHighParts[0].split(" ")[0]);
       endY = parseFloat(gridHighParts[1].split(" ")[0]);
+      return new SimulationMetadata(startX, startY, endX, endY, gridSize);
     } else {
       throw `Cannot use web editor for grid with unequal units ${gridUnits} and ${pointUnits}.`;
     }
-
-    return new SimulationMetadata(startX, startY, endX, endY, gridSize);
   }
 
   /**
@@ -242,19 +265,7 @@ class WasmLayer {
    * @return {number} Absolute approximate distance between these two points.
    */
   _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
-    const angleLatitudeStart = startLatitude * Math.PI / 180;
-    const angleLatitudeEnd = endLatitude * Math.PI / 180;
-    const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
-    const deltaLongitude = (endLongitude - startLongitude) * Math.PI / 180;
-
-    const a = (
-      Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
-      Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
-      Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2)
-    );
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return EARTH_RADIUS * c;
+    return getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude);
   }
 
   /**

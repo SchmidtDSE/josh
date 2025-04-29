@@ -12,7 +12,7 @@ a:hover, a:active {
 }
 
 dialog {
-  max-width: 670px;
+  max-width: 500px;
   z-index: 1;
   font-size: 14px;
 }
@@ -20,9 +20,10 @@ dialog {
 dialog h2 {
   margin-top: 0;
   padding-top: 5px;
-  margin-bottom: 0;
+  margin-bottom: 5px;
   padding-bottom: 5px;
   font-size: 18px;
+  border-bottom: 1px solid #C0C0C0;
 }
 
 dialog label {
@@ -260,7 +261,7 @@ main {
   line-height: 175%;
 }
 
-#download-buttons {
+#sim-display-buttons {
   text-align: right;
 }
 
@@ -289,7 +290,7 @@ main {
   display: none;
 }
 
-#results .buttons-panel {
+#results .sim-wide-panel {
   text-align: right;
 }
 
@@ -423,7 +424,7 @@ main {
 
 @media (max-width: 999px) {
 
-  #download-buttons {
+  #sim-display-buttons {
     margin-top: 5px;
     margin-bottom: 15px;
     padding-top: 10px;
@@ -432,12 +433,12 @@ main {
     border-bottom: 1px dotted #D0D0D0;
   }
   
-  #download-buttons .button-holder {
+  #sim-display-buttons .button-holder {
     margin-top: 20px;
     margin-bottom: 20px;
   }
 
-  #download-buttons .button-holder a {
+  #sim-display-buttons .button-holder a {
     display: block;
   }
   
@@ -462,11 +463,11 @@ main {
     grid-template-columns: 20% 80%;
   }
 
-  #download-buttons {
+  #sim-display-buttons {
     text-align: right;
   }
 
-  #download-buttons .button-holder {
+  #sim-display-buttons .button-holder {
     display: inline-block;
     margin-left: 10px;
   }
