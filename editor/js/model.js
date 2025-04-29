@@ -228,14 +228,26 @@ class SimulationMetadata {
    * @param {number} endX - The maximum horizontal position of a patch in grid space.
    * @param {number} endY - The maximum vertical positoin of a patch in grid space.
    * @param {number} patchSize - The size of each patch or cell, typically 1.
+   * @param {?number} minLongitude - The minimum longitude within this grid. Defaults to null.
+   * @param {?number} minLatitude - The minimum latitude within this grid. Defaults to null.
+   * @param {?number} maxLongitude - The maximum longitude within this grid. Defaults to null.
+   * @param {?number} maxLatitude - The maximum latitude within this grid. Defaults to null.
    */
-  constructor(startX, startY, endX, endY, patchSize, startLongitude, startLatitude, endLongitude, endLatitude) {
+  constructor(startX, startY, endX, endY, patchSize, minLongitude, minLatitude, maxLongitude,
+        maxLatitude) {
     const self = this;
     self._startX = startX;
     self._startY = startY;
     self._endX = endX;
     self._endY = endY;
     self._patchSize = patchSize;
+
+    const defaultToNull = (x) => x === undefined ? null : x;
+    
+    self._minLongitude = defaultToNull(minLongitude);
+    self._minLatitude = defaultToNull(minLatitude);
+    self._maxLongitude = defaultToNull(maxLongitude);
+    self._maxLatitude = defaultToNull(maxLatitude);
   }
 
   /**
@@ -288,6 +300,46 @@ class SimulationMetadata {
   getPatchSize() {
     const self = this;
     return self._patchSize;
+  }
+
+  /**
+   * Gets the minimum longitude within this grid.
+   *
+   * @returns {?number} The minimum longitude, or null if grid not defined in degrees.
+   */
+  getMinLongitude() {
+    const self = this;
+    return self._minLongitude;
+  }
+
+  /**
+   * Gets the minimum latitude within this grid.
+   *
+   * @returns {?number} The minimum latitude, or null if grid not defined in degrees.
+   */
+  getMinLatitude() {
+    const self = this;
+    return self._minLatitude;
+  }
+
+  /**
+   * Gets the maximum longitude within this grid.
+   *
+   * @returns {?number} The maximum longitude, or null if grid not defined in degrees.
+   */
+  getMaxLongitude() {
+    const self = this;
+    return self._maxLongitude;
+  }
+
+  /**
+   * Gets the maximum latitude within this grid.
+   *
+   * @returns {?number} The maximum latitude, or null if grid not defined in degrees.
+   */
+  getMaxLatitude() {
+    const self = this;
+    return self._maxLatitude;
   }
   
 }

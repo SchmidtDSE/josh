@@ -208,7 +208,8 @@ class WasmLayer {
     
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
-    if (self._isDegrees(pointUnits) && self._isMeters(gridUnits)) {
+    const usesDegrees = self._isDegrees(pointUnits);
+    if (usesDegrees && self._isMeters(gridUnits)) {
       const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
       const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
       const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
@@ -219,16 +220,31 @@ class WasmLayer {
       
       endX = Math.ceil(width / gridSize);
       endY = Math.ceil(height / gridSize);
+      
+      if (usesDegrees) {
+        return new SimulationMetadata(
+          startX,
+          startY,
+          endX,
+          endY,
+          gridSize,
+          Math.min(lowLon, highLon),
+          Math.min(lowLat, highLat),
+          Math.max(lowLon, highLon),
+          Math.max(lowLat, highLat)
+        );
+      } else {
+        return new SimulationMetadata(startX, startY, endX, endY, gridSize);
+      }
     } else if (gridUnits === pointUnits) {
       startX = parseFloat(gridLowParts[0].split(" ")[0]);
       startY = parseFloat(gridLowParts[1].split(" ")[0]);
       endX = parseFloat(gridHighParts[0].split(" ")[0]);
       endY = parseFloat(gridHighParts[1].split(" ")[0]);
+      return new SimulationMetadata(startX, startY, endX, endY, gridSize);
     } else {
       throw `Cannot use web editor for grid with unequal units ${gridUnits} and ${pointUnits}.`;
     }
-
-    return new SimulationMetadata(startX, startY, endX, endY, gridSize);
   }
 
   /**
