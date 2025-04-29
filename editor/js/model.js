@@ -525,8 +525,7 @@ class SummarizedResult {
    * @param {number} timestep - The timestep to query.
    * @param {number} x - The x coordinate.
    * @param {number} y - The y coordinate.
-   * @returns {number} The value at the specified grid location.
-   * @throws {Error} If the grid location is not found.
+   * @returns {?number} The value at the specified grid location.
    */
   getGridValue(timestep, x, y) {
     const self = this;
@@ -537,7 +536,7 @@ class SummarizedResult {
     const key = `${timestepRounded},${xRounded},${yRounded}`;
 
     if (!self._gridPerTimestep.has(key)) {
-      throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
+      return null;
     }
 
     return self._gridPerTimestep.get(key);

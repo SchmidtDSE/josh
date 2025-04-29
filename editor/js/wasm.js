@@ -210,10 +210,18 @@ class WasmLayer {
 
     const usesDegrees = self._isDegrees(pointUnits);
     if (usesDegrees && self._isMeters(gridUnits)) {
-      const lowLat = parseFloat(gridLowParts[1].split(" ")[0]);
-      const lowLon = parseFloat(gridLowParts[0].split(" ")[0]);
-      const highLat = parseFloat(gridHighParts[1].split(" ")[0]);
-      const highLon = parseFloat(gridHighParts[0].split(" ")[0]);
+      const lowLongitudeFirst = gridLowParts[0].split(" ")[2] === "longitude";
+      const highLongitudeFirst = gridHighParts[0].split(" ")[2] === "longitude";
+      
+      const lowFirst = parseFloat(gridLowParts[0].split(" ")[0]);
+      const lowSecond = parseFloat(gridLowParts[1].split(" ")[0]);
+      const highFirst = parseFloat(gridHighParts[0].split(" ")[0]);
+      const highSecond = parseFloat(gridHighParts[1].split(" ")[0]);
+
+      const lowLon = lowLongitudeFirst ? lowFirst : lowSecond;
+      const lowLat = lowLongitudeFirst ? lowSecond : lowFirst;
+      const highLon = highLongitudeFirst ? highFirst : highSecond;
+      const highLat = highLongitudeFirst ? highSecond : highFirst;
       
       const width = self._getDistanceMeters(lowLon, lowLat, highLon, lowLat);
       const height = self._getDistanceMeters(lowLon, lowLat, lowLon, highLat);

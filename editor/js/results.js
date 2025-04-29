@@ -346,6 +346,11 @@ class ResultsDisplayPresenter {
     self._gridPresenter.render(metadata, summary, self._currentTimestep);
   }
 
+  /**
+   * Callback when a step is selected.
+   *
+   * @param {number} step - The timestep selected.
+   */
   _onStepSelected(step) {
     const self = this;
     self._currentTimestep = step;

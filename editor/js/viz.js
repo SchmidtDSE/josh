@@ -256,7 +256,9 @@ class GridPresenter {
     for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
       for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
         const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
-        cells.push({x: x, y: y, value: value});
+        if (value !== null) {
+          cells.push({x: x, y: y, value: value});
+        }
       }
     }
 
