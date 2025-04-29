@@ -108,7 +108,8 @@ class MainPresenter {
     const simName = self._currentRequest.getSimName();
 
     self._wasmLayer.getSimulationMetadata(simCode, simName).then(
-      (x) => {
+      (metadata) => {
+        self._metadata = metadata;
         self._executeSingleReplicate(simCode, simName);
       },
       (x) => { self._onError(x); }
@@ -145,7 +146,7 @@ class MainPresenter {
   _onRunComplete() {
     const self = this;
     self._runPresenter.showButtons();
-    self._resultsPresenter.onComplete(self._replicateResults);
+    self._resultsPresenter.onComplete(self._metadata, self._replicateResults);
   }
 
   /**

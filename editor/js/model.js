@@ -144,119 +144,6 @@ class SimulationResult {
 
 }
 
-
-/**
- * Builder for constructing simulation results from individual output records.
- */
-class SimulationResultBuilder {
-
-  /**
-   * Creates a new simulation result builder with empty collections.
-   */
-  constructor() {
-    const self = this;
-    self._simResults = [];
-    self._simAttributes = new Set();
-    self._patchResults = [];
-    self._patchAttributes = new Set();
-    self._entityResults = [];
-    self._entityAttributes = new Set();
-    
-    self._minX = null;
-    self._minY = null;
-    self._maxX = null;
-    self._maxY = null;
-  }
-
-  /**
-   * Adds a single output record to the appropriate collection based on its target type.
-   * 
-   * @param {OutputDatum} result - The output record to add to the builder.
-   */
-  add(result) {
-    const self = this;
-    const targetName = result.getTarget();
-    
-    const targetCollection = {
-      "simulation": self._simResults,
-      "patches": self._patchResults,
-      "entites": self._entityResults
-    }[targetName];
-    targetCollection.push(result);
-
-    const targetAttributes = {
-      "simulation": self._simAttributes,
-      "patches": self._patchAttributes,
-      "entites": self._entityAttributes
-    }[targetName];
-    result.getAttributeNames().forEach((x) => targetAttributes.add(x));
-
-    self._updateBounds(result);
-  }
-
-  /**
-   * Constructs and returns a SimulationResult from the collected output records.
-   * 
-   * @returns {SimulationResult} A new SimulationResult containing all collected records.
-   */
-  build() {
-    const self = this;
-    return new SimulationResult(
-      self._simResults,
-      self._simAttributes,
-      self._patchResults,
-      self._patchAttributes,
-      self._entityResults,
-      self._entityAttributes,
-      self._minX,
-      self._minY,
-      self._maxX,
-      self._maxY
-    );
-  }
-
-  /**
-   * Update the minimum and maximum x and y coordinates seen by this builder.
-   *
-   * Update the minimum and maximum x and y coordinates seen by this builder, using this result's
-   * x and y coordinates as the minimum and maximum if no prior values seen. Note that this uses
-   * position.x and position.y from result. If either position.x or position.y are not found, this
-   * record is ignored.
-   * 
-   * @param {OutputDatum} result - The output record to add to the builder.
-   */
-  _updateBounds(result) {
-    const self = this;
-    
-    const hasPosX = result.hasValue("position.x");
-    const hasPosY = result.hasValue("position.y");
-    const hasPos = hasPosX && hasPosY;
-    if (!hasPos) {
-      return;
-    }
-    
-    const posX = result.getValue("position.x");
-    const posY = result.getValue("position.y");
-
-    if (self._minX === null || posX < self._minX) {
-      self._minX = posX;
-    }
-    
-    if (self._minY === null || posY < self._minY) {
-      self._minY = posY;
-    }
-    
-    if (self._maxX === null || posX > self._maxX) {
-      self._maxX = posX;
-    }
-    
-    if (self._maxY === null || posY > self._maxY) {
-      self._maxY = posY;
-    }
-  }
-
-}
-
 /**
  * Record describing an export from the engine running in WASM or JS emulation.
  */
@@ -348,6 +235,7 @@ class SimulationMetadata {
     self._startY = startY;
     self._endX = endX;
     self._endY = endY;
+    self._patchSize = patchSize;
   }
 
   /**
@@ -374,7 +262,7 @@ class SimulationMetadata {
 
   /**
    * Gets the maximum horizontal position of a patch in grid space.
-   * 
+   * onComplete
    * @returns {number} The ending X coordinate in grid space.
    */
   getEndX() {
@@ -405,4 +293,265 @@ class SimulationMetadata {
 }
 
 
-export {OutputDatum, SimulationMetadata, SimulationResult, SimulationResultBuilder};
+/**
+ * Record describing a result which is summarized according to the instructions of the user.
+ *
+ * Record describing a result which is summarized according to the instructions of the user,
+ * specifically a single metric on a single exported variable which is reported once per patch (cell
+ * within the simluation grid) per timestep.
+ */
+class SummarizedResult {
+
+  /**
+   * Create a new record of a summarized result.
+   *
+   * @param {number} minX - The minimum x coordinate in the result set.
+   * @param {number} minY - The minimum Y coordinate in the result set.
+   * @param {number} maxX - The maximum x coordinate in the result set.
+   * @param {number} maxY - The maximum Y coordinate in the result set.
+   * @param {Map<string, number>} valuePerTimestep - Array where each element corresponds to the
+   *     value requested by the user in which the zeroth element is the first timestep.
+   * @param {Map<string, number>} gridPerTimestep - Cell by cell (patch by patch) values requested
+   *     by the user in which the key is the integer timestep followed by a comma followed by the x
+   *     coordinate followed by a comma followed by the y coordinate where x and y are rounded to
+   *     the nearest hundredth.
+   */
+  constructor(minX, minY, maxX, maxY, valuePerTimestep, gridPerTimestep) {
+    const self = this;
+    self._minX = minX;
+    self._minY = minY;
+    self._maxX = maxX;
+    self._maxY = maxY;
+    self._valuePerTimestep = valuePerTimestep;
+    self._gridPerTimestep = gridPerTimestep;
+    self._timesteps = Array.of(...self._valuePerTimestep.keys());
+  }
+
+  /**
+   * Gets the minimum x coordinate in the result set.
+   * 
+   * @returns {number} The minimum x coordinate.
+   */
+  getMinX() {
+    const self = this;
+    return self._minX;
+  }
+
+  /**
+   * Gets the minimum y coordinate in the result set.
+   * 
+   * @returns {number} The minimum y coordinate.
+   */
+  getMinY() {
+    const self = this;
+    return self._minY;
+  }
+
+  /**
+   * Gets the maximum x coordinate in the result set.
+   * 
+   * @returns {number} The maximum x coordinate.
+   */
+  getMaxX() {
+    const self = this;
+    return self._maxX;
+  }
+
+  /**
+   * Gets the maximum y coordinate in the result set.
+   * 
+   * @returns {number} The maximum y coordinate.
+   */
+  getMaxY() {
+    const self = this;
+    return self._maxY;
+  }
+
+  /**
+   * Gets the timesteps in the result set.
+   * 
+   * @returns {Array<number>} All timesteps found in this result set.
+   */
+  getTimesteps() {
+    const self = this;
+    return self._timesteps;
+  }
+
+  /**
+   * Get the minimum timestep found within this dataset.
+   *
+   * @returns {number} Minimum timestep from this dataset.
+   */
+  getMinTimestep() {
+    const self = this;
+    return math.min(self._timesteps);
+  }
+
+  /**
+   * Get the maximum timestep found within this dataset.
+   *
+   * @returns {number} Maximum timestep from this dataset.
+   */
+  getMaxTimestep() {
+    const self = this;
+    return math.max(self._timesteps);
+  }
+
+  /**
+   * Gets the value for a specific replicate.
+   * 
+   * @param {number} timestep - The timestep to retrieve.
+   * @returns {number} The value for the specified timestep.
+   */
+  getTimestepValue(timestep) {
+    const self = this;
+    return self._valuePerTimestep.get(timestep);
+  }
+
+  /**
+   * Gets the grid value for a specific timestep and coordinate.
+   * 
+   * @param {number} timestep - The timestep to query.
+   * @param {number} x - The x coordinate.
+   * @param {number} y - The y coordinate.
+   * @returns {number} The value at the specified grid location.
+   * @throws {Error} If the grid location is not found.
+   */
+  getGridValue(timestep, x, y) {
+    const self = this;
+
+    const timestepRounded = Math.round(timestep);
+    const xRounded = x.toFixed(2);
+    const yRounded = y.toFixed(2);
+    const key = `${timestepRounded},${xRounded},${yRounded}`;
+
+    if (!self._gridPerTimestep.has(key)) {
+      throw new Error(`Grid value not found for timestep=${timestep}, x=${x}, y=${y}`);
+    }
+
+    return self._gridPerTimestep.get(key);
+  }
+
+}
+
+
+/**
+ * Builder for constructing simulation results from individual output records.
+ */
+class SimulationResultBuilder {
+
+  /**
+   * Creates a new simulation result builder with empty collections.
+   */
+  constructor() {
+    const self = this;
+    self._simResults = [];
+    self._simAttributes = new Set();
+    self._patchResults = [];
+    self._patchAttributes = new Set();
+    self._entityResults = [];
+    self._entityAttributes = new Set();
+
+    self._minX = null;
+    self._minY = null;
+    self._maxX = null;
+    self._maxY = null;
+  }
+
+  /**
+   * Adds a single output record to the appropriate collection based on its target type.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
+  add(result) {
+    const self = this;
+    const targetName = result.getTarget();
+
+    const targetCollection = {
+      "simulation": self._simResults,
+      "patches": self._patchResults,
+      "entites": self._entityResults
+    }[targetName];
+    targetCollection.push(result);
+
+    const targetAttributes = {
+      "simulation": self._simAttributes,
+      "patches": self._patchAttributes,
+      "entites": self._entityAttributes
+    }[targetName];
+    result.getAttributeNames().forEach((x) => targetAttributes.add(x));
+
+    self._updateBounds(result);
+  }
+
+  /**
+   * Constructs and returns a SimulationResult from the collected output records.
+   * 
+   * @returns {SimulationResult} A new SimulationResult containing all collected records.
+   */
+  build() {
+    const self = this;
+    return new SimulationResult(
+      self._simResults,
+      self._simAttributes,
+      self._patchResults,
+      self._patchAttributes,
+      self._entityResults,
+      self._entityAttributes,
+      self._minX,
+      self._minY,
+      self._maxX,
+      self._maxY
+    );
+  }
+
+  /**
+   * Update the minimum and maximum x and y coordinates seen by this builder.
+   *
+   * Update the minimum and maximum x and y coordinates seen by this builder, using this result's
+   * x and y coordinates as the minimum and maximum if no prior values seen. Note that this uses
+   * position.x and position.y from result. If either position.x or position.y are not found, this
+   * record is ignored.
+   * 
+   * @param {OutputDatum} result - The output record to add to the builder.
+   */
+  _updateBounds(result) {
+    const self = this;
+
+    const hasPosX = result.hasValue("position.x");
+    const hasPosY = result.hasValue("position.y");
+    const hasPos = hasPosX && hasPosY;
+    if (!hasPos) {
+      return;
+    }
+
+    const posX = result.getValue("position.x");
+    const posY = result.getValue("position.y");
+
+    if (self._minX === null || posX < self._minX) {
+      self._minX = posX;
+    }
+
+    if (self._minY === null || posY < self._minY) {
+      self._minY = posY;
+    }
+
+    if (self._maxX === null || posX > self._maxX) {
+      self._maxX = posX;
+    }
+
+    if (self._maxY === null || posY > self._maxY) {
+      self._maxY = posY;
+    }
+  }
+
+}
+
+
+export {
+  OutputDatum,
+  SimulationMetadata,
+  SimulationResult,
+  SimulationResultBuilder,
+  SummarizedResult
+};

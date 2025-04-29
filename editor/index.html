@@ -143,13 +143,10 @@ end simulation
                 
                   <div id="download-buttons" class="buttons-panel">
                     <div class="button-holder">
-                      <a class="primary" id="download-patches-button" href="#download-patches">Download Patch Exports</a>
+                      <a class="primary" id="download-button" href="#download">Download</a>
                     </div>
                     <div class="button-holder">
-                      <a class="secondary" id="download-simulation-button" href="#download-simulation">Simulation</a>
-                    </div>
-                    <div class="button-holder">
-                      <a class="secondary" id="download-entity-button" href="#download-entities">Entities</a>
+                      <a class="secondary" id="map-button" href="#map">Map</a>
                     </div>
                   </div>
                 </div>
@@ -201,6 +198,20 @@ end simulation
                 <div class="viz-holder" id="grid-viz-holder">
                   <div id="grid-viz-info"></div>
                   <svg id="grid-viz"></svg>
+                  <table id="grid-legend">
+                    <tr class="label">
+                      <td class="lowest"></td>
+                      <td class="low"></td>
+                      <td class="high"></td>
+                      <td class="highest"></td>
+                    </tr>
+                    <tr class="color">
+                      <td class="lowest"></td>
+                      <td class="low"></td>
+                      <td class="high"></td>
+                      <td class="highest"></td>
+                    </tr>
+                  </table>
                 </div>
                 
               </div>

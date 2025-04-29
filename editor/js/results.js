@@ -5,7 +5,7 @@
  */
 
 import {DataQuery, summarizeDatasets} from "summarize";
-import {ScrubPresenter} from "viz";
+import {GridPresenter, ScrubPresenter} from "viz";
 
 
 /**
@@ -22,11 +22,12 @@ class ResultsPresenter {
     const self = this;
 
     self._results = null;
+    self._metadata = null;
     self._root = document.getElementById(rootId);
     self._statusPresenter = new StatusPresenter(self._root.querySelector("#status-panel"));
     self._resultsDisplayPresenter = new ResultsDisplayPresenter(
       self._root.querySelector("#viz-panel"),
-      () => self._renderDisplay()
+      () => self._renderDisplay(self._metadata)
     );
 
     self._secondsOnStart = null;
@@ -56,15 +57,17 @@ class ResultsPresenter {
 
   /**
    * Handles completion of simulation run, calculating and displaying results.
-   * 
+   *
+   * @param {SimulationMetadata} metadata - The metadata of the simulation being displayed.
    * @param {Array<SimulationResult>} results - Array of simulation results containing output records.
    */
-  onComplete(results) {
+  onComplete(metadata, results) {
     const self = this;
+    self._metadata = metadata;
     self._results = results;
     self._updateStatus();
     self._updateVariables();
-    self._renderDisplay();
+    self._renderDisplay(metadata);
   }
 
   /**
@@ -101,8 +104,10 @@ class ResultsPresenter {
 
   /**
    * Re-render the internal display showing the results.
+   *
+   * @param {SimulationMetadata} metadata - Metadata of the simulation being displayed.
    */
-  _renderDisplay() {
+  _renderDisplay(metadata) {
     const self = this;
 
     if (self._results === null) {
@@ -111,7 +116,7 @@ class ResultsPresenter {
     
     const query = self._resultsDisplayPresenter.getCurrentQuerySelection();
     const summarized = summarizeDatasets(self._results, query);
-    self._resultsDisplayPresenter.render(summarized);
+    self._resultsDisplayPresenter.render(metadata, summarized);
   }
 
   /**
@@ -248,6 +253,10 @@ class ResultsDisplayPresenter {
   constructor(selection, callback) {
     const self = this;
     self._root = selection;
+    self._currentTimestep = null;
+    self._metadata = null;
+    self._summary = null;
+    
     self._dataSelector = new DataQuerySelector(
       self._root.querySelector("#data-selector"),
       () => callback()
@@ -255,6 +264,9 @@ class ResultsDisplayPresenter {
     self._scrubPresenter = new ScrubPresenter(
       self._root.querySelector("#scrub-viz-holder"),
       (step) => self._onStepSelected(step)
+    );
+    self._gridPresenter = new GridPresenter(
+      self._root.querySelector("#grid-viz-holder")
     );
   }
 
@@ -264,6 +276,8 @@ class ResultsDisplayPresenter {
   hide() {
     const self = this;
     self._root.style.display = "none";
+    self._currentTimestep = null;
+    self._metadata = null;
   }
 
   /**
@@ -311,14 +325,25 @@ class ResultsDisplayPresenter {
    *
    * Instruct the visualizations to display a summary which was computed from the underlying raw
    * data using user defined parameters.
+   *
+   * @param {SimulationMetadata} metadata - Metadata about the simulation to be displayed. 
+   * @param {SummarizedResult} summary - The data summarized according to user instructions. 
    */
-  render(summary) {
+  render(metadata, summary) {
     const self = this;
+    self._metadata = metadata;
+    self._summary = summary;
     self._scrubPresenter.render(summary);
+    if (self._currentTimestep === null) {
+      self._currentTimestep = summary.getMaxTimestep();
+    }
+    self._gridPresenter.render(metadata, summary, self._currentTimestep);
   }
 
   _onStepSelected(step) {
     const self = this;
+    self._currentTimestep = step;
+    self._gridPresenter.render(self._metadata, self._summary, step);
   }
   
 }
@@ -415,11 +440,17 @@ class DataQuerySelector {
   _addEventListeners() {
     const self = this;
     self._root.querySelectorAll(".data-select-option").forEach(
-      (elem) => elem.addEventListener("click", (event) => {
-        event.preventDefault();
-        self._updateInternalDisplay();
-        self._callback();
-      })
+      (elem) => {
+        elem.addEventListener("change", (event) => {
+          event.preventDefault();
+          self._updateInternalDisplay();
+          self._callback();
+        });
+        elem.addEventListener("keyup", (event) => {
+          self._updateInternalDisplay();
+          self._callback();
+        });
+      }
     );
   }
   

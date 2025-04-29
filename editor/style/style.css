@@ -308,8 +308,45 @@ main {
   margin-bottom: 10px;
 }
 
+#results #grid-viz-holder {
+  width: 100%;
+  overflow-x: auto;
+  text-align: center;
+}
+
+#results #grid-legend {
+  margin: 20px auto;
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+#results #grid-legend .color td {
+  height: 10px;
+  min-width: 40px;
+}
+
 #results #grid-viz {
   width: 100%;
+  margin: 0 auto;
+}
+
+#results #grid-viz .grid-patch-foreground:hover {
+  stroke: #333333;
+  stroke-weight: 2;
+}
+
+#results #grid-viz-info {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+#results #grid-viz-info.fixed {
+  position: relative;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1;
+  border-bottom: 1px sold #C0C0C0;
 }
 
 #results #scrub-viz {
