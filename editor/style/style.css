@@ -308,8 +308,15 @@ main {
   margin-bottom: 10px;
 }
 
+#results #grid-viz-holder {
+  width: 100%;
+  overflow-x: auto;
+  text-align: center;
+}
+
 #results #grid-viz {
   width: 100%;
+  margin: 0 auto;
 }
 
 #results #scrub-viz {
