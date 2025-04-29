@@ -225,13 +225,22 @@ class GridPresenter {
     self._d3SvgSelection.html("");
     
     const svgBounds = self._svgSelection.getBoundingClientRect();
-    const width = svgBounds.width;
-    
     const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
     const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
 
-    const patchSize = metadata.getPatchSize()
+    const patchSize = metadata.getPatchSize();
     const patchSizeHalf = patchSize / 2;
+    
+    // Determine patch pixel size based on grid width
+    let patchPixels = 10;
+    if (gridWidth > 50 && gridWidth <= 100) {
+      patchPixels = 5;
+    } else if (gridWidth > 100) {
+      patchPixels = 3;
+    }
+    
+    const totalWidth = (patchPixels + 1) * gridWidth;
+    const totalHeight = (patchPixels + 1) * gridHeight;
     
     const cells = [];
     const endXPad = metadata.getEndX() - patchSizeHalf;
@@ -248,33 +257,29 @@ class GridPresenter {
       .domain([Math.min(...values), Math.max(...values)])
       .interpolator(d3.interpolateBlues);
 
-    const bandScale = d3.scaleBand()
-      .domain(Array.from(new Set(cells.map(d => d.x))))
-      .range([0, width])
-      .padding(0.1);
-    const patchSizePixels = bandScale.bandwidth();
+    const xScale = d3.scaleLinear()
+      .domain([metadata.getStartX(), metadata.getEndX()])
+      .range([0, totalWidth]);
+      
+    const yScale = d3.scaleLinear()
+      .domain([metadata.getStartY(), metadata.getEndY()])
+      .range([0, totalHeight]);
     
     const grid = self._d3SvgSelection.selectAll("g")
       .data(cells)
       .enter()
       .append("g")
-      .attr("transform", (d) => {
-        const gridX = bandScale(d.x);
-        const gridY = bandScale(d.y);
-        return `translate(${gridX} ${gridY})`;
-      });
+      .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`);
     
     grid.append("rect")
-      .attr("width", patchSizePixels)
-      .attr("height", patchSizePixels)
+      .attr("width", patchPixels)
+      .attr("height", patchPixels)
       .attr("fill", (d) => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
-
     
-    self._d3SvgSelection.style(
-      "height",
-      (bandScale(metadata.getEndY() - 1) + patchSizePixels + 1) + "px"
-    );
+    self._d3SvgSelection
+      .style("width", totalWidth + "px")
+      .style("height", totalHeight + "px");
   }
 
   /**
