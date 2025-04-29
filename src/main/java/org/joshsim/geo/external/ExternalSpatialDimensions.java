@@ -1,6 +1,7 @@
 package org.joshsim.geo.external;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Container for spatial dimension information of a geospatial data source.
@@ -10,10 +11,9 @@ public class ExternalSpatialDimensions {
   private final String dimensionNameY;
   private final String dimensionNameTime;
   private final String crs;
-  private final BigDecimal[] coordinatesX;
-  private final BigDecimal[] coordinatesY;
-  private final int width;
-  private final int height;
+  private final List<BigDecimal> coordinatesX;
+  private final List<BigDecimal> coordinatesY;
+
   
   /**
    * Constructor for spatial dimensions.
@@ -23,17 +23,14 @@ public class ExternalSpatialDimensions {
           String dimensionNameY,
           String dimensionNameTime,
           String crs,
-          BigDecimal[] coordinatesX, 
-          BigDecimal[] coordinatesY) {
-      
+          List<BigDecimal> coordinatesX, 
+          List<BigDecimal> coordinatesY) {
     this.dimensionNameX = dimensionNameX;
     this.dimensionNameY = dimensionNameY;
     this.dimensionNameTime = dimensionNameTime;
     this.crs = crs;
     this.coordinatesX = coordinatesX;
     this.coordinatesY = coordinatesY;
-    this.width = coordinatesX.length;
-    this.height = coordinatesY.length;
   }
 
   public String getDimensionNameX() {
@@ -52,20 +49,12 @@ public class ExternalSpatialDimensions {
     return crs;
   }
 
-  public BigDecimal[] getCoordinatesX() {
+  public List<BigDecimal> getCoordinatesX() {
     return coordinatesX;
   }
 
-  public BigDecimal[] getCoordinatesY() {
+  public List<BigDecimal> getCoordinatesY() {
     return coordinatesY;
-  }
-
-  public int getWidth() {
-    return width;
-  }
-
-  public int getHeight() {
-    return height;
   }
 
   /**
@@ -74,11 +63,13 @@ public class ExternalSpatialDimensions {
    * @return Array of [minX, minY, maxX, maxY]
    */
   public BigDecimal[] getBounds() {
-    BigDecimal minX = coordinatesX[0];
-    BigDecimal maxX = coordinatesX[coordinatesX.length - 1];
-    BigDecimal minY = coordinatesY[0];
-    BigDecimal maxY = coordinatesY[coordinatesY.length - 1];
-    
+    if (coordinatesX.isEmpty() || coordinatesY.isEmpty()) {
+      return new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO};
+    }
+    BigDecimal minX = coordinatesX.get(0);
+    BigDecimal maxX = coordinatesX.getLast();
+    BigDecimal minY = coordinatesY.get(0);
+    BigDecimal maxY = coordinatesY.getLast();
     return new BigDecimal[] {minX, minY, maxX, maxY};
   }
   
@@ -102,16 +93,16 @@ public class ExternalSpatialDimensions {
     return findClosestIndex(y, coordinatesY);
   }
   
-  private int findClosestIndex(BigDecimal target, BigDecimal[] coordinates) {
-    if (coordinates.length == 0) {
+  private int findClosestIndex(BigDecimal target, List<BigDecimal> coordinates) {
+    if (coordinates.isEmpty()) {
       return -1;
     }
     
     int closestIdx = 0;
-    BigDecimal closestDiff = target.subtract(coordinates[0]).abs();
+    BigDecimal closestDiff = target.subtract(coordinates.get(0)).abs();
     
-    for (int i = 1; i < coordinates.length; i++) {
-      BigDecimal diff = target.subtract(coordinates[i]).abs();
+    for (int i = 1; i < coordinates.size(); i++) {
+      BigDecimal diff = target.subtract(coordinates.get(i)).abs();
       if (diff.compareTo(closestDiff) < 0) {
         closestDiff = diff;
         closestIdx = i;

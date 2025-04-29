@@ -16,8 +16,8 @@ public interface ExternalDataReader extends AutoCloseable {
    * @param sourcePath Path to the data source
    * @throws IOException If there's an error opening the source
    */
-  void open(String sourcePath) throws IOException;
-  
+  public void open(String sourcePath) throws IOException;
+
   /**
    * Gets the available variable names in the data source.
    *
