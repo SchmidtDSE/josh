@@ -230,43 +230,42 @@ class GridPresenter {
     
     const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
     const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
+
+    const patchSize = metadata.getPatchSize()
+    const patchSizeHalf = patchSize / 2;
     
-    const cellWidth = Math.floor((width - 20) / gridWidth);
-    const cellHeight = Math.floor((height - 20) / gridHeight);
-    
-    // Create grid cells
     const cells = [];
-    for (let x = metadata.getStartX(); x <= metadata.getEndX(); x++) {
-      for (let y = metadata.getStartY(); y <= metadata.getEndY(); y++) {
-        try {
-          const value = summarized.getGridValue(timestep, x, y);
-          cells.push({x: x, y: y, value: value});
-        } catch (e) {
-          // Skip cells with no value
-          continue;
-        }
+    const endXPad = metadata.getEndX() + patchSizeHalf;
+    const endYPad = metadata.getEndY() + patchSizeHalf;
+    for (let x = metadata.getStartX(); x <= endXPad; x += patchSize) {
+      for (let y = metadata.getStartY(); y <= endYPad; y += patchSize) {
+        const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
+        cells.push({x: x, y: y, value: value});
       }
     }
     
-    // Create color scale
     const values = cells.map(d => d.value);
     const colorScale = d3.scaleSequential()
       .domain([Math.min(...values), Math.max(...values)])
       .interpolator(d3.interpolateBlues);
-      
-    // Draw grid
+
+    const bandScale = ;
+    const patchSizePixels = ;
+    
     const grid = self._d3SvgSelection.selectAll("g")
       .data(cells)
       .enter()
       .append("g")
-      .attr("transform", d => 
-        `translate(${(d.x - metadata.getStartX()) * cellWidth + 10},
-                  ${(d.y - metadata.getStartY()) * cellHeight + 10})`);
+      .attr("transform", (d) => {
+        const gridX = ;
+        const gridY = ;
+        return `translate(${gridX} ${gridY})`;
+      });
     
     grid.append("rect")
-      .attr("width", cellWidth - 1)
-      .attr("height", cellHeight - 1)
-      .attr("fill", d => colorScale(d.value))
+      .attr("width", patchSizePixels)
+      .attr("height", patchSizePixels)
+      .attr("fill", (d) => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
   }
 
@@ -294,4 +293,4 @@ class GridPresenter {
 }
 
 
-export {ScrubPresenter};
+export {GridPresenter, ScrubPresenter};
