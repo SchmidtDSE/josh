@@ -210,6 +210,12 @@ function buildExportUri(metadata, dataset, command) {
     }
   });
 
+  function addToRows(resultsTarget) {
+    resultsTarget.forEach((result) => {
+      rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, command.shouldConvertLocationToDegrees()));
+    });
+  }
+
   const csvContent = rows.join("\n");
   const filename = `${seriesName}.csv`;
   return `data:text/csv;charset=utf-8;filename=${filename},${encodeURIComponent(csvContent)}`;
@@ -232,12 +238,22 @@ function buildExportUri(metadata, dataset, command) {
  * @returns {string} CSV serialization of this datum with the replicate number included after all
  *     attributesSorted. Does not include a newline.
  */
-function getCsvRow(datum, attributesSorted, replicateNumber) {
+function getCsvRow(datum, attributesSorted, replicateNumber, metadata, convertToDegrees) {
   const values = attributesSorted.map(attr => {
     if (!datum.hasValue(attr)) {
       return "";
     }
-    const value = datum.getValue(attr);
+    let value = datum.getValue(attr);
+    
+    if (convertToDegrees && metadata.hasDegrees()) {
+      if (attr === "position.x" || attr === "position.y") {
+        const x = datum.getValue("position.x");
+        const y = datum.getValue("position.y");
+        const coords = getPositionInDegrees(metadata, x, y);
+        value = attr === "position.x" ? coords.getLongitude() : coords.getLatitude();
+      }
+    }
+    
     if (typeof value === "number") {
       return value.toString();
     } else {
