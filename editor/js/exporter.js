@@ -135,7 +135,38 @@ class ExportCommand {
  * @returns {string} Data URI string containing the entire export.
  */
 function buildExportUri(metadata, dataset, command) {
+  const rows = [];
   
+  // Add header row
+  const attributes = command._seriesNames === 'simulation' ? 
+    dataset[0].getSimulationVariables() :
+    command._seriesNames === 'patches' ?
+    dataset[0].getPatchVariables() :
+    dataset[0].getEntityVariables();
+
+  const attributesSorted = Array.from(attributes).sort();
+  rows.push([...attributesSorted, 'replicate'].join(','));
+
+  // Add data rows
+  dataset.forEach((replicate, replicateNum) => {
+    const results = command._seriesNames === 'simulation' ?
+      replicate.getSimResults() :
+      command._seriesNames === 'patches' ?
+      replicate.getPatchResults() :
+      replicate.getEntityResults();
+
+    if (command._finalOnly) {
+      const lastResult = results[results.length - 1];
+      rows.push(getCsvRow(lastResult, attributesSorted, replicateNum));
+    } else {
+      results.forEach(result => {
+        rows.push(getCsvRow(result, attributesSorted, replicateNum));
+      });
+    }
+  });
+
+  const csvContent = rows.join('\n');
+  return 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
 }
 
 
@@ -156,7 +187,19 @@ function buildExportUri(metadata, dataset, command) {
  *     attributesSorted. Does not include a newline.
  */
 function getCsvRow(datum, attributesSorted, replicateNumber) {
+  const values = attributesSorted.map(attr => {
+    if (!datum.hasValue(attr)) {
+      return '';
+    }
+    const value = datum.getValue(attr);
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    return `"${value.toString().replace(/"/g, '""')}"`;
+  });
   
+  values.push(replicateNumber.toString());
+  return values.join(',');
 }
 
 
@@ -168,11 +211,29 @@ function getCsvRow(datum, attributesSorted, replicateNumber) {
  * @param {SimulationMetadata} metadata - Information about the simulation required to construct a
  *     grid.
  * @param {number} xInCount - The patch-space horizontal coordinate to be converted.
- * @param {number} xInCount - The patch-space vertical coordinate to be converted.
+ * @param {number} yInCount - The patch-space vertical coordinate to be converted.
  * returns {EarthCoordinate} The position converted to Earth-space coordinates.
  */
 function getPositionInDegrees(metadata, xInCount, yInCount) {
+  const minLon = metadata.getMinLongitude();
+  const maxLon = metadata.getMaxLongitude();
+  const minLat = metadata.getMinLatitude();
+  const maxLat = metadata.getMaxLatitude();
   
+  if (minLon === null || maxLon === null || minLat === null || maxLat === null) {
+    throw new Error("Grid not defined in degrees");
+  }
+
+  const gridWidth = metadata.getEndX() - metadata.getStartX();
+  const gridHeight = metadata.getEndY() - metadata.getStartY();
+  
+  const lonRange = maxLon - minLon;
+  const latRange = maxLat - minLat;
+  
+  const longitude = minLon + (xInCount - metadata.getStartX()) * lonRange / gridWidth;
+  const latitude = minLat + (yInCount - metadata.getStartY()) * latRange / gridHeight;
+  
+  return new EarthCoordinate(longitude, latitude);
 }
 
 
