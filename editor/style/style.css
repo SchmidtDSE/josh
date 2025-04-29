@@ -149,6 +149,10 @@ main {
   color: white;
 }
 
+.horiz-scroll-area {
+  overflow-x: auto;
+}
+
 /* Thanks https://codepen.io/code-boxx/pen/RwxbpOz */
 /* MIT License */
 
@@ -311,7 +315,6 @@ main {
 
 #results #grid-viz-holder {
   width: 100%;
-  overflow-x: auto;
   text-align: center;
 }
 
