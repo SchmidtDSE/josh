@@ -194,7 +194,8 @@ function buildExportUri(metadata, dataset, command) {
   });
 
   const csvContent = rows.join("\n");
-  return "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+  const filename = `${seriesName}.csv`;
+  return `data:text/csv;charset=utf-8;filename=${filename},${encodeURIComponent(csvContent)}`;
 }
 
 
