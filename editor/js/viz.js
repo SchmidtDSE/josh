@@ -201,9 +201,23 @@ class GridPresenter {
    */
   constructor(selection) {
     const self = this;
+    self._root = selection;
     self._infoSelection = selection.querySelector("#grid-viz-info");
     self._svgSelection = selection.querySelector("#grid-viz");
     self._d3SvgSelection = d3.select(self._svgSelection);
+
+    const resultsSelection = document.getElementById("results-area");
+    resultsSelection.addEventListener("scroll", () => {
+      const outerRect = resultsSelection.getBoundingClientRect();
+      const rect = self._svgSelection.getBoundingClientRect();
+      const difference = rect.top - outerRect.top;
+      if (difference < 0) {
+        self._infoSelection.classList.add("fixed");
+        self._infoSelection.style.top = (difference * -1 + 37) + "px";
+      } else {
+        self._infoSelection.classList.remove("fixed");
+      }
+    });
   }
 
   /**
@@ -271,6 +285,7 @@ class GridPresenter {
       .attr("height", patchPixels)
       .attr("fill", (d) => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value))
+      .on("mouseout", (event, d) => self._showIdleMessage(timestep))
       .classed("grid-patch-foreground", true);
 
     self._d3SvgSelection
@@ -282,12 +297,10 @@ class GridPresenter {
 
   /**
    * Update the color legend with the current scale values.
-   * 
+   *
    * @param {d3.ScaleSequential} colorScale - The color scale to use for the legend
-   * @private
    */
   _updateLegend(colorScale) {
-    const legendSelector = "#grid-legend";
     const domain = colorScale.domain();
     const step = (domain[1] - domain[0]) / 4;
     const legendValues = [
@@ -298,7 +311,7 @@ class GridPresenter {
       domain[1]
     ];
 
-    const legend = d3.select(legendSelector);
+    const legend = d3.select("#grid-legend");
     legend.select(".color .lowest").style("background-color", colorScale(legendValues[0]));
     legend.select(".color .low").style("background-color", colorScale(legendValues[1]));
     legend.select(".color .high").style("background-color", colorScale(legendValues[3]));
@@ -310,16 +323,27 @@ class GridPresenter {
     legend.select(".label .highest").text(legendValues[4].toFixed(2));
   }
 
+  /**
+   * Determine the pixel size for each grid patch based on the grid width.
+   *
+   * This function returns a pixel size used for each square patch in the grid
+   * visualization, with smaller sizes for larger grids to fit the visualization area.
+   *
+   * @param {number} gridWidth - The total number of grid patches along the x-axis.
+   * @returns {number} - The pixel size for each patch.
+   */
   _getPatchPixels(gridWidth) {
     const self = this;
 
     if (gridWidth <= 20) {
-      return 20;
+      return 25;
     } else if (gridWidth <= 50) {
-      return 15;
+      return 20;
     } else if (gridWidth <= 100) {
-      return 10;
+      return 15;
     } else if (gridWidth <= 200) {
+      return 10;
+    } else if (gridWidth <= 500) {
       return 5;
     } else {
       return 3;
@@ -333,7 +357,7 @@ class GridPresenter {
    */
   _showIdleMessage(timestep) {
     const self = this;
-    self._infoSelection.innerHTML = `Showing results at ${timestep}.`;
+    self._infoSelection.innerHTML = `Showing results at time of ${timestep}.`;
   }
 
   /**

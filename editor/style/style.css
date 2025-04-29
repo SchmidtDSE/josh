@@ -314,6 +314,17 @@ main {
   text-align: center;
 }
 
+#results #grid-legend {
+  margin: 20px auto;
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+#results #grid-legend .color td {
+  height: 10px;
+  min-width: 40px;
+}
+
 #results #grid-viz {
   width: 100%;
   margin: 0 auto;
@@ -324,18 +335,18 @@ main {
   stroke-weight: 2;
 }
 
-#results #grid-viz #grid-legend {
+#results #grid-viz-info {
   margin-top: 20px;
   margin-bottom: 20px;
 }
 
-#results #grid-viz #grid-legend .color td {
-  min-height: 10px;
-}
-
-#results #grid-viz #grid-viz-info {
-  margin-top: 20px;
-  margin-bottom: 20px;
+#results #grid-viz-info.fixed {
+  position: relative;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1;
+  border-bottom: 1px sold #C0C0C0;
 }
 
 #results #scrub-viz {
