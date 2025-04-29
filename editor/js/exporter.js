@@ -182,6 +182,7 @@ class ExportCommand {
  * @returns {string} Data URI string containing the entire export.
  */
 function buildExportUri(metadata, dataset, command) {
+  const convertToDegrees = command.shouldConvertLocationToDegrees();
   const rows = [];
 
   if (dataset.length == 0) {
@@ -202,7 +203,7 @@ function buildExportUri(metadata, dataset, command) {
 
     const addToRows = (resultsTarget) => {
       resultsTarget.forEach((result) => {
-        rows.push(getCsvRow(result, attributesSorted, replicateNum));
+        rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, convertToDegrees));
       });
     };
 
@@ -215,7 +216,6 @@ function buildExportUri(metadata, dataset, command) {
     }
   });
 
-  const convertToDegrees = command.shouldConvertLocationToDegrees();
   const addToRows = (resultsTarget) => {
     resultsTarget.forEach((result) => {
       rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, convertToDegrees));
