@@ -27,6 +27,7 @@ class ExportPresenter {
     self._dialog = dialog;
     self._seriesSelect = self._dialog.querySelector("#download-series-select");
     self._stepsSelect = self._dialog.querySelector("#timeseries-select");
+    self._locationOption = self._dialog.querySelector("#location-option");
     self._convertLocationToDegreesCheck = self._dialog.querySelector("#geo-export-check");
     self._downloadLink = self._dialog.querySelector("#download-uri-button");
     self._cancelLink = self._dialog.querySelector(".cancel-button");
@@ -50,7 +51,11 @@ class ExportPresenter {
     const self = this;
     self._metadata = metadata;
     self._dataset = dataset;
+
+    self._locationOption.style.display = metadata.hasDegrees() ? "block" : "none";
+    
     self._downloadLink.style.display = "inline-block";
+    
     self._updateDownloadDataUri();
   }
 
@@ -210,9 +215,10 @@ function buildExportUri(metadata, dataset, command) {
     }
   });
 
-  function addToRows(resultsTarget) {
+  const convertToDegrees = command.shouldConvertLocationToDegrees();
+  const addToRows = (resultsTarget) => {
     resultsTarget.forEach((result) => {
-      rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, command.shouldConvertLocationToDegrees()));
+      rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, convertToDegrees));
     });
   }
 
@@ -235,23 +241,27 @@ function buildExportUri(metadata, dataset, command) {
  *     which those attributes should appear in the result.
  * @param {number} replicateNumber - An integer uniquely indicating the replicate from which this
  *     datum was taken.
+ * @param {SimulationMetadata} metadata - Metadata containing the simulation details required for
+ *     degree conversions.
+ * @param {boolean} convertToDegrees - Flag indicating whether or not location coordinates should
+ *     be converted to degrees.
  * @returns {string} CSV serialization of this datum with the replicate number included after all
  *     attributesSorted. Does not include a newline.
  */
 function getCsvRow(datum, attributesSorted, replicateNumber, metadata, convertToDegrees) {
-  const values = attributesSorted.map(attr => {
+  const convertToDegreesActive = convertToDegrees && metadata.hasDegrees();
+  const values = attributesSorted.map((attr) => {
     if (!datum.hasValue(attr)) {
       return "";
     }
     let value = datum.getValue(attr);
-    
-    if (convertToDegrees && metadata.hasDegrees()) {
-      if (attr === "position.x" || attr === "position.y") {
-        const x = datum.getValue("position.x");
-        const y = datum.getValue("position.y");
-        const coords = getPositionInDegrees(metadata, x, y);
-        value = attr === "position.x" ? coords.getLongitude() : coords.getLatitude();
-      }
+
+    const isPosition = attr === "position.x" || attr === "position.y";
+    if (convertToDegreesActive && isPosition) {
+      const x = datum.getValue("position.x");
+      const y = datum.getValue("position.y");
+      const coords = getPositionInDegrees(metadata, x, y);
+      value = attr === "position.x" ? coords.getLongitude() : coords.getLatitude();
     }
     
     if (typeof value === "number") {
