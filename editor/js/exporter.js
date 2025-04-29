@@ -116,9 +116,36 @@ class ExportCommand {
    */
   constructor(seriesName, finalOnly, convertLocationToDegrees) {
     const self = this;
-    self._seriesNames = seriesNames;
+    self._seriesNames = seriesName;
     self._finalOnly = finalOnly;
     self._convertLocationToDegrees = convertLocationToDegrees;
+  }
+
+  /**
+   * Get the name of the series to be exported.
+   * @returns {string} Name of the series (simulation, patches, or entities).
+   */
+  getSeriesName() {
+    const self = this;
+    return self._seriesNames;
+  }
+
+  /**
+   * Check if only the final timestep should be exported.
+   * @returns {boolean} True if only final timestep should be exported, false for all timesteps.
+   */
+  isFinalOnly() {
+    const self = this;
+    return self._finalOnly;
+  }
+
+  /**
+   * Check if locations should be converted to degrees.
+   * @returns {boolean} True if locations should be converted to degrees.
+   */
+  shouldConvertLocationToDegrees() {
+    const self = this;
+    return self._convertLocationToDegrees;
   }
   
 }
@@ -138,9 +165,9 @@ function buildExportUri(metadata, dataset, command) {
   const rows = [];
   
   // Add header row
-  const attributes = command._seriesNames === 'simulation' ? 
+  const attributes = command.getSeriesName() === 'simulation' ? 
     dataset[0].getSimulationVariables() :
-    command._seriesNames === 'patches' ?
+    command.getSeriesName() === 'patches' ?
     dataset[0].getPatchVariables() :
     dataset[0].getEntityVariables();
 
@@ -149,13 +176,13 @@ function buildExportUri(metadata, dataset, command) {
 
   // Add data rows
   dataset.forEach((replicate, replicateNum) => {
-    const results = command._seriesNames === 'simulation' ?
+    const results = command.getSeriesName() === 'simulation' ?
       replicate.getSimResults() :
-      command._seriesNames === 'patches' ?
+      command.getSeriesName() === 'patches' ?
       replicate.getPatchResults() :
       replicate.getEntityResults();
 
-    if (command._finalOnly) {
+    if (command.isFinalOnly()) {
       const lastResult = results[results.length - 1];
       rows.push(getCsvRow(lastResult, attributesSorted, replicateNum));
     } else {
