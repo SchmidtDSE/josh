@@ -231,13 +231,7 @@ class GridPresenter {
     const patchSize = metadata.getPatchSize();
     const patchSizeHalf = patchSize / 2;
     
-    // Determine patch pixel size based on grid width
-    let patchPixels = 10;
-    if (gridWidth > 50 && gridWidth <= 100) {
-      patchPixels = 5;
-    } else if (gridWidth > 100) {
-      patchPixels = 3;
-    }
+    const patchPixels = self._getPatchPixels(gridWidth);
     
     const totalWidth = (patchPixels + 1) * gridWidth;
     const totalHeight = (patchPixels + 1) * gridHeight;
@@ -247,7 +241,7 @@ class GridPresenter {
     const endYPad = metadata.getEndY() - patchSizeHalf;
     for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
       for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
-        const value = summarized.getGridValue(timestep - 1, x + patchSizeHalf, y + patchSizeHalf);
+        const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
         cells.push({x: x, y: y, value: value});
       }
     }
@@ -269,17 +263,35 @@ class GridPresenter {
       .data(cells)
       .enter()
       .append("g")
-      .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`);
+      .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`)
+      .classed("grid-patch", true);
     
     grid.append("rect")
       .attr("width", patchPixels)
       .attr("height", patchPixels)
       .attr("fill", (d) => colorScale(d.value))
-      .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
+      .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value))
+      .classed("grid-patch-foreground", true);
     
     self._d3SvgSelection
       .style("width", totalWidth + "px")
       .style("height", totalHeight + "px");
+  }
+
+  _getPatchPixels(gridWidth) {
+    const self = this;
+
+    if (gridWidth <= 20) {
+      return 20;
+    } else if (gridWidth <= 50) {
+      return 15;
+    } else if (gridWidth <= 100) {
+      return 10;
+    } else if (gridWidth <= 200) {
+      return 5;
+    } else {
+      return 3;
+    }
   }
 
   /**
