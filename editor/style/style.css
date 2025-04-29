@@ -260,7 +260,7 @@ main {
   line-height: 175%;
 }
 
-#download-buttons {
+#sim-display-buttons {
   text-align: right;
 }
 
@@ -423,7 +423,7 @@ main {
 
 @media (max-width: 999px) {
 
-  #download-buttons {
+  #sim-display-buttons {
     margin-top: 5px;
     margin-bottom: 15px;
     padding-top: 10px;
@@ -432,12 +432,12 @@ main {
     border-bottom: 1px dotted #D0D0D0;
   }
   
-  #download-buttons .button-holder {
+  #sim-display-buttons .button-holder {
     margin-top: 20px;
     margin-bottom: 20px;
   }
 
-  #download-buttons .button-holder a {
+  #sim-display-buttons .button-holder a {
     display: block;
   }
   
@@ -462,11 +462,11 @@ main {
     grid-template-columns: 20% 80%;
   }
 
-  #download-buttons {
+  #sim-display-buttons {
     text-align: right;
   }
 
-  #download-buttons .button-holder {
+  #sim-display-buttons .button-holder {
     display: inline-block;
     margin-left: 10px;
   }
