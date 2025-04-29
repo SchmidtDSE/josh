@@ -62,6 +62,7 @@ class SimulationResult {
    * @returns {Array<OutputDatum>} Array of output records for the requested series.
    */
   getSeries(name) {
+    const self = this;
     const getter = self._getterStrategies[name];
 
     if (getter === undefined) {
@@ -78,6 +79,7 @@ class SimulationResult {
    * @returns {Array<string>} Array of attributes on that series.
    */
   getVariables(name) {
+    const self = this;
     const getter = self._variableGetterStrategies[name];
 
     if (getter === undefined) {

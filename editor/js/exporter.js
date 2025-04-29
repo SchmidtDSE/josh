@@ -60,14 +60,26 @@ class ExportPresenter {
   _attachListeners() {
     const self = this;
     
-    self._exportButton.addEventListener("click", function(event) {
+    self._exportButton.addEventListener("click", (event) => {
         event.preventDefault();
         self._dialog.showModal();
     });
 
-    self._cancelLink.addEventListener("click", function(event) {
+    self._cancelLink.addEventListener("click", (event) => {
         event.preventDefault();
         self._dialog.close();
+    });
+
+    self._seriesSelect.addEventListener("change", () => {
+        self._updateDownloadDataUri();
+    });
+
+    self._stepsSelect.addEventListener("change", () => {
+        self._updateDownloadDataUri();
+    });
+
+    self._convertLocationToDegreesCheck.addEventListener("change", () => {
+        self._updateDownloadDataUri();
     });
   }
 
@@ -77,7 +89,7 @@ class ExportPresenter {
   _updateDownloadDataUri() {
     const self = this;
     const exportCommand = self._buildExportCommand();
-    const dataUri = buildExportUri(command, self._dataset);
+    const dataUri = buildExportUri(self._metadata, self._dataset, exportCommand);
     self._downloadLink.href = dataUri;
   }
 
@@ -183,13 +195,18 @@ function buildExportUri(metadata, dataset, command) {
   dataset.forEach((replicate, replicateNum) => {
     const results = replicate.getSeries(seriesName);
 
-    if (command.isFinalOnly()) {
-      const lastResult = results[results.length - 1];
-      rows.push(getCsvRow(lastResult, attributesSorted, replicateNum));
-    } else {
-      results.forEach(result => {
+    const addToRows = (resultsTarget) => {
+      resultsTarget.forEach((result) => {
         rows.push(getCsvRow(result, attributesSorted, replicateNum));
       });
+    };
+
+    if (command.isFinalOnly()) {
+      const lastStep = Math.max(...results.map((x) => x.getValue("step")));
+      const lastStepResults = results.filter((x) => x.getValue("step") == lastStep);
+      addToRows(lastStepResults);
+    } else {
+      addToRows(results);
     }
   });
 

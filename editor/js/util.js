@@ -16,7 +16,7 @@ const EARTH_RADIUS_METERS = 6371000;
  * @param {number} endLatitude - The latitude of the end point.
  * @returns {number} The distance between the start and end coordinates, in meters.
  */
-getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
+function getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
   const angleLatitudeStart = startLatitude * Math.PI / 180;
   const angleLatitudeEnd = endLatitude * Math.PI / 180;
   const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
