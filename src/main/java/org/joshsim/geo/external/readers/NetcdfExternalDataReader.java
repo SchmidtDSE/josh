@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.checkerframework.checker.units.qual.UnitsBottom;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -29,11 +30,27 @@ import ucar.nc2.Variable;
  */
 public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
+  private final EngineValueFactory valueFactory;
+  private Units units;
+
+  // Dimension names
   private String dimNameX;
   private String dimNameY;
   private String dimNameTime;
+
+  // Coordinate reference system (if applicable)
   private String crsCode;
-  private final EngineValueFactory valueFactory;
+  
+  // Bounds
+  private BigDecimal minX;
+  private BigDecimal maxX;
+  private BigDecimal minY;
+  private BigDecimal maxY;
+  private BigDecimal extendedMinX;
+  private BigDecimal extendedMaxX;
+  private BigDecimal extendedMinY;
+  private BigDecimal extendedMaxY;
+  private BigDecimal boundBuffer = new BigDecimal("0.1"); // 10% buffer by default
   
   /**
    * Constructs a NetcdfExternalDataReader with the specified value factory.
@@ -158,6 +175,11 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       }
     }
     
+    // Try to extract bounds from metadata
+    if (success && dimNameX != null && dimNameY != null) {
+      initializeBounds();
+    }
+
     return success && dimNameX != null && dimNameY != null;
   }
 
@@ -250,6 +272,15 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         return Optional.empty();
       }
       
+      // Check if coordinates are within extended bounds
+      if (extendedMinX != null && extendedMaxX != null && 
+          extendedMinY != null && extendedMaxY != null) {
+        if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0 ||
+            y.compareTo(extendedMinY) < 0 || y.compareTo(extendedMaxY) > 0) {
+          return Optional.empty(); // Coordinates outside extended bounds
+        }
+      }
+      
       // Get dimensions
       ExternalSpatialDimensions dimensions = getSpatialDimensions();
       
@@ -261,167 +292,406 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         return Optional.empty();
       }
       
-      // Find origin for reading data and verify time dimension is valid
-      int[] originAndShape = findOriginAndShape(var, indexX, indexY, timeStep);
-      if (originAndShape == null) {
-        return Optional.empty(); // Time step out of bounds or other issue
+      // Determine the shape of the variable
+      int[] shape = var.getShape();
+      int rank = var.getRank();
+      
+      // Find the index positions of X, Y, and time dimensions
+      List<Dimension> varDims = var.getDimensions();
+      int xDimIdx = -1;
+      int yDimIdx = -1;
+      int timeDimIdx = -1;
+      
+      for (int i = 0; i < varDims.size(); i++) {
+        Dimension dim = varDims.get(i);
+        if (dim.getShortName().equals(dimNameX) || dim.getName().equals(dimNameX)) {
+          xDimIdx = i;
+        } else if (dim.getShortName().equals(dimNameY) || dim.getName().equals(dimNameY)) {
+          yDimIdx = i;
+        } else if (dimNameTime != null && 
+            (dim.getShortName().equals(dimNameTime) || dim.getName().equals(dimNameTime))) {
+          timeDimIdx = i;
+        }
       }
       
-      int[] origin = Arrays.copyOfRange(originAndShape, 0, var.getRank());
-      int[] shape = Arrays.copyOfRange(originAndShape, var.getRank(), originAndShape.length);
+      // Check if we found the dimensions in this variable
+      if (xDimIdx < 0 || yDimIdx < 0) {
+        return Optional.empty(); // Can't locate dimensions in this variable
+      }
       
-      // Read the single data point
-      Array data = var.read(origin, shape);
+      // Create the section specification for reading just the value we want
+      int[] origin = new int[rank];
+      int[] size = new int[rank];
+      
+      for (int i = 0; i < rank; i++) {
+        if (i == xDimIdx) {
+          origin[i] = indexX;
+          size[i] = 1;
+        } else if (i == yDimIdx) {
+          origin[i] = indexY;
+          size[i] = 1;
+        } else if (i == timeDimIdx) {
+          // Use the provided time step if the variable has a time dimension
+          if (timeStep >= 0 && timeStep < shape[i]) {
+            origin[i] = timeStep;
+          } else {
+            return Optional.empty(); // Time step out of bounds
+          }
+          size[i] = 1;
+        } else {
+          // For other dimensions, read the first element only
+          origin[i] = 0;
+          size[i] = 1;
+        }
+      }
+      
+      // Read the value from the file
+      Array data;
+      try {
+        data = var.read(origin, size).reduce();
+      } catch (InvalidRangeException e) {
+        return Optional.empty(); // Requested coordinates are invalid
+      }
+      
+      if (data.getSize() != 1) {
+        return Optional.empty(); // Expected a single value
+      }
+      
+      // Get the value and check for missing/fill values
       double value = data.getDouble(0);
       
-      // Validate the value (check for missing values or NaN)
-      if (!isValidValue(var, value)) {
+      // Check for NaN or missing value
+      if (Double.isNaN(value)) {
         return Optional.empty();
       }
       
-      // Extract units and create EngineValue
-      org.joshsim.engine.value.converter.Units units = extractUnits(var);
-      return Optional.of(valueFactory.build(new BigDecimal(value), units));
+      // Check for _FillValue or missing_value attribute
+      Attribute fillValueAttr = var.findAttribute("_FillValue");
+      if (fillValueAttr != null && value == fillValueAttr.getNumericValue().doubleValue()) {
+        return Optional.empty();
+      }
+      
+      Attribute missingValueAttr = var.findAttribute("missing_value");
+      if (missingValueAttr != null && value == missingValueAttr.getNumericValue().doubleValue()) {
+        return Optional.empty();
+      }
+      
+      // Get the unit if available
+      String unit = null;
+      Attribute unitAttr = var.findAttribute("units");
+      if (unitAttr != null) {
+        unit = unitAttr.getStringValue();
+      }
+      
+      // Get units and bigdecimal value
+      Units units = new Units(unit);
+      BigDecimal bigDecimalValue = new BigDecimal(value).setScale(6, RoundingMode.HALF_UP);
+      
+      // Create an EngineValue with the result
+      EngineValue result = valueFactory.build(bigDecimalValue, units);
+      return Optional.of(result);
       
     } catch (Exception e) {
       throw new IOException("Failed to read value: " + e.getMessage(), e);
     }
   }
-  
+
   /**
-   * Extracts units information from variable metadata.
-   *
-   * @param var The NetCDF variable
-   * @return Units object representing the variable's units
+   * Initializes the coordinate bounds, trying to extract them from NetCDF metadata first,
+   * then falling back to calculating from coordinate arrays.
    */
-  private Units extractUnits(Variable var) {
-    Attribute unitsAttr = var.findAttribute("units");
-    if (unitsAttr != null && unitsAttr.isString()) {
-      return new org.joshsim.engine.value.converter.Units(unitsAttr.getStringValue());
-    }
-    
-    // Try alternate attribute names
-    String[] unitAttributeNames = {"unit", "Unit", "UNITS"};
-    for (String attrName : unitAttributeNames) {
-      Attribute attr = var.findAttribute(attrName);
-      if (attr != null && attr.isString()) {
-        return new org.joshsim.engine.value.converter.Units(attr.getStringValue());
+  private void initializeBounds() {
+    try {
+      // Get X and Y coordinate variables
+      Variable varX = ncFile.findVariable(dimNameX);
+      Variable varY = ncFile.findVariable(dimNameY);
+      
+      boolean boundsFound = false;
+      
+      // Try to get bounds from CF convention attributes
+      boundsFound = extractBoundsFromAttribute(varX, varY, "valid_range");
+      
+      // Alternative: look for actual_range attribute
+      if (!boundsFound) {
+        boundsFound = extractBoundsFromAttribute(varX, varY, "actual_range");
       }
+      
+      // If bounds not found in metadata, calculate from coordinate arrays
+      if (!boundsFound) {
+        calculateBoundsFromArrays(varX, varY);
+      }
+      
+      // Calculate extended bounds with buffer
+      calculateExtendedBounds();
+
+    } catch (Exception e) {
+      // If bounds initialization fails, clear all bounds
+      resetAllBounds();
     }
-    
-    return Units.EMPTY;
   }
   
   /**
-   * Determines if a value is valid (not NaN or a fill/missing value).
-   *
-   * @param var The NetCDF variable
-   * @param value The value to check
-   * @return true if the value is valid, false otherwise
+   * Tries to extract bounds from a specific attribute in the coordinate variables.
+   * 
+   * @param varX The X coordinate variable
+   * @param varY The Y coordinate variable
+   * @param attributeName The attribute name to check for bounds
+   * @return true if bounds were successfully extracted, false otherwise
    */
-  private boolean isValidValue(Variable var, double value) {
-    // Check for NaN
-    if (Double.isNaN(value)) {
-      return false;
-    }
+  private boolean extractBoundsFromAttribute(Variable varX, Variable varY, String attributeName) {
+    Attribute boundsX = varX.findAttribute(attributeName);
+    Attribute boundsY = varY.findAttribute(attributeName);
     
-    // Check for fill/missing values
-    String[] fillValueAttrs = {"_FillValue", "missing_value", "FillValue"};
-    for (String attrName : fillValueAttrs) {
-      Attribute attr = var.findAttribute(attrName);
-      if (attr != null) {
-        try {
-          double fillValue = attr.getNumericValue().doubleValue();
-          if (Math.abs(value - fillValue) < 1e-10) {
-            return false;
-          }
-        } catch (Exception e) {
-          // Attribute is not numeric or cannot be converted to double, skip it
-        }
+    if (boundsX != null && boundsY != null && boundsX.isArray() && boundsY.isArray()) {
+      try {
+        minX = new BigDecimal(boundsX.getValues().getDouble(0))
+            .setScale(6, RoundingMode.HALF_UP);
+        maxX = new BigDecimal(boundsX.getValues().getDouble(1))
+            .setScale(6, RoundingMode.HALF_UP);
+        minY = new BigDecimal(boundsY.getValues().getDouble(0))
+            .setScale(6, RoundingMode.HALF_UP);
+        maxY = new BigDecimal(boundsY.getValues().getDouble(1))
+            .setScale(6, RoundingMode.HALF_UP);
+        return true;
+      } catch (Exception e) {
+        // Couldn't parse bounds from attributes
+        return false;
       }
     }
-    
-    return true;
-  }
-  
-  /**
-   * Finds the origin and shape arrays for reading data from a variable.
-   *
-   * @param var The NetCDF variable
-   * @param indexX The index for the X dimension
-   * @param indexY The index for the Y dimension
-   * @param timeStep The time step index
-   * @return An array containing origin and shape arrays concatenated, or null if invalid
-   */
-  private int[] findOriginAndShape(
-        Variable var,
-        int indexX,
-        int indexY,
-        int timeStep
-  ) {
-    List<Dimension> varDims = var.getDimensions();
-    int[] origin = new int[var.getRank()];
-    int[] shape = new int[var.getRank()];
-    Arrays.fill(shape, 1); // We're reading a single point
-    
-    // Map the variable dimensions to the X, Y, and time dimensions
-    for (int d = 0; d < var.getRank(); d++) {
-      Dimension dim = varDims.get(d);
-      if (dim.getShortName().equals(dimNameX)) {
-        origin[d] = indexX;
-      } else if (dim.getShortName().equals(dimNameY)) {
-        origin[d] = indexY;
-      } else if (dimNameTime != null && dim.getShortName().equals(dimNameTime)) {
-        // Only set time step if we have a time dimension and it's part of this variable
-        if (timeStep >= dim.getLength()) {
-          return null; // Time step out of bounds
-        }
-        origin[d] = timeStep;
-      }
-    }
-    
-    // Concatenate origin and shape into a single array for return
-    int[] result = new int[origin.length + shape.length];
-    System.arraycopy(origin, 0, result, 0, origin.length);
-    System.arraycopy(shape, 0, result, origin.length, shape.length);
-    
-    return result;
-  }
-  
-  public boolean canHandle(String filePath) {
-    return filePath.toLowerCase().endsWith(".nc") || 
-           filePath.toLowerCase().endsWith(".ncf") || 
-           filePath.toLowerCase().endsWith(".netcdf") || 
-           filePath.toLowerCase().endsWith(".nc4");
+    return false;
   }
 
-  public void close() throws IOException {
-    if (ncFile != null) {
-      ncFile.close();
-      ncFile = null;
+  /**
+   * Calculates bounds by analyzing the values in coordinate arrays.
+   *
+   * @param varX The X coordinate variable
+   * @param varY The Y coordinate variable
+   * @throws IOException If there is an error reading the data
+   */
+  private void calculateBoundsFromArrays(Variable varX, Variable varY) throws IOException {
+    // Read coordinate values
+    Array arrayX = varX.read();
+    Array arrayY = varY.read();
+    
+    // Find min and max values
+    double valMinX = Double.MAX_VALUE;
+    double valMaxX = -Double.MAX_VALUE;
+    double valMinY = Double.MAX_VALUE;
+    double valMaxY = -Double.MAX_VALUE;
+    
+    for (int i = 0; i < arrayX.getSize(); i++) {
+      double val = arrayX.getDouble(i);
+      if (val < valMinX) valMinX = val;
+      if (val > valMaxX) valMaxX = val;
     }
+    
+    for (int i = 0; i < arrayY.getSize(); i++) {
+      double val = arrayY.getDouble(i);
+      if (val < valMinY) valMinY = val;
+      if (val > valMaxY) valMaxY = val;
+    }
+    
+    minX = new BigDecimal(valMinX).setScale(6, RoundingMode.HALF_UP);
+    maxX = new BigDecimal(valMaxX).setScale(6, RoundingMode.HALF_UP);
+    minY = new BigDecimal(valMinY).setScale(6, RoundingMode.HALF_UP);
+    maxY = new BigDecimal(valMaxY).setScale(6, RoundingMode.HALF_UP);
   }
   
   /**
-   * Ensures the file is open before operations.
+   * Calculates extended bounds by applying a buffer percentage to the actual bounds.
+   * Extended bounds create a small margin outside the actual data extent for better queries.
+   */
+  private void calculateExtendedBounds() {
+    // Skip if bounds weren't properly initialized
+    if (minX == null || maxX == null || minY == null || maxY == null) {
+      return;
+    }
+    
+    // Apply special case for WGS84 coordinates
+    if (crsCode != null && crsCode.equals("EPSG:4326")) {
+      // For WGS84, enforce global bounds if needed
+      if (minX.compareTo(new BigDecimal("-180")) < 0) {
+        minX = new BigDecimal("-180");
+      }
+      if (maxX.compareTo(new BigDecimal("180")) > 0) {
+        maxX = new BigDecimal("180");
+      }
+      if (minY.compareTo(new BigDecimal("-90")) < 0) {
+        minY = new BigDecimal("-90");
+      }
+      if (maxY.compareTo(new BigDecimal("90")) > 0) {
+        maxY = new BigDecimal("90");
+      }
+    }
+    
+    // Calculate extended bounds with buffer
+    BigDecimal rangeX = maxX.subtract(minX);
+    BigDecimal rangeY = maxY.subtract(minY);
+    BigDecimal bufferX = rangeX.multiply(boundBuffer);
+    BigDecimal bufferY = rangeY.multiply(boundBuffer);
+    
+    extendedMinX = minX.subtract(bufferX);
+    extendedMaxX = maxX.add(bufferX);
+    extendedMinY = minY.subtract(bufferY);
+    extendedMaxY = maxY.add(bufferY);
+  }
+  
+  /**
+   * Resets all bounds variables to null.
+   */
+  private void resetAllBounds() {
+    minX = null;
+    maxX = null;
+    minY = null;
+    maxY = null;
+    extendedMinX = null;
+    extendedMaxX = null;
+    extendedMinY = null;
+    extendedMaxY = null;
+  }
+  
+  /**
+   * Sets the buffer percentage and recalculates extended bounds if bounds are set.
    *
-   * @throws IOException If the file is not open
+   * @param bufferPercent Buffer as decimal percentage (0.1 = 10%)
+   */
+  public void setBoundsBuffer(BigDecimal bufferPercent) {
+    this.boundBuffer = bufferPercent;
+    calculateExtendedBounds(); // Recalculate the extended bounds with the new buffer
+  }
+
+  /**
+   * Gets the minimum X coordinate of the dataset.
+   *
+   * @return Minimum X value or null if bounds not initialized
+   */
+  public BigDecimal getMinX() {
+    return minX;
+  }
+
+  /**
+   * Gets the maximum X coordinate of the dataset.
+   *
+   * @return Maximum X value or null if bounds not initialized
+   */
+  public BigDecimal getMaxX() {
+    return maxX;
+  }
+
+  /**
+   * Gets the minimum Y coordinate of the dataset.
+   *
+   * @return Minimum Y value or null if bounds not initialized
+   */
+  public BigDecimal getMinY() {
+    return minY;
+  }
+
+  /**
+   * Gets the maximum Y coordinate of the dataset.
+   *
+   * @return Maximum Y value or null if bounds not initialized
+   */
+  public BigDecimal getMaxY() {
+    return maxY;
+  }
+  
+  /**
+   * Gets the extended minimum X coordinate of the dataset.
+   *
+   * @return Extended minimum X value or null if bounds not initialized
+   */
+  public BigDecimal getExtendedMinX() {
+    return extendedMinX;
+  }
+
+  /**
+   * Gets the extended maximum X coordinate of the dataset.
+   *
+   * @return Extended maximum X value or null if bounds not initialized
+   */
+  public BigDecimal getExtendedMaxX() {
+    return extendedMaxX;
+  }
+
+  /**
+   * Gets the extended minimum Y coordinate of the dataset.
+   *
+   * @return Extended minimum Y value or null if bounds not initialized
+   */
+  public BigDecimal getExtendedMinY() {
+    return extendedMinY;
+  }
+
+  /**
+   * Gets the extended maximum Y coordinate of the dataset.
+   *
+   * @return Extended maximum Y value or null if bounds not initialized
+   */
+  public BigDecimal getExtendedMaxY() {
+    return extendedMaxY;
+  }
+
+  /**
+   * Checks if the NetCDF file has been opened, throwing an exception if not.
+   *
+   * @throws IOException if the file has not been opened yet
    */
   private void checkFileOpen() throws IOException {
     if (ncFile == null) {
-      throw new IOException("NetCDF file not opened");
+      throw new IOException("NetCDF file not opened. Call open() first.");
     }
   }
-  
+
   /**
-   * Ensures dimensions are set before operations that require them.
+   * Ensures that dimension names have been set, throwing an exception if not.
    *
-   * @throws IOException If dimensions are not properly set
+   * @throws IOException if dimensions have not been set or detected
    */
   private void ensureDimensionsSet() throws IOException {
     if (dimNameX == null || dimNameY == null) {
       throw new IOException(
-          "X and Y dimensions not set. Call setDimensions() or detectSpatialDimensions() first.");
+          "Spatial dimensions not set. Call setDimensions() or detectSpatialDimensions() first.");
     }
+  }
+
+  /**
+   * Closes the NetCDF file and releases resources.
+   * 
+   * @throws Exception if closing the file fails
+   */
+  @Override
+  public void close() throws Exception {
+    if (ncFile != null) {
+      try {
+        ncFile.close();
+      } finally {
+        ncFile = null;
+        // Reset state variables when closing
+        resetAllBounds();
+        dimNameX = null;
+        dimNameTime = null;
+        crsCode = null;
+      }
+    }
+  }
+
+  /**
+   * Determines whether this reader can handle the given file based on its file extension.
+   *
+   * @param filePath the path to the file
+   * @return true if the file extension indicates a NetCDF file, false otherwise
+   */
+  @Override
+  public boolean canHandle(String filePath) {
+    if (filePath == null || filePath.isEmpty()) {
+      return false;
+    }
+    
+    String lowerPath = filePath.toLowerCase();
+    return lowerPath.endsWith(".nc") || 
+           lowerPath.endsWith(".ncf") || 
+           lowerPath.endsWith(".netcdf") || 
+           lowerPath.endsWith(".nc4");
   }
 }

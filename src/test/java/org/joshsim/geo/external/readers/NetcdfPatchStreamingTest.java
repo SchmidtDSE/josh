@@ -2,7 +2,6 @@ package org.joshsim.geo.external.readers;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -66,9 +65,10 @@ public class NetcdfPatchStreamingTest {
   
   /**
    * Test that demonstrates how to process a collection of patches and build up the required map.
+   * @throws Exception 
    */
   @Test
-  public void testProcessPatchesIntoMap() throws IOException {
+  public void testProcessPatchesIntoMap() throws Exception {
     // Create a real EngineValueFactory for this integration test
     EngineValueFactory valueFactory = new EngineValueFactory();
     
