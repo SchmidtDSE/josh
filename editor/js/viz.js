@@ -211,7 +211,7 @@ class GridPresenter {
       const outerRect = resultsSelection.getBoundingClientRect();
       const rect = self._svgSelection.getBoundingClientRect();
       const difference = rect.top - outerRect.top;
-      if (difference < 0) {
+      if (difference < 35) {
         self._infoSelection.classList.add("fixed");
         self._infoSelection.style.top = (difference * -1 + 37) + "px";
       } else {
