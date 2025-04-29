@@ -227,7 +227,7 @@ class WasmLayer {
           startY,
           endX,
           endY,
-          gridSize,
+          1,
           Math.min(lowLon, highLon),
           Math.min(lowLat, highLat),
           Math.max(lowLon, highLon),
