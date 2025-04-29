@@ -41,18 +41,18 @@ class ScrubPresenter {
   render(summarized) {
     const self = this;
     self._dataset = summarized;
-    
+
     self._svgSelection.html("");
-    
+
     const svgBounds = self._svg.getBoundingClientRect();
     const width = svgBounds.width - SCRUB_RIGHT_PAD;
     const height = svgBounds.height - SCRUB_BOTTOM_PAD;
-    
+
     const minTimestep = summarized.getMinTimestep();
     const maxTimestep = summarized.getMaxTimestep();
     const numSteps = maxTimestep - minTimestep + 1;
     const timesteps = Array.from({length: numSteps}, (_, i) => minTimestep + i);
-    
+
     const values = [];
     for (let step = minTimestep; step <= maxTimestep; step++) {
       values.push(summarized.getTimestepValue(step));
@@ -69,7 +69,7 @@ class ScrubPresenter {
     const yScale = d3.scaleLinear()
       .domain([minValue, maxValue])
       .range([height - 7, 13]);
-    
+
     const createBody = () => {
       const groups = self._svgSelection.selectAll("g")
         .data(timesteps)
@@ -77,14 +77,14 @@ class ScrubPresenter {
         .append("g")
         .classed("scrub-group", true)
         .attr("transform", (d) => `translate(${xScale(d)},0)`);
-      
+
       groups.append("rect")
         .attr("class", "display-bar")
         .attr("x", 1)
         .attr("y", (d) => yScale(summarized.getTimestepValue(d)))
         .attr("width", xScale.bandwidth() - 2)
         .attr("height", (d) => height - yScale(summarized.getTimestepValue(d)));
-      
+
       groups.append("rect")
         .attr("class", "pointer-target")
         .attr("x", 0)
@@ -109,28 +109,28 @@ class ScrubPresenter {
         .text((d) => summarized.getTimestepValue(d).toFixed(2))
         .classed("selected-value-display", true);
     };
-    
+
     const addVerticalAxis = () => {
       self._svgSelection.append("text")
         .attr("x", width + 10)
         .attr("y", 13)
         .text(maxValue.toFixed(2))
         .classed("vertical-tick", true);
-        
+
       self._svgSelection.append("text")
         .attr("x", width + 10)
         .attr("y", height - 3)
         .text(minValue.toFixed(2))
         .classed("vertical-tick", true);
     };
-    
+
     const addHorizontalAxis = () => {
       self._svgSelection.append("text")
         .attr("x", xScale(minTimestep) + xScale.bandwidth() / 2)
         .attr("y", height + 3)
         .text(minTimestep)
         .classed("horizontal-tick", true);
-        
+
       self._svgSelection.append("text")
         .attr("x", xScale(maxTimestep) + xScale.bandwidth() / 2)
         .attr("y", height + 3)
@@ -151,7 +151,7 @@ class ScrubPresenter {
     }
   }
 
-  
+
   /**
    * Indicate that a timestep was selected.
    *
@@ -164,7 +164,7 @@ class ScrubPresenter {
    */
   _onStepSelect(timestep, xScale, yScale) {
     const self = this;
-    
+
     self._svgSelection.selectAll('.scrub-group')
       .classed('active', (d) => d === timestep);
 
@@ -219,23 +219,23 @@ class GridPresenter {
    */
   render(metadata, summarized, timestep) {
     const self = this;
-    
+
     self._showIdleMessage(timestep);
-    
+
     self._d3SvgSelection.html("");
-    
+
     const svgBounds = self._svgSelection.getBoundingClientRect();
     const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
     const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
 
     const patchSize = metadata.getPatchSize();
     const patchSizeHalf = patchSize / 2;
-    
+
     const patchPixels = self._getPatchPixels(gridWidth);
-    
+
     const totalWidth = (patchPixels + 1) * gridWidth;
     const totalHeight = (patchPixels + 1) * gridHeight;
-    
+
     const cells = [];
     const endXPad = metadata.getEndX() - patchSizeHalf;
     const endYPad = metadata.getEndY() - patchSizeHalf;
@@ -245,7 +245,7 @@ class GridPresenter {
         cells.push({x: x, y: y, value: value});
       }
     }
-    
+
     const values = cells.map(d => d.value);
     const colorScale = d3.scaleSequential()
       .domain([Math.min(...values), Math.max(...values)])
@@ -254,28 +254,60 @@ class GridPresenter {
     const xScale = d3.scaleLinear()
       .domain([metadata.getStartX(), metadata.getEndX()])
       .range([0, totalWidth]);
-      
+
     const yScale = d3.scaleLinear()
       .domain([metadata.getStartY(), metadata.getEndY()])
       .range([0, totalHeight]);
-    
+
     const grid = self._d3SvgSelection.selectAll("g")
       .data(cells)
       .enter()
       .append("g")
       .attr("transform", (d) => `translate(${xScale(d.x)}, ${yScale(d.y)})`)
       .classed("grid-patch", true);
-    
+
     grid.append("rect")
       .attr("width", patchPixels)
       .attr("height", patchPixels)
       .attr("fill", (d) => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value))
       .classed("grid-patch-foreground", true);
-    
+
     self._d3SvgSelection
       .style("width", totalWidth + "px")
       .style("height", totalHeight + "px");
+
+    self._updateLegend(colorScale);
+  }
+
+  /**
+   * Update the color legend with the current scale values.
+   * 
+   * @param {d3.ScaleSequential} colorScale - The color scale to use for the legend
+   * @private
+   */
+  _updateLegend(colorScale) {
+    const legendSelector = "#grid-legend";
+    const domain = colorScale.domain();
+    const step = (domain[1] - domain[0]) / 4;
+    const legendValues = [
+      domain[0],
+      domain[0] + step,
+      domain[0] + 2 * step,
+      domain[0] + 3 * step,
+      domain[1]
+    ];
+
+    const legend = d3.select(legendSelector);
+    legend.select(".color .lowest").style("background-color", colorScale(legendValues[0]));
+    legend.select(".color .low").style("background-color", colorScale(legendValues[1]));
+    legend.select(".color .high").style("background-color", colorScale(legendValues[3]));
+    legend.select(".color .highest").style("background-color", colorScale(legendValues[4]));
+
+    legend.select(".label .lowest").text(legendValues[0].toFixed(2));
+    legend.select(".label .low").text(legendValues[1].toFixed(2));
+    legend.select(".label .high").text(legendValues[3].toFixed(2));
+    legend.select(".label .highest").text(legendValues[4].toFixed(2));
   }
 
   _getPatchPixels(gridWidth) {
@@ -314,7 +346,7 @@ class GridPresenter {
     const rounded = value.toFixed(2);
     self._infoSelection.innerHTML = `Patch ${x}, ${y} has value ${rounded} at time ${timestep}.`;
   }
-  
+
 }
 
 
