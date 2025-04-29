@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.value.type.EngineValue;
+import org.locationtech.jts.geom.Coordinate;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Interface for reading grid-based geospatial data from various external sources.
@@ -26,6 +28,14 @@ public interface ExternalDataReader extends AutoCloseable {
    */
   List<String> getVariableNames() throws IOException;
   
+  /**
+   * Gets the coordinate reference system code of the data source.
+   *
+   * @return String containing the CRS code
+   * @throws IOException If there's an error reading the data source
+   */
+  String getCrsCode() throws IOException;
+
   /**
    * Gets the time dimension size if available.
    *

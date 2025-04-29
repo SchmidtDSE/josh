@@ -13,6 +13,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
@@ -28,10 +29,10 @@ import ucar.nc2.Variable;
  */
 public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
-  private String xDimName;
+  private String dimNameX;
   private String dimNameY;
   private String dimNameTime;
-  private String crs;
+  private String crsCode;
   private final EngineValueFactory valueFactory;
   
   /**
@@ -78,7 +79,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       throw new IOException("Time dimension variable not found: " + timeDimension);
     }
     
-    this.xDimName = dimensionX;
+    this.dimNameX = dimensionX;
     this.dimNameY = dimensionY;
     this.dimNameTime = timeDimension;
   }
@@ -88,8 +89,17 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    *
    * @param crs The coordinate reference system identifier
    */
-  public void setCrs(String crs) {
-    this.crs = crs;
+  public void setCrsCode(String crsCode) {
+    this.crsCode = crsCode;
+  }
+
+  /**
+   * Gets the CRS.
+   *
+   * @return The coordinate reference system identifier
+   */
+  public String getCrsCode() {
+    return crsCode;
   }
   
   /**
@@ -106,7 +116,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       if (axisAttr != null) {
         String axisVal = axisAttr.getStringValue();
         if ("X".equalsIgnoreCase(axisVal)) {
-          xDimName = var.getFullName();
+          dimNameX = var.getFullName();
           success = true;
         } else if ("Y".equalsIgnoreCase(axisVal)) {
           dimNameY = var.getFullName();
@@ -120,8 +130,8 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       Attribute stdNameAttr = var.findAttribute("standard_name");
       if (stdNameAttr != null) {
         String stdName = stdNameAttr.getStringValue();
-        if ("longitude".equals(stdName) && xDimName == null) {
-          xDimName = var.getFullName();
+        if ("longitude".equals(stdName) && dimNameX == null) {
+          dimNameX = var.getFullName();
           success = true;
         } else if ("latitude".equals(stdName) && dimNameY == null) {
           dimNameY = var.getFullName();
@@ -133,7 +143,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     }
     
     // Try to detect CRS from file metadata (only if unambiguous)
-    if (crs == null) {
+    if (crsCode == null) {
       // Check for explicit CRS variable
       for (Variable var : ncFile.getVariables()) {
         Attribute gridMappingName = var.findAttribute("grid_mapping_name");
@@ -141,14 +151,14 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
           // Check if this has an EPSG code
           Attribute epsgAttr = var.findAttribute("epsg_code");
           if (epsgAttr != null) {
-            crs = "EPSG:" + epsgAttr.getNumericValue();
+            crsCode = "EPSG:" + epsgAttr.getNumericValue();
             break;
           }
         }
       }
     }
     
-    return success && xDimName != null && dimNameY != null;
+    return success && dimNameX != null && dimNameY != null;
   }
 
   public List<String> getVariableNames() throws IOException {
@@ -156,8 +166,8 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     
     // Get coordinate variable names for exclusion
     List<String> coordVars = new ArrayList<>();
-    if (xDimName != null) {
-      coordVars.add(xDimName);
+    if (dimNameX != null) {
+      coordVars.add(dimNameX);
     }
     if (dimNameY != null) coordVars.add(dimNameY);
     if (dimNameTime != null) coordVars.add(dimNameTime);
@@ -191,7 +201,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     
     try {
       // Get X and Y coordinate variables
-      Variable varX = ncFile.findVariable(xDimName);
+      Variable varX = ncFile.findVariable(dimNameX);
       Variable varY = ncFile.findVariable(dimNameY);
       
       // Read coordinate values
@@ -211,13 +221,13 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         coordsY.add(new BigDecimal(arrayY.getDouble(i)).setScale(6, RoundingMode.HALF_UP));
       }
       
-      String effectiveCrs = crs; // Use explicitly set CRS
+      String effectiveCrs = crsCode; // Use explicitly set CRS
       
       // If no CRS was explicitly set or detected, it will remain null
       // The caller is responsible for handling this case appropriately
       
       return new ExternalSpatialDimensions(
-          xDimName,
+          dimNameX,
           dimNameY,
           dimNameTime,
           effectiveCrs,
@@ -357,7 +367,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     // Map the variable dimensions to the X, Y, and time dimensions
     for (int d = 0; d < var.getRank(); d++) {
       Dimension dim = varDims.get(d);
-      if (dim.getShortName().equals(xDimName)) {
+      if (dim.getShortName().equals(dimNameX)) {
         origin[d] = indexX;
       } else if (dim.getShortName().equals(dimNameY)) {
         origin[d] = indexY;
@@ -409,7 +419,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    * @throws IOException If dimensions are not properly set
    */
   private void ensureDimensionsSet() throws IOException {
-    if (xDimName == null || dimNameY == null) {
+    if (dimNameX == null || dimNameY == null) {
       throw new IOException(
           "X and Y dimensions not set. Call setDimensions() or detectSpatialDimensions() first.");
     }
