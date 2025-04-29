@@ -440,11 +440,17 @@ class DataQuerySelector {
   _addEventListeners() {
     const self = this;
     self._root.querySelectorAll(".data-select-option").forEach(
-      (elem) => elem.addEventListener("click", (event) => {
-        event.preventDefault();
-        self._updateInternalDisplay();
-        self._callback();
-      })
+      (elem) => {
+        elem.addEventListener("change", (event) => {
+          event.preventDefault();
+          self._updateInternalDisplay();
+          self._callback();
+        });
+        elem.addEventListener("keyup", (event) => {
+          self._updateInternalDisplay();
+          self._callback();
+        });
+      }
     );
   }
   
