@@ -226,7 +226,6 @@ class GridPresenter {
     
     const svgBounds = self._svgSelection.getBoundingClientRect();
     const width = svgBounds.width;
-    const height = svgBounds.height;
     
     const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
     const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
@@ -235,11 +234,11 @@ class GridPresenter {
     const patchSizeHalf = patchSize / 2;
     
     const cells = [];
-    const endXPad = metadata.getEndX() + patchSizeHalf;
-    const endYPad = metadata.getEndY() + patchSizeHalf;
-    for (let x = metadata.getStartX(); x <= endXPad; x += patchSize) {
-      for (let y = metadata.getStartY(); y <= endYPad; y += patchSize) {
-        const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
+    const endXPad = metadata.getEndX() - patchSizeHalf;
+    const endYPad = metadata.getEndY() - patchSizeHalf;
+    for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
+      for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
+        const value = summarized.getGridValue(timestep - 1, x + patchSizeHalf, y + patchSizeHalf);
         cells.push({x: x, y: y, value: value});
       }
     }
@@ -270,6 +269,12 @@ class GridPresenter {
       .attr("height", patchSizePixels)
       .attr("fill", (d) => colorScale(d.value))
       .on("mouseover", (event, d) => self._showInfoMessage(d.x, d.y, timestep, d.value));
+
+    
+    self._d3SvgSelection.style(
+      "height",
+      (bandScale(metadata.getEndY() - 1) + patchSizePixels + 1) + "px"
+    );
   }
 
   /**

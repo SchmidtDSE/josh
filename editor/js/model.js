@@ -235,6 +235,7 @@ class SimulationMetadata {
     self._startY = startY;
     self._endX = endX;
     self._endY = endY;
+    self._patchSize = patchSize;
   }
 
   /**
@@ -261,7 +262,7 @@ class SimulationMetadata {
 
   /**
    * Gets the maximum horizontal position of a patch in grid space.
-   * 
+   * onComplete
    * @returns {number} The ending X coordinate in grid space.
    */
   getEndX() {
@@ -420,8 +421,8 @@ class SummarizedResult {
     const self = this;
 
     const timestepRounded = Math.round(timestep);
-    const xRounded = Math.round(x);
-    const yRounded = Math.round(y);
+    const xRounded = x.toFixed(2);
+    const yRounded = y.toFixed(2);
     const key = `${timestepRounded},${xRounded},${yRounded}`;
 
     if (!self._gridPerTimestep.has(key)) {
