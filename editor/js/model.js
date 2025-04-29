@@ -229,7 +229,7 @@ class SimulationMetadata {
    * @param {number} endY - The maximum vertical positoin of a patch in grid space.
    * @param {number} patchSize - The size of each patch or cell, typically 1.
    */
-  constructor(startX, startY, endX, endY, patchSize) {
+  constructor(startX, startY, endX, endY, patchSize, startLongitude, startLatitude, endLongitude, endLatitude) {
     const self = this;
     self._startX = startX;
     self._startY = startY;

@@ -5,8 +5,7 @@
  */
 
 import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
-
-const EARTH_RADIUS_METERS = 6371000;
+import {getDistanceMeters} from "util";
 
 
 /**
@@ -242,19 +241,7 @@ class WasmLayer {
    * @return {number} Absolute approximate distance between these two points.
    */
   _getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude) {
-    const angleLatitudeStart = startLatitude * Math.PI / 180;
-    const angleLatitudeEnd = endLatitude * Math.PI / 180;
-    const deltaLatitude = (endLatitude - startLatitude) * Math.PI / 180;
-    const deltaLongitude = (endLongitude - startLongitude) * Math.PI / 180;
-
-    const a = (
-      Math.sin(deltaLatitude/2) * Math.sin(deltaLatitude/2) +
-      Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd) *
-      Math.sin(deltaLongitude/2) * Math.sin(deltaLongitude/2)
-    );
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return EARTH_RADIUS * c;
+    return getDistanceMeters(startLongitude, startLatitude, endLongitude, endLatitude);
   }
 
   /**
