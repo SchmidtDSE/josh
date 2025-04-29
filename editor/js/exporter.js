@@ -60,12 +60,12 @@ class ExportPresenter {
   _attachListeners() {
     const self = this;
     
-    self._exportButton.addEventListener('click', function(event) {
+    self._exportButton.addEventListener("click", function(event) {
         event.preventDefault();
         self._dialog.showModal();
     });
 
-    self._cancelLink.addEventListener('click', function(event) {
+    self._cancelLink.addEventListener("click", function(event) {
         event.preventDefault();
         self._dialog.close();
     });
@@ -123,6 +123,7 @@ class ExportCommand {
 
   /**
    * Get the name of the series to be exported.
+   * 
    * @returns {string} Name of the series (simulation, patches, or entities).
    */
   getSeriesName() {
@@ -132,6 +133,7 @@ class ExportCommand {
 
   /**
    * Check if only the final timestep should be exported.
+   * 
    * @returns {boolean} True if only final timestep should be exported, false for all timesteps.
    */
   isFinalOnly() {
@@ -141,6 +143,7 @@ class ExportCommand {
 
   /**
    * Check if locations should be converted to degrees.
+   * 
    * @returns {boolean} True if locations should be converted to degrees.
    */
   shouldConvertLocationToDegrees() {
@@ -163,24 +166,22 @@ class ExportCommand {
  */
 function buildExportUri(metadata, dataset, command) {
   const rows = [];
+
+  if (dataset.length == 0) {
+    return "data:text/csv;charset=utf-8,";
+  }
+
+  const seriesName = command.getSeriesName();
   
   // Add header row
-  const attributes = command.getSeriesName() === 'simulation' ? 
-    dataset[0].getSimulationVariables() :
-    command.getSeriesName() === 'patches' ?
-    dataset[0].getPatchVariables() :
-    dataset[0].getEntityVariables();
+  const attributes = dataset[0].getVariables(seriesName);
 
   const attributesSorted = Array.from(attributes).sort();
-  rows.push([...attributesSorted, 'replicate'].join(','));
+  rows.push([...attributesSorted, "replicate"].join(","));
 
   // Add data rows
   dataset.forEach((replicate, replicateNum) => {
-    const results = command.getSeriesName() === 'simulation' ?
-      replicate.getSimResults() :
-      command.getSeriesName() === 'patches' ?
-      replicate.getPatchResults() :
-      replicate.getEntityResults();
+    const results = replicate.getSeries(seriesName);
 
     if (command.isFinalOnly()) {
       const lastResult = results[results.length - 1];
@@ -192,8 +193,8 @@ function buildExportUri(metadata, dataset, command) {
     }
   });
 
-  const csvContent = rows.join('\n');
-  return 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+  const csvContent = rows.join("\n");
+  return "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
 }
 
 
@@ -216,10 +217,10 @@ function buildExportUri(metadata, dataset, command) {
 function getCsvRow(datum, attributesSorted, replicateNumber) {
   const values = attributesSorted.map(attr => {
     if (!datum.hasValue(attr)) {
-      return '';
+      return "";
     }
     const value = datum.getValue(attr);
-    if (typeof value === 'number') {
+    if (typeof value === "number") {
       return value.toString();
     } else {
       return value;
@@ -227,7 +228,7 @@ function getCsvRow(datum, attributesSorted, replicateNumber) {
   });
   
   values.push(replicateNumber.toString());
-  return values.join(',');
+  return values.join(",");
 }
 
 

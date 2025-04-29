@@ -30,6 +30,7 @@ class SimulationResult {
   constructor(simResults, simAttributes, patchResults, patchAttributes, entityResults,
         entityAttributes, minX, minY, maxX, maxY) {
     const self = this;
+    
     self._simResults = simResults;
     self._simAttributes = simAttributes;
     self._patchResults = patchResults;
@@ -40,6 +41,50 @@ class SimulationResult {
     self._minY = minY;
     self._maxX = maxX;
     self._maxY = maxY;
+
+    self._getterStrategies = {
+      "simulation": () => self.getSimResults(),
+      "patches": () => self.getPatchResults(),
+      "entities": () => self.getEntityResults()
+    };
+
+    self._variableGetterStrategies = {
+      "simulation": () => self.getSimVariables(),
+      "patches": () => self.getPatchVariables(),
+      "entities": () => self.getEntityVariables()
+    };
+  }
+  
+  /**
+   * Get a series from this replicate given the series' name.
+   *
+   * @param {string} name - The name of the series like simulation or patches.
+   * @returns {Array<OutputDatum>} Array of output records for the requested series.
+   */
+  getSeries(name) {
+    const getter = self._getterStrategies[name];
+
+    if (getter === undefined) {
+      throw "Unknown series: " + name;
+    }
+
+    return getter();
+  }
+
+  /**
+   * Get attributes on a series from this replicate given the series' name.
+   *
+   * @param {string} name - The name of the series like simulation or patches.
+   * @returns {Array<string>} Array of attributes on that series.
+   */
+  getVariables(name) {
+    const getter = self._variableGetterStrategies[name];
+
+    if (getter === undefined) {
+      throw "Unknown series: " + name;
+    }
+
+    return getter();
   }
 
   /**
