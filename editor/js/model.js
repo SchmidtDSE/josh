@@ -341,6 +341,18 @@ class SimulationMetadata {
     const self = this;
     return self._maxLatitude;
   }
+
+  /**
+   * Determine if this record has latitude and longitude specified.
+   *
+   * @returns {boolean} True if latitude and longitudes are specified and false otherwise.
+   */
+  hasDegrees() {
+    const self = this;
+    const hasLongitude = self.getMinLongitude() !== null && self.getMaxLongitude() !== null;
+    const hasLatitude = self.getMinLatitude() !== null && self.getMaxLatitude() !== null;
+    return hasLongitude && hasLatitude;
+  }
   
 }
 

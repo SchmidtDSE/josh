@@ -194,8 +194,9 @@ function getCsvRow(datum, attributesSorted, replicateNumber) {
     const value = datum.getValue(attr);
     if (typeof value === 'number') {
       return value.toString();
+    } else {
+      return value;
     }
-    return `"${value.toString().replace(/"/g, '""')}"`;
   });
   
   values.push(replicateNumber.toString());
@@ -215,23 +216,31 @@ function getCsvRow(datum, attributesSorted, replicateNumber) {
  * returns {EarthCoordinate} The position converted to Earth-space coordinates.
  */
 function getPositionInDegrees(metadata, xInCount, yInCount) {
+  if (!metadata.hasDegrees()) {
+    throw "Cannot convert as metadata does not specify degrees."
+  }
+  
   const minLon = metadata.getMinLongitude();
   const maxLon = metadata.getMaxLongitude();
   const minLat = metadata.getMinLatitude();
   const maxLat = metadata.getMaxLatitude();
-  
-  if (minLon === null || maxLon === null || minLat === null || maxLat === null) {
-    throw new Error("Grid not defined in degrees");
-  }
 
-  const gridWidth = metadata.getEndX() - metadata.getStartX();
-  const gridHeight = metadata.getEndY() - metadata.getStartY();
+  const startX = metadata.getStartX();
+  const endX = metadata.getEndX();
+  const startY = metadata.getStartY();
+  const endY = metadata.getEndY();
+
+  const gridWidth = endX - startX;
+  const gridHeight = endY - startY;
   
   const lonRange = maxLon - minLon;
   const latRange = maxLat - minLat;
+
+  const percentX = (xInCount - startX) / gridWidth;
+  const percentY = (yInCount - startY) / gridHeight;
   
-  const longitude = minLon + (xInCount - metadata.getStartX()) * lonRange / gridWidth;
-  const latitude = minLat + (yInCount - metadata.getStartY()) * latRange / gridHeight;
+  const longitude = minLon + percentX * lonRange;
+  const latitude = minLat + percentY * latRange;
   
   return new EarthCoordinate(longitude, latitude);
 }
