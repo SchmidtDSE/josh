@@ -249,16 +249,19 @@ class GridPresenter {
       .domain([Math.min(...values), Math.max(...values)])
       .interpolator(d3.interpolateBlues);
 
-    const bandScale = ;
-    const patchSizePixels = ;
+    const bandScale = d3.scaleBand()
+      .domain(Array.from(new Set(cells.map(d => d.x))))
+      .range([0, width])
+      .padding(0.1);
+    const patchSizePixels = bandScale.bandwidth();
     
     const grid = self._d3SvgSelection.selectAll("g")
       .data(cells)
       .enter()
       .append("g")
       .attr("transform", (d) => {
-        const gridX = ;
-        const gridY = ;
+        const gridX = bandScale(d.x);
+        const gridY = bandScale(d.y);
         return `translate(${gridX} ${gridY})`;
       });
     
