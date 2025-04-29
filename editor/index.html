@@ -153,6 +153,9 @@ end simulation
 
                 <dialog id="download-dialog">
                   <h2>Download Results</h2>
+
+                  <p>This will generate a download to continue analysis of simulation results oustide of this web editor.</p>
+                  
                   <div class="form-group">
                     <div>
                       <label for="download-series-select">Series:</label>
@@ -162,6 +165,17 @@ end simulation
                         <option value="patches" selected>patches</option>
                         <option value="simulation">simulation</option>
                         <option value="entities">entities</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div>
+                      <label for="download-type-select">Format:</label>
+                    </div>
+                    <div class="sel long">
+                      <select name="download-type-select" id="download-type-select">
+                        <option value="csv" selected>CSV</option>
                       </select>
                     </div>
                   </div>
