@@ -42,6 +42,9 @@ class BasemapDialogPresenter {
     
     self._metadata = null;
     self._imageUrlCallback = imageUrlCallback;
+
+    self._addEventListeners();
+    self._updateVisibility();
   }
 
   /**
@@ -256,3 +259,6 @@ class ImageDimensions {
   }
   
 }
+
+
+export {BasemapDialogPresenter};

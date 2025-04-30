@@ -4,6 +4,7 @@
  * @license BSD-3-Clause
  */
 
+import {BasemapDialogPresenter} from "baselayer";
 import {ExportPresenter} from "exporter";
 import {DataQuery, summarizeDatasets} from "summarize";
 import {GridPresenter, ScrubPresenter} from "viz";
@@ -32,10 +33,16 @@ class ResultsPresenter {
       self._root.querySelector("#export-button"),
       self._root.querySelector("#download-dialog")
     );
+    self._baselayerDialogPresenter = new BasemapDialogPresenter(
+      self._root.querySelector("#map-button"),
+      self._root.querySelector("#map-dialog"),
+      (url) => self._onBasemapChange(url)
+    );
 
     self._results = null;
     self._metadata = null;
     self._secondsOnStart = null;
+    self._basemapUrl = null;
   }
 
   /**
@@ -74,6 +81,7 @@ class ResultsPresenter {
     self._updateVariables();
     self._renderDisplay(metadata);
     self._exportPresenter.setDataset(metadata, results);
+    self._baselayerDialogPresenter.setMetadata(metadata);
   }
 
   /**
@@ -119,10 +127,9 @@ class ResultsPresenter {
     if (self._results === null) {
       throw "No results available to display.";
     }
-    
-    const query = self._resultsDisplayPresenter.getCurrentQuerySelection();
-    const summarized = summarizeDatasets(self._results, query);
-    self._resultsDisplayPresenter.render(metadata, summarized);
+
+    self._metadata = metadata;
+    self._refreshDisplay();
   }
 
   /**
@@ -162,6 +169,28 @@ class ResultsPresenter {
     });
 
     self._resultsDisplayPresenter.setVariables(allVariables);
+  }
+
+  /**
+   * Callback for when the basemap URL is updated.
+   *
+   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no basemap
+   *     image should be provided.
+   */
+  _onBasemapChange(basemapUrl) {
+    const self = this;
+    self._basemapUrl = basemapUrl;
+    self._refreshDisplay();
+  }
+
+  /**
+   * Refresh the components within this display using last known values.
+   */
+  _refreshDisplay() {
+    const self = this;
+    const query = self._resultsDisplayPresenter.getCurrentQuerySelection();
+    const summarized = summarizeDatasets(self._results, query);
+    self._resultsDisplayPresenter.render(self._metadata, summarized, self._basemapUrl);
   }
 }
 
@@ -333,17 +362,19 @@ class ResultsDisplayPresenter {
    * data using user defined parameters.
    *
    * @param {SimulationMetadata} metadata - Metadata about the simulation to be displayed. 
-   * @param {SummarizedResult} summary - The data summarized according to user instructions. 
+   * @param {SummarizedResult} summary - The data summarized according to user instructions.
+   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no
+   *     basemap.
    */
-  render(metadata, summary) {
+  render(metadata, summary, basemapUrl) {
     const self = this;
     self._metadata = metadata;
     self._summary = summary;
-    self._scrubPresenter.render(summary);
+    self._basemapUrl = basemapUrl;
     if (self._currentTimestep === null) {
       self._currentTimestep = summary.getMaxTimestep();
     }
-    self._gridPresenter.render(metadata, summary, self._currentTimestep);
+    self._renderInternal(true);
   }
 
   /**
@@ -354,7 +385,28 @@ class ResultsDisplayPresenter {
   _onStepSelected(step) {
     const self = this;
     self._currentTimestep = step;
-    self._gridPresenter.render(self._metadata, self._summary, step);
+    self._renderInternal(false);
+  }
+
+  /**
+   * Update the components in this display using last known values.
+   *
+   * @param {boolean} timestepChangedExternally - True if the timestep was changed from outside the
+   *     UI widgets and false if changed within the UI widgets or unchanged.
+   */
+  _renderInternal(timestepChangedExternally) {
+    const self = this;
+
+    if (timestepChangedExternally) {
+      self._scrubPresenter.render(self._summary);
+    }
+    
+    self._gridPresenter.render(
+      self._metadata,
+      self._summary,
+      self._currentTimestep,
+      self._basemapUrl
+    );
   }
   
 }

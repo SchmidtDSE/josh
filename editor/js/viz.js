@@ -230,13 +230,19 @@ class GridPresenter {
    *     simulation definition.
    * @param {SummarizedResult} summarized - The dataset to visualize.
    * @param {number} timestep - The timestep to visualize.
+   * @param {?string} basemapUrl - The URL at which the basemap PNG can be found.
    */
-  render(metadata, summarized, timestep) {
+  render(metadata, summarized, timestep, basemapUrl) {
     const self = this;
 
     self._showIdleMessage(timestep);
 
     self._d3SvgSelection.html("");
+
+    const baselayerGroup = self._d3SvgSelection.append("g").classed("base-layer", true);
+    const glyphsGroup = self._d3SvgSelection.append("g")
+      .classed("glyphs-layer", true)
+      .classed("overlay", basemapUrl !== null);
 
     const svgBounds = self._svgSelection.getBoundingClientRect();
     const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
@@ -275,7 +281,7 @@ class GridPresenter {
       .domain([metadata.getStartY(), metadata.getEndY()])
       .range([0, totalHeight]);
 
-    const grid = self._d3SvgSelection.selectAll("g")
+    const grid = glyphsGroup.selectAll("g")
       .data(cells)
       .enter()
       .append("g")
@@ -295,6 +301,10 @@ class GridPresenter {
       .style("height", totalHeight + "px");
 
     self._updateLegend(colorScale);
+
+    if (basemapUrl !== null) {
+      self._addBaselayer(basemapUrl, baselayerGroup, totalWidth, totalHeight);
+    }
   }
 
   /**
@@ -323,6 +333,21 @@ class GridPresenter {
     legend.select(".label .low").text(legendValues[1].toFixed(2));
     legend.select(".label .high").text(legendValues[3].toFixed(2));
     legend.select(".label .highest").text(legendValues[4].toFixed(2));
+  }
+
+  /**
+   * Add the image at basemapUrl to baselayerGroup such that it stretches to the entire space.
+   *
+   * Add the image at basemapUrl to baselayerGroup such that it stretches to the entire space such
+   * that the image starts at 0, 0, and stretches to totalWidth and totalHeight.
+   *
+   * @param {string} basemapUrl - The URL at which the basemap PNG can be found.
+   * @param {d3.select} baselayerGroup - D3 selection at which the image should be added.
+   * @param {number} totalWidth - The width to which the image should be stretched in pixels.
+   * @param {number} totalHeight - The height to which the image should be stretched in pixels.
+   */
+  _addBaselayer(basemapUrl, baselayerGroup, totalWidth, totalHeight) {
+    
   }
 
   /**
