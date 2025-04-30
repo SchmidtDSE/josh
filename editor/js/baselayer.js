@@ -101,7 +101,9 @@ class BasemapDialogPresenter {
    * recently supplied metadata. If the high density check is selected, will request with the "@2x"
    * option. Attribution always included. Uses png format.
    * 
-   * @returns {string} URL with authentication information included where this image can be found.
+   * @returns {!string} URL with authentication information included where this image can be found
+   *     or null if the metadata has not been provided or does not have Earth-space coordinates
+   *     available.
    */
   _generateUrl() {
     const self = this;
