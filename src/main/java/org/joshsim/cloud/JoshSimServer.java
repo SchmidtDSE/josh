@@ -4,6 +4,18 @@
  * @license BSD-3-Clause
  */
 
+
+package org.joshsim.cloud;
+
+import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
+import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.handlers.resource.FileResourceManager;
+import io.undertow.util.Headers;
+import io.undertow.Handlers;
+import java.io.File;
+import java.util.Optional;
+
 package org.joshsim.cloud;
 
 
@@ -30,8 +42,49 @@ public class JoshSimServer {
    *     machine, possibly with a load balancer in the middle.
    * @param port The port number on which the server should listen for requests.
    */
+  private final Undertow server;
+
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port) {
-    
+    PathHandler pathHandler = Handlers.path()
+        // Static file handlers
+        .addPrefixPath("/", Handlers.resource(new FileResourceManager(new File("editor"), 100))
+            .addWelcomeFiles("index.html"))
+        .addPrefixPath("/js", Handlers.resource(new FileResourceManager(new File("editor/js"), 100)))
+        .addPrefixPath("/style", Handlers.resource(new FileResourceManager(new File("editor/style"), 100)))
+        .addPrefixPath("/third_party", Handlers.resource(new FileResourceManager(new File("editor/third_party"), 100)))
+        .addPrefixPath("/war", Handlers.resource(new FileResourceManager(new File("editor/war"), 100)))
+        
+        // API handlers
+        .addPrefixPath("/runReplicate", new JoshSimWorkerHandler(dataLayer, true, Optional.empty()))
+        .addPrefixPath("/runReplicates", new JoshSimLeaderHandler(dataLayer, workerUrl, 4))
+
+  /**
+   * Stop the server and release resources.
+   */
+  public void stop() {
+    if (server != null) {
+      server.stop();
+    }
+  }
+
+        
+        // Health endpoint
+        .addPrefixPath("/health", exchange -> {
+            exchange.setStatusCode(200);
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+            exchange.getResponseSender().send("healthy");
+        });
+
+    Undertow.Builder builder = Undertow.builder()
+        .addHttpListener(port, "0.0.0.0")
+        .setHandler(pathHandler);
+
+    if (useHttp2) {
+        builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+    }
+
+    this.server = builder.build();
+    this.server.start();
   }
   
 }
