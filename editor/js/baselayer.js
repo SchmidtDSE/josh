@@ -160,18 +160,16 @@ class BasemapDialogPresenter {
 
     const widthLargerThanHeight = width > height;
     const aspectRatio = width / height;
-
-    let imageWidth, imageHeight;
     
     if (widthLargerThanHeight) {
-      imageWidth = MAX_IMAGE_WIDTH;
-      imageHeight = Math.round(MAX_IMAGE_WIDTH / aspectRatio);
+      const imageWidth = MAX_IMAGE_WIDTH;
+      const imageHeight = Math.round(MAX_IMAGE_WIDTH / aspectRatio);
+      return new ImageDimensions(imageWidth, imageHeight);
     } else {
-      imageHeight = MAX_IMAGE_HEIGHT;
-      imageWidth = Math.round(MAX_IMAGE_HEIGHT * aspectRatio);
+      const imageHeight = MAX_IMAGE_HEIGHT;
+      const imageWidth = Math.round(MAX_IMAGE_HEIGHT * aspectRatio);
+      return new new ImageDimensions(imageWidth, imageHeight);
     }
-
-    return new ImageDimensions(imageWidth, imageHeight);
   }
   
 }
