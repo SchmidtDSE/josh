@@ -347,6 +347,13 @@ class GridPresenter {
    * @param {number} totalHeight - The height to which the image should be stretched in pixels.
    */
   _addBaselayer(basemapUrl, baselayerGroup, totalWidth, totalHeight) {
+    baselayerGroup.append("image")
+      .attr("xlink:href", basemapUrl)
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", totalWidth)
+      .attr("height", totalHeight)
+      .classed("basemap-layer", true);
     
   }
 
