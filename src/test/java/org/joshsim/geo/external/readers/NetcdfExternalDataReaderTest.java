@@ -42,7 +42,7 @@ public class NetcdfExternalDataReaderTest {
   // Default patch CRS (WGS84) 
   private CoordinateReferenceSystem patchCrs;
 
-  @BeforeEach
+  @BeforeEach 
   public void setUp() {
     valueFactory = new EngineValueFactory();
     reader = new NetcdfExternalDataReader(valueFactory);
