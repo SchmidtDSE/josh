@@ -107,6 +107,44 @@ class BasemapDialogPresenter {
    */
   _generateUrl() {
     const self = this;
+    
+    // Return null if no metadata or missing Earth coordinates
+    if (!self._metadata || !self._metadata.hasDegrees()) {
+      return null;
+    }
+
+    // Return null if no basemap selected
+    if (!self._userSelectedBasemap()) {
+      return null;
+    }
+
+    // Get credentials
+    const username = self._mapboxUsernameInput.value;
+    const apiKey = self._apiKeyInput.value;
+    if (!username || !apiKey) {
+      return null;
+    }
+
+    // Get image dimensions based on grid size
+    const dimensions = self._scaleDimensions();
+    if (!dimensions) {
+      return null;
+    }
+
+    // Build the URL components
+    const style = self._basemapLayerSelect.value;
+    const width = dimensions.getImageWidth();
+    const height = dimensions.getImageHeight();
+    const bbox = [
+      self._metadata.getMinLongitude(),
+      self._metadata.getMinLatitude(), 
+      self._metadata.getMaxLongitude(),
+      self._metadata.getMaxLatitude()
+    ].join(',');
+
+    // Construct the final URL with authentication
+    const baseUrl = 'https://api.mapbox.com/styles/v1';
+    return `${baseUrl}/${username}/${style}/static/${bbox}/${width}x${height}@2x?access_token=${apiKey}&attribution=true&logo=false`;
   }
 
   /**
