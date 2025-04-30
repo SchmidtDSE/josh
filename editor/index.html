@@ -68,8 +68,30 @@
                     <input id="replicates-input" name="replicates-input" class="replicates-input long" type="number" value="1">
                   </div>
                 </div>
+                <div class="form-group">
+                  <fieldset>
+                    <legend>Engine</legend>
+                    <p>The location where this should run. Some options may be faster than others but require more set up. Want to try the free non-profit Josh Cloud? <a href="mailto:hello@joshsim.org">Email us</a>.</p>
+                    <div>
+                      <input type="radio" id="engine-browser" name="engine" value="browser" checked>
+                      <label for="engine-browser">Your Browser</label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-computer" name="engine" value="computer">
+                      <label for="engine-computer">Your Computer</label>
+                    </div>
+                    <div>
+                      <input type="radio" id="josh-cloud" name="engine" value="josh-cloud">
+                      <label for="josh-cloud">Josh Cloud</label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-your-cloud" name="engine" value="your-cloud" disabled>
+                      <label for="your-cloud">Your Cloud</label>
+                    </div>
+                  </fieldset>
+                </div>
                 <div class="dialog-buttons buttons-panel bold-buttons">
-                  <a href="#" class="run-button primary">Open</a>
+                  <a href="#" class="run-button primary">Run</a>
                   <a href="#" class="cancel-button destructive">Cancel</a>
                 </div>
               </dialog>
