@@ -74,6 +74,11 @@ dependencies {
 }
 
 teavm {
+  js {
+    mainClass = "org.joshsim.JoshJsSimFacade"
+    addedToWebApp = true
+    moduleType = org.teavm.gradle.api.JSModuleType.NONE
+  }
   wasmGC {
     mainClass = "org.joshsim.JoshJsSimFacade"
     addedToWebApp = true

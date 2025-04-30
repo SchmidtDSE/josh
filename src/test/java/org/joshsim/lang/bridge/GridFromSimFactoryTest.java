@@ -9,6 +9,7 @@ package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -69,6 +70,33 @@ class GridFromSimFactoryTest {
     assertNotNull(result, "PatchSet should be created with default values");
     assertNotNull(result.getPatches(), "PatchSet should contain patches");
     assertNotNull(result.getSpacing(), "PatchSet should have spacing defined");
+  }
+
+  @Test
+  void testConvertCoordinatesToMeters() {
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
+
+    EngineValueFactory testFactory = new EngineValueFactory();
+    EngineValue gridStartStr = testFactory.build(
+        "1.23 degrees latitude, 1.4 degrees longitude",
+        Units.EMPTY
+    );
+    EngineValue gridEndStr = testFactory.build(
+        "1.3 degrees latitude, 1.5 degrees longitude",
+        Units.EMPTY
+    );
+    EngineValue sizeVal = testFactory.build(1000, Units.METERS);
+
+    when(mockSimulation.getAttributeValue("grid.inputCrs")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.targetCrs")).thenReturn(Optional.empty());
+    when(mockSimulation.getAttributeValue("grid.low")).thenReturn(Optional.of(gridStartStr));
+    when(mockSimulation.getAttributeValue("grid.high")).thenReturn(Optional.of(gridEndStr));
+    when(mockSimulation.getAttributeValue("grid.size")).thenReturn(Optional.of(sizeVal));
+
+    PatchSet result = factory.build(mockSimulation);
+
+    assertNotNull(result);
+    assertTrue(result.getSpacing().compareTo(BigDecimal.valueOf(1)) == 0);
   }
 
   @Test

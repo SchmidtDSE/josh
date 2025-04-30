@@ -24,3 +24,6 @@ src-generated
 
 # Editor third-party files
 editor/third_party
+
+# Editor war
+editor/war
