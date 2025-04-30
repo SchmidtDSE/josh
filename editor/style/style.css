@@ -30,6 +30,11 @@ dialog label {
   font-weight: bold;
 }
 
+dialog p {
+  color: #505050;
+  font-size: 12px;
+}
+
 dialog .dialog-buttons {
   padding-top: 15px;
   margin-top: 10px;
@@ -45,7 +50,7 @@ dialog .form-group input {
 }
 
 dialog .form-group input.long {
-  width: 90%;
+  width: 250px;
 }
 
 dialog .form-group input.short {
