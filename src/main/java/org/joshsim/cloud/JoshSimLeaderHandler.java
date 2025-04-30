@@ -63,7 +63,21 @@ public class JoshSimLeaderHandler {
    * @param httpServerExchange The exchange through which this request should execute.
    */
   @Override
-  public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {}
+  public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+    String apiKey = httpServerExchange.getRequestHeaders().get("api-key").getFirst();
+
+    if (apiKey == null || !apiInternalLayer.apiKeyIsValid(apiKey)) {
+      httpServerExchange.setStatusCode(401);
+      return;
+    }
+
+    long startTime = System.nanoTime();
+    handleRequestTrusted(httpServerExchange);
+    long endTime = System.nanoTime();
+
+    long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
+    apiInternalLayer.log(apiKey, "distribute", runtimeSeconds);
+  }
 
   /**
    * Execute a request without interacting with the API service internals.
