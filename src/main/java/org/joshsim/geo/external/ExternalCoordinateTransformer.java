@@ -18,11 +18,11 @@ public interface ExternalCoordinateTransformer {
    * @throws Exception If transformation fails
    */
   BigDecimal[] transformPatchToDataCoordinates(
-          BigDecimal patchX, 
+          BigDecimal patchX,
           BigDecimal patchY,
           GridCrsDefinition gridCrs,
           ExternalSpatialDimensions sourceDimensions) throws Exception;
-  
+
   /**
    * Transforms coordinates from data source coordinate system to patch grid space.
    *
@@ -34,7 +34,7 @@ public interface ExternalCoordinateTransformer {
    * @throws Exception If transformation fails
    */
   BigDecimal[] transformDataToPatchCoordinates(
-          BigDecimal dataX, 
+          BigDecimal dataX,
           BigDecimal dataY,
           GridCrsDefinition gridCrs,
           ExternalSpatialDimensions sourceDimensions) throws Exception;

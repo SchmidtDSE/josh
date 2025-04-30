@@ -10,7 +10,7 @@ import org.joshsim.geo.external.GeoInterpolationStrategyFactory.InterpolationMet
 public class ExternalGeoMapperBuilder {
   private ExternalCoordinateTransformer coordinateTransformer;
   private GeoInterpolationStrategy interpolationStrategy;
-  
+
   /**
    * Sets the coordinate transformer for the mapper.
    *
@@ -22,7 +22,7 @@ public class ExternalGeoMapperBuilder {
     this.coordinateTransformer = transformer;
     return this;
   }
-  
+
   /**
    * Sets the interpolation strategy for the mapper.
    *
@@ -33,7 +33,7 @@ public class ExternalGeoMapperBuilder {
     this.interpolationStrategy = strategy;
     return this;
   }
-  
+
   /**
    * Sets the interpolation strategy using a predefined method.
    *
@@ -47,7 +47,7 @@ public class ExternalGeoMapperBuilder {
     this.interpolationStrategy = factory.createStrategy(method);
     return this;
   }
-  
+
   /**
    * Builds and returns a configured ExternalGeoMapper instance.
    *
@@ -57,11 +57,11 @@ public class ExternalGeoMapperBuilder {
     if (coordinateTransformer == null) {
       coordinateTransformer = new GridExternalCoordinateTransformer();
     }
-    
+
     if (interpolationStrategy == null) {
       interpolationStrategy = new NearestNeighborInterpolationStrategy();
     }
-    
+
     return new ExternalGeoMapper(coordinateTransformer, interpolationStrategy);
   }
 }

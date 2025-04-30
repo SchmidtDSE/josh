@@ -1,11 +1,9 @@
 package org.joshsim.geo.external;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -14,7 +12,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * Implementations define how values are interpolated from data sources to patches.
  */
 public interface GeoInterpolationStrategy {
-  
+
   /**
    * Interpolates a value from a data source for a specific patch.
    *
@@ -36,7 +34,7 @@ public interface GeoInterpolationStrategy {
       ExternalCoordinateTransformer transformer,
       ExternalDataReader reader,
       ExternalSpatialDimensions dimensions) throws IOException;
-  
+
   /**
    * Creates a GeoKey for the patch.
    *

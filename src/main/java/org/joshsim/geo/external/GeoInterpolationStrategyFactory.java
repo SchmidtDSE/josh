@@ -15,9 +15,9 @@ public class GeoInterpolationStrategyFactory {
     BILINEAR,
     WEIGHTED_AVERAGE
   }
-  
+
   private final EngineValueFactory valueFactory;
-  
+
   /**
    * Constructs an InterpolationStrategyFactory with the specified value factory.
    *
@@ -26,7 +26,7 @@ public class GeoInterpolationStrategyFactory {
   public GeoInterpolationStrategyFactory(EngineValueFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
-  
+
   /**
    * Creates an interpolation strategy based on the specified method.
    *

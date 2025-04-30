@@ -14,7 +14,7 @@ public class ExternalSpatialDimensions {
   private final List<BigDecimal> coordinatesX;
   private final List<BigDecimal> coordinatesY;
 
-  
+
   /**
    * Constructor for spatial dimensions.
    */
@@ -23,7 +23,7 @@ public class ExternalSpatialDimensions {
           String dimensionNameY,
           String dimensionNameTime,
           String crs,
-          List<BigDecimal> coordinatesX, 
+          List<BigDecimal> coordinatesX,
           List<BigDecimal> coordinatesY) {
     this.dimensionNameX = dimensionNameX;
     this.dimensionNameY = dimensionNameY;
@@ -72,7 +72,7 @@ public class ExternalSpatialDimensions {
     BigDecimal maxY = coordinatesY.getLast();
     return new BigDecimal[] {minX, minY, maxX, maxY};
   }
-  
+
   /**
    * Finds the closest X coordinate index.
    *
@@ -82,7 +82,7 @@ public class ExternalSpatialDimensions {
   public int findClosestIndexX(BigDecimal x) {
     return findClosestIndex(x, coordinatesX);
   }
-  
+
   /**
    * Finds the closest Y coordinate index.
    *
@@ -92,15 +92,15 @@ public class ExternalSpatialDimensions {
   public int findClosestIndexY(BigDecimal y) {
     return findClosestIndex(y, coordinatesY);
   }
-  
+
   private int findClosestIndex(BigDecimal target, List<BigDecimal> coordinates) {
     if (coordinates.isEmpty()) {
       return -1;
     }
-    
+
     int closestIdx = 0;
     BigDecimal closestDiff = target.subtract(coordinates.get(0)).abs();
-    
+
     for (int i = 1; i < coordinates.size(); i++) {
       BigDecimal diff = target.subtract(coordinates.get(i)).abs();
       if (diff.compareTo(closestDiff) < 0) {
@@ -108,7 +108,7 @@ public class ExternalSpatialDimensions {
         closestIdx = i;
       }
     }
-    
+
     return closestIdx;
   }
 }

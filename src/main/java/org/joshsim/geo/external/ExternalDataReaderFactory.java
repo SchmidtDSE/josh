@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ExternalDataReaderFactory {
   private static final List<ExternalDataReader> readers = new ArrayList<>();
-  
+
   /**
    * Creates a ExternalDataReader appropriate for the given file path.
    *
@@ -23,10 +23,10 @@ public class ExternalDataReaderFactory {
         return reader;
       }
     }
-    
+
     throw new IOException("No suitable reader found for file: " + filePath);
   }
-  
+
   /**
    * Registers a custom reader implementation.
    *
@@ -35,7 +35,7 @@ public class ExternalDataReaderFactory {
   public static void registerReader(ExternalDataReader reader) {
     readers.add(0, reader); // Add at beginning for higher priority
   }
-  
+
   // Private constructor to prevent instantiation
   private ExternalDataReaderFactory() {
     throw new AssertionError(

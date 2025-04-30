@@ -5,8 +5,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.value.type.EngineValue;
-import org.locationtech.jts.geom.Coordinate;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Interface for reading grid-based geospatial data from various external sources.
@@ -18,7 +16,7 @@ public interface ExternalDataReader extends AutoCloseable {
    * @param sourcePath Path to the data source
    * @throws IOException If there's an error opening the source
    */
-  public void open(String sourcePath) throws IOException;
+  void open(String sourcePath) throws IOException;
 
   /**
    * Gets the available variable names in the data source.
@@ -27,7 +25,7 @@ public interface ExternalDataReader extends AutoCloseable {
    * @throws IOException If there's an error reading the data source
    */
   List<String> getVariableNames() throws IOException;
-  
+
   /**
    * Gets the coordinate reference system code of the data source.
    *
@@ -43,7 +41,7 @@ public interface ExternalDataReader extends AutoCloseable {
    * @throws IOException If there's an error reading the data source
    */
   Optional<Integer> getTimeDimensionSize() throws IOException;
-  
+
   /**
    * Gets spatial dimensions of the data source.
    *
@@ -51,7 +49,7 @@ public interface ExternalDataReader extends AutoCloseable {
    * @throws IOException If there's an error reading the data source
    */
   ExternalSpatialDimensions getSpatialDimensions() throws IOException;
-  
+
   /**
    * Reads a value at a specific location and time step.
    *
@@ -63,11 +61,11 @@ public interface ExternalDataReader extends AutoCloseable {
    * @throws IOException If there's an error reading the data source
    */
   Optional<EngineValue> readValueAt(
-      String variableName, 
-      BigDecimal x, 
-      BigDecimal y, 
+      String variableName,
+      BigDecimal x,
+      BigDecimal y,
       int timeStep) throws IOException;
-      
+
   /**
    * Checks if this reader can handle the given file format.
    *
