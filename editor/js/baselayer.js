@@ -150,6 +150,17 @@ class BasemapDialogPresenter {
    */
   _scaleDimensions() {
     const self = this;
+
+    if (!self._metadata) {
+      return null;
+    }
+
+    const width = self._metadata.getEndX() - self._metadata.getStartX();
+    const height = self._metadata.getEndY() - self._metadata.getStartY();
+
+    const widthLargerThanHeight = width > height;
+
+    // TODO
   }
   
 }
