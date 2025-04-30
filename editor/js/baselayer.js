@@ -32,6 +32,110 @@ class BasemapDialogPresenter {
     
     self._metadata = null;
     self._imageUrlCallback = imageUrlCallback;
+    
+    self._addEventListeners();
+  }
+
+  setMetadata(metadata) {
+    const self = this;
+    self._metadata = metadata;
+    self._updateVisibility();
+    self._generateAndSendUrl();
+  }
+
+  _addEventListeners() {
+    const self = this;
+    
+    self._openButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      self._dialog.showModal();
+    });
+
+    self._closeButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      self._dialog.close();
+      self._generateAndSendUrl();
+    });
+
+    self._basemapLayerSelect.addEventListener('change', () => {
+      self._updateVisibility();
+      self._generateAndSendUrl();
+    });
+  }
+
+  _generateAndSendUrl() {
+    const self = this;
+    self._imageUrlCallback(self._generateUrl());
+  }
+
+  _generateUrl() {
+    const self = this;
+    
+    if (!self._metadata || !self._metadata.hasDegrees() || !self._userSelectedBasemap()) {
+      return '';
+    }
+
+    const dimensions = self._scaleDimensions();
+    if (!dimensions) {
+      return '';
+    }
+
+    const username = self._mapboxUsernameInput.value;
+    const apiKey = self._apiKeyInput.value;
+    const style = self._basemapLayerSelect.value;
+    const width = dimensions.getImageWidth();
+    const height = dimensions.getImageHeight();
+    
+    const bbox = [
+      self._metadata.getMinLongitude(),
+      self._metadata.getMinLatitude(),
+      self._metadata.getMaxLongitude(),
+      self._metadata.getMaxLatitude()
+    ].join(',');
+
+    return `https://api.mapbox.com/styles/v1/${username}/${style}/static/[${bbox}]/${width}x${height}?access_token=${apiKey}&attribution=true`;
+  }
+
+  _updateVisibility() {
+    const self = this;
+    
+    const hasMetadata = self._metadata !== null;
+    const hasDegrees = hasMetadata && self._metadata.hasDegrees();
+    
+    if (!hasMetadata || !hasDegrees) {
+      self._settingsAvailablePanel.style.display = 'none';
+      self._settingsUnavailablePanel.style.display = 'block';
+      return;
+    }
+
+    self._settingsAvailablePanel.style.display = 'block';
+    self._settingsUnavailablePanel.style.display = 'none';
+
+    const credentialsPanel = self._dialog.querySelector("#mapbox-credentials");
+    credentialsPanel.style.display = self._userSelectedBasemap() ? 'block' : 'none';
+  }
+
+  _scaleDimensions() {
+    const self = this;
+    
+    if (!self._metadata) {
+      return null;
+    }
+
+    const gridWidth = self._metadata.getEndX() - self._metadata.getStartX();
+    const gridHeight = self._metadata.getEndY() - self._metadata.getStartY();
+    const aspectRatio = gridWidth / gridHeight;
+
+    let imageWidth, imageHeight;
+    if (aspectRatio >= 1) {
+      imageWidth = MAX_IMAGE_WIDTH;
+      imageHeight = Math.round(MAX_IMAGE_WIDTH / aspectRatio);
+    } else {
+      imageHeight = MAX_IMAGE_HEIGHT;
+      imageWidth = Math.round(MAX_IMAGE_HEIGHT * aspectRatio);
+    }
+
+    return new ImageDimensions(imageWidth, imageHeight);
   }
 
   /**
@@ -122,19 +226,38 @@ class BasemapDialogPresenter {
 }
 
 
+/**
+ * Container for image dimensions used in Mapbox Static Images API requests.
+ */
 class ImageDimensions {
 
+  /**
+   * Creates a new image dimensions container.
+   * 
+   * @param {number} imageWidth - The width of the image in pixels.
+   * @param {number} imageHeight - The height of the image in pixels.
+   */
   constructor(imageWidth, imageHeight) {
     const self = this;
     self._imageWidth = imageWidth;
     self._imageHeight = imageHeight;
   }
 
+  /**
+   * Gets the width of the image in pixels.
+   * 
+   * @returns {number} The image width in pixels.
+   */
   getImageWidth() {
     const self = this;
     return self._imageWidth;
   }
 
+  /**
+   * Gets the height of the image in pixels.
+   * 
+   * @returns {number} The image height in pixels.
+   */
   getImageHeight() {
     const self = this;
     return self._imageHeight;
