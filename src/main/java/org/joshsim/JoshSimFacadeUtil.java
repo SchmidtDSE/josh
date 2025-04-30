@@ -72,7 +72,7 @@ public class JoshSimFacadeUtil {
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory,
         InputOutputLayer inputOutputLayer, JoshProgram program, String simulationName,
         SimulationStepCallback callback, boolean serialPatches) {
-    
+
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(

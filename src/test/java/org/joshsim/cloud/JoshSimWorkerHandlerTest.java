@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.never;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
@@ -15,8 +14,6 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.HttpString;
 import java.io.OutputStream;
-import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,8 +43,9 @@ class JoshSimWorkerHandlerTest {
   void setUp() {
     MockitoAnnotations.openMocks(this);
     handler = new JoshSimWorkerHandler(apiDataLayer, true, java.util.Optional.empty());
-    
+
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
+    when(exchange.getResponseHeaders()).thenReturn(headerMap);
     when(headerMap.get("api-key")).thenReturn(headerValues);
     when(exchange.getOutputStream()).thenReturn(outputStream);
   }
@@ -85,7 +83,7 @@ class JoshSimWorkerHandlerTest {
     when(headerValues.getFirst()).thenReturn("valid-key");
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
-    
+
     FormParserFactory mockFactory = mock(FormParserFactory.class);
     when(mockFactory.createParser(any())).thenReturn(null);
 
@@ -118,7 +116,7 @@ class JoshSimWorkerHandlerTest {
     // Given
     FormData.FormValue codeValue = mock(FormData.FormValue.class);
     FormData.FormValue nameValue = mock(FormData.FormValue.class);
-    
+
     when(headerValues.getFirst()).thenReturn("valid-key");
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));

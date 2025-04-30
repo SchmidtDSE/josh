@@ -33,5 +33,5 @@ public interface CloudApiDataLayer {
    * @param runtimeSeconds The duration of the operation in seconds which should be reported.
    */
   void log(String key, String type, long runtimeSeconds);
-  
+
 }

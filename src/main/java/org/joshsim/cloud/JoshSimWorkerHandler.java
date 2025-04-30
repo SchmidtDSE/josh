@@ -40,7 +40,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
   public JoshSimWorkerHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
                               Optional<String> crs) {
     this.apiDataLayer = apiInternalLayer;
-    
+
     if (!sandboxed) {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
     }
@@ -65,7 +65,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * issue was encountered) and runs the simulation with patches processed in parallel. The code
    * for the simulation is read from form-encoded code field and the simulation name from the name
    * form-encoded field.</p>
-   * 
+   *
    * @param httpServerExchange The exchange through which this request should execute.
    */
   @Override
@@ -87,10 +87,10 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
   /**
    * Execute a request without interacting with the API service internals.
-   * 
+   *
    * <p>Execute a request without interactingw ith the API service inernals as described in
    * handleRequest which checks the API key and reports logging.</p>
-   * 
+   *
    * @param httpServerExchange The exchange through which this request should execute.
    */
   public void handleRequestTrusted(HttpServerExchange httpServerExchange) {
@@ -109,8 +109,13 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    FormData formData = parser.parseBlocking();
-    
+    FormData formData = null;
+    try {
+      formData = parser.parseBlocking();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     if (!formData.contains("code") || !formData.contains("name")) {
       httpServerExchange.setStatusCode(400);
       return;
@@ -151,7 +156,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
   /**
    * Create a new input / output layer that writes exports to an exchange.
-   * 
+   *
    * @param httpServerExchange The exchange where the response should be streamed.
    * @return The newly created layer.
    */
@@ -167,4 +172,3 @@ public class JoshSimWorkerHandler implements HttpHandler {
   }
 
 }
-
