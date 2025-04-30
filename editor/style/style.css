@@ -339,6 +339,14 @@ main {
   margin: 0 auto;
 }
 
+#results #grid-viz .base-layer {
+  opacity: 0.7;
+}
+
+#results #grid-viz .glyphs-layer.overlay {
+  opacity: 0.7;
+}
+
 #results #grid-viz .grid-patch-foreground:hover {
   stroke: #333333;
   stroke-weight: 2;

@@ -353,8 +353,7 @@ class GridPresenter {
       .attr("y", 0)
       .attr("width", totalWidth)
       .attr("height", totalHeight)
-      .classed("basemap-layer", true);
-    
+      .classed("basemap-layer-image", true);
   }
 
   /**

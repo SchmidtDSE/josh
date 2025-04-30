@@ -120,10 +120,9 @@ class BasemapDialogPresenter {
       return null;
     }
 
-    const username = self._mapboxUsernameInput.value;
     const apiKey = self._apiKeyInput.value;
-    if (!username || !apiKey) {
-      alert("No basemap added: Please specify a Mapbox username and API key.");
+    if (!apiKey) {
+      alert("No basemap added: Please specify a Mapbox API key.");
       return null;
     }
 
@@ -145,10 +144,10 @@ class BasemapDialogPresenter {
     // Construct the final URL with authentication
     return [
       MAPBOX_BASE_URL,
-      username,
+      "mapbox",
       style,
       "static",
-      bbox,
+      `[${bbox}]`,
       `${width}x${height}@2x`
     ].join("/") + `?access_token=${apiKey}&attribution=true`;
   }
