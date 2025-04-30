@@ -10,8 +10,8 @@ package org.joshsim.cloud;
 /**
  * Description of a facade which handles API service internal logic.
  *
- * Description of a facade which handles API service internal logic such as checking for API
- * validity and limited logging of user requests.
+ * <p>Description of a facade which handles API service internal logic such as checking for API
+ * validity and limited logging of user requests.</p>
  */
 public interface CloudApiDataLayer {
 
