@@ -96,7 +96,11 @@ public class JoshSimLeaderHandler {
       throw new RuntimeException(e);
     }
 
-    if (!formData.contains("code") || !formData.contains("name") || !formData.contains("replicates")) {
+    boolean hasCode = formData.contains("code");
+    boolean hasName = formData.contains("name");
+    boolean hasReplicates = formData.contains("replicates");
+    boolean hasRequired = hasCode && hasName && hasReplicates;
+    if (!hasRequired) {
       httpServerExchange.setStatusCode(400);
       return;
     }
@@ -116,7 +120,8 @@ public class JoshSimLeaderHandler {
       return;
     }
 
-    ExecutorService executor = Executors.newFixedThreadPool(Math.min(replicates, maxParallelRequests));
+    int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
+    ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
     List<Future<String>> futures = new ArrayList<>();
 
     for (int i = 0; i < replicates; i++) {
@@ -139,31 +144,43 @@ public class JoshSimLeaderHandler {
     }
   }
 
+  /**
+   * Execute a replicate of the simulation with given parameters.
+   *
+   * <p>This method constructs a HTTP request to send to the worker server, using the provided
+   * code and simulation name. The replicate number is included in the request body.</p>
+   *
+   * @param code The code to execute for the simulation.
+   * @param simulationName The name of the simulation to run.
+   * @param replicateNumber The number of the replicate to execute.
+   * @return A string with the result, including the replicate number for each line of output.
+   * @throws IOException If an I/O error occurs when sending or receiving.
+   * @throws InterruptedException If the operation is interrupted.
+   */
   private String executeReplicate(String code, String simulationName, int replicateNumber) {
-    try {
-      HttpClient client = HttpClient.newBuilder().build();
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(URI.create(urlToWorker))
-          .header("Content-Type", "application/x-www-form-urlencoded")
-          .POST(HttpRequest.BodyPublishers.ofString(
-              String.format("code=%s&name=%s", 
-                  URLEncoder.encode(code, StandardCharsets.UTF_8),
-                  URLEncoder.encode(simulationName, StandardCharsets.UTF_8))))
-          .build();
+    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
+      String.format("code=%s&name=%s", 
+          URLEncoder.encode(code, StandardCharsets.UTF_8),
+          URLEncoder.encode(simulationName, StandardCharsets.UTF_8)
+      )
+    );
+    
+    HttpClient client = HttpClient.newBuilder().build();
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(urlToWorker))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .POST(body)
+        .build();
 
-      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      if (response.statusCode() == 200) {
-        String[] lines = response.body().split("\n");
-        StringBuilder result = new StringBuilder();
-        for (String line : lines) {
-          result.append(String.format("[%d] %s\n", replicateNumber, line));
-        }
-        return result.toString();
+    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    if (response.statusCode() == 200) {
+      String[] lines = response.body().split("\n");
+      StringBuilder result = new StringBuilder();
+      for (String line : lines) {
+        result.append(String.format("[%d] %s\n", replicateNumber, line));
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+      return result.toString();
     }
-    return null;
   }
   
 }
