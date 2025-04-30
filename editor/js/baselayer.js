@@ -16,6 +16,15 @@ const MAX_IMAGE_HEIGHT = 1280;
  */
 class BasemapDialogPresenter {
 
+  /**
+   * Create a new presenter.
+   *
+   * @param {Element} openButton - Element which, when clicked, should open the dialog.
+   * @param {Element} dialog - The actual basemap dialog element.
+   * @param {function} imageUrlCallback - Function to be called with a single parameter which is the
+   *     string if a basemap image should be used (in this case it will be the URL at which that
+   *     image may be retrieved) or null if no basemap should be used.
+   */
   constructor(openButton, dialog, imageUrlCallback) {
     const self = this;
     
@@ -74,7 +83,7 @@ class BasemapDialogPresenter {
    * longitude through bbox, automatically calculating the zoom.  This will be generated using the
    * current style specification, username, and API key found in the dialog as well as the most
    * recently supplied metadata. If the high density check is selected, will request with the "@2x"
-   * option. Attribution always included.
+   * option. Attribution always included. Uses png format.
    * 
    * @returns {string} URL with authentication information included where this image can be found.
    */
