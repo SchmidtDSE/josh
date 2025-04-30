@@ -27,18 +27,18 @@ class BasemapDialogPresenter {
    */
   constructor(openButton, dialog, imageUrlCallback) {
     const self = this;
-    
+
     self._openButton = openButton;
     self._dialog = dialog;
 
     self._settingsAvailablePanel = self._dialog.querySelector("#map-settings-available");
     self._settingsUnavailablePanel = self._dialog.querySelector("#map-settings-unavailable");
-    
+
     self._basemapLayerSelect = self._dialog.querySelector("#basemap-layer-select");
     self._mapboxUsernameInput = self._dialog.querySelector("#mapbox-username-input");
     self._apiKeyInput = self._dialog.querySelector("#mapbox-key-input");
     self._closeButton = self._dialog.querySelector("#close-map-button");
-    
+
     self._metadata = null;
     self._imageUrlCallback = imageUrlCallback;
   }
@@ -51,9 +51,9 @@ class BasemapDialogPresenter {
    */
   setMetadata(metadata) {
     const self = this;
-    
+
     self._metadata = metadata;
-    
+
     self._updateVisibility();
     self._generateAndSendUrl();
   }
@@ -67,7 +67,7 @@ class BasemapDialogPresenter {
    */
   _addEventListeners() {
     const self = this;
-    
+
     self._openButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._dialog.showModal();
@@ -117,12 +117,12 @@ class BasemapDialogPresenter {
    */
   _updateVisibility() {
     const self = this;
-    
+
     const hasMetadata = self._metadata !== null && self._metadata.hasDegrees();
-    
+
     self._settingsAvailablePanel.style.display = hasMetadata ? "block" : "none";
     self._settingsUnavailablePanel.style.display = hasMetadata ? "none" : "block";
-    
+
     const credentialsPanel = self._dialog.querySelector("#mapbox-credentials");
     credentialsPanel.style.display = self._userSelectedBasemap() ? "block" : "none";
   }
@@ -160,7 +160,7 @@ class BasemapDialogPresenter {
 
     const widthLargerThanHeight = width > height;
     const aspectRatio = width / height;
-    
+
     if (widthLargerThanHeight) {
       const imageWidth = MAX_IMAGE_WIDTH;
       const imageHeight = Math.round(MAX_IMAGE_WIDTH / aspectRatio);
@@ -168,10 +168,10 @@ class BasemapDialogPresenter {
     } else {
       const imageHeight = MAX_IMAGE_HEIGHT;
       const imageWidth = Math.round(MAX_IMAGE_HEIGHT * aspectRatio);
-      return new new ImageDimensions(imageWidth, imageHeight);
+      return new ImageDimensions(imageWidth, imageHeight);
     }
   }
-  
+
 }
 
 
@@ -211,5 +211,5 @@ class ImageDimensions {
     const self = this;
     return self._imageHeight;
   }
-  
+
 }
