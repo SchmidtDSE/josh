@@ -19,3 +19,5 @@ fi
 [ ! -e tabby.min.js ] && wget https://cdn.jsdelivr.net/gh/cferdinandi/tabby@12.0.3/dist/js/tabby.min.js -O tabby.min.js
 [ ! -e d3.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js -O d3.min.js
 [ ! -e math.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.2.1/math.min.js -O math.min.js
+[ ! -e popper.min.js ] && wget https://unpkg.com/@popperjs/core@2 -O popper.min.js
+[ ! -e tippy.min.js ] && wget https://unpkg.com/tippy.js@6 -O tippy.min.js

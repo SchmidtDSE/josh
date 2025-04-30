@@ -26,7 +26,19 @@ class RunPanelPresenter {
     self._availablePanel = self._root.querySelector("#available-panel");
     self._runLocalDialog = self._root.querySelector("#run-local-dialog");
 
+    self._localPanel = self._runLocalDialog.querySelector("#local-run-instructions");
+    self._joshCloudPanel = self._runLocalDialog.querySelector("#josh-run-settings");
+    self._customCloudPanel = self._runLocalDialog.querySelector("#custom-cloud-run-settings");
+
+    self._browserRadio = self._runLocalDialog.querySelector("#engine-browser");
+    self._localRadio = self._runLocalDialog.querySelector("#engine-computer");
+    self._joshCloudRadio = self._runLocalDialog.querySelector("#engine-josh-cloud");
+    self._customCloudRadio = self._runLocalDialog.querySelector("#engine-your-cloud");
+
+    tippy("[data-tippy-content]", { appendTo: self._runLocalDialog });
+
     self._setupDialog();
+    self._updateVisibility();
   }
 
   /**
@@ -67,6 +79,13 @@ class RunPanelPresenter {
           simSelect.appendChild(option);
         });
       });
+
+      [
+        self._browserRadio,
+        self._localRadio,
+        self._joshCloudRadio,
+        self._customCloudRadio
+      ].forEach((x) => x.addEventListener("click", () => self._updateVisibility()));
     });
     
     self._runLocalDialog.querySelector(".cancel-button").addEventListener("click", (event) => {
@@ -90,6 +109,22 @@ class RunPanelPresenter {
       self._runLocalDialog.close();
       self._onRun(runRequest);
     });
+  }
+
+  
+  /**
+   * Updates the visibility of different panels based on the radio button selection.
+   */
+  _updateVisibility() {
+    const self = this;
+
+    const updateVisibilityComponent = (panel, radio) => {
+      panel.style.display = radio.checked ? "block" : "none";
+    };
+    
+    updateVisibilityComponent(self._localPanel, self._localRadio);
+    updateVisibilityComponent(self._joshCloudPanel, self._joshCloudRadio);
+    updateVisibilityComponent(self._customCloudPanel, self._customCloudRadio);
   }
 }
 

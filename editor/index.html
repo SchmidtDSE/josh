@@ -68,8 +68,51 @@
                     <input id="replicates-input" name="replicates-input" class="replicates-input long" type="number" value="1">
                   </div>
                 </div>
+                <div class="form-group">
+                  <fieldset>
+                    <legend>Engine</legend>
+                    <p>The location where this should run. Some options may be faster than others but require more set up. Want to try the free non-profit Josh Cloud? <a href="mailto:hello@joshsim.org">Email us</a>.</p>
+                    <div>
+                      <input type="radio" id="engine-browser" name="engine" value="browser" checked>
+                      <label for="engine-browser">On Your Computer (Browser) <span data-tippy-content="Run this locally on your machine through your browser (WebAssembly). This keeps your simulation completely on your mahcine and doesn't require any installation but is the slowest. Recommended for small or prototype models with a small number of replicates.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-computer" name="engine" value="computer">
+                      <label for="engine-computer">On Your Computer (App) <span data-tippy-content="Run this locally on your machine outside of your browser in an app (JVM). This keeps your simulation completely on your machine and is much faster than running in a browser but requires installation. Recommended for medium sized models or those with a moderate number of replicates.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-josh-cloud" name="engine" value="engine-josh-cloud">
+                      <label for="engine-josh-cloud">In Josh Cloud <span data-tippy-content="Run this in our free non-profit cloud, utilizing many machines at the same time. Recommended for large models or those with a many replicates. Sends your simulation to our privacy-respecting servers.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-your-cloud" name="engine" value="engine-your-cloud">
+                      <label for="engine-your-cloud">In Your Cloud <span data-tippy-content="Run this in your own cloud. Recommended for those with dedicated IT support staff supporting the use of Josh. Sends your simulation to the server you specify that we do not control.">ℹ️</span></label>
+                    </div>
+                  </fieldset>
+                </div>
+                <div id="local-run-instructions">
+                  <div class="form-group">
+                    Your local application was not found. <a href="#">See local Josh application instructions</a>.
+                  </div>
+                </div>
+                <div id="josh-run-settings">
+                  <div class="form-group">
+                    <div><label for="josh-cloud-api-key">Josh Cloud API Key:</label></div>
+                    <input id="josh-cloud-api-key" name="josh-cloud-api-key" class="long" type="password">
+                  </div>
+                </div>
+                <div id="custom-cloud-run-settings">
+                  <div class="form-group">
+                    <div><label for="your-cloud-endpoint">Your Cloud Endpoint:</label></div>
+                    <input id="your-cloud-endpoint" name="your-cloud-endpoint" class="long" type="text">
+                  </div>
+                  <div class="form-group">
+                    <div><label for="your-cloud-api-key">Your Cloud API Key:</label></div>
+                    <input id="your-cloud-api-key" name="your-cloud-api-key" class="long" type="password">
+                  </div>
+                </div>
                 <div class="dialog-buttons buttons-panel bold-buttons">
-                  <a href="#" class="run-button primary">Open</a>
+                  <a href="#" class="run-button primary">Run</a>
                   <a href="#" class="cancel-button destructive">Cancel</a>
                 </div>
               </dialog>
@@ -327,6 +370,8 @@ end simulation
     <script type="text/javascript" src="/third_party/ext-searchbox.js"></script>
     <script type="text/javascript" src="/third_party/math.min.js"></script>
     <script type="text/javascript" src="/third_party/tabby.min.js"></script>
+    <script type="text/javascript" src="/third_party/popper.min.js"></script>
+    <script type="text/javascript" src="/third_party/tippy.min.js"></script>
 
     <script type="importmap">
       {
