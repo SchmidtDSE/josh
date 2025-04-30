@@ -19,13 +19,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
+import java.net.URL;
+import java.io.File;
+
 
 @ExtendWith(MockitoExtension.class)
 public class NetcdfExternalDataReaderTest {
 
-  private static final String RIVERSIDE_FILE =
-      "/workspaces/josh/assets/test/netcdf/precip_riverside_annual_agg.nc";
-
+  private static final String RIVERSIDE_RESOURCE_PATH = "netcdf/precip_riverside_annual_agg.nc";
+  private String riversideFilePath;
 
   // Define the explicit dimension names
   private static final String DIM_X = "lon";
@@ -43,9 +45,17 @@ public class NetcdfExternalDataReaderTest {
   private CoordinateReferenceSystem patchCrs;
 
   @BeforeEach 
-  public void setUp() {
+  public void setUp() throws IOException {
     valueFactory = new EngineValueFactory();
     reader = new NetcdfExternalDataReader(valueFactory);
+    
+    // Get resource path
+    URL resourceUrl = getClass().getClassLoader().getResource(RIVERSIDE_RESOURCE_PATH);
+    if (resourceUrl == null) {
+      throw new IOException("Test resource not found: " + RIVERSIDE_RESOURCE_PATH);
+    }
+    riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
+    
     // Try to create WGS84 CRS
     try {
       patchCrs = JtsTransformUtility.getRightHandedCrs("EPSG:4326");
@@ -85,7 +95,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testOpenAndCloseFile() throws IOException {
-    assertDoesNotThrow(() -> reader.open(RIVERSIDE_FILE));
+    assertDoesNotThrow(() -> reader.open(riversideFilePath));
     assertDoesNotThrow(() -> reader.close());
   }
 
@@ -96,7 +106,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testExplicitDimensions() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     ExternalSpatialDimensions dims = reader.getSpatialDimensions();
     assertNotNull(dims);
@@ -109,7 +119,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testGetCrs() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     // Get CRS from file
     String crs = reader.getCrsCode();
@@ -121,7 +131,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testGetVariableNames() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     List<String> variables = reader.getVariableNames();
     assertNotNull(variables);
@@ -138,7 +148,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testGetSpatialDimensions() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     ExternalSpatialDimensions dims = reader.getSpatialDimensions();
     assertNotNull(dims);
@@ -162,7 +172,7 @@ public class NetcdfExternalDataReaderTest {
     EngineValueFactory realFactory = new EngineValueFactory();
     reader = new NetcdfExternalDataReader(realFactory);
 
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     // Get spatial dimensions
     ExternalSpatialDimensions dims = reader.getSpatialDimensions();
@@ -189,7 +199,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testCompareRiversideFiles() throws Exception {
     // Test Riverside file
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
     final List<String> riversideVariables = reader.getVariableNames();
     final ExternalSpatialDimensions riversideDims = reader.getSpatialDimensions();
     final String riversideCrsCode = reader.getCrsCode();
@@ -209,7 +219,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testGetTimeDimensionSize() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     Optional<Integer> timeSize = reader.getTimeDimensionSize();
 
@@ -224,7 +234,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testReadValueOutsideBounds() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     List<String> variables = reader.getVariableNames();
     assertFalse(variables.isEmpty());
@@ -242,7 +252,7 @@ public class NetcdfExternalDataReaderTest {
 
   @Test
   public void testReadValueWithInvalidTimeStep() throws IOException {
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     // Get a valid variable name
     List<String> variables = reader.getVariableNames();
@@ -264,7 +274,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testExtendedBoundsCalculation() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     // Get actual bounds
     BigDecimal minX = reader.getMinX();
@@ -298,7 +308,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testCustomBufferSize() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     // Get original extended bounds with default 10% buffer
     BigDecimal origExtMinX = reader.getExtendedMinX();
@@ -321,7 +331,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testPointsJustOutsideActualBoundsButInsideExtendedBounds() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    openAndSetExplicitDimensions(RIVERSIDE_FILE);
+    openAndSetExplicitDimensions(riversideFilePath);
 
     List<String> variables = reader.getVariableNames();
     assertFalse(variables.isEmpty());
@@ -349,7 +359,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testEnsureDimensionsSetValidation() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    reader.open(RIVERSIDE_FILE);
+    reader.open(riversideFilePath);
     // Try operations that require dimensions to be set without setting them
     assertThrows(IOException.class, () -> reader.getSpatialDimensions(),
         "Should throw IOException if dimensions not set");

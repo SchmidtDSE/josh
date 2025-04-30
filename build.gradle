@@ -96,6 +96,15 @@ test {
   }
 }
 
+// JUnit resource assets for tests.
+sourceSets {
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
 // Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
