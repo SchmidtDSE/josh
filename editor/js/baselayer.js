@@ -66,6 +66,17 @@ class BasemapDialogPresenter {
    */
   _addEventListeners() {
     const self = this;
+    
+    self._openButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._dialog.showModal();
+    });
+
+    self._closeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._dialog.close();
+      self._generateAndSendUrl();
+    });
   }
 
   /**
