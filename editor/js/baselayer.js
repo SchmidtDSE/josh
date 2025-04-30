@@ -122,19 +122,38 @@ class BasemapDialogPresenter {
 }
 
 
+/**
+ * Class representing the dimensions of an image in pixels.
+ */
 class ImageDimensions {
 
+  /**
+   * Creates a new image dimensions object.
+   * 
+   * @param {number} imageWidth - The width of the image in pixels.
+   * @param {number} imageHeight - The height of the image in pixels.
+   */
   constructor(imageWidth, imageHeight) {
     const self = this;
     self._imageWidth = imageWidth;
     self._imageHeight = imageHeight;
   }
 
+  /**
+   * Gets the width of the image.
+   * 
+   * @returns {number} The width in pixels.
+   */
   getImageWidth() {
     const self = this;
     return self._imageWidth;
   }
 
+  /**
+   * Gets the height of the image.
+   * 
+   * @returns {number} The height in pixels.
+   */
   getImageHeight() {
     const self = this;
     return self._imageHeight;
