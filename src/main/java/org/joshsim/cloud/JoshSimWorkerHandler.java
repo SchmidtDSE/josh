@@ -6,9 +6,12 @@
 
 package org.joshsim.cloud;
 
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import java.io.IOException;
+import java.util.Deque;
+import java.util.Map;
 import java.util.Optional;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.referencing.CRS;
@@ -20,8 +23,6 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
-
-
 
 
 /**
@@ -63,16 +64,53 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * issue was encountered) and runs the simulation with patches processed in parallel. The code
    * for the simulation is read from form-encoded code field and the simulation name from the name
    * form-encoded field.</p>
+   * 
+   * @param httpServerExchange The exchange through which this request should execute.
    */
   @Override
   public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+    String apiKey = httpServerExchange.getRequestHeaders().get("api-key").getFirst();
+
+    if (apiKey == null || !apiDataLayer.apiKeyIsValid(apiKey)) {
+      httpServerExchange.setStatusCode(401);
+      return;
+    }
+
+    long startTime = System.nanoTime();
+    handleRequestTrusted(httpServerExchange);
+    long endTime = System.nanoTime();
+
+    long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
+    apiDataLayer.log(apiKey, "simulate", runtimeSeconds);
+  }
+
+  /**
+   * Execute a request without interacting with the API service internals.
+   * 
+   * <p>Execute a request without interactingw ith the API service inernals as described in
+   * handleRequest which checks the API key and reports logging.</p>
+   * 
+   * @param httpServerExchange The exchange through which this request should execute.
+   */
+  public void handleRequestTrusted(HttpServerExchange httpServerExchange) {
     if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
       httpServerExchange.setStatusCode(405);
       return;
     }
 
-    String code = httpServerExchange.getQueryParameters().get("code").getFirst();
-    String simulationName = httpServerExchange.getQueryParameters().get("name").getFirst();
+    httpServerExchange.setStatusCode(200);
+    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+    httpServerExchange.startBlocking();
+
+    Map<String, Deque<String>> parameters = httpServerExchange.getQueryParameters();
+
+    if (!parameters.containsKey("code") || !parameters.containsKey("name")) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    String code = parameters.get("code").getFirst();
+    String simulationName = parameters.get("name").getFirst();
 
     if (code == null || simulationName == null) {
       httpServerExchange.setStatusCode(400);
@@ -110,11 +148,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * @param httpServerExchange The exchange where the response should be streamed.
    * @return The newly created layer.
    */
-  InputOutputLayer getLayer(HttpServerExchange httpServerExchange) {
-    httpServerExchange.setStatusCode(200);
-    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-    httpServerExchange.startBlocking();
-
+  private InputOutputLayer getLayer(HttpServerExchange httpServerExchange) {
     return new SandboxInputOutputLayer((export) -> {
       try {
         httpServerExchange.getOutputStream().write((export + "\n").getBytes());
