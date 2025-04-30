@@ -159,8 +159,19 @@ class BasemapDialogPresenter {
     const height = self._metadata.getEndY() - self._metadata.getStartY();
 
     const widthLargerThanHeight = width > height;
+    const aspectRatio = width / height;
 
-    // TODO
+    let imageWidth, imageHeight;
+    
+    if (widthLargerThanHeight) {
+      imageWidth = MAX_IMAGE_WIDTH;
+      imageHeight = Math.round(MAX_IMAGE_WIDTH / aspectRatio);
+    } else {
+      imageHeight = MAX_IMAGE_HEIGHT;
+      imageWidth = Math.round(MAX_IMAGE_HEIGHT * aspectRatio);
+    }
+
+    return new ImageDimensions(imageWidth, imageHeight);
   }
   
 }
