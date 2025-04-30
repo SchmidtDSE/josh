@@ -6,6 +6,7 @@
 
 const MAX_IMAGE_WIDTH = 1280;
 const MAX_IMAGE_HEIGHT = 1280;
+const MAPBOX_BASE_URL = "https://api.mapbox.com/styles/v1";
 
 
 /**
@@ -108,30 +109,26 @@ class BasemapDialogPresenter {
   _generateUrl() {
     const self = this;
     
-    // Return null if no metadata or missing Earth coordinates
     if (!self._metadata || !self._metadata.hasDegrees()) {
       return null;
     }
 
-    // Return null if no basemap selected
     if (!self._userSelectedBasemap()) {
       return null;
     }
 
-    // Get credentials
     const username = self._mapboxUsernameInput.value;
     const apiKey = self._apiKeyInput.value;
     if (!username || !apiKey) {
+      alert("No basemap added: Please specify a Mapbox username and API key.");
       return null;
     }
 
-    // Get image dimensions based on grid size
     const dimensions = self._scaleDimensions();
     if (!dimensions) {
       return null;
     }
 
-    // Build the URL components
     const style = self._basemapLayerSelect.value;
     const width = dimensions.getImageWidth();
     const height = dimensions.getImageHeight();
@@ -143,8 +140,14 @@ class BasemapDialogPresenter {
     ].join(',');
 
     // Construct the final URL with authentication
-    const baseUrl = 'https://api.mapbox.com/styles/v1';
-    return `${baseUrl}/${username}/${style}/static/${bbox}/${width}x${height}@2x?access_token=${apiKey}&attribution=true&logo=false`;
+    return [
+      MAPBOX_BASE_URL,
+      username,
+      style,
+      "static",
+      bbox,
+      `${width}x${height}@2x`
+    ].join("/") + `?access_token=${apiKey}&attribution=true`;
   }
 
   /**
