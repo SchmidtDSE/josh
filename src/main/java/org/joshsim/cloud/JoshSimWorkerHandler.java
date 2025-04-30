@@ -8,10 +8,11 @@ package org.joshsim.cloud;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData;
+import io.undertow.server.handlers.form.FormDataParser;
+import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
-import java.util.Deque;
-import java.util.Map;
 import java.util.Optional;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.referencing.CRS;
@@ -102,15 +103,21 @@ public class JoshSimWorkerHandler implements HttpHandler {
     httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
     httpServerExchange.startBlocking();
 
-    Map<String, Deque<String>> parameters = httpServerExchange.getQueryParameters();
-
-    if (!parameters.containsKey("code") || !parameters.containsKey("name")) {
+    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
+    if (parser == null) {
       httpServerExchange.setStatusCode(400);
       return;
     }
 
-    String code = parameters.get("code").getFirst();
-    String simulationName = parameters.get("name").getFirst();
+    FormData formData = parser.parseBlocking();
+    
+    if (!formData.contains("code") || !formData.contains("name")) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    String code = formData.getFirst("code").getValue();
+    String simulationName = formData.getFirst("name").getValue();
 
     if (code == null || simulationName == null) {
       httpServerExchange.setStatusCode(400);
