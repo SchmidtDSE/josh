@@ -65,7 +65,7 @@
                 <div class="form-group">
                   <div><label for="replicates-input">Replicates:</label></div>
                   <div>
-                    <input id="replicates-input" name="replicates-input" class="replicates-input" type="number" value="1">
+                    <input id="replicates-input" name="replicates-input" class="replicates-input long" type="number" value="1">
                   </div>
                 </div>
                 <div class="dialog-buttons buttons-panel bold-buttons">
@@ -205,6 +205,47 @@ end simulation
                   </div>
                   
                 </dialog>
+
+                <dialog id="map-dialog">
+                  <h2>Map Settings</h2>
+
+                  <p>You may optionally add a map baselayer like satellite imagery to your visualization using <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>, a service that is not affiliated with the Josh project. This requires getting a Mapbox key and will send the boundaries of your simulation to mapbox in order to request imagery. Communication will go directly to Mapbox and not through Josh servers. Requests will only be made if the basemap is not none.</p>
+
+                  <div id="map-settings-available">
+                    <div class="form-group">
+                      <div>
+                        <label for="basemap-layer-select">Basemap:</label>
+                      </div>
+                      <div class="sel long">
+                        <select name="basemap-layer-select" id="basemap-layer-select">
+                          <option value="none" selected>none</option>
+                          <option value="satellite-streets-v12">satellite-streets-v12</option>
+                          <option value="satellite-v9">satellite-v9</option>
+                          <option value="streets-v12">streets-v12</option>
+                          <option value="outdoors-v12">outdoors-v12</option>
+                          <option value="light-v11">light-v11</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div id="mapbox-credentials">
+                      <div class="form-group">
+                        <div><label for="mapbox-key-input">Mapbox API Key:</label></div>
+                        <div>
+                          <input id="mapbox-key-input" name="mapbox-key-input" class="mapbox-key-input long" type="password">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="map-settings-unavailable">
+                    Please specify latitude and longitude in your simulation in order to add a map layer.
+                  </div>
+
+                  <div class="dialog-buttons buttons-panel bold-buttons">
+                    <a href="#" class="primary cancel-button" id="close-map-button">OK</a>
+                  </div>
+
+                </dialog>
                 
                 <div id="data-selector">
                   Showing
@@ -290,6 +331,7 @@ end simulation
     <script type="importmap">
       {
         "imports": {
+          "baselayer": "/js/baselayer.js?v=EPOCH",
           "editor": "/js/editor.js?v=EPOCH",
           "exporter": "/js/exporter.js?v=EPOCH",
           "file": "/js/file.js?v=EPOCH",
