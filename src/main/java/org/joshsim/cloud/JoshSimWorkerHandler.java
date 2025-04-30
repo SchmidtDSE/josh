@@ -63,7 +63,42 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   @Override
   public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-    throw new NotImplementedException("Still in progress");
+    if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
+      httpServerExchange.setStatusCode(405);
+      return;
+    }
+
+    String code = httpServerExchange.getQueryParameters().get("code").getFirst();
+    String simulationName = httpServerExchange.getQueryParameters().get("name").getFirst();
+
+    if (code == null || simulationName == null) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    ParseResult result = JoshSimFacadeUtil.parse(code);
+    if (result.hasErrors()) {
+      httpServerExchange.setStatusCode(400);
+      httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+      httpServerExchange.getResponseSender().send(result.getErrors().iterator().next().toString());
+      return;
+    }
+
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    if (!program.getSimulations().hasPrototype(simulationName)) {
+      httpServerExchange.setStatusCode(404);
+      return;
+    }
+
+    InputOutputLayer layer = getLayer(httpServerExchange);
+    JoshSimFacadeUtil.runSimulation(
+        geometryFactory,
+        layer,
+        program,
+        simulationName,
+        (step) -> {}, // No step reporting needed for worker
+        true // Use parallel processing
+    );
   }
 
   /**
