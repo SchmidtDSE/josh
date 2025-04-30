@@ -1,5 +1,12 @@
+/**
+ * Handler for collating simulation replicate tasks.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.cloud;
 
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.server.handlers.form.FormDataParser;
@@ -26,7 +33,7 @@ import java.util.concurrent.Future;
  * sending results from different replicates streamed from HTTP 2 back to the original requester
  * through HTTP 2.</p>
  */
-public class JoshSimLeaderHandler {
+public class JoshSimLeaderHandler implements HttpHandler {
 
   private final CloudApiDataLayer apiInternalLayer;
   private final String urlToWorker;
@@ -173,12 +180,13 @@ public class JoshSimLeaderHandler {
    */
   private String executeReplicate(String code, String simulationName, int replicateNumber) {
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
-      String.format("code=%s&name=%s", 
-          URLEncoder.encode(code, StandardCharsets.UTF_8),
-          URLEncoder.encode(simulationName, StandardCharsets.UTF_8)
-      )
+        String.format(
+            "code=%s&name=%s",
+            URLEncoder.encode(code, StandardCharsets.UTF_8),
+            URLEncoder.encode(simulationName, StandardCharsets.UTF_8)
+        )
     );
-    
+
     HttpClient client = HttpClient.newBuilder().build();
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(urlToWorker))
@@ -186,7 +194,13 @@ public class JoshSimLeaderHandler {
         .POST(body)
         .build();
 
-    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    HttpResponse<String> response = null;
+    try {
+      response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    } catch (IOException | InterruptedException e) {
+      throw new RuntimeException("Encountered issue in worker thread: " + e);
+    }
+
     if (response.statusCode() == 200) {
       String[] lines = response.body().split("\n");
       StringBuilder result = new StringBuilder();
@@ -194,7 +208,9 @@ public class JoshSimLeaderHandler {
         result.append(String.format("[%d] %s\n", replicateNumber, line));
       }
       return result.toString();
+    } else {
+      throw new RuntimeException("Encountered issue in worker response: " + response.statusCode());
     }
   }
-  
+
 }
