@@ -4,15 +4,14 @@
  * @license BSD-3-Clause
  */
 
-
 package org.joshsim.cloud;
 
+import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.FileResourceManager;
 import io.undertow.util.Headers;
-import io.undertow.Handlers;
 import java.io.File;
 import java.util.Optional;
 
@@ -57,17 +56,7 @@ public class JoshSimServer {
         // API handlers
         .addPrefixPath("/runReplicate", new JoshSimWorkerHandler(dataLayer, true, Optional.empty()))
         .addPrefixPath("/runReplicates", new JoshSimLeaderHandler(dataLayer, workerUrl, 4))
-
-  /**
-   * Stop the server and release resources.
-   */
-  public void stop() {
-    if (server != null) {
-      server.stop();
-    }
-  }
-
-        
+      
         // Health endpoint
         .addPrefixPath("/health", exchange -> {
             exchange.setStatusCode(200);
@@ -85,6 +74,15 @@ public class JoshSimServer {
 
     this.server = builder.build();
     this.server.start();
+  }
+
+  /**
+   * Stop the server and release resources.
+   */
+  public void stop() {
+    if (server != null) {
+      server.stop();
+    }
   }
   
 }
