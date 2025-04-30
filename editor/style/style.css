@@ -69,6 +69,10 @@ dialog .contents .instructions {
   margin-top: 10px;
 }
 
+fieldset div {
+  margin-bottom: 5px;
+}
+
 footer {
   margin-bottom: 20px;
 }
