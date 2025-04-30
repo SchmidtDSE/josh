@@ -7,4 +7,4 @@
 package org.joshsim.cloud;
 
 
-
+public class JoshSimServer {}

@@ -6,21 +6,19 @@
 
 package org.joshsim.cloud;
 
-import io.undertow.server.HttpHandler;
-
-import java.io.IOException;
-import java.util.Optional;
-
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
+import java.io.IOException;
+import java.util.Optional;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.referencing.CRS;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
+
+
 
 
 /**
@@ -65,7 +63,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   @Override
   public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-    // TODO
+    throw new NotImplementedException("Still in progress");
   }
 
   /**
