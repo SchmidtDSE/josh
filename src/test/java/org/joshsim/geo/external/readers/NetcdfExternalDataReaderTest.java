@@ -39,7 +39,7 @@ public class NetcdfExternalDataReaderTest {
   @Mock
   private EngineValue mockEngineValue;
 
-  // Default patch CRS (WGS84)
+  // Default patch CRS (WGS84) 
   private CoordinateReferenceSystem patchCrs;
 
   @BeforeEach
