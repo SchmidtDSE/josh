@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.geo.external.readers.NetcdfExternalDataReader;
+
 /**
  * Factory for creating appropriate ExternalDataReader instances based on file type.
  */
@@ -18,6 +21,11 @@ public class ExternalDataReaderFactory {
    * @throws IOException If no suitable reader is found or there's an error opening the file
    */
   public static ExternalDataReader createReader(String filePath) throws IOException {
+    if (readers.isEmpty()) {
+      // If not explicitly defined, register default readers
+      EngineValueFactory engineValueFactory = new EngineValueFactory();
+      registerReader(new NetcdfExternalDataReader(engineValueFactory));
+    }
     for (ExternalDataReader reader : readers) {
       if (reader.canHandle(filePath)) {
         return reader;

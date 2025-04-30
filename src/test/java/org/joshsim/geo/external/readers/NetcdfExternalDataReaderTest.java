@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.external.ExternalDataReaderFactory;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.geo.geometry.JtsTransformUtility;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +22,8 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
 import java.net.URL;
 import java.io.File;
-
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 @ExtendWith(MockitoExtension.class)
 public class NetcdfExternalDataReaderTest {
@@ -48,7 +50,7 @@ public class NetcdfExternalDataReaderTest {
   public void setUp() throws IOException {
     valueFactory = new EngineValueFactory();
     reader = new NetcdfExternalDataReader(valueFactory);
-    
+
     // Get resource path
     URL resourceUrl = getClass().getClassLoader().getResource(RIVERSIDE_RESOURCE_PATH);
     if (resourceUrl == null) {
@@ -74,13 +76,9 @@ public class NetcdfExternalDataReaderTest {
    */
   private void openAndSetExplicitDimensions(String filePath) throws IOException {
     reader.open(filePath);
-    try {
-      reader.setDimensions(DIM_X, DIM_Y, DIM_TIME);
-      // Also set WGS84 CRS since we're using lon/lat
-      reader.setCrsCode("EPSG:4326");
-    } catch (IOException e) {
-      throw new IOException("Failed to set explicit dimensions: " + e.getMessage(), e);
-    }
+    reader.setDimensions(DIM_X, DIM_Y, Optional.of(DIM_TIME));
+    // Also set WGS84 CRS since we're using lon/lat
+    reader.setCrsCode("EPSG:4326");
   }
 
   @Test

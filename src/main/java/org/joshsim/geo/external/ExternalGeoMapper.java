@@ -10,6 +10,7 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.external.readers.NetcdfExternalDataReader;
 
 /**
  * Main utility class for mapping geospatial data to patches in a simulation.
@@ -20,6 +21,10 @@ public class ExternalGeoMapper {
 
   private final ExternalCoordinateTransformer coordinateTransformer;
   private final GeoInterpolationStrategy interpolationStrategy;
+  private final String dimensionX;
+  private final String dimensionY;
+  private final String timeDimension;
+  private final String crsCode;
 
   /**
    * Constructs an ExternalGeospatialMapper with the specified components.
@@ -30,8 +35,32 @@ public class ExternalGeoMapper {
   public ExternalGeoMapper(
       ExternalCoordinateTransformer coordinateTransformer,
       GeoInterpolationStrategy interpolationStrategy) {
+    this(coordinateTransformer, interpolationStrategy, null, null, null, null);
+  }
+  
+  /**
+   * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
+   *
+   * @param coordinateTransformer Coordinate transformer for spatial conversions
+   * @param interpolationStrategy Strategy for interpolating values from data to patches
+   * @param dimensionX The name of the X dimension (can be null for auto-detection)
+   * @param dimensionY The name of the Y dimension (can be null for auto-detection)
+   * @param timeDimension The name of the time dimension (can be null)
+   * @param crsCode The coordinate reference system code (can be null)
+   */
+  public ExternalGeoMapper(
+      ExternalCoordinateTransformer coordinateTransformer,
+      GeoInterpolationStrategy interpolationStrategy,
+      String dimensionX,
+      String dimensionY,
+      String timeDimension,
+      String crsCode) {
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
+    this.dimensionX = dimensionX;
+    this.dimensionY = dimensionY;
+    this.timeDimension = timeDimension;
+    this.crsCode = crsCode;
   }
 
   /**
@@ -56,6 +85,8 @@ public class ExternalGeoMapper {
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath)) {
       // Open data source
       reader.open(dataFilePath);
+      reader.setDimensions(dimensionX, dimensionY, Optional.of(timeDimension));
+      reader.setCrsCode(crsCode);
 
       // If no variable names provided, get all available variables
       List<String> actualVariables = variableNames.isEmpty() ?
@@ -111,24 +142,33 @@ public class ExternalGeoMapper {
 
     Map<GeoKey, EngineValue> patchValueMap = new ConcurrentHashMap<>();
 
-    // Process each patch (could be parallelized)
-    for (MutableEntity patch : patchSet.getPatches()) {
-      Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
-          patch,
-          variableName,
-          timeStep,
-          patchSet.getGridCrsDefinition(),
-          coordinateTransformer,
-          reader,
-          dimensions);
+    // Process patches in parallel using Stream API
+    // patchSet.getPatches().parallelStream().forEach(patch -> {
+    // DEBUG: Use serial stream for debugging
+    patchSet.getPatches().forEach(patch -> {
+      try {
+        Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
+            patch,
+            variableName,
+            timeStep,
+            patchSet.getGridCrsDefinition(),
+            coordinateTransformer,
+            reader,
+            dimensions
+        );
 
-      // Store in the map if value exists
-      if (valueOpt.isPresent()) {
-        GeoKey key = interpolationStrategy.getGeoKey(patch);
-        patchValueMap.put(key, valueOpt.get());
+        // Store in the map if value exists
+        if (valueOpt.isPresent()) {
+          GeoKey key = patch.getKey().orElseThrow();
+          patchValueMap.put(key, valueOpt.get());
+        }
+      } catch (Exception e) {
+        // Handle exceptions in parallel stream
+        throw new RuntimeException("Error interpolating value for patch: " + patch, e);
       }
-    }
+    });
 
     return patchValueMap;
   }
+
 }

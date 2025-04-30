@@ -71,33 +71,35 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    * @param dimensionX The name of the X dimension
    * @param dimensionY The name of the Y dimension
    * @param timeDimension The name of the time dimension (can be null)
-   * @throws IOException If the specified dimensions don't exist in the file
    */
-  public void setDimensions(String dimensionX, String dimensionY, String timeDimension)
-      throws IOException {
-    if (ncFile == null) {
-      throw new IOException("NetCDF file not opened yet");
+  public void setDimensions(String dimensionX, String dimensionY, Optional<String> timeDimension) {
+    try {
+      if (ncFile == null) {
+        throw new IOException("NetCDF file not opened yet");
+      }
+
+      // Verify dimensions exist
+      if (ncFile.findVariable(dimensionX) == null) {
+        throw new IOException("X dimension variable not found: " + dimensionX);
+      }
+
+      if (ncFile.findVariable(dimensionY) == null) {
+        throw new IOException("Y dimension variable not found: " + dimensionY);
+      }
+
+      if (timeDimension.isPresent() && ncFile.findVariable(timeDimension.get()) == null) {
+        throw new IOException("Time dimension variable not found: " + timeDimension.get());
+      }
+
+      this.dimNameX = dimensionX;
+      this.dimNameY = dimensionY;
+      this.dimNameTime = timeDimension.orElse(null);
+
+      // Initialize bounds after setting dimensions
+      initializeBounds();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to set dimensions: " + e.getMessage(), e);
     }
-
-    // Verify dimensions exist
-    if (ncFile.findVariable(dimensionX) == null) {
-      throw new IOException("X dimension variable not found: " + dimensionX);
-    }
-
-    if (ncFile.findVariable(dimensionY) == null) {
-      throw new IOException("Y dimension variable not found: " + dimensionY);
-    }
-
-    if (timeDimension != null && ncFile.findVariable(timeDimension) == null) {
-      throw new IOException("Time dimension variable not found: " + timeDimension);
-    }
-
-    this.dimNameX = dimensionX;
-    this.dimNameY = dimensionY;
-    this.dimNameTime = timeDimension;
-
-    // Initialize bounds after setting dimensions
-    initializeBounds();
   }
 
   /**

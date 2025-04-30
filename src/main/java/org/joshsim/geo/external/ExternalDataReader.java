@@ -73,4 +73,8 @@ public interface ExternalDataReader extends AutoCloseable {
    * @return true if this reader can handle the file format
    */
   boolean canHandle(String filePath);
+
+  void setDimensions(String dimensionX, String dimensionY, Optional<String> dimensionTime);
+
+  void setCrsCode(String crsCode);
 }
