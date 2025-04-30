@@ -62,7 +62,8 @@ class BasemapDialogPresenter {
    * Add event listeners to the open and close buttons.
    *
    * Add click listeners that open the dialog on open button and both close the dialog on the close
-   * button and, upon close, also generate and send a mapbox URL. Events' defaults prevented.
+   * button and, upon close, also generate and send a mapbox URL. Events' defaults prevented. Also
+   * adds a callback for internal visibility for basemap.
    */
   _addEventListeners() {
     const self = this;
@@ -76,6 +77,10 @@ class BasemapDialogPresenter {
       event.preventDefault();
       self._dialog.close();
       self._generateAndSendUrl();
+    });
+
+    self._basemapLayerSelect.addEventListener("click", (event) => {
+      self._updateVisibility();
     });
   }
 
@@ -113,15 +118,13 @@ class BasemapDialogPresenter {
   _updateVisibility() {
     const self = this;
     
-    const hasValidMetadata = self._metadata !== null && self._metadata.hasDegrees();
+    const hasMetadata = self._metadata !== null && self._metadata.hasDegrees();
     
-    // Show/hide the main panels based on metadata
-    self._settingsAvailablePanel.style.display = hasValidMetadata ? "block" : "none";
-    self._settingsUnavailablePanel.style.display = hasValidMetadata ? "none" : "block";
+    self._settingsAvailablePanel.style.display = hasMetadata ? "block" : "none";
+    self._settingsUnavailablePanel.style.display = hasMetadata ? "none" : "block";
     
-    // Show/hide mapbox credentials section based on basemap selection
     const credentialsPanel = self._dialog.querySelector("#mapbox-credentials");
-    credentialsPanel.style.display = hasValidMetadata && self._userSelectedBasemap() ? "block" : "none";
+    credentialsPanel.style.display = self._userSelectedBasemap() ? "block" : "none";
   }
 
   /**
