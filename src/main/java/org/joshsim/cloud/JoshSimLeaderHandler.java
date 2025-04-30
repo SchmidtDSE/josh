@@ -1,6 +1,22 @@
 package org.joshsim.cloud;
 
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData;
+import io.undertow.server.handlers.form.FormDataParser;
+import io.undertow.server.handlers.form.FormParserFactory;
+import io.undertow.util.HttpString;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 /**
@@ -57,6 +73,97 @@ public class JoshSimLeaderHandler {
    *
    * @param httpServerExchange The exchange through which this request should execute.
    */
-  public void handleRequestTrusted(HttpServerExchange httpServerExchange) {}
+  public void handleRequestTrusted(HttpServerExchange httpServerExchange) {
+    if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
+      httpServerExchange.setStatusCode(405);
+      return;
+    }
+
+    httpServerExchange.setStatusCode(200);
+    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+    httpServerExchange.startBlocking();
+
+    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
+    if (parser == null) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    FormData formData;
+    try {
+      formData = parser.parseBlocking();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    if (!formData.contains("code") || !formData.contains("name") || !formData.contains("replicates")) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    String code = formData.getFirst("code").getValue();
+    String simulationName = formData.getFirst("name").getValue();
+    int replicates;
+    try {
+      replicates = Integer.parseInt(formData.getFirst("replicates").getValue());
+    } catch (NumberFormatException e) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    if (code == null || simulationName == null || replicates <= 0) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    ExecutorService executor = Executors.newFixedThreadPool(Math.min(replicates, maxParallelRequests));
+    List<Future<String>> futures = new ArrayList<>();
+
+    for (int i = 0; i < replicates; i++) {
+      final int replicateNumber = i;
+      futures.add(executor.submit(() -> executeReplicate(code, simulationName, replicateNumber)));
+    }
+
+    try {
+      for (Future<String> future : futures) {
+        String result = future.get();
+        if (result != null) {
+          httpServerExchange.getOutputStream().write(result.getBytes());
+          httpServerExchange.getOutputStream().flush();
+        }
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  private String executeReplicate(String code, String simulationName, int replicateNumber) {
+    try {
+      HttpClient client = HttpClient.newBuilder().build();
+      HttpRequest request = HttpRequest.newBuilder()
+          .uri(URI.create(urlToWorker))
+          .header("Content-Type", "application/x-www-form-urlencoded")
+          .POST(HttpRequest.BodyPublishers.ofString(
+              String.format("code=%s&name=%s", 
+                  URLEncoder.encode(code, StandardCharsets.UTF_8),
+                  URLEncoder.encode(simulationName, StandardCharsets.UTF_8))))
+          .build();
+
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() == 200) {
+        String[] lines = response.body().split("\n");
+        StringBuilder result = new StringBuilder();
+        for (String line : lines) {
+          result.append(String.format("[%d] %s\n", replicateNumber, line));
+        }
+        return result.toString();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
   
 }
