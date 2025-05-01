@@ -135,7 +135,7 @@ jobs:
       - name: Build war
         run: ./gradlew war
       - name: Install wget
-        run: apt-get install wget
+        run: sudo apt-get install -y wget
       - name: Load JS deps
         run: cd editor/third_party; bash intall_deps.sh
       - name: Upload war
@@ -152,14 +152,17 @@ jobs:
         with:
           name: fullJar
           path: build/libs/joshsim-fat.jar
+      - name: Upload editor
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor
+          path: editor
   deployStatic:
     environment: Deploy
     runs-on: ubuntu-latest
     name: Deploy to SFTP
     needs: [buildWeb]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Set branch name
         id: branch
         run: |
@@ -175,7 +178,7 @@ jobs:
         with:
           name: war
           path: ./deploy/war
-      - name: Upload to SFTP
+      - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
           host: ${{ secrets.SFTPHOST }}
@@ -184,6 +187,56 @@ jobs:
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './deploy'
           remotePath: './joshsim.org/dist/${{ steps.branch.outputs.name }}'
+      - name: Download editor
+        uses: actions/download-artifact@v4
+        with:
+          name: editor
+          path: ./editor-build
+      - name: Upload Editor via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './editor-build/index.html'
+          remotePath: './editor.joshsim.org'
+      - name: Upload JS via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './editor-build/js'
+          remotePath: './editor.joshsim.org'
+      - name: Upload style via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './editor-build/style'
+          remotePath: './editor.joshsim.org'
+      - name: Upload third party via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './editor-build/third_party'
+          remotePath: './editor.joshsim.org'
+      - name: Upload war via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './editor-build/war'
+          remotePath: './editor.joshsim.org'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
