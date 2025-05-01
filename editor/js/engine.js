@@ -252,7 +252,7 @@ class RunRequest {
     
     self._apiKey = apiKey;
     
-    if (useServer && endpoint && !endpoint.endsWith("/runSimulations")) {
+    if (useServer && endpoint !== null && !endpoint.endsWith("/runSimulations")) {
       self._endpoint = endpoint + "/runSimulations";
     } else {
       self._endpoint = endpoint;

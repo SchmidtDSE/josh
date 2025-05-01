@@ -112,12 +112,39 @@ class RunPanelPresenter {
         return;
       }
 
-      const runRequest = new RunRequest(simulationName, replicates);
+      const customEndpoint = self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
+      const useServer = self._localRadio.checked ? false : true;
+      const apiKey = self._getApiKey();
+      const endpoint = self._customCloudRadio.checked ? customEndpoint : "";
+
+      const runRequest = new RunRequest(
+        simulationName,
+        replicates,
+        useServer,
+        apiKey,
+        endpoint
+      );
+      
       self._runLocalDialog.close();
       self._onRun(runRequest);
     });
   }
 
+  /**
+   * Get the effective API key that should be used.
+   *
+   * @returns {string} API key to use in communication with a server for executing simulations.
+   */
+  _getApiKey() {
+    const self = this;
+    if (self._joshCloudRadio.checked) {
+      return self._runLocalDialog.querySelector("#josh-cloud-api-key").value;
+    } else if (self._customCloudRadio.checked) {
+      return self._runLocalDialog.querySelector("#your-cloud-api-key").value;
+    } else {
+      return "";
+    }
+  }
   
   /**
    * Updates the visibility of different panels based on the radio button selection.
