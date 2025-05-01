@@ -111,73 +111,108 @@ class RemoteEngineBackend {
    *     number as they may not be guaranteed to return in order from all backends.
    */
   execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
-    const formData = new FormData();
-    formData.append('code', simCode);
-    formData.append('name', runRequest.getSimName());
-    formData.append('replicates', runRequest.getReplicates().toString());
+
+    /**
+     * Encode information required to run the simulation.
+     *
+     * @returns {FormData} Data to pass into the request.
+     */
+    const createFormData = () => {
+      const formData = new FormData();
+      
+      formData.append("code", simCode);
+      formData.append("name", runRequest.getSimName());
+      formData.append("replicates", runRequest.getReplicates().toString());
+      
+      return formData;
+    };
+
+    /**
+     * Create the body of the request.
+     *
+     * @returns {Object} Request body which can be passed to fetch.
+     */
+    const createRequest = () => {
+      return {
+        method: "POST",
+        headers: {
+          "api-key": self._apiKey
+        },
+        body: createFormData()
+      };
+    };
+
+    /**
+     * Build a new reponse reader which splits by newlines with an internal buffer.
+     *
+     * @param {Map<number, Array<OutputDatum>>} replicateResults - The mapping by integer replicate
+     *     number to data parsed for that replicate.
+     * @returns {function} Function to call with text returned by the remote.
+     */
+    const buildResponseReader = (replicateResults) => {
+      let buffer = "";
+      let completedReplicates = 0;
+
+      const processResponse = (text) => {
+        buffer += text;
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        lines.map((x) => x.trim()).forEach((line) => {
+          if (parsed.type === "datum") {
+            if (!replicateResults.has(parsed.replicate)) {
+              replicateResults.set(parsed.replicate, []);
+            }
+            replicateResults.get(parsed.replicate).push(parsed.datum);
+          } else if (parsed.type === "end") {
+            completedReplicates++;
+            onReplicateExternal(completedReplicates);
+          }
+        });
+      };
+
+      return processResponse;
+    };
     
     return new Promise((resolve, reject) => {
       const replicateResults = new Map();
-      let completedReplicates = 0;
       
-      fetch(this._leaderUrl, {
-        method: 'POST',
-        headers: {
-          'api-key': this._apiKey
-        },
-        body: formData
-      }).then(response => {
+      const onFetchResponse = (response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
-        
-        function processText(text) {
-          buffer += text;
-          const lines = buffer.split('\n');
-          buffer = lines.pop(); // Keep incomplete line in buffer
-          
-          for (const line of lines) {
-            if (line.trim()) {
-              const parsed = parseEngineResponse(line);
-              if (parsed.type === 'datum') {
-                if (!replicateResults.has(parsed.replicate)) {
-                  replicateResults.set(parsed.replicate, []);
-                }
-                replicateResults.get(parsed.replicate).push(parsed.datum);
-              } else if (parsed.type === 'end') {
-                completedReplicates++;
-                onReplicateExternal(completedReplicates);
-              }
-            }
-          }
-        }
+        const processResponse = buildResponseReader(replicateResults);
 
-        function readStream() {
-          return reader.read().then(({done, value}) => {
+        const readStream = () => {
+          return reader.read().then((x) => {
+            const done = x.done;
+            const value = x.value;
+
             if (done) {
               if (buffer.trim()) {
-                processText(buffer);
+                processResponse(buffer);
               }
               const results = Array.from(replicateResults.values());
               resolve(results);
               return;
+            } else {
+              processResponse(decoder.decode(value, {stream: true}));
+              return readStream();
             }
-            
-            processText(decoder.decode(value, {stream: true}));
-            return readStream();
           });
         }
 
         readStream().catch(error => {
           reject(error);
         });
-      }).catch(error => {
-        reject(error);
-      });
+      };
+      
+      fetch(self._leaderUrl, createRequest())
+        .then(onFetchResponse)
+        .catch((error) => { reject(error); });
     });
   }
   
