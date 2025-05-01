@@ -74,7 +74,19 @@ public interface ExternalDataReader extends AutoCloseable {
    */
   boolean canHandle(String filePath);
 
+  /**
+   * Sets the spatial and optional time dimensions for the data source.
+   *
+   * @param dimensionX Name of the X dimension
+   * @param dimensionY Name of the Y dimension
+   * @param dimensionTime Optional name of the time dimension
+   */
   void setDimensions(String dimensionX, String dimensionY, Optional<String> dimensionTime);
 
+  /**
+   * Sets the coordinate reference system code for the data source.
+   *
+   * @param crsCode String containing the CRS code
+   */
   void setCrsCode(String crsCode);
 }

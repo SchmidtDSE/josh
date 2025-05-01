@@ -51,22 +51,22 @@ public class ExternalGeoMapperBuilder {
     this.interpolationStrategy = factory.createStrategy(method);
     return this;
   }
-  
+
   /**
    * Sets the dimension names for the data reader.
    *
-   * @param xDim The name of the X dimension
-   * @param yDim The name of the Y dimension
+   * @param dimX The name of the X dimension
+   * @param dimY The name of the Y dimension
    * @param timeDim The name of the time dimension (can be null)
    * @return This builder instance
    */
-  public ExternalGeoMapperBuilder addDimensions(String xDim, String yDim, String timeDim) {
-    this.dimensionX = xDim;
-    this.dimensionY = yDim;
+  public ExternalGeoMapperBuilder addDimensions(String dimX, String dimY, String timeDim) {
+    this.dimensionX = dimX;
+    this.dimensionY = dimY;
     this.timeDimension = timeDim;
     return this;
   }
-  
+
   /**
    * Sets the coordinate reference system code.
    *
@@ -93,7 +93,7 @@ public class ExternalGeoMapperBuilder {
     }
 
     return new ExternalGeoMapper(
-        coordinateTransformer, 
+        coordinateTransformer,
         interpolationStrategy,
         dimensionX,
         dimensionY,

@@ -3,13 +3,14 @@ package org.joshsim.geo.external.readers;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.geo.external.ExternalDataReaderFactory;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.geo.geometry.JtsTransformUtility;
 import org.junit.jupiter.api.AfterEach;
@@ -20,10 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
-import java.net.URL;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 
 @ExtendWith(MockitoExtension.class)
 public class NetcdfExternalDataReaderTest {
@@ -43,10 +40,10 @@ public class NetcdfExternalDataReaderTest {
   @Mock
   private EngineValue mockEngineValue;
 
-  // Default patch CRS (WGS84) 
+  // Default patch CRS (WGS84)
   private CoordinateReferenceSystem patchCrs;
 
-  @BeforeEach 
+  @BeforeEach
   public void setUp() throws IOException {
     valueFactory = new EngineValueFactory();
     reader = new NetcdfExternalDataReader(valueFactory);
@@ -57,7 +54,7 @@ public class NetcdfExternalDataReaderTest {
       throw new IOException("Test resource not found: " + RIVERSIDE_RESOURCE_PATH);
     }
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     // Try to create WGS84 CRS
     try {
       patchCrs = JtsTransformUtility.getRightHandedCrs("EPSG:4326");

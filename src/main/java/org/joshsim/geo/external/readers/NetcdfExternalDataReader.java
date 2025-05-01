@@ -56,6 +56,12 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     this.valueFactory = valueFactory;
   }
 
+  /**
+   * Opens a NetCDF file from the specified source path.
+   *
+   * @param sourcePath The path to the NetCDF file to open.
+   * @throws IOException If the file cannot be opened or an error occurs during opening.
+   */
   public void open(String sourcePath) throws IOException {
     try {
       ncFile = NetcdfFiles.open(sourcePath);
@@ -126,6 +132,13 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     return crsCode;
   }
 
+  /**
+   * Retrieves the names of all numeric data variables in the NetCDF file
+   * that are not coordinate variables and have at least two dimensions.
+   *
+   * @return A list of variable names.
+   * @throws IOException If the NetCDF file is not open or an error occurs while reading.
+   */
   public List<String> getVariableNames() throws IOException {
     checkFileOpen();
     ensureDimensionsSet();
@@ -146,9 +159,9 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
     for (Variable var : ncFile.getVariables()) {
       // Only include numeric data variables that aren't coordinate variables
-      if (!coordVars.contains(var.getFullName()) &&
-          var.getDataType().isNumeric() &&
-          var.getRank() >= 2) { // Must have at least 2 dimensions (X and Y)
+      if (!coordVars.contains(var.getFullName())
+          && var.getDataType().isNumeric()
+          && var.getRank() >= 2) { // Must have at least 2 dimensions (X and Y)
         result.add(var.getFullName());
       }
     }
@@ -156,6 +169,14 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     return result;
   }
 
+  /**
+   * Retrieves the size of the time dimension if it is set and exists in the NetCDF file.
+   *
+   * <p>@return An Optional containing the size of the time dimension, or an empty Optional if
+   * the time dimension is not set or does not exist.</p>
+   *
+   * @throws IOException If the NetCDF is not open or an error occurs while accessing dimension.
+   */
   public Optional<Integer> getTimeDimensionSize() throws IOException {
     checkFileOpen();
     ensureDimensionsSet();
@@ -171,6 +192,12 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     return Optional.of(timeDim.getLength());
   }
 
+  /**
+   * Retrieves the spatial dimensions (X, Y, and optionally time) from the NetCDF file.
+   *
+   * @return An ExternalSpatialDimensions object containing the spatial dimensions and their values.
+   * @throws IOException If the NetCDF file is not open or an error occurs while reading dimensions.
+   */
   public ExternalSpatialDimensions getSpatialDimensions() throws IOException {
     checkFileOpen();
     ensureDimensionsSet();
@@ -213,6 +240,16 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     }
   }
 
+  /**
+   * Reads a value from the specified variable at the given spatial coordinates and time step.
+   *
+   * @param variableName The name of the variable to read.
+   * @param x The X coordinate as a BigDecimal.
+   * @param y The Y coordinate as a BigDecimal.
+   * @param timeStep The time step index.
+   * @return An Optional containing the EngineValue if found, or an empty Optional if not.
+   * @throws IOException If an error occurs while reading the value.
+   */
   public Optional<EngineValue> readValueAt(
       String variableName, BigDecimal x, BigDecimal y, int timeStep) throws IOException {
     checkFileOpen();
@@ -225,10 +262,10 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       }
 
       // Check if coordinates are within extended bounds
-      if (extendedMinX != null && extendedMaxX != null &&
-          extendedMinY != null && extendedMaxY != null) {
-        if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0 ||
-            y.compareTo(extendedMinY) < 0 || y.compareTo(extendedMaxY) > 0) {
+      if (extendedMinX != null && extendedMaxX != null 
+          && extendedMinY != null && extendedMaxY != null) {
+        if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0 
+            || y.compareTo(extendedMinY) < 0 || y.compareTo(extendedMaxY) > 0) {
           return Optional.empty(); // Coordinates outside extended bounds
         }
       }
@@ -245,29 +282,28 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       }
 
       // Determine the shape of the variable
-      int[] shape = var.getShape();
-      int rank = var.getRank();
+      final int[] shape = var.getShape();
+      final int rank = var.getRank();
 
       // Find the index positions of X, Y, and time dimensions
       List<Dimension> varDims = var.getDimensions();
-      int xDimIdx = -1;
-      int yDimIdx = -1;
+      int dimIdxX = -1;
+      int dimIdxY = -1;
       int timeDimIdx = -1;
-
       for (int i = 0; i < varDims.size(); i++) {
         Dimension dim = varDims.get(i);
         if (dim.getShortName().equals(dimNameX) || dim.getName().equals(dimNameX)) {
-          xDimIdx = i;
+          dimIdxX = i;
         } else if (dim.getShortName().equals(dimNameY) || dim.getName().equals(dimNameY)) {
-          yDimIdx = i;
-        } else if (dimNameTime != null &&
-            (dim.getShortName().equals(dimNameTime) || dim.getName().equals(dimNameTime))) {
+          dimIdxY = i;
+        } else if (dimNameTime != null
+            && (dim.getShortName().equals(dimNameTime) || dim.getName().equals(dimNameTime))) {
           timeDimIdx = i;
         }
       }
 
       // Check if we found the dimensions in this variable
-      if (xDimIdx < 0 || yDimIdx < 0) {
+      if (dimIdxX < 0 || dimIdxY < 0) {
         return Optional.empty(); // Can't locate dimensions in this variable
       }
 
@@ -289,10 +325,10 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       int[] size = new int[rank];
 
       for (int i = 0; i < rank; i++) {
-        if (i == xDimIdx) {
+        if (i == dimIdxX) {
           origin[i] = indexX;
           size[i] = 1;
-        } else if (i == yDimIdx) {
+        } else if (i == dimIdxY) {
           origin[i] = indexY;
           size[i] = 1;
         } else if (i == timeDimIdx) {
@@ -446,14 +482,22 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
     for (int i = 0; i < arrayX.getSize(); i++) {
       double val = arrayX.getDouble(i);
-      if (val < valMinX) valMinX = val;
-      if (val > valMaxX) valMaxX = val;
+      if (val < valMinX) {
+        valMinX = val;
+      }
+      if (val > valMaxX) {
+        valMaxX = val;
+      }
     }
 
     for (int i = 0; i < arrayY.getSize(); i++) {
       double val = arrayY.getDouble(i);
-      if (val < valMinY) valMinY = val;
-      if (val > valMaxY) valMaxY = val;
+      if (val < valMinY) {
+        valMinY = val;
+      }
+      if (val > valMaxY) {
+        valMaxY = val;
+      }
     }
 
     minX = new BigDecimal(valMinX).setScale(6, RoundingMode.HALF_UP);
@@ -655,9 +699,9 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     }
 
     String lowerPath = filePath.toLowerCase();
-    return lowerPath.endsWith(".nc") ||
-           lowerPath.endsWith(".ncf") ||
-           lowerPath.endsWith(".netcdf") ||
-           lowerPath.endsWith(".nc4");
+    return lowerPath.endsWith(".nc") 
+           || lowerPath.endsWith(".ncf")
+           || lowerPath.endsWith(".netcdf")
+           || lowerPath.endsWith(".nc4");
   }
 }

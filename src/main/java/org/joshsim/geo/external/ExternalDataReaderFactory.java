@@ -3,7 +3,6 @@ package org.joshsim.geo.external;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.readers.NetcdfExternalDataReader;
 

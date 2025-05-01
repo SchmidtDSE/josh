@@ -7,10 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.entity.base.GeoKey;
-import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.geo.external.readers.NetcdfExternalDataReader;
 
 /**
  * Main utility class for mapping geospatial data to patches in a simulation.
@@ -37,7 +35,7 @@ public class ExternalGeoMapper {
       GeoInterpolationStrategy interpolationStrategy) {
     this(coordinateTransformer, interpolationStrategy, null, null, null, null);
   }
-  
+
   /**
    * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
    *
@@ -92,8 +90,8 @@ public class ExternalGeoMapper {
       reader.setCrsCode(crsCode);
 
       // If no variable names provided, get all available variables
-      List<String> actualVariables = variableNames.isEmpty() ?
-          reader.getVariableNames() : variableNames;
+      List<String> actualVariables = variableNames.isEmpty()
+          ? reader.getVariableNames() : variableNames;
 
       // Get spatial dimensions of the data source
       ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
@@ -104,7 +102,7 @@ public class ExternalGeoMapper {
 
       // Determine actual time range to process
       int actualMinTimestep = Math.max(0, minTimestep);
-      int actualMaxTimestep = (maxTimestep < 0) ? availableTimeSteps - 1 
+      int actualMaxTimestep = (maxTimestep < 0) ? availableTimeSteps - 1
           : Math.min(maxTimestep, availableTimeSteps - 1);
 
       // Process each requested variable
