@@ -111,7 +111,74 @@ class RemoteEngineBackend {
    *     number as they may not be guaranteed to return in order from all backends.
    */
   execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
-    // TODO
+    const formData = new FormData();
+    formData.append('code', simCode);
+    formData.append('name', runRequest.getSimName());
+    formData.append('replicates', runRequest.getReplicates().toString());
+    
+    return new Promise((resolve, reject) => {
+      const replicateResults = new Map();
+      let completedReplicates = 0;
+      
+      fetch(this._leaderUrl, {
+        method: 'POST',
+        headers: {
+          'api-key': this._apiKey
+        },
+        body: formData
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        function processText(text) {
+          buffer += text;
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // Keep incomplete line in buffer
+          
+          for (const line of lines) {
+            if (line.trim()) {
+              const parsed = parseEngineResponse(line);
+              if (parsed.type === 'datum') {
+                if (!replicateResults.has(parsed.replicate)) {
+                  replicateResults.set(parsed.replicate, []);
+                }
+                replicateResults.get(parsed.replicate).push(parsed.datum);
+              } else if (parsed.type === 'end') {
+                completedReplicates++;
+                onReplicateExternal(completedReplicates);
+              }
+            }
+          }
+        }
+
+        function readStream() {
+          return reader.read().then(({done, value}) => {
+            if (done) {
+              if (buffer.trim()) {
+                processText(buffer);
+              }
+              const results = Array.from(replicateResults.values());
+              resolve(results);
+              return;
+            }
+            
+            processText(decoder.decode(value, {stream: true}));
+            return readStream();
+          });
+        }
+
+        readStream().catch(error => {
+          reject(error);
+        });
+      }).catch(error => {
+        reject(error);
+      });
+    });
   }
   
 }
