@@ -25,6 +25,8 @@ import java.util.concurrent.Callable;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
+import org.joshsim.cloud.EnvCloudApiDataLayer;
+import org.joshsim.cloud.JoshSimServer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
@@ -367,7 +369,7 @@ public class JoshSimCommander {
       name = "server",
       description = "Run the JoshSim server locally"
   )
-  private static class ServerCommand implements Callable<Integer> {
+  static class ServerCommand implements Callable<Integer> {
 
     @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
     private int port;

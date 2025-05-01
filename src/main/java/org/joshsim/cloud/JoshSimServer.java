@@ -41,25 +41,60 @@ public class JoshSimServer {
    */
   private final Undertow server;
 
+  /**
+   * Constructs a JoshSimServer instance.
+   *
+   * @param dataLayer The instance of CloudApiDataLayer that handles internal API logic like
+   *     validation and logging.
+   * @param useHttp2 A boolean flag indicating whether the server should enable HTTP/2 support.
+   * @param workerUrl The URL of the worker service to which tasks may be delegated.
+   * @param port The port on which the server listens for HTTP requests.
+   */
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port) {
     PathHandler pathHandler = Handlers.path()
         // Static file handlers
-        .addPrefixPath("/", Handlers.resource(new FileResourceManager(new File("editor"), 100))
-            .addWelcomeFiles("index.html"))
-        .addPrefixPath("/js", Handlers.resource(new FileResourceManager(new File("editor/js"), 100)))
-        .addPrefixPath("/style", Handlers.resource(new FileResourceManager(new File("editor/style"), 100)))
-        .addPrefixPath("/third_party", Handlers.resource(new FileResourceManager(new File("editor/third_party"), 100)))
-        .addPrefixPath("/war", Handlers.resource(new FileResourceManager(new File("editor/war"), 100)))
+        .addPrefixPath(
+            "/",
+            Handlers.resource(
+                new FileResourceManager(new File("editor"), 100)
+            ).addWelcomeFiles("index.html"))
+        .addPrefixPath("/js", Handlers.resource(
+            new FileResourceManager(new File("editor/js"), 100))
+        )
+        .addPrefixPath(
+            "/style",
+            Handlers.resource(
+                new FileResourceManager(new File("editor/style"), 100)
+            )
+        )
+        .addPrefixPath(
+            "/third_party",
+            Handlers.resource(
+                new FileResourceManager(new File("editor/third_party"), 100)
+            )
+        )
+        .addPrefixPath(
+            "/war",
+            Handlers.resource(
+                new FileResourceManager(new File("editor/war"), 100)
+            )
+        )
         
         // API handlers
-        .addPrefixPath("/runReplicate", new JoshSimWorkerHandler(dataLayer, true, Optional.empty()))
-        .addPrefixPath("/runReplicates", new JoshSimLeaderHandler(dataLayer, workerUrl, 4))
+        .addPrefixPath(
+            "/runReplicate",
+            new JoshSimWorkerHandler(dataLayer, true, Optional.empty())
+        )
+        .addPrefixPath(
+            "/runReplicates",
+            new JoshSimLeaderHandler(dataLayer, workerUrl, 4)
+        )
       
         // Health endpoint
         .addPrefixPath("/health", exchange -> {
-            exchange.setStatusCode(200);
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-            exchange.getResponseSender().send("healthy");
+          exchange.setStatusCode(200);
+          exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+          exchange.getResponseSender().send("healthy");
         });
 
     Undertow.Builder builder = Undertow.builder()
@@ -67,7 +102,7 @@ public class JoshSimServer {
         .setHandler(pathHandler);
 
     if (useHttp2) {
-        builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+      builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
     }
 
     this.server = builder.build();
