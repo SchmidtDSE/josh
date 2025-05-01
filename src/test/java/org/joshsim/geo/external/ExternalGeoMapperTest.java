@@ -3,6 +3,7 @@ package org.joshsim.geo.external;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -81,7 +82,6 @@ public class ExternalGeoMapperTest {
     }
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
     
-
     patches = Arrays.asList(mockPatch1, mockPatch2);
     
     // Set up common mock behaviors
@@ -121,9 +121,9 @@ public class ExternalGeoMapperTest {
     when(mockStrategy.getGeoKey(mockPatch1)).thenReturn(mockGeoKey1);
     when(mockStrategy.getGeoKey(mockPatch2)).thenReturn(mockGeoKey2);
 
-    // Execute the method being tested
+    // Execute the method being tested with time range 0 to 1 (2 timesteps)
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 2);
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 0, 1);
 
     // Verify results
     assertNotNull(result);
@@ -153,7 +153,7 @@ public class ExternalGeoMapperTest {
     
     // Execute with empty variable list - should get all variables from reader
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
-        mapper.mapDataToPatchValues(riversideFilePath, List.of(), mockPatchSet, 2);
+        mapper.mapDataToPatchValues(riversideFilePath, List.of(), mockPatchSet, 0, 1);
 
     // Verify results
     assertNotNull(result);
@@ -164,19 +164,38 @@ public class ExternalGeoMapperTest {
   }
 
   @Test
-  public void testMapDataToPatchValues_SingleVariableNetcdf_WithNegativeTimeSteps() throws Exception {
+  public void testMapDataToPatchValues_SingleVariableNetcdf_WithAllTimeSteps() throws Exception {
     // Set up to return Optional.empty for interpolation
     when(mockStrategy.interpolateValue(any(), anyString(), anyInt(), any(), any(), any(), any()))
         .thenReturn(Optional.empty());
     
-    // Execute with -1 for timeSteps (all available)
+    // Execute with -1 for maxTimestep (all available)
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, -1);
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 0, -1);
 
     // Verify results - should process all 3 time steps we mocked
     assertNotNull(result);
     assertEquals(1, result.size());  // Should have map for one variable
     assertEquals(3, result.get("Precipitation_(total)").size());  // 3 time steps
+  }
+  
+  @Test
+  public void testMapDataToPatchValues_SingleVariableNetcdf_WithSpecificTimeRange() throws Exception {
+    // Set up to return Optional.empty for interpolation
+    when(mockStrategy.interpolateValue(any(), anyString(), anyInt(), any(), any(), any(), any()))
+        .thenReturn(Optional.empty());
+    
+    // Execute with specific time range (1 to 2 inclusive)
+    Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 1, 2);
+
+    // Verify results - should process timesteps 1 and 2 (total of 2 steps)
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(2, result.get("Precipitation_(total)").size());
+    // Verify the specific keys are present
+    assertTrue(result.get("Precipitation_(total)").containsKey(1));
+    assertTrue(result.get("Precipitation_(total)").containsKey(2));
   }
 
   @Test
@@ -186,7 +205,7 @@ public class ExternalGeoMapperTest {
     
     // Verify the exception is wrapped and thrown
     assertThrows(IOException.class, () -> 
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 2));
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 0, 1));
   }
 
   @Test
@@ -198,7 +217,7 @@ public class ExternalGeoMapperTest {
     
     // Verify the exception is wrapped
     assertThrows(IOException.class, () -> 
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 1));
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, mockPatchSet, 0, 0));
   }
 
   /**

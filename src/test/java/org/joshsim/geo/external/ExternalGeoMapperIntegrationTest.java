@@ -132,15 +132,15 @@ public class ExternalGeoMapperIntegrationTest {
     // Check data for precipitation variable
     Map<Integer, Map<GeoKey, EngineValue>> timeStepMaps = result.get(VAR_NAME);
     assertNotNull(timeStepMaps);
-    assertEquals(1, timeStepMaps.size()); // Should have only time step 0
+    assertEquals(1, timeStepMaps.size()); // Should have only time step 1
     
     // Check values for patches
-    Map<GeoKey, EngineValue> patchValueMap = timeStepMaps.get(0);
+    Map<GeoKey, EngineValue> patchValueMap = timeStepMaps.get(1);
     assertFalse(patchValueMap.isEmpty());
     
     // Print sample values
     System.out.println("Number of patches with precipitation values: " + patchValueMap.size());
-    System.out.println("Sample precipitation values at time step 0:");
+    System.out.println("Sample precipitation values at time step 1:");
     
     int count = 0;
     for (Map.Entry<GeoKey, EngineValue> entry : patchValueMap.entrySet()) {
@@ -161,7 +161,7 @@ public class ExternalGeoMapperIntegrationTest {
     
     // Execute with request for 2 time steps
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result = 
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet, 2);
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet,0, 1);
     
     // Verify result contains data for 2 time steps
     assertNotNull(result);

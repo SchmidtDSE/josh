@@ -64,12 +64,13 @@ public class ExternalGeoMapper {
   }
 
   /**
-   * Maps geospatial data to patches based on spatial location.
+   * Maps geospatial data to patches based on spatial location for a specified time range.
    *
    * @param dataFilePath Path to the data file
    * @param variableNames List of variable names to extract
    * @param patchSet Set of patches to map data to
-   * @param timeSteps Number of time steps to process (or -1 for all)
+   * @param minTimestep Minimum time step to process (inclusive, 0-based)
+   * @param maxTimestep Maximum time step to process (inclusive, or -1 for all available)
    * @return Nested map of variable name to time step to patch key to value
    * @throws IOException If there's an error reading the data file
    */
@@ -77,7 +78,9 @@ public class ExternalGeoMapper {
       String dataFilePath,
       List<String> variableNames,
       PatchSet patchSet,
-      int timeSteps) throws IOException {
+      int minTimestep,
+      int maxTimestep
+  ) throws IOException {
 
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result = new HashMap<>();
 
@@ -96,10 +99,13 @@ public class ExternalGeoMapper {
       ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
 
       // Get time dimension size
-      int actualTimeSteps = reader.getTimeDimensionSize().orElse(1);
-      if (timeSteps > 0) {
-        actualTimeSteps = Math.min(timeSteps, actualTimeSteps);
-      }
+      // Get time dimension size
+      int availableTimeSteps = reader.getTimeDimensionSize().orElse(1);
+
+      // Determine actual time range to process
+      int actualMinTimestep = Math.max(0, minTimestep);
+      int actualMaxTimestep = (maxTimestep < 0) ? availableTimeSteps - 1 
+          : Math.min(maxTimestep, availableTimeSteps - 1);
 
       // Process each requested variable
       for (String varName : actualVariables) {
@@ -107,8 +113,8 @@ public class ExternalGeoMapper {
         Map<Integer, Map<GeoKey, EngineValue>> timeStepMaps = new HashMap<>();
         result.put(varName, timeStepMaps);
 
-        // Process each time step
-        for (int t = 0; t < actualTimeSteps; t++) {
+        // Process each time step in the requested range
+        for (int t = actualMinTimestep; t <= actualMaxTimestep; t++) {
           // Create a map for this time step
           Map<GeoKey, EngineValue> patchValueMap = mapVariableTimeStepToPatches(
               reader, varName, t, dimensions, patchSet);
@@ -120,6 +126,26 @@ public class ExternalGeoMapper {
     }
 
     return result;
+  }
+
+  /**
+   * Maps geospatial data to patches based on spatial location for a specific time step.
+   *
+   * @param dataFilePath Path to the data file
+   * @param variableNames List of variable names to extract
+   * @param patchSet Set of patches to map data to
+   * @param timestep The specific time step to process (0-based)
+   * @return Nested map of variable name to time step to patch key to value
+   * @throws IOException If there's an error reading the data file
+   */
+  public Map<String, Map<Integer, Map<GeoKey, EngineValue>>> mapDataToPatchValues(
+      String dataFilePath,
+      List<String> variableNames,
+      PatchSet patchSet,
+      int timestep
+  ) throws IOException {
+    // Simply delegate to the range-based method with the same timestep as both min and max
+    return mapDataToPatchValues(dataFilePath, variableNames, patchSet, timestep, timestep);
   }
 
   /**
