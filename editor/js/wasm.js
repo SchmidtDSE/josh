@@ -19,9 +19,8 @@ class WasmLayer {
   /**
    * Creates a new WASM layer wrapper.
    */
-  constructor(stepCallback) {
+  constructor() {
     const self = this;
-    self._stepCallback = stepCallback;
     self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
     self._datasetBuilder = null;
@@ -127,10 +126,12 @@ class WasmLayer {
    * 
    * @param {string} code - The code containing the simulation.
    * @param {string} simulationName - Name of simulation to run.
+   * @param {function} stepCallback - The function to invoke when a step is completed, passing the
+   *     number of steps completed.
    * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
    *     simulation is concluded with data on this single replicate.
    */
-  async runSimulation(code, simulationName) {
+  async runSimulation(code, simulationName, stepCallback) {
     const self = this;
     await self._initPromise;
 
@@ -148,7 +149,7 @@ class WasmLayer {
           const completedBuilder = self._datasetBuilder;
           setTimeout(() => { resolve(completedBuilder.build()); }, 100);
         } else if (type === "reportStep") {
-          self._onStepCompleted(e.data.result);
+          stepCallback(e.data.result);
         } else if (type === "outputDatum") {
           const rawInput = e.data.result;
           const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
@@ -160,16 +161,6 @@ class WasmLayer {
         data: { code: code, simulationName: simulationName } 
       });
     });
-  }
-
-  /**
-   * Internal callback for when a step within a replicate is completed.
-   *
-   * @param {number} numComplete - The number of steps completed in this replicate.
-   */
-  _onStepCompleted(numComplete) {
-    const self = this;
-    self._stepCallback(numComplete);
   }
 
   /**
@@ -343,27 +334,4 @@ class CodeErrorMaybe {
 }
 
 
-let wasmLayer = null;
-
-/**
- * Gets or creates the WASM layer singleton.
- * 
- * @param {function} stepCallback - Callback function that will be called with the number of
- *     completed steps when a simulation step finishes. Required when creating a new layer.
- * @returns {WasmLayer} The WASM layer singleton instance.
- * @throws {Error} If stepCallback is undefined when creating a new layer.
- */
-function getWasmLayer(stepCallback) {
-  if (wasmLayer === null) {
-    if (stepCallback === undefined) {
-      throw "Provide step callback to make a new wasm layer.";
-    }
-
-    wasmLayer = new WasmLayer(stepCallback);
-  }
-
-  return wasmLayer;
-}
-
-
-export {getWasmLayer};
+export {WasmLayer};

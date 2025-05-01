@@ -5,6 +5,8 @@
  * @license BSD-3-Clause
  */
 
+import {RunRequest} from "model";
+
 /**
  * Presenter which manages the run control panel and dialogs.
  */
@@ -154,44 +156,6 @@ class RunPanelPresenter {
         self._notFoundMessage.style.display = "block";
         self._foundMessage.style.display = "none";
       });
-  }
-}
-
-/**
- * Record for a simulation run request.
- */
-class RunRequest {
-
-  /**
-   * Creates a new run request.
-   * 
-   * @param {string} simName - Name of the simulation to run.
-   * @param {number} replicates - Number of times to replicate the simulation.
-   */
-  constructor(simName, replicates) {
-    const self = this;
-    self._simName = simName;
-    self._replicates = replicates;
-  }
-
-  /**
-   * Gets the simulation name.
-   * 
-   * @returns {string} The simulation name.
-   */
-  getSimName() {
-    const self = this;
-    return self._simName;
-  }
-
-  /**
-   * Gets the number of replicates.
-   * 
-   * @returns {number} The number of replicates.
-   */
-  getReplicates() {
-    const self = this;
-    return self._replicates;
   }
 }
 
