@@ -121,7 +121,6 @@ jobs:
       - name: Run examples
         run: bash examples/test.sh
   buildWeb:
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
     environment: Build
     runs-on: ubuntu-latest
     name: Build for Browser
