@@ -12,6 +12,7 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
+import io.undertow.util.MimeMappings;
 import java.io.File;
 import java.util.Optional;
 
@@ -57,7 +58,10 @@ public class JoshSimServer {
             "/",
             Handlers.resource(
                 new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor")
-            ).addWelcomeFiles("index.html"))
+            ).addWelcomeFiles("index.html")
+             .setMimeMappings(MimeMappings.builder()
+                 .addMapping("wasm", "application/wasm")
+                 .build()))
         .addPrefixPath(
             "/js",
             Handlers.resource(
