@@ -38,7 +38,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * Create a new handler for the leader node which is invoked via an HTTP 2 request.
    */
   public JoshSimWorkerHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
-                              Optional<String> crs) {
+        Optional<String> crs) {
     this.apiDataLayer = apiInternalLayer;
 
     if (!sandboxed) {
@@ -77,7 +77,11 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
-    if (apiKey == null || !apiDataLayer.apiKeyIsValid(apiKey)) {
+    if (apiKey == null) {
+      apiKey = "";
+    }
+
+    if (!apiDataLayer.apiKeyIsValid(apiKey)) {
       httpServerExchange.setStatusCode(401);
       return;
     }

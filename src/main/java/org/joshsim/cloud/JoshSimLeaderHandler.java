@@ -78,7 +78,11 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
-    if (apiKey == null || !apiInternalLayer.apiKeyIsValid(apiKey)) {
+    if (apiKey == null) {
+      apiKey = "";
+    }
+
+    if (!apiInternalLayer.apiKeyIsValid(apiKey)) {
       httpServerExchange.setStatusCode(401);
       return;
     }
