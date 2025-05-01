@@ -73,7 +73,10 @@ public class JoshSimServer {
         .addPrefixPath(
             "/third_party",
             Handlers.resource(
-                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/third_party")
+                new ClassPathResourceManager(
+                    JoshSimServer.class.getClassLoader(),
+                    "editor/third_party"
+                )
             )
         )
         .addPrefixPath(
