@@ -55,7 +55,6 @@ function parseDatum(source) {
  *     it will also have a datum attribute.
  */
 function parseEngineResponse(source) {
-  // Check if it's a replicate end message
   const endMatch = source.match(/^\[end (\d+)\]$/);
   if (endMatch) {
     return {
@@ -64,17 +63,16 @@ function parseEngineResponse(source) {
     };
   }
 
-  // Extract replicate number and data from a data line
   const match = source.match(/^\[(\d+)\] (.+)$/);
   if (!match) {
-    return null;
+    throw "Got malformed engine response.";
   }
 
   const replicate = parseInt(match[1], 10);
   const data = parseDatum(match[2]);
   
   if (!data) {
-    return null;
+    throw "Got malformed engine response.";
   }
 
   return {

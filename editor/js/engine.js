@@ -11,7 +11,7 @@
 class WasmEngineBackend {
 
   /**
-   * Create a new engine fullfillment backend strategy which executes simulations via WASM
+   * Create a new engine fullfillment backend strategy which executes simulations via WASM.
    *
    * @param {WasmLayer} wasmLayer - The WASM layer through which the simulations should execute.
    */
@@ -73,6 +73,45 @@ class WasmEngineBackend {
 
       runReplicate();
     });
+  }
+  
+}
+
+
+/**
+ * Engine backend strategy which uses a remote Josh server endpoint to execute simulations.
+ */
+class RemoteEngineBackend {
+
+  /**
+   * Create a new engine fullfillment backend strategy which executes via a remote server.
+   *
+   * @param {string} leaderUrl - Url ending in /runSimulations where requests to execute should be
+   *     sent along with the API key and simulation code.
+   * @param {string} apiKey - The API key to send to the runSimluations endpoint to authenticate.
+   */
+  constructor(leaderUrl, apiKey) {
+    const self = this;
+    self._leaderUrl = leaderUrl;
+    self._apiKey = apiKey;
+  }
+
+  /**
+   * Fulfill a run request.
+   *
+   * @param simCode {string} - The code to run in this simulation.
+   * @param runRequest {RunRequest} - Information about what simulation should run and with how many
+   *     replicates.
+   * @param onStepExternal {function} - Callback to invoke when a single step is completed. This
+   *     will not be invoked when using the remote engine backend.
+   * @param onReplicateExternal {function} - Callback to invoke when a single replicate is
+   *     completed. Will pass the number of replicates completed in the current execution.
+   * @returns {Promise<Array<SimulationResult>>} Resolves to the per-replicate simulation results or
+   *     rejects if it encounters a runtime error. This is after collecting results by replicate
+   *     number as they may not be guaranteed to return in order from all backends.
+   */
+  execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
+    // TODO
   }
   
 }
