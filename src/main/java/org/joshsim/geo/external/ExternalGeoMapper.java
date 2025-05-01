@@ -23,6 +23,7 @@ public class ExternalGeoMapper {
   private final String dimensionY;
   private final String timeDimension;
   private final String crsCode;
+  private boolean useParallelProcessing = false;  // Add this as a class field
 
   /**
    * Constructs an ExternalGeospatialMapper with the specified components.
@@ -166,10 +167,11 @@ public class ExternalGeoMapper {
 
     Map<GeoKey, EngineValue> patchValueMap = new ConcurrentHashMap<>();
 
-    // Process patches in parallel using Stream API
-    // patchSet.getPatches().parallelStream().forEach(patch -> {
-    // DEBUG: Use serial stream for debugging
-    patchSet.getPatches().forEach(patch -> {
+    var stream = useParallelProcessing
+        ? patchSet.getPatches().parallelStream()
+        : patchSet.getPatches().stream();
+
+    stream.forEach(patch -> {
       try {
         Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
             patch,

@@ -79,10 +79,10 @@ public class ExternalGeoMapperIntegrationTest {
    */
   private PatchSet createRiversidePatchSet() {
     // Define Riverside area coordinates
-    BigDecimal westLon = new BigDecimal("-117.400");
-    BigDecimal eastLon = new BigDecimal("-117.395");
-    BigDecimal southLat = new BigDecimal("33.900");
-    BigDecimal northLat = new BigDecimal("33.905");
+    BigDecimal westLon = new BigDecimal("-117.40000");
+    BigDecimal eastLon = new BigDecimal("-117.39975");
+    BigDecimal southLat = new BigDecimal("33.90000");
+    BigDecimal northLat = new BigDecimal("33.90025");
 
     // Create extents for the grid - note the orientation for proper grid construction
     // In grid space, topLeft has smaller Y value than bottomRight
