@@ -73,6 +73,12 @@ public class JoshSimServer {
     }
 
     this.server = builder.build();
+  }
+
+  /**
+   * Start running this server.
+   */
+  public void start() {
     this.server.start();
   }
 
