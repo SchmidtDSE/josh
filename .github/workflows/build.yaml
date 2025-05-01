@@ -184,6 +184,7 @@ jobs:
           localPath: './deploy'
           remotePath: './joshsim.org/dist/${{ steps.branch.outputs.name }}'
   deployCloud:
+    name: Deploy to Cloud
     environment: Deploy
     runs-on: ubuntu-latest
     needs: [buildWeb]

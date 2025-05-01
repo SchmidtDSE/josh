@@ -374,7 +374,11 @@ public class JoshSimCommander {
     @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
     private int port;
 
-    @Option(names = "--concurrent-workers", description = "Nubmer of concurrent workers allowed", defaultValue = "0")
+    @Option(
+        names = "--concurrent-workers",
+        description = "Nubmer of concurrent workers allowed",
+        defaultValue = "0"
+    )
     private int workers;
 
     @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://localhost:8085/runReplicate")
