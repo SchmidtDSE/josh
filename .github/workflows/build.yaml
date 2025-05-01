@@ -124,7 +124,7 @@ jobs:
     needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
     environment: Build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/head/feat/cloud-run-deploy'
     name: Build for Browser
     steps:
       - name: Checkout
