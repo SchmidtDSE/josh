@@ -1,4 +1,3 @@
-
 FROM quay.io/lib/eclipse-temurin:21
 
 WORKDIR /app
