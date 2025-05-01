@@ -140,8 +140,20 @@ class RunPanelPresenter {
    */
   _detectLocalApp() {
     const self = this;
-    self._notFoundMessage
-    self._foundMessage
+    fetch('/health')
+      .then(response => {
+        if (response.status === 200) {
+          self._notFoundMessage.style.display = 'none';
+          self._foundMessage.style.display = 'block';
+        } else {
+          self._notFoundMessage.style.display = 'block';
+          self._foundMessage.style.display = 'none';
+        }
+      })
+      .catch(() => {
+        self._notFoundMessage.style.display = 'block';
+        self._foundMessage.style.display = 'none';
+      });
   }
 }
 
