@@ -57,7 +57,8 @@ import picocli.CommandLine.Parameters;
     description = "JoshSim command line interface",
     subcommands = {
         JoshSimCommander.ValidateCommand.class,
-        JoshSimCommander.RunCommand.class
+        JoshSimCommander.RunCommand.class,
+        JoshSimCommander.ServerCommand.class
     }
 )
 public class JoshSimCommander {
@@ -360,3 +361,43 @@ public class JoshSimCommander {
   }
 
 }
+/**
+   * Command to run the JoshSim server locally.
+   */
+  @Command(
+      name = "server",
+      description = "Run the JoshSim server locally"
+  )
+  static class ServerCommand implements Callable<Integer> {
+
+    @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
+    private int port;
+
+    @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://0.0.0.0:8085/runSimulation")
+    private String workerUrl;
+
+    @Option(names = "--use-http2", description = "Enable HTTP/2 support", defaultValue = "false")
+    private boolean useHttp2;
+
+    @Override
+    public Integer call() {
+      try {
+        JoshSimServer server = new JoshSimServer(
+            new EnvCloudApiDataLayer(),
+            useHttp2,
+            workerUrl,
+            port
+        );
+        
+        server.start();
+        System.out.println("Server started on port " + port);
+        
+        // Keep the server running
+        Thread.currentThread().join();
+        return 0;
+      } catch (Exception e) {
+        System.err.println("Server error: " + e.getMessage());
+        return 1;
+      }
+    }
+  }
