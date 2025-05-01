@@ -238,11 +238,25 @@ class RunRequest {
    *     "/runSimulations" and, if it does not, it will be appended. Null if not using server. May
    *     be empty if running locally such that an empty string should be passed for API key. If null
    *     and useServer is true, will use a default.
+   * @throws {Error} If useServer is true but apiKey is null.
    */
   constructor(simName, replicates, useServer, apiKey, endpoint) {
     const self = this;
     self._simName = simName;
     self._replicates = replicates;
+    self._useServer = useServer;
+    
+    if (useServer && apiKey === null) {
+      throw new Error("API key cannot be null when using server");
+    }
+    
+    self._apiKey = apiKey;
+    
+    if (useServer && endpoint && !endpoint.endsWith("/runSimulations")) {
+      self._endpoint = endpoint + "/runSimulations";
+    } else {
+      self._endpoint = endpoint;
+    }
   }
 
   /**
@@ -263,6 +277,36 @@ class RunRequest {
   getReplicates() {
     const self = this;
     return self._replicates;
+  }
+
+  /**
+   * Gets whether the request should use a server.
+   * 
+   * @returns {boolean} True if using server, false if using browser WASM/JS.
+   */
+  getUseServer() {
+    const self = this;
+    return self._useServer;
+  }
+
+  /**
+   * Gets the server endpoint URL.
+   * 
+   * @returns {?string} The server endpoint URL or null if not using server.
+   */
+  getEndpoint() {
+    const self = this;
+    return self._endpoint;
+  }
+
+  /**
+   * Gets the API key for server authentication.
+   * 
+   * @returns {?string} The API key or null if not using server.
+   */
+  getApiKey() {
+    const self = this;
+    return self._apiKey;
   }
 }
 
