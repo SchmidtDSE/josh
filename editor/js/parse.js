@@ -55,5 +55,31 @@ function parseDatum(source) {
  *     it will also have a datum attribute.
  */
 function parseEngineResponse(source) {
+  // Check if it's a replicate end message
+  const endMatch = source.match(/^\[end (\d+)\]$/);
+  if (endMatch) {
+    return {
+      replicate: parseInt(endMatch[1], 10),
+      type: "end"
+    };
+  }
+
+  // Extract replicate number and data from a data line
+  const match = source.match(/^\[(\d+)\] (.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  const replicate = parseInt(match[1], 10);
+  const data = parseDatum(match[2]);
   
+  if (!data) {
+    return null;
+  }
+
+  return {
+    replicate: replicate,
+    type: "datum",
+    datum: data
+  };
 }
