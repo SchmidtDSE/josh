@@ -9,7 +9,7 @@
  */
 
 import {EditorPresenter} from "editor";
-import {WasmEngineBackend} from "engine";
+import {RemoteEngineBackend, WasmEngineBackend} from "engine";
 import {FilePresenter} from "file";
 import {ResultsPresenter} from "results";
 import {RunPanelPresenter} from "run";
@@ -33,7 +33,6 @@ class MainPresenter {
     self._metadata = null;
 
     self._wasmLayer = new WasmLayer();
-    self._engineBackend = new WasmEngineBackend(self._wasmLayer);
 
     self._filePresenter = new FilePresenter("file-buttons", (code) => {
       self._editorPresenter.setCode(code);
@@ -121,7 +120,8 @@ class MainPresenter {
    */
   _executeInBackend() {
     const self = this;
-    self._engineBackend.execute(
+    const engineBackend = self._buildEngineBackend();
+    engineBackend.execute(
       self._editorPresenter.getCode(),
       self._currentRequest,
       (x) => self._onStepCompleted(x, "steps"),
@@ -132,6 +132,25 @@ class MainPresenter {
     );
   }
 
+  /**
+   * Build the backend given the current request.
+   */
+  _buildEngineBackend() {
+    const self = this;
+
+    if (self._currentRequest === null) {
+      throw "No request active. Cannot build backend";
+    }
+    
+    if (self._currentRequest.useServer()) {
+      return new RemoteEngineBackend(
+        self._currentRequest.getEndpoint(),
+        self._currentRequest.getApiKey()
+      );
+    } else {
+      return new WasmEngineBackend(self._wasmLayer);
+    }
+  }
   
   /**
    * Callback for when a simulation run is completed.

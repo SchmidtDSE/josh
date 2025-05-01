@@ -284,7 +284,7 @@ class RunRequest {
    * 
    * @returns {boolean} True if using server, false if using browser WASM/JS.
    */
-  getUseServer() {
+  useServer() {
     const self = this;
     return self._useServer;
   }
