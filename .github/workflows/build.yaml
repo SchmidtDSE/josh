@@ -194,6 +194,8 @@ jobs:
         with:
           name: editor
           path: ./editor-build
+      - name: Verify editor
+        run: ls editor-build/
       - name: Unzip editor
         run: cd editor-build; unzip editor.zip
       - name: Upload Editor via SFTP
@@ -278,19 +280,19 @@ jobs:
             echo "Deploying to Development environment"
           fi
       - name: Configure Docker
-        run: gcloud auth configure-docker us-docker.pkg.dev
+        run: gcloud auth configure-docker us-west1-docker.pkg.dev
       - name: Build and Push Docker image
         run: |
           # Build from the directory containing the Dockerfile
-          docker build -t us-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }} -f cloud-img/${{ env.DOCKERFILE }} cloud-img
-          docker push us-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker build -t us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }} -f cloud-img/${{ env.DOCKERFILE }} cloud-img
+          docker push us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ secrets.REGION }}
-          image: us-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          image: us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: |
             --memory=32Gi
             --cpu=8
