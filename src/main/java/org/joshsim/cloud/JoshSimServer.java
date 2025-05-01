@@ -15,8 +15,6 @@ import io.undertow.util.Headers;
 import java.io.File;
 import java.util.Optional;
 
-package org.joshsim.cloud;
-
 
 /**
  * Undertow server running either Josh Cloud or a self-hosted cloud.

@@ -360,15 +360,14 @@ public class JoshSimCommander {
 
   }
 
-}
-/**
+  /**
    * Command to run the JoshSim server locally.
    */
   @Command(
       name = "server",
       description = "Run the JoshSim server locally"
   )
-  static class ServerCommand implements Callable<Integer> {
+  private static class ServerCommand implements Callable<Integer> {
 
     @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
     private int port;
@@ -388,10 +387,10 @@ public class JoshSimCommander {
             workerUrl,
             port
         );
-        
+
         server.start();
         System.out.println("Server started on port " + port);
-        
+
         // Keep the server running
         Thread.currentThread().join();
         return 0;
@@ -401,3 +400,5 @@ public class JoshSimCommander {
       }
     }
   }
+
+}
