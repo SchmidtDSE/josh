@@ -7,4 +7,12 @@ COPY joshsim-fat.jar /app/
 
 EXPOSE 8085
 
-CMD ["java", "-jar", "joshsim-fat.jar", "server", "--port=8085", "--concurrent-workers=5", "--use-http2=true"]
+CMD [
+  "java",
+  "-jar",
+  "joshsim-fat.jar",
+  "server",
+  "--port=8085",
+  "--concurrent-workers=5",
+  "--use-http2=true"
+]
