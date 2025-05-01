@@ -262,9 +262,9 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       }
 
       // Check if coordinates are within extended bounds
-      if (extendedMinX != null && extendedMaxX != null 
+      if (extendedMinX != null && extendedMaxX != null
           && extendedMinY != null && extendedMaxY != null) {
-        if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0 
+        if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0
             || y.compareTo(extendedMinY) < 0 || y.compareTo(extendedMaxY) > 0) {
           return Optional.empty(); // Coordinates outside extended bounds
         }
@@ -699,7 +699,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     }
 
     String lowerPath = filePath.toLowerCase();
-    return lowerPath.endsWith(".nc") 
+    return lowerPath.endsWith(".nc")
            || lowerPath.endsWith(".ncf")
            || lowerPath.endsWith(".netcdf")
            || lowerPath.endsWith(".nc4");
