@@ -1,7 +1,6 @@
 importScripts("/war/js/JoshSim.js");
 importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
-
-const NUMBER_REGEX = /^(\+|\-)?\d+(\.\d+)?$/;
+importScripts("/js/parse.js");
 
 let wasmLayer = null;
 let postMessage = null;
@@ -14,41 +13,6 @@ let postMessage = null;
  */
 function reportStepComplete(stepCount) {
   postMessage({ type: "reportStep", success: true, result: stepCount })
-}
-
-
-/**
- * Parse a single data point from an internal memory transfer string.
- *
- * @param {string} source - The internal memory transfer string to parse.
- * @returns {Object} Record with the target name and attributes.
- */
-function parseDatum(source) {
-  const firstPieces = source.split(':', 2);
-  const target = firstPieces[0];
-  const attributesStr = firstPieces[1];
-
-  const attributes = new Map();
-
-  if (!attributesStr) {
-    return;
-  }
-
-  const pairs = attributesStr.split("\t");
-  for (const pair of pairs) {
-    const pairPieces = pair.split('=', 2);
-    const key = pairPieces[0];
-    const value = pairPieces[1];
-
-    const valid = key && value !== undefined;
-
-    if (valid) {
-      const isNumber = NUMBER_REGEX.test(value);
-      attributes.set(key, isNumber ? parseFloat(value) : value);
-    }
-  }
-
-  return {"target": target, "attributes": attributes};
 }
 
 

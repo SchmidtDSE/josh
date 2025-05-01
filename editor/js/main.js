@@ -9,10 +9,11 @@
  */
 
 import {EditorPresenter} from "editor";
+import {RemoteEngineBackend, WasmEngineBackend} from "engine";
 import {FilePresenter} from "file";
 import {ResultsPresenter} from "results";
 import {RunPanelPresenter} from "run";
-import {getWasmLayer} from "wasm";
+import {WasmLayer} from "wasm";
 
 
 /**
@@ -31,9 +32,7 @@ class MainPresenter {
     self._replicateResults = [];
     self._metadata = null;
 
-    self._wasmLayer = getWasmLayer(
-      (numSteps) => self._onStepCompleted(numSteps)
-    );
+    self._wasmLayer = new WasmLayer();
 
     self._filePresenter = new FilePresenter("file-buttons", (code) => {
       self._editorPresenter.setCode(code);
@@ -110,57 +109,77 @@ class MainPresenter {
     self._wasmLayer.getSimulationMetadata(simCode, simName).then(
       (metadata) => {
         self._metadata = metadata;
-        self._executeSingleReplicate(simCode, simName);
+        self._executeInBackend();
       },
       (x) => { self._onError(x); }
     );
   }
 
-  _executeSingleReplicate(simCode, simName) {
+  /**
+   * Execute the simulation code in the currently configured engine backend.
+   */
+  _executeInBackend() {
     const self = this;
-    self._wasmLayer.runSimulation(simCode, simName).then(
-      (x) => { self._onSimulationComplete(x); },
-      (x) => { self._onError(x); }
+    const engineBackend = self._buildEngineBackend();
+    engineBackend.execute(
+      self._editorPresenter.getCode(),
+      self._currentRequest,
+      (x) => self._onStepCompleted(x, "steps"),
+      (x) => self._onStepCompleted(x, "replicates")
+    ).then(
+      (x) => self._onRunComplete(x),
+      (x) => self._onError(x)
     );
   }
 
-  _onSimulationComplete(results) {
+  /**
+   * Build the backend given the current request.
+   */
+  _buildEngineBackend() {
     const self = this;
-    
-    self._replicateResults.push(results);
-    self._replicatesCompleted++;
 
-    const multiReplicate = self._currentRequest.getReplicates() > 1;
-    if (multiReplicate) {
-      self._resultsPresenter.onStep(self._replicatesCompleted, "replicates");
+    if (self._currentRequest === null) {
+      throw "No request active. Cannot build backend";
     }
-
-    const completed = self._replicatesCompleted >= self._currentRequest.getReplicates();
-    if (completed) {
-      self._onRunComplete();
+    
+    if (self._currentRequest.useServer()) {
+      return new RemoteEngineBackend(
+        self._currentRequest.getEndpoint(),
+        self._currentRequest.getApiKey()
+      );
     } else {
-      self._executeSingleReplicate();
+      return new WasmEngineBackend(self._wasmLayer);
     }
   }
-
-  _onRunComplete() {
+  
+  /**
+   * Callback for when a simulation run is completed.
+   *
+   * @param {Array<SimulationResult>} results - The completed simulation results.
+   */
+  _onRunComplete(results) {
     const self = this;
+    self._replicateResults = results;
     self._runPresenter.showButtons();
     self._resultsPresenter.onComplete(self._metadata, self._replicateResults);
   }
 
   /**
    * Callback for when a simulation step is completed.
+   *
+   * @param {number} numCompleted - The number of items completed.
+   * @param {string} typeCompleted - The type of items being reported like steps or replicates.
    */
-  _onStepCompleted(stepsCompleted) {
+  _onStepCompleted(numCompleted, typeCompleted) {
     const self = this;
-
-    const singleReplicate = self._currentRequest.getReplicates() == 1;
-    if (singleReplicate) {
-      self._resultsPresenter.onStep(stepsCompleted, "steps");
-    }
+    self._resultsPresenter.onStep(numCompleted, typeCompleted);
   }
 
+  /**
+   * Handles errors that occur during simulation run requests.
+   *
+   * @param {string} message - The error message to be displayed.
+   */
   _onError(message) {
     const self = this;
     

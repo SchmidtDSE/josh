@@ -47,7 +47,7 @@ class JoshSimLeaderHandlerTest {
 
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
     when(exchange.getResponseHeaders()).thenReturn(headerMap);
-    when(headerMap.get("X-API-KEY")).thenReturn(headerValues);
+    when(headerMap.get("X-API-Key")).thenReturn(headerValues);
     when(exchange.getOutputStream()).thenReturn(outputStream);
   }
 
@@ -67,7 +67,7 @@ class JoshSimLeaderHandlerTest {
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("GET"));
 
-    handler.handleRequestTrusted(exchange);
+    handler.handleRequestTrusted(exchange, "");
 
     verify(exchange).setStatusCode(405);
   }
@@ -81,7 +81,7 @@ class JoshSimLeaderHandlerTest {
     FormParserFactory mockFactory = mock(FormParserFactory.class);
     when(mockFactory.createParser(any())).thenReturn(null);
 
-    handler.handleRequestTrusted(exchange);
+    handler.handleRequestTrusted(exchange, "");
 
     verify(exchange).setStatusCode(400);
   }
@@ -96,7 +96,7 @@ class JoshSimLeaderHandlerTest {
     when(formData.contains("replicates")).thenReturn(false);
     when(formDataParser.parseBlocking()).thenReturn(formData);
 
-    handler.handleRequestTrusted(exchange);
+    handler.handleRequestTrusted(exchange, "");
 
     verify(exchange).setStatusCode(400);
   }
@@ -121,7 +121,7 @@ class JoshSimLeaderHandlerTest {
     when(replicatesValue.getValue()).thenReturn("2");
     when(formDataParser.parseBlocking()).thenReturn(formData);
 
-    handler.handleRequestTrusted(exchange);
+    handler.handleRequestTrusted(exchange, "");
 
     verify(exchange).setStatusCode(200);
     verify(exchange).getResponseHeaders();

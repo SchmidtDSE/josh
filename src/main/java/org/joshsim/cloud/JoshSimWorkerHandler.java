@@ -70,7 +70,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   @Override
   public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-KEY").getFirst();
+    if (httpServerExchange.isInIoThread()) {
+      httpServerExchange.dispatch(this);
+      return;
+    }
+
+    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
     if (apiKey == null) {
       apiKey = "";
@@ -156,6 +161,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         (step) -> {}, // No step reporting needed for worker
         true // Use parallel processing
     );
+    httpServerExchange.endExchange();
   }
 
   /**

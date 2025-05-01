@@ -5,6 +5,8 @@
  * @license BSD-3-Clause
  */
 
+import {RunRequest} from "engine";
+
 /**
  * Presenter which manages the run control panel and dialogs.
  */
@@ -110,12 +112,39 @@ class RunPanelPresenter {
         return;
       }
 
-      const runRequest = new RunRequest(simulationName, replicates);
+      const customEndpoint = self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
+      const useServer = self._browserRadio.checked ? false : true;
+      const apiKey = self._getApiKey();
+      const endpoint = self._customCloudRadio.checked ? customEndpoint : "";
+
+      const runRequest = new RunRequest(
+        simulationName,
+        replicates,
+        useServer,
+        apiKey,
+        endpoint
+      );
+      
       self._runLocalDialog.close();
       self._onRun(runRequest);
     });
   }
 
+  /**
+   * Get the effective API key that should be used.
+   *
+   * @returns {string} API key to use in communication with a server for executing simulations.
+   */
+  _getApiKey() {
+    const self = this;
+    if (self._joshCloudRadio.checked) {
+      return self._runLocalDialog.querySelector("#josh-cloud-api-key").value;
+    } else if (self._customCloudRadio.checked) {
+      return self._runLocalDialog.querySelector("#your-cloud-api-key").value;
+    } else {
+      return "";
+    }
+  }
   
   /**
    * Updates the visibility of different panels based on the radio button selection.
@@ -154,44 +183,6 @@ class RunPanelPresenter {
         self._notFoundMessage.style.display = "block";
         self._foundMessage.style.display = "none";
       });
-  }
-}
-
-/**
- * Record for a simulation run request.
- */
-class RunRequest {
-
-  /**
-   * Creates a new run request.
-   * 
-   * @param {string} simName - Name of the simulation to run.
-   * @param {number} replicates - Number of times to replicate the simulation.
-   */
-  constructor(simName, replicates) {
-    const self = this;
-    self._simName = simName;
-    self._replicates = replicates;
-  }
-
-  /**
-   * Gets the simulation name.
-   * 
-   * @returns {string} The simulation name.
-   */
-  getSimName() {
-    const self = this;
-    return self._simName;
-  }
-
-  /**
-   * Gets the number of replicates.
-   * 
-   * @returns {number} The number of replicates.
-   */
-  getReplicates() {
-    const self = this;
-    return self._replicates;
   }
 }
 
