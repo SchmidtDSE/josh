@@ -1,8 +1,8 @@
 start simulation TestSimpleSimulation
 
   grid.size = 1000 m
-  grid.low = 33.7 degrees longitude, -115.4 degrees latitude
-  grid.high = 34.0 degrees longitude, -116.4 degrees latitude
+  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
+  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
 
   steps.low = 0 count
   steps.high = 10 count

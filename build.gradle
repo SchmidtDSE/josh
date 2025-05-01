@@ -66,6 +66,9 @@ dependencies {
   testImplementation("org.mockito:mockito-junit-jupiter:5.16.1")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+  // Local server
+  implementation("io.undertow:undertow-core:2.3.18.Final")
+
   // Command line parsing
   implementation("info.picocli:picocli:4.7.6")
 
@@ -111,6 +114,11 @@ task fatJar(type: Jar) {
   // Include all dependencies
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
+  }
+  
+  // Include editor resources
+  from("editor") {
+    into "editor"
   }
 
   // Exclude duplicates

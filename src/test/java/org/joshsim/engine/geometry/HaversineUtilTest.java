@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -22,13 +21,13 @@ class HaversineUtilTest {
     BigDecimal sfLat = new BigDecimal("37.73");
 
     BigDecimal distance = HaversineUtil.getDistance(laLong, laLat, sfLong, sfLat);
-    
+
     BigDecimal expected = new BigDecimal("557787");
     BigDecimal difference = distance.subtract(expected).abs();
     BigDecimal tolerance = expected.multiply(new BigDecimal("0.05"));
-    
+
     assertTrue(
-        difference.compareTo(tolerance) < 0, 
+        difference.compareTo(tolerance) < 0,
         "Distance should be within 5% of expected value"
     );
   }
@@ -39,7 +38,7 @@ class HaversineUtilTest {
     BigDecimal latitude = new BigDecimal("1.23");
 
     BigDecimal distance = haversineUtil.getDistance(longitude, latitude, longitude, latitude);
-    
+
     assertEquals(
         BigDecimal.ZERO.setScale(2),
         distance.setScale(2),

@@ -9,3 +9,7 @@ run = ["sh", "-c", "./gradlew test"]
 [[ports]]
 localPort = 8000
 externalPort = 80
+
+[[ports]]
+localPort = 8085
+externalPort = 3000

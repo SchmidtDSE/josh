@@ -18,7 +18,7 @@ import org.joshsim.compat.CompatibleStringJoiner;
 
 /**
  * Utility class for converting map data to a memory-passing string format.
- * 
+ *
  * <p>This class provides functionality to convert a map of key-value pairs into
  * a formatted string that can be efficiently passed between different parts of
  * the system. The output format is name:key1=value1\tkey2=value2...</p>

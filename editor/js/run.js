@@ -35,6 +35,9 @@ class RunPanelPresenter {
     self._joshCloudRadio = self._runLocalDialog.querySelector("#engine-josh-cloud");
     self._customCloudRadio = self._runLocalDialog.querySelector("#engine-your-cloud");
 
+    self._notFoundMessage = self._runLocalDialog.querySelector("#app-not-found-message");
+    self._foundMessage = self._runLocalDialog.querySelector("#app-found-message");
+
     tippy("[data-tippy-content]", { appendTo: self._runLocalDialog });
 
     self._setupDialog();
@@ -86,6 +89,8 @@ class RunPanelPresenter {
         self._joshCloudRadio,
         self._customCloudRadio
       ].forEach((x) => x.addEventListener("click", () => self._updateVisibility()));
+
+      self._detectLocalApp();
     });
     
     self._runLocalDialog.querySelector(".cancel-button").addEventListener("click", (event) => {
@@ -125,6 +130,30 @@ class RunPanelPresenter {
     updateVisibilityComponent(self._localPanel, self._localRadio);
     updateVisibilityComponent(self._joshCloudPanel, self._joshCloudRadio);
     updateVisibilityComponent(self._customCloudPanel, self._customCloudRadio);
+  }
+
+  /**
+   * Attempt to determine if a Josh server is running at this location.
+   *
+   * Make a request to /health and, if it gives back a 200, show the found message. Otherwise, show
+   * the not found message indicating that a Josh server could not be found.
+   */
+  _detectLocalApp() {
+    const self = this;
+    fetch("/health")
+      .then(response => {
+        if (response.status === 200) {
+          self._notFoundMessage.style.display = "none";
+          self._foundMessage.style.display = "block";
+        } else {
+          self._notFoundMessage.style.display = "block";
+          self._foundMessage.style.display = "none";
+        }
+      })
+      .catch(() => {
+        self._notFoundMessage.style.display = "block";
+        self._foundMessage.style.display = "none";
+      });
   }
 }
 

@@ -188,10 +188,10 @@ public class GridFromSimFactory {
         extents.getTopLeftX(),
         extents.getBottomRightY()
     );
-    
+
     BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
     BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-    
+
     return new PatchBuilderExtents(
         BigDecimal.ZERO,
         BigDecimal.ZERO,

@@ -82,11 +82,13 @@ self.onmessage = async function(e) {
     try {
       wasmLayer = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
       console.log("Started engine thread with WASM.");
-    } catch {
+    } catch (e) {
+      console.log("Failed to load WASM, falling back to JS due to error:" + e);
       wasmLayer = {"exports": {
         "validate": validate,
         "getSimulations": getSimulations,
-        "runSimulation": runSimulation
+        "runSimulation": runSimulation,
+        "getSimulationMetadata": getSimulationMetadata
       }};
       console.log("Started ending thread with JS fallback.");
     }

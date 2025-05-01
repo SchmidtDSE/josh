@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.EngineValue;
 
 /**
  * Extractor of grid-related information from simulation configurations.
- * 
+ *
  * <p>Utility to extract metadata from simulations required for constructing a grid including the
  * coordinate reference systems, grid boundaries, patch names, and grid size information.</p>
  */

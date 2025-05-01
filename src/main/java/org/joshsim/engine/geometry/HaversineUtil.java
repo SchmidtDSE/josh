@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * Utility to perform calculations using the Haversine formula.
  */
 public class HaversineUtil {
-  
+
   private static final BigDecimal EARTH_RADIUS_METERS = new BigDecimal("6371000");
 
   /**
@@ -27,7 +27,7 @@ public class HaversineUtil {
    */
   public static BigDecimal getDistance(BigDecimal longitudeStart, BigDecimal latitudeStart,
       BigDecimal longitudeEnd, BigDecimal latitudeEnd) {
-    
+
     double angleLatitudeStart = Math.toRadians(latitudeStart.doubleValue());
     double angleLatitudeEnd = Math.toRadians(latitudeEnd.doubleValue());
     double deltaLatitude = Math.toRadians(latitudeEnd.subtract(latitudeStart).doubleValue());
@@ -38,9 +38,9 @@ public class HaversineUtil {
         + Math.cos(angleLatitudeStart) * Math.cos(angleLatitudeEnd)
         * Math.sin(deltaLongitude / 2) * Math.sin(deltaLongitude / 2)
     );
-               
+
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
     return EARTH_RADIUS_METERS.multiply(BigDecimal.valueOf(c));
   }
 }
