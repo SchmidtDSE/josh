@@ -115,6 +115,11 @@ task fatJar(type: Jar) {
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
   }
+  
+  // Include editor resources
+  from("editor") {
+    into "editor"
+  }
 
   // Exclude duplicates
   // TODO: What are implications of this?

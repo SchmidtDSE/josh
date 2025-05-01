@@ -10,7 +10,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
-import io.undertow.server.handlers.resource.FileResourceManager;
+import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
 import java.io.File;
 import java.util.Optional;
@@ -56,27 +56,30 @@ public class JoshSimServer {
         .addPrefixPath(
             "/",
             Handlers.resource(
-                new FileResourceManager(new File("editor"), 100)
+                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor")
             ).addWelcomeFiles("index.html"))
-        .addPrefixPath("/js", Handlers.resource(
-            new FileResourceManager(new File("editor/js"), 100))
+        .addPrefixPath(
+            "/js",
+            Handlers.resource(
+                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/js")
+            )
         )
         .addPrefixPath(
             "/style",
             Handlers.resource(
-                new FileResourceManager(new File("editor/style"), 100)
+                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/style")
             )
         )
         .addPrefixPath(
             "/third_party",
             Handlers.resource(
-                new FileResourceManager(new File("editor/third_party"), 100)
+                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/third_party")
             )
         )
         .addPrefixPath(
             "/war",
             Handlers.resource(
-                new FileResourceManager(new File("editor/war"), 100)
+                new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/war")
             )
         )
         
