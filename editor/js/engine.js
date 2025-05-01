@@ -4,6 +4,8 @@
  * @license BSD-3-Clause
  */
 
+import {OutputDatum, SimulationResultBuilder} from "model";
+
 
 /**
  * An engine executional backend strategy that uses WASM (or JS emulation) in the browser.
@@ -137,47 +139,13 @@ class RemoteEngineBackend {
       return {
         method: "POST",
         headers: {
-          "api-key": self._apiKey
+          "X-API-Key": self._apiKey
         },
         body: createFormData()
       };
     };
-
-    /**
-     * Build a new reponse reader which splits by newlines with an internal buffer.
-     *
-     * @param {Map<number, Array<OutputDatum>>} replicateResults - The mapping by integer replicate
-     *     number to data parsed for that replicate.
-     * @returns {function} Function to call with text returned by the remote.
-     */
-    const buildResponseReader = (replicateResults) => {
-      let buffer = "";
-      let completedReplicates = 0;
-
-      const processResponse = (text) => {
-        buffer += text;
-        const lines = buffer.split("\n");
-        buffer = lines.pop();
-
-        lines.map((x) => x.trim()).forEach((line) => {
-          if (parsed.type === "datum") {
-            if (!replicateResults.has(parsed.replicate)) {
-              replicateResults.set(parsed.replicate, []);
-            }
-            replicateResults.get(parsed.replicate).push(parsed.datum);
-          } else if (parsed.type === "end") {
-            completedReplicates++;
-            onReplicateExternal(completedReplicates);
-          }
-        });
-      };
-
-      return processResponse;
-    };
     
     return new Promise((resolve, reject) => {
-      const replicateResults = new Map();
-      
       const onFetchResponse = (response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -185,7 +153,7 @@ class RemoteEngineBackend {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        const processResponse = buildResponseReader(replicateResults);
+        const responseReader = new ResponseReader(onReplicateExternal);
 
         const readStream = () => {
           return reader.read().then((x) => {
@@ -193,14 +161,13 @@ class RemoteEngineBackend {
             const value = x.value;
 
             if (done) {
-              if (buffer.trim()) {
-                processResponse(buffer);
+              if (responseReader.getBuffer().trim()) {
+                responseReader.processResponse(buffer);
               }
-              const results = Array.from(replicateResults.values());
-              resolve(results);
+              resolve(responseReader.getCompleteReplicates());
               return;
             } else {
-              processResponse(decoder.decode(value, {stream: true}));
+              responseReader.processResponse(decoder.decode(value, {stream: true}));
               return readStream();
             }
           });
@@ -215,6 +182,56 @@ class RemoteEngineBackend {
         .then(onFetchResponse)
         .catch((error) => { reject(error); });
     });
+  }
+  
+}
+
+
+class ResponseReader {
+
+  constructor(onReplicateExternal) {
+    const self = this;
+    self._replicateReducer = new Map();
+    self._completeReplicates = [];
+    self._onReplicateExternal = onReplicateExternal;
+    self._buffer = "";
+    self._completedReplicates = 0;
+  }
+
+  processResponse(text) {
+    const self = this;
+    
+    self._buffer += text;
+    const lines = self._buffer.split("\n");
+    self._buffer = lines.pop();
+
+    lines.map((x) => x.trim()).forEach((line) => {
+      const intermediate = parseEngineResponse(line);
+      if (intermediate["type"] === "datum") {
+        if (!self._replicateReducer.has(intermediate["replicate"])) {
+          self._replicateReducer.set(intermediate["replicate"], new SimulationResultBuilder());
+        }
+        const rawInput = intermediate["datum"];
+        const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
+        self._replicateReducer.get(intermediate["replicate"]).add(parsed);
+      } else if (intermediate["type"] === "end") {
+        self._completedReplicates++;
+        self._completeReplicates.push(
+          self._replicateReducer.get(intermediate["replicate"]).build()
+        );
+        self._onReplicateExternal(self._completedReplicates);
+      }
+    });
+  }
+
+  getBuffer() {
+    const self = this;
+    return self._buffer;
+  }
+
+  getCompleteReplicates() {
+    const self = this;
+    return self._completeReplicates;
   }
   
 }

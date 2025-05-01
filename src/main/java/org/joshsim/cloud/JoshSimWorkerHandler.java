@@ -75,7 +75,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    String apiKey = httpServerExchange.getRequestHeaders().get("api-key").getFirst();
+    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
     if (apiKey == null || !apiDataLayer.apiKeyIsValid(apiKey)) {
       httpServerExchange.setStatusCode(401);

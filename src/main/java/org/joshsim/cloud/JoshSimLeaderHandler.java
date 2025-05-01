@@ -76,7 +76,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
-    String apiKey = httpServerExchange.getRequestHeaders().get("api-key").getFirst();
+    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
     if (apiKey == null || !apiInternalLayer.apiKeyIsValid(apiKey)) {
       httpServerExchange.setStatusCode(401);
@@ -84,7 +84,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     }
 
     long startTime = System.nanoTime();
-    handleRequestTrusted(httpServerExchange);
+    handleRequestTrusted(httpServerExchange, apiKey);
     long endTime = System.nanoTime();
 
     long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
@@ -98,8 +98,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * handleRequest which checks the API key and reports logging.</p>
    *
    * @param httpServerExchange The exchange through which this request should execute.
+   * @param apiKey The API key to use in sending worker requests.
    */
-  public void handleRequestTrusted(HttpServerExchange httpServerExchange) {
+  public void handleRequestTrusted(HttpServerExchange httpServerExchange, String apiKey) {
     if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
       httpServerExchange.setStatusCode(405);
       return;
@@ -152,7 +153,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
-      futures.add(executor.submit(() -> executeReplicate(code, simulationName, replicateNumber)));
+      futures.add(executor.submit(
+        () -> executeReplicate(code, simulationName, replicateNumber, apiKey)
+      ));
     }
 
     try {
@@ -180,11 +183,13 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * @param code The code to execute for the simulation.
    * @param simulationName The name of the simulation to run.
    * @param replicateNumber The number of the replicate to execute.
+   * @param apiKey The API key to include in the request.
    * @return A string with the result, including the replicate number for each line of output.
    * @throws IOException If an I/O error occurs when sending or receiving.
    * @throws InterruptedException If the operation is interrupted.
    */
-  private String executeReplicate(String code, String simulationName, int replicateNumber) {
+  private String executeReplicate(String code, String simulationName, int replicateNumber,
+        String apiKey) {
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
         String.format(
             "code=%s&name=%s",
@@ -197,6 +202,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(urlToWorker))
         .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("X-API-Key", apiKey)
         .POST(body)
         .build();
 

@@ -374,7 +374,7 @@ public class JoshSimCommander {
     @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
     private int port;
 
-    @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://0.0.0.0:8085/runSimulation")
+    @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://localhost:8085/runReplicate")
     private String workerUrl;
 
     @Option(names = "--use-http2", description = "Enable HTTP/2 support", defaultValue = "false")

@@ -4,6 +4,8 @@
  * @license BSD-3-Clause
  */
 
+const NUMBER_REGEX = /^(\+|\-)?\d+(\.\d+)?$/;
+
 
 /**
  * Parse a single data point from an internal transfer string without a replicate prefix.
