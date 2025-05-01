@@ -139,7 +139,7 @@ jobs:
       - name: Install wget
         run: sudo apt-get install -y wget
       - name: Load JS deps
-        run: cd editor/third_party; bash intall_deps.sh
+        run: cd editor/third_party; bash install_deps.sh
       - name: Upload war
         uses: actions/upload-artifact@v4
         with:
