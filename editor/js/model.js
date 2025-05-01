@@ -658,57 +658,8 @@ class SimulationResultBuilder {
 }
 
 
-/**
- * Record for a simulation run request.
- */
-class RunRequest {
-
-  /**
-   * Creates a new run request.
-   * 
-   * @param {string} simName - Name of the simulation to run.
-   * @param {number} replicates - Number of times to replicate the simulation.
-   * @param {boolean} useServer - Flag indicating if a server should be used to execute this run.
-   *     True if a server should be used and false if WASM / JS within the browser should be used.
-   * @param {?apiKey} apiKey - The API key to use in authenticating with the remote server. Null
-   *     if not using server. May be empty if running on the same server as that which is currently
-   *     serving the editor.
-   * @param {?string} endpoint - The URL at which the server can be found which should end in
-   *     "/runSimulations" and, if it does not, it will be appended. Null if not using server. May
-   *     be empty if running locally such that an empty string should be passed for API key. If null
-   *     and useServer is true, will use a default.
-   */
-  constructor(simName, replicates, useServer, apiKey, endpoint) {
-    const self = this;
-    self._simName = simName;
-    self._replicates = replicates;
-  }
-
-  /**
-   * Gets the simulation name.
-   * 
-   * @returns {string} The simulation name.
-   */
-  getSimName() {
-    const self = this;
-    return self._simName;
-  }
-
-  /**
-   * Gets the number of replicates.
-   * 
-   * @returns {number} The number of replicates.
-   */
-  getReplicates() {
-    const self = this;
-    return self._replicates;
-  }
-}
-
-
 export {
   OutputDatum,
-  RunRequest,
   SimulationMetadata,
   SimulationResult,
   SimulationResultBuilder,

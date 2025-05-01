@@ -5,7 +5,7 @@
  * @license BSD-3-Clause
  */
 
-import {RunRequest} from "model";
+import {RunRequest} from "engine";
 
 /**
  * Presenter which manages the run control panel and dialogs.
