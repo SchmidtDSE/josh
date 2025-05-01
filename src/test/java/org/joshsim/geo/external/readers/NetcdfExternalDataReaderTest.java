@@ -1,7 +1,11 @@
 package org.joshsim.geo.external.readers;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +26,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
 
+/**
+ * Unit tests for the {@link NetcdfExternalDataReader} class.
+ * This class verifies the functionality of reading and processing
+ * NetCDF files using various test cases.
+ */
 @ExtendWith(MockitoExtension.class)
 public class NetcdfExternalDataReaderTest {
 
@@ -43,6 +52,12 @@ public class NetcdfExternalDataReaderTest {
   // Default patch CRS (WGS84)
   private CoordinateReferenceSystem patchCrs;
 
+  /**
+   * Sets up the test environment before each test.
+   * Initializes the reader, value factory, and loads the test resource file.
+   *
+   * @throws IOException if the test resource file cannot be found or accessed
+   */
   @BeforeEach
   public void setUp() throws IOException {
     valueFactory = new EngineValueFactory();
@@ -63,13 +78,18 @@ public class NetcdfExternalDataReaderTest {
     }
   }
 
+  /**
+   * Cleans up resources after each test by closing the reader.
+   *
+   * @throws Exception if an error occurs during cleanup
+   */
   @AfterEach
   public void tearDown() throws Exception {
     reader.close();
   }
 
   /**
-   * Helper method to open the file and set the dimensions explicitly
+   * Helper method to open the file and set the dimensions explicitly.
    */
   private void openAndSetExplicitDimensions(String filePath) throws IOException {
     reader.open(filePath);
@@ -272,10 +292,10 @@ public class NetcdfExternalDataReaderTest {
     openAndSetExplicitDimensions(riversideFilePath);
 
     // Get actual bounds
-    BigDecimal minX = reader.getMinX();
-    BigDecimal maxX = reader.getMaxX();
-    BigDecimal minY = reader.getMinY();
-    BigDecimal maxY = reader.getMaxY();
+    final BigDecimal minX = reader.getMinX();
+    final BigDecimal maxX = reader.getMaxX();
+    final BigDecimal minY = reader.getMinY();
+    final BigDecimal maxY = reader.getMaxY();
 
     assertNotNull(minX, "Min X should be set");
     assertNotNull(maxX, "Max X should be set");
@@ -283,10 +303,10 @@ public class NetcdfExternalDataReaderTest {
     assertNotNull(maxY, "Max Y should be set");
 
     // Get extended bounds
-    BigDecimal extMinX = reader.getExtendedMinX();
-    BigDecimal extMaxX = reader.getExtendedMaxX();
-    BigDecimal extMinY = reader.getExtendedMinY();
-    BigDecimal extMaxY = reader.getExtendedMaxY();
+    final BigDecimal extMinX = reader.getExtendedMinX();
+    final BigDecimal extMaxX = reader.getExtendedMaxX();
+    final BigDecimal extMinY = reader.getExtendedMinY();
+    final BigDecimal extMaxY = reader.getExtendedMaxY();
 
     assertNotNull(extMinX, "Extended min X should be set");
     assertNotNull(extMaxX, "Extended max X should be set");
@@ -358,7 +378,8 @@ public class NetcdfExternalDataReaderTest {
     // Try operations that require dimensions to be set without setting them
     assertThrows(IOException.class, () -> reader.getSpatialDimensions(),
         "Should throw IOException if dimensions not set");
-    assertThrows(IOException.class, () -> reader.readValueAt("test", BigDecimal.ONE, BigDecimal.ONE, 0),
+    assertThrows(IOException.class, () -> reader.readValueAt(
+          "test", BigDecimal.ONE, BigDecimal.ONE, 0),
         "Should throw IOException if dimensions not set");
   }
 }

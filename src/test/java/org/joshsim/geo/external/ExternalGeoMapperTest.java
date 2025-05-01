@@ -1,6 +1,10 @@
 package org.joshsim.geo.external;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +49,11 @@ public class ExternalGeoMapperTest {
   private PatchSet patchSet;
   private List<String> variableNames;
 
+  /**
+   * Sets up the test environment by initializing required components and resources.
+   *
+   * @throws IOException if the test resource file cannot be found or accessed.
+   */
   @BeforeEach
   public void setUp() throws IOException {
     // Set up the value factory
@@ -74,7 +83,7 @@ public class ExternalGeoMapperTest {
   }
 
   /**
-   * Create a real PatchSet for the Riverside area
+   * Create a real PatchSet for the Riverside area.
    */
   private PatchSet createRiversidePatchSet() {
     // Define Riverside area coordinates
@@ -115,7 +124,7 @@ public class ExternalGeoMapperTest {
    * Test mapping data to patch values with specific variables.
    */
   @Test
-  public void testMapDataToPatchValues_WithSpecifiedVariables() throws IOException {
+  public void testMapDataToPatchValuesWithSpecifiedVariables() throws IOException {
     // Execute the method with time range 0 to 1 (2 timesteps)
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
         mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet, 0, 1);
@@ -138,10 +147,10 @@ public class ExternalGeoMapperTest {
   }
 
   /**
-   * Test with empty variable list (should fetch all variables)
+   * Test with empty variable list (should fetch all variables).
    */
   @Test
-  public void testMapDataToPatchValues_WithEmptyVariableList() throws IOException {
+  public void testMapDataToPatchValuesWithEmptyVariableList() throws IOException {
     // Execute with empty variable list - should get all variables from reader
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
         mapper.mapDataToPatchValues(riversideFilePath, List.of(), patchSet, 0, 1);
@@ -161,10 +170,10 @@ public class ExternalGeoMapperTest {
   }
 
   /**
-   * Test requesting all available time steps
+   * Test requesting all available time steps.
    */
   @Test
-  public void testMapDataToPatchValues_WithAllTimeSteps() throws IOException {
+  public void testMapDataToPatchValuesWithAllTimeSteps() throws IOException {
     // Execute with -1 for maxTimestep (all available)
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
         mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet, -1);
@@ -184,10 +193,10 @@ public class ExternalGeoMapperTest {
   }
 
   /**
-   * Test requesting a specific time range
+   * Test requesting a specific time range.
    */
   @Test
-  public void testMapDataToPatchValues_WithSpecificTimeRange() throws IOException {
+  public void testMapDataToPatchValuesWithSpecificTimeRange() throws IOException {
     // Execute with specific time range (1 to 2 inclusive)
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
         mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet, 1, 2);
@@ -206,17 +215,17 @@ public class ExternalGeoMapperTest {
   }
 
   /**
-   * Test handling of invalid file path
+   * Test handling of invalid file path.
    */
   @Test
-  public void testMapDataToPatchValues_HandlesInvalidFilepath() {
+  public void testMapDataToPatchValuesHandlesInvalidFilepath() {
     // Verify exception is thrown for invalid file path
     assertThrows(IOException.class, () ->
         mapper.mapDataToPatchValues(INVALID_RESOURCE_PATH, variableNames, patchSet, 0, 1));
   }
 
   /**
-   * Real entity prototype for creating Patch instances
+   * Real entity prototype for creating Patch instances.
    */
   private class RiversideEntityPrototype implements EntityPrototype {
     private int patchCounter = 0;

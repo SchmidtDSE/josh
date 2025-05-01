@@ -46,6 +46,11 @@ public class ExternalGeoMapperIntegrationTest {
   private ExternalGeoMapper mapper;
   private PatchSet patchSet;
 
+  /**
+   * Sets up the test environment by initializing the value factory, mapper, and PatchSet.
+   *
+   * @throws IOException if the test resource cannot be found or accessed.
+   */
   @BeforeEach
   public void setUp() throws IOException {
     // Set up the value factory
@@ -70,7 +75,7 @@ public class ExternalGeoMapperIntegrationTest {
   }
 
   /**
-   * Create a real PatchSet for the Riverside area
+   * Create a real PatchSet for the Riverside area.
    */
   private PatchSet createRiversidePatchSet() {
     // Define Riverside area coordinates
@@ -110,7 +115,7 @@ public class ExternalGeoMapperIntegrationTest {
   }
 
   @Test
-  public void testMapDataToPatchValues_WithRealPatchSet() throws IOException {
+  public void testMapDataToPatchValuesWithRealPatchSet() throws IOException {
     // Get precipitation variable
     List<String> variableNames = new ArrayList<>();
     variableNames.add(VAR_NAME);
@@ -140,7 +145,9 @@ public class ExternalGeoMapperIntegrationTest {
     int count = 0;
     for (Map.Entry<GeoKey, EngineValue> entry : patchValueMap.entrySet()) {
       System.out.println("  " + entry.getKey() + ": " + entry.getValue());
-      if (++count >= 5) break;
+      if (++count >= 5) {
+        break;
+      }
     }
 
     // Verify we have values for most patches
@@ -149,14 +156,14 @@ public class ExternalGeoMapperIntegrationTest {
   }
 
   @Test
-  public void testMapDataToPatchValues_WithMultipleTimeSteps() throws IOException {
+  public void testMapDataToPatchValuesWithMultipleTimeSteps() throws IOException {
     // Test with multiple time steps
     List<String> variableNames = new ArrayList<>();
     variableNames.add(VAR_NAME);
 
     // Execute with request for 2 time steps
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result =
-        mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet,0, 1);
+        mapper.mapDataToPatchValues(riversideFilePath, variableNames, patchSet, 0, 1);
 
     // Verify result contains data for 2 time steps
     assertNotNull(result);
@@ -179,15 +186,17 @@ public class ExternalGeoMapperIntegrationTest {
     int count = 0;
     for (GeoKey key : values0.keySet()) {
       if (values1.containsKey(key)) {
-        System.out.println("  Patch " + key + ": " +
-            "Time 0 = " + values0.get(key) + ", Time 1 = " + values1.get(key));
-        if (++count >= 3) break;
+        System.out.println("  Patch " + key + ": "
+            + "Time 0 = " + values0.get(key) + ", Time 1 = " + values1.get(key));
+        if (++count >= 3) {
+          break;
+        }
       }
     }
   }
 
   /**
-   * Real entity prototype for creating Patch instances
+   * Real entity prototype for creating Patch instances.
    */
   private class RiversideEntityPrototype implements EntityPrototype {
     private int patchCounter = 0;
