@@ -50,8 +50,10 @@ public class JoshSimServer {
    * @param useHttp2 A boolean flag indicating whether the server should enable HTTP/2 support.
    * @param workerUrl The URL of the worker service to which tasks may be delegated.
    * @param port The port on which the server listens for HTTP requests.
+   * @param maxParallelRequests The maximum parallel requests to allow in leaders.
    */
-  public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port) {
+  public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
+      int maxParallelRequests) {
     PathHandler pathHandler = Handlers.path()
         // Static file handlers
         .addPrefixPath(
@@ -59,9 +61,7 @@ public class JoshSimServer {
             Handlers.resource(
                 new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor")
             ).addWelcomeFiles("index.html")
-             .setMimeMappings(MimeMappings.builder()
-                 .addMapping("wasm", "application/wasm")
-                 .build()))
+        )
         .addPrefixPath(
             "/js",
             Handlers.resource(
@@ -87,6 +87,10 @@ public class JoshSimServer {
             "/war",
             Handlers.resource(
                 new ClassPathResourceManager(JoshSimServer.class.getClassLoader(), "editor/war")
+            ).setMimeMappings(
+                MimeMappings.builder()
+                .addMapping("wasm", "application/wasm")
+                .build()
             )
         )
         
@@ -97,7 +101,7 @@ public class JoshSimServer {
         )
         .addPrefixPath(
             "/runReplicates",
-            new JoshSimLeaderHandler(dataLayer, workerUrl, 4)
+            new JoshSimLeaderHandler(dataLayer, workerUrl, maxParallelRequests)
         )
       
         // Health endpoint

@@ -383,15 +383,21 @@ public class JoshSimCommander {
     @Override
     public Integer call() {
       try {
+        int numProcessors = Runtime.getRuntime().availableProcessors();
+
         JoshSimServer server = new JoshSimServer(
             new EnvCloudApiDataLayer(),
             useHttp2,
             workerUrl,
-            port
+            port,
+            workerUrl.startsWith("localhost") ? 1 : numProcessors - 1
         );
 
         server.start();
         System.out.println("Server started on port " + port);
+        System.out.println(
+            "Open your browser at http://localhost:" + port + "/ to run simulations"
+        );
 
         // Keep the server running
         Thread.currentThread().join();

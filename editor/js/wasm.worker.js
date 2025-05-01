@@ -87,7 +87,8 @@ self.onmessage = async function(e) {
       wasmLayer = {"exports": {
         "validate": validate,
         "getSimulations": getSimulations,
-        "runSimulation": runSimulation
+        "runSimulation": runSimulation,
+        "getSimulationMetadata": getSimulationMetadata
       }};
       console.log("Started ending thread with JS fallback.");
     }
