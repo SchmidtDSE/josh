@@ -152,6 +152,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         (step) -> {}, // No step reporting needed for worker
         true // Use parallel processing
     );
+    httpServerExchange.endExchange();
   }
 
   /**

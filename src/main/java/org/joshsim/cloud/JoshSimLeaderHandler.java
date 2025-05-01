@@ -6,7 +6,6 @@
 
 package org.joshsim.cloud;
 
-import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.server.handlers.form.FormDataParser;
@@ -158,6 +157,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
           httpServerExchange.getOutputStream().flush();
         }
       }
+      httpServerExchange.endExchange();
     } catch (Exception e) {
       throw new RuntimeException(e);
     } finally {
@@ -207,6 +207,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
       for (String line : lines) {
         result.append(String.format("[%d] %s\n", replicateNumber, line));
       }
+      result.append(String.format("[end %d]\n", replicateNumber));
       return result.toString();
     } else {
       throw new RuntimeException("Encountered issue in worker response: " + response.statusCode());

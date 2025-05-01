@@ -18,41 +18,6 @@ function reportStepComplete(stepCount) {
 
 
 /**
- * Parse a single data point from an internal memory transfer string.
- *
- * @param {string} source - The internal memory transfer string to parse.
- * @returns {Object} Record with the target name and attributes.
- */
-function parseDatum(source) {
-  const firstPieces = source.split(':', 2);
-  const target = firstPieces[0];
-  const attributesStr = firstPieces[1];
-
-  const attributes = new Map();
-
-  if (!attributesStr) {
-    return;
-  }
-
-  const pairs = attributesStr.split("\t");
-  for (const pair of pairs) {
-    const pairPieces = pair.split('=', 2);
-    const key = pairPieces[0];
-    const value = pairPieces[1];
-
-    const valid = key && value !== undefined;
-
-    if (valid) {
-      const isNumber = NUMBER_REGEX.test(value);
-      attributes.set(key, isNumber ? parseFloat(value) : value);
-    }
-  }
-
-  return {"target": target, "attributes": attributes};
-}
-
-
-/**
  * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
  * 
  * @param {string} source - The formatted string containing target name and key-value pairs.
