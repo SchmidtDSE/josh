@@ -86,7 +86,7 @@ class RemoteEngineBackend {
   /**
    * Create a new engine fullfillment backend strategy which executes via a remote server.
    *
-   * @param {string} leaderUrl - Url ending in /runSimulations where requests to execute should be
+   * @param {string} leaderUrl - Url ending in /runReplicates where requests to execute should be
    *     sent along with the API key and simulation code.
    * @param {string} apiKey - The API key to send to the runSimluations endpoint to authenticate.
    */
@@ -111,6 +111,7 @@ class RemoteEngineBackend {
    *     number as they may not be guaranteed to return in order from all backends.
    */
   execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
+    const self = this;
 
     /**
      * Encode information required to run the simulation.
@@ -235,7 +236,7 @@ class RunRequest {
    *     if not using server. May be empty if running on the same server as that which is currently
    *     serving the editor.
    * @param {?string} endpoint - The URL at which the server can be found which should end in
-   *     "/runSimulations" and, if it does not, it will be appended. Null if not using server. May
+   *     "/runReplicates" and, if it does not, it will be appended. Null if not using server. May
    *     be empty if running locally such that an empty string should be passed for API key. If null
    *     and useServer is true, will use a default.
    * @throws {Error} If useServer is true but apiKey is null.
@@ -252,8 +253,8 @@ class RunRequest {
     
     self._apiKey = apiKey;
     
-    if (useServer && endpoint !== null && !endpoint.endsWith("/runSimulations")) {
-      self._endpoint = endpoint + "/runSimulations";
+    if (useServer && endpoint !== null && !endpoint.endsWith("/runReplicates")) {
+      self._endpoint = endpoint + "/runReplicates";
     } else {
       self._endpoint = endpoint;
     }

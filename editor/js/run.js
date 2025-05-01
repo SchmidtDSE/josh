@@ -113,7 +113,7 @@ class RunPanelPresenter {
       }
 
       const customEndpoint = self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
-      const useServer = self._localRadio.checked ? false : true;
+      const useServer = self._browserRadio.checked ? false : true;
       const apiKey = self._getApiKey();
       const endpoint = self._customCloudRadio.checked ? customEndpoint : "";
 
