@@ -134,6 +134,8 @@ jobs:
           java-version: '21'
       - name: Build war
         run: ./gradlew war
+      - name: Update apt
+        run: sudo apt-get update
       - name: Install wget
         run: sudo apt-get install -y wget
       - name: Load JS deps
