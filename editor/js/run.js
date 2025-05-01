@@ -140,19 +140,19 @@ class RunPanelPresenter {
    */
   _detectLocalApp() {
     const self = this;
-    fetch('/health')
+    fetch("/health")
       .then(response => {
         if (response.status === 200) {
-          self._notFoundMessage.style.display = 'none';
-          self._foundMessage.style.display = 'block';
+          self._notFoundMessage.style.display = "none";
+          self._foundMessage.style.display = "block";
         } else {
-          self._notFoundMessage.style.display = 'block';
-          self._foundMessage.style.display = 'none';
+          self._notFoundMessage.style.display = "block";
+          self._foundMessage.style.display = "none";
         }
       })
       .catch(() => {
-        self._notFoundMessage.style.display = 'block';
-        self._foundMessage.style.display = 'none';
+        self._notFoundMessage.style.display = "block";
+        self._foundMessage.style.display = "none";
       });
   }
 }
