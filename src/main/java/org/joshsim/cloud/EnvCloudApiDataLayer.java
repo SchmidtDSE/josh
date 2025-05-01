@@ -10,14 +10,14 @@ import org.joshsim.compat.CompatibleStringJoiner;
 
 /**
  * Cloud API data layer for testing and local execution not exposed to public Internet.
- * 
+ *
  * <p>Cloud API data layer which uses an environment variable to check allowed API keys and which
  * simply logs to standard out (System.out.println). If the API key environment variable is empty
  * or is not set, all API keys will be allowed. Otherwise, assumes JOSH_API_KEYS contains a list of
  * API keys as strings separated by commas.</p>
  */
 public class EnvCloudApiDataLayer implements CloudApiDataLayer {
-  
+
   private static final String API_KEY_ENV_VAR = "JOSH_API_KEYS";
 
   private final ApiKeyStringGetter apiKeyStringGetter;

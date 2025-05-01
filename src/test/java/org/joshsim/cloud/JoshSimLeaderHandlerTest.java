@@ -47,7 +47,7 @@ class JoshSimLeaderHandlerTest {
 
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
     when(exchange.getResponseHeaders()).thenReturn(headerMap);
-    when(headerMap.get("api-key")).thenReturn(headerValues);
+    when(headerMap.get("X-API-KEY")).thenReturn(headerValues);
     when(exchange.getOutputStream()).thenReturn(outputStream);
   }
 
