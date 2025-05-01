@@ -13,7 +13,6 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
-import java.io.File;
 import java.util.Optional;
 
 
@@ -93,7 +92,7 @@ public class JoshSimServer {
                 .build()
             )
         )
-        
+
         // API handlers
         .addPrefixPath(
             "/runReplicate",
@@ -103,7 +102,7 @@ public class JoshSimServer {
             "/runReplicates",
             new JoshSimLeaderHandler(dataLayer, workerUrl, maxParallelRequests)
         )
-      
+
         // Health endpoint
         .addPrefixPath("/health", exchange -> {
           exchange.setStatusCode(200);
@@ -137,5 +136,5 @@ public class JoshSimServer {
       server.stop();
     }
   }
-  
+
 }
