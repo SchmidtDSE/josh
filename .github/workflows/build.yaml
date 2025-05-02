@@ -220,6 +220,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [buildWeb]
     steps:
+      - name: Set environment variables based on branch
+        run: |
+          if [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "SERVICE_NAME=josh-executor-prod" >> $GITHUB_ENV
+            echo "DOCKERFILE=Dockerfile.prod" >> $GITHUB_ENV
+            echo "Deploying to Production environment"
+          else
+            echo "SERVICE_NAME=josh-executor-dev" >> $GITHUB_ENV
+            echo "DOCKERFILE=Dockerfile.dev" >> $GITHUB_ENV
+            echo "Deploying to Development environment"
+          fi
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Set up JDK 21
@@ -239,17 +250,6 @@ jobs:
         with:
           name: fullJar
           path: ./cloud-img
-      - name: Set environment variables based on branch
-        run: |
-          if [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "SERVICE_NAME=josh-executor-prod" >> $GITHUB_ENV
-            echo "DOCKERFILE=Dockerfile.prod" >> $GITHUB_ENV
-            echo "Deploying to Production environment"
-          else
-            echo "SERVICE_NAME=josh-executor-dev" >> $GITHUB_ENV
-            echo "DOCKERFILE=Dockerfile.dev" >> $GITHUB_ENV
-            echo "Deploying to Development environment"
-          fi
       - name: Configure Docker
         run: gcloud auth configure-docker us-west1-docker.pkg.dev
       - name: Build and Push Docker image
