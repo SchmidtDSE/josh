@@ -13,9 +13,6 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
 import io.undertow.util.MimeMappings;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 
 
@@ -115,18 +112,9 @@ public class JoshSimServer {
           exchange.getResponseSender().send("healthy");
         });
 
-    CorsHandler corsHandler = Handlers.cors(
-        pathHandler,
-        new AllowedOrigins(Collections.singletonList("*"))
-    ).allowedMethods(new HashSet<>(Arrays.asList(
-        Methods.GET, Methods.POST, Methods.PUT, Methods.DELETE, Methods.OPTIONS
-    ))).allowedHeaders(new HashSet<>(Arrays.asList(
-        Headers.CONTENT_TYPE_STRING, "Authorization"
-    )));
-
     Undertow.Builder builder = Undertow.builder()
         .addHttpListener(port, "0.0.0.0")
-        .setHandler(corsHandler);
+        .setHandler(pathHandler);
 
     if (useHttp2) {
       builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);

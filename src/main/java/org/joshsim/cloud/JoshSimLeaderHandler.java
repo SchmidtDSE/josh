@@ -76,6 +76,11 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
+    httpServerExchange.getResponseHeaders().put(
+        new HttpString("Access-Control-Allow-Origin"),
+        "*"
+    );
+
     String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
     if (apiKey == null) {
