@@ -12,6 +12,7 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import io.undertow.util.MimeMappings;
 import java.util.Optional;
 
@@ -56,6 +57,25 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
+        .addExactPath("*", exchange -> {
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Origin"),
+              "*"
+          );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Methods"),
+              "GET, POST, PUT, DELETE, OPTIONS"
+          );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Headers"),
+              "Content-Type, Authorization"
+          );
+          if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
+            exchange.setStatusCode(200);
+            exchange.endExchange();
+            return;
+          }
+        })
         // Static file handlers
         .addPrefixPath(
             "/",
