@@ -67,7 +67,7 @@ class JoshSimLeaderHandlerTest {
   void whenMethodIsNotPost_shouldReturn405() throws Exception {
     when(exchange.getRequestMethod()).thenReturn(new HttpString("GET"));
 
-    handler.handleRequestTrusted(exchange, "");
+    handler.handleRequestTrusted(exchange);
 
     verify(exchange).setStatusCode(405);
   }
@@ -78,7 +78,7 @@ class JoshSimLeaderHandlerTest {
     FormParserFactory mockFactory = mock(FormParserFactory.class);
     when(mockFactory.createParser(any())).thenReturn(null);
 
-    handler.handleRequestTrusted(exchange, "");
+    handler.handleRequestTrusted(exchange);
 
     verify(exchange).setStatusCode(400);
   }
@@ -91,7 +91,7 @@ class JoshSimLeaderHandlerTest {
     when(formData.contains("replicates")).thenReturn(false);
     when(formDataParser.parseBlocking()).thenReturn(formData);
 
-    handler.handleRequestTrusted(exchange, "");
+    handler.handleRequestTrusted(exchange);
 
     verify(exchange).setStatusCode(400);
   }
@@ -119,7 +119,7 @@ class JoshSimLeaderHandlerTest {
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(formDataParser.parseBlocking()).thenReturn(formData);
 
-    handler.handleRequestTrusted(exchange, "");
+    handler.handleRequestTrusted(exchange);
 
     verify(exchange).setStatusCode(200);
     verify(exchange).getResponseHeaders();

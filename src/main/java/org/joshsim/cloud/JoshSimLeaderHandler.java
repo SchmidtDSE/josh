@@ -21,6 +21,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -80,10 +81,34 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
+    long startTime = System.nanoTime();
+    Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
+    long endTime = System.nanoTime();
+
+    long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
+    apiInternalLayer.log(apiKey.orElse(""), "distribute", runtimeSeconds);
+  }
+
+  /**
+   * Execute a request assuming its environment is set up for blocking.
+   *
+   * @param httpServerExchange The exchange through which this request should execute.
+   * @returns The API key used in the request or empty if rejected.
+   */
+  public Optional<String> handleRequestTrusted(HttpServerExchange httpServerExchange) {
+    if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
+      httpServerExchange.setStatusCode(405);
+      return Optional.empty();
+    }
+
+    httpServerExchange.setStatusCode(200);
+    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+    httpServerExchange.startBlocking();
+
     FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
     if (parser == null) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.empty();
     }
 
     FormData formData;
@@ -96,48 +121,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
     ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiInternalLayer);
     if (!apiCheckResult.getKeyIsValid()) {
       httpServerExchange.setStatusCode(401);
-      return;
+      return Optional.empty();
     }
-
-    long startTime = System.nanoTime();
-    handleRequestTrusted(httpServerExchange, apiCheckResult.getApiKey());
-    long endTime = System.nanoTime();
-
-    long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
-    apiInternalLayer.log(apiCheckResult.getApiKey(), "distribute", runtimeSeconds);
-  }
-
-  /**
-   * Execute a request without interacting with the API service internals.
-   *
-   * <p>Execute a request without interacting with the API service inernals as described in
-   * handleRequest which checks the API key and reports logging.</p>
-   *
-   * @param httpServerExchange The exchange through which this request should execute.
-   * @param apiKey The API key to use in sending worker requests.
-   */
-  public void handleRequestTrusted(HttpServerExchange httpServerExchange, String apiKey) {
-    if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
-      httpServerExchange.setStatusCode(405);
-      return;
-    }
-
-    httpServerExchange.setStatusCode(200);
-    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-    httpServerExchange.startBlocking();
-
-    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
-    if (parser == null) {
-      httpServerExchange.setStatusCode(400);
-      return;
-    }
-
-    FormData formData;
-    try {
-      formData = parser.parseBlocking();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    String apiKey = apiCheckResult.getApiKey();
 
     boolean hasCode = formData.contains("code");
     boolean hasName = formData.contains("name");
@@ -145,7 +131,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     boolean hasRequired = hasCode && hasName && hasReplicates;
     if (!hasRequired) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.of(apiKey);
     }
 
     String code = formData.getFirst("code").getValue();
@@ -155,12 +141,12 @@ public class JoshSimLeaderHandler implements HttpHandler {
       replicates = Integer.parseInt(formData.getFirst("replicates").getValue());
     } catch (NumberFormatException e) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.of(apiKey);
     }
 
     if (code == null || simulationName == null || replicates <= 0) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.of(apiKey);
     }
 
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
@@ -188,6 +174,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
     } finally {
       executor.shutdown();
     }
+
+    return Optional.of(apiKey);
   }
 
   /**
