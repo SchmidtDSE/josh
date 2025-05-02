@@ -388,9 +388,9 @@ public class JoshSimCommander {
     private boolean useHttp2;
 
     @Option(
-      names = "--serial-patches",
-      description = "Run patches in serial instead of parallel",
-      defaultValue = "false"
+        names = "--serial-patches",
+        description = "Run patches in serial instead of parallel",
+        defaultValue = "false"
     )
     private boolean serialPatches;
 
