@@ -58,22 +58,23 @@ public class JoshSimServer {
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
         .addExactPath("*", exchange -> {
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Origin"), "*"
-            );
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Methods"),
-                "GET, POST, PUT, DELETE, OPTIONS"
-            );
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Headers"),
-                "Content-Type, Authorization"
-            );
-            if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
-                exchange.setStatusCode(200);
-                exchange.endExchange();
-                return;
-            }
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Origin"),
+              "*"
+          );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Methods"),
+              "GET, POST, PUT, DELETE, OPTIONS"
+          );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Headers"),
+              "Content-Type, Authorization"
+          );
+          if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
+            exchange.setStatusCode(200);
+            exchange.endExchange();
+            return;
+          }
         })
         // Static file handlers
         .addPrefixPath(
