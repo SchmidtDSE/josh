@@ -57,7 +57,7 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
-        .addExactPath("*", (exchange) -> {
+        .addPrefixPath("/", exchange -> {
           exchange.getResponseHeaders().put(
               new HttpString("Access-Control-Allow-Origin"),
               "*"
@@ -75,6 +75,17 @@ public class JoshSimServer {
             exchange.endExchange();
             return;
           }
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Max-Age"),
+              "3600"
+          );
+          exchange.addDefaultResponseListener(defaultResponse -> {
+            defaultResponse.getResponseHeaders().put(
+                new HttpString("Access-Control-Allow-Origin"),
+                "*"
+            );
+            return defaultResponse;
+          });
         })
         // Static file handlers
         .addPrefixPath(
