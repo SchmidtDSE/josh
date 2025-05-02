@@ -80,13 +80,14 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
+    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
+    if (parser == null) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
     FormData formData;
     try {
-      FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
-      if (parser == null) {
-        httpServerExchange.setStatusCode(400);
-        return;
-      }
       formData = parser.parseBlocking();
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -95,9 +96,6 @@ public class JoshSimLeaderHandler implements HttpHandler {
     ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiInternalLayer);
     if (!apiCheckResult.getKeyIsValid()) {
       httpServerExchange.setStatusCode(401);
-      return;
-    }
-    if (!apiCheckResult.getKeyIsValid()) {
       return;
     }
 
