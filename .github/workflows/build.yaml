@@ -204,7 +204,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build/index.html'
-          remotePath: './editor.joshsim.org'
+          remotePath: './editor.joshsim.org/index.html'
       - name: Upload JS via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -213,7 +213,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build/js'
-          remotePath: './editor.joshsim.org'
+          remotePath: './editor.joshsim.org/js'
       - name: Upload style via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -222,7 +222,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build/style'
-          remotePath: './editor.joshsim.org'
+          remotePath: './editor.joshsim.org/style'
       - name: Upload third party via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -231,7 +231,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build/third_party'
-          remotePath: './editor.joshsim.org'
+          remotePath: './editor.joshsim.org/third_party'
       - name: Upload war via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -240,7 +240,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build/war'
-          remotePath: './editor.joshsim.org'
+          remotePath: './editor.joshsim.org/war'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
@@ -297,13 +297,13 @@ jobs:
           region: ${{ secrets.REGION }}
           image: us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: |
-            --memory=32Gi
-            --cpu=8
+            --memory=16Gi
+            --cpu=6
             --min-instances=0
             --max-instances=100
             --port=8085
             --allow-unauthenticated
             --set-secrets="JOSH_API_KEYS=${{ env.SECRET_NAME }}"
             --http2
-            --concurrency=2
+            --concurrency=1
             --timeout=3600
