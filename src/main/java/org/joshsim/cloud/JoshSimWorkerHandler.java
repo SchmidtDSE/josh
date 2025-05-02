@@ -89,7 +89,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (!CorsUtil.addCorsHeaders(httpServerExchange)) {
       return;
     }
-
+    
     long startTime = System.nanoTime();
     Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
     long endTime = System.nanoTime();
