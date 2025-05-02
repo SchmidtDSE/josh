@@ -90,12 +90,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
-    if (parser == null) {
-      httpServerExchange.setStatusCode(400);
-      return;
-    }
-
     long startTime = System.nanoTime();
     Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
     long endTime = System.nanoTime();

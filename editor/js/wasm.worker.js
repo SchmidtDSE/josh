@@ -1,6 +1,6 @@
-importScripts("/war/js/JoshSim.js");
-importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js");
-importScripts("/js/parse.js");
+importScripts("/war/js/JoshSim.js?v=0.0.1");
+importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js?v=0.0.1");
+importScripts("/js/parse.js?v=0.0.1");
 
 let wasmLayer = null;
 let postMessage = null;
