@@ -203,44 +203,8 @@ jobs:
           port: 22
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build/index.html'
-          remotePath: './editor.joshsim.org/index.html'
-      - name: Upload JS via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build/js'
-          remotePath: './editor.joshsim.org/js'
-      - name: Upload style via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build/style'
-          remotePath: './editor.joshsim.org/style'
-      - name: Upload third party via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build/third_party'
-          remotePath: './editor.joshsim.org/third_party'
-      - name: Upload war via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build/war'
-          remotePath: './editor.joshsim.org/war'
+          localPath: './editor-build'
+          remotePath: './editor.joshsim.org'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
@@ -304,6 +268,6 @@ jobs:
             --port=8085
             --allow-unauthenticated
             --set-secrets="JOSH_API_KEYS=${{ env.SECRET_NAME }}"
-            --http2
+            --use-http2
             --concurrency=1
             --timeout=3600
