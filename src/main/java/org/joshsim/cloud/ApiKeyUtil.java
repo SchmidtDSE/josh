@@ -1,3 +1,4 @@
+
 /**
  * Utility to facilitate API key checking.
  *
@@ -7,7 +8,7 @@
 package org.joshsim.cloud;
 
 import io.undertow.server.HttpServerExchange;
-
+import io.undertow.server.handlers.form.FormData;
 
 /**
  * Utility to support API key checking.
@@ -17,15 +18,18 @@ public class ApiKeyUtil {
   /**
    * Check if an API key is valid.
    *
-   * @param httpServerExchange Exchange through which the API key should be checked.
-   * @param apiInternalLayer Layer through which API keys read from the exchange should be checked.
+   * @param formData FormData from which the API key should be checked.
+   * @param apiInternalLayer Layer through which API keys read from the form should be checked.
    * @returns True if the API key is found and valid. False otherwise.
    */
-  public static ApiCheckResult checkApiKey(HttpServerExchange httpServerExchange,
+  public static ApiCheckResult checkApiKey(FormData formData,
         CloudApiDataLayer apiInternalLayer) {
     
-    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
+    if (!formData.contains("apiKey")) {
+      return new ApiCheckResult("", false);
+    }
 
+    String apiKey = formData.getFirst("apiKey").getValue();
     if (apiKey == null) {
       apiKey = "";
     }
@@ -33,7 +37,6 @@ public class ApiKeyUtil {
     if (apiInternalLayer.apiKeyIsValid(apiKey)) {
       return new ApiCheckResult(apiKey, true);
     } else {
-      httpServerExchange.setStatusCode(401);
       return new ApiCheckResult(apiKey, false);
     }
   }
@@ -55,7 +58,6 @@ public class ApiKeyUtil {
       this.apiKey = apiKey;
       this.keyIsValid = keyIsValid;
     }
-
     
     /**
      * Returns the API key associated with this result.
@@ -75,5 +77,4 @@ public class ApiKeyUtil {
       return keyIsValid;
     }
   }
-  
 }

@@ -80,10 +80,23 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
-    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(
-        httpServerExchange,
-        apiInternalLayer
-    );
+    FormData formData;
+    try {
+      FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
+      if (parser == null) {
+        httpServerExchange.setStatusCode(400);
+        return;
+      }
+      formData = parser.parseBlocking();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiInternalLayer);
+    if (!apiCheckResult.getKeyIsValid()) {
+      httpServerExchange.setStatusCode(401);
+      return;
+    }
     if (!apiCheckResult.getKeyIsValid()) {
       return;
     }
@@ -197,9 +210,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
         String apiKey) {
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
         String.format(
-            "code=%s&name=%s",
+            "code=%s&name=%s&apiKey=%s",
             URLEncoder.encode(code, StandardCharsets.UTF_8),
-            URLEncoder.encode(simulationName, StandardCharsets.UTF_8)
+            URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
+            URLEncoder.encode(apiKey, StandardCharsets.UTF_8)
         )
     );
 
@@ -207,7 +221,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(urlToWorker))
         .header("Content-Type", "application/x-www-form-urlencoded")
-        .header("X-API-Key", apiKey)
+        
         .POST(body)
         .build();
 

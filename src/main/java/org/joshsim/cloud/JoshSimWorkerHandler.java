@@ -35,7 +35,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private final EngineGeometryFactory geometryFactory;
   private final boolean useSerial;
 
-  
+
   /**
    * Constructs a new JoshSimWorkerHandler.
    *
@@ -90,11 +90,22 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(
-        httpServerExchange,
-        apiDataLayer
-    );
+    FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
+    if (parser == null) {
+      httpServerExchange.setStatusCode(400);
+      return;
+    }
+
+    FormData formData;
+    try {
+      formData = parser.parseBlocking();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiDataLayer);
     if (!apiCheckResult.getKeyIsValid()) {
+      httpServerExchange.setStatusCode(401);
       return;
     }
 
