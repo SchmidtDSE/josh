@@ -67,7 +67,7 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
   @Override
   public void log(String key, String type, long runtimeSeconds) {
     CompatibleStringJoiner logJoiner = CompatibilityLayerKeeper.get().createStringJoiner(", ");
-    logJoiner.add(generateMD5(key));
+    logJoiner.add(generateHash(key));
     logJoiner.add(type);
     logJoiner.add(String.valueOf(runtimeSeconds));
     System.out.println("[josh cloud log] " + logJoiner.toString());
@@ -87,7 +87,15 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
 
   }
 
-  private String generateMD5(String message) {
+  
+  /**
+   * Generates an MD5 hash for a given API key.
+   *
+   * @param message The message to be hashed.
+   * @return The MD5 hash of the message as a hexadecimal string.
+   * @throws RuntimeException If the MD5 algorithm is not available.
+   */
+  private String generateHash(String message) {
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
       byte[] hashBytes = md.digest(message.getBytes());
