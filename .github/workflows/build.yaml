@@ -165,6 +165,15 @@ jobs:
     name: Deploy to SFTP
     needs: [buildWeb]
     steps:
+      - name: Set environment variables based on branch
+        run: |
+          if [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "EDITOR_DIRECTORY=editor.joshsim.org" >> $GITHUB_ENV
+            echo "Deploying to production environment"
+          else
+            echo "EDITOR_DIRECTORY=editor.joshsim.org/dev" >> $GITHUB_ENV
+            echo "Deploying to directory environment"
+          fi
       - name: Set branch name
         id: branch
         run: |
@@ -204,7 +213,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build'
-          remotePath: './editor.joshsim.org'
+          remotePath: './${{ env.EDITOR_DIRECTORY }}'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
@@ -243,11 +252,6 @@ jobs:
           fi
       - name: Configure Docker
         run: gcloud auth configure-docker us-west1-docker.pkg.dev
-      - name: Verify Artifact Registry Repository
-        run: |
-          # List existing repositories to verify
-          echo "Existing repositories:"
-          gcloud artifacts repositories list --location=us-west1
       - name: Build and Push Docker image
         run: |
           # Build from the directory containing the Dockerfile
@@ -267,7 +271,7 @@ jobs:
             --max-instances=100
             --port=8085
             --allow-unauthenticated
-            --set-secrets="JOSH_API_KEYS=${{ env.SECRET_NAME }}"
+            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}"
             --use-http2
             --concurrency=1
             --timeout=3600
