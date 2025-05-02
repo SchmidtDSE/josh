@@ -42,7 +42,7 @@ class JoshSimWorkerHandlerTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    handler = new JoshSimWorkerHandler(apiDataLayer, true, java.util.Optional.empty());
+    handler = new JoshSimWorkerHandler(apiDataLayer, true, java.util.Optional.empty(), true);
 
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
     when(exchange.getResponseHeaders()).thenReturn(headerMap);
