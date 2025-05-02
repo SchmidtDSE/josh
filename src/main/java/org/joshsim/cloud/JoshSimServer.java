@@ -57,7 +57,7 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
-        .addExactPath("*", exchange -> {
+        .addExactPath("*", (exchange) -> {
           exchange.getResponseHeaders().put(
               new HttpString("Access-Control-Allow-Origin"),
               "*"
