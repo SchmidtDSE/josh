@@ -58,22 +58,21 @@ public class JoshSimServer {
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
         .addPrefixPath("/", exchange -> {
-          // Set common CORS headers
+          // Set common CORS headers for all requests
           exchange.getResponseHeaders().put(
               new HttpString("Access-Control-Allow-Origin"),
               "*"
           );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Methods"),
+              "GET, POST, PUT, DELETE, OPTIONS"
+          );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Allow-Headers"),
+              "Content-Type, Authorization"
+          );
           
           if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
-            // Additional headers for preflight requests
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Methods"),
-                "GET, POST, PUT, DELETE, OPTIONS"
-            );
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Headers"),
-                "Content-Type, Authorization"
-            );
             exchange.getResponseHeaders().put(
                 new HttpString("Access-Control-Max-Age"),
                 "3600"
