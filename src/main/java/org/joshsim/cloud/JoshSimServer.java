@@ -12,8 +12,10 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.MimeMappings;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 
@@ -57,25 +59,6 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
-        .addExactPath("*", exchange -> {
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Origin"),
-              "*"
-          );
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Methods"),
-              "GET, POST, PUT, DELETE, OPTIONS"
-          );
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Headers"),
-              "Content-Type, Authorization"
-          );
-          if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
-            exchange.setStatusCode(200);
-            exchange.endExchange();
-            return;
-          }
-        })
         // Static file handlers
         .addPrefixPath(
             "/",
@@ -132,9 +115,18 @@ public class JoshSimServer {
           exchange.getResponseSender().send("healthy");
         });
 
+    CorsHandler corsHandler = Handlers.cors(
+        pathHandler,
+        new AllowedOrigins(Collections.singletonList("*"))
+    ).allowedMethods(new HashSet<>(Arrays.asList(
+        Methods.GET, Methods.POST, Methods.PUT, Methods.DELETE, Methods.OPTIONS
+    ))).allowedHeaders(new HashSet<>(Arrays.asList(
+        Headers.CONTENT_TYPE_STRING, "Authorization"
+    )));
+
     Undertow.Builder builder = Undertow.builder()
         .addHttpListener(port, "0.0.0.0")
-        .setHandler(pathHandler);
+        .setHandler(corsHandler);
 
     if (useHttp2) {
       builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
