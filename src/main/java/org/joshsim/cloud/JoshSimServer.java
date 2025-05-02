@@ -57,39 +57,13 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
-        .addPrefixPath("/", exchange -> {
-          // Set common CORS headers for all requests
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Origin"),
-              "*"
-          );
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Methods"),
-              "GET, POST, PUT, DELETE, OPTIONS"
-          );
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Allow-Headers"),
-              "Content-Type, Authorization"
-          );
-          exchange.getResponseHeaders().put(
-              new HttpString("Access-Control-Max-Age"),
-              "3600"
-          );
-          
-          if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
+        // CORS preflight
+        .addPrefixPath("/*", exchange -> {
+          if(CorsUtil.addCorsHeaders(exchange)) {
             exchange.setStatusCode(200);
-            exchange.endExchange();
-            return;
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+            exchange.getResponseSender().send("ok");
           }
-
-          // Let the request continue to be processed
-          exchange.addDefaultResponseListener(defaultResponse -> {
-            defaultResponse.getResponseHeaders().put(
-                new HttpString("Access-Control-Allow-Origin"),
-                "*"
-            );
-            return defaultResponse;
-          });
         })
         // Static file handlers
         .addPrefixPath(

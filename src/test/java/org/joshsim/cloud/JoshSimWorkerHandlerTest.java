@@ -55,6 +55,7 @@ class JoshSimWorkerHandlerTest {
     // Given
     when(headerValues.getFirst()).thenReturn("invalid-key");
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(false);
+    when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
 
     // When
     handler.handleRequest(exchange);

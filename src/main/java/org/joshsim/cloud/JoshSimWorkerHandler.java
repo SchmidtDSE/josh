@@ -86,6 +86,10 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
+    if (!CorsUtil.addCorsHeaders(httpServerExchange)) {
+      return;
+    }
+
     String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
 
     if (apiKey == null) {
