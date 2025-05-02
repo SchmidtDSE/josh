@@ -80,7 +80,7 @@ public class EventHandlerGroupBuilder {
    * @return the attribute value
    * @throws IllegalStateException if the attribute has not been set
    */
-  private String getAttribute() {
+  public String getAttribute() {
     return attribute.orElseThrow(() -> new IllegalStateException("Attribute not set"));
   }
 

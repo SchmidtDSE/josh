@@ -1,5 +1,5 @@
 /**
- * Utility to seed a GridBuilder from a simulation entity.
+ * Utility to seed a PatchBuilder from a simulation entity.
  *
  * @license BSD-3-Clause
  */
@@ -7,16 +7,13 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
-import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.TransformException;
-import org.geotools.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.Grid;
-import org.joshsim.engine.geometry.GridBuilder;
-import org.joshsim.engine.geometry.GridBuilderExtents;
-import org.joshsim.engine.geometry.GridBuilderExtentsBuilder;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.HaversineUtil;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -24,7 +21,7 @@ import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
- * Factory building a Grid from a simulation and bridge.
+ * Factory building a PatchSet from a simulation and bridge.
  */
 public class GridFromSimFactory {
 
@@ -54,77 +51,49 @@ public class GridFromSimFactory {
   }
 
   /**
-   * Builds a Grid from a simulation entity using the provided EngineBridge.
+   * Builds a PatchSet from a simulation entity using the provided EngineBridge.
    *
-   * @param simulation the simulation entity used to build the Grid
-   * @return the built Grid
+   * @param simulation the simulation entity used to build the PatchSet
+   * @return the built PatchSet
    */
-  public Grid build(MutableEntity simulation) {
-    simulation.startSubstep("constant");
+  public PatchSet build(MutableEntity simulation) {
 
-    final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
-    final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
-    final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
-    final Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
+    GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
+    String inputCrs = extractor.getInputCrs();
+    String targetCrs = extractor.getTargetCrs();
+    String startStr = extractor.getStartStr();
+    String endStr = extractor.getEndStr();
+    String patchName = extractor.getPatchName();
 
-    simulation.endSubstep();
+    PatchBuilderExtents extents = buildExtents(startStr, endStr);
+    EngineValue sizeValueRaw = extractor.getSize();
+    BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
-    String inputCrs = getOrDefault(inputCrsMaybe, "EPSG:4326");
-    String targetCrs = getOrDefault(targetCrsMaybe, "EPSG:4326");
-    String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
-    String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
-    String patchName = getOrDefault(patchNameMaybe, "Default");
+    EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
 
-    CoordinateReferenceSystem inputCrsRef;
-    try {
-      // Check if the input CRS is valid
-      inputCrsRef = CRS.decode(inputCrs, true);
-    } catch (FactoryException e) {
-      throw new RuntimeException("Invalid input CRS: " + inputCrs, e);
+    String sizeUnits = sizeValueRaw.getUnits().toString();
+    boolean posDegrees = startStr.contains("degrees");
+    boolean sizeMeters = (
+        sizeUnits.equals("m")
+        || sizeUnits.equals("meter")
+        || sizeUnits.equals("meters")
+    );
+    boolean posSizeMismatch = posDegrees && sizeMeters;
+    boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
+    boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    if (requiresCountConversion) {
+      extents = convertToMeters(extents, sizeValuePrimitive);
+      sizeValuePrimitive = BigDecimal.valueOf(1);
     }
 
-    CoordinateReferenceSystem targetCrsRef;
-    try {
-      // Check if the target CRS is valid
-      targetCrsRef = CRS.decode(targetCrs, true);
-    } catch (FactoryException e) {
-      throw new RuntimeException("Invalid target CRS: " + targetCrs, e);
-    }
-
-    EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
-    EngineValue sizeValue = convertToExpectedUnits(sizeValueRaw, Units.METERS);
-
-    GridBuilderExtents extents = buildExtents(startStr, endStr);
-    try {
-      GridBuilder builder = new GridBuilder(
-          inputCrsRef,
-          targetCrsRef,
-          extents,
-          sizeValue.getAsDecimal(),
-          bridge.getPrototype(patchName)
-      );
-
-      return builder.build();
-    } catch (FactoryException | TransformException e) {
-      throw new RuntimeException("Error instantiating grid from script: " + e);
-    }
-  }
-
-  /**
-   * Returns the string value of an optional EngineValue or a default value if empty.
-   *
-   * @param target the optional EngineValue to check
-   * @param defaultVal the default value to return if target is empty
-   * @return the string value from the EngineValue or the default value
-   */
-  private String getOrDefault(Optional<EngineValue> target, String defaultVal) {
-    if (target.isEmpty()) {
-      return defaultVal;
-    } else {
-      return target.get().getAsString();
-    }
+    PatchBuilder builder = geometryFactory.getPatchBuilder(
+        inputCrs,
+        targetCrs,
+        extents,
+        sizeValuePrimitive,
+        bridge.getPrototype(patchName)
+    );
+    return builder.build();
   }
 
   /**
@@ -132,23 +101,23 @@ public class GridFromSimFactory {
    *
    * @param startStr the starting coordinate string in format "X latitude, Y longitude"
    * @param endStr the ending coordinate string in format "X latitude, Y longitude"
-   * @return GridBuilderExtents object containing the parsed coordinates
+   * @return PatchBuilderExtents object containing the parsed coordinates
    */
-  private GridBuilderExtents buildExtents(String startStr, String endStr) {
-    GridBuilderExtentsBuilder builder = new GridBuilderExtentsBuilder();
+  private PatchBuilderExtents buildExtents(String startStr, String endStr) {
+    PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
     addExtents(builder, startStr, true);
     addExtents(builder, endStr, false);
     return builder.build();
   }
 
   /**
-   * Adds coordinate extents to a GridBuilderExtentsBuilder.
+   * Adds coordinate extents to a PatchBuilderExtentsBuilder.
    *
-   * @param builder the GridBuilderExtentsBuilder to add coordinates to
+   * @param builder the PatchBuilderExtentsBuilder to add coordinates to
    * @param target the coordinate string to parse
    * @param start true if these are start coordinates, false if end coordinates
    */
-  private void addExtents(GridBuilderExtentsBuilder builder, String target, boolean start) {
+  private void addExtents(PatchBuilderExtentsBuilder builder, String target, boolean start) {
     String[] pieces = target.split(",");
 
     EngineValue value1 = parseExtentComponent(pieces[0]);
@@ -158,28 +127,12 @@ public class GridFromSimFactory {
     EngineValue latitude = latitudeFirst ? value1 : value2;
     EngineValue longitude = latitudeFirst ? value2 : value1;
 
-    EngineValue latitudeConverted = convertToExpectedUnits(latitude, Units.DEGREES);
-    EngineValue longitudeConverted = convertToExpectedUnits(longitude, Units.DEGREES);
-
-    boolean reversed = value1.getUnits().equals(Units.COUNT);
-
     if (start) {
-      builder.setTopLeftX(longitudeConverted.getAsDecimal());
-
-      if (reversed) {
-        builder.setBottomRightY(latitudeConverted.getAsDecimal());
-      } else {
-        builder.setTopLeftY(latitudeConverted.getAsDecimal());
-      }
+      builder.setTopLeftX(longitude.getAsDecimal());
+      builder.setTopLeftY(latitude.getAsDecimal());
     } else {
-      builder.setBottomRightX(longitudeConverted.getAsDecimal());
-
-      if (reversed) {
-        builder.setTopLeftY(latitudeConverted.getAsDecimal());
-      } else {
-        builder.setBottomRightY(latitudeConverted.getAsDecimal());
-      }
-
+      builder.setBottomRightX(longitude.getAsDecimal());
+      builder.setBottomRightY(latitude.getAsDecimal());
     }
   }
 
@@ -209,6 +162,42 @@ public class GridFromSimFactory {
     } else {
       return bridge.convert(target, allowed);
     }
+  }
+
+  /**
+   * Convert a set of extents from degrees to meters.
+   *
+   * <p>Convert a set of extents from degrees to coordinates expressed in cell / patch counts via
+   * conversion to meters using Haverzine where the upper left corner is 0, 0 and the bottom right
+   * is positive. This is done using HaversineUtil.</p>
+   *
+   * @param extents Original extents expressed in degrees which should be converted to meters and
+   *     then cell counts.
+   * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
+   */
+  private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
+    BigDecimal width = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getTopLeftY()
+    );
+    BigDecimal height = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getTopLeftX(),
+        extents.getBottomRightY()
+    );
+
+    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+
+    return new PatchBuilderExtents(
+        BigDecimal.ZERO,
+        BigDecimal.ZERO,
+        gridWidth,
+        gridHeight
+    );
   }
 
 }

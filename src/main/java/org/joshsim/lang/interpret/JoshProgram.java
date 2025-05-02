@@ -1,4 +1,3 @@
-
 /**
  * Structures for representing a parsed Josh program.
  *

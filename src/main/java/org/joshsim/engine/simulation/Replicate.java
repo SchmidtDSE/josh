@@ -6,8 +6,6 @@
 
 package org.joshsim.engine.simulation;
 
-import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -16,7 +14,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.Grid;
+import org.joshsim.engine.geometry.PatchSet;
 
 
 /**
@@ -28,6 +26,8 @@ import org.joshsim.engine.geometry.Grid;
  * </p>
  */
 public class Replicate {
+
+  private MutableEntity meta;
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private Map<GeoKey, MutableEntity> presentTimeStep;
   private long stepNumber = 0;
@@ -35,18 +35,23 @@ public class Replicate {
   /**
    * Construct a replicate with the given patches.
    *
-   * @param patches the patches to be included in the replicate.
+   * @param meta The simulation metadata for which this replicate was created.
+   * @param patches The patches to be included in the replicate.
    */
-  public Replicate(Map<GeoKey, MutableEntity> patches) {
+  public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches) {
+    this.meta = meta;
     this.presentTimeStep = patches;
   }
 
   /**
    * Construct a replicate with the given grid.
    *
-   * @param grid Grid with the the patches to be included in the replicate.
+   * @param meta The simulation metadata for which this replicate was created.
+   * @param grid PatchSet with the the patches to be included in the replicate.
    */
-  public Replicate(Grid grid) {
+  public Replicate(MutableEntity meta, PatchSet grid) {
+    this.meta = meta;
+
     presentTimeStep = new HashMap<>();
     for (MutableEntity patch : grid.getPatches()) {
       presentTimeStep.put(patch.getKey().orElseThrow(), patch);
@@ -76,7 +81,7 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().parallelStream()
+    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().stream()
         .collect(Collectors.toMap(
             (x) -> x.getKey().orElseThrow(),
             (original) -> {
@@ -87,7 +92,9 @@ public class Replicate {
             })
         );
 
-    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenPatches);
+    Entity frozenMeta = meta.freeze();
+
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMeta, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 

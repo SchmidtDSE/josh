@@ -9,7 +9,8 @@ package org.joshsim.lang.interpret;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
@@ -541,6 +542,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
+    ReservedWordChecker.checkVariableDeclaration(identifierName);
     EventHandlerAction valAction = ctx.val.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
@@ -710,6 +712,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return new EventHandlerGroupFragment(groupBuilder);
   }
 
+  public Fragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
+    Fragment fragment = ctx.getChild(0).accept(this);
+    String attributeName = fragment.getEventHandlerGroup().getAttribute();
+    ReservedWordChecker.checkVariableDeclaration(attributeName);
+    return fragment;
+  }
+
   public Fragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
     List<EventHandlerGroupBuilder> groups = new ArrayList<>();
     String stateName = ctx.getChild(2).getText();
@@ -855,7 +864,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     String candidateEventName = namePieces[namePieces.length - 1];
     boolean endsWithEventName = isEventName(candidateEventName);
 
-    StringJoiner attributeNameJoiner = new StringJoiner(".");
+    CompatibleStringJoiner attributeNameJoiner = CompatibilityLayerKeeper
+        .get()
+        .createStringJoiner(".");
+
     for (int i = 0; i < namePieces.length - 1; i++) {
       attributeNameJoiner.add(namePieces[i]);
     }

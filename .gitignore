@@ -21,3 +21,9 @@ src-generated
 
 # Log files
 *.log
+
+# Editor third-party files
+editor/third_party
+
+# Editor war
+editor/war

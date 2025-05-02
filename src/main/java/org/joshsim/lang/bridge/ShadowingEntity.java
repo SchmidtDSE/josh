@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -51,6 +52,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvingAttributes;
   private final Scope scope;
   private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+
   private boolean checkAssertions;
 
   /**
@@ -127,7 +129,7 @@ public class ShadowingEntity implements MutableEntity {
 
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
-    StringJoiner keyJoiner = new StringJoiner("\t");
+    CompatibleStringJoiner keyJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\t");
     keyJoiner.add(attribute);
     keyJoiner.add(substep);
     keyJoiner.add(state);
@@ -367,7 +369,7 @@ public class ShadowingEntity implements MutableEntity {
 
     // If failed to match, use prior
     if (executed) {
-      if (name.startsWith("assert.")) {
+      if (checkAssertions && name.startsWith("assert.")) {
         Optional<EngineValue> result = getAttributeValue(name);
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();
@@ -446,12 +448,14 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void startSubstep(String name) {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
     resolvedAttributes.clear();
   }
 
   @Override
   public void endSubstep() {
+    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
     resolvingAttributes.clear();
     inner.endSubstep();
   }

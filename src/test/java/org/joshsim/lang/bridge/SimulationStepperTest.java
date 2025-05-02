@@ -70,7 +70,7 @@ class SimulationStepperTest {
     when(mockValue.getLanguageType()).thenReturn(new LanguageType("test", true));
 
     // Perform the step
-    long result = stepper.perform();
+    long result = stepper.perform(true);
 
     // Verify
     assertEquals(1L, result, "Step should complete and return timestep 1");

@@ -23,6 +23,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -48,8 +49,10 @@ public class SingleThreadEventHandlerMachineTest {
 
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private EngineValue mockValue;
+  @Mock(lenient = true) private EngineValue mockEntityValue;
   @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private Entity mockEntity;
+  @Mock(lenient = true) private MutableEntity mockMutableEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
   @Mock(lenient = true) private EngineBridge mockBridge;
@@ -65,6 +68,9 @@ public class SingleThreadEventHandlerMachineTest {
    */
   @BeforeEach
   void setUp() {
+    when(mockMutableEntity.getSubstep()).thenReturn(Optional.of("start"));
+    when(mockEntityValue.getAsMutableEntity()).thenReturn(mockMutableEntity);
+    when(mockScope.get("current")).thenReturn(mockEntityValue);
     machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
     factory = new EngineValueFactory();
   }
@@ -793,7 +799,6 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void createEntity_shouldCreateEntityFromPrototype() {
     // Given
-    when(mockScope.get("current")).thenReturn(mockValue);
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
@@ -815,7 +820,6 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void createEntity_shouldCreateMultipleEntitiesFromPrototype() {
     // Given
-    when(mockScope.get("current")).thenReturn(mockValue);
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
@@ -850,10 +854,10 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
     when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
-    when(mockGeometry.getCrs()).thenReturn(mockCrs);
 
     List<Entity> queryResults = List.of(mockEntity);
     when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
     when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
 
     // When

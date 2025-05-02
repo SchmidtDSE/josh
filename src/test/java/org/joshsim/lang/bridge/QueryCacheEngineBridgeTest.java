@@ -20,6 +20,8 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
@@ -53,7 +55,9 @@ public class QueryCacheEngineBridgeTest {
    */
   @BeforeEach
   void setUp() {
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     bridge = new QueryCacheEngineBridge(
+        geometryFactory,
         mockSimulation,
         mockConverter,
         mockPrototypeStore,

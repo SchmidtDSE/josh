@@ -1,5 +1,5 @@
 /**
- * Tests for aid in constructing a GridBuilderExtents.
+ * Tests for aid in constructing a PatchBuilderExtents.
  *
  * @license BSD-3-Clause
  */
@@ -17,22 +17,22 @@ import org.junit.jupiter.api.Test;
 
 
 /**
- * Test for GridBuilderExtentsBuilder.
+ * Test for PatchBuilderExtentsBuilder.
  */
 class GridBuilderExtentsBuilderTest {
 
-  private GridBuilderExtentsBuilder builder;
+  private PatchBuilderExtentsBuilder builder;
 
   /**
    * Create common structures for tests.
    */
   @BeforeEach
   void setUp() {
-    builder = new GridBuilderExtentsBuilder();
+    builder = new PatchBuilderExtentsBuilder();
   }
 
   @Test
-  @DisplayName("Builder should create valid GridBuilderExtents when all coordinates are set")
+  @DisplayName("Builder should create valid PatchBuilderExtents when all coordinates are set")
   void builderCreatesValidExtents() {
     // Arrange
     BigDecimal topLeftX = new BigDecimal("-115.55");
@@ -70,7 +70,7 @@ class GridBuilderExtentsBuilderTest {
     BigDecimal bottomRightY = new BigDecimal("33.5");
 
     // Act
-    GridBuilderExtents extents = builder
+    PatchBuilderExtents extents = builder
         .setTopLeftX(topLeftX)
         .setTopLeftY(topLeftY)
         .setBottomRightX(bottomRightX)

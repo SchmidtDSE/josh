@@ -3,7 +3,6 @@ package org.joshsim.engine.entity.type;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -94,27 +93,6 @@ public class PatchTest {
     attributeValue = patch.getAttributeValue("newAttribute");
     assertTrue(attributeValue.isPresent());
     assertEquals(newValue, attributeValue.get());
-  }
-
-  /**
-   * Test the locking functionality inherited from Entity.
-   */
-  @Test
-  public void testLockFunctionality() {
-    // Test that setting attributes works when not locked
-    EngineValue mockValue = mock(EngineValue.class);
-    patch.setAttributeValue("testLock", mockValue);
-
-    // Lock the entity - should not throw
-    patch.lock();
-
-    // Unlock and verify setting works again
-    patch.unlock();
-    patch.setAttributeValue("unlockedAttribute", mockValue);
-    assertTrue(patch.getAttributeValue("unlockedAttribute").isPresent());
-
-    // Unlock again - should throw
-    assertThrows(IllegalMonitorStateException.class, () -> patch.unlock());
   }
 
   /**

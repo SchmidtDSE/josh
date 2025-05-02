@@ -1,0 +1,419 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Josh Web Editor</title>
+    <link href="/third_party/tabby-ui.min.css" rel="stylesheet" type="text/css" />
+    <link href="/style/style.css?v=0.0.1" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <header>
+      <div class="beta-warning">
+        This tool is under development and currently in beta testing. We would love to hear from
+        you! Let us know your feedback at <a href="mailto:hello@joshsim.org">hello@joshsim.org</a>
+        and we are here to help if you run into any issues.
+      </div>
+      <h1>Josh Simulation Editor</h1>
+      This web-based editor allows for rapid prototyping Josh agent-based simulations from your browser. These scripts are only saved within your browser and are not sent to external servers unless requested. Try out small scripts in your browser. Then, run on cloud or CLI when ready to execute larger simulations.
+      <div class="file-buttons buttons-panel" id="file-buttons">
+        <a href="#" id="new-file-button" class="secondary">New File</a>
+        <a href="#" id="load-file-button" class="secondary">Load File</a>
+        <a href="#" download="simulation.josh" id="save-file-button" class="secondary">Save File</a>
+
+        <dialog id="load-file-dialog">
+          <h2>Open File</h2>
+          <p>Note that this will override code currently entered into the application.</p>
+          <div><label for="upload-file">File (.josh recommended):</label></div>
+          <div><input type="file" class="upload-file" id="upload-file" name="upload-file" /></div>
+          <div class="dialog-buttons bold-buttons">
+            <a href="#" class="load-button primary">Open</a>
+            <a href="#" class="cancel-button destructive">Cancel</a>
+          </div>
+        </dialog>
+      </div>
+    </header>
+
+    <section id="loading">
+      <img src="/style/90-ring.svg" alt="Loading indicator" /> Loading please wait...
+    </section>
+
+    <div id="main-holder">
+      <main id="main">
+        <section id="editor">
+          <h2>Simulation</h2>
+          <div id="code-editor-pane">
+            <div id="code-editor">
+              <div id="code-editor-inner" class="inner"></div>
+              <div class="error-display"></div>
+            </div>
+            <div id="code-buttons-panel" class="buttons-panel">
+              <div id="available-panel">
+                <a class="primary" id="open-run-dialog-button" href="#run">Run</a>
+                <a class="secondary" id="open-data-dialog-button" href="#data">Data Files</a>
+              </div>
+              <dialog id="run-local-dialog">
+                <h2>Run</h2>
+                <p>This will run your simulation in your browser using your computer.</p>
+                <div class="form-group">
+                  <div><label for="simulation-name">Simulation:</label></div>
+                  <div class="sel long">
+                    <select id="simulation-name" name="simulation-name" class="simulation-select"></select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div><label for="replicates-input">Replicates:</label></div>
+                  <div>
+                    <input id="replicates-input" name="replicates-input" class="replicates-input long" type="number" value="1">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <fieldset>
+                    <legend>Engine</legend>
+                    <p>The location where this should run. Some options may be faster than others but require more set up. Want to try the free non-profit Josh Cloud? <a href="mailto:hello@joshsim.org">Email us</a>.</p>
+                    <div>
+                      <input type="radio" id="engine-browser" name="engine" value="browser" checked>
+                      <label for="engine-browser">On Your Computer (Browser) <span data-tippy-content="Run this locally on your machine through your browser (WebAssembly). This keeps your simulation completely on your mahcine and doesn't require any installation but is the slowest. Recommended for small or prototype models with a small number of replicates.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-computer" name="engine" value="computer">
+                      <label for="engine-computer">On Your Computer (App) <span data-tippy-content="Run this locally on your machine outside of your browser in an app (JVM). This keeps your simulation completely on your machine and is much faster than running in a browser but requires installation. Recommended for medium sized models or those with a moderate number of replicates.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-josh-cloud" name="engine" value="engine-josh-cloud">
+                      <label for="engine-josh-cloud">In Josh Cloud <span data-tippy-content="Run this in our free non-profit cloud, utilizing many machines at the same time. Recommended for large models or those with a many replicates. Sends your simulation to our privacy-respecting servers.">ℹ️</span></label>
+                    </div>
+                    <div>
+                      <input type="radio" id="engine-your-cloud" name="engine" value="engine-your-cloud">
+                      <label for="engine-your-cloud">In Your Cloud <span data-tippy-content="Run this in your own cloud. Recommended for those with dedicated IT support staff supporting the use of Josh. Sends your simulation to the server you specify that we do not control.">ℹ️</span></label>
+                    </div>
+                  </fieldset>
+                </div>
+                <div id="local-run-instructions">
+                  <div class="form-group">
+                    <div id="app-not-found-message">
+                      Your local application was not found. <a href="#">See local Josh application instructions</a>.
+                    </div>
+                    <div id="app-found-message">
+                      Local application found!
+                    </div>
+                  </div>
+                </div>
+                <div id="josh-run-settings">
+                  <div class="form-group">
+                    <div><label for="josh-cloud-api-key">Josh Cloud API Key:</label></div>
+                    <input id="josh-cloud-api-key" name="josh-cloud-api-key" class="long" type="password">
+                  </div>
+                </div>
+                <div id="custom-cloud-run-settings">
+                  <div class="form-group">
+                    <div><label for="your-cloud-endpoint">Your Cloud Endpoint:</label></div>
+                    <input id="your-cloud-endpoint" name="your-cloud-endpoint" class="long" type="text">
+                  </div>
+                  <div class="form-group">
+                    <div><label for="your-cloud-api-key">Your Cloud API Key:</label></div>
+                    <input id="your-cloud-api-key" name="your-cloud-api-key" class="long" type="password">
+                  </div>
+                </div>
+                <div class="dialog-buttons buttons-panel bold-buttons">
+                  <a href="#" class="run-button primary">Run</a>
+                  <a href="#" class="cancel-button destructive">Cancel</a>
+                </div>
+              </dialog>
+            </div>
+          </div>
+        </section>
+        <section id="results">
+          <h2>Run</h2>
+
+          <div id="results-area">
+            <div id="status-panel" class="results-panel">
+              <h3>Execution status</h3>
+              <div>
+                <div class="running-indicator status-display">
+                  <span class="running-icon">⌛</span>
+                  <span class="complete-icon">✅</span>
+                  <span class="status-text">Please wait...</span>
+                </div>
+                <div class="error-display status-display">
+                  ⚠️ Encountered error: <span class="error-message"></span>.
+                </div>
+                <div class="timing-indicator finish-display status-display">
+                  ⏰ Ran in <span class="completed-minutes"></span> minutes and <span class="completed-seconds"></span> seconds.
+                </div>
+                <div class="dataset-indicator finish-display status-display">
+                  💾 Collected <span class="completed-records"></span> records.
+                </div>
+                <div class="dataset-indicator finish-display status-display">
+                  🚀 Need to go faster? Run on <a href="#" class="cta-cloud">cloud</a> or <a href="#" class="cta-cli">CLI</a>.
+                </div>
+              </div>
+            </div>
+            
+            <div id="viz-panel" class="results-panel">
+              <div id="no-data-message">
+                <h3>Results</h3>
+                
+                No data were reported for this simulation. To add data to an export, consider adding code like this:
+  
+                <pre>
+start patch Default
+
+  # ...
+
+  export.averageAge.step = mean(ForeverTree.age)
+  export.averageHeight.step = mean(ForeverTree.height)
+
+  # ...
+
+end patch
+                </pre>
+
+              Then, specify that the results should be written to this editor's visualizations:
+
+                <pre>
+start simulation Simulation
+
+  # ...
+
+  exportFiles.patch = "memory://editor/patches"
+
+  # ...
+
+end simulation
+                </pre>
+              </div>
+              <div id="data-display">
+                
+                <div class="header-button-grid">
+                  <h3>Results</h3>
+                
+                  <div id="sim-display-buttons" class="buttons-panel sim-wide-panel">
+                    <div class="button-holder">
+                      <a class="primary" id="export-button" href="#export">Export</a>
+                    </div>
+                    <div class="button-holder">
+                      <a class="secondary" id="map-button" href="#map">Map</a>
+                    </div>
+                  </div>
+                </div>
+
+                <dialog id="download-dialog">
+                  <h2>Download Results</h2>
+
+                  <p>This will generate a download to continue analysis of simulation results oustide of this web editor.</p>
+                  
+                  <div class="form-group">
+                    <div>
+                      <label for="download-series-select">Series:</label>
+                    </div>
+                    <div class="sel long">
+                      <select name="download-series-select" id="download-series-select">
+                        <option value="patches" selected>patches</option>
+                        <option value="simulation">simulation</option>
+                        <option value="entities">entities</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div>
+                      <label for="download-type-select">Format:</label>
+                    </div>
+                    <div class="sel long">
+                      <select name="download-type-select" id="download-type-select">
+                        <option value="csv" selected>CSV</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <div>
+                      <label for="timeseries-select">Steps:</label>
+                    </div>
+                    <div class="sel long">
+                      <select id="timeseries-select">
+                        <option value="final" selected>final only</option>
+                        <option value="all">all</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group" id="location-option">
+                    <div>
+                      <input type="checkbox" id="geo-export-check" name="geo-export-check">
+                      <label for="geo-export-check">Convert location to degrees</label>
+                    </div>
+                  </div>
+
+                  <div class="dialog-buttons buttons-panel bold-buttons">
+                    <a href="#" class="primary" id="download-uri-button">Download</a>
+                    <a href="#" class="cancel-button destructive">Close</a>
+                  </div>
+                  
+                </dialog>
+
+                <dialog id="map-dialog">
+                  <h2>Map Settings</h2>
+
+                  <p>You may optionally add a map baselayer like satellite imagery to your visualization using <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>, a service that is not affiliated with the Josh project. This requires getting a Mapbox key and will send the boundaries of your simulation to mapbox in order to request imagery. Communication will go directly to Mapbox and not through Josh servers. Requests will only be made if the basemap is not none.</p>
+
+                  <div id="map-settings-available">
+                    <div class="form-group">
+                      <div>
+                        <label for="basemap-layer-select">Basemap:</label>
+                      </div>
+                      <div class="sel long">
+                        <select name="basemap-layer-select" id="basemap-layer-select">
+                          <option value="none" selected>none</option>
+                          <option value="satellite-streets-v12">satellite-streets-v12</option>
+                          <option value="satellite-v9">satellite-v9</option>
+                          <option value="streets-v12">streets-v12</option>
+                          <option value="outdoors-v12">outdoors-v12</option>
+                          <option value="light-v11">light-v11</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div id="mapbox-credentials">
+                      <div class="form-group">
+                        <div><label for="mapbox-key-input">Mapbox API Key:</label></div>
+                        <div>
+                          <input id="mapbox-key-input" name="mapbox-key-input" class="mapbox-key-input long" type="password">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="map-settings-unavailable">
+                    Please specify latitude and longitude in your simulation in order to add a map layer.
+                  </div>
+
+                  <div class="dialog-buttons buttons-panel bold-buttons">
+                    <a href="#" class="primary cancel-button" id="close-map-button">OK</a>
+                  </div>
+
+                </dialog>
+                
+                <div id="data-selector">
+                  Showing
+                  <span class="sel">
+                    <select class="metric-select data-select-option">
+                      <option value="mean" selected>mean</option>
+                      <option value="median">median</option>
+                      <option value="min">min</option>
+                      <option value="max">max</option>
+                      <option value="std">std dev</option>
+                      <option value="probability">probability</option>
+                    </select>
+                  </span>
+                  <span class="probability-controls">
+                    that
+                  </span>
+                  <span class="regular-metric-controls">
+                    of
+                  </span>
+                  <span class="sel long">
+                    <select class="variable-select data-select-option"></select>
+                  </span>
+                  <span class="probability-controls">
+                    <span class="sel">
+                      <select class="probability-range-target data-select-option">
+                        <option value="exceeds" selected>exceeds</option>
+                        <option value="falls below">falls below</option>
+                        <option value="is between">is between</option>
+                      </select>
+                    </span>
+                    <span class="target-a">
+                      <input type="number" class="target-a-input data-select-option">
+                    </span>
+                    <span class="target-b">
+                      to
+                      <input type="number" class="target-b-input data-select-option">
+                    </span>
+                  </span>
+                  .
+                </div>
+
+                <div class="viz-holder" id="scrub-viz-holder">
+                  <svg id="scrub-viz"></svg>
+                </div>
+
+                <div class="viz-holder" id="grid-viz-holder">
+                  <div id="grid-viz-info"></div>
+                  <div class="horiz-scroll-area">
+                    <svg id="grid-viz"></svg>
+                  </div>
+                  <table id="grid-legend">
+                    <tr class="label">
+                      <td class="lowest"></td>
+                      <td class="low"></td>
+                      <td class="high"></td>
+                      <td class="highest"></td>
+                    </tr>
+                    <tr class="color">
+                      <td class="lowest"></td>
+                      <td class="low"></td>
+                      <td class="high"></td>
+                      <td class="highest"></td>
+                    </tr>
+                  </table>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="text/javascript" src="/third_party/ace.min.js"></script>
+    <script type="text/javascript" src="/third_party/d3.min.js"></script>
+    <script type="text/javascript" src="/third_party/ext-language_tools.js"></script>
+    <script type="text/javascript" src="/third_party/ext-options.js"></script>
+    <script type="text/javascript" src="/third_party/ext-prompt.js"></script>
+    <script type="text/javascript" src="/third_party/ext-searchbox.js"></script>
+    <script type="text/javascript" src="/third_party/math.min.js"></script>
+    <script type="text/javascript" src="/third_party/tabby.min.js"></script>
+    <script type="text/javascript" src="/third_party/popper.min.js"></script>
+    <script type="text/javascript" src="/third_party/tippy.min.js"></script>
+
+    <script type="text/javascript" src="/js/parse.js"></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "baselayer": "/js/baselayer.js?v=0.0.1",
+          "editor": "/js/editor.js?v=0.0.1",
+          "engine": "/js/engine.js?v=0.0.1",
+          "exporter": "/js/exporter.js?v=0.0.1",
+          "file": "/js/file.js?v=0.0.1",
+          "main": "/js/main.js?v=0.0.1",
+          "model": "/js/model.js?v=0.0.1",
+          "results": "/js/results.js?v=0.0.1",
+          "run": "/js/run.js?v=0.0.1",
+          "summarize": "/js/summarize.js?v=0.0.1",
+          "util": "/js/util.js?v=0.0.1",
+          "viz": "/js/viz.js?v=0.0.1",
+          "wasm": "/js/wasm.js?v=0.0.1"
+        }
+      }
+    </script>
+
+    <!-- Resources for WASM runtime. -->
+    <script type="text/javascript" charset="utf-8" src="/war/wasm-gc/JoshSim.wasm-runtime.js"></script>
+
+    <script type="module">
+      import {main} from "main";
+
+      /**
+       * Load the WASM resource.
+       */
+      async function scaffold() {
+        main();
+      }
+
+      setTimeout(scaffold, 500);
+    </script>
+  </body>
+</html>

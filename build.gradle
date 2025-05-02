@@ -1,5 +1,6 @@
 plugins {
   id "java"
+  id "war"
   id "eclipse" // optional (to generate Eclipse project files)
   id "idea" // optional (to generate IntelliJ IDEA project files)
   id "application" // for creating executable JARs
@@ -42,11 +43,21 @@ dependencies {
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0-M3")
 
+  // Apache Commons CSV for CSV handling
+  implementation("org.apache.commons:commons-csv:1.10.0")
+
   // Geotools for Raster transformations and COG support
   implementation("org.geotools:gt-main:32.2")
   implementation("org.geotools:gt-geotiff:32.2")
   implementation("org.geotools:gt-referencing:32.2")
   implementation("org.geotools:gt-epsg-hsql:32.2")
+  
+  // Add NetCDF support to Geotools
+  implementation("org.geotools:gt-netcdf:32.2")
+
+  // Interaction with browser
+  implementation("org.teavm:teavm-core:0.11.0")
+  implementation("org.teavm:teavm-jso:0.11.0")
 
   // Testing dependencies
   testImplementation(platform("org.junit:junit-bom:5.12.1"))
@@ -55,16 +66,25 @@ dependencies {
   testImplementation("org.mockito:mockito-junit-jupiter:5.16.1")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+  // Local server
+  implementation("io.undertow:undertow-core:2.3.18.Final")
+
   // Command line parsing
   implementation("info.picocli:picocli:4.7.6")
 
   // Minio for S3 storage
-  implementation 'io.minio:minio:8.5.2'
+  implementation("io.minio:minio:8.5.2")
 }
 
 teavm {
-  wasm {
-    mainClass = "org.joshsim.JoshSimFacade"
+  js {
+    mainClass = "org.joshsim.JoshJsSimFacade"
+    addedToWebApp = true
+    moduleType = org.teavm.gradle.api.JSModuleType.NONE
+  }
+  wasmGC {
+    mainClass = "org.joshsim.JoshJsSimFacade"
+    addedToWebApp = true
   }
 }
 
@@ -94,6 +114,11 @@ task fatJar(type: Jar) {
   // Include all dependencies
   from { 
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } 
+  }
+  
+  // Include editor resources
+  from("editor") {
+    into "editor"
   }
 
   // Exclude duplicates
@@ -152,23 +177,23 @@ spotless {
     leadingTabsToSpaces(2)
     trimTrailingWhitespace()
     endWithNewline()
-    
+
     custom 'ensure empty line at end', {
       def last = it[-1]
       return last == '\n' ? it : it + '\n'
     }
-    
+
     custom 'ensure space after typecast', {
       return it.replaceAll('\\)([a-zA-Z0-9_])', ') $1')
     }
-    
+
     custom 'ensure blank line after header', {
       if (it.contains('*/')) {
         return it.replaceAll('\\*/\\s*package', '*/\n\npackage')
       }
       return it
     }
-    
+
   }
 }
 

@@ -11,10 +11,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleLock;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -28,7 +28,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   private final String name;
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
-  private final Lock lock;
+  private final CompatibleLock lock;
 
   private Map<String, EngineValue> attributes;
   private Map<String, EngineValue> priorAttributes;
@@ -63,7 +63,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       this.attributes = new HashMap<>(attributes);
     }
 
-    lock = new ReentrantLock();
+    lock = CompatibilityLayerKeeper.get().getLock();
     substep = Optional.empty();
     priorAttributes = new HashMap<>();
     onlyOnPrior = new HashSet<>();

@@ -22,6 +22,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
+import org.joshsim.cloud.EnvCloudApiDataLayer;
+import org.joshsim.cloud.JoshSimServer;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -30,6 +38,7 @@ import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -50,7 +59,8 @@ import picocli.CommandLine.Parameters;
     description = "JoshSim command line interface",
     subcommands = {
         JoshSimCommander.ValidateCommand.class,
-        JoshSimCommander.RunCommand.class
+        JoshSimCommander.RunCommand.class,
+        JoshSimCommander.ServerCommand.class
     }
 )
 public class JoshSimCommander {
@@ -91,7 +101,12 @@ public class JoshSimCommander {
     @Override
     public Integer call() {
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+          new GridGeometryFactory(),
+          file,
+          output
+      );
+
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -135,11 +150,21 @@ public class JoshSimCommander {
     @Parameters(index = "1", description = "Simulation to run")
     private String simulation;
 
+    @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
+    private String crs;
+
     @Mixin
     private OutputOptions output = new OutputOptions();
 
     @Mixin
     private MinioOptions minioOptions = new MinioOptions();
+
+    @Option(
+        names = "--serial-patches",
+        description = "Run patches in serial instead of parallel",
+        defaultValue = "false"
+    )
+    private boolean serialPatches;
 
     /**
      * Runs the simulation file specified.
@@ -152,8 +177,20 @@ public class JoshSimCommander {
      */
     @Override
     public Integer call() {
+      EngineGeometryFactory geometryFactory;
+      if (crs.isEmpty()) {
+        geometryFactory = new GridGeometryFactory();
+      } else {
+        CoordinateReferenceSystem crsRealized;
+        try {
+          crsRealized = CRS.decode(crs);
+        } catch (FactoryException e) {
+          throw new RuntimeException(e);
+        }
+        geometryFactory = new EarthGeometryFactory(crsRealized);
+      }
 
-      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(file, output);
+      ProgramInitResult initResult = JoshSimCommander.getJoshProgram(geometryFactory, file, output);
       if (initResult.getFailureStep().isPresent()) {
         CommanderStepEnum failStep = initResult.getFailureStep().get();
         return switch (failStep) {
@@ -173,9 +210,11 @@ public class JoshSimCommander {
       }
 
       JoshSimFacade.runSimulation(
+          geometryFactory,
           program,
           simulation,
-          (step) -> output.printInfo(String.format("Completed step %d.", step))
+          (step) -> output.printInfo(String.format("Completed step %d.", step)),
+          serialPatches
       );
 
       if (minioOptions.isMinioOutput()) {
@@ -250,7 +289,8 @@ public class JoshSimCommander {
     }
   }
 
-  private static ProgramInitResult getJoshProgram(File file, OutputOptions output) {
+  private static ProgramInitResult getJoshProgram(EngineGeometryFactory geometryFactory, File file,
+        OutputOptions output) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -282,7 +322,7 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(result);
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
     assert program != null;
 
     return new ProgramInitResult(program);
@@ -320,6 +360,72 @@ public class JoshSimCommander {
       return program;
     }
 
+  }
+
+  /**
+   * Command to run the JoshSim server locally.
+   */
+  @Command(
+      name = "server",
+      description = "Run the JoshSim server locally"
+  )
+  static class ServerCommand implements Callable<Integer> {
+
+    @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
+    private int port;
+
+    @Option(
+        names = "--concurrent-workers",
+        description = "Nubmer of concurrent workers allowed",
+        defaultValue = "0"
+    )
+    private int workers;
+
+    @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://localhost:8085/runReplicate")
+    private String workerUrl;
+
+    @Option(names = "--use-http2", description = "Enable HTTP/2 support", defaultValue = "false")
+    private boolean useHttp2;
+
+    @Option(
+        names = "--serial-patches",
+        description = "Run patches in serial instead of parallel",
+        defaultValue = "false"
+    )
+    private boolean serialPatches;
+
+    @Override
+    public Integer call() {
+      try {
+        int numProcessors = Runtime.getRuntime().availableProcessors();
+
+        if (workers == 0) {
+          workers = workerUrl.startsWith("localhost") ? 1 : numProcessors - 1;
+        }
+
+        JoshSimServer server = new JoshSimServer(
+            new EnvCloudApiDataLayer(),
+            useHttp2,
+            workerUrl.replaceAll("\"", "").trim(),
+            port,
+            workers,
+            serialPatches
+        );
+
+        server.start();
+        System.out.println("Server started on port " + port);
+        System.out.println(
+            "Open your browser at http://localhost:" + port + "/ to run simulations"
+        );
+
+        // Keep the server running
+        Thread.currentThread().join();
+        return 0;
+      } catch (Exception e) {
+        System.err.println("Server error: " + e.getMessage());
+        return 1;
+      }
+    }
   }
 
 }

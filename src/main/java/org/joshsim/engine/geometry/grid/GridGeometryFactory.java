@@ -1,0 +1,83 @@
+/**
+ * Structures describing geometric shapes and their properties in grid space.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.engine.geometry.grid;
+
+import java.math.BigDecimal;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+
+/**
+ * Factory for creating geometric shapes in grid space.
+ *
+ * <p>This factory provides methods to create basic geometric shapes like squares, circles and
+ * points in a grid space coordinates.</p>
+ */
+public class GridGeometryFactory implements EngineGeometryFactory {
+
+  @Override
+  public boolean supportsEarthSpace() {
+    return false;
+  }
+
+  @Override
+  public boolean supportsGridSpace() {
+    return true;
+  }
+
+  @Override
+  public EngineGeometry createSquare(BigDecimal centerX, BigDecimal centerY, BigDecimal width) {
+    return new GridSquare(centerX, centerY, width);
+  }
+
+  @Override
+  public EngineGeometry createSquare(BigDecimal topLeftX, BigDecimal topLeftY,
+        BigDecimal bottomRightX, BigDecimal bottomRightY) {
+
+    BigDecimal width = bottomRightX.subtract(topLeftX);
+    return new GridSquare(
+        topLeftX.add(width.divide(BigDecimal.TWO)),
+        topLeftY.add(width.divide(BigDecimal.TWO)),
+        width
+    );
+  }
+
+  @Override
+  public EngineGeometry createCircle(BigDecimal centerX, BigDecimal centerY, BigDecimal radius) {
+    return new GridCircle(centerX, centerY, radius);
+  }
+
+  @Override
+  public EngineGeometry createCircle(BigDecimal point1X, BigDecimal point1Y, BigDecimal point2X,
+        BigDecimal point2Y) {
+    BigDecimal centerX = point1X.add(point2X).divide(BigDecimal.TWO);
+    BigDecimal centerY = point1Y.add(point2Y).divide(BigDecimal.TWO);
+    BigDecimal radius = BigDecimal.valueOf(Math.sqrt(
+        point2X.subtract(point1X).pow(2).add(point2Y.subtract(point1Y).pow(2)).doubleValue()
+    )).divide(BigDecimal.TWO);
+    return new GridCircle(centerX, centerY, radius);
+  }
+
+  @Override
+  public EngineGeometry createPoint(BigDecimal x, BigDecimal y) {
+    return new GridPoint(x, y);
+  }
+
+  @Override
+  public PatchBuilder getPatchBuilder(String inputCrs, String targetCrs,
+        PatchBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype) {
+    boolean emptyCrs = inputCrs.isEmpty() && targetCrs.isEmpty();
+    if (!emptyCrs) {
+      throw new IllegalArgumentException("Grid-space expects an empty CRS.");
+    }
+
+    return new GridPatchBuilder(extents, cellWidth, prototype);
+  }
+
+}
