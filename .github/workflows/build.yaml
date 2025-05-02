@@ -259,19 +259,17 @@ jobs:
           docker push us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
       - name: Deploy to Cloud Run
         id: deploy
-        uses: google-github-actions/deploy-cloudrun@v1
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          region: ${{ secrets.REGION }}
-          image: us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: |
-            --memory=16Gi
-            --cpu=6
-            --min-instances=0
-            --max-instances=100
-            --port=8085
-            --allow-unauthenticated
-            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}"
-            --use-http2
-            --concurrency=1
-            --timeout=3600
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --region=${{ secrets.REGION }} \
+            --image=us-west1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/docker-repo/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --memory=16Gi \
+            --cpu=6 \
+            --min-instances=0 \
+            --max-instances=100 \
+            --port=8085 \
+            --allow-unauthenticated \
+            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}" \
+            --use-http2 \
+            --concurrency=1 \
+            --timeout=3600s
