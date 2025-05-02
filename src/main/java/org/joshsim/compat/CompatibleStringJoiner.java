@@ -1,5 +1,5 @@
 /**
- * Interface for a cross-VM compatability string joiner.
+ * Interface for a cross-VM Compatibility string joiner.
  *
  * @license BSD-3-Clause
  */

@@ -9,7 +9,7 @@ class CompatibilityLayerKeeperTest {
 
   @Test
   void testGetDefault() {
-    CompatabilityLayer result = CompatibilityLayerKeeper.get();
+    CompatibilityLayer result = CompatibilityLayerKeeper.get();
     assertNotNull(result, "Returned layer should not be null");
   }
 

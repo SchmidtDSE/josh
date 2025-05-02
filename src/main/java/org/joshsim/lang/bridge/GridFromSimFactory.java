@@ -7,8 +7,9 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
@@ -57,25 +58,15 @@ public class GridFromSimFactory {
    * @return the built PatchSet
    */
   public PatchSet build(MutableEntity simulation) {
-    simulation.startSubstep("constant");
-
-    final Optional<EngineValue> inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
-    // final Optional<EngineValue> targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    final Optional<EngineValue> startStrMaybe = simulation.getAttributeValue("grid.low");
-    final Optional<EngineValue> endStrMaybe = simulation.getAttributeValue("grid.high");
-    final Optional<EngineValue> patchNameMaybe = simulation.getAttributeValue("grid.patch");
-    final Optional<EngineValue> sizeMaybe = simulation.getAttributeValue("grid.size");
-
-    simulation.endSubstep();
-
-    String inputCrs = getOrDefault(inputCrsMaybe, "");
-    // String targetCrs = getOrDefault(targetCrsMaybe, "");
-    String startStr = getOrDefault(startStrMaybe, "1 count latitude, 1 count longitude");
-    String endStr = getOrDefault(endStrMaybe, "10 count latitude, 10 count longitude");
-    String patchName = getOrDefault(patchNameMaybe, "Default");
+    GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
+    String inputCrs = extractor.getInputCrs();
+    String targetCrs = extractor.getTargetCrs();
+    String startStr = extractor.getStartStr();
+    String endStr = extractor.getEndStr();
+    String patchName = extractor.getPatchName();
 
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
-    EngineValue sizeValueRaw = sizeMaybe.orElse(valueFactory.build(1, Units.COUNT));
+    EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
     // TODO: properly parse units for cell size
@@ -85,26 +76,28 @@ public class GridFromSimFactory {
         "GRID", inputCrs, extents, sizeValuePrimitive, sizeValueUnits
     );
 
-    PatchBuilder builder = bridge.getGeometryFactory().getPatchBuilder(
+    EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
+
+    String sizeUnits = sizeValueRaw.getUnits().toString();
+    boolean posDegrees = startStr.contains("degrees");
+    boolean sizeMeters = (
+        sizeUnits.equals("m")
+        || sizeUnits.equals("meter")
+        || sizeUnits.equals("meters")
+    );
+    boolean posSizeMismatch = posDegrees && sizeMeters;
+    boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
+    boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    if (requiresCountConversion) {
+      extents = convertToMeters(extents, sizeValuePrimitive);
+      sizeValuePrimitive = BigDecimal.valueOf(1);
+    }
+
+    PatchBuilder builder = geometryFactory.getPatchBuilder(
         gridCrsDefinition,
         bridge.getPrototype(patchName)
     );
     return builder.build();
-  }
-
-  /**
-   * Returns the string value of an optional EngineValue or a default value if empty.
-   *
-   * @param target the optional EngineValue to check
-   * @param defaultVal the default value to return if target is empty
-   * @return the string value from the EngineValue or the default value
-   */
-  private String getOrDefault(Optional<EngineValue> target, String defaultVal) {
-    if (target.isEmpty()) {
-      return defaultVal;
-    } else {
-      return target.get().getAsString();
-    }
   }
 
   /**
@@ -173,6 +166,42 @@ public class GridFromSimFactory {
     } else {
       return bridge.convert(target, allowed);
     }
+  }
+
+  /**
+   * Convert a set of extents from degrees to meters.
+   *
+   * <p>Convert a set of extents from degrees to coordinates expressed in cell / patch counts via
+   * conversion to meters using Haverzine where the upper left corner is 0, 0 and the bottom right
+   * is positive. This is done using HaversineUtil.</p>
+   *
+   * @param extents Original extents expressed in degrees which should be converted to meters and
+   *     then cell counts.
+   * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
+   */
+  private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
+    BigDecimal width = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getTopLeftY()
+    );
+    BigDecimal height = HaversineUtil.getDistance(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getTopLeftX(),
+        extents.getBottomRightY()
+    );
+
+    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+
+    return new PatchBuilderExtents(
+        BigDecimal.ZERO,
+        BigDecimal.ZERO,
+        gridWidth,
+        gridHeight
+    );
   }
 
 }

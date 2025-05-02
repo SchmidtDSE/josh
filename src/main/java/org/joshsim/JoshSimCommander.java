@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.apache.sis.referencing.CRS;
+import org.joshsim.cloud.EnvCloudApiDataLayer;
+import org.joshsim.cloud.JoshSimServer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
@@ -57,7 +59,8 @@ import picocli.CommandLine.Parameters;
     description = "JoshSim command line interface",
     subcommands = {
         JoshSimCommander.ValidateCommand.class,
-        JoshSimCommander.RunCommand.class
+        JoshSimCommander.RunCommand.class,
+        JoshSimCommander.ServerCommand.class
     }
 )
 public class JoshSimCommander {
@@ -156,7 +159,7 @@ public class JoshSimCommander {
     @Mixin
     private MinioOptions minioOptions = new MinioOptions();
 
-    @CommandLine.Option(
+    @Option(
         names = "--serial-patches",
         description = "Run patches in serial instead of parallel",
         defaultValue = "false"
@@ -357,6 +360,72 @@ public class JoshSimCommander {
       return program;
     }
 
+  }
+
+  /**
+   * Command to run the JoshSim server locally.
+   */
+  @Command(
+      name = "server",
+      description = "Run the JoshSim server locally"
+  )
+  static class ServerCommand implements Callable<Integer> {
+
+    @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
+    private int port;
+
+    @Option(
+        names = "--concurrent-workers",
+        description = "Nubmer of concurrent workers allowed",
+        defaultValue = "0"
+    )
+    private int workers;
+
+    @Option(names = "--worker-url", description = "URL for worker requests", defaultValue = "http://localhost:8085/runReplicate")
+    private String workerUrl;
+
+    @Option(names = "--use-http2", description = "Enable HTTP/2 support", defaultValue = "false")
+    private boolean useHttp2;
+
+    @Option(
+        names = "--serial-patches",
+        description = "Run patches in serial instead of parallel",
+        defaultValue = "false"
+    )
+    private boolean serialPatches;
+
+    @Override
+    public Integer call() {
+      try {
+        int numProcessors = Runtime.getRuntime().availableProcessors();
+
+        if (workers == 0) {
+          workers = workerUrl.startsWith("localhost") ? 1 : numProcessors - 1;
+        }
+
+        JoshSimServer server = new JoshSimServer(
+            new EnvCloudApiDataLayer(),
+            useHttp2,
+            workerUrl.replaceAll("\"", "").trim(),
+            port,
+            workers,
+            serialPatches
+        );
+
+        server.start();
+        System.out.println("Server started on port " + port);
+        System.out.println(
+            "Open your browser at http://localhost:" + port + "/ to run simulations"
+        );
+
+        // Keep the server running
+        Thread.currentThread().join();
+        return 0;
+      } catch (Exception e) {
+        System.err.println("Server error: " + e.getMessage());
+        return 1;
+      }
+    }
   }
 
 }

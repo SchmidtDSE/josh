@@ -1,5 +1,5 @@
 /**
- * Logic for a singleton offering access to a compatability layer.
+ * Logic for a singleton offering access to a Compatibility layer.
  *
  * @license BSD-3-Clause
  */
@@ -9,38 +9,34 @@ package org.joshsim.compat;
 import java.util.Optional;
 
 /**
- * Singleton keeper for the platform-specific CompatabilityLayer implementation.
+ * Singleton keeper for the platform-specific CompatibilityLayer implementation.
  *
- * <p>This class manages access to the platform-specific implementation of CompatabilityLayer,
+ * <p>This class manages access to the platform-specific implementation of CompatibilityLayer,
  * ensuring only one instance is used throughout the application. If no layer is explicitly set,
- * it defaults to an EmulatedCompatabilityLayer.</p>
+ * it defaults to an EmulatedCompatibilityLayer.</p>
  */
 public class CompatibilityLayerKeeper {
 
-  private static Optional<CompatabilityLayer> layer = Optional.empty();
+  private static Optional<CompatibilityLayer> layer = Optional.empty();
 
   /**
-   * Sets the platform-specific CompatabilityLayer implementation.
+   * Sets the platform-specific CompatibilityLayer implementation.
    *
-   * @param newLayer The CompatabilityLayer implementation to use
+   * @param newLayer The CompatibilityLayer implementation to use
    * @throws IllegalStateException if a layer has already been set
    */
-  public static void set(CompatabilityLayer newLayer) {
-    if (layer.isPresent()) {
-      throw new IllegalStateException("Layer already set");
-    }
-
+  public static void set(CompatibilityLayer newLayer) {
     layer = Optional.of(newLayer);
   }
 
   /**
-   * Returns the current CompatabilityLayer implementation or a default.
+   * Returns the current CompatibilityLayer implementation or a default.
    *
-   * @return The current CompatabilityLayer implementation
+   * @return The current CompatibilityLayer implementation
    */
-  public static CompatabilityLayer get() {
+  public static CompatibilityLayer get() {
     if (!layer.isPresent()) {
-      layer = Optional.of(new EmulatedCompatabilityLayer());
+      layer = Optional.of(new EmulatedCompatibilityLayer());
     }
 
     return layer.get();
