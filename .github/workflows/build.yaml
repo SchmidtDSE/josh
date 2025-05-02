@@ -196,8 +196,6 @@ jobs:
           path: ./editor-build
       - name: Verify editor
         run: ls editor-build/
-      - name: Unzip editor
-        run: cd editor-build; unzip editor.zip
       - name: Upload Editor via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -281,6 +279,11 @@ jobs:
           fi
       - name: Configure Docker
         run: gcloud auth configure-docker us-west1-docker.pkg.dev
+      - name: Verify Artifact Registry Repository
+        run: |
+          # List existing repositories to verify
+          echo "Existing repositories:"
+          gcloud artifacts repositories list --location=us-west1
       - name: Build and Push Docker image
         run: |
           # Build from the directory containing the Dockerfile
