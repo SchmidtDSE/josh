@@ -51,7 +51,7 @@ class JoshSimWorkerHandlerTest {
   }
 
   @Test
-  void whenApiKeyIsInvalid_shouldReturn401() throws Exception {
+  void whenApiKeyIsInvalid_shouldReturn400() throws Exception {
     // Given
     when(headerValues.getFirst()).thenReturn("invalid-key");
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(false);
@@ -61,7 +61,7 @@ class JoshSimWorkerHandlerTest {
     handler.handleRequest(exchange);
 
     // Then
-    verify(exchange).setStatusCode(401);
+    verify(exchange).setStatusCode(400);
   }
 
   @Test

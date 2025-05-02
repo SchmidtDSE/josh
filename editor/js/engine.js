@@ -126,6 +126,7 @@ class RemoteEngineBackend {
       formData.append("code", simCode);
       formData.append("name", runRequest.getSimName());
       formData.append("replicates", runRequest.getReplicates().toString());
+      formData.append("apiKey", self._apiKey);
       
       return formData;
     };
@@ -138,9 +139,6 @@ class RemoteEngineBackend {
     const createRequest = () => {
       return {
         method: "POST",
-        headers: {
-          "X-API-Key": self._apiKey
-        },
         body: createFormData()
       };
     };

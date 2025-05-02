@@ -30,8 +30,6 @@ class JoshSimLeaderHandlerTest {
   @Mock
   private HeaderMap headerMap;
   @Mock
-  private HeaderValues headerValues;
-  @Mock
   private FormDataParser formDataParser;
   @Mock
   private FormData formData;
@@ -47,25 +45,26 @@ class JoshSimLeaderHandlerTest {
 
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
     when(exchange.getResponseHeaders()).thenReturn(headerMap);
-    when(headerMap.get("X-API-Key")).thenReturn(headerValues);
     when(exchange.getOutputStream()).thenReturn(outputStream);
   }
 
   @Test
-  void whenApiKeyIsInvalid_shouldReturn401() throws Exception {
-    when(headerValues.getFirst()).thenReturn("invalid-key");
-    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(false);
+  void whenApiKeyIsInvalid_shouldReturn400() throws Exception {
+    FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
+    when(formData.contains("apiKey")).thenReturn(true);
+    when(formData.getFirst("apiKey")).thenReturn(apiKeyValue);
+    when(apiKeyValue.getValue()).thenReturn("invalid-key");
+    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(false);
+    when(formDataParser.parseBlocking()).thenReturn(formData);
 
     handler.handleRequest(exchange);
 
-    verify(exchange).setStatusCode(401);
+    verify(exchange).setStatusCode(400);
   }
 
   @Test
   void whenMethodIsNotPost_shouldReturn405() throws Exception {
-    when(headerValues.getFirst()).thenReturn("valid-key");
-    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("GET"));
 
     handler.handleRequestTrusted(exchange, "");
@@ -75,10 +74,7 @@ class JoshSimLeaderHandlerTest {
 
   @Test
   void whenFormParserIsNull_shouldReturn400() throws Exception {
-    when(headerValues.getFirst()).thenReturn("valid-key");
-    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
-
     FormParserFactory mockFactory = mock(FormParserFactory.class);
     when(mockFactory.createParser(any())).thenReturn(null);
 
@@ -89,8 +85,6 @@ class JoshSimLeaderHandlerTest {
 
   @Test
   void whenFormDataIsMissingRequiredFields_shouldReturn400() throws Exception {
-    when(headerValues.getFirst()).thenReturn("valid-key");
-    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(formData.contains("code")).thenReturn(false);
     when(formData.contains("name")).thenReturn(false);
@@ -107,19 +101,22 @@ class JoshSimLeaderHandlerTest {
     FormData.FormValue codeValue = mock(FormData.FormValue.class);
     FormData.FormValue nameValue = mock(FormData.FormValue.class);
     FormData.FormValue replicatesValue = mock(FormData.FormValue.class);
+    FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);
 
-    when(headerValues.getFirst()).thenReturn("valid-key");
-    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(formData.contains("code")).thenReturn(true);
     when(formData.contains("name")).thenReturn(true);
     when(formData.contains("replicates")).thenReturn(true);
+    when(formData.contains("apiKey")).thenReturn(true);
     when(formData.getFirst("code")).thenReturn(codeValue);
     when(formData.getFirst("name")).thenReturn(nameValue);
     when(formData.getFirst("replicates")).thenReturn(replicatesValue);
+    when(formData.getFirst("apiKey")).thenReturn(apiKeyValue);
     when(codeValue.getValue()).thenReturn("simulation code");
     when(nameValue.getValue()).thenReturn("test simulation");
     when(replicatesValue.getValue()).thenReturn("2");
+    when(apiKeyValue.getValue()).thenReturn("valid-key");
+    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(formDataParser.parseBlocking()).thenReturn(formData);
 
     handler.handleRequestTrusted(exchange, "");
