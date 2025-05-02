@@ -49,7 +49,7 @@ class JoshSimLeaderHandlerTest {
   }
 
   @Test
-  void whenApiKeyIsInvalid_shouldReturn401() throws Exception {
+  void whenApiKeyIsInvalid_shouldReturn400() throws Exception {
     FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(formData.contains("apiKey")).thenReturn(true);
@@ -60,7 +60,7 @@ class JoshSimLeaderHandlerTest {
 
     handler.handleRequest(exchange);
 
-    verify(exchange).setStatusCode(401);
+    verify(exchange).setStatusCode(400);
   }
 
   @Test
