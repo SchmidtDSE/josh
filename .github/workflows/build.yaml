@@ -122,6 +122,8 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
     steps:
@@ -164,6 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy to SFTP
     needs: [buildWeb]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Set environment variables based on branch
         run: |
@@ -219,6 +222,7 @@ jobs:
     environment: Deploy
     runs-on: ubuntu-latest
     needs: [buildWeb]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Set environment variables based on branch
         run: |
