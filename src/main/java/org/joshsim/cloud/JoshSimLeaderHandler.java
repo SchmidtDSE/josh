@@ -80,23 +80,20 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return;
     }
 
-    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
-
-    if (apiKey == null) {
-      apiKey = "";
-    }
-
-    if (!apiInternalLayer.apiKeyIsValid(apiKey)) {
-      httpServerExchange.setStatusCode(401);
+    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(
+        httpServerExchange,
+        apiInternalLayer
+    );
+    if (!apiCheckResult.getKeyIsValid()) {
       return;
     }
 
     long startTime = System.nanoTime();
-    handleRequestTrusted(httpServerExchange, apiKey);
+    handleRequestTrusted(httpServerExchange, apiCheckResult.getApiKey());
     long endTime = System.nanoTime();
 
     long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
-    apiInternalLayer.log(apiKey, "distribute", runtimeSeconds);
+    apiInternalLayer.log(apiCheckResult.getApiKey(), "distribute", runtimeSeconds);
   }
 
   /**

@@ -90,14 +90,11 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    String apiKey = httpServerExchange.getRequestHeaders().get("X-API-Key").getFirst();
-
-    if (apiKey == null) {
-      apiKey = "";
-    }
-
-    if (!apiDataLayer.apiKeyIsValid(apiKey)) {
-      httpServerExchange.setStatusCode(401);
+    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(
+        httpServerExchange,
+        apiDataLayer
+    );
+    if (!apiCheckResult.getKeyIsValid()) {
       return;
     }
 
@@ -106,7 +103,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     long endTime = System.nanoTime();
 
     long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
-    apiDataLayer.log(apiKey, "simulate", runtimeSeconds);
+    apiDataLayer.log(apiCheckResult.getApiKey(), "simulate", runtimeSeconds);
   }
 
   /**
