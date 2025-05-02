@@ -50,9 +50,11 @@ public class JoshSimServer {
    * @param workerUrl The URL of the worker service to which tasks may be delegated.
    * @param port The port on which the server listens for HTTP requests.
    * @param maxParallelRequests The maximum parallel requests to allow in leaders.
+   * @param serialPatches Flag indicating if patches should be processed in serial. True if serial
+   *     and false if parallel.
    */
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
-      int maxParallelRequests) {
+      int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
         // Static file handlers
         .addPrefixPath(
@@ -96,7 +98,7 @@ public class JoshSimServer {
         // API handlers
         .addPrefixPath(
             "/runReplicate",
-            new JoshSimWorkerHandler(dataLayer, true, Optional.empty())
+            new JoshSimWorkerHandler(dataLayer, true, Optional.empty(), serialPatches)
         )
         .addPrefixPath(
             "/runReplicates",

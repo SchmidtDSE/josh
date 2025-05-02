@@ -5,6 +5,8 @@
 package org.joshsim.cloud;
 
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 
@@ -65,7 +67,7 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
   @Override
   public void log(String key, String type, long runtimeSeconds) {
     CompatibleStringJoiner logJoiner = CompatibilityLayerKeeper.get().createStringJoiner(", ");
-    logJoiner.add(key);
+    logJoiner.add(generateMD5(key));
     logJoiner.add(type);
     logJoiner.add(String.valueOf(runtimeSeconds));
     System.out.println("[josh cloud log] " + logJoiner.toString());
@@ -83,6 +85,21 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
      */
     String getApiKeysString();
 
+  }
+
+  private String generateMD5(String message) {
+    try {
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      byte[] hashBytes = md.digest(message.getBytes());
+
+      StringBuilder stringBuilder = new StringBuilder();
+      for (byte b : hashBytes) {
+        stringBuilder.append(String.format("%02x", b));
+      }
+      return stringBuilder.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("Could not generate MD5 hash: ", e);
+    }
   }
 
 }
