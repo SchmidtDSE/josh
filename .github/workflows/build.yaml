@@ -267,7 +267,7 @@ jobs:
             --max-instances=100
             --port=8085
             --allow-unauthenticated
-            --set-secrets="JOSH_API_KEYS=${{ env.SECRET_NAME }}:${{ secrets.SECRET_VERSION }}"
+            --set-secrets="JOSH_API_KEYS=${{ env.SECRET_NAME }}"
             --use-http2
             --concurrency=1
             --timeout=3600
