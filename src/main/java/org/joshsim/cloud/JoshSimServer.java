@@ -71,16 +71,25 @@ public class JoshSimServer {
               new HttpString("Access-Control-Allow-Headers"),
               "Content-Type, Authorization"
           );
+          exchange.getResponseHeaders().put(
+              new HttpString("Access-Control-Max-Age"),
+              "3600"
+          );
           
           if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
-            exchange.getResponseHeaders().put(
-                new HttpString("Access-Control-Max-Age"),
-                "3600"
-            );
             exchange.setStatusCode(200);
             exchange.endExchange();
             return;
           }
+
+          // Let the request continue to be processed
+          exchange.addDefaultResponseListener(defaultResponse -> {
+            defaultResponse.getResponseHeaders().put(
+                new HttpString("Access-Control-Allow-Origin"),
+                "*"
+            );
+            return defaultResponse;
+          });
         })
         // Static file handlers
         .addPrefixPath(
