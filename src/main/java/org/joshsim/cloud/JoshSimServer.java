@@ -56,6 +56,16 @@ public class JoshSimServer {
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
+        .addExactPath("*", exchange -> {
+            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
+            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type, Authorization");
+            if (exchange.getRequestMethod().equalString("OPTIONS")) {
+                exchange.setStatusCode(200);
+                exchange.endExchange();
+                return;
+            }
+        })
         // Static file handlers
         .addPrefixPath(
             "/",
