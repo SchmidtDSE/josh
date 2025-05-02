@@ -12,6 +12,7 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import io.undertow.util.MimeMappings;
 import java.util.Optional;
 
@@ -58,17 +59,17 @@ public class JoshSimServer {
     PathHandler pathHandler = Handlers.path()
         .addExactPath("*", exchange -> {
             exchange.getResponseHeaders().put(
-                Headers.ACCESS_CONTROL_ALLOW_ORIGIN, "*"
+                new HttpString("Access-Control-Allow-Origin"), "*"
             );
             exchange.getResponseHeaders().put(
-                Headers.ACCESS_CONTROL_ALLOW_METHODS,
+                new HttpString("Access-Control-Allow-Methods"),
                 "GET, POST, PUT, DELETE, OPTIONS"
             );
             exchange.getResponseHeaders().put(
-                Headers.ACCESS_CONTROL_ALLOW_HEADERS,
+                new HttpString("Access-Control-Allow-Headers"),
                 "Content-Type, Authorization"
             );
-            if (exchange.getRequestMethod().equalString("OPTIONS")) {
+            if (exchange.getRequestMethod().toString().equals("OPTIONS")) {
                 exchange.setStatusCode(200);
                 exchange.endExchange();
                 return;
