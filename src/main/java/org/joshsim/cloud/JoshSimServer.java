@@ -57,9 +57,17 @@ public class JoshSimServer {
       int maxParallelRequests, boolean serialPatches) {
     PathHandler pathHandler = Handlers.path()
         .addExactPath("*", exchange -> {
-            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
-            exchange.getResponseHeaders().put(Headers.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type, Authorization");
+            exchange.getResponseHeaders().put(
+                Headers.ACCESS_CONTROL_ALLOW_ORIGIN, "*"
+            );
+            exchange.getResponseHeaders().put(
+                Headers.ACCESS_CONTROL_ALLOW_METHODS,
+                "GET, POST, PUT, DELETE, OPTIONS"
+            );
+            exchange.getResponseHeaders().put(
+                Headers.ACCESS_CONTROL_ALLOW_HEADERS,
+                "Content-Type, Authorization"
+            );
             if (exchange.getRequestMethod().equalString("OPTIONS")) {
                 exchange.setStatusCode(200);
                 exchange.endExchange();
