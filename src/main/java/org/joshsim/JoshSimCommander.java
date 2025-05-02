@@ -159,7 +159,7 @@ public class JoshSimCommander {
     @Mixin
     private MinioOptions minioOptions = new MinioOptions();
 
-    @CommandLine.Option(
+    @Option(
         names = "--serial-patches",
         description = "Run patches in serial instead of parallel",
         defaultValue = "false"
@@ -387,6 +387,13 @@ public class JoshSimCommander {
     @Option(names = "--use-http2", description = "Enable HTTP/2 support", defaultValue = "false")
     private boolean useHttp2;
 
+    @Option(
+      names = "--serial-patches",
+      description = "Run patches in serial instead of parallel",
+      defaultValue = "false"
+    )
+    private boolean serialPatches;
+
     @Override
     public Integer call() {
       try {
@@ -401,7 +408,8 @@ public class JoshSimCommander {
             useHttp2,
             workerUrl,
             port,
-            workers
+            workers,
+            serialPatches
         );
 
         server.start();

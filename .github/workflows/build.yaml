@@ -275,5 +275,5 @@ jobs:
             --allow-unauthenticated \
             --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}" \
             --use-http2 \
-            --concurrency=1 \
+            --concurrency=5 \
             --timeout=3600s

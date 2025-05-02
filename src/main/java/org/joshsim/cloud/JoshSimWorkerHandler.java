@@ -33,13 +33,24 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
   private final CloudApiDataLayer apiDataLayer;
   private final EngineGeometryFactory geometryFactory;
+  private final boolean useSerial;
 
+  
   /**
-   * Create a new handler for the leader node which is invoked via an HTTP 2 request.
+   * Constructs a new JoshSimWorkerHandler.
+   *
+   * @param apiInternalLayer The cloud API data layer utilized by this handler for API operations.
+   * @param sandboxed A boolean flag indicating whether to operate in sandboxed mode.
+   * @param crs An optional string representing the coordinate reference system to be used. If not
+   *     given, will use grid-space.
+   * @param useSerial If true, patch processing will be done serially or, otherwise, parallel
+   *     processing will be used.
+   * @throws RuntimeException if not in sandboxed mode or if there is an error decoding the CRS.
    */
   public JoshSimWorkerHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
-        Optional<String> crs) {
+        Optional<String> crs, boolean useSerial) {
     this.apiDataLayer = apiInternalLayer;
+    this.useSerial = useSerial;
 
     if (!sandboxed) {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
@@ -159,7 +170,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         program,
         simulationName,
         (step) -> {}, // No step reporting needed for worker
-        true // Use parallel processing
+        useSerial
     );
     httpServerExchange.endExchange();
   }
