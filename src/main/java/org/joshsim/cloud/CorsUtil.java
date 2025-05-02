@@ -32,7 +32,7 @@ public class CorsUtil {
     );
     exchange.getResponseHeaders().put(
         new HttpString("Access-Control-Allow-Headers"),
-        "Content-Type, Authorization"
+        "Content-Type, Authorization, X-API-Key"
     );
     exchange.getResponseHeaders().put(
         new HttpString("Access-Control-Max-Age"),
