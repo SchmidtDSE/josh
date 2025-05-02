@@ -59,7 +59,7 @@ public class JoshSimServer {
     PathHandler pathHandler = Handlers.path()
         // CORS preflight
         .addPrefixPath("/*", exchange -> {
-          if(CorsUtil.addCorsHeaders(exchange)) {
+          if (CorsUtil.addCorsHeaders(exchange)) {
             exchange.setStatusCode(200);
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
             exchange.getResponseSender().send("ok");
