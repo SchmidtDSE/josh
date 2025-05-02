@@ -406,7 +406,7 @@ public class JoshSimCommander {
         JoshSimServer server = new JoshSimServer(
             new EnvCloudApiDataLayer(),
             useHttp2,
-            workerUrl,
+            workerUrl.replaceAll("\"", "").trim(),
             port,
             workers,
             serialPatches
