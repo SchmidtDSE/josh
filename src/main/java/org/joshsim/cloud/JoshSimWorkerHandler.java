@@ -96,25 +96,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return;
     }
 
-    FormData formData;
-    try {
-      formData = parser.parseBlocking();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiDataLayer);
-    if (!apiCheckResult.getKeyIsValid()) {
-      httpServerExchange.setStatusCode(401);
-      return;
-    }
-
     long startTime = System.nanoTime();
-    handleRequestTrusted(httpServerExchange);
+    Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
     long endTime = System.nanoTime();
 
     long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
-    apiDataLayer.log(apiCheckResult.getApiKey(), "simulate", runtimeSeconds);
+    apiDataLayer.log(apiKey.orElse(""), "simulate", runtimeSeconds);
   }
 
   /**
@@ -124,11 +111,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * handleRequest which checks the API key and reports logging.</p>
    *
    * @param httpServerExchange The exchange through which this request should execute.
+   * @returns The API key used in the request or empty string if rejected.
    */
-  public void handleRequestTrusted(HttpServerExchange httpServerExchange) {
+  public Optional<String> handleRequestTrusted(HttpServerExchange httpServerExchange) {
     if (!httpServerExchange.getRequestMethod().equalToString("POST")) {
       httpServerExchange.setStatusCode(405);
-      return;
+      return Optional.empty();
     }
 
     httpServerExchange.setStatusCode(200);
@@ -138,7 +126,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     FormDataParser parser = FormParserFactory.builder().build().createParser(httpServerExchange);
     if (parser == null) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.empty();
     }
 
     FormData formData = null;
@@ -148,9 +136,16 @@ public class JoshSimWorkerHandler implements HttpHandler {
       throw new RuntimeException(e);
     }
 
+    ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiDataLayer);
+    if (!apiCheckResult.getKeyIsValid()) {
+      httpServerExchange.setStatusCode(401);
+      return Optional.empty();
+    }
+    String apiKey = apiCheckResult.getApiKey();
+
     if (!formData.contains("code") || !formData.contains("name")) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.of(apiKey);
     }
 
     String code = formData.getFirst("code").getValue();
@@ -158,7 +153,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     if (code == null || simulationName == null) {
       httpServerExchange.setStatusCode(400);
-      return;
+      return Optional.of(apiKey);
     }
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -166,13 +161,13 @@ public class JoshSimWorkerHandler implements HttpHandler {
       httpServerExchange.setStatusCode(400);
       httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
       httpServerExchange.getResponseSender().send(result.getErrors().iterator().next().toString());
-      return;
+      return Optional.of(apiKey);
     }
 
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
-      return;
+      return Optional.of(apiKey);
     }
 
     InputOutputLayer layer = getLayer(httpServerExchange);
@@ -185,6 +180,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         useSerial
     );
     httpServerExchange.endExchange();
+    return Optional.of(apiKey);
   }
 
   /**
