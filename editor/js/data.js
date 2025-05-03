@@ -1,3 +1,6 @@
+const MB_CONVERSION = 1 / (1024 * 1024);
+
+
 /**
  * Presenter which runs the data files dialog and the OPFS files layer.
  */
@@ -246,11 +249,9 @@ class LocalFileLayer {
   async listFiles() {
     const self = this;
     const root = await self._root;
-    const files = [];
-    for await (const [name] of root.entries()) {
-      files.push(name);
-    }
-    return files;
+    return await Promise.all(
+      Array.from(root.entries(), async ([name]) => name)
+    );
   }
 
   /**
@@ -264,7 +265,7 @@ class LocalFileLayer {
   async getMbUsed() {
     const self = this;
     const serialized = await self.serialize();
-    return new Blob([serialized]).size / (1024 * 1024);
+    return new Blob([serialized]).size * MB_CONVERSION;
   }
 
   /**
