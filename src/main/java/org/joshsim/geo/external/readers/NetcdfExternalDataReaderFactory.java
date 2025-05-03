@@ -13,7 +13,7 @@ public class NetcdfExternalDataReaderFactory {
   private static volatile boolean cacheInitialized = false;
   private static final Lock CACHE_LOCK = new ReentrantLock();
   private static final int MIN_CACHE_SIZE = 1;
-  private static final int MAX_CACHE_SIZE = 100; // Use only one file at a time
+  private static final int MAX_CACHE_SIZE = 1; // Use only one file at a time
   private static final int CACHE_REFRESH_INTERVAL_SECONDS = 300;
 
 

@@ -108,12 +108,12 @@ public class ExternalGeoMapperTest {
    * Large area of interest (AOI) for Riverside, CA.
    * This is used to define the extents of the grid.
    */
-  // private static final BigDecimal[] largeAoi = {
-  //     new BigDecimal("-117.400"), // westLon
-  //     new BigDecimal("-117.300"), // eastLon
-  //     new BigDecimal("33.900"),   // southLat
-  //     new BigDecimal("34.000")    // northLat
-  // };
+  private static final BigDecimal[] largeAoi = {
+      new BigDecimal("-117.400"), // westLon
+      new BigDecimal("-117.300"), // eastLon
+      new BigDecimal("33.900"),   // southLat
+      new BigDecimal("34.000")    // northLat
+  };
 
 
   /**
@@ -472,12 +472,12 @@ public class ExternalGeoMapperTest {
     double mediumThroughput = 
         mediumPatchSet.getPatches().size() / (mediumDuration / 1_000_000_000.0);
     // double largeThroughput = largePatchSet.getPatches().size() /
-        // (largeDuration / 1_000_000_000.0);
+    //     (largeDuration / 1_000_000_000.0);
     
     System.out.println("Throughput Comparison (patches/second):");
     System.out.printf("Small AOI: %.2f patches/second%n", smallThroughput);
     System.out.printf("Medium AOI: %.2f patches/second%n", mediumThroughput);
-    // System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
+  //   System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
   }
 
   /**
