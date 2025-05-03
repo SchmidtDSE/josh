@@ -6,16 +6,14 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 
 /**
- * The PatchSet class contains a list of patches and a cell width for conveniences.
- * Spatial operations will be performed on the elements of the grid, Patches, which
- * are the basic unit of spatial representation.
+ * List of patches and spacing infromation for those patches.
  */
 public class PatchSet {
   private final List<MutableEntity> patches;
   private final GridCrsDefinition gridCrsDefinition;
 
   /**
-   * Constructor for the PatchSet class.
+   * Constructor for a new PatchSet.
    *
    * @param patches List of patches in the grid.
    * @param gridCrsDefinition definition of 'Grid Space' for later CRS construction.

@@ -67,9 +67,9 @@ public class ExternalSpatialDimensions {
       return new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO};
     }
     BigDecimal minX = coordinatesX.get(0);
-    BigDecimal maxX = coordinatesX.getLast();
+    BigDecimal maxX = coordinatesX.get(coordinatesX.size() - 1);
     BigDecimal minY = coordinatesY.get(0);
-    BigDecimal maxY = coordinatesY.getLast();
+    BigDecimal maxY = coordinatesY.get(coordinatesY.size() - 1);
     return new BigDecimal[] {minX, minY, maxX, maxY};
   }
 

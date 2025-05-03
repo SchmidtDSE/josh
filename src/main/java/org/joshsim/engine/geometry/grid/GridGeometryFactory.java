@@ -21,6 +21,16 @@ import org.joshsim.engine.geometry.PatchBuilder;
 public class GridGeometryFactory implements EngineGeometryFactory {
 
   @Override
+  public boolean supportsEarthSpace() {
+    return false;
+  }
+
+  @Override
+  public boolean supportsGridSpace() {
+    return true;
+  }
+
+  @Override
   public EngineGeometry createSquare(BigDecimal centerX, BigDecimal centerY, BigDecimal width) {
     return new GridSquare(centerX, centerY, width);
   }

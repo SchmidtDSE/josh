@@ -1,5 +1,5 @@
 /**
- * Logic for running a compatability layer on JVM.
+ * Logic for running a Compatibility layer on JVM.
  *
  * @license BSD-3-Clause
  */
@@ -9,12 +9,12 @@ package org.joshsim.compat;
 import java.math.BigDecimal;
 
 /**
- * Compatability layer providing the ability to run simulations within JVM.
+ * Compatibility layer providing the ability to run simulations within JVM.
  *
- * <p>Compatability layer providing access to compatability objects which afford the ability to run
+ * <p>Compatibility layer providing access to Compatibility objects which afford the ability to run
  * simulations in different host virtual machines, in this case within a standard JVM.</p>
  */
-public class JvmCompatibilityLayer implements CompatabilityLayer {
+public class JvmCompatibilityLayer implements CompatibilityLayer {
 
   @Override
   public CompatibleStringJoiner createStringJoiner(String delimiter) {

@@ -90,6 +90,16 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
   }
 
   @Override
+  public boolean supportsEarthSpace() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsGridSpace() {
+    return false;
+  }
+
+  @Override
   public EngineGeometry createSquare(BigDecimal centerX, BigDecimal centerY, BigDecimal width) {
     GeometricShapeFactory shapeFactory = new GeometricShapeFactory(JTS_GEOMETRY_FACTORY);
 
