@@ -128,7 +128,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
     boolean hasCode = formData.contains("code");
     boolean hasName = formData.contains("name");
     boolean hasReplicates = formData.contains("replicates");
-    boolean hasRequired = hasCode && hasName && hasReplicates;
+    boolean hasExternalData = formData.contains("externalData");
+    boolean hasRequired = hasCode && hasName && hasReplicates && hasExternalData;
     if (!hasRequired) {
       httpServerExchange.setStatusCode(400);
       return Optional.of(apiKey);
@@ -149,6 +150,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
+    String externalData = formData.getFirst("externalData").getValue();
+
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
     List<Future<String>> futures = new ArrayList<>();
@@ -156,7 +159,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
       futures.add(executor.submit(
-          () -> executeReplicate(code, simulationName, replicateNumber, apiKey)
+          () -> executeReplicate(code, simulationName, replicateNumber, apiKey, externalData)
       ));
     }
 
@@ -188,18 +191,20 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * @param simulationName The name of the simulation to run.
    * @param replicateNumber The number of the replicate to execute.
    * @param apiKey The API key to include in the request.
+   * @param externalData String serialization of external data available to the simulation.
    * @return A string with the result, including the replicate number for each line of output.
    * @throws IOException If an I/O error occurs when sending or receiving.
    * @throws InterruptedException If the operation is interrupted.
    */
   private String executeReplicate(String code, String simulationName, int replicateNumber,
-        String apiKey) {
+        String apiKey, String externalData) {
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
         String.format(
-            "code=%s&name=%s&apiKey=%s",
+            "code=%s&name=%s&apiKey=%s&externalData=",
             URLEncoder.encode(code, StandardCharsets.UTF_8),
             URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
-            URLEncoder.encode(apiKey, StandardCharsets.UTF_8)
+            URLEncoder.encode(apiKey, StandardCharsets.UTF_8),
+            URLEncoder.encode(externalData, StandardCharsets.UTF_8)
         )
     );
 

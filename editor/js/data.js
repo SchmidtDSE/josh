@@ -16,14 +16,15 @@ class DataFilesPresenter {
   /**
    * Create a new presenter for the data files dialog.
    *
-   * @param {Element} openButton - The button used to open the dialog.
-   * @param {Element} dialog - The dialog in which the user can manipulate the OPFS file system.
+   * @param {string} openButtonId - The ID for the button used to open the dialog.
+   * @param {string} dialogId - The ID for the dialog in which the user can manipulate the OPFS file
+   *     system.
    */
-  constructor(openButton, dialog) {
+  constructor(openButtonId, dialogId) {
     const self = this;
     self._fileLayer = new LocalFileLayer();
-    self._openButton = openButton;
-    self._dialog = dialog;
+    self._openButton = document.getElementById(openButtonId);
+    self._dialog = document.getElementById(dialogId);
 
     self._filesPanel = self._dialog.querySelector(".files-panel");
     self._addFileButton = self._dialog.querySelector(".add-file-button");
@@ -288,7 +289,7 @@ class LocalFileLayer {
   /**
    * Convert the file system to a JSON string.
    *
-   * @returns {Promise<string>} JSON serialization of the current OPFS file system contents.
+   * @returns {Promise<Object>} JSON serializable object of the current OPFS file system contents.
    */
   async serialize() {
     const self = this;
@@ -303,7 +304,7 @@ class LocalFileLayer {
       };
     }
 
-    return JSON.stringify(contents);
+    return contents;
   }
 
 }

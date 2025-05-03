@@ -137,13 +137,18 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
     String apiKey = apiCheckResult.getApiKey();
 
-    if (!formData.contains("code") || !formData.contains("name")) {
+    boolean hasCode = formData.contains("code");
+    boolean hasName = formData.contains("name");
+    boolean hasExternalData = formData.contains("externalData");
+    boolean hasRequired = hasCode && hasName && hasExternalData;
+    if (hasRequired) {
       httpServerExchange.setStatusCode(400);
       return Optional.of(apiKey);
     }
 
     String code = formData.getFirst("code").getValue();
     String simulationName = formData.getFirst("name").getValue();
+    String externalData = formData.getFirst("externalData").getValue();
 
     if (code == null || simulationName == null) {
       httpServerExchange.setStatusCode(400);

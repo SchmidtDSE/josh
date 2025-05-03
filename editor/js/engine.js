@@ -28,6 +28,7 @@ class WasmEngineBackend {
    * @param simCode {string} - The code to run in this simulation.
    * @param runRequest {RunRequest} - Information about what simulation should run and with how many
    *     replicates.
+   * @param externalData {Object} - JSON serializable object containing external resources.
    * @param onStepExternal {function} - Callback to invoke when a single step is completed. This
    *     may not be called depending on backend and number of replicates. Will pass the number of
    *     steps completed in the current replicate.
@@ -36,7 +37,7 @@ class WasmEngineBackend {
    * @returns {Promise<Array<SimulationResult>>} Resolves to the per-replicate simulation results or
    *     rejects if it encounters a runtime error.
    */
-  execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
+  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal) {
     const self = this;
 
     const simName = runRequest.getSimName();
@@ -66,6 +67,7 @@ class WasmEngineBackend {
         self._wasmLayer.runSimulation(
           simCode,
           simName,
+          externalData,
           multiReplicate ? (x) => x : (x) => onStepExternal(x)
         ).then(
           (x) => { onSimulationComplete(x); },
@@ -104,6 +106,7 @@ class RemoteEngineBackend {
    * @param simCode {string} - The code to run in this simulation.
    * @param runRequest {RunRequest} - Information about what simulation should run and with how many
    *     replicates.
+   * @param externalData {Object} - JSON serializable descfription of external data.
    * @param onStepExternal {function} - Callback to invoke when a single step is completed. This
    *     will not be invoked when using the remote engine backend.
    * @param onReplicateExternal {function} - Callback to invoke when a single replicate is
@@ -112,7 +115,7 @@ class RemoteEngineBackend {
    *     rejects if it encounters a runtime error. This is after collecting results by replicate
    *     number as they may not be guaranteed to return in order from all backends.
    */
-  execute(simCode, runRequest, onStepExternal, onReplicateExternal) {
+  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal) {
     const self = this;
 
     /**
@@ -127,6 +130,7 @@ class RemoteEngineBackend {
       formData.append("name", runRequest.getSimName());
       formData.append("replicates", runRequest.getReplicates().toString());
       formData.append("apiKey", self._apiKey);
+      formData.append("externalData", externalData);
       
       return formData;
     };
