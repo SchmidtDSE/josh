@@ -1,4 +1,11 @@
+/**
+ * Logic for running the external data dialog and OPFS file system.
+ *
+ * @license BSD-3-Clause
+ */
+
 const MB_CONVERSION = 1 / (1024 * 1024);
+const TEXT_TYPES = ["text/csv", "application/json"];
 
 
 /**
@@ -36,7 +43,7 @@ class DataFilesPresenter {
    *
    * @returns {Promise<string>} The contents of the file system serialized as JSON.
    */
-  getFilesAsJson() {
+  async getFilesAsJson() {
     const self = this;
     return self._fileLayer.serialize();
   }
@@ -107,7 +114,8 @@ class DataFilesPresenter {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const contents = e.target.result;
-      const opfsFile = new OpfsFile(file.name, contents, false, file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith('video/'));
+      const isBinaryFile = self._getIsBinaryFile(file.type);
+      const opfsFile = new OpfsFile(file.name, contents, false, isBinaryFile);
       try {
         await self._fileLayer.putFile(opfsFile);
         self._refreshFilesList();
@@ -118,7 +126,6 @@ class DataFilesPresenter {
       }
     };
     reader.readAsText(file);
-
   }
 
   /**
@@ -171,6 +178,16 @@ class DataFilesPresenter {
     const self = this;
     await self._fileLayer.deleteFile(name);
     self._refreshFilesList();
+  }
+
+  /**
+   * Determine if a file should be treated as binary or text based on mime filetype.
+   *
+   * @param {string} filetype - The mime type associated with the file.
+   * @returns {boolean} True if should be treated as binary and false otherwise.
+   */
+  _getIsBinaryFile(filetype) {
+    return !TEXT_TYPES.includes(filetype);
   }
 
 }
