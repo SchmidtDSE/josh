@@ -53,6 +53,7 @@
                 <a class="primary" id="open-run-dialog-button" href="#run">Run</a>
                 <a class="secondary" id="open-data-dialog-button" href="#data">Data Files</a>
               </div>
+              
               <dialog id="run-local-dialog">
                 <h2>Run</h2>
                 <p>This will run your simulation in your browser using your computer.</p>
@@ -121,6 +122,27 @@
                   <a href="#" class="cancel-button destructive">Cancel</a>
                 </div>
               </dialog>
+              
+              <dialog id="run-local-dialog">
+                <h2>Data Files</h2>
+                <p>
+                  These files can be sent along with your simulation as "external" data. This is typically limited 100 MB but larger data files may be sent by using Josh outside of the browser.
+                </p>
+                <div class="files-panel">
+                </div>
+                <div class="dialog-buttons buttons-panel bold-buttons">
+                  <div class="file-upload-idle-panel">
+                    <a href="#" class="add-file-button secondary">Add File</a>
+                    <a href="#" class="cancel-button primary">Done</a>
+                  </div>
+                  <div class="file-upload-active-panel">
+                    <div><label for="upload-input">File: </label><input type="file" class="upload-input" id="upload-input" name="upload-input"></div>
+                    <a href="#" class="add-file-cancel-button destructive">Cancel</a>
+                    <a href="#" class="add-file-confirm-button secondary">Add File</a>
+                  </div>
+                </div>
+              </dialog>
+              
             </div>
           </div>
         </section>
@@ -384,6 +406,7 @@ end simulation
       {
         "imports": {
           "baselayer": "/js/baselayer.js?v=0.0.1",
+          "data": "/js/data.js?v=0.0.1",
           "editor": "/js/editor.js?v=0.0.1",
           "engine": "/js/engine.js?v=0.0.1",
           "exporter": "/js/exporter.js?v=0.0.1",

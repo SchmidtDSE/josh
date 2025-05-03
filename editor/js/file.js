@@ -1,5 +1,8 @@
 /**
  * Logic for handling file operations in the code editor.
+ *
+ * Logic for handling file operations in the code editor, distinct from data which runs the
+ * external data dialog.
  * 
  * @license BSD-3-Clause
  */

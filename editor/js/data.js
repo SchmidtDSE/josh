@@ -1,0 +1,305 @@
+
+/**
+ * Presenter which runs the data files dialog and the OPFS files layer.
+ */
+class DataFilesPresenter {
+  
+  /**
+   * Create a new presenter for the data files dialog.
+   *
+   * @param {Element} openButton - The button used to open the dialog.
+   * @param {Element} dialog - The dialog in which the user can manipulate the OPFS file system.
+   */
+  constructor(openButton, dialog) {
+    const self = this;
+    self._fileLayer = new LocalFileLayer();
+    self._openButton = openButton;
+    self._dialog = dialog;
+    
+    self._filesPanel = self._dialog.querySelector(".files-panel");
+    self._addFileButton = self._dialog.querySelector(".add-file-button");
+    self._closeButton = self._dialog.querySelector(".cancel-button");
+    self._fileUploadInput = self._dialog.querySelector(".upload-input");
+    self._fileUploadCancelButton = self._dialog.querySelector(".add-file-cancel-button");
+    self._fileUploadConfirmButton = self._dialog.querySelector(".add-file-confirm-button");
+    self._fileUploadIdlePanel = self._dialog.querySelector(".file-upload-idle-panel");
+    self._fileUploadActivePanel = self._dialog.querySelector(".file-upload-active-panel");
+    
+    self._hideFileUpload();
+    self._attachListeners();
+  }
+  
+  /**
+   * Get the contents of the file system as a JSON string.
+   *
+   * @returns {string} The contents of the file system serialized as JSON.
+   */
+  getFilesAsJson() {
+    const self = this;
+    return self._fileLayer.serialize();
+  }
+  
+  /**
+   * Attach event listeners for running the data files UI.
+   */
+  _attachListeners() {
+    const self = this;
+    
+    self._openButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._dialog.showModal();
+    });
+    
+    self._closeButotn.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._dialog.close();
+    });
+    
+    self._addFileButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._showFileUpload();
+    });
+    
+    self._fileUploadCancelButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._hideFileUpload();
+    });
+    
+    self._fileUploadConfirmButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      self._uploadFile();
+    });
+  }
+  
+  /**
+   * Show the file upload panel and hide the idle panel.
+   */
+  _showFileUpload() {
+    const self = this;
+    self._fileUploadIdlePanel.style.display = "none";
+    self._fileUploadActivePanel.style.display = "block";
+  }
+  
+  /**
+   * Hide the file upload panel and show the idle panel.
+   */
+  _hideFileUpload() {
+    const self = this;
+    self._fileUploadIdlePanel.style.display = "block";
+    self._fileUploadActivePanel.style.display = "none";
+  }
+  
+  /**
+   * Add the file in the file upload input to the OPFS file system.
+   *
+   * Take the current file in the file upload input and add it to the OPFS file system with the
+   * same name as the file had in the upload input. If a file by that name already exists, use 
+   * confirm to check with the user if the file should be overwritten. The file list will be
+   * refreshed after file upload.
+   */
+  _uploadFile() {
+    const self = this;
+  }
+  
+  /**
+   * Update the files panel to show the current listing of files in the OPFS file system.
+   */
+  _refreshFilesList() {
+    const self = this;
+    
+    const filesPanelD3 = d3.select(self._filesPanel);
+    const filesList = self._fileLayer.listFiles().sort();
+    
+    filesPanelD3.html("");
+    
+    const filesGroups = filesPanelD3.selectAll(".file-group")
+      .data(filesList)
+      .enter()
+      .append("div")
+      .classed("file-group", true);
+    
+    const deleteHolders = filesGroups.append("div").classed("delete-holder", true);
+    
+    deleteHolders.append("a")
+      .attr("href", "#")
+      .text("delete")
+      .attr("aria-label", (x) => "Delete " + x)
+      .on("click", (x) => {
+        self._removeFile(name);
+      });
+    
+    const labelHolders = filesGroups.append("div").classed("label-holder", true);
+    
+    labelHolders.text((x) => x);
+  }
+  
+  /**
+   * Request that the file at the given path be removed from the OPFS file sytem.
+   *
+   * Request that the file at the given path be removed from the OPFS file sytem before refreshing
+   * the files list.
+   *
+   * @param {string} name - The path (name) of the file to be removed.
+   */
+  _removeFile(name) {
+    const self = this;
+    self._fileLayer.deleteFile(name);
+    self._refreshFilesList();
+  }
+  
+}
+
+
+/**
+ * Layer that manages data files in OPFS.
+ *
+ * Layer that emulates a file system in OPFS as a simple mapping between string paths (names) and
+ * string file contents. Binary data may be converted to base64 for persistance. Also provides an
+ * option to serialize the entire contents of the file system to a JSON string.
+ */
+class LocalFileLayer {
+  
+  /**
+   * Create a new file manager for OPFS.
+   */
+  constructor() {
+    const self = this;
+  }
+  
+  /**
+   * Get the contents of a file as a string.
+   *
+   * @param {string} name - The path (name) of the file to be retrieved.
+   * @returns {OpfsFile} The file at this filename. Will have unsaved file flag set to true if does 
+   *     not yet exist.
+   */
+  getFile(name) {
+    const self = this;
+  }
+  
+  /**
+   * Add a file to the OPFS file system, overwritting if file perviously present.
+   *
+   * @param {OpfsFile} The file to persist, creating a new file if it does not yet exist or 
+   *     overwritting the prior file of with the same path.
+   */
+  putFile(file) {
+    const self = this;
+  }
+  
+  /**
+   * Delete the file at the given path.
+   *
+   * @param {string} name - The path (name) of the file to be deleted.
+   * @throws Exception thrown if file could not be found.
+   */
+  deleteFile(name) {
+    const self = this;
+  }
+  
+  /**
+   * Get a list of all files in the OPFS file system.
+   *
+   * @returns {Array<string>} Collection of all paths currently in this OPFS file system.
+   */
+  listFiles() {
+    const self = this;
+  }
+  
+  /**
+   * Get the total space used in this OPFS file system.
+   *
+   * Get the total space used in this OPFS file system determined by serializing the contents of
+   * this file system and determining its space utilization.
+   *
+   * @returns {number} The size of the OPFS file system in megabytes when serialized.
+   */
+  getMbUsed() {
+    const self = this;
+  }
+  
+  /**
+   * Convert the file system to a JSON string.
+   *
+   * @returns {string} JSON serialization of the current OPFS file system contents.
+   */
+  serialize() {
+    const self = this;
+  }
+  
+}
+
+
+/**
+ * Structure representing a file for the OPFS file system.
+ */
+class OpfsFile {
+
+  /**
+   * Create a new record of a file which may be in the OPFS file system or which is compatible.
+   *
+   * @param {string} name - The path (name) of the file represented by this structure.
+   * @param {string} contents - The string contents of this file. If the file is binary, this
+   *     should be base64 encoded. May be empty string for new file.
+   * @param {boolean} saved - Flag indicating if this file has been saved to OPFS. True if this
+   *     file has been saved and false if this is not yet persisted (new file or new version of an
+   *     existing file).
+   * @param {boolean} binary - Flag indicating if this file contains binary data. True if contents
+   *     is a base64 encoded string representation of a binary blob. False otherwise.
+   */
+  constructor(name, contents, saved, binary) {
+    const self = this;
+    self._name = name;
+    self._contents = contents;
+    self._saved = saved;
+    self._binary = binary;
+  }
+
+  /**
+   * Get the path (name) of this file.
+   *
+   * @returns {string} The location at which this file is saved in the local OPFS file system.
+   */
+  getName() {
+    const self = this;
+    return self._name;
+  }
+
+  /**
+   * Get the contents of this file.
+   *
+   * @returns {string} The contents of this file as a string. If it is a binary file, this is the
+   *     base64 encoding.
+   */
+  getContents() {
+    const self = this;
+    return self._contents;
+  }
+
+  /**
+   * Determine if this file is saved or not.
+   *
+   * @returns {boolean} Flag indicating if this file has been saved to OPFS. True if this file has
+   *     been saved and false if this is not yet persisted (new file or new version of an existing
+   *     file).
+   */
+  getIsSaved() {
+    const self = this;
+    return self._saved;
+  }
+
+  /**
+   * Determine if this file is a binary file or a string file.
+   *
+   * @returns {boolean} Flag indicating if this file contains binary data. True if contents is a
+   *     base64 encoded string representation of a binary blob. False otherwise.
+   */
+  getIsBinary() {
+    const self = this;
+    return self._binary;
+  }
+
+}
+
+
+export {DataFilesPresenter};
