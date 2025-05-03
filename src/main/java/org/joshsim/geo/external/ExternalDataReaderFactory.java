@@ -11,8 +11,7 @@ import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
  * Factory for creating appropriate ExternalDataReader instances based on file type.
  */
 public class ExternalDataReaderFactory {
-  private static final List<ExternalDataReader> readers = new ArrayList<>();
-  
+
   // Specialized reader factories
   private static final NetcdfExternalDataReaderFactory netcdfReaderFactory = 
       new NetcdfExternalDataReaderFactory(new EngineValueFactory());
@@ -82,16 +81,6 @@ public class ExternalDataReaderFactory {
     }
     String lowerPath = filePath.toLowerCase();
     return lowerPath.endsWith(".zarr");
-  }
-
-
-  /**
-   * Registers a custom reader implementation.
-   *
-   * @param reader The reader to register
-   */
-  public static void registerReader(ExternalDataReader reader) {
-    readers.add(0, reader); // Add at beginning for higher priority
   }
 
   // Private constructor to prevent instantiation
