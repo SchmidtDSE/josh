@@ -32,7 +32,7 @@ class DataFilesPresenter {
   /**
    * Get the contents of the file system as a JSON string.
    *
-   * @returns {string} The contents of the file system serialized as JSON.
+   * @returns {Promise<string>} The contents of the file system serialized as JSON.
    */
   getFilesAsJson() {
     const self = this;
@@ -106,31 +106,33 @@ class DataFilesPresenter {
    */
   _refreshFilesList() {
     const self = this;
-    
-    const filesPanelD3 = d3.select(self._filesPanel);
-    const filesList = self._fileLayer.listFiles().sort();
-    
-    filesPanelD3.html("");
-    
-    const filesGroups = filesPanelD3.selectAll(".file-group")
-      .data(filesList)
-      .enter()
-      .append("div")
-      .classed("file-group", true);
-    
-    const deleteHolders = filesGroups.append("div").classed("delete-holder", true);
-    
-    deleteHolders.append("a")
-      .attr("href", "#")
-      .text("delete")
-      .attr("aria-label", (x) => "Delete " + x)
-      .on("click", (x) => {
-        self._removeFile(name);
-      });
-    
-    const labelHolders = filesGroups.append("div").classed("label-holder", true);
-    
-    labelHolders.text((x) => x);
+
+    self._fileLayer.listFiles().then((filesListUnsorted) => {
+      const filesPanelD3 = d3.select(self._filesPanel);
+      const filesList = filesListUnsorted.sort();
+      
+      filesPanelD3.html("");
+      
+      const filesGroups = filesPanelD3.selectAll(".file-group")
+        .data(filesList)
+        .enter()
+        .append("div")
+        .classed("file-group", true);
+      
+      const deleteHolders = filesGroups.append("div").classed("delete-holder", true);
+      
+      deleteHolders.append("a")
+        .attr("href", "#")
+        .text("delete")
+        .attr("aria-label", (name) => "Delete " + name)
+        .on("click", (name) => {
+          self._removeFile(name);
+        });
+      
+      const labelHolders = filesGroups.append("div").classed("label-holder", true);
+      
+      labelHolders.text((name) => name);
+    };
   }
   
   /**
@@ -143,8 +145,9 @@ class DataFilesPresenter {
    */
   _removeFile(name) {
     const self = this;
-    self._fileLayer.deleteFile(name);
-    self._refreshFilesList();
+    self._fileLayer.deleteFile(name).then(() => {
+      self._refreshFilesList();
+    });
   }
   
 }
@@ -170,8 +173,8 @@ class LocalFileLayer {
    * Get the contents of a file as a string.
    *
    * @param {string} name - The path (name) of the file to be retrieved.
-   * @returns {OpfsFile} The file at this filename. Will have unsaved file flag set to true if does 
-   *     not yet exist.
+   * @returns {Promise<OpfsFile>} The file at this filename. Will have unsaved file flag set to
+   *     true if does not yet exist.
    */
   getFile(name) {
     const self = this;
@@ -180,7 +183,7 @@ class LocalFileLayer {
   /**
    * Add a file to the OPFS file system, overwritting if file perviously present.
    *
-   * @param {OpfsFile} The file to persist, creating a new file if it does not yet exist or 
+   * @param {Promise<OpfsFile>} The file to persist, creating a new file if it does not yet exist or
    *     overwritting the prior file of with the same path.
    */
   putFile(file) {
@@ -191,6 +194,7 @@ class LocalFileLayer {
    * Delete the file at the given path.
    *
    * @param {string} name - The path (name) of the file to be deleted.
+   * @returns {Promise} Promise which resolves after the file is deleted.
    * @throws Exception thrown if file could not be found.
    */
   deleteFile(name) {
@@ -200,7 +204,7 @@ class LocalFileLayer {
   /**
    * Get a list of all files in the OPFS file system.
    *
-   * @returns {Array<string>} Collection of all paths currently in this OPFS file system.
+   * @returns {Promise<Array<string>>} Collection of all paths currently in this OPFS file system.
    */
   listFiles() {
     const self = this;
@@ -212,7 +216,7 @@ class LocalFileLayer {
    * Get the total space used in this OPFS file system determined by serializing the contents of
    * this file system and determining its space utilization.
    *
-   * @returns {number} The size of the OPFS file system in megabytes when serialized.
+   * @returns {Promise<number>} The size of the OPFS file system in megabytes when serialized.
    */
   getMbUsed() {
     const self = this;
@@ -221,7 +225,7 @@ class LocalFileLayer {
   /**
    * Convert the file system to a JSON string.
    *
-   * @returns {string} JSON serialization of the current OPFS file system contents.
+   * @returns {Promise<string>} JSON serialization of the current OPFS file system contents.
    */
   serialize() {
     const self = this;
