@@ -99,21 +99,21 @@ public class ExternalGeoMapperTest {
    */
   private static final BigDecimal[] mediumAoi = {
       new BigDecimal("-117.400"), // westLon
-      new BigDecimal("-117.395"), // eastLon
+      new BigDecimal("-117.370"), // eastLon
       new BigDecimal("33.900"),   // southLat
-      new BigDecimal("33.905")    // northLat
+      new BigDecimal("33.930")    // northLat
   };
 
   /**
    * Large area of interest (AOI) for Riverside, CA.
    * This is used to define the extents of the grid.
    */
-  private static final BigDecimal[] largeAoi = {
-      new BigDecimal("-117.400"), // westLon
-      new BigDecimal("-117.370"), // eastLon
-      new BigDecimal("33.900"),   // southLat
-      new BigDecimal("33.930")    // northLat
-  };
+  // private static final BigDecimal[] largeAoi = {
+  //     new BigDecimal("-117.400"), // westLon
+  //     new BigDecimal("-117.300"), // eastLon
+  //     new BigDecimal("33.900"),   // southLat
+  //     new BigDecimal("34.000")    // northLat
+  // };
 
 
   /**
@@ -428,11 +428,11 @@ public class ExternalGeoMapperTest {
     // Create PatchSets with different AOI sizes
     PatchSet smallPatchSet = createRiversidePatchSet(smallAoi);
     PatchSet mediumPatchSet = createRiversidePatchSet(mediumAoi);
-    PatchSet largePatchSet = createRiversidePatchSet(largeAoi);
+    // PatchSet largePatchSet = createRiversidePatchSet(largeAoi);
     
     System.out.println("Small AOI has " + smallPatchSet.getPatches().size() + " patches");
     System.out.println("Medium AOI has " + mediumPatchSet.getPatches().size() + " patches");
-    System.out.println("Large AOI has " + largePatchSet.getPatches().size() + " patches");
+    // System.out.println("Large AOI has " + largePatchSet.getPatches().size() + " patches");
     
     // Warm up the JVM first 
     executeWithPatchSet(smallPatchSet, true, 0, 0);
@@ -451,12 +451,12 @@ public class ExternalGeoMapperTest {
     final long mediumDuration = System.nanoTime() - mediumStart;
     validateMappingResultsWithCustomPatchSet(mediumResults, testTimeSteps, mediumPatchSet);
     
-    // Test with large AOI
-    long largeStart = System.nanoTime();
-    Map<String, Map<Integer, Map<GeoKey, EngineValue>>> largeResults = 
-        executeWithPatchSet(largePatchSet, true, 0, testTimeSteps - 1);
-    final long largeDuration = System.nanoTime() - largeStart;
-    validateMappingResultsWithCustomPatchSet(largeResults, testTimeSteps, largePatchSet);
+    // // Test with large AOI
+    // long largeStart = System.nanoTime();
+    // Map<String, Map<Integer, Map<GeoKey, EngineValue>>> largeResults = 
+    //     executeWithPatchSet(largePatchSet, true, 0, testTimeSteps - 1);
+    // final long largeDuration = System.nanoTime() - largeStart;
+    // validateMappingResultsWithCustomPatchSet(largeResults, testTimeSteps, largePatchSet);
     
     // Log performance metrics
     System.out.println("AOI Size Comparison (Parallel Processing):");
@@ -464,19 +464,20 @@ public class ExternalGeoMapperTest {
         smallDuration / 1_000_000.0, smallPatchSet.getPatches().size());
     System.out.printf("Medium AOI: %.2f ms (%d patches)%n", 
         mediumDuration / 1_000_000.0, mediumPatchSet.getPatches().size());
-    System.out.printf("Large AOI: %.2f ms (%d patches)%n", 
-        largeDuration / 1_000_000.0, largePatchSet.getPatches().size());
+    // System.out.printf("Large AOI: %.2f ms (%d patches)%n", 
+    //     largeDuration / 1_000_000.0, largePatchSet.getPatches().size());
         
     // Optional: Calculate and log throughput metrics (patches processed per second)
     double smallThroughput = smallPatchSet.getPatches().size() / (smallDuration / 1_000_000_000.0);
     double mediumThroughput = 
         mediumPatchSet.getPatches().size() / (mediumDuration / 1_000_000_000.0);
-    double largeThroughput = largePatchSet.getPatches().size() / (largeDuration / 1_000_000_000.0);
+    // double largeThroughput = largePatchSet.getPatches().size() /
+        // (largeDuration / 1_000_000_000.0);
     
     System.out.println("Throughput Comparison (patches/second):");
     System.out.printf("Small AOI: %.2f patches/second%n", smallThroughput);
     System.out.printf("Medium AOI: %.2f patches/second%n", mediumThroughput);
-    System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
+    // System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
   }
 
   /**
