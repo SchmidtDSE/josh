@@ -1,10 +1,7 @@
 package org.joshsim.geo.external;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.geo.external.readers.NetcdfExternalDataReader;
 import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
 
 /**
@@ -13,9 +10,9 @@ import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
 public class ExternalDataReaderFactory {
 
   // Specialized reader factories
-  private static final NetcdfExternalDataReaderFactory netcdfReaderFactory = 
+  private static final NetcdfExternalDataReaderFactory netcdfReaderFactory =
       new NetcdfExternalDataReaderFactory(new EngineValueFactory());
-  
+
   // Future factories will be added here
   // private static final CogReaderFactory cogReaderFactory = new CogReaderFactory();
   // private static final ZarrReaderFactory zarrReaderFactory = new ZarrReaderFactory();
@@ -31,7 +28,7 @@ public class ExternalDataReaderFactory {
     if (isNetCdfFile(filePath)) {
       return netcdfReaderFactory.createReader();
     }
-    
+
     if (isCogFile(filePath)) {
       throw new UnsupportedOperationException("COG reader not implemented yet");
     }
@@ -39,7 +36,7 @@ public class ExternalDataReaderFactory {
     if (isZarrFile(filePath)) {
       throw new UnsupportedOperationException("Zarr reader not implemented yet");
     }
-    
+
     throw new IOException("No suitable reader found for file: " + filePath);
   }
 

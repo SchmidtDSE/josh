@@ -12,9 +12,9 @@ import ucar.nc2.dataset.NetcdfDatasets;
 public class NetcdfExternalDataReaderFactory {
   private static volatile boolean cacheInitialized = false;
   private static final Lock CACHE_LOCK = new ReentrantLock();
-  private static final int MIN_CACHE_SIZE = 1000;
-  private static final int MAX_CACHE_SIZE = 10000;
-  private static final int CACHE_REFRESH_INTERVAL_SECONDS = 3600; 
+  private static final int MIN_CACHE_SIZE = 10;
+  private static final int MAX_CACHE_SIZE = 100;
+  private static final int CACHE_REFRESH_INTERVAL_SECONDS = 300;
 
 
   private final EngineValueFactory valueFactory;
@@ -74,7 +74,7 @@ public class NetcdfExternalDataReaderFactory {
       }
     }
   }
-  
+
   /**
    * Creates a factory with system default settings for the engine value factory.
    */

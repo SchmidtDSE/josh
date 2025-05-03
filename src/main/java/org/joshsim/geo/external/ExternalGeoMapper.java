@@ -23,7 +23,7 @@ public class ExternalGeoMapper {
   private final String dimensionY;
   private final String timeDimension;
   private final String crsCode;
-  private boolean useParallelProcessing = false;  // Add this as a class field
+  private boolean useParallelProcessing = false;
 
   /**
    * Constructs an ExternalGeospatialMapper with the specified components.
@@ -63,6 +63,15 @@ public class ExternalGeoMapper {
   }
 
   /**
+   * Enable or disable parallel processing.
+   *
+   * @param useParallelProcessing true to enable parallel processing, false to disable
+   */
+  public void setUseParallelProcessing(boolean useParallelProcessing) {
+    this.useParallelProcessing = useParallelProcessing;
+  }
+
+  /**
    * Maps geospatial data to patches based on spatial location for a specified time range.
    *
    * @param dataFilePath Path to the data file
@@ -87,8 +96,10 @@ public class ExternalGeoMapper {
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath)) {
       // Open data source
       reader.open(dataFilePath);
-      reader.setDimensions(dimensionX, dimensionY, Optional.of(timeDimension));
-      reader.setCrsCode(crsCode);
+      reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
+      if (crsCode != null) {
+        reader.setCrsCode(crsCode);
+      }
 
       // If no variable names provided, get all available variables
       List<String> actualVariables = variableNames.isEmpty()
@@ -97,7 +108,6 @@ public class ExternalGeoMapper {
       // Get spatial dimensions of the data source
       ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
 
-      // Get time dimension size
       // Get time dimension size
       int availableTimeSteps = reader.getTimeDimensionSize().orElse(1);
 
@@ -116,7 +126,7 @@ public class ExternalGeoMapper {
         for (int t = actualMinTimestep; t <= actualMaxTimestep; t++) {
           // Create a map for this time step
           Map<GeoKey, EngineValue> patchValueMap = mapVariableTimeStepToPatches(
-              reader, varName, t, dimensions, patchSet);
+              reader, dataFilePath, varName, t, dimensions, patchSet);
           timeStepMaps.put(t, patchValueMap);
         }
       }
@@ -149,8 +159,10 @@ public class ExternalGeoMapper {
 
   /**
    * Maps a specific variable at a specific time step to patch values.
+   * Creates thread-local readers when using parallel processing.
    *
-   * @param reader The data source reader
+   * @param sharedReader The shared data reader for sequential processing
+   * @param dataFilePath The path to the data file for creating thread-local readers
    * @param variableName The variable to extract
    * @param timeStep The time step to process
    * @param dimensions The spatial dimensions information
@@ -159,7 +171,8 @@ public class ExternalGeoMapper {
    * @throws Exception If there's an error mapping the data
    */
   private Map<GeoKey, EngineValue> mapVariableTimeStepToPatches(
-      ExternalDataReader reader,
+      ExternalDataReader sharedReader,
+      String dataFilePath,
       String variableName,
       int timeStep,
       ExternalSpatialDimensions dimensions,
@@ -172,29 +185,49 @@ public class ExternalGeoMapper {
         : patchSet.getPatches().stream();
 
     stream.forEach(patch -> {
+      ExternalDataReader effectiveReader = sharedReader;
+      
       try {
-        Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
-            patch,
-            variableName,
-            timeStep,
-            patchSet.getGridCrsDefinition(),
-            coordinateTransformer,
-            reader,
-            dimensions
-        );
+        // Create a thread-local reader only for parallel processing
+        ExternalDataReader threadLocalReader = null;
+        if (useParallelProcessing) {
+          threadLocalReader = ExternalDataReaderFactory.createReader(dataFilePath);
+          threadLocalReader.open(dataFilePath);
+          threadLocalReader.setDimensions(
+                dimensionX, dimensionY, Optional.ofNullable(timeDimension));
+          if (crsCode != null) {
+            threadLocalReader.setCrsCode(crsCode);
+          }
+          effectiveReader = threadLocalReader;
+        }
+        
+        try {
+          Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
+              patch,
+              variableName,
+              timeStep,
+              patchSet.getGridCrsDefinition(),
+              coordinateTransformer,
+              effectiveReader,
+              dimensions
+          );
 
-        // Store in the map if value exists
-        if (valueOpt.isPresent()) {
-          GeoKey key = patch.getKey().orElseThrow();
-          patchValueMap.put(key, valueOpt.get());
+          // Store in the map if value exists
+          if (valueOpt.isPresent()) {
+            GeoKey key = patch.getKey().orElseThrow();
+            patchValueMap.put(key, valueOpt.get());
+          }
+        } finally {
+          // Close the thread-local reader if we created one
+          if (threadLocalReader != null) {
+            threadLocalReader.close();
+          }
         }
       } catch (Exception e) {
-        // Handle exceptions in parallel stream
         throw new RuntimeException("Error interpolating value for patch: " + patch, e);
       }
     });
 
     return patchValueMap;
   }
-
 }
