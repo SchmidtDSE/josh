@@ -1,9 +1,8 @@
-
 /**
  * Presenter which runs the data files dialog and the OPFS files layer.
  */
 class DataFilesPresenter {
-  
+
   /**
    * Create a new presenter for the data files dialog.
    *
@@ -15,7 +14,7 @@ class DataFilesPresenter {
     self._fileLayer = new LocalFileLayer();
     self._openButton = openButton;
     self._dialog = dialog;
-    
+
     self._filesPanel = self._dialog.querySelector(".files-panel");
     self._addFileButton = self._dialog.querySelector(".add-file-button");
     self._closeButton = self._dialog.querySelector(".cancel-button");
@@ -24,11 +23,11 @@ class DataFilesPresenter {
     self._fileUploadConfirmButton = self._dialog.querySelector(".add-file-confirm-button");
     self._fileUploadIdlePanel = self._dialog.querySelector(".file-upload-idle-panel");
     self._fileUploadActivePanel = self._dialog.querySelector(".file-upload-active-panel");
-    
+
     self._hideFileUpload();
     self._attachListeners();
   }
-  
+
   /**
    * Get the contents of the file system as a JSON string.
    *
@@ -38,39 +37,39 @@ class DataFilesPresenter {
     const self = this;
     return self._fileLayer.serialize();
   }
-  
+
   /**
    * Attach event listeners for running the data files UI.
    */
   _attachListeners() {
     const self = this;
-    
+
     self._openButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._dialog.showModal();
     });
-    
-    self._closeButotn.addEventListener("click", (event) => {
+
+    self._closeButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._dialog.close();
     });
-    
+
     self._addFileButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._showFileUpload();
     });
-    
+
     self._fileUploadCancelButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._hideFileUpload();
     });
-    
+
     self._fileUploadConfirmButton.addEventListener("click", (event) => {
       event.preventDefault();
       self._uploadFile();
     });
   }
-  
+
   /**
    * Show the file upload panel and hide the idle panel.
    */
@@ -79,7 +78,7 @@ class DataFilesPresenter {
     self._fileUploadIdlePanel.style.display = "none";
     self._fileUploadActivePanel.style.display = "block";
   }
-  
+
   /**
    * Hide the file upload panel and show the idle panel.
    */
@@ -88,7 +87,7 @@ class DataFilesPresenter {
     self._fileUploadIdlePanel.style.display = "block";
     self._fileUploadActivePanel.style.display = "none";
   }
-  
+
   /**
    * Add the file in the file upload input to the OPFS file system.
    *
@@ -97,44 +96,66 @@ class DataFilesPresenter {
    * confirm to check with the user if the file should be overwritten. The file list will be
    * refreshed after file upload.
    */
-  _uploadFile() {
+  async _uploadFile() {
     const self = this;
+    const file = self._fileUploadInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target.result;
+      const opfsFile = new OpfsFile(file.name, contents, false, file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith('video/'));
+      try {
+        await self._fileLayer.putFile(opfsFile);
+        self._refreshFilesList();
+        self._hideFileUpload();
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        alert("Error uploading file. Please try again.");
+      }
+    };
+    reader.readAsText(file);
+
   }
-  
+
   /**
    * Update the files panel to show the current listing of files in the OPFS file system.
    */
-  _refreshFilesList() {
+  async _refreshFilesList() {
     const self = this;
+    const filesList = await self._fileLayer.listFiles();
+    const filesPanelD3 = d3.select(self._filesPanel);
 
-    self._fileLayer.listFiles().then((filesListUnsorted) => {
-      const filesPanelD3 = d3.select(self._filesPanel);
-      const filesList = filesListUnsorted.sort();
-      
-      filesPanelD3.html("");
-      
-      const filesGroups = filesPanelD3.selectAll(".file-group")
-        .data(filesList)
-        .enter()
-        .append("div")
-        .classed("file-group", true);
-      
-      const deleteHolders = filesGroups.append("div").classed("delete-holder", true);
-      
-      deleteHolders.append("a")
-        .attr("href", "#")
-        .text("delete")
-        .attr("aria-label", (name) => "Delete " + name)
-        .on("click", (name) => {
-          self._removeFile(name);
-        });
-      
-      const labelHolders = filesGroups.append("div").classed("label-holder", true);
-      
-      labelHolders.text((name) => name);
-    };
+    filesPanelD3.html("");
+
+    const filesGroups = filesPanelD3.selectAll(".file-group")
+      .data(filesList)
+      .enter()
+      .append("div")
+      .classed("file-group", true);
+
+    const deleteHolders = filesGroups.append("div").classed("delete-holder", true);
+
+    deleteHolders.append("a")
+      .attr("href", "#")
+      .text("delete")
+      .attr("aria-label", (name) => "Delete " + name)
+      .on("click", async (name) => {
+        if (confirm(`Are you sure you want to delete ${name}?`)) {
+          try {
+            await self._removeFile(name);
+          } catch (error) {
+            console.error("Error deleting file:", error);
+            alert("Error deleting file. Please try again.");
+          }
+        }
+      });
+
+    const labelHolders = filesGroups.append("div").classed("label-holder", true);
+
+    labelHolders.text((name) => name);
   }
-  
+
   /**
    * Request that the file at the given path be removed from the OPFS file sytem.
    *
@@ -143,13 +164,12 @@ class DataFilesPresenter {
    *
    * @param {string} name - The path (name) of the file to be removed.
    */
-  _removeFile(name) {
+  async _removeFile(name) {
     const self = this;
-    self._fileLayer.deleteFile(name).then(() => {
-      self._refreshFilesList();
-    });
+    await self._fileLayer.deleteFile(name);
+    self._refreshFilesList();
   }
-  
+
 }
 
 
@@ -161,14 +181,15 @@ class DataFilesPresenter {
  * option to serialize the entire contents of the file system to a JSON string.
  */
 class LocalFileLayer {
-  
+
   /**
    * Create a new file manager for OPFS.
    */
   constructor() {
     const self = this;
+    self._root = navigator.storage.getDirectory();
   }
-  
+
   /**
    * Get the contents of a file as a string.
    *
@@ -176,20 +197,34 @@ class LocalFileLayer {
    * @returns {Promise<OpfsFile>} The file at this filename. Will have unsaved file flag set to
    *     true if does not yet exist.
    */
-  getFile(name) {
+  async getFile(name) {
     const self = this;
+    try {
+      const root = await self._root;
+      const fileHandle = await root.getFileHandle(name);
+      const file = await fileHandle.getFile();
+      const contents = await file.text();
+      return new OpfsFile(name, contents, true, false);
+    } catch (e) {
+      return new OpfsFile(name, "", false, false);
+    }
   }
-  
+
   /**
    * Add a file to the OPFS file system, overwritting if file perviously present.
    *
    * @param {Promise<OpfsFile>} The file to persist, creating a new file if it does not yet exist or
    *     overwritting the prior file of with the same path.
    */
-  putFile(file) {
+  async putFile(file) {
     const self = this;
+    const root = await self._root;
+    const fileHandle = await root.getFileHandle(file.getName(), { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(file.getContents());
+    await writable.close();
   }
-  
+
   /**
    * Delete the file at the given path.
    *
@@ -197,19 +232,27 @@ class LocalFileLayer {
    * @returns {Promise} Promise which resolves after the file is deleted.
    * @throws Exception thrown if file could not be found.
    */
-  deleteFile(name) {
+  async deleteFile(name) {
     const self = this;
+    const root = await self._root;
+    await root.removeEntry(name);
   }
-  
+
   /**
    * Get a list of all files in the OPFS file system.
    *
    * @returns {Promise<Array<string>>} Collection of all paths currently in this OPFS file system.
    */
-  listFiles() {
+  async listFiles() {
     const self = this;
+    const root = await self._root;
+    const files = [];
+    for await (const [name] of root.entries()) {
+      files.push(name);
+    }
+    return files;
   }
-  
+
   /**
    * Get the total space used in this OPFS file system.
    *
@@ -218,19 +261,33 @@ class LocalFileLayer {
    *
    * @returns {Promise<number>} The size of the OPFS file system in megabytes when serialized.
    */
-  getMbUsed() {
+  async getMbUsed() {
     const self = this;
+    const serialized = await self.serialize();
+    return new Blob([serialized]).size / (1024 * 1024);
   }
-  
+
   /**
    * Convert the file system to a JSON string.
    *
    * @returns {Promise<string>} JSON serialization of the current OPFS file system contents.
    */
-  serialize() {
+  async serialize() {
     const self = this;
+    const files = await self.listFiles();
+    const contents = {};
+
+    for (const name of files) {
+      const file = await self.getFile(name);
+      contents[name] = {
+        contents: file.getContents(),
+        binary: file.getIsBinary()
+      };
+    }
+
+    return JSON.stringify(contents);
   }
-  
+
 }
 
 
