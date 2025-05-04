@@ -115,12 +115,14 @@ class MainPresenter {
     const futureExternalData = self._dataPresenter.getFilesAsJson();
     const futureMetadata = self._wasmLayer.getSimulationMetadata(simCode, simName);
 
-    Promise.all(futureMetadata, futureExternalData).then(
-      (metadata, externalData) => {
-        self._metadata = metadata;
-        self._executeInBackend(externalData);
+    Promise.all([futureMetadata, futureExternalData]).then(
+      (results) => {
+        self._metadata = results[0];
+        self._executeInBackend(results[1]);
       },
-      (x) => { self._onError(x); }
+      (x) => {
+        self._onError(x);
+      }
     );
   }
 

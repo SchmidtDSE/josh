@@ -198,21 +198,19 @@ public class JoshSimLeaderHandler implements HttpHandler {
    */
   private String executeReplicate(String code, String simulationName, int replicateNumber,
         String apiKey, String externalData) {
-    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(
-        String.format(
-            "code=%s&name=%s&apiKey=%s&externalData=",
-            URLEncoder.encode(code, StandardCharsets.UTF_8),
-            URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
-            URLEncoder.encode(apiKey, StandardCharsets.UTF_8),
-            URLEncoder.encode(externalData, StandardCharsets.UTF_8)
-        )
+    String bodyString = String.format(
+        "code=%s&name=%s&apiKey=%s&externalData=%s",
+        URLEncoder.encode(code, StandardCharsets.UTF_8),
+        URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
+        URLEncoder.encode(apiKey, StandardCharsets.UTF_8),
+        URLEncoder.encode(externalData, StandardCharsets.UTF_8)
     );
+    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
 
     HttpClient client = HttpClient.newBuilder().build();
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(urlToWorker))
         .header("Content-Type", "application/x-www-form-urlencoded")
-        
         .POST(body)
         .build();
 
