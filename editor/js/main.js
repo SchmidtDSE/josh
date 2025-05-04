@@ -52,7 +52,7 @@ class MainPresenter {
 
     self._dataPresenter = new DataFilesPresenter(
       "open-data-dialog-button",
-      "run-local-dialog"
+      "external-data-dialog"
     );
 
     self._resultsPresenter = new ResultsPresenter("results");
@@ -115,7 +115,7 @@ class MainPresenter {
     const futureExternalData = self._dataPresenter.getFilesAsJson();
     const futureMetadata = self._wasmLayer.getSimulationMetadata(simCode, simName);
 
-    Promises.all(futureMetadata, futureExternalData).then(
+    Promise.all(futureMetadata, futureExternalData).then(
       (metadata, externalData) => {
         self._metadata = metadata;
         self._executeInBackend(externalData);
