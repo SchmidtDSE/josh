@@ -472,6 +472,7 @@ main {
 
   #sim-display-buttons .button-holder a {
     display: block;
+    text-align: center;
   }
   
   #results .dimensions .dimension {
