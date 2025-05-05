@@ -263,12 +263,11 @@ class LocalFileLayer {
     const self = this;
     const root = await self._root;
     const fileHandle = await root.getFileHandle(file.getName(), { create: true });
-    const stream = await fileHandle.createSyncAccessHandle();
+    const writable = await fileHandle.createWritable();
     const encoder = new TextEncoder();
     const encodedContent = encoder.encode(file.getContents());
-    await stream.write(encodedContent, 0);
-    await stream.flush();
-    await stream.close();
+    await writable.write(encodedContent);
+    await writable.close();
   }
 
   /**
