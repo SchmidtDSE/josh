@@ -157,7 +157,7 @@ class DataFilesPresenter {
       .attr("href", "#")
       .text("delete")
       .attr("aria-label", (name) => "Delete " + name)
-      .on("click", async (name) => {
+      .on("click", async (event, name) => {
         if (confirm(`Are you sure you want to delete ${name}?`)) {
           try {
             await self._removeFile(name);
@@ -231,7 +231,7 @@ class LocalFileLayer {
    */
   constructor() {
     const self = this;
-    self._worker = new Worker('./editor/js/data.worker.js');
+    self._worker = new Worker("./js/data.worker.js");
     self._nextMessageId = 0;
     self._messagePromises = new Map();
 
@@ -331,10 +331,24 @@ class LocalFileLayer {
     const self = this;
     return self._sendWorkerMessage("serializeProject");
   }
-
-  _sendWorkerMessage(method, filename = null, contents = null) {
+  
+  /**
+   * Send a message to the worker thread handling file system operations.
+   *
+   * @param {string} method - The method name to invoke on the worker.
+   * @param {string} [filename] - The name of the file involved in the operation, if applicable.
+   * @param {string} [contents] - The contents associated with the operation, if applicable.
+   *
+   * @returns {Promise} A promise that resolves when the worker responds with the result of the
+   *     operation.
+   */
+  _sendWorkerMessage(method, filename, contents) {
     const self = this;
     const messageId = self._nextMessageId++;
+
+    defaultToNull = (x) => x === undefined ? null : x;
+    filename = defaultToNull(filename);
+    contents = defaultToNull(contents);
 
     return new Promise((resolve, reject) => {
       self._messagePromises.set(messageId, {resolve, reject});

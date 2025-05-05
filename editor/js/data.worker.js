@@ -1,3 +1,11 @@
+/**
+ * Worker thread to manage OPFS.
+ *
+ * @license BSD-3-Clause
+ * @author Sketchingpy Project
+ */
+
+
 class ReceiverFileManagerDecorator {
 
     constructor(inner) {
