@@ -161,9 +161,14 @@ main {
 .files-panel {
   margin: 5px;
   padding: 5px;
-  border-radius: 1px solid #C0C0C0;
-  height: 450px;
+  border: 1px solid #C0C0C0;
+  border-radius: 5px;
+  height: 350px;
   overflow-y: auto;
+}
+
+.file-upload-input-holder {
+  margin-bottom: 15px;
 }
 
 .files-panel .file-group {
@@ -257,8 +262,6 @@ main {
   margin-top: 5px;
   padding-top: 5px;
   margin-bottom: 5px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #C0C0C0;
 }
 
 .status-display {

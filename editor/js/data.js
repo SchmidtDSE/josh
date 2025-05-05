@@ -5,6 +5,7 @@
  */
 
 const MB_CONVERSION = 1 / (1024 * 1024);
+const RECOMMENDED_SERVER_MAX_MB = 500;
 const TEXT_TYPES = ["text/csv", "application/json"];
 
 
@@ -40,6 +41,8 @@ class DataFilesPresenter {
 
     self._hideFileUpload();
     self._attachListeners();
+    self._refreshFilesList();
+    self._updateSpaceUtilizationDisplay();
   }
 
   /**
@@ -122,11 +125,11 @@ class DataFilesPresenter {
       const opfsFile = new OpfsFile(file.name, contents, false, isBinaryFile);
       try {
         await self._fileLayer.putFile(opfsFile);
-        self._refreshFilesList();
+        await self._refreshFilesList();
+        await self._updateSpaceUtilizationDisplay();
         self._hideFileUpload();
       } catch (error) {
-        console.error("Error uploading file:", error);
-        alert("Error uploading file. Please try again.");
+        alert("Error uploading file: " + error);
       }
     };
     reader.readAsText(file);
@@ -182,6 +185,7 @@ class DataFilesPresenter {
     const self = this;
     await self._fileLayer.deleteFile(name);
     self._refreshFilesList();
+    self._updateSpaceUtilizationDisplay();
   }
 
   /**
@@ -200,17 +204,13 @@ class DataFilesPresenter {
    */
   async _updateSpaceUtilizationDisplay() {
     const self = this;
-    try {
-      const usedMb = await self.getMbUsed();
-      const totalMb = await self.getAvailableSpace();
-      const percentUsed = (usedMb / totalMb) * 100;
+    const usedMb = await self._fileLayer.getMbUsed();
+    const totalMb = await self._fileLayer.getAvailableSpace();
+    const percentUsed = (usedMb / totalMb) * 100;
 
-      self._spaceUtilizationProgressBar.value = percentUsed;
-      self._usedMbLabel.textContent = usedMb.toFixed(2);
-      self._totalMbLabel.textContent = totalMb.toFixed(2);
-    } catch (error) {
-      console.error('Error updating space utilization display:', error);
-    }
+    self._spaceUtilizationProgressBar.value = percentUsed;
+    self._usedMbLabel.innerHTML = Math.round(usedMb);
+    self._totalMbLabel.innerHTML = Math.round(totalMb);
   }
 
 }
@@ -318,17 +318,9 @@ class LocalFileLayer {
    *     browser allowance or Josh server recommendation).
    */
   async getAvailableSpace() {
-    try {
-      const estimate = await navigator.storage.estimate();
-      const availableMb = (estimate.quota - estimate.usage) * MB_CONVERSION;
-      // Return minimum of browser storage or Josh server recommendation (500MB)
-      return Math.min(availableMb, 500);
-    } catch (error) {
-      console.warn('Error getting storage estimate:', error);
-      // Default to Josh server recommendation if estimate fails
-      return 500;
-    }
-    
+    const estimate = await navigator.storage.estimate();
+    const availableMb = (estimate.quota - estimate.usage) * MB_CONVERSION;
+    return Math.min(availableMb, RECOMMENDED_SERVER_MAX_MB);
   }
 
   /**
