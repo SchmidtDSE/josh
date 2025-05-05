@@ -5,14 +5,26 @@
  * @author Sketchingpy Project
  */
 
-
+/**
+ * A decorator class that manages file operations through a worker thread interface.
+ */
 class ReceiverFileManagerDecorator {
-
+    /**
+     * Creates a new ReceiverFileManagerDecorator.
+     * @param {Object} inner - The inner file manager implementation.
+     */
     constructor(inner) {
         const self = this;
         self._inner = inner;
     }
 
+    /**
+     * Executes a file operation based on the provided method.
+     * @param {string} method - The operation to execute.
+     * @param {string} filename - The name of the file to operate on.
+     * @param {*} contents - The contents for operations that require data.
+     * @returns {Promise} A promise that resolves with the operation result.
+     */
     execute(method, filename, contents) {
         const self = this;
 
@@ -31,53 +43,93 @@ class ReceiverFileManagerDecorator {
         return implementor();
     }
 
+    /**
+     * Clears all files in the project.
+     * @returns {Promise} A promise that resolves when the project is cleared.
+     */
     clearProject() {
         const self = this;
         return self._inner.clearProject();
     }
 
+    /**
+     * Loads multiple files into the project.
+     * @param {Object} contents - Map of filenames to file contents.
+     * @returns {Promise} A promise that resolves when all files are loaded.
+     */
     loadProject(contents) {
         const self = this;
         return self._inner.loadProject(contents);
     }
 
+    /**
+     * Serializes all project files into a single object.
+     * @returns {Promise<Object>} A promise that resolves with a map of filenames to contents.
+     */
     serializeProject() {
         const self = this;
         return self._inner.serializeProject();
     }
 
+    /**
+     * Gets the names of all files in the project.
+     * @returns {Promise<Array<string>>} A promise that resolves with an array of filenames.
+     */
     getItemNames() {
         const self = this;
         return self._inner.getItemNames();
     }
 
+    /**
+     * Gets the contents of a specific file.
+     * @param {string} filename - The name of the file to retrieve.
+     * @returns {Promise<string>} A promise that resolves with the file contents.
+     */
     getItem(filename) {
         const self = this;
         return self._inner.getItem(filename);
     }
 
+    /**
+     * Updates the contents of a specific file.
+     * @param {string} filename - The name of the file to update.
+     * @param {string} contents - The new contents of the file.
+     * @returns {Promise} A promise that resolves when the file is updated.
+     */
     updateItem(filename, contents) {
         const self = this;
         return self._inner.updateItem(filename, contents);
     }
 
+    /**
+     * Gets the total storage space used by the project in megabytes.
+     * @returns {Promise<number>} A promise that resolves with the storage space used.
+     */
     getMbUsed() {
         const self = this;
         return self._inner.getMbUsed();
     }
 
+    /**
+     * Creates a new empty file.
+     * @param {string} filename - The name of the file to create.
+     * @returns {Promise} A promise that resolves when the file is created.
+     */
     createItem(filename) {
         const self = this;
         return self._inner.createItem(filename);
     }
 
+    /**
+     * Removes a file from the project.
+     * @param {string} filename - The name of the file to remove.
+     * @returns {Promise} A promise that resolves when the file is removed.
+     */
     removeItem(filename) {
         const self = this;
         return self._inner.removeItem(filename);
     }
-
 }
-
 
 class OpfsFileManager {
 
@@ -296,11 +348,9 @@ class OpfsFileManager {
 
 }
 
-
 const fileManager = new ReceiverFileManagerDecorator(
     new OpfsFileManager()
 );
-
 
 self.onmessage = (message) => {
     const data = message.data;
