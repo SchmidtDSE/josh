@@ -477,7 +477,7 @@ public class ExternalGeoMapperTest {
     System.out.println("Throughput Comparison (patches/second):");
     System.out.printf("Small AOI: %.2f patches/second%n", smallThroughput);
     System.out.printf("Medium AOI: %.2f patches/second%n", mediumThroughput);
-  //   System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
+    //   System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
   }
 
   /**
