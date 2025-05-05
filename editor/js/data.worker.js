@@ -5,6 +5,7 @@
  * @author Sketchingpy Project
  */
 
+
 /**
  * A decorator class that manages file operations through a worker thread interface.
  */
@@ -20,6 +21,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Executes a file operation based on the provided method.
+     * 
      * @param {string} method - The operation to execute.
      * @param {string} filename - The name of the file to operate on.
      * @param {*} contents - The contents for operations that require data.
@@ -45,6 +47,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Clears all files in the project.
+     * 
      * @returns {Promise} A promise that resolves when the project is cleared.
      */
     clearProject() {
@@ -53,7 +56,8 @@ class ReceiverFileManagerDecorator {
     }
 
     /**
-     * Loads multiple files into the project.
+     * Replaces the current file system with the given snapshot.
+     * 
      * @param {Object} contents - Map of filenames to file contents.
      * @returns {Promise} A promise that resolves when all files are loaded.
      */
@@ -64,6 +68,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Serializes all project files into a single object.
+     * 
      * @returns {Promise<Object>} A promise that resolves with a map of filenames to contents.
      */
     serializeProject() {
@@ -73,6 +78,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Gets the names of all files in the project.
+     * 
      * @returns {Promise<Array<string>>} A promise that resolves with an array of filenames.
      */
     getItemNames() {
@@ -82,6 +88,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Gets the contents of a specific file.
+     * 
      * @param {string} filename - The name of the file to retrieve.
      * @returns {Promise<string>} A promise that resolves with the file contents.
      */
@@ -92,6 +99,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Updates the contents of a specific file.
+     * 
      * @param {string} filename - The name of the file to update.
      * @param {string} contents - The new contents of the file.
      * @returns {Promise} A promise that resolves when the file is updated.
@@ -103,6 +111,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Gets the total storage space used by the project in megabytes.
+     * 
      * @returns {Promise<number>} A promise that resolves with the storage space used.
      */
     getMbUsed() {
@@ -112,6 +121,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Creates a new empty file.
+     * 
      * @param {string} filename - The name of the file to create.
      * @returns {Promise} A promise that resolves when the file is created.
      */
@@ -122,6 +132,7 @@ class ReceiverFileManagerDecorator {
 
     /**
      * Removes a file from the project.
+     * 
      * @param {string} filename - The name of the file to remove.
      * @returns {Promise} A promise that resolves when the file is removed.
      */
