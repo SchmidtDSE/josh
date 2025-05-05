@@ -142,14 +142,14 @@ class ReceiverFileManagerDecorator {
     }
 }
 
+
 /**
  * Manager class for handling file operations in Origin Private File System (OPFS).
- * Provides synchronous and asynchronous file operations with locking mechanisms.
  */
 class OpfsFileManager {
+    
     /**
-     * Creates a new OpfsFileManager instance.
-     * Initializes the file locking system.
+     * Creates a new manager for OPFS.
      */
     constructor() {
         const self = this;
@@ -158,6 +158,7 @@ class OpfsFileManager {
 
     /**
      * Clears all files from the project.
+     * 
      * @returns {Promise} A promise that resolves when all files are removed.
      */
     clearProject() {
@@ -170,7 +171,8 @@ class OpfsFileManager {
     }
 
     /**
-     * Loads multiple files into the project.
+     * Replace current project files with another set.
+     * 
      * @param {Object} contents - Map of filenames to file contents.
      * @returns {Promise} A promise that resolves when all files are loaded.
      */
@@ -187,6 +189,7 @@ class OpfsFileManager {
 
     /**
      * Serializes all project files into a single object.
+     * 
      * @returns {Promise<Object>} A promise that resolves with a map of filenames to contents.
      */
     serializeProject() {
@@ -214,6 +217,7 @@ class OpfsFileManager {
 
     /**
      * Gets the names of all files in the project.
+     * 
      * @returns {Promise<Array<string>>} A promise that resolves with an array of filenames.
      */
     getItemNames() {
@@ -228,6 +232,7 @@ class OpfsFileManager {
 
     /**
      * Gets the contents of a specific file.
+     * 
      * @param {string} filenameRaw - The name of the file to retrieve.
      * @returns {Promise<string>} A promise that resolves with the file contents.
      */
@@ -248,6 +253,7 @@ class OpfsFileManager {
 
     /**
      * Updates the contents of a specific file.
+     * 
      * @param {string} filenameRaw - The name of the file to update.
      * @param {string} contents - The new contents of the file.
      * @returns {Promise} A promise that resolves when the file is updated.
@@ -260,9 +266,9 @@ class OpfsFileManager {
 
     /**
      * Cleans a filename by replacing URL-encoded spaces.
+     * 
      * @param {string} filenameRaw - The filename to clean.
      * @returns {string} The cleaned filename.
-     * @private
      */
     _cleanFilename(filenameRaw) {
         const self = this;
@@ -271,10 +277,10 @@ class OpfsFileManager {
 
     /**
      * Updates a file using synchronous file system operations.
+     * 
      * @param {string} filename - The name of the file to update.
      * @param {string} contents - The new contents of the file.
      * @returns {Promise} A promise that resolves when the file is updated.
-     * @private
      */
     _updateItemSync(filename, contents) {
         const self = this;
@@ -301,10 +307,10 @@ class OpfsFileManager {
 
     /**
      * Updates a file using asynchronous file system operations.
+     * 
      * @param {string} filename - The name of the file to update.
      * @param {string} contents - The new contents of the file.
      * @returns {Promise} A promise that resolves when the file is updated.
-     * @private
      */
     _updateItemAsync(filename, contents) {
         const self = this;
@@ -322,6 +328,7 @@ class OpfsFileManager {
 
     /**
      * Gets the total storage space used in megabytes.
+     * 
      * @returns {Promise<number>} A promise that resolves with the storage space used.
      */
     getMbUsed() {
@@ -342,6 +349,7 @@ class OpfsFileManager {
 
     /**
      * Creates a new empty file.
+     * 
      * @param {string} filenameRaw - The name of the file to create.
      * @returns {Promise} A promise that resolves when the file is created.
      */
@@ -358,6 +366,7 @@ class OpfsFileManager {
 
     /**
      * Removes a file from the project.
+     * 
      * @param {string} filenameRaw - The name of the file to remove.
      * @returns {Promise} A promise that resolves when the file is removed.
      */
@@ -376,9 +385,9 @@ class OpfsFileManager {
 
     /**
      * Acquires a lock for a file operation.
+     * 
      * @param {string} filename - The name of the file to lock.
      * @returns {Promise} A promise that resolves when the lock is acquired.
-     * @private
      */
     _aquireLock(filename) {
         const self = this;
@@ -410,9 +419,9 @@ class OpfsFileManager {
 
     /**
      * Releases a lock for a file operation.
+     * 
      * @param {string} filename - The name of the file to unlock.
      * @returns {Promise} A promise that resolves when the lock is released.
-     * @private
      */
     _releaseLock(filename) {
         const self = this;
@@ -439,6 +448,7 @@ class OpfsFileManager {
     }
 
 }
+
 
 const fileManager = new ReceiverFileManagerDecorator(
     new OpfsFileManager()
