@@ -198,8 +198,19 @@ class DataFilesPresenter {
   /**
    * Update the progress bar and labels showing space utilization.
    */
-  _updateSpaceUtilizationDisplay() {
+  async _updateSpaceUtilizationDisplay() {
     const self = this;
+    try {
+      const usedMb = await self.getMbUsed();
+      const totalMb = await self.getAvailableSpace();
+      const percentUsed = (usedMb / totalMb) * 100;
+
+      self._spaceUtilizationProgressBar.value = percentUsed;
+      self._usedMbLabel.textContent = usedMb.toFixed(2);
+      self._totalMbLabel.textContent = totalMb.toFixed(2);
+    } catch (error) {
+      console.error('Error updating space utilization display:', error);
+    }
   }
 
 }
@@ -307,6 +318,16 @@ class LocalFileLayer {
    *     browser allowance or Josh server recommendation).
    */
   async getAvailableSpace() {
+    try {
+      const estimate = await navigator.storage.estimate();
+      const availableMb = (estimate.quota - estimate.usage) * MB_CONVERSION;
+      // Return minimum of browser storage or Josh server recommendation (500MB)
+      return Math.min(availableMb, 500);
+    } catch (error) {
+      console.warn('Error getting storage estimate:', error);
+      // Default to Josh server recommendation if estimate fails
+      return 500;
+    }
     
   }
 
