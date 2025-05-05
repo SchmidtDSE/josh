@@ -221,7 +221,8 @@ class DataFilesPresenter {
  *
  * Layer that emulates a file system in OPFS as a simple mapping between string paths (names) and
  * string file contents. Binary data may be converted to base64 for persistance. Also provides an
- * option to serialize the entire contents of the file system to a JSON string.
+ * option to serialize the entire contents of the file system to a JSON string. Offloads to a worker
+ * thread defined in data.worker.js.
  */
 class LocalFileLayer {
 
@@ -230,7 +231,7 @@ class LocalFileLayer {
    */
   constructor() {
     const self = this;
-    self._root = navigator.storage.getDirectory();
+    // TODO
   }
 
   /**
@@ -242,15 +243,7 @@ class LocalFileLayer {
    */
   async getFile(name) {
     const self = this;
-    try {
-      const root = await self._root;
-      const fileHandle = await root.getFileHandle(name);
-      const file = await fileHandle.getFile();
-      const contents = await file.text();
-      return new OpfsFile(name, contents, true, false);
-    } catch (e) {
-      return new OpfsFile(name, "", false, false);
-    }
+    // TODO
   }
 
   /**
@@ -259,29 +252,9 @@ class LocalFileLayer {
    * @param {Promise<OpfsFile>} The file to persist, creating a new file if it does not yet exist or
    *     overwritting the prior file of with the same path.
    */
-  putFile(file) {
+  async putFile(file) {
     const self = this;
-
-    const executeOnFileHandle = (fileHandle) => {
-      return new Promise((resolve, reject) => {
-        fileHandle.file(
-          (file) => {
-            const writer = new FileWriter(file);
-            const encoder = new TextEncoder();
-            const encodedContent = encoder.encode(file.getContents());
-  
-            writer.onwriteend = () => resolve();
-            writer.onerror = (error) => reject(error);
-            writer.write(new Blob([encodedContent]));
-          },
-          (error) => { reject(error); }
-        );
-      });
-    };
-
-    return self._root.then(root => {
-      return root.getFileHandle(file.getName(), { create: true });
-    }).then(executeOnFileHandle);
+    // TODO
   }
 
   /**
@@ -293,8 +266,7 @@ class LocalFileLayer {
    */
   async deleteFile(name) {
     const self = this;
-    const root = await self._root;
-    await root.removeEntry(name);
+    // TODO
   }
 
   /**
@@ -304,10 +276,7 @@ class LocalFileLayer {
    */
   async listFiles() {
     const self = this;
-    const root = await self._root;
-    return await Promise.all(
-      Array.from(root.entries(), async ([name]) => name)
-    );
+    // TODO
   }
 
   /**
@@ -320,8 +289,7 @@ class LocalFileLayer {
    */
   async getMbUsed() {
     const self = this;
-    const serialized = await self.serialize();
-    return new Blob([serialized]).size * MB_CONVERSION;
+    // TODO
   }
 
   /**
@@ -346,18 +314,7 @@ class LocalFileLayer {
    */
   async serialize() {
     const self = this;
-    const files = await self.listFiles();
-    const contents = {};
-
-    for (const name of files) {
-      const file = await self.getFile(name);
-      contents[name] = {
-        contents: file.getContents(),
-        binary: file.getIsBinary()
-      };
-    }
-
-    return contents;
+    // TODO
   }
 
 }
