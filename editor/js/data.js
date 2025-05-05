@@ -346,7 +346,7 @@ class LocalFileLayer {
     const self = this;
     const messageId = self._nextMessageId++;
 
-    defaultToNull = (x) => x === undefined ? null : x;
+    const defaultToNull = (x) => x === undefined ? null : x;
     filename = defaultToNull(filename);
     contents = defaultToNull(contents);
 
