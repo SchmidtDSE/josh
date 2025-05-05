@@ -231,7 +231,21 @@ class LocalFileLayer {
    */
   constructor() {
     const self = this;
-    // TODO
+    self._worker = new Worker('./editor/js/data.worker.js');
+    self._nextMessageId = 0;
+    self._messagePromises = new Map();
+
+    self._worker.onmessage = (message) => {
+      const data = message.data;
+      const messageId = data["messageId"]; 
+      const returnValue = data["return"];
+
+      const promiseHandlers = self._messagePromises.get(messageId);
+      if (promiseHandlers) {
+        promiseHandlers.resolve(returnValue);
+        self._messagePromises.delete(messageId);
+      }
+    };
   }
 
   /**
@@ -243,7 +257,8 @@ class LocalFileLayer {
    */
   async getFile(name) {
     const self = this;
-    // TODO
+    const contents = await self._sendWorkerMessage("getItem", name);
+    return new OpfsFile(name, contents, true, false);
   }
 
   /**
@@ -254,7 +269,7 @@ class LocalFileLayer {
    */
   async putFile(file) {
     const self = this;
-    // TODO
+    await self._sendWorkerMessage("updateItem", file.getName(), file.getContents());
   }
 
   /**
@@ -266,7 +281,7 @@ class LocalFileLayer {
    */
   async deleteFile(name) {
     const self = this;
-    // TODO
+    await self._sendWorkerMessage("removeItem", name);
   }
 
   /**
@@ -276,7 +291,7 @@ class LocalFileLayer {
    */
   async listFiles() {
     const self = this;
-    // TODO
+    return self._sendWorkerMessage("getItemNames");
   }
 
   /**
@@ -289,7 +304,7 @@ class LocalFileLayer {
    */
   async getMbUsed() {
     const self = this;
-    // TODO
+    return self._sendWorkerMessage("getMbUsed");
   }
 
   /**
@@ -314,9 +329,23 @@ class LocalFileLayer {
    */
   async serialize() {
     const self = this;
-    // TODO
+    return self._sendWorkerMessage("serializeProject");
   }
 
+  _sendWorkerMessage(method, filename = null, contents = null) {
+    const self = this;
+    const messageId = self._nextMessageId++;
+
+    return new Promise((resolve, reject) => {
+      self._messagePromises.set(messageId, {resolve, reject});
+      self._worker.postMessage({
+        messageId: messageId,
+        method: method,
+        filename: filename,
+        contents: contents
+      });
+    });
+  }
 }
 
 
