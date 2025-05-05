@@ -259,15 +259,29 @@ class LocalFileLayer {
    * @param {Promise<OpfsFile>} The file to persist, creating a new file if it does not yet exist or
    *     overwritting the prior file of with the same path.
    */
-  async putFile(file) {
+  putFile(file) {
     const self = this;
-    const root = await self._root;
-    const fileHandle = await root.getFileHandle(file.getName(), { create: true });
-    const writable = await fileHandle.createWritable();
-    const encoder = new TextEncoder();
-    const encodedContent = encoder.encode(file.getContents());
-    await writable.write(encodedContent);
-    await writable.close();
+
+    const executeOnFileHandle = (fileHandle) => {
+      return new Promise((resolve, reject) => {
+        fileHandle.file(
+          (file) => {
+            const writer = new FileWriter(file);
+            const encoder = new TextEncoder();
+            const encodedContent = encoder.encode(file.getContents());
+  
+            writer.onwriteend = () => resolve();
+            writer.onerror = (error) => reject(error);
+            writer.write(new Blob([encodedContent]));
+          },
+          (error) => { reject(error); }
+        );
+      });
+    };
+
+    return self._root.then(root => {
+      return root.getFileHandle(file.getName(), { create: true });
+    }).then(executeOnFileHandle);
   }
 
   /**
