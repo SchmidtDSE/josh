@@ -126,12 +126,13 @@ class WasmLayer {
    * 
    * @param {string} code - The code containing the simulation.
    * @param {string} simulationName - Name of simulation to run.
+   * @param {Object} externalData - JSON-serializable object containing external data resources.
    * @param {function} stepCallback - The function to invoke when a step is completed, passing the
    *     number of steps completed.
    * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
    *     simulation is concluded with data on this single replicate.
    */
-  async runSimulation(code, simulationName, stepCallback) {
+  async runSimulation(code, simulationName, externalData, stepCallback) {
     const self = this;
     await self._initPromise;
 
@@ -158,7 +159,7 @@ class WasmLayer {
       };
       self._worker.postMessage({ 
         type: "runSimulation", 
-        data: { code: code, simulationName: simulationName } 
+        data: { code: code, simulationName: simulationName, data: externalData } 
       });
     });
   }
