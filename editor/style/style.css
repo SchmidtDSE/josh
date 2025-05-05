@@ -252,6 +252,15 @@ main {
   color: #ff1212;
 }
 
+.space-panel {
+  text-align: center;
+  margin-top: 5px;
+  padding-top: 5px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #C0C0C0;
+}
+
 .status-display {
   margin-bottom: 10px;
 }

@@ -34,6 +34,9 @@ class DataFilesPresenter {
     self._fileUploadConfirmButton = self._dialog.querySelector(".add-file-confirm-button");
     self._fileUploadIdlePanel = self._dialog.querySelector(".file-upload-idle-panel");
     self._fileUploadActivePanel = self._dialog.querySelector(".file-upload-active-panel");
+    self._spaceUtilizationProgressBar = self._dialog.querySelector(".space-utilization-progress");
+    self._usedMbLabel = self._dialog.querySelector(".used-mb-display");
+    self._totalMbLabel = self._dialog.querySelector(".total-mb-display");
 
     self._hideFileUpload();
     self._attachListeners();
@@ -188,7 +191,15 @@ class DataFilesPresenter {
    * @returns {boolean} True if should be treated as binary and false otherwise.
    */
   _getIsBinaryFile(filetype) {
+    const self = this;
     return !TEXT_TYPES.includes(filetype);
+  }
+
+  /**
+   * Update the progress bar and labels showing space utilization.
+   */
+  _updateSpaceUtilizationDisplay() {
+    const self = this;
   }
 
 }
@@ -284,6 +295,19 @@ class LocalFileLayer {
     const self = this;
     const serialized = await self.serialize();
     return new Blob([serialized]).size * MB_CONVERSION;
+  }
+
+  /**
+   * Get the total available space for OPFS reported by the browser.
+   *
+   * Get the total available space for OPFS reported by the browser or 500 MB (the guideline
+   * recommended maximum for Josh servers), whichever is smallest.
+   *
+   * @returns {Promise<number>} Promise resolving to the number of megabytes available (minimum of
+   *     browser allowance or Josh server recommendation).
+   */
+  async getAvailableSpace() {
+    
   }
 
   /**
