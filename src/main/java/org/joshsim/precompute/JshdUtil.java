@@ -58,7 +58,7 @@ public class JshdUtil {
     int timesteps = (int)(maxTimestep - minTimestep + 1);
     
     // Read grid data
-    double[][][] output = new double[width][height][timesteps];
+    double[][][] output = new double[timesteps][height][width];
     for (int timestep = 0; timestep < timesteps; timestep++) {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
