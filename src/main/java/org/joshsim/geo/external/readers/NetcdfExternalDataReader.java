@@ -16,8 +16,10 @@ import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
-import ucar.nc2.NetcdfFiles;
 import ucar.nc2.Variable;
+import ucar.nc2.dataset.DatasetUrl;
+import ucar.nc2.dataset.NetcdfDatasets;
+import ucar.nc2.util.CancelTask;
 
 /**
  * Implementation of ExternalDataReader for NetCDF files using UCAR's netcdf-java library.
@@ -26,7 +28,7 @@ import ucar.nc2.Variable;
 public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
   private final EngineValueFactory valueFactory;
-  private Units units;
+  private Optional<CancelTask> cancelTask = Optional.empty();
 
   // Dimension names
   private String dimNameX;
@@ -57,6 +59,15 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   }
 
   /**
+   * Sets the cancel task for this reader.
+   *
+   * @param cancelTask The CancelTask to set
+   */
+  public void setCancelTask(CancelTask cancelTask) {
+    this.cancelTask = Optional.of(cancelTask);
+  }
+
+  /**
    * Opens a NetCDF file from the specified source path.
    *
    * @param sourcePath The path to the NetCDF file to open.
@@ -64,7 +75,9 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    */
   public void open(String sourcePath) throws IOException {
     try {
-      ncFile = NetcdfFiles.open(sourcePath);
+      // ncFile = NetcdfFiles.open(sourcePath);
+      DatasetUrl datasetUrl = DatasetUrl.findDatasetUrl(sourcePath);
+      ncFile = NetcdfDatasets.acquireFile(datasetUrl, cancelTask.orElse(null));
     } catch (Exception e) {
       throw new IOException("Failed to open NetCDF file: " + e.getMessage(), e);
     }

@@ -12,7 +12,6 @@ import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.MimeMappings;
 import java.util.Optional;
 

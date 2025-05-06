@@ -207,7 +207,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(urlToWorker))
         .header("Content-Type", "application/x-www-form-urlencoded")
-        
+
         .POST(body)
         .build();
 
