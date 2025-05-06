@@ -10,6 +10,7 @@ package org.joshsim.precompute;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 
 /**
  * Utility which facilitates conversion between jshd format and PrecomputedGrids.
@@ -27,11 +28,15 @@ public class JshdUtil {
   /**
    * Load a DoublePrecomputedGrid from the given bytes serialization.
    *
+   * @param engineValueFactory The factory which should be used in creating values returned from the
+   *     grid.
+   * @param units The units with which to report values returned from the resulting grid.
    * @param bytes The bytes following the jshd format specification from which to parse a
    *     PrecomputedGrid.
    * @return A DoublePrecomputedGrid parsed from the given bytes.
    */
-  public static DoublePrecomputedGrid loadFromBytes(byte[] bytes) {
+  public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
+        String units, byte[] bytes) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     
     // Read header
@@ -47,18 +52,18 @@ public class JshdUtil {
     int timesteps = (int)(maxTimestep - minTimestep + 1);
     
     // Read grid data
-    List<double[][]> timeframes = new ArrayList<>();
-    for (int t = 0; t < timesteps; t++) {
-      double[][] grid = new double[height][width];
+    double[][][] output = new double[width][height][timesteps];
+    for (int timestep = 0; timestep < timesteps; timestep++) {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-          grid[y][x] = buffer.getDouble();
+          output[timestep][y][x] = buffer.getDouble();
         }
       }
-      timeframes.add(grid);
     }
+
+    // TODO: extents
     
-    return new DoublePrecomputedGrid(minX, maxX, minY, maxY, minTimestep, timeframes);
+    return new DoublePrecomputedGrid(engineValueFactory, extents, minTimestep, maxTimestep, units);
   }
 
   /**
@@ -71,7 +76,7 @@ public class JshdUtil {
   public static byte[] serializeToBytes(DoublePrecomputedGrid target) {
     int width = (int)(target.getMaxX() - target.getMinX() + 1);
     int height = (int)(target.getMaxY() - target.getMinY() + 1);
-    int timesteps = target.getTimeframes().size();
+    int timesteps = (int)(target.getMaxTimestep() - target.getMinTimestep() + 1)
     
     // Calculate buffer size: 6 longs for header + doubles for all grid values
     int bufferSize = (6 * Long.BYTES) + (width * height * timesteps * Double.BYTES);
@@ -86,10 +91,10 @@ public class JshdUtil {
     buffer.putLong(target.getMinTimestep() + timesteps - 1);
     
     // Write grid data
-    for (double[][] timeframe : target.getTimeframes()) {
+    for (int timestep = 0; timestep < timesteps; i++) {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-          buffer.putDouble(timeframe[y][x]);
+          buffer.putDouble(target.getAt(x, y, timestep).getAsDecimal().doubleValue());
         }
       }
     }

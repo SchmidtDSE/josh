@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
 
   private final EngineValueFactory factory;
-  private final String units;
+  private final Units units;
   private final double[][][] innerValues;
 
   /**
@@ -32,7 +32,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    * @param units The units that returned EngineValues should be created with.
    */
   DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents, long minTimestep,
-        long maxTimestep, String units) {
+        long maxTimestep, Units units) {
     super(extents, minTimestep, maxTimestep);
 
     this.factory = engineValueFactory;
@@ -42,7 +42,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int height = (int) getHeight();
     int timestepsCut = (int) (getMaxTimestep() - getMinTimestep());
 
-    innerValues = new double[width][height][timestepsCut];
+    innerValues = new double[timestepsCut][height][width];
   }
 
   @Override
@@ -50,8 +50,8 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int xCut = (int) (x - getMinX());
     int yCut = (int) (y - getMinY());
     int timestepCut = (int) timestep;
-    double value = innerValues[xCut][yCut][timestepCut];
-    return factory.build(BigDecimal.valueOf(value), new Units(units));
+    double value = innerValues[timestepCut][yCut][xCut];
+    return factory.build(BigDecimal.valueOf(value), units);
   }
 
 }
