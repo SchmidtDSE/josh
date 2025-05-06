@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 import org.joshsim.engine.geometry.EngineGeometry;
 
@@ -23,6 +24,24 @@ public class GeoKey {
    */
   public GeoKey(Entity entity) {
     this.entity = entity;
+  }
+
+  /**
+   * Get the horizontal center of this position.
+   *
+   * @returns The x or horizontal position as reported in the space in which this key was made.
+   */
+  public BigDecimal getCenterX() {
+    return entity.getGeometry().orElseThrow().getCenterX();
+  }
+
+  /**
+   * Get the vertical center of this position.
+   *
+   * @returns The y or vertical position as reported in the space in which this key was made.
+   */
+  public BigDecimal getCenterY() {
+    return entity.getGeometry().orElseThrow().getCenterY();
   }
 
   @Override
