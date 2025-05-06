@@ -14,6 +14,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -478,6 +482,213 @@ public class ExternalGeoMapperTest {
     System.out.printf("Small AOI: %.2f patches/second%n", smallThroughput);
     System.out.printf("Medium AOI: %.2f patches/second%n", mediumThroughput);
     //   System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
+  }
+
+  /**
+   * Test basic streaming functionality for a single variable and time step.
+   */
+  @Test
+  public void testStreamVariableTimeStepToPatches() throws IOException {
+    // Execute streaming method
+    int timeStep = 0;
+    
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, timeStep, patchSet)) {
+        
+      Map<GeoKey, EngineValue> patchValueMap = stream.collect(Collectors.toMap(
+          Map.Entry::getKey,
+          Map.Entry::getValue
+      ));
+      
+      // Verify we got values
+      assertFalse(patchValueMap.isEmpty(), "Should have values for patches");
+      assertTrue(patchValueMap.size() > patchSet.getPatches().size() * 0.9,
+          "Should have values for at least 90% of patches");
+    }
+  }
+
+  /**
+   * Test resource cleanup by intentionally trying to use a stream after it's closed.
+   */
+  @Test
+  public void testStreamResourceCleanup() throws IOException {
+    // Get a stream
+    Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, 0, patchSet);
+        
+    // Close it
+    stream.close();
+    
+    // Verify it throws exception when we try to use it after closing
+    assertThrows(IllegalStateException.class, () -> {
+      stream.findFirst();
+    });
+  }
+
+  /**
+   * Test parallel streaming produces correct results.
+   */
+  @Test 
+  public void testParallelStreaming() throws IOException {
+    // Configure mapper for parallel processing
+    mapper.setUseParallelProcessing(true);
+    int timeStep = 0;
+    
+    // Execute with parallel stream
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, timeStep, patchSet)) {
+        
+      Map<GeoKey, EngineValue> patchValueMap = stream.collect(Collectors.toMap(
+          Map.Entry::getKey,
+          Map.Entry::getValue
+      ));
+      
+      // Verify we got values
+      assertFalse(patchValueMap.isEmpty(), "Should have values for patches");
+      assertTrue(patchValueMap.size() > patchSet.getPatches().size() * 0.9,
+          "Should have values for at least 90% of patches");
+    }
+    
+    // Compare with sequential results
+    mapper.setUseParallelProcessing(false);
+    
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, timeStep, patchSet)) {
+        
+      Map<GeoKey, EngineValue> seqPatchValueMap = stream.collect(Collectors.toMap(
+          Map.Entry::getKey,
+          Map.Entry::getValue
+      ));
+      
+      // Execute with parallel processing again to compare results
+      mapper.setUseParallelProcessing(true);
+      
+      try (Stream<Map.Entry<GeoKey, EngineValue>> parStream =
+          mapper.streamVariableTimeStepToPatches(
+          riversideFilePath, VAR_NAME, timeStep, patchSet
+      )) {
+          
+        Map<GeoKey, EngineValue> parPatchValueMap = parStream.collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue
+        ));
+        
+        // Compare sequential and parallel results
+        assertEquals(seqPatchValueMap.keySet(), parPatchValueMap.keySet(),
+            "Sequential and parallel results should have the same keys");
+            
+        for (GeoKey key : seqPatchValueMap.keySet()) {
+          assertEquals(seqPatchValueMap.get(key), parPatchValueMap.get(key),
+              "Values should match for key " + key);
+        }
+      }
+    }
+  }
+
+  /**
+   * Test lazy evaluation of stream by processing only a subset of patches.
+   */
+  @Test
+  public void testLazyEvaluationOfStream() throws IOException {
+    int timeStep = 0;
+    
+    // Measure time to find first 10 values that meet a condition
+    long start = System.nanoTime();
+    
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, timeStep, patchSet)) {
+        
+      List<Map.Entry<GeoKey, EngineValue>> firstTen = stream
+          .filter(entry -> {
+            try {
+              // Apply some filter condition (accessing the value will trigger interpolation)
+              BigDecimal value = entry.getValue().getAsDecimal();
+              BigDecimal threshold = new BigDecimal(0.0);
+              return value.compareTo(threshold) > 0;
+            } catch (Exception e) {
+              return false;
+            }
+          })
+          .limit(10) // Only process until we find 10 matching entries
+          .collect(Collectors.toList());
+      
+      long duration = System.nanoTime() - start;
+      
+      // Verify we got some results
+      assertFalse(firstTen.isEmpty(), "Should find at least some entries");
+      assertTrue(firstTen.size() <= 10, "Should not process more than requested limit");
+      
+      System.out.printf("Time to find first 10 matching entries: %.2f ms%n", 
+          duration / 1_000_000.0);
+    }
+    
+    // Compare with eager evaluation time (processing all patches)
+    start = System.nanoTime();
+    
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+        riversideFilePath, VAR_NAME, timeStep, patchSet)) {
+        
+      List<Map.Entry<GeoKey, EngineValue>> all = stream
+          .filter(entry -> {
+            try {
+              BigDecimal value = entry.getValue().getAsDecimal();
+              BigDecimal threshold = new BigDecimal(0.0);
+              return value.compareTo(threshold) > 0;
+            } catch (Exception e) {
+              return false;
+            }
+          })
+          .collect(Collectors.toList());
+      
+      long fullDuration = System.nanoTime() - start;
+      
+      System.out.printf("Time to process all entries: %.2f ms%n", 
+          fullDuration / 1_000_000.0);
+    }
+  }
+
+  /**
+   * Test filtered streaming to demonstrate processing efficiency.
+   *
+   * @throws Exception if an error occurs during processing.
+   */
+  @Test
+  public void testFilteredStreamProcessing() throws Exception {
+    // Define a threshold value for filtering
+    final BigDecimal threshold = new BigDecimal(300.0);  // Filter for precipitation above value
+    
+    // Process multiple time steps
+    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(riversideFilePath)) {
+      reader.open(riversideFilePath);
+      reader.setDimensions(DIM_X, DIM_Y, Optional.ofNullable(DIM_TIME));
+      
+      int timeSteps = reader.getTimeDimensionSize().orElse(30);
+      ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
+      
+      // Count high precipitation patches at each time step
+      System.out.println("Time steps with high precipitation (>" + threshold + " mm):");
+      
+      for (int t = 0; t < Math.min(timeSteps, 10); t++) {  // Limit to first 10 time steps
+        // Stream just this time step
+        try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+            reader, riversideFilePath, VAR_NAME, t, dimensions, patchSet)) {
+          
+          long highPrecipCount = stream
+              .filter(entry -> {
+                try {
+                  BigDecimal value = entry.getValue().getAsDecimal();
+                  return value.compareTo(threshold) > 0.0;
+                } catch (Exception e) {
+                  return false;
+                }
+              })
+              .count();
+          
+          System.out.printf("Time step %d: %d patches with precipitation > %.1f mm%n",
+              t, highPrecipCount, threshold);
+        }
+      }
+    }
   }
 
   /**

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.value.type.EngineValue;
@@ -124,9 +126,15 @@ public class ExternalGeoMapper {
 
         // Process each time step in the requested range
         for (int t = actualMinTimestep; t <= actualMaxTimestep; t++) {
-          // Create a map for this time step
-          Map<GeoKey, EngineValue> patchValueMap = mapVariableTimeStepToPatches(
-              reader, dataFilePath, varName, t, dimensions, patchSet);
+          // Create a map for this time step by collecting the stream
+          Map<GeoKey, EngineValue> patchValueMap;
+          try (Stream<Map.Entry<GeoKey, EngineValue>> stream = streamVariableTimeStepToPatches(
+              reader, dataFilePath, varName, t, dimensions, patchSet)) {
+            patchValueMap = stream.collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue
+            ));
+          }
           timeStepMaps.put(t, patchValueMap);
         }
       }
@@ -158,8 +166,8 @@ public class ExternalGeoMapper {
   }
 
   /**
-   * Maps a specific variable at a specific time step to patch values.
-   * Creates thread-local readers when using parallel processing.
+   * Returns a stream of patch key-value entries for a specific variable and time step.
+   * The stream must be closed when done to release resources.
    *
    * @param sharedReader The shared data reader for sequential processing
    * @param dataFilePath The path to the data file for creating thread-local readers
@@ -167,24 +175,21 @@ public class ExternalGeoMapper {
    * @param timeStep The time step to process
    * @param dimensions The spatial dimensions information
    * @param patchSet The set of patches
-   * @return Map of patch keys to values
-   * @throws Exception If there's an error mapping the data
+   * @return Stream of patch key to value entries
    */
-  private Map<GeoKey, EngineValue> mapVariableTimeStepToPatches(
+  public Stream<Map.Entry<GeoKey, EngineValue>> streamVariableTimeStepToPatches(
       ExternalDataReader sharedReader,
       String dataFilePath,
       String variableName,
       int timeStep,
       ExternalSpatialDimensions dimensions,
-      PatchSet patchSet) throws Exception {
-
-    Map<GeoKey, EngineValue> patchValueMap = new ConcurrentHashMap<>();
-
-    var stream = useParallelProcessing
+      PatchSet patchSet) {
+    
+    var patchStream = useParallelProcessing
         ? patchSet.getPatches().parallelStream()
         : patchSet.getPatches().stream();
-
-    stream.forEach(patch -> {
+    
+    return patchStream.flatMap(patch -> {
       ExternalDataReader effectiveReader = sharedReader;
       
       try {
@@ -212,21 +217,99 @@ public class ExternalGeoMapper {
               dimensions
           );
 
-          // Store in the map if value exists
-          if (valueOpt.isPresent()) {
-            GeoKey key = patch.getKey().orElseThrow();
-            patchValueMap.put(key, valueOpt.get());
+          // Return entry if value exists, otherwise empty stream
+          if (valueOpt.isPresent() && patch.getKey().isPresent()) {
+            GeoKey key = patch.getKey().get();
+            return Stream.of(Map.entry(key, valueOpt.get()));
           }
+          return Stream.empty();
+          
         } finally {
           // Close the thread-local reader if we created one
           if (threadLocalReader != null) {
-            threadLocalReader.close();
+            try {
+              threadLocalReader.close();
+            } catch (Exception e) {
+              // Log or wrap this exception
+            }
           }
         }
       } catch (Exception e) {
         throw new RuntimeException("Error interpolating value for patch: " + patch, e);
       }
     });
+  }
+
+  /**
+   * Returns a stream of patch values for a specific variable and time step.
+   * This creates and manages its own data reader.
+   *
+   * @param dataFilePath Path to the data file
+   * @param variableName The variable to extract
+   * @param timeStep The time step to process
+   * @param patchSet Set of patches to map data to
+   * @return Stream of patch key to value entries that must be closed when done
+   * @throws IOException If there's an error reading the data file
+   */
+  public Stream<Map.Entry<GeoKey, EngineValue>> streamVariableTimeStepToPatches(
+      String dataFilePath,
+      String variableName,
+      int timeStep,
+      PatchSet patchSet) throws IOException {
+
+    // Create and configure reader
+    ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath);
+    reader.open(dataFilePath);
+    reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
+    if (crsCode != null) {
+      reader.setCrsCode(crsCode);
+    }
+    
+    ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
+    
+    // Create a stream that will close the reader when it's done
+    return streamVariableTimeStepToPatches(
+          reader, dataFilePath, variableName, timeStep, dimensions, patchSet)
+        .onClose(() -> {
+          try {
+            reader.close();
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to close data reader", e);
+          }
+        });
+  }
+  
+  /**
+   * Maps a specific variable at a specific time step to patch values.
+   * Creates thread-local readers when using parallel processing.
+   *
+   * @param sharedReader The shared data reader for sequential processing
+   * @param dataFilePath The path to the data file for creating thread-local readers
+   * @param variableName The variable to extract
+   * @param timeStep The time step to process
+   * @param dimensions The spatial dimensions information
+   * @param patchSet The set of patches
+   * @return Map of patch keys to values
+   * @throws Exception If there's an error mapping the data
+   * @deprecated Use streamVariableTimeStepToPatches instead
+   */
+  @Deprecated
+  private Map<GeoKey, EngineValue> mapVariableTimeStepToPatches(
+      ExternalDataReader sharedReader,
+      String dataFilePath,
+      String variableName,
+      int timeStep,
+      ExternalSpatialDimensions dimensions,
+      PatchSet patchSet
+  ) throws Exception {
+
+    Map<GeoKey, EngineValue> patchValueMap = new ConcurrentHashMap<>();
+
+    try (Stream<Map.Entry<GeoKey, EngineValue>> stream = 
+        streamVariableTimeStepToPatches(
+            sharedReader, dataFilePath, variableName, timeStep, dimensions, patchSet)) {
+      stream.forEach(entry -> patchValueMap.put(entry.getKey(), entry.getValue()));
+    }
 
     return patchValueMap;
   }
