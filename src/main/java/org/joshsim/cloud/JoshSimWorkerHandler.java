@@ -14,8 +14,7 @@ import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
 import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.referencing.CRS;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
@@ -58,9 +57,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     if (crs.isPresent()) {
       try {
-        geometryFactory = new EarthGeometryFactory(CRS.decode(crs.get()));
-      } catch (FactoryException e) {
-        throw new RuntimeException(e);
+        geometryFactory = new EarthGeometryFactory(CRS.forCode(crs.get()));
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to parse CRS: " + e);
       }
     } else {
       geometryFactory = new GridGeometryFactory();
@@ -89,7 +88,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (!CorsUtil.addCorsHeaders(httpServerExchange)) {
       return;
     }
-    
+
     long startTime = System.nanoTime();
     Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
     long endTime = System.nanoTime();

@@ -14,6 +14,7 @@ import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -57,7 +58,6 @@ public class GridFromSimFactory {
    * @return the built PatchSet
    */
   public PatchSet build(MutableEntity simulation) {
-
     GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String inputCrs = extractor.getInputCrs();
     String targetCrs = extractor.getTargetCrs();
@@ -68,6 +68,13 @@ public class GridFromSimFactory {
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
     EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
+
+    // TODO: properly parse units for cell size
+    String sizeValueUnits = "m";
+
+    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
+        "GRID", inputCrs, extents, sizeValuePrimitive, sizeValueUnits
+    );
 
     EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
 
@@ -87,10 +94,7 @@ public class GridFromSimFactory {
     }
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(
-        inputCrs,
-        targetCrs,
-        extents,
-        sizeValuePrimitive,
+        gridCrsDefinition,
         bridge.getPrototype(patchName)
     );
     return builder.build();

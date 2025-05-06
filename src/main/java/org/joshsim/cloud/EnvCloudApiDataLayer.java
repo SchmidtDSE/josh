@@ -87,7 +87,7 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
 
   }
 
-  
+
   /**
    * Generates an MD5 hash for a given API key.
    *
