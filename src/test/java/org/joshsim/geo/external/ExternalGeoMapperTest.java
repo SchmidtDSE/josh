@@ -416,7 +416,7 @@ public class ExternalGeoMapperTest {
         seqDuration / 1_000_000.0, parDuration / 1_000_000.0);
   }
   
-  /**
+  /*
    * Compare the performance of parallel processing with different size AOIs.
    * This test only uses parallel processing since sequential would be too slow for larger AOIs.
    */
