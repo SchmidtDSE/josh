@@ -7,9 +7,13 @@
 
 package org.joshsim.precompute;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 
 /**
@@ -61,7 +65,13 @@ public class JshdUtil {
       }
     }
 
-    // TODO: extents
+    PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+    extentsBuilder.setTopLeftX(BigDecimal.valueOf(minX));
+    extentsBuilder.setTopLeftY(BigDecimal.valueOf(minY));
+    extentsBuilder.setBottomRightX(BigDecimal.valueOf(maxX));
+    extentsBuilder.setBottomRightY(BigDecimal.valueOf(maxY));
+
+    PatchBuilderExtents extents = extentsBuilder.build();
     
     return new DoublePrecomputedGrid(engineValueFactory, extents, minTimestep, maxTimestep, units);
   }
