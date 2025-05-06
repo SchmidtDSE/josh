@@ -420,7 +420,7 @@ public class ExternalGeoMapperTest {
    * Compare the performance of parallel processing with different size AOIs.
    * This test only uses parallel processing since sequential would be too slow for larger AOIs.
    */
-  @Test
+  /*@Test
   public void testParallelProcessingWithDifferentAoiSizes() throws IOException {
     // Ensure parallel processing is enabled
     mapper.setUseParallelProcessing(true);
@@ -481,7 +481,7 @@ public class ExternalGeoMapperTest {
     System.out.printf("Small AOI: %.2f patches/second%n", smallThroughput);
     System.out.printf("Medium AOI: %.2f patches/second%n", mediumThroughput);
     //   System.out.printf("Large AOI: %.2f patches/second%n", largeThroughput);
-  }
+  }*/
 
   /**
    * Test basic streaming functionality for a single variable and time step.

@@ -62,7 +62,8 @@ public class JshdUtil {
     for (int timestep = 0; timestep < timesteps; timestep++) {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-          output[timestep][y][x] = buffer.getDouble();
+          double newValue = buffer.getDouble();
+          output[timestep][y][x] = newValue;
         }
       }
     }
@@ -75,7 +76,14 @@ public class JshdUtil {
 
     PatchBuilderExtents extents = extentsBuilder.build();
     
-    return new DoublePrecomputedGrid(engineValueFactory, extents, minTimestep, maxTimestep, units);
+    return new DoublePrecomputedGrid(
+        engineValueFactory,
+        extents,
+        minTimestep,
+        maxTimestep,
+        units,
+        output
+    );
   }
 
   /**

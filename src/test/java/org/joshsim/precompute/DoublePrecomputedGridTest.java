@@ -80,7 +80,12 @@ class DoublePrecomputedGridTest {
 
         // When
         DoublePrecomputedGrid testGrid = new DoublePrecomputedGrid(
-            mockFactory, extents, minTimestep, maxTimestep, testUnits);
+            mockFactory,
+            extents,
+            minTimestep,
+            maxTimestep,
+            testUnits
+        );
 
         // Then
         assertEquals(true, testGrid.isCompatible(extents, minTimestep, maxTimestep));

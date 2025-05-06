@@ -73,7 +73,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
   public EngineValue getAt(long x, long y, long timestep) {
     int xCut = (int) (x - getMinX());
     int yCut = (int) (y - getMinY());
-    int timestepCut = (int) timestep;
+    int timestepCut = (int) (timestep - getMinTimestep());
     double value = innerValues[timestepCut][yCut][xCut];
     return factory.build(BigDecimal.valueOf(value), units);
   }
