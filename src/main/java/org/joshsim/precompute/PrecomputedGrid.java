@@ -33,9 +33,10 @@ public interface PrecomputedGrid {
    * Determine if a set of extents is compatible with this pre-computed dataset.
    *
    * @param extents The grid space ot check
-   * @param timestep The timestep at which the value is requested.
+   * @param minTimestep The minimum timestep that needs to be available.
+   * @param maxTimestep The maximum timestep that needs to be available.
    * @returns True if compatible and can be used with this grid and false otherwise.
    */
-  boolean isCompatible(PatchBuilderExtents extents, long timestep);
+  boolean isCompatible(PatchBuilderExtents extents, long minTimestep, long maxTimestep);
 
 }
