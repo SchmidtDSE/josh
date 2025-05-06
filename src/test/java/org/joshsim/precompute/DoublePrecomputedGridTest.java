@@ -43,10 +43,10 @@ class DoublePrecomputedGridTest {
     @Test
     void testGetAt() {
         // Given
-        long x = 5;
-        long y = 5;
-        long timestep = 5;
-        double expectedValue = 42.0;
+        long x = 1;
+        long y = 2;
+        long timestep = 3;
+        double expectedValue = 45.0;
         when(mockFactory.build(BigDecimal.valueOf(expectedValue), testUnits))
             .thenReturn(mockEngineValue);
 
