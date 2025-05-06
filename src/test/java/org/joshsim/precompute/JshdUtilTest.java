@@ -118,6 +118,6 @@ class JshdUtilTest {
     byte[] serialized = JshdUtil.serializeToBytes(grid);
     ByteBuffer buffer = ByteBuffer.wrap(serialized);
     DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, buffer.array());
-    assertEquals(loaded.getAt(0, 1, 2).getAsDecimal().longValue(), 5);
+    assertEquals(5, loaded.getAt(0, 1, 2).getAsDecimal().longValue());
   }
 }

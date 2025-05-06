@@ -115,9 +115,9 @@ public class JshdUtil {
     long maxY = target.getMaxY();
     long maxX = target.getMaxX();
 
-    for (long timestep = target.getMinTimestep(); timestep < maxTimestep; timestep++) {
-      for (long y = target.getMinY(); y < maxY; y++) {
-        for (long  x = target.getMinX(); x < maxX; x++) {
+    for (long timestep = target.getMinTimestep(); timestep <= maxTimestep; timestep++) {
+      for (long y = target.getMinY(); y <= maxY; y++) {
+        for (long  x = target.getMinX(); x <= maxX; x++) {
           buffer.putDouble(target.getAt(x, y, timestep).getAsDecimal().doubleValue());
         }
       }
