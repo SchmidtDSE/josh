@@ -65,6 +65,30 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     this.innerValues = innerValues;
   }
 
+  /**
+   * Set a value in the precomputed grid at the given coordinates and timestep.
+   *
+   * @param x The x-coordinate within the grid where the value will be set.
+   * @param y The y-coordinate within the grid where the value will be set.
+   * @param timestep The timestep at which the value will be set.
+   * @param value The double value to be set at the specified location and timestep.
+   */
+  public void setAt(long x, long y, long timestep, double value) {
+    int horizCut = (int) (x - getMinX());
+    int vertCut = (int) (y - getMinY());
+    int timestepCut = (int) (timestep - getMinTimestep());
+
+    boolean horizOutBounds = horizCut < 0 || horizCut >= getWidth();
+    boolean vertOutBounds = vertCut < 0 || vertCut >= getHeight();
+    boolean timeOutBounds = timestepCut < 0 || timestepCut >= getMaxTimestep() - getMinTimestep();
+
+    if (horizOutBounds || vertOutBounds || timeOutBounds) {
+      throw new IllegalArgumentException("Coordinates or timestep out of bounds");
+    }
+
+    innerValues[timestepCut][vertCut][horizCut] = value;
+  }
+
   @Override
   public EngineValue getAt(long x, long y, long timestep) {
     int horizCut = (int) (x - getMinX());
