@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim;
+package org.joshsim.precompute;
 
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchBuilderExtents;

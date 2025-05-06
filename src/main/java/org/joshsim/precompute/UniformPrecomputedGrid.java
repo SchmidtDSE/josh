@@ -6,6 +6,7 @@
 
 package org.joshsim.precompute;
 
+import org.joshsim.PrecomputedGrid;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.type.EngineValue;
@@ -18,7 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * converted to EngineValues at time of access.</p>
  */
 public abstract class UniformPrecomputedGrid<T extends Comparable> implements
-      PrecomputedGrid {
+    PrecomputedGrid {
 
   private final long minX;
   private final long minY;

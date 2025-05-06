@@ -5,8 +5,8 @@
  */
 package org.joshsim.precompute;
 
-import org.joshsim.UniformPrecomputedGrid;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 /**
  * Create a new precomputed grid with double precision.
  */
-class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
+public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
 
   private final EngineValueFactory factory;
   private final String units;
@@ -51,7 +51,7 @@ class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int yCut = (int) (y - getMinY());
     int timestepCut = (int) timestep;
     double value = innerValues[xCut][yCut][timestepCut];
-    return factory.build(BigDecimal.valueOf(value), units);
+    return factory.build(BigDecimal.valueOf(value), new Units(units));
   }
 
 }

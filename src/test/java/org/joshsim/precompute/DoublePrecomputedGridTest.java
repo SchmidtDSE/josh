@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 
 @ExtendWith(MockitoExtension.class)
 class DoublePrecomputedGridTest {
@@ -47,7 +49,7 @@ class DoublePrecomputedGridTest {
         long y = 2;
         long timestep = 3;
         double expectedValue = 45.0;
-        when(mockFactory.build(BigDecimal.valueOf(expectedValue), testUnits))
+        when(mockFactory.build(BigDecimal.valueOf(expectedValue), new Units(testUnits)))
             .thenReturn(mockEngineValue);
 
         // When
