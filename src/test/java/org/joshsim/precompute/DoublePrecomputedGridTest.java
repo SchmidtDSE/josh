@@ -28,7 +28,7 @@ class DoublePrecomputedGridTest {
     private EngineValue mockEngineValue;
 
     private DoublePrecomputedGrid grid;
-    private final String testUnits = "meters";
+    private final Units testUnits = new Units("meters");
     private final long minTimestep = 0;
     private final long maxTimestep = 10;
 
@@ -39,7 +39,17 @@ class DoublePrecomputedGridTest {
         when(mockExtents.getBottomRightX()).thenReturn(BigDecimal.TEN);
         when(mockExtents.getBottomRightY()).thenReturn(BigDecimal.TEN);
 
-        grid = new DoublePrecomputedGrid(mockFactory, mockExtents, minTimestep, maxTimestep, testUnits);
+        double[][][] innerValues = new double[11][11][11];
+        innerValues[3][2][1] = 45.0;
+
+        grid = new DoublePrecomputedGrid(
+            mockFactory,
+            mockExtents,
+            minTimestep,
+            maxTimestep,
+            testUnits,
+            innerValues
+        );
     }
 
     @Test
@@ -49,7 +59,7 @@ class DoublePrecomputedGridTest {
         long y = 2;
         long timestep = 3;
         double expectedValue = 45.0;
-        when(mockFactory.build(BigDecimal.valueOf(expectedValue), new Units(testUnits)))
+        when(mockFactory.build(BigDecimal.valueOf(expectedValue), testUnits))
             .thenReturn(mockEngineValue);
 
         // When

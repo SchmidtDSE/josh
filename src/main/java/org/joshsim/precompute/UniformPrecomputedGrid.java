@@ -6,7 +6,6 @@
 
 package org.joshsim.precompute;
 
-import org.joshsim.PrecomputedGrid;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.type.EngineValue;

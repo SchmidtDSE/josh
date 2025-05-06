@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 
 
@@ -41,7 +42,7 @@ public class JshdUtil {
    * @return A DoublePrecomputedGrid parsed from the given bytes.
    */
   public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
-        String units, byte[] bytes) {
+        Units units, byte[] bytes) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     
     // Read header
@@ -87,7 +88,7 @@ public class JshdUtil {
   public static byte[] serializeToBytes(DoublePrecomputedGrid target) {
     int width = (int)(target.getMaxX() - target.getMinX() + 1);
     int height = (int)(target.getMaxY() - target.getMinY() + 1);
-    int timesteps = (int)(target.getMaxTimestep() - target.getMinTimestep() + 1)
+    int timesteps = (int)(target.getMaxTimestep() - target.getMinTimestep() + 1);
     
     // Calculate buffer size: 6 longs for header + doubles for all grid values
     int bufferSize = (6 * Long.BYTES) + (width * height * timesteps * Double.BYTES);
@@ -102,9 +103,13 @@ public class JshdUtil {
     buffer.putLong(target.getMinTimestep() + timesteps - 1);
     
     // Write grid data
-    for (int timestep = 0; timestep < timesteps; i++) {
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
+    long maxTimestep = target.getMaxTimestep();
+    long maxY = target.getMaxY();
+    long maxX = target.getMaxX();
+
+    for (long timestep = target.getMinTimestep(); timestep < maxTimestep; timestep++) {
+      for (long y = target.getMinY(); y < maxY; y++) {
+        for (long  x = target.getMinX(); x < maxX; x++) {
           buffer.putDouble(target.getAt(x, y, timestep).getAsDecimal().doubleValue());
         }
       }

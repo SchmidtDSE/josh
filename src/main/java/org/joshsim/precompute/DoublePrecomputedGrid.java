@@ -45,6 +45,30 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     innerValues = new double[timestepsCut][height][width];
   }
 
+  /**
+   * Create a new precomputed grid.
+   *
+   * @param engineValueFactory Factory through which to build returned values.
+   * @param extents The extents of the grid to be created.
+   * @param minTimestep The start of the timestep series that should be supported in this grid.
+   * @param maxTimestep The end of the timestep series that should be supported in this grid.
+   * @param units The units that returned EngineValues should be created with.
+   * @param innerValues The values with which to populate the grid.
+   */
+  DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents, long minTimestep,
+        long maxTimestep, Units units, double[][][] innerValues) {
+    super(extents, minTimestep, maxTimestep);
+
+    this.factory = engineValueFactory;
+    this.units = units;
+
+    int width = (int) getWidth();
+    int height = (int) getHeight();
+    int timestepsCut = (int) (getMaxTimestep() - getMinTimestep());
+
+    this.innerValues = innerValues;
+  }
+
   @Override
   public EngineValue getAt(long x, long y, long timestep) {
     int xCut = (int) (x - getMinX());
