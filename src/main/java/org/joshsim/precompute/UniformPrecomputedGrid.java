@@ -83,14 +83,14 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
     long otherMinTimestep = Math.min(timestepA, timestepB);
     long otherMaxTimestep = Math.max(timestepA, timestepB);
 
-    boolean minXOk = otherMinX >= minX;
-    boolean minYOk = otherMinY >= minY;
-    boolean maxXOk = otherMaxX <= maxX;
-    boolean maxYOk = otherMaxY <= maxY;
+    boolean minHorizOk = otherMinX >= minX;
+    boolean minVertOk = otherMinY >= minY;
+    boolean maxHorizOk = otherMaxX <= maxX;
+    boolean maxVertOk = otherMaxY <= maxY;
     boolean minTimestepOk = otherMinTimestep >= minTimestep;
     boolean maxTimestepOk = otherMaxTimestep <= maxTimestep;
 
-    return minXOk && minYOk && maxXOk && maxYOk && minTimestepOk && maxTimestepOk;
+    return minHorizOk && minVertOk && maxHorizOk && maxVertOk && minTimestepOk && maxTimestepOk;
   }
 
   /**

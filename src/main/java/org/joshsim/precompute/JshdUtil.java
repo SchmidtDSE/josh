@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
@@ -53,9 +52,9 @@ public class JshdUtil {
     long minTimestep = buffer.getLong();
     long maxTimestep = buffer.getLong();
     
-    int width = (int)(maxX - minX + 1);
-    int height = (int)(maxY - minY + 1);
-    int timesteps = (int)(maxTimestep - minTimestep + 1);
+    int width = (int) (maxX - minX + 1);
+    int height = (int) (maxY - minY + 1);
+    int timesteps = (int) (maxTimestep - minTimestep + 1);
     
     // Read grid data
     double[][][] output = new double[timesteps][height][width];
@@ -89,14 +88,14 @@ public class JshdUtil {
   /**
    * Convert DoublePrecomputedGrid from the given bytes serialization.
    *
-   * @param bytes The bytes following the jshd format specification from which to parse a
+   * @param target The bytes following the jshd format specification from which to parse a
    *     PrecomputedGrid.
    * @return A DoublePrecomputedGrid parsed from the given bytes.
    */
   public static byte[] serializeToBytes(DoublePrecomputedGrid target) {
-    int width = (int)(target.getMaxX() - target.getMinX() + 1);
-    int height = (int)(target.getMaxY() - target.getMinY() + 1);
-    int timesteps = (int)(target.getMaxTimestep() - target.getMinTimestep() + 1);
+    int width = (int) (target.getMaxX() - target.getMinX() + 1);
+    int height = (int) (target.getMaxY() - target.getMinY() + 1);
+    int timesteps = (int) (target.getMaxTimestep() - target.getMinTimestep() + 1);
     
     // Calculate buffer size: 6 longs for header + doubles for all grid values
     int bufferSize = (6 * Long.BYTES) + (width * height * timesteps * Double.BYTES);
