@@ -23,7 +23,8 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
       BigDecimal patchX,
       BigDecimal patchY,
       GridCrsDefinition gridCrs,
-      ExternalSpatialDimensions sourceDimensions) throws Exception {
+      ExternalSpatialDimensions sourceDimensions
+  ) throws Exception {
 
     // First, transform from grid to CRS coordinates
     BigDecimal[] crsCoords = gridCrs.gridToCrsCoordinates(patchX, patchY);
@@ -80,8 +81,8 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
       BigDecimal x,
       BigDecimal y,
       String sourceCrs,
-      String targetCrs) throws Exception {
-
+      String targetCrs
+  ) throws Exception {
     // Skip transformation if CRS codes are identical
     if (sourceCrs.equals(targetCrs)) {
       return new BigDecimal[] {x, y};
