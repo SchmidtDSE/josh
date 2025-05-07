@@ -18,13 +18,14 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 /**
  * Utility which facilitates conversion between jshd format and PrecomputedGrids.
  *
- * <p>Utility which facilitates conversions involving the jshd binary format. This has the first 64
- * bits for the minimum x coordinate followed by 64 bits for maximum x coordinate, 64 bits for
- * minimum y coordinate, 64 bits for maximum y coordinate, 64 bits for minimum timestep, 64 bits for
- * maximum timestep, and units string to conclude the header section (units limited to
- * 200 characters). After the header containing these longs, the doubles of the grid through time
- * are listed one after another in which each row is written in ordered from low to high column and
- * then each set of rows follows from the minimum to maximum timestep.</p>
+ * <p>Utility which facilitates conversions involving the jshd binary format. This has the first 32
+ * bits are for the version number (currently always 1), 64 bits for the minimum x coordinate
+ * followed by 64 bits for maximum x coordinate, 64 bits for minimum y coordinate, 64 bits for
+ * maximum y coordinate, 64 bits for minimum timestep, 64 bits for maximum timestep, and units
+ * string to conclude the header section (units limited to 200 characters). After the header
+ * containing these longs, the doubles of the grid through time are listed one after another in
+ * which each row is written in ordered from low to high column and then each set of rows follows
+ * from the minimum to maximum timestep.</p>
  */
 public class JshdUtil {
 
