@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -95,7 +94,9 @@ public class ExternalGeoMapper {
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result = new HashMap<>();
 
     // Get appropriate reader for this file
-    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath)) {
+    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
+          dataFilePath
+      )) {
       // Open data source
       reader.open(dataFilePath);
       reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
@@ -184,14 +185,14 @@ public class ExternalGeoMapper {
       int timeStep,
       ExternalSpatialDimensions dimensions,
       PatchSet patchSet) {
-    
+
     var patchStream = useParallelProcessing
         ? patchSet.getPatches().parallelStream()
         : patchSet.getPatches().stream();
-    
+
     return patchStream.flatMap(patch -> {
       ExternalDataReader effectiveReader = sharedReader;
-      
+
       try {
         // Create a thread-local reader only for parallel processing
         ExternalDataReader threadLocalReader = null;
@@ -205,7 +206,7 @@ public class ExternalGeoMapper {
           }
           effectiveReader = threadLocalReader;
         }
-        
+
         try {
           Optional<EngineValue> valueOpt = interpolationStrategy.interpolateValue(
               patch,
@@ -223,7 +224,7 @@ public class ExternalGeoMapper {
             return Stream.of(Map.entry(key, valueOpt.get()));
           }
           return Stream.empty();
-          
+
         } finally {
           // Close the thread-local reader if we created one
           if (threadLocalReader != null) {
@@ -264,9 +265,9 @@ public class ExternalGeoMapper {
     if (crsCode != null) {
       reader.setCrsCode(crsCode);
     }
-    
+
     ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
-    
+
     // Create a stream that will close the reader when it's done
     return streamVariableTimeStepToPatches(
           reader, dataFilePath, variableName, timeStep, dimensions, patchSet)

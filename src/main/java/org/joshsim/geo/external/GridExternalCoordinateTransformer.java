@@ -1,7 +1,16 @@
 package org.joshsim.geo.external;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
+import org.joshsim.geo.geometry.JtsTransformUtility;
+import org.locationtech.jts.geom.Point;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
+
 
 /**
  * Default implementation of ExternalCoordinateTransformer.
@@ -14,7 +23,8 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
       BigDecimal patchX,
       BigDecimal patchY,
       GridCrsDefinition gridCrs,
-      ExternalSpatialDimensions sourceDimensions) throws Exception {
+      ExternalSpatialDimensions sourceDimensions
+  ) throws Exception {
 
     // First, transform from grid to CRS coordinates
     BigDecimal[] crsCoords = gridCrs.gridToCrsCoordinates(patchX, patchY);
@@ -25,7 +35,6 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
     }
 
     // Otherwise, transform between CRSes using a CRS transformation service
-    // This is a placeholder implementation that would need to be completed based on your CRS tools
     return transformCoordinatesBetweenCrs(
         crsCoords[0],
         crsCoords[1],
@@ -72,10 +81,37 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
       BigDecimal x,
       BigDecimal y,
       String sourceCrs,
-      String targetCrs) throws Exception {
+      String targetCrs
+  ) throws Exception {
+    // Skip transformation if CRS codes are identical
+    if (sourceCrs.equals(targetCrs)) {
+      return new BigDecimal[] {x, y};
+    }
 
-    // This would need to be implemented using your CRS transformation tools
-    // For now, return input coordinates as a placeholder
-    return new BigDecimal[] {x, y};
+    try {
+      // Get right-handed coordinate reference systems for both source and target
+      CoordinateReferenceSystem sourceReference = JtsTransformUtility.getRightHandedCrs(sourceCrs);
+      CoordinateReferenceSystem targetReference = JtsTransformUtility.getRightHandedCrs(targetCrs);
+      
+      // Create the transform between the two CRS
+      MathTransform transform = CRS.findOperation(sourceReference, targetReference, null)
+          .getMathTransform();
+      
+      // Create a JTS point from the input coordinates
+      Point sourcePoint = JtsTransformUtility.createJtsPoint(x.doubleValue(), y.doubleValue());
+      
+      // Transform the point
+      Point transformedPoint = (Point) JtsTransformUtility.transform(sourcePoint, transform);
+      
+      // Convert back to BigDecimal with reasonable precision (6 decimal places)
+      return new BigDecimal[] {
+          new BigDecimal(transformedPoint.getX()).setScale(6, RoundingMode.HALF_UP),
+          new BigDecimal(transformedPoint.getY()).setScale(6, RoundingMode.HALF_UP)
+      };
+    } catch (FactoryException e) {
+      throw new Exception("Failed to create CRS transformation: " + e.getMessage(), e);
+    } catch (TransformException e) {
+      throw new Exception("Failed to transform coordinates: " + e.getMessage(), e);
+    }
   }
 }
