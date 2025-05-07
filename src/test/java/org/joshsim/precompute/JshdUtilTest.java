@@ -1,6 +1,7 @@
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -126,7 +127,7 @@ class JshdUtilTest {
     }
 
     // When
-    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, buffer.array());
+    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, buffer.array());
 
     // Then
     assertEquals(0L, loaded.getMinX());
@@ -141,7 +142,7 @@ class JshdUtilTest {
   void testLoadBody() {
     byte[] serialized = JshdUtil.serializeToBytes(grid);
     ByteBuffer buffer = ByteBuffer.wrap(serialized);
-    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, buffer.array());
+    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, buffer.array());
     assertEquals(5, loaded.getAt(0, 1, 2).getAsDecimal().longValue());
   }
 }

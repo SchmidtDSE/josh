@@ -122,7 +122,6 @@ public class JshdUtil {
     buffer.putLong(target.getMinTimestep() + timesteps - 1);
 
     // Write units
-    byte[] unitsBytes = target.getUnits().toString().getBytes();
     buffer.putInt(unitsBytes.length);
     buffer.put(unitsBytes);
 
