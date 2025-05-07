@@ -113,6 +113,20 @@ public interface EngineBridge {
   long getPriorTimestep();
 
   /**
+   * Determine at what timestep the simulation starts.
+   *
+   * @return User defined timestep where the simulation starts.
+   */
+  long getStartTimestep();
+
+  /**
+   * Determine at what timestep the simulation ends.
+   *
+   * @return User defined timestep where the simulation ends.
+   */
+  long getEndTimestep();
+
+  /**
    * Get the number of timesteps completed.
    *
    * @return Integer count of full timesteps which have been completed in their entirety.

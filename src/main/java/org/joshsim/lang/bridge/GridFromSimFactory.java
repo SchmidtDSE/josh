@@ -107,7 +107,7 @@ public class GridFromSimFactory {
    * @param endStr the ending coordinate string in format "X latitude, Y longitude"
    * @return PatchBuilderExtents object containing the parsed coordinates
    */
-  private PatchBuilderExtents buildExtents(String startStr, String endStr) {
+  public PatchBuilderExtents buildExtents(String startStr, String endStr) {
     PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
     addExtents(builder, startStr, true);
     addExtents(builder, endStr, false);

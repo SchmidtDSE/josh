@@ -1,0 +1,71 @@
+package org.joshsim.precompute;
+
+import java.util.Map;
+import java.util.stream.Stream;
+import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
+
+
+/**
+ * Utility which converts from streams to a precomputed grid.
+ *
+ * <p>Utility which converts from a stream of geo keys and corresponding engine values to a
+ * dense precomputed grid once per timestep.</p>
+ */
+public class StreamToPrecomputedGridUtil {
+
+  /**
+   * Convert a set of streams of geo keys and values to a precomputed grid.
+   *
+   * @param engineValueFactory The factory which should be used in creating values returned.
+   * @param streamGetter The stream getter which will provide the streams for each timestep.
+   * @param extents The extents of the grid to be created.
+   * @param minTimestep The start of the timestep series that should be supported in this grid.
+   * @param maxTimestep The end of the timestep series that should be supported in this grid.
+   * @param units The units that returned EngineValues should be created with.
+   * @return The precomputed grid created from the streams.
+   */
+  public static PrecomputedGrid streamToGrid(EngineValueFactory engineValueFactory,
+        StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
+        long maxTimestep, Units units) {
+
+    DoublePrecomputedGrid grid = new DoublePrecomputedGrid(
+        engineValueFactory,
+        extents,
+        minTimestep,
+        maxTimestep,
+        null
+    );
+
+    for (long timestep = minTimestep; timestep < maxTimestep; timestep++) {
+      Stream<Map.Entry<GeoKey, EngineValue>> values = streamGetter.getForTimestep(timestep);
+      final long timestepRealized = timestep;
+      values.forEach(entry -> grid.setAt(
+          entry.getKey().getCenterX().longValue(),
+          entry.getKey().getCenterY().longValue(),
+          timestepRealized,
+          entry.getValue().getAsDecimal().doubleValue()
+      ));
+    }
+
+    return grid;
+  }
+
+  /**
+   * Strategy for getting a stream of geo keys and values for a given timestep.
+   */
+  public interface StreamGetter {
+
+    /**
+     * Get a stream of geo keys and values for a given timestep.
+     *
+     * @param timestep The timestep for which to get the stream.
+     * @return The stream of geo keys and values for the requested timestep.
+     */
+    Stream<Map.Entry<GeoKey, EngineValue>> getForTimestep(long timestep);
+
+  }
+}

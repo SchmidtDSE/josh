@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 import org.joshsim.engine.geometry.EngineGeometry;
 
@@ -25,6 +26,24 @@ public class GeoKey {
     this.entity = entity;
   }
 
+  /**
+   * Get the horizontal center of this position.
+   *
+   * @returns The x or horizontal position as reported in the space in which this key was made.
+   */
+  public BigDecimal getCenterX() {
+    return entity.getGeometry().orElseThrow().getCenterX();
+  }
+
+  /**
+   * Get the vertical center of this position.
+   *
+   * @returns The y or vertical position as reported in the space in which this key was made.
+   */
+  public BigDecimal getCenterY() {
+    return entity.getGeometry().orElseThrow().getCenterY();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -34,11 +53,11 @@ public class GeoKey {
       return false;
     }
     GeoKey other = (GeoKey) o;
-    
+
     // Compare entities by their geometry
     EngineGeometry thisGeom = entity.getGeometry().orElse(null);
     EngineGeometry otherGeom = other.entity.getGeometry().orElse(null);
-    
+
     if (thisGeom == null || otherGeom == null) {
       return false;
     }
