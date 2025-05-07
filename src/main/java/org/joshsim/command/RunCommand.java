@@ -30,10 +30,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 
-@Command(
-  name = "run",
-  description = "Run a simulation file"
-)
 /**
  * Command handler for executing Josh simulations.
  * 
@@ -41,6 +37,10 @@ import picocli.CommandLine.Parameters;
  * Supports configuration of the coordinate reference system and parallel/serial patch processing.
  * Can optionally save results to Minio storage.</p>
  */
+@Command(
+    name = "run",
+    description = "Run a simulation file"
+)
 public class RunCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
@@ -61,9 +61,9 @@ public class RunCommand implements Callable<Integer> {
   private MinioOptions minioOptions = new MinioOptions();
 
   @Option(
-    names = "--serial-patches",
-    description = "Run patches in serial instead of parallel",
-    defaultValue = "false"
+      names = "--serial-patches",
+      description = "Run patches in serial instead of parallel",
+      defaultValue = "false"
   )
   private boolean serialPatches;
 
@@ -83,9 +83,9 @@ public class RunCommand implements Callable<Integer> {
     }
 
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-      geometryFactory,
-      file,
-      output
+        geometryFactory,
+        file,
+        output
     );
 
     if (initResult.getFailureStep().isPresent()) {
@@ -107,11 +107,11 @@ public class RunCommand implements Callable<Integer> {
     }
 
     JoshSimFacade.runSimulation(
-      geometryFactory,
-      program,
-      simulation,
-      (step) -> output.printInfo(String.format("Completed step %d.", step)),
-      serialPatches
+        geometryFactory,
+        program,
+        simulation,
+        (step) -> output.printInfo(String.format("Completed step %d.", step)),
+        serialPatches
     );
 
     if (minioOptions.isMinioOutput()) {

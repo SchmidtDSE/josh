@@ -28,19 +28,31 @@ import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 
 
-@Command(
-  name = "joshsim",
-  mixinStandardHelpOptions = true,
-  version = "1.0",
-  description = "JoshSim command line interface",
-  subcommands = {
-    ValidateCommand.class,
-    RunCommand.class,
-    ServerCommand.class
-  }
+/**
+ * Entry point for the JoshSim command line.
+ *
+ * <p>Entry point for the JoshSim command line application, offering various operations like
+ * validation, execution, and management of Josh simulations. It facilitates local file interactions
+ * as well as integration with Minio cloud storage.</p>
+ *
+ * @command joshsim
+ * @mixinStandardHelpOptions true
+ * @version 1.0
+ * @description "JoshSim command line interface"
+ * @subcommands { ValidateCommand, RunCommand, ServerCommand }
+ */
+@CommandLine.Command(
+    name = "joshsim",
+    mixinStandardHelpOptions = true,
+    version = "1.0",
+    description = "JoshSim command line interface",
+    subcommands = {
+        ValidateCommand.class,
+        RunCommand.class,
+        ServerCommand.class
+    }
 )
 public class JoshSimCommander {
 
@@ -70,6 +82,7 @@ public class JoshSimCommander {
     private final Optional<CommanderStepEnum> failureStep;
     private final Optional<JoshProgram> program;
 
+    
     public ProgramInitResult(CommanderStepEnum failureStep) {
       this.failureStep = Optional.of(failureStep);
       program = Optional.empty();

@@ -18,10 +18,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 
-@Command(
-  name = "server",
-  description = "Run the JoshSim server locally"
-)
 /**
  * Command handler for running the local JoshSim web server.
  * 
@@ -29,21 +25,25 @@ import picocli.CommandLine.Option;
  * a browser-based interface for Josh simulations. Supports configuration of worker threads,
  * HTTP/2 protocol, and parallel/serial patch processing modes.</p>
  */
+@Command(
+    name = "server",
+    description = "Run the JoshSim server locally"
+)
 public class ServerCommand implements Callable<Integer> {
   @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
   private int port;
 
   @Option(
-    names = "--concurrent-workers",
-    description = "Number of concurrent workers allowed",
-    defaultValue = "0"
+      names = "--concurrent-workers",
+      description = "Number of concurrent workers allowed",
+      defaultValue = "0"
   )
   private int workers;
 
   @Option(
-    names = "--worker-url",
-    description = "URL for worker requests",
-    defaultValue = "http://0.0.0.0:8085/runReplicate"
+      names = "--worker-url",
+      description = "URL for worker requests",
+      defaultValue = "http://0.0.0.0:8085/runReplicate"
   )
   private String workerUrl;
 
@@ -51,9 +51,9 @@ public class ServerCommand implements Callable<Integer> {
   private boolean useHttp2;
 
   @Option(
-    names = "--serial-patches",
-    description = "Run patches in serial instead of parallel",
-    defaultValue = "false"
+      names = "--serial-patches",
+      description = "Run patches in serial instead of parallel",
+      defaultValue = "false"
   )
   private boolean serialPatches;
 
@@ -67,18 +67,18 @@ public class ServerCommand implements Callable<Integer> {
       }
 
       JoshSimServer server = new JoshSimServer(
-        new EnvCloudApiDataLayer(),
-        useHttp2,
-        workerUrl.replaceAll("\"", "").trim(),
-        port,
-        workers,
-        serialPatches
+          new EnvCloudApiDataLayer(),
+          useHttp2,
+          workerUrl.replaceAll("\"", "").trim(),
+          port,
+          workers,
+          serialPatches
       );
 
       server.start();
       System.out.println("Server started on port " + port);
       System.out.println(
-        "Open your browser at http://0.0.0.0:" + port + "/ to run simulations"
+          "Open your browser at http://0.0.0.0:" + port + "/ to run simulations"
       );
 
       Thread.currentThread().join();

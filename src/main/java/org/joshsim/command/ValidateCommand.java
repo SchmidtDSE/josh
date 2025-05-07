@@ -20,10 +20,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@Command(
-  name = "validate",
-  description = "Validate a simulation file"
-)
+
 /**
  * Command handler for validating Josh simulation files.
  * 
@@ -31,6 +28,10 @@ import picocli.CommandLine.Parameters;
  * and other validation issues. Can optionally save validated files to Minio storage for further
  * processing or deployment.</p>
  */
+@Command(
+    name = "validate",
+    description = "Validate a simulation file"
+)
 public class ValidateCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
@@ -47,9 +48,9 @@ public class ValidateCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-      new GridGeometryFactory(),
-      file,
-      output
+        new GridGeometryFactory(),
+        file,
+        output
     );
 
     if (initResult.getFailureStep().isPresent()) {
