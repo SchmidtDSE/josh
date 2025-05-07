@@ -2,7 +2,6 @@ package org.joshsim.geo.external;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.geo.geometry.JtsTransformUtility;
