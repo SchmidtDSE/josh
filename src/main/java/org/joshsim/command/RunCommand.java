@@ -1,4 +1,14 @@
 
+/**
+ * Command line interface handler for running Josh simulations.
+ *
+ * <p>This class implements the 'run' command which executes a specified simulation from a Josh
+ * script file. It supports both grid-based and earth-based coordinate reference systems, and can
+ * process patches either serially or in parallel.</p>
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.command;
 
 import java.io.File;
@@ -24,6 +34,13 @@ import picocli.CommandLine.Parameters;
   name = "run",
   description = "Run a simulation file"
 )
+/**
+ * Command handler for executing Josh simulations.
+ * 
+ * <p>Processes command line arguments to run a specified simulation from a Josh script file.
+ * Supports configuration of the coordinate reference system and parallel/serial patch processing.
+ * Can optionally save results to Minio storage.</p>
+ */
 public class RunCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
