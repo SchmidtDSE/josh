@@ -1,4 +1,14 @@
 
+/**
+ * Command line interface handler for running the JoshSim local web server.
+ *
+ * <p>This class implements the 'server' command which starts a local web server to provide
+ * a browser-based interface for running Josh simulations. It supports configuration of worker
+ * threads, HTTP/2, and patch processing modes.</p>
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.command;
 
 import java.util.concurrent.Callable;
@@ -12,6 +22,13 @@ import picocli.CommandLine.Option;
   name = "server",
   description = "Run the JoshSim server locally"
 )
+/**
+ * Command handler for running the local JoshSim web server.
+ * 
+ * <p>Processes command line arguments to configure and start a local web server that provides
+ * a browser-based interface for Josh simulations. Supports configuration of worker threads,
+ * HTTP/2 protocol, and parallel/serial patch processing modes.</p>
+ */
 public class ServerCommand implements Callable<Integer> {
   @Option(names = "--port", description = "Port number for the server", defaultValue = "8085")
   private int port;
