@@ -45,3 +45,18 @@ Validation failed (exit code: 3)
 
 - A future iteration of this approach could probably use the gradle extension within VSCode to validate `.josh` files, which may be a bit cleaner - this works for now.
 
+##### Preprocess Scratch
+
+```bash
+java -jar build/libs/joshsim-fat.jar preprocess \
+    examples/simulations/simple_external.josh \
+    TestSimpleSimulationExternal \
+    tmp/maxtemp_riverside_annual.nc \
+    temperature \
+    celsius \
+    test_riverside_tiny.jshd \
+    --crs "EPSG:4326" \
+    --x-coord "lon" \
+    --y-coord "lat" \
+    --time-dim "calendar_year"
+```
