@@ -99,6 +99,7 @@ class JshdUtilTest {
     ByteBuffer buffer = ByteBuffer.wrap(serialized);
 
     // Then
+    assertEquals(1, buffer.getInt()); // version
     assertEquals(0L, buffer.getLong()); // minX
     assertEquals(2L, buffer.getLong()); // maxX
     assertEquals(0L, buffer.getLong()); // minY
