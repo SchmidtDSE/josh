@@ -41,6 +41,8 @@ public class JshdUtil {
         byte[] bytes) {
 
     DoublePrecomputedGridBuilder gridBuilder = new DoublePrecomputedGridBuilder();
+    gridBuilder.setEngineValueFactory(engineValueFactory);
+    
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
     // Read header
@@ -50,20 +52,13 @@ public class JshdUtil {
     long maxY = buffer.getLong();
     long minTimestep = buffer.getLong();
     long maxTimestep = buffer.getLong();
-
-    // Read units string length (max 200 chars)
-    int unitsLength = buffer.getInt();
-    if (unitsLength > 200) {
-      throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
-    }
-    byte[] unitsBytes = new byte[unitsLength];
-    buffer.get(unitsBytes);
-    String unitsStr = new String(unitsBytes);
-    Units units = new Units(unitsStr);
+    gridBuilder.setTimestepRange(minTimestep, maxTimestep);
 
     int width = (int) (maxX - minX + 1);
     int height = (int) (maxY - minY + 1);
     int timesteps = (int) (maxTimestep - minTimestep + 1);
+
+    readUnitsStr(buffer, gridBuilder);
 
     // Read grid data
     double[][][] output = new double[timesteps][height][width];
@@ -76,6 +71,9 @@ public class JshdUtil {
       }
     }
 
+    gridBuilder.setInnerValues(output);
+
+    // Create extents
     PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
     extentsBuilder.setTopLeftX(BigDecimal.valueOf(minX));
     extentsBuilder.setTopLeftY(BigDecimal.valueOf(minY));
@@ -83,15 +81,10 @@ public class JshdUtil {
     extentsBuilder.setBottomRightY(BigDecimal.valueOf(maxY));
 
     PatchBuilderExtents extents = extentsBuilder.build();
+    gridBuilder.setExtents(extents);
 
-    return new DoublePrecomputedGrid(
-        engineValueFactory,
-        extents,
-        minTimestep,
-        maxTimestep,
-        units,
-        output
-    );
+    // Build
+    return gridBuilder.build();
   }
 
   /**
@@ -111,8 +104,12 @@ public class JshdUtil {
       throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
     }
 
-    // Calculate buffer size: 6 longs for header + int for units length + units string + doubles for all grid values
-    int bufferSize = (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length + (width * height * timesteps * Double.BYTES);
+    // Calculate buffer size: 6 longs for header + int for units length + units string + doubles
+    // for all grid values
+    int headerNoUnitsSize = 6 * Long.BYTES;
+    int unitsSize = Integer.BYTES + unitsBytes.length;
+    int bodySize = width * height * timesteps * Double.BYTES;
+    int bufferSize = headerNoUnitsSize + unitsSize + bodySize;
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 
     // Write header
@@ -141,5 +138,17 @@ public class JshdUtil {
     }
 
     return buffer.array();
+  }
+
+  private static void readUnitsStr(ByteBuffer buffer, DoublePrecomputedGridBuilder builder) {
+    int unitsLength = buffer.getInt();
+    if (unitsLength > 200) {
+      throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
+    }
+    byte[] unitsBytes = new byte[unitsLength];
+    buffer.get(unitsBytes);
+    String unitsStr = new String(unitsBytes);
+    Units units = new Units(unitsStr);
+    builder.setUnits(units);
   }
 }

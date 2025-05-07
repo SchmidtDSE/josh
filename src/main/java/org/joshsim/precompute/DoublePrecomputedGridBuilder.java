@@ -1,5 +1,7 @@
 /**
- * Structure to help instantiate a DoublePrecomputedGrid
+ * Structure to help instantiate a DoublePrecomputedGrid.
+ *
+ * @license BSD-3-Clause
  */
 
 package org.joshsim.precompute;

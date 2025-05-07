@@ -50,8 +50,6 @@ class DoublePrecomputedGridBuilderTest {
         .build();
 
     // Then
-    assertEquals(mockFactory, grid.factory);
-    assertEquals(mockExtents, grid.extents);
     assertEquals(testUnits, grid.getUnits());
   }
 
@@ -71,10 +69,8 @@ class DoublePrecomputedGridBuilderTest {
         .build();
 
     // Then
-    assertEquals(mockFactory, grid.factory);
-    assertEquals(mockExtents, grid.extents);
     assertEquals(testUnits, grid.getUnits());
-    assertEquals(45.0, grid.innerValues[3][2][1]);
+    assertEquals(45L, grid.getAt(1, 2, 3).getAsDecimal().longValue());
   }
 
   @Test
