@@ -39,6 +39,8 @@ public class JshdUtil {
    */
   public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
         byte[] bytes) {
+
+    DoublePrecomputedGridBuilder gridBuilder = new DoublePrecomputedGridBuilder();
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
     // Read header

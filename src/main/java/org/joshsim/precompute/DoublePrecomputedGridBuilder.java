@@ -1,3 +1,6 @@
+/**
+ * Structure to help instantiate a DoublePrecomputedGrid
+ */
 
 package org.joshsim.precompute;
 
@@ -7,7 +10,6 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 
 /**
  * Builder for DoublePrecomputedGrid.
- * Creates and configures DoublePrecomputedGrid instances.
  */
 public class DoublePrecomputedGridBuilder {
   private EngineValueFactory engineValueFactory;
@@ -98,14 +100,16 @@ public class DoublePrecomputedGridBuilder {
           minTimestep,
           maxTimestep,
           units,
-          innerValues);
+          innerValues
+      );
     } else {
       return new DoublePrecomputedGrid(
           engineValueFactory,
           extents,
           minTimestep,
           maxTimestep,
-          units);
+          units
+      );
     }
   }
 }
