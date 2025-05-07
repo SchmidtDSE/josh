@@ -8,6 +8,7 @@ package org.joshsim.precompute;
 
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -38,5 +39,12 @@ public interface PrecomputedGrid {
    * @returns True if compatible and can be used with this grid and false otherwise.
    */
   boolean isCompatible(PatchBuilderExtents extents, long minTimestep, long maxTimestep);
+
+  /**
+   * Get the units that are used in generating values from this grid.
+   *
+   * @returns Units that are reported for values in the grid.
+   */
+  Units getUnits();
 
 }

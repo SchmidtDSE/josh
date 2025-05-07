@@ -20,11 +20,11 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
  *
  * <p>Utility which facilitates conversions involving the jshd binary format. This has the first 64
  * bits for the minimum x coordinate followed by 64 bits for maximum x coordinate, 64 bits for
- * minimum y coordinate, 64 bits for maximum y coordinate, 64 bits for minimum timestep, and 64 bits
- * for maximum timestep to conclude the header section. After the header containing these longs, the
- * doubles of the grid through time are listed one after another in which each row is written in
- * ordered from low to high column and then each set of rows follows from the minimum to maximum
- * timestep.</p>
+ * minimum y coordinate, 64 bits for maximum y coordinate, 64 bits for minimum timestep, 64 bits for
+ * maximum timestep, and units string to conclude the header section (units limited to
+ * 200 characters). After the header containing these longs, the doubles of the grid through time
+ * are listed one after another in which each row is written in ordered from low to high column and
+ * then each set of rows follows from the minimum to maximum timestep.</p>
  */
 public class JshdUtil {
 
@@ -33,13 +33,12 @@ public class JshdUtil {
    *
    * @param engineValueFactory The factory which should be used in creating values returned from the
    *     grid.
-   * @param units The units with which to report values returned from the resulting grid.
    * @param bytes The bytes following the jshd format specification from which to parse a
    *     PrecomputedGrid.
    * @return A DoublePrecomputedGrid parsed from the given bytes.
    */
   public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
-        Units units, byte[] bytes) {
+        byte[] bytes) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
     // Read header
