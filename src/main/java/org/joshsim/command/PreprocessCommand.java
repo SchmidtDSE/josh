@@ -1,3 +1,8 @@
+/**
+ * Command for preprocessing data to jshd files.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.command;
 
@@ -71,10 +76,7 @@ public class PreprocessCommand implements Callable<Integer> {
   @Parameters(index = "3", description = "Name of the variable to be read or band number")
   private String variable;
 
-  @Parameters(index = "4", description = "Units of the data to use within simulations")
-  private String unitsStr;
-
-  @Parameters(index = "5", description = "Path where preprocessed jshd file should be written")
+  @Parameters(index = "4", description = "Path where preprocessed jshd file should be written")
   private File outputFile;
 
   @Option(
@@ -177,7 +179,7 @@ public class PreprocessCommand implements Callable<Integer> {
         gridFactory.buildExtents(startStr, endStr),
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
-        new Units(unitsStr)
+        Units.COUNT
     );
 
     // Serialize to binary file
