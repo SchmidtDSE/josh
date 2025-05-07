@@ -1,4 +1,13 @@
 
+/**
+ * Command line interface handler for validating Josh simulation files.
+ *
+ * <p>This class implements the 'validate' command which checks Josh script files for syntax
+ * errors and other validation issues. It can optionally save validated files to Minio storage.</p>
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.command;
 
 import java.io.File;
@@ -15,6 +24,13 @@ import picocli.CommandLine.Parameters;
   name = "validate",
   description = "Validate a simulation file"
 )
+/**
+ * Command handler for validating Josh simulation files.
+ * 
+ * <p>Processes command line arguments to validate Josh script files, checking for syntax errors
+ * and other validation issues. Can optionally save validated files to Minio storage for further
+ * processing or deployment.</p>
+ */
 public class ValidateCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
