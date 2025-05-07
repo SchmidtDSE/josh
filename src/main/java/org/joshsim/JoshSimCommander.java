@@ -82,26 +82,49 @@ public class JoshSimCommander {
     private final Optional<CommanderStepEnum> failureStep;
     private final Optional<JoshProgram> program;
 
-    
+
+    /**
+     * Constructor for ProgramInitResult when initialization fails.
+     * @param failureStep The step where the initialization failed.
+     */
     public ProgramInitResult(CommanderStepEnum failureStep) {
       this.failureStep = Optional.of(failureStep);
       program = Optional.empty();
     }
 
+    /**
+     * Constructor for ProgramInitResult when initialization is successful.
+     * @param program The successfully initialized JoshProgram.
+     */
     public ProgramInitResult(JoshProgram program) {
       this.program = Optional.of(program);
       failureStep = Optional.empty();
     }
 
+    /**
+     * Returns the step where initialization failed, if any.
+     * @return An Optional containing the failure step, or Optional.empty() if initialization was successful.
+     */
     public Optional<CommanderStepEnum> getFailureStep() {
       return failureStep;
     }
 
+    /**
+     * Returns the initialized JoshProgram, if any.
+     * @return An Optional containing the JoshProgram, or Optional.empty() if initialization failed.
+     */
     public Optional<JoshProgram> getProgram() {
       return program;
     }
   }
 
+  /**
+   * Retrieves and initializes a Josh program from a file.
+   * @param geometryFactory The factory for creating geometry objects.
+   * @param file The file containing the Josh program code.
+   * @param output Options for handling output messages.
+   * @return A ProgramInitResult containing either the initialized JoshProgram or information about the failure.
+   */
   public static ProgramInitResult getJoshProgram(
     EngineGeometryFactory geometryFactory,
     File file,
@@ -144,6 +167,15 @@ public class JoshSimCommander {
     return new ProgramInitResult(program);
   }
 
+  /**
+   * Saves a file to Minio storage.
+   *
+   * @param subDirectories The subdirectory path in the Minio bucket
+   * @param file The file to upload
+   * @param minioOptions Configuration options for Minio connection
+   * @param output Options for handling output messages
+   * @return true if the upload was successful, false otherwise
+   */
   public static boolean saveToMinio(
     String subDirectories,
     File file,
@@ -185,6 +217,11 @@ public class JoshSimCommander {
     }
   }
 
+  /**
+   * Main entry point for the JoshSim command line interface.
+   *
+   * @param args Command line arguments passed to the program
+   */
   public static void main(String[] args) {
     int exitCode = new CommandLine(new JoshSimCommander()).execute(args);
     System.exit(exitCode);
