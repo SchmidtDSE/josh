@@ -9,8 +9,6 @@ package org.joshsim.precompute;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
@@ -43,7 +41,7 @@ public class JshdUtil {
   public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
         Units units, byte[] bytes) {
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
-    
+
     // Read header
     long minX = buffer.getLong();
     long maxX = buffer.getLong();
@@ -51,11 +49,11 @@ public class JshdUtil {
     long maxY = buffer.getLong();
     long minTimestep = buffer.getLong();
     long maxTimestep = buffer.getLong();
-    
+
     int width = (int) (maxX - minX + 1);
     int height = (int) (maxY - minY + 1);
     int timesteps = (int) (maxTimestep - minTimestep + 1);
-    
+
     // Read grid data
     double[][][] output = new double[timesteps][height][width];
     for (int timestep = 0; timestep < timesteps; timestep++) {
@@ -74,7 +72,7 @@ public class JshdUtil {
     extentsBuilder.setBottomRightY(BigDecimal.valueOf(maxY));
 
     PatchBuilderExtents extents = extentsBuilder.build();
-    
+
     return new DoublePrecomputedGrid(
         engineValueFactory,
         extents,
@@ -96,11 +94,11 @@ public class JshdUtil {
     int width = (int) (target.getMaxX() - target.getMinX() + 1);
     int height = (int) (target.getMaxY() - target.getMinY() + 1);
     int timesteps = (int) (target.getMaxTimestep() - target.getMinTimestep() + 1);
-    
+
     // Calculate buffer size: 6 longs for header + doubles for all grid values
     int bufferSize = (6 * Long.BYTES) + (width * height * timesteps * Double.BYTES);
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-    
+
     // Write header
     buffer.putLong(target.getMinX());
     buffer.putLong(target.getMaxX());
@@ -108,7 +106,7 @@ public class JshdUtil {
     buffer.putLong(target.getMaxY());
     buffer.putLong(target.getMinTimestep());
     buffer.putLong(target.getMinTimestep() + timesteps - 1);
-    
+
     // Write grid data
     long maxTimestep = target.getMaxTimestep();
     long maxY = target.getMaxY();
@@ -121,7 +119,7 @@ public class JshdUtil {
         }
       }
     }
-    
+
     return buffer.array();
   }
 }

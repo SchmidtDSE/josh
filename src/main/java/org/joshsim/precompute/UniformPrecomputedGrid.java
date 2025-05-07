@@ -39,12 +39,12 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
   public UniformPrecomputedGrid(PatchBuilderExtents extents, long minTimestep, long maxTimestep) {
     this.minTimestep = Math.min(minTimestep, maxTimestep);
     this.maxTimestep = Math.max(minTimestep, maxTimestep);
-    
+
     long leftX = extents.getTopLeftX().longValue();
     long rightX = extents.getBottomRightX().longValue();
     long topY = extents.getTopLeftY().longValue();
     long bottomY = extents.getBottomRightY().longValue();
-    
+
     minX = Math.min(leftX, rightX);
     minY = Math.min(topY, bottomY);
     maxX = Math.max(leftX, rightX);
@@ -61,7 +61,7 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
    * @param timestep The timestep count at which to get the value.
    */
   public abstract EngineValue getAt(long x, long y, long timestep);
-  
+
   @Override
   public EngineValue getAt(GeoKey location, long timestep) {
     long x = location.getCenterX().longValue();
@@ -164,5 +164,5 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
   public long getMaxTimestep() {
     return maxTimestep;
   }
-  
+
 }

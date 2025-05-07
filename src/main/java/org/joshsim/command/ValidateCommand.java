@@ -1,15 +1,10 @@
 
 package org.joshsim.command;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.UploadObjectArgs;
 import java.io.File;
 import java.util.concurrent.Callable;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
@@ -17,51 +12,51 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @Command(
-    name = "validate",
-    description = "Validate a simulation file"
+  name = "validate",
+  description = "Validate a simulation file"
 )
 public class ValidateCommand implements Callable<Integer> {
-    private static final int MINIO_ERROR_CODE = 100;
-    private static final int UNKNOWN_ERROR_CODE = 404;
+  private static final int MINIO_ERROR_CODE = 100;
+  private static final int UNKNOWN_ERROR_CODE = 404;
 
-    @Parameters(index = "0", description = "Path to file to validate")
-    private File file;
+  @Parameters(index = "0", description = "Path to file to validate")
+  private File file;
 
-    @Mixin
-    private OutputOptions output = new OutputOptions();
+  @Mixin
+  private OutputOptions output = new OutputOptions();
 
-    @Mixin
-    private MinioOptions minioOptions = new MinioOptions();
+  @Mixin
+  private MinioOptions minioOptions = new MinioOptions();
 
-    @Override
-    public Integer call() {
-        JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-            new GridGeometryFactory(),
-            file,
-            output
-        );
+  @Override
+  public Integer call() {
+    JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+      new GridGeometryFactory(),
+      file,
+      output
+    );
 
-        if (initResult.getFailureStep().isPresent()) {
-            JoshSimCommander.CommanderStepEnum failStep = initResult.getFailureStep().get();
-            return switch (failStep) {
-                case LOAD -> 1;
-                case READ -> 2;
-                case PARSE -> 3;
-                default -> UNKNOWN_ERROR_CODE;
-            };
-        }
-
-        output.printInfo("Validated Josh code at " + file);
-
-        if (minioOptions.isMinioOutput()) {
-            return saveToMinio("validate", file);
-        }
-
-        return 0;
+    if (initResult.getFailureStep().isPresent()) {
+      JoshSimCommander.CommanderStepEnum failStep = initResult.getFailureStep().get();
+      return switch (failStep) {
+        case LOAD -> 1;
+        case READ -> 2;
+        case PARSE -> 3;
+        default -> UNKNOWN_ERROR_CODE;
+      };
     }
 
-    private Integer saveToMinio(String subDirectories, File file) {
-        boolean successful = JoshSimCommander.saveToMinio(subDirectories, file, minioOptions, output);
-        return successful ? 0 : MINIO_ERROR_CODE;
+    output.printInfo("Validated Josh code at " + file);
+
+    if (minioOptions.isMinioOutput()) {
+      return saveToMinio("validate", file);
     }
+
+    return 0;
+  }
+
+  private Integer saveToMinio(String subDirectories, File file) {
+    boolean successful = JoshSimCommander.saveToMinio(subDirectories, file, minioOptions, output);
+    return successful ? 0 : MINIO_ERROR_CODE;
+  }
 }

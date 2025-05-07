@@ -53,11 +53,11 @@ public class GeoKey {
       return false;
     }
     GeoKey other = (GeoKey) o;
-    
+
     // Compare entities by their geometry
     EngineGeometry thisGeom = entity.getGeometry().orElse(null);
     EngineGeometry otherGeom = other.entity.getGeometry().orElse(null);
-    
+
     if (thisGeom == null || otherGeom == null) {
       return false;
     }

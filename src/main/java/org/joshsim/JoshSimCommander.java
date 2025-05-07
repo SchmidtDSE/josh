@@ -1,14 +1,7 @@
 /**
  * Entrypoint for the JoshSim command line interface application.
  *
- * <div>
- * Entrypoint into the JoshSim engine and language avialable via the command line. Commands include:
- *
- * <ul>
- *  <li><strong>validate</strong>: Check if a .josh file is valid and parsable.</li>
- * </ul>
- *
- * </div>
+ * @license BSD-3-Clause
  */
 
 package org.joshsim;
@@ -35,138 +28,138 @@ import picocli.CommandLine.Command;
 
 
 @Command(
-    name = "joshsim",
-    mixinStandardHelpOptions = true,
-    version = "1.0",
-    description = "JoshSim command line interface",
-    subcommands = {
-        ValidateCommand.class,
-        RunCommand.class,
-        ServerCommand.class
-    }
+  name = "joshsim",
+  mixinStandardHelpOptions = true,
+  version = "1.0",
+  description = "JoshSim command line interface",
+  subcommands = {
+    ValidateCommand.class,
+    RunCommand.class,
+    ServerCommand.class
+  }
 )
 public class JoshSimCommander {
 
-    private static final int MINIO_ERROR_CODE = 100;
-    private static final int UNKNOWN_ERROR_CODE = 404;
+  private static final int MINIO_ERROR_CODE = 100;
+  private static final int UNKNOWN_ERROR_CODE = 404;
 
-    public static enum CommanderStepEnum {
-        LOAD,
-        READ,
-        PARSE,
-        INTERPRET,
-        RUN,
-        SUCCESS
+  public static enum CommanderStepEnum {
+    LOAD,
+    READ,
+    PARSE,
+    INTERPRET,
+    RUN,
+    SUCCESS
+  }
+
+  public static class ProgramInitResult {
+    private final Optional<CommanderStepEnum> failureStep;
+    private final Optional<JoshProgram> program;
+
+    public ProgramInitResult(CommanderStepEnum failureStep) {
+      this.failureStep = Optional.of(failureStep);
+      program = Optional.empty();
     }
 
-    public static class ProgramInitResult {
-        private final Optional<CommanderStepEnum> failureStep;
-        private final Optional<JoshProgram> program;
-
-        public ProgramInitResult(CommanderStepEnum failureStep) {
-            this.failureStep = Optional.of(failureStep);
-            program = Optional.empty();
-        }
-
-        public ProgramInitResult(JoshProgram program) {
-            this.program = Optional.of(program);
-            failureStep = Optional.empty();
-        }
-
-        public Optional<CommanderStepEnum> getFailureStep() {
-            return failureStep;
-        }
-
-        public Optional<JoshProgram> getProgram() {
-            return program;
-        }
+    public ProgramInitResult(JoshProgram program) {
+      this.program = Optional.of(program);
+      failureStep = Optional.empty();
     }
 
-    public static ProgramInitResult getJoshProgram(
-        EngineGeometryFactory geometryFactory,
-        File file,
-        OutputOptions output
-    ) {
-        if (!file.exists()) {
-            output.printError("Could not find file: " + file);
-            return new ProgramInitResult(CommanderStepEnum.LOAD);
-        }
-
-        String fileContent;
-        try {
-            fileContent = new String(Files.readAllBytes(file.toPath()));
-        } catch (IOException e) {
-            output.printError("Error in reading input file: " + e.getMessage());
-            return new ProgramInitResult(CommanderStepEnum.READ);
-        }
-
-        ParseResult result = JoshSimFacade.parse(fileContent);
-
-        if (result.hasErrors()) {
-            String leadMessage = String.format("Found errors in Josh code at %s:", file);
-            output.printError(leadMessage);
-
-            for (ParseError error : result.getErrors()) {
-                String lineMessage = String.format(
-                    " - On line %d: %s",
-                    error.getLine(),
-                    error.getMessage()
-                );
-                output.printError(lineMessage);
-            }
-
-            return new ProgramInitResult(CommanderStepEnum.PARSE);
-        }
-
-        JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
-        assert program != null;
-
-        return new ProgramInitResult(program);
+    public Optional<CommanderStepEnum> getFailureStep() {
+      return failureStep;
     }
 
-    public static boolean saveToMinio(
-        String subDirectories,
-        File file,
-        MinioOptions minioOptions,
-        OutputOptions output
-    ) {
-        try {
-            MinioClient minioClient = minioOptions.getMinioClient();
-            String bucketName = minioOptions.getBucketName();
-            String objectName = minioOptions.getObjectName(subDirectories, file.getName());
+    public Optional<JoshProgram> getProgram() {
+      return program;
+    }
+  }
 
-            boolean bucketExists = minioClient.bucketExists(
-                BucketExistsArgs.builder().bucket(bucketName).build()
-            );
-
-            if (!bucketExists) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                output.printInfo("Created bucket: " + bucketName);
-            }
-
-            output.printInfo(minioOptions.toString());
-
-            minioClient.uploadObject(
-                UploadObjectArgs.builder()
-                    .bucket(bucketName)
-                    .object(objectName)
-                    .filename(file.getAbsolutePath())
-                    .build()
-            );
-
-            output.printInfo(
-                "Successfully uploaded " + file.getName() + " to minio://" + bucketName + "/"
-                    + objectName
-            );
-            return true;
-        } catch (Exception e) {
-            output.printError("Failed to upload to Minio: " + e.getMessage());
-            return false;
-        }
+  public static ProgramInitResult getJoshProgram(
+    EngineGeometryFactory geometryFactory,
+    File file,
+    OutputOptions output
+  ) {
+    if (!file.exists()) {
+      output.printError("Could not find file: " + file);
+      return new ProgramInitResult(CommanderStepEnum.LOAD);
     }
 
-    public static void main(String[] args) {
-        int exitCode = new CommandLine(new JoshSimCommander()).execute(args);
-        System.exit(exitCode);
+    String fileContent;
+    try {
+      fileContent = new String(Files.readAllBytes(file.toPath()));
+    } catch (IOException e) {
+      output.printError("Error in reading input file: " + e.getMessage());
+      return new ProgramInitResult(CommanderStepEnum.READ);
     }
+
+    ParseResult result = JoshSimFacade.parse(fileContent);
+
+    if (result.hasErrors()) {
+      String leadMessage = String.format("Found errors in Josh code at %s:", file);
+      output.printError(leadMessage);
+
+      for (ParseError error : result.getErrors()) {
+        String lineMessage = String.format(
+          " - On line %d: %s",
+          error.getLine(),
+          error.getMessage()
+        );
+        output.printError(lineMessage);
+      }
+
+      return new ProgramInitResult(CommanderStepEnum.PARSE);
+    }
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
+    assert program != null;
+
+    return new ProgramInitResult(program);
+  }
+
+  public static boolean saveToMinio(
+    String subDirectories,
+    File file,
+    MinioOptions minioOptions,
+    OutputOptions output
+  ) {
+    try {
+      MinioClient minioClient = minioOptions.getMinioClient();
+      String bucketName = minioOptions.getBucketName();
+      String objectName = minioOptions.getObjectName(subDirectories, file.getName());
+
+      boolean bucketExists = minioClient.bucketExists(
+        BucketExistsArgs.builder().bucket(bucketName).build()
+      );
+
+      if (!bucketExists) {
+        minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+        output.printInfo("Created bucket: " + bucketName);
+      }
+
+      output.printInfo(minioOptions.toString());
+
+      minioClient.uploadObject(
+        UploadObjectArgs.builder()
+          .bucket(bucketName)
+          .object(objectName)
+          .filename(file.getAbsolutePath())
+          .build()
+      );
+
+      output.printInfo(
+        "Successfully uploaded " + file.getName() + " to minio://" + bucketName + "/"
+          + objectName
+      );
+      return true;
+    } catch (Exception e) {
+      output.printError("Failed to upload to Minio: " + e.getMessage());
+      return false;
+    }
+  }
+
+  public static void main(String[] args) {
+    int exitCode = new CommandLine(new JoshSimCommander()).execute(args);
+    System.exit(exitCode);
+  }
 }

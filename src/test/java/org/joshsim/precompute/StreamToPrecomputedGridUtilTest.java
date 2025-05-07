@@ -52,9 +52,9 @@ class StreamToPrecomputedGridUtilTest {
     when(mockGeoKey.getCenterY()).thenReturn(BigDecimal.ONE);
     when(mockEngineValue.getAsDecimal()).thenReturn(BigDecimal.valueOf(42.0));
 
-    Map.Entry<GeoKey, EngineValue> entry = 
+    Map.Entry<GeoKey, EngineValue> entry =
         new AbstractMap.SimpleEntry<>(mockGeoKey, mockEngineValue);
-    StreamToPrecomputedGridUtil.StreamGetter streamGetter = 
+    StreamToPrecomputedGridUtil.StreamGetter streamGetter =
         timestep -> Stream.of(entry);
 
     // When
@@ -85,12 +85,12 @@ class StreamToPrecomputedGridUtilTest {
     EngineValue mockEngineValue2 = mock(EngineValue.class);
     when(mockEngineValue2.getAsDecimal()).thenReturn(BigDecimal.valueOf(24.0));
 
-    Map.Entry<GeoKey, EngineValue> entry1 = 
+    Map.Entry<GeoKey, EngineValue> entry1 =
         new AbstractMap.SimpleEntry<>(mockGeoKey, mockEngineValue);
-    Map.Entry<GeoKey, EngineValue> entry2 = 
+    Map.Entry<GeoKey, EngineValue> entry2 =
         new AbstractMap.SimpleEntry<>(mockGeoKey2, mockEngineValue2);
 
-    StreamToPrecomputedGridUtil.StreamGetter streamGetter = 
+    StreamToPrecomputedGridUtil.StreamGetter streamGetter =
         timestep -> Stream.of(entry1, entry2);
 
     // When
