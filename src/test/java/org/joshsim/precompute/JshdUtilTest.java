@@ -110,13 +110,17 @@ class JshdUtilTest {
   @Test
   void testLoadHeader() {
     // Given
-    ByteBuffer buffer = ByteBuffer.allocate(6 * 8 + 3 * 3 * 3 * 8);
+    String testUnits = "meters";
+    byte[] unitsBytes = testUnits.getBytes();
+    ByteBuffer buffer = ByteBuffer.allocate(6 * 8 + Integer.BYTES + unitsBytes.length + 3 * 3 * 3 * 8);
     buffer.putLong(0L); // minX
     buffer.putLong(2L); // maxX
     buffer.putLong(0L); // minY
     buffer.putLong(2L); // maxY
     buffer.putLong(0L); // minTimestep
     buffer.putLong(2L); // maxTimestep
+    buffer.putInt(unitsBytes.length); // units length
+    buffer.put(unitsBytes); // units string
 
     for (int x = 0; x <= 2; x++) {
       for (int y = 0; y <= 2; y++) {
@@ -136,6 +140,7 @@ class JshdUtilTest {
     assertEquals(2L, loaded.getMaxY());
     assertEquals(0L, loaded.getMinTimestep());
     assertEquals(2L, loaded.getMaxTimestep());
+    assertEquals(new Units(testUnits), loaded.getUnits());
   }
 
   @Test
