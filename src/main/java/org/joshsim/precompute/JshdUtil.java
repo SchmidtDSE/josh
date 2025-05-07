@@ -49,6 +49,16 @@ public class JshdUtil {
     long minTimestep = buffer.getLong();
     long maxTimestep = buffer.getLong();
 
+    // Read units string length (max 200 chars)
+    int unitsLength = buffer.getInt();
+    if (unitsLength > 200) {
+      throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
+    }
+    byte[] unitsBytes = new byte[unitsLength];
+    buffer.get(unitsBytes);
+    String unitsStr = new String(unitsBytes);
+    Units units = new Units(unitsStr);
+
     int width = (int) (maxX - minX + 1);
     int height = (int) (maxY - minY + 1);
     int timesteps = (int) (maxTimestep - minTimestep + 1);
@@ -94,8 +104,13 @@ public class JshdUtil {
     int height = (int) (target.getMaxY() - target.getMinY() + 1);
     int timesteps = (int) (target.getMaxTimestep() - target.getMinTimestep() + 1);
 
-    // Calculate buffer size: 6 longs for header + doubles for all grid values
-    int bufferSize = (6 * Long.BYTES) + (width * height * timesteps * Double.BYTES);
+    byte[] unitsBytes = target.getUnits().toString().getBytes();
+    if (unitsBytes.length > 200) {
+      throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
+    }
+
+    // Calculate buffer size: 6 longs for header + int for units length + units string + doubles for all grid values
+    int bufferSize = (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length + (width * height * timesteps * Double.BYTES);
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 
     // Write header
@@ -105,6 +120,11 @@ public class JshdUtil {
     buffer.putLong(target.getMaxY());
     buffer.putLong(target.getMinTimestep());
     buffer.putLong(target.getMinTimestep() + timesteps - 1);
+
+    // Write units
+    byte[] unitsBytes = target.getUnits().toString().getBytes();
+    buffer.putInt(unitsBytes.length);
+    buffer.put(unitsBytes);
 
     // Write grid data
     long maxTimestep = target.getMaxTimestep();
