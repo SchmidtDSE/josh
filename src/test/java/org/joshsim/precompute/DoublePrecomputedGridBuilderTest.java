@@ -18,10 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DoublePrecomputedGridBuilderTest {
-
-  @Mock
-  private EngineValueFactory mockFactory;
-  @Mock
+  
+  @Mock(lenient=true)
   private PatchBuilderExtents mockExtents;
 
   private DoublePrecomputedGridBuilder builder;
@@ -43,7 +41,7 @@ class DoublePrecomputedGridBuilderTest {
   void testBuildWithRequiredParameters() {
     // When
     DoublePrecomputedGrid grid = builder
-        .setEngineValueFactory(mockFactory)
+        .setEngineValueFactory(EngineValueFactory.getDefault())
         .setExtents(mockExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(testUnits)
@@ -61,7 +59,7 @@ class DoublePrecomputedGridBuilderTest {
 
     // When
     DoublePrecomputedGrid grid = builder
-        .setEngineValueFactory(mockFactory)
+        .setEngineValueFactory(EngineValueFactory.getDefault())
         .setExtents(mockExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(testUnits)
@@ -90,7 +88,7 @@ class DoublePrecomputedGridBuilderTest {
     // When/Then
     assertThrows(IllegalArgumentException.class, () -> {
       builder
-          .setEngineValueFactory(mockFactory)
+          .setEngineValueFactory(EngineValueFactory.getDefault())
           .setTimestepRange(minTimestep, maxTimestep)
           .setUnits(testUnits)
           .build();
@@ -102,7 +100,7 @@ class DoublePrecomputedGridBuilderTest {
     // When/Then
     assertThrows(IllegalArgumentException.class, () -> {
       builder
-          .setEngineValueFactory(mockFactory)
+          .setEngineValueFactory(EngineValueFactory.getDefault())
           .setExtents(mockExtents)
           .setTimestepRange(minTimestep, maxTimestep)
           .build();
