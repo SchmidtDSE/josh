@@ -1,6 +1,10 @@
 /**
  * Entrypoint for the JoshSim command line interface application.
  *
+ * <p>This class serves as the main entry point for the Josh command line interface,
+ * providing functionality to validate, run, and manage Josh simulations. It supports
+ * both local file operations and integration with cloud storage services like Minio.</p>
+ *
  * @license BSD-3-Clause
  */
 
@@ -43,6 +47,11 @@ public class JoshSimCommander {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
 
+  /**
+   * Enumeration of possible execution steps in the Josh simulation process.
+   * These steps represent the sequential phases of loading, reading, parsing,
+   * interpreting, and running a Josh simulation.
+   */
   public static enum CommanderStepEnum {
     LOAD,
     READ,
@@ -52,6 +61,11 @@ public class JoshSimCommander {
     SUCCESS
   }
 
+  /**
+   * Container class for the results of initializing a Josh program.
+   * Holds either a successfully initialized program or information about
+   * which step in the initialization process failed.
+   */
   public static class ProgramInitResult {
     private final Optional<CommanderStepEnum> failureStep;
     private final Optional<JoshProgram> program;
