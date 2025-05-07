@@ -18,10 +18,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
-import org.joshsim.command.PreprocessCommand; //Import the new command
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.parse.ParseError;
@@ -42,7 +42,7 @@ import picocli.CommandLine;
  * @mixinStandardHelpOptions true
  * @version 1.0
  * @description "JoshSim command line interface"
- * @subcommands { ValidateCommand, RunCommand, ServerCommand, PreprocessCommand } //Added PreprocessCommand
+ * @subcommands { ValidateCommand, RunCommand, ServerCommand, PreprocessCommand }
  */
 @CommandLine.Command(
     name = "joshsim",

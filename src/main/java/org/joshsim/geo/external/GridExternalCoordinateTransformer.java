@@ -3,6 +3,7 @@ package org.joshsim.geo.external;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 
+
 /**
  * Default implementation of ExternalCoordinateTransformer.
  * Performs basic transformations between patch grid coordinates and data coordinates.

@@ -32,7 +32,7 @@ import picocli.CommandLine.Parameters;
 
 /**
  * Command handler for executing Josh simulations.
- * 
+ *
  * <p>Processes command line arguments to run a specified simulation from a Josh script file.
  * Supports configuration of the coordinate reference system and parallel/serial patch processing.
  * Can optionally save results to Minio storage.</p>

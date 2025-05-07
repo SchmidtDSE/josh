@@ -23,7 +23,7 @@ import picocli.CommandLine.Parameters;
 
 /**
  * Command handler for validating Josh simulation files.
- * 
+ *
  * <p>Processes command line arguments to validate Josh script files, checking for syntax errors
  * and other validation issues. Can optionally save validated files to Minio storage for further
  * processing or deployment.</p>

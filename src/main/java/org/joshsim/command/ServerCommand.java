@@ -20,7 +20,7 @@ import picocli.CommandLine.Option;
 
 /**
  * Command handler for running the local JoshSim web server.
- * 
+ *
  * <p>Processes command line arguments to configure and start a local web server that provides
  * a browser-based interface for Josh simulations. Supports configuration of worker threads,
  * HTTP/2 protocol, and parallel/serial patch processing modes.</p>

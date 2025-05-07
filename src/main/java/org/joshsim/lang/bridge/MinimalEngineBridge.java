@@ -38,6 +38,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
   private final EngineValueFactory engineValueFactory;
+  private final EngineValue startStep;
   private final EngineValue endStep;
   private final Converter converter;
   private final EntityPrototypeStore prototypeStore;
@@ -72,9 +73,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    currentStep = simulation
+    startStep = simulation
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+
+    currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -107,9 +110,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    currentStep = simulation
+    startStep = simulation
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+
+    currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -219,6 +224,16 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public long getAbsoluteTimestep() {
     return absoluteStep;
+  }
+
+  @Override
+  public long getStartTimestep() {
+    return startStep.getAsInt();
+  }
+
+  @Override
+  public long getEndTimestep() {
+    return endStep.getAsInt();
   }
 
   @Override
