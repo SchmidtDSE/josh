@@ -8,6 +8,7 @@
  * @license BSD-3-Clause
  */
 
+import {DataFilesPresenter} from "data";
 import {EditorPresenter} from "editor";
 import {RemoteEngineBackend, WasmEngineBackend} from "engine";
 import {FilePresenter} from "file";
@@ -47,6 +48,11 @@ class MainPresenter {
       "code-buttons-panel",
       () => self._wasmLayer.getSimulations(self._editorPresenter.getCode()),
       (request) => { self._executeRunRequest(request); }
+    );
+
+    self._dataPresenter = new DataFilesPresenter(
+      "open-data-dialog-button",
+      "external-data-dialog"
     );
 
     self._resultsPresenter = new ResultsPresenter("results");
@@ -106,24 +112,33 @@ class MainPresenter {
     const simCode = self._editorPresenter.getCode();
     const simName = self._currentRequest.getSimName();
 
-    self._wasmLayer.getSimulationMetadata(simCode, simName).then(
-      (metadata) => {
-        self._metadata = metadata;
-        self._executeInBackend();
+    const futureExternalData = self._dataPresenter.getFilesAsJson();
+    const futureMetadata = self._wasmLayer.getSimulationMetadata(simCode, simName);
+
+    Promise.all([futureMetadata, futureExternalData]).then(
+      (results) => {
+        self._metadata = results[0];
+        self._executeInBackend(results[1]);
       },
-      (x) => { self._onError(x); }
+      (x) => {
+        self._onError(x);
+      }
     );
   }
 
   /**
    * Execute the simulation code in the currently configured engine backend.
+   *
+   * @param {Object} externalData - Data to load as avilable external resources which can be
+   *     serialized to JSON.
    */
-  _executeInBackend() {
+  _executeInBackend(externalData) {
     const self = this;
     const engineBackend = self._buildEngineBackend();
     engineBackend.execute(
       self._editorPresenter.getCode(),
       self._currentRequest,
+      externalData,
       (x) => self._onStepCompleted(x, "steps"),
       (x) => self._onStepCompleted(x, "replicates")
     ).then(

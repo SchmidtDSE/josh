@@ -158,6 +158,31 @@ main {
   color: white;
 }
 
+.files-panel {
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid #C0C0C0;
+  border-radius: 5px;
+  height: 350px;
+  overflow-y: auto;
+}
+
+.file-upload-input-holder {
+  margin-bottom: 15px;
+}
+
+.files-panel .file-group {
+  border-bottom: 1px dotted #C0C0C0;
+}
+
+.files-panel .file-group .delete-holder {
+  float: right;
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: right;
+  font-size: 11px;
+  width: 50px;
+}
+
 .horiz-scroll-area {
   overflow-x: auto;
 }
@@ -232,6 +257,13 @@ main {
   color: #ff1212;
 }
 
+.space-panel {
+  text-align: center;
+  margin-top: 5px;
+  padding-top: 5px;
+  margin-bottom: 5px;
+}
+
 .status-display {
   margin-bottom: 10px;
 }
@@ -274,10 +306,6 @@ main {
   line-height: 175%;
 }
 
-#sim-display-buttons {
-  text-align: right;
-}
-
 #editor-tabs {
   margin-bottom: 10px;
 }
@@ -301,10 +329,6 @@ main {
 
 #results {
   display: none;
-}
-
-#results .sim-wide-panel {
-  text-align: right;
 }
 
 #results .center-chart {
@@ -460,6 +484,7 @@ main {
 
   #sim-display-buttons .button-holder a {
     display: block;
+    text-align: center;
   }
   
   #results .dimensions .dimension {
@@ -481,6 +506,10 @@ main {
   .header-button-grid {
     display: grid;
     grid-template-columns: 20% 80%;
+  }
+
+  #results .sim-wide-panel {
+    text-align: right;
   }
 
   #sim-display-buttons {
