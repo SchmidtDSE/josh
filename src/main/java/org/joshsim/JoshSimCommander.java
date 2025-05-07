@@ -1,9 +1,9 @@
 /**
  * Entrypoint for the JoshSim command line interface application.
  *
- * <p>This class serves as the main entry point for the Josh command line interface,
- * providing functionality to validate, run, and manage Josh simulations. It supports
- * both local file operations and integration with cloud storage services like Minio.</p>
+ * <p>This class serves as the main entry point for the Josh command line interface, providing
+ * functionality to validate, run, and manage Josh simulations. It supports both local file
+ * operations and integration with cloud storage services like Minio.</p>
  *
  * @license BSD-3-Clause
  */
@@ -61,8 +61,6 @@ public class JoshSimCommander {
 
   /**
    * Enumeration of possible execution steps in the Josh simulation process.
-   * These steps represent the sequential phases of loading, reading, parsing,
-   * interpreting, and running a Josh simulation.
    */
   public static enum CommanderStepEnum {
     LOAD,
@@ -75,8 +73,6 @@ public class JoshSimCommander {
 
   /**
    * Container class for the results of initializing a Josh program.
-   * Holds either a successfully initialized program or information about
-   * which step in the initialization process failed.
    */
   public static class ProgramInitResult {
     private final Optional<CommanderStepEnum> failureStep;
@@ -85,6 +81,7 @@ public class JoshSimCommander {
 
     /**
      * Constructor for ProgramInitResult when initialization fails.
+     *
      * @param failureStep The step where the initialization failed.
      */
     public ProgramInitResult(CommanderStepEnum failureStep) {
@@ -94,6 +91,7 @@ public class JoshSimCommander {
 
     /**
      * Constructor for ProgramInitResult when initialization is successful.
+     *
      * @param program The successfully initialized JoshProgram.
      */
     public ProgramInitResult(JoshProgram program) {
@@ -103,7 +101,9 @@ public class JoshSimCommander {
 
     /**
      * Returns the step where initialization failed, if any.
-     * @return An Optional containing the failure step, or Optional.empty() if initialization was successful.
+     *
+     * @return An Optional containing the failure step, or Optional.empty() if initialization was
+     *     successful.
      */
     public Optional<CommanderStepEnum> getFailureStep() {
       return failureStep;
@@ -111,6 +111,7 @@ public class JoshSimCommander {
 
     /**
      * Returns the initialized JoshProgram, if any.
+     *
      * @return An Optional containing the JoshProgram, or Optional.empty() if initialization failed.
      */
     public Optional<JoshProgram> getProgram() {
@@ -120,15 +121,17 @@ public class JoshSimCommander {
 
   /**
    * Retrieves and initializes a Josh program from a file.
+   *
    * @param geometryFactory The factory for creating geometry objects.
    * @param file The file containing the Josh program code.
    * @param output Options for handling output messages.
-   * @return A ProgramInitResult containing either the initialized JoshProgram or information about the failure.
+   * @return A ProgramInitResult containing either the initialized JoshProgram or information about
+   *     the failure.
    */
   public static ProgramInitResult getJoshProgram(
-    EngineGeometryFactory geometryFactory,
-    File file,
-    OutputOptions output
+      EngineGeometryFactory geometryFactory,
+      File file,
+      OutputOptions output
   ) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
@@ -151,9 +154,9 @@ public class JoshSimCommander {
 
       for (ParseError error : result.getErrors()) {
         String lineMessage = String.format(
-          " - On line %d: %s",
-          error.getLine(),
-          error.getMessage()
+            " - On line %d: %s",
+            error.getLine(),
+            error.getMessage()
         );
         output.printError(lineMessage);
       }
@@ -177,10 +180,10 @@ public class JoshSimCommander {
    * @return true if the upload was successful, false otherwise
    */
   public static boolean saveToMinio(
-    String subDirectories,
-    File file,
-    MinioOptions minioOptions,
-    OutputOptions output
+      String subDirectories,
+      File file,
+      MinioOptions minioOptions,
+      OutputOptions output
   ) {
     try {
       MinioClient minioClient = minioOptions.getMinioClient();
@@ -188,7 +191,7 @@ public class JoshSimCommander {
       String objectName = minioOptions.getObjectName(subDirectories, file.getName());
 
       boolean bucketExists = minioClient.bucketExists(
-        BucketExistsArgs.builder().bucket(bucketName).build()
+          BucketExistsArgs.builder().bucket(bucketName).build()
       );
 
       if (!bucketExists) {
@@ -199,17 +202,16 @@ public class JoshSimCommander {
       output.printInfo(minioOptions.toString());
 
       minioClient.uploadObject(
-        UploadObjectArgs.builder()
-          .bucket(bucketName)
-          .object(objectName)
-          .filename(file.getAbsolutePath())
-          .build()
+          UploadObjectArgs.builder()
+            .bucket(bucketName)
+            .object(objectName)
+            .filename(file.getAbsolutePath())
+            .build()
       );
 
-      output.printInfo(
-        "Successfully uploaded " + file.getName() + " to minio://" + bucketName + "/"
-          + objectName
-      );
+      String path = "minio://" + bucketName + "/" + objectName;
+      String message = "Successfully uploaded " + file.getName() + " to " + path;
+      output.printInfo(message);
       return true;
     } catch (Exception e) {
       output.printError("Failed to upload to Minio: " + e.getMessage());
