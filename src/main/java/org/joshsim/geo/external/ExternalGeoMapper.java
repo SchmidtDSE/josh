@@ -94,7 +94,9 @@ public class ExternalGeoMapper {
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result = new HashMap<>();
 
     // Get appropriate reader for this file
-    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath)) {
+    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
+          dataFilePath
+      )) {
       // Open data source
       reader.open(dataFilePath);
       reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));

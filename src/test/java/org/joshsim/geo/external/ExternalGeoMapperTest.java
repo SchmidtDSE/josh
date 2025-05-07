@@ -74,6 +74,7 @@ public class ExternalGeoMapperTest {
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)
+        .addCrsCode("EPSG:4326")
         .build();
 
     // Create a real PatchSet for testing with smallAoi
@@ -657,10 +658,12 @@ public class ExternalGeoMapperTest {
     final BigDecimal threshold = new BigDecimal(300.0);  // Filter for precipitation above value
 
     // Process multiple time steps
-    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(riversideFilePath)) {
+    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
+        riversideFilePath
+    )) {
       reader.open(riversideFilePath);
       reader.setDimensions(DIM_X, DIM_Y, Optional.ofNullable(DIM_TIME));
-
+      reader.setCrsCode("EPSG:4326");
       int timeSteps = reader.getTimeDimensionSize().orElse(30);
       ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
 

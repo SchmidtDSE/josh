@@ -24,7 +24,9 @@ public class ExternalDataReaderFactory {
    * @return A ExternalDataReader instance that can handle the file
    * @throws IOException If no suitable reader is found or there's an error opening the file
    */
-  public static ExternalDataReader createReader(String filePath) throws IOException {
+  public static ExternalDataReader createReader(
+        String filePath
+  ) throws IOException {
     if (isNetCdfFile(filePath)) {
       return netcdfReaderFactory.createReader();
     }

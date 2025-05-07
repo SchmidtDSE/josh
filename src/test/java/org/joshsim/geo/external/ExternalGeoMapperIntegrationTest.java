@@ -67,6 +67,7 @@ public class ExternalGeoMapperIntegrationTest {
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)
+        .addCrsCode("EPSG:4326")
         .build();
 
     // Create a real PatchSet
