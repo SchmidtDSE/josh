@@ -1,4 +1,3 @@
-
 /**
  * Convienence functions which perform binary conversion in jshd format.
  *
@@ -29,6 +28,8 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
  */
 public class JshdUtil {
 
+  private static final int JSHD_VERSION = 1;
+
   /**
    * Load a DoublePrecomputedGrid from the given bytes serialization.
    *
@@ -43,8 +44,14 @@ public class JshdUtil {
 
     DoublePrecomputedGridBuilder gridBuilder = new DoublePrecomputedGridBuilder();
     gridBuilder.setEngineValueFactory(engineValueFactory);
-    
+
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+    // Read version
+    int version = buffer.getInt();
+    if (version != JSHD_VERSION) {
+      throw new IllegalArgumentException("Unsupported JSHD version: " + version);
+    }
 
     // Read header
     long minX = buffer.getLong();
@@ -105,13 +112,12 @@ public class JshdUtil {
       throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
     }
 
-    // Calculate buffer size: 6 longs for header + int for units length + units string + doubles
-    // for all grid values
-    int headerNoUnitsSize = 6 * Long.BYTES;
-    int unitsSize = Integer.BYTES + unitsBytes.length;
-    int bodySize = width * height * timesteps * Double.BYTES;
-    int bufferSize = headerNoUnitsSize + unitsSize + bodySize;
+    // Calculate buffer size: version number + 6 longs for header + int for units length + units string + doubles for all grid values
+    int bufferSize = Integer.BYTES + (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length + (width * height * timesteps * Double.BYTES);
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+    // Write version
+    buffer.putInt(JSHD_VERSION);
 
     // Write header
     buffer.putLong(target.getMinX());
