@@ -50,4 +50,68 @@ class HaversineUtilTest {
         "Distance between same point should be 0"
     );
   }
+
+  @Test
+  void getAtDistanceFromShouldMoveNorthCorrectly() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+    
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start, new BigDecimal("5000"), "N");
+    
+    BigDecimal expectedLat = new BigDecimal("37.77");
+    assertEquals(0, result.getLatitude().setScale(2).compareTo(expectedLat),
+        "Latitude should increase when moving north");
+    assertEquals(0, result.getLongitude().setScale(2).compareTo(sfLong),
+        "Longitude should remain same when moving north");
+  }
+
+  @Test
+  void getAtDistanceFromShouldMoveSouthCorrectly() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+    
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start, new BigDecimal("5000"), "S");
+    
+    BigDecimal expectedLat = new BigDecimal("37.69");
+    assertEquals(0, result.getLatitude().setScale(2).compareTo(expectedLat),
+        "Latitude should decrease when moving south");
+    assertEquals(0, result.getLongitude().setScale(2).compareTo(sfLong),
+        "Longitude should remain same when moving south");
+  }
+
+  @Test
+  void getAtDistanceFromShouldMoveEastCorrectly() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+    
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start, new BigDecimal("5000"), "E");
+    
+    BigDecimal expectedLong = new BigDecimal("-122.39");
+    assertEquals(0, result.getLongitude().setScale(2).compareTo(expectedLong),
+        "Longitude should increase when moving east");
+    assertEquals(0, result.getLatitude().setScale(2).compareTo(sfLat),
+        "Latitude should remain same when moving east");
+  }
+
+  @Test
+  void getAtDistanceFromShouldMoveWestCorrectly() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+    
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start, new BigDecimal("5000"), "W");
+    
+    BigDecimal expectedLong = new BigDecimal("-122.51");
+    assertEquals(0, result.getLongitude().setScale(2).compareTo(expectedLong),
+        "Longitude should decrease when moving west");
+    assertEquals(0, result.getLatitude().setScale(2).compareTo(sfLat),
+        "Latitude should remain same when moving west");
+  }
 }
