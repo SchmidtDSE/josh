@@ -46,28 +46,7 @@ public class PatchKeyConverter {
    * @return A new patch key in grid-space.
    */
   public GeoKey convert(GeoKey key) {
-    BigDecimal longitude = key.getX();
-    BigDecimal latitude = key.getY();
-    
-    // Create HaversinePoint for the input key
-    HaversineUtil.HaversinePoint keyPoint = new HaversineUtil.HaversinePoint(longitude, latitude);
-    
-    // Calculate distances from top-left corner to determine cell indices
-    BigDecimal eastDistance = HaversineUtil.getDistance(
-        startPoint,
-        new HaversineUtil.HaversinePoint(longitude, startPoint.getLatitude())
-    );
-    
-    BigDecimal southDistance = HaversineUtil.getDistance(
-        startPoint,
-        new HaversineUtil.HaversinePoint(startPoint.getLongitude(), latitude)
-    );
-    
-    // Calculate cell indices based on distances and patch width
-    BigDecimal colIndex = eastDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
-    BigDecimal rowIndex = southDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
-    
-    return new GeoKey(colIndex, rowIndex);
+    // TODO
   }
 
 }
