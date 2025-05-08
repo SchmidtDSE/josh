@@ -1,6 +1,7 @@
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +57,7 @@ class JshdUtilTest {
   void testSerializeAndLoadBytes() {
     // When
     byte[] serialized = JshdUtil.serializeToBytes(grid);
-    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, serialized);
+    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, serialized);
 
     // Then
     assertEquals(grid.getMinX(), loaded.getMinX());
@@ -65,6 +66,30 @@ class JshdUtilTest {
     assertEquals(grid.getMaxY(), loaded.getMaxY());
     assertEquals(grid.getMinTimestep(), loaded.getMinTimestep());
     assertEquals(grid.getMaxTimestep(), loaded.getMaxTimestep());
+    assertEquals(grid.getUnits(), loaded.getUnits());
+  }
+
+  @Test
+  void testUnitsExceedingMaxLength() {
+    // Create a grid with very long units string
+    StringBuilder longUnits = new StringBuilder();
+    for (int i = 0; i < 201; i++) {
+      longUnits.append('m');
+    }
+    Units units = new Units(longUnits.toString());
+
+    DoublePrecomputedGrid gridWithLongUnits = new DoublePrecomputedGrid(
+        factory,
+        extents,
+        minTimestep,
+        maxTimestep,
+        units,
+        new double[3][3][3]
+    );
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      JshdUtil.serializeToBytes(gridWithLongUnits);
+    });
   }
 
   @Test
@@ -74,6 +99,7 @@ class JshdUtilTest {
     ByteBuffer buffer = ByteBuffer.wrap(serialized);
 
     // Then
+    assertEquals(1, buffer.getInt()); // version
     assertEquals(0L, buffer.getLong()); // minX
     assertEquals(2L, buffer.getLong()); // maxX
     assertEquals(0L, buffer.getLong()); // minY
@@ -85,13 +111,20 @@ class JshdUtilTest {
   @Test
   void testLoadHeader() {
     // Given
-    ByteBuffer buffer = ByteBuffer.allocate(6 * 8 + 3 * 3 * 3 * 8);
+    String testUnits = "meters";
+    byte[] unitsBytes = testUnits.getBytes();
+    ByteBuffer buffer = ByteBuffer.allocate(
+        Integer.BYTES + 6 * 8 + Integer.BYTES + unitsBytes.length + 3 * 3 * 3 * 8
+    );
+    buffer.putInt(1); // version
     buffer.putLong(0L); // minX
     buffer.putLong(2L); // maxX
     buffer.putLong(0L); // minY
     buffer.putLong(2L); // maxY
     buffer.putLong(0L); // minTimestep
     buffer.putLong(2L); // maxTimestep
+    buffer.putInt(unitsBytes.length); // units length
+    buffer.put(unitsBytes); // units string
 
     for (int x = 0; x <= 2; x++) {
       for (int y = 0; y <= 2; y++) {
@@ -102,7 +135,7 @@ class JshdUtilTest {
     }
 
     // When
-    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, buffer.array());
+    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, buffer.array());
 
     // Then
     assertEquals(0L, loaded.getMinX());
@@ -111,13 +144,14 @@ class JshdUtilTest {
     assertEquals(2L, loaded.getMaxY());
     assertEquals(0L, loaded.getMinTimestep());
     assertEquals(2L, loaded.getMaxTimestep());
+    assertEquals(new Units(testUnits), loaded.getUnits());
   }
 
   @Test
   void testLoadBody() {
     byte[] serialized = JshdUtil.serializeToBytes(grid);
     ByteBuffer buffer = ByteBuffer.wrap(serialized);
-    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, testUnits, buffer.array());
+    DoublePrecomputedGrid loaded = JshdUtil.loadFromBytes(factory, buffer.array());
     assertEquals(5, loaded.getAt(0, 1, 2).getAsDecimal().longValue());
   }
 }
