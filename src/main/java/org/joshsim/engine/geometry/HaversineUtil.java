@@ -58,7 +58,11 @@ public class HaversineUtil {
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
     
-    double distanceKm = meters.divide(new BigDecimal("1000"), 10, BigDecimal.ROUND_HALF_UP).doubleValue();
+    double distanceKm = meters.divide(
+      new BigDecimal("1000"),
+      10,
+      BigDecimal.ROUND_HALF_UP
+    ).doubleValue();
     double lat1 = Math.toRadians(start.getLatitude().doubleValue());
     double lon1 = Math.toRadians(start.getLongitude().doubleValue());
     
