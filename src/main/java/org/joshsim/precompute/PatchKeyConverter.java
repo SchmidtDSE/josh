@@ -45,8 +45,45 @@ public class PatchKeyConverter {
    * @param key The patch key to be converted.
    * @return A new patch key in grid-space.
    */
-  public GeoKey convert(GeoKey key) {
+  public ProjectedKey convert(GeoKey key) {
     // TODO
+  }
+
+  
+  /**
+   * Result of a projection from Earth-space to grid-space.
+   */
+  public static class ProjectedKey {
+
+    private final BigDecimal x;
+    private final BigDecimal y;
+
+    /**
+     * Create a new record of a projection.
+     */
+    public ProjectedKey(BigDecimal x, BigDecimal y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    /**
+     * Get the horizontal location of the projected point on grid-space.
+     *
+     * @returns Zero indexed number of patch width to the horizontal center position of this point.
+     */
+    public BigDecimal getX() {
+      return x;
+    }
+
+    /**
+     * Get the vertical location of the projected point on grid-space.
+     *
+     * @returns Zero indexed number of patch width to the vertical center position of this point.
+     */
+    public BigDecimal getY() {
+      return y;
+    }
+    
   }
 
 }
