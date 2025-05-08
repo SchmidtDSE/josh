@@ -141,10 +141,13 @@ public class EarthPatchBuilder implements PatchBuilder {
   }
 
   /**
-   * Creates all patches in the grid using GridCRS.
+   * Creates all patches in the grid.
+   *
+   * <p>Creates all patches in the grid using Haversine to build cells which span from the top left
+   * to bottom right in the extents provided where the center of each square patch is at distance
+   * specified by provided cell size in meters.</p>
    */
-  private List<MutableEntity> createPatchGrid() throws TransformException {
-    List<MutableEntity> patches = new ArrayList<>();
+  private List<MutableEntity> createPatchGrid() {
     BigDecimal cellWidthMeters = gridCrsDefinition.getCellSize();
     BigDecimal halfCellWidthMeters = cellWidthMeters.divide(new BigDecimal(2));
     BigDecimal topLeftLon = extents.getTopLeftX();
