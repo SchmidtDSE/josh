@@ -47,12 +47,31 @@ Validation failed (exit code: 3)
 
 ##### Preprocess Scratch
 
+###### Riverside (JOTR)
+
 ```bash
 java -jar build/libs/joshsim-fat.jar preprocess \
     examples/simulations/simple_external.josh \
     TestSimpleSimulationExternal \
-    tmp/maxtemp_riverside_annual.nc \
+    assets/command/maxtemp_riverside_annual.nc \
     temperature \
+    celsius \
+    test_riverside_tiny.jshd \
+    --crs "EPSG:4326" \
+    --x-coord "lon" \
+    --y-coord "lat" \
+    --time-dim "calendar_year"
+```
+
+
+###### Sequoia (SEKI)
+
+```bash
+java -jar build/libs/joshsim-fat.jar preprocess \
+    examples/simulations/simple_seki.josh \
+    TestSimpleSimulationExternal \
+    assets/command/maxtemp_tulare_annual.nc \
+    max_temperature \
     celsius \
     test_riverside_tiny.jshd \
     --crs "EPSG:4326" \
