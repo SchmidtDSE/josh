@@ -1,3 +1,4 @@
+
 package org.joshsim.precompute;
 
 import java.util.Map;
@@ -7,7 +8,6 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-
 
 /**
  * Utility which converts from streams to a precomputed grid.
@@ -55,15 +55,15 @@ public class StreamToPrecomputedGridUtil {
   }
 
   /**
-   * Strategy for getting a stream of geo keys and values for a given timestep.
+   * Strategy for getting a stream of projected values for a given timestep.
    */
   public interface StreamGetter {
 
     /**
-     * Get a stream of geo keys and values for a given timestep.
+     * Get a stream of projected values for a given timestep.
      *
      * @param timestep The timestep for which to get the stream.
-     * @return The stream of geo keys and values for the requested timestep.
+     * @return The stream of projected values for the requested timestep.
      */
     Stream<PatchKeyConverter.ProjectedValue> getForTimestep(long timestep);
 
