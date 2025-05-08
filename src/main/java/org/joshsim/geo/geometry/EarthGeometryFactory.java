@@ -293,7 +293,6 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   ) {
-    throw new UnsupportedOperationException(
-      "getPatchBuilder is not supported in EarthGeometryFactory - use GridGeometryFactory instead");
+    return new EarthPatchBuilder()
   }
 }

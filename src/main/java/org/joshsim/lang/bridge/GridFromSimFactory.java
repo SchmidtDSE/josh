@@ -20,7 +20,6 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
-
 /**
  * Factory building a PatchSet from a simulation and bridge.
  */

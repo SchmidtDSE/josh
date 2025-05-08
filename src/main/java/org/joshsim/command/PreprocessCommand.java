@@ -29,6 +29,7 @@ import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.PrecomputedGrid;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
 import org.joshsim.util.OutputOptions;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -136,7 +137,14 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Get metadata
-    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(CRS.forCode(crsCode));
+    CoordinateReferenceSystem crs;
+    try {
+      crs = CRS.forCode(crsCode);
+    } catch (Exception e) {
+      System.out.println("Failed to read CRS code due to: " + e);
+      return 1;
+    }
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
