@@ -21,7 +21,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalGeoMapper;
 import org.joshsim.geo.external.ExternalGeoMapperBuilder;
-import org.joshsim.geo.external.GridExternalCoordinateTransformer;
+import org.joshsim.geo.external.NoopExternalCoordinateTransformer;
 import org.joshsim.geo.external.NearestNeighborInterpolationStrategy;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
@@ -158,12 +158,12 @@ public class PreprocessCommand implements Callable<Integer> {
     ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
-    geoMapperBuilder.addCoordinateTransformer(new GridExternalCoordinateTransformer());
+    geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
     geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
     ExternalGeoMapper mapper = geoMapperBuilder.build();
 
     // Create grid from streaming data
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, new EngineValueFactory());
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     EngineValue size = extractor.getSize();
@@ -210,14 +210,16 @@ public class PreprocessCommand implements Callable<Integer> {
               )
           );
         },
-        extents,
+        extentsTransformed,
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
         new Units(unitsStr)
     );
 
     // Serialize to binary file
-    BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy();
+    BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
+        EngineValueFactory.getDefault()
+    );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(grid, outputStream);
       outputStream.flush();

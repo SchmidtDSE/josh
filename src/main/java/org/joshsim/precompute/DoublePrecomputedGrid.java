@@ -40,7 +40,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
 
     int width = (int) getWidth();
     int height = (int) getHeight();
-    int timestepsCut = (int) (getMaxTimestep() - getMinTimestep());
+    int timestepsCut = (int) (getMaxTimestep() - getMinTimestep() + 1);
 
     innerValues = new double[timestepsCut][height][width];
   }
@@ -74,15 +74,17 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    * @param value The double value to be set at the specified location and timestep.
    */
   public void setAt(long x, long y, long timestep, double value) {
+    System.out.println(x + ", " + y + ", " + timestep);
     int horizCut = (int) (x - getMinX());
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
 
     boolean horizOutBounds = horizCut < 0 || horizCut >= getWidth();
     boolean vertOutBounds = vertCut < 0 || vertCut >= getHeight();
-    boolean timeOutBounds = timestepCut < 0 || timestepCut >= getMaxTimestep() - getMinTimestep();
+    boolean timeOutBounds = timestepCut < 0 || timestepCut >= (getMaxTimestep() - getMinTimestep());
 
     if (horizOutBounds || vertOutBounds || timeOutBounds) {
+      System.out.println(horizCut + " - " + getWidth() + "/" + vertCut + " - " + getHeight());
       throw new IllegalArgumentException("Coordinates or timestep out of bounds");
     }
 

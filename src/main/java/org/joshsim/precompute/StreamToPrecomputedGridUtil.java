@@ -36,10 +36,10 @@ public class StreamToPrecomputedGridUtil {
         extents,
         minTimestep,
         maxTimestep,
-        null
+        units
     );
 
-    for (long timestep = minTimestep; timestep < maxTimestep; timestep++) {
+    for (long timestep = minTimestep; timestep <= maxTimestep; timestep++) {
       Stream<PatchKeyConverter.ProjectedValue> values = streamGetter.getForTimestep(timestep);
       final long timestepRealized = timestep;
       values.forEach(entry -> grid.setAt(

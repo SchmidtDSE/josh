@@ -44,6 +44,7 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
     long rightX = extents.getBottomRightX().longValue();
     long topY = extents.getTopLeftY().longValue();
     long bottomY = extents.getBottomRightY().longValue();
+    System.out.println(leftX + ":" + rightX + ":" + topY + ":" + bottomY);
 
     minX = Math.min(leftX, rightX);
     minY = Math.min(topY, bottomY);
