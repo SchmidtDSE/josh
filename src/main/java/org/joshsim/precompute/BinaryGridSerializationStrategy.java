@@ -20,12 +20,12 @@ public class BinaryGridSerializationStrategy implements GridSerializationStrateg
 
   @Override
   public void serialize(PrecomputedGrid target, OutputStream outputStream) {
-
+    
   }
 
   @Override
   public PrecomputedGrid deserialize(InputStream inputStream) {
-    return null;
+
   }
 
 }

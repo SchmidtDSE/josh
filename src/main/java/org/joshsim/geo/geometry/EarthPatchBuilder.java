@@ -54,11 +54,11 @@ public class EarthPatchBuilder implements PatchBuilder {
       BigDecimal cellWidth,
       EntityPrototype prototype
   ) throws TransformException, FactoryException {
-    if (inputCrsStr == null) {
+    if (inputCrsStr == null || inputCrsStr.isBlank()) {
       throw new IllegalArgumentException("Must specify input CRS");
     }
 
-    if (targetCrsStr == null) {
+    if (targetCrsStr == null || targetCrsStr.isBlank()) {
       throw new IllegalArgumentException("Must specify target CRS");
     }
 
@@ -228,12 +228,6 @@ public class EarthPatchBuilder implements PatchBuilder {
 
     if (gridCrsDefinition.getCellSize().compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell width must be positive");
-    }
-
-    // Ensure target CRS is projected for proper distance calculations
-    if (targetCrs instanceof GeographicCRS) {
-      throw new IllegalArgumentException(
-          "Target CRS must be projected for accurate area/distance calculations");
     }
   }
 }
