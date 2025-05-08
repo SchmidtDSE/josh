@@ -176,7 +176,7 @@ public class PreprocessCommand implements Callable<Integer> {
         program.getPrototypes()
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
-    PatchSet patchSet = gridFactory.build(simEntity);
+    PatchSet patchSet = gridFactory.build(simEntity, crsCode);
 
     // Check and parse grid
     if (!unitsSupported(size.getUnits().toString())) {
@@ -220,6 +220,8 @@ public class PreprocessCommand implements Callable<Integer> {
     BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy();
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(grid, outputStream);
+      outputStream.flush();
+      outputStream.close();
     } catch (FileNotFoundException e) {
       throw new RuntimeException("File not found: " + e);
     } catch (IOException e) {

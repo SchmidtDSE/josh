@@ -59,7 +59,18 @@ public class GridFromSimFactory {
   public PatchSet build(MutableEntity simulation) {
     GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String inputCrs = extractor.getInputCrs();
-    String targetCrs = extractor.getTargetCrs();
+    return build(simulation, inputCrs);
+  }
+
+  /**
+   * Builds a PatchSet from a simulation entity using the provided EngineBridge.
+   *
+   * @param simulation the simulation entity used to build the PatchSet
+   * @param inputCrs code of CRS to use in parsing input dataset.
+   * @return the built PatchSet
+   */
+  public PatchSet build(MutableEntity simulation, String inputCrs) {
+    GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     String patchName = extractor.getPatchName();
@@ -88,7 +99,7 @@ public class GridFromSimFactory {
     String sizeValueUnits = "m";
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID",
+        inputCrs,
         inputCrs,
         extents,
         sizeValuePrimitive,
