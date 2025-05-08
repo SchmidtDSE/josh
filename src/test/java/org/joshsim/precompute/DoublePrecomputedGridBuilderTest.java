@@ -3,7 +3,6 @@ package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -18,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DoublePrecomputedGridBuilderTest {
-  
+
   @Mock(lenient = true)
   private PatchBuilderExtents mockExtents;
 

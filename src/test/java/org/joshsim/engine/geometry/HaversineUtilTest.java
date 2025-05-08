@@ -1,3 +1,8 @@
+/**
+ * Tests for Haversine operations.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.engine.geometry;
 
@@ -5,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.junit.jupiter.api.Test;
+
 
 /**
  * Tests for the HaversineUtil class.
@@ -56,15 +63,24 @@ class HaversineUtilTest {
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
     HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
-    
+
     HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
-        start, new BigDecimal("5000"), "N");
-    
+        start,
+        new BigDecimal("5000"),
+        "N"
+    );
+
     BigDecimal expectedLat = new BigDecimal("37.77");
-    assertEquals(0, result.getLatitude().setScale(2).compareTo(expectedLat),
-        "Latitude should increase when moving north");
-    assertEquals(0, result.getLongitude().setScale(2).compareTo(sfLong),
-        "Longitude should remain same when moving north");
+    assertEquals(
+        0,
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLat),
+        "Latitude should increase when moving north"
+    );
+    assertEquals(
+        0,
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong),
+        "Longitude should remain same when moving north"
+    );
   }
 
   @Test
@@ -72,15 +88,20 @@ class HaversineUtilTest {
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
     HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
-    
+
     HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
         start, new BigDecimal("5000"), "S");
-    
+
     BigDecimal expectedLat = new BigDecimal("37.69");
-    assertEquals(0, result.getLatitude().setScale(2).compareTo(expectedLat),
-        "Latitude should decrease when moving south");
-    assertEquals(0, result.getLongitude().setScale(2).compareTo(sfLong),
-        "Longitude should remain same when moving south");
+    assertEquals(
+        0,
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLat),
+        "Latitude should decrease when moving south"
+    );
+    assertEquals(0, result.getLongitude().setScale(
+        2, RoundingMode.HALF_UP).compareTo(sfLong),
+        "Longitude should remain same when moving south"
+    );
   }
 
   @Test
@@ -88,15 +109,24 @@ class HaversineUtilTest {
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
     HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
-    
+
     HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
-        start, new BigDecimal("5000"), "E");
-    
-    BigDecimal expectedLong = new BigDecimal("-122.39");
-    assertEquals(0, result.getLongitude().setScale(2).compareTo(expectedLong),
-        "Longitude should increase when moving east");
-    assertEquals(0, result.getLatitude().setScale(2).compareTo(sfLat),
-        "Latitude should remain same when moving east");
+        start,
+        new BigDecimal("5000"),
+        "E"
+    );
+
+    BigDecimal expectedLong = new BigDecimal("-122.41");
+    assertEquals(
+        0,
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLong),
+        "Longitude should increase when moving east"
+    );
+    assertEquals(
+        0,
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat),
+        "Latitude should remain same when moving east"
+    );
   }
 
   @Test
@@ -104,14 +134,22 @@ class HaversineUtilTest {
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
     HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
-    
+
     HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
-        start, new BigDecimal("5000"), "W");
-    
-    BigDecimal expectedLong = new BigDecimal("-122.51");
-    assertEquals(0, result.getLongitude().setScale(2).compareTo(expectedLong),
-        "Longitude should decrease when moving west");
-    assertEquals(0, result.getLatitude().setScale(2).compareTo(sfLat),
-        "Latitude should remain same when moving west");
+        start,
+        new BigDecimal("5000"),
+        "W"
+    );
+
+    BigDecimal expectedLong = new BigDecimal("-122.49");
+    assertEquals(
+        0,
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLong),
+        "Longitude should decrease when moving west"
+    );
+    assertEquals(0,
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat),
+        "Latitude should remain same when moving west"
+    );
   }
 }

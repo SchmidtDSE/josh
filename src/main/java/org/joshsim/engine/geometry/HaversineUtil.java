@@ -65,24 +65,24 @@ public class HaversineUtil {
     double lat2 = lat1;
     double lon2 = lon1;
 
-    double R = EARTH_RADIUS_METERS.doubleValue();
+    double radius = EARTH_RADIUS_METERS.doubleValue();
 
     switch (direction.toUpperCase()) {
       case "N":
-        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters/R) +
-               Math.cos(lat1) * Math.sin(distanceMeters/R));
+        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / radius)
+            + Math.cos(lat1) * Math.sin(distanceMeters / radius));
         break;
       case "S":
-        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters/R) -
-               Math.cos(lat1) * Math.sin(distanceMeters/R));
+        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / radius)
+            - Math.cos(lat1) * Math.sin(distanceMeters / radius));
         break;
       case "E":
-        lon2 = lon1 + Math.atan2(Math.sin(distanceMeters/R) * Math.cos(lat1),
-               Math.cos(distanceMeters/R));
+        lon2 = lon1 + Math.atan2(Math.sin(distanceMeters / radius) * Math.cos(lat1),
+               Math.cos(distanceMeters / radius));
         break;
       case "W":
-        lon2 = lon1 - Math.atan2(Math.sin(distanceMeters/R) * Math.cos(lat1),
-               Math.cos(distanceMeters/R));
+        lon2 = lon1 - Math.atan2(Math.sin(distanceMeters / radius) * Math.cos(lat1),
+               Math.cos(distanceMeters / radius));
         break;
       default:
         throw new IllegalArgumentException("Direction must be N, S, E, or W");

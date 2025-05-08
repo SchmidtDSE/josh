@@ -2,8 +2,6 @@ package org.joshsim.geo.geometry;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-
-import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;

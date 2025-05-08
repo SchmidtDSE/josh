@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
-import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
@@ -15,7 +15,6 @@ import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridSquare;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
@@ -40,8 +39,8 @@ public class EarthPatchBuilder implements PatchBuilder {
   /**
    * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
    *
-   * @param inputCrs input CRS
-   * @param targetCrs target CRS
+   * @param inputCrsStr input CRS
+   * @param targetCrsStr target CRS
    * @param extents Structure describing the extents or bounds of the grid to be built.
    * @param cellWidth The width of each cell in the grid in meters.
    * @param prototype The entity prototype used to create grid cells
@@ -55,6 +54,17 @@ public class EarthPatchBuilder implements PatchBuilder {
       BigDecimal cellWidth,
       EntityPrototype prototype
   ) throws TransformException, FactoryException {
+    if (inputCrsStr == null) {
+      throw new IllegalArgumentException("Must specify input CRS");
+    }
+
+    if (targetCrsStr == null) {
+      throw new IllegalArgumentException("Must specify target CRS");
+    }
+
+    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
 
     this.prototype = prototype;
     this.extents = extents;
@@ -68,17 +78,13 @@ public class EarthPatchBuilder implements PatchBuilder {
         extents.getBottomRightY()
     );
 
-    // Determine CRS units for grid definition
-    String crsUnits = targetCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
-    String cellSizeUnit = crsUnits; // Assume cell size is in the same units as target CRS
-
     // Create GridCrsDefinition
     this.gridCrsDefinition = new GridCrsDefinition(
         "Grid_" + System.currentTimeMillis(),
         targetCrsStr,
         extents,
         cellWidth,
-        cellSizeUnit
+        "meters"
     );
 
     try {
@@ -104,7 +110,7 @@ public class EarthPatchBuilder implements PatchBuilder {
       validateParameters();
 
       // Create all patches using grid CRS
-      List<MutableEntity> patches = createPatchGrid(colCells, rowCells);
+      List<MutableEntity> patches = createPatchGrid();
 
       // Return PatchSet with GridCrsDefinition
       return new PatchSet(patches, gridCrsDefinition);
@@ -155,16 +161,32 @@ public class EarthPatchBuilder implements PatchBuilder {
     BigDecimal bottomRightLat = extents.getBottomRightY();
 
     // Calculate total distances
-    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(topLeftLon, topLeftLat);
-    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(bottomRightLon, topLeftLat);
-    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(topLeftLon, bottomRightLat);
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+        topLeftLon,
+        topLeftLat
+    );
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
+        bottomRightLon,
+        topLeftLat);
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
+        topLeftLon,
+        bottomRightLat
+    );
 
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
 
     // Calculate number of cells needed
-    long numColCells = widthMeters.divide(cellWidthMeters, 0, BigDecimal.ROUND_CEILING).longValue();
-    long numRowCells = heightMeters.divide(cellWidthMeters, 0, BigDecimal.ROUND_CEILING).longValue();
+    long numColCells = widthMeters.divide(
+        cellWidthMeters,
+        0,
+        BigDecimal.ROUND_CEILING
+    ).longValue();
+    long numRowCells = heightMeters.divide(
+        cellWidthMeters,
+        0,
+        BigDecimal.ROUND_CEILING
+    ).longValue();
 
     List<MutableEntity> patches = new ArrayList<>();
     HaversineUtil.HaversinePoint currentPoint = topLeft;
@@ -172,13 +194,13 @@ public class EarthPatchBuilder implements PatchBuilder {
     for (int rowIdx = 0; rowIdx < numRowCells; rowIdx++) {
       // Reset to start of row
       currentPoint = rowIdx == 0 ? topLeft :
-          HaversineUtil.getAtDistanceFrom(topLeft, 
+          HaversineUtil.getAtDistanceFrom(topLeft,
               cellWidthMeters.multiply(new BigDecimal(rowIdx)), "S");
 
       for (int colIdx = 0; colIdx < numColCells; colIdx++) {
         // Move east along row
         HaversineUtil.HaversinePoint patchCenter = colIdx == 0 ? currentPoint :
-            HaversineUtil.getAtDistanceFrom(currentPoint, 
+            HaversineUtil.getAtDistanceFrom(currentPoint,
                 cellWidthMeters.multiply(new BigDecimal(colIdx)), "E");
 
         // Create grid square using the center point
@@ -187,7 +209,7 @@ public class EarthPatchBuilder implements PatchBuilder {
             patchCenter.getLatitude(),
             cellWidthMeters
         );
-        
+
         MutableEntity patch = prototype.buildSpatial(square);
         patches.add(patch);
       }
