@@ -98,4 +98,8 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     return factory.build(BigDecimal.valueOf(value), units);
   }
 
+  @Override
+  public Units getUnits() {
+    return units;
+  }
 }
