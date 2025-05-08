@@ -55,7 +55,7 @@ public class HaversineUtil {
    *     or due west respectively.
    * @return The point after traveling.
    */
-  public static HaversinePoint getDistanceFrom(HaversinePoint start, BigDecimal meters,
+  public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
     return null;
   }
