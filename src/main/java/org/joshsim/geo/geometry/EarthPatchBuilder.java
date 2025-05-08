@@ -1,6 +1,23 @@
 package org.joshsim.geo.geometry;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.sis.referencing.CRS;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
+import org.joshsim.engine.geometry.grid.GridSquare;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.crs.GeographicCRS;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
 
 
 /**
@@ -9,9 +26,7 @@ import org.joshsim.engine.geometry.PatchBuilder;
  * <p>Utility creating a rectangular grid of patches based on coordinates in any coordinate
  * reference system, converting them to the target CRS if needed.</p>
  */
-public abstract class EarthPatchBuilder implements PatchBuilder {
-
-  private static final int ESTIMATED_CELLS_WARNING_SIZE = 1_000_000;
+public class EarthPatchBuilder implements PatchBuilder {
 
   private final EntityPrototype prototype;
   private final EarthGeometryFactory geometryFactory;
@@ -21,7 +36,6 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
 
   // CRS-related fields
   private final CoordinateReferenceSystem targetCrs;
-  private final MathTransform gridToTargetTransform;
 
   /**
    * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
@@ -29,14 +43,14 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
    * @param inputCrs input CRS
    * @param targetCrs target CRS
    * @param extents Structure describing the extents or bounds of the grid to be built.
-   * @param cellWidth The width of each cell in the grid (in units of the target CRS)
+   * @param cellWidth The width of each cell in the grid in meters.
    * @param prototype The entity prototype used to create grid cells
    * @throws FactoryException if any CRS code is invalid
    * @throws TransformException if coordinate transformation fails
    */
   public EarthPatchBuilder(
-      CoordinateReferenceSystem inputCrs,
-      CoordinateReferenceSystem targetCrs,
+      String inputCrsStr,
+      String targetCrsStr,
       PatchBuilderExtents extents,
       BigDecimal cellWidth,
       EntityPrototype prototype
@@ -44,7 +58,7 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
 
     this.prototype = prototype;
     this.extents = extents;
-    this.targetCrs = targetCrs;
+    this.targetCrs = CRS.forCode(targetCrsStr);
 
     // Validate corners
     validateCornerCoordinates(
@@ -56,26 +70,24 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
 
     // Determine CRS units for grid definition
     String crsUnits = targetCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
-    String cellSizeUnit = crsUnits; Assume cell size is in the same units as target CRS
+    String cellSizeUnit = crsUnits; // Assume cell size is in the same units as target CRS
 
     // Create GridCrsDefinition
     this.gridCrsDefinition = new GridCrsDefinition(
         "Grid_" + System.currentTimeMillis(),
-        targetCrs.getName().getCode(),
+        targetCrsStr,
         extents,
         cellWidth,
-        cellSizeUnit,
-        crsUnits
+        cellSizeUnit
     );
 
     try {
       // Create GridCrsManager
       this.gridCrsManager = new GridCrsManager(gridCrsDefinition);
-      this.gridToTargetTransform = gridCrsManager.createGridToTargetCrsTransform(targetCrs);
 
       // Create geometry factory
       this.geometryFactory = new EarthGeometryFactory(targetCrs, gridCrsManager);
-    } catch (IOException e) {
+    } catch (IOException | TransformException e) {
       throw new FactoryException("Failed to create GridCrsManager: " + e.getMessage(), e);
     }
   }
@@ -90,20 +102,6 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
     try {
       // Validate parameters before building
       validateParameters();
-
-      // Calculate grid dimensions
-      BigDecimal cellWidth = gridCrsDefinition.getCellSize();
-      BigDecimal gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
-      BigDecimal gridHeight = extents.getTopLeftY().subtract(extents.getBottomRightY());
-      int colCells = gridWidth.divide(cellWidth, RoundingMode.CEILING).intValue();
-      int rowCells = gridHeight.divide(cellWidth, RoundingMode.CEILING).intValue();
-
-      // Check grid size
-      int estimatedCells = colCells * rowCells;
-      if (estimatedCells > ESTIMATED_CELLS_WARNING_SIZE) {
-        System.err.println("Warning: Grid configuration will create approximately "
-            + estimatedCells + " cells, which may impact performance");
-      }
 
       // Create all patches using grid CRS
       List<MutableEntity> patches = createPatchGrid(colCells, rowCells);
@@ -145,33 +143,26 @@ public abstract class EarthPatchBuilder implements PatchBuilder {
   /**
    * Creates all patches in the grid using GridCRS.
    */
-  private List<MutableEntity> createPatchGrid(
-        int colCells,
-        int rowCells
-  ) throws TransformException {
+  private List<MutableEntity> createPatchGrid() throws TransformException {
     List<MutableEntity> patches = new ArrayList<>();
-    BigDecimal cellWidth = gridCrsDefinition.getCellSize();
-    BigDecimal halfCellWidth = cellWidth.divide(new BigDecimal(2));
+    BigDecimal cellWidthMeters = gridCrsDefinition.getCellSize();
+    BigDecimal halfCellWidthMeters = cellWidthMeters.divide(new BigDecimal(2));
+    BigDecimal topLeftLon = extents.getTopLeftX();
+    BigDecimal topLeftLat = extents.getTopLeftY();
 
-    BigDecimal topLeftX = extents.getTopLeftX();
-    BigDecimal topLeftY = extents.getTopLeftY();
+    long numRowCells = 0;  // TODO: get number of cells along latitude or y using HaversineUtil
+    long numColCells = 0;  // TODO: get number of cells along longitude or x using HaversineUtil
+    List<MutableEntity> patches = new ArrayList<>();
 
     for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
       for (int colIdx = 0; colIdx < colCells; colIdx++) {
-        Calculate cell center in grid coordinates
-        BigDecimal cellCenterX = topLeftX.add(
-            cellWidth.multiply(new BigDecimal(colIdx)).add(halfCellWidth));
-        BigDecimal cellCenterY = topLeftY.subtract(
-            cellWidth.multiply(new BigDecimal(rowIdx)).add(halfCellWidth));
+        BigDecimal patchLongitude = null;  // TODO: calculate center longitude using HaversineUtil
+        BigDecimal patchLatitude = null;  // TODO: calculate center latitude using HaversineUtil
+        BigDecimal patchWidthDegrees = null;  // TODO: calculate using HaversineUtil
 
-        // Create grid square with center coordinates
-        GridSquare gridSquare = new GridSquare(cellCenterX, cellCenterY, cellWidth);
+        GridSquare square = new GridSquare(patchLongitude, patchLatitude, patchWidthDegrees);
+        MutableEntity patch = prototype.buildSpatial(square);
 
-        // Transform to target CRS using GridCrsManager
-        EngineGeometry cellGeometry = geometryFactory.createRectangleFromGrid(gridSquare);
-
-        // Create patch using prototype
-        MutableEntity patch = prototype.buildSpatial(cellGeometry);
         patches.add(patch);
       }
     }

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
  * Tests for the HaversineUtil class.
  */
 class HaversineUtilTest {
-  private HaversineUtil haversineUtil;
 
   @Test
   void getDistanceShouldCalculateCorrectly() {
@@ -20,7 +19,10 @@ class HaversineUtilTest {
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
 
-    BigDecimal distance = HaversineUtil.getDistance(laLong, laLat, sfLong, sfLat);
+    BigDecimal distance = HaversineUtil.getDistance(
+        new HaversineUtil.HaversinePoint(laLong, laLat),
+        new HaversineUtil.HaversinePoint(sfLong, sfLat)
+    );
 
     BigDecimal expected = new BigDecimal("557787");
     BigDecimal difference = distance.subtract(expected).abs();
@@ -37,7 +39,10 @@ class HaversineUtilTest {
     BigDecimal longitude = new BigDecimal("1.23");
     BigDecimal latitude = new BigDecimal("1.23");
 
-    BigDecimal distance = haversineUtil.getDistance(longitude, latitude, longitude, latitude);
+    BigDecimal distance = HaversineUtil.getDistance(
+        new HaversineUtil.HaversinePoint(longitude, latitude),
+        new HaversineUtil.HaversinePoint(longitude, latitude)
+    );
 
     assertEquals(
         BigDecimal.ZERO.setScale(2),

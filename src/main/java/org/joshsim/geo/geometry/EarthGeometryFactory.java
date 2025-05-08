@@ -2,6 +2,8 @@ package org.joshsim.geo.geometry;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+
+import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -293,6 +295,16 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   ) {
-    return new EarthPatchBuilder()
+    try {
+      return new EarthPatchBuilder(
+          gridCrsDefinition.getBaseCrsCode(),
+          gridCrsDefinition.getBaseCrsCode(),
+          gridCrsDefinition.getExtents(),
+          gridCrsDefinition.getCellSize(),
+          prototype
+      );
+    } catch (TransformException | FactoryException e) {
+      throw new RuntimeException("Failed to create earth patch builder: " + e);
+    }
   }
 }

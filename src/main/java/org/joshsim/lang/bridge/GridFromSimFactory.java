@@ -183,16 +183,12 @@ public class GridFromSimFactory {
    */
   private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
     BigDecimal width = HaversineUtil.getDistance(
-        extents.getTopLeftX(),
-        extents.getTopLeftY(),
-        extents.getBottomRightX(),
-        extents.getTopLeftY()
+        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY()),
+        new HaversineUtil.HaversinePoint(extents.getBottomRightX(), extents.getTopLeftY())
     );
     BigDecimal height = HaversineUtil.getDistance(
-        extents.getTopLeftX(),
-        extents.getTopLeftY(),
-        extents.getTopLeftX(),
-        extents.getBottomRightY()
+        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY()),
+        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getBottomRightY())
     );
 
     BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
