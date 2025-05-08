@@ -149,23 +149,46 @@ public class EarthPatchBuilder implements PatchBuilder {
    */
   private List<MutableEntity> createPatchGrid() {
     BigDecimal cellWidthMeters = gridCrsDefinition.getCellSize();
-    BigDecimal halfCellWidthMeters = cellWidthMeters.divide(new BigDecimal(2));
     BigDecimal topLeftLon = extents.getTopLeftX();
     BigDecimal topLeftLat = extents.getTopLeftY();
+    BigDecimal bottomRightLon = extents.getBottomRightX();
+    BigDecimal bottomRightLat = extents.getBottomRightY();
 
-    long numRowCells = 0;  // TODO: get number of cells along latitude or y using HaversineUtil
-    long numColCells = 0;  // TODO: get number of cells along longitude or x using HaversineUtil
+    // Calculate total distances
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(topLeftLon, topLeftLat);
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(bottomRightLon, topLeftLat);
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(topLeftLon, bottomRightLat);
+
+    BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+
+    // Calculate number of cells needed
+    long numColCells = widthMeters.divide(cellWidthMeters, 0, BigDecimal.ROUND_CEILING).longValue();
+    long numRowCells = heightMeters.divide(cellWidthMeters, 0, BigDecimal.ROUND_CEILING).longValue();
+
     List<MutableEntity> patches = new ArrayList<>();
+    HaversineUtil.HaversinePoint currentPoint = topLeft;
 
-    for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
-      for (int colIdx = 0; colIdx < colCells; colIdx++) {
-        BigDecimal patchLongitude = null;  // TODO: calculate center longitude using HaversineUtil
-        BigDecimal patchLatitude = null;  // TODO: calculate center latitude using HaversineUtil
-        BigDecimal patchWidthDegrees = null;  // TODO: calculate using HaversineUtil
+    for (int rowIdx = 0; rowIdx < numRowCells; rowIdx++) {
+      // Reset to start of row
+      currentPoint = rowIdx == 0 ? topLeft :
+          HaversineUtil.getAtDistanceFrom(topLeft, 
+              cellWidthMeters.multiply(new BigDecimal(rowIdx)), "S");
 
-        GridSquare square = new GridSquare(patchLongitude, patchLatitude, patchWidthDegrees);
+      for (int colIdx = 0; colIdx < numColCells; colIdx++) {
+        // Move east along row
+        HaversineUtil.HaversinePoint patchCenter = colIdx == 0 ? currentPoint :
+            HaversineUtil.getAtDistanceFrom(currentPoint, 
+                cellWidthMeters.multiply(new BigDecimal(colIdx)), "E");
+
+        // Create grid square using the center point
+        GridSquare square = new GridSquare(
+            patchCenter.getLongitude(),
+            patchCenter.getLatitude(),
+            cellWidthMeters
+        );
+        
         MutableEntity patch = prototype.buildSpatial(square);
-
         patches.add(patch);
       }
     }
