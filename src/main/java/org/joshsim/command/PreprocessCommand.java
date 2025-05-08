@@ -154,15 +154,6 @@ public class PreprocessCommand implements Callable<Integer> {
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
-    EngineBridge bridge = new QueryCacheEngineBridge(
-        engineGeometryFactory,
-        simEntity,
-        program.getConverter(),
-        program.getPrototypes()
-    );
-    GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
-    PatchSet patchSet = gridFactory.build(simEntity);
-
     // Initialize an external geo mapper
     ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
     geoMapperBuilder.addCrsCode(crsCode);
@@ -176,6 +167,16 @@ public class PreprocessCommand implements Callable<Integer> {
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     EngineValue size = extractor.getSize();
+
+    // Build bridge
+    EngineBridge bridge = new QueryCacheEngineBridge(
+        engineGeometryFactory,
+        simEntity,
+        program.getConverter(),
+        program.getPrototypes()
+    );
+    GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
+    PatchSet patchSet = gridFactory.build(simEntity);
 
     // Check and parse grid
     if (!unitsSupported(size.getUnits().toString())) {

@@ -72,16 +72,20 @@ public class PatchKeyConverter {
    */
   public static class ProjectedValue {
 
-    private final BigDecimal x;
-    private final BigDecimal y;
+    private final BigDecimal positionX;
+    private final BigDecimal positionY;
     private final BigDecimal value;
 
     /**
      * Create a new record of a projection.
+     *
+     * @param positionX The horizontal position in grid-space where the value is located.
+     * @param positionY The vertical position in grid-space where the value is located.
+     * @param value The value whose positoin was projected.
      */
-    public ProjectedValue(BigDecimal x, BigDecimal y, BigDecimal value) {
-      this.x = x;
-      this.y = y;
+    public ProjectedValue(BigDecimal positionX, BigDecimal positionY, BigDecimal value) {
+      this.positionX = positionX;
+      this.positionY = positionY;
       this.value = value;
     }
 
@@ -91,7 +95,7 @@ public class PatchKeyConverter {
      * @returns Zero indexed number of patch width to the horizontal center position of this point.
      */
     public BigDecimal getX() {
-      return x;
+      return positionX;
     }
 
     /**
@@ -100,9 +104,14 @@ public class PatchKeyConverter {
      * @returns Zero indexed number of patch width to the vertical center position of this point.
      */
     public BigDecimal getY() {
-      return y;
+      return positionY;
     }
 
+    /**
+     * Get the value that was projected.
+     *
+     * @returns The value at the projected point.
+     */
     public BigDecimal getValue() {
       return value;
     }
