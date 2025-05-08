@@ -43,9 +43,10 @@ public class PatchKeyConverter {
    * Convert a single patch key to grid-space.
    *
    * @param key The patch key to be converted.
-   * @return A new patch key in grid-space.
+   * @param value The value at the location.
+   * @return A new patch key in grid-space with the associated value.
    */
-  public ProjectedKey convert(GeoKey key) {
+  public ProjectedValue convert(GeoKey key, BigDecimal value) {
     // Calculate horizontal distance from start point (going east)
     BigDecimal horizontalDistance = HaversineUtil.getDistance(
         startPoint,
@@ -62,24 +63,26 @@ public class PatchKeyConverter {
     BigDecimal gridX = horizontalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
     BigDecimal gridY = verticalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
     
-    return new ProjectedKey(gridX, gridY);
+    return new ProjectedValue(gridX, gridY, value);
   }
 
   
   /**
    * Result of a projection from Earth-space to grid-space.
    */
-  public static class ProjectedKey {
+  public static class ProjectedValue {
 
     private final BigDecimal x;
     private final BigDecimal y;
+    private final BigDecimal value;
 
     /**
      * Create a new record of a projection.
      */
-    public ProjectedKey(BigDecimal x, BigDecimal y) {
+    public ProjectedValue(BigDecimal x, BigDecimal y, BigDecimal value) {
       this.x = x;
       this.y = y;
+      this.value = value;
     }
 
     /**
@@ -98,6 +101,10 @@ public class PatchKeyConverter {
      */
     public BigDecimal getY() {
       return y;
+    }
+
+    public BigDecimal getValue() {
+      return value;
     }
     
   }

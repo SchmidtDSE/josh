@@ -115,13 +115,12 @@ class PatchKeyConverterTest {
             }
         });
 
-        PatchKeyConverter.ProjectedKey result = converter.convert(laKey);
+        PatchKeyConverter.ProjectedValue result = converter.convert(laKey, BigDecimal.ONE);
         BigDecimal expectedX = new BigDecimal("74");
         BigDecimal expectedY = new BigDecimal("81");
         
-        assertEquals(0, result.getX().compareTo(expectedX),
-            "X coordinate should match expected grid position");
-        assertEquals(0, result.getY().compareTo(expectedY),
-            "Y coordinate should match expected grid position");
+        assertEquals(0, result.getX().compareTo(expectedX));
+        assertEquals(0, result.getY().compareTo(expectedY));
+        assertEquals(0, result.getValue().compareTo(BigDecimal.ONE));
     }
 }

@@ -2,7 +2,7 @@ package org.joshsim.precompute;
 
 import java.util.Map;
 import java.util.stream.Stream;
-import org.joshsim.engine.entity.base.GeoKey;
+
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -41,13 +41,13 @@ public class StreamToPrecomputedGridUtil {
     );
 
     for (long timestep = minTimestep; timestep < maxTimestep; timestep++) {
-      Stream<Map.Entry<GeoKey, EngineValue>> values = streamGetter.getForTimestep(timestep);
+      Stream<PatchKeyConverter.ProjectedValue> values = streamGetter.getForTimestep(timestep);
       final long timestepRealized = timestep;
       values.forEach(entry -> grid.setAt(
-          entry.getKey().getCenterX().longValue(),
-          entry.getKey().getCenterY().longValue(),
+          entry.getX().longValue(),
+          entry.getY().longValue(),
           timestepRealized,
-          entry.getValue().getAsDecimal().doubleValue()
+          entry.getValue().doubleValue()
       ));
     }
 
@@ -65,7 +65,7 @@ public class StreamToPrecomputedGridUtil {
      * @param timestep The timestep for which to get the stream.
      * @return The stream of geo keys and values for the requested timestep.
      */
-    Stream<Map.Entry<GeoKey, EngineValue>> getForTimestep(long timestep);
+    Stream<PatchKeyConverter.ProjectedValue> getForTimestep(long timestep);
 
   }
 }
