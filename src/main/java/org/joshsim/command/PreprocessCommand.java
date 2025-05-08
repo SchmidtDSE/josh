@@ -10,10 +10,12 @@ import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalGeoMapper;
 import org.joshsim.geo.external.ExternalGeoMapperBuilder;
 import org.joshsim.geo.external.GridExternalCoordinateTransformer;
@@ -169,6 +171,14 @@ public class PreprocessCommand implements Callable<Integer> {
     GridInfoExtractor extractor = new GridInfoExtractor(simEntity, new EngineValueFactory());
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
+    EngineValue size = extractor.getSize();
+
+    // Check and parse grid
+    if (!unitsSupported(size.getUnits().toString())) {
+      output.printError("Unsupported units for grid size: " + size.getUnits());
+      return 1;
+    }
+    PatchBuilderExtents extents = gridFactory.buildExtents(startStr, endStr);
 
     PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
@@ -184,7 +194,7 @@ public class PreprocessCommand implements Callable<Integer> {
             throw new RuntimeException("Failed to stream on patches: " + e);
           }
         },
-        gridFactory.buildExtents(startStr, endStr),
+        extents,
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
         new Units(unitsStr)
@@ -202,5 +212,9 @@ public class PreprocessCommand implements Callable<Integer> {
 
     output.printInfo("Successfully preprocessed data to " + outputFile);
     return 0;
+  }
+
+  private boolean unitsSupported(String unitsStr) {
+    return unitsStr.equals("m") || unitsStr.equals("meter") || unitsStr.equals("meters");
   }
 }
