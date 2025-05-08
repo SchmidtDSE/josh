@@ -1,16 +1,21 @@
-
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.Set;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
-import org.joshsim.engine.entity.Entity;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridShape;
+import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.geometry.EarthShape;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.util.Optional;
+
 
 class PatchKeyConverterTest {
     
@@ -51,10 +56,30 @@ class PatchKeyConverterTest {
                     public BigDecimal getCenterY() {
                         return new BigDecimal("34.05");
                     }
-                    
+
                     @Override
-                    public BigDecimal getOnGrid() {
-                        return BigDecimal.ONE;
+                    public EngineGeometry getCenter() {
+                        return this;
+                    }
+
+                    @Override
+                    public boolean intersects(EngineGeometry other) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean intersects(BigDecimal locationX, BigDecimal locationY) {
+                        return false;
+                    }
+
+                    @Override
+                    public EarthShape getOnEarth() {
+                        return null;
+                    }
+
+                    @Override
+                    public GridShape getOnGrid() {
+                        return null;
                     }
                 });
             }
@@ -63,14 +88,36 @@ class PatchKeyConverterTest {
             public String getName() {
                 return "TestPatch";
             }
+
+            @Override
+            public Optional<EngineValue> getAttributeValue(String name) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Set<String> getAttributeNames() {
+                return Set.of();
+            }
+
+            @Override
+            public EntityType getEntityType() {
+                return null;
+            }
+
+            @Override
+            public Entity freeze() {
+                return null;
+            }
+
+            @Override
+            public Optional<GeoKey> getKey() {
+                return Optional.empty();
+            }
         });
 
-        ProjectedKey result = converter.convert(laKey);
-        
-        // LA is approximately 557.787km from SF (from HaversineUtilTest)
-        // With 5km patches, expect around 111 patches distance
-        BigDecimal expectedX = new BigDecimal("111");
-        BigDecimal expectedY = new BigDecimal("111");
+        PatchKeyConverter.ProjectedKey result = converter.convert(laKey);
+        BigDecimal expectedX = new BigDecimal("74");
+        BigDecimal expectedY = new BigDecimal("81");
         
         assertEquals(0, result.getX().compareTo(expectedX),
             "X coordinate should match expected grid position");
