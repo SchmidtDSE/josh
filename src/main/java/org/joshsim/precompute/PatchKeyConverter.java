@@ -46,55 +46,7 @@ public class PatchKeyConverter {
    * @return A new patch key in grid-space.
    */
   public GeoKey convert(GeoKey key) {
-    // Get the distance from the top-left corner to the key's position
-    HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
-        key.getCenterX(),
-        key.getCenterY()
-    );
-    
-    // Calculate horizontal distance (going east from start point)
-    BigDecimal horizontalDistance = HaversineUtil.getDistance(
-        startPoint,
-        new HaversineUtil.HaversinePoint(key.getCenterX(), startPoint.getLatitude())
-    );
-    
-    // Calculate vertical distance (going south from start point)
-    BigDecimal verticalDistance = HaversineUtil.getDistance(
-        startPoint,
-        new HaversineUtil.HaversinePoint(startPoint.getLongitude(), key.getCenterY())
-    );
-    
-    // Convert distances to grid cell indices
-    BigDecimal gridX = horizontalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
-    BigDecimal gridY = verticalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
-    
-    // Create a new entity at the grid position
-    return new GeoKey(new Entity() {
-      @Override
-      public Optional<EngineGeometry> getGeometry() {
-        return Optional.of(new EngineGeometry() {
-          @Override
-          public BigDecimal getCenterX() {
-            return gridX;
-          }
-          
-          @Override
-          public BigDecimal getCenterY() {
-            return gridY;
-          }
-          
-          @Override
-          public BigDecimal getOnGrid() {
-            return BigDecimal.ONE;
-          }
-        });
-      }
-      
-      @Override
-      public String getName() {
-        return "GridCell";
-      }
-    });
+    // TODO
   }
 
 }
