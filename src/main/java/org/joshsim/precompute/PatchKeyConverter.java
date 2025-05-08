@@ -46,7 +46,23 @@ public class PatchKeyConverter {
    * @return A new patch key in grid-space.
    */
   public ProjectedKey convert(GeoKey key) {
-    // TODO
+    // Calculate horizontal distance from start point (going east)
+    BigDecimal horizontalDistance = HaversineUtil.getDistance(
+        startPoint,
+        new HaversineUtil.HaversinePoint(key.getCenterX(), startPoint.getLatitude())
+    );
+    
+    // Calculate vertical distance from start point (going south)
+    BigDecimal verticalDistance = HaversineUtil.getDistance(
+        startPoint,
+        new HaversineUtil.HaversinePoint(startPoint.getLongitude(), key.getCenterY())
+    );
+    
+    // Convert distances to grid cell indices by dividing by patch width
+    BigDecimal gridX = horizontalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
+    BigDecimal gridY = verticalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
+    
+    return new ProjectedKey(gridX, gridY);
   }
 
   
