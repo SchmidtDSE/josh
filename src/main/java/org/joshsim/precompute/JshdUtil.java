@@ -112,8 +112,10 @@ public class JshdUtil {
       throw new IllegalArgumentException("Units string exceeds maximum length of 200 characters");
     }
 
-    // Calculate buffer size: version number + 6 longs for header + int for units length + units string + doubles for all grid values
-    int bufferSize = Integer.BYTES + (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length + (width * height * timesteps * Double.BYTES);
+    // Calculate buffer size
+    int headerSize = Integer.BYTES + (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length;
+    int bodySize = width * height * timesteps * Double.BYTES;
+    int bufferSize = headerSize + bodySize;
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 
     // Write version

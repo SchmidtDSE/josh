@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DoublePrecomputedGridBuilderTest {
   
-  @Mock(lenient=true)
+  @Mock(lenient = true)
   private PatchBuilderExtents mockExtents;
 
   private DoublePrecomputedGridBuilder builder;

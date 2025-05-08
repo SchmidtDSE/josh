@@ -113,7 +113,9 @@ class JshdUtilTest {
     // Given
     String testUnits = "meters";
     byte[] unitsBytes = testUnits.getBytes();
-    ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES + 6 * 8 + Integer.BYTES + unitsBytes.length + 3 * 3 * 3 * 8);
+    ByteBuffer buffer = ByteBuffer.allocate(
+        Integer.BYTES + 6 * 8 + Integer.BYTES + unitsBytes.length + 3 * 3 * 3 * 8
+    );
     buffer.putInt(1); // version
     buffer.putLong(0L); // minX
     buffer.putLong(2L); // maxX
