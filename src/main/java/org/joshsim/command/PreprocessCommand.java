@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -17,6 +18,7 @@ import org.joshsim.geo.external.ExternalGeoMapper;
 import org.joshsim.geo.external.ExternalGeoMapperBuilder;
 import org.joshsim.geo.external.GridExternalCoordinateTransformer;
 import org.joshsim.geo.external.NearestNeighborInterpolationStrategy;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.GridFromSimFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
@@ -134,7 +136,7 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Get metadata
-    EngineGeometryFactory engineGeometryFactory = new GridGeometryFactory();
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(CRS.forCode(crsCode));
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 

@@ -69,13 +69,6 @@ public class GridFromSimFactory {
     EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
 
-    // TODO: properly parse units for cell size
-    String sizeValueUnits = "m";
-
-    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", inputCrs, extents, sizeValuePrimitive, sizeValueUnits
-    );
-
     EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
 
     String sizeUnits = sizeValueRaw.getUnits().toString();
@@ -92,6 +85,16 @@ public class GridFromSimFactory {
       extents = convertToMeters(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
+
+    String sizeValueUnits = "m";
+
+    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
+        "GRID",
+        inputCrs,
+        extents,
+        sizeValuePrimitive,
+        sizeValueUnits
+    );
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(
         gridCrsDefinition,
