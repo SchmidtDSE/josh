@@ -62,39 +62,61 @@ public class HaversineUtil {
     BigDecimal longitude = start.getLongitude();
     BigDecimal latitude = start.getLatitude();
     
+    // Angular distance in radians
+    BigDecimal angularDistance = meters.divide(EARTH_RADIUS_METERS, 10, RoundingMode.HALF_UP);
+    
     // Convert to radians for calculation
     double latRad = Math.toRadians(latitude.doubleValue());
+    double lonRad = Math.toRadians(longitude.doubleValue());
+    double angularDistanceRad = angularDistance.doubleValue();
     
-    // Angular distance in radians
-    double angularDistance = meters.divide(EARTH_RADIUS_METERS, 10, RoundingMode.HALF_UP)
-        .doubleValue();
+    double newLat, newLon;
     
     switch (direction) {
       case "N":
-        double newLatN = Math.toDegrees(latRad + angularDistance);
-        return new HaversinePoint(longitude, BigDecimal.valueOf(newLatN));
+        newLat = Math.asin(
+            Math.sin(latRad) * Math.cos(angularDistanceRad) 
+            + Math.cos(latRad) * Math.sin(angularDistanceRad)
+        );
+        newLon = lonRad;
+        break;
         
       case "S":
-        double newLatS = Math.toDegrees(latRad - angularDistance);
-        return new HaversinePoint(longitude, BigDecimal.valueOf(newLatS));
+        newLat = Math.asin(
+            Math.sin(latRad) * Math.cos(angularDistanceRad) 
+            - Math.cos(latRad) * Math.sin(angularDistanceRad)
+        );
+        newLon = lonRad;
+        break;
         
       case "E":
-        double newLongE = Math.toDegrees(
-            Math.toRadians(longitude.doubleValue()) 
-            + angularDistance / Math.cos(latRad)
+        newLat = Math.asin(
+            Math.sin(latRad) * Math.cos(angularDistanceRad)
         );
-        return new HaversinePoint(BigDecimal.valueOf(newLongE), latitude);
+        newLon = lonRad + Math.atan2(
+            Math.sin(angularDistanceRad) * Math.cos(latRad),
+            Math.cos(angularDistanceRad)
+        );
+        break;
         
       case "W":
-        double newLongW = Math.toDegrees(
-            Math.toRadians(longitude.doubleValue())
-            - angularDistance / Math.cos(latRad)
+        newLat = Math.asin(
+            Math.sin(latRad) * Math.cos(angularDistanceRad)
         );
-        return new HaversinePoint(BigDecimal.valueOf(newLongW), latitude);
+        newLon = lonRad - Math.atan2(
+            Math.sin(angularDistanceRad) * Math.cos(latRad),
+            Math.cos(angularDistanceRad)
+        );
+        break;
         
       default:
         throw new IllegalArgumentException("Direction must be N, S, E, or W");
     }
+    
+    return new HaversinePoint(
+        BigDecimal.valueOf(Math.toDegrees(newLon)),
+        BigDecimal.valueOf(Math.toDegrees(newLat))
+    );
   }
 
   /**
