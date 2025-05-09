@@ -259,8 +259,8 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    * Reads a value from the specified variable at the given spatial coordinates and time step.
    *
    * @param variableName The name of the variable to read.
-   * @param x The X coordinate as a BigDecimal.
-   * @param y The Y coordinate as a BigDecimal.
+   * @param x The X coordinate as a BigDecimal. Typically longitude in degrees.
+   * @param y The Y coordinate as a BigDecimal. Typically latitude in degrees.
    * @param timeStep The time step index.
    * @return An Optional containing the EngineValue if found, or an empty Optional if not.
    * @throws IOException If an error occurs while reading the value.
