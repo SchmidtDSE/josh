@@ -122,7 +122,7 @@ class DataFilesPresenter {
 
     const isBinaryFile = self._getIsBinaryFile(file.type);
     if (isBinaryFile) {
-      await self._uploadBInaryFile(file);
+      await self._uploadBinaryFile(file);
     } else {
       await self._uploadTextFile(file);
     }
