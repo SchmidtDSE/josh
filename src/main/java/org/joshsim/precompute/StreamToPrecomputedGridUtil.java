@@ -1,11 +1,9 @@
 package org.joshsim.precompute;
 
-import java.util.Map;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.engine.value.type.EngineValue;
 
 
 /**

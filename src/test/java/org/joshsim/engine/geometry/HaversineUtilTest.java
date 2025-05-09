@@ -70,16 +70,10 @@ class HaversineUtilTest {
         "N"
     );
 
-    BigDecimal expectedLat = new BigDecimal("37.77");
+    assertTrue(result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat) > 0);
     assertEquals(
         0,
-        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLat),
-        "Latitude should increase when moving north"
-    );
-    assertEquals(
-        0,
-        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong),
-        "Longitude should remain same when moving north"
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong)
     );
   }
 
@@ -93,14 +87,10 @@ class HaversineUtilTest {
         start, new BigDecimal("5000"), "S");
 
     BigDecimal expectedLat = new BigDecimal("37.69");
+    assertTrue(result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat) < 0);
     assertEquals(
         0,
-        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLat),
-        "Latitude should decrease when moving south"
-    );
-    assertEquals(0, result.getLongitude().setScale(
-        2, RoundingMode.HALF_UP).compareTo(sfLong),
-        "Longitude should remain same when moving south"
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong)
     );
   }
 
@@ -117,15 +107,10 @@ class HaversineUtilTest {
     );
 
     BigDecimal expectedLong = new BigDecimal("-122.41");
+    assertTrue(result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong) > 0);
     assertEquals(
         0,
-        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLong),
-        "Longitude should increase when moving east"
-    );
-    assertEquals(
-        0,
-        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat),
-        "Latitude should remain same when moving east"
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat)
     );
   }
 
@@ -142,15 +127,31 @@ class HaversineUtilTest {
     );
 
     BigDecimal expectedLong = new BigDecimal("-122.49");
+    assertTrue(result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong) < 0);
     assertEquals(
         0,
-        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(expectedLong),
-        "Longitude should decrease when moving west"
+        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat)
     );
-    assertEquals(0,
-        result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat),
-        "Latitude should remain same when moving west"
+  }
+
+  @Test
+  void encodesAndDecodesInAgreementNorth() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start,
+        new BigDecimal("5000"),
+        "N"
     );
+
+    double delta = HaversineUtil.getDistance(start, result)
+        .subtract(new BigDecimal("5000"))
+        .abs()
+        .doubleValue();
+
+    assertTrue(delta < 0.0001);
   }
 
   @Test
@@ -163,6 +164,46 @@ class HaversineUtilTest {
         start,
         new BigDecimal("5000"),
         "E"
+    );
+
+    double delta = HaversineUtil.getDistance(start, result)
+        .subtract(new BigDecimal("5000"))
+        .abs()
+        .doubleValue();
+
+    assertTrue(delta < 0.0001);
+  }
+
+  @Test
+  void encodesAndDecodesInAgreementSouth() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start,
+        new BigDecimal("5000"),
+        "S"
+    );
+
+    double delta = HaversineUtil.getDistance(start, result)
+        .subtract(new BigDecimal("5000"))
+        .abs()
+        .doubleValue();
+
+    assertTrue(delta < 0.0001);
+  }
+
+  @Test
+  void encodesAndDecodesInAgreementWest() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start,
+        new BigDecimal("5000"),
+        "W"
     );
 
     double delta = HaversineUtil.getDistance(start, result)

@@ -58,41 +58,6 @@ public class HaversineUtil {
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
 
-    double distanceMeters = meters.doubleValue();
-    double lat1 = Math.toRadians(start.getLatitude().doubleValue());
-    double lon1 = Math.toRadians(start.getLongitude().doubleValue());
-
-    double lat2 = lat1;
-    double lon2 = lon1;
-
-    double radius = EARTH_RADIUS_METERS.doubleValue();
-
-    switch (direction.toUpperCase()) {
-      case "N":
-        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / radius)
-            + Math.cos(lat1) * Math.sin(distanceMeters / radius));
-        break;
-      case "S":
-        lat2 = Math.asin(Math.sin(lat1) * Math.cos(distanceMeters / radius)
-            - Math.cos(lat1) * Math.sin(distanceMeters / radius));
-        break;
-      case "E":
-        lon2 = lon1 + Math.atan2(Math.sin(distanceMeters / radius) * Math.cos(lat1),
-               Math.cos(distanceMeters / radius));
-        break;
-      case "W":
-        lon2 = lon1 - Math.atan2(Math.sin(distanceMeters / radius) * Math.cos(lat1),
-               Math.cos(distanceMeters / radius));
-        break;
-      default:
-        throw new IllegalArgumentException("Direction must be N, S, E, or W");
-    }
-
-    // Convert back to degrees
-    BigDecimal newLat = new BigDecimal(String.valueOf(Math.toDegrees(lat2)));
-    BigDecimal newLon = new BigDecimal(String.valueOf(Math.toDegrees(lon2)));
-
-    return new HaversinePoint(newLon, newLat);
   }
 
   /**

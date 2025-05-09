@@ -79,11 +79,33 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int timestepCut = (int) (timestep - getMinTimestep());
 
     boolean horizOutBounds = horizCut < 0 || horizCut >= getWidth();
-    boolean vertOutBounds = vertCut < 0 || vertCut >= getHeight();
-    boolean timeOutBounds = timestepCut < 0 || timestepCut >= (getMaxTimestep() - getMinTimestep());
+    if (horizOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Horizontal out of bounds (%d < 0 || %d >= %d)",
+          horizCut,
+          horizCut,
+          getWidth()
+      ));
+    }
 
-    if (horizOutBounds || vertOutBounds || timeOutBounds) {
-      throw new IllegalArgumentException("Coordinates or timestep out of bounds");
+    boolean vertOutBounds = vertCut < 0 || vertCut >= getHeight();
+    if (vertOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Vertical out of bounds (%d < 0 || %d >= %d)",
+          vertCut,
+          vertCut,
+          getHeight()
+      ));
+    }
+
+    boolean timeOutBounds = timestepCut < 0 || timestepCut > (getMaxTimestep() - getMinTimestep());
+    if (timeOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Timestep out of bounds (%d < 0 || %d >= %d)",
+          timestepCut,
+          timestepCut,
+          (getMaxTimestep() - getMinTimestep())
+      ));
     }
 
     innerValues[timestepCut][vertCut][horizCut] = value;
