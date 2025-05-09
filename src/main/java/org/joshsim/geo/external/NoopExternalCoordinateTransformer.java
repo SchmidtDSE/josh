@@ -33,18 +33,18 @@ public class NoopExternalCoordinateTransformer implements ExternalCoordinateTran
   }
 
   @Override
-    public BigDecimal[] transformDataToPatchCoordinates(
-        BigDecimal patchX,
-        BigDecimal patchY,
-        GridCrsDefinition gridCrs,
-        ExternalSpatialDimensions sourceDimensions
-    ) throws Exception {
+  public BigDecimal[] transformDataToPatchCoordinates(
+      BigDecimal patchX,
+      BigDecimal patchY,
+      GridCrsDefinition gridCrs,
+      ExternalSpatialDimensions sourceDimensions
+  ) throws Exception {
 
-      // Otherwise, transform between CRSes using a CRS transformation service
-      return new BigDecimal[] {
-          patchX,
-          patchY
-      };
-    }
+    // Otherwise, transform between CRSes using a CRS transformation service
+    return new BigDecimal[] {
+        patchX,
+        patchY
+    };
+  }
 
 }

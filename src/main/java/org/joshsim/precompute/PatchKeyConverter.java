@@ -8,7 +8,6 @@ package org.joshsim.precompute;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
@@ -64,12 +63,6 @@ public class PatchKeyConverter {
     );
     
     // Convert distances to grid cell indices by dividing by patch width
-    System.out.println(
-        horizontalDistance + "/" +
-            horizontalDistance.subtract(patchWidthHalf).divide(patchWidth, 1, RoundingMode.HALF_UP) + " " +
-            verticalDistance + "/" +
-            verticalDistance.subtract(patchWidthHalf).divide(patchWidth, 1, RoundingMode.HALF_UP)
-    );
     BigDecimal gridX = horizontalDistance.subtract(patchWidthHalf).divide(
         patchWidth,
         0,

@@ -6,12 +6,9 @@
 
 package org.joshsim.precompute;
 
+import java.math.BigDecimal;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigDecimal;
 
 
 /**
@@ -30,7 +27,8 @@ public class ExtentsTransformer {
    *     then cell counts.
    * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
    */
-  public static PatchBuilderExtents transformToGrid(PatchBuilderExtents extents, BigDecimal sizeMeters) {
+  public static PatchBuilderExtents transformToGrid(PatchBuilderExtents extents,
+        BigDecimal sizeMeters) {
     BigDecimal width = HaversineUtil.getDistance(
         new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY()),
         new HaversineUtil.HaversinePoint(extents.getBottomRightX(), extents.getTopLeftY())

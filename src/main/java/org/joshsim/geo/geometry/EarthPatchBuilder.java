@@ -177,7 +177,6 @@ public class EarthPatchBuilder implements PatchBuilder {
 
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
-    System.out.println("Patch builder saw " + widthMeters.toPlainString() + " " + heightMeters.toPlainString());
     BigDecimal halfWidth = cellWidthMeters.divide(BigDecimal.TWO, RoundingMode.HALF_UP);
 
     // Calculate number of cells needed

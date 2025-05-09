@@ -68,7 +68,7 @@ public class HaversineUtil {
     double newLat = lat;
     double newLng = lng;
 
-    switch(direction) {
+    switch (direction) {
       case "N":
         // Moving north increases latitude
         newLat = lat + (distance / EARTH_RADIUS_METERS_DOUBLE);

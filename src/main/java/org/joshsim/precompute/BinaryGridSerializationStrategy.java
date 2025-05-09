@@ -23,6 +23,11 @@ public class BinaryGridSerializationStrategy implements GridSerializationStrateg
 
   private final EngineValueFactory engineValueFactory;
 
+  /**
+   * Construct a serialization strategy using the given engine factory.
+   *
+   * @param engineValueFactory the factory used to create values during the deserialization process
+   */
   public BinaryGridSerializationStrategy(EngineValueFactory engineValueFactory) {
     this.engineValueFactory = engineValueFactory;
   }
@@ -30,7 +35,9 @@ public class BinaryGridSerializationStrategy implements GridSerializationStrateg
   @Override
   public void serialize(PrecomputedGrid target, OutputStream outputStream) {
     if (!(target instanceof DoublePrecomputedGrid)) {
-      throw new IllegalArgumentException("Binary serialization only supports DoublePrecomputedGrid");
+      throw new IllegalArgumentException(
+          "Binary serialization currently only supports DoublePrecomputedGrid"
+      );
     }
     try {
       byte[] serialized = JshdUtil.serializeToBytes((DoublePrecomputedGrid) target);
