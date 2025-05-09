@@ -106,7 +106,7 @@ jobs:
             exit 1
           fi
   validateExamples:
-    needs: testPreprocess
+    needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
     name: Validate Josh examples
