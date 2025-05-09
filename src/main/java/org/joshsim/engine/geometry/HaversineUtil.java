@@ -74,39 +74,25 @@ public class HaversineUtil {
     
     switch (direction) {
       case "N":
-        newLat = Math.asin(
-            Math.sin(latRad) * Math.cos(angularDistanceRad) 
-            + Math.cos(latRad) * Math.sin(angularDistanceRad)
-        );
+        newLat = latRad + angularDistanceRad;
         newLon = lonRad;
         break;
         
       case "S":
-        newLat = Math.asin(
-            Math.sin(latRad) * Math.cos(angularDistanceRad) 
-            - Math.cos(latRad) * Math.sin(angularDistanceRad)
-        );
+        newLat = latRad - angularDistanceRad;
         newLon = lonRad;
         break;
         
       case "E":
-        newLat = Math.asin(
-            Math.sin(latRad) * Math.cos(angularDistanceRad)
-        );
-        newLon = lonRad + Math.atan2(
-            Math.sin(angularDistanceRad) * Math.cos(latRad),
-            Math.cos(angularDistanceRad)
-        );
+        double R = Math.cos(latRad);
+        newLat = latRad;
+        newLon = lonRad + (R != 0 ? angularDistanceRad / R : angularDistanceRad);
         break;
         
       case "W":
-        newLat = Math.asin(
-            Math.sin(latRad) * Math.cos(angularDistanceRad)
-        );
-        newLon = lonRad - Math.atan2(
-            Math.sin(angularDistanceRad) * Math.cos(latRad),
-            Math.cos(angularDistanceRad)
-        );
+        R = Math.cos(latRad);
+        newLat = latRad;
+        newLon = lonRad - (R != 0 ? angularDistanceRad / R : angularDistanceRad);
         break;
         
       default:
