@@ -116,13 +116,52 @@ class DataFilesPresenter {
   async _uploadFile() {
     const self = this;
     const file = self._fileUploadInput.files[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
+    const isBinaryFile = self._getIsBinaryFile(file.type);
+    if (isBinaryFile) {
+      await self._uploadBinaryFile(file);
+    } else {
+      await self._uploadTextFile(file);
+    }
+  }
+
+  /**
+   * Upload a binary file into the application as an OPFS file.
+   *
+   * @param {File} file - The file from the file upload input to be added to OPFS.
+   */
+  async _uploadBinaryFile(file) {
+    const self = this;
     const reader = new FileReader();
     reader.onload = async (e) => {
       const contents = e.target.result;
-      const isBinaryFile = self._getIsBinaryFile(file.type);
-      const opfsFile = new OpfsFile(file.name, contents, false, isBinaryFile);
+      const opfsFile = new OpfsFile(file.name, contents, false, true);
+      try {
+        await self._fileLayer.putFile(opfsFile);
+        await self._refreshFilesList();
+        await self._updateSpaceUtilizationDisplay();
+        self._hideFileUpload();
+      } catch (error) {
+        alert("Error uploading file: " + error);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /**
+   * Upload a text file into the application as an OPFS file.
+   *
+   * @param {File} file - The file from the file upload input to be added to OPFS.
+   */
+  async _uploadTextFile(file) {
+    const self = this;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target.result;
+      const opfsFile = new OpfsFile(file.name, contents, false, false);
       try {
         await self._fileLayer.putFile(opfsFile);
         await self._refreshFilesList();
