@@ -58,42 +58,41 @@ public class HaversineUtil {
    */
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
-    // Earth's radius in meters
-    final double EARTH_RADIUS = 6371000;
+    BigDecimal latRad = BigDecimal.valueOf(Math.toRadians(start.getLatitude().doubleValue()));
+    BigDecimal lngRad = BigDecimal.valueOf(Math.toRadians(start.getLongitude().doubleValue()));
+    BigDecimal distanceRatio = meters.divide(EARTH_RADIUS_METERS, 10, RoundingMode.HALF_UP);
 
-    double lat = Math.toRadians(start.getLatitude().doubleValue());
-    double lng = Math.toRadians(start.getLongitude().doubleValue());
-    double distance = meters.doubleValue();
-
-    double newLat = lat;
-    double newLng = lng;
+    BigDecimal newLatRad = latRad;
+    BigDecimal newLngRad = lngRad;
 
     switch(direction) {
       case "N":
         // Moving north increases latitude
-        newLat = lat + (distance / EARTH_RADIUS);
+        newLatRad = latRad.add(distanceRatio);
         break;
       case "S":
         // Moving south decreases latitude
-        newLat = lat - (distance / EARTH_RADIUS);
+        newLatRad = latRad.subtract(distanceRatio);
         break;
       case "E":
         // Moving east increases longitude, adjusted for latitude
-        newLng = lng + (distance / (EARTH_RADIUS * Math.cos(lat)));
+        BigDecimal cosLat = BigDecimal.valueOf(Math.cos(latRad.doubleValue()));
+        newLngRad = lngRad.add(distanceRatio.divide(cosLat, 10, RoundingMode.HALF_UP));
         break;
       case "W":
         // Moving west decreases longitude, adjusted for latitude
-        newLng = lng - (distance / (EARTH_RADIUS * Math.cos(lat)));
+        BigDecimal cosLat = BigDecimal.valueOf(Math.cos(latRad.doubleValue()));
+        newLngRad = lngRad.subtract(distanceRatio.divide(cosLat, 10, RoundingMode.HALF_UP));
         break;
       default:
         throw new IllegalArgumentException("Direction must be N, S, E, or W");
     }
 
     // Convert back to degrees
-    double newLatDegrees = Math.toDegrees(newLat);
-    double newLngDegrees = Math.toDegrees(newLng);
+    BigDecimal newLatDegrees = BigDecimal.valueOf(Math.toDegrees(newLatRad.doubleValue()));
+    BigDecimal newLngDegrees = BigDecimal.valueOf(Math.toDegrees(newLngRad.doubleValue()));
 
-    return new HaversinePoint(BigDecimal.valueOf(newLngDegrees), BigDecimal.valueOf(newLatDegrees));
+    return new HaversinePoint(newLngDegrees, newLatDegrees);
   }
 
   /**
