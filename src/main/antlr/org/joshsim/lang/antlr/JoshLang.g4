@@ -120,7 +120,8 @@ expression: unitsValue # simpleExpression
   | identifier # identifierExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
-  | EXTERNAL_ identifier # externalValue
+  | EXTERNAL_ name=identifier # externalValue
+  | EXTERNAL_ name=identifier AT_ steps=expression # externalValueAtTime
   | subject=expression LBRAC_ selection=expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
