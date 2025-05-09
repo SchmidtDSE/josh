@@ -78,6 +78,33 @@ jobs:
           java-version: '21'
       - name: Run tests
         run: ./gradlew test
+  testPreprocess:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Preprocessing
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Run preprocess
+        run: java -jar build/libs/joshsim-fat.jar preprocess examples/simulations/simple_seki.josh TestSimpleSimulationExternal assets/command/maxtemp_tulare_annual.nc Maximum_air_temperature_at_2m celsius test_riverside_tiny.jshd --crs "EPSG:4326" --x-coord "lon" --y-coord "lat" --time-dim "calendar_year"
+      - name: Check result
+        run: |
+          if [ ! -s "test_riverside_tiny.jshd" ]; then
+            echo "Error: test_riverside_tiny.jshd is empty." >&2
+            exit 1
+          fi
   validateExamples:
     needs: buildJava
     environment: Build
@@ -122,7 +149,7 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
