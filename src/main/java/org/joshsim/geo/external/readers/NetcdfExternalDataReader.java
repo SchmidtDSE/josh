@@ -29,6 +29,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
   private final EngineValueFactory valueFactory;
   private Optional<CancelTask> cancelTask = Optional.empty();
+  private final Map<String, Array> variableDataCache = new HashMap<>();
 
   // Dimension names
   private String dimNameX;
@@ -359,20 +360,24 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         }
       }
 
-      // Read the value from the file
-      Array data;
+      // Get cached data and index into it
+      Array data = getDataForVariable(variableName);
+      double value;
       try {
-        data = var.read(origin, size).reduce();
-      } catch (InvalidRangeException e) {
-        return Optional.empty(); // Requested coordinates are invalid
+        // Calculate flat array index based on dimension order
+        int index = 0;
+        int multiplier = 1;
+        for (int i = rank - 1; i >= 0; i--) {
+          int pos = i == dimIdxX ? indexX : 
+                    i == dimIdxY ? indexY :
+                    i == timeDimIdx ? timeStep : 0;
+          index += pos * multiplier;
+          multiplier *= shape[i];
+        }
+        value = data.getDouble(index);
+      } catch (Exception e) {
+        return Optional.empty(); // Invalid index
       }
-
-      if (data.getSize() != 1) {
-        return Optional.empty(); // Expected a single value
-      }
-
-      // Get the value and check for missing/fill values
-      double value = data.getDouble(0);
 
       // Check for NaN or missing value
       if (Double.isNaN(value)) {
@@ -695,6 +700,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         dimNameY = null;
         dimNameTime = null;
         crsCode = null;
+        variableDataCache.clear();
       }
     }
   }
@@ -718,3 +724,28 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
            || lowerPath.endsWith(".nc4");
   }
 }
+/**
+   * Gets cached data array for a variable, loading it if not present.
+   * @param variableName Name of the variable to load
+   * @return Array containing the variable data
+   * @throws IOException If reading fails
+   */
+  private Array getDataForVariable(String variableName) throws IOException {
+    Array cachedData = variableDataCache.get(variableName);
+    if (cachedData != null) {
+      return cachedData;
+    }
+
+    Variable var = ncFile.findVariable(variableName);
+    if (var == null) {
+      throw new IOException("Variable not found: " + variableName);
+    }
+
+    try {
+      Array data = var.read();
+      variableDataCache.put(variableName, data);
+      return data;
+    } catch (Exception e) {
+      throw new IOException("Failed to read variable data: " + e.getMessage(), e);
+    }
+  }
