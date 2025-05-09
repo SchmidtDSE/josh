@@ -15,7 +15,10 @@ import java.math.RoundingMode;
  */
 public class HaversineUtil {
 
-  private static final BigDecimal EARTH_RADIUS_METERS = new BigDecimal("6371000");
+  private static final double EARTH_RADIUS_METERS_DOUBLE = 6371000;
+  private static final BigDecimal EARTH_RADIUS_METERS = BigDecimal.valueOf(
+      EARTH_RADIUS_METERS_DOUBLE
+  );
 
   /**
    * Get the distance between two points in meters.
@@ -58,9 +61,6 @@ public class HaversineUtil {
    */
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
-    // Earth's radius in meters
-    final double EARTH_RADIUS = 6371000;
-
     double lat = Math.toRadians(start.getLatitude().doubleValue());
     double lng = Math.toRadians(start.getLongitude().doubleValue());
     double distance = meters.doubleValue();
@@ -71,19 +71,19 @@ public class HaversineUtil {
     switch(direction) {
       case "N":
         // Moving north increases latitude
-        newLat = lat + (distance / EARTH_RADIUS);
+        newLat = lat + (distance / EARTH_RADIUS_METERS_DOUBLE);
         break;
       case "S":
         // Moving south decreases latitude
-        newLat = lat - (distance / EARTH_RADIUS);
+        newLat = lat - (distance / EARTH_RADIUS_METERS_DOUBLE);
         break;
       case "E":
         // Moving east increases longitude, adjusted for latitude
-        newLng = lng + (distance / (EARTH_RADIUS * Math.cos(lat)));
+        newLng = lng + (distance / (EARTH_RADIUS_METERS_DOUBLE * Math.cos(lat)));
         break;
       case "W":
         // Moving west decreases longitude, adjusted for latitude
-        newLng = lng - (distance / (EARTH_RADIUS * Math.cos(lat)));
+        newLng = lng - (distance / (EARTH_RADIUS_METERS_DOUBLE * Math.cos(lat)));
         break;
       default:
         throw new IllegalArgumentException("Direction must be N, S, E, or W");
