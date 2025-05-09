@@ -58,7 +58,42 @@ public class HaversineUtil {
    */
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
-    
+    // Earth's radius in meters
+    final double EARTH_RADIUS = 6371000;
+
+    double lat = Math.toRadians(start.getLatitude().doubleValue());
+    double lng = Math.toRadians(start.getLongitude().doubleValue());
+    double distance = meters.doubleValue();
+
+    double newLat = lat;
+    double newLng = lng;
+
+    switch(direction) {
+      case "N":
+        // Moving north increases latitude
+        newLat = lat + (distance / EARTH_RADIUS);
+        break;
+      case "S":
+        // Moving south decreases latitude
+        newLat = lat - (distance / EARTH_RADIUS);
+        break;
+      case "E":
+        // Moving east increases longitude, adjusted for latitude
+        newLng = lng + (distance / (EARTH_RADIUS * Math.cos(lat)));
+        break;
+      case "W":
+        // Moving west decreases longitude, adjusted for latitude
+        newLng = lng - (distance / (EARTH_RADIUS * Math.cos(lat)));
+        break;
+      default:
+        throw new IllegalArgumentException("Direction must be N, S, E, or W");
+    }
+
+    // Convert back to degrees
+    double newLatDegrees = Math.toDegrees(newLat);
+    double newLngDegrees = Math.toDegrees(newLng);
+
+    return new HaversinePoint(BigDecimal.valueOf(newLngDegrees), BigDecimal.valueOf(newLatDegrees));
   }
 
   /**

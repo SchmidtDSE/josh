@@ -127,7 +127,9 @@ class HaversineUtilTest {
     );
 
     BigDecimal expectedLong = new BigDecimal("-122.49");
-    assertTrue(result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong) < 0);
+    assertTrue(
+        result.getLongitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLong) < 0
+    );
     assertEquals(
         0,
         result.getLatitude().setScale(2, RoundingMode.HALF_UP).compareTo(sfLat)
