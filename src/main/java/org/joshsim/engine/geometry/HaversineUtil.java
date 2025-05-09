@@ -7,6 +7,7 @@
 package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 
 /**
