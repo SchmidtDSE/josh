@@ -30,3 +30,5 @@ editor/third_party
 
 # Editor war
 editor/war
+
+*.jshd
