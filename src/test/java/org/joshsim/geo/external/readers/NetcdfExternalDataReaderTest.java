@@ -388,7 +388,9 @@ public class NetcdfExternalDataReaderTest {
     reader = new NetcdfExternalDataReader(valueFactory);
 
     // Get resource path for test file
-    URL resourceUrl = getClass().getClassLoader().getResource("netcdf/precip_riverside_annual_agg.nc");
+    URL resourceUrl = getClass().getClassLoader().getResource(
+        "netcdf/maxtemp_tulare_annual.nc"
+    );
     assertNotNull(resourceUrl, "Test resource not found");
     String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
@@ -405,7 +407,35 @@ public class NetcdfExternalDataReaderTest {
     Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 0);
 
     assertTrue(value.isPresent(), "Value should be present at test coordinates");
-    assertEquals(286.059326171875, value.get().getInnerValue().doubleValue(), 1e-10,
+    assertEquals(286.059326171875, value.get().getAsDecimal().doubleValue(), 1e-5,
+        "Value at test coordinates does not match expected value");
+  }
+
+  @Test
+  public void testKnownPoint2() throws IOException {
+    reader = new NetcdfExternalDataReader(valueFactory);
+
+    // Get resource path for test file
+    URL resourceUrl = getClass().getClassLoader().getResource(
+        "netcdf/maxtemp_tulare_annual.nc"
+    );
+    assertNotNull(resourceUrl, "Test resource not found");
+    String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
+
+    // Open file and set dimensions
+    reader.open(filePath);
+    reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
+    reader.setCrsCode("EPSG:4326");
+
+    // Test specific point
+    BigDecimal lon = new BigDecimal("-118.421875");
+    BigDecimal lat = new BigDecimal("35.953125");
+    String variableName = "Maximum_air_temperature_at_2m";
+
+    Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 15);
+
+    assertTrue(value.isPresent(), "Value should be present at test coordinates");
+    assertEquals(301.4525146, value.get().getAsDecimal().doubleValue(), 1e-5,
         "Value at test coordinates does not match expected value");
   }
 }
