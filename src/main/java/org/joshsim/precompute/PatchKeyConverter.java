@@ -7,6 +7,8 @@
 package org.joshsim.precompute;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
@@ -23,6 +25,7 @@ public class PatchKeyConverter {
   private final PatchBuilderExtents geoExtents;
   private final HaversineUtil.HaversinePoint startPoint;
   private final BigDecimal patchWidth;
+  private final BigDecimal patchWidthHalf;
 
   /**
    * Create a utility which performs conversions from patch keys in geoExtents to grid-space.
@@ -32,11 +35,12 @@ public class PatchKeyConverter {
    */
   public PatchKeyConverter(PatchBuilderExtents geoExtents, BigDecimal patchWidth) {
     this.geoExtents = geoExtents;
+    this.patchWidth = patchWidth;
+    this.patchWidthHalf = patchWidth.divide(new BigDecimal(2));
     this.startPoint = new HaversineUtil.HaversinePoint(
         geoExtents.getTopLeftX(),
         geoExtents.getTopLeftY()
     );
-    this.patchWidth = patchWidth;
   }
 
   /**
@@ -60,8 +64,22 @@ public class PatchKeyConverter {
     );
     
     // Convert distances to grid cell indices by dividing by patch width
-    BigDecimal gridX = horizontalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
-    BigDecimal gridY = verticalDistance.divide(patchWidth, 0, BigDecimal.ROUND_FLOOR);
+    System.out.println(
+        horizontalDistance + "/" +
+            horizontalDistance.subtract(patchWidthHalf).divide(patchWidth, 1, RoundingMode.HALF_UP) + " " +
+            verticalDistance + "/" +
+            verticalDistance.subtract(patchWidthHalf).divide(patchWidth, 1, RoundingMode.HALF_UP)
+    );
+    BigDecimal gridX = horizontalDistance.subtract(patchWidthHalf).divide(
+        patchWidth,
+        0,
+        RoundingMode.HALF_UP
+    );
+    BigDecimal gridY = verticalDistance.subtract(patchWidthHalf).divide(
+        patchWidth,
+        0,
+        RoundingMode.HALF_UP
+    );
     
     return new ProjectedValue(gridX, gridY, value);
   }

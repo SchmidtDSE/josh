@@ -2,6 +2,7 @@ package org.joshsim.geo.geometry;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.sis.referencing.CRS;
@@ -167,7 +168,8 @@ public class EarthPatchBuilder implements PatchBuilder {
     );
     HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
         bottomRightLon,
-        topLeftLat);
+        topLeftLat
+    );
     HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
         topLeftLon,
         bottomRightLat
@@ -175,17 +177,19 @@ public class EarthPatchBuilder implements PatchBuilder {
 
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+    System.out.println("Patch builder saw " + widthMeters.toPlainString() + " " + heightMeters.toPlainString());
+    BigDecimal halfWidth = cellWidthMeters.divide(BigDecimal.TWO, RoundingMode.HALF_UP);
 
     // Calculate number of cells needed
     long numColCells = widthMeters.divide(
         cellWidthMeters,
         0,
-        BigDecimal.ROUND_CEILING
+        RoundingMode.CEILING
     ).longValue();
     long numRowCells = heightMeters.divide(
         cellWidthMeters,
         0,
-        BigDecimal.ROUND_CEILING
+        RoundingMode.CEILING
     ).longValue();
 
     List<MutableEntity> patches = new ArrayList<>();
@@ -193,15 +197,19 @@ public class EarthPatchBuilder implements PatchBuilder {
 
     for (int rowIdx = 0; rowIdx < numRowCells; rowIdx++) {
       // Reset to start of row
-      currentPoint = rowIdx == 0 ? topLeft :
-          HaversineUtil.getAtDistanceFrom(topLeft,
-              cellWidthMeters.multiply(new BigDecimal(rowIdx)), "S");
+      currentPoint = HaversineUtil.getAtDistanceFrom(
+          topLeft,
+          cellWidthMeters.multiply(new BigDecimal(rowIdx)).add(halfWidth),
+          "S"
+      );
 
       for (int colIdx = 0; colIdx < numColCells; colIdx++) {
         // Move east along row
-        HaversineUtil.HaversinePoint patchCenter = colIdx == 0 ? currentPoint :
-            HaversineUtil.getAtDistanceFrom(currentPoint,
-                cellWidthMeters.multiply(new BigDecimal(colIdx)), "E");
+        HaversineUtil.HaversinePoint patchCenter = HaversineUtil.getAtDistanceFrom(
+            currentPoint,
+            cellWidthMeters.multiply(new BigDecimal(colIdx)).add(halfWidth),
+            "E"
+        );
 
         // Create grid square using the center point
         GridSquare square = new GridSquare(

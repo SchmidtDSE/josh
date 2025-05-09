@@ -271,10 +271,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     try {
       Variable var = ncFile.findVariable(variableName);
       if (var == null) {
-        System.out.println("could not find variable: " + variableName);
-        ncFile.getVariables().forEach((varAvail) -> System.out.println(varAvail.getFullName()));
-        throw new RuntimeException("here");
-        // return Optional.empty();
+        return Optional.empty();
       }
 
       // Check if coordinates are within extended bounds
@@ -282,9 +279,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
           && extendedMinY != null && extendedMaxY != null) {
         if (x.compareTo(extendedMinX) < 0 || x.compareTo(extendedMaxX) > 0
             || y.compareTo(extendedMinY) < 0 || y.compareTo(extendedMaxY) > 0) {
-          System.out.println("Got " + x.toPlainString() + "," + y.toPlainString());
-          System.out.println("X bounds: " + extendedMinX + ", " + extendedMaxX);
-          System.out.println("Y bounds: " + extendedMinY + ", " + extendedMaxX);
           return Optional.empty(); // Coordinates outside extended bounds
         }
       }
@@ -297,7 +291,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       int indexY = dimensions.findClosestIndexY(y);
 
       if (indexX < 0 || indexY < 0) {
-        System.out.println("here2");
         return Optional.empty();
       }
 
@@ -324,13 +317,11 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
       // Check if we found the dimensions in this variable
       if (dimIdxX < 0 || dimIdxY < 0) {
-        System.out.println("here3");
         return Optional.empty(); // Can't locate dimensions in this variable
       }
 
       // Check if we don't have the time dimension
       if (dimNameTime != null && timeStep < 0) {
-        System.out.println("here4");
         return Optional.empty();
       }
 
@@ -338,7 +329,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       if (dimNameTime != null) {
         Optional<Integer> timeSize = getTimeDimensionSize();
         if (timeSize.isPresent() && timeStep >= timeSize.get()) {
-          System.out.println("here5");
           return Optional.empty(); // Time step is out of bounds
         }
       }
@@ -359,7 +349,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
           if (timeStep >= 0 && timeStep < shape[i]) {
             origin[i] = timeStep;
           } else {
-            System.out.println("here6");
             return Optional.empty(); // Time step out of bounds
           }
           size[i] = 1;
@@ -375,12 +364,10 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       try {
         data = var.read(origin, size).reduce();
       } catch (InvalidRangeException e) {
-        System.out.println("here7: " + e);
         return Optional.empty(); // Requested coordinates are invalid
       }
 
       if (data.getSize() != 1) {
-        System.out.println("here8");
         return Optional.empty(); // Expected a single value
       }
 
@@ -389,20 +376,17 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
       // Check for NaN or missing value
       if (Double.isNaN(value)) {
-        System.out.println("here9");
         return Optional.empty();
       }
 
       // Check for _FillValue or missing_value attribute
       Attribute fillValueAttr = var.findAttribute("_FillValue");
       if (fillValueAttr != null && value == fillValueAttr.getNumericValue().doubleValue()) {
-        System.out.println("here10");
         return Optional.empty();
       }
 
       Attribute missingValueAttr = var.findAttribute("missing_value");
       if (missingValueAttr != null && value == missingValueAttr.getNumericValue().doubleValue()) {
-        System.out.println("here11");
         return Optional.empty();
       }
 

@@ -30,10 +30,7 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.precompute.BinaryGridSerializationStrategy;
-import org.joshsim.precompute.PatchKeyConverter;
-import org.joshsim.precompute.PrecomputedGrid;
-import org.joshsim.precompute.StreamToPrecomputedGridUtil;
+import org.joshsim.precompute.*;
 import org.joshsim.util.OutputOptions;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import picocli.CommandLine.Command;
@@ -192,6 +189,7 @@ public class PreprocessCommand implements Callable<Integer> {
     PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
         (timestep) -> {
+          System.out.println("Preprocessing: " + timestep);
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
           try {
             geoStream = mapper.streamVariableTimeStepToPatches(
@@ -210,7 +208,7 @@ public class PreprocessCommand implements Callable<Integer> {
               )
           );
         },
-        extentsTransformed,
+        ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
         new Units(unitsStr)
@@ -223,7 +221,6 @@ public class PreprocessCommand implements Callable<Integer> {
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(grid, outputStream);
       outputStream.flush();
-      outputStream.close();
     } catch (FileNotFoundException e) {
       throw new RuntimeException("File not found: " + e);
     } catch (IOException e) {

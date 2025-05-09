@@ -18,6 +18,7 @@ import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.precompute.ExtentsTransformer;
 
 
 /**
@@ -92,7 +93,7 @@ public class GridFromSimFactory {
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
     boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
     if (requiresCountConversion) {
-      extents = convertToMeters(extents, sizeValuePrimitive);
+      extents = ExtentsTransformer.transformToGrid(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
 
@@ -179,38 +180,6 @@ public class GridFromSimFactory {
     } else {
       return bridge.convert(target, allowed);
     }
-  }
-
-  /**
-   * Convert a set of extents from degrees to meters.
-   *
-   * <p>Convert a set of extents from degrees to coordinates expressed in cell / patch counts via
-   * conversion to meters using Haverzine where the upper left corner is 0, 0 and the bottom right
-   * is positive. This is done using HaversineUtil.</p>
-   *
-   * @param extents Original extents expressed in degrees which should be converted to meters and
-   *     then cell counts.
-   * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
-   */
-  private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
-    BigDecimal width = HaversineUtil.getDistance(
-        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY()),
-        new HaversineUtil.HaversinePoint(extents.getBottomRightX(), extents.getTopLeftY())
-    );
-    BigDecimal height = HaversineUtil.getDistance(
-        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY()),
-        new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getBottomRightY())
-    );
-
-    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-
-    return new PatchBuilderExtents(
-        BigDecimal.ZERO,
-        BigDecimal.ZERO,
-        gridWidth,
-        gridHeight
-    );
   }
 
 }

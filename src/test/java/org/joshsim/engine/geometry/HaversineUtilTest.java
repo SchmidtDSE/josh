@@ -152,4 +152,24 @@ class HaversineUtilTest {
         "Latitude should remain same when moving west"
     );
   }
+
+  @Test
+  void encodesAndDecodesInAgreementEast() {
+    BigDecimal sfLong = new BigDecimal("-122.45");
+    BigDecimal sfLat = new BigDecimal("37.73");
+    HaversineUtil.HaversinePoint start = new HaversineUtil.HaversinePoint(sfLong, sfLat);
+
+    HaversineUtil.HaversinePoint result = HaversineUtil.getAtDistanceFrom(
+        start,
+        new BigDecimal("5000"),
+        "E"
+    );
+
+    double delta = HaversineUtil.getDistance(start, result)
+        .subtract(new BigDecimal("5000"))
+        .abs()
+        .doubleValue();
+
+    assertTrue(delta < 0.0001);
+  }
 }
