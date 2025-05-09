@@ -382,33 +382,30 @@ public class NetcdfExternalDataReaderTest {
           "test", BigDecimal.ONE, BigDecimal.ONE, 0),
         "Should throw IOException if dimensions not set");
   }
-}
-
-
 
   @Test
   public void testKnownPoint1() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    
+
     // Get resource path for test file
     URL resourceUrl = getClass().getClassLoader().getResource("netcdf/precip_riverside_annual_agg.nc");
     assertNotNull(resourceUrl, "Test resource not found");
     String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     // Open file and set dimensions
     reader.open(filePath);
     reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
     reader.setCrsCode("EPSG:4326");
-    
+
     // Test specific point
     BigDecimal lon = new BigDecimal("-118.828125");
     BigDecimal lat = new BigDecimal("35.890625");
     String variableName = "Maximum_air_temperature_at_2m";
-    
+
     Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 0);
-    
+
     assertTrue(value.isPresent(), "Value should be present at test coordinates");
     assertEquals(286.059326171875, value.get().getInnerValue().doubleValue(), 1e-10,
         "Value at test coordinates does not match expected value");
   }
-
+}
