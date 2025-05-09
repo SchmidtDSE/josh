@@ -134,7 +134,21 @@ class DataFilesPresenter {
    * @param {File} file - The file from the file upload input to be added to OPFS.
    */
   async _uploadBinaryFile(file) {
-    
+    const self = this;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target.result;
+      const opfsFile = new OpfsFile(file.name, contents, false, true);
+      try {
+        await self._fileLayer.putFile(opfsFile);
+        await self._refreshFilesList();
+        await self._updateSpaceUtilizationDisplay();
+        self._hideFileUpload();
+      } catch (error) {
+        alert("Error uploading file: " + error);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   /**
