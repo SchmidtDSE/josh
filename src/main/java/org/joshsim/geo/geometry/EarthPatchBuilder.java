@@ -1,6 +1,24 @@
 package org.joshsim.geo.geometry;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.sis.referencing.CRS;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilder;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
+import org.joshsim.engine.geometry.grid.GridSquare;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.crs.GeographicCRS;
+import org.opengis.referencing.operation.TransformException;
+import org.opengis.util.FactoryException;
+
 
 /**
  * Utility responsible for building grid structures in Earth space using GridCrsManager.
@@ -8,192 +26,215 @@ import org.joshsim.engine.geometry.PatchBuilder;
  * <p>Utility creating a rectangular grid of patches based on coordinates in any coordinate
  * reference system, converting them to the target CRS if needed.</p>
  */
-public abstract class EarthPatchBuilder implements PatchBuilder {
+public class EarthPatchBuilder implements PatchBuilder {
 
-  // private static final int ESTIMATED_CELLS_WARNING_SIZE = 1_000_000;
+  private final EntityPrototype prototype;
+  private final EarthGeometryFactory geometryFactory;
+  private final GridCrsDefinition gridCrsDefinition;
+  private final GridCrsManager gridCrsManager;
+  private final PatchBuilderExtents extents;
 
-  // private final EntityPrototype prototype;
-  // private final EarthGeometryFactory geometryFactory;
-  // private final GridCrsDefinition gridCrsDefinition;
-  // private final GridCrsManager gridCrsManager;
-  // private final PatchBuilderExtents extents;
+  // CRS-related fields
+  private final CoordinateReferenceSystem targetCrs;
 
-  // // CRS-related fields
-  // private final CoordinateReferenceSystem targetCrs;
-  // private final MathTransform gridToTargetTransform;
+  /**
+   * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
+   *
+   * @param inputCrsStr input CRS
+   * @param targetCrsStr target CRS
+   * @param extents Structure describing the extents or bounds of the grid to be built.
+   * @param cellWidth The width of each cell in the grid in meters.
+   * @param prototype The entity prototype used to create grid cells
+   * @throws FactoryException if any CRS code is invalid
+   * @throws TransformException if coordinate transformation fails
+   */
+  public EarthPatchBuilder(
+      String inputCrsStr,
+      String targetCrsStr,
+      PatchBuilderExtents extents,
+      BigDecimal cellWidth,
+      EntityPrototype prototype
+  ) throws TransformException, FactoryException {
+    if (inputCrsStr == null || inputCrsStr.isBlank()) {
+      throw new IllegalArgumentException("Must specify input CRS");
+    }
 
-  // /**
-  //  * Creates a new PatchBuilder with specified input and target CRS, and corner coordinates.
-  //  *
-  //  * @param inputCrs input CRS
-  //  * @param targetCrs target CRS
-  //  * @param extents Structure describing the extents or bounds of the grid to be built.
-  //  * @param cellWidth The width of each cell in the grid (in units of the target CRS)
-  //  * @param prototype The entity prototype used to create grid cells
-  //  * @throws FactoryException if any CRS code is invalid
-  //  * @throws TransformException if coordinate transformation fails
-  //  */
-  // public EarthPatchBuilder(
-  //     CoordinateReferenceSystem inputCrs,
-  //     CoordinateReferenceSystem targetCrs,
-  //     PatchBuilderExtents extents,
-  //     BigDecimal cellWidth,
-  //     EntityPrototype prototype
-  // ) throws TransformException, FactoryException {
+    if (targetCrsStr == null || targetCrsStr.isBlank()) {
+      throw new IllegalArgumentException("Must specify target CRS");
+    }
 
-  //   this.prototype = prototype;
-  //   this.extents = extents;
-  //   this.targetCrs = targetCrs;
+    if (cellWidth == null || cellWidth.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
 
-  //   // Validate corners
-  //   validateCornerCoordinates(
-  //       extents.getTopLeftX(),
-  //       extents.getTopLeftY(),
-  //       extents.getBottomRightX(),
-  //       extents.getBottomRightY()
-  //   );
+    this.prototype = prototype;
+    this.extents = extents;
+    this.targetCrs = CRS.forCode(targetCrsStr);
 
-  //   // Determine CRS units for grid definition
-  //   String crsUnits = targetCrs.getCoordinateSystem().getAxis(0).getUnit().toString();
-  //   String cellSizeUnit = crsUnits; // Assume cell size is in the same units as target CRS
+    // Validate corners
+    validateCornerCoordinates(
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getBottomRightY()
+    );
 
-  //   // Create GridCrsDefinition
-  //   this.gridCrsDefinition = new GridCrsDefinition(
-  //       "Grid_" + System.currentTimeMillis(),
-  //       targetCrs.getName().getCode(),
-  //       extents,
-  //       cellWidth,
-  //       cellSizeUnit,
-  //       crsUnits
-  //   );
+    // Create GridCrsDefinition
+    this.gridCrsDefinition = new GridCrsDefinition(
+        "Grid_" + System.currentTimeMillis(),
+        targetCrsStr,
+        extents,
+        cellWidth,
+        "meters"
+    );
 
-  //   try {
-  //     // Create GridCrsManager
-  //     this.gridCrsManager = new GridCrsManager(gridCrsDefinition);
-  //     this.gridToTargetTransform = gridCrsManager.createGridToTargetCrsTransform(targetCrs);
+    try {
+      // Create GridCrsManager
+      this.gridCrsManager = new GridCrsManager(gridCrsDefinition);
 
-  //     // Create geometry factory
-  //     this.geometryFactory = new EarthGeometryFactory(targetCrs, gridCrsManager);
-  //   } catch (IOException e) {
-  //     throw new FactoryException("Failed to create GridCrsManager: " + e.getMessage(), e);
-  //   }
-  // }
+      // Create geometry factory
+      this.geometryFactory = new EarthGeometryFactory(targetCrs, gridCrsManager);
+    } catch (IOException | TransformException e) {
+      throw new FactoryException("Failed to create GridCrsManager: " + e.getMessage(), e);
+    }
+  }
 
-  // /**
-  //  * Builds and returns a PatchSet based on the grid CRS definition.
-  //  *
-  //  * @return a new PatchSet instance
-  //  */
-  // @Override
-  // public PatchSet build() {
-  //   try {
-  //     // Validate parameters before building
-  //     validateParameters();
+  /**
+   * Builds and returns a PatchSet based on the grid CRS definition.
+   *
+   * @return a new PatchSet instance
+   */
+  @Override
+  public PatchSet build() {
+    try {
+      // Validate parameters before building
+      validateParameters();
 
-  //     // Calculate grid dimensions
-  //     BigDecimal cellWidth = gridCrsDefinition.getCellSize();
-  //     BigDecimal gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
-  //     BigDecimal gridHeight = extents.getTopLeftY().subtract(extents.getBottomRightY());
-  //     int colCells = gridWidth.divide(cellWidth, RoundingMode.CEILING).intValue();
-  //     int rowCells = gridHeight.divide(cellWidth, RoundingMode.CEILING).intValue();
+      // Create all patches using grid CRS
+      List<MutableEntity> patches = createPatchGrid();
 
-  //     // Check grid size
-  //     int estimatedCells = colCells * rowCells;
-  //     if (estimatedCells > ESTIMATED_CELLS_WARNING_SIZE) {
-  //       System.err.println("Warning: Grid configuration will create approximately "
-  //           + estimatedCells + " cells, which may impact performance");
-  //     }
+      // Return PatchSet with GridCrsDefinition
+      return new PatchSet(patches, gridCrsDefinition);
 
-  //     // Create all patches using grid CRS
-  //     List<MutableEntity> patches = createPatchGrid(colCells, rowCells);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
+    }
+  }
 
-  //     // Return PatchSet with GridCrsDefinition
-  //     return new PatchSet(patches, gridCrsDefinition);
+  /**
+   * Validates corner coordinates based on coordinate system type.
+   */
+  private void validateCornerCoordinates(
+      BigDecimal topLeftX,
+      BigDecimal topLeftY,
+      BigDecimal bottomRightX,
+      BigDecimal bottomRightY
+  ) {
+    if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
+      throw new IllegalArgumentException("Missing corner coordinates");
+    }
 
-  //   } catch (Exception e) {
-  //     throw new RuntimeException("Failed to build grid: " + e.getMessage(), e);
-  //   }
-  // }
+    // Y-coordinate should decrease from top to bottom
+    if (topLeftY.compareTo(bottomRightY) <= 0) {
+      throw new IllegalArgumentException(
+          "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
+    }
 
-  // /**
-  //  * Validates corner coordinates based on coordinate system type.
-  //  */
-  // private void validateCornerCoordinates(
-  //     BigDecimal topLeftX,
-  //     BigDecimal topLeftY,
-  //     BigDecimal bottomRightX,
-  //     BigDecimal bottomRightY
-  // ) {
-  //   if (topLeftX == null || topLeftY == null || bottomRightX == null || bottomRightY == null) {
-  //     throw new IllegalArgumentException("Missing corner coordinates");
-  //   }
+    // X-coordinate should increase from left to right
+    if (topLeftX.compareTo(bottomRightX) >= 0) {
+      throw new IllegalArgumentException(
+          "Top-left X-coordinate must be less than bottom-right X-coordinate");
+    }
+  }
 
-  //   // Y-coordinate should decrease from top to bottom
-  //   if (topLeftY.compareTo(bottomRightY) <= 0) {
-  //     throw new IllegalArgumentException(
-  //         "Top-left Y-coordinate must be greater than bottom-right Y-coordinate");
-  //   }
+  /**
+   * Creates all patches in the grid.
+   *
+   * <p>Creates all patches in the grid using Haversine to build cells which span from the top left
+   * to bottom right in the extents provided where the center of each square patch is at distance
+   * specified by provided cell size in meters.</p>
+   */
+  private List<MutableEntity> createPatchGrid() {
+    BigDecimal cellWidthMeters = gridCrsDefinition.getCellSize();
+    BigDecimal topLeftLon = extents.getTopLeftX();
+    BigDecimal topLeftLat = extents.getTopLeftY();
+    BigDecimal bottomRightLon = extents.getBottomRightX();
+    BigDecimal bottomRightLat = extents.getBottomRightY();
 
-  //   // X-coordinate should increase from left to right
-  //   if (topLeftX.compareTo(bottomRightX) >= 0) {
-  //     throw new IllegalArgumentException(
-  //         "Top-left X-coordinate must be less than bottom-right X-coordinate");
-  //   }
-  // }
+    // Calculate total distances
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+        topLeftLon,
+        topLeftLat
+    );
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
+        bottomRightLon,
+        topLeftLat
+    );
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
+        topLeftLon,
+        bottomRightLat
+    );
 
-  // /**
-  //  * Creates all patches in the grid using GridCRS.
-  //  */
-  // private List<MutableEntity> createPatchGrid(
-  //       int colCells,
-  //       int rowCells
-  // ) throws TransformException {
-  //   List<MutableEntity> patches = new ArrayList<>();
-  //   BigDecimal cellWidth = gridCrsDefinition.getCellSize();
-  //   BigDecimal halfCellWidth = cellWidth.divide(new BigDecimal(2));
+    BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+    BigDecimal halfWidth = cellWidthMeters.divide(BigDecimal.TWO, RoundingMode.HALF_UP);
 
-  //   BigDecimal topLeftX = extents.getTopLeftX();
-  //   BigDecimal topLeftY = extents.getTopLeftY();
+    // Calculate number of cells needed
+    long numColCells = widthMeters.divide(
+        cellWidthMeters,
+        0,
+        RoundingMode.CEILING
+    ).longValue();
+    long numRowCells = heightMeters.divide(
+        cellWidthMeters,
+        0,
+        RoundingMode.CEILING
+    ).longValue();
 
-  //   for (int rowIdx = 0; rowIdx < rowCells; rowIdx++) {
-  //     for (int colIdx = 0; colIdx < colCells; colIdx++) {
-  //       // Calculate cell center in grid coordinates
-  //       BigDecimal cellCenterX = topLeftX.add(
-  //           cellWidth.multiply(new BigDecimal(colIdx)).add(halfCellWidth));
-  //       BigDecimal cellCenterY = topLeftY.subtract(
-  //           cellWidth.multiply(new BigDecimal(rowIdx)).add(halfCellWidth));
+    List<MutableEntity> patches = new ArrayList<>();
+    HaversineUtil.HaversinePoint currentPoint = topLeft;
 
-  //       // Create grid square with center coordinates
-  //       GridSquare gridSquare = new GridSquare(cellCenterX, cellCenterY, cellWidth);
+    for (int rowIdx = 0; rowIdx < numRowCells; rowIdx++) {
+      // Reset to start of row
+      currentPoint = HaversineUtil.getAtDistanceFrom(
+          topLeft,
+          cellWidthMeters.multiply(new BigDecimal(rowIdx)).add(halfWidth),
+          "S"
+      );
 
-  //       // Transform to target CRS using GridCrsManager
-  //       EngineGeometry cellGeometry = geometryFactory.createRectangleFromGrid(gridSquare);
+      for (int colIdx = 0; colIdx < numColCells; colIdx++) {
+        // Move east along row
+        HaversineUtil.HaversinePoint patchCenter = HaversineUtil.getAtDistanceFrom(
+            currentPoint,
+            cellWidthMeters.multiply(new BigDecimal(colIdx)).add(halfWidth),
+            "E"
+        );
 
-  //       // Create patch using prototype
-  //       MutableEntity patch = prototype.buildSpatial(cellGeometry);
-  //       patches.add(patch);
-  //     }
-  //   }
+        // Create grid square using the center point
+        GridSquare square = new GridSquare(
+            patchCenter.getLongitude(),
+            patchCenter.getLatitude(),
+            cellWidthMeters
+        );
 
-  //   return patches;
-  // }
+        MutableEntity patch = prototype.buildSpatial(square);
+        patches.add(patch);
+      }
+    }
 
-  // /**
-  //  * Validates that all required objects are properly initialized.
-  //  */
-  // private void validateParameters() {
-  //   if (gridCrsDefinition == null || gridCrsManager == null) {
-  //     throw new IllegalStateException("Grid CRS not initialized");
-  //   }
+    return patches;
+  }
 
-  //   if (gridCrsDefinition.getCellSize().compareTo(BigDecimal.ZERO) <= 0) {
-  //     throw new IllegalArgumentException("Cell width must be positive");
-  //   }
+  /**
+   * Validates that all required objects are properly initialized.
+   */
+  private void validateParameters() {
+    if (gridCrsDefinition == null || gridCrsManager == null) {
+      throw new IllegalStateException("Grid CRS not initialized");
+    }
 
-  //   // Ensure target CRS is projected for proper distance calculations
-  //   if (targetCrs instanceof GeographicCRS) {
-  //     throw new IllegalArgumentException(
-  //         "Target CRS must be projected for accurate area/distance calculations");
-  //   }
-  // }
+    if (gridCrsDefinition.getCellSize().compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Cell width must be positive");
+    }
+  }
 }

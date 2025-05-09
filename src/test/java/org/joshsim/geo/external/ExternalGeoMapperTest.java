@@ -82,8 +82,6 @@ public class ExternalGeoMapperTest {
 
     // Initialize variable names
     variableNames = Arrays.asList(VAR_NAME);
-
-    System.out.println("Created PatchSet with " + patchSet.getPatches().size() + " patches");
   }
 
   /**
@@ -666,9 +664,6 @@ public class ExternalGeoMapperTest {
       reader.setCrsCode("EPSG:4326");
       int timeSteps = reader.getTimeDimensionSize().orElse(30);
       ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
-
-      // Count high precipitation patches at each time step
-      System.out.println("Time steps with high precipitation (>" + threshold + " mm):");
 
       for (int t = 0; t < Math.min(timeSteps, 10); t++) {  // Limit to first 10 time steps
         // Stream just this time step

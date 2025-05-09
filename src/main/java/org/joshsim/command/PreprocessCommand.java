@@ -5,18 +5,25 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalGeoMapper;
 import org.joshsim.geo.external.ExternalGeoMapperBuilder;
-import org.joshsim.geo.external.GridExternalCoordinateTransformer;
 import org.joshsim.geo.external.NearestNeighborInterpolationStrategy;
+import org.joshsim.geo.external.NoopExternalCoordinateTransformer;
+import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.GridFromSimFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
@@ -24,9 +31,12 @@ import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
+import org.joshsim.precompute.ExtentsTransformer;
+import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.PrecomputedGrid;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
 import org.joshsim.util.OutputOptions;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -134,10 +144,32 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Get metadata
-    EngineGeometryFactory engineGeometryFactory = new GridGeometryFactory();
+    CoordinateReferenceSystem crs;
+    try {
+      crs = CRS.forCode(crsCode);
+    } catch (Exception e) {
+      System.out.println("Failed to read CRS code due to: " + e);
+      return 1;
+    }
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
+    // Initialize an external geo mapper
+    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
+    geoMapperBuilder.addCrsCode(crsCode);
+    geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
+    geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
+    geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+    ExternalGeoMapper mapper = geoMapperBuilder.build();
+
+    // Create grid from streaming data
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    String startStr = extractor.getStartStr();
+    String endStr = extractor.getEndStr();
+    EngineValue size = extractor.getSize();
+
+    // Build bridge
     EngineBridge bridge = new QueryCacheEngineBridge(
         engineGeometryFactory,
         simEntity,
@@ -145,26 +177,26 @@ public class PreprocessCommand implements Callable<Integer> {
         program.getPrototypes()
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
-    PatchSet patchSet = gridFactory.build(simEntity);
+    PatchSet patchSet = gridFactory.build(simEntity, crsCode);
 
-    // Initialize an external geo mapper
-    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
-    geoMapperBuilder.addCrsCode(crsCode);
-    geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
-    geoMapperBuilder.addCoordinateTransformer(new GridExternalCoordinateTransformer());
-    geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
-    ExternalGeoMapper mapper = geoMapperBuilder.build();
-
-    // Create grid from streaming data
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, new EngineValueFactory());
-    String startStr = extractor.getStartStr();
-    String endStr = extractor.getEndStr();
+    // Check and parse grid
+    if (!unitsSupported(size.getUnits().toString())) {
+      output.printError("Unsupported units for grid size: " + size.getUnits());
+      return 1;
+    }
+    PatchBuilderExtents extents = gridFactory.buildExtents(startStr, endStr);
+    PatchKeyConverter patchKeyConverter = new PatchKeyConverter(
+        extents,
+        size.getAsDecimal()
+    );
 
     PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
         (timestep) -> {
+          System.out.println("Preprocessing: " + timestep);
+          Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
           try {
-            return mapper.streamVariableTimeStepToPatches(
+            geoStream = mapper.streamVariableTimeStepToPatches(
                 dataFile,
                 variable,
                 (int) timestep,
@@ -173,17 +205,26 @@ public class PreprocessCommand implements Callable<Integer> {
           } catch (IOException e) {
             throw new RuntimeException("Failed to stream on patches: " + e);
           }
+          return geoStream.map(
+              (entry) -> patchKeyConverter.convert(
+                  entry.getKey(),
+                  entry.getValue().getAsDecimal()
+              )
+          );
         },
-        gridFactory.buildExtents(startStr, endStr),
+        ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
         new Units(unitsStr)
     );
 
     // Serialize to binary file
-    BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy();
+    BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
+        EngineValueFactory.getDefault()
+    );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(grid, outputStream);
+      outputStream.flush();
     } catch (FileNotFoundException e) {
       throw new RuntimeException("File not found: " + e);
     } catch (IOException e) {
@@ -192,5 +233,9 @@ public class PreprocessCommand implements Callable<Integer> {
 
     output.printInfo("Successfully preprocessed data to " + outputFile);
     return 0;
+  }
+
+  private boolean unitsSupported(String unitsStr) {
+    return unitsStr.equals("m") || unitsStr.equals("meter") || unitsStr.equals("meters");
   }
 }

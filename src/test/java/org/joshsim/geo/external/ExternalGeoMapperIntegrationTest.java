@@ -72,7 +72,6 @@ public class ExternalGeoMapperIntegrationTest {
 
     // Create a real PatchSet
     patchSet = createRiversidePatchSet();
-    System.out.println("Created PatchSet with " + patchSet.getPatches().size() + " patches");
   }
 
   /**
@@ -140,12 +139,8 @@ public class ExternalGeoMapperIntegrationTest {
     assertFalse(patchValueMap.isEmpty());
 
     // Print sample values
-    System.out.println("Number of patches with precipitation values: " + patchValueMap.size());
-    System.out.println("Sample precipitation values at time step 1:");
-
     int count = 0;
     for (Map.Entry<GeoKey, EngineValue> entry : patchValueMap.entrySet()) {
-      System.out.println("  " + entry.getKey() + ": " + entry.getValue());
       if (++count >= 5) {
         break;
       }
@@ -183,12 +178,9 @@ public class ExternalGeoMapperIntegrationTest {
     assertFalse(values1.isEmpty());
 
     // Print some comparison values
-    System.out.println("Comparison of values between time steps for same patches:");
     int count = 0;
     for (GeoKey key : values0.keySet()) {
       if (values1.containsKey(key)) {
-        System.out.println("  Patch " + key + ": "
-            + "Time 0 = " + values0.get(key) + ", Time 1 = " + values1.get(key));
         if (++count >= 3) {
           break;
         }

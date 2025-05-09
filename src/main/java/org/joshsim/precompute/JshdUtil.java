@@ -127,7 +127,7 @@ public class JshdUtil {
     buffer.putLong(target.getMinY());
     buffer.putLong(target.getMaxY());
     buffer.putLong(target.getMinTimestep());
-    buffer.putLong(target.getMinTimestep() + timesteps - 1);
+    buffer.putLong(target.getMaxTimestep());
 
     // Write units
     buffer.putInt(unitsBytes.length);

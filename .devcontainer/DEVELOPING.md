@@ -71,7 +71,7 @@ java -jar build/libs/joshsim-fat.jar preprocess \
     examples/simulations/simple_seki.josh \
     TestSimpleSimulationExternal \
     assets/command/maxtemp_tulare_annual.nc \
-    max_temperature \
+    Maximum_air_temperature_at_2m \
     celsius \
     test_riverside_tiny.jshd \
     --crs "EPSG:4326" \

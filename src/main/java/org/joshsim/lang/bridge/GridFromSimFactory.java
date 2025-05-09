@@ -18,7 +18,7 @@ import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-
+import org.joshsim.precompute.ExtentsTransformer;
 
 
 /**
@@ -60,7 +60,18 @@ public class GridFromSimFactory {
   public PatchSet build(MutableEntity simulation) {
     GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String inputCrs = extractor.getInputCrs();
-    String targetCrs = extractor.getTargetCrs();
+    return build(simulation, inputCrs);
+  }
+
+  /**
+   * Builds a PatchSet from a simulation entity using the provided EngineBridge.
+   *
+   * @param simulation the simulation entity used to build the PatchSet
+   * @param inputCrs code of CRS to use in parsing input dataset.
+   * @return the built PatchSet
+   */
+  public PatchSet build(MutableEntity simulation, String inputCrs) {
+    GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     String patchName = extractor.getPatchName();
@@ -68,13 +79,6 @@ public class GridFromSimFactory {
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
     EngineValue sizeValueRaw = extractor.getSize();
     BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-
-    // TODO: properly parse units for cell size
-    String sizeValueUnits = "m";
-
-    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", inputCrs, extents, sizeValuePrimitive, sizeValueUnits
-    );
 
     EngineGeometryFactory geometryFactory = bridge.getGeometryFactory();
 
@@ -89,9 +93,19 @@ public class GridFromSimFactory {
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
     boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
     if (requiresCountConversion) {
-      extents = convertToMeters(extents, sizeValuePrimitive);
+      extents = ExtentsTransformer.transformToGrid(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
+
+    String sizeValueUnits = "m";
+
+    GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
+        inputCrs,
+        inputCrs,
+        extents,
+        sizeValuePrimitive,
+        sizeValueUnits
+    );
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(
         gridCrsDefinition,
@@ -166,42 +180,6 @@ public class GridFromSimFactory {
     } else {
       return bridge.convert(target, allowed);
     }
-  }
-
-  /**
-   * Convert a set of extents from degrees to meters.
-   *
-   * <p>Convert a set of extents from degrees to coordinates expressed in cell / patch counts via
-   * conversion to meters using Haverzine where the upper left corner is 0, 0 and the bottom right
-   * is positive. This is done using HaversineUtil.</p>
-   *
-   * @param extents Original extents expressed in degrees which should be converted to meters and
-   *     then cell counts.
-   * @param sizeMeters Size of each cell / patch in meters where each patch is a square.
-   */
-  private PatchBuilderExtents convertToMeters(PatchBuilderExtents extents, BigDecimal sizeMeters) {
-    BigDecimal width = HaversineUtil.getDistance(
-        extents.getTopLeftX(),
-        extents.getTopLeftY(),
-        extents.getBottomRightX(),
-        extents.getTopLeftY()
-    );
-    BigDecimal height = HaversineUtil.getDistance(
-        extents.getTopLeftX(),
-        extents.getTopLeftY(),
-        extents.getTopLeftX(),
-        extents.getBottomRightY()
-    );
-
-    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-
-    return new PatchBuilderExtents(
-        BigDecimal.ZERO,
-        BigDecimal.ZERO,
-        gridWidth,
-        gridHeight
-    );
   }
 
 }

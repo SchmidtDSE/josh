@@ -92,17 +92,17 @@ public class GridExternalCoordinateTransformer implements ExternalCoordinateTran
       // Get right-handed coordinate reference systems for both source and target
       CoordinateReferenceSystem sourceReference = JtsTransformUtility.getRightHandedCrs(sourceCrs);
       CoordinateReferenceSystem targetReference = JtsTransformUtility.getRightHandedCrs(targetCrs);
-      
+
       // Create the transform between the two CRS
       MathTransform transform = CRS.findOperation(sourceReference, targetReference, null)
           .getMathTransform();
-      
+
       // Create a JTS point from the input coordinates
       Point sourcePoint = JtsTransformUtility.createJtsPoint(x.doubleValue(), y.doubleValue());
-      
+
       // Transform the point
       Point transformedPoint = (Point) JtsTransformUtility.transform(sourcePoint, transform);
-      
+
       // Convert back to BigDecimal with reasonable precision (6 decimal places)
       return new BigDecimal[] {
           new BigDecimal(transformedPoint.getX()).setScale(6, RoundingMode.HALF_UP),

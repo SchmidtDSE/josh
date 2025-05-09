@@ -293,7 +293,16 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
       GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   ) {
-    throw new UnsupportedOperationException(
-      "getPatchBuilder is not supported in EarthGeometryFactory - use GridGeometryFactory instead");
+    try {
+      return new EarthPatchBuilder(
+          gridCrsDefinition.getBaseCrsCode(),
+          gridCrsDefinition.getBaseCrsCode(),
+          gridCrsDefinition.getExtents(),
+          gridCrsDefinition.getCellSize(),
+          prototype
+      );
+    } catch (TransformException | FactoryException e) {
+      throw new RuntimeException("Failed to create earth patch builder: " + e);
+    }
   }
 }
