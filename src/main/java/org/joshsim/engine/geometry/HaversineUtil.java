@@ -57,7 +57,43 @@ public class HaversineUtil {
    */
   public static HaversinePoint getAtDistanceFrom(HaversinePoint start, BigDecimal meters,
       String direction) {
-
+    
+    BigDecimal longitude = start.getLongitude();
+    BigDecimal latitude = start.getLatitude();
+    
+    // Convert to radians for calculation
+    double latRad = Math.toRadians(latitude.doubleValue());
+    
+    // Angular distance in radians
+    double angularDistance = meters.divide(EARTH_RADIUS_METERS, 10, RoundingMode.HALF_UP)
+        .doubleValue();
+    
+    switch (direction) {
+      case "N":
+        double newLatN = Math.toDegrees(latRad + angularDistance);
+        return new HaversinePoint(longitude, BigDecimal.valueOf(newLatN));
+        
+      case "S":
+        double newLatS = Math.toDegrees(latRad - angularDistance);
+        return new HaversinePoint(longitude, BigDecimal.valueOf(newLatS));
+        
+      case "E":
+        double newLongE = Math.toDegrees(
+            Math.toRadians(longitude.doubleValue()) 
+            + angularDistance / Math.cos(latRad)
+        );
+        return new HaversinePoint(BigDecimal.valueOf(newLongE), latitude);
+        
+      case "W":
+        double newLongW = Math.toDegrees(
+            Math.toRadians(longitude.doubleValue())
+            - angularDistance / Math.cos(latRad)
+        );
+        return new HaversinePoint(BigDecimal.valueOf(newLongW), latitude);
+        
+      default:
+        throw new IllegalArgumentException("Direction must be N, S, E, or W");
+    }
   }
 
   /**
