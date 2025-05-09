@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -12,7 +14,6 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import ucar.ma2.Array;
-import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
@@ -723,9 +724,10 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
            || lowerPath.endsWith(".netcdf")
            || lowerPath.endsWith(".nc4");
   }
-}
-/**
+
+  /**
    * Gets cached data array for a variable, loading it if not present.
+   *
    * @param variableName Name of the variable to load
    * @return Array containing the variable data
    * @throws IOException If reading fails
@@ -749,3 +751,4 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       throw new IOException("Failed to read variable data: " + e.getMessage(), e);
     }
   }
+}
