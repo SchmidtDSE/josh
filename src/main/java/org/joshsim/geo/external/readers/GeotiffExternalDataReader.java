@@ -140,12 +140,12 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   public Optional<EngineValue> readValueAt(String variableName, BigDecimal x, BigDecimal y, int timeStep) 
       throws IOException {
     try {
-      // Parse band index from variable name, default to 0 if invalid
+      // Parse band index from variable name
       int bandIndex;
       try {
         bandIndex = Integer.parseInt(variableName);
       } catch (NumberFormatException e) {
-        bandIndex = 0;
+        throw new IOException("Invalid band index: variable name must be a valid integer", e);
       }
 
       // Create a direct position for the coordinates
