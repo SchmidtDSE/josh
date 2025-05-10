@@ -55,7 +55,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    * @param units The units that returned EngineValues should be created with.
    * @param innerValues The values with which to populate the grid.
    */
-  DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents,
+  public DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents,
         long minTimestep, long maxTimestep, Units units, double[][][] innerValues) {
     super(extents, minTimestep, maxTimestep);
 
