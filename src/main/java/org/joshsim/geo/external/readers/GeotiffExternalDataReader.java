@@ -15,6 +15,7 @@ import java.util.*;
 
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridGeometry;
+import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.storage.DataStoreException;
 import org.apache.sis.storage.GridCoverageResource;
 import org.apache.sis.storage.Resource;
@@ -111,8 +112,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       List<BigDecimal> coordsY = new ArrayList<>();
       
       // Get grid size
-      int width = geometry.getExtent().getSize(0);
-      int height = geometry.getExtent().getSize(1);
+      long width = geometry.getExtent().getSize(0);
+      long height = geometry.getExtent().getSize(1);
 
       // Calculate step sizes
       BigDecimal stepX = maxX.subtract(minX)
@@ -151,8 +152,12 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       DirectPosition position = new DirectPosition2D(x.doubleValue(), y.doubleValue());
       
       // Calculate tile coordinates
-      int tileX = (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
-      int tileY = (position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
+      long tileX = Math.round(
+          (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
+      );
+      long tileY = Math.round(
+          (position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
+      );
       String tileKey = String.format("%d_%d_%d", bandIndex, tileX, tileY);
       
       // Get or load tile data
@@ -174,8 +179,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
       
       // Get value from tile
-      int localX = position.getOrdinate(0) - tileX;
-      int localY = position.getOrdinate(1) - tileY;
+      int localX = (int)(Math.round(position.getOrdinate(0) - tileX));
+      int localY = (int)(Math.round(position.getOrdinate(1) - tileY));
       double value = tileData[localY][localX];
       
       if (Double.isNaN(value)) {
@@ -183,8 +188,9 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
       
       // Create engine value with the result
-      BigDecimal value = BigDecimal.valueOf(value).setScale(6, RoundingMode.HALF_UP);
-      return Optional.of(valueFactory.build(value, units));
+      BigDecimal valueWrapped = BigDecimal.valueOf(value)
+          .setScale(6, RoundingMode.HALF_UP);
+      return Optional.of(valueFactory.build(valueWrapped, units));
       
     } catch (DataStoreException e) {
       throw new IOException("Failed to read value: " + e.getMessage(), e);
