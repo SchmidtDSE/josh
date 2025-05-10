@@ -166,8 +166,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
             DirectPosition tilePos = createDirectPosition(tileX + x1, tileY + y1);
-            // TODO: fill in tileValue
-            tileData[y1][x1] = 0;
+            double[] values = data.evaluate(tilePos, new double[data.getSampleDimensions().size()]);
+            tileData[y1][x1] = values[bandIndex];
           }
         }
         tileCache.put(tileKey, tileData);
