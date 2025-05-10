@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridGeometry;
-import org.apache.sis.coverage.grid.PixelInCell;
 import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.storage.DataStoreException;
 import org.apache.sis.storage.GridCoverageResource;
