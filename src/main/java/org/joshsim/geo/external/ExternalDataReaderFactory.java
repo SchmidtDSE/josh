@@ -31,8 +31,8 @@ public class ExternalDataReaderFactory {
       return netcdfReaderFactory.createReader();
     }
 
-    if (isCogFile(filePath)) {
-      throw new UnsupportedOperationException("COG reader not implemented yet");
+    if (isGeotiffFile(filePath)) {
+      return 
     }
 
     if (isZarrFile(filePath)) {
@@ -62,7 +62,7 @@ public class ExternalDataReaderFactory {
    * that this is a simple check that checks only the file extension. A more robust check would
    * validate that the file is indeed a COG (and not a naive tiff) by reading the file.
    */
-  private static boolean isCogFile(String filePath) {
+  private static boolean isGeotiffFile(String filePath) {
     if (filePath == null || filePath.isEmpty()) {
       return false;
     }
