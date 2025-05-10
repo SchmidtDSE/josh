@@ -32,7 +32,13 @@ class ExternalDataSerializer {
    *     files to use in the virutal file system.
    */
   serialize(data) {
-    
+    const self = this;
+    return Object.entries(data).map(([filename, content]) => {
+      const isBinary = !self._isTextFile(filename);
+      // Replace tabs with spaces in content to avoid conflicting with wire format
+      const safeContent = content.replace(/\t/g, '    ');
+      return `${filename}\t${isBinary ? '1' : '0'}\t${safeContent}\t`;
+    }).join('');
   }
 
   /**
@@ -46,7 +52,21 @@ class ExternalDataSerializer {
    *     strings. For all other files, the contents of the file are plain text strings.
    */
   deserialize(dataStr) {
-    
+    const result = {};
+    if (!dataStr) {
+      return result;
+    }
+
+    const files = dataStr.split(/\t(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+    for (let i = 0; i < files.length - 1; i += 3) {
+      const filename = files[i];
+      const isBinary = files[i + 1] === '1';
+      const content = files[i + 2];
+      if (filename && content !== undefined) {
+        result[filename] = content;
+      }
+    }
+    return result;
   }
 
   /**
