@@ -19,7 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * access, specifically pre-segmented into grid space and timesteps. This reduces repetitive
  * geospatial computation when running replicates.</p>
  */
-public interface PrecomputedGrid {
+public interface DataGridLayer {
 
   /**
    * Get the value for the grid at a specific location and time.

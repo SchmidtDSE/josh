@@ -9,7 +9,6 @@ package org.joshsim.lang.bridge;
 import java.math.BigDecimal;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;

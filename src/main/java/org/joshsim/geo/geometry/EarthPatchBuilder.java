@@ -15,7 +15,6 @@ import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridSquare;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
 import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 

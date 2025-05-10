@@ -10,6 +10,7 @@ import java.util.Iterator;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
 
 
@@ -22,10 +23,12 @@ public class JoshInterpreter {
    * Interpret a Josh source into a JoshProgram.
    *
    * @param parseResult The result of parsing to interpret.
-   * @param geometryFactory Factory through which to build engine geometries.
+   * @param geometryFactory Factory through which to build engine geometries
+   * @param inputOutputLayer Layer to use in interacting with external files.
    * @return Parsed simulations.
    */
-  public JoshProgram interpret(ParseResult parseResult, EngineGeometryFactory geometryFactory) {
+  public JoshProgram interpret(ParseResult parseResult, EngineGeometryFactory geometryFactory,
+        InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");
     }
@@ -38,6 +41,7 @@ public class JoshInterpreter {
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);
     bridgeGetter.setGeometryFactory(geometryFactory);
+    bridgeGetter.setInputOutputLayer(inputOutputLayer);
 
     EngineBridgeSimulationStore simulationStore = program.getSimulations();
     Iterator<String> simulationNames = simulationStore.getSimulations().iterator();
@@ -54,10 +58,11 @@ public class JoshInterpreter {
    * @param parseResult The result of parsing to interpret.
    * @param simulationName The name of the simulation to be executed.
    * @param geometryFactory Factory through which to build engine geometries.
+   * @param inputOutputLayer Layer to use in interacting with external files.
    * @return Parsed simulations.
    */
   public JoshProgram interpret(ParseResult parseResult, String simulationName,
-        EngineGeometryFactory geometryFactory) {
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");
     }
@@ -71,6 +76,7 @@ public class JoshInterpreter {
     bridgeGetter.setProgram(program);
     bridgeGetter.setSimulationName(simulationName);
     bridgeGetter.setGeometryFactory(geometryFactory);
+    bridgeGetter.setInputOutputLayer(inputOutputLayer);
 
     return program;
   }

@@ -111,9 +111,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
-    String name = ctx.getChild(1).getText();
+    String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
-      // TODO
+      long stepCount = machine.getStepCount();
+      machine.pushExternal(name, stepCount);
       return machine;
     };
     return new ActionFragment(action);
@@ -122,7 +123,6 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
     String name = ctx.getChild(1).getText();
     EventHandlerAction action = (machine) -> {
-      // TODO
       return machine;
     };
     return new ActionFragment(action);

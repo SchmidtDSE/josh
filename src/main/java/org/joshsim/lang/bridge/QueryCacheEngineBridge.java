@@ -38,11 +38,13 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
-   * @param prototypeStore The set of prototypes to use to build new entities.s
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to get external resources.
    */
   public QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore) {
-    super(geometryFactory, simulation, converter, prototypeStore);
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter) {
+    super(geometryFactory, simulation, converter, prototypeStore, externalResourceGetter);
     cachedPatchesByGeometry = new HashMap<>();
   }
 
@@ -53,11 +55,21 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
-   * @param prototypeStore The set of prototypes to use to build new entities.s
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to get external resources.
+   * @param replicate The replicate to use for testing.
    */
   QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore, Replicate replicate) {
-    super(geometryFactory, simulation, converter, prototypeStore, replicate);
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, Replicate replicate) {
+    super(
+        geometryFactory,
+        simulation,
+        converter,
+        prototypeStore,
+        externalResourceGetter,
+        replicate
+    );
     cachedPatchesByGeometry = new HashMap<>();
   }
 

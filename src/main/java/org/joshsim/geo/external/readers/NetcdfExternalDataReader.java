@@ -369,7 +369,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         int index = 0;
         int multiplier = 1;
         for (int i = rank - 1; i >= 0; i--) {
-          int pos = i == dimIdxX ? indexX : 
+          int pos = i == dimIdxX ? indexX :
                     i == dimIdxY ? indexY :
                     i == timeDimIdx ? timeStep : 0;
           index += pos * multiplier;
