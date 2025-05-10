@@ -28,14 +28,14 @@ class SandboxInputGetterTest {
 
   @Test
   void testOpenWithNonExistentFile() {
-    String identifier = "nonexistent.txt";
+    String identifier = "not_found.txt";
     assertThrows(RuntimeException.class, () -> inputGetter.open(identifier));
   }
 
   @Test
   void testOpenWithTextFile() throws IOException {
     // Arrange
-    String content = "Hello, World!";
+    String content = "Hello!";
     String identifier = "test.txt";
     virtualFiles.put(identifier, new VirtualFile(identifier, content, false));
 
@@ -50,7 +50,7 @@ class SandboxInputGetterTest {
   @Test
   void testOpenWithBinaryFile() throws IOException {
     // Arrange
-    byte[] originalBytes = "Binary Content".getBytes(StandardCharsets.UTF_8);
+    byte[] originalBytes = "binary content".getBytes(StandardCharsets.UTF_8);
     String base64Content = Base64.getEncoder().encodeToString(originalBytes);
     String identifier = "test.bin";
     virtualFiles.put(identifier, new VirtualFile(identifier, base64Content, true));
@@ -60,8 +60,10 @@ class SandboxInputGetterTest {
 
     // Assert
     byte[] result = inputStream.readAllBytes();
-    assertEquals(new String(originalBytes, StandardCharsets.UTF_8), 
-                new String(result, StandardCharsets.UTF_8));
+    assertEquals(
+        new String(originalBytes, StandardCharsets.UTF_8), 
+        new String(result, StandardCharsets.UTF_8)
+    );
   }
 
   @Test

@@ -36,13 +36,13 @@ public class SandboxInputGetter implements InputGetterStrategy {
 
   @Override
   public InputStream open(String identifier) {
-    if (virtualFiles.containsKey(identifier)) {
+    if (!virtualFiles.containsKey(identifier)) {
       throw new RuntimeException("Cannot find virtual file: " + identifier);
     }
 
     VirtualFile virtualFile = virtualFiles.get(identifier);
     String contents = virtualFile.getContent();
-    return virtualFile.getIsBinary() ? makeForString(contents) : makeForBase64(contents);
+    return virtualFile.getIsBinary() ? makeForBase64(contents) : makeForString(contents);
   }
 
   /**
