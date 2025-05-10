@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.cloud;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;

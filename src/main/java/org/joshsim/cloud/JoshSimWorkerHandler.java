@@ -189,6 +189,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   private InputOutputLayer getLayer(HttpServerExchange httpServerExchange) {
     Map<String, VirtualFile> virtualFiles = new HashMap<>();  // TODO virtual file system
+    
     SandboxExportCallback exportCallback = (export) -> {
       try {
         httpServerExchange.getOutputStream().write((export + "\n").getBytes());
