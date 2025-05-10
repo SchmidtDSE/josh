@@ -1,7 +1,11 @@
 package org.joshsim.precompute;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Base64;
 
 
 /**
@@ -26,13 +30,28 @@ public class Base64StringGridSerializationStrategy implements GridSerializationS
   
   @Override
   public void serialize(DataGridLayer target, OutputStream outputStream) {
-    // TODO - serialize with inner and then convert the binary payload produced by inner into a
-    // string which, base64 encoded, is sent to output stream.
+    try {
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      inner.serialize(target, byteStream);
+      byte[] bytes = byteStream.toByteArray();
+      String base64String = Base64.getEncoder().encodeToString(bytes);
+      outputStream.write(base64String.getBytes());
+      outputStream.flush();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to serialize grid to base64", e);
+    }
   }
 
   @Override
   public DataGridLayer deserialize(InputStream inputStream) {
-    // TODO - first parse the input stream as a string and decode it assuming it contains base64
-    // encoded data before then deserializing with inner.
+    try {
+      byte[] bytes = inputStream.readAllBytes();
+      String base64String = new String(bytes);
+      byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+      ByteArrayInputStream byteStream = new ByteArrayInputStream(decodedBytes);
+      return inner.deserialize(byteStream);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to deserialize grid from base64", e);
+    }
   }
 }
