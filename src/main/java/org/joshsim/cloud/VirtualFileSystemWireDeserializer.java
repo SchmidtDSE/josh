@@ -27,7 +27,7 @@ import org.joshsim.lang.io.VirtualFile;
  * replaced with spaces followed by a tab. After the third tab, the next file starts or the string
  * ends if no further files.
  */
-public class VirutalFileSystemWireDeserializer {
+public class VirtualFileSystemWireDeserializer {
 
   /**
    * Load a virutal file system from a wire serialization of that file system.

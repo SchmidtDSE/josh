@@ -9,18 +9,18 @@ import org.joshsim.lang.io.VirtualFile;
 import org.junit.jupiter.api.Test;
 
 
-public class VirutalFileSystemWireDeserializerTest {
+public class VirtualFileSystemWireDeserializerTest {
   
   @Test
   void testEmptyString() {
-    Map<String, VirtualFile> result = VirutalFileSystemWireDeserializer.load("");
+    Map<String, VirtualFile> result = VirtualFileSystemWireDeserializer.load("");
     assertTrue(result.isEmpty());
   }
   
   @Test
   void testSingleTextFile() {
     String serialized = "hello.txt\t0\tworld\t";
-    Map<String, VirtualFile> result = VirutalFileSystemWireDeserializer.load(serialized);
+    Map<String, VirtualFile> result = VirtualFileSystemWireDeserializer.load(serialized);
     
     assertEquals(1, result.size());
     assertTrue(result.containsKey("hello.txt"));
@@ -37,7 +37,7 @@ public class VirutalFileSystemWireDeserializerTest {
     String base64Content = Base64.getEncoder().encodeToString(Long.toString(123).getBytes());
     String serialized = "hello.bin\t1\t" + base64Content + "\t";
     
-    Map<String, VirtualFile> result = VirutalFileSystemWireDeserializer.load(serialized);
+    Map<String, VirtualFile> result = VirtualFileSystemWireDeserializer.load(serialized);
     
     assertEquals(1, result.size());
     assertTrue(result.containsKey("hello.bin"));
@@ -53,7 +53,7 @@ public class VirutalFileSystemWireDeserializerTest {
     String base64Content = Base64.getEncoder().encodeToString(Long.toString(123).getBytes());
     String serialized = "hello.txt\t0\tworld\thello.bin\t1\t" + base64Content + "\t";
     
-    Map<String, VirtualFile> result = VirutalFileSystemWireDeserializer.load(serialized);
+    Map<String, VirtualFile> result = VirtualFileSystemWireDeserializer.load(serialized);
     
     assertEquals(2, result.size());
     
