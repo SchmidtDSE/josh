@@ -204,7 +204,10 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
       
       // Transform world coordinates to image coordinates using the grid geometry
-      DirectPosition2D worldPos = new DirectPosition2D(position.getOrdinate(0), position.getOrdinate(1));
+      DirectPosition2D worldPos = new DirectPosition2D(
+          position.getOrdinate(0),
+          position.getOrdinate(1)
+      );
       DirectPosition2D imagePos = new DirectPosition2D();
       try {
         geometry.getGridToCRS(PixelInCell.CELL_CENTER).inverse().transform(worldPos, imagePos);
@@ -217,7 +220,9 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       int localY = (int) Math.round(imagePos.getY() - tileY);
       
       // Verify coordinates are within bounds
-      if (localX < 0 || localY < 0 || localX >= STANDARD_COG_TILE_SIZE || localY >= STANDARD_COG_TILE_SIZE) {
+      boolean belowMin = localX < 0 || localY < 0;
+      boolean aboveMax = localX >= STANDARD_COG_TILE_SIZE || localY >= STANDARD_COG_TILE_SIZE;
+      if (belowMin || aboveMax) {
         return Optional.empty();
       }
       
