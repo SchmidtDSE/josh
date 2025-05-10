@@ -270,7 +270,6 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
    * @return Newly created direct position.
    */
   private DirectPosition createDirectPosition(double x, double y) {
-    // TODO
-    return null;
+    return new org.apache.sis.geometry.DirectPosition2D(x, y);
   }
 }
