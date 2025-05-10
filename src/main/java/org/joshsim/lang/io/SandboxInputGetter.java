@@ -6,7 +6,10 @@
 
 package org.joshsim.lang.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 
@@ -49,7 +52,7 @@ public class SandboxInputGetter implements InputGetterStrategy {
    * @return InputStream which provides access to contents as plain text.
    */
   private InputStream makeForString(String contents) {
-    return null;  // TODO
+    return new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -64,7 +67,8 @@ public class SandboxInputGetter implements InputGetterStrategy {
    *     contentsBase64 string.
    */
   private InputStream makeForBase64(String contentsBase64) {
-    return null;  // TODO
+    byte[] decodedBytes = Base64.getDecoder().decode(contentsBase64);
+    return new ByteArrayInputStream(decodedBytes);
   }
 
 }
