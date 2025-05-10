@@ -79,7 +79,15 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   @Override
   public List<String> getVariableNames() throws IOException {
     List<String> names = new ArrayList<>();
-    names.add("value"); // GeoTIFF typically has one band/variable
+    try {
+      GridCoverage data = coverage.read(null);
+      int numBands = data.getSampleDimensions().size();
+      for (int i = 0; i < numBands; i++) {
+        names.add(String.valueOf(i));
+      }
+    } catch (DataStoreException e) {
+      throw new IOException("Failed to get band count: " + e.getMessage(), e);
+    }
     return names;
   }
 
@@ -132,14 +140,23 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   public Optional<EngineValue> readValueAt(String variableName, BigDecimal x, BigDecimal y, int timeStep) 
       throws IOException {
     try {
+      // Parse band index from variable name, default to 0 if invalid
+      int bandIndex;
+      try {
+        bandIndex = Integer.parseInt(variableName);
+      } catch (NumberFormatException e) {
+        bandIndex = 0;
+      }
+
       // Create a direct position for the coordinates
       double[] coords = new double[] {x.doubleValue(), y.doubleValue()};
       DirectPosition position = geometry.getCoordinateReferenceSystem().getCoordinateSystem()
         .getFactory().createDirectPosition(coords);
       
-      // Read the grid coverage
+      // Read the grid coverage for the specified band
       GridCoverage data = coverage.read(null);
-      double[] values = data.evaluate(position, new double[1]);
+      double[] values = new double[1];
+      data.evaluate(position, bandIndex, values);
       
       if (values == null || values.length == 0 || Double.isNaN(values[0])) {
         return Optional.empty();
