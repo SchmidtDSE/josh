@@ -1,5 +1,8 @@
 /**
  * Logic to read from geotiffs and COGs.
+
+import org.apache.sis.coverage.grid.PixelInCell;
+
  *
  * @license BSD-3-Clause
  */
@@ -192,7 +195,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Transform world coordinates to image coordinates using the grid geometry
       DirectPosition2D worldPos = new DirectPosition2D(position.getOrdinate(0), position.getOrdinate(1));
       DirectPosition2D imagePos = new DirectPosition2D();
-      geometry.getGridToCRS().inverse().transform(worldPos, imagePos);
+      geometry.getGridToCRS(PixelInCell.CELL_CENTER).inverse().transform(worldPos, imagePos);
       
       // Get value from tile using transformed coordinates
       int localX = (int) Math.round(imagePos.getX() - tileX);
