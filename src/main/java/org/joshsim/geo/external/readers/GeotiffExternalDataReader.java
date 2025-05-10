@@ -148,7 +148,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
 
       // Get image coordinates
-      DirectPosition position = createDirectPosition(x.doubleValue(), y.doubleValue());
+      DirectPosition position = new DirectPosition2D(x.doubleValue(), y.doubleValue());
       
       // Calculate tile coordinates
       int tileX = (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
@@ -165,7 +165,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         // Read entire tile
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
-            DirectPosition tilePos = createDirectPosition(tileX + x1, tileY + y1);
+            DirectPosition tilePos = new DirectPosition2D(tileX + x1, tileY + y1);
             double[] values = data.evaluate(tilePos, new double[data.getSampleDimensions().size()]);
             tileData[y1][x1] = values[bandIndex];
           }
@@ -262,14 +262,4 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
     maxY = BigDecimal.valueOf(upper.getOrdinate(1)).setScale(6, RoundingMode.HALF_UP);
   }
 
-  /**
-   * Creates a DirectPosition from the specified x and y coordinates.
-   *
-   * @param x The horizontal coordinate at which the position should be created.
-   * @param y The vertical coordinate at which the position should be created.
-   * @return Newly created direct position.
-   */
-  private DirectPosition createDirectPosition(double x, double y) {
-    return new org.apache.sis.geometry.DirectPosition2D(x, y);
-  }
 }
