@@ -7,6 +7,7 @@
 package org.joshsim.cloud;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 import org.joshsim.lang.io.VirtualFile;
 
 
@@ -45,10 +46,6 @@ public class VirutalFileSystemWireDeserializer {
     StringTokenizer tokenizer = new StringTokenizer(serialized, "\t");
     
     while (tokenizer.hasMoreTokens()) {
-      if (tokenizer.countTokens() < 3) {
-        break;
-      }
-      
       String path = tokenizer.nextToken();
       boolean isBinary = "1".equals(tokenizer.nextToken());
       String content = tokenizer.nextToken();
