@@ -191,18 +191,6 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
     }
   }
 
-  /**
-   * Creates a DirectPosition from the specified x and y coordinates.
-   *
-   * @param x The horizontal coordinate at which the position should be created.
-   * @param y The vertical coordinate at which the position should be created.
-   * @return Newly created direct position.
-   */
-  private DirectPosition createDirectPosition(double x, double y) {
-    // TODO
-    return null;
-  }
-
   @Override
   public void setDimensions(String dimensionX, String dimensionY, Optional<String> timeDimension) {
     // GeoTIFF dimensions are implicit in the file structure
@@ -272,5 +260,17 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
     maxX = BigDecimal.valueOf(upper.getOrdinate(0)).setScale(6, RoundingMode.HALF_UP);
     minY = BigDecimal.valueOf(lower.getOrdinate(1)).setScale(6, RoundingMode.HALF_UP);
     maxY = BigDecimal.valueOf(upper.getOrdinate(1)).setScale(6, RoundingMode.HALF_UP);
+  }
+
+  /**
+   * Creates a DirectPosition from the specified x and y coordinates.
+   *
+   * @param x The horizontal coordinate at which the position should be created.
+   * @param y The vertical coordinate at which the position should be created.
+   * @return Newly created direct position.
+   */
+  private DirectPosition createDirectPosition(double x, double y) {
+    // TODO
+    return null;
   }
 }
