@@ -9,6 +9,9 @@ import org.joshsim.lang.io.VirtualFile;
 import org.junit.jupiter.api.Test;
 
 
+/**
+ * Tests for deserializing the virtual file system from a wire encoding in a string.
+ */
 public class VirtualFileSystemWireDeserializerTest {
   
   @Test

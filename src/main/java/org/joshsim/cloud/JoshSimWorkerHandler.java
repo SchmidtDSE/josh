@@ -168,7 +168,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer layer = getLayer(httpServerExchange);
+    InputOutputLayer layer = getLayer(httpServerExchange, externalData);
     JoshSimFacadeUtil.runSimulation(
         geometryFactory,
         layer,
