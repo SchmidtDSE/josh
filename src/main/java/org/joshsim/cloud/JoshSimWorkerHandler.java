@@ -161,7 +161,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange);
+    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
@@ -185,10 +185,11 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * Create a new input / output layer that writes exports to an exchange.
    *
    * @param httpServerExchange The exchange where the response should be streamed.
+   * @param externalData String serialization of the virtual file system.
    * @return The newly created layer.
    */
-  private InputOutputLayer getLayer(HttpServerExchange httpServerExchange) {
-    Map<String, VirtualFile> virtualFiles = new HashMap<>();  // TODO virtual file system
+  private InputOutputLayer getLayer(HttpServerExchange httpServerExchange, String externalData) {
+    Map<String, VirtualFile> virtualFiles = VirtualFileSystemWireDeserializer.load(externalData);
     
     SandboxExportCallback exportCallback = (export) -> {
       try {
