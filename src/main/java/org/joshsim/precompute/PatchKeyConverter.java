@@ -55,13 +55,13 @@ public class PatchKeyConverter {
         startPoint,
         new HaversineUtil.HaversinePoint(key.getCenterX(), startPoint.getLatitude())
     );
-    
+
     // Calculate vertical distance from start point (going south)
     BigDecimal verticalDistance = HaversineUtil.getDistance(
         startPoint,
         new HaversineUtil.HaversinePoint(startPoint.getLongitude(), key.getCenterY())
     );
-    
+
     // Convert distances to grid cell indices by dividing by patch width
     BigDecimal gridX = horizontalDistance.subtract(patchWidthHalf).divide(
         patchWidth,
@@ -73,11 +73,11 @@ public class PatchKeyConverter {
         0,
         RoundingMode.HALF_UP
     );
-    
+
     return new ProjectedValue(gridX, gridY, value);
   }
 
-  
+
   /**
    * Result of a projection from Earth-space to grid-space.
    */
@@ -126,7 +126,7 @@ public class PatchKeyConverter {
     public BigDecimal getValue() {
       return value;
     }
-    
+
   }
 
 }

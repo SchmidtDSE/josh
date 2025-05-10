@@ -39,7 +39,7 @@ start patch Default
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTree - deadTrees
@@ -59,7 +59,7 @@ end patch
 start organism JoshuaTree
 
   age.init
-    :if(meta.stepCount == 0 count) = sample here.ObservedAges
+    :if(meta.stepCount == 0 count) = sample external ObservedAges
     :else = 0 years
 
   age.step = prior.age + 1 year

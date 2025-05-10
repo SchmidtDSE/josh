@@ -25,7 +25,7 @@ public class StreamToPrecomputedGridUtil {
    * @param units The units that returned EngineValues should be created with.
    * @return The precomputed grid created from the streams.
    */
-  public static PrecomputedGrid streamToGrid(EngineValueFactory engineValueFactory,
+  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units) {
 

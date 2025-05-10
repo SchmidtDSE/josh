@@ -10,12 +10,12 @@ import java.io.OutputStream;
 public class Base64StringGridSerializationStrategy implements GridSerializationStrategy {
 
   @Override
-  public void serialize(PrecomputedGrid target, OutputStream outputStream) {
+  public void serialize(DataGridLayer target, OutputStream outputStream) {
 
   }
 
   @Override
-  public PrecomputedGrid deserialize(InputStream inputStream) {
+  public DataGridLayer deserialize(InputStream inputStream) {
     return null;
   }
 }

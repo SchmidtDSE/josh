@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 
 class PatchKeyConverterTest {
-  
+
   private PatchKeyConverter converter;
   private static final BigDecimal PATCH_WIDTH = new BigDecimal("5000"); // 5km patches
 
@@ -29,14 +29,14 @@ class PatchKeyConverterTest {
     BigDecimal laLat = new BigDecimal("34.05");
     BigDecimal sfLong = new BigDecimal("-122.45");
     BigDecimal sfLat = new BigDecimal("37.73");
-    
+
     PatchBuilderExtents extents = new PatchBuilderExtents(
         sfLong,  // topLeftX (west)
         sfLat,   // topLeftY (north)
         laLong,  // bottomRightX (east)
         laLat    // bottomRightY (south)
     );
-    
+
     converter = new PatchKeyConverter(extents, PATCH_WIDTH);
   }
 
@@ -51,7 +51,7 @@ class PatchKeyConverterTest {
           public BigDecimal getCenterX() {
             return new BigDecimal("-118.24");
           }
-          
+
           @Override
           public BigDecimal getCenterY() {
             return new BigDecimal("34.05");
@@ -83,7 +83,7 @@ class PatchKeyConverterTest {
           }
         });
       }
-      
+
       @Override
       public String getName() {
         return "TestPatch";
@@ -118,7 +118,7 @@ class PatchKeyConverterTest {
     PatchKeyConverter.ProjectedValue result = converter.convert(laKey, BigDecimal.ONE);
     BigDecimal expectedX = new BigDecimal("74");
     BigDecimal expectedY = new BigDecimal("81");
-    
+
     assertEquals(0, result.getX().compareTo(expectedX));
     assertEquals(0, result.getY().compareTo(expectedY));
     assertEquals(0, result.getValue().compareTo(BigDecimal.ONE));

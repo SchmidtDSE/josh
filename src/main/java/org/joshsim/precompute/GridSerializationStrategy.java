@@ -21,7 +21,7 @@ public interface GridSerializationStrategy {
    * @param target grid to send to output stream
    * @param outputStream the target location for the grid
    */
-  void serialize(PrecomputedGrid target, OutputStream outputStream);
+  void serialize(DataGridLayer target, OutputStream outputStream);
 
   /**
    * Deserialize a grid from an output stream.
@@ -29,6 +29,6 @@ public interface GridSerializationStrategy {
    * @param inputStream grid from which to read the precomputed grid
    * @return the target from which to get the grid
    */
-  PrecomputedGrid deserialize(InputStream inputStream);
+  DataGridLayer deserialize(InputStream inputStream);
 
 }

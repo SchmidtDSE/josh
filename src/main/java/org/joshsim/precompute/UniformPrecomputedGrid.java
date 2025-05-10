@@ -18,7 +18,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * converted to EngineValues at time of access.</p>
  */
 public abstract class UniformPrecomputedGrid<T extends Comparable> implements
-    PrecomputedGrid {
+    DataGridLayer {
 
   private final long minX;
   private final long minY;

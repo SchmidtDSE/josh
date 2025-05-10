@@ -19,4 +19,11 @@ public interface InputOutputLayer {
    */
   ExportFacadeFactory getExportFacadeFactory();
 
+  /**
+   * Get the strategy for requesting external inputs available in this layer.
+   *
+   * @return Strategy for data inputs available in the current environment.
+   */
+  InputGetterStrategy getInputStrategy();
+
 }

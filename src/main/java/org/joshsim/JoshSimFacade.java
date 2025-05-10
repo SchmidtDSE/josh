@@ -10,6 +10,7 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
 
@@ -42,12 +43,14 @@ public class JoshSimFacade {
    *
    * @param engineGeometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
+   * @param inputOutputLayer The layer to use in giving the simulation access to the external data
+   *     and resources.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
   public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
-        ParseResult parsed) {
+        ParseResult parsed, InputOutputLayer inputOutputLayer) {
     setupForJvm();
-    return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed);
+    return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed, inputOutputLayer);
   }
 
   /**

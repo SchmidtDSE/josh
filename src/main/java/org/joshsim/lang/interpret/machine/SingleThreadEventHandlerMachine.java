@@ -743,6 +743,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     return memory.peek();
   }
 
+  @Override
+  public long getStepCount() {
+    return bridge.getAbsoluteTimestep();
+  }
+
+  @Override
+  public void pushExternal(String name, long step) {
+    push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
+  }
+
   /**
    * Get a value from the top of the stack, converting it if in a conversion group.
    *

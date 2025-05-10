@@ -523,4 +523,19 @@ public interface EventHandlerMachine {
    */
   EngineValue getResult();
 
+  /**
+   * Get the current absolute step number.
+   *
+   * @return The number of steps completed.
+   */
+  long getStepCount();
+
+  /**
+   * Get a value from an external resource at a given time.
+   *
+   * @param name The name of the external resource.
+   * @param step The timestep (according to the external resource) at which a value should be
+   *     returned.
+   */
+  void pushExternal(String name, long step);
 }

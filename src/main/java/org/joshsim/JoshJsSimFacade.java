@@ -60,7 +60,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      interpreter.interpret(result, new GridGeometryFactory());
+      interpreter.interpret(result, new GridGeometryFactory(), getInputOutputLayer());
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -85,7 +85,11 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        geometryFactory,
+        result,
+        getInputOutputLayer()
+    );
 
     CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
     for (String name : program.getSimulations().getSimulations()) {
@@ -140,7 +144,11 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        geometryFactory,
+        result,
+        getInputOutputLayer()
+    );
     program.getSimulations().getProtoype(simulationName);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
@@ -197,9 +205,9 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(JoshJsSimFacade::reportData);
+    InputOutputLayer inputOutputLayer = getInputOutputLayer();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
 
     JoshSimFacadeUtil.runSimulation(
         geometryFactory,
@@ -217,6 +225,18 @@ public class JoshJsSimFacade {
    * @param args ignored arguments
    */
   public static void main(String[] args) {}
+
+  /**
+   * Get the input / output layer for the browser sandbox.
+   *
+   * @return Sandboxed input / output layer.
+   */
+  private static InputOutputLayer getInputOutputLayer() {
+    return new SandboxInputOutputLayer(
+        new HashMap<>(),  // TODO virtual file system
+        JoshJsSimFacade::reportData
+    );
+  }
 
   @JSBody(params = { "count" }, script = "reportStepComplete(count)")
   private static native void reportStepComplete(int count);

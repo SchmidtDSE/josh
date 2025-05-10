@@ -18,6 +18,7 @@ import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
+import org.joshsim.lang.io.InputOutputLayer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ public class FutureBridgeGetterTest {
   @Mock(lenient = true) private Converter mockConverter;
   @Mock(lenient = true) private MutableEntity mockSimulation;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
+  @Mock(lenient = true) private InputOutputLayer mockInputOutputLayer;
   private FutureBridgeGetter bridgeGetter;
 
   /**
@@ -56,6 +58,7 @@ public class FutureBridgeGetterTest {
   void testGetBridgeWithoutProgram() {
     bridgeGetter.setSimulationName("testSim");
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.get(),
@@ -67,6 +70,7 @@ public class FutureBridgeGetterTest {
   void testGetBridgeWithoutSimulationName() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.get(),
@@ -78,6 +82,7 @@ public class FutureBridgeGetterTest {
   void testGetBridgeWithoutGridGeometryFactory() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.get(),
@@ -86,10 +91,23 @@ public class FutureBridgeGetterTest {
   }
 
   @Test
+  void testGetBridgeWithoutInputOutputLayer() {
+    bridgeGetter.setProgram(mockProgram);
+    bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridgeGetter.get(),
+        "Should throw when input output layer not set"
+    );
+  }
+
+  @Test
   void testSuccessfulBridgeCreation() {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
 
     EngineBridge bridge = bridgeGetter.get();
     assertEquals(bridge, bridgeGetter.get(), "Should return same bridge instance");
@@ -100,6 +118,7 @@ public class FutureBridgeGetterTest {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     bridgeGetter.get();
 
     assertThrows(
@@ -114,6 +133,7 @@ public class FutureBridgeGetterTest {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     bridgeGetter.get();
 
     assertThrows(
@@ -128,12 +148,28 @@ public class FutureBridgeGetterTest {
     bridgeGetter.setProgram(mockProgram);
     bridgeGetter.setSimulationName("testSim");
     bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
     bridgeGetter.get();
 
     assertThrows(
         IllegalStateException.class,
         () -> bridgeGetter.setGeometryFactory(new GridGeometryFactory()),
         "Should throw when setting simulation name after bridge built"
+    );
+  }
+
+  @Test
+  void testSetInputOutputLayerAfterBridgeBuilt() {
+    bridgeGetter.setProgram(mockProgram);
+    bridgeGetter.setSimulationName("testSim");
+    bridgeGetter.setGeometryFactory(new GridGeometryFactory());
+    bridgeGetter.setInputOutputLayer(mockInputOutputLayer);
+    bridgeGetter.get();
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> bridgeGetter.setInputOutputLayer(mockInputOutputLayer),
+        "Should throw when setting input output layer after bridge built"
     );
   }
 }

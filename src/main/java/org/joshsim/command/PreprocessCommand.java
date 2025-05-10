@@ -30,10 +30,12 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.JshdExternalGetter;
+import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
+import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
 import org.joshsim.precompute.PatchKeyConverter;
-import org.joshsim.precompute.PrecomputedGrid;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
 import org.joshsim.util.OutputOptions;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -59,7 +61,7 @@ import picocli.CommandLine.Parameters;
  *
  * </p>
  *
- * @see org.joshsim.precompute.PrecomputedGrid
+ * @see DataGridLayer
  * @see org.joshsim.geo.external.ExternalGeoMapper
  */
 @Command(
@@ -174,7 +176,8 @@ public class PreprocessCommand implements Callable<Integer> {
         engineGeometryFactory,
         simEntity,
         program.getConverter(),
-        program.getPrototypes()
+        program.getPrototypes(),
+        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy())
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);
@@ -190,7 +193,7 @@ public class PreprocessCommand implements Callable<Integer> {
         size.getAsDecimal()
     );
 
-    PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
+    DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
         (timestep) -> {
           System.out.println("Preprocessing: " + timestep);
