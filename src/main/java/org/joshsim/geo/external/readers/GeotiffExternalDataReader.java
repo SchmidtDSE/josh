@@ -180,12 +180,24 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         // Create a raster from the rendered image
         Raster raster = renderedImage.getData();
         
+        // Calculate actual raster bounds
+        int maxX = raster.getWidth();
+        int maxY = raster.getHeight();
+        
         // Read entire tile
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
-            double[] values = new double[data.getSampleDimensions().size()];
-            raster.getPixel((int) (tileX + x1), (int) (tileY + y1), values);
-            tileData[y1][x1] = values[bandIndex];
+            int pixelX = (int) tileX + x1;
+            int pixelY = (int) tileY + y1;
+            
+            // Check bounds
+            if (pixelX >= 0 && pixelX < maxX && pixelY >= 0 && pixelY < maxY) {
+              double[] values = new double[data.getSampleDimensions().size()];
+              raster.getPixel(pixelX, pixelY, values);
+              tileData[y1][x1] = values[bandIndex];
+            } else {
+              tileData[y1][x1] = Double.NaN;
+            }
           }
         }
         tileCache.put(tileKey, tileData);
