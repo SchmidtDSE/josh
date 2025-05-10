@@ -1,7 +1,6 @@
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -49,7 +48,7 @@ class StreamToPrecomputedGridUtilTest {
         timestep -> Stream.of(projectedValue);
 
     // When
-    PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
+    DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         mockFactory,
         streamGetter,
         mockExtents,
@@ -81,7 +80,7 @@ class StreamToPrecomputedGridUtilTest {
         timestep -> Stream.of(projectedValue1, projectedValue2);
 
     // When
-    PrecomputedGrid grid = StreamToPrecomputedGridUtil.streamToGrid(
+    DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         mockFactory,
         streamGetter,
         mockExtents,

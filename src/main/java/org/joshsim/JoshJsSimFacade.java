@@ -8,6 +8,7 @@ package org.joshsim;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.joshsim.cloud.VirtualFileSystemWireDeserializer;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.compat.EmulatedCompatibilityLayer;
@@ -60,7 +61,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      interpreter.interpret(result, new GridGeometryFactory());
+      interpreter.interpret(result, new GridGeometryFactory(), getInputOutputLayer());
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -85,7 +86,11 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        geometryFactory,
+        result,
+        getInputOutputLayer()
+    );
 
     CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
     for (String name : program.getSimulations().getSimulations()) {
@@ -105,11 +110,12 @@ public class JoshJsSimFacade {
    * @param code The Josh source code to parse, interpret, and run as a simulation.
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
+   * @param externalData The serialization of the virtual file system to use in this simulation.
    */
   @JSExport
-  public static void runSimulation(String code, String simulationName) {
+  public static void runSimulation(String code, String simulationName, String externalData) {
     try {
-      runSimulationUnsafe(code, simulationName);
+      runSimulationUnsafe(code, simulationName, externalData);
     } catch (Exception e) {
       reportError(e.toString());
     }
@@ -140,7 +146,11 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        geometryFactory,
+        result,
+        getInputOutputLayer()
+    );
     program.getSimulations().getProtoype(simulationName);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
@@ -186,9 +196,10 @@ public class JoshJsSimFacade {
    * @param code The Josh source code to parse, interpret, and run as a simulation.
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
+   * @param externalData The serialization of the virtual file system to use within this simulation.
    * @throws RuntimeException If parsing the code results in errors.
    */
-  private static void runSimulationUnsafe(String code, String simulationName) {
+  private static void runSimulationUnsafe(String code, String simulationName, String externalData) {
     setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -197,9 +208,9 @@ public class JoshJsSimFacade {
     }
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(JoshJsSimFacade::reportData);
+    InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
 
     JoshSimFacadeUtil.runSimulation(
         geometryFactory,
@@ -217,6 +228,32 @@ public class JoshJsSimFacade {
    * @param args ignored arguments
    */
   public static void main(String[] args) {}
+
+  /**
+   * Get the input / output layer for the browser sandbox without a filesystem.
+   *
+   * @return Sandboxed input / output layer with an empty virtual file system.
+   */
+  private static InputOutputLayer getInputOutputLayer() {
+    return new SandboxInputOutputLayer(
+        new HashMap<>(),
+        JoshJsSimFacade::reportData
+    );
+  }
+  
+  /**
+   * Get the input / output layer for the browser sandbox.
+   *
+   * @param externalData The string serialization of the virtual file system to use within the input
+   *     output layer.
+   * @return Sandboxed input / output layer.
+   */
+  private static InputOutputLayer getInputOutputLayer(String externalData) {
+    return new SandboxInputOutputLayer(
+        VirtualFileSystemWireDeserializer.load(externalData),
+        JoshJsSimFacade::reportData
+    );
+  }
 
   @JSBody(params = { "count" }, script = "reportStepComplete(count)")
   private static native void reportStepComplete(int count);

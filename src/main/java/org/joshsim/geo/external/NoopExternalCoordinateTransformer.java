@@ -1,15 +1,7 @@
 package org.joshsim.geo.external;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
-import org.joshsim.geo.geometry.JtsTransformUtility;
-import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.FactoryException;
 
 
 /**

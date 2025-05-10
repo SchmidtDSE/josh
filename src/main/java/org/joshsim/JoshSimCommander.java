@@ -24,6 +24,8 @@ import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
@@ -166,7 +168,8 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result);
+    InputOutputLayer inputOutputLayer = new JvmInputOutputLayer();
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result, inputOutputLayer);
     assert program != null;
 
     return new ProgramInitResult(program);

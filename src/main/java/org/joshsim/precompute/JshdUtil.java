@@ -149,6 +149,14 @@ public class JshdUtil {
     return buffer.array();
   }
 
+  
+  /**
+   * Read the units string from the given ByteBuffer, setting it in a DoublePrecomputedGridBuilder.
+   *
+   * @param buffer  The ByteBuffer from which to read the units string.
+   * @param builder The DoublePrecomputedGridBuilder instance where the units will be set.
+   * @throws IllegalArgumentException If the units string length exceeds 200 characters.
+   */
   private static void readUnitsStr(ByteBuffer buffer, DoublePrecomputedGridBuilder builder) {
     int unitsLength = buffer.getInt();
     if (unitsLength > 200) {

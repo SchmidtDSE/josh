@@ -17,4 +17,9 @@ public class JvmInputOutputLayer implements InputOutputLayer {
     return new JvmExportFacadeFactory();
   }
 
+  @Override
+  public InputGetterStrategy getInputStrategy() {
+    return new JvmInputGetter();
+  }
+
 }

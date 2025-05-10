@@ -33,7 +33,7 @@ public class BinaryGridSerializationStrategy implements GridSerializationStrateg
   }
 
   @Override
-  public void serialize(PrecomputedGrid target, OutputStream outputStream) {
+  public void serialize(DataGridLayer target, OutputStream outputStream) {
     if (!(target instanceof DoublePrecomputedGrid)) {
       throw new IllegalArgumentException(
           "Binary serialization currently only supports DoublePrecomputedGrid"
@@ -49,7 +49,7 @@ public class BinaryGridSerializationStrategy implements GridSerializationStrateg
   }
 
   @Override
-  public PrecomputedGrid deserialize(InputStream inputStream) {
+  public DataGridLayer deserialize(InputStream inputStream) {
     try {
       byte[] bytes = inputStream.readAllBytes();
       return JshdUtil.loadFromBytes(engineValueFactory, bytes);
