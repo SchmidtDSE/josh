@@ -161,7 +161,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer inputOutputLayer = null;  // TODO: load from external data
+    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange);
     JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
