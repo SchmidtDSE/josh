@@ -12,10 +12,8 @@ public class ExternalDataReaderFactory {
   // Specialized reader factories
   private static final NetcdfExternalDataReaderFactory netcdfReaderFactory =
       new NetcdfExternalDataReaderFactory(new EngineValueFactory());
-
-  // Future factories will be added here
-  // private static final CogReaderFactory cogReaderFactory = new CogReaderFactory();
-  // private static final ZarrReaderFactory zarrReaderFactory = new ZarrReaderFactory();
+  private static final GeotiffExternalDataReaderFactory geotiffReaderFactory =
+      new GeotiffExternalDataReaderFactory(new EngineValueFactory());
 
   /**
    * Creates a ExternalDataReader appropriate for the given file path.
@@ -32,7 +30,7 @@ public class ExternalDataReaderFactory {
     }
 
     if (isGeotiffFile(filePath)) {
-      return 
+      return geotiffReaderFactory.createReader();
     }
 
     if (isZarrFile(filePath)) {
