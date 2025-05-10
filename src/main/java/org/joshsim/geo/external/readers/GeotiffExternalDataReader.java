@@ -111,8 +111,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       List<BigDecimal> coordsY = new ArrayList<>();
       
       // Get grid size
-      int width = (int) geometry.getExtent().getSize(0);
-      int height = (int) geometry.getExtent().getSize(1);
+      int width = geometry.getExtent().getSize(0);
+      int height = geometry.getExtent().getSize(1);
 
       // Calculate step sizes
       BigDecimal stepX = maxX.subtract(minX)
@@ -151,8 +151,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       DirectPosition position = createDirectPosition(x.doubleValue(), y.doubleValue());
       
       // Calculate tile coordinates
-      int tileX = (int)(position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
-      int tileY = (int)(position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
+      int tileX = (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
+      int tileY = (position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE;
       String tileKey = String.format("%d_%d_%d", bandIndex, tileX, tileY);
       
       // Get or load tile data
@@ -165,10 +165,9 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         // Read entire tile
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
-            double[] tileValue = new double[1];
             DirectPosition tilePos = createDirectPosition(tileX + x1, tileY + y1);
             // TODO: fill in tileValue
-            tileData[y1][x1] = tileValue[0];
+            tileData[y1][x1] = 0;
           }
         }
         tileCache.put(tileKey, tileData);
