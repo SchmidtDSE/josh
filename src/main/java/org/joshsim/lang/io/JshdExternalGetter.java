@@ -5,6 +5,7 @@ import java.io.InputStream;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.ExternalResourceGetter;
 import org.joshsim.precompute.DataGridLayer;
+import org.joshsim.precompute.JshdUtil;
 
 
 /**
