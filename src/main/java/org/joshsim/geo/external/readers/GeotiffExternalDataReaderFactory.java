@@ -1,3 +1,8 @@
+/**
+ * Logic to instantiate a geotiff reader.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.geo.external.readers;
 
@@ -22,7 +27,7 @@ public class GeotiffExternalDataReaderFactory {
    * Creates a new Geotiff external data reader.
    */
   public ExternalDataReader createReader() {
-    return new GeotiffExternalDataReader(valueFactory, new Units("mm"));
+    return new GeotiffExternalDataReader(valueFactory, Units.EMPTY);
   }
 
   /**

@@ -2,6 +2,7 @@ package org.joshsim.geo.external;
 
 import java.io.IOException;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.geo.external.readers.GeotiffExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
 
 /**
