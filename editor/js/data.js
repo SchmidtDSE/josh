@@ -308,7 +308,9 @@ class LocalFileLayer {
    */
   async putFile(file) {
     const self = this;
-    await self._sendWorkerMessage("updateItem", file.getName(), file.getContents());
+    const name = file.getName();
+    effective_name = file.getIsBinary() ? name : self._enforceTextExtension(name);
+    await self._sendWorkerMessage("updateItem", effective_name, file.getContents());
   }
 
   /**
@@ -398,6 +400,18 @@ class LocalFileLayer {
         contents: contents
       });
     });
+  }
+
+  /**
+   * Ensure that files which are intended to be interpreted as text have a text extension.
+   *
+   * @param {string} filename - The filename provided by the user.
+   * @returns {string} The filename to use which has a known text extension.
+   */
+  _enforceTextExtension(filename) {
+    const self = this;
+    const hasExtension = filename.endsWith(".csv") || filename.endsWith(".txt");
+    return hasExtension ? filename : (filename + ".txt");
   }
 }
 

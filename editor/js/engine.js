@@ -5,6 +5,7 @@
  */
 
 import {OutputDatum, SimulationResultBuilder} from "model";
+import {ResponseReader} from "wire";
 
 
 /**
@@ -184,56 +185,6 @@ class RemoteEngineBackend {
         .then(onFetchResponse)
         .catch((error) => { reject(error); });
     });
-  }
-  
-}
-
-
-class ResponseReader {
-
-  constructor(onReplicateExternal) {
-    const self = this;
-    self._replicateReducer = new Map();
-    self._completeReplicates = [];
-    self._onReplicateExternal = onReplicateExternal;
-    self._buffer = "";
-    self._completedReplicates = 0;
-  }
-
-  processResponse(text) {
-    const self = this;
-    
-    self._buffer += text;
-    const lines = self._buffer.split("\n");
-    self._buffer = lines.pop();
-
-    lines.map((x) => x.trim()).forEach((line) => {
-      const intermediate = parseEngineResponse(line);
-      if (intermediate["type"] === "datum") {
-        if (!self._replicateReducer.has(intermediate["replicate"])) {
-          self._replicateReducer.set(intermediate["replicate"], new SimulationResultBuilder());
-        }
-        const rawInput = intermediate["datum"];
-        const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
-        self._replicateReducer.get(intermediate["replicate"]).add(parsed);
-      } else if (intermediate["type"] === "end") {
-        self._completedReplicates++;
-        self._completeReplicates.push(
-          self._replicateReducer.get(intermediate["replicate"]).build()
-        );
-        self._onReplicateExternal(self._completedReplicates);
-      }
-    });
-  }
-
-  getBuffer() {
-    const self = this;
-    return self._buffer;
-  }
-
-  getCompleteReplicates() {
-    const self = this;
-    return self._completeReplicates;
   }
   
 }
