@@ -43,8 +43,8 @@ public class JshdExternalGetter implements ExternalResourceGetter {
     }
 
     try (InputStream binaryInputStream = inputStrategy.open(name)) {
-      // TODO - use JshdUtil loadFromBytes
-      return null;
+      byte[] fileBytes = binaryInputStream.readAllBytes();
+      return JshdUtil.loadFromBytes(valueFactory, fileBytes);
     } catch (IOException e) {
       throw new RuntimeException("Failure in loading a jshd resource: " + e);
     }
