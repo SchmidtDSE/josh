@@ -174,8 +174,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
       
       // Get value from tile
-      int localX = (int)(position.getOrdinate(0) - tileX);
-      int localY = (int)(position.getOrdinate(1) - tileY);
+      int localX = position.getOrdinate(0) - tileX;
+      int localY = position.getOrdinate(1) - tileY;
       double value = tileData[localY][localX];
       
       if (Double.isNaN(value)) {
