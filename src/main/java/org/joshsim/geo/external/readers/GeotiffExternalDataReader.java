@@ -137,6 +137,9 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   }
 
   @Override
+  private static final int TILE_SIZE = 256; // Standard COG tile size
+  private Map<String, double[][]> tileCache = new HashMap<>();
+  
   public Optional<EngineValue> readValueAt(String variableName, BigDecimal x, BigDecimal y, int timeStep) 
       throws IOException {
     try {
@@ -148,17 +151,42 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         throw new IOException("Invalid band index: variable name must be a valid integer", e);
       }
 
-      // Create a direct position for the coordinates
+      // Get image coordinates
       double[] coords = new double[] {x.doubleValue(), y.doubleValue()};
       DirectPosition position = geometry.getCoordinateReferenceSystem().getCoordinateSystem()
         .getFactory().createDirectPosition(coords);
       
-      // Read the grid coverage for the specified band
-      GridCoverage data = coverage.read(null);
-      double[] values = new double[1];
-      data.evaluate(position, bandIndex, values);
+      // Calculate tile coordinates
+      int tileX = (int)(position.getOrdinate(0) / TILE_SIZE) * TILE_SIZE;
+      int tileY = (int)(position.getOrdinate(1) / TILE_SIZE) * TILE_SIZE;
+      String tileKey = String.format("%d_%d_%d", bandIndex, tileX, tileY);
       
-      if (values == null || values.length == 0 || Double.isNaN(values[0])) {
+      // Get or load tile data
+      double[][] tileData = tileCache.get(tileKey);
+      if (tileData == null) {
+        // Read tile from coverage
+        GridCoverage data = coverage.read(null);
+        tileData = new double[TILE_SIZE][TILE_SIZE];
+        
+        // Read entire tile
+        for (int y1 = 0; y1 < TILE_SIZE; y1++) {
+          for (int x1 = 0; x1 < TILE_SIZE; x1++) {
+            double[] tileValue = new double[1];
+            DirectPosition tilePos = geometry.getCoordinateReferenceSystem().getCoordinateSystem()
+              .getFactory().createDirectPosition(new double[] {tileX + x1, tileY + y1});
+            data.evaluate(tilePos, bandIndex, tileValue);
+            tileData[y1][x1] = tileValue[0];
+          }
+        }
+        tileCache.put(tileKey, tileData);
+      }
+      
+      // Get value from tile
+      int localX = (int)(position.getOrdinate(0) - tileX);
+      int localY = (int)(position.getOrdinate(1) - tileY);
+      double value = tileData[localY][localX];
+      
+      if (Double.isNaN(value)) {
         return Optional.empty();
       }
       
