@@ -35,7 +35,27 @@ public class VirutalFileSystemWireDeserializer {
    *     where binary files 
    */
   public static Map<String, VirtualFile> load(String serialized) {
-    // TODO
+    Map<String, VirtualFile> virtualFiles = new HashMap<>();
+    
+    if (serialized == null || serialized.trim().isEmpty()) {
+      return virtualFiles;
+    }
+
+    String[] fileEntries = serialized.split("\t(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+    
+    for (int i = 0; i < fileEntries.length; i += 3) {
+      if (i + 2 >= fileEntries.length) {
+        break;
+      }
+      
+      String path = fileEntries[i];
+      boolean isBinary = "1".equals(fileEntries[i + 1]);
+      String content = fileEntries[i + 2];
+      
+      virtualFiles.put(path, new VirtualFile(path, content, isBinary));
+    }
+    
+    return virtualFiles;
   }
   
 }
