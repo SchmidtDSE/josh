@@ -1,8 +1,5 @@
 /**
  * Logic to read from geotiffs and COGs.
-
-import org.apache.sis.coverage.grid.PixelInCell;
-
  *
  * @license BSD-3-Clause
  */
@@ -36,6 +33,8 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.datum.PixelInCell;
+import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 
@@ -195,8 +194,12 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Transform world coordinates to image coordinates using the grid geometry
       DirectPosition2D worldPos = new DirectPosition2D(position.getOrdinate(0), position.getOrdinate(1));
       DirectPosition2D imagePos = new DirectPosition2D();
-      geometry.getGridToCRS(PixelInCell.CELL_CENTER).inverse().transform(worldPos, imagePos);
-      
+      try {
+        geometry.getGridToCRS(PixelInCell.CELL_CENTER).inverse().transform(worldPos, imagePos);
+      } catch (TransformException e) {
+        throw new RuntimeException(e);
+      }
+
       // Get value from tile using transformed coordinates
       int localX = (int) Math.round(imagePos.getX() - tileX);
       int localY = (int) Math.round(imagePos.getY() - tileY);
