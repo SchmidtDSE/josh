@@ -189,9 +189,20 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         tileCache.put(tileKey, tileData);
       }
       
-      // Get value from tile
-      int localX = (int) (Math.round(position.getOrdinate(0) - tileX));
-      int localY = (int) (Math.round(position.getOrdinate(1) - tileY));
+      // Transform world coordinates to image coordinates using the grid geometry
+      DirectPosition2D worldPos = new DirectPosition2D(position.getOrdinate(0), position.getOrdinate(1));
+      DirectPosition2D imagePos = new DirectPosition2D();
+      geometry.getGridToCRS().inverse().transform(worldPos, imagePos);
+      
+      // Get value from tile using transformed coordinates
+      int localX = (int) Math.round(imagePos.getX() - tileX);
+      int localY = (int) Math.round(imagePos.getY() - tileY);
+      
+      // Verify coordinates are within bounds
+      if (localX < 0 || localY < 0 || localX >= STANDARD_COG_TILE_SIZE || localY >= STANDARD_COG_TILE_SIZE) {
+        return Optional.empty();
+      }
+      
       double value = tileData[localY][localX];
       
       if (Double.isNaN(value)) {
