@@ -20,7 +20,6 @@
  */
 class ExternalDataSerializer {
 
-
   /**
    * Convert from the JSON-serializable object with data files to the string wire transfer format.
    *
@@ -33,40 +32,13 @@ class ExternalDataSerializer {
    */
   serialize(data) {
     const self = this;
-    return Object.entries(data).map(([filename, content]) => {
+    return Object.entries(data).map((entry) => {
+      const filename = entry[0];
+      const content = entry[1];
       const isBinary = !self._isTextFile(filename);
-      // Replace tabs with spaces in content to avoid conflicting with wire format
       const safeContent = content.replace(/\t/g, '    ');
       return `${filename}\t${isBinary ? '1' : '0'}\t${safeContent}\t`;
     }).join('');
-  }
-
-  /**
-   * Convert from the string wire transfer format to the JSON-serializable object with data files.
-   *
-   * @param {string} dataStr - The wire format string containing all files in the virutal file
-   *     system.
-   * @returns {Object} The JSON serializable object with data file information. This object's
-   *     attributes or keys are the filenames or file paths. Meanwhile, the this object's values are
-   *     the contents of files. For binary files, the contents of the files will be base64 encoded
-   *     strings. For all other files, the contents of the file are plain text strings.
-   */
-  deserialize(dataStr) {
-    const result = {};
-    if (!dataStr) {
-      return result;
-    }
-
-    const files = dataStr.split(/\t(?=(?:[^"]*"[^"]*")*[^"]*$)/);
-    for (let i = 0; i < files.length - 1; i += 3) {
-      const filename = files[i];
-      const isBinary = files[i + 1] === '1';
-      const content = files[i + 2];
-      if (filename && content !== undefined) {
-        result[filename] = content;
-      }
-    }
-    return result;
   }
 
   /**
