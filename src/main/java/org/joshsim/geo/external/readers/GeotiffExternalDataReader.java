@@ -1,18 +1,23 @@
 /**
  * Logic to read from geotiffs and COGs.
- * 
+ *
  * @license BSD-3-Clause
  */
 
 package org.joshsim.geo.external.readers;
 
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.geometry.DirectPosition2D;
@@ -55,7 +60,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
 
   /**
    * Create a new external data reader for geotiffs and COGs.
-   * 
+   *
    * @param valueFactory The value factory to use in building values returned from this reader.
    * @param units The units to use for the values returned from this reader.
    */
@@ -137,8 +142,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   }
 
   @Override
-  public Optional<EngineValue> readValueAt(String variableName, BigDecimal x, BigDecimal y, int timeStep) 
-      throws IOException {
+  public Optional<EngineValue> readValueAt(String variableName, BigDecimal x, BigDecimal y,
+      int timeStep) throws IOException {
     try {
       // Parse band index from variable name
       int bandIndex;
@@ -166,12 +171,18 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         // Read tile from coverage
         GridCoverage data = coverage.read(null);
         tileData = new double[STANDARD_COG_TILE_SIZE][STANDARD_COG_TILE_SIZE];
+
+        // Get the rendered image from the coverage
+        RenderedImage renderedImage = data.render(null);
+
+        // Create a raster from the rendered image
+        Raster raster = renderedImage.getData();
         
         // Read entire tile
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
-            DirectPosition tilePos = new DirectPosition2D(tileX + x1, tileY + y1);
-            double[] values = data.evaluate(tilePos, new double[data.getSampleDimensions().size()]);
+            double[] values = new double[data.getSampleDimensions().size()];
+            raster.getPixel((int) (tileX + x1), (int) (tileY + y1), values);
             tileData[y1][x1] = values[bandIndex];
           }
         }
@@ -179,8 +190,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       }
       
       // Get value from tile
-      int localX = (int)(Math.round(position.getOrdinate(0) - tileX));
-      int localY = (int)(Math.round(position.getOrdinate(1) - tileY));
+      int localX = (int) (Math.round(position.getOrdinate(0) - tileX));
+      int localY = (int) (Math.round(position.getOrdinate(1) - tileY));
       double value = tileData[localY][localX];
       
       if (Double.isNaN(value)) {
