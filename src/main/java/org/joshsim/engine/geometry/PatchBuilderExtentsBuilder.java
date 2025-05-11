@@ -75,4 +75,5 @@ public class PatchBuilderExtentsBuilder {
     }
     return new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
   }
+
 }

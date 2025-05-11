@@ -8,7 +8,11 @@ package org.joshsim;
 
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
@@ -73,6 +77,13 @@ public class JoshSimFacade {
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
         boolean serialPatches) {
     setupForJvm();
+
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+
+    
+    
     JoshSimFacadeUtil.runSimulation(
         engineGeometryFactory,
         new JvmInputOutputLayer(),
