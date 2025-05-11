@@ -31,6 +31,7 @@ public class MapWithLatLngSerializeStrategy implements
 
   private final ExportSerializeStrategy<Map<String, String>> inner;
   private final PatchBuilderExtents extents;
+  private final BigDecimal width;
   private final BigDecimal gridWidth;
   private final BigDecimal gridHeight;
   private final BigDecimal longitudeRange;
@@ -41,12 +42,15 @@ public class MapWithLatLngSerializeStrategy implements
    *
    * @param extents The extents of the simulation where these extents are provided in degrees. All
    *     entities' positions are given in grid space corresponding to these extents.
+   * @param width The width and height of each patch in grid space where 1, 1 in grid-space is to
+   *     the left to the bottom by 1 width. This is provided in meters.
    * @param inner The inner strategy to decorate.
    */
-  public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents,
+  public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents, BigDecimal width,
         ExportSerializeStrategy<Map<String, String>> inner) {
     this.inner = inner;
     this.extents = extents;
+    this.width = width;
     this.gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
     this.gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
     this.longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
@@ -64,25 +68,7 @@ public class MapWithLatLngSerializeStrategy implements
    */
   @Override
   public Map<String, String> getRecord(Entity entity) {
-    Map<String, String> record = inner.getRecord(entity);
     
-    if (entity.getGeometry().isPresent()) {
-      EngineGeometry geometry = entity.getGeometry().get();
-      
-      // Convert from grid coordinates to earth coordinates using precalculated values
-      BigDecimal longitude = extents.getTopLeftX().add(
-          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
-      );
-      BigDecimal latitude = extents.getTopLeftY().add(
-          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
-      );
-      
-      HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
-      record.put("position.longitude", point.getLongitude().toString());
-      record.put("position.latitude", point.getLatitude().toString());
-    }
-    
-    return record;
   }
   
 }
