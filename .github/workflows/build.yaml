@@ -143,6 +143,10 @@ jobs:
         run: sudo apt-get update
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
+      - name: Setup GDAL
+        run: sudo apt-get install -y libgdal-dev
+      - name: Setup gdal-java
+        run: sudo apt-get install -y libgdal-java
       - name: Download farJar artifact
         uses: actions/download-artifact@v4
         with:

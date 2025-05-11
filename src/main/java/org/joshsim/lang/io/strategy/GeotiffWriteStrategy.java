@@ -6,11 +6,17 @@
 
 package org.joshsim.lang.io.strategy;
 
+import static org.gdal.gdal.gdal.AllRegister;
+import static org.gdal.gdal.gdal.GetDriverByName;
+import static org.gdal.gdalconst.gdalconstConstants.GDT_Float64;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.Driver;
 
 
 /**
@@ -56,16 +62,16 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       File tempFile = File.createTempFile("geotiff", ".tif");
       tempFile.deleteOnExit();
 
-      org.gdal.gdal.gdal.AllRegister();
+      AllRegister();
       
       // Create driver and dataset
-      org.gdal.gdal.Driver driver = org.gdal.gdal.gdal.GetDriverByName("GTiff");
-      org.gdal.gdal.Dataset dataset = driver.Create(
+      Driver driver = GetDriverByName("GTiff");
+      Dataset dataset = driver.Create(
           tempFile.getAbsolutePath(),
           dimensions.getGridWidthPixels(),
           dimensions.getGridHeightPixels(),
           1,  // One band for single variable
-          org.gdal.gdalconst.gdalconstConstants.GDT_Float64
+          GDT_Float64
       );
       
       // Set geotransform
@@ -108,6 +114,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       band.SetNoDataValue(-9999.0);
       
       // Close the dataset to flush changes
+      dataset.FlushCache();
       dataset.delete();
 
       // Copy temp file to output stream
