@@ -101,7 +101,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       BufferedImage targetImage = new BufferedImage(
           dimensions.getGridWidthPixels(),
           dimensions.getGridHeightPixels(),
-          BufferedImage.TYPE_FLOAT
+          BufferedImage.TYPE_INT_RGB
       );
       WritableRaster raster = targetImage.getRaster();
 
@@ -147,16 +147,12 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       builder.setValues(targetImage);
 
       // Write to GeoTIFF using Apache SIS
-      Resource resource = builder.build();
-      if (!(resource instanceof GridCoverageResource)) {
-          throw new IOException("Failed to create grid coverage resource");
-      }
-      GridCoverageResource coverageResource = (GridCoverageResource) resource;
+      GridCoverage coverage = builder.build();
       
       // Create GeoTIFF store and write
       StorageConnector connector = new StorageConnector(tempFile);
       GeoTiffStore store = new GeoTiffStore(null, new GeoTiffStoreProvider(), connector, false);
-      store.createCopy(coverageResource);
+      store.write(coverage);
       store.close();
 
       // Copy temp file to output stream
