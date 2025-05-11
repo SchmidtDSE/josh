@@ -49,7 +49,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   public void write(Map<String, String> record, OutputStream output) throws IOException {
     if (!isInitialized) {
       this.currentOutput = output;
-      this.builder = NetcdfFormatWriter.createNewNetcdf3();
+      this.builder = NetcdfFormatWriter.createNewNetcdf3("memory");
       isInitialized = true;
     }
 

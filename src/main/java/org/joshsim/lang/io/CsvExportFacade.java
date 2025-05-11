@@ -171,7 +171,7 @@ public class CsvExportFacade implements ExportFacade {
 
     @Override
     public void onEnd() {
-      writeStrategy.flush();
+      writeStrategy.close();
 
       try {
         outputStream.close();
