@@ -23,6 +23,7 @@ import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.write.NetcdfFormatWriter;
+import ucar.nc2.NetcdfFileFormat;
 
 /**
  * ExportWriteStrategy for writing netCDF files.
@@ -88,7 +89,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
       // Create NetCDF writer with the temporary file
       try (NetcdfFormatWriter.Builder builder = NetcdfFormatWriter.createNewNetcdf4(
-          NetcdfFormatWriter.Version.netcdf4, tempFile.getAbsolutePath());
+          NetcdfFileFormat.NETCDF4, tempFile.getAbsolutePath());
           NetcdfFormatWriter writer = builder.build()) {
 
         // Add dimensions
