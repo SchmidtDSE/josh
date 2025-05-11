@@ -36,8 +36,8 @@ public class GeotiffDimensions {
     // Process data from records where these are in degrees
     BigDecimal minLonBig = extents.getTopLeftX();
     BigDecimal maxLonBig = extents.getBottomRightX();
-    BigDecimal minLatBig = extents.getTopLeftY();
-    BigDecimal maxLatBig = extents.getBottomRightY();
+    BigDecimal minLatBig = extents.getBottomRightY();
+    BigDecimal maxLatBig = extents.getTopLeftY();
 
     minLon = minLonBig.doubleValue();
     maxLon = maxLonBig.doubleValue();
