@@ -17,12 +17,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+
+/**
+ * Test reading a CSV file as external data.
+ */
 public class CsvExternalDataReaderTest {
   private static final String CSV_RESOURCE_PATH = "csv/local.csv";
   private String csvFilePath;
   private CsvExternalDataReader reader;
   private EngineValueFactory valueFactory;
 
+  /**
+   * Get the test CSV file.
+   */
   @BeforeEach
   public void setUp() throws IOException {
     // Initialize value factory
@@ -43,6 +50,9 @@ public class CsvExternalDataReaderTest {
     reader.setCrsCode("EPSG:4326");
   }
 
+  /**
+   * Close the test CSV file.
+   */
   @AfterEach
   public void tearDown() throws Exception {
     if (reader != null) {
