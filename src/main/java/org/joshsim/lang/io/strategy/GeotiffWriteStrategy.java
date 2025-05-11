@@ -203,7 +203,19 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         dimensions.getGridHeightPixels()
     );
 
-    MathTransform transform = ;
+    // Calculate scaling factors from pixel space to geographic space
+    double scaleX = (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels();
+    double scaleY = (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels();
+    
+    // Create affine transform from pixel coordinates to geographic coordinates
+    MathTransform transform = new AffineTransform2D(
+        scaleX,                    // Scale X 
+        0.0,                       // Rotation X
+        0.0,                       // Rotation Y
+        -scaleY,                   // Scale Y (negative because Y axis is inverted)
+        dimensions.getMinLon(),    // Translation X
+        dimensions.getMaxLat()     // Translation Y
+    );
 
     GridGeometry gridGeometry = new GridGeometry(
         extent,
