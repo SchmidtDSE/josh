@@ -6,7 +6,7 @@
 
 package org.joshsim.lang.io.strategy;
 
-
+import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.referencing.CommonCRS;
 
 import java.awt.image.RenderedImage;
@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
-import org.opengis.referencing.operation.TransformException;
+import org.opengis.referencing.datum.PixelInCell;
 
 
 /**
@@ -95,22 +95,12 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    * <p>Establish the Earth-space location and size of this geotiff using values avialable on the
    * GeotiffDimensions object in dimensions.</p>
    *
-   * @param builder
+   * @param builder The bulid in which to specify the grid.
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
-    // Set the grid dimensions and coordinate reference system
-    builder.setCoordinateReferenceSystem(CommonCRS.WGS84.geographic());
-    
-    // Set the grid extent using the dimensions
-    builder.setDomain(
-        dimensions.getMinLon(),   // West longitude
-        dimensions.getMinLat(),   // South latitude
-        dimensions.getMaxLon(),   // East longitude
-        dimensions.getMaxLat(),   // North latitude
-        PixelInCell.CELL_CENTER, // Pixel position interpretation
-        dimensions.getGridWidthPixels(),  // Number of columns
-        dimensions.getGridHeightPixels()  // Number of rows
-    );
+    GridGeometry gridGeometry;
+    // TODO - build grid geometry
+    builder.setDomain(gridGeometry);
   }
 
   @Override
