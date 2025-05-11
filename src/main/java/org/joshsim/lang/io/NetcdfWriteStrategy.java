@@ -85,6 +85,9 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   private File writeToTempFile() {
     try {
       File tempFile = File.createTempFile("netcdf", ".nc");
+      System.out.println("Temp file created at: " + tempFile.getAbsolutePath());
+      System.out.println("Temp file exists: " + tempFile.exists());
+      System.out.println("Temp file can write: " + tempFile.canWrite());
       tempFile.deleteOnExit();
 
       // Create NetCDF writer with the temporary file
