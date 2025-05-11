@@ -13,6 +13,7 @@ import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.nc2.geotiff.GeotiffWriter;
 
+
 public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
     private final String variable;
     private final GeotiffDimensions dimensions;
