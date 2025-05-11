@@ -87,22 +87,24 @@ class MapWithLatLngSerializeStrategyTest {
     // Arrange
     Entity entity = mock(Entity.class);
     EngineGeometry geometry = mock(EngineGeometry.class);
+    EngineValue nameValue = mock(EngineValue.class);
     
     when(geometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(geometry.getCenterY()).thenReturn(BigDecimal.ZERO);
     when(entity.getGeometry()).thenReturn(Optional.of(geometry));
+    when(nameValue.getAsString()).thenReturn("Test Name");
     
     // Add an export attribute that inner strategy should handle
     when(entity.getAttributeNames()).thenReturn(java.util.Set.of("export.name"));
-    when(entity.getAttributeValue("export.name"))
-        .thenReturn(Optional.of(mock(org.joshsim.engine.value.type.EngineValue.class)));
+    when(entity.getAttributeValue("export.name")).thenReturn(Optional.of(nameValue));
     
     // Act
     Map<String, String> result = strategy.getRecord(entity);
     
     // Assert - should contain both inner strategy and lat/lng fields
-    assertEquals(true, result.containsKey("name")); // From inner strategy
-    assertEquals(true, result.containsKey("position.longitude")); // From our strategy
-    assertEquals(true, result.containsKey("position.latitude")); // From our strategy
+    assertTrue(result.containsKey("name")); // From inner strategy
+    assertTrue(result.containsKey("position.longitude")); // From our strategy
+    assertTrue(result.containsKey("position.latitude")); // From our strategy
+    assertEquals("Test Name", result.get("name")); // Verify inner strategy value
   }
 }
