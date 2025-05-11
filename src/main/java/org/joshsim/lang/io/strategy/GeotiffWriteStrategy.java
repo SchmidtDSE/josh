@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
-import org.joshsim.engine.geometry.HaversineUtil;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
@@ -43,6 +42,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
   private final String variable;
   private final GeotiffDimensions dimensions;
+  private final double lonExtents;
+  private final double latExtents;
 
   /**
    * Constructs a GeotiffWriteStrategy with the specified variable.
@@ -53,6 +54,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   public GeotiffWriteStrategy(String variable, GeotiffDimensions dimensions) {
     this.variable = variable;
     this.dimensions = dimensions;
+    lonExtents = dimensions.getMaxLon() - dimensions.getMinLon();
+    latExtents = dimensions.getMaxLat() - dimensions.getMinLat();
   }
 
   /**
@@ -71,30 +74,29 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       setGridInBuilder(builder);
 
       // Fill grid with values
-      BufferedImage targetImage = new BufferedImage(dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels(), BufferedImage.TYPE_FLOAT_RASTER);
+      BufferedImage targetImage = new BufferedImage(
+          dimensions.getGridWidthPixels(),
+          dimensions.getGridHeightPixels(),
+          BufferedImage.TYPE_FLOAT_RASTER
+      );
       WritableRaster raster = targetImage.getRaster();
 
       for (Map<String, String> record : records) {
-        BigDecimal longitude = new BigDecimal(record.get("position.longitude"));
-        BigDecimal latitude = new BigDecimal(record.get("position.latitude"));
+        double longitude = Double.valueOf(record.get("position.longitude"));
+        double latitude = Double.valueOf(record.get("position.latitude"));
         String valueStr = record.get(variable);
         float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
 
-        HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
-
         // Calculate pixel coordinates using HaversineUtil and dimensions
-        double pixelX = (longitude.doubleValue() - dimensions.getMinLon()) / (dimensions.getMaxLon() - dimensions.getMinLon()) * dimensions.getGridWidthPixels();
-        double pixelY = (latitude.doubleValue() - dimensions.getMinLat()) / (dimensions.getMaxLat() - dimensions.getMinLat()) * dimensions.getGridHeightPixels();
-
+        double lonDistance = longitude - dimensions.getMinLon();
+        double latDistance = latitude - dimensions.getMinLat();
+        double pixelX = lonDistance / lonExtents * dimensions.getGridWidthPixels();
+        double pixelY = latDistance / latExtents * dimensions.getGridHeightPixels();
 
         // Add value to target image
         int x = (int) Math.round(pixelX);
-        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY); // Flip y-coordinate
-
-        // Check boundaries
-        if (x >= 0 && x < dimensions.getGridWidthPixels() && y >= 0 && y < dimensions.getGridHeightPixels()) {
-          raster.setSample(x, y, 0, value);
-        }
+        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY);
+        raster.setSample(x, y, 0, value);
       }
 
       // Set the values
