@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 
@@ -28,10 +29,8 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
   private final MapExportSerializeStrategy inner;
   private final PatchBuilderExtents extents;
   private final BigDecimal width;
-  private final BigDecimal gridWidth;
-  private final BigDecimal gridHeight;
-  private final BigDecimal longitudeRange;
-  private final BigDecimal latitudeRange;
+  private final BigDecimal gridWidthMeters;
+  private final BigDecimal gridHeightMeters;
 
   /**
    * Create a new decorator.
@@ -48,12 +47,21 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
     this.extents = extents;
     this.width = width;
 
-    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY());
-    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(extents.getBottomRightX(), extents.getTopLeftY());
-    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getBottomRightY());
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+        extents.getTopLeftX(),
+        extents.getTopLeftY()
+    );
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
+        extents.getBottomRightX(),
+        extents.getTopLeftY()
+    );
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
+        extents.getTopLeftX(),
+        extents.getBottomRightY()
+    );
     
-    this.gridWidthMeters = HaversineUtil.getDistance(topLeft, topRight);
-    this.gridHeightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+    gridWidthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    gridHeightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
   }
 
   /**
@@ -78,12 +86,23 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
       BigDecimal distanceFromLeftMeters = gridWidthMeters.multiply(xGridRatio);
       BigDecimal distanceFromTopMeters = gridHeightMeters.multiply(yGridRatio);
       
-      HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY());
-      HaversineUtil.HaversinePoint eastPoint = HaversineUtil.getAtDistanceFrom(topLeft, distanceFromLeftMeters, "E");
-      HaversineUtil.HaversinePoint finalPoint = HaversineUtil.getAtDistanceFrom(eastPoint, distanceFromTopMeters, "S");
+      HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+          extents.getTopLeftX(),
+          extents.getTopLeftY()
+      );
+      HaversineUtil.HaversinePoint eastPoint = HaversineUtil.getAtDistanceFrom(
+          topLeft,
+          distanceFromLeftMeters,
+          "E"
+      );
+      HaversineUtil.HaversinePoint finalPoint = HaversineUtil.getAtDistanceFrom(
+          eastPoint,
+          distanceFromTopMeters,
+          "S"
+      );
       
-      longitude = finalPoint.getLongitude();
-      latitude = finalPoint.getLatitude();
+      BigDecimal longitude = finalPoint.getLongitude();
+      BigDecimal latitude = finalPoint.getLatitude();
 
       result.put("position.longitude", longitude.toString());
       result.put("position.latitude", latitude.toString());
