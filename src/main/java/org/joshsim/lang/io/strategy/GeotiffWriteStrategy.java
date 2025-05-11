@@ -101,20 +101,25 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    * @param builder The bulid in which to specify the grid.
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
-    DirectPosition lower = new DirectPosition2D(dimensions.getMinLon(), dimensions.getMinLat());
-    DirectPosition upper = new DirectPosition2D(dimensions.getMaxLon(), dimensions.getMaxLat());
+    GridExtent extent = new GridExtent(
+        new int[] {0, 0},
+        new int[] {dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels()},
+        false
+    );
+
+    MathTransform transform = new AffineTransform2D(
+        (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
+        0.0,
+        0.0,
+        (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels(),
+        dimensions.getMinLon(),
+        dimensions.getMinLat()
+    );
 
     GridGeometry gridGeometry = new GridGeometry(
-        new GeneralEnvelope(lower, upper),
+        extent,
         PixelInCell.CELL_CENTER,
-        new AffineTransform2D(
-            (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
-            0.0,
-            0.0,
-            (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels(),
-            dimensions.getMinLon(),
-            dimensions.getMinLat()
-        ),
+        transform,
         CommonCRS.WGS84.geographic()
     );
     
