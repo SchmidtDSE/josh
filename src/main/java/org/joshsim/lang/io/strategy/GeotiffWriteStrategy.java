@@ -11,6 +11,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridCoverageFactory;
+import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 
 
 /**
@@ -47,7 +52,65 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    */
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
-    
+    try {
+      // Create a grid coverage factory
+      final GridCoverageFactory gcf = new GridCoverageFactory();
+      
+      // Create the grid for our data
+      float[][] data = new float[dimensions.getGridHeightPixels()][dimensions.getGridWidthPixels()];
+      
+      // Initialize with NaN
+      for (int y = 0; y < dimensions.getGridHeightPixels(); y++) {
+        for (int x = 0; x < dimensions.getGridWidthPixels(); x++) {
+          data[y][x] = Float.NaN;
+        }
+      }
+      
+      // Calculate meters per pixel
+      double metersPerPixelX = (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels();
+      double metersPerPixelY = (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels();
+      
+      // Fill the grid with our data
+      for (Map<String, String> record : records) {
+        double lon = Double.parseDouble(record.get("position.longitude"));
+        double lat = Double.parseDouble(record.get("position.latitude"));
+        double value = Double.parseDouble(record.get(variable));
+        
+        // Calculate grid position
+        int x = (int)((lon - dimensions.getMinLon()) / metersPerPixelX);
+        int y = (int)((dimensions.getMaxLat() - lat) / metersPerPixelY);
+        
+        // Check bounds
+        if (x >= 0 && x < dimensions.getGridWidthPixels() && 
+            y >= 0 && y < dimensions.getGridHeightPixels()) {
+          data[y][x] = (float)value;
+        }
+      }
+      
+      // Create envelope for the world file
+      ReferencedEnvelope envelope = new ReferencedEnvelope(
+          dimensions.getMinLon(), dimensions.getMaxLon(),
+          dimensions.getMinLat(), dimensions.getMaxLat(),
+          DefaultGeographicCRS.WGS84
+      );
+      
+      // Create the grid coverage
+      GridCoverage2D coverage = gcf.create(
+          "coverage",
+          data,
+          envelope
+      );
+      
+      // Create GeoTIFF writer
+      GeoTiffWriter writer = new GeoTiffWriter(outputStream);
+      
+      // Write the coverage
+      writer.write(coverage, null);
+      writer.dispose();
+      
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to write GeoTIFF: " + e.getMessage(), e);
+    }
   }
 
   @Override
