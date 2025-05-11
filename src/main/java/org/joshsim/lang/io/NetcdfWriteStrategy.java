@@ -1,4 +1,3 @@
-
 package org.joshsim.lang.io;
 
 import java.io.IOException;
@@ -7,14 +6,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import ucar.array.Array;
-import ucar.array.Arrays;
+import ucar.ma2.Array;
+import ucar.ma2.DataType;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
-import ucar.nc2.NetcdfFileWriter;
 import ucar.nc2.Variable;
 import ucar.nc2.write.NetcdfFormatWriter;
-import ucar.nc2.write.NcStreamWriter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing netCDF files.
@@ -57,7 +54,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
         // Store coordinates
         BigDecimal lat = new BigDecimal(record.get("position.latitude"));
         BigDecimal lon = new BigDecimal(record.get("position.longitude"));
-        
+
         if (!lats.contains(lat)) {
             lats.add(lat);
         }
@@ -78,16 +75,16 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
                 List<Dimension> dims = List.of(latDim, lonDim);
 
                 // Create coordinate variables
-                Variable.Builder<?> latVar = builder.addVariable("latitude", ucar.array.ArrayType.DOUBLE, List.of(latDim));
-                Variable.Builder<?> lonVar = builder.addVariable("longitude", ucar.array.ArrayType.DOUBLE, List.of(lonDim));
-                
+                Variable.Builder<?> latVar = builder.addVariable("latitude", DataType.DOUBLE, List.of(latDim));
+                Variable.Builder<?> lonVar = builder.addVariable("longitude", DataType.DOUBLE, List.of(lonDim));
+
                 // Add standard attributes
                 latVar.addAttribute(new Attribute("units", "degrees_north"));
                 lonVar.addAttribute(new Attribute("units", "degrees_east"));
 
                 // Create variables for each data field
                 for (String varName : variableNames) {
-                    builder.addVariable(varName, ucar.array.ArrayType.DOUBLE, dims);
+                    builder.addVariable(varName, DataType.DOUBLE, dims);
                 }
 
                 // Build the writer and write to the output stream
@@ -95,7 +92,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
                     // Write coordinate data
                     double[] latArray = new double[lats.size()];
                     double[] lonArray = new double[lons.size()];
-                    
+
                     for (int i = 0; i < lats.size(); i++) {
                         latArray[i] = lats.get(i).doubleValue();
                     }
@@ -103,26 +100,26 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
                         lonArray[i] = lons.get(i).doubleValue();
                     }
 
-                    writer.write("latitude", Array.factory(latArray));
-                    writer.write("longitude", Array.factory(lonArray));
+                    writer.write("latitude", Array.factory(DataType.DOUBLE, new int[]{lats.size()}, latArray));
+                    writer.write("longitude", Array.factory(DataType.DOUBLE, new int[]{lons.size()}, lonArray));
 
                     // Write variable data
                     for (String varName : variableNames) {
                         double[] data = new double[lats.size() * lons.size()];
-                        
+
                         for (Map<String, String> record : records) {
                             BigDecimal lat = new BigDecimal(record.get("position.latitude"));
                             BigDecimal lon = new BigDecimal(record.get("position.longitude"));
                             int latIndex = lats.indexOf(lat);
                             int lonIndex = lons.indexOf(lon);
-                            
+
                             if (record.containsKey(varName)) {
                                 data[latIndex * lons.size() + lonIndex] = 
                                     Double.parseDouble(record.get(varName));
                             }
                         }
-                        
-                        writer.write(varName, Array.factory(data));
+
+                        writer.write(varName, Array.factory(DataType.DOUBLE, new int[]{lats.size(), lons.size()}, data));
                     }
                 }
             }
