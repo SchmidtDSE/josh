@@ -1,4 +1,3 @@
-
 package org.joshsim.lang.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,6 +12,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
