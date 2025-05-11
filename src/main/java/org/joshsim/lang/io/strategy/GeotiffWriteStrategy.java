@@ -77,7 +77,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       BufferedImage targetImage = new BufferedImage(
           dimensions.getGridWidthPixels(),
           dimensions.getGridHeightPixels(),
-          BufferedImage.TYPE_FLOAT_RASTER
+          BufferedImage.TYPE_FLOAT
       );
       WritableRaster raster = targetImage.getRaster();
 
