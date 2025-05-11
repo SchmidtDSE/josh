@@ -9,21 +9,20 @@ package org.joshsim.lang.io.strategy;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
-import ucar.ma2.Index;
-import ucar.nc2.Attribute;
+import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
-import ucar.nc2.NetcdfFileWriter;
 import ucar.nc2.Variable;
+import ucar.nc2.write.Nc4Chunking;
+import ucar.nc2.write.Nc4ChunkingStrategy;
+import ucar.nc2.write.NetcdfFileFormat;
+import ucar.nc2.write.NetcdfFormatWriter;
 
 
 /**
@@ -58,116 +57,135 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
     return variablesRequired;
   }
 
-  /**
-   * Write the pending results to a netCDF file.
-   *
-   * <p>Write the pending results to a netCDF file where all values will be converted to double
-   * except for step which will be a long.</p>
-   *
-   * @param records The records to be written where each element is a record with one or more
-   *     variables to be written. Importantly, all records will have position.longitude and
-   *     position.latitude in degrees as well a step which is an integer referring to the simulation
-   *     step count when the record snapshot was taken.
-   * @param outputStream The stream to whcih the netCDF file will be written.
-   */
   @Override
   public void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
+    File tempFile = writeToTempFile(records);
+    redirectFileToStream(tempFile, outputStream);
+  }
+
+  /**
+   * Write all pending records to a new temporary file.
+   *
+   * @param pendingRecords The records which should be written in batch.
+   * @return The temporary file where all pending records are written before being redirected to
+   *     the output stream.
+   */
+  private File writeToTempFile(List<Map<String, String>> pendingRecords) {
     try {
-      // Create a temporary file.
-      File tempFile = File.createTempFile("netcdf-temp", ".nc");
-      NetcdfFileWriter writer = NetcdfFileWriter.createNew(tempFile.getAbsolutePath(), false);
+      File tempFile = File.createTempFile("netcdf", ".nc");
+      tempFile.deleteOnExit();
 
-      // Define dimensions
-      Dimension timeDim = writer.addDimension("time", records.size());
-      Dimension latDim = writer.addDimension("latitude", 1); // Assuming single latitude/longitude per record
-      Dimension lonDim = writer.addDimension("longitude", 1); // Assuming single latitude/longitude per record
+      // Create NetCDF writer with the temporary file
+      NetcdfFormatWriter.Builder builder = NetcdfFormatWriter.createNewNetcdf4(
+          NetcdfFileFormat.NETCDF4,
+          tempFile.getAbsolutePath(),
+          Nc4ChunkingStrategy.factory(Nc4Chunking.Strategy.standard, 0, true)
+      );
 
-      // Define variables
-      Variable latitude = writer.addVariable("latitude", DataType.DOUBLE, Arrays.asList(timeDim, latDim));
-      latitude.addAttribute(new Attribute("units", "degrees_north"));
+      // Add dimensions
+      int numRecords = pendingRecords.size();
+      Dimension timeDim = Dimension.builder()
+          .setName("time")
+          .setLength(numRecords)
+          .build();
+      builder.addDimension(timeDim);
 
-      Variable longitude = writer.addVariable("longitude", DataType.DOUBLE, Arrays.asList(timeDim, lonDim));
-      longitude.addAttribute(new Attribute("units", "degrees_east"));
+      // Add variables including time, latitude, and longitude
+      builder.addVariable("time", DataType.DOUBLE, "time");
+      builder.addVariable("latitude", DataType.DOUBLE, "time");
+      builder.addVariable("longitude", DataType.DOUBLE, "time");
 
-      Variable step = writer.addVariable("step", DataType.LONG, Collections.singletonList(timeDim));
-
-      List<Variable> dataVariables = new ArrayList<>();
-      Map<String, Variable> variableMap = new HashMap<>();
-
-      for (String variableName : variables) {
-        Variable variable = writer.addVariable(variableName, DataType.DOUBLE, Collections.singletonList(timeDim));
-        dataVariables.add(variable);
-        variableMap.put(variableName, variable);
+      for (String varName : variables) {
+        Variable.Builder<?> varBuilder = Variable.builder()
+            .setName(varName)
+            .setDataType(DataType.DOUBLE);
+        builder.addVariable(varName, DataType.DOUBLE, "time");
       }
 
+      // Build and get the writer
+      try (NetcdfFormatWriter writer = builder.build()) {
+        // Write time data
+        Array timeData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] timeArray = (double[]) timeData.get1DJavaArray(DataType.DOUBLE);
 
-      writer.addGlobalAttribute("Conventions", "CF-1.6");
-      writer.create();
+        // Write latitude data
+        Array latData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] latArray = (double[]) latData.get1DJavaArray(DataType.DOUBLE);
 
+        // Write longitude data
+        Array lonData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] lonArray = (double[]) lonData.get1DJavaArray(DataType.DOUBLE);
 
-      // Write data
-      Array latitudeData = Array.factory(DataType.DOUBLE, new int[]{records.size(), 1});
-      Array longitudeData = Array.factory(DataType.DOUBLE, new int[]{records.size(), 1});
-      Array stepData = Array.factory(DataType.LONG, new int[]{records.size()});
-      Map<String, Array> dataArrays = new HashMap<>();
-
-      for (String variableName : variables) {
-        dataArrays.put(variableName, Array.factory(DataType.DOUBLE, new int[]{records.size()}));
-      }
-
-
-      Index latIndex = latitudeData.getIndex();
-      Index lonIndex = longitudeData.getIndex();
-      Index stepIndex = stepData.getIndex();
-
-      Map<String, Index> dataIndices = new HashMap<>();
-      for (String variableName : variables) {
-        dataIndices.put(variableName, dataArrays.get(variableName).getIndex());
-      }
-
-
-      for (int i = 0; i < records.size(); i++) {
-        Map<String, String> record = records.get(i);
-
-        double lat = Double.parseDouble(record.get("position.latitude"));
-        double lon = Double.parseDouble(record.get("position.longitude"));
-        long stepValue = Long.parseLong(record.get("step"));
-
-        latitudeData.setDouble(latIndex.set(i, 0), lat);
-        longitudeData.setDouble(lonIndex.set(i, 0), lon);
-        stepData.setLong(stepIndex.set(i), stepValue);
-
-
-        for (String variableName : variables) {
-          Array dataArray = dataArrays.get(variableName);
-          Index dataIndex = dataIndices.get(variableName);
-
-          double value = Double.parseDouble(record.get(variableName));
-          dataArray.setDouble(dataIndex.set(i), value);
+        // Fill coordinate and time arrays
+        int index = 0;
+        for (Map<String, String> record : pendingRecords) {
+          timeArray[index] = Double.parseDouble(record.getOrDefault("step", "0.0"));
+          latArray[index] = Double.parseDouble(record.getOrDefault("position.latitude", "0.0"));
+          lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
+          index++;
         }
 
+        writer.write("time", timeData);
+        writer.write("latitude", latData);
+        writer.write("longitude", lonData);
+
+        // Write data for each variable
+        for (String varName : variables) {
+          Array data = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+          double[] dataArray = (double[]) data.get1DJavaArray(DataType.DOUBLE);
+          index = 0;
+          for (Map<String, String> record : pendingRecords) {
+            String value = record.getOrDefault(varName, "0.0");
+            try {
+              dataArray[index] = Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+              dataArray[index] = 0.0;
+            }
+            index++;
+          }
+          writer.write(varName, data);
+        }
       }
 
-      writer.write(latitude, latitudeData);
-      writer.write(longitude, longitudeData);
-      writer.write(step, stepData);
-
-      for (String variableName : variables) {
-        writer.write(variableMap.get(variableName), dataArrays.get(variableName));
-      }
-
-      // Close the writer
-      writer.close();
-
-      // Write the temporary file to the output stream
-      Files.copy(tempFile.toPath(), outputStream);
-
-      // Delete the temporary file
-      tempFile.delete();
-
-    } catch (IOException e) {
-      throw new RuntimeException("Error writing to netCDF file", e);
+      return tempFile;
+    } catch (IOException | InvalidRangeException e) {
+      System.err.println("Exception details: " + e.getMessage());
+      e.printStackTrace();
+      throw new RuntimeException("Failed to write NetCDF file", e);
     }
+  }
 
+  /**
+   * Send the contents of the tempFile to outputStream.
+   *
+   * <p>Send the contents of the temporary file where the netCDF was written to the outputStream
+   * before deleting that temporary file.</p>
+   *
+   * @param tempFile The contents where the netCDF file can be found which should be sent to the
+   *     output stream. After this operation is complete, this method will delete this temporary
+   *     file.
+   * @param outputStream The stream to which the netCDF file contents should be written.
+   */
+  private void redirectFileToStream(File tempFile, OutputStream outputStream) {
+    try {
+      byte[] buffer = Files.readAllBytes(Paths.get(tempFile.getAbsolutePath()));
+      outputStream.write(buffer);
+      outputStream.flush();
+      tempFile.delete();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to write NetCDF data to output stream", e);
+    }
+  }
+
+  /**
+   * Check that a variable name is present on a record.
+   *
+   * @param record The record in which to check for the variable.
+   * @param varName The name of the variable to check for.
+   */
+  private void checkPresent(Map<String, String> record, String varName) {
+    if (!record.containsKey(varName)) {
+      throw new RuntimeException("Record does not contain variable " + varName);
+    }
   }
 }
