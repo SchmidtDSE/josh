@@ -47,11 +47,9 @@ dependencies {
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 
-  // UCAR NetCDF output geotiff and NetCDF support
+  // UCAR NetCDF for NetCDF support
   implementation "edu.ucar:cdm-core:5.7.0"
   implementation "edu.ucar:netcdf4:5.7.0"
-  implementation "edu.ucar:cdm-core:5.7.0"
-  implementation "edu.ucar:cdm-image:5.7.0"
   runtimeOnly "org.slf4j:slf4j-jdk14:2.0.17"
 
   // Apache SIS for coordinate system transformations and COG support
@@ -61,8 +59,8 @@ dependencies {
   // Java Topology Suite for geometry handling
   implementation("org.locationtech.jts:jts-core:1.20.0")
   
-  // GDAL for GeoTIFF handling
-  implementation("org.gdal:gdal:3.6.4")
+  // GDAL for GeoTIFF writing
+  implementation("org.gdal:gdal:3.8.0")
 
   // Interaction with browser
   implementation("org.teavm:teavm-core:0.11.0")
