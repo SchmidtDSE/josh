@@ -7,13 +7,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.apache.sis.storage.DataStoreException;
-import org.apache.sis.storage.netcdf.NetcdfStore;
-import ucar.ma2.Array;
-import ucar.ma2.DataType;
+import ucar.array.Array;
+import ucar.array.Arrays;
+import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFileWriter;
 import ucar.nc2.Variable;
+import ucar.nc2.write.NetcdfFormatWriter;
+import ucar.nc2.write.NcStreamWriter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing netCDF files.
@@ -24,109 +25,109 @@ import ucar.nc2.Variable;
  */
 public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
 
-  private final List<String> variableNames;
-  private NetcdfFileWriter writer;
-  private List<BigDecimal> lats;
-  private List<BigDecimal> lons;
-  private List<Map<String, String>> records;
-  private boolean isInitialized;
+    private final List<String> variableNames;
+    private NetcdfFormatWriter.Builder builder;
+    private List<BigDecimal> lats;
+    private List<BigDecimal> lons;
+    private List<Map<String, String>> records;
+    private boolean isInitialized;
+    private OutputStream currentOutput;
 
-  /**
-   * Create a new netCDF write strategy.
-   *
-   * @param variableNames List of variable names to write to the netCDF file
-   */
-  public NetcdfWriteStrategy(List<String> variableNames) {
-    this.variableNames = variableNames;
-    this.lats = new ArrayList<>();
-    this.lons = new ArrayList<>();
-    this.records = new ArrayList<>();
-    this.isInitialized = false;
-  }
-
-  @Override
-  public void write(Map<String, String> record, OutputStream output) throws IOException {
-    if (!isInitialized) {
-      writer = NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, output.toString());
-      isInitialized = true;
+    /**
+     * Create a new netCDF write strategy.
+     *
+     * @param variableNames List of variable names to write to the netCDF file
+     */
+    public NetcdfWriteStrategy(List<String> variableNames) {
+        this.variableNames = variableNames;
+        this.lats = new ArrayList<>();
+        this.lons = new ArrayList<>();
+        this.records = new ArrayList<>();
+        this.isInitialized = false;
     }
 
-    // Store coordinates
-    BigDecimal lat = new BigDecimal(record.get("position.latitude"));
-    BigDecimal lon = new BigDecimal(record.get("position.longitude"));
-    
-    if (!lats.contains(lat)) {
-      lats.add(lat);
-    }
-    if (!lons.contains(lon)) {
-      lons.add(lon);
-    }
+    @Override
+    public void write(Map<String, String> record, OutputStream output) throws IOException {
+        if (!isInitialized) {
+            this.currentOutput = output;
+            this.builder = NetcdfFormatWriter.createNewNetcdf3();
+            isInitialized = true;
+        }
 
-    records.add(record);
-  }
-
-  @Override
-  public void flush() {
-    try {
-      if (writer != null && !records.isEmpty()) {
-        // Create dimensions
-        Dimension latDim = writer.addDimension(null, "latitude", lats.size());
-        Dimension lonDim = writer.addDimension(null, "longitude", lons.size());
-        List<Dimension> dims = List.of(latDim, lonDim);
-
-        // Create coordinate variables
-        Variable latVar = writer.addVariable(null, "latitude", DataType.DOUBLE, List.of(latDim));
-        Variable lonVar = writer.addVariable(null, "longitude", DataType.DOUBLE, List.of(lonDim));
+        // Store coordinates
+        BigDecimal lat = new BigDecimal(record.get("position.latitude"));
+        BigDecimal lon = new BigDecimal(record.get("position.longitude"));
         
-        // Add standard attributes
-        latVar.addAttribute(new ucar.nc2.Attribute("units", "degrees_north"));
-        lonVar.addAttribute(new ucar.nc2.Attribute("units", "degrees_east"));
-
-        // Create variables for each data field
-        for (String varName : variableNames) {
-          writer.addVariable(null, varName, DataType.DOUBLE, dims);
+        if (!lats.contains(lat)) {
+            lats.add(lat);
+        }
+        if (!lons.contains(lon)) {
+            lons.add(lon);
         }
 
-        writer.create();
+        records.add(record);
+    }
 
-        // Write coordinate data
-        Array latData = Array.factory(DataType.DOUBLE, new int[]{lats.size()});
-        Array lonData = Array.factory(DataType.DOUBLE, new int[]{lons.size()});
-        
-        for (int i = 0; i < lats.size(); i++) {
-          latData.setDouble(i, lats.get(i).doubleValue());
-        }
-        for (int i = 0; i < lons.size(); i++) {
-          lonData.setDouble(i, lons.get(i).doubleValue());
-        }
+    @Override
+    public void flush() {
+        try {
+            if (builder != null && !records.isEmpty()) {
+                // Create dimensions
+                Dimension latDim = builder.addDimension("latitude", lats.size());
+                Dimension lonDim = builder.addDimension("longitude", lons.size());
+                List<Dimension> dims = List.of(latDim, lonDim);
 
-        writer.write(latVar, latData);
-        writer.write(lonVar, lonData);
+                // Create coordinate variables
+                Variable.Builder<?> latVar = builder.addVariable("latitude", ucar.array.ArrayType.DOUBLE, List.of(latDim));
+                Variable.Builder<?> lonVar = builder.addVariable("longitude", ucar.array.ArrayType.DOUBLE, List.of(lonDim));
+                
+                // Add standard attributes
+                latVar.addAttribute(new Attribute("units", "degrees_north"));
+                lonVar.addAttribute(new Attribute("units", "degrees_east"));
 
-        // Write variable data
-        for (String varName : variableNames) {
-          Variable var = writer.findVariable(varName);
-          Array data = Array.factory(DataType.DOUBLE, new int[]{lats.size(), lons.size()});
-          
-          for (Map<String, String> record : records) {
-            BigDecimal lat = new BigDecimal(record.get("position.latitude"));
-            BigDecimal lon = new BigDecimal(record.get("position.longitude"));
-            int latIndex = lats.indexOf(lat);
-            int lonIndex = lons.indexOf(lon);
-            
-            if (record.containsKey(varName)) {
-              data.setDouble(latIndex * lons.size() + lonIndex, 
-                  Double.parseDouble(record.get(varName)));
+                // Create variables for each data field
+                for (String varName : variableNames) {
+                    builder.addVariable(varName, ucar.array.ArrayType.DOUBLE, dims);
+                }
+
+                // Build the writer and write to the output stream
+                try (NetcdfFormatWriter writer = builder.setOutputStream(currentOutput).build()) {
+                    // Write coordinate data
+                    double[] latArray = new double[lats.size()];
+                    double[] lonArray = new double[lons.size()];
+                    
+                    for (int i = 0; i < lats.size(); i++) {
+                        latArray[i] = lats.get(i).doubleValue();
+                    }
+                    for (int i = 0; i < lons.size(); i++) {
+                        lonArray[i] = lons.get(i).doubleValue();
+                    }
+
+                    writer.write("latitude", Array.factory(latArray));
+                    writer.write("longitude", Array.factory(lonArray));
+
+                    // Write variable data
+                    for (String varName : variableNames) {
+                        double[] data = new double[lats.size() * lons.size()];
+                        
+                        for (Map<String, String> record : records) {
+                            BigDecimal lat = new BigDecimal(record.get("position.latitude"));
+                            BigDecimal lon = new BigDecimal(record.get("position.longitude"));
+                            int latIndex = lats.indexOf(lat);
+                            int lonIndex = lons.indexOf(lon);
+                            
+                            if (record.containsKey(varName)) {
+                                data[latIndex * lons.size() + lonIndex] = 
+                                    Double.parseDouble(record.get(varName));
+                            }
+                        }
+                        
+                        writer.write(varName, Array.factory(data));
+                    }
+                }
             }
-          }
-          
-          writer.write(var, data);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write netCDF file", e);
         }
-
-        writer.close();
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to write netCDF file", e);
     }
-  }
 }
