@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.lang.io.strategy.CsvExportFacade;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
+import org.joshsim.lang.io.strategy.NetcdfExportFacade;
 
 
 /**
@@ -20,7 +23,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   private final int replicate;
-  private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
+  private final MapExportSerializeStrategy serializeStrategy;
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
   

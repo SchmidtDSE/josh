@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.strategy.CsvExportFacade;
 import org.junit.jupiter.api.Test;
 
 

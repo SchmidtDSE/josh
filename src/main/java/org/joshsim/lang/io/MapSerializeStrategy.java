@@ -12,11 +12,12 @@ import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 
 /**
  * Strategy to serialize Entities into a flat table-like structure.
  */
-public class MapSerializeStrategy implements ExportSerializeStrategy<Map<String, String>> {
+public class MapSerializeStrategy implements MapExportSerializeStrategy {
 
   @Override
   public Map<String, String> getRecord(Entity entity) {

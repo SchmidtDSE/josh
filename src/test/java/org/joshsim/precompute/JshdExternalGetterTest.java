@@ -1,4 +1,4 @@
-package org.joshsim.lang.io;
+package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,8 +11,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.precompute.DoublePrecomputedGrid;
-import org.joshsim.precompute.JshdUtil;
+import org.joshsim.lang.io.InputGetterStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

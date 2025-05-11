@@ -4,12 +4,13 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.*;
 
 
 /**
@@ -18,8 +19,8 @@ import org.joshsim.engine.entity.base.Entity;
 public class MemoryExportFacade implements ExportFacade {
 
   private final OutputStream outputStream;
-  private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
-  private final ExportWriteStrategy<Map<String, String>> writeStrategy;
+  private final MapExportSerializeStrategy serializeStrategy;
+  private final StringMapWriteStrategy writeStrategy;
 
   /**
    * Constructs a CsvExportFacade object with the specified export target / output stream strategy.

@@ -16,6 +16,7 @@ import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 
 /**
  * Decorator to add geo position to the outputs of an inner strategy.
@@ -26,10 +27,9 @@ import org.joshsim.engine.value.type.EngineValue;
  * to maps returned from the inner strategy in place. This assumes that entities are provided where
  * their position is provided in grid space such that points need transformation to earth space.</p>
  */
-public class MapWithLatLngSerializeStrategy implements
-    ExportSerializeStrategy<Map<String, String>> {
+public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrategy {
 
-  private final ExportSerializeStrategy<Map<String, String>> inner;
+  private final MapExportSerializeStrategy inner;
   private final PatchBuilderExtents extents;
   private final BigDecimal width;
   private final BigDecimal gridWidth;
@@ -47,7 +47,7 @@ public class MapWithLatLngSerializeStrategy implements
    * @param inner The inner strategy to decorate.
    */
   public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents, BigDecimal width,
-        ExportSerializeStrategy<Map<String, String>> inner) {
+        MapExportSerializeStrategy inner) {
     this.inner = inner;
     this.extents = extents;
     this.width = width;
