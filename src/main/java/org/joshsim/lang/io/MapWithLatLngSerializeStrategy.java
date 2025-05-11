@@ -56,11 +56,22 @@ public class MapWithLatLngSerializeStrategy implements
     
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
-      HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(
-          geometry.getCenterX(),
-          geometry.getCenterY()
+      
+      // Convert from grid coordinates to earth coordinates using extents
+      BigDecimal gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
+      BigDecimal gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
+      
+      BigDecimal longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
+      BigDecimal latitudeRange = extents.getBottomRightY().subtract(extents.getTopLeftY());
+      
+      BigDecimal longitude = extents.getTopLeftX().add(
+          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, BigDecimal.ROUND_HALF_UP)
+      );
+      BigDecimal latitude = extents.getTopLeftY().add(
+          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, BigDecimal.ROUND_HALF_UP)
       );
       
+      HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
       record.put("position.longitude", point.getLongitude().toString());
       record.put("position.latitude", point.getLatitude().toString());
     }
