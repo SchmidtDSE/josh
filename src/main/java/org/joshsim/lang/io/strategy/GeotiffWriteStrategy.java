@@ -209,12 +209,12 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
     
     // Create affine transform from pixel coordinates to geographic coordinates
     MathTransform transform = new AffineTransform2D(
-        scaleX,                    // Scale X 
-        0.0,                       // Rotation X
-        0.0,                       // Rotation Y
-        -scaleY,                   // Scale Y (negative because Y axis is inverted)
-        dimensions.getMinLon(),    // Translation X
-        dimensions.getMaxLat()     // Translation Y
+        scaleX,
+        0.0,
+        0.0,
+        -scaleY,
+        dimensions.getMinLon(),
+        dimensions.getMaxLat()
     );
 
     GridGeometry gridGeometry = new GridGeometry(
