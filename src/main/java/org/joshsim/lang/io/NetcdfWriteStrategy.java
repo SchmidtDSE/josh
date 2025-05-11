@@ -135,4 +135,9 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       throw new RuntimeException("Failed to write netCDF file", e);
     }
   }
+
+  @Override
+  public void close() {
+    
+  }
 }
