@@ -6,6 +6,9 @@
 
 package org.joshsim.lang.io.strategy;
 
+
+import org.apache.sis.referencing.CommonCRS;
+
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +16,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
 import org.opengis.referencing.operation.TransformException;
 
@@ -96,7 +98,19 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    * @param builder
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
-    // TODO
+    // Set the grid dimensions and coordinate reference system
+    builder.setCoordinateReferenceSystem(CommonCRS.WGS84.geographic());
+    
+    // Set the grid extent using the dimensions
+    builder.setDomain(
+        dimensions.getMinLon(),   // West longitude
+        dimensions.getMinLat(),   // South latitude
+        dimensions.getMaxLon(),   // East longitude
+        dimensions.getMaxLat(),   // North latitude
+        PixelInCell.CELL_CENTER, // Pixel position interpretation
+        dimensions.getGridWidthPixels(),  // Number of columns
+        dimensions.getGridHeightPixels()  // Number of rows
+    );
   }
 
   @Override
