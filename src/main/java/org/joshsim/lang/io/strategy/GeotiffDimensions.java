@@ -34,16 +34,21 @@ public class GeotiffDimensions {
    */
   public GeotiffDimensions(PatchBuilderExtents extents, BigDecimal width) {
     // Process data from records where these are in degrees
-    minLon = extents.getTopLeftX().doubleValue();
-    maxLon = extents.getBottomRightX().doubleValue();
-    minLat = extents.getTopLeftY().doubleValue();
-    maxLat = extents.getBottomRightY().doubleValue();
+    BigDecimal minLonBig = extents.getTopLeftX();
+    BigDecimal maxLonBig = extents.getBottomRightX();
+    BigDecimal minLatBig = extents.getTopLeftY();
+    BigDecimal maxLatBig = extents.getBottomRightY();
+
+    minLon = minLonBig.doubleValue();
+    maxLon = maxLonBig.doubleValue();
+    minLat = minLatBig.doubleValue();
+    maxLat = maxLatBig.doubleValue();
     widthInMeters = width.doubleValue();
 
     // Calculate grid dimensions using HaversineUtil
-    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(minLon, maxLat);
-    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(maxLon, maxLat);
-    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(minLon, minLat);
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(minLonBig, maxLatBig);
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(maxLonBig, maxLatBig);
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(minLonBig, minLatBig);
     
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
