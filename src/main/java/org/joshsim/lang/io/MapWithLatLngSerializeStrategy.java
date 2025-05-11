@@ -28,6 +28,11 @@ public class MapWithLatLngSerializeStrategy implements
     ExportSerializeStrategy<Map<String, String>> {
 
   private final ExportSerializeStrategy<Map<String, String>> inner;
+  private final PatchBuilderExtents extents;
+  private final BigDecimal gridWidth;
+  private final BigDecimal gridHeight;
+  private final BigDecimal longitudeRange;
+  private final BigDecimal latitudeRange;
 
   /**
    * Create a new decorator.
@@ -39,6 +44,11 @@ public class MapWithLatLngSerializeStrategy implements
   public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents,
         ExportSerializeStrategy<Map<String, String>> inner) {
     this.inner = inner;
+    this.extents = extents;
+    this.gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
+    this.gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
+    this.longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
+    this.latitudeRange = extents.getBottomRightY().subtract(extents.getTopLeftY());
   }
 
   /**
@@ -57,13 +67,7 @@ public class MapWithLatLngSerializeStrategy implements
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
       
-      // Convert from grid coordinates to earth coordinates using extents
-      BigDecimal gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
-      BigDecimal gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
-      
-      BigDecimal longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
-      BigDecimal latitudeRange = extents.getBottomRightY().subtract(extents.getTopLeftY());
-      
+      // Convert from grid coordinates to earth coordinates using precalculated values
       BigDecimal longitude = extents.getTopLeftX().add(
           geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, BigDecimal.ROUND_HALF_UP)
       );
