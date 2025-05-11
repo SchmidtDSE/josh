@@ -15,6 +15,8 @@ public class ExternalDataReaderFactory {
       new NetcdfExternalDataReaderFactory(new EngineValueFactory());
   private static final GeotiffExternalDataReaderFactory geotiffReaderFactory =
       new GeotiffExternalDataReaderFactory(new EngineValueFactory());
+  private static final CsvExternalDataReaderFactory csvReaderFactory =
+      new CsvExternalDataReaderFactory(new EngineValueFactory());
 
   /**
    * Creates a ExternalDataReader appropriate for the given file path.
@@ -38,7 +40,21 @@ public class ExternalDataReaderFactory {
       throw new UnsupportedOperationException("Zarr reader not implemented yet");
     }
 
+    if (isCsvFile(filePath)) {
+      return csvReaderFactory.createReader();
+    }
+
     throw new IOException("No suitable reader found for file: " + filePath);
+  }
+
+  /**
+   * Checks if the file is a CSV format file based on extension.
+   */
+  private static boolean isCsvFile(String filePath) {
+    if (filePath == null || filePath.isEmpty()) {
+      return false;
+    }
+    return filePath.toLowerCase().endsWith(".csv");
   }
 
   /**
