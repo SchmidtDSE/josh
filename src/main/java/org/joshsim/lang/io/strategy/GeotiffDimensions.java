@@ -37,9 +37,16 @@ public class GeotiffDimensions {
     maxLat = extents.getBottomRightY().doubleValue();
     widthInMeters = width.doubleValue();
 
-    // Calculate grid dimensions - TODO using HaversineUtil
-    gridWidthPixels = 0;
-    gridHeightPixels = 0;
+    // Calculate grid dimensions using HaversineUtil
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(minLon, maxLat);
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(maxLon, maxLat);
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(minLon, minLat);
+    
+    BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+    
+    gridWidthPixels = widthMeters.divide(width, 0, BigDecimal.ROUND_CEILING).intValue();
+    gridHeightPixels = heightMeters.divide(width, 0, BigDecimal.ROUND_CEILING).intValue();
   }
 
   /**
