@@ -76,15 +76,31 @@ public class NetcdfExportFacade implements ExportFacade {
     private final Entity entity;
     private final long step;
 
+    /**
+     * Create a new task.
+     *
+     * @param entity the Entity to write
+     * @param step the simulation timestep on which the entity is reported 
+     */
     public Task(Entity entity, long step) {
       this.entity = entity;
       this.step = step;
     }
-
+ 
+    /**
+     * Retrieves the entity associated with this task.
+     *
+     * @return The entity to be written.
+     */
     public Entity getEntity() {
       return entity;
     }
 
+    /**
+     * Retrieves the simulation step at which the entity is reported.
+     *
+     * @return The simulation timestep value associated with this task.
+     */
     public long getStep() {
       return step;
     }

@@ -131,10 +131,10 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
         // Fill coordinate and time arrays
         int index = 0;
         for (Map<String, String> record : pendingRecords) {
-            timeArray[index] = Double.parseDouble(record.getOrDefault("step", "0.0"));
-            latArray[index] = Double.parseDouble(record.getOrDefault("position.latitude", "0.0"));
-            lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
-            index++;
+          timeArray[index] = Double.parseDouble(record.getOrDefault("step", "0.0"));
+          latArray[index] = Double.parseDouble(record.getOrDefault("position.latitude", "0.0"));
+          lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
+          index++;
         }
         
         writer.write("time", timeData);

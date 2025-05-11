@@ -20,6 +20,8 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
+  private final Optional<PatchBuilderExtents> extents;
+  private final Optional<BigDecimal> width;
   
   /**
    * Create a new JvmExportFacadeFactory with only grid-space.
@@ -29,6 +31,8 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   public JvmExportFacadeFactory() {
     serializeStrategy = new MapSerializeStrategy();
+    extents = Optional.empty();
+    width = Optional.empty();
   }
 
   /**
@@ -38,6 +42,8 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * allowing use of geotiffs and netCDF as export formats.</p>
    */
   public JvmExportFacadeFactory(PatchBuilderExtents extents, BigDecimal width) {
+    this.extents = Optional.of(extents);
+    this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
     serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner);
   }
@@ -59,6 +65,16 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       case "nc" -> buildForNetcdf(target, header);
       default -> throw new IllegalArgumentException("Not supported: " + target.getFileType());
     };
+  }
+
+  /**
+   * Determine if information is avialable to translate to Earth longitude and latitude.
+   *
+   * @returns True if there is enough information to determine Earth-space coordinates or false if
+   *     only grid-space is available.
+   */
+  private boolean hasGeo() {
+    return extents.isPresent() && width.isPresent();
   }
 
   /**
@@ -102,6 +118,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     if (!target.getProtocol().isEmpty()) {
       String message = "Only local file system is supported for netcdf at this time.";
       throw new IllegalArgumentException(message);
+    }
+
+    if (!hasGeo()) {
+      throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
 
     String path = target.getPath();
