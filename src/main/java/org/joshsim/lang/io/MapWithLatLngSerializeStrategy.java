@@ -39,6 +39,19 @@ public class MapWithLatLngSerializeStrategy implements
 
   @Override
   public Map<String, String> getRecord(Entity entity) {
+    Map<String, String> result = inner.getRecord(entity);
+    
+    if (entity.getGeometry().isPresent()) {
+      HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(
+          entity.getGeometry().get().getCenterX(),
+          entity.getGeometry().get().getCenterY()
+      );
+      
+      result.put("position.longitude", point.getLongitude().toString());
+      result.put("position.latitude", point.getLatitude().toString());
+    }
+    
+    return result;
   }
   
 }
