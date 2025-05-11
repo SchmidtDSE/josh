@@ -30,7 +30,10 @@ class CsvExportFacadeTest {
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
+    CsvExportFacade csvExportFacade = new CsvExportFacade(
+        outputStrategyMock,
+        new MapSerializeStrategy()
+    );
 
     // Act
     csvExportFacade.start();
@@ -51,7 +54,10 @@ class CsvExportFacadeTest {
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
+    CsvExportFacade csvExportFacade = new CsvExportFacade(
+        outputStrategyMock,
+        new MapSerializeStrategy()
+    );
 
     // Act
     csvExportFacade.start();

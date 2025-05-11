@@ -51,7 +51,7 @@ public class CsvExportFacade implements ExportFacade {
         ExportSerializeStrategy<Map<String, String>> serializeStrategy, Iterable<String> header) {
     this.outputStrategy = outputStrategy;
     this.header = Optional.of(header);
-    innerWriter = new InnerWriter(Optional.of(header), outputStrategy);
+    innerWriter = new InnerWriter(Optional.of(header), outputStrategy, serializeStrategy);
     queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
