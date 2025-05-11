@@ -79,7 +79,7 @@ jobs:
       - name: Run tests
         run: ./gradlew test
   testPreprocess:
-    needs: testJava
+    needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
     name: Test Preprocessing
