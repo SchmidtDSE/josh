@@ -35,7 +35,7 @@ import ucar.nc2.write.NetcdfFormatWriter;
 public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
 
   private final List<String> variables;
-  
+
   private OutputStream outputStream;
   private List<Map<String, String>> pendingRecords;
 
@@ -93,38 +93,40 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
           tempFile.getAbsolutePath(),
           Nc4ChunkingStrategy.factory(Nc4Chunking.Strategy.standard, 0, true)
       );
-      try (NetcdfFormatWriter writer = builder.build()) {
-
-        // Add dimensions
+      
+      // Add dimensions
         int numRecords = pendingRecords.size();
-        
+        Dimension.Builder timeDimBuilder = Dimension.builder().setName("time").setLength(numRecords);
+        builder.addDimension(timeDimBuilder.build());
+
         // Add variables
         for (String varName : variables) {
           Variable.Builder<?> varBuilder = Variable.builder()
               .setName(varName)
-              .setDataType(DataType.DOUBLE);
-          writer.addVariable(varBuilder.build());
+              .setDataType(DataType.DOUBLE)
+              .addDimension("time");
+          builder.addVariable(varBuilder.build());
         }
 
-        // Create the file
-        writer.create();
+        // Build and get the writer
+        NetcdfFormatWriter writer = builder.build();
 
         // Write data for each variable
         for (String varName : variables) {
           Array data = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+          double[] dataArray = (double[]) data.get1DJavaArray(DataType.DOUBLE);
           int index = 0;
           for (Map<String, String> record : pendingRecords) {
             String value = record.getOrDefault(varName, "0.0");
             try {
-              ((double[]) data.get1DJavaArray(DataType.DOUBLE))[index] = Double.parseDouble(value);
+              dataArray[index] = Double.parseDouble(value);
             } catch (NumberFormatException e) {
-              ((double[]) data.get1DJavaArray(DataType.DOUBLE))[index] = 0.0;
+              dataArray[index] = 0.0;
             }
             index++;
           }
-          writer.write(writer.findVariable(varName), data);
+          writer.write(varName, data);
         }
-      }
 
       return tempFile;
     } catch (IOException | InvalidRangeException e) {
