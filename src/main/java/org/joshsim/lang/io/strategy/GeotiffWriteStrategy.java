@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverage;
@@ -23,6 +26,7 @@ import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.referencing.CommonCRS;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
+import org.apache.sis.setup.OptionKey;
 import org.apache.sis.storage.DataStore;
 import org.apache.sis.storage.DataStoreException;
 import org.apache.sis.storage.StorageConnector;
@@ -160,6 +164,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
       // Create GeoTIFF store and write
       StorageConnector connector = new StorageConnector(tempFile);
+      connector.setOption(OptionKey.OPEN_OPTIONS, new OpenOption[]{StandardOpenOption.WRITE});
       try (DataStore store = new GeoTiffStoreProvider().open(connector)) {
         WritableGridCoverageResource resource = (WritableGridCoverageResource) store.findResource(
             "0"
