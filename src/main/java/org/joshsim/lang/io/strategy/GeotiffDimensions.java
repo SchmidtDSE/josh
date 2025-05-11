@@ -7,6 +7,9 @@
 package org.joshsim.lang.io.strategy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 
@@ -45,8 +48,8 @@ public class GeotiffDimensions {
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
     
-    gridWidthPixels = widthMeters.divide(width, 0, BigDecimal.ROUND_CEILING).intValue();
-    gridHeightPixels = heightMeters.divide(width, 0, BigDecimal.ROUND_CEILING).intValue();
+    gridWidthPixels = widthMeters.divide(width, 0, RoundingMode.CEILING).intValue();
+    gridHeightPixels = heightMeters.divide(width, 0, RoundingMode.CEILING).intValue();
   }
 
   /**
