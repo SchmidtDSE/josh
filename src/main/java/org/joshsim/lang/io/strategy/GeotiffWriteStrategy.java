@@ -6,13 +6,15 @@
 
 package org.joshsim.lang.io.strategy;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+import java.io.File;
 import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.geometry.GeneralEnvelope;
 import org.apache.sis.referencing.CommonCRS;
 
 import java.awt.image.RenderedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -69,7 +71,9 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       setGridInBuilder(builder);
 
       // Fill grid with values
-      RenderedImage targetImage = null;  // TODO
+      BufferedImage targetImage = new BufferedImage(dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels(), BufferedImage.TYPE_FLOAT_RASTER);
+      WritableRaster raster = targetImage.getRaster();
+
       for (Map<String, String> record : records) {
         BigDecimal longitude = new BigDecimal(record.get("position.longitude"));
         BigDecimal latitude = new BigDecimal(record.get("position.latitude"));
@@ -78,7 +82,19 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
         HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
 
-        // TODO - add value to target image using HaversineUtil if needed
+        // Calculate pixel coordinates using HaversineUtil and dimensions
+        double pixelX = (longitude.doubleValue() - dimensions.getMinLon()) / (dimensions.getMaxLon() - dimensions.getMinLon()) * dimensions.getGridWidthPixels();
+        double pixelY = (latitude.doubleValue() - dimensions.getMinLat()) / (dimensions.getMaxLat() - dimensions.getMinLat()) * dimensions.getGridHeightPixels();
+
+
+        // Add value to target image
+        int x = (int) Math.round(pixelX);
+        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY); // Flip y-coordinate
+
+        // Check boundaries
+        if (x >= 0 && x < dimensions.getGridWidthPixels() && y >= 0 && y < dimensions.getGridHeightPixels()) {
+          raster.setSample(x, y, 0, value);
+        }
       }
 
       // Set the values
@@ -128,7 +144,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         transform,
         CommonCRS.WGS84.geographic()
     );
-    
+
     builder.setDomain(gridGeometry);
   }
 
