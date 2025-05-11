@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.io.strategy;
 
+import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridGeometry;
 import org.apache.sis.geometry.GeneralEnvelope;
 import org.apache.sis.referencing.CommonCRS;
@@ -21,6 +22,7 @@ import org.apache.sis.coverage.grid.GridCoverageBuilder;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
+import org.opengis.referencing.operation.MathTransform;
 
 
 /**
@@ -102,9 +104,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
     GridExtent extent = new GridExtent(
-        new int[] {0, 0},
-        new int[] {dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels()},
-        false
+        dimensions.getGridWidthPixels(),
+        dimensions.getGridHeightPixels()
     );
 
     MathTransform transform = new AffineTransform2D(
