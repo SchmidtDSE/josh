@@ -7,6 +7,7 @@
 package org.joshsim.lang.io.strategy;
 
 import org.apache.sis.coverage.grid.GridGeometry;
+import org.apache.sis.geometry.GeneralEnvelope;
 import org.apache.sis.referencing.CommonCRS;
 
 import java.awt.image.RenderedImage;
@@ -17,6 +18,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
+import org.apache.sis.referencing.util.j2d.AffineTransform2D;
+import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 
 
@@ -98,13 +101,11 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    * @param builder The bulid in which to specify the grid.
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
-    // Create grid geometry from dimensions
+    DirectPosition lower;
+    DirectPosition upper;
+
     GridGeometry gridGeometry = new GridGeometry(
-        new GeneralGridEnvelope(
-            new int[] {0, 0}, 
-            new int[] {dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels()}, 
-            false
-        ),
+        new GeneralEnvelope(lower, upper),
         PixelInCell.CELL_CENTER,
         new AffineTransform2D(
             (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
