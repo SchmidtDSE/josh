@@ -6,6 +6,8 @@
 
 package org.joshsim.lang.io;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -69,10 +71,10 @@ public class MapWithLatLngSerializeStrategy implements
       
       // Convert from grid coordinates to earth coordinates using precalculated values
       BigDecimal longitude = extents.getTopLeftX().add(
-          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, BigDecimal.ROUND_HALF_UP)
+          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
       );
       BigDecimal latitude = extents.getTopLeftY().add(
-          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, BigDecimal.ROUND_HALF_UP)
+          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
       );
       
       HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
