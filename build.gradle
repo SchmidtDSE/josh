@@ -83,11 +83,11 @@ dependencies {
   implementation("io.minio:minio:8.5.2")
 
 // GeoTools dependencies
-  implementation("org.geotools:gt-main:32-SNAPSHOT")
-  implementation("org.geotools:gt-geotiff:32-SNAPSHOT") 
-  implementation("org.geotools:gt-coverage:32-SNAPSHOT")
-  implementation("org.geotools:gt-epsg-hsql:32-SNAPSHOT")
-  implementation("org.geotools:gt-netcdf:32-SNAPSHOT")
+  implementation("org.geotools:gt-main:33.0")
+  implementation("org.geotools:gt-geotiff:33.0") 
+  implementation("org.geotools:gt-coverage:33.0")
+  implementation("org.geotools:gt-epsg-hsql:33.0")
+  implementation("org.geotools:gt-netcdf:33.0")
 }
 
 teavm {
