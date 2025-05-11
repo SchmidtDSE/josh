@@ -1,3 +1,9 @@
+/**
+ * Implementation of an external data reader which uses CSV files.
+ *
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.geo.external.readers;
 
@@ -12,17 +18,30 @@ import java.util.Optional;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 
+/**
+ * Create a new external data reader which parses CSV files.
+ *
+ * <p>Implementation of the ExternalDataReader interface for reading grid-based geospatial data from
+ * CSV files. This class is specifically designed to handle CSV files containing spatial coordinate
+ * data (longitude and latitude) and optional variable-based data columns.</p>
+ */
 public class CsvExternalDataReader implements ExternalDataReader {
   private final EngineValueFactory valueFactory;
   private String crsCode = "EPSG:4326"; // Default to WGS84
   private final Map<String, List<BigDecimal>> data = new HashMap<>();
   private boolean isOpen = false;
 
+  /**
+   * Constructs a new instance of CsvExternalDataReader.
+   *
+   * @param valueFactory an instance of EngineValueFactory used to create EngineValue objects.
+   */
   public CsvExternalDataReader(EngineValueFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
@@ -129,7 +148,7 @@ public class CsvExternalDataReader implements ExternalDataReader {
       return Optional.empty();
     }
 
-    return Optional.of(valueFactory.build(data.get(variableName).get(closestIndex)));
+    return Optional.of(valueFactory.build(data.get(variableName).get(closestIndex), Units.EMPTY));
   }
 
   @Override
