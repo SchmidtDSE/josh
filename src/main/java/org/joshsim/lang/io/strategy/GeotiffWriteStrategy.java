@@ -13,10 +13,8 @@ import java.io.File;
 import org.apache.sis.coverage.grid.GridExtent;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridGeometry;
-import org.apache.sis.geometry.GeneralEnvelope;
 import org.apache.sis.referencing.CommonCRS;
 
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -25,15 +23,13 @@ import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
+import org.apache.sis.storage.*;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
 import org.joshsim.engine.geometry.HaversineUtil;
-import org.apache.sis.storage.Resource;
-import org.apache.sis.storage.StorageConnector;
 import org.apache.sis.storage.geotiff.GeoTiffStore;
 import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
-import org.apache.sis.storage.GridCoverageResource;
 
 /**
  * Strategy to write a single geotiff.
@@ -154,10 +150,14 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       
       // Create GeoTIFF store and write
       StorageConnector connector = new StorageConnector(tempFile);
-      GeoTiffStore store = new GeoTiffStore(null, new GeoTiffStoreProvider(), connector, false);
-      GridCoverageResource resource = store.createResource(GridCoverageResource.class);
-      resource.write(coverage);
-      store.close();
+      try (DataStore store = new GeoTiffStoreProvider().open(connector)) {
+        WritableGridCoverageResource resource = (WritableGridCoverageResource) store.findResource(
+            "0"
+        );
+        resource.write(coverage);
+      } catch (DataStoreException e) {
+        throw new RuntimeException("Failed to write GeoTIFF: " + e);
+      }
 
       // Copy temp file to output stream
       byte[] buffer = Files.readAllBytes(tempFile.toPath());
