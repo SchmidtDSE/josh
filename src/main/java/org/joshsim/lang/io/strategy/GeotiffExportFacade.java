@@ -8,6 +8,7 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.lang.io.ExportFacade;
 
 
@@ -27,8 +29,8 @@ import org.joshsim.lang.io.ExportFacade;
  */
 public class GeotiffExportFacade implements ExportFacade {
 
-  private final List<String> variables;
   private final MapExportSerializeStrategy serializeStrategy;
+  private final List<String> variables;
   private final InnerWriter innerWriter;
   private final QueueService queueService;
 
@@ -39,12 +41,15 @@ public class GeotiffExportFacade implements ExportFacade {
    * @param serializeStrategy The strategy to use in serializing records before writing.
    * @param variables The list of variables to include across geotiffs with one geotiff per
    *     variable.
+   * @param extents The extents in Earth-space for the simulation.
+   * @param width The width and height of each patch and, thus, each pixel in meters.
    */
   public GeotiffExportFacade(ParameterizedOutputStreamGenerator streamGenerator,
-        MapExportSerializeStrategy serializeStrategy, List<String> variables) {
+        MapExportSerializeStrategy serializeStrategy, List<String> variables,
+        PatchBuilderExtents extents, BigDecimal width) {
     this.serializeStrategy = serializeStrategy;
     this.variables = variables;
-    innerWriter = new InnerWriter(streamGenerator);
+    innerWriter = new InnerWriter(streamGenerator, extents, width);
     queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
@@ -236,6 +241,8 @@ public class GeotiffExportFacade implements ExportFacade {
    * which corresponds to combination of step, variable, and replicate.</p>
    */
   private static class InnerWriter implements QueueServiceCallback {
+    private final PatchBuilderExtents extents;
+    private final BigDecimal width;
     private final ParameterizedOutputStreamGenerator streamGenerator;
     private Map<StreamReference, OutputStream> outputStreams;
     private Map<StreamReference, StringMapWriteStrategy> writeStrategies;
@@ -244,9 +251,14 @@ public class GeotiffExportFacade implements ExportFacade {
      * Build InnerWriter for managing the writing of serialized records to an output stream.
      *
      * @param streamGenerator Strategy to use in generating paths for new output files.
+     * @param extents The extents in Earth-space for the simulation.
+     * @param width The width and height of each patch and, thus, each pixel in meters.
      */
-    public InnerWriter(ParameterizedOutputStreamGenerator streamGenerator) {
+    public InnerWriter(ParameterizedOutputStreamGenerator streamGenerator,
+          PatchBuilderExtents extents, BigDecimal width) {
       this.streamGenerator = streamGenerator;
+      this.extents = extents;
+      this.width = width;
       outputStreams = new HashMap<>();
       writeStrategies = new HashMap<>();
     }
@@ -271,7 +283,7 @@ public class GeotiffExportFacade implements ExportFacade {
         }
 
         if (!writeStrategies.containsKey(reference)) {
-          writeStrategies.put(reference, new GeotiffWriteStrategy(variableName));
+          writeStrategies.put(reference, new GeotiffWriteStrategy(variableName, extents, width));
         }
 
         Map<String, String> serialized = new HashMap<>();

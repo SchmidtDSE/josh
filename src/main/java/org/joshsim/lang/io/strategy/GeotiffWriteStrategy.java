@@ -7,16 +7,17 @@
 package org.joshsim.lang.io.strategy;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-import org.apache.sis.coverage.grid.GridCoverage;
-import org.apache.sis.coverage.grid.GridExtent;
-import org.apache.sis.coverage.grid.GridGeometry;
+import org.apache.sis.storage.DataStore;
+import org.apache.sis.storage.DataStoreException;
+import org.apache.sis.storage.GridCoverageResource;
 import org.apache.sis.storage.StorageConnector;
-import org.apache.sis.storage.geotiff.GeoTiffStore;
+import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 
@@ -80,7 +81,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
       // Create store
       StorageConnector connector = new StorageConnector(tempFile);
-      GeoTiffStore store = new GeoTiffStoreProvider().open(connector);
+      DataStore store = new GeoTiffStoreProvider().open(connector);
 
       // Create grid data
       int width = (int) Math.ceil((maxLon - minLon) / this.width.doubleValue());
