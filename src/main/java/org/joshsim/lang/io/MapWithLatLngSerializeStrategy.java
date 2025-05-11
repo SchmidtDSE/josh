@@ -48,8 +48,12 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
     this.extents = extents;
     this.width = width;
 
-    this.gridWidthMeters = ;  // TODO - Get distance via HaversineUtil
-    this.gridHeightMeters = ;  // TODO - Get distance via HaversineUtil
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY());
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(extents.getBottomRightX(), extents.getTopLeftY());
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getBottomRightY());
+    
+    this.gridWidthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    this.gridHeightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
   }
 
   /**
@@ -68,13 +72,18 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
 
-      // TODO - Get distance from upper left
-      BigDecimal distanceFromLeftMeters = ;
-      BigDecimal distanceFromTopMeters = ;
-
-      // TODO - Convert grid coordinates to lat/lng through HaversineUtil getAtDistanceFrom
-      BigDecimal longitude = ;
-      BigDecimal latitude = ;
+      BigDecimal xGridRatio = geometry.getCenterX().divide(width, 10, RoundingMode.HALF_UP);
+      BigDecimal yGridRatio = geometry.getCenterY().divide(width, 10, RoundingMode.HALF_UP);
+      
+      BigDecimal distanceFromLeftMeters = gridWidthMeters.multiply(xGridRatio);
+      BigDecimal distanceFromTopMeters = gridHeightMeters.multiply(yGridRatio);
+      
+      HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getTopLeftY());
+      HaversineUtil.HaversinePoint eastPoint = HaversineUtil.getAtDistanceFrom(topLeft, distanceFromLeftMeters, "E");
+      HaversineUtil.HaversinePoint finalPoint = HaversineUtil.getAtDistanceFrom(eastPoint, distanceFromTopMeters, "S");
+      
+      longitude = finalPoint.getLongitude();
+      latitude = finalPoint.getLatitude();
 
       result.put("position.longitude", longitude.toString());
       result.put("position.latitude", latitude.toString());
