@@ -142,8 +142,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         raster.setSample(x, y, 0, value);
       }
 
-      // Set the values
-      builder.setValues(raster);
+      // Set the values directly
+      builder.values().setAll(raster);
 
       File tempFile = null;
       try {
