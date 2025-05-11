@@ -36,6 +36,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.apache.commons:commons-csv:1.10.0'
   // ANTLR dependencies
   antlr("org.antlr:antlr4:4.13.2") // The ANTLR tool for grammar processing
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
