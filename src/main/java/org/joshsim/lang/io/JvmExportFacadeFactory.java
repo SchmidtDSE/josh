@@ -17,7 +17,6 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
-
   
   /**
    * Create a new JvmExportFacadeFactory with only grid-space.

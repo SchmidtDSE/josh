@@ -5,6 +5,7 @@
  */
 
 package org.joshsim.lang.io;
+
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 

@@ -6,6 +6,7 @@
 
 package org.joshsim;
 
+import java.math.BigDecimal;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -21,8 +22,6 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
-
-import java.math.BigDecimal;
 
 
 /**
