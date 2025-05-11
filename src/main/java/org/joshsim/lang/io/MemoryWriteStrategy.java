@@ -40,4 +40,7 @@ public class MemoryWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   @Override
   public void flush() {}
 
+  @Override
+  public void close() {}
+
 }

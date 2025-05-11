@@ -107,6 +107,11 @@ public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>
     }
   }
 
+  @Override
+  public void close() {
+    flush();
+  }
+
   private static List<String> convertIterableToList(Iterable<String> target) {
     Stream<String> targetStream = StreamSupport.stream(target.spliterator(), false);
     return targetStream.collect(Collectors.toList());

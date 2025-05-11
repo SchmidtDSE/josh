@@ -34,4 +34,9 @@ public interface ExportWriteStrategy<T> {
    */
   void flush();
 
+  /**
+   * Finish all operations on this export.
+   */
+  void close();
+
 }

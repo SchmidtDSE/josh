@@ -5,7 +5,7 @@ grammar JoshLang;
 }
 
 // Base values
-STR_: '"' ~[",]* '"';
+STR_: '"' ~["]* '"';
 
 COMMENT: '#' ~[\r\n]* -> channel(HIDDEN);
 

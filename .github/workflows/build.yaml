@@ -98,7 +98,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Run preprocess
-        run: java -jar build/libs/joshsim-fat.jar preprocess examples/simulations/simple_seki.josh TestSimpleSimulationExternal assets/command/maxtemp_tulare_annual.nc Maximum_air_temperature_at_2m celsius test_riverside_tiny.jshd --crs "EPSG:4326" --x-coord "lon" --y-coord "lat" --time-dim "calendar_year"
+        run: java -jar build/libs/joshsim-fat.jar preprocess examples/simulations/simple_seki.josh TestSimpleSimulation assets/command/maxtemp_tulare_annual.nc Maximum_air_temperature_at_2m celsius test_riverside_tiny.jshd --crs "EPSG:4326" --x-coord "lon" --y-coord "lat" --time-dim "calendar_year"
       - name: Check result
         run: |
           if [ ! -s "test_riverside_tiny.jshd" ]; then
@@ -139,6 +139,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
       - name: Download farJar artifact
         uses: actions/download-artifact@v4
         with:
