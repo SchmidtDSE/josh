@@ -71,6 +71,11 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
   @Override
   public void flush() {
+    // No intermediate flushing needed
+  }
+
+  @Override
+  public void close() {
     try {
       if (builder != null && !records.isEmpty()) {
         // Create dimensions
@@ -125,19 +130,24 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
             writer.write(varName, Array.factory(DataType.DOUBLE, new int[]{lats.size(), lons.size()}, data));
           }
           writer.close();
-          // Copy the temporary file to the output stream
+        } catch (IOException | InvalidRangeException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Copy the temporary file to the output stream
+        try {
           Files.copy(Paths.get("test.nc"), currentOutput);
           // Clean up temporary file
           Files.delete(Paths.get("test.nc"));
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to copy or clean up temporary file", e);
         }
       }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to write netCDF file", e);
+    }  finally {
+       lats.clear();
+       lons.clear();
+       records.clear();
+       isInitialized = false;
     }
-  }
-
-  @Override
-  public void close() {
-    
   }
 }
