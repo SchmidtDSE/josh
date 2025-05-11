@@ -3,6 +3,8 @@ package org.joshsim.lang.io;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   public void write(Map<String, String> record, OutputStream output) throws IOException {
     if (!isInitialized) {
       this.currentOutput = output;
-      this.builder = NetcdfFormatWriter.createNewNetcdf3("memory");
+      this.builder = NetcdfFormatWriter.createNewNetcdf3("test.nc");
       isInitialized = true;
     }
 
@@ -90,7 +92,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
         }
 
         // Build the writer and write to the output stream
-        try (NetcdfFormatWriter writer = builder.setOutputStream(currentOutput).build()) {
+        try (NetcdfFormatWriter writer = builder.build()) {
           // Write coordinate data
           double[] latArray = new double[lats.size()];
           double[] lonArray = new double[lons.size()];
@@ -122,8 +124,11 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
             writer.write(varName, Array.factory(DataType.DOUBLE, new int[]{lats.size(), lons.size()}, data));
           }
-        } catch (InvalidRangeException e) {
-          throw new RuntimeException(e);
+          writer.close();
+          // Copy the temporary file to the output stream
+          Files.copy(Paths.get("test.nc"), currentOutput);
+          // Clean up temporary file
+          Files.delete(Paths.get("test.nc"));
         }
       }
     } catch (IOException e) {
