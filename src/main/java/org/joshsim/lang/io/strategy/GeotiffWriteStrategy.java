@@ -68,13 +68,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       GridCoverageBuilder builder = new GridCoverageBuilder();
       setGridInBuilder(builder);
 
-      // Create target image
-      java.awt.image.BufferedImage targetImage = new java.awt.image.BufferedImage(
-          dimensions.getGridWidthPixels(),
-          dimensions.getGridHeightPixels(),
-          java.awt.image.BufferedImage.TYPE_FLOAT);
-
-      // Fill grid with values  
+      // Fill grid with values
+      RenderedImage targetImage = null;  // TODO
       for (Map<String, String> record : records) {
         BigDecimal longitude = new BigDecimal(record.get("position.longitude"));
         BigDecimal latitude = new BigDecimal(record.get("position.latitude"));
