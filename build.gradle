@@ -50,6 +50,8 @@ dependencies {
   // UCAR NetCDF output geotiff and NetCDF support
   implementation "edu.ucar:cdm-core:5.7.0"
   implementation "edu.ucar:netcdf4:5.7.0"
+  implementation "edu.ucar:cdm-core:5.7.0"
+  implementation "edu.ucar:cdm-image:5.7.0"
   runtimeOnly "org.slf4j:slf4j-jdk14:2.0.17"
 
   // Apache SIS for coordinate system transformations and COG support
