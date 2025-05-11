@@ -19,6 +19,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
  */
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
+  private final int replicate;
   private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
@@ -28,8 +29,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    *
    * <p>Creates a new export facade factory which does not try to add latitude and longitude to
    * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
    */
-  public JvmExportFacadeFactory() {
+  public JvmExportFacadeFactory(int replicate) {
+    this.replicate = replicate;
     serializeStrategy = new MapSerializeStrategy();
     extents = Optional.empty();
     width = Optional.empty();
@@ -40,8 +44,13 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    *
    * <p>Creates a new export facade factory which adds latitude and longitude to returned records,
    * allowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space.
+   * @param width The width and height of each patch in meters.
    */
-  public JvmExportFacadeFactory(PatchBuilderExtents extents, BigDecimal width) {
+  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width) {
+    this.replicate = replicate;
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
@@ -94,7 +103,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException(message);
     }
 
-    String path = target.getPath();
+    String path = replaceTemplateStrings(target.getPath());
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
     if (header.isPresent()) {
@@ -124,7 +133,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
 
-    String path = target.getPath();
+    String path = replaceTemplateStrings(target.getPath());
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
     if (header.isPresent()) {
@@ -138,5 +147,16 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     } else {
       throw new IllegalArgumentException("Variable names must be specified for netCDF.");
     }
+  }
+
+  /**
+   * Replace template strings inside a path.
+   *
+   * @param path The path string provided by the user which may contain template strings.
+   * @returns The path with the template strings filled in.
+   */
+  private String replaceTemplateStrings(String path) {
+    String replicateStr = ((Integer) replicate).toString();
+    return path.replaceAll("\\{replicate\\}", replicateStr);
   }
 }

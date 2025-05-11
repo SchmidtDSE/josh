@@ -54,6 +54,9 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
   private String crs;
 
+  @Option(names = "--replicate", description = "Replicate number", defaultValue = "0")
+  private int replicateNumber;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -111,7 +114,8 @@ public class RunCommand implements Callable<Integer> {
         program,
         simulation,
         (step) -> output.printInfo(String.format("Completed step %d.", step)),
-        serialPatches
+        serialPatches,
+        replicateNumber
     );
 
     if (minioOptions.isMinioOutput()) {
