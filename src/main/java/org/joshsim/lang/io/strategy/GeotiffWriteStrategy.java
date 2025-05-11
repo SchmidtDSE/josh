@@ -11,9 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
-import ucar.ma2.Array;
-import ucar.ma2.DataType;
-import ucar.nc2.geotiff
 
 
 /**
@@ -40,6 +37,18 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
     this.dimensions = dimensions;
   }
 
+  /**
+   * Write all of the records to the temporary file before copying to output stream.
+   *
+   * <p>Write all of the records to the temporary file before copying to output stream using cloud
+   * optimized geotiff format where possible. This will be done through GDAL.</p>
+   *
+   * @param records The records to be written where each element of the records list corresponds to
+   *     a pixel. This will have properties position.longitude and position.latitude as well as a
+   *     value given by the attribute "variable" on this object. All should be converted to double.
+   * @param outputStream The stream to which to write this geotiff after it is written to the
+   *     temporary file.
+   */
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
     try {
@@ -47,49 +56,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       File tempFile = File.createTempFile("geotiff", ".tif");
       tempFile.deleteOnExit();
 
-      // Create data array
-      float[] data = new float[dimensions.getGridWidthPixels() * dimensions.getGridHeightPixels()];
-      // Initialize with NaN
-      for (int i = 0; i < data.length; i++) {
-        data[i] = Float.NaN;
-      }
-
-      // Fill data array from records
-      for (Map<String, String> record : records) {
-        double longitude = Double.parseDouble(record.get("position.longitude"));
-        double latitude = Double.parseDouble(record.get("position.latitude"));
-        String valueStr = record.get(variable);
-        float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
-
-        // Calculate grid position
-        int x = (int) ((longitude - dimensions.getMinLon()) /
-            (dimensions.getMaxLon() - dimensions.getMinLon()) *
-            dimensions.getGridWidthPixels());
-        int y = dimensions.getGridHeightPixels() - 1 - (int) ((latitude - dimensions.getMinLat()) /
-            (dimensions.getMaxLat() - dimensions.getMinLat()) *
-            dimensions.getGridHeightPixels());
-
-        if (x >= 0 && x < dimensions.getGridWidthPixels() &&
-            y >= 0 && y < dimensions.getGridHeightPixels()) {
-          data[y * dimensions.getGridWidthPixels() + x] = value;
-        }
-      }
-
-      // Create the GeoTIFF writer
-      GeotiffWriter writer = new GeotiffWriter(tempFile.getAbsolutePath());
-
-      // Convert data to Array
-      Array dataArray = Array.factory(DataType.FLOAT,
-          new int[]{dimensions.getGridHeightPixels(), dimensions.getGridWidthPixels()},
-          data);
-
-      // Write the data
-      writer.writeGrid(dimensions.getMinLat(), dimensions.getMinLon(),
-          (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels(),
-          (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
-          dataArray);
-
-      writer.close();
+      // TODO - save to temporary file via GDAL.
 
       // Copy temp file to output stream
       try (OutputStream out = outputStream) {
