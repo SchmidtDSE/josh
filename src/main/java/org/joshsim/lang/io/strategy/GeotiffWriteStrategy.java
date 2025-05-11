@@ -30,6 +30,7 @@ import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
+import java.awt.Dimension;
 
 /**
  * Strategy to write a single geotiff.
@@ -95,15 +96,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       GridCoverageBuilder builder = new GridCoverageBuilder();
       setGridInBuilder(builder);
 
-      // Create raster directly
-      WritableRaster raster = Raster.createBandedRaster(
-          DataBuffer.TYPE_DOUBLE,
-          dimensions.getGridWidthPixels(),
-          dimensions.getGridHeightPixels(),
-          1, // single band
-          null
-      );
-
+      DataBuffer dataBuffer = DataBuffer.allocateDirectDouble(dimensions.getGridWidthPixels() * dimensions.getGridHeightPixels());
       for (Map<String, String> record : records) {
         double longitude = Double.valueOf(record.get("position.longitude"));
         double latitude = Double.valueOf(record.get("position.latitude"));
@@ -111,18 +104,18 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         double value = valueStr != null ? Double.parseDouble(valueStr) : Double.NaN;
 
         // Calculate distances using Haversine
-        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(longitude),
-            BigDecimal.valueOf(latitude)
-        );
-        HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(dimensions.getMinLon()),
-            BigDecimal.valueOf(latitude)
-        );
-        HaversineUtil.HaversinePoint southPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(longitude),
-            BigDecimal.valueOf(dimensions.getMinLat())
-        );
+                HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
+                        BigDecimal.valueOf(longitude),
+                        BigDecimal.valueOf(latitude)
+                );
+                HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
+                        BigDecimal.valueOf(dimensions.getMinLon()),
+                        BigDecimal.valueOf(latitude)
+                );
+                HaversineUtil.HaversinePoint southPoint = new HaversineUtil.HaversinePoint(
+                        BigDecimal.valueOf(longitude),
+                        BigDecimal.valueOf(dimensions.getMinLat())
+                );
 
         double distanceFromWest = HaversineUtil.getDistance(
             westPoint,
@@ -133,17 +126,18 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
             currentPoint
         ).doubleValue();
 
+        // Calculate pixel position
         double pixelX = (distanceFromWest / totalWidthMeters) * dimensions.getGridWidthPixels();
         double pixelY = (distanceFromSouth / totalHeightMeters) * dimensions.getGridHeightPixels();
 
-        // Add value to target image
         int x = (int) Math.round(pixelX);
         int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY);
-        raster.setSample(x, y, 0, value);
+        int index = y * dimensions.getGridWidthPixels() + x;
+        dataBuffer.setElemDouble(index, value);
       }
 
-      // Set the values directly
-      builder.setValues(raster);
+      Dimension size = new Dimension(dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels());
+      builder.setValues(dataBuffer, size);
 
       File tempFile = null;
       try {
