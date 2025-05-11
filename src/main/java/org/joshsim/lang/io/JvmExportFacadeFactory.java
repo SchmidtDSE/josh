@@ -86,7 +86,12 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   @Override
   public String getPath(String template) {
     String replicateStr = ((Integer) replicate).toString();
-    return template.replaceAll("\\{replicate\\}", replicateStr);
+    String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
+
+    // TODO: need a better option
+    String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
+    String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
+    return withVariable;
   }
 
   /**
@@ -198,8 +203,8 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private OutputStream getPathForReference(String base, GeotiffExportFacade.StreamReference ref) {
     String step = ref.getStep();
     String variable = ref.getVariable();
-    String withStep = base.replaceAll("\\{step\\}", step);
-    String path = withStep.replaceAll("\\{variable\\}", variable);
+    String withStep = base.replaceAll("\\_\\_step\\_\\_", step);
+    String path = withStep.replaceAll("\\_\\_variable\\_\\_", variable);
 
     try {
       return new FileOutputStream(path);
