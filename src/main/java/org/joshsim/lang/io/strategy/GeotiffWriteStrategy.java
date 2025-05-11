@@ -108,7 +108,10 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
 
         // Calculate distances using Haversine
-        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude));
+        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
+          BigDecimal.valueOf(longitude),
+          BigDecimal.valueOf(latitude)
+        );
         HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
             BigDecimal.valueOf(dimensions.getMinLon()),
             BigDecimal.valueOf(latitude)
@@ -118,8 +121,14 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
             BigDecimal.valueOf(dimensions.getMinLat())
         );
 
-        double distanceFromWest = HaversineUtil.getDistance(westPoint, currentPoint).doubleValue();
-        double distanceFromSouth = HaversineUtil.getDistance(southPoint, currentPoint).doubleValue();
+        double distanceFromWest = HaversineUtil.getDistance(
+            westPoint,
+            currentPoint
+        ).doubleValue();
+        double distanceFromSouth = HaversineUtil.getDistance(
+            southPoint,
+            currentPoint
+        ).doubleValue();
 
         double pixelX = (distanceFromWest / totalWidthMeters) * dimensions.getGridWidthPixels();
         double pixelY = (distanceFromSouth / totalHeightMeters) * dimensions.getGridHeightPixels();
