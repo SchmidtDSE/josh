@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -24,6 +23,7 @@ import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFileFormat;
 import ucar.nc2.write.NetcdfFormatWriter;
+
 
 /**
  * ExportWriteStrategy for writing netCDF files.
@@ -47,7 +47,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
    */
   public NetcdfWriteStrategy(List<String> variables) {
     this.variables = variables;
-      pendingRecords = new ArrayList<>();
+    pendingRecords = new ArrayList<>();
   }
 
   /**
@@ -79,7 +79,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   /**
    * Write all pending records to a new temporary file.
    *
-   * @returns The temporary file where all pending records are written before being redirected to
+   * @return The temporary file where all pending records are written before being redirected to
    *     the output stream.
    */
   private File writeToTempFile() {
@@ -93,27 +93,25 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
           tempFile.getAbsolutePath(),
           Nc4ChunkingStrategy.factory(Nc4Chunking.Strategy.standard, 0, true)
       );
-      
+
       // Add dimensions
-        int numRecords = pendingRecords.size();
-        Dimension timeDim = Dimension.builder()
-            .setName("time")
-            .setLength(numRecords)
-            .build();
-        builder.addDimension(timeDim);
+      int numRecords = pendingRecords.size();
+      Dimension timeDim = Dimension.builder()
+          .setName("time")
+          .setLength(numRecords)
+          .build();
+      builder.addDimension(timeDim);
 
-        // Add variables
-        for (String varName : variables) {
-          Variable.Builder<?> varBuilder = Variable.builder()
-              .setName(varName)
-              .setDataType(DataType.DOUBLE)
-              .addDimension(timeDim);
-          builder.addVariable(varBuilder.build(builder.getRootGroup()));
-          writer = builder.build();
-        }
+      // Add variables
+      for (String varName : variables) {
+        Variable.Builder<?> varBuilder = Variable.builder()
+            .setName(varName)
+            .setDataType(DataType.DOUBLE);
+        builder.addVariable(varName, DataType.DOUBLE, "time");
+      }
 
-        // Build and get the writer
-        NetcdfFormatWriter writer = builder.build();
+      // Build and get the writer
+      try (NetcdfFormatWriter writer = builder.build()) {
 
         // Write data for each variable
         for (String varName : variables) {
@@ -131,6 +129,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
           }
           writer.write(varName, data);
         }
+      }
 
       return tempFile;
     } catch (IOException | InvalidRangeException e) {
