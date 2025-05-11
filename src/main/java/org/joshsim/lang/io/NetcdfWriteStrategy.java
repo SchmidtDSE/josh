@@ -82,7 +82,52 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
    *     the output stream.
    */
   private File writeToTempFile() {
-    
+    try {
+      File tempFile = File.createTempFile("netcdf", ".nc");
+      tempFile.deleteOnExit();
+
+      // Create NetCDF writer with the temporary file
+      try (NetcdfFormatWriter.Builder builder = NetcdfFormatWriter.createNewNetcdf4(
+          NetcdfFormatWriter.Version.netcdf4, tempFile.getAbsolutePath());
+          NetcdfFormatWriter writer = builder.build()) {
+
+        // Add dimensions
+        int numRecords = pendingRecords.size();
+        Dimension timeDim = writer.addDimension("time", numRecords);
+        
+        // Add variables
+        for (String varName : variables) {
+          Variable.Builder<?> varBuilder = Variable.builder()
+              .setName(varName)
+              .setDataType(DataType.DOUBLE)
+              .addDimension(timeDim);
+          writer.addVariable(varBuilder.build());
+        }
+
+        // Create the file
+        writer.create();
+
+        // Write data for each variable
+        for (String varName : variables) {
+          Array data = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+          int index = 0;
+          for (Map<String, String> record : pendingRecords) {
+            String value = record.getOrDefault(varName, "0.0");
+            try {
+              ((double[]) data.get1DJavaArray())[index] = Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+              ((double[]) data.get1DJavaArray())[index] = 0.0;
+            }
+            index++;
+          }
+          writer.write(writer.findVariable(varName), data);
+        }
+      }
+
+      return tempFile;
+    } catch (IOException | InvalidRangeException e) {
+      throw new RuntimeException("Failed to write NetCDF file", e);
+    }
   }
 
   /**
@@ -96,7 +141,14 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
    *     file.
    * @param outputStream The stream to which the netCDF file contents should be written.
    */
-  private void redirectFileToStream(File tempFile, OutputSteram outputStream) {
-    
+  private void redirectFileToStream(File tempFile, OutputStream outputStream) {
+    try {
+      byte[] buffer = Files.readAllBytes(Paths.get(tempFile.getAbsolutePath()));
+      outputStream.write(buffer);
+      outputStream.flush();
+      tempFile.delete();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to write NetCDF data to output stream", e);
+    }
   }
 }
