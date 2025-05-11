@@ -96,16 +96,19 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       
       // Add dimensions
         int numRecords = pendingRecords.size();
-        Dimension.Builder timeDimBuilder = Dimension.builder().setName("time").setLength(numRecords);
-        builder.addDimension(timeDimBuilder.build());
+        Dimension timeDim = Dimension.builder()
+            .setName("time")
+            .setLength(numRecords)
+            .build();
+        builder.addDimension(timeDim);
 
         // Add variables
         for (String varName : variables) {
           Variable.Builder<?> varBuilder = Variable.builder()
               .setName(varName)
               .setDataType(DataType.DOUBLE)
-              .addDimension("time");
-          builder.addVariable(varBuilder.build());
+              .addDimension(timeDim);
+          builder.addVariable(varBuilder.build(builder.getRootGroup()));
         }
 
         // Build and get the writer
