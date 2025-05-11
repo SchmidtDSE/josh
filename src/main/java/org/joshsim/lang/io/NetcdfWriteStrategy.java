@@ -119,6 +119,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
       // Build and get the writer
       try (NetcdfFormatWriter writer = builder.build()) {
+        System.out.println("Writer created successfully");
         // Write time data
         Array timeData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
         double[] timeArray = (double[]) timeData.get1DJavaArray(DataType.DOUBLE);
@@ -164,6 +165,8 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
       return tempFile;
     } catch (IOException | InvalidRangeException e) {
+      System.err.println("Exception details: " + e.getMessage());
+      e.printStackTrace();
       throw new RuntimeException("Failed to write NetCDF file", e);
     }
   }
