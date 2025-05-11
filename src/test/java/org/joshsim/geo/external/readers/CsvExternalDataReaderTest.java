@@ -2,7 +2,6 @@
 package org.joshsim.geo.external.readers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -10,7 +9,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Optional;
-import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +32,7 @@ public class CsvExternalDataReaderTest {
   public void setUp() throws IOException {
     // Initialize value factory
     valueFactory = new EngineValueFactory();
-    
+
     // Initialize reader
     reader = new CsvExternalDataReader(valueFactory);
 
@@ -44,7 +42,7 @@ public class CsvExternalDataReaderTest {
       throw new IOException("Test resource not found: " + CSV_RESOURCE_PATH);
     }
     csvFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     // Open the file
     reader.open(csvFilePath);
     reader.setCrsCode("EPSG:4326");

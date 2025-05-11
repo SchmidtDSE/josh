@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.joshsim.lang.io.ExportWriteStrategy;
-
 
 /**
  * Strategy method which gathers records and writes all records at the same time.

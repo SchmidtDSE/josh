@@ -34,7 +34,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
-    
+
   }
 
   @Override

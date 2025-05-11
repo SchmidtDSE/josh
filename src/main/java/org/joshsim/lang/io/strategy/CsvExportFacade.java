@@ -14,7 +14,8 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.lang.io.*;
+import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.OutputStreamStrategy;
 
 
 /**
@@ -152,7 +153,7 @@ public class CsvExportFacade implements ExportFacade {
       } catch (IOException e) {
         throw new RuntimeException("Error opening output stream", e);
       }
-      
+
       if (header.isPresent()) {
         writeStrategy = new CsvWriteStrategy(header.get());
       } else {

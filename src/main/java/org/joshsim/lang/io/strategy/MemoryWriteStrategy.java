@@ -6,13 +6,11 @@
 
 package org.joshsim.lang.io.strategy;
 
-import org.joshsim.lang.io.ExportWriteStrategy;
-import org.joshsim.lang.io.MapToMemoryStringConverter;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.joshsim.lang.io.MapToMemoryStringConverter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing writing to a callback.

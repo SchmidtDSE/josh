@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.joshsim.lang.io.ExportWriteStrategy;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing CSV files.

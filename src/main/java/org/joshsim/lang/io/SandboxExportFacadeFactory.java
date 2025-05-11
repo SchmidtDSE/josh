@@ -7,11 +7,10 @@
 
 package org.joshsim.lang.io;
 
-import org.joshsim.lang.io.strategy.MemoryExportFacade;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
+import org.joshsim.lang.io.strategy.MemoryExportFacade;
 
 /**
  * Factory implementation for creating ExportFacade instances in a sandbox environment.

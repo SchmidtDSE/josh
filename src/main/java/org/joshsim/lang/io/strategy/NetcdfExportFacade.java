@@ -1,4 +1,3 @@
-
 /**
  * Structures to simplify writing entities to NetCDF.
  *
@@ -9,7 +8,6 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,7 +15,8 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.lang.io.*;
+import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.OutputStreamStrategy;
 
 /**
  * Strategy implementing ExportFacade which writes entities to NetCDF in a writer thread.
@@ -80,13 +79,13 @@ public class NetcdfExportFacade implements ExportFacade {
      * Create a new task.
      *
      * @param entity the Entity to write
-     * @param step the simulation timestep on which the entity is reported 
+     * @param step the simulation timestep on which the entity is reported
      */
     public Task(Entity entity, long step) {
       this.entity = entity;
       this.step = step;
     }
- 
+
     /**
      * Retrieves the entity associated with this task.
      *

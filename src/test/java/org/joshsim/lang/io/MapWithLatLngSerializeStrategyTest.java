@@ -42,22 +42,22 @@ class MapWithLatLngSerializeStrategyTest {
     // Arrange
     Entity entity = mock(Entity.class);
     EngineGeometry geometry = mock(EngineGeometry.class);
-    
+
     // Set up mock geometry with grid coordinates (1, 1)
     when(geometry.getCenterX()).thenReturn(BigDecimal.ONE);
     when(geometry.getCenterY()).thenReturn(BigDecimal.ONE);
     when(entity.getGeometry()).thenReturn(Optional.of(geometry));
-    
+
     MapSerializeStrategy innerStrategy = new MapSerializeStrategy();
     MapWithLatLngSerializeStrategy strategy = new MapWithLatLngSerializeStrategy(
         extents,
         width,
         innerStrategy
     );
-    
+
     // Act
     Map<String, String> result = strategy.getRecord(entity);
-    
+
     // Assert
     assertTrue(result.containsKey("position.longitude"));
     assertTrue(result.containsKey("position.latitude"));
@@ -72,10 +72,10 @@ class MapWithLatLngSerializeStrategyTest {
     // Arrange
     Entity entity = mock(Entity.class);
     when(entity.getGeometry()).thenReturn(Optional.empty());
-    
+
     // Act
     Map<String, String> result = strategy.getRecord(entity);
-    
+
     // Assert - should not have lat/lng fields
     assertEquals(false, result.containsKey("position.longitude"));
     assertEquals(false, result.containsKey("position.latitude"));
@@ -88,19 +88,19 @@ class MapWithLatLngSerializeStrategyTest {
     Entity entity = mock(Entity.class);
     EngineGeometry geometry = mock(EngineGeometry.class);
     EngineValue nameValue = mock(EngineValue.class);
-    
+
     when(geometry.getCenterX()).thenReturn(BigDecimal.ZERO);
     when(geometry.getCenterY()).thenReturn(BigDecimal.ZERO);
     when(entity.getGeometry()).thenReturn(Optional.of(geometry));
     when(nameValue.getAsString()).thenReturn("Test Name");
-    
+
     // Add an export attribute that inner strategy should handle
     when(entity.getAttributeNames()).thenReturn(java.util.Set.of("export.name"));
     when(entity.getAttributeValue("export.name")).thenReturn(Optional.of(nameValue));
-    
+
     // Act
     Map<String, String> result = strategy.getRecord(entity);
-    
+
     // Assert - should contain both inner strategy and lat/lng fields
     assertTrue(result.containsKey("name")); // From inner strategy
     assertTrue(result.containsKey("position.longitude")); // From our strategy

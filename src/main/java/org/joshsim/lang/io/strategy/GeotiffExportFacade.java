@@ -90,7 +90,7 @@ public class GeotiffExportFacade implements ExportFacade {
     /**
      * Generate an output stream based on the provided StreamReference instance.
      *
-     * @param reference The StreamReference object containing the data (step and variable) 
+     * @param reference The StreamReference object containing the data (step and variable)
      *     required to generate the file path.
      * @return New output stream for this reference.
      */
@@ -140,7 +140,7 @@ public class GeotiffExportFacade implements ExportFacade {
 
     /**
      * Get a string representation of this key.
-     * 
+     *
      * @return String which uniquely identifies this key's group.
      */
     @Override
@@ -231,7 +231,7 @@ public class GeotiffExportFacade implements ExportFacade {
 
   /**
    * Callback to write to the different output streams and write strategies.
-   * 
+   *
    * <p>Callback to write to the different output streams and write strategies with one per geotiff
    * which corresponds to combination of step, variable, and replicate.</p>
    */
@@ -265,22 +265,23 @@ public class GeotiffExportFacade implements ExportFacade {
 
       try {
         String variableName = reference.getVariable();
-        
+
         if (!outputStreams.containsKey(reference)) {
           outputStreams.put(reference, streamGenerator.getStream(reference));
         }
-        OutputStream outputStream = outputStreams.get(reference);
-        
+
         if (!writeStrategies.containsKey(reference)) {
           writeStrategies.put(reference, new GeotiffWriteStrategy(variableName));
         }
-        StringMapWriteStrategy writeStrategy = writeStrategies.get(reference);
-        
+
         Map<String, String> serialized = new HashMap<>();
         serialized.put("step", reference.getStep());
         serialized.put("position.longitude", task.getLongitude());
         serialized.put("position.latitude", task.getLatitude());
         serialized.put(variableName, task.getValue());
+
+        OutputStream outputStream = outputStreams.get(reference);
+        StringMapWriteStrategy writeStrategy = writeStrategies.get(reference);
         writeStrategy.write(serialized, outputStream);
       } catch (IOException e) {
         throw new RuntimeException("Error writing to output stream", e);
@@ -314,5 +315,5 @@ public class GeotiffExportFacade implements ExportFacade {
       }
     }
   }
-  
+
 }

@@ -39,7 +39,7 @@ class JvmInputGetterTest {
   void testOpenFileFromWorkingDirectory() throws Exception {
     // Act
     InputStream inputStream = inputGetter.open(TEST_FILE_PATH);
-    
+
     // Assert
     String result = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     assertEquals(TEST_CONTENT, result);

@@ -13,7 +13,6 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.sis.referencing.CRS;
@@ -190,7 +189,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   private InputOutputLayer getLayer(HttpServerExchange httpServerExchange, String externalData) {
     Map<String, VirtualFile> virtualFiles = VirtualFileSystemWireDeserializer.load(externalData);
-    
+
     SandboxExportCallback exportCallback = (export) -> {
       try {
         httpServerExchange.getOutputStream().write((export + "\n").getBytes());

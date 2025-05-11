@@ -35,26 +35,26 @@ public class VirtualFileSystemWireDeserializer {
    * @param serialized The string seialization of the file system to be loaded using the tab
    *     separation format.
    * @returns Mapping from the name of a file or its path to its contents as a VirutaalFile object
-   *     where binary files 
+   *     where binary files
    */
   public static Map<String, VirtualFile> load(String serialized) {
     Map<String, VirtualFile> virtualFiles = new HashMap<>();
-    
+
     if (serialized == null || serialized.trim().isEmpty()) {
       return virtualFiles;
     }
 
     StringTokenizer tokenizer = new StringTokenizer(serialized, "\t");
-    
+
     while (tokenizer.hasMoreTokens()) {
       String path = tokenizer.nextToken();
       boolean isBinary = "1".equals(tokenizer.nextToken());
       String content = tokenizer.nextToken();
-      
+
       virtualFiles.put(path, new VirtualFile(path, content, isBinary));
     }
-    
+
     return virtualFiles;
   }
-  
+
 }

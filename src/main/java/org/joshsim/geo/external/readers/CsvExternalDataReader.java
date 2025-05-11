@@ -73,7 +73,7 @@ public class CsvExternalDataReader implements ExternalDataReader {
             data.get(header).add(value);
           } catch (NumberFormatException e) {
             throw new RuntimeException(
-                String.format("Invalid numeric value in column '%s': %s", 
+                String.format("Invalid numeric value in column '%s': %s",
                     header, record.get(header)));
           }
         }
@@ -132,7 +132,7 @@ public class CsvExternalDataReader implements ExternalDataReader {
     for (int i = 0; i < lons.size(); i++) {
       BigDecimal lon = lons.get(i);
       BigDecimal lat = lats.get(i);
-      
+
       // Simple Euclidean distance (could be enhanced for better geographic accuracy)
       BigDecimal dx = x.subtract(lon);
       BigDecimal dy = y.subtract(lat);

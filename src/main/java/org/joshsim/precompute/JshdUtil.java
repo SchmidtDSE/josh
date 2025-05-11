@@ -149,7 +149,7 @@ public class JshdUtil {
     return buffer.array();
   }
 
-  
+
   /**
    * Read the units string from the given ByteBuffer, setting it in a DoublePrecomputedGridBuilder.
    *

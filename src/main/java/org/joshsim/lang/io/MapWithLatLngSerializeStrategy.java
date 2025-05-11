@@ -9,13 +9,9 @@ package org.joshsim.lang.io;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
-import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 
 /**
@@ -69,10 +65,10 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
   @Override
   public Map<String, String> getRecord(Entity entity) {
     Map<String, String> result = inner.getRecord(entity);
-    
+
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
-      
+
       // Convert grid coordinates to lat/lng using extents
       BigDecimal longitude = extents.getTopLeftX().add(
           geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
@@ -80,12 +76,12 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
       BigDecimal latitude = extents.getTopLeftY().add(
           geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
       );
-      
+
       result.put("position.longitude", longitude.toString());
       result.put("position.latitude", latitude.toString());
     }
-    
+
     return result;
   }
-  
+
 }

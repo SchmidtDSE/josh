@@ -111,7 +111,7 @@ public class JoshSimFacade {
     } else {
       inputOutputLayer = new JvmInputOutputLayer(replicateNumber);
     }
-    
+
     JoshSimFacadeUtil.runSimulation(
         engineGeometryFactory,
         inputOutputLayer,
