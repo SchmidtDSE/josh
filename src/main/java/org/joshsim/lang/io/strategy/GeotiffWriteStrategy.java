@@ -26,6 +26,7 @@ import org.apache.sis.referencing.util.j2d.AffineTransform2D;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
+import org.joshsim.engine.geometry.HaversineUtil;
 
 
 /**
@@ -42,8 +43,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
   private final String variable;
   private final GeotiffDimensions dimensions;
-  private final double lonExtents;
-  private final double latExtents;
+  private final double totalWidthMeters;
+  private final double totalHeightMeters;
 
   /**
    * Constructs a GeotiffWriteStrategy with the specified variable.
@@ -54,8 +55,27 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   public GeotiffWriteStrategy(String variable, GeotiffDimensions dimensions) {
     this.variable = variable;
     this.dimensions = dimensions;
-    lonExtents = dimensions.getMaxLon() - dimensions.getMinLon();
-    latExtents = dimensions.getMaxLat() - dimensions.getMinLat();
+
+    // Calculate total width and height in meters using Haversine
+    HaversineUtil.HaversinePoint west = new HaversineUtil.HaversinePoint(
+        BigDecimal.valueOf(dimensions.getMinLon()),
+        BigDecimal.valueOf(dimensions.getMinLat())
+    );
+    HaversineUtil.HaversinePoint east = new HaversineUtil.HaversinePoint(
+        BigDecimal.valueOf(dimensions.getMaxLon()),
+        BigDecimal.valueOf(dimensions.getMinLat())
+    );
+    HaversineUtil.HaversinePoint south = new HaversineUtil.HaversinePoint(
+        BigDecimal.valueOf(dimensions.getMinLon()),
+        BigDecimal.valueOf(dimensions.getMinLat())
+    );
+    HaversineUtil.HaversinePoint north = new HaversineUtil.HaversinePoint(
+        BigDecimal.valueOf(dimensions.getMinLon()),
+        BigDecimal.valueOf(dimensions.getMaxLat())
+    );
+
+    totalWidthMeters = HaversineUtil.getDistance(west, east).doubleValue();
+    totalHeightMeters = HaversineUtil.getDistance(south, north).doubleValue();
   }
 
   /**
@@ -87,11 +107,22 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         String valueStr = record.get(variable);
         float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
 
-        // Calculate pixel coordinates using HaversineUtil and dimensions
-        double lonDistance = longitude - dimensions.getMinLon();
-        double latDistance = latitude - dimensions.getMinLat();
-        double pixelX = lonDistance / lonExtents * dimensions.getGridWidthPixels();
-        double pixelY = latDistance / latExtents * dimensions.getGridHeightPixels();
+        // Calculate distances using Haversine
+        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(BigDecimal.valueOf(longitude), BigDecimal.valueOf(latitude));
+        HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
+            BigDecimal.valueOf(dimensions.getMinLon()),
+            BigDecimal.valueOf(latitude)
+        );
+        HaversineUtil.HaversinePoint southPoint = new HaversineUtil.HaversinePoint(
+            BigDecimal.valueOf(longitude),
+            BigDecimal.valueOf(dimensions.getMinLat())
+        );
+
+        double distanceFromWest = HaversineUtil.getDistance(westPoint, currentPoint).doubleValue();
+        double distanceFromSouth = HaversineUtil.getDistance(southPoint, currentPoint).doubleValue();
+
+        double pixelX = (distanceFromWest / totalWidthMeters) * dimensions.getGridWidthPixels();
+        double pixelY = (distanceFromSouth / totalHeightMeters) * dimensions.getGridHeightPixels();
 
         // Add value to target image
         int x = (int) Math.round(pixelX);
