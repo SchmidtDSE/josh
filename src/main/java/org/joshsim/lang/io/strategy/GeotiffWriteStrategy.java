@@ -91,21 +91,15 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
     try {
-      System.out.println("Writing geotiff with " + records.size() + " records");
-
       // Create the grid coverage
       GridCoverageBuilder builder = new GridCoverageBuilder();
       setGridInBuilder(builder);
 
-      int bufferSize = dimensions.getGridWidthPixels() * dimensions.getGridHeightPixels();
-      System.out.println("Data buffer size: " + bufferSize);
+      int bufferSize = dimensions.getGridWidthPixels() * dimensions.getGridHeightPixels() + 1;
       DataBuffer dataBuffer = new DataBufferDouble(bufferSize);
       for (Map<String, String> record : records) {
         double longitude = Double.valueOf(record.get("position.longitude"));
         double latitude = Double.valueOf(record.get("position.latitude"));
-        System.out.println("Longitude: " + longitude + ", Latitude: " + latitude);
-        System.out.println("Longitude range from " + dimensions.getMinLon() + " to " + dimensions.getMaxLon());
-        System.out.println("Latitude range from " + dimensions.getMinLat() + " to " + dimensions.getMaxLat());
         String valueStr = record.get(variable);
         double value = valueStr != null ? Double.parseDouble(valueStr) : Double.NaN;
 
@@ -135,16 +129,17 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         // Calculate pixel position
         double percentX = distanceFromWest / totalWidthMeters;
         double percentY = distanceFromSouth / totalHeightMeters;
-        System.out.println(distanceFromWest + " : " + totalWidthMeters);
-        System.out.println(distanceFromSouth + " : " + totalHeightMeters);
-        System.out.println("PercentX: " + percentX + ", PercentY: " + percentY);
         double pixelX = percentX * dimensions.getGridWidthPixels();
         double pixelY = percentY * dimensions.getGridHeightPixels();
 
         int x = (int) Math.round(pixelX);
-        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY);
+        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY - 1);
         int index = y * dimensions.getGridWidthPixels() + x;
-        dataBuffer.setElemDouble(index, value);
+        try {
+          dataBuffer.setElemDouble(index, value);
+        } catch (Exception e) {
+          System.out.println("Failed on " + x + ", " + y + " which is " + index);
+        }
       }
 
       Dimension size = new Dimension(
@@ -170,7 +165,6 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
             "0"
         );
         resource.write(builder.build());
-        System.out.println("Wrote geotiff to " + tempFile.getAbsolutePath());
       } catch (DataStoreException e) {
         System.err.println("Exception details: " + e.getMessage());
         e.printStackTrace();
@@ -181,7 +175,6 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       byte[] buffer = null;
       try {
         buffer = Files.readAllBytes(tempFile.toPath());
-        System.out.println("Buffer size: " + buffer.length);
         outputStream.write(buffer);
         outputStream.flush();
         tempFile.delete();
@@ -210,14 +203,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         dimensions.getGridHeightPixels()
     );
 
-    MathTransform transform = new AffineTransform2D(
-        (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
-        0.0,
-        0.0,
-        (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels(),
-        dimensions.getMinLon(),
-        dimensions.getMinLat()
-    );
+    MathTransform transform = ;
 
     GridGeometry gridGeometry = new GridGeometry(
         extent,

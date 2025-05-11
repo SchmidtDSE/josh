@@ -79,12 +79,9 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
 
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
-
-      BigDecimal xGridRatio = geometry.getCenterX().divide(width, 10, RoundingMode.HALF_UP);
-      BigDecimal yGridRatio = geometry.getCenterY().divide(width, 10, RoundingMode.HALF_UP);
       
-      BigDecimal distanceFromLeftMeters = gridWidthMeters.multiply(xGridRatio);
-      BigDecimal distanceFromTopMeters = gridHeightMeters.multiply(yGridRatio);
+      BigDecimal distanceFromLeftMeters = geometry.getCenterX().multiply(width);
+      BigDecimal distanceFromTopMeters = geometry.getCenterY().multiply(width);
       
       HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
           extents.getTopLeftX(),

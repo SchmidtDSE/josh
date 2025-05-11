@@ -301,9 +301,7 @@ public class GeotiffExportFacade implements ExportFacade {
 
     @Override
     public void onEnd() {
-      System.out.println("Closing all output streams: " + outputStreams.size());
       for (StreamReference reference : outputStreams.keySet()) {
-        System.out.println("Closing stream for " + reference);
         onEnd(reference);
       }
 

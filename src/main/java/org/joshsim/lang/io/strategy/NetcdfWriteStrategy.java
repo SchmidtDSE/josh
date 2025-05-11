@@ -96,7 +96,6 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
       builder.addVariable("longitude", DataType.DOUBLE, "time");
 
       for (String varName : variables) {
-        System.out.println(varName);
         Variable.Builder<?> varBuilder = Variable.builder()
             .setName(varName)
             .setDataType(DataType.DOUBLE);
