@@ -13,12 +13,23 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import org.apache.sis.coverage.grid.GridCoverage;
+import org.apache.sis.coverage.grid.GridCoverageBuilder;
+import org.apache.sis.geometry.GeneralGridGeometry;
+import org.apache.sis.referencing.CommonCRS;
 import org.apache.sis.storage.DataStore;
 import org.apache.sis.storage.DataStoreException;
-import org.apache.sis.storage.GridCoverageResource;
 import org.apache.sis.storage.StorageConnector;
 import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
+import org.apache.sis.storage.geotiff.GeoTiffStore;
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.geometry.DirectPosition2D;
+import org.apache.sis.referencing.operation.transform.AffineTransform2D;
+import org.apache.sis.coverage.grid.GridExtent;
 
 
 /**
@@ -62,13 +73,13 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
     try {
       // Create temporary file
       File tempFile = File.createTempFile("geotiff", ".tif");
-      
+
       // Process data from records
       double minLon = Double.MAX_VALUE;
       double maxLon = -Double.MAX_VALUE;
       double minLat = Double.MAX_VALUE;
       double maxLat = -Double.MAX_VALUE;
-      
+
       // Find bounds
       for (Map<String, String> record : records) {
         double lon = Double.parseDouble(record.get("position.longitude"));
@@ -81,7 +92,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
       // Create store
       StorageConnector connector = new StorageConnector(tempFile);
-      DataStore store = new GeoTiffStoreProvider().open(connector);
+      GeoTiffStore store = new GeoTiffStoreProvider().open(connector);
 
       // Create grid data
       int width = (int) Math.ceil((maxLon - minLon) / this.width.doubleValue());
@@ -94,22 +105,34 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         double lat = Double.parseDouble(record.get("position.latitude"));
         String valueStr = record.get(variable);
         float value = valueStr != null ? Float.parseFloat(valueStr) : 0f;
-        
+
         int x = (int) ((lon - minLon) / this.width.doubleValue());
         int y = height - 1 - (int) ((lat - minLat) / this.width.doubleValue());
-        
+
         if (x >= 0 && x < width && y >= 0 && y < height) {
           gridData[y][x] = value;
         }
       }
 
-      // Create grid coverage
-      GridCoverageResource coverage = store.createCoverageResource();
-      coverage.setData(gridData);
-      coverage.setDomain(extents);
+      // Create grid coverage using Apache SIS GridCoverage builder
+      GridCoverageBuilder builder = new GridCoverageBuilder();
+      builder.setName(variable);
+      builder.setCoordinateReferenceSystem(CRS.forCode("EPSG:4326"));
+      builder.setDomain(new GeneralGridGeometry(
+          new GridExtent(width, height),
+          new AffineTransform2D(
+              this.width.doubleValue(), 0.0,
+              0.0, -this.width.doubleValue(),
+              minLon, maxLat
+          ),
+          CommonCRS.WGS84.geographic()
+      ));
+      builder.setValues(gridData);
 
-      // Write to temporary file
-      store.flush();
+      GridCoverage coverage = builder.build();
+
+      // Write to GeoTIFF
+      store.write(coverage);
       store.close();
 
       // Copy temp file to output stream
@@ -119,8 +142,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
       // Cleanup
       tempFile.delete();
-      
-    } catch (IOException | DataStoreException e) {
+
+    } catch (IOException | DataStoreException | FactoryException e) {
       throw new RuntimeException("Failed to write GeoTIFF", e);
     }
   }
