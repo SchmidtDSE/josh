@@ -155,7 +155,7 @@ public class JoshJsSimFacade {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, new EngineValueFactory());
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
 
     Map<String, String> outputRecord = new HashMap<>();
     outputRecord.put("name", simulationName);

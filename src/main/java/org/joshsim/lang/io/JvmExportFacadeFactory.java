@@ -6,12 +6,38 @@
 
 package org.joshsim.lang.io;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Optional;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 /**
  * Factory implementation for creating ExportFacade instances in a JVM environment.
  */
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
+
+  private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
+  
+  /**
+   * Create a new JvmExportFacadeFactory with only grid-space.
+   *
+   * <p>Creates a new export facade factory which does not try to add latitude and longitude to
+   * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
+   */
+  public JvmExportFacadeFactory() {
+    serializeStrategy = new MapSerializeStrategy();
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with access to Earth-space.
+   *
+   * <p>Creates a new export facade factory which adds latitude and longitude to returned records,
+   * allowing use of geotiffs and netCDF as export formats.</p>
+   */
+  public JvmExportFacadeFactory(PatchBuilderExtents extents, BigDecimal width) {
+    MapSerializeStrategy inner = new MapSerializeStrategy();
+    serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner);
+  }
 
   @Override
   public ExportFacade build(ExportTarget target) {
@@ -42,7 +68,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @throws IllegalArgumentException if the target's protocol is not empty or the target is
    *     invalid.
    */
-  private static ExportFacade buildForCsv(ExportTarget target, Optional<Iterable<String>> header) {
+  private ExportFacade buildForCsv(ExportTarget target, Optional<Iterable<String>> header) {
     if (!target.getProtocol().isEmpty()) {
       String message = "Only local file system is supported for CSV at this time.";
       throw new IllegalArgumentException(message);
@@ -52,9 +78,9 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
     if (header.isPresent()) {
-      return new CsvExportFacade(outputStreamStrategy, header.get());
+      return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());
     } else {
-      return new CsvExportFacade(outputStreamStrategy);
+      return new CsvExportFacade(outputStreamStrategy, serializeStrategy);
     }
   }
 }

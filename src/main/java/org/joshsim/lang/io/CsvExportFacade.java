@@ -30,11 +30,13 @@ public class CsvExportFacade implements ExportFacade {
    * Constructs a CsvExportFacade object with the specified export target / output stream strategy.
    *
    * @param outputStrategy The strategy to provide an output stream for writing the exported data.
+   * @param serializeStrategy The strategy to use in serializing records before writing.
    */
-  public CsvExportFacade(OutputStreamStrategy outputStrategy) {
+  public CsvExportFacade(OutputStreamStrategy outputStrategy,
+        ExportSerializeStrategy<Map<String, String>> serializeStrategy) {
     this.outputStrategy = outputStrategy;
     header = Optional.empty();
-    innerWriter = new InnerWriter(header, outputStrategy);
+    innerWriter = new InnerWriter(header, outputStrategy, serializeStrategy);
     queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
@@ -42,12 +44,14 @@ public class CsvExportFacade implements ExportFacade {
    * Constructs a CsvExportFacade with the specified export target / output stream and headers.
    *
    * @param outputStrategy The strategy to provide an output stream for writing the exported data.
+   * @param serializeStrategy The strategy to use in serializing records before writing.
    * @param header Iterable over the header columns to use for the CSV output.
    */
-  public CsvExportFacade(OutputStreamStrategy outputStrategy, Iterable<String> header) {
+  public CsvExportFacade(OutputStreamStrategy outputStrategy,
+        ExportSerializeStrategy<Map<String, String>> serializeStrategy, Iterable<String> header) {
     this.outputStrategy = outputStrategy;
     this.header = Optional.of(header);
-    innerWriter = new InnerWriter(Optional.of(header), outputStrategy);
+    innerWriter = new InnerWriter(Optional.of(header), outputStrategy, serializeStrategy);
     queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
   }
 
@@ -123,17 +127,17 @@ public class CsvExportFacade implements ExportFacade {
     private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
     private final ExportWriteStrategy<Map<String, String>> writeStrategy;
 
-    public InnerWriter(Optional<Iterable<String>> header, OutputStreamStrategy outputStrategy) {
+    public InnerWriter(Optional<Iterable<String>> header, OutputStreamStrategy outputStrategy,
+          ExportSerializeStrategy<Map<String, String>> serializeStrategy) {
       this.header = header;
+      this.serializeStrategy = serializeStrategy;
 
       try {
         outputStream = outputStrategy.open();
       } catch (IOException e) {
         throw new RuntimeException("Error opening output stream", e);
       }
-
-      serializeStrategy = new MapSerializeStrategy();
-      ;
+      
       if (header.isPresent()) {
         writeStrategy = new CsvWriteStrategy(header.get());
       } else {

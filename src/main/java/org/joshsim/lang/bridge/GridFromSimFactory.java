@@ -9,6 +9,7 @@ package org.joshsim.lang.bridge;
 import java.math.BigDecimal;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilder;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
@@ -122,63 +123,9 @@ public class GridFromSimFactory {
    */
   public PatchBuilderExtents buildExtents(String startStr, String endStr) {
     PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
-    addExtents(builder, startStr, true);
-    addExtents(builder, endStr, false);
+    ExtentsUtil.addExtents(builder, startStr, true, valueFactory);
+    ExtentsUtil.addExtents(builder, endStr, false, valueFactory);
     return builder.build();
-  }
-
-  /**
-   * Adds coordinate extents to a PatchBuilderExtentsBuilder.
-   *
-   * @param builder the PatchBuilderExtentsBuilder to add coordinates to
-   * @param target the coordinate string to parse
-   * @param start true if these are start coordinates, false if end coordinates
-   */
-  private void addExtents(PatchBuilderExtentsBuilder builder, String target, boolean start) {
-    String[] pieces = target.split(",");
-
-    EngineValue value1 = parseExtentComponent(pieces[0]);
-    EngineValue value2 = parseExtentComponent(pieces[1]);
-    boolean latitudeFirst = pieces[0].contains("latitude");
-
-    EngineValue latitude = latitudeFirst ? value1 : value2;
-    EngineValue longitude = latitudeFirst ? value2 : value1;
-
-    if (start) {
-      builder.setTopLeftX(longitude.getAsDecimal());
-      builder.setTopLeftY(latitude.getAsDecimal());
-    } else {
-      builder.setBottomRightX(longitude.getAsDecimal());
-      builder.setBottomRightY(latitude.getAsDecimal());
-    }
-  }
-
-  /**
-   * Parses a coordinate component string into an EngineValue.
-   *
-   * @param target the coordinate component string in format "X latitude/longitude"
-   * @return EngineValue containing the parsed value and units
-   */
-  private EngineValue parseExtentComponent(String target) {
-    String engineValStr = target.strip().replaceAll(" latitude", "").replaceAll(" longitude", "");
-    String[] pieces = engineValStr.split(" ");
-    return valueFactory.build(new BigDecimal(pieces[0]), new Units(pieces[1]));
-  }
-
-  /**
-   * Converts an EngineValue to expected units (meters) if not already in count units.
-   *
-   * @param target the EngineValue to potentially convert
-   * @param allowed The type of units other than count which is allowed.
-   * @return the original EngineValue if in count units, otherwise converted to meters
-   */
-  private EngineValue convertToExpectedUnits(EngineValue target, Units allowed) {
-    Units targetUnits = target.getUnits();
-    if (targetUnits.equals(Units.COUNT) || targetUnits.equals(allowed)) {
-      return target;
-    } else {
-      return bridge.convert(target, allowed);
-    }
   }
 
 }
