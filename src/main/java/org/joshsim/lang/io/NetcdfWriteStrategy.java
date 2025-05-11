@@ -85,9 +85,6 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
   private File writeToTempFile() {
     try {
       File tempFile = File.createTempFile("netcdf", ".nc");
-      System.out.println("Temp file created at: " + tempFile.getAbsolutePath());
-      System.out.println("Temp file exists: " + tempFile.exists());
-      System.out.println("Temp file can write: " + tempFile.canWrite());
       tempFile.deleteOnExit();
 
       // Create NetCDF writer with the temporary file
@@ -109,8 +106,9 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       builder.addVariable("time", DataType.DOUBLE, "time");
       builder.addVariable("latitude", DataType.DOUBLE, "time");
       builder.addVariable("longitude", DataType.DOUBLE, "time");
-      
+
       for (String varName : variables) {
+        System.out.println(varName);
         Variable.Builder<?> varBuilder = Variable.builder()
             .setName(varName)
             .setDataType(DataType.DOUBLE);
@@ -119,19 +117,18 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
       // Build and get the writer
       try (NetcdfFormatWriter writer = builder.build()) {
-        System.out.println("Writer created successfully");
         // Write time data
         Array timeData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
         double[] timeArray = (double[]) timeData.get1DJavaArray(DataType.DOUBLE);
-        
+
         // Write latitude data
         Array latData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
         double[] latArray = (double[]) latData.get1DJavaArray(DataType.DOUBLE);
-        
+
         // Write longitude data
         Array lonData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
         double[] lonArray = (double[]) lonData.get1DJavaArray(DataType.DOUBLE);
-        
+
         // Fill coordinate and time arrays
         int index = 0;
         for (Map<String, String> record : pendingRecords) {
@@ -140,7 +137,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
           lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
           index++;
         }
-        
+
         writer.write("time", timeData);
         writer.write("latitude", latData);
         writer.write("longitude", lonData);

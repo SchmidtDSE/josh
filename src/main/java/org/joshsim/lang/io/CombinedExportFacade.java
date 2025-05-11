@@ -188,7 +188,7 @@ public class CombinedExportFacade {
     StringTokenizer tokenizer = new StringTokenizer(headerStr, ",");
     List<String> retVal = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
-      retVal.add(tokenizer.nextToken());
+      retVal.add(tokenizer.nextToken().replaceAll("\"", "").trim());
     }
     return retVal;
   }
