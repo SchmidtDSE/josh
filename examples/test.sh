@@ -29,7 +29,12 @@ rm -f /tmp/simple_josh.csv
 assert_ok examples/simulations/simple.josh TestSimpleSimulation || exit 1
 [ -f "/tmp/simple_josh.csv" ] || exit 2
 
+echo "Testing CSV with Earth-space output..."
+rm -f /tmp/simple_seki_josh.csv
+assert_ok examples/simulations/simple_seki.josh TestSimpleSimulation || exit 3
+[ -f "/tmp/simple_seki_josh.csv" ] || exit 4
+
 echo "Testing netCDF output..."
 rm -f /tmp/simple_josh.nc
-assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 3
-[ -f "/tmp/simple_josh.nc" ] || exit 4
+assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 5
+[ -f "/tmp/simple_josh.nc" ] || exit 6

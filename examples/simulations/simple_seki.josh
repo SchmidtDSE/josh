@@ -1,4 +1,4 @@
-start simulation TestSimpleSimulationExternal
+start simulation TestSimpleSimulation
 
   grid.size = 30 m
   grid.low = 36.51947777043374 degrees latitude, -118.67203360913730 degrees longitude
@@ -10,7 +10,7 @@ start simulation TestSimpleSimulationExternal
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
 
-  exportFiles.patch = "file:///tmp/simple_external_josh.csv"
+  exportFiles.patch = "file:///tmp/simple_seki_josh.csv"
 
 end simulation
 
