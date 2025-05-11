@@ -155,7 +155,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       // Create GeoTIFF store and write
       StorageConnector connector = new StorageConnector(tempFile);
       GeoTiffStore store = new GeoTiffStore(null, new GeoTiffStoreProvider(), connector, false);
-      store.write(coverage);
+      store.writeCoverage(coverage);
       store.close();
 
       // Copy temp file to output stream
