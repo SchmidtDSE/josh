@@ -10,26 +10,26 @@ import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
-import org.apache.sis.coverage.grid.GridExtent;
-import org.apache.sis.coverage.grid.GridCoverage;
-import org.apache.sis.coverage.grid.GridGeometry;
-import org.apache.sis.referencing.CommonCRS;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
+import org.apache.sis.coverage.grid.GridExtent;
+import org.apache.sis.coverage.grid.GridGeometry;
+import org.apache.sis.referencing.CommonCRS;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
-import org.apache.sis.storage.*;
-import org.opengis.geometry.DirectPosition;
+import org.apache.sis.storage.DataStore;
+import org.apache.sis.storage.DataStoreException;
+import org.apache.sis.storage.StorageConnector;
+import org.apache.sis.storage.WritableGridCoverageResource;
+import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
-import org.joshsim.engine.geometry.HaversineUtil;
-import org.apache.sis.storage.geotiff.GeoTiffStore;
-import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
 
 /**
  * Strategy to write a single geotiff.
@@ -81,94 +81,95 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   }
 
   /**
+   * Write all pending records to the geotiff.
    *
    * @param records The records to be written.
    * @param outputStream The stream to which they should be written.
    */
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
-    try {
-      // Create temporary file
-      File tempFile = File.createTempFile("geotiff", ".tif");
+    // Create the grid coverage
+    GridCoverageBuilder builder = new GridCoverageBuilder();
+    setGridInBuilder(builder);
 
-      // Create the grid coverage
-      GridCoverageBuilder builder = new GridCoverageBuilder();
-      setGridInBuilder(builder);
+    // Create raster directly
+    WritableRaster raster = Raster.createBandedRaster(
+        DataBuffer.TYPE_FLOAT,
+        dimensions.getGridWidthPixels(),
+        dimensions.getGridHeightPixels(),
+        1, // single band
+        null
+    );
 
-      // Create raster directly
-      WritableRaster raster = Raster.createBandedRaster(
-          DataBuffer.TYPE_FLOAT,
-          dimensions.getGridWidthPixels(),
-          dimensions.getGridHeightPixels(),
-          1, // single band
-          null
-      );
+    for (Map<String, String> record : records) {
+      double longitude = Double.valueOf(record.get("position.longitude"));
+      double latitude = Double.valueOf(record.get("position.latitude"));
+      String valueStr = record.get(variable);
+      float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
 
-      for (Map<String, String> record : records) {
-        double longitude = Double.valueOf(record.get("position.longitude"));
-        double latitude = Double.valueOf(record.get("position.latitude"));
-        String valueStr = record.get(variable);
-        float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
-
-        // Calculate distances using Haversine
-        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
+      // Calculate distances using Haversine
+      HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
           BigDecimal.valueOf(longitude),
           BigDecimal.valueOf(latitude)
-        );
-        HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(dimensions.getMinLon()),
-            BigDecimal.valueOf(latitude)
-        );
-        HaversineUtil.HaversinePoint southPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(longitude),
-            BigDecimal.valueOf(dimensions.getMinLat())
-        );
+      );
+      HaversineUtil.HaversinePoint westPoint = new HaversineUtil.HaversinePoint(
+          BigDecimal.valueOf(dimensions.getMinLon()),
+          BigDecimal.valueOf(latitude)
+      );
+      HaversineUtil.HaversinePoint southPoint = new HaversineUtil.HaversinePoint(
+          BigDecimal.valueOf(longitude),
+          BigDecimal.valueOf(dimensions.getMinLat())
+      );
 
-        double distanceFromWest = HaversineUtil.getDistance(
-            westPoint,
-            currentPoint
-        ).doubleValue();
-        double distanceFromSouth = HaversineUtil.getDistance(
-            southPoint,
-            currentPoint
-        ).doubleValue();
+      double distanceFromWest = HaversineUtil.getDistance(
+          westPoint,
+          currentPoint
+      ).doubleValue();
+      double distanceFromSouth = HaversineUtil.getDistance(
+          southPoint,
+          currentPoint
+      ).doubleValue();
 
-        double pixelX = (distanceFromWest / totalWidthMeters) * dimensions.getGridWidthPixels();
-        double pixelY = (distanceFromSouth / totalHeightMeters) * dimensions.getGridHeightPixels();
+      double pixelX = (distanceFromWest / totalWidthMeters) * dimensions.getGridWidthPixels();
+      double pixelY = (distanceFromSouth / totalHeightMeters) * dimensions.getGridHeightPixels();
 
-        // Add value to target image
-        int x = (int) Math.round(pixelX);
-        int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY);
-        raster.setSample(x, y, 0, value);
-      }
+      // Add value to target image
+      int x = (int) Math.round(pixelX);
+      int y = (int) Math.round(dimensions.getGridHeightPixels() - pixelY);
+      raster.setSample(x, y, 0, value);
+    }
 
-      // Set the values
-      builder.setValues(raster);
+    // Set the values
+    builder.setValues(raster);
 
-      // Write to GeoTIFF using Apache SIS
-      GridCoverage coverage = builder.build();
-      
-      // Create GeoTIFF store and write
-      StorageConnector connector = new StorageConnector(tempFile);
-      try (DataStore store = new GeoTiffStoreProvider().open(connector)) {
-        WritableGridCoverageResource resource = (WritableGridCoverageResource) store.findResource(
-            "0"
-        );
-        resource.write(coverage);
-      } catch (DataStoreException e) {
-        throw new RuntimeException("Failed to write GeoTIFF: " + e);
-      }
+    File tempFile = null;
+    try {
+      tempFile = File.createTempFile("geotiff", ".tif");
+      tempFile.deleteOnExit();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to make temporary file: " + e);
+    }
 
-      // Copy temp file to output stream
-      byte[] buffer = Files.readAllBytes(tempFile.toPath());
+    // Create GeoTIFF store and write
+    StorageConnector connector = new StorageConnector(tempFile);
+    try (DataStore store = new GeoTiffStoreProvider().open(connector)) {
+      WritableGridCoverageResource resource = (WritableGridCoverageResource) store.findResource(
+          "0"
+      );
+      resource.write(builder.build());
+    } catch (DataStoreException e) {
+      throw new RuntimeException("Failed to write GeoTIFF: " + e);
+    }
+
+    // Copy temp file to output stream
+    byte[] buffer = null;
+    try {
+      buffer = Files.readAllBytes(tempFile.toPath());
       outputStream.write(buffer);
       outputStream.flush();
-
-      // Cleanup
       tempFile.delete();
-
     } catch (IOException e) {
-      throw new RuntimeException("Failed to write GeoTIFF: " + e);
+      throw new RuntimeException(e);
     }
   }
 

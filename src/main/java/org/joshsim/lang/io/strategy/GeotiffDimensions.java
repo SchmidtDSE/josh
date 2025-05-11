@@ -8,7 +8,6 @@ package org.joshsim.lang.io.strategy;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 
@@ -35,24 +34,36 @@ public class GeotiffDimensions {
   public GeotiffDimensions(PatchBuilderExtents extents, BigDecimal width) {
     // Process data from records where these are in degrees
     BigDecimal minLonBig = extents.getTopLeftX();
-    BigDecimal maxLonBig = extents.getBottomRightX();
-    BigDecimal minLatBig = extents.getBottomRightY();
-    BigDecimal maxLatBig = extents.getTopLeftY();
-
     minLon = minLonBig.doubleValue();
+
+    BigDecimal maxLonBig = extents.getBottomRightX();
     maxLon = maxLonBig.doubleValue();
+
+    BigDecimal minLatBig = extents.getBottomRightY();
     minLat = minLatBig.doubleValue();
+
+    BigDecimal maxLatBig = extents.getTopLeftY();
     maxLat = maxLatBig.doubleValue();
+
     widthInMeters = width.doubleValue();
 
     // Calculate grid dimensions using HaversineUtil
-    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(minLonBig, maxLatBig);
-    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(maxLonBig, maxLatBig);
-    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(minLonBig, minLatBig);
-    
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+        minLonBig,
+        maxLatBig
+    );
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
+        maxLonBig,
+        maxLatBig
+    );
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
+        minLonBig,
+        minLatBig
+    );
+
     BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
     BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
-    
+
     gridWidthPixels = widthMeters.divide(width, 0, RoundingMode.CEILING).intValue();
     gridHeightPixels = heightMeters.divide(width, 0, RoundingMode.CEILING).intValue();
   }

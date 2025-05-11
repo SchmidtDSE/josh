@@ -17,18 +17,18 @@ class GeotiffDimensionsTest {
     BigDecimal topLeftY = new BigDecimal("37.73");   // SF latitude
     BigDecimal bottomRightX = new BigDecimal("-118.24"); // LA longitude
     BigDecimal bottomRightY = new BigDecimal("34.05");   // LA latitude
-    
+
     PatchBuilderExtents extents = new PatchBuilderExtents(
         topLeftX, topLeftY, bottomRightX, bottomRightY
     );
-    
+
     BigDecimal cellWidth = new BigDecimal("10000"); // 10km cells
     GeotiffDimensions dimensions = new GeotiffDimensions(extents, cellWidth);
-    
+
     // Check calculated dimensions
     assertTrue(dimensions.getGridWidthPixels() > 0);
     assertTrue(dimensions.getGridHeightPixels() > 0);
-    
+
     // Check stored values
     assertEquals(topLeftX.doubleValue(), dimensions.getMinLon());
     assertEquals(bottomRightX.doubleValue(), dimensions.getMaxLon());
