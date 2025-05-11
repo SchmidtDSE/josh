@@ -10,7 +10,7 @@ start simulation TestSimpleSimulation
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
 
-  exportFiles.patch = "file:///tmp/simple_josh.nc"
+  exportFiles.patch = "file:///tmp/simple_josh_{replicate}.nc"
   exportFiles.patch.columns = "averageAge,averageHeight"
 
 end simulation

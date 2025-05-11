@@ -45,4 +45,12 @@ public interface ExportFacadeFactory {
    *     target.
    */
   ExportFacade build(ExportTarget target, Optional<Iterable<String>> header);
+
+  /**
+   * Replace template strings in the user provided template.
+   *
+   * @param template The template string provided by the user which may contain template tags.
+   * @returns The path with supported template tags replaced.
+   */
+  String getPath(String template);
 }

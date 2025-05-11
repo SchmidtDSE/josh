@@ -77,10 +77,11 @@ public class JoshSimFacade {
    *     as blocking.
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
+   * @param replicateNumber The replicate number for the replicate to be run.
    */
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
-        boolean serialPatches) {
+        boolean serialPatches, int replicateNumber) {
     setupForJvm();
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
@@ -102,9 +103,13 @@ public class JoshSimFacade {
       ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
       ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
       BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-      inputOutputLayer = new JvmInputOutputLayer(extentsBuilder.build(), sizeValuePrimitive);
+      inputOutputLayer = new JvmInputOutputLayer(
+          replicateNumber,
+          extentsBuilder.build(),
+          sizeValuePrimitive
+      );
     } else {
-      inputOutputLayer = new JvmInputOutputLayer();
+      inputOutputLayer = new JvmInputOutputLayer(replicateNumber);
     }
     
     JoshSimFacadeUtil.runSimulation(
