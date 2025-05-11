@@ -98,8 +98,25 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    * @param builder The bulid in which to specify the grid.
    */
   private void setGridInBuilder(GridCoverageBuilder builder) {
-    GridGeometry gridGeometry;
-    // TODO - build grid geometry
+    // Create grid geometry from dimensions
+    GridGeometry gridGeometry = new GridGeometry(
+        new GeneralGridEnvelope(
+            new int[] {0, 0}, 
+            new int[] {dimensions.getGridWidthPixels(), dimensions.getGridHeightPixels()}, 
+            false
+        ),
+        PixelInCell.CELL_CENTER,
+        new AffineTransform2D(
+            (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels(),
+            0.0,
+            0.0,
+            (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels(),
+            dimensions.getMinLon(),
+            dimensions.getMinLat()
+        ),
+        CommonCRS.WGS84.geographic()
+    );
+    
     builder.setDomain(gridGeometry);
   }
 
