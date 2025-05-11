@@ -102,7 +102,11 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
           .build();
       builder.addDimension(timeDim);
 
-      // Add variables
+      // Add variables including time, latitude, and longitude
+      builder.addVariable("time", DataType.DOUBLE, "time");
+      builder.addVariable("latitude", DataType.DOUBLE, "time");
+      builder.addVariable("longitude", DataType.DOUBLE, "time");
+      
       for (String varName : variables) {
         Variable.Builder<?> varBuilder = Variable.builder()
             .setName(varName)
@@ -112,12 +116,36 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
 
       // Build and get the writer
       try (NetcdfFormatWriter writer = builder.build()) {
+        // Write time data
+        Array timeData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] timeArray = (double[]) timeData.get1DJavaArray(DataType.DOUBLE);
+        
+        // Write latitude data
+        Array latData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] latArray = (double[]) latData.get1DJavaArray(DataType.DOUBLE);
+        
+        // Write longitude data
+        Array lonData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
+        double[] lonArray = (double[]) lonData.get1DJavaArray(DataType.DOUBLE);
+        
+        // Fill coordinate and time arrays
+        int index = 0;
+        for (Map<String, String> record : pendingRecords) {
+            timeArray[index] = Double.parseDouble(record.getOrDefault("step", "0.0"));
+            latArray[index] = Double.parseDouble(record.getOrDefault("position.latitude", "0.0"));
+            lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
+            index++;
+        }
+        
+        writer.write("time", timeData);
+        writer.write("latitude", latData);
+        writer.write("longitude", lonData);
 
         // Write data for each variable
         for (String varName : variables) {
           Array data = Array.factory(DataType.DOUBLE, new int[]{numRecords});
           double[] dataArray = (double[]) data.get1DJavaArray(DataType.DOUBLE);
-          int index = 0;
+          index = 0;
           for (Map<String, String> record : pendingRecords) {
             String value = record.getOrDefault(varName, "0.0");
             try {
