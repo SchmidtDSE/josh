@@ -76,6 +76,12 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     };
   }
 
+  @Override
+  public String getPath(String template) {
+    String replicateStr = ((Integer) replicate).toString();
+    return template.replaceAll("\\{replicate\\}", replicateStr);
+  }
+
   /**
    * Determine if information is avialable to translate to Earth longitude and latitude.
    *
@@ -103,7 +109,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException(message);
     }
 
-    String path = replaceTemplateStrings(target.getPath());
+    String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
     if (header.isPresent()) {
@@ -133,7 +139,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
 
-    String path = replaceTemplateStrings(target.getPath());
+    String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
     if (header.isPresent()) {
@@ -149,14 +155,4 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     }
   }
 
-  /**
-   * Replace template strings inside a path.
-   *
-   * @param path The path string provided by the user which may contain template strings.
-   * @returns The path with the template strings filled in.
-   */
-  private String replaceTemplateStrings(String path) {
-    String replicateStr = ((Integer) replicate).toString();
-    return path.replaceAll("\\{replicate\\}", replicateStr);
-  }
 }

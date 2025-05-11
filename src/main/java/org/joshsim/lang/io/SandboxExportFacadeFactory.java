@@ -54,6 +54,11 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     return build(target);
   }
 
+  @Override
+  public String getPath(String path) {
+    return path;
+  }
+
   /**
    * An OutputStream implementation that redirects output through an in-memory callback.
    */
