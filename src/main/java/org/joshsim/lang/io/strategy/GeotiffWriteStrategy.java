@@ -27,6 +27,7 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
 import org.joshsim.engine.geometry.HaversineUtil;
+import org.apache.sis.storage.Resource;
 import org.apache.sis.storage.StorageConnector;
 import org.apache.sis.storage.geotiff.GeoTiffStore;
 import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
@@ -146,7 +147,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       builder.setValues(targetImage);
 
       // Write to GeoTIFF using Apache SIS
-      org.apache.sis.storage.Resource resource = builder.build();
+      Resource resource = builder.build();
       if (!(resource instanceof GridCoverageResource)) {
           throw new IOException("Failed to create grid coverage resource");
       }
