@@ -109,6 +109,7 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
               .setDataType(DataType.DOUBLE)
               .addDimension(timeDim);
           builder.addVariable(varBuilder.build(builder.getRootGroup()));
+          writer = builder.build();
         }
 
         // Build and get the writer
