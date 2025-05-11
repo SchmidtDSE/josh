@@ -49,8 +49,9 @@ dependencies {
 
   // UCAR NetCDF for Zarr and NetCDF support
   implementation "edu.ucar:cdm-core:5.7.0"
+  implementation "edu.ucar:netcdf4:5.7.0"
+  implementation "edu.ucar:cdm-geotiff:5.7.0"
   runtimeOnly "org.slf4j:slf4j-jdk14:2.0.17"
-  runtimeOnly "edu.ucar:netcdf4:5.7.0"
 
   // Apache SIS for coordinate system transformations and COG support
   implementation("org.apache.sis.core:sis-referencing:1.4")
