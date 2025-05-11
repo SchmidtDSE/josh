@@ -241,8 +241,7 @@ public class GeotiffExportFacade implements ExportFacade {
    * which corresponds to combination of step, variable, and replicate.</p>
    */
   private static class InnerWriter implements QueueServiceCallback {
-    private final PatchBuilderExtents extents;
-    private final BigDecimal width;
+    private final GeotiffDimensions dimensions;
     private final ParameterizedOutputStreamGenerator streamGenerator;
     private Map<StreamReference, OutputStream> outputStreams;
     private Map<StreamReference, StringMapWriteStrategy> writeStrategies;
@@ -257,8 +256,7 @@ public class GeotiffExportFacade implements ExportFacade {
     public InnerWriter(ParameterizedOutputStreamGenerator streamGenerator,
           PatchBuilderExtents extents, BigDecimal width) {
       this.streamGenerator = streamGenerator;
-      this.extents = extents;
-      this.width = width;
+      dimensions = new GeotiffDimensions(extents, width);
       outputStreams = new HashMap<>();
       writeStrategies = new HashMap<>();
     }
@@ -283,7 +281,7 @@ public class GeotiffExportFacade implements ExportFacade {
         }
 
         if (!writeStrategies.containsKey(reference)) {
-          writeStrategies.put(reference, new GeotiffWriteStrategy(variableName, extents, width));
+          writeStrategies.put(reference, new GeotiffWriteStrategy(variableName, dimensions));
         }
 
         Map<String, String> serialized = new HashMap<>();
