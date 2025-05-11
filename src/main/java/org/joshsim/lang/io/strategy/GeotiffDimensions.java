@@ -24,6 +24,8 @@ public class GeotiffDimensions {
   private final double widthInMeters;
   private final int gridWidthPixels;
   private final int gridHeightPixels;
+  private final BigDecimal widthMeters;
+  private final BigDecimal heightMeters;
 
   /**
    * Create a new dimensions record.
@@ -61,8 +63,8 @@ public class GeotiffDimensions {
         minLatBig
     );
 
-    BigDecimal widthMeters = HaversineUtil.getDistance(topLeft, topRight);
-    BigDecimal heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
+    widthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    heightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
 
     gridWidthPixels = widthMeters.divide(width, 0, RoundingMode.CEILING).intValue();
     gridHeightPixels = heightMeters.divide(width, 0, RoundingMode.CEILING).intValue();
@@ -129,6 +131,14 @@ public class GeotiffDimensions {
    */
   public int getGridHeightPixels() {
     return gridHeightPixels;
+  }
+
+  public BigDecimal getWidthMeters() {
+    return widthMeters;
+  }
+
+  public BigDecimal getHeightMeters() {
+    return heightMeters;
   }
 
 }

@@ -6,6 +6,10 @@
 
 package org.joshsim.lang.io.strategy;
 
+import static org.gdal.gdal.gdal.AllRegister;
+import static org.gdal.gdal.gdal.GetDriverByName;
+import static org.gdal.gdalconst.gdalconstConstants.GDT_Float64;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -67,8 +71,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       }
       
       // Calculate meters per pixel
-      double metersPerPixelX = (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels();
-      double metersPerPixelY = (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels();
+      double degreesPerPixelX = (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels();
+      double degreesPerPixelY = (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels();
       
       // Fill the grid with our data
       for (Map<String, String> record : records) {
@@ -76,9 +80,29 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         double lat = Double.parseDouble(record.get("position.latitude"));
         double value = Double.parseDouble(record.get(variable));
         
-        // Calculate grid position
-        int x = (int)((lon - dimensions.getMinLon()) / metersPerPixelX);
-        int y = (int)((dimensions.getMaxLat() - lat) / metersPerPixelY);
+        // Calculate position using Haversine distances
+        HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+            BigDecimal.valueOf(dimensions.getMinLon()),
+            BigDecimal.valueOf(dimensions.getMaxLat())
+        );
+        HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
+            BigDecimal.valueOf(lon),
+            BigDecimal.valueOf(lat)
+        );
+        
+        // Get distances from top-left corner
+        BigDecimal distanceWest = HaversineUtil.getDistance(
+            topLeft,
+            new HaversineUtil.HaversinePoint(BigDecimal.valueOf(lon), BigDecimal.valueOf(dimensions.getMaxLat()))
+        );
+        BigDecimal distanceSouth = HaversineUtil.getDistance(
+            topLeft,
+            new HaversineUtil.HaversinePoint(BigDecimal.valueOf(dimensions.getMinLon()), BigDecimal.valueOf(lat))
+        );
+        
+        // Calculate grid position using percentages
+        int x = (int)(distanceWest.doubleValue() / dimensions.getWidthMeters().doubleValue() * dimensions.getGridWidthPixels());
+        int y = (int)(distanceSouth.doubleValue() / dimensions.getHeightMeters().doubleValue() * dimensions.getGridHeightPixels());
         
         // Check bounds
         if (x >= 0 && x < dimensions.getGridWidthPixels() && 
@@ -109,7 +133,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       writer.dispose();
       
     } catch (Exception e) {
-      throw new RuntimeException("Failed to write GeoTIFF: " + e.getMessage(), e);
+      throw new RuntimeException("Failed to write geotiff: " + e.getMessage(), e);
     }
   }
 
