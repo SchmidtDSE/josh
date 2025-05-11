@@ -38,7 +38,35 @@ class MapWithLatLngSerializeStrategyTest {
   @Test
   @DisplayName("Should add latitude and longitude to record with geometry")
   void testGetRecordWithGeometry() {
+    // Arrange
+    Entity entity = mock(Entity.class);
+    EngineGeometry geometry = mock(EngineGeometry.class);
     
+    // Set up mock geometry with grid coordinates (1, 1)
+    when(geometry.getCenterX()).thenReturn(BigDecimal.ONE);
+    when(geometry.getCenterY()).thenReturn(BigDecimal.ONE);
+    when(entity.getGeometry()).thenReturn(Optional.of(geometry));
+    
+    // Set up test extents (-123, 45) to (-124, 46)
+    BigDecimal topLeftX = new BigDecimal("-123");
+    BigDecimal topLeftY = new BigDecimal("45");
+    BigDecimal bottomRightX = new BigDecimal("-124");
+    BigDecimal bottomRightY = new BigDecimal("46");
+    BigDecimal width = new BigDecimal("1000");
+    
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
+    MapSerializeStrategy innerStrategy = new MapSerializeStrategy();
+    MapWithLatLngSerializeStrategy strategy = new MapWithLatLngSerializeStrategy(extents, width, innerStrategy);
+    
+    // Act
+    Map<String, String> result = strategy.getRecord(entity);
+    
+    // Assert
+    assertTrue(result.containsKey("position.longitude"));
+    assertTrue(result.containsKey("position.latitude"));
+    // Values should be transformed from grid space to geo space
+    assertNotEquals("1", result.get("position.longitude"));
+    assertNotEquals("1", result.get("position.latitude"));
   }
 
   @Test

@@ -68,7 +68,24 @@ public class MapWithLatLngSerializeStrategy implements
    */
   @Override
   public Map<String, String> getRecord(Entity entity) {
+    Map<String, String> result = inner.getRecord(entity);
     
+    if (entity.getGeometry().isPresent()) {
+      EngineGeometry geometry = entity.getGeometry().get();
+      
+      // Convert grid coordinates to lat/lng using extents
+      BigDecimal longitude = extents.getTopLeftX().add(
+          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, BigDecimal.ROUND_HALF_UP)
+      );
+      BigDecimal latitude = extents.getTopLeftY().add(
+          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, BigDecimal.ROUND_HALF_UP)
+      );
+      
+      result.put("position.longitude", longitude.toString());
+      result.put("position.latitude", latitude.toString());
+    }
+    
+    return result;
   }
   
 }
