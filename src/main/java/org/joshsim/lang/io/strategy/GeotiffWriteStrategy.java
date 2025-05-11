@@ -6,13 +6,16 @@
 
 package org.joshsim.lang.io.strategy;
 
-import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.apache.sis.coverage.grid.GridCoverage;
+import org.apache.sis.coverage.grid.GridExtent;
+import org.apache.sis.coverage.grid.GridGeometry;
+import org.apache.sis.storage.StorageConnector;
+import org.apache.sis.storage.geotiff.GeoTiffStore;
 
 
 /**
@@ -84,18 +87,27 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         }
       }
 
-      // Create grid coverage
-      GridCoverageFactory factory = new GridCoverageFactory();
-      GridCoverage2D coverage = factory.create(
-          variable,
-          gridData,
-          new Rectangle2D.Double(minLon, minLat, maxLon - minLon, maxLat - minLat)
-      );
+      // Create grid geometry
+      GridExtent extent = new GridExtent(null, new double[]{minLon, minLat}, 
+          new double[]{maxLon, maxLat}, new int[]{width, height});
+      GridGeometry geometry = new GridGeometry(extent, null);
 
-      // Write to GeoTIFF
-      GeoTiffWriter writer = new GeoTiffWriter(outputStream);
-      writer.write(coverage, null);
-      writer.dispose();
+      // Create grid coverage
+      GridCoverage coverage = new GridCoverage(variable, gridData, geometry);
+
+      // Write to GeoTIFF using temporary file
+      File tempFile = File.createTempFile("geotiff", ".tif");
+      tempFile.deleteOnExit();
+      
+      try (GeoTiffStore store = new GeoTiffStore(null, new StorageConnector(tempFile))) {
+        store.createCoverage(coverage);
+        
+        // Copy temp file to output stream
+        Files.copy(tempFile.toPath(), outputStream);
+        outputStream.flush();
+      } finally {
+        tempFile.delete();
+      }
       
     } catch (Exception e) {
       throw new RuntimeException("Failed to write GeoTIFF: " + e.getMessage(), e);
