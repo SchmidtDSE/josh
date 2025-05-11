@@ -15,11 +15,13 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import org.apache.sis.coverage.grid.GridCoverageBuilder;
 import org.apache.sis.referencing.util.j2d.AffineTransform2D;
+import org.joshsim.engine.geometry.HaversineUtil;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
@@ -69,10 +71,13 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       // Fill grid with values
       RenderedImage targetImage = null;  // TODO
       for (Map<String, String> record : records) {
-        double longitude = Double.parseDouble(record.get("position.longitude"));
-        double latitude = Double.parseDouble(record.get("position.latitude"));
+        BigDecimal longitude = new BigDecimal(record.get("position.longitude"));
+        BigDecimal latitude = new BigDecimal(record.get("position.latitude"));
         String valueStr = record.get(variable);
         float value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
+
+        HaversineUtil.HaversinePoint point = new HaversineUtil.HaversinePoint(longitude, latitude);
+
         // TODO - add value to target image using HaversineUtil if needed
       }
 
