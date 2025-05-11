@@ -24,6 +24,12 @@ assert_ok() {
   fi
 }
 
+echo "Testing CSV output..."
 rm -f /tmp/simple_josh.csv
 assert_ok examples/simulations/simple.josh TestSimpleSimulation || exit 1
 [ -f "/tmp/simple_josh.csv" ] || exit 2
+
+echo "Testing netCDF output..."
+rm -f /tmp/simple_josh.nc
+assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 3
+[ -f "/tmp/simple_josh.nc" ] || exit 4
