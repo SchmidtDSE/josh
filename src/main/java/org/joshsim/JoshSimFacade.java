@@ -10,6 +10,7 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -82,11 +83,18 @@ public class JoshSimFacade {
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
     GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
 
-    
+    JvmInputOutputLayer inputOutputLayer;
+    if (extractor.getStartStr().contains("degree")) {
+      PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+      EngineValueFactory valueFactory = EngineValueFactory.getDefault();
+      ExtentsUtil.addExtents();
+    } else {
+      inputOutputLayer = new JvmInputOutputLayer();
+    }
     
     JoshSimFacadeUtil.runSimulation(
         engineGeometryFactory,
-        new JvmInputOutputLayer(),
+        inputOutputLayer,
         program,
         simulationName,
         callback,

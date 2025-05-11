@@ -1,4 +1,3 @@
-
 package org.joshsim.engine.geometry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,6 +13,7 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 
 class ExtentsUtilTest {
 
@@ -34,7 +34,7 @@ class ExtentsUtilTest {
   @DisplayName("addExtents should handle latitude first coordinates")
   void addExtentsHandlesLatitudeFirst() {
     // Arrange
-    String coordinates = "33.5 latitude, -115.5 longitude";
+    String coordinates = "10 latitude, -20 longitude";
     
     // Act
     ExtentsUtil.addExtents(builder, coordinates, true, valueFactory);
@@ -52,7 +52,7 @@ class ExtentsUtilTest {
   @DisplayName("addExtents should handle longitude first coordinates")
   void addExtentsHandlesLongitudeFirst() {
     // Arrange
-    String coordinates = "-115.5 longitude, 33.5 latitude";
+    String coordinates = "-20 longitude, 10 latitude";
     
     // Act
     ExtentsUtil.addExtents(builder, coordinates, true, valueFactory);
@@ -70,22 +70,22 @@ class ExtentsUtilTest {
   @DisplayName("parseExtentComponent should correctly parse coordinate components")
   void parseExtentComponentParsesCorrectly() {
     // Arrange
-    String component = "33.5 degrees";
-    when(valueFactory.build(new BigDecimal("33.5"), new Units("degrees"))).thenReturn(mockValue);
+    String component = "1.23 degrees";
+    when(valueFactory.build(new BigDecimal("1.23"), new Units("degrees"))).thenReturn(mockValue);
 
     // Act
     EngineValue result = ExtentsUtil.parseExtentComponent(component, valueFactory);
 
     // Assert
     assertEquals(mockValue, result);
-    verify(valueFactory).build(new BigDecimal("33.5"), new Units("degrees"));
+    verify(valueFactory).build(new BigDecimal("1.23"), new Units("degrees"));
   }
 
   @Test
   @DisplayName("addExtents should handle end coordinates")
   void addExtentsHandlesEndCoordinates() {
     // Arrange
-    String coordinates = "33.5 latitude, -115.5 longitude";
+    String coordinates = "10 latitude, -20 longitude";
     
     // Act
     ExtentsUtil.addExtents(builder, coordinates, false, valueFactory);
