@@ -6,7 +6,8 @@
 
 package org.joshsim.lang.io.strategy;
 
-import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import org.apache.sis.coverage.grid.GridExtent;
@@ -97,13 +98,14 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       GridCoverageBuilder builder = new GridCoverageBuilder();
       setGridInBuilder(builder);
 
-      // Fill grid with values
-      BufferedImage targetImage = new BufferedImage(
+      // Create raster directly
+      WritableRaster raster = Raster.createBandedRaster(
+          DataBuffer.TYPE_FLOAT,
           dimensions.getGridWidthPixels(),
           dimensions.getGridHeightPixels(),
-          BufferedImage.TYPE_INT_RGB
+          1, // single band
+          null
       );
-      WritableRaster raster = targetImage.getRaster();
 
       for (Map<String, String> record : records) {
         double longitude = Double.valueOf(record.get("position.longitude"));
@@ -144,7 +146,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       }
 
       // Set the values
-      builder.setValues(targetImage);
+      builder.setValues(raster);
 
       // Write to GeoTIFF using Apache SIS
       GridCoverage coverage = builder.build();
