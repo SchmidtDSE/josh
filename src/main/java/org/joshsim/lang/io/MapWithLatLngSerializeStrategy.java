@@ -47,10 +47,9 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
     this.inner = inner;
     this.extents = extents;
     this.width = width;
-    this.gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
-    this.gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
-    this.longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
-    this.latitudeRange = extents.getBottomRightY().subtract(extents.getTopLeftY());
+
+    this.gridWidthMeters = ;  // TODO - Get distance via HaversineUtil
+    this.gridHeightMeters = ;  // TODO - Get distance via HaversineUtil
   }
 
   /**
@@ -69,13 +68,13 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
 
-      // Convert grid coordinates to lat/lng using extents
-      BigDecimal longitude = extents.getTopLeftX().add(
-          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
-      );
-      BigDecimal latitude = extents.getTopLeftY().add(
-          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
-      );
+      // TODO - Get distance from upper left
+      BigDecimal distanceFromLeftMeters = ;
+      BigDecimal distanceFromTopMeters = ;
+
+      // TODO - Convert grid coordinates to lat/lng through HaversineUtil getAtDistanceFrom
+      BigDecimal longitude = ;
+      BigDecimal latitude = ;
 
       result.put("position.longitude", longitude.toString());
       result.put("position.latitude", latitude.toString());
