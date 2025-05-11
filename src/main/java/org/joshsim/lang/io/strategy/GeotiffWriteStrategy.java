@@ -58,7 +58,70 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
    */
   @Override
   protected void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
+    try {
+      // Create temporary file
+      File tempFile = File.createTempFile("geotiff", ".tif");
+      
+      // Process data from records
+      double minLon = Double.MAX_VALUE;
+      double maxLon = -Double.MAX_VALUE;
+      double minLat = Double.MAX_VALUE;
+      double maxLat = -Double.MAX_VALUE;
+      
+      // Find bounds
+      for (Map<String, String> record : records) {
+        double lon = Double.parseDouble(record.get("position.longitude"));
+        double lat = Double.parseDouble(record.get("position.latitude"));
+        minLon = Math.min(minLon, lon);
+        maxLon = Math.max(maxLon, lon);
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+      }
 
+      // Create store
+      StorageConnector connector = new StorageConnector(tempFile);
+      GeoTiffStore store = new GeoTiffStoreProvider().open(connector);
+
+      // Create grid data
+      int width = (int) Math.ceil((maxLon - minLon) / this.width.doubleValue());
+      int height = (int) Math.ceil((maxLat - minLat) / this.width.doubleValue());
+      float[][] gridData = new float[height][width];
+
+      // Fill grid with values
+      for (Map<String, String> record : records) {
+        double lon = Double.parseDouble(record.get("position.longitude"));
+        double lat = Double.parseDouble(record.get("position.latitude"));
+        String valueStr = record.get(variable);
+        float value = valueStr != null ? Float.parseFloat(valueStr) : 0f;
+        
+        int x = (int) ((lon - minLon) / this.width.doubleValue());
+        int y = height - 1 - (int) ((lat - minLat) / this.width.doubleValue());
+        
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          gridData[y][x] = value;
+        }
+      }
+
+      // Create grid coverage
+      GridCoverageResource coverage = store.createCoverageResource();
+      coverage.setData(gridData);
+      coverage.setDomain(extents);
+
+      // Write to temporary file
+      store.flush();
+      store.close();
+
+      // Copy temp file to output stream
+      byte[] buffer = Files.readAllBytes(tempFile.toPath());
+      outputStream.write(buffer);
+      outputStream.flush();
+
+      // Cleanup
+      tempFile.delete();
+      
+    } catch (IOException | DataStoreException e) {
+      throw new RuntimeException("Failed to write GeoTIFF", e);
+    }
   }
 
   @Override
