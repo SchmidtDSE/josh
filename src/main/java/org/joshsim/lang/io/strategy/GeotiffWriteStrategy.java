@@ -27,7 +27,10 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.datum.PixelInCell;
 import org.opengis.referencing.operation.MathTransform;
 import org.joshsim.engine.geometry.HaversineUtil;
-
+import org.apache.sis.storage.StorageConnector;
+import org.apache.sis.storage.geotiff.GeoTiffStore;
+import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
+import org.apache.sis.storage.GridCoverageResource;
 
 /**
  * Strategy to write a single geotiff.
@@ -142,7 +145,18 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       // Set the values
       builder.setValues(targetImage);
 
-      // TODO - Write to GeoTIFF
+      // Write to GeoTIFF using Apache SIS
+      org.apache.sis.storage.Resource resource = builder.build();
+      if (!(resource instanceof GridCoverageResource)) {
+          throw new IOException("Failed to create grid coverage resource");
+      }
+      GridCoverageResource coverageResource = (GridCoverageResource) resource;
+      
+      // Create GeoTIFF store and write
+      StorageConnector connector = new StorageConnector(tempFile);
+      GeoTiffStore store = new GeoTiffStore(null, new GeoTiffStoreProvider(), connector, false);
+      store.createCopy(coverageResource);
+      store.close();
 
       // Copy temp file to output stream
       byte[] buffer = Files.readAllBytes(tempFile.toPath());
