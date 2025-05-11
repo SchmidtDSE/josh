@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
