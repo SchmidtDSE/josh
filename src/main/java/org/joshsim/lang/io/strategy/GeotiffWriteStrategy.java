@@ -104,6 +104,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         double longitude = Double.valueOf(record.get("position.longitude"));
         double latitude = Double.valueOf(record.get("position.latitude"));
         System.out.println("Longitude: " + longitude + ", Latitude: " + latitude);
+        System.out.println("Longitude range from " + dimensions.getMinLon() + " to " + dimensions.getMaxLon());
+        System.out.println("Latitude range from " + dimensions.getMinLat() + " to " + dimensions.getMaxLat());
         String valueStr = record.get(variable);
         double value = valueStr != null ? Double.parseDouble(valueStr) : Double.NaN;
 
@@ -133,6 +135,8 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         // Calculate pixel position
         double percentX = distanceFromWest / totalWidthMeters;
         double percentY = distanceFromSouth / totalHeightMeters;
+        System.out.println(distanceFromWest + " : " + totalWidthMeters);
+        System.out.println(distanceFromSouth + " : " + totalHeightMeters);
         System.out.println("PercentX: " + percentX + ", PercentY: " + percentY);
         double pixelX = percentX * dimensions.getGridWidthPixels();
         double pixelY = percentY * dimensions.getGridHeightPixels();
