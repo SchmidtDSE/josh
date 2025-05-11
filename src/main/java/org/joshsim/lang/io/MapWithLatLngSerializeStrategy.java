@@ -75,10 +75,10 @@ public class MapWithLatLngSerializeStrategy implements
       
       // Convert grid coordinates to lat/lng using extents
       BigDecimal longitude = extents.getTopLeftX().add(
-          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, BigDecimal.ROUND_HALF_UP)
+          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
       );
       BigDecimal latitude = extents.getTopLeftY().add(
-          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, BigDecimal.ROUND_HALF_UP)
+          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
       );
       
       result.put("position.longitude", longitude.toString());

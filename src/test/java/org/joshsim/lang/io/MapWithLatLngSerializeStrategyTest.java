@@ -2,6 +2,8 @@
 package org.joshsim.lang.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,19 +22,18 @@ class MapWithLatLngSerializeStrategyTest {
   private MapWithLatLngSerializeStrategy strategy;
   private MapSerializeStrategy innerStrategy;
   private PatchBuilderExtents extents;
+  private BigDecimal width;
 
   @BeforeEach
   void setUp() {
-    // Create real instances with test coordinates similar to GridBuilderExtentsBuilderTest
     BigDecimal topLeftX = new BigDecimal("-123");
     BigDecimal topLeftY = new BigDecimal("45");
     BigDecimal bottomRightX = new BigDecimal("-124");
     BigDecimal bottomRightY = new BigDecimal("46");
-    BigDecimal width = new BigDecimal("1000");
-    
+    width = new BigDecimal("1000");
     extents = new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
     innerStrategy = new MapSerializeStrategy();
-    strategy = new MapWithLatLngSerializeStrategy(extents, width innerStrategy);
+    strategy = new MapWithLatLngSerializeStrategy(extents, width, innerStrategy);
   }
 
   @Test
@@ -47,16 +48,12 @@ class MapWithLatLngSerializeStrategyTest {
     when(geometry.getCenterY()).thenReturn(BigDecimal.ONE);
     when(entity.getGeometry()).thenReturn(Optional.of(geometry));
     
-    // Set up test extents (-123, 45) to (-124, 46)
-    BigDecimal topLeftX = new BigDecimal("-123");
-    BigDecimal topLeftY = new BigDecimal("45");
-    BigDecimal bottomRightX = new BigDecimal("-124");
-    BigDecimal bottomRightY = new BigDecimal("46");
-    BigDecimal width = new BigDecimal("1000");
-    
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY);
     MapSerializeStrategy innerStrategy = new MapSerializeStrategy();
-    MapWithLatLngSerializeStrategy strategy = new MapWithLatLngSerializeStrategy(extents, width, innerStrategy);
+    MapWithLatLngSerializeStrategy strategy = new MapWithLatLngSerializeStrategy(
+        extents,
+        width,
+        innerStrategy
+    );
     
     // Act
     Map<String, String> result = strategy.getRecord(entity);
