@@ -108,7 +108,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         double longitude = Double.valueOf(record.get("position.longitude"));
         double latitude = Double.valueOf(record.get("position.latitude"));
         String valueStr = record.get(variable);
-        double value = valueStr != null ? Float.parseFloat(valueStr) : Float.NaN;
+        double value = valueStr != null ? Double.parseDouble(valueStr) : Double.NaN;
 
         // Calculate distances using Haversine
         HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
@@ -143,7 +143,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       }
 
       // Set the values directly
-      builder.values().setAll(raster);
+      builder.setValues(raster);
 
       File tempFile = null;
       try {
