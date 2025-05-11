@@ -68,9 +68,10 @@ public class GeotiffExportFacade implements ExportFacade {
     Map<String, String> serialized = serializeStrategy.getRecord(entity);
     String longitude = serialized.get("position.longitude");
     String latitude = serialized.get("position.latitude");
+    String stepStr = "" + step;
 
     for (String varName : variables) {
-      StreamReference reference = new StreamReference(serialized.get("step"), varName);
+      StreamReference reference = new StreamReference(stepStr, varName);
       String valueRaw = serialized.get(varName);
       String value = valueRaw == null ? "0" : valueRaw;
       Task task = new Task(reference, longitude, latitude, value);
@@ -300,7 +301,9 @@ public class GeotiffExportFacade implements ExportFacade {
 
     @Override
     public void onEnd() {
+      System.out.println("Closing all output streams: " + outputStreams.size());
       for (StreamReference reference : outputStreams.keySet()) {
+        System.out.println("Closing stream for " + reference);
         onEnd(reference);
       }
 
