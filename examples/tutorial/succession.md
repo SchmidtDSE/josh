@@ -1,46 +1,69 @@
-In progress..
+# Succession Model
+A simple succession model where growth of two species of tree is influenced by temperature and precipitation which also exhibits extreme heat disturbance. 
 
-  
-# Bioclimatic limits
+## Density
+Density is represented by agents where each agent may represent a certain number of trees. Each tree species can reach up to 10 agents per patch. The probability of a new agent being created is defined by
 
-$p_S = \begin{cases}  = 0 \quad if \quad T < 273  \quad or \quad T > 373 \\ = p_S^* \quad else \end{cases} \quad$ where
+$p_c = min(-(n - 5)^2 / 20 + 1.1, 1)$
 
-Dependent variable: $p_S \in [0,1]$ is survival probability
-Independent variable: $T$ is temperature in K
+This parabolic function is limited to 1 and a tree is viable so long as bioclimatic limits are not exceeded. Note that $n$ refers to the total number of trees on the patch.
 
-Parameter: 
-- $p_S^*$ is optimal survival probability
-	- $p_{S,A}^* = 0.3$ (Species A)
-	- $p_{S,B}^* = 0.5$ (Species B)
+## Growth
+Growth is a function of both temperature and precipitation. 
 
-# Temperature dependency of growth
+### Optimal growth rate
+Under optimal conditions, both trees see an optimal growth rate of $g^* = 1$.
 
-$g = g^* - b(T - T^*)^2$  where
+### Temperature-dependency of growth
+The influence of temperature on growth rate is defined as follows:
 
-Dependent variable: $g \in [0,1]$ is a growth rate scalar
-Independent variable: $T$ is temperature in K
+$g = g^* - b(T - T^*)^2$
 
-Constants: 
-- $g^* = 1$ is the optimal growth rate
-- $b = 0.0025$ is a scaling parameter
-Parameter: 
-- $T^*$ is optimal temperature in K
-	- $T_A^* = 300$ (Species A)
-	- $T_B^* = 320$ (Species B)
+In this sytem:
 
-# Precipitation dependency of growth
+  - Dependent variable: $g \in [0,1]$ is a growth rate scalar
+  - Independent variable: $T$ is temperature in K
 
-plot y = 1/(1 + e^(-0.01(x - 500) ))
+Note that $b = 0.0025$ is a scaling parameter and this behavior is subject to the following where $T^*$ is optimal temperature in K:
 
-$g = \frac{g^*}{e^{r(P - P^{c})}}$ where
+  - $T_A^* = 300$ (Species A)
+  - $T_B^* = 320$ (Species B)
 
-Dependent variable: $g \in [0,1]$ is a growth rate scalar
-Independent variable: $P$ is annual precipitation in mm
+### Precipitation-dependency of growth
+The influence of precipitation on growth rate is defined as follows:
 
-Constants: 
-- $g^* = 1$ is the optimal growth rate
-- $r = 0.001$ is a scaling parameter
-Parameter: 
-- $P^c$ is the critical precipitation in mm ( $g(P^c) = 0.5$ )
-	- $P_A^c = 500$ (Species A)
-	- $P_B^c = 400$ (Species B)
+$g = \frac{g^*}{e^{r(P - P^{c})}}$
+
+In this system:
+
+  - Dependent variable: $g \in [0,1]$ is a growth rate scalar
+  - Independent variable: $P$ is annual precipitation in mm
+
+Note that $r = 0.001$ is a scaling parameter and this behavior is subjec to $P^c$ (the critical precipitation in mm where $g(P^c) = 0.5$ ):
+
+  - $P_A^c = 500$ (Species A)
+  - $P_B^c = 400$ (Species B)
+
+## Survival probability
+The probabiliy of survival is defined both under presence and absence of extreme heat stress.
+
+### Typical surivival probability
+Where $p_S^*$ is optimal survival probability:
+
+ - $p_{S,A}^* = 0.3$ (Species A)
+ - $p_{S,B}^* = 0.5$ (Species B)
+
+These probabilities may be modified under extreme heat stress.
+
+### Bioclimatic limits
+Probablity of survival ($p_S$) is limited by extreme heat as described by the following in K:
+
+ - $= 0 \quad if \quad T < 273  \quad or \quad T > 373$
+ - $= p_S^* else$
+ 
+In this system, consider the following:
+
+ - Dependent variable: $p_S \in [0,1]$ is survival probability
+ - Independent variable: $T$ is temperature in K
+
+These stresses are read from external data.
