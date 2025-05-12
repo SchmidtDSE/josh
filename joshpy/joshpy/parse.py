@@ -7,15 +7,130 @@ import joshpy.definitions
 
 
 class ResponseReader:
-
+  """Utility to parse responses from the engine."""
+  
   def __init__(self, callback):
+    """Create a new reader which parses external responses.
+    
+    Args:
+      callback: Function to call when replicates are ready.
+    """
+    self._replicate_reducer = {}  # Map of replicate ID to list of data points
+    self._complete_replicates = []  # List of completed replicate data
     self._callback = callback
+    self._buffer = ""
+    self._completed_replicates = 0
 
-  def process_response(self, line: str):
-    raise NotImplementedError('Not implemented yet.')
+  def process_response(self, text: str):
+    """Parse a response into data records.
+    
+    Args:
+      text: The text returned by the engine.
+    """
+    self._buffer += text
+    lines = self._buffer.split("\n")
+    self._buffer = lines.pop()
+
+    for line in (x.strip() for x in lines if x.strip()):
+      intermediate = self._parse_engine_response(line)
+      
+      if intermediate["type"] == "datum":
+        replicate_id = intermediate["replicate"]
+        if replicate_id not in self._replicate_reducer:
+          self._replicate_reducer[replicate_id] = []
+          
+        parsed = {
+          "target": intermediate["datum"]["target"],
+          "attributes": intermediate["datum"]["attributes"]
+        }
+        self._replicate_reducer[replicate_id].append(parsed)
+        
+      elif intermediate["type"] == "end":
+        self._completed_replicates += 1
+        self._complete_replicates.append(
+          self._replicate_reducer[intermediate["replicate"]]
+        )
+        self._callback(self._completed_replicates)
 
   def get_complete_replicates(self) -> joshpy.definitions.SimulationResults:
-    raise NotImplementedError('Not implemented yet.')
+    """Get a listing of all completed replicates.
+    
+    Returns:
+      Result from each replicate as an individual element in the list.
+    """
+    return self._complete_replicates
+
+  def _parse_datum(self, source: str) -> dict:
+    """Parse a single data point from a transfer string without replicate prefix.
+    
+    Args:
+      source: The internal transfer string to parse.
+      
+    Returns:
+      Dictionary with target name and attributes.
+    """
+    first_pieces = source.split(':', 1)
+    target = first_pieces[0]
+    attributes_str = first_pieces[1] if len(first_pieces) > 1 else ""
+
+    attributes = {}
+    if not attributes_str:
+      return {"target": target, "attributes": attributes}
+
+    pairs = attributes_str.split("\t")
+    for pair in pairs:
+      if not pair:
+        continue
+      pair_pieces = pair.split('=', 1)
+      if len(pair_pieces) != 2:
+        continue
+        
+      key, value = pair_pieces
+      if key and value is not None:
+        try:
+          # Try parsing as number if possible
+          if '.' in value:
+            attributes[key] = float(value)
+          else:
+            attributes[key] = int(value)
+        except ValueError:
+          attributes[key] = value
+
+    return {"target": target, "attributes": attributes}
+
+  def _parse_engine_response(self, source: str) -> dict:
+    """Parse a data point from a transfer string with replicate prefix.
+    
+    Args:
+      source: The line returned from the engine.
+      
+    Returns:
+      Dictionary with replicate number and message type.
+    """
+    import re
+    
+    end_match = re.match(r'^\[end (\d+)\]$', source)
+    if end_match:
+      return {
+        "replicate": int(end_match.group(1)),
+        "type": "end"
+      }
+
+    match = re.match(r'^\[(\d+)\] (.+)$', source)
+    if not match:
+      raise ValueError("Got malformed engine response")
+
+    replicate = int(match.group(1))
+    data = self._parse_datum(match.group(2))
+    
+    if not data:
+      raise ValueError("Got malformed engine response")
+
+    return {
+      "replicate": replicate,
+      "type": "datum",
+      "datum": data
+    }
 
 
 class EngineValue:
