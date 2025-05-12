@@ -1,12 +1,11 @@
 import unittest
-
 from typing import List
-from .virtual_file import VirtualFile, serialize_files
+import virtual_file
 
 class TestVirtualFile(unittest.TestCase):
     def setUp(self):
-        self.text_file = VirtualFile("hello.txt", "Hello World", False)
-        self.binary_file = VirtualFile("test.bin", "YmluYXJ5", True)  # "binary" in base64
+        self.text_file = virtual_file.VirtualFile("hello.txt", "Hello World", False)
+        self.binary_file = virtual_file.VirtualFile("test.bin", "YmluYXJ5", True)  # "binary" in base64
         
     def test_get_name(self):
         self.assertEqual(self.text_file.get_name(), "hello.txt")
@@ -21,8 +20,8 @@ class TestVirtualFile(unittest.TestCase):
         self.assertTrue(self.binary_file.is_binary())
 
     def test_serialize_files_empty(self):
-        files: List[VirtualFile] = []
-        result = serialize_files(files)
+        files: List[virtual_file.VirtualFile] = []
+        result = virtual_file.serialize_files(files)
         self.assertEqual(result, "")
 
     def test_serialize_single_text_file(self):
