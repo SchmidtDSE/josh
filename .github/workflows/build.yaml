@@ -63,6 +63,25 @@ jobs:
         run: ./gradlew checkstyleMain
       - name: Check test style
         run: ./gradlew checkstyleTest
+  checkPython:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Python Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install mypy pyflakes types-requests nose2
+      - name: Run mypy
+        run: mypy joshpy/joshpy/*.py
+      - name: Run pyflakes
+        run: pyflakes joshpy/joshpy/*.py
+      - name: Run tests
+        run: cd joshpy && nose2
   testJava:
     needs: buildJava
     environment: Build
