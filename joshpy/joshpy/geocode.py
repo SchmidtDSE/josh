@@ -8,8 +8,12 @@ of Haversine to support these operations.
 License: BSD-3-Clause
 """
 
+import math
+
 import joshpy.definitions
 import joshpy.metadata
+
+EARTH_RADIUS_METERS = 6371000
 
 
 def add_positions(results: joshpy.definitions.SimulationResults,
@@ -101,8 +105,6 @@ def get_distance_meters(start: EarthPoint, end: EarthPoint) -> float:
   Returns:
     Distance between start and end in meters.
   """
-  EARTH_RADIUS_METERS = 6371000
-  
   angle_lat_start = math.radians(start.get_latitude())
   angle_lat_end = math.radians(end.get_latitude())
   delta_lat = math.radians(end.get_latitude() - start.get_latitude())
