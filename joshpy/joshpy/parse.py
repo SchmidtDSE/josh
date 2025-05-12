@@ -3,6 +3,21 @@
 License: BSD-3-Clause
 """
 
+import joshpy.definitions
+
+
+class ResponseReader:
+
+  def __init__(self, callback):
+    self._callback = callback
+
+  def process_response(self, line: str):
+    raise NotImplementedError('Not implemented yet.')
+
+  def get_complete_replicates(self) -> joshpy.definitions.SimulationResults:
+    raise NotImplementedError('Not implemented yet.')
+
+
 class EngineValue:
   """Value returned by the engine."""
 
