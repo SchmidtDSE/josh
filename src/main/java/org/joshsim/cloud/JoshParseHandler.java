@@ -15,14 +15,15 @@ import io.undertow.util.HttpString;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
-import java.util.StringJoiner;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.engine.value.EngineValue;
 import org.joshsim.engine.value.EngineValueFactory;
@@ -162,14 +163,19 @@ public class JoshParseHandler implements HttpHandler {
         try {
           MutableEntity simEntityRaw = facade.getSimulations().getProtoype(simName).build();
           MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-          GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+          GridInfoExtractor extractor = new GridInfoExtractor(
+              simEntity,
+              EngineValueFactory.getDefault()
+          );
 
           EngineValue size = extractor.getSize();
-          gridInfo = String.format("%s,%s,%s %s",
+          gridInfo = String.format(
+              "%s,%s,%s %s",
               extractor.getStartStr(),
               extractor.getEndStr(),
               size.getAsDecimal().toString(),
-              size.getUnits().toString());
+              size.getUnits().toString()
+          );
         } catch (Exception e) {
           // Keep gridInfo empty on any error
         }
@@ -183,4 +189,3 @@ public class JoshParseHandler implements HttpHandler {
     return Optional.of(apiKey);
   }
 }
-```
