@@ -19,18 +19,17 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.JoshSimFacadeUtil;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.lang.bridge.ShadowingEntity;
+import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.bridge.GridInfoExtractor;
-import org.joshsim.engine.value.EngineValue;
-import org.joshsim.engine.value.EngineValueFactory;
-import org.joshsim.engine.Simulation;
-import org.joshsim.simulator.facade.JoshSimFacade;
-import org.joshsim.entity.base.MutableEntity;
-import org.joshsim.entity.shadow.ShadowingEntity;
+
 
 /**
  * Handler which parses Josh code and returns parse results with simulation names.
@@ -49,7 +48,7 @@ public class JoshParseHandler implements HttpHandler {
    * @param serialPatches Flag indicating if patches should be processed in serial.
    */
   public JoshParseHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
-      Optional<String> crs, boolean serialPatches) {
+                          Optional<String> crs, boolean serialPatches) {
     this.apiDataLayer = apiInternalLayer;
 
     if (!sandboxed) {
@@ -130,13 +129,17 @@ public class JoshParseHandler implements HttpHandler {
     String code = formData.getFirst("code").getValue();
     ParseResult result = JoshSimFacadeUtil.parse(code);
 
-    String parseStatus = result.hasErrors() ? 
-          result.getErrors().iterator().next().toString() : 
-          "success";
+    String parseStatus = "";
+    if (result.hasErrors()) {
+      parseStatus = result.getErrors().iterator().next().toString();
+    } else {
+      parseStatus = "success";
+    }
 
     SandboxInputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(
-      new HashMap<>(),
-      (x) -> {}
+        new HashMap<>(),
+        (x) -> {
+        }
     );
 
     StringJoiner responseJoiner = new StringJoiner("\t");
@@ -146,7 +149,7 @@ public class JoshParseHandler implements HttpHandler {
     String gridInfo = "";
 
     if (!result.hasErrors()) {
-      JoshSimFacade facade = JoshSimFacadeUtil.interpret(
+      JoshProgram facade = JoshSimFacadeUtil.interpret(
           geometryFactory,
           result,
           inputOutputLayer
