@@ -6,6 +6,8 @@
 
 package org.joshsim.lang.io.strategy;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import static org.gdal.gdal.gdal.AllRegister;
 import static org.gdal.gdal.gdal.GetDriverByName;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Float64;
@@ -20,6 +22,7 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.joshsim.engine.geometry.HaversineUtil;
 
 
 /**
@@ -33,6 +36,9 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   private final String variable;
   private final GeotiffDimensions dimensions;
+  private final HaversineUtil.HaversinePoint topLeft;
+  private final BigDecimal gridWidthPixels;
+  private final BigDecimal gridHeightPixels;
 
   /**
    * Constructs a new strategy for writing geotiff data.
@@ -44,6 +50,14 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   public GeotiffWriteStrategy(String variable, GeotiffDimensions dimensions) {
     this.variable = variable;
     this.dimensions = dimensions;
+
+    topLeft = new HaversineUtil.HaversinePoint(
+        BigDecimal.valueOf(dimensions.getMinLon()),
+        BigDecimal.valueOf(dimensions.getMaxLat())
+    );
+
+    gridWidthPixels = BigDecimal.valueOf(dimensions.getGridWidthPixels());
+    gridHeightPixels = BigDecimal.valueOf(dimensions.getGridHeightPixels());
   }
 
   /**
@@ -72,33 +86,38 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
       
       // Fill the grid with our data
       for (Map<String, String> record : records) {
-        double lon = Double.parseDouble(record.get("position.longitude"));
-        double lat = Double.parseDouble(record.get("position.latitude"));
+        BigDecimal lon = new BigDecimal(record.get("position.longitude"));
+        BigDecimal lat = new BigDecimal(record.get("position.latitude"));
         double value = Double.parseDouble(record.get(variable));
         
         // Calculate position using Haversine distances
-        HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(dimensions.getMinLon()),
-            BigDecimal.valueOf(dimensions.getMaxLat())
-        );
         HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
-            BigDecimal.valueOf(lon),
-            BigDecimal.valueOf(lat)
+            lon,
+            lat
         );
         
         // Get distances from top-left corner
         BigDecimal distanceWest = HaversineUtil.getDistance(
             topLeft,
-            new HaversineUtil.HaversinePoint(BigDecimal.valueOf(lon), BigDecimal.valueOf(dimensions.getMaxLat()))
+            new HaversineUtil.HaversinePoint(lon, BigDecimal.valueOf(dimensions.getMaxLat()))
         );
         BigDecimal distanceSouth = HaversineUtil.getDistance(
             topLeft,
-            new HaversineUtil.HaversinePoint(BigDecimal.valueOf(dimensions.getMinLon()), BigDecimal.valueOf(lat))
+            new HaversineUtil.HaversinePoint(BigDecimal.valueOf(dimensions.getMinLon()), lat)
         );
         
         // Calculate grid position using percentages
-        int x = (int)(distanceWest.doubleValue() / dimensions.getWidthMeters().doubleValue() * dimensions.getGridWidthPixels());
-        int y = (int)(distanceSouth.doubleValue() / dimensions.getHeightMeters().doubleValue() * dimensions.getGridHeightPixels());
+        BigDecimal horizPercent = distanceWest.divide(
+            dimensions.getWidthMeters(),
+            RoundingMode.HALF_UP
+        );
+        int x = (int) horizPercent.multiply(gridWidthPixels).longValue();
+        
+        BigDecimal vertPercent = distanceSouth.divide(
+            dimensions.getHeightMeters(),
+            RoundingMode.HALF_UP
+        );
+        int y = (int) vertPercent.multiply(gridHeightPixels).longValue();
         
         // Check bounds
         if (x >= 0 && x < dimensions.getGridWidthPixels() && 

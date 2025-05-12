@@ -59,9 +59,6 @@ dependencies {
   // Java Topology Suite for geometry handling
   implementation("org.locationtech.jts:jts-core:1.20.0")
 
-  // GDAL for GeoTIFF writing
-  implementation("org.gdal:gdal:3.8.0")
-
   // Interaction with browser
   implementation("org.teavm:teavm-core:0.11.0")
   implementation("org.teavm:teavm-jso:0.11.0")
@@ -82,7 +79,7 @@ dependencies {
   // Minio for S3 storage
   implementation("io.minio:minio:8.5.2")
 
-// GeoTools dependencies
+  // GeoTools dependencies
   implementation("org.geotools:gt-main:33.0")
   implementation("org.geotools:gt-geotiff:33.0") 
   implementation("org.geotools:gt-coverage:33.0")
