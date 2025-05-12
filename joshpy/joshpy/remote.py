@@ -107,7 +107,62 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
     Returns:
       Result of parsing with error information or simulation information.
     """
-    raise NotImplementedError('Not implemented yet.')
+    endpoint = f"{self._server}/parse"
+    data = {
+      'code': code,
+      'api_key': self._api_key
+    }
+    
+    if name is not None:
+      data['name'] = name
+      
+    try:
+      response = requests.post(endpoint, data=data)
+      if response.status_code != 200:
+        return ParseResult(
+          error=f"Server returned status code {response.status_code}",
+          simulation_names=[],
+          metadata=None
+        )
+        
+      # Parse response which is tab separated: status, names, metadata
+      parts = response.text.split('\t')
+      if len(parts) != 3:
+        return ParseResult(
+          error="Invalid response format from server",
+          simulation_names=[],
+          metadata=None
+        )
+        
+      status, names_csv, metadata_str = parts
+      
+      # Check parse status
+      if status != 'success':
+        return ParseResult(error=status, simulation_names=[], metadata=None)
+        
+      # Get simulation names
+      simulation_names = names_csv.split(',') if names_csv else []
+      
+      # Parse metadata if name was provided and metadata returned
+      metadata = None
+      if name is not None and metadata_str:
+        try:
+          metadata = self._parse_metadata(metadata_str)
+        except ValueError as e:
+          return ParseResult(
+            error=str(e),
+            simulation_names=[],
+            metadata=None
+          )
+          
+      return ParseResult(error=None, simulation_names=simulation_names, metadata=metadata)
+      
+    except requests.exceptions.RequestException as e:
+      return ParseResult(
+        error=f"Failed to connect to server: {str(e)}",
+        simulation_names=[],
+        metadata=None
+      )
 
   def _parse_metadata(self, target: str) -> joshpy.metadata.SimulationMetadata:
     """Parse the string returned from the server describing the metadata for a simulation.
@@ -119,4 +174,35 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
     Returns:
       joshpy.metadata.SimulationMetadata: Parsed simulation metadata.
     """
-    raise NotImplementedError('Not implemented yet.')
+    if not target:
+      raise ValueError("Empty metadata string provided")
+    
+    # Split into grid info parts, format is "start:end:size units"
+    parts = target.split(' ', 1)
+    if len(parts) != 2:
+      raise ValueError(f"Invalid metadata format: {target}")
+      
+    info_parts = parts[0].split(':')
+    if len(info_parts) != 3:
+      raise ValueError(f"Invalid grid info format: {parts[0]}")
+      
+    start_str, end_str, size_value = info_parts
+    units = parts[1]
+    
+    # Parse start and end coordinates 
+    start = joshpy.parse.parse_start_end_string(start_str)
+    end = joshpy.parse.parse_start_end_string(end_str)
+    size = joshpy.parse.parse_engine_value_string(size_value + ' ' + units)
+    
+    # Create metadata object with grid coordinates
+    return joshpy.metadata.SimulationMetadata(
+      start_x=0.0,
+      start_y=0.0, 
+      end_x=abs(end.get_longitude().get_value() - start.get_longitude().get_value()),
+      end_y=abs(end.get_latitude().get_value() - start.get_latitude().get_value()),
+      patch_size=size.get_value(),
+      min_longitude=min(start.get_longitude().get_value(), end.get_longitude().get_value()),
+      max_longitude=max(start.get_longitude().get_value(), end.get_longitude().get_value()),
+      min_latitude=min(start.get_latitude().get_value(), end.get_latitude().get_value()),
+      max_latitude=max(start.get_latitude().get_value(), end.get_latitude().get_value())
+    )
