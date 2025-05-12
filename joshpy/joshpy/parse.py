@@ -83,6 +83,71 @@ def parse_engine_value_string(target: str) -> EngineValue:
   return EngineValue(value, units)
 
 
+class ResponseReader:
+    """Reads and parses responses from the engine."""
+    
+    def __init__(self, on_replicate_external):
+        """Create a new response reader.
+        
+        Args:
+            on_replicate_external: Callback to invoke when replicates are ready.
+        """
+        self._replicate_reducer = {}  # Map equivalent in Python
+        self._complete_replicates = []
+        self._on_replicate_external = on_replicate_external
+        self._buffer = ""
+        self._completed_replicates = 0
+
+    def process_response(self, text: str) -> None:
+        """Parse a response into OutputDatum and SimulationResult objects.
+        
+        Args:
+            text: The text returned by the engine where the simulation is executing.
+        """
+        self._buffer += text
+        lines = self._buffer.split("\n")
+        self._buffer = lines.pop()
+
+        for line in (x.strip() for x in lines):
+            if not line:
+                continue
+                
+            intermediate = parse_engine_response(line)
+            
+            if intermediate["type"] == "datum":
+                replicate = intermediate["replicate"]
+                if replicate not in self._replicate_reducer:
+                    self._replicate_reducer[replicate] = SimulationResultBuilder()
+                
+                raw_input = intermediate["datum"]
+                parsed = OutputDatum(raw_input["target"], raw_input["attributes"])
+                self._replicate_reducer[replicate].add(parsed)
+                
+            elif intermediate["type"] == "end":
+                self._completed_replicates += 1
+                replicate = intermediate["replicate"]
+                self._complete_replicates.append(
+                    self._replicate_reducer[replicate].build()
+                )
+                self._on_replicate_external(self._completed_replicates)
+
+    def get_buffer(self) -> str:
+        """Get the buffer of response data not yet processed.
+        
+        Returns:
+            Data waiting to be processed.
+        """
+        return self._buffer
+
+    def get_complete_replicates(self) -> list:
+        """Get a listing of all completed replicates.
+        
+        Returns:
+            Result from each replicate as an individual element in the resulting array.
+        """
+        return self._complete_replicates
+
+
 def parse_start_end_string(target: str) -> StartEndString:
   """Parse a start or an end string.
 
