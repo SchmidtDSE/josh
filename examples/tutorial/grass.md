@@ -2,11 +2,15 @@ In progress..
 
 # Fire probability
 
+$p_F =$
 
-$p_F = \begin{cases}  = 0.05 \quad if \quad \varphi_{G} \geq 0.15 \\ = 0.01 \quad else \end{cases} \quad$ where
+ - $0.05 \quad if \quad \varphi_{G} \geq 0.15$
+ - $0.01 \quad else \end{cases} \quad$
 
-Dependent variable: $p_F \in [0,1]$ is fire probability
-Independent variable: $\varphi_{G}$ is fraction of grass cover
+where
+
+ - Dependent variable: $p_F \in [0,1]$ is fire probability
+ - Independent variable: $\varphi_{G}$ is fraction of grass cover
 
 # Fire damage
 
