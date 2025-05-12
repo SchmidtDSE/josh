@@ -32,3 +32,4 @@ editor/third_party
 editor/war
 
 *.jshd
+*.wasm
