@@ -75,7 +75,12 @@ def parse_engine_value_string(target: str) -> EngineValue:
   Returns:
     Parsed EngineValue.
   """
-  raise NotImplementedError('Not yet implemented.')
+  parts = target.strip().split(' ', 1)
+  if len(parts) != 2:
+    raise ValueError(f"Invalid engine value string format: {target}")
+  value = float(parts[0])
+  units = parts[1]
+  return EngineValue(value, units)
 
 
 def parse_start_end_string(target: str) -> StartEndString:
@@ -87,4 +92,17 @@ def parse_start_end_string(target: str) -> StartEndString:
   Returns:
     Parsed version of the string.
   """
-  raise NotImplementedError('Not yet implemented.')
+  parts = target.strip().split(',')
+  if len(parts) != 2:
+    raise ValueError(f"Invalid start/end string format: {target}")
+    
+  lat_parts = parts[0].strip().split(' ')
+  lon_parts = parts[1].strip().split(' ')
+  
+  if len(lat_parts) < 3 or len(lon_parts) < 3:
+    raise ValueError(f"Invalid coordinate format in: {target}")
+    
+  latitude = EngineValue(float(lat_parts[0]), lat_parts[1])
+  longitude = EngineValue(float(lon_parts[0]), lon_parts[1])
+  
+  return StartEndString(longitude, latitude)
