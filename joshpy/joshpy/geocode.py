@@ -124,6 +124,47 @@ def get_at_distance_from(start: EarthPoint, distance_meters: float, direction: s
   
   Args:
     start: The starting point from which a new point should be derived.
+    distance_meters: How far in a cardinal direction the new point should be from the starting point.
+    direction: The direction as a single letter string like N, S, E, W corresponding to the cardinal 
+      directions.
+
+  Returns:
+    New point which is the given distance in the given direction from the starting point.
+  
+  Raises:
+    ValueError: If direction is not one of N, S, E, or W.
+  """
+  lat = math.radians(start.get_latitude())
+  lng = math.radians(start.get_longitude())
+  
+  if direction not in ['N', 'S', 'E', 'W']:
+    raise ValueError("Direction must be N, S, E, or W")
+    
+  new_lat = lat
+  new_lng = lng
+  
+  if direction == 'N':
+    # Moving north increases latitude
+    new_lat = lat + (distance_meters / EARTH_RADIUS_METERS)
+  elif direction == 'S':
+    # Moving south decreases latitude  
+    new_lat = lat - (distance_meters / EARTH_RADIUS_METERS)
+  elif direction == 'E':
+    # Moving east increases longitude, adjusted for latitude
+    new_lng = lng + (distance_meters / (EARTH_RADIUS_METERS * math.cos(lat)))
+  else:  # direction == 'W'
+    # Moving west decreases longitude, adjusted for latitude
+    new_lng = lng - (distance_meters / (EARTH_RADIUS_METERS * math.cos(lat)))
+    
+  # Convert back to degrees
+  new_lat_degrees = math.degrees(new_lat)
+  new_lng_degrees = math.degrees(new_lng)
+  
+  return EarthPoint(new_lng_degrees, new_lat_degrees)
+  """Get a new point which is some distance from a starting point.
+  
+  Args:
+    start: The starting point from which a new point should be derived.
     distance_meters: How far in a cardinal direction the new point should be from the starting
       point.
     direction: The direction as a single letter string like N, S, E, W corresponding to the
