@@ -85,7 +85,7 @@ grid.low = 36.52 degrees latitude, -118.68 degrees longitude
 grid.high = 36.42 degrees latitude, -118.45 degrees longitude
 
 steps.low = 0 count
-steps.high = 20 count
+steps.high = 30 count
 ```
 
 This uses [Cal-Adapt](https://cal-adapt.org/) data.
