@@ -14,11 +14,14 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
 
 /**
@@ -47,7 +50,7 @@ public class JoshParseHandler implements HttpHandler {
 
     if (crs.isPresent()) {
       try {
-        geometryFactory = new EarthGeometryFactory(CRS.forCode(crs.get()));
+        geometryFactory = new GridGeometryFactory();
       } catch (Exception e) {
         throw new RuntimeException("Failed to parse CRS: " + e);
       }
@@ -122,15 +125,28 @@ public class JoshParseHandler implements HttpHandler {
     String parseStatus = result.hasErrors() ? 
         result.getErrors().iterator().next().toString() : 
         "success";
-    
-    String simulations = result.hasErrors() ? "" :
-        JoshSimFacadeUtil.interpret(geometryFactory, result)
-            .getSimulations()
-            .getSimulations()
-            .stream()
-            .collect(Collectors.joining(","));
 
-    httpServerExchange.getResponseSender().send(parseStatus + "\t" + simulations);
+    SandboxInputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(
+      new HashMap<>(),
+      (x) -> {}
+    );
+    
+    String simulationNamesCsv;
+    if (result.hasErrors()) {
+      simulationNamesCsv = "";
+    } else {
+      Iterable<String> simulationNames = JoshSimFacadeUtil.interpret(
+          geometryFactory,
+          result,
+          inputOutputLayer
+      ).getSimulations().getSimulations();
+      simulationNamesCsv = StreamSupport.stream(
+          simulationNames.spliterator(),
+          false
+      ).collect(Collectors.joining(","));
+    }
+
+    httpServerExchange.getResponseSender().send(parseStatus + "\t" + simulationNamesCsv);
     return Optional.of(apiKey);
   }
 }

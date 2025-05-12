@@ -41,3 +41,5 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
       replicates: int) -> joshpy.definitions.SimulationResults:
     raise NotImplementedError('Not yet implemented.')
 
+  def _parse_simulation(self, code: str) -> 
+
