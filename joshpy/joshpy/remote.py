@@ -5,6 +5,8 @@ License: BSD-3-Clause
 
 import typing
 
+import requests
+
 import joshpy.definitions
 import joshpy.metadata
 import joshpy.parse
@@ -105,59 +107,16 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
     Returns:
       Result of parsing with error information or simulation information.
     """
-    import requests
+    raise NotImplementedError('Not implemented yet.')
 
-    # Prepare request data
-    form_data = {'code': code}
-    if name is not None:
-      form_data['name'] = name
+  def _parse_metadata(self, target: str) -> joshpy.metadata.SimulationMetadata:
+    """Parse the string returned from the server describing the metadata for a simulation.
 
-    # Make request to parse endpoint
-    response = requests.post(
-      f"{self._server}/parse",
-      data=form_data,
-      headers={'X-API-Key': self._api_key}
-    )
+    Args:
+      target: The string section returned from the server, specifically the third value after the
+        two tab characters.
 
-    if response.status_code != 200:
-      return ParseResult(f"Parse request failed with status {response.status_code}", [], None)
-
-    # Parse response which is tab-delimited: status, simulation_names_csv, grid_info
-    parts = response.text.split('\t')
-
-    if len(parts) < 2:
-      return ParseResult("Invalid response format from server", [], None)
-
-    status = parts[0]
-    if status != 'success':
-      return ParseResult(status, [], None)
-
-    simulation_names = parts[1].split(',') if parts[1] else []
-
-    metadata = None
-    if len(parts) > 2 and parts[2] and name is not None:
-      try:
-        # Parse grid info which is: start,end,size units
-        grid_parts = parts[2].split(' ')
-        if len(grid_parts) == 2:
-          coords = grid_parts[0].split(',')
-          if len(coords) == 2:
-            start = joshpy.parse.parse_start_end_string(coords[0])
-            end = joshpy.parse.parse_start_end_string(coords[1])
-            size = joshpy.parse.parse_engine_value_string(grid_parts[1])
-
-            if size.get_units() in ['m', 'meter', 'meters']:
-              metadata = joshpy.metadata.SimulationMetadata(
-                start_x=0, start_y=0,
-                end_x=abs(end.get_longitude().get_value() - start.get_longitude().get_value()),
-                end_y=abs(end.get_latitude().get_value() - start.get_latitude().get_value()),
-                patch_size=size.get_value(),
-                min_longitude=min(start.get_longitude().get_value(), end.get_longitude().get_value()),
-                max_longitude=max(start.get_longitude().get_value(), end.get_longitude().get_value()),
-                min_latitude=min(start.get_latitude().get_value(), end.get_latitude().get_value()),
-                max_latitude=max(start.get_latitude().get_value(), end.get_latitude().get_value())
-              )
-      except Exception as e:
-        return ParseResult(str(e), simulation_names, None)
-
-    return ParseResult(None, simulation_names, metadata)
+    Returns:
+      joshpy.metadata.SimulationMetadata: Parsed simulation metadata.
+    """
+    raise NotImplementedError('Not implemented yet.')

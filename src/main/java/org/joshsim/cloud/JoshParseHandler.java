@@ -173,7 +173,7 @@ public class JoshParseHandler implements HttpHandler {
 
           EngineValue size = extractor.getSize();
           gridInfo = String.format(
-              "%s,%s,%s %s",
+              "%s:%s:%s %s",
               extractor.getStartStr(),
               extractor.getEndStr(),
               size.getAsDecimal().toString(),
