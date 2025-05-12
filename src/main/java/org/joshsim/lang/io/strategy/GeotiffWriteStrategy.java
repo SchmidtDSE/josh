@@ -70,10 +70,6 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
         }
       }
       
-      // Calculate meters per pixel
-      double degreesPerPixelX = (dimensions.getMaxLon() - dimensions.getMinLon()) / dimensions.getGridWidthPixels();
-      double degreesPerPixelY = (dimensions.getMaxLat() - dimensions.getMinLat()) / dimensions.getGridHeightPixels();
-      
       // Fill the grid with our data
       for (Map<String, String> record : records) {
         double lon = Double.parseDouble(record.get("position.longitude"));
