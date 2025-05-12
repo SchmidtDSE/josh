@@ -96,13 +96,19 @@ def parse_start_end_string(target: str) -> StartEndString:
   if len(parts) != 2:
     raise ValueError(f"Invalid start/end string format: {target}")
     
-  lat_parts = parts[0].strip().split(' ')
-  lon_parts = parts[1].strip().split(' ')
+  first_parts = parts[0].strip().split(' ')
+  second_parts = parts[1].strip().split(' ')
   
-  if len(lat_parts) < 3 or len(lon_parts) < 3:
+  if len(first_parts) < 3 or len(second_parts) < 3:
     raise ValueError(f"Invalid coordinate format in: {target}")
     
-  latitude = EngineValue(float(lat_parts[0]), lat_parts[1])
-  longitude = EngineValue(float(lon_parts[0]), lon_parts[1])
+  first_is_latitude = 'latitude' in first_parts[2]
+  
+  if first_is_latitude:
+    latitude = EngineValue(float(first_parts[0]), first_parts[1])
+    longitude = EngineValue(float(second_parts[0]), second_parts[1])
+  else:
+    longitude = EngineValue(float(first_parts[0]), first_parts[1])
+    latitude = EngineValue(float(second_parts[0]), second_parts[1])
   
   return StartEndString(longitude, latitude)
