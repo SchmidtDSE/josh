@@ -7,7 +7,6 @@
 package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -59,7 +58,7 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
         extents.getTopLeftX(),
         extents.getBottomRightY()
     );
-    
+
     gridWidthMeters = HaversineUtil.getDistance(topLeft, topRight);
     gridHeightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
   }
@@ -79,10 +78,10 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
 
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
-      
+
       BigDecimal distanceFromLeftMeters = geometry.getCenterX().multiply(width);
       BigDecimal distanceFromTopMeters = geometry.getCenterY().multiply(width);
-      
+
       HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
           extents.getTopLeftX(),
           extents.getTopLeftY()
@@ -97,7 +96,7 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
           distanceFromTopMeters,
           "S"
       );
-      
+
       BigDecimal longitude = finalPoint.getLongitude();
       BigDecimal latitude = finalPoint.getLatitude();
 

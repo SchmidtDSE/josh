@@ -111,7 +111,7 @@ public class GeotiffDimensions {
    *
    * @return The width in meters.
    */
-  public double getWidthInMeters() {
+  public double getPatchWidthInMeters() {
     return widthInMeters;
   }
 
@@ -133,11 +133,21 @@ public class GeotiffDimensions {
     return gridHeightPixels;
   }
 
-  public BigDecimal getWidthMeters() {
+  /**
+   * Retrieves the width of the grid in meters.
+   *
+   * @return The grid's width as a BigDecimal.
+   */
+  public BigDecimal getGridWidthMeters() {
     return widthMeters;
   }
 
-  public BigDecimal getHeightMeters() {
+  /**
+   * Retrieves the height of the grid in meters.
+   *
+   * @return The grid's height as a BigDecimal.
+   */
+  public BigDecimal getGridHeightMeters() {
     return heightMeters;
   }
 

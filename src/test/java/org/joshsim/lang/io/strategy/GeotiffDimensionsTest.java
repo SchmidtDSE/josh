@@ -34,6 +34,6 @@ class GeotiffDimensionsTest {
     assertEquals(bottomRightX.doubleValue(), dimensions.getMaxLon());
     assertEquals(bottomRightY.doubleValue(), dimensions.getMinLat());
     assertEquals(topLeftY.doubleValue(), dimensions.getMaxLat());
-    assertEquals(cellWidth.doubleValue(), dimensions.getWidthInMeters());
+    assertEquals(cellWidth.doubleValue(), dimensions.getPatchWidthInMeters());
   }
 }

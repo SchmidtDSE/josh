@@ -6,11 +6,9 @@
 
 package org.joshsim.lang.io.strategy;
 
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -35,6 +33,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
   private final HaversineUtil.HaversinePoint topLeft;
   private final BigDecimal gridWidthPixels;
   private final BigDecimal gridHeightPixels;
+  private final BigDecimal patchWidth;
 
   /**
    * Constructs a new strategy for writing geotiff data.
@@ -54,6 +53,7 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
     gridWidthPixels = BigDecimal.valueOf(dimensions.getGridWidthPixels());
     gridHeightPixels = BigDecimal.valueOf(dimensions.getGridHeightPixels());
+    patchWidth = BigDecimal.valueOf(dimensions.getPatchWidthInMeters());
   }
 
   /**
@@ -69,29 +69,31 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
     try {
       // Create a grid coverage factory
       final GridCoverageFactory gcf = new GridCoverageFactory();
-      
+
       // Create the grid for our data
-      float[][] data = new float[dimensions.getGridHeightPixels()][dimensions.getGridWidthPixels()];
-      
+      int effectiveHeight = dimensions.getGridHeightPixels() + 1;
+      int effectiveWidth = dimensions.getGridWidthPixels() + 1;
+      float[][] data = new float[effectiveHeight][effectiveWidth];
+
       // Initialize with NaN
-      for (int y = 0; y < dimensions.getGridHeightPixels(); y++) {
-        for (int x = 0; x < dimensions.getGridWidthPixels(); x++) {
+      for (int y = 0; y <= dimensions.getGridHeightPixels(); y++) {
+        for (int x = 0; x <= dimensions.getGridWidthPixels(); x++) {
           data[y][x] = Float.NaN;
         }
       }
-      
+
       // Fill the grid with our data
       for (Map<String, String> record : records) {
         BigDecimal lon = new BigDecimal(record.get("position.longitude"));
         BigDecimal lat = new BigDecimal(record.get("position.latitude"));
         double value = Double.parseDouble(record.get(variable));
-        
+
         // Calculate position using Haversine distances
         HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(
             lon,
             lat
         );
-        
+
         // Get distances from top-left corner
         BigDecimal distanceWest = HaversineUtil.getDistance(
             topLeft,
@@ -101,48 +103,56 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
             topLeft,
             new HaversineUtil.HaversinePoint(BigDecimal.valueOf(dimensions.getMinLon()), lat)
         );
-        
+
         // Calculate grid position using percentages
         BigDecimal horizPercent = distanceWest.divide(
-            dimensions.getWidthMeters(),
+            dimensions.getGridWidthMeters(),
             RoundingMode.HALF_UP
         );
-        int x = (int) horizPercent.multiply(gridWidthPixels).longValue();
-        
+        int x = (int) Math.round(horizPercent.multiply(gridWidthPixels).doubleValue());
+
         BigDecimal vertPercent = distanceSouth.divide(
-            dimensions.getHeightMeters(),
+            dimensions.getGridHeightMeters(),
             RoundingMode.HALF_UP
         );
-        int y = (int) vertPercent.multiply(gridHeightPixels).longValue();
-        
+        int y = (int) Math.round(vertPercent.multiply(gridHeightPixels).longValue());
+
         // Check bounds
-        if (x >= 0 && x < dimensions.getGridWidthPixels() && 
-            y >= 0 && y < dimensions.getGridHeightPixels()) {
-          data[y][x] = (float)value;
+        boolean horizInBounds = x >= 0 && x <= dimensions.getGridWidthPixels();
+        boolean vertInBounds = y >= 0 && y <= dimensions.getGridHeightPixels();
+        if (horizInBounds && vertInBounds) {
+          if (!Float.isNaN(data[y][x])) {
+            System.err.println("Possible collision at: " + x + ", " + y);
+          }
+          data[y][x] = (float) value;
+        } else {
+          System.err.println("Out of bounds: " + x + ", " + y);
+          System.err.println("  grid of " + gridWidthPixels + ", " + gridHeightPixels);
+          System.err.println("  " + lon + ", " + lat + " for " + currentPoint.toString());
         }
       }
-      
+
       // Create envelope for the world file
       ReferencedEnvelope envelope = new ReferencedEnvelope(
           dimensions.getMinLon(), dimensions.getMaxLon(),
           dimensions.getMinLat(), dimensions.getMaxLat(),
           DefaultGeographicCRS.WGS84
       );
-      
+
       // Create the grid coverage
       GridCoverage2D coverage = gcf.create(
           "coverage",
           data,
           envelope
       );
-      
+
       // Create GeoTIFF writer
       GeoTiffWriter writer = new GeoTiffWriter(outputStream);
-      
+
       // Write the coverage
       writer.write(coverage, null);
       writer.dispose();
-      
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to write geotiff: " + e.getMessage(), e);
     }

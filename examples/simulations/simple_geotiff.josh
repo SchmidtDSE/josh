@@ -5,7 +5,7 @@ start simulation TestSimpleSimulation
   grid.high = 36.42000797711917 degrees latitude, -118.45569642095174 degrees longitude
 
   steps.low = 0 count
-  steps.high = 4 count
+  steps.high = 0 count
 
   stepCount.init = 0 count
   stepCount.step = prior.stepCount + 1 count
