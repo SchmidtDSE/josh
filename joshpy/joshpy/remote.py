@@ -7,9 +7,53 @@ import typing
 
 import joshpy.definitions
 import joshpy.metadata
+import joshpy.parse
 import joshpy.strategy
 
 PUBLIC_DEFAULT_ENDPOINT = ''
+
+
+class ParseResult:
+  """Result of invoking the parse endpoint."""
+
+  def __init__(self, error: typing.Optional[str], simulation_names: typing.List[str],
+      metadata: typing.Optional[joshpy.metadata.SimulationMetadata]):
+    """Create a new record of a parse result.
+    
+    Args:
+      error: The error if one encountered in interpretation or None if no error encountered.
+      simulation_names: List of simulation names found in the code or empty if error encountered.
+      metadata: The metadata found for the requested simulation if simulation requested and no
+        errors encountered.
+    """
+    self._error = error
+    self._simulation_names = simulation_names
+    self._metadata = metadata
+  
+  def get_error(self) -> typing.Optional[str]:
+    """Get the error encountered if any.
+    
+    Returns:
+      The error if one encountered in interpretation or None if no error encountered.
+    """
+    return self._error
+  
+  def get_simulation_names(self) -> typing.List[str]:
+    """Get the simulations found in the code sent to the parse endpoint.
+    
+    Returns:
+      List of simulation names found in the code or empty if error encountered.
+    """
+    return self._simulation_names
+  
+  def get_metadata(self) -> typing.Optional[joshpy.metadata.SimulationMetadata]:
+    """Get the simulation metadata found in the code.
+    
+    Returns:
+      typing.Optional[joshpy.metadata.SimulationMetadata]: The metadata found for the requested
+        simulation if simulation requested and no errors encountered.
+    """
+    return self._metadata
 
 
 class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
@@ -62,4 +106,3 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
       Result of parsing with error information or simulation information.
     """
     raise NotImplementedError('Not yet implemented.')
-    
