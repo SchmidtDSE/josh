@@ -44,6 +44,24 @@ jobs:
         with:
           name: fatJar
           path: build/libs/joshsim-fat.jar
+  checkPython:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Python Static Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install mypy pyflakes types-requests
+      - name: Run mypy
+        run: mypy joshpy/joshpy/*.py
+      - name: Run pyflakes
+        run: pyflakes joshpy/joshpy/*.py
+
   checkJava:
     needs: buildJava
     environment: Build
