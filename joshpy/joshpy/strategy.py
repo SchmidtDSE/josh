@@ -62,7 +62,8 @@ class JoshBackend:
     raise NotImplementedError('Must use implementor.')
     
   def run_simulation(self, code: str, name: str,
-    virtual_files: joshpy.definitions.FlatFiles) -> joshpy.definitions.SimulationResults:
+      virtual_files: joshpy.definitions.FlatFiles,
+      replicates: int) -> joshpy.definitions.SimulationResults:
     """Run a simulation using the current Josh backend.
 
     Run a simulation, printing to the console when each replicate is completed. The full result set
@@ -73,6 +74,7 @@ class JoshBackend:
       code: The code to execute.
       name: The name of the simulation from the provided code to execute.
       virtual_files: List of virutal files to provide to the simulation within its sandbox.
+      replicates: The number of replicates for which the simulation should run.
 
     Returns:
       joshpy.definitions.SimulationResults: Outer list where each element is a replicate and each

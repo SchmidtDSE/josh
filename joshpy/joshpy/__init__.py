@@ -96,7 +96,7 @@ class Josh:
     return self._backend.get_metadata(code, name)
 
   def run_simulation(self, code: str, name: str, virtual_files: joshpy.definitions.FlatFiles,
-        geocode: bool = False) -> joshpy.definitions.SimulationResults:
+        replicates: int = 1, geocode: bool = False) -> joshpy.definitions.SimulationResults:
     """Run a simulation using the current Josh backend.
 
     Run a simulation through the current Josh backend, printing to the console when each replicate
@@ -109,6 +109,7 @@ class Josh:
       code: The code to execute.
       name: The name of the simulation from the provided code to execute.
       virtual_files: List of virutal files to provide to the simulation within its sandbox.
+      replicates: The number of replicates for which the simulation should run.
       geocode: Flag indicating if geocoding should be provided where true will add
         position.longitude and position.latitude. These will not be added if false.
 
@@ -121,7 +122,7 @@ class Josh:
         string description of the first error.
       ValueError: Raised if the simulation of the given name cannot be found.
     """
-    results = self._backend.run_simulations(code, name, virtual_files)
+    results = self._backend.run_simulation(code, name, virtual_files, replicates)
 
     if geocode:
       metadata = self._backend.get_metadata(code, name)

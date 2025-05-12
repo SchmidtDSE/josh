@@ -25,6 +25,7 @@ class EmbeddedJoshServer(joshpy.strategy.JoshBackend):
     raise NotImplementedError('Not yet implemented.')
 
   def run_simulation(self, code: str, name: str,
-      virtual_files: joshpy.definitions.FlatFiles) -> joshpy.definitions.SimulationResults:
+      virtual_files: joshpy.definitions.FlatFiles,
+      replicates: int) -> joshpy.definitions.SimulationResults:
     raise NotImplementedError('Not yet implemented.')
 

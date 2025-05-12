@@ -12,7 +12,7 @@ import joshpy.strategy
 PUBLIC_DEFAULT_ENDPOINT = ''
 
 
-class EmbeddedJoshServer(joshpy.strategy.JoshBackend):
+class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
   """Implementation of JoshBackend which uses a remote Josh to run simulations.
   
   Implementation of JoshBackend which uses a remote Josh to run simulations but all other smaller
@@ -47,6 +47,7 @@ class EmbeddedJoshServer(joshpy.strategy.JoshBackend):
     return self._inner.get_metadata(code, name)
 
   def run_simulation(self, code: str, name: str,
-      virtual_files: joshpy.definitions.FlatFiles) -> joshpy.definitions.SimulationResults:
+      virtual_files: joshpy.definitions.FlatFiles,
+      replicates: int) -> joshpy.definitions.SimulationResults:
     raise NotImplementedError('Not yet implemented.')
 
