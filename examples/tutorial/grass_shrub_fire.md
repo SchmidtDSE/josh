@@ -1,5 +1,5 @@
-# Grass Fire Cycle
-Simple model showing disturbances based on simulation conditions with external data. This shows grass and shrub growth which increases probability of fires.
+# Grass Shrub Fire Cycle
+Simple model showing disturbances based on simulation conditions with external data. This shows grass and shrub growth which increases probability of fires. This is a patch-based model to amount of grass and shrub coverage is given by an occupancy density as opposed to individual agents.
 
 ## Vegitation
 Vegitation grows according to a growth rate which is influenced by precipitation.
@@ -7,7 +7,7 @@ Vegitation grows according to a growth rate which is influenced by precipitation
 ### Growth and precipitation
 $g = \frac{g^*}{e^{r(P - P^{c})}}$
 
-Put more formally:
+In this system:
 
 - Dependent variable: $g \in [0,1]$ is a growth rate scalar
 - Independent variable: $P$ is annual precipitation in mm (Expected ecosystem range is 0 - 600 mm)
@@ -34,7 +34,7 @@ The probability of fire is a function of grass cover where probability per time-
 - $0.05 \quad if \quad \varphi_{G} \geq 0.15$
 - $0.01 \quad else \quad$
 
-More formally,
+In this system:
 
 - Dependent variable: $p_F \in [0,1]$ is fire probability
 - Independent variable: $\varphi_{G}$ is fraction of grass cover
