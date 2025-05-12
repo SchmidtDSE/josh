@@ -7,23 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.api.referencing.operation.TransformException;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
+import java.math.RoundingMode;
+import org.apache.sis.referencing.CRS;
+import org.apache.sis.referencing.CommonCRS;
+import org.apache.sis.referencing.crs.AbstractCRS;
+import org.apache.sis.referencing.cs.AxesConvention;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
 
 /**
  * Tests for the EarthGeometry class, organized by EarthGeometry type.
@@ -45,8 +44,12 @@ public class EarthGeometryTest {
   @BeforeEach
   public void setUp() throws FactoryException {
     geometryFactory = new GeometryFactory();
-    wgs84 = CRS.decode("EPSG:4326", true); // WGS84, lefthanded (lon first)
-    utm11n = CRS.decode("EPSG:32611"); // UTM Zone 11N
+
+    // Using Apache SIS for CRS definitions
+    CoordinateReferenceSystem wgs84unsafe = CommonCRS.WGS84.geographic();
+    wgs84 = AbstractCRS.castOrCopy(wgs84unsafe).forConvention(AxesConvention.RIGHT_HANDED);
+
+    utm11n = CRS.forCode("EPSG:32611"); // UTM Zone 11N
 
     // Initialize valid coordinates for UTM Zone 11N (approximately -120° to -114° longitude)
     validUtm11nCoordinates = new double[][] {
@@ -68,7 +71,7 @@ public class EarthGeometryTest {
     double lonWidth = 0.02;  // small lon/lat rectangle around the valid point
     double latHeight = 0.02;
     coords[0] = new Coordinate(
-      defaultValidCoordinate.x - lonWidth, defaultValidCoordinate.y - latHeight
+        defaultValidCoordinate.x - lonWidth, defaultValidCoordinate.y - latHeight
     );
     coords[1] = new Coordinate(
         defaultValidCoordinate.x + lonWidth,
@@ -101,11 +104,10 @@ public class EarthGeometryTest {
   }
 
   @Test
-  public void testConstructorWithTransformers() {
+  public void testBasicConstructor() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers =
-        Optional.of(new HashMap<>());
-    EarthGeometry geometry = new EarthGeometry(point, wgs84, transformers);
+
+    EarthGeometry geometry = new EarthGeometry(point, wgs84);
 
     assertNotNull(geometry, "EarthGeometry should be initialized");
     assertEquals(
@@ -118,17 +120,17 @@ public class EarthGeometryTest {
 
   @Test
   public void testWithNullGeometry() {
-    Exception exception = assertThrows(NullPointerException.class, () -> {
+    assertThrows(NullPointerException.class, () -> {
       new EarthGeometry(null, wgs84);
-    });
+    }, "Constructor should throw NullPointerException when geometry is null");
   }
 
   @Test
   public void testWithNullCrs() {
     Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
-    Exception exception = assertThrows(NullPointerException.class, () -> {
+    assertThrows(NullPointerException.class, () -> {
       new EarthGeometry(point, null);
-    });
+    }, "Constructor should throw NullPointerException when CRS is null");
   }
 
   @Nested
@@ -298,7 +300,7 @@ public class EarthGeometryTest {
     }
 
     @Test
-    public void testAsTargetCrsWithSameCrs() {
+    public void testAsTargetCrsWithSameCrs() throws FactoryException {
       Point point = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       EarthGeometry geometry = new EarthGeometry(point, wgs84);
 
@@ -307,26 +309,12 @@ public class EarthGeometryTest {
       // Should return the same instance when target CRS is the same
       assertEquals(geometry, transformed, "Should return same instance when CRS is unchanged");
     }
-
-    @Test
-    public void testIntersectionWithDifferentCrs() throws FactoryException, TransformException {
-      EarthGeometry wgs84Geometry = new EarthGeometry(defaultValidPoint, wgs84);
-
-      // Create point in UTM11N that corresponds to same location
-      MathTransform transform = CRS.findMathTransform(wgs84, utm11n, true);
-      Geometry utmPoint = JTS.transform(defaultValidPoint, transform);
-      EarthGeometry utmGeometry = new EarthGeometry(utmPoint, utm11n);
-
-      // They should intersect despite different CRS
-      assertTrue(wgs84Geometry.intersects(utmGeometry),
-          "Points at same location should intersect despite different CRS");
-    }
   }
 
   @Nested
   class ConvexHullTests {
     @Test
-    public void testGetConvexHullWithOtherGeometry() {
+    public void testGetConvexHullWithOtherGeometry() throws FactoryException {
       // Create two points
       Point point1 = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
       Point point2 = geometryFactory.createPoint(new Coordinate(30.0, 40.0));
@@ -360,6 +348,113 @@ public class EarthGeometryTest {
 
       assertNotNull(hull, "Convex hull should not be null");
       assertEquals(wgs84, hull.getCrs(), "Convex hull should use the first geometry's CRS");
+    }
+
+    @Test
+    public void testGetConvexHullWithMultipleGeometries() throws FactoryException {
+      // Create multiple points forming a polygon
+      Point point1 = geometryFactory.createPoint(new Coordinate(10.0, 10.0));
+      Point point2 = geometryFactory.createPoint(new Coordinate(10.0, 20.0));
+      Point point3 = geometryFactory.createPoint(new Coordinate(20.0, 20.0));
+      Point point4 = geometryFactory.createPoint(new Coordinate(20.0, 10.0));
+
+      EarthGeometry geom1 = new EarthGeometry(point1, wgs84);
+      EarthGeometry geom2 = new EarthGeometry(point2, wgs84);
+      EarthGeometry geom3 = new EarthGeometry(point3, wgs84);
+      EarthGeometry geom4 = new EarthGeometry(point4, wgs84);
+
+      // Get convex hull of all points
+      EarthGeometry hull = geom1
+          .getConvexHull(geom2)
+          .getConvexHull(geom3)
+          .getConvexHull(geom4);
+
+      assertNotNull(hull, "Convex hull should not be null");
+      assertEquals(5, hull.getInnerGeometry().getCoordinates().length,
+          "Convex hull should form a closed poly with 5 coordinates (first/last are the same)");
+    }
+  }
+
+  @Nested
+  class GridCrsConversionTests {
+    @Test
+    public void testGridCrsCreation() throws FactoryException {
+      // Define extents
+      BigDecimal topLeftX = new BigDecimal("-116.0");
+      BigDecimal topLeftY = new BigDecimal("35.0");
+      BigDecimal bottomRightX = new BigDecimal("-115.0");
+      BigDecimal bottomRightY = new BigDecimal("34.0");
+      BigDecimal cellSize = new BigDecimal("30");
+
+      // Create a custom CRS definition
+      GridCrsDefinition definition = new GridCrsDefinition(
+          "TestGrid",
+          "EPSG:4326",
+          new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
+          cellSize,
+          "m");
+
+      assertNotNull(definition, "Grid CRS definition should be created");
+      assertEquals("TestGrid", definition.getName(), "Grid name should match");
+      assertEquals("EPSG:4326", definition.getBaseCrsCode(), "Base CRS code should match");
+      assertEquals(cellSize, definition.getCellSize(), "Cell size should match");
+    }
+
+    @Test
+    public void testGridToCrsCoordinatesConversion() {
+      // Define extents based on WGS84
+      BigDecimal topLeftX = new BigDecimal("-116.0");
+      BigDecimal topLeftY = new BigDecimal("35.0");
+      BigDecimal bottomRightX = new BigDecimal("-115.0");
+      BigDecimal bottomRightY = new BigDecimal("34.0");
+      BigDecimal cellSize = new BigDecimal("0.001"); // Small cell size for WGS84
+
+      // Create grid CRS definition
+      GridCrsDefinition definition = new GridCrsDefinition(
+          "TestGrid",
+          "EPSG:4326",
+          new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
+          cellSize,
+          "degrees");
+
+      // Test converting from grid to CRS coordinates
+      BigDecimal gridX = BigDecimal.ZERO;
+      BigDecimal gridY = BigDecimal.ZERO;
+
+      BigDecimal[] crsCoords = definition.gridToCrsCoordinates(gridX, gridY);
+
+      // Should return top-left corner - using compareTo for BigDecimal comparison
+      assertTrue(topLeftX.compareTo(crsCoords[0].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "X coordinate should match top-left");
+      assertTrue(topLeftY.compareTo(crsCoords[1].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "Y coordinate should match top-left");
+    }
+
+    @Test
+    public void testCrsToGridCoordinatesConversion() {
+      // Define extents based on WGS84
+      BigDecimal topLeftX = new BigDecimal("-116.0");
+      BigDecimal topLeftY = new BigDecimal("35.0");
+      BigDecimal bottomRightX = new BigDecimal("-115.0");
+      BigDecimal bottomRightY = new BigDecimal("34.0");
+      BigDecimal cellSize = new BigDecimal("0.001"); // Small cell size for WGS84
+
+      // Create grid CRS definition
+      GridCrsDefinition definition = new GridCrsDefinition(
+          "TestGrid",
+          "EPSG:4326",
+          new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
+          cellSize,
+          "degrees");
+
+      // Test converting from CRS to grid coordinates
+      BigDecimal[] gridCoords = definition.crsToGridCoordinates(topLeftX, topLeftY);
+
+      // Should return origin cell (0,0) - using compareTo with appropriate scale
+      assertTrue(BigDecimal.ZERO.compareTo(gridCoords[0].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "Grid X should be 0");
+      assertTrue(BigDecimal.ZERO.compareTo(gridCoords[1].setScale(4, RoundingMode.HALF_UP)) == 0,
+          "Grid Y should be 0");
     }
   }
 }

@@ -13,16 +13,18 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.referencing.CRS;
+import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.io.SandboxExportCallback;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
+import org.joshsim.lang.io.VirtualFile;
 import org.joshsim.lang.parse.ParseResult;
 
 
@@ -58,9 +60,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     if (crs.isPresent()) {
       try {
-        geometryFactory = new EarthGeometryFactory(CRS.decode(crs.get()));
-      } catch (FactoryException e) {
-        throw new RuntimeException(e);
+        geometryFactory = new EarthGeometryFactory(CRS.forCode(crs.get()));
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to parse CRS: " + e);
       }
     } else {
       geometryFactory = new GridGeometryFactory();
@@ -89,7 +91,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (!CorsUtil.addCorsHeaders(httpServerExchange)) {
       return;
     }
-    
+
     long startTime = System.nanoTime();
     Optional<String> apiKey = handleRequestTrusted(httpServerExchange);
     long endTime = System.nanoTime();
@@ -158,13 +160,14 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result);
+    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer layer = getLayer(httpServerExchange);
+    InputOutputLayer layer = getLayer(httpServerExchange, externalData);
     JoshSimFacadeUtil.runSimulation(
         geometryFactory,
         layer,
@@ -181,17 +184,21 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * Create a new input / output layer that writes exports to an exchange.
    *
    * @param httpServerExchange The exchange where the response should be streamed.
+   * @param externalData String serialization of the virtual file system.
    * @return The newly created layer.
    */
-  private InputOutputLayer getLayer(HttpServerExchange httpServerExchange) {
-    return new SandboxInputOutputLayer((export) -> {
+  private InputOutputLayer getLayer(HttpServerExchange httpServerExchange, String externalData) {
+    Map<String, VirtualFile> virtualFiles = VirtualFileSystemWireDeserializer.load(externalData);
+
+    SandboxExportCallback exportCallback = (export) -> {
       try {
         httpServerExchange.getOutputStream().write((export + "\n").getBytes());
         httpServerExchange.getOutputStream().flush();
       } catch (IOException e) {
         throw new RuntimeException("Error streaming response", e);
       }
-    });
+    };
+    return new SandboxInputOutputLayer(virtualFiles, exportCallback);
   }
 
 }

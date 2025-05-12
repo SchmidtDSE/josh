@@ -63,6 +63,25 @@ jobs:
         run: ./gradlew checkstyleMain
       - name: Check test style
         run: ./gradlew checkstyleTest
+  checkPython:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Python Checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Test install
+        run: cd joshpy; pip install .
+      - name: Install optional
+        run: cd joshpy; pip install .[dev]
+      - name: Run pyflakes
+        run: pyflakes joshpy/joshpy/*.py
+      - name: Run tests
+        run: cd joshpy && nose2
   testJava:
     needs: buildJava
     environment: Build
@@ -78,6 +97,33 @@ jobs:
           java-version: '21'
       - name: Run tests
         run: ./gradlew test
+  testPreprocess:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Preprocessing
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Run preprocess
+        run: java -jar build/libs/joshsim-fat.jar preprocess examples/simulations/simple_seki.josh TestSimpleSimulation assets/command/maxtemp_tulare_annual.nc Maximum_air_temperature_at_2m celsius test_riverside_tiny.jshd --crs "EPSG:4326" --x-coord "lon" --y-coord "lat" --time-dim "calendar_year"
+      - name: Check result
+        run: |
+          if [ ! -s "test_riverside_tiny.jshd" ]; then
+            echo "Error: test_riverside_tiny.jshd is empty." >&2
+            exit 1
+          fi
   validateExamples:
     needs: buildJava
     environment: Build
@@ -112,6 +158,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
       - name: Download farJar artifact
         uses: actions/download-artifact@v4
         with:
@@ -122,7 +172,7 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser

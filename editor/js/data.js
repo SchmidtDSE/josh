@@ -116,13 +116,52 @@ class DataFilesPresenter {
   async _uploadFile() {
     const self = this;
     const file = self._fileUploadInput.files[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
+    const isBinaryFile = self._getIsBinaryFile(file.type);
+    if (isBinaryFile) {
+      await self._uploadBinaryFile(file);
+    } else {
+      await self._uploadTextFile(file);
+    }
+  }
+
+  /**
+   * Upload a binary file into the application as an OPFS file.
+   *
+   * @param {File} file - The file from the file upload input to be added to OPFS.
+   */
+  async _uploadBinaryFile(file) {
+    const self = this;
     const reader = new FileReader();
     reader.onload = async (e) => {
       const contents = e.target.result;
-      const isBinaryFile = self._getIsBinaryFile(file.type);
-      const opfsFile = new OpfsFile(file.name, contents, false, isBinaryFile);
+      const opfsFile = new OpfsFile(file.name, contents, false, true);
+      try {
+        await self._fileLayer.putFile(opfsFile);
+        await self._refreshFilesList();
+        await self._updateSpaceUtilizationDisplay();
+        self._hideFileUpload();
+      } catch (error) {
+        alert("Error uploading file: " + error);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /**
+   * Upload a text file into the application as an OPFS file.
+   *
+   * @param {File} file - The file from the file upload input to be added to OPFS.
+   */
+  async _uploadTextFile(file) {
+    const self = this;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target.result;
+      const opfsFile = new OpfsFile(file.name, contents, false, false);
       try {
         await self._fileLayer.putFile(opfsFile);
         await self._refreshFilesList();
@@ -269,7 +308,9 @@ class LocalFileLayer {
    */
   async putFile(file) {
     const self = this;
-    await self._sendWorkerMessage("updateItem", file.getName(), file.getContents());
+    const name = file.getName();
+    effective_name = file.getIsBinary() ? name : self._enforceTextExtension(name);
+    await self._sendWorkerMessage("updateItem", effective_name, file.getContents());
   }
 
   /**
@@ -359,6 +400,18 @@ class LocalFileLayer {
         contents: contents
       });
     });
+  }
+
+  /**
+   * Ensure that files which are intended to be interpreted as text have a text extension.
+   *
+   * @param {string} filename - The filename provided by the user.
+   * @returns {string} The filename to use which has a known text extension.
+   */
+  _enforceTextExtension(filename) {
+    const self = this;
+    const hasExtension = filename.endsWith(".csv") || filename.endsWith(".txt");
+    return hasExtension ? filename : (filename + ".txt");
   }
 }
 

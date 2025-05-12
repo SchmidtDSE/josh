@@ -6,9 +6,12 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
@@ -25,6 +28,7 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.precompute.DataGridLayer;
 
 
 /**
@@ -38,9 +42,12 @@ public class MinimalEngineBridge implements EngineBridge {
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
   private final EngineValueFactory engineValueFactory;
+  private final EngineValue startStep;
   private final EngineValue endStep;
   private final Converter converter;
   private final EntityPrototypeStore prototypeStore;
+  private final Map<String, DataGridLayer> externalData;
+  private final ExternalResourceGetter externalResourceGetter;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -60,11 +67,13 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    */
   public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore) {
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter) {
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
+    this.externalResourceGetter = externalResourceGetter;
 
     replicate = Optional.empty();
 
@@ -72,9 +81,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    currentStep = simulation
+    startStep = simulation
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+
+    currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -84,6 +95,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
+    externalData = new HashMap<>();
   }
 
   /**
@@ -92,14 +104,17 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
+   * @param externalResourceGetter Strategy to use in loading external resources.
    * @param replicate The replicate to use for testing.
    */
   public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore, Replicate replicate) {
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, Replicate replicate) {
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
+    this.externalResourceGetter = externalResourceGetter;
 
     this.replicate = Optional.of(replicate);
 
@@ -107,9 +122,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    currentStep = simulation
+    startStep = simulation
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+
+    currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -119,6 +136,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
+    externalData = new HashMap<>();
   }
 
   @Override
@@ -156,6 +174,14 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public boolean isComplete() {
     return currentStep.greaterThan(endStep).getAsBoolean();
+  }
+
+  @Override
+  public EngineValue getExternal(GeoKey key, String name, long step) {
+    if (!externalData.containsKey(name)) {
+      externalData.put(name, externalResourceGetter.getResource(name));
+    }
+    return externalData.get(name).getAt(key, step);
   }
 
   @Override
@@ -219,6 +245,16 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public long getAbsoluteTimestep() {
     return absoluteStep;
+  }
+
+  @Override
+  public long getStartTimestep() {
+    return startStep.getAsInt();
+  }
+
+  @Override
+  public long getEndTimestep() {
+    return endStep.getAsInt();
   }
 
   @Override

@@ -2,7 +2,7 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.joshsim.geo.geometry.EarthGeometry;
+import org.joshsim.geo.geometry.EarthShape;
 
 /**
  * A geometric object which defines if it is in Earth space or in grid space.
@@ -14,7 +14,7 @@ public interface EngineGeometry extends Spatial {
    *
    * @return Combined point representing the center of this geometry.
    */
-  EnginePoint getCenter();
+  EngineGeometry getCenter();
 
   /**
    * Determines if this geometry intersects with another spatial geometry.
@@ -38,7 +38,7 @@ public interface EngineGeometry extends Spatial {
    *
    * @return A version of this geometry in Earth space.
    */
-  EarthGeometry getOnEarth();
+  EarthShape getOnEarth();
 
   /**
    * Get this geometry on PatchSet sapce.

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.strategy.CsvExportFacade;
 import org.junit.jupiter.api.Test;
 
 
@@ -30,7 +31,10 @@ class CsvExportFacadeTest {
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
+    CsvExportFacade csvExportFacade = new CsvExportFacade(
+        outputStrategyMock,
+        new MapSerializeStrategy()
+    );
 
     // Act
     csvExportFacade.start();
@@ -51,7 +55,10 @@ class CsvExportFacadeTest {
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 
-    CsvExportFacade csvExportFacade = new CsvExportFacade(outputStrategyMock);
+    CsvExportFacade csvExportFacade = new CsvExportFacade(
+        outputStrategyMock,
+        new MapSerializeStrategy()
+    );
 
     // Act
     csvExportFacade.start();

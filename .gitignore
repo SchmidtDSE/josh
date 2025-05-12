@@ -25,5 +25,11 @@ src-generated
 # Editor third-party files
 editor/third_party
 
+# temp files
+/tmp
+
 # Editor war
 editor/war
+
+*.jshd
+*.wasm

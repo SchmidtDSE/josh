@@ -157,7 +157,9 @@ public class CombinedExportFacade {
 
     Optional<ExportFacade> exportFacade;
     if (destination.isPresent()) {
-      ExportTarget target = ExportTargetParser.parse(destination.get().getAsString());
+      String templatePath = destination.get().getAsString();
+      String path = exportFactory.getPath(templatePath);
+      ExportTarget target = ExportTargetParser.parse(path);
 
       Optional<EngineValue> headerVal = simEntity.getAttributeValue(attribute + ".columns");
       if (headerVal.isPresent()) {
@@ -188,7 +190,7 @@ public class CombinedExportFacade {
     StringTokenizer tokenizer = new StringTokenizer(headerStr, ",");
     List<String> retVal = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
-      retVal.add(tokenizer.nextToken());
+      retVal.add(tokenizer.nextToken().replaceAll("\"", "").trim());
     }
     return retVal;
   }

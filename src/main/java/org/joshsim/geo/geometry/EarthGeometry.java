@@ -1,144 +1,131 @@
 package org.joshsim.geo.geometry;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
-import org.geotools.geometry.jts.JTS;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.referencing.CRS;
+import org.apache.sis.geometry.Envelope2D;
+import org.apache.sis.util.Utilities;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.geometry.EnginePoint;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.util.FactoryException;
 
 /**
- * A geometric object using JTS geometry implementation.
+ * A geometric object using JTS geometry implementation with Apache SIS for coordinate transforms.
  */
-public class EarthGeometry implements EngineGeometry {
+public class EarthGeometry extends EarthShape {
 
-  protected Geometry innerGeometry;
-  protected CoordinateReferenceSystem crs;
-  protected Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers;
-  protected static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
-
-  /**
-   * Constructs a Geometry with a provided JTS geometry and CRS.
-   */
-  public EarthGeometry(
-      Geometry innerGeometry,
-      CoordinateReferenceSystem crs,
-      Optional<Map<CoordinateReferenceSystem, MathTransform>> transformers
-  ) {
-    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
-    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
-    this.transformers = transformers;
-  }
+  private final Geometry innerGeometry;
+  private final CoordinateReferenceSystem crs;
+  private static final GeometryFactory JTS_GEOMETRY_FACTORY = new GeometryFactory();
 
   /**
    * Constructs a Geometry with a provided JTS geometry and CRS.
+   *
+   * @param innerGeometry The JTS geometry
+   * @param crs The coordinate reference system
    */
   public EarthGeometry(Geometry innerGeometry, CoordinateReferenceSystem crs) {
-    this(innerGeometry, crs, Optional.empty());
+    super(innerGeometry, crs);
+    this.innerGeometry = Objects.requireNonNull(innerGeometry, "Geometry cannot be null");
+    this.crs = Objects.requireNonNull(crs, "Coordinate reference system cannot be null");
   }
 
   /**
    * Gets the JTS geometry.
+   *
+   * @return The inner JTS geometry
    */
+  @Override
   public Geometry getInnerGeometry() {
     return innerGeometry;
   }
 
   /**
    * Gets the coordinate reference system of this geometry.
+   *
+   * @return The coordinate reference system
    */
+  @Override
   public CoordinateReferenceSystem getCrs() {
     return crs;
   }
 
   /**
-   * Transforms geometry to target CRS.
+   * Transforms geometry to target CRS using EarthTransformer.
+   *
+   * @param targetCrs The target coordinate reference system
+   * @return A new EarthGeometry transformed to the target CRS
+   * @throws FactoryException if the transformation fails
    */
-  public EarthGeometry asTargetCrs(CoordinateReferenceSystem targetCrs) {
-    if (CRS.equalsIgnoreMetadata(crs, targetCrs)) {
-      return this;
-    }
-
-    try {
-      MathTransform transform;
-      if (transformers.isPresent() && transformers.get().containsKey(targetCrs)) {
-        transform = transformers.get().get(targetCrs);
-      } else {
-        transform = CRS.findMathTransform(crs, targetCrs, true);
-      }
-
-      Geometry transformedGeometry = JTS.transform(
-          innerGeometry,
-          transform
-      );
-      return new EarthGeometry(transformedGeometry, targetCrs);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to transform geometry to target CRS", e);
-    }
+  @Override
+  public EarthGeometry asTargetCrs(CoordinateReferenceSystem targetCrs) throws FactoryException {
+    return EarthTransformer.earthToEarth(this, targetCrs);
   }
 
   /**
    * Checks if a point is contained within this geometry.
+   *
+   * @param locationX The X coordinate of the point
+   * @param locationY The Y coordinate of the point
+   * @return true if the point intersects this geometry, false otherwise
    */
   public boolean intersects(BigDecimal locationX, BigDecimal locationY) {
     Point point = JTS_GEOMETRY_FACTORY.createPoint(
-        new Coordinate(locationX.doubleValue(), locationY.doubleValue())
-    );
+        new Coordinate(locationX.doubleValue(), locationY.doubleValue()));
     return innerGeometry.intersects(point);
   }
 
   /**
    * Checks if this geometry intersects with another.
+   *
+   * @param other The other geometry to check for intersection
+   * @return true if the geometries intersect, false otherwise
    */
-  public boolean intersects(EngineGeometry other) {
-    // TODO: Remove cast
-    EarthGeometry otherEarth = other.getOnEarth();
-
-    // Ensure both geometries use the same CRS
-    if (!CRS.equalsIgnoreMetadata(crs, otherEarth.getCrs())) {
-      otherEarth = otherEarth.asTargetCrs(crs);
+  public boolean intersects(EarthGeometry other) {
+    if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
+      EarthGeometry transformed = EarthTransformer.earthToEarth(other, crs);
+      return getInnerGeometry().intersects(transformed.getInnerGeometry());
     }
-    return getInnerGeometry().intersects(otherEarth.getInnerGeometry());
+    return getInnerGeometry().intersects(other.getInnerGeometry());
   }
 
   @Override
-  public EarthGeometry getOnEarth() {
-    return this;
+  public boolean intersects(EngineGeometry other) {
+    return intersects(other.getOnEarth());
   }
 
   @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
-        "Conversion from Earth to PatchSet space reserved for future use."
-    );
+        "EarthGeometry does not support conversion to GridShape");
   }
 
   @Override
-  public EnginePoint getCenter() {
-    return null;
+  public EarthShape getOnEarth() {
+    return this;
+  }
+
+  @Override
+  public EarthPoint getCenter() {
+    Point centroid = getInnerGeometry().getCentroid();
+    return new EarthPoint(centroid, crs);
   }
 
   /**
    * Computes the convex hull of this geometry and another geometry.
    * Ensures both geometries are in the same CRS before computation.
    *
-   * @param other The other geometry to compute the convex hull with.
-   * @return A new EarthGeometry representing the convex hull.
+   * @param other The other geometry to compute the convex hull with
+   * @return A new EarthGeometry representing the convex hull
+   * @throws FactoryException if the transformation fails
    */
-  public EarthGeometry getConvexHull(EarthGeometry other) {
+  public EarthGeometry getConvexHull(EarthGeometry other) throws FactoryException {
     // Ensure both geometries use the same CRS
-    if (!CRS.equalsIgnoreMetadata(crs, other.getCrs())) {
+    if (!Utilities.equalsIgnoreMetadata(crs, other.getCrs())) {
       other = other.asTargetCrs(crs);
     }
     Geometry convexHull = getInnerGeometry().union(other.getInnerGeometry()).convexHull();
@@ -148,7 +135,7 @@ public class EarthGeometry implements EngineGeometry {
   /**
    * Computes the convex hull of this geometry.
    *
-   * @return A new EarthGeometry representing the convex hull.
+   * @return A new EarthGeometry representing the convex hull
    */
   public EarthGeometry getConvexHull() {
     Geometry convexHull = getInnerGeometry().convexHull();
@@ -166,26 +153,24 @@ public class EarthGeometry implements EngineGeometry {
   }
 
   /**
-   * Gets the envelope of this geometry as a GeneralEnvelope.
+   * Gets the envelope of this geometry.
+   *
+   * @return The envelope of this geometry with its CRS
    */
-  public ReferencedEnvelope getEnvelope() {
-    Envelope env = getInnerGeometry().getEnvelopeInternal();
-    return new ReferencedEnvelope(env, crs);
+  public Envelope2D getEnvelope() {
+    org.locationtech.jts.geom.Envelope env = getInnerGeometry().getEnvelopeInternal();
+    return new Envelope2D(crs, env.getMinX(), env.getMinY(),
+        env.getWidth(), env.getHeight());
   }
 
   @Override
   public boolean equals(Object o) {
-    // Check if the object is the exact same instance
     if (this == o) {
       return true;
     }
-
-    // Check if the object is null or not of the same class
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    // Delegate to the type-specific equals method
     return equals((EarthGeometry) o);
   }
 
@@ -196,18 +181,15 @@ public class EarthGeometry implements EngineGeometry {
    * @return true if the geometries are equal, false otherwise
    */
   public boolean equals(EarthGeometry other) {
-    // Compare innerGeometry using equals
     if (!innerGeometry.equals(other.innerGeometry)) {
       return false;
     }
-    // Compare CRS using CRS.equalsIgnoreMetadata
-    return CRS.equalsIgnoreMetadata(crs, other.crs);
+    return Utilities.equalsIgnoreMetadata(crs, other.getCrs());
   }
 
   @Override
   public int hashCode() {
     int result = innerGeometry.hashCode();
-    // Use a simple approach for CRS hashCode
     result = 31 * result + crs.toString().hashCode();
     return result;
   }
@@ -218,8 +200,6 @@ public class EarthGeometry implements EngineGeometry {
         "EarthGeometry at %s, %s with crs of %s.",
         getCenterX().toString(),
         getCenterY().toString(),
-        crs
-    );
+        crs);
   }
-
 }

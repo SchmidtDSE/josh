@@ -1,6 +1,11 @@
 /**
  * Logic to parse internal transfer strings.
  *
+ * Logic to parse internal transfer strings and is shared across the WebAssembly worker and the main
+ * JavaScript logic of the application. When used in the main JavaScript, it is used through the
+ * structures described in the wire.js file which uses modules. For legacy browser compatibility
+ * reasons, this file does not use modules.
+ *
  * @license BSD-3-Clause
  */
 

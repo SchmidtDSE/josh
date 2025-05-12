@@ -8,6 +8,7 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 
 
 /**
@@ -77,17 +78,17 @@ public interface EngineGeometryFactory {
   /**
    * Creates a circular EngineGeometry from radius and a point on the circumference.
    *
-   * @param point1X The X position (longitude, easting) of a point on the circle's circumference
-   * @param point1Y The Y position (latitude, northing) of a point on the circle's circumference
-   * @param point2X The X position (longitude, easting) of the circle's center
-   * @param point2Y The Y position (latitude, northing) of the circle's center
+   * @param centerX The X position (longitude, easting) of the circle's center
+   * @param centerY The Y position (latitude, northing) of the circle's center
+   * @param circumX The X position (longitude, easting) of the circle's center
+   * @param circumY The Y position (latitude, northing) of the circle's center
    * @return A EngineGeometry object representing a circle
    */
   EngineGeometry createCircle(
-      BigDecimal point1X,
-      BigDecimal point1Y,
-      BigDecimal point2X,
-      BigDecimal point2Y
+      BigDecimal centerX,
+      BigDecimal centerY,
+      BigDecimal circumX,
+      BigDecimal circumY
   );
 
   /**
@@ -111,25 +112,18 @@ public interface EngineGeometryFactory {
   String toString();
 
   /**
-   * Create a new PatchBuilder for the space in which this factory is buliding geometries.
+   * Create a new PatchBuilder using a GridCrsDefinition.
    *
-   * <p>Creates a new instance of a PatchBuilder for transforming and building grid structures
-   * between specified coordinate reference systems (CRS). Some spaces expect CRS to be empty,
-   * representing grid-space.</p>
+   * <p>Creates a new instance of a PatchBuilder for creating grid structures
+   * based on the provided grid coordinate reference system definition.</p>
    *
-   * @param inputCrs  The source coordinate reference system in which the input data is defined.
-   * @param targetCrs The target coordinate reference system to which the data is transformed.
-   * @param extents The extents in which the cells should be created.
-   * @param cellWidth The width and height of each cell or patch.
-   * @param prototype The prototype through which to build patches representing cells.
-   * @return A PatchBuilder instance configured for the specified CRS transformation.
+   * @param gridCrsDefinition The grid CRS definition containing extents, cell size,
+   *                         and reference system information
+   * @param prototype The prototype through which to build patches representing cells
+   * @return A PatchBuilder instance configured for the specified grid CRS
    */
   PatchBuilder getPatchBuilder(
-      String inputCrs,
-      String targetCrs,
-      PatchBuilderExtents extents,
-      BigDecimal cellWidth,
+      GridCrsDefinition gridCrsDefinition,
       EntityPrototype prototype
   );
-
 }

@@ -29,7 +29,7 @@ public class PatchBuilderExtents {
    * @throws IllegalArgumentException if coordinates don't form a valid rectangle
    */
   public PatchBuilderExtents(BigDecimal topLeftX, BigDecimal topLeftY, BigDecimal bottomRightX,
-                             BigDecimal bottomRightY) {
+        BigDecimal bottomRightY) {
 
     assertNotNull(topLeftX, "top left x");
     assertNotNull(topLeftY, "top left y");

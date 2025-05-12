@@ -45,3 +45,37 @@ Validation failed (exit code: 3)
 
 - A future iteration of this approach could probably use the gradle extension within VSCode to validate `.josh` files, which may be a bit cleaner - this works for now.
 
+##### Preprocess Scratch
+
+###### Riverside (JOTR)
+
+```bash
+java -jar build/libs/joshsim-fat.jar preprocess \
+    examples/simulations/simple_external.josh \
+    TestSimpleSimulationExternal \
+    assets/command/maxtemp_riverside_annual.nc \
+    temperature \
+    celsius \
+    test_riverside_tiny.jshd \
+    --crs "EPSG:4326" \
+    --x-coord "lon" \
+    --y-coord "lat" \
+    --time-dim "calendar_year"
+```
+
+
+###### Sequoia (SEKI)
+
+```bash
+java -jar build/libs/joshsim-fat.jar preprocess \
+    examples/simulations/simple_seki.josh \
+    TestSimpleSimulationExternal \
+    assets/command/maxtemp_tulare_annual.nc \
+    Maximum_air_temperature_at_2m \
+    celsius \
+    test_riverside_tiny.jshd \
+    --crs "EPSG:4326" \
+    --x-coord "lon" \
+    --y-coord "lat" \
+    --time-dim "calendar_year"
+```

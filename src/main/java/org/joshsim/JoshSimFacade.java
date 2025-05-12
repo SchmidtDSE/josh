@@ -6,10 +6,20 @@
 
 package org.joshsim;
 
+import java.math.BigDecimal;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.ExtentsUtil;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
 
@@ -42,12 +52,14 @@ public class JoshSimFacade {
    *
    * @param engineGeometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
+   * @param inputOutputLayer The layer to use in giving the simulation access to the external data
+   *     and resources.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
   public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
-        ParseResult parsed) {
+        ParseResult parsed, InputOutputLayer inputOutputLayer) {
     setupForJvm();
-    return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed);
+    return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed, inputOutputLayer);
   }
 
   /**
@@ -65,14 +77,44 @@ public class JoshSimFacade {
    *     as blocking.
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
+   * @param replicateNumber The replicate number for the replicate to be run.
    */
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
-        boolean serialPatches) {
+        boolean serialPatches, int replicateNumber) {
     setupForJvm();
+
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    boolean hasDegrees = extractor.getStartStr().contains("degree");
+
+    EngineValue sizeValueRaw = extractor.getSize();
+    Units sizeUnits = sizeValueRaw.getUnits();
+    String sizeStr = sizeUnits.toString();
+    boolean sizeMeterAbbreviated = sizeStr.equals("m");
+    boolean sizeMetersFull = sizeStr.equals("meter") || sizeStr.equals("meters");
+    boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
+
+    JvmInputOutputLayer inputOutputLayer;
+    if (hasDegrees && sizeMeters) {
+      PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+      EngineValueFactory valueFactory = EngineValueFactory.getDefault();
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
+      BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
+      inputOutputLayer = new JvmInputOutputLayer(
+          replicateNumber,
+          extentsBuilder.build(),
+          sizeValuePrimitive
+      );
+    } else {
+      inputOutputLayer = new JvmInputOutputLayer(replicateNumber);
+    }
+
     JoshSimFacadeUtil.runSimulation(
         engineGeometryFactory,
-        new JvmInputOutputLayer(),
+        inputOutputLayer,
         program,
         simulationName,
         callback,

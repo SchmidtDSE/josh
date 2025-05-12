@@ -7,7 +7,6 @@
 
 package org.joshsim.cloud;
 
-import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 
 /**
@@ -24,7 +23,7 @@ public class ApiKeyUtil {
    */
   public static ApiCheckResult checkApiKey(FormData formData,
         CloudApiDataLayer apiInternalLayer) {
-    
+
     if (!formData.contains("apiKey")) {
       return new ApiCheckResult("", false);
     }
@@ -40,7 +39,7 @@ public class ApiKeyUtil {
       return new ApiCheckResult(apiKey, false);
     }
   }
-  
+
   /**
    * A class representing the result of an API key check.
    */
@@ -58,7 +57,7 @@ public class ApiKeyUtil {
       this.apiKey = apiKey;
       this.keyIsValid = keyIsValid;
     }
-    
+
     /**
      * Returns the API key associated with this result.
      *
@@ -67,7 +66,7 @@ public class ApiKeyUtil {
     public String getApiKey() {
       return apiKey;
     }
-    
+
     /**
      * Returns the validity status of the API key.
      *

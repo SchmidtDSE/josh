@@ -15,6 +15,8 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
+import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.precompute.JshdExternalGetter;
 
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
@@ -29,6 +31,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<String> simulationName;
   private Optional<EngineBridge> builtBridge;
   private Optional<EngineGeometryFactory> geometryFactory;
+  private Optional<InputOutputLayer> inputOutputLayer;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -38,6 +41,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.simulationName = Optional.empty();
     this.builtBridge = Optional.empty();
     this.geometryFactory = Optional.empty();
+    this.inputOutputLayer = Optional.empty();
   }
 
   /**
@@ -47,7 +51,7 @@ public class FutureBridgeGetter implements BridgeGetter {
    */
   public void setProgram(JoshProgram newProgram) {
     if (program.isPresent()) {
-      throw new IllegalStateException("Bridge already built.");
+      throw new IllegalStateException("Program already set.");
     }
     this.program = Optional.of(newProgram);
   }
@@ -59,7 +63,7 @@ public class FutureBridgeGetter implements BridgeGetter {
    */
   public void setGeometryFactory(EngineGeometryFactory newFactory) {
     if (geometryFactory.isPresent()) {
-      throw new IllegalStateException("Bridge already built.");
+      throw new IllegalStateException("Geometry factory already set.");
     }
     this.geometryFactory = Optional.of(newFactory);
   }
@@ -71,9 +75,22 @@ public class FutureBridgeGetter implements BridgeGetter {
    */
   public void setSimulationName(String newName) {
     if (simulationName.isPresent()) {
-      throw new IllegalStateException("Bridge already built.");
+      throw new IllegalStateException("Simulation name already set.");
     }
     this.simulationName = Optional.of(newName);
+  }
+
+  /**
+   * Sets the platform-specific input/output layer for this bridge getter.
+   *
+   * @param inputOutputLayer The input/output layer to be set. Provides platform-specific
+   *     functionality for input and output operations.
+   */
+  public void setInputOutputLayer(InputOutputLayer inputOutputLayer) {
+    if (this.inputOutputLayer.isPresent()) {
+      throw new IllegalStateException("Input output layer already set.");
+    }
+    this.inputOutputLayer = Optional.of(inputOutputLayer);
   }
 
   @Override
@@ -94,7 +111,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     EngineBridgeSimulationStore simulations = programRealized.getSimulations();
 
     if (simulationName.isEmpty()) {
-      throw new IllegalStateException("Simluation name not provided to bridge.");
+      throw new IllegalStateException("Simulation name not provided to bridge.");
     }
 
     String simulationNameRealized = simulationName.get();
@@ -106,6 +123,12 @@ public class FutureBridgeGetter implements BridgeGetter {
 
     EngineGeometryFactory geometryFactoryRealized = geometryFactory.get();
 
+    if (inputOutputLayer.isEmpty()) {
+      throw new IllegalStateException("Input output layer not provided to bridge.");
+    }
+
+    InputOutputLayer inputOutputLayerRealized = inputOutputLayer.get();
+
     Converter converter = programRealized.getConverter();
     EntityPrototypeStore prototypeStore = programRealized.getPrototypes();
 
@@ -113,7 +136,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         geometryFactoryRealized,
         simulation,
         converter,
-        prototypeStore
+        prototypeStore,
+        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy())
     );
 
     builtBridge = Optional.of(newBridge);

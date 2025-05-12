@@ -53,6 +53,7 @@ public class MinimalEngineBridgeTest {
   @Mock(lenient = true) private EnginePoint mockEnginePoint;
   @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
+  @Mock(lenient = true) private ExternalResourceGetter mockExternalResourceGetter;
 
   private EngineBridge bridge;
 
@@ -67,6 +68,7 @@ public class MinimalEngineBridgeTest {
         mockSimulation,
         mockConverter,
         mockPrototypeStore,
+        mockExternalResourceGetter,
         mockReplicate
     );
   }

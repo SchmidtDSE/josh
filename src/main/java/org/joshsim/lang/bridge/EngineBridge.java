@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -113,6 +114,20 @@ public interface EngineBridge {
   long getPriorTimestep();
 
   /**
+   * Determine at what timestep the simulation starts.
+   *
+   * @return User defined timestep where the simulation starts.
+   */
+  long getStartTimestep();
+
+  /**
+   * Determine at what timestep the simulation ends.
+   *
+   * @return User defined timestep where the simulation ends.
+   */
+  long getEndTimestep();
+
+  /**
    * Get the number of timesteps completed.
    *
    * @return Integer count of full timesteps which have been completed in their entirety.
@@ -141,4 +156,13 @@ public interface EngineBridge {
    */
   boolean isComplete();
 
+  /**
+   * Get a value from an external resource.
+   *
+   * @param key The location at which the data is requested.
+   * @param name The name of the external resource.
+   * @param step The timestep at which the value from the external resource should be returned.
+   * @return The value from the external resource at the given step.
+   */
+  EngineValue getExternal(GeoKey key, String name, long step);
 }

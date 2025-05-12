@@ -11,7 +11,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilder;
-import org.joshsim.engine.geometry.PatchBuilderExtents;
 
 /**
  * Factory for creating geometric shapes in grid space.
@@ -54,13 +53,12 @@ public class GridGeometryFactory implements EngineGeometryFactory {
   }
 
   @Override
-  public EngineGeometry createCircle(BigDecimal point1X, BigDecimal point1Y, BigDecimal point2X,
-        BigDecimal point2Y) {
-    BigDecimal centerX = point1X.add(point2X).divide(BigDecimal.TWO);
-    BigDecimal centerY = point1Y.add(point2Y).divide(BigDecimal.TWO);
+  public EngineGeometry createCircle(BigDecimal centerX, BigDecimal centerY, BigDecimal circumX,
+        BigDecimal circumY) {
+    // Calculate radius as distance from center to circumference point
     BigDecimal radius = BigDecimal.valueOf(Math.sqrt(
-        point2X.subtract(point1X).pow(2).add(point2Y.subtract(point1Y).pow(2)).doubleValue()
-    )).divide(BigDecimal.TWO);
+        circumX.subtract(centerX).pow(2).add(circumY.subtract(centerY).pow(2)).doubleValue()
+    ));
     return new GridCircle(centerX, centerY, radius);
   }
 
@@ -69,15 +67,16 @@ public class GridGeometryFactory implements EngineGeometryFactory {
     return new GridPoint(x, y);
   }
 
-  @Override
-  public PatchBuilder getPatchBuilder(String inputCrs, String targetCrs,
-        PatchBuilderExtents extents, BigDecimal cellWidth, EntityPrototype prototype) {
-    boolean emptyCrs = inputCrs.isEmpty() && targetCrs.isEmpty();
-    if (!emptyCrs) {
-      throw new IllegalArgumentException("Grid-space expects an empty CRS.");
-    }
-
-    return new GridPatchBuilder(extents, cellWidth, prototype);
+  /**
+   * Creates a patch builder with the specified grid CRS definition and entity prototype.
+   *
+   * @param gridCrsDefinition The grid CRS definition
+   * @param prototype The entity prototype used to create grid cells
+   * @return A patch builder
+   */
+  public PatchBuilder getPatchBuilder(
+        GridCrsDefinition gridCrsDefinition,
+        EntityPrototype prototype) {
+    return new GridPatchBuilder(gridCrsDefinition, prototype);
   }
-
 }

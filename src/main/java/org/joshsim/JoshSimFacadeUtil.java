@@ -18,6 +18,7 @@ import org.joshsim.lang.io.CombinedExportFacade;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.precompute.JshdExternalGetter;
 
 
 /**
@@ -45,12 +46,13 @@ public class JoshSimFacadeUtil {
    *
    * @param engineGeometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
+   * @param inputOutputLayer Layer to use to interact with external files and resources.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
   public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
-        ParseResult parsed) {
+        ParseResult parsed, InputOutputLayer inputOutputLayer) {
     JoshInterpreter interpreter = new JoshInterpreter();
-    return interpreter.interpret(parsed, engineGeometryFactory);
+    return interpreter.interpret(parsed, engineGeometryFactory, inputOutputLayer);
   }
 
   /**
@@ -79,7 +81,8 @@ public class JoshSimFacadeUtil {
         engineGeometryFactory,
         simEntity,
         program.getConverter(),
-        program.getPrototypes()
+        program.getPrototypes(),
+        new JshdExternalGetter(inputOutputLayer.getInputStrategy())
     );
 
     CombinedExportFacade exportFacade = new CombinedExportFacade(
