@@ -161,16 +161,3 @@ def get_at_distance_from(start: EarthPoint, distance_meters: float, direction: s
   new_lng_degrees = math.degrees(new_lng)
   
   return EarthPoint(new_lng_degrees, new_lat_degrees)
-  """Get a new point which is some distance from a starting point.
-  
-  Args:
-    start: The starting point from which a new point should be derived.
-    distance_meters: How far in a cardinal direction the new point should be from the starting
-      point.
-    direction: The direction as a single letter string like N, S, E, W corresponding to the
-      cardinal directions.
-
-  Returns:
-    New point which is the given distance in the given direction from the starting point.
-  """
-  raise NotImplementedError('Not yet implemented.')
