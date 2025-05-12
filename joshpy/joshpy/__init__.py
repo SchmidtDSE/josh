@@ -6,7 +6,6 @@ License: BSD-3-Clause
 import typing
 
 import joshpy.definitions
-import joshpy.embed
 import joshpy.geocode
 import joshpy.metadata
 import joshpy.remote
@@ -36,14 +35,17 @@ class Josh:
 
     has_server = self._server is not None
     has_api_key = self._api_key is not None
+    has_either_server_or_api = has_server or has_api_key
 
-    self._backend: joshpy.strategy.JoshBackend = joshpy.embed.EmbeddedJoshServer()
-    
-    if has_server or has_api_key:
+    if has_either_server_or_api:
       self._backend = joshpy.remote.RemoteJoshDecorator(
         server=self._server,
-        api_key=self._api_key,
-        inner=self._backend
+        api_key=self._api_key
+      )
+    else:
+      self._backend = joshpy.remote.RemoteJoshDecorator(
+        server='localhost:8085',
+        api_key=''
       )
 
   def get_error(self, code: str) -> typing.Optional[str]:
