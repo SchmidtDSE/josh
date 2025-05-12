@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,6 +14,8 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.OutputStreamStrategy;
 
 
 /**
@@ -33,7 +35,7 @@ public class CsvExportFacade implements ExportFacade {
    * @param serializeStrategy The strategy to use in serializing records before writing.
    */
   public CsvExportFacade(OutputStreamStrategy outputStrategy,
-        ExportSerializeStrategy<Map<String, String>> serializeStrategy) {
+        MapExportSerializeStrategy serializeStrategy) {
     this.outputStrategy = outputStrategy;
     header = Optional.empty();
     innerWriter = new InnerWriter(header, outputStrategy, serializeStrategy);
@@ -48,7 +50,7 @@ public class CsvExportFacade implements ExportFacade {
    * @param header Iterable over the header columns to use for the CSV output.
    */
   public CsvExportFacade(OutputStreamStrategy outputStrategy,
-        ExportSerializeStrategy<Map<String, String>> serializeStrategy, Iterable<String> header) {
+        MapExportSerializeStrategy serializeStrategy, Iterable<String> header) {
     this.outputStrategy = outputStrategy;
     this.header = Optional.of(header);
     innerWriter = new InnerWriter(Optional.of(header), outputStrategy, serializeStrategy);
@@ -120,15 +122,29 @@ public class CsvExportFacade implements ExportFacade {
     }
   }
 
+  /**
+   * Callback to write to a CSV file.
+   */
   private static class InnerWriter implements QueueServiceCallback {
 
     private final Optional<Iterable<String>> header;
     private final OutputStream outputStream;
-    private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
-    private final ExportWriteStrategy<Map<String, String>> writeStrategy;
+    private final MapExportSerializeStrategy serializeStrategy;
+    private final StringMapWriteStrategy writeStrategy;
 
+    /**
+     * Create a writer which writes to the CSV file as data become avialable.
+     *
+     * @param header an optional iterable containing the header values for the CSV output. If not
+     *      present, the header will be inferred.
+     * @param outputStrategy the strategy to provide an OutputStream instance. This determines where
+     *      the data will be written.
+     * @param serializeStrategy the strategy used to serialize data records into a string
+     *      representation  suitable for writing to the output stream.
+     * @throws RuntimeException if an exception occurs while attempting to open the OutputStream.
+     */
     public InnerWriter(Optional<Iterable<String>> header, OutputStreamStrategy outputStrategy,
-          ExportSerializeStrategy<Map<String, String>> serializeStrategy) {
+          MapExportSerializeStrategy serializeStrategy) {
       this.header = header;
       this.serializeStrategy = serializeStrategy;
 
@@ -137,7 +153,7 @@ public class CsvExportFacade implements ExportFacade {
       } catch (IOException e) {
         throw new RuntimeException("Error opening output stream", e);
       }
-      
+
       if (header.isPresent()) {
         writeStrategy = new CsvWriteStrategy(header.get());
       } else {

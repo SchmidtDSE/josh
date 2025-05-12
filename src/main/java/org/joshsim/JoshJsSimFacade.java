@@ -240,7 +240,7 @@ public class JoshJsSimFacade {
         JoshJsSimFacade::reportData
     );
   }
-  
+
   /**
    * Get the input / output layer for the browser sandbox.
    *

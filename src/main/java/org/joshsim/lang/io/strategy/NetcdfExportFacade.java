@@ -1,15 +1,13 @@
-
 /**
  * Structures to simplify writing entities to NetCDF.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +15,8 @@ import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.OutputStreamStrategy;
 
 /**
  * Strategy implementing ExportFacade which writes entities to NetCDF in a writer thread.
@@ -36,8 +36,7 @@ public class NetcdfExportFacade implements ExportFacade {
    * @param variables The list of variables to include in the NetCDF file.
    */
   public NetcdfExportFacade(OutputStreamStrategy outputStrategy,
-      ExportSerializeStrategy<Map<String, String>> serializeStrategy,
-      List<String> variables) {
+      MapExportSerializeStrategy serializeStrategy, List<String> variables) {
     this.outputStrategy = outputStrategy;
     this.variables = variables;
     innerWriter = new InnerWriter(variables, outputStrategy, serializeStrategy);
@@ -80,13 +79,13 @@ public class NetcdfExportFacade implements ExportFacade {
      * Create a new task.
      *
      * @param entity the Entity to write
-     * @param step the simulation timestep on which the entity is reported 
+     * @param step the simulation timestep on which the entity is reported
      */
     public Task(Entity entity, long step) {
       this.entity = entity;
       this.step = step;
     }
- 
+
     /**
      * Retrieves the entity associated with this task.
      *
@@ -106,18 +105,27 @@ public class NetcdfExportFacade implements ExportFacade {
     }
   }
 
+  /**
+   * Callback for writing to a netCDF file.
+   */
   private static class InnerWriter implements QueueServiceCallback {
     private final List<String> variables;
     private final OutputStream outputStream;
-    private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
-    private final ExportWriteStrategy<Map<String, String>> writeStrategy;
-    private final List<Map<String, String>> pendingRecords;
+    private final MapExportSerializeStrategy serializeStrategy;
+    private final StringMapWriteStrategy writeStrategy;
 
+    /**
+     * Constructs InnerWriter for writing data to an output stream.
+     *
+     * @param variables the list of variable names to be processed and written.
+     * @param outputStrategy the strategy for opening and managing the output stream.
+     * @param serializeStrategy the strategy for serializing data into an exportable format.
+     * @throws RuntimeException if there is an error opening the output stream.
+     */
     public InnerWriter(List<String> variables, OutputStreamStrategy outputStrategy,
-        ExportSerializeStrategy<Map<String, String>> serializeStrategy) {
+        MapExportSerializeStrategy serializeStrategy) {
       this.variables = variables;
       this.serializeStrategy = serializeStrategy;
-      this.pendingRecords = new ArrayList<>();
 
       try {
         outputStream = outputStrategy.open();

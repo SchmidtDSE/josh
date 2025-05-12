@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,12 +32,9 @@ import ucar.nc2.write.NetcdfFormatWriter;
  * writing to the actual output stream by going through a file indicated by Files'
  * createTempFile.</p>
  */
-public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
+public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
 
   private final List<String> variables;
-
-  private OutputStream outputStream;
-  private List<Map<String, String>> pendingRecords;
 
   /**
    * Create a new netCDF write strategy.
@@ -46,43 +43,34 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
    *     be ignored except for position.longitude and position.latitude.
    */
   public NetcdfWriteStrategy(List<String> variables) {
+    super();
     this.variables = variables;
-    pendingRecords = new ArrayList<>();
-  }
-
-  /**
-   * Add new records to the pending records list.
-   *
-   * @param record The new record to be added to the pending records list.
-   * @param outputStream The stream to which the netCDF file should be written after being
-   *     generated, overwriting prior pending output stream.
-   */
-  @Override
-  public void write(Map<String, String> record, OutputStream outputStream) throws IOException {
-    this.outputStream = outputStream;
-    pendingRecords.add(record);
   }
 
   @Override
-  public void flush() {
-    // Ignored
+  protected List<String> getRequiredVariables() {
+    List<String> variablesRequired = new ArrayList<>();
+    variablesRequired.addAll(variables);
+    variablesRequired.add("position.longitude");
+    variablesRequired.add("position.latitude");
+    variablesRequired.add("step");
+    return variablesRequired;
   }
 
   @Override
-  public void close() {
-    File tempFile = writeToTempFile();
+  public void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
+    File tempFile = writeToTempFile(records);
     redirectFileToStream(tempFile, outputStream);
-    pendingRecords = new ArrayList<>();
-    outputStream = null;
   }
 
   /**
    * Write all pending records to a new temporary file.
    *
+   * @param pendingRecords The records which should be written in batch.
    * @return The temporary file where all pending records are written before being redirected to
    *     the output stream.
    */
-  private File writeToTempFile() {
+  private File writeToTempFile(List<Map<String, String>> pendingRecords) {
     try {
       File tempFile = File.createTempFile("netcdf", ".nc");
       tempFile.deleteOnExit();
@@ -108,7 +96,6 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       builder.addVariable("longitude", DataType.DOUBLE, "time");
 
       for (String varName : variables) {
-        System.out.println(varName);
         Variable.Builder<?> varBuilder = Variable.builder()
             .setName(varName)
             .setDataType(DataType.DOUBLE);
@@ -187,6 +174,18 @@ public class NetcdfWriteStrategy implements ExportWriteStrategy<Map<String, Stri
       tempFile.delete();
     } catch (IOException e) {
       throw new RuntimeException("Failed to write NetCDF data to output stream", e);
+    }
+  }
+
+  /**
+   * Check that a variable name is present on a record.
+   *
+   * @param record The record in which to check for the variable.
+   * @param varName The name of the variable to check for.
+   */
+  private void checkPresent(Map<String, String> record, String varName) {
+    if (!record.containsKey(varName)) {
+      throw new RuntimeException("Record does not contain variable " + varName);
     }
   }
 }

@@ -6,12 +6,18 @@
 
 package org.joshsim.lang.io;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.lang.io.strategy.CsvExportFacade;
+import org.joshsim.lang.io.strategy.GeotiffExportFacade;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
+import org.joshsim.lang.io.strategy.NetcdfExportFacade;
 
 
 /**
@@ -20,10 +26,10 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   private final int replicate;
-  private final ExportSerializeStrategy<Map<String, String>> serializeStrategy;
+  private final MapExportSerializeStrategy serializeStrategy;
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
-  
+
   /**
    * Create a new JvmExportFacadeFactory with only grid-space.
    *
@@ -72,6 +78,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     return switch (target.getFileType()) {
       case "csv" -> buildForCsv(target, header);
       case "nc" -> buildForNetcdf(target, header);
+      case "tif", "tiff" -> buildForGeotiff(target, header);
       default -> throw new IllegalArgumentException("Not supported: " + target.getFileType());
     };
   }
@@ -79,7 +86,12 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   @Override
   public String getPath(String template) {
     String replicateStr = ((Integer) replicate).toString();
-    return template.replaceAll("\\{replicate\\}", replicateStr);
+    String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
+
+    // TODO: need a better option
+    String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
+    String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
+    return withVariable;
   }
 
   /**
@@ -139,19 +151,65 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
 
+    if (header.isEmpty()) {
+      throw new IllegalArgumentException("Variable names must be specified for netCDF.");
+    }
+
     String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
-    if (header.isPresent()) {
-      List<String> variablesList = new ArrayList<>();
-      header.get().forEach(variablesList::add);
-      return new NetcdfExportFacade(
-          outputStreamStrategy,
-          serializeStrategy,
-          variablesList
-      );
-    } else {
-      throw new IllegalArgumentException("Variable names must be specified for netCDF.");
+    List<String> variablesList = new ArrayList<>();
+    header.get().forEach(variablesList::add);
+    return new NetcdfExportFacade(
+        outputStreamStrategy,
+        serializeStrategy,
+        variablesList
+    );
+  }
+
+  private ExportFacade buildForGeotiff(ExportTarget target, Optional<Iterable<String>> header) {
+    if (!target.getProtocol().isEmpty()) {
+      String message = "Only local file system is supported for netcdf at this time.";
+      throw new IllegalArgumentException(message);
+    }
+
+    if (!hasGeo()) {
+      throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
+    }
+
+    if (header.isEmpty()) {
+      throw new IllegalArgumentException("Variable names must be specified for geotiff.");
+    }
+
+    List<String> variablesList = new ArrayList<>();
+    header.get().forEach(variablesList::add);
+
+    return new GeotiffExportFacade(
+        (reference) -> getPathForReference(target.getPath(), reference),
+        serializeStrategy,
+        variablesList,
+        extents.orElseThrow(),
+        width.orElseThrow()
+    );
+  }
+
+  /**
+   * Replaces placeholders in the given path template with values from the provided StreamReference.
+   *
+   * @param base The template string containing placeholders to be replaced.
+   * @param ref The StreamReference object containing values for step and variable placeholders.
+   * @return The formatted string with placeholders replaced by corresponding values.
+   */
+  private OutputStream getPathForReference(String base, GeotiffExportFacade.StreamReference ref) {
+    String step = ref.getStep();
+    String variable = ref.getVariable();
+    String withStep = base.replaceAll("\\_\\_step\\_\\_", step);
+    String path = withStep.replaceAll("\\_\\_variable\\_\\_", variable);
+
+    try {
+      return new FileOutputStream(path);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Could not open file for geotiff: " + e);
     }
   }
 

@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,7 +27,7 @@ import org.apache.commons.csv.CSVPrinter;
  * of the map, and subsequent rows are written in the order of the corresponding values for the
  * keys.</p>
  */
-public class CsvWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
+public class CsvWriteStrategy implements StringMapWriteStrategy {
 
   private boolean onFirstRecord;
   private CSVPrinter printer;

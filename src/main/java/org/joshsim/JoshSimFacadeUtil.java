@@ -16,9 +16,9 @@ import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.CombinedExportFacade;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JshdExternalGetter;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.precompute.JshdExternalGetter;
 
 
 /**

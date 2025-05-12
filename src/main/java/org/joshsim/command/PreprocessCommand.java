@@ -1,3 +1,8 @@
+/**
+ * Command which converts external data to a jshd format.
+ *
+ * @license BSD-3-Clause
+ */
 
 package org.joshsim.command;
 
@@ -30,11 +35,11 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.io.JshdExternalGetter;
 import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
+import org.joshsim.precompute.JshdExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
 import org.joshsim.util.OutputOptions;

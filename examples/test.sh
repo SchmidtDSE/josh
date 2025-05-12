@@ -41,3 +41,11 @@ rm -f /tmp/simple_josh.nc
 assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 3 || exit 7
 [ -f "/tmp/simple_josh_3.nc" ] || exit 8
 [ -s "/tmp/simple_josh_3.nc" ] || exit 9
+
+echo "Testing geotiff output..."
+rm -f /tmp/simple_josh.nc
+assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 4 || exit 10
+[ -f "/tmp/simple_josh_averageAge_0_4.tiff" ] || exit 11
+[ -s "/tmp/simple_josh_averageAge_0_4.tiff" ] || exit 12
+[ -f "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 13
+[ -s "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 14

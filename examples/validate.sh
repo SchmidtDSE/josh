@@ -69,6 +69,7 @@ assert_ok examples/simulations/interaction.josh || exit 26
 assert_ok examples/simulations/query.josh || exit 27
 assert_ok examples/simulations/simple.josh || exit 28
 assert_ok examples/simulations/simple_seki.josh || exit 29
-assert_ok examples/simulations/simple_netcdf.josh || exit 30
-assert_ok examples/simulations/state.josh || exit 31
-assert_ok examples/simulations/variables.josh || exit 32
+assert_ok examples/simulations/simple_geotiff.josh || exit 30
+assert_ok examples/simulations/simple_netcdf.josh || exit 31
+assert_ok examples/simulations/state.josh || exit 32
+assert_ok examples/simulations/variables.josh || exit 33

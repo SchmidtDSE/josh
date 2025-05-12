@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.csv.CSVPrinter;
+import org.joshsim.lang.io.strategy.CsvWriteStrategy;
 import org.junit.jupiter.api.Test;
 
 

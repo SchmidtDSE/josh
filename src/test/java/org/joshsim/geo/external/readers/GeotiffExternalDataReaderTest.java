@@ -2,7 +2,6 @@
 package org.joshsim.geo.external.readers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -35,7 +34,7 @@ public class GeotiffExternalDataReaderTest {
   public void setUp() throws IOException {
     // Initialize value factory
     valueFactory = new EngineValueFactory();
-    
+
     // Initialize reader
     reader = new GeotiffExternalDataReader(valueFactory, new Units("mm"));
 
@@ -45,7 +44,7 @@ public class GeotiffExternalDataReaderTest {
       throw new IOException("Test resource not found: " + GEOTIFF_RESOURCE_PATH);
     }
     geotiffFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     // Open the file
     reader.open(geotiffFilePath);
     reader.setCrsCode("EPSG:4326");

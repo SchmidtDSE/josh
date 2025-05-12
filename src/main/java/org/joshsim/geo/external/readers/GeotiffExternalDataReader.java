@@ -40,17 +40,17 @@ import org.opengis.util.FactoryException;
 
 /**
  * Strategy which supports reading geotiffs and COGs into simulations.
- * 
+ *
  * <p>Strategy which supports reading geotiffs and COGs into simulations where the variable is
  * interpreted as the band index.</p>
  */
 public class GeotiffExternalDataReader implements ExternalDataReader {
   private static final int STANDARD_COG_TILE_SIZE = 256;
-  
+
   private final EngineValueFactory valueFactory;
   private final Map<String, double[][]> tileCache;
   private final Units units;
-  
+
   private GeoTiffStore store;
   private GridCoverageResource coverage;
   private String crsCode;
@@ -117,7 +117,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Create coordinate lists
       List<BigDecimal> coordsX = new ArrayList<>();
       List<BigDecimal> coordsY = new ArrayList<>();
-      
+
       // Get grid size
       long width = geometry.getExtent().getSize(0);
       long height = geometry.getExtent().getSize(1);
@@ -127,16 +127,16 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
           .divide(BigDecimal.valueOf(width - 1), 6, RoundingMode.HALF_UP);
       BigDecimal stepY = maxY.subtract(minY)
           .divide(BigDecimal.valueOf(height - 1), 6, RoundingMode.HALF_UP);
-      
+
       // Generate coordinate lists
       for (int i = 0; i < width; i++) {
         coordsX.add(minX.add(stepX.multiply(BigDecimal.valueOf(i))));
       }
-      
+
       for (int i = 0; i < height; i++) {
         coordsY.add(minY.add(stepY.multiply(BigDecimal.valueOf(i))));
       }
-      
+
       return new ExternalSpatialDimensions("x", "y", null, crsCode, coordsX, coordsY);
     } catch (Exception e) {
       throw new IOException("Failed to get spatial dimensions: " + e.getMessage(), e);
@@ -157,7 +157,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
 
       // Get image coordinates
       DirectPosition position = new DirectPosition2D(x.doubleValue(), y.doubleValue());
-      
+
       // Calculate tile coordinates
       long tileX = Math.round(
           (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
@@ -166,7 +166,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
           (position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
       );
       String tileKey = String.format("%d_%d_%d", bandIndex, tileX, tileY);
-      
+
       // Get or load tile data
       double[][] tileData = tileCache.get(tileKey);
       if (tileData == null) {
@@ -179,17 +179,17 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
 
         // Create a raster from the rendered image
         Raster raster = renderedImage.getData();
-        
+
         // Calculate actual raster bounds
         int maxX = raster.getWidth();
         int maxY = raster.getHeight();
-        
+
         // Read entire tile
         for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
           for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
             int pixelX = (int) tileX + x1;
             int pixelY = (int) tileY + y1;
-            
+
             // Check bounds
             if (pixelX >= 0 && pixelX < maxX && pixelY >= 0 && pixelY < maxY) {
               double[] values = new double[data.getSampleDimensions().size()];
@@ -202,7 +202,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         }
         tileCache.put(tileKey, tileData);
       }
-      
+
       // Transform world coordinates to image coordinates using the grid geometry
       DirectPosition2D worldPos = new DirectPosition2D(
           position.getOrdinate(0),
@@ -218,25 +218,25 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Get value from tile using transformed coordinates
       int localX = (int) Math.round(imagePos.getX() - tileX);
       int localY = (int) Math.round(imagePos.getY() - tileY);
-      
+
       // Verify coordinates are within bounds
       boolean belowMin = localX < 0 || localY < 0;
       boolean aboveMax = localX >= STANDARD_COG_TILE_SIZE || localY >= STANDARD_COG_TILE_SIZE;
       if (belowMin || aboveMax) {
         return Optional.empty();
       }
-      
+
       double value = tileData[localY][localX];
-      
+
       if (Double.isNaN(value)) {
         return Optional.empty();
       }
-      
+
       // Create engine value with the result
       BigDecimal valueWrapped = BigDecimal.valueOf(value)
           .setScale(6, RoundingMode.HALF_UP);
       return Optional.of(valueFactory.build(valueWrapped, units));
-      
+
     } catch (DataStoreException e) {
       throw new IOException("Failed to read value: " + e.getMessage(), e);
     }

@@ -11,7 +11,7 @@ import java.util.Base64;
 /**
  * Serialization strategy which reads or writes jshd formatted binary as base64 strings.
  *
- * <p>Serialization strategy which decorates another serialization strategy like 
+ * <p>Serialization strategy which decorates another serialization strategy like
  * BinaryGridSerializationStrategy to read and write base64 encoded binary payloads as opposed to
  * those binary data directly.</p>
  */
@@ -27,7 +27,7 @@ public class Base64StringGridSerializationStrategy implements GridSerializationS
   public Base64StringGridSerializationStrategy(GridSerializationStrategy inner) {
     this.inner = inner;
   }
-  
+
   @Override
   public void serialize(DataGridLayer target, OutputStream outputStream) {
     try {

@@ -55,5 +55,5 @@ public class ExtentsUtil {
     String[] pieces = engineValStr.split(" ");
     return valueFactory.build(new BigDecimal(pieces[0]), new Units(pieces[1]));
   }
-  
+
 }

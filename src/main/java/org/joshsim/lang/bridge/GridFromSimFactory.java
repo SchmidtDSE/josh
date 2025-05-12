@@ -15,7 +15,6 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
-import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.ExtentsTransformer;

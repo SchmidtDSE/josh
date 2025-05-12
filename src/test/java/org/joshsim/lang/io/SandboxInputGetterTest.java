@@ -2,8 +2,6 @@ package org.joshsim.lang.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +59,7 @@ class SandboxInputGetterTest {
     // Assert
     byte[] result = inputStream.readAllBytes();
     assertEquals(
-        new String(originalBytes, StandardCharsets.UTF_8), 
+        new String(originalBytes, StandardCharsets.UTF_8),
         new String(result, StandardCharsets.UTF_8)
     );
   }

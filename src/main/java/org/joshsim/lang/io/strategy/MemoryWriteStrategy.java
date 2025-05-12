@@ -4,12 +4,13 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.joshsim.lang.io.MapToMemoryStringConverter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing writing to a callback.
@@ -17,7 +18,7 @@ import java.util.Map;
  * <p>Class responsible for serializing a stream of records, where each record is represented as a
  * Map (String, String), into an internal string format which can be passed between languages.</p>
  */
-public class MemoryWriteStrategy implements ExportWriteStrategy<Map<String, String>> {
+public class MemoryWriteStrategy implements StringMapWriteStrategy {
 
   private final String name;
 

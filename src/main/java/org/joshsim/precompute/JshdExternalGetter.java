@@ -1,11 +1,16 @@
-package org.joshsim.lang.io;
+/**
+ * Logic to get jshd external data within a simulation.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.precompute;
 
 import java.io.IOException;
 import java.io.InputStream;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.ExternalResourceGetter;
-import org.joshsim.precompute.DataGridLayer;
-import org.joshsim.precompute.JshdUtil;
+import org.joshsim.lang.io.InputGetterStrategy;
 
 
 /**

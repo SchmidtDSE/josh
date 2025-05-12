@@ -7,15 +7,12 @@
 package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
-import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 
 /**
  * Decorator to add geo position to the outputs of an inner strategy.
@@ -26,16 +23,13 @@ import org.joshsim.engine.value.type.EngineValue;
  * to maps returned from the inner strategy in place. This assumes that entities are provided where
  * their position is provided in grid space such that points need transformation to earth space.</p>
  */
-public class MapWithLatLngSerializeStrategy implements
-    ExportSerializeStrategy<Map<String, String>> {
+public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrategy {
 
-  private final ExportSerializeStrategy<Map<String, String>> inner;
+  private final MapExportSerializeStrategy inner;
   private final PatchBuilderExtents extents;
   private final BigDecimal width;
-  private final BigDecimal gridWidth;
-  private final BigDecimal gridHeight;
-  private final BigDecimal longitudeRange;
-  private final BigDecimal latitudeRange;
+  private final BigDecimal gridWidthMeters;
+  private final BigDecimal gridHeightMeters;
 
   /**
    * Create a new decorator.
@@ -47,14 +41,26 @@ public class MapWithLatLngSerializeStrategy implements
    * @param inner The inner strategy to decorate.
    */
   public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents, BigDecimal width,
-        ExportSerializeStrategy<Map<String, String>> inner) {
+        MapExportSerializeStrategy inner) {
     this.inner = inner;
     this.extents = extents;
     this.width = width;
-    this.gridWidth = extents.getBottomRightX().subtract(extents.getTopLeftX());
-    this.gridHeight = extents.getBottomRightY().subtract(extents.getTopLeftY());
-    this.longitudeRange = extents.getBottomRightX().subtract(extents.getTopLeftX());
-    this.latitudeRange = extents.getBottomRightY().subtract(extents.getTopLeftY());
+
+    HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+        extents.getTopLeftX(),
+        extents.getTopLeftY()
+    );
+    HaversineUtil.HaversinePoint topRight = new HaversineUtil.HaversinePoint(
+        extents.getBottomRightX(),
+        extents.getTopLeftY()
+    );
+    HaversineUtil.HaversinePoint bottomLeft = new HaversineUtil.HaversinePoint(
+        extents.getTopLeftX(),
+        extents.getBottomRightY()
+    );
+
+    gridWidthMeters = HaversineUtil.getDistance(topLeft, topRight);
+    gridHeightMeters = HaversineUtil.getDistance(topLeft, bottomLeft);
   }
 
   /**
@@ -69,23 +75,36 @@ public class MapWithLatLngSerializeStrategy implements
   @Override
   public Map<String, String> getRecord(Entity entity) {
     Map<String, String> result = inner.getRecord(entity);
-    
+
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();
-      
-      // Convert grid coordinates to lat/lng using extents
-      BigDecimal longitude = extents.getTopLeftX().add(
-          geometry.getCenterX().multiply(longitudeRange).divide(gridWidth, 10, RoundingMode.HALF_UP)
+
+      BigDecimal distanceFromLeftMeters = geometry.getCenterX().multiply(width);
+      BigDecimal distanceFromTopMeters = geometry.getCenterY().multiply(width);
+
+      HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
+          extents.getTopLeftX(),
+          extents.getTopLeftY()
       );
-      BigDecimal latitude = extents.getTopLeftY().add(
-          geometry.getCenterY().multiply(latitudeRange).divide(gridHeight, 10, RoundingMode.HALF_UP)
+      HaversineUtil.HaversinePoint eastPoint = HaversineUtil.getAtDistanceFrom(
+          topLeft,
+          distanceFromLeftMeters,
+          "E"
       );
-      
+      HaversineUtil.HaversinePoint finalPoint = HaversineUtil.getAtDistanceFrom(
+          eastPoint,
+          distanceFromTopMeters,
+          "S"
+      );
+
+      BigDecimal longitude = finalPoint.getLongitude();
+      BigDecimal latitude = finalPoint.getLatitude();
+
       result.put("position.longitude", longitude.toString());
       result.put("position.latitude", latitude.toString());
     }
-    
+
     return result;
   }
-  
+
 }

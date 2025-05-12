@@ -47,10 +47,10 @@ dependencies {
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 
-  // UCAR NetCDF for Zarr and NetCDF support
+  // UCAR NetCDF for NetCDF support
   implementation "edu.ucar:cdm-core:5.7.0"
+  implementation "edu.ucar:netcdf4:5.7.0"
   runtimeOnly "org.slf4j:slf4j-jdk14:2.0.17"
-  runtimeOnly "edu.ucar:netcdf4:5.7.0"
 
   // Apache SIS for coordinate system transformations and COG support
   implementation("org.apache.sis.core:sis-referencing:1.4")
@@ -78,6 +78,13 @@ dependencies {
 
   // Minio for S3 storage
   implementation("io.minio:minio:8.5.2")
+
+  // GeoTools dependencies
+  implementation("org.geotools:gt-main:33.0")
+  implementation("org.geotools:gt-geotiff:33.0") 
+  implementation("org.geotools:gt-coverage:33.0")
+  implementation("org.geotools:gt-epsg-hsql:33.0")
+  implementation("org.geotools:gt-netcdf:33.0")
 }
 
 teavm {

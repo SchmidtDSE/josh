@@ -16,7 +16,7 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JshdExternalGetter;
+import org.joshsim.precompute.JshdExternalGetter;
 
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
