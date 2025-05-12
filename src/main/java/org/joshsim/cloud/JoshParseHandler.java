@@ -1,4 +1,3 @@
-
 /**
  * Handler for parsing Josh code and returning simulation names.
  *
@@ -23,6 +22,14 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
+import java.util.StringJoiner;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.engine.value.EngineValue;
+import org.joshsim.engine.value.EngineValueFactory;
+import org.joshsim.engine.Simulation;
+import org.joshsim.simulator.facade.JoshSimFacade;
+import org.joshsim.entity.base.MutableEntity;
+import org.joshsim.entity.shadow.ShadowingEntity;
 
 /**
  * Handler which parses Josh code and returns parse results with simulation names.
@@ -43,7 +50,7 @@ public class JoshParseHandler implements HttpHandler {
   public JoshParseHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
       Optional<String> crs, boolean serialPatches) {
     this.apiDataLayer = apiInternalLayer;
-    
+
     if (!sandboxed) {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
     }
@@ -121,32 +128,59 @@ public class JoshParseHandler implements HttpHandler {
 
     String code = formData.getFirst("code").getValue();
     ParseResult result = JoshSimFacadeUtil.parse(code);
-    
+
     String parseStatus = result.hasErrors() ? 
-        result.getErrors().iterator().next().toString() : 
-        "success";
+          result.getErrors().iterator().next().toString() : 
+          "success";
 
     SandboxInputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(
       new HashMap<>(),
       (x) -> {}
     );
-    
-    String simulationNamesCsv;
-    if (result.hasErrors()) {
-      simulationNamesCsv = "";
-    } else {
-      Iterable<String> simulationNames = JoshSimFacadeUtil.interpret(
+
+    StringJoiner responseJoiner = new StringJoiner("\t");
+    responseJoiner.add(parseStatus);
+
+    String simulationNamesCsv = "";
+    String gridInfo = "";
+
+    if (!result.hasErrors()) {
+      JoshSimFacade facade = JoshSimFacadeUtil.interpret(
           geometryFactory,
           result,
           inputOutputLayer
-      ).getSimulations().getSimulations();
+      );
+
+      Iterable<String> simulationNames = facade.getSimulations().getSimulations();
       simulationNamesCsv = StreamSupport.stream(
           simulationNames.spliterator(),
           false
       ).collect(Collectors.joining(","));
+
+      if (formData.contains("name")) {
+        String simName = formData.getFirst("name").getValue();
+        try {
+          MutableEntity simEntityRaw = facade.getSimulations().getProtoype(simName).build();
+          MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+          GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+
+          EngineValue size = extractor.getSize();
+          gridInfo = String.format("%s,%s,%s %s",
+              extractor.getStartStr(),
+              extractor.getEndStr(),
+              size.getAsDecimal().toString(),
+              size.getUnits().toString());
+        } catch (Exception e) {
+          // Keep gridInfo empty on any error
+        }
+      }
     }
 
-    httpServerExchange.getResponseSender().send(parseStatus + "\t" + simulationNamesCsv);
+    responseJoiner.add(simulationNamesCsv);
+    responseJoiner.add(gridInfo);
+
+    httpServerExchange.getResponseSender().send(responseJoiner.toString());
     return Optional.of(apiKey);
   }
 }
+```
