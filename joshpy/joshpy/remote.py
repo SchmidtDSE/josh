@@ -150,7 +150,37 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
         string description of the first error.
       ValueError: Raised if the simulation of the given name cannot be found.
     """
-    raise NotImplementedError('Not yet implemented.')
+    endpoint = f"{self._server}/runReplicates"
+    data = {
+      'code': code,
+      'name': name,
+      'replicates': str(replicates),
+      'api_key': self._api_key,
+      'externalData': virtual_files
+    }
+
+    try:
+      response = requests.post(endpoint, data=data, stream=True)
+      if response.status_code != 200:
+        raise RuntimeError(f"Server returned status code {response.status_code}")
+
+      # Create response reader to parse streaming results
+      reader = joshpy.parse.ResponseReader(lambda x: print(f"Completed {x} replicates"))
+      
+      # Process streaming response chunks
+      for chunk in response.iter_lines(decode_unicode=True):
+        if chunk:
+          reader.process_response(chunk + '\n')
+          
+      # Get final results
+      results = reader.get_complete_replicates()
+      if not results:
+        raise RuntimeError("No results returned from simulation")
+        
+      return results
+
+    except requests.exceptions.RequestException as e:
+      raise RuntimeError(f"Failed to connect to server: {str(e)}")
 
   def _parse_simulation(self, code: str, name: typing.Optional[str] = None) -> ParseResult:
     """Try parsing a simulation.
