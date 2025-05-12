@@ -1,6 +1,6 @@
 import unittest
 
-import metadata
+import joshpy.metadata
 
 
 class TestMetadata(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestMetadata(unittest.TestCase):
         self.max_longitude = -118.24
         self.max_latitude = 34.05
         
-        self.metadata = metadata.SimulationMetadata(
+        self.metadata = joshpy.metadata.SimulationMetadata(
             self.start_x, 
             self.start_y,
             self.end_x,
@@ -58,7 +58,7 @@ class TestMetadata(unittest.TestCase):
         self.assertTrue(self.metadata.has_degrees())
 
     def test_has_degrees_without_coordinates(self):
-        metadata = SimulationMetadata(
+        metadata = joshpy.metadata.SimulationMetadata(
             self.start_x,
             self.start_y,
             self.end_x,
@@ -68,7 +68,7 @@ class TestMetadata(unittest.TestCase):
         self.assertFalse(metadata.has_degrees())
 
     def test_has_degrees_with_partial_coordinates(self):
-        metadata = SimulationMetadata(
+        metadata = joshpy.metadata.SimulationMetadata(
             self.start_x,
             self.start_y,
             self.end_x,
