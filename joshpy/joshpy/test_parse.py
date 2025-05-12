@@ -1,5 +1,5 @@
-
 import unittest
+
 from .parse import parse_engine_value_string, parse_start_end_string, ResponseReader
 
 class TestParse(unittest.TestCase):

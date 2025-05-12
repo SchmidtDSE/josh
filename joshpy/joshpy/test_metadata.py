@@ -1,5 +1,5 @@
-
 import unittest
+
 from .metadata import SimulationMetadata
 
 class TestMetadata(unittest.TestCase):

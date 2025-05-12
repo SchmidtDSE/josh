@@ -1,7 +1,7 @@
-
 import unittest
-import math
+
 from .geocode import EarthPoint, get_distance_meters, get_at_distance_from
+
 
 class TestGeocode(unittest.TestCase):
     def setUp(self):
