@@ -3,6 +3,8 @@
 License: BSD-3-Clause
 """
 
+import typing
+
 import joshpy.definitions
 
 
@@ -18,7 +20,7 @@ class ResponseReader:
     self._replicate_reducer = {}
     self._complete_replicates = [] 
     self._callback = callback
-    self._buffer = ""
+    self._buffer = ''
     self._completed_replicates = 0
 
   def process_response(self, text: str):
@@ -28,27 +30,27 @@ class ResponseReader:
       text: The text returned by the engine.
     """
     self._buffer += text
-    lines = self._buffer.split("\n")
+    lines = self._buffer.split('\n')
     self._buffer = lines.pop()
 
     for line in (x.strip() for x in lines if x.strip()):
       intermediate = self._parse_engine_response(line)
       
-      if intermediate["type"] == "datum":
-        replicate_id = intermediate["replicate"]
+      if intermediate['type'] == 'datum':
+        replicate_id = intermediate['replicate']
         if replicate_id not in self._replicate_reducer:
           self._replicate_reducer[replicate_id] = []
           
         parsed = {
-          "target": intermediate["datum"]["target"],
-          "attributes": intermediate["datum"]["attributes"]
+          'target': intermediate['datum']['target'],
+          'attributes': intermediate['datum']['attributes']
         }
         self._replicate_reducer[replicate_id].append(parsed)
         
-      elif intermediate["type"] == "end":
+      elif intermediate['type'] == 'end':
         self._completed_replicates += 1
         self._complete_replicates.append(
-          self._replicate_reducer[intermediate["replicate"]]
+          self._replicate_reducer[intermediate['replicate']]
         )
         self._callback(self._completed_replicates)
 
@@ -73,11 +75,11 @@ class ResponseReader:
     target = first_pieces[0]
     attributes_str = first_pieces[1] if len(first_pieces) > 1 else ""
 
-    attributes = {}
+    attributes: typing.Dict[str, typing.Union[float, int, str]] = {}
     if not attributes_str:
-      return {"target": target, "attributes": attributes}
+      return {'target': target, 'attributes': attributes}
 
-    pairs = attributes_str.split("\t")
+    pairs = attributes_str.split('\t')
     for pair in pairs:
       if not pair:
         continue
@@ -96,7 +98,7 @@ class ResponseReader:
         except ValueError:
           attributes[key] = value
 
-    return {"target": target, "attributes": attributes}
+    return {'target': target, 'attributes': attributes}
 
   def _parse_engine_response(self, source: str) -> dict:
     """Parse a data point from a transfer string with replicate prefix.
@@ -112,24 +114,24 @@ class ResponseReader:
     end_match = re.match(r'^\[end (\d+)\]$', source)
     if end_match:
       return {
-        "replicate": int(end_match.group(1)),
-        "type": "end"
+        'replicate': int(end_match.group(1)),
+        'type': 'end'
       }
 
     match = re.match(r'^\[(\d+)\] (.+)$', source)
     if not match:
-      raise ValueError("Got malformed engine response")
+      raise ValueError('Got malformed engine response')
 
     replicate = int(match.group(1))
     data = self._parse_datum(match.group(2))
     
     if not data:
-      raise ValueError("Got malformed engine response")
+      raise ValueError('Got malformed engine response')
 
     return {
-      "replicate": replicate,
-      "type": "datum",
-      "datum": data
+      'replicate': replicate,
+      'type': 'datum',
+      'datum': data
     }
 
 

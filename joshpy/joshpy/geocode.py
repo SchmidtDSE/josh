@@ -34,33 +34,37 @@ def add_positions(results: joshpy.definitions.SimulationResults,
   Returns:
     joshpy.definitions.SimulationResults: The results after modification in place.
   """
-  for replicate in results.get_replicates():
-    for timestep in replicate.get_timesteps():
-      for entity in timestep.get_entities():
-        if 'position' in entity:
-          pos = entity['position']
-          if 'x' in pos and 'y' in pos:
-            top_left = EarthPoint(
-              metadata.get_top_left_longitude(),
-              metadata.get_top_left_latitude()
-            )
-            
-            # Move east by x distance
-            east_point = get_at_distance_from(
-              top_left, 
-              float(pos['x']) * metadata.get_width_meters(), 
-              'E'
-            )
-            
-            # Move south from the east point by y distance
-            final_point = get_at_distance_from(
-              east_point,
-              float(pos['y']) * metadata.get_width_meters(),
-              'S'  
-            )
-            
-            pos['longitude'] = final_point.get_longitude()
-            pos['latitude'] = final_point.get_latitude()
+  for replicate in results:
+    for entity in replicate:
+      if 'position.x' in entity:
+        
+        longitude = metadata.get_min_longitude()
+        assert longitude is not None
+        
+        latitude = metadata.get_max_latitude()
+        assert latitude is not None
+        
+        top_left = EarthPoint(
+          longitude,
+          latitude
+        )
+        
+        # Move east by x distance
+        east_point = get_at_distance_from(
+          top_left, 
+          float(entity['position.x']) * metadata.get_patch_size(), 
+          'E'
+        )
+        
+        # Move south from the east point by y distance
+        final_point = get_at_distance_from(
+          east_point,
+          float(entity['position.y']) * metadata.get_patch_size(),
+          'S'  
+        )
+        
+        entity['position.longitude'] = final_point.get_longitude()
+        entity['position.latitude'] = final_point.get_latitude()
             
   return results
 

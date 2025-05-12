@@ -4,13 +4,17 @@
 License: BSD-3-Clause
 """
 
+import typing
+
+OPT_FLOAT = typing.Optional[float]
+
 
 class SimulationMetadata:
   """Information about metadata from a simulation including grid initialization information."""
 
   def __init__(self, start_x: float, start_y: float, end_x: float, end_y: float, 
-               patch_size: float, min_longitude: float = None, min_latitude: float = None,
-               max_longitude: float = None, max_latitude: float = None):
+               patch_size: float, min_longitude: OPT_FLOAT = None, min_latitude: OPT_FLOAT = None,
+               max_longitude: OPT_FLOAT = None, max_latitude: OPT_FLOAT = None):
     """Create a new metadata record.
     
     Args:
@@ -78,7 +82,7 @@ class SimulationMetadata:
     """
     return self._patch_size
 
-  def get_min_longitude(self) -> float:
+  def get_min_longitude(self) -> OPT_FLOAT:
     """Gets the minimum longitude within this grid.
     
     Returns:
@@ -86,7 +90,7 @@ class SimulationMetadata:
     """
     return self._min_longitude
 
-  def get_min_latitude(self) -> float:
+  def get_min_latitude(self) -> OPT_FLOAT:
     """Gets the minimum latitude within this grid.
     
     Returns:
@@ -94,7 +98,7 @@ class SimulationMetadata:
     """
     return self._min_latitude
 
-  def get_max_longitude(self) -> float:
+  def get_max_longitude(self) -> OPT_FLOAT:
     """Gets the maximum longitude within this grid.
     
     Returns:
@@ -102,7 +106,7 @@ class SimulationMetadata:
     """
     return self._max_longitude
 
-  def get_max_latitude(self) -> float:
+  def get_max_latitude(self) -> OPT_FLOAT:
     """Gets the maximum latitude within this grid.
     
     Returns:
