@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Scientific/Engineering",
 ]
-dependencies = ["requests ~= 2.32.3"]
+dependencies = ["requests ~= 2.32.3", "wasmer ~= 1.1.0"]
 
 [tool.setuptools.package-data]
 afscgap = ["py.typed"]
