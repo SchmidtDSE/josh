@@ -105,6 +105,10 @@ public class JoshSimServer {
 
         // API handlers
         .addPrefixPath(
+            "/parse",
+            new JoshParseHandler(dataLayer, true, Optional.empty(), serialPatches)
+        )
+        .addPrefixPath(
             "/runReplicate",
             new JoshSimWorkerHandler(dataLayer, true, Optional.empty(), serialPatches)
         )
