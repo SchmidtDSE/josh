@@ -15,8 +15,8 @@ class ResponseReader:
     Args:
       callback: Function to call when replicates are ready.
     """
-    self._replicate_reducer = {}  # Map of replicate ID to list of data points
-    self._complete_replicates = []  # List of completed replicate data
+    self._replicate_reducer = {}
+    self._complete_replicates = [] 
     self._callback = callback
     self._buffer = ""
     self._completed_replicates = 0
