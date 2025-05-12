@@ -74,13 +74,57 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
     self._api_key = '' if api_key is None else api_key
 
   def get_error(self, code: str) -> typing.Optional[str]:
-    raise NotImplementedError('Not yet implemented.')
+    """Get the error in the given Josh code if one is present.
+
+    Args:
+      code: The code to be parsed and from which error message is to be returned.
+
+    Returns:
+      The first error found described as a string or None if no errors found.
+    """
+    result = self._parse_simulation(code)
+    return result.get_error()
 
   def get_simulations(self, code: str) -> typing.List[str]:
-    raise NotImplementedError('Not yet implemented.')
+    """Get the list of simulations found within code if it interprets correctly.
+
+    Args:
+      code: The code to be parsed and from which list of simulation names is to be returned.
+
+    Returns:
+      List of simulation names found within the code.
+
+    Raises:
+      RuntimeError: Raised if the code provided has an error in it. The exception will have the
+        string description of the first error.
+    """
+    result = self._parse_simulation(code)
+    if result.get_error() is not None:
+      raise RuntimeError(result.get_error())
+    return result.get_simulation_names()
 
   def get_metadata(self, code: str, name: str) -> joshpy.metadata.SimulationMetadata:
-    raise NotImplementedError('Not yet implemented.')
+    """Get the metadata for a specific simulation.
+
+    Args:
+      code: The code to be parsed and from which metadata should be extracted.
+      name: The name of the simulation for which metadata should be returned.
+
+    Returns:
+      The metadata parsed from the given code for the given simulation.
+
+    Raises:
+      RuntimeError: Raised if the code provided has an error in it or the simulation is not found.
+    """
+    result = self._parse_simulation(code, name)
+    if result.get_error() is not None:
+      raise RuntimeError(result.get_error())
+    
+    metadata = result.get_metadata()
+    if metadata is None:
+      raise RuntimeError(f"No metadata found for simulation: {name}")
+      
+    return metadata
 
   def run_simulation(self, code: str, name: str,
       virtual_files: joshpy.definitions.FlatFiles,
