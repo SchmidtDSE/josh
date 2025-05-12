@@ -1,5 +1,7 @@
 # Succession Model
-A simple succession model where growth of two species of tree is influenced by temperature and precipitation which also exhibits extreme heat disturbance. 
+A simple succession model where growth of two species of tree is influenced by temperature and precipitation which also exhibits extreme heat disturbance. This is a toy model meant to demonstrate Josh language features and not meant to be ecologically complete or validated.
+
+<br>
 
 ## Density
 Density is represented by agents where each agent may represent a certain number of trees. Each tree species can reach up to 10 agents per patch. The probability of a new agent being created is defined by
@@ -7,6 +9,8 @@ Density is represented by agents where each agent may represent a certain number
 $p_c = min(-(n - 5)^2 / 20 + 1.1, 1)$
 
 This parabolic function is limited to 1 and a tree is viable so long as bioclimatic limits are not exceeded. Note that $n$ refers to the total number of trees on the patch.
+
+<br>
 
 ## Growth
 Growth is a function of both temperature and precipitation. 
@@ -44,6 +48,8 @@ Note that $r = 0.001$ is a scaling parameter and this behavior is subjec to $P^c
   - $P_A^c = 500$ (Species A)
   - $P_B^c = 400$ (Species B)
 
+<br>
+
 ## Survival probability
 The probabiliy of survival is defined both under presence and absence of extreme heat stress.
 
@@ -67,3 +73,19 @@ In this system, consider the following:
  - Independent variable: $T$ is temperature in K
 
 These stresses are read from external data.
+
+<br>
+
+## Demo
+To demonstrate use of this toy simulation, the following 100 meter resolution example is suggested for use:
+
+```
+grid.size = 100 m
+grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+steps.low = 0 count
+steps.high = 20 count
+```
+
+This uses [Cal-Adapt](https://cal-adapt.org/) data.

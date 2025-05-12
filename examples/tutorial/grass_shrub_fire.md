@@ -1,5 +1,7 @@
 # Grass Shrub Fire Cycle
-Simple model showing disturbances based on simulation conditions with external data. This shows grass and shrub growth which increases probability of fires. This is a patch-based model to amount of grass and shrub coverage is given by an occupancy density as opposed to individual agents.
+Simple model showing disturbances based on simulation conditions with external data. This shows grass and shrub growth which increases probability of fires. This is a patch-based model to amount of grass and shrub coverage is given by an occupancy density as opposed to individual agents. This is a toy model meant to demonstrate Josh language features and not meant to be ecologically complete or validated.
+
+<br>
 
 ## Vegitation
 Vegitation grows according to a growth rate which is influenced by precipitation.
@@ -25,6 +27,8 @@ In these growth formulas, $r$ is a scaling parameter controlling steepness of cu
 
 Both kinds of vegitation are influenced by fire.
 
+<br>
+
 ## Fire
 Fire acts as the distrurbance in this system which happens probabilistically.
 
@@ -41,3 +45,19 @@ In this system:
 
 ### Damage
 A fire should, on average, destroy 90% of shrub cover and 70% of grass cover. The idea is that this creates the grass-fire positive feedback loop. These are defined by sampling probailities directly when a patch is on fire.
+
+<br>
+
+## Demo
+To demonstrate use of this toy simulation, the following 30 meter resolution example is suggested for use:
+
+```
+grid.size = 30 m
+grid.low = 34.5 degrees latitude, -120 degrees longitude
+grid.high = 35.5 degrees latitude, -119 degrees longitude
+
+steps.low = 0 count
+steps.high = 20 count
+```
+
+This uses [Cal-Adapt](https://cal-adapt.org/) data.
