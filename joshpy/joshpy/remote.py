@@ -41,5 +41,25 @@ class RemoteJoshDecorator(joshpy.strategy.JoshBackend):
       replicates: int) -> joshpy.definitions.SimulationResults:
     raise NotImplementedError('Not yet implemented.')
 
-  def _parse_simulation(self, code: str) -> 
+  def _parse_simulation(self, code: str, name: typing.Optional[str] = None) -> ParseResult:
+    """Try parsing a simulation.
+    
+    Try parsing a simulation and return results from the remote. If simulation was not parsed
+    successfully, returns a result with the error indicated and empty simulation names and empty
+    metadata. If simulation parsed successfully, the error is indicated as None and a list of
+    simulation names are provided.
+    
+    If a name is provided and parsing is successful, the metadata for the simulation of that name
+    parsed and returned if the start / end is provided in degrees and the size of the  simulation is
+    in meters (m, meter, meters). The other attributes are calculated through joshpy.geocode.
 
+    Args:
+      code: The code to be parsed.
+      name: The name of the simulation for which metadata should be returned or None if no metadata
+        should be returned.
+
+    Returns:
+      Result of parsing with error information or simulation information.
+    """
+    raise NotImplementedError('Not yet implemented.')
+    
