@@ -1,5 +1,7 @@
 """Utilities to convert from grid-space to Earth-space results.
 
+import math
+
 Utilities to convert from grid-space to Earth-space results including a Python-based implmentation
 of Haversine to support these operations.
 
@@ -28,7 +30,35 @@ def add_positions(results: joshpy.definitions.SimulationResults,
   Returns:
     joshpy.definitions.SimulationResults: The results after modification in place.
   """
-  raise NotImplementedError('Not yet implemented.')
+  for replicate in results.get_replicates():
+    for timestep in replicate.get_timesteps():
+      for entity in timestep.get_entities():
+        if 'position' in entity:
+          pos = entity['position']
+          if 'x' in pos and 'y' in pos:
+            top_left = EarthPoint(
+              metadata.get_top_left_longitude(),
+              metadata.get_top_left_latitude()
+            )
+            
+            # Move east by x distance
+            east_point = get_at_distance_from(
+              top_left, 
+              float(pos['x']) * metadata.get_width_meters(), 
+              'E'
+            )
+            
+            # Move south from the east point by y distance
+            final_point = get_at_distance_from(
+              east_point,
+              float(pos['y']) * metadata.get_width_meters(),
+              'S'  
+            )
+            
+            pos['longitude'] = final_point.get_longitude()
+            pos['latitude'] = final_point.get_latitude()
+            
+  return results
 
 
 class EarthPoint:
@@ -71,7 +101,20 @@ def get_distance_meters(start: EarthPoint, end: EarthPoint) -> float:
   Returns:
     Distance between start and end in meters.
   """
-  raise NotImplementedError('Not yet implemented.')
+  EARTH_RADIUS_METERS = 6371000
+  
+  angle_lat_start = math.radians(start.get_latitude())
+  angle_lat_end = math.radians(end.get_latitude())
+  delta_lat = math.radians(end.get_latitude() - start.get_latitude())
+  delta_long = math.radians(end.get_longitude() - start.get_longitude())
+  
+  a = (math.sin(delta_lat / 2) * math.sin(delta_lat / 2) 
+       + math.cos(angle_lat_start) * math.cos(angle_lat_end) 
+       * math.sin(delta_long / 2) * math.sin(delta_long / 2))
+  
+  c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+  
+  return EARTH_RADIUS_METERS * c
 
 
 def get_at_distance_from(start: EarthPoint, distance_meters: float, direction: str) -> EarthPoint:
