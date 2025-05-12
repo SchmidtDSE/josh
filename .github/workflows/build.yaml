@@ -75,11 +75,13 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install dependencies
-        run: pip install mypy pyflakes types-requests
+        run: pip install mypy pyflakes types-requests nose2
       - name: Run mypy
         run: mypy joshpy/joshpy/*.py
       - name: Run pyflakes
         run: pyflakes joshpy/joshpy/*.py
+      - name: Run tests
+        run: cd joshpy && nose2
   testJava:
     needs: buildJava
     environment: Build
