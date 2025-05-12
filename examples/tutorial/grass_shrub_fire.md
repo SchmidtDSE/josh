@@ -32,7 +32,7 @@ Fire acts as the distrurbance in this system which happens probabilistically.
 The probability of fire is a function of grass cover where probability per time-step is as follows. $p_F =$
 
 - $0.05 \quad if \quad \varphi_{G} \geq 0.15$
-- $0.01 \quad else \end{cases} \quad$
+- $0.01 \quad else \quad$
 
 More formally,
 
