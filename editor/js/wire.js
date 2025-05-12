@@ -132,3 +132,5 @@ class ResponseReader {
   }
 
 }
+
+export {ExternalDataSerializer, ResponseReader};
