@@ -40,8 +40,8 @@ class SimulationMetadata:
     """Gets the minimum horizontal position of a patch in grid space.
     
     Returns:
-      The starting X coordinate where coordinates in degrees are automatically converted to a 
-      grid with 0,0 in upper left.
+      float: The starting X coordinate where coordinates in degrees are automatically converted to a 
+        grid with 0,0 in upper left.
     """
     return self._start_x
 
@@ -49,8 +49,8 @@ class SimulationMetadata:
     """Gets the minimum vertical position of a patch in grid space.
     
     Returns:
-      The starting Y coordinate where coordinates in degrees are automatically converted to a 
-      grid with 0,0 in upper left.
+      float: The starting Y coordinate where coordinates in degrees are automatically converted to a 
+        grid with 0,0 in upper left.
     """
     return self._start_y
 
@@ -58,7 +58,7 @@ class SimulationMetadata:
     """Gets the maximum horizontal position of a patch in grid space.
     
     Returns:
-      The ending X coordinate in grid space.
+      float: The ending X coordinate in grid space.
     """
     return self._end_x
 
@@ -66,7 +66,7 @@ class SimulationMetadata:
     """Gets the maximum vertical position of a patch in grid space.
     
     Returns:
-      The ending Y coordinate in grid space.
+      float: The ending Y coordinate in grid space.
     """
     return self._end_y
 
@@ -74,7 +74,7 @@ class SimulationMetadata:
     """Gets the size of each patch/cell in the grid.
     
     Returns:
-      The patch size, typically 1.
+      float: The patch size, typically 1.
     """
     return self._patch_size
 
@@ -82,7 +82,7 @@ class SimulationMetadata:
     """Gets the minimum longitude within this grid.
     
     Returns:
-      The minimum longitude, or None if grid not defined in degrees.
+      float: The minimum longitude, or None if grid not defined in degrees.
     """
     return self._min_longitude
 
@@ -90,7 +90,7 @@ class SimulationMetadata:
     """Gets the minimum latitude within this grid.
     
     Returns:
-      The minimum latitude, or None if grid not defined in degrees.
+      float: The minimum latitude, or None if grid not defined in degrees.
     """
     return self._min_latitude
 
@@ -98,7 +98,7 @@ class SimulationMetadata:
     """Gets the maximum longitude within this grid.
     
     Returns:
-      The maximum longitude, or None if grid not defined in degrees.
+      float: The maximum longitude, or None if grid not defined in degrees.
     """
     return self._max_longitude
 
@@ -106,7 +106,7 @@ class SimulationMetadata:
     """Gets the maximum latitude within this grid.
     
     Returns:
-      The maximum latitude, or None if grid not defined in degrees.
+      float: The maximum latitude, or None if grid not defined in degrees.
     """
     return self._max_latitude
 
@@ -114,7 +114,7 @@ class SimulationMetadata:
     """Determine if this record has latitude and longitude specified.
     
     Returns:
-      True if latitude and longitudes are specified and false otherwise.
+      bool: True if latitude and longitudes are specified and false otherwise.
     """
     has_longitude = self.get_min_longitude() is not None and self.get_max_longitude() is not None
     has_latitude = self.get_min_latitude() is not None and self.get_max_latitude() is not None
