@@ -8,10 +8,6 @@ package org.joshsim.lang.io.strategy;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import static org.gdal.gdal.gdal.AllRegister;
-import static org.gdal.gdal.gdal.GetDriverByName;
-import static org.gdal.gdalconst.gdalconstConstants.GDT_Float64;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
