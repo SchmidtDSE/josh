@@ -64,6 +64,16 @@ def serialize_files(files: typing.List[VirtualFile]) -> str:
 
   Returns:
     str: The string serialization of the given virtual file system in the format expected by the
-      Josh server.
+      Josh server. Each file is represented as a string with tab-separated values in the format:
+      filename\t(1 if binary, 0 if text)\tcontent\t. The content has tabs replaced with spaces
+      and multiple files are concatenated without newlines.
   """
-  raise NotImplementedError('Not yet implemented.')
+  serialized_files = []
+  for file in files:
+    # Replace tabs with spaces in content as per wire.js implementation
+    safe_content = file.get_content().replace('\t', '    ')
+    # Format is: filename TAB is_binary TAB content TAB
+    serialized_file = f"{file.get_name()}\t{1 if file.is_binary() else 0}\t{safe_content}\t"
+    serialized_files.append(serialized_file)
+  
+  return ''.join(serialized_files)
