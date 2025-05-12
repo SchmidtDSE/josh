@@ -1,0 +1,184 @@
+###
+# Simple successional model to demonstrate agentic modeling in Josh
+#
+# Simple successional model to demonstrate agentic modeling in Josh in response to external data
+# files. This is further described in succession.md with equations provided. Note that this is
+# verbose in a few areas for readability. Used in agentic modeling tutorial.
+#
+# Toy model not meant to be ecologically sound or verified. Geospatial coordinates only provided to
+# demonstrate use with external data.
+#
+# License: BSD-3-Clause
+# Data: Cal-Adapt
+###
+
+
+start simulation Main
+
+  # Specify where the simluation runs
+  grid.size = 1000 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  # Specify when the simulation runs (2024 to 2054)
+  steps.low = 0 count
+  steps.high = 30 count
+
+  startYear.init = 2024
+  year.init = startYear
+  year.step = prior.year + 1 
+
+  # Indicate ecological and spatial limits
+  constraints.maxOccupants = 10 count
+  constraints.minViableTemperature = 273 K
+  constraints.maxViableTemperature = 373 K
+
+  optimal.temperature.speciesA = 300 K
+  optimal.temperature.speciesB = 320 K
+  optimal.precipitation.speciesA = 500 mm
+  optimal.precipitation.speciesB = 400 mm
+
+  survival.speciesA = 30%
+  survival.speciesB = 50%
+
+  growthScaler = 0.0025 m / (1 K * 1 K)
+  precipitationBase = 2.7182818284
+
+end simulation
+
+
+
+start patch Default
+
+  # Randomize starting occupancy
+  countOccupancy.init = sample uniform from 0 count to meta.constraints.maxOccupants
+  initialACount.init = (sample uniform from 0% to 100%) * countOccupancy
+  initialBCount.init = countOccupancy - initalA
+
+  # Create initial occupants
+  SpeciesA.init = create initialACount of SpeciesA
+  SpeciesB.init = create initialBCount of SpeciesB
+
+  # Remove dead occupants at start of simulation step
+  SpeciesA.start = SpeicesA[SpeicesA.dead == false]
+  SpeicesB.start = SpeicesB[SpeicesB.dead == false]
+  speciesACount.start = count(SpeicesA)
+  speciesBCount.start = count(SpeciesB)
+  totalCount.start = speciesACount + speciesBCount
+
+  # Determine if in an extreme temperature event
+  inExtremeTemperature.step = {
+    const currentTemperature = external temperature
+    const inExtremeCold = currentTemperature < 273 K
+    const inExtremeHot = currentTemperature > 373 K
+    return inExtremeCold or inExtremeHot
+  }
+
+  # Make new occupants end step (to have their first step on next step)
+  newCount.end = {
+    const probabilityNewRaw = (-1 count * (totalCount - 5 count) ^ 2 / 20 count) + 110 %
+    const probabilityNew = limit probabilityNewRaw to [0%, 100%]
+    const maxNewCount = (meta.constraints.maxOccupants - totalCount) * probabilityNew
+    return sample uniform from 0 count to maxNewCount
+  }
+
+  newSpeciesACount.end = floor((speicesACount / totalCount) * newCount)
+  newSpeciesBCount.end = floor((speicesACount / totalCount) * newCount)
+
+  SpeciesA.end = SpeciesA + create newSpeciesACount of SpeciesA
+  SpeciesB.end = SpeciesB + create newSpeciesBCount of SpeciesB
+
+end patch
+
+
+start organism SpeicesA
+
+  # Start a zero height except when if this is the simulation start
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample =  (sample normal with mean of 20 meters std of 5 meters)
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+
+  # At each step, determine impact of temperature
+  temperatureImpact.step = {
+    const deltaFromOptimalTemp = external temperature - meta.optimal.temperature.speciesA
+    return meta.growthScaler * (deltaFromOptimalTemp)^2
+  }
+
+  # At each step, determine impact of precipitation
+  precipitationImpact.step = {
+    const deltaFromOptimalPrecipitation = external precipitation - optimal.precipitation.speciesA
+    const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
+    return 1 / meta.precipitationBase ^ scaledPrecipitation
+  }
+
+  # At each step, determine overall growth
+  newGrowth.step = (1 m - temperatureImpact) * precipitationImpact
+  height.step = prior.height + newGrowth
+
+  # At each step end, determine death
+  dead.end = (sample uniform from 0% to 100%) > meta.survival.speciesA
+
+end organism
+
+
+start organism SpeicesB
+
+  # Start a zero height except when if this is the simulation start
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample =  (sample normal with mean of 20 meters std of 5 meters)
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+
+  # At each step, determine impact of temperature
+  temperatureImpact.step = {
+    const deltaFromOptimalTemp = external temperature - meta.optimal.temperature.speciesB
+    return meta.growthScaler * (deltaFromOptimalTemp)^2
+  }
+
+  # At each step, determine impact of precipitation
+  precipitationImpact.step = {
+    const deltaFromOptimalPrecipitation = external precipitation - optimal.precipitation.speciesB
+    const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
+    return 1 / meta.precipitationBase ^ scaledPrecipitation
+  }
+
+  # At each step, determine overall growth
+  newGrowth.step = (1 m - temperatureImpact) * precipitationImpact
+  height.step = prior.height + newGrowth
+
+  # At each step end, determine death
+  dead.end = (sample uniform from 0% to 100%) > meta.survival.speciesB
+
+end organism
+
+
+start unit K
+
+  alias Kelvins
+  alias Kelvin
+
+end unit
+
+
+start unit C
+
+  alias Celcius
+
+  K = 272.15 + current
+
+end unit
+
+
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit
