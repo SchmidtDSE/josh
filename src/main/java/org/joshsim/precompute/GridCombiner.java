@@ -7,8 +7,10 @@
 
 package org.joshsim.precompute;
 
+import java.math.BigDecimal;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -36,7 +38,24 @@ public class GridCombiner {
    * @return Newly created DataGridLayer which combines the two input layers.
    */
   public static DataGridLayer combine(DataGridLayer left, DataGridLayer right) {
+    PatchBuilderExtents combinedExtents = getCombinedExtents(left, right);
+    long minTimestep = getMinTimestep(left, right);
+    long maxTimestep = getMaxTimestep(left, right);
+    Units units = getUnits(left, right);
 
+    DoublePrecomputedGrid combinedGrid = new DoublePrecomputedGridBuilder()
+        .setEngineValueFactory(EngineValueFactory.getDefault())
+        .setExtents(combinedExtents)
+        .setTimestepRange(minTimestep, maxTimestep)
+        .setUnits(units)
+        .build();
+
+    // Add values from left grid first
+    addInValues(combinedGrid, left);
+    // Then overlay values from right grid (taking precedence)
+    addInValues(combinedGrid, right);
+
+    return combinedGrid;
   }
 
   /**
@@ -52,7 +71,31 @@ public class GridCombiner {
    *     be given in grid-space.
    */
   static PatchBuilderExtents getCombinedExtents(DataGridLayer left, DataGridLayer right) {
+    PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
+    
+    // Get min/max coordinates from both grids
+    BigDecimal leftMinX = BigDecimal.valueOf(left.getMinX());
+    BigDecimal leftMaxX = BigDecimal.valueOf(left.getMaxX());
+    BigDecimal leftMinY = BigDecimal.valueOf(left.getMinY());
+    BigDecimal leftMaxY = BigDecimal.valueOf(left.getMaxY());
+    
+    BigDecimal rightMinX = BigDecimal.valueOf(right.getMinX());
+    BigDecimal rightMaxX = BigDecimal.valueOf(right.getMaxX());
+    BigDecimal rightMinY = BigDecimal.valueOf(right.getMinY());
+    BigDecimal rightMaxY = BigDecimal.valueOf(right.getMaxY());
 
+    // Find the most extreme points to encompass both grids
+    BigDecimal topLeftX = leftMinX.min(rightMinX);
+    BigDecimal topLeftY = leftMaxY.max(rightMaxY);
+    BigDecimal bottomRightX = leftMaxX.max(rightMaxX);
+    BigDecimal bottomRightY = leftMinY.min(rightMinY);
+
+    return builder
+        .setTopLeftX(topLeftX)
+        .setTopLeftY(topLeftY)
+        .setBottomRightX(bottomRightX)
+        .setBottomRightY(bottomRightY)
+        .build();
   }
 
   /**
@@ -63,7 +106,7 @@ public class GridCombiner {
    * @return The minimum of the minimum timestep across both input grids.
    */
   private static long getMinTimestep(DataGridLayer left, DataGridLayer right) {
-
+    return Math.min(left.getMinTimestep(), right.getMinTimestep());
   }
 
   /**
@@ -74,7 +117,7 @@ public class GridCombiner {
    * @return The maximum of the maximum timestep across both input grids.
    */
   static long getMaxTimestep(DataGridLayer left, DataGridLayer right) {
-
+    return Math.max(left.getMaxTimestep(), right.getMaxTimestep());
   }
 
   /**
@@ -89,13 +132,24 @@ public class GridCombiner {
    * @throws IllegalArgumentException If the units of the two input grids are not compatible.
    */
   static Units getUnits(DataGridLayer left, DataGridLayer right) {
-
+    Units leftUnits = left.getUnits();
+    Units rightUnits = right.getUnits();
+    
+    if (!leftUnits.equals(rightUnits)) {
+      throw new IllegalArgumentException(String.format(
+          "Units must be equal: left=%s, right=%s",
+          leftUnits,
+          rightUnits
+      ));
+    }
+    
+    return rightUnits;
   }
 
   /**
    * Add in values from a source grid into the combined grid.
    *
-   * <p>Add in values from the given source grid into the given combined grid. This asusmes that the
+   * <p>Add in values from the given source grid into the given combined grid. This assumes that the
    * combinedGrid extents, time range, units, and type are compatible or a superset of the
    * source.</p>
    *
@@ -103,6 +157,16 @@ public class GridCombiner {
    * @param source The grid from which values will be copied into combinedGrid.
    */
   static void addInValues(DoublePrecomputedGrid combinedGrid, DataGridLayer source) {
-
+    for (long x = source.getMinX(); x <= source.getMaxX(); x++) {
+      for (long y = source.getMinY(); y <= source.getMaxY(); y++) {
+        for (long timestep = source.getMinTimestep(); 
+             timestep <= source.getMaxTimestep(); 
+             timestep++) {
+          GeoKey key = new GeoKey(x, y);
+          EngineValue value = source.getAt(key, timestep);
+          combinedGrid.setAt(x, y, timestep, value.getAsDecimal().doubleValue());
+        }
+      }
+    }
   }
 }
