@@ -8,6 +8,7 @@ package org.joshsim.engine.entity.base;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.Optional;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
@@ -15,15 +16,29 @@ import org.joshsim.engine.geometry.EngineGeometry;
  */
 public class GeoKey {
 
-  private final Entity entity;
+  private final Optional<EngineGeometry> geometry;
+  private final String entityName;
 
   /**
-   * Constructs a Key with the specified entity.
+   * Craete a new key with the specified entity.
    *
    * @param entity The patch to be keyed.
    */
   public GeoKey(Entity entity) {
-    this.entity = entity;
+    geometry = entity.getGeometry();
+    entityName = entity.getName();
+  }
+
+  /**
+   * Create a new key with the given properties.
+   *
+   * @param geometry The geometry of the entity represented by this key or empty if this entity
+   *     does not have geometry.
+   * @param entityName The name of this type of entity.
+   */
+  public GeoKey(Optional<EngineGeometry> geometry, String entityName) {
+    this.geometry = geometry;
+    this.entityName = entityName;
   }
 
   /**
@@ -32,7 +47,7 @@ public class GeoKey {
    * @returns The x or horizontal position as reported in the space in which this key was made.
    */
   public BigDecimal getCenterX() {
-    return entity.getGeometry().orElseThrow().getCenterX();
+    return getGeometry().orElseThrow().getCenterX();
   }
 
   /**
@@ -41,7 +56,15 @@ public class GeoKey {
    * @returns The y or vertical position as reported in the space in which this key was made.
    */
   public BigDecimal getCenterY() {
-    return entity.getGeometry().orElseThrow().getCenterY();
+    return getGeometry().orElseThrow().getCenterY();
+  }
+
+  public Optional<EngineGeometry> getGeometry() {
+    return geometry;
+  }
+
+  public String getEntityName() {
+    return entityName;
   }
 
   @Override
@@ -55,8 +78,8 @@ public class GeoKey {
     GeoKey other = (GeoKey) o;
 
     // Compare entities by their geometry
-    EngineGeometry thisGeom = entity.getGeometry().orElse(null);
-    EngineGeometry otherGeom = other.entity.getGeometry().orElse(null);
+    EngineGeometry thisGeom = getGeometry().orElse(null);
+    EngineGeometry otherGeom = other.getGeometry().orElse(null);
 
     if (thisGeom == null || otherGeom == null) {
       return false;
@@ -67,7 +90,7 @@ public class GeoKey {
 
   @Override
   public int hashCode() {
-    EngineGeometry geom = entity.getGeometry().orElse(null);
+    EngineGeometry geom = getGeometry().orElse(null);
     if (geom == null) {
       return 0;
     }
@@ -76,10 +99,10 @@ public class GeoKey {
 
   @Override
   public String toString() {
-    EngineGeometry geometry = entity.getGeometry().orElseThrow();
+    EngineGeometry geometry = getGeometry().orElseThrow();
     return String.format(
         "Entity of type %s at (%.6f, %.6f)",
-        entity.getName(),
+        getEntityName(),
         geometry.getCenterX(),
         geometry.getCenterY()
     );

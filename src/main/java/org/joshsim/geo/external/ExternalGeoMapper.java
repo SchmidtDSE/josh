@@ -24,19 +24,8 @@ public class ExternalGeoMapper {
   private final String dimensionY;
   private final String timeDimension;
   private final String crsCode;
+  private final Optional<Long> forcedTimestep;
   private boolean useParallelProcessing = false;
-
-  /**
-   * Constructs an ExternalGeospatialMapper with the specified components.
-   *
-   * @param coordinateTransformer Coordinate transformer for spatial conversions
-   * @param interpolationStrategy Strategy for interpolating values from data to patches
-   */
-  public ExternalGeoMapper(
-      ExternalCoordinateTransformer coordinateTransformer,
-      GeoInterpolationStrategy interpolationStrategy) {
-    this(coordinateTransformer, interpolationStrategy, null, null, null, null);
-  }
 
   /**
    * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
@@ -54,13 +43,44 @@ public class ExternalGeoMapper {
       String dimensionX,
       String dimensionY,
       String timeDimension,
-      String crsCode) {
+      String crsCode
+  ) {
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;
     this.dimensionY = dimensionY;
     this.timeDimension = timeDimension;
     this.crsCode = crsCode;
+    this.forcedTimestep = Optional.empty();
+  }
+
+  /**
+   * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
+   *
+   * @param coordinateTransformer Coordinate transformer for spatial conversions
+   * @param interpolationStrategy Strategy for interpolating values from data to patches
+   * @param dimensionX The name of the X dimension (can be null for auto-detection)
+   * @param dimensionY The name of the Y dimension (can be null for auto-detection)
+   * @param timeDimension The name of the time dimension (can be null)
+   * @param crsCode The coordinate reference system code (can be null)
+   * @param forcedTimestep If provided, all values read will be assumed to have this timestep
+   */
+  public ExternalGeoMapper(
+      ExternalCoordinateTransformer coordinateTransformer,
+      GeoInterpolationStrategy interpolationStrategy,
+      String dimensionX,
+      String dimensionY,
+      String timeDimension,
+      String crsCode,
+      Optional<Long> forcedTimestep
+  ) {
+    this.coordinateTransformer = coordinateTransformer;
+    this.interpolationStrategy = interpolationStrategy;
+    this.dimensionX = dimensionX;
+    this.dimensionY = dimensionY;
+    this.timeDimension = timeDimension;
+    this.crsCode = crsCode;
+    this.forcedTimestep = forcedTimestep;
   }
 
   /**
@@ -118,6 +138,17 @@ public class ExternalGeoMapper {
       int actualMinTimestep = Math.max(0, minTimestep);
       int actualMaxTimestep = (maxTimestep < 0) ? availableTimeSteps - 1
           : Math.min(maxTimestep, availableTimeSteps - 1);
+
+      if (forcedTimestep.isPresent()) {
+        boolean matchesMin = forcedTimestep.get() == actualMinTimestep;
+        boolean matchesMax = forcedTimestep.get() == actualMaxTimestep;
+        boolean matches = matchesMin && matchesMax;
+        if (!matches) {
+          throw new IllegalArgumentException(
+              "If forcing timestep, min and max must equal that step."
+          );
+        }
+      }
 
       // Process each requested variable
       for (String varName : actualVariables) {

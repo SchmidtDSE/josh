@@ -7,10 +7,12 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.apache.sis.referencing.CRS;
@@ -39,6 +41,7 @@ import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
+import org.joshsim.precompute.GridCombiner;
 import org.joshsim.precompute.JshdExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
@@ -95,6 +98,13 @@ public class PreprocessCommand implements Callable<Integer> {
   private File outputFile;
 
   @Option(
+      names = "--amend",
+      description = "Amend existing file rather than overwriting",
+      defaultValue = "false"
+  )
+  private boolean amend;
+
+  @Option(
       names = "--crs",
       description = "CRS to use in reading the file.",
       defaultValue = "EPSG:4326"
@@ -121,6 +131,13 @@ public class PreprocessCommand implements Callable<Integer> {
       defaultValue = "calendar_year"
   )
   private String timeName;
+
+  @Option(
+      names = "--timestep",
+      description = "The single timestep to process.",
+      defaultValue = ""
+  )
+  private String timestep;
 
   @Mixin
   private OutputOptions output = new OutputOptions();
@@ -150,25 +167,28 @@ public class PreprocessCommand implements Callable<Integer> {
       return 4;
     }
 
-    // Get metadata
-    CoordinateReferenceSystem crs;
-    try {
-      crs = CRS.forCode(crsCode);
-    } catch (Exception e) {
-      System.out.println("Failed to read CRS code due to: " + e);
-      return 1;
-    }
-    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
-    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-
     // Initialize an external geo mapper
     ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
     geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
-    geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+
+    Optional<Long> forcedTimestep = timestep.isBlank() ? Optional.empty() : Optional.of(
+        Long.parseLong(timestep)
+    );
+
+    if (forcedTimestep.isPresent()) {
+      geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+      geoMapperBuilder.forceTimestep(forcedTimestep.get());
+    } else {
+      geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+    }
+
     ExternalGeoMapper mapper = geoMapperBuilder.build();
+
+    // Get metadata
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
     // Create grid from streaming data
     GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
@@ -177,6 +197,15 @@ public class PreprocessCommand implements Callable<Integer> {
     EngineValue size = extractor.getSize();
 
     // Build bridge
+    CoordinateReferenceSystem crs;
+    try {
+      crs = CRS.forCode(crsCode);
+    } catch (Exception e) {
+      System.out.println("Failed to read CRS code due to: " + e);
+      return 1;
+    }
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
+
     EngineBridge bridge = new QueryCacheEngineBridge(
         engineGeometryFactory,
         simEntity,
@@ -197,6 +226,9 @@ public class PreprocessCommand implements Callable<Integer> {
         extents,
         size.getAsDecimal()
     );
+
+    long startTimestep = forcedTimestep.orElse(bridge.getStartTimestep());
+    long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
 
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
@@ -221,17 +253,32 @@ public class PreprocessCommand implements Callable<Integer> {
           );
         },
         ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
-        bridge.getStartTimestep(),
-        bridge.getEndTimestep(),
+        startTimestep,
+        endTimestep,
         Units.of(unitsStr)
     );
+
+    // If amending, combine with existing grid
+    DataGridLayer finalGrid = grid;
+    if (amend && outputFile.exists()) {
+      BinaryGridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
+          EngineValueFactory.getDefault()
+      );
+      try (FileInputStream inputStream = new FileInputStream(outputFile)) {
+        DataGridLayer existingGrid = deserializer.deserialize(inputStream);
+        GridCombiner combiner = new GridCombiner(engineGeometryFactory);
+        finalGrid = combiner.combine(existingGrid, grid);
+      } catch (IOException e) {
+        throw new RuntimeException("Error reading existing grid file: " + e);
+      }
+    }
 
     // Serialize to binary file
     BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
         EngineValueFactory.getDefault()
     );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-      serializer.serialize(grid, outputStream);
+      serializer.serialize(finalGrid, outputStream);
       outputStream.flush();
     } catch (FileNotFoundException e) {
       throw new RuntimeException("File not found: " + e);

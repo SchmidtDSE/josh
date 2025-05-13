@@ -1,5 +1,6 @@
 package org.joshsim.geo.external;
 
+import java.util.Optional;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.GeoInterpolationStrategyFactory.InterpolationMethod;
 
@@ -14,6 +15,7 @@ public class ExternalGeoMapperBuilder {
   private String dimensionY;
   private String timeDimension;
   private String crsCode;
+  private Optional<Long> forcedTimestep = Optional.empty();
 
   /**
    * Sets the coordinate transformer for the mapper.
@@ -68,6 +70,27 @@ public class ExternalGeoMapperBuilder {
   }
 
   /**
+   * Indicate a timestep that all read data should be assuemd to be part of.
+   *
+   * @param timestep The timestep to force for all data points.
+   * @return This builder instance
+   */
+  public ExternalGeoMapperBuilder forceTimestep(long timestep) {
+    forcedTimestep = Optional.of(timestep);
+    return this;
+  }
+
+  /**
+   * Return to deault of reading the timestep from the file.
+   *
+   * @return This builder instance
+   */
+  public ExternalGeoMapperBuilder clearForcedTimestep() {
+    forcedTimestep = Optional.empty();
+    return this;
+  }
+
+  /**
    * Sets the coordinate reference system code.
    *
    * @param crsCode The CRS code (e.g., "EPSG:4326")
@@ -98,6 +121,8 @@ public class ExternalGeoMapperBuilder {
         dimensionX,
         dimensionY,
         timeDimension,
-        crsCode);
+        crsCode,
+        forcedTimestep
+    );
   }
 }
