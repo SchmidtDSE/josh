@@ -66,6 +66,13 @@ public class EngineValueWideningCaster implements EngineValueCaster {
         "string",
         x -> factory.build(x.getAsString(), x.getUnits())
     );
+
+    // Options for empty
+    addCast(
+        "empty",
+        "boolean",
+        x -> factory.build(false, x.getUnits())
+    );
   }
 
   @Override

@@ -36,7 +36,7 @@ public class GeotiffExternalDataReaderTest {
     valueFactory = new EngineValueFactory();
 
     // Initialize reader
-    reader = new GeotiffExternalDataReader(valueFactory, new Units("mm"));
+    reader = new GeotiffExternalDataReader(valueFactory, Units.of("mm"));
 
     // Get resource path
     URL resourceUrl = getClass().getClassLoader().getResource(GEOTIFF_RESOURCE_PATH);

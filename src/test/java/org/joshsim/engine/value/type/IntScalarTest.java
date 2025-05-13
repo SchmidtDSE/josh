@@ -26,10 +26,10 @@ class IntScalarTest {
   @Test
   void testConstructorAndGetters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar scalar = new IntScalar(caster, 10L, Units.of("m"));
 
     assertEquals(10L, scalar.getAsInt());
-    assertEquals(new Units("m"), scalar.getUnits());
+    assertEquals(Units.of("m"), scalar.getUnits());
     assertEquals(new BigDecimal(10), scalar.getAsDecimal());
     assertEquals("10", scalar.getAsString());
     assertEquals(new LanguageType("int"), scalar.getLanguageType());
@@ -51,19 +51,19 @@ class IntScalarTest {
   @Test
   void testAdd() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("m"));
 
     IntScalar result = (IntScalar) scalar1.add(scalar2);
     assertEquals(15L, result.getAsInt());
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testAddWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2));
   }
@@ -71,19 +71,19 @@ class IntScalarTest {
   @Test
   void testSubtract() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("m"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("m"));
 
     IntScalar result = (IntScalar) scalar1.subtract(scalar2);
     assertEquals(5L, result.getAsInt());
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testSubtractWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.subtract(scalar2));
   }
@@ -91,30 +91,30 @@ class IntScalarTest {
   @Test
   void testMultiply() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
     IntScalar result = (IntScalar) scalar1.multiply(scalar2);
     assertEquals(20L, result.getAsInt());
-    assertEquals(new Units("m * s"), result.getUnits());
+    assertEquals(Units.of("m * s"), result.getUnits());
   }
 
   @Test
   void testDivide() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
     IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(5L, result.getAsInt());
-    assertEquals(new Units("m / s"), result.getUnits());
+    assertEquals(Units.of("m / s"), result.getUnits());
   }
 
   @Test
   void testDivideByZero() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar zeroScalar = new IntScalar(caster, 0L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar zeroScalar = new IntScalar(caster, 0L, Units.of("s"));
 
     assertThrows(ArithmeticException.class, () -> scalar1.divide(zeroScalar));
   }
@@ -122,30 +122,30 @@ class IntScalarTest {
   @Test
   void testDivisionRounding() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 7L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 7L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
     IntScalar result = (IntScalar) scalar1.divide(scalar2);
     assertEquals(3L, result.getAsInt()); // Integer division should truncate
-    assertEquals(new Units("m / s"), result.getUnits());
+    assertEquals(Units.of("m / s"), result.getUnits());
   }
 
   @Test
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 2L, new Units("m"));
+    IntScalar scalar1 = new IntScalar(caster, 2L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 3L, Units.EMPTY);
 
     DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal(8), result.getAsDecimal());
-    assertEquals(new Units("m * m * m"), result.getUnits());
+    assertEquals(Units.of("m * m * m"), result.getUnits());
   }
 
   @Test
   void testRaiseToPowerWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 2L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 3L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 2L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 3L, Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.raiseToPower(scalar2));
   }
@@ -161,18 +161,18 @@ class IntScalarTest {
   // @Test
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
-  //   IntScalar scalar = new IntScalar(caster, 10L, new Units("m"));
+  //   IntScalar scalar = new IntScalar(caster, 10L, Units.of("m"));
 
   //   Distribution distribution = scalar.getAsDistribution();
   //   assertEquals(1, distribution.getValues().size());
   //   assertEquals(10L, distribution.getValues().get(0));
-  //   assertEquals(new Units("m"), distribution.getUnits());
+  //   assertEquals(Units.of("m"), distribution.getUnits());
   // }
 
   @Test
   void testNegativeNumbers() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar = new IntScalar(caster, -42L, new Units("m"));
+    IntScalar scalar = new IntScalar(caster, -42L, Units.of("m"));
 
     assertEquals(-42L, scalar.getAsInt());
     assertEquals(new BigDecimal(-42), scalar.getAsDecimal());
@@ -202,8 +202,8 @@ class IntScalarTest {
   @Test
   void testCompareToSameUnitsDifferentValues() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 20L, new Units("m"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 20L, Units.of("m"));
 
     assertTrue(scalar1.compareTo(scalar2) < 0);
     assertTrue(scalar2.compareTo(scalar1) > 0);
@@ -212,8 +212,8 @@ class IntScalarTest {
   @Test
   void testCompareToIncompatibleUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 10L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 10L, Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.compareTo(scalar2));
   }
@@ -221,8 +221,8 @@ class IntScalarTest {
   @Test
   void testCompareToEqualValues() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 10L, new Units("m"));
-    IntScalar scalar2 = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
+    IntScalar scalar2 = new IntScalar(caster, 10L, Units.of("m"));
 
     assertEquals(0, scalar1.compareTo(scalar2));
   }
@@ -230,8 +230,8 @@ class IntScalarTest {
   @Test
   void testCompareToDifferentValuesSameOrder() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    IntScalar scalar1 = new IntScalar(caster, 15L, new Units("s"));
-    IntScalar scalar2 = new IntScalar(caster, 5L, new Units("s"));
+    IntScalar scalar1 = new IntScalar(caster, 15L, Units.of("s"));
+    IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 
     assertTrue(scalar1.compareTo(scalar2) > 0);
     assertTrue(scalar2.compareTo(scalar1) < 0);

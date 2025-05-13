@@ -47,4 +47,9 @@ public class DirectConversion implements Conversion {
     return callable;
   }
 
+  @Override
+  public boolean isCommunicativeSafe() {
+    return false;
+  }
+
 }

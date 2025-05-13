@@ -165,7 +165,7 @@ public class JshdUtil {
     byte[] unitsBytes = new byte[unitsLength];
     buffer.get(unitsBytes);
     String unitsStr = new String(unitsBytes);
-    Units units = new Units(unitsStr);
+    Units units = Units.of(unitsStr);
     builder.setUnits(units);
   }
 }

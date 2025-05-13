@@ -41,25 +41,25 @@ class RealizedDistributionTest {
 
     // Add some test values (integers 1-5)
     for (int i = 1; i <= 5; i++) {
-      values.add(new IntScalar(caster, (long) i, new Units("m")));
+      values.add(new IntScalar(caster, (long) i, Units.of("m")));
       nakedValues.add(new IntScalar(caster, (long) i, Units.EMPTY));
     }
 
-    distribution = new RealizedDistribution(caster, values, new Units("m"));
+    distribution = new RealizedDistribution(caster, values, Units.of("m"));
     nakedDistribution = new RealizedDistribution(caster, values, Units.EMPTY);
   }
 
   @Test
   void testConstructorAndGetters() {
     assertEquals(new LanguageType("RealizedDistribution"), distribution.getLanguageType());
-    assertEquals(new Units("m"), distribution.getUnits());
+    assertEquals(Units.of("m"), distribution.getUnits());
     assertSame(values, distribution.getInnerValue());
     assertEquals(Optional.of(5), distribution.getSize());
   }
 
   @Test
   void testAdd() {
-    IntScalar addend = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar addend = new IntScalar(caster, 10L, Units.of("m"));
     RealizedDistribution result = (RealizedDistribution) distribution.add(addend);
 
     // Fix unchecked cast warning by using a safer approach
@@ -76,12 +76,12 @@ class RealizedDistributionTest {
       assertEquals(i + 11, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testAddReverse() {
-    IntScalar addend = new IntScalar(caster, 10L, new Units("m"));
+    IntScalar addend = new IntScalar(caster, 10L, Units.of("m"));
     RealizedDistribution result = (RealizedDistribution) addend.add(distribution);
 
     // Fix unchecked cast warning by using a safer approach
@@ -98,12 +98,12 @@ class RealizedDistributionTest {
       assertEquals(i + 11, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testSubtract() {
-    IntScalar subtrahend = new IntScalar(caster, 1L, new Units("m"));
+    IntScalar subtrahend = new IntScalar(caster, 1L, Units.of("m"));
     RealizedDistribution result = (RealizedDistribution) distribution.subtract(subtrahend);
 
     Object innerValue = result.getInnerValue();
@@ -119,12 +119,12 @@ class RealizedDistributionTest {
       assertEquals(i, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testSubtractReverse() {
-    IntScalar subtrahend = new IntScalar(caster, 1L, new Units("m"));
+    IntScalar subtrahend = new IntScalar(caster, 1L, Units.of("m"));
     RealizedDistribution result = (RealizedDistribution) subtrahend.subtract(distribution);
 
     Object innerValue = result.getInnerValue();
@@ -140,12 +140,12 @@ class RealizedDistributionTest {
       assertEquals(i, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testMultiply() {
-    IntScalar multiplier = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar multiplier = new IntScalar(caster, 2L, Units.of("s"));
     RealizedDistribution result = (RealizedDistribution) distribution.multiply(multiplier);
 
     Object innerValue = result.getInnerValue();
@@ -161,11 +161,11 @@ class RealizedDistributionTest {
       assertEquals((i + 1) * 2, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m * s"), result.getUnits());
+    assertEquals(Units.of("m * s"), result.getUnits());
   }
 
   void testMultiplyReverse() {
-    IntScalar multiplier = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar multiplier = new IntScalar(caster, 2L, Units.of("s"));
     RealizedDistribution result = (RealizedDistribution) multiplier.multiply(distribution);
 
     Object innerValue = result.getInnerValue();
@@ -181,12 +181,12 @@ class RealizedDistributionTest {
       assertEquals((i + 1) * 2, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m*s"), result.getUnits());
+    assertEquals(Units.of("m*s"), result.getUnits());
   }
 
   @Test
   void testDivide() {
-    IntScalar divisor = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar divisor = new IntScalar(caster, 2L, Units.of("s"));
     RealizedDistribution result = (RealizedDistribution) distribution.divide(divisor);
 
     Object innerValue = result.getInnerValue();
@@ -202,12 +202,12 @@ class RealizedDistributionTest {
       assertEquals((i + 1) / 2, scalar.getAsInt());
     }
 
-    assertEquals(new Units("m / s"), result.getUnits());
+    assertEquals(Units.of("m / s"), result.getUnits());
   }
 
   @Test
   void testDivideReverse() {
-    IntScalar divisor = new IntScalar(caster, 2L, new Units("s"));
+    IntScalar divisor = new IntScalar(caster, 2L, Units.of("s"));
     RealizedDistribution result = (RealizedDistribution) divisor.divide(distribution);
 
     Object innerValue = result.getInnerValue();
@@ -223,7 +223,7 @@ class RealizedDistributionTest {
       assertEquals((int) (2 / (i + 1)), scalar.getAsInt());
     }
 
-    assertEquals(new Units("s / m"), result.getUnits());
+    assertEquals(Units.of("s / m"), result.getUnits());
   }
 
   @Test
@@ -244,7 +244,7 @@ class RealizedDistributionTest {
       assertEquals(new BigDecimal((i + 1) * (i + 1)), scalar.getAsDecimal());
     }
 
-    assertEquals(new Units("m * m"), result.getUnits());
+    assertEquals(Units.of("m * m"), result.getUnits());
   }
 
   @Test
@@ -329,7 +329,7 @@ class RealizedDistributionTest {
 
     DecimalScalar meanScalar = (DecimalScalar) mean.get();
     assertEquals(3.0, meanScalar.getAsDecimal().doubleValue(), 0.0001);
-    assertEquals(new Units("m"), meanScalar.getUnits());
+    assertEquals(Units.of("m"), meanScalar.getUnits());
   }
 
   @Test
@@ -360,11 +360,13 @@ class RealizedDistributionTest {
   void testEmptyDistribution() {
     ArrayList<EngineValue> emptyValues = new ArrayList<>();
 
-    assertThrows(IllegalArgumentException.class, () -> new RealizedDistribution(
+    RealizedDistribution distribution = new RealizedDistribution(
         caster,
         emptyValues,
-        new Units("m")
-    ));
+        Units.of("m")
+    );
+
+    assertThrows(IllegalArgumentException.class, () -> distribution.getMean());
   }
 
   @Test
@@ -376,7 +378,7 @@ class RealizedDistributionTest {
       IntScalar scalar = (IntScalar) result;
       // Values should be between 1 and 5 inclusive
       assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
-      assertEquals(new Units("m"), scalar.getUnits());
+      assertEquals(Units.of("m"), scalar.getUnits());
     }
   }
 
@@ -398,7 +400,7 @@ class RealizedDistributionTest {
       assertTrue(value instanceof IntScalar);
       IntScalar scalar = (IntScalar) value;
       assertTrue(scalar.getAsInt() >= 1 && scalar.getAsInt() <= 5);
-      assertEquals(new Units("m"), scalar.getUnits());
+      assertEquals(Units.of("m"), scalar.getUnits());
     }
   }
 
@@ -441,7 +443,7 @@ class RealizedDistributionTest {
     assertEquals(distributionWithMutable.getUnits(), frozenDistribution.getUnits());
 
     // Check that changes do not propogate
-    values.add(new IntScalar(caster, 0L, new Units("m")));
+    values.add(new IntScalar(caster, 0L, Units.of("m")));
 
     // Verify the frozen distribution has the same size
     assertNotEquals(distributionWithMutable.getSize(), frozenDistribution.getSize());

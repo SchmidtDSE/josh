@@ -130,6 +130,7 @@ expression: unitsValue # simpleExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
   | left=expression op=(AND_ | OR_ | XOR_) right=expression # logicalExpression
+  | left=expression CONCAT_ right=expression # concatExpression
   | LPAREN_ expression RPAREN_ # parenExpression
   | SAMPLE_ target=expression # sampleSimple
   | SAMPLE_ count=expression FROM_ target=expression # sampleParam

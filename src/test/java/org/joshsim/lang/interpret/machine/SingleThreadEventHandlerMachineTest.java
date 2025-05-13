@@ -257,6 +257,94 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+  void concat_shouldCombineDistributions() {
+    // Given
+    List<EngineValue> values1 = List.of(makeIntScalar(1), makeIntScalar(2), makeIntScalar(3));
+    List<EngineValue> values2 = List.of(makeIntScalar(4), makeIntScalar(5));
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue dist2 = factory.buildRealizedDistribution(values2, Units.EMPTY);
+
+    // When
+    machine.push(dist1);
+    machine.push(dist2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(5, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateEmptyDistributions() {
+    // Given
+    EngineValue emptyDist1 = factory.buildRealizedDistribution(new ArrayList<>(), Units.EMPTY);
+    EngineValue emptyDist2 = factory.buildRealizedDistribution(new ArrayList<>(), Units.EMPTY);
+
+    // When
+    machine.push(emptyDist1);
+    machine.push(emptyDist2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    assertEquals(machine.getResult().getAsDistribution().getSize().orElseThrow(), 0);
+  }
+
+  @Test
+  void concat_shouldConcatenateTwoIntScalars() {
+    // Given
+    EngineValue scalar1 = makeIntScalar(1);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(scalar1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(2, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateIntScalarAndEmpty() {
+    // Given
+    List<EngineValue> values1 = new ArrayList<>();
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(dist1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(1, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateTwoScalarsAndDist() {
+    // Given
+    List<EngineValue> values1 = List.of(makeIntScalar(1), makeIntScalar(2));
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(dist1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(3, result.getSize().orElseThrow());
+  }
+
+  @Test
   void and_shouldPerformLogicalAnd() {
     // Given
     EngineValue value1 = makeBoolScalar(true);
@@ -765,8 +853,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void cast_withForceTrue_shouldKeepOriginalValue() {
     // Given
-    EngineValue intValue = factory.build(1L, new Units("m"));
-    Units targetUnits = new Units("cm");
+    EngineValue intValue = factory.build(1L, Units.of("m"));
+    Units targetUnits = Units.of("cm");
 
     // When
     machine.push(intValue);
@@ -781,8 +869,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void cast_withForceFalse_shouldConvertValue() {
     // Given
-    EngineValue intValue = factory.build(1L, new Units("m"));
-    Units targetUnits = new Units("cm");
+    EngineValue intValue = factory.build(1L, Units.of("m"));
+    Units targetUnits = Units.of("cm");
     EngineValue convertedValue = factory.build(100L, targetUnits);
     when(mockBridge.convert(intValue, targetUnits)).thenReturn(convertedValue);
 
@@ -802,7 +890,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
-    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
     when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
@@ -823,7 +911,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
-    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
     when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
@@ -862,7 +950,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     // When
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
-    EngineValue distanceValue = factory.build(queryDistance, new Units("meters"));
+    EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
     machine.executeSpatialQuery(new ValueResolver("testAttr"));
 

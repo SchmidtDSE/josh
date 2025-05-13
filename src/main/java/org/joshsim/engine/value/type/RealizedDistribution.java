@@ -42,9 +42,6 @@ public class RealizedDistribution extends Distribution {
       Units units
   ) {
     super(caster, units);
-    if (values.isEmpty()) {
-      throw new IllegalArgumentException("Cannot create a distribution with no values.");
-    }
     this.values = values;
   }
 
@@ -63,9 +60,6 @@ public class RealizedDistribution extends Distribution {
       List<BigDecimal> decimalValues,
       Units units
   ) {
-    if (decimalValues.isEmpty()) {
-      throw new IllegalArgumentException("Cannot create a distribution with no values.");
-    }
 
     List<EngineValue> engineValues = decimalValues.stream()
         .map(value -> new DecimalScalar(caster, value, units))
@@ -80,6 +74,7 @@ public class RealizedDistribution extends Distribution {
    * @return DoubleSummaryStatistics for the values
    */
   private void computeStats() {
+    requireNonEmpty();
     DoubleSummaryStatistics newStats = values.stream()
         .map(EngineValue::getAsScalar)
         .map(Scalar::getAsDecimal)
@@ -185,6 +180,22 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.equalTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
+    List<EngineValue> result = values.stream()
+        .map(value -> value.notEqualTo(other))
+        .collect(Collectors.toCollection(ArrayList::new));
+    return new RealizedDistribution(getCaster(), result, getUnits());
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Cannot convert multiple values to a single scalar.");
   }
@@ -196,6 +207,10 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public LanguageType getLanguageType() {
+    if (values.isEmpty()) {
+      return new LanguageType("empty", false);
+    }
+
     EngineValue exampleValue = values.get(0);
 
     Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
@@ -232,6 +247,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public EngineValue sample() {
+    requireNonEmpty();
     int index = (int) (Math.random() * values.size());
     return values.get(index);
   }
@@ -253,6 +269,8 @@ public class RealizedDistribution extends Distribution {
       return values;
     }
 
+    requireNonEmpty();
+
     // Otherwise, sublist or wrap.
     if (withReplacement) {
       ArrayList<EngineValue> result = new ArrayList<>();
@@ -272,6 +290,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getMean() {
+    requireNonEmpty();
     if (stats.isEmpty()) {
       computeStats();
     }
@@ -281,6 +300,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getStd() {
+    requireNonEmpty();
     if (stats.isEmpty()) {
       computeStats();
     }
@@ -298,6 +318,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getMin() {
+    requireNonEmpty();
     if (stats.isEmpty()) {
       computeStats();
     }
@@ -324,6 +345,7 @@ public class RealizedDistribution extends Distribution {
 
   @Override
   public Optional<Scalar> getSum() {
+    requireNonEmpty();
     if (stats.isEmpty()) {
       computeStats();
     }
@@ -357,6 +379,7 @@ public class RealizedDistribution extends Distribution {
    *     in the distribution.
    */
   private Distribution sampleWithoutReplacement(long count) {
+    requireNonEmpty();
     if (count > values.size()) {
       String message = String.format(
           "Cannot sample %d elements from a distribution with %d elements without replacement.",
@@ -377,11 +400,27 @@ public class RealizedDistribution extends Distribution {
    * @return A new distribution containing the sampled values.
    */
   private Distribution sampleWithReplacement(long count) {
+    requireNonEmpty();
     List<EngineValue> sampledValues = new ArrayList<>();
     for (long i = 0; i < count; i++) {
       sampledValues.add(sample());
     }
     return new RealizedDistribution(getCaster(), sampledValues, getUnits());
+  }
+
+  /**
+   * Validates that the distribution is not empty.
+   *
+   * <p>This method ensures that the list of values in the distribution is not empty. If the
+   * distribution contains no values, an {@code IllegalArgumentException} is thrown to indicate
+   * that operations on an empty distribution are not allowed.
+   *
+   * @throws IllegalArgumentException if the distribution is empty.
+   */
+  private void requireNonEmpty() {
+    if (values.isEmpty()) {
+      throw new IllegalArgumentException("Cannot perform this operation on an empty distribution.");
+    }
   }
 
 }
