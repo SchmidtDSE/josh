@@ -316,7 +316,8 @@ public abstract class EngineValue {
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (!other.canBePower()) {
-      throw new IllegalArgumentException("Can only raise to a count.");
+      String otherUnitsStr = other.getUnits().toString();
+      throw new IllegalArgumentException("Can only raise to a count. Got: " + otherUnitsStr);
     }
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -395,6 +396,42 @@ public abstract class EngineValue {
       return safeTuple.getSecond().unsafeGreaterThanOrEqualTo(safeTuple.getFirst());
     } else {
       return safeTuple.getFirst().unsafeLessThanOrEqualTo(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Determine if this is engine value is equal to another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   *     values otherwise.
+   */
+  public EngineValue equalTo(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeEqualTo(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeEqualTo(safeTuple.getSecond());
+    }
+  }
+
+  /**
+   * Determine if this is engine value is not equal to another engine value.
+   *
+   * @param other The other engine value to compare.
+   * @return EngineValue with a single boolean if comparing two scalars or a distribution of boolean
+   *     values otherwise.
+   */
+  public EngineValue notEqualTo(EngineValue other) {
+    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
+
+    if (safeTuple.getSecond().getLanguageType().isDistribution()) {
+      return safeTuple.getSecond().unsafeNotEqualTo(safeTuple.getFirst());
+    } else {
+      return safeTuple.getFirst().unsafeNotEqualTo(safeTuple.getSecond());
     }
   }
 
@@ -525,12 +562,33 @@ public abstract class EngineValue {
   protected abstract EngineValue unsafeLessThanOrEqualTo(EngineValue other);
 
   /**
+   * Compare this value with another for equal-to assuming compatible units / type.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeEqualTo(EngineValue other);
+
+  /**
+   * Compare this value with another for equal-to assuming compatible units / type.
+   *
+   * @param other the other value.
+   * @return the result of the comparison.
+   * @throws NotImplementedException  if the operation is not supported for this data type.
+   * @throws IllegalArgumentException if units are incompatible.
+   */
+  protected abstract EngineValue unsafeNotEqualTo(EngineValue other);
+
+  /**
    * Determine if this value can be used to raise another value to a power.
    *
    * @return true if this can be a power and false otherwise.
    */
   protected boolean canBePower() {
-    return getUnits().equals("") || getUnits().equals("count");
+    String unitsStr = getUnits().toString();
+    return unitsStr.isEmpty() || unitsStr.equals("count");
   }
 
   @Override

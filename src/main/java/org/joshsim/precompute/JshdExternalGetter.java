@@ -48,6 +48,10 @@ public class JshdExternalGetter implements ExternalResourceGetter {
       throw new IllegalArgumentException("Can only open jshd files with this getter. Got " + name);
     }
 
+    if (!name.endsWith(".jshd")) {
+      name += ".jshd";
+    }
+
     try (InputStream binaryInputStream = inputStrategy.open(name)) {
       byte[] fileBytes = binaryInputStream.readAllBytes();
       return JshdUtil.loadFromBytes(valueFactory, fileBytes);

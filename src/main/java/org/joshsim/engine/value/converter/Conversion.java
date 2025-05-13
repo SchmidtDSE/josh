@@ -40,4 +40,11 @@ public interface Conversion {
    */
   CompiledCallable getConversionCallable();
 
+  /**
+   * Determine if this conversion is safely communicative.
+   *
+   * @return True if guaranteed communicative and false otherwise.
+   */
+  boolean isCommunicativeSafe();
+
 }

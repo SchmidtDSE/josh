@@ -55,4 +55,9 @@ public class NoopConversion implements Conversion {
   public CompiledCallable getConversionCallable() {
     return callable;
   }
+
+  @Override
+  public boolean isCommunicativeSafe() {
+    return true;
+  }
 }

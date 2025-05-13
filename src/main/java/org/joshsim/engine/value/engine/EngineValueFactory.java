@@ -132,13 +132,8 @@ public class EngineValueFactory {
       List<EngineValue> innerValue,
       Units units
   ) {
-    if (innerValue.size() == 0) {
-      throw new IllegalArgumentException("Distributions cannot be empty.");
-    }
-
     ArrayList<EngineValue> innerArrayList = new ArrayList<EngineValue>(innerValue);;
     return new RealizedDistribution(caster, innerArrayList, units);
-
   }
 
 }

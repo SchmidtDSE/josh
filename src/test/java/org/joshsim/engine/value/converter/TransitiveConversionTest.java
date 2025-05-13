@@ -45,9 +45,9 @@ public class TransitiveConversionTest {
    */
   @BeforeEach
   void setUp() {
-    sourceUnits = new Units("m");
-    intermediateUnits = new Units("cm");
-    destUnits = new Units("mm");
+    sourceUnits = Units.of("m");
+    intermediateUnits = Units.of("cm");
+    destUnits = Units.of("mm");
 
     when(mockFirstConversion.getSourceUnits()).thenReturn(sourceUnits);
     when(mockFirstConversion.getDestinationUnits()).thenReturn(intermediateUnits);
@@ -81,7 +81,7 @@ public class TransitiveConversionTest {
 
   @Test
   void testConstructorThrowsOnUnitsMismatch() {
-    Units differentUnits = new Units("kg");
+    Units differentUnits = Units.of("kg");
     when(mockSecondConversion.getSourceUnits()).thenReturn(differentUnits);
 
     assertThrows(IllegalArgumentException.class,

@@ -8,6 +8,7 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -29,7 +30,7 @@ public class EntityValue extends EngineValue {
    * @param innerValue The inner entity value.
    */
   public EntityValue(EngineValueCaster caster, Entity innerValue) {
-    super(caster, new Units(innerValue.getName()));
+    super(caster, Units.of(innerValue.getName()));
     this.innerValue = innerValue;
   }
 
@@ -65,7 +66,7 @@ public class EntityValue extends EngineValue {
 
   @Override
   public Distribution getAsDistribution() {
-    throw new UnsupportedOperationException("Entity conversion to distribution is not defined.");
+    return new RealizedDistribution(caster, List.of(this), units);
   }
 
   @Override
@@ -155,6 +156,16 @@ public class EntityValue extends EngineValue {
 
   @Override
   protected EngineValue unsafeLessThanOrEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
     throw new UnsupportedOperationException("Entity comparison is not defined.");
   }
 

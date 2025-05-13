@@ -37,8 +37,8 @@ public class MapConverterTest {
    */
   @BeforeEach
   void setUp() {
-    sourceUnits = new Units("m");
-    destUnits = new Units("cm");
+    sourceUnits = Units.of("m");
+    destUnits = Units.of("cm");
     conversions = new HashMap<>();
 
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(sourceUnits, destUnits);
@@ -57,7 +57,7 @@ public class MapConverterTest {
 
   @Test
   void testGetConversionThrowsOnMissingConversion() {
-    Units unknownUnits = new Units("unknown");
+    Units unknownUnits = Units.of("unknown");
     assertThrows(IllegalArgumentException.class,
         () -> converter.getConversion(sourceUnits, unknownUnits));
   }

@@ -100,8 +100,8 @@ class BooleanScalarTest {
   @Test
   void testRaiseToPowerThrowsException() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar1 = new BooleanScalar(caster, true, new Units("count"));
-    BooleanScalar scalar2 = new BooleanScalar(caster, false, new Units("count"));
+    BooleanScalar scalar1 = new BooleanScalar(caster, true, Units.of("count"));
+    BooleanScalar scalar2 = new BooleanScalar(caster, false, Units.of("count"));
 
     assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
   }
@@ -109,7 +109,7 @@ class BooleanScalarTest {
   // @Test
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
-  //   BooleanScalar scalar = new BooleanScalar(caster, true, new Units("units"));
+  //   BooleanScalar scalar = new BooleanScalar(caster, true, Units.of("units"));
 
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());
@@ -128,9 +128,9 @@ class BooleanScalarTest {
   @Test
   void testWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    BooleanScalar scalar = new BooleanScalar(caster, true, new Units("meters"));
+    BooleanScalar scalar = new BooleanScalar(caster, true, Units.of("meters"));
 
-    assertEquals(new Units("meters"), scalar.getUnits());
+    assertEquals(Units.of("meters"), scalar.getUnits());
   }
 
 

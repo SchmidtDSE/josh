@@ -141,8 +141,8 @@ public class MinimalEngineBridgeTest {
 
   @Test
   void testValueConversion() {
-    Units oldUnits = new Units("old");
-    Units newUnits = new Units("test");
+    Units oldUnits = Units.of("old");
+    Units newUnits = Units.of("test");
     when(mockEngineValue.getUnits()).thenReturn(oldUnits);
     when(mockEngineValueConverted.replaceUnits(any())).thenReturn(mockEngineValueConverted);
     when(mockConverter.getConversion(mockEngineValue.getUnits(), newUnits))

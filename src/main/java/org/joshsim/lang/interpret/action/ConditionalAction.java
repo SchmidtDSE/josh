@@ -59,7 +59,7 @@ public class ConditionalAction implements EventHandlerAction {
   public EventHandlerMachine apply(EventHandlerMachine machine) {
     conditional.apply(machine);
 
-    if (negative.isEmpty()) {
+    if (negative.isPresent()) {
       machine.branch(positive, negative.get());
     } else {
       machine.condition(positive);
