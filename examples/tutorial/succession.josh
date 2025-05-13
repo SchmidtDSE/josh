@@ -16,7 +16,7 @@
 start simulation Main
 
   # Specify where the simluation runs
-  grid.size = 1000 m
+  grid.size = 100 m
   grid.low = 36.52 degrees latitude, -118.68 degrees longitude
   grid.high = 36.42 degrees latitude, -118.45 degrees longitude
 
@@ -35,14 +35,15 @@ start simulation Main
 
   optimal.temperature.speciesA = 300 K
   optimal.temperature.speciesB = 320 K
-  optimal.precipitation.speciesA = 500 mm
-  optimal.precipitation.speciesB = 400 mm
+  optimal.precip.speciesA = 500 mm
+  optimal.precip.speciesB = 400 mm
 
   survival.speciesA = 30%
   survival.speciesB = 50%
 
   growthScaler = 0.0025 m / (1 K * 1 K)
   precipitationBase = 2.7182818284
+  precipitationScale = 0.0025 / 1 mm
 
 end simulation
 
@@ -53,16 +54,16 @@ start patch Default
   # Randomize starting occupancy
   countOccupancy.init = sample uniform from 0 count to meta.constraints.maxOccupants
   initialACount.init = (sample uniform from 0% to 100%) * countOccupancy
-  initialBCount.init = countOccupancy - initalA
+  initialBCount.init = countOccupancy - initialACount
 
   # Create initial occupants
   SpeciesA.init = create initialACount of SpeciesA
   SpeciesB.init = create initialBCount of SpeciesB
 
   # Remove dead occupants at start of simulation step
-  SpeciesA.start = SpeicesA[SpeicesA.dead == false]
-  SpeicesB.start = SpeicesB[SpeicesB.dead == false]
-  speciesACount.start = count(SpeicesA)
+  SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
+  SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
+  speciesACount.start = count(SpeciesA)
   speciesBCount.start = count(SpeciesB)
   totalCount.start = speciesACount + speciesBCount
 
@@ -82,21 +83,34 @@ start patch Default
     return sample uniform from 0 count to maxNewCount
   }
 
-  newSpeciesACount.end = floor((speicesACount / totalCount) * newCount)
-  newSpeciesBCount.end = floor((speicesACount / totalCount) * newCount)
+  newSpeciesACount.end = {
+    if (totalCount > 0) {
+      return floor((speciesACount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
+  newSpeciesBCount.end = {
+    if (totalCount > 0) {
+      return floor((speciesACount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
 
-  SpeciesA.end = SpeciesA + create newSpeciesACount of SpeciesA
-  SpeciesB.end = SpeciesB + create newSpeciesBCount of SpeciesB
+  SpeciesA.end = prior.SpeciesA | create newSpeciesACount of SpeciesA
+  SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
 
 end patch
 
 
-start organism SpeicesA
+start organism SpeciesA
 
   # Start a zero height except when if this is the simulation start
+  dead.init = false
   height.init = {
     const isFirstYear = meta.startYear == meta.year
-    const heightSample =  (sample normal with mean of 20 meters std of 5 meters)
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
     const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
     return heightSampleLimit if isFirstYear else 0 meters
   }
@@ -109,7 +123,7 @@ start organism SpeicesA
 
   # At each step, determine impact of precipitation
   precipitationImpact.step = {
-    const deltaFromOptimalPrecipitation = external precipitation - optimal.precipitation.speciesA
+    const deltaFromOptimalPrecipitation = external precipitation - meta.optimal.precip.speciesA
     const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
     return 1 / meta.precipitationBase ^ scaledPrecipitation
   }
@@ -124,12 +138,13 @@ start organism SpeicesA
 end organism
 
 
-start organism SpeicesB
+start organism SpeciesB
 
   # Start a zero height except when if this is the simulation start
+  dead.init = false
   height.init = {
     const isFirstYear = meta.startYear == meta.year
-    const heightSample =  (sample normal with mean of 20 meters std of 5 meters)
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
     const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
     return heightSampleLimit if isFirstYear else 0 meters
   }
@@ -142,7 +157,7 @@ start organism SpeicesB
 
   # At each step, determine impact of precipitation
   precipitationImpact.step = {
-    const deltaFromOptimalPrecipitation = external precipitation - optimal.precipitation.speciesB
+    const deltaFromOptimalPrecipitation = external precipitation - meta.optimal.precip.speciesB
     const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
     return 1 / meta.precipitationBase ^ scaledPrecipitation
   }
