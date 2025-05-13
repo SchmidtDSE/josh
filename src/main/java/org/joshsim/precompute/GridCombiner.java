@@ -8,7 +8,10 @@
 package org.joshsim.precompute;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
@@ -24,6 +27,18 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class GridCombiner {
 
+  private final EngineGeometryFactory geometryFactory;
+
+  /**
+   * Create a new grid combiner which uses the given factory to build geometries.
+   *
+   * @param geometryFactory The factory to use when building geometries within the new grid or when
+   *     supporting its construction.
+   */
+  public GridCombiner(EngineGeometryFactory geometryFactory) {
+    this.geometryFactory = geometryFactory;
+  }
+
   /**
    * Combine two DataGridLayers into a single DataGridLayer.
    *
@@ -37,7 +52,7 @@ public class GridCombiner {
    *     conflict.
    * @return Newly created DataGridLayer which combines the two input layers.
    */
-  public static DataGridLayer combine(DataGridLayer left, DataGridLayer right) {
+  public DataGridLayer combine(DataGridLayer left, DataGridLayer right) {
     PatchBuilderExtents combinedExtents = getCombinedExtents(left, right);
     long minTimestep = getMinTimestep(left, right);
     long maxTimestep = getMaxTimestep(left, right);
@@ -52,6 +67,7 @@ public class GridCombiner {
 
     // Add values from left grid first
     addInValues(combinedGrid, left);
+    
     // Then overlay values from right grid (taking precedence)
     addInValues(combinedGrid, right);
 
@@ -70,7 +86,7 @@ public class GridCombiner {
    * @return Extents which fully enclose the extents of both input grids. These extents are to be
    *     be given in grid-space.
    */
-  static PatchBuilderExtents getCombinedExtents(DataGridLayer left, DataGridLayer right) {
+  private PatchBuilderExtents getCombinedExtents(DataGridLayer left, DataGridLayer right) {
     PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
     
     // Get min/max coordinates from both grids
@@ -105,7 +121,7 @@ public class GridCombiner {
    * @param right The second grid from which the minimum timestep should be determined.
    * @return The minimum of the minimum timestep across both input grids.
    */
-  private static long getMinTimestep(DataGridLayer left, DataGridLayer right) {
+  private long getMinTimestep(DataGridLayer left, DataGridLayer right) {
     return Math.min(left.getMinTimestep(), right.getMinTimestep());
   }
 
@@ -116,7 +132,7 @@ public class GridCombiner {
    * @param right The second grid from which the maximum timestep should be determined.
    * @return The maximum of the maximum timestep across both input grids.
    */
-  static long getMaxTimestep(DataGridLayer left, DataGridLayer right) {
+  private long getMaxTimestep(DataGridLayer left, DataGridLayer right) {
     return Math.max(left.getMaxTimestep(), right.getMaxTimestep());
   }
 
@@ -131,7 +147,7 @@ public class GridCombiner {
    * @return The units from the right grid.
    * @throws IllegalArgumentException If the units of the two input grids are not compatible.
    */
-  static Units getUnits(DataGridLayer left, DataGridLayer right) {
+  private Units getUnits(DataGridLayer left, DataGridLayer right) {
     Units leftUnits = left.getUnits();
     Units rightUnits = right.getUnits();
     
@@ -156,13 +172,17 @@ public class GridCombiner {
    * @param combinedGrid The grid into which all values from source will be copied.
    * @param source The grid from which values will be copied into combinedGrid.
    */
-  static void addInValues(DoublePrecomputedGrid combinedGrid, DataGridLayer source) {
+  private void addInValues(DoublePrecomputedGrid combinedGrid, DataGridLayer source) {
     for (long x = source.getMinX(); x <= source.getMaxX(); x++) {
       for (long y = source.getMinY(); y <= source.getMaxY(); y++) {
         for (long timestep = source.getMinTimestep(); 
              timestep <= source.getMaxTimestep(); 
              timestep++) {
-          GeoKey key = new GeoKey(x, y);
+          EngineGeometry geometry = geometryFactory.createPoint(
+              BigDecimal.valueOf(x),
+              BigDecimal.valueOf(y)
+          );
+          GeoKey key = new GeoKey(Optional.of(geometry), "");
           EngineValue value = source.getAt(key, timestep);
           combinedGrid.setAt(x, y, timestep, value.getAsDecimal().doubleValue());
         }
