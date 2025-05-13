@@ -30,6 +30,7 @@ start simulation Main
 
   # Indicate ecological and spatial limits
   constraints.maxOccupants = 10 count
+# Comment: Note that with the 100 m grid cell this is now quite sparse. Not a problem for the tutorial I think, but just to keep in mind (e.g. I don't think light competition would drive sucession here because we do not necessarily have a closed canopy)
   constraints.minViableTemperature = 273 K
   constraints.maxViableTemperature = 373 K
 
@@ -41,6 +42,8 @@ start simulation Main
   survival.speciesA = 30%
   survival.speciesB = 50%
 
+# Comment: I can't yet map these completely to our functions, especially precipitationBase. Not also inconsistency in naming (Scaler vs Scale)?
+# Comment on comment: Got it now, it is e :)
   growthScaler = 0.0025 m / (1 K * 1 K)
   precipitationBase = 2.7182818284
   precipitationScale = 0.0025 / 1 mm
@@ -70,6 +73,7 @@ start patch Default
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
     const currentTemperature = external temperature
+# Comment: I think these should be using the constants from above?
     const inExtremeCold = currentTemperature < constraints.minViableTemperature
     const inExtremeHot = currentTemperature > constraints.maxViableTemperature
     return inExtremeCold or inExtremeHot
@@ -128,6 +132,7 @@ start organism SpeciesA
   }
 
   # At each step, determine impact of precipitation
+# Comment: This is the implementation of our precipitation equation right? I think for readability reformulating this such that it is clear it is a sigmoid function would be nice but ot a priority for now (I think we also failed to explain that in the doc)
   precipitationImpact.step = {
     const deltaFromOptimalPrecipitation = external precipitation - meta.optimal.precip.speciesA
     const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
@@ -161,11 +166,14 @@ start organism SpeciesB
   # At each step, determine impact of temperature
   temperatureImpact.step = {
     const deltaFromOptimalTemp = external temperature - meta.optimal.temperature.speciesB
+# Comment: I am not sure I understand how this equation is implemented. The equation is g* - b(T-T*)^2, where is g* here?
     return meta.growthScaler * (deltaFromOptimalTemp)^2
   }
 
   # At each step, determine impact of precipitation
   precipitationImpact.step = {
+# Comment: Ooh I get it now, the precipitationBase is used to calculate the exponential? Ok, but why is the scale factor in the Numerator?
+# Comment: Hm hm, I am not sure if this is the most intuitive way to do this, but if it is correct I am trusting you to explain it :)
     const deltaFromOptimalPrecipitation = external precipitation - meta.optimal.precip.speciesB
     const scaledPrecipitation = meta.precipitationScale * deltaFromOptimalPrecipitation
     return 1 / meta.precipitationBase ^ scaledPrecipitation
