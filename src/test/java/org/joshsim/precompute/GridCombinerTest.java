@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
@@ -12,7 +15,6 @@ import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.IntScalar;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +23,7 @@ class GridCombinerTest {
   private EngineValueFactory valueFactory;
   private GridCombiner gridCombiner;
   private final Units testUnits = Units.of("meters");
-  
+
   private DoublePrecomputedGrid leftGrid;
   private DoublePrecomputedGrid rightGrid;
 
@@ -30,7 +32,7 @@ class GridCombinerTest {
     geometryFactory = new GridGeometryFactory();
     valueFactory = EngineValueFactory.getDefault();
     gridCombiner = new GridCombiner(geometryFactory);
-    
+
     // Create extents for left grid (0,0 to 2,2)
     PatchBuilderExtents leftExtents = new PatchBuilderExtentsBuilder()
         .setTopLeftX(BigDecimal.ZERO)
@@ -98,15 +100,15 @@ class GridCombinerTest {
   @Test
   void testCombineValues() {
     DataGridLayer combined = gridCombiner.combine(leftGrid, rightGrid);
-    
+
     // Test a point that should come from the left grid
-    EngineValue leftValue = combined.getAt(new GeoKey(geometryFactory.createPoint(
-        BigDecimal.ZERO, BigDecimal.ZERO), ""), 0);
+    EngineGeometry geometry1 = geometryFactory.createPoint(BigDecimal.ZERO, BigDecimal.ZERO);
+    EngineValue leftValue = combined.getAt(new GeoKey(Optional.of(geometry1), ""), 0);
     assertEquals(1.0, leftValue.getAsDecimal().doubleValue(), 0.001);
 
     // Test a point that should be overwritten by the right grid
-    EngineValue rightValue = combined.getAt(new GeoKey(geometryFactory.createPoint(
-        BigDecimal.valueOf(2), BigDecimal.valueOf(2)), ""), 2);
+    EngineGeometry geometry2 = geometryFactory.createPoint(BigDecimal.TWO, BigDecimal.TWO);
+    EngineValue rightValue = combined.getAt(new GeoKey(Optional.of(geometry2), ""), 2);
     assertEquals(2.0, rightValue.getAsDecimal().doubleValue(), 0.001);
   }
 

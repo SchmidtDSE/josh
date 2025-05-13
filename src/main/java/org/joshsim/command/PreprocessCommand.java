@@ -124,9 +124,9 @@ public class PreprocessCommand implements Callable<Integer> {
   private String timeName;
 
   @Option(
-    names = "--timestep",
-    description = "The single timestep to process.",
-    defaultValue = ""
+      names = "--timestep",
+      description = "The single timestep to process.",
+      defaultValue = ""
   )
   private String timestep;
 
@@ -158,18 +158,6 @@ public class PreprocessCommand implements Callable<Integer> {
       return 4;
     }
 
-    // Get metadata
-    CoordinateReferenceSystem crs;
-    try {
-      crs = CRS.forCode(crsCode);
-    } catch (Exception e) {
-      System.out.println("Failed to read CRS code due to: " + e);
-      return 1;
-    }
-    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
-    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-
     // Initialize an external geo mapper
     ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
     geoMapperBuilder.addCrsCode(crsCode);
@@ -179,15 +167,19 @@ public class PreprocessCommand implements Callable<Integer> {
     Optional<Long> forcedTimestep = timestep.isBlank() ? Optional.empty() : Optional.of(
         Long.parseLong(timestep)
     );
-    
+
     if (forcedTimestep.isPresent()) {
       geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
       geoMapperBuilder.forceTimestep(forcedTimestep.get());
     } else {
       geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
     }
-    
+
     ExternalGeoMapper mapper = geoMapperBuilder.build();
+
+    // Get metadata
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
     // Create grid from streaming data
     GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
@@ -196,6 +188,15 @@ public class PreprocessCommand implements Callable<Integer> {
     EngineValue size = extractor.getSize();
 
     // Build bridge
+    CoordinateReferenceSystem crs;
+    try {
+      crs = CRS.forCode(crsCode);
+    } catch (Exception e) {
+      System.out.println("Failed to read CRS code due to: " + e);
+      return 1;
+    }
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
+
     EngineBridge bridge = new QueryCacheEngineBridge(
         engineGeometryFactory,
         simEntity,

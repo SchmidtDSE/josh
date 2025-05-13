@@ -44,7 +44,7 @@ public class ExternalGeoMapper {
       String dimensionY,
       String timeDimension,
       String crsCode
-    ) {
+  ) {
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;
@@ -73,7 +73,7 @@ public class ExternalGeoMapper {
       String timeDimension,
       String crsCode,
       Optional<Long> forcedTimestep
-    ) {
+  ) {
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;

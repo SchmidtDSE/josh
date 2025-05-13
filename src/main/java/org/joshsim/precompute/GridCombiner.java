@@ -67,7 +67,7 @@ public class GridCombiner {
 
     // Add values from left grid first
     addInValues(combinedGrid, left);
-    
+
     // Then overlay values from right grid (taking precedence)
     addInValues(combinedGrid, right);
 
@@ -88,13 +88,13 @@ public class GridCombiner {
    */
   private PatchBuilderExtents getCombinedExtents(DataGridLayer left, DataGridLayer right) {
     PatchBuilderExtentsBuilder builder = new PatchBuilderExtentsBuilder();
-    
+
     // Get min/max coordinates from both grids
     BigDecimal leftMinX = BigDecimal.valueOf(left.getMinX());
     BigDecimal leftMaxX = BigDecimal.valueOf(left.getMaxX());
     BigDecimal leftMinY = BigDecimal.valueOf(left.getMinY());
     BigDecimal leftMaxY = BigDecimal.valueOf(left.getMaxY());
-    
+
     BigDecimal rightMinX = BigDecimal.valueOf(right.getMinX());
     BigDecimal rightMaxX = BigDecimal.valueOf(right.getMaxX());
     BigDecimal rightMinY = BigDecimal.valueOf(right.getMinY());
@@ -150,7 +150,7 @@ public class GridCombiner {
   private Units getUnits(DataGridLayer left, DataGridLayer right) {
     Units leftUnits = left.getUnits();
     Units rightUnits = right.getUnits();
-    
+
     if (!leftUnits.equals(rightUnits)) {
       throw new IllegalArgumentException(String.format(
           "Units must be equal: left=%s, right=%s",
@@ -158,7 +158,7 @@ public class GridCombiner {
           rightUnits
       ));
     }
-    
+
     return rightUnits;
   }
 
@@ -175,8 +175,8 @@ public class GridCombiner {
   private void addInValues(DoublePrecomputedGrid combinedGrid, DataGridLayer source) {
     for (long x = source.getMinX(); x <= source.getMaxX(); x++) {
       for (long y = source.getMinY(); y <= source.getMaxY(); y++) {
-        for (long timestep = source.getMinTimestep(); 
-             timestep <= source.getMaxTimestep(); 
+        for (long timestep = source.getMinTimestep();
+             timestep <= source.getMaxTimestep();
              timestep++) {
           EngineGeometry geometry = geometryFactory.createPoint(
               BigDecimal.valueOf(x),
