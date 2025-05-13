@@ -7,6 +7,7 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,6 +41,7 @@ import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
+import org.joshsim.precompute.GridCombiner;
 import org.joshsim.precompute.JshdExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
