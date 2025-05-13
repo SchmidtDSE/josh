@@ -107,8 +107,10 @@ start patch Default
 end patch
 
 
-# Agent implements behavior described in markdown
 start organism SpeciesA
+
+  # Agent implements behavior described in markdown
+  # This responds to temperature and precipitation
 
   # Start a zero height except when if this is the simulation start
   dead.init = false
@@ -142,8 +144,10 @@ start organism SpeciesA
 end organism
 
 
-# Same as species A but with different constants
 start organism SpeciesB
+
+  # Same as species A which, for toy demo, is same but with different constants
+  # In practice, these two would likely have more divergent behaviors.
 
   # Start a zero height except when if this is the simulation start
   dead.init = false
