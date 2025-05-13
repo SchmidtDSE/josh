@@ -28,7 +28,7 @@ class JshdUtilTest {
 
   private DoublePrecomputedGrid grid;
   private PatchBuilderExtents extents;
-  private final Units testUnits = new Units("meters");
+  private final Units testUnits = Units.of("meters");
   private final long minTimestep = 0;
   private final long maxTimestep = 2;
 
@@ -76,7 +76,7 @@ class JshdUtilTest {
     for (int i = 0; i < 201; i++) {
       longUnits.append('m');
     }
-    Units units = new Units(longUnits.toString());
+    Units units = Units.of(longUnits.toString());
 
     DoublePrecomputedGrid gridWithLongUnits = new DoublePrecomputedGrid(
         factory,
@@ -144,7 +144,7 @@ class JshdUtilTest {
     assertEquals(2L, loaded.getMaxY());
     assertEquals(0L, loaded.getMinTimestep());
     assertEquals(2L, loaded.getMaxTimestep());
-    assertEquals(new Units(testUnits), loaded.getUnits());
+    assertEquals(Units.of(testUnits), loaded.getUnits());
   }
 
   @Test

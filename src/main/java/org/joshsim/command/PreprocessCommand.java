@@ -223,7 +223,7 @@ public class PreprocessCommand implements Callable<Integer> {
         ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
         bridge.getStartTimestep(),
         bridge.getEndTimestep(),
-        new Units(unitsStr)
+        Units.of(unitsStr)
     );
 
     // Serialize to binary file

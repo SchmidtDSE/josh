@@ -28,7 +28,7 @@ class DoublePrecomputedGridTest {
   private EngineValue mockEngineValue;
 
   private DoublePrecomputedGrid grid;
-  private final Units testUnits = new Units("meters");
+  private final Units testUnits = Units.of("meters");
   private final long minTimestep = 0;
   private final long maxTimestep = 10;
 

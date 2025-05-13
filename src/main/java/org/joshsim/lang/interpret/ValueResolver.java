@@ -6,13 +6,16 @@
 
 package org.joshsim.lang.interpret;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.func.DistributionScope;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
  * Helper which resolves a value within a scope, memoizing the path after resolution.
@@ -71,6 +74,12 @@ public class ValueResolver {
       Scope newScope;
       if (innerSize.get() == 1) {
         newScope = new EntityScope(resolved.getAsEntity());
+      } else if (innerSize.get() == 0) {
+        return Optional.of(new RealizedDistribution(
+            resolved.getCaster(),
+            new ArrayList<>(),
+            Units.EMPTY
+        ));
       } else {
         newScope = new DistributionScope(resolved.getAsDistribution());
       }

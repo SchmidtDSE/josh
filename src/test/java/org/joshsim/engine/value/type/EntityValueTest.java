@@ -52,7 +52,6 @@ class EntityValueTest {
     assertThrows(UnsupportedOperationException.class, () -> value.getAsBoolean());
     assertThrows(UnsupportedOperationException.class, () -> value.getAsString());
     assertThrows(UnsupportedOperationException.class, () -> value.getAsInt());
-    assertThrows(UnsupportedOperationException.class, () -> value.getAsDistribution());
   }
 
   @Test

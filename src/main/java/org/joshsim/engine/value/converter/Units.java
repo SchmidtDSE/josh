@@ -34,11 +34,36 @@ public class Units {
    *
    * @param description a string representation of the units, with numerator and optionally a
    *     denominator.
+   * @return Units from the description.
    * @throws IllegalArgumentException if more than one denominator is specified.
    */
-  public Units(String description) {
-    this.description = description;
+  public static Units of(String description) {
+    Units unsimplified = new Units(description);
+    return unsimplified.simplify();
+  }
 
+  /**
+   * Constructs Units with the specified numerator and denominator unit maps.
+   *
+   * @param numeratorUnits a Map representing the units in the numerator, mapping from name to
+   *     count.
+   * @return Units from the given units.
+   * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
+   *     count.
+   */
+  public static Units of(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
+    Units unsimplified = new Units(numeratorUnits, denominatorUnits);
+    return unsimplified.simplify();
+  }
+
+  /**
+   * Constructs Units from a description string.
+   *
+   * @param description a string representation of the units, with numerator and optionally a
+   *     denominator.
+   * @throws IllegalArgumentException if more than one denominator is specified.
+   */
+  private Units(String description) {
     String numerator = "";
     String denominator = "";
 
@@ -58,6 +83,7 @@ public class Units {
 
     numeratorUnits = parseMultiplyString(numerator);
     denominatorUnits = parseMultiplyString(denominator);
+    this.description = serializeString();
   }
 
   /**
@@ -68,7 +94,7 @@ public class Units {
    * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
    *     count.
    */
-  public Units(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
+  private Units(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
     this.numeratorUnits = numeratorUnits;
     this.denominatorUnits = denominatorUnits;
     this.description = serializeString();
@@ -127,7 +153,7 @@ public class Units {
       newDenominatorUnits.put(units, newCount);
     }
 
-    return new Units(newNumeratorUnits, newDenominatorUnits);
+    return Units.of(newNumeratorUnits, newDenominatorUnits);
   }
 
   /**
@@ -160,7 +186,7 @@ public class Units {
       newDenominatorUnits.put(units, newCount);
     }
 
-    return new Units(newNumeratorUnits, newDenominatorUnits);
+    return Units.of(newNumeratorUnits, newDenominatorUnits);
   }
 
   /**
@@ -170,6 +196,10 @@ public class Units {
    *     out.
    */
   public Units simplify() {
+    if (numeratorUnits.isEmpty() || denominatorUnits.isEmpty()) {
+      return this;
+    }
+
     Map<String, Long> newNumeratorUnits = new TreeMap<>();
     Map<String, Long> newDenominatorUnits = new TreeMap<>();
 

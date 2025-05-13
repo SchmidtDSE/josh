@@ -36,10 +36,10 @@ class StringScalarTest {
   @Test
   void testConstructorWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    StringScalar scalar = new StringScalar(caster, "hello", new Units("label"));
+    StringScalar scalar = new StringScalar(caster, "hello", Units.of("label"));
 
     assertEquals("hello", scalar.getAsString());
-    assertEquals(new Units("label"), scalar.getUnits());
+    assertEquals(Units.of("label"), scalar.getUnits());
   }
 
   @Test
@@ -162,7 +162,7 @@ class StringScalarTest {
   // @Test
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
-  //   StringScalar scalar = new StringScalar(caster, "hello", "labelnew Units("));
+  //   StringScalar scalar = new StringScalar(caster, "hello", "labelUnits.of("));
 
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());

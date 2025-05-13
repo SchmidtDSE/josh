@@ -6,17 +6,6 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
@@ -39,6 +28,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -254,6 +253,94 @@ public class SingleThreadEventHandlerMachineTest {
     // Then - 5 is 50% of way from 0 to 10, so result should be 50 (50% of way from 0 to 100)
     machine.end();
     assertAlmostEquals(makeIntScalar(50), machine.getResult());
+  }
+
+  @Test
+  void concat_shouldCombineDistributions() {
+    // Given
+    List<EngineValue> values1 = List.of(makeIntScalar(1), makeIntScalar(2), makeIntScalar(3));
+    List<EngineValue> values2 = List.of(makeIntScalar(4), makeIntScalar(5));
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue dist2 = factory.buildRealizedDistribution(values2, Units.EMPTY);
+
+    // When
+    machine.push(dist1);
+    machine.push(dist2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(5, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateEmptyDistributions() {
+    // Given
+    EngineValue emptyDist1 = factory.buildRealizedDistribution(new ArrayList<>(), Units.EMPTY);
+    EngineValue emptyDist2 = factory.buildRealizedDistribution(new ArrayList<>(), Units.EMPTY);
+
+    // When
+    machine.push(emptyDist1);
+    machine.push(emptyDist2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    assertEquals(machine.getResult().getAsDistribution().getSize().orElseThrow(), 0);
+  }
+
+  @Test
+  void concat_shouldConcatenateTwoIntScalars() {
+    // Given
+    EngineValue scalar1 = makeIntScalar(1);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(scalar1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(2, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateIntScalarAndEmpty() {
+    // Given
+    List<EngineValue> values1 = new ArrayList<>();
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(dist1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(1, result.getSize().orElseThrow());
+  }
+
+  @Test
+  void concat_shouldConcatenateTwoScalarsAndDist() {
+    // Given
+    List<EngineValue> values1 = List.of(makeIntScalar(1), makeIntScalar(2));
+    EngineValue dist1 = factory.buildRealizedDistribution(values1, Units.EMPTY);
+    EngineValue scalar2 = makeIntScalar(2);
+
+    // When
+    machine.push(dist1);
+    machine.push(scalar2);
+    machine.concat();
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(3, result.getSize().orElseThrow());
   }
 
   @Test
@@ -765,8 +852,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void cast_withForceTrue_shouldKeepOriginalValue() {
     // Given
-    EngineValue intValue = factory.build(1L, new Units("m"));
-    Units targetUnits = new Units("cm");
+    EngineValue intValue = factory.build(1L, Units.of("m"));
+    Units targetUnits = Units.of("cm");
 
     // When
     machine.push(intValue);
@@ -781,8 +868,8 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void cast_withForceFalse_shouldConvertValue() {
     // Given
-    EngineValue intValue = factory.build(1L, new Units("m"));
-    Units targetUnits = new Units("cm");
+    EngineValue intValue = factory.build(1L, Units.of("m"));
+    Units targetUnits = Units.of("cm");
     EngineValue convertedValue = factory.build(100L, targetUnits);
     when(mockBridge.convert(intValue, targetUnits)).thenReturn(convertedValue);
 
@@ -802,7 +889,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
-    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
     when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
@@ -823,7 +910,7 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockScope.get("meta")).thenReturn(mockValue);
     when(mockScope.get("here")).thenReturn(mockValue);
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
-    when(mockValue.getUnits()).thenReturn(new Units("Test"));
+    when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
     when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
@@ -862,7 +949,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     // When
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
-    EngineValue distanceValue = factory.build(queryDistance, new Units("meters"));
+    EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
     machine.executeSpatialQuery(new ValueResolver("testAttr"));
 

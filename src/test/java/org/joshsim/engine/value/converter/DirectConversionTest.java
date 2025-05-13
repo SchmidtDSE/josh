@@ -39,8 +39,8 @@ public class DirectConversionTest {
    */
   @BeforeEach
   void setUp() {
-    sourceUnits = new Units("m");
-    destUnits = new Units("cm");
+    sourceUnits = Units.of("m");
+    destUnits = Units.of("cm");
     conversion = new DirectConversion(sourceUnits, destUnits, mockCallable);
   }
 

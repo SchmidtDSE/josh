@@ -34,7 +34,10 @@ public class GeotiffExternalDataReaderFactory {
    * Creates a new Geotiff external data reader and opens the specified file.
    */
   public ExternalDataReader createAndOpen(String filePath) {
-    GeotiffExternalDataReader reader = new GeotiffExternalDataReader(valueFactory, new Units("mm"));
+    GeotiffExternalDataReader reader = new GeotiffExternalDataReader(
+        valueFactory,
+        Units.of("mm")
+    );
     try {
       reader.open(filePath);
       return reader;

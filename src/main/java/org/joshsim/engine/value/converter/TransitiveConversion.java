@@ -67,5 +67,10 @@ public class TransitiveConversion implements Conversion {
     return callable;
   }
 
+  @Override
+  public boolean isCommunicativeSafe() {
+    return first.isCommunicativeSafe() && second.isCommunicativeSafe();
+  }
+
 
 }

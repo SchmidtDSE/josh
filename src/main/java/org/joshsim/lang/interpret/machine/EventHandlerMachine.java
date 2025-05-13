@@ -79,6 +79,16 @@ public interface EventHandlerMachine {
   EventHandlerMachine pow();
 
   /**
+   * Concatenate two distributions together.
+   *
+   * <p>Concatenate two distributions together or, if an operand is a single value, it is added to
+   * the other distribution.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine concat();
+
+  /**
    * Pop the top two EngineNumbers on the stack and perform a logical and.
    *
    * <p>Pop the top two EngineNumbers on the stack and perform a logical and between them, putting

@@ -18,7 +18,7 @@ import org.joshsim.engine.value.engine.EngineValueTuple;
 public class ConverterBuilder {
 
   Map<EngineValueTuple.UnitsTuple, Conversion> conversions;
-  Map<Units, List<Conversion>> conversionsByDestination;
+  Map<Units, Map<Units, Conversion>> conversionsByDestination;
 
   /**
    * Create a builder without any conversions.
@@ -26,6 +26,10 @@ public class ConverterBuilder {
   public ConverterBuilder() {
     conversions = new HashMap<>();
     conversionsByDestination = new HashMap<>();
+    addConversion(new NoopConversion(Units.of(""), Units.of("count")));
+    addConversion(new NoopConversion(Units.of("count"), Units.of("counts")));
+    addConversion(new NoopConversion(Units.of("m"), Units.of("meter")));
+    addConversion(new NoopConversion(Units.of("meter"), Units.of("meters")));
   }
 
   /**
@@ -35,19 +39,33 @@ public class ConverterBuilder {
    * @return this builder for method chaining
    */
   public ConverterBuilder addConversion(Conversion conversion) {
+    addConversionNoCommunicative(conversion);
+    if (conversion.isCommunicativeSafe()) {
+      addConversionNoCommunicative(new InverseConversion(conversion));
+    }
+    return this;
+  }
+
+
+  private void addConversionNoCommunicative(Conversion conversion) {
     Units source = conversion.getSourceUnits();
     Units destination = conversion.getDestinationUnits();
+
+    if (conversionsByDestination.containsKey(destination)) {
+      if (conversionsByDestination.get(destination).containsKey(source)) {
+        return;
+      }
+    }
 
     EngineValueTuple.UnitsTuple unitsTuple = new EngineValueTuple.UnitsTuple(source, destination);
     conversions.put(unitsTuple, conversion);
 
     if (!conversionsByDestination.containsKey(destination)) {
-      conversionsByDestination.put(destination, new ArrayList<>());
+      conversionsByDestination.put(destination, new HashMap<>());
     }
-    conversionsByDestination.get(destination).add(conversion);
+    conversionsByDestination.get(destination).put(source, conversion);
 
     extendTransitively(conversion);
-    return this;
   }
 
   /**
@@ -71,8 +89,8 @@ public class ConverterBuilder {
       return;
     }
 
-    List<Conversion> endingAtSource = conversionsByDestination.get(newSource);
-    for (Conversion conversionToChain : endingAtSource) {
+    Map<Units, Conversion> endingAtSource = conversionsByDestination.get(newSource);
+    for (Conversion conversionToChain : endingAtSource.values()) {
       Conversion chainedConversion = new TransitiveConversion(conversionToChain, newConversion);
       addConversion(chainedConversion);
     }

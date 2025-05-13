@@ -27,6 +27,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.EntityValue;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
@@ -42,9 +43,9 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
  */
 public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
-  private static final Units EMPTY_UNITS = new Units("");
-  private static final Units COUNT_UNITS = new Units("count");
-  private static final Units METER_UNITS = new Units("meters");
+  private static final Units EMPTY_UNITS = Units.of("");
+  private static final Units COUNT_UNITS = Units.of("count");
+  private static final Units METER_UNITS = Units.of("meters");
   private static final ValueResolver CURRENT_VALUE_RESOLVER = new ValueResolver("current");
 
   private final EngineBridge bridge;
@@ -142,10 +143,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine multiply() {
-    startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
-    endConversionGroup();
 
     memory.push(left.multiply(right));
 
@@ -154,10 +153,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine divide() {
-    startConversionGroup();
     EngineValue right = pop();
     EngineValue left = pop();
-    endConversionGroup();
 
     memory.push(left.divide(right));
 
@@ -169,6 +166,32 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue exponent = pop();
     EngineValue base = pop();
     memory.push(base.raiseToPower(exponent));
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine concat() {
+    startConversionGroup();
+    EngineValue right = pop();
+    EngineValue left = pop();
+    endConversionGroup();
+
+    Iterable<EngineValue> leftValues = left.getAsDistribution().getContents(
+        left.getSize().orElseThrow(),
+        false
+    );
+    
+    Iterable<EngineValue> rightValues = right.getAsDistribution().getContents(
+        right.getSize().orElseThrow(), 
+        false
+    );
+
+    List<EngineValue> allValues = new ArrayList<>();
+    leftValues.forEach(allValues::add);
+    rightValues.forEach(allValues::add);
+
+    memory.push(valueFactory.buildRealizedDistribution(allValues, right.getUnits()));
+
     return this;
   }
 
@@ -221,7 +244,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    EngineValue resultDecorated = valueFactory.build(left.equals(right), EMPTY_UNITS);
+    EngineValue resultDecorated = left.equalTo(right);
     memory.push(resultDecorated);
 
     return this;
@@ -234,7 +257,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    EngineValue resultDecorated = valueFactory.build(!left.equals(right), EMPTY_UNITS);
+    EngineValue resultDecorated = left.notEqualTo(right);
     memory.push(resultDecorated);
 
     return this;
@@ -309,7 +332,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine condition(EventHandlerAction positive) {
     EngineValue conditionValue = pop();
     boolean conditionResult = conditionValue.getAsBoolean();
-
+    
     if (conditionResult) {
       positive.apply(this);
     }
@@ -411,7 +434,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         EntityFastForwarder.fastForward(newEntity, substep);
         values.add(valueFactory.build(newEntity));
       }
-      result = valueFactory.buildRealizedDistribution(values, new Units(entityType));
+      result = valueFactory.buildRealizedDistribution(values, Units.of(entityType));
     }
 
     memory.push(result);
@@ -461,7 +484,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     double minDouble = min.getAsDecimal().doubleValue();
     double maxDouble = max.getAsDecimal().doubleValue();
-    double doubleResult = random.nextDouble(minDouble, maxDouble);
+
+    double doubleResult;
+    if (Math.abs(maxDouble - minDouble) < 1e-7) {
+      doubleResult = minDouble;
+    } else {
+      doubleResult = random.nextDouble(minDouble, maxDouble);
+    }
+
     BigDecimal result = BigDecimal.valueOf(doubleResult);
 
     EngineValue decoratedResult = valueFactory.build(result, min.getUnits());
@@ -702,7 +732,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         secondUnitsSafe,
         type2.getAsString()
     );
-    EngineValue newValue = valueFactory.build(complete, new Units("position"));
+    EngineValue newValue = valueFactory.build(complete, Units.of("position"));
     push(newValue);
 
     return this;
