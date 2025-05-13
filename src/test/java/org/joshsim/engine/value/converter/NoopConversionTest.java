@@ -27,7 +27,7 @@ class NoopConversionTest {
 
   @BeforeEach
   void setUp() {
-    units = new Units("m");
+    units = Units.of("m");
     conversion = new NoopConversion(units);
   }
 

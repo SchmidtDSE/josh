@@ -404,7 +404,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       }
 
       // Create units and BigDecimal value
-      Units units = new Units(unit);
+      Units units = Units.of(unit);
       BigDecimal bigDecimalValue = new BigDecimal(value).setScale(6, RoundingMode.HALF_UP);
 
       // Create an EngineValue with the result

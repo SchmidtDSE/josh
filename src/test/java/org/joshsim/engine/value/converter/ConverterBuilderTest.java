@@ -36,9 +36,9 @@ public class ConverterBuilderTest {
    */
   @BeforeEach
   void setUp() {
-    kilometersUnits = new Units("km");
-    metersUnits = new Units("m");
-    centimetersUnits = new Units("cm");
+    kilometersUnits = Units.of("km");
+    metersUnits = Units.of("m");
+    centimetersUnits = Units.of("cm");
 
     when(kilometersToMetersConversion.getSourceUnits()).thenReturn(kilometersUnits);
     when(kilometersToMetersConversion.getDestinationUnits()).thenReturn(metersUnits);

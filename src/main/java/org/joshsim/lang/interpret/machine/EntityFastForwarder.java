@@ -68,7 +68,9 @@ public class EntityFastForwarder {
     entity.startSubstep(subStep);
 
     entity.getAttributeNames().stream()
-        .map(entity::getAttributeValue)
+        .map((name) -> {
+          return entity.getAttributeValue(name);
+        })
         .forEach((x) -> {
           assert x != null;
         });

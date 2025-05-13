@@ -48,7 +48,7 @@ class JshdExternalGetterTest {
         extents,
         0L,
         2L,
-        new Units("meters"),
+        Units.of("meters"),
         new double[3][3][3]
     );
     byte[] gridBytes = JshdUtil.serializeToBytes(originalGrid);

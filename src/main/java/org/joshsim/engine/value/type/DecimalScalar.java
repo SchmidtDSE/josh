@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
@@ -96,7 +97,7 @@ public class DecimalScalar extends Scalar {
     assertScalarCompatible(other);
     return new DecimalScalar(
       getCaster(),
-      getAsDecimal().divide(other.getAsDecimal()),
+      getAsDecimal().divide(other.getAsDecimal(), MathContext.DECIMAL128),
       determineDividedUnits(getUnits(), other.getUnits())
     );
   }
@@ -106,9 +107,11 @@ public class DecimalScalar extends Scalar {
     assertScalarCompatible(other);
 
     double base = getAsDecimal().doubleValue();
-    double exponent = other.getAsInt();
-    if (exponent != other.getAsDecimal().doubleValue()) {
-      throw new UnsupportedOperationException("Non-integer exponents are not supported");
+    double exponent = other.getAsDecimal().doubleValue();
+    double remainder = Math.abs(other.getAsInt() - other.getAsDecimal().doubleValue());
+    boolean otherIsInteger = remainder < 1e-7;
+    if (!otherIsInteger && !canBePower()) {
+      throw new UnsupportedOperationException("Non-integer exponents with units are not supported");
     }
     if (!other.canBePower()) {
       throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");

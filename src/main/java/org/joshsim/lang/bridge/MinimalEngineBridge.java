@@ -83,13 +83,13 @@ public class MinimalEngineBridge implements EngineBridge {
 
     startStep = simulation
       .getAttributeValue("steps.low")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
 
     currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
     simulation.endSubstep();
 
@@ -124,13 +124,13 @@ public class MinimalEngineBridge implements EngineBridge {
 
     startStep = simulation
       .getAttributeValue("steps.low")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, new Units("count")));
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
 
     currentStep = startStep;
 
     endStep = simulation
       .getAttributeValue("steps.high")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, new Units("count")));
+      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
     simulation.endSubstep();
 
@@ -166,7 +166,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     getReplicate().saveTimeStep(currentStep.getAsInt());
 
-    currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, new Units("count"));
+    currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, Units.of("count"));
     absoluteStep++;
     inStep = false;
   }

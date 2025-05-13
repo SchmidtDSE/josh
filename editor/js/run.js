@@ -7,6 +7,9 @@
 
 import {RunRequest} from "engine";
 
+const DEFAULT_ENDPOINT = "https://josh-executor-prod-1007495489273.us-west1.run.app";
+
+
 /**
  * Presenter which manages the run control panel and dialogs.
  */
@@ -115,7 +118,7 @@ class RunPanelPresenter {
       const customEndpoint = self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
       const useServer = self._browserRadio.checked ? false : true;
       const apiKey = self._getApiKey();
-      const endpoint = self._customCloudRadio.checked ? customEndpoint : "";
+      const endpoint = self._customCloudRadio.checked ? customEndpoint : DEFAULT_ENDPOINT;
 
       const runRequest = new RunRequest(
         simulationName,

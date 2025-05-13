@@ -25,13 +25,13 @@ class DecimalScalarTest {
   @Test
   void testConstructorAndGetters() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units("m"));
+    DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), Units.of("m"));
 
     assertEquals(new BigDecimal("42.5"), scalar.getAsDecimal());
     assertEquals(new LanguageType("decimal"), scalar.getLanguageType());
     assertEquals("42.5", scalar.getAsString());
     assertEquals(new BigDecimal("42.5"), scalar.getInnerValue());
-    assertEquals(new Units("m"), scalar.getUnits());
+    assertEquals(Units.of("m"), scalar.getUnits());
   }
 
   @Test
@@ -55,19 +55,19 @@ class DecimalScalarTest {
   @Test
   void testAdd() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("m"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), Units.of("m"));
 
     DecimalScalar result = (DecimalScalar) scalar1.add(scalar2);
     assertEquals(new BigDecimal("15.8"), result.getAsDecimal());
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testAddWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.add(scalar2));
   }
@@ -75,19 +75,19 @@ class DecimalScalarTest {
   @Test
   void testSubtract() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("m"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), Units.of("m"));
 
     DecimalScalar result = (DecimalScalar) scalar1.subtract(scalar2);
     assertEquals(new BigDecimal("5.2"), result.getAsDecimal());
-    assertEquals(new Units("m"), result.getUnits());
+    assertEquals(Units.of("m"), result.getUnits());
   }
 
   @Test
   void testSubtractWithDifferentUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("5.3"), Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.subtract(scalar2));
   }
@@ -95,30 +95,30 @@ class DecimalScalarTest {
   @Test
   void testMultiply() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.of("s"));
 
     DecimalScalar result = (DecimalScalar) scalar1.multiply(scalar2);
     assertEquals(new BigDecimal("21.00"), result.getAsDecimal());
-    assertEquals(new Units("m * s"), result.getUnits());
+    assertEquals(Units.of("m * s"), result.getUnits());
   }
 
   @Test
   void testDivide() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.of("s"));
 
     DecimalScalar result = (DecimalScalar) scalar1.divide(scalar2);
     assertEquals(new BigDecimal("5.25"), result.getAsDecimal());
-    assertEquals(new Units("m / s"), result.getUnits());
+    assertEquals(Units.of("m / s"), result.getUnits());
   }
 
   @Test
   void testDivideByZero() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), new Units("m"));
-    DecimalScalar zeroScalar = new DecimalScalar(caster, BigDecimal.ZERO, new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("10.5"), Units.of("m"));
+    DecimalScalar zeroScalar = new DecimalScalar(caster, BigDecimal.ZERO, Units.of("s"));
 
     assertThrows(ArithmeticException.class, () -> scalar1.divide(zeroScalar));
   }
@@ -126,30 +126,41 @@ class DecimalScalarTest {
   @Test
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("m"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.of("m"));
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), Units.EMPTY);
 
     DecimalScalar result = (DecimalScalar) scalar1.raiseToPower(scalar2);
     assertEquals(new BigDecimal("8.0"), result.getAsDecimal());
-    assertEquals(new Units("m * m * m"), result.getUnits());
+    assertEquals(Units.of("m * m * m"), result.getUnits());
   }
 
   @Test
   void testRaiseToPowerWithUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), new Units("m"));
-    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), new Units("s"));
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.0"), Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.raiseToPower(scalar2));
   }
 
   @Test
-  void testRaiseToPowerWithUncoercableDecimal() {
+  void testRaiseToPowerWithUncoercableDecimalUnits() {
+    EngineValueCaster caster = new EngineValueWideningCaster();
+    DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.of("m"));
+    DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.5"), Units.EMPTY);
+
+    assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
+  }
+
+  @Test
+  void testRaiseToPowerWithUncoercableDecimalNoUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar1 = new DecimalScalar(caster, new BigDecimal("2.0"), Units.EMPTY);
     DecimalScalar scalar2 = new DecimalScalar(caster, new BigDecimal("3.5"), Units.EMPTY);
 
-    assertThrows(UnsupportedOperationException.class, () -> scalar1.raiseToPower(scalar2));
+    double result = scalar1.raiseToPower(scalar2).getAsDecimal().doubleValue();
+    double expected = Math.pow(2.0, 3.5);
+    assertTrue(Math.abs(result - expected) < 0.000001);
   }
 
   @Test
@@ -163,7 +174,7 @@ class DecimalScalarTest {
   // @Test
   // void testGetAsDistribution() {
   //   EngineValueCaster caster = new EngineValueWideningCaster();
-  //   DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), new Units("kg"));
+  //   DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), Units.of("kg"));
 
   //   Distribution dist = scalar.getAsDistribution();
   //   assertEquals(1, dist.getValues().size());
@@ -185,8 +196,8 @@ class DecimalScalarTest {
   @Test
   void testCompareToSameUnitsDifferentValues() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
-    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(20), new Units("m"));
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(20), Units.of("m"));
 
     assertTrue(scalar1.compareTo(scalar2) < 0);
     assertTrue(scalar2.compareTo(scalar1) > 0);
@@ -195,8 +206,8 @@ class DecimalScalarTest {
   @Test
   void testCompareToIncompatibleUnits() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
-    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), new Units("s"));
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), Units.of("s"));
 
     assertThrows(IllegalArgumentException.class, () -> scalar1.compareTo(scalar2));
   }
@@ -204,8 +215,8 @@ class DecimalScalarTest {
   @Test
   void testCompareToEqualValues() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
-    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), new Units("m"));
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
 
     assertEquals(0, scalar1.compareTo(scalar2));
   }
@@ -213,8 +224,8 @@ class DecimalScalarTest {
   @Test
   void testCompareToDifferentValuesSameOrder() {
     EngineValueCaster caster = new EngineValueWideningCaster();
-    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(15), new Units("s"));
-    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(5), new Units("s"));
+    Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(15), Units.of("s"));
+    Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(5), Units.of("s"));
 
     assertTrue(scalar1.compareTo(scalar2) > 0);
     assertTrue(scalar2.compareTo(scalar1) < 0);

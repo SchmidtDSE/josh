@@ -66,9 +66,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     this.bridgeGetter = bridgeGetter;
 
     engineValueFactory = EngineValueFactory.getDefault();
-    singleCount = engineValueFactory.build(1, new Units("count"));
-    allString = engineValueFactory.build("all", new Units(""));
-    trueValue = engineValueFactory.build(true, new Units(""));
+    singleCount = engineValueFactory.build(1, Units.of("count"));
+    allString = engineValueFactory.build("all", Units.of(""));
+    trueValue = engineValueFactory.build(true, Units.of(""));
   }
 
   public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
@@ -80,7 +80,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
     BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
-    EngineValue value = engineValueFactory.build(number, new Units(""));
+    EngineValue value = engineValueFactory.build(number, Units.of("count"));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
   }
@@ -93,14 +93,14 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitString(JoshLangParser.StringContext ctx) {
     String string = ctx.getText();
-    EngineValue value = engineValueFactory.build(string, new Units(""));
+    EngineValue value = engineValueFactory.build(string, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
   }
 
   public Fragment visitBool(JoshLangParser.BoolContext ctx) {
     boolean bool = ctx.getChild(0).getText().equals("true");
-    EngineValue value = engineValueFactory.build(bool, new Units(""));
+    EngineValue value = engineValueFactory.build(bool, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
   }
@@ -205,6 +205,20 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       leftAction.apply(machine);
       rightAction.apply(machine);
       machine.pow();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
+    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
+    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
+      leftAction.apply(machine);
+      rightAction.apply(machine);
+      machine.concat();
       return machine;
     };
 
@@ -433,7 +447,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitCast(JoshLangParser.CastContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    Units newUnits = new Units(ctx.target.getText());
+    Units newUnits = Units.of(ctx.target.getText());
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -446,7 +460,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitCastForce(JoshLangParser.CastForceContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    Units newUnits = new Units(ctx.target.getText());
+    Units newUnits = Units.of(ctx.target.getText());
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -536,9 +550,9 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     EventHandlerAction action = (machine) -> {
       unitsFragment1.getCurrentAction().apply(machine);
-      machine.push(engineValueFactory.build(type1, new Units("")));
+      machine.push(engineValueFactory.build(type1, Units.of("")));
       unitsFragment2.getCurrentAction().apply(machine);
-      machine.push(engineValueFactory.build(type2, new Units("")));
+      machine.push(engineValueFactory.build(type2, Units.of("")));
       machine.makePosition();
       return machine;
     };
@@ -619,15 +633,14 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     }
 
     EventHandlerAction action = (machine) -> {
-
       for (EventHandlerAction innerAction : innerActions) {
         innerAction.apply(machine);
-        if (!machine.isEnded()) {
+        if (machine.isEnded()) {
           break;
         }
       }
 
-      if (machine.isEnded()) {
+      if (!machine.isEnded()) {
         throw new IllegalStateException("Event handler finished without returning a value.");
       }
 
@@ -792,13 +805,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitNoopConversion(JoshLangParser.NoopConversionContext ctx) {
     String aliasName = ctx.getChild(1).getText();
-    Conversion conversion = new NoopConversion(new Units(aliasName));
+    Conversion conversion = new NoopConversion(Units.of(aliasName));
     return new ConversionFragment(conversion);
   }
 
   public Fragment visitActiveConversion(JoshLangParser.ActiveConversionContext ctx) {
     String destinationUnitsName = ctx.getChild(0).getText();
-    Units destinationUnits = new Units(destinationUnitsName);
+    Units destinationUnits = Units.of(destinationUnitsName);
     EventHandlerAction action = ctx.getChild(2).accept(this).getCurrentAction();
     CompiledCallable conversionLogic = makeCallableMachine(action);
 
@@ -813,7 +826,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitUnitStanza(JoshLangParser.UnitStanzaContext ctx) {
     String sourceUnitName = ctx.getChild(2).getText();
-    Units sourceUnits = new Units(sourceUnitName);
+    Units sourceUnits = Units.of(sourceUnitName);
 
     List<Conversion> conversions = new ArrayList<>();
     int numChildren = ctx.getChildCount();
@@ -857,16 +870,20 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     boolean hasDecimal = numberStr.contains(".");
     boolean isPercent = unitsText.equals("percent") || unitsText.equals("%");
 
+    if (unitsText.isBlank()) {
+      unitsText = "count";
+    }
+
     if (isPercent) {
       BigDecimal percent = BigDecimal.valueOf(Double.parseDouble(numberStr));
       BigDecimal converted = percent.divide(BigDecimal.valueOf(100));
-      return engineValueFactory.build(converted, new Units(unitsText));
+      return engineValueFactory.build(converted, Units.of("count"));
     } else if (hasDecimal) {
       BigDecimal number = BigDecimal.valueOf(Double.parseDouble(numberStr));
-      return engineValueFactory.build(number, new Units(unitsText));
+      return engineValueFactory.build(number, Units.of(unitsText));
     } else {
       long number = Long.parseLong(numberStr);
-      return engineValueFactory.build(number, new Units(unitsText));
+      return engineValueFactory.build(number, Units.of(unitsText));
     }
   }
 

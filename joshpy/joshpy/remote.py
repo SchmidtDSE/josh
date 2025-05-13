@@ -12,7 +12,7 @@ import joshpy.metadata
 import joshpy.parse
 import joshpy.strategy
 
-PUBLIC_DEFAULT_ENDPOINT = ''
+PUBLIC_DEFAULT_ENDPOINT = 'https://josh-executor-prod-1007495489273.us-west1.run.app'
 
 
 class ParseResult:
