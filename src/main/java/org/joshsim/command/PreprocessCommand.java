@@ -96,6 +96,13 @@ public class PreprocessCommand implements Callable<Integer> {
   private File outputFile;
 
   @Option(
+      names = "--amend",
+      description = "Amend existing file rather than overwriting",
+      defaultValue = "false"
+  )
+  private boolean amend;
+
+  @Option(
       names = "--crs",
       description = "CRS to use in reading the file.",
       defaultValue = "EPSG:4326"
@@ -249,12 +256,27 @@ public class PreprocessCommand implements Callable<Integer> {
         Units.of(unitsStr)
     );
 
+    // If amending, combine with existing grid
+    DataGridLayer finalGrid = grid;
+    if (amend && outputFile.exists()) {
+      BinaryGridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
+          EngineValueFactory.getDefault()
+      );
+      try (FileInputStream inputStream = new FileInputStream(outputFile)) {
+        DataGridLayer existingGrid = deserializer.deserialize(inputStream);
+        GridCombiner combiner = new GridCombiner(engineGeometryFactory);
+        finalGrid = combiner.combine(existingGrid, grid);
+      } catch (IOException e) {
+        throw new RuntimeException("Error reading existing grid file: " + e);
+      }
+    }
+
     // Serialize to binary file
     BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
         EngineValueFactory.getDefault()
     );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
-      serializer.serialize(grid, outputStream);
+      serializer.serialize(finalGrid, outputStream);
       outputStream.flush();
     } catch (FileNotFoundException e) {
       throw new RuntimeException("File not found: " + e);
