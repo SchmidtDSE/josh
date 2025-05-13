@@ -75,7 +75,7 @@ start patch Default
     return inExtremeCold or inExtremeHot
   }
 
-  # Make new occupants end step (to have their first step on next step)
+  # Calculate num new occupants end step (to have their first step on next step)
   newCount.end = {
     const probabilityNewRaw = (-1 count * (totalCount - 5 count) ^ 2 / 20 count) + 110 %
     const probabilityNew = limit probabilityNewRaw to [0%, 100%]
@@ -83,6 +83,7 @@ start patch Default
     return sample uniform from 0 count to maxNewCount
   }
 
+  # Work around division by zero to determine new species counts
   newSpeciesACount.end = {
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
@@ -90,6 +91,7 @@ start patch Default
       return newCount * 50%
     }
   }
+  
   newSpeciesBCount.end = {
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
@@ -98,12 +100,14 @@ start patch Default
     }
   }
 
+  # Make the new agents and concatenate to ("|" or add to end of) the current list.
   SpeciesA.end = prior.SpeciesA | create newSpeciesACount of SpeciesA
   SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
 
 end patch
 
 
+# Agent implements behavior described in markdown
 start organism SpeciesA
 
   # Start a zero height except when if this is the simulation start
@@ -138,6 +142,7 @@ start organism SpeciesA
 end organism
 
 
+# Same as species A but with different constants
 start organism SpeciesB
 
   # Start a zero height except when if this is the simulation start
