@@ -47,9 +47,9 @@ public class Units {
    *
    * @param numeratorUnits a Map representing the units in the numerator, mapping from name to
    *     count.
-   * @return Units from the given units.
    * @param denominatorUnits a Map representing the units in the denominator, mapping from name to
    *     count.
+   * @return Units from the given units.
    */
   public static Units of(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
     Units unsimplified = new Units(numeratorUnits, denominatorUnits);

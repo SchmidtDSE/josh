@@ -9,7 +9,7 @@ import org.joshsim.engine.func.CompiledCallable;
  * <p>Conversion which acts as a decorator around another conversion in which the conversion
  * operates with the same callable but with units flipped.</p>
  */
-public class InverseConversion implements Conversion{
+public class InverseConversion implements Conversion {
 
   private final Conversion inner;
 

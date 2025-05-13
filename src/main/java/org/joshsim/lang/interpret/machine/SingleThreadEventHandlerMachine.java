@@ -27,7 +27,6 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.EntityValue;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
@@ -180,9 +179,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         left.getSize().orElseThrow(),
         false
     );
-    
+
     Iterable<EngineValue> rightValues = right.getAsDistribution().getContents(
-        right.getSize().orElseThrow(), 
+        right.getSize().orElseThrow(),
         false
     );
 
@@ -332,7 +331,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine condition(EventHandlerAction positive) {
     EngineValue conditionValue = pop();
     boolean conditionResult = conditionValue.getAsBoolean();
-    
+
     if (conditionResult) {
       positive.apply(this);
     }

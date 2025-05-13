@@ -49,7 +49,7 @@ public class JshdExternalGetter implements ExternalResourceGetter {
     }
 
     if (!name.endsWith(".jshd")) {
-      name = name + ".jshd";
+      name += ".jshd";
     }
 
     try (InputStream binaryInputStream = inputStrategy.open(name)) {
