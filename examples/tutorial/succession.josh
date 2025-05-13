@@ -70,8 +70,8 @@ start patch Default
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
     const currentTemperature = external temperature
-    const inExtremeCold = currentTemperature < 273 K
-    const inExtremeHot = currentTemperature > 373 K
+    const inExtremeCold = currentTemperature < constraints.minViableTemperature
+    const inExtremeHot = currentTemperature > constraints.maxViableTemperature
     return inExtremeCold or inExtremeHot
   }
 
