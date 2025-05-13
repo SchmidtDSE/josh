@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.apache.sis.referencing.CRS;
@@ -122,6 +123,13 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private String timeName;
 
+  @Option(
+    names = "--timestep",
+    description = "The single timestep to process.",
+    defaultValue = ""
+  )
+  private String timestep;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -167,7 +175,18 @@ public class PreprocessCommand implements Callable<Integer> {
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
     geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
-    geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+
+    Optional<Long> forcedTimestep = timestep.isBlank() ? Optional.empty() : Optional.of(
+        Long.parseLong(timestep)
+    );
+    
+    if (forcedTimestep.isPresent()) {
+      geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+      geoMapperBuilder.forceTimestep(forcedTimestep.get());
+    } else {
+      geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
+    }
+    
     ExternalGeoMapper mapper = geoMapperBuilder.build();
 
     // Create grid from streaming data
@@ -198,6 +217,9 @@ public class PreprocessCommand implements Callable<Integer> {
         size.getAsDecimal()
     );
 
+    long startTimestep = forcedTimestep.orElse(bridge.getStartTimestep());
+    long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
+
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         EngineValueFactory.getDefault(),
         (timestep) -> {
@@ -221,8 +243,8 @@ public class PreprocessCommand implements Callable<Integer> {
           );
         },
         ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
-        bridge.getStartTimestep(),
-        bridge.getEndTimestep(),
+        startTimestep,
+        endTimestep,
         Units.of(unitsStr)
     );
 
