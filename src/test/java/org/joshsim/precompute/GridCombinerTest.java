@@ -1,67 +1,91 @@
+
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.IntScalar;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class GridCombinerTest {
-
   private EngineGeometryFactory geometryFactory;
-  
-  @Mock
-  private DataGridLayer leftGrid;
-  @Mock
-  private DataGridLayer rightGrid;
-  @Mock
-  private EngineValue mockValue;
-
+  private EngineValueFactory valueFactory;
   private GridCombiner gridCombiner;
   private final Units testUnits = Units.of("meters");
+  
+  private DoublePrecomputedGrid leftGrid;
+  private DoublePrecomputedGrid rightGrid;
 
   @BeforeEach
   void setUp() {
     geometryFactory = new GridGeometryFactory();
+    valueFactory = EngineValueFactory.getDefault();
     gridCombiner = new GridCombiner(geometryFactory);
     
-    // Setup basic grid properties
-    when(leftGrid.getMinX()).thenReturn(0L);
-    when(leftGrid.getMaxX()).thenReturn(2L);
-    when(leftGrid.getMinY()).thenReturn(0L);
-    when(leftGrid.getMaxY()).thenReturn(2L);
-    when(leftGrid.getMinTimestep()).thenReturn(0L);
-    when(leftGrid.getMaxTimestep()).thenReturn(2L);
-    when(leftGrid.getUnits()).thenReturn(testUnits);
+    // Create extents for left grid (0,0 to 2,2)
+    PatchBuilderExtents leftExtents = new PatchBuilderExtentsBuilder()
+        .setTopLeftX(BigDecimal.ZERO)
+        .setTopLeftY(BigDecimal.valueOf(2))
+        .setBottomRightX(BigDecimal.valueOf(2))
+        .setBottomRightY(BigDecimal.ZERO)
+        .build();
 
-    when(rightGrid.getMinX()).thenReturn(1L);
-    when(rightGrid.getMaxX()).thenReturn(3L);
-    when(rightGrid.getMinY()).thenReturn(1L);
-    when(rightGrid.getMaxY()).thenReturn(3L);
-    when(rightGrid.getMinTimestep()).thenReturn(1L);
-    when(rightGrid.getMaxTimestep()).thenReturn(3L);
-    when(rightGrid.getUnits()).thenReturn(testUnits);
+    // Create extents for right grid (1,1 to 3,3)
+    PatchBuilderExtents rightExtents = new PatchBuilderExtentsBuilder()
+        .setTopLeftX(BigDecimal.ONE)
+        .setTopLeftY(BigDecimal.valueOf(3))
+        .setBottomRightX(BigDecimal.valueOf(3))
+        .setBottomRightY(BigDecimal.ONE)
+        .build();
+
+    // Create left grid and populate with values 1-4
+    leftGrid = new DoublePrecomputedGridBuilder()
+        .setEngineValueFactory(valueFactory)
+        .setExtents(leftExtents)
+        .setTimestepRange(0, 2)
+        .setUnits(testUnits)
+        .build();
+
+    // Create right grid and populate with values 5-8
+    rightGrid = new DoublePrecomputedGridBuilder()
+        .setEngineValueFactory(valueFactory)
+        .setExtents(rightExtents)
+        .setTimestepRange(1, 3)
+        .setUnits(testUnits)
+        .build();
+
+    // Populate left grid
+    for (long x = 0; x <= 2; x++) {
+      for (long y = 0; y <= 2; y++) {
+        for (long t = 0; t <= 2; t++) {
+          leftGrid.setAt(x, y, t, 1.0);
+        }
+      }
+    }
+
+    // Populate right grid with higher values
+    for (long x = 1; x <= 3; x++) {
+      for (long y = 1; y <= 3; y++) {
+        for (long t = 1; t <= 3; t++) {
+          rightGrid.setAt(x, y, t, 2.0);
+        }
+      }
+    }
   }
 
   @Test
   void testCombineBasicProperties() {
-    // When
     DataGridLayer combined = gridCombiner.combine(leftGrid, rightGrid);
 
-    // Then
     assertEquals(0L, combined.getMinX());
     assertEquals(3L, combined.getMaxX());
     assertEquals(0L, combined.getMinY());
@@ -72,29 +96,39 @@ class GridCombinerTest {
   }
 
   @Test
-  void testCombineWithDifferentUnits() {
-    // Given
-    when(rightGrid.getUnits()).thenReturn(Units.of("feet"));
+  void testCombineValues() {
+    DataGridLayer combined = gridCombiner.combine(leftGrid, rightGrid);
+    
+    // Test a point that should come from the left grid
+    EngineValue leftValue = combined.getAt(new GeoKey(geometryFactory.createPoint(
+        BigDecimal.ZERO, BigDecimal.ZERO), ""), 0);
+    assertEquals(1.0, leftValue.getAsDecimal().doubleValue(), 0.001);
 
-    // Then
-    assertThrows(IllegalArgumentException.class, () -> {
-      gridCombiner.combine(leftGrid, rightGrid);
-    });
+    // Test a point that should be overwritten by the right grid
+    EngineValue rightValue = combined.getAt(new GeoKey(geometryFactory.createPoint(
+        BigDecimal.valueOf(2), BigDecimal.valueOf(2)), ""), 2);
+    assertEquals(2.0, rightValue.getAsDecimal().doubleValue(), 0.001);
   }
 
   @Test
-  void testCombineExtentsCalculation() {
-    // Given
-    PatchBuilderExtents mockExtents = mock(PatchBuilderExtents.class);
-    when(mockExtents.getTopLeftX()).thenReturn(BigDecimal.ZERO);
-    when(mockExtents.getTopLeftY()).thenReturn(BigDecimal.valueOf(3));
-    when(mockExtents.getBottomRightX()).thenReturn(BigDecimal.valueOf(3));
-    when(mockExtents.getBottomRightY()).thenReturn(BigDecimal.ZERO);
+  void testCombineWithDifferentUnits() {
+    // Create a new right grid with different units
+    PatchBuilderExtents rightExtents = new PatchBuilderExtentsBuilder()
+        .setTopLeftX(BigDecimal.ONE)
+        .setTopLeftY(BigDecimal.valueOf(3))
+        .setBottomRightX(BigDecimal.valueOf(3))
+        .setBottomRightY(BigDecimal.ONE)
+        .build();
 
-    // When
-    DataGridLayer combined = gridCombiner.combine(leftGrid, rightGrid);
+    DoublePrecomputedGrid differentUnitsGrid = new DoublePrecomputedGridBuilder()
+        .setEngineValueFactory(valueFactory)
+        .setExtents(rightExtents)
+        .setTimestepRange(1, 3)
+        .setUnits(Units.of("feet"))
+        .build();
 
-    // Then
-    assertEquals(true, combined.isCompatible(mockExtents, 0L, 3L));
+    assertThrows(IllegalArgumentException.class, () -> {
+      gridCombiner.combine(leftGrid, differentUnitsGrid);
+    });
   }
 }
