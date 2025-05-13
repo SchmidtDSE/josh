@@ -28,7 +28,7 @@ In this sytem:
   - Dependent variable: $g \in [0,1]$ is a growth rate scalar
   - Independent variable: $T$ is temperature in K
 
-Note that $b = 0.0025$ is a scaling parameter and this behavior is subject to the following where $T^*$ is optimal temperature in K:
+Note that $b = 0.0025$ is a scaling parameter and this behavior is subject to the following where $T^{*}$ is optimal temperature in K:
 
   - $T_A^* = 300$ (Species A)
   - $T_B^* = 320$ (Species B)
@@ -65,7 +65,7 @@ These probabilities may be modified under extreme heat stress.
 Probablity of survival ($p_S$) is limited by extreme heat as described by the following in K:
 
  - $= 0 \quad if \quad T < 273  \quad or \quad T > 373$
- - $= p_S^* else$
+ - $= p_S^* \quad else$
  
 In this system, consider the following:
 
