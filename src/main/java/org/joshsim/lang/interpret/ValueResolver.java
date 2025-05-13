@@ -94,6 +94,15 @@ public class ValueResolver {
   }
 
   /**
+   * Retrieves the path configured for this resolver.
+   *
+   * @return The dot-separated path as a String.
+   */
+  public String getPath() {
+    return path;
+  }
+
+  /**
    * Gets or creates a resolver for any remaining path segments after the longest matching prefix.
    *
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.

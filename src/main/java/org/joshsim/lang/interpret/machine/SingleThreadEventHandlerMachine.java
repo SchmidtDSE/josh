@@ -79,7 +79,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine push(ValueResolver valueResolver) {
     Optional<EngineValue> value = valueResolver.get(scope);
     memory.push(value.orElseThrow(
-        () -> new IllegalStateException("Unable to get value for " + valueResolver)
+        () -> new IllegalStateException(String.format(
+            "Unable to get value for %s. Is it misspelled?",
+            valueResolver.getPath()
+        ))
     ));
     return this;
   }
