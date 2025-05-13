@@ -1,10 +1,10 @@
 # Grass Shrub Fire Cycle
-Simple model showing disturbances based on simulation conditions with external data. This shows grass and shrub growth which increases probability of fires. This is a patch-based model to amount of grass and shrub coverage is given by an occupancy density as opposed to individual agents. This is a toy model meant to demonstrate Josh language features and not meant to be ecologically complete or validated.
+Simple model showing disturbances based on simulation conditions with external data. This shows the slow expansion of an invasive grass species into a shrub ecosystem, which increases probability of fires. For this example, we use a patch-based model of grass and shrub coverage given by an occupancy density as opposed to individual agents. This is a toy model meant to demonstrate Josh language features and not meant to be ecologically complete or validated.
 
 <br>
 
-## Vegitation
-Vegitation grows according to a growth rate which is influenced by precipitation.
+## Vegetation
+Vegetation grows according to a sigmoid growth rate which is influenced by precipitation.
 
 ### Growth and precipitation
 $g = \frac{g^*}{e^{r(P - P^{c})}}$
@@ -25,7 +25,7 @@ In these growth formulas, $r$ is a scaling parameter controlling steepness of cu
 - $r_G = 0.05$ (Grasses)
 - $r_S = 0.005$ (Shrubs)
 
-Both kinds of vegitation are influenced by fire.
+Both kinds of vegetation are influenced by fire.
 
 <br>
 
@@ -43,8 +43,8 @@ In this system:
 - Dependent variable: $p_F \in [0,1]$ is fire probability
 - Independent variable: $\varphi_{G}$ is fraction of grass cover
 
-### Damage
-A fire should, on average, destroy 90% of shrub cover and 70% of grass cover. The idea is that this creates the grass-fire positive feedback loop. These are defined by sampling probailities directly when a patch is on fire.
+### Post-fire recovery
+After fire, grasses establish (from neighbouring patches or surviving seedbank) and spread more quickly than shrubs. In this example, we have simplified this by modelling lower mortality of grasses. Thus, a fire, on average, destroys 90% of shrub cover and 70% of grass cover. The idea is that this creates the grass-fire positive feedback loop. These are defined by sampling probabilities directly when a patch is on fire.
 
 <br>
 
