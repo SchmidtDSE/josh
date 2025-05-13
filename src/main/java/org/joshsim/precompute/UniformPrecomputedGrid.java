@@ -93,74 +93,42 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
     return minHorizOk && minVertOk && maxHorizOk && maxVertOk && minTimestepOk && maxTimestepOk;
   }
 
-  /**
-   * Get the minimum X coordinate of this grid.
-   *
-   * @return The minimum X coordinate in grid-space.
-   */
+  @Override
   public long getMinX() {
     return minX;
   }
 
-  /**
-   * Get the minimum Y coordinate of this grid.
-   *
-   * @return The minimum Y coordinate in grid-space.
-   */
+  @Override
   public long getMinY() {
     return minY;
   }
 
-  /**
-   * Get the maximum X coordinate of this grid.
-   *
-   * @return The maximum X coordinate in grid-space.
-   */
+  @Override
   public long getMaxX() {
     return maxX;
   }
 
-  /**
-   * Get the maximum Y coordinate of this grid.
-   *
-   * @return The maximum Y coordinate in grid-space.
-   */
+  @Override
   public long getMaxY() {
     return maxY;
   }
 
-  /**
-   * Get the width of this grid in number of horizontal patches.
-   *
-   * @return The x size of this grid in grid-space.
-   */
+  @Override
   public long getWidth() {
     return width;
   }
 
-  /**
-   * Get the height of this grid in number of horizontal patches.
-   *
-   * @return The y size of this grid in grid-space.
-   */
+  @Override
   public long getHeight() {
     return height;
   }
 
-  /**
-   * The earliest timestep available in this grid.
-   *
-   * @return The minimum available timestep.
-   */
+  @Override
   public long getMinTimestep() {
     return minTimestep;
   }
 
-  /**
-   * The latest timestep available in this grid.
-   *
-   * @return The maximum available timestep.
-   */
+  @Override
   public long getMaxTimestep() {
     return maxTimestep;
   }

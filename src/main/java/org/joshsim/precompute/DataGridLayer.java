@@ -47,4 +47,60 @@ public interface DataGridLayer {
    */
   Units getUnits();
 
+  /**
+   * Get the minimum X coordinate of this grid.
+   *
+   * @return The minimum X coordinate in grid-space.
+   */
+  long getMinX();
+
+  /**
+   * Get the minimum Y coordinate of this grid.
+   *
+   * @return The minimum Y coordinate in grid-space.
+   */
+  long getMinY();
+
+  /**
+   * Get the maximum X coordinate of this grid.
+   *
+   * @return The maximum X coordinate in grid-space.
+   */
+  long getMaxX();
+
+  /**
+   * Get the maximum Y coordinate of this grid.
+   *
+   * @return The maximum Y coordinate in grid-space.
+   */
+  long getMaxY();
+
+  /**
+   * Get the width of this grid in number of horizontal patches.
+   *
+   * @return The x size of this grid in grid-space.
+   */
+  long getWidth();
+
+  /**
+   * Get the height of this grid in number of horizontal patches.
+   *
+   * @return The y size of this grid in grid-space.
+   */
+  long getHeight();
+
+  /**
+   * The earliest timestep available in this grid.
+   *
+   * @return The minimum available timestep.
+   */
+  long getMinTimestep();
+
+  /**
+   * The latest timestep available in this grid.
+   *
+   * @return The maximum available timestep.
+   */
+  long getMaxTimestep();
+
 }
