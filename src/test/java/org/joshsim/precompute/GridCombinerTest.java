@@ -1,4 +1,3 @@
-
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GridCombinerTest {
 
-  @Mock
-  private EngineGeometryFactory mockGeometryFactory;
+  private EngineGeometryFactory geometryFactory;
+  
   @Mock
   private DataGridLayer leftGrid;
   @Mock
@@ -35,7 +35,8 @@ class GridCombinerTest {
 
   @BeforeEach
   void setUp() {
-    gridCombiner = new GridCombiner(mockGeometryFactory);
+    geometryFactory = new GridGeometryFactory();
+    gridCombiner = new GridCombiner(geometryFactory);
     
     // Setup basic grid properties
     when(leftGrid.getMinX()).thenReturn(0L);
