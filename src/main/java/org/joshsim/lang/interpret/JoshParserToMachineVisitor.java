@@ -141,6 +141,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       fromHighAction.apply(machine);
       toLowAction.apply(machine);
       toHighAction.apply(machine);
+      machine.push(engineValueFactory.build(true, Units.EMPTY));
       machine.applyMap("linear");
       return machine;
     };
@@ -162,6 +163,30 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       fromHighAction.apply(machine);
       toLowAction.apply(machine);
       toHighAction.apply(machine);
+      machine.push(engineValueFactory.build(true, Units.EMPTY));
+      machine.applyMap(method);
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
+  public Fragment visitMapParamParam(JoshLangParser.MapParamParamContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
+    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
+    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
+    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
+    EventHandlerAction paramAction = ctx.methodarg.accept(this).getCurrentAction();
+    String method = ctx.method.getText();
+
+    EventHandlerAction action = (machine) -> {
+      operandAction.apply(machine);
+      fromLowAction.apply(machine);
+      fromHighAction.apply(machine);
+      toLowAction.apply(machine);
+      toHighAction.apply(machine);
+      paramAction.apply(machine);
       machine.applyMap(method);
       return machine;
     };
