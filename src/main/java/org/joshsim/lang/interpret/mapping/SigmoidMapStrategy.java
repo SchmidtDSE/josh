@@ -14,7 +14,7 @@ import org.joshsim.engine.value.type.EngineValue;
 
 /**
  * Map strategy which creates a sigmoid mapping between the given domain and range.
- * 
+ *
  * <p>The strategy maps values using a sigmoid function of the form y = 1 / (1 + e^(scale * x)).
  * The domain controls the x-axis scaling and shifting while the range controls the y-axis scaling.
  * The direction parameter controls whether the mapping increases or decreases with x.</p>
@@ -40,14 +40,14 @@ public class SigmoidMapStrategy implements MapStrategy {
     this.domain = domain;
     this.range = range;
     this.increasing = increasing;
-    
+
     // Calculate scale based on domain size
     // For domain [-5,5] and range [0,1], scale should be -1 for increasing
     double domainSize = domain.getHigh()
         .subtract(domain.getLow())
         .getAsDecimal()
         .doubleValue();
-    
+
     scale = (increasing ? -1.0 : 1.0) * (10.0 / domainSize);
   }
 

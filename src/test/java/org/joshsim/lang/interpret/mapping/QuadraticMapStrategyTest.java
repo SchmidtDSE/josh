@@ -8,8 +8,8 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 class QuadraticMapStrategyTest {
   private EngineValueFactory valueFactory;
@@ -41,7 +41,7 @@ class QuadraticMapStrategyTest {
   void testMaxStrategyEndpoints() {
     EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
     EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.EMPTY);
-    
+
     assertEquals(0, maxStrategy.apply(input1).getAsDecimal().doubleValue(), 0.00001);
     assertEquals(0, maxStrategy.apply(input2).getAsDecimal().doubleValue(), 0.00001);
   }
@@ -58,7 +58,7 @@ class QuadraticMapStrategyTest {
   void testMinStrategyEndpoints() {
     EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
     EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.EMPTY);
-    
+
     assertEquals(100, minStrategy.apply(input1).getAsDecimal().doubleValue(), 0.00001);
     assertEquals(100, minStrategy.apply(input2).getAsDecimal().doubleValue(), 0.00001);
   }

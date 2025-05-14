@@ -106,7 +106,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
-    MapStrategy strategy = switch(strategyName) {
+    MapStrategy strategy = switch (strategyName) {
       case "linear" -> new LinearMapStrategy(
           valueFactory,
           new MapBounds(fromLow, fromHigh),
@@ -126,7 +126,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       );
       default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
     };
-    
+
     EngineValue result = strategy.apply(operand);
 
     memory.push(result);

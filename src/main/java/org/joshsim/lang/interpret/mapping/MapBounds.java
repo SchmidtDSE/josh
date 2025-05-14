@@ -48,6 +48,5 @@ public class MapBounds {
   public EngineValue getHigh() {
     return high;
   }
-  
-}
 
+}
