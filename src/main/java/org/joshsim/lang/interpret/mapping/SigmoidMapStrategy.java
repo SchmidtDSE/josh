@@ -45,21 +45,17 @@ public class SigmoidMapStrategy implements MapStrategy {
 
   @Override
   public EngineValue apply(EngineValue operand) {
-    // Normalize input to [-1, 1] range
-    EngineValue domainMid = domain.getHigh()
-        .subtract(domain.getLow())
-        .divide(valueFactory.build(new BigDecimal("2"), Units.EMPTY))
-        .add(domain.getLow());
-    
-    EngineValue normalizedX = operand.subtract(domainMid)
+    // Normalize input to domain
+    EngineValue normalizedX = operand.subtract(domain.getLow())
         .divide(domain.getHigh().subtract(domain.getLow()))
-        .multiply(valueFactory.build(new BigDecimal("2"), Units.EMPTY));
+        .multiply(valueFactory.build(new BigDecimal("2"), Units.EMPTY))
+        .subtract(valueFactory.build(new BigDecimal("1"), Units.EMPTY));
 
     // Calculate sigmoid: 1 / (1 + e^(scale * x))
     double x = normalizedX.getAsDecimal().doubleValue();
     double sigmoid = 1.0 / (1.0 + Math.exp(scale * x));
 
-    // Scale to output range
+    // Rescale sigmoid output (0,1) to range
     EngineValue rangeSpan = range.getHigh().subtract(range.getLow());
     return valueFactory.build(new BigDecimal(sigmoid), Units.EMPTY)
         .multiply(rangeSpan)
