@@ -1,4 +1,10 @@
 
+/**
+ * Strategy for performing a quadratic map between a given domain and range.
+ *
+ * @license BSD-3-Clause
+ */
+
 package org.joshsim.lang.interpret.mapping;
 
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -6,12 +12,28 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.converter.Units;
 import java.math.BigDecimal;
 
+/**
+ * Map strategy which creates a quadratic mapping between the given domain and range.
+ * 
+ * <p>The strategy maps values using a quadratic function where the domain endpoints map to either
+ * the minimum or maximum of the range (based on centerIsMaximum), and the midpoint of the domain
+ * maps to the opposite range value. The resulting curve forms a parabola.</p>
+ */
 public class QuadraticMapStrategy implements MapStrategy {
   private final EngineValueFactory valueFactory;
   private final MapBounds domain;
   private final MapBounds range;
   private final boolean centerIsMaximum;
 
+  /**
+   * Create a new map strategy that performs a quadratic mapping between a given domain and range.
+   *
+   * @param valueFactory The value factory to use in constructing returned and supporting values.
+   * @param domain The domain from which values provided will be mapped quadratically.
+   * @param range The range to which values provided will be mapped quadratically.
+   * @param centerIsMaximum If true, the center of the domain maps to range maximum, endpoints to minimum.
+   *                       If false, the center maps to range minimum, endpoints to maximum.
+   */
   public QuadraticMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range, boolean centerIsMaximum) {
     this.valueFactory = valueFactory;
     this.domain = domain;
