@@ -40,7 +40,7 @@ class LinearMapStrategyTest {
   void testMapValueBelowDomain() {
     EngineValue input = valueFactory.build(new BigDecimal("0"), Units.EMPTY);
     EngineValue result = strategy.apply(input);
-    assertEquals("0", result.getAsString());
+    assertEquals(0, result.getAsDecimal().doubleValue(), 0.00001);
   }
 
   @Test
@@ -48,7 +48,7 @@ class LinearMapStrategyTest {
   void testMapValueWithinDomain() {
     EngineValue input = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
     EngineValue result = strategy.apply(input);
-    assertEquals("110", result.getAsString());
+    assertEquals(100, result.getAsDecimal().doubleValue(), 0.00001);
   }
 
   @Test
@@ -56,6 +56,6 @@ class LinearMapStrategyTest {
   void testMapValueAboveDomain() {
     EngineValue input = valueFactory.build(new BigDecimal("11"), Units.EMPTY);
     EngineValue result = strategy.apply(input);
-    assertEquals("220", result.getAsString());
+    assertEquals(220, result.getAsDecimal().doubleValue(), 0.00001);
   }
 }
