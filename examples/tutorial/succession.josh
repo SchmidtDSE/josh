@@ -33,21 +33,6 @@ start simulation Main
   constraints.minViableTemperature = 273 K
   constraints.maxViableTemperature = 373 K
 
-  # Optimal growing conditions
-  optimal.temperature.speciesA = 300 K
-  optimal.temperature.speciesB = 320 K
-  optimal.precip.speciesA = 500 mm
-  optimal.precip.speciesB = 400 mm
-
-  # Survival rates
-  survival.speciesA = 30%
-  survival.speciesB = 50%
-
-  # Other constants
-  growthScaler = 0.0025 m / (1 K * 1 K)
-  e = 2.7182818284
-  precipitationScaler = 0.0025 / 1 mm
-
 end simulation
 
 
@@ -86,7 +71,7 @@ start patch Default
     return sample uniform from 0 count to maxNewCount
   }
 
-  # Work around division by zero to determine new species counts
+  # If empty, split evenly
   newSpeciesACount.end = {
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
@@ -112,9 +97,6 @@ end patch
 
 start organism SpeciesA
 
-  # Agent implements behavior described in markdown
-  # This responds to temperature and precipitation
-
   # Start a zero height except when if this is the simulation start
   dead.init = false
   height.init = {
@@ -125,36 +107,33 @@ start organism SpeciesA
   }
 
   # At each step, determine impact of temperature
-  temperatureImpact.step = {
-    const t = external temperature
-    const tOptimal = meta.optimal.temperature.speciesA
-    const b = meta.growthScaler
-    return b * (t - tOptimal)^2
-  }
+  temperatureImpact.step = map external temperature
+    from [270 K, 330 K]
+    to [0%, 100%]
+    quadratic
 
   # At each step, determine impact of precipitation
-  precipitationImpact.step = {
-    const p = external precipitation
-    const pOptimal = meta.optimal.precip.speciesA
-    const r = meta.precipitationScaler
-    return 1 / (meta.e ^ (r * (p - pOptimal)))
-  }
+  precipitationImpact.step = map external precipitation
+    from [300 mm, 500 mm]
+    to [0%, 100%]
+    sigmoid
 
   # At each step, determine overall growth
-  newGrowth.step = (1 m - temperatureImpact) * precipitationImpact
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
   height.step = prior.height + newGrowth
 
-  # At each step end, determine death
-  dead.end = (sample uniform from 0% to 100%) > meta.survival.speciesA
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 30%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
 
 end organism
 
 
 start organism SpeciesB
 
-  # Same as species A which, for toy demo, is same but with different constants
-  # In practice, these two would likely have more divergent behaviors.
-
   # Start a zero height except when if this is the simulation start
   dead.init = false
   height.init = {
@@ -165,27 +144,27 @@ start organism SpeciesB
   }
 
   # At each step, determine impact of temperature
-  temperatureImpact.step = {
-    const b = meta.growthScaler
-    const t = external temperature
-    const tOptimal = meta.optimal.temperature.speciesB
-    return b * (t - tOptimal) ^ 2
-  }
+  temperatureImpact.step = map external temperature
+    from [290 K, 350 K]
+    to [0%, 100%]
+    quadratic
 
   # At each step, determine impact of precipitation
-  precipitationImpact.step = {
-    const p = external precipitation
-    const pOptimal = meta.optimal.precip.speciesB
-    const r = meta.precipitationScaler
-    return 1 / (meta.e ^ (r * (p - pOptimal)))
-  }
+  precipitationImpact.step = map external precipitation
+    from [200 mm, 400 mm]
+    to [0%, 100%]
+    sigmoid
 
   # At each step, determine overall growth
-  newGrowth.step = (1 m - temperatureImpact) * precipitationImpact
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
   height.step = prior.height + newGrowth
 
-  # At each step end, determine death
-  dead.end = (sample uniform from 0% to 100%) > meta.survival.speciesB
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 30%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
 
 end organism
 
