@@ -14,7 +14,6 @@ package org.joshsim.command;
 import java.util.concurrent.Callable;
 import org.joshsim.cloud.EnvCloudApiDataLayer;
 import org.joshsim.cloud.JoshSimServer;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 
@@ -36,7 +35,7 @@ public class ServerCommand implements Callable<Integer> {
   @Option(
       names = "--concurrent-workers",
       description = "Number of concurrent workers allowed",
-      defaultValue = "0"
+      defaultValue = "1"
   )
   private int workers;
 
