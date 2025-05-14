@@ -22,14 +22,19 @@ public class QuadraticMapStrategy implements MapStrategy {
   @Override
   public EngineValue apply(EngineValue operand) {
     // Calculate domain midpoint
-    EngineValue domainMid = domain.getHigh().subtract(domain.getLow()).divide(
-        valueFactory.build(new BigDecimal("2"), Units.EMPTY)).add(domain.getLow());
+    EngineValue domainMid = domain.getHigh()
+        .subtract(domain.getLow())
+        .divide(valueFactory.build(new BigDecimal("2"), Units.EMPTY))
+        .add(domain.getLow());
     
     // Scale factor is based on range and domain
     EngineValue rangeSpan = range.getHigh().subtract(range.getLow());
     EngineValue domainSpan = domain.getHigh().subtract(domain.getLow());
-    EngineValue scaleFactor = rangeSpan.divide(domainSpan.multiply(domainSpan.divide(
-        valueFactory.build(new BigDecimal("4"), Units.EMPTY))));
+    EngineValue scaleFactor = rangeSpan.divide(
+        domainSpan.multiply(
+            domainSpan.divide(valueFactory.build(new BigDecimal("4"), Units.EMPTY))
+        )
+    );
     
     // Calculate quadratic term
     EngineValue x = operand.subtract(domainMid);
