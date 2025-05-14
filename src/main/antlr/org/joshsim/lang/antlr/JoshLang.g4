@@ -140,6 +140,7 @@ expression: unitsValue # simpleExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
+  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier LPAREN_ methodarg=expression RPAREN_ # mapParamParam
   | CREATE_ target=identifier # createSingleExpression
   | CREATE_ count=expression OF_ target=identifier # createVariableExpression
   | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery

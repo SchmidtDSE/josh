@@ -32,6 +32,11 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
+import org.joshsim.lang.interpret.mapping.MapBounds;
+import org.joshsim.lang.interpret.mapping.MapStrategy;
+import org.joshsim.lang.interpret.mapping.QuadraticMapStrategy;
+import org.joshsim.lang.interpret.mapping.SigmoidMapStrategy;
 
 
 /**
@@ -91,12 +96,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine applyMap(String strategy) {
-    if (!"linear".equals(strategy)) {
-      throw new IllegalArgumentException("Unsupported map strategy: " + strategy);
-    }
-
+  public EventHandlerMachine applyMap(String strategyName) {
     startConversionGroup();
+    EngineValue param = pop();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
     EngineValue fromHigh = pop();
@@ -104,13 +106,28 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
-    EngineValue zero = valueFactory.build(BigDecimal.ZERO, EMPTY_UNITS);
+    MapStrategy strategy = switch (strategyName) {
+      case "linear" -> new LinearMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh)
+      );
+      case "quadratic" -> new QuadraticMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh),
+          param.getAsBoolean()
+      );
+      case "sigmoid" -> new SigmoidMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh),
+          param.getAsBoolean()
+      );
+      default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
+    };
 
-    EngineValue fromSpan = fromHigh.subtract(fromLow);
-    EngineValue toSpan = toHigh.subtract(toLow);
-    EngineValue operandDiff = operand.subtract(fromLow);
-    EngineValue percent = operandDiff.add(zero).divide(fromSpan);
-    EngineValue result = toSpan.multiply(percent).add(toLow);
+    EngineValue result = strategy.apply(operand);
 
     memory.push(result);
 
