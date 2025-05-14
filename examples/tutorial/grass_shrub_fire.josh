@@ -25,12 +25,6 @@ start simulation Main
   year.init = startYear
   year.step = prior.year + 1
 
-  # Species-specific parameters
-  growth.curves.grass = 5% / 1 mm
-  growth.curves.shrub = 0.5% / 1 mm
-  growth.optimal.grass = 3%
-  growth.optimal.shrub = 5%
-
   # Fire parameters
   fire.trigger.coverThreshold = 15%
   fire.trigger.high = 5%
@@ -40,9 +34,6 @@ start simulation Main
 
   # Precipitation parameters
   criticalPrecipitation = 350 mm
-
-  # Other constants
-  growthBase = 2.7182818284
 
 end simulation
 
@@ -59,13 +50,8 @@ start patch Default
   onFire.step = (sample uniform from 0% to 100%) < fireProbability
 
   # Determine possible growth
-  precipitationDelta.step = external precipitation - meta.criticalPrecipitation
-
-  scaledPrecipitationDelta.grass.step = meta.growth.curves.grass * precipitationDelta
-  growth.grass.step = 1 / meta.growthBase ^ scaledPrecipitationDelta.grass
-
-  scaledPrecipitationDelta.shrub.step = meta.growth.curves.shrub * precipitationDelta
-  growth.shrub.step = 1 / meta.growthBase ^ scaledPrecipitationDelta.shrub
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
 
   # Determine possible destruction
   destroy.grass.step = sample normal with mean of 70% std of 10%
