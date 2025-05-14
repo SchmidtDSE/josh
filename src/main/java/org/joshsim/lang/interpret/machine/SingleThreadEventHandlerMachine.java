@@ -35,6 +35,8 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
+import org.joshsim.lang.interpret.mapping.QuadraticMapStrategy;
+import org.joshsim.lang.interpret.mapping.SigmoidMapStrategy;
 
 
 /**
@@ -94,17 +96,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public EventHandlerMachine applyMap(String strategy) {
-    if (!"linear".equals(strategy)) {
-      String message = String.format(
-          "Tried making map strategy %s without parameters.",
-          strategy
-      );
-      String suggestion = "The only map strategy supported without map parameters is linear.";
-      throw new IllegalArgumentException(message + " " + suggestion);
-    }
-
+  public EventHandlerMachine applyMap(String strategyName) {
     startConversionGroup();
+    EngineValue param = pop();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
     EngineValue fromHigh = pop();
@@ -112,12 +106,28 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
-    MapStrategy linearStrategy = new LinearMapStrategy(
-        valueFactory,
-        new MapBounds(fromLow, fromHigh),
-        new MapBounds(toLow, toHigh)
-    );
-    EngineValue result = linearStrategy.apply(operand);
+    MapStrategy strategy = switch(strategyName) {
+      case "linear" -> new LinearMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh)
+      );
+      case "quadratic" -> new QuadraticMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh),
+          param.getAsBoolean()
+      );
+      case "sigmoid" -> new SigmoidMapStrategy(
+          valueFactory,
+          new MapBounds(fromLow, fromHigh),
+          new MapBounds(toLow, toHigh),
+          param.getAsBoolean()
+      );
+      default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
+    };
+    
+    EngineValue result = strategy.apply(operand);
 
     memory.push(result);
 
