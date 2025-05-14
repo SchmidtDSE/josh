@@ -34,7 +34,8 @@ public class QuadraticMapStrategy implements MapStrategy {
    * @param centerIsMaximum If true, the center of the domain maps to range maximum, endpoints to 
    *     minimum. If false, the center maps to range minimum, endpoints to maximum.
    */
-  public QuadraticMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range, boolean centerIsMaximum) {
+  public QuadraticMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range, 
+      boolean centerIsMaximum) {
     this.valueFactory = valueFactory;
     this.domain = domain;
     this.range = range;
