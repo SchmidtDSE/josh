@@ -16,14 +16,18 @@ This parabolic function is limited to 1 and a tree is viable so long as bioclima
 Growth is a function of both temperature and precipitation. 
 
 ### Optimal growth rate
-Under optimal conditions, both trees see an optimal growth rate of $g^* = 1$.
+Under optimal conditions, both trees see an optimal growth rate of $g^* = 1 m$ which represents a yearly rate. The actual growth rate is defined by:
+
+$g = g^* * g_{t} * g_{p}$
+
+These terms are further explained below.
 
 ### Temperature-dependency of growth
-The influence of temperature on growth rate is defined as follows:
+The influence of temperature on growth rate is defined as follows by the following quadratic:
 
-$g = g^* - b(T - T^*)^2$
+$g_{t} = 1 - b(T - T^*)^2$
 
-In this sytem:
+In this system:
 
   - Dependent variable: $g \in [0,1]$ is a growth rate scalar
   - Independent variable: $T$ is temperature in K
@@ -34,9 +38,9 @@ Note that $b = 0.0025$ is a scaling parameter and this behavior is subject to th
   - $T_B^* = 320$ (Species B)
 
 ### Precipitation-dependency of growth
-The influence of precipitation on growth rate is defined as follows:
+The influence of precipitation on growth rate is defined as follows by the following sigmoid:
 
-$g = \frac{g^*}{e^{r(P - P^{c})}}$
+$g_{p} = \frac{1}{e^{r(P - P^{c})}}$
 
 In this system:
 
