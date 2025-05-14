@@ -32,7 +32,7 @@ class SigmoidMapStrategyTest {
     range = new MapBounds(rangeLow, rangeHigh);
 
     // Create strategy with scale -2
-    strategy = new SigmoidMapStrategy(valueFactory, domain, range, -2.0);
+    strategy = new SigmoidMapStrategy(valueFactory, domain, range, -3.0);
   }
 
   @Test
