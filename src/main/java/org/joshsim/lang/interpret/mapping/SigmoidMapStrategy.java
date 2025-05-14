@@ -43,8 +43,12 @@ public class SigmoidMapStrategy implements MapStrategy {
     
     // Calculate scale based on domain size
     // For domain [-5,5] and range [0,1], scale should be -1 for increasing
-    double domainSize = domain.getHigh().subtract(domain.getLow()).getAsDecimal().doubleValue();
-    this.scale = (increasing ? -1.0 : 1.0) * (10.0 / domainSize);
+    double domainSize = domain.getHigh()
+        .subtract(domain.getLow())
+        .getAsDecimal()
+        .doubleValue();
+    
+    scale = (increasing ? -1.0 : 1.0) * (10.0 / domainSize);
   }
 
   @Override
@@ -56,7 +60,7 @@ public class SigmoidMapStrategy implements MapStrategy {
         .subtract(valueFactory.build(new BigDecimal("1"), Units.EMPTY));
 
     // Calculate sigmoid: 1 / (1 + e^(scale * x))
-    double x = normalizedX.getAsDecimal().doubleValue();
+    double x = normalizedX.getAsDecimal().doubleValue() * 5;
     double sigmoid = 1.0 / (1.0 + Math.exp(scale * x));
 
     // Rescale sigmoid output (0,1) to range
