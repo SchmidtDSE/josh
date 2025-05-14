@@ -58,8 +58,8 @@ function parseDatum(source) {
  *
  * @param {string} source - The internal memory transfer string to parse. This should be a single
  *     line returned from the engine backend.
- * @returns {Object} Record with the replicate number and message type. If it contains a data point,
- *     it will also have a datum attribute.
+ * @returns {?Object} Record with the replicate number and message type. If it contains a data point,
+ *     it will also have a datum attribute. Null if no data returned.
  */
 function parseEngineResponse(source) {
   const endMatch = source.match(/^\[end (\d+)\]$/);
@@ -68,6 +68,11 @@ function parseEngineResponse(source) {
       replicate: parseInt(endMatch[1], 10),
       type: "end"
     };
+  }
+
+  const emptyMatch = source.match(/^\[(\d+)\]$/);
+  if (emptyMatch) {
+    return null;
   }
 
   const match = source.match(/^\[(\d+)\] (.+)$/);

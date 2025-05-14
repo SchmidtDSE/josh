@@ -115,10 +115,9 @@ class RunPanelPresenter {
         return;
       }
 
-      const customEndpoint = self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
       const useServer = self._browserRadio.checked ? false : true;
       const apiKey = self._getApiKey();
-      const endpoint = self._customCloudRadio.checked ? customEndpoint : DEFAULT_ENDPOINT;
+      const endpoint = self._determineEndpoint();
 
       const runRequest = new RunRequest(
         simulationName,
@@ -131,6 +130,22 @@ class RunPanelPresenter {
       self._runLocalDialog.close();
       self._onRun(runRequest);
     });
+  }
+
+  /**
+   * Determine the endpoint where the simulation should run.
+   * 
+   * @returns {string} The URL at which the simulation should run.
+   */
+  _determineEndpoint() {
+    const self = this;
+    if (self._customCloudRadio.checked) {
+      return self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
+    } else if (self._joshCloudRadio.checked) {
+      return DEFAULT_ENDPOINT;
+    } else {
+      return "";
+    }
   }
 
   /**

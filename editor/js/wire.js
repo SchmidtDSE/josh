@@ -4,6 +4,8 @@
  * @license BSD-3-Clause
  */
 
+import {OutputDatum, SimulationResultBuilder} from "model";
+
 
 /**
  * Utility to serialize input data into the wire transfer format.
@@ -93,6 +95,10 @@ class ResponseReader {
 
     lines.map((x) => x.trim()).forEach((line) => {
       const intermediate = parseEngineResponse(line);
+      if (intermediate === null) {
+        return;
+      }
+
       if (intermediate["type"] === "datum") {
         if (!self._replicateReducer.has(intermediate["replicate"])) {
           self._replicateReducer.set(intermediate["replicate"], new SimulationResultBuilder());
@@ -102,9 +108,11 @@ class ResponseReader {
         self._replicateReducer.get(intermediate["replicate"]).add(parsed);
       } else if (intermediate["type"] === "end") {
         self._completedReplicates++;
-        self._completeReplicates.push(
-          self._replicateReducer.get(intermediate["replicate"]).build()
-        );
+        if (self._replicateReducer.has(intermediate["replicate"])) {
+          self._completeReplicates.push(
+            self._replicateReducer.get(intermediate["replicate"]).build()
+          );
+        }
         self._onReplicateExternal(self._completedReplicates);
       }
     });
