@@ -105,7 +105,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     endConversionGroup();
 
     EngineValue zero = valueFactory.build(BigDecimal.ZERO, EMPTY_UNITS);
-
     EngineValue fromSpan = fromHigh.subtract(fromLow);
     EngineValue toSpan = toHigh.subtract(toLow);
     EngineValue operandDiff = operand.subtract(fromLow);
