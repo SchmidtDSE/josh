@@ -32,6 +32,9 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
+import org.joshsim.lang.interpret.mapping.MapBounds;
+import org.joshsim.lang.interpret.mapping.MapStrategy;
 
 
 /**
@@ -93,7 +96,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine applyMap(String strategy) {
     if (!"linear".equals(strategy)) {
-      throw new IllegalArgumentException("Unsupported map strategy: " + strategy);
+      String message = String.format(
+          "Tried making map strategy %s without parameters.",
+          strategy
+      );
+      String suggestion = "The only map strategy supported without map parameters is linear.";
+      throw new IllegalArgumentException(message + " " + suggestion);
     }
 
     startConversionGroup();
@@ -104,12 +112,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
-    EngineValue zero = valueFactory.build(BigDecimal.ZERO, EMPTY_UNITS);
-    EngineValue fromSpan = fromHigh.subtract(fromLow);
-    EngineValue toSpan = toHigh.subtract(toLow);
-    EngineValue operandDiff = operand.subtract(fromLow);
-    EngineValue percent = operandDiff.add(zero).divide(fromSpan);
-    EngineValue result = toSpan.multiply(percent).add(toLow);
+    MapStrategy linearStrategy = new LinearMapStrategy(
+        valueFactory,
+        new MapBounds(fromLow, fromHigh),
+        new MapBounds(toLow, toHigh)
+    );
+    EngineValue result = linearStrategy.apply(operand);
 
     memory.push(result);
 

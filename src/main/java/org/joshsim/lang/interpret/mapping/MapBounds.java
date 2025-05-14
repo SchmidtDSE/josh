@@ -15,7 +15,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * <p>Structure describing bounds to be used in a mapping function such as a function's domain or
  * its range.</p>
  */
-class MapBounds {
+public class MapBounds {
 
   private final EngineValue low;
   private final EngineValue high;
