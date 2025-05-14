@@ -6,6 +6,7 @@
 
 import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
 import {getDistanceMeters} from "util";
+import {ExternalDataSerializer} from "wire";
 
 
 /**
@@ -24,6 +25,7 @@ class WasmLayer {
     self._worker = new Worker("/js/wasm.worker.js");
     self._initialized = false;
     self._datasetBuilder = null;
+    self._wireSerializer = new ExternalDataSerializer();
     self._initPromise = new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, result, error, success } = e.data;
@@ -136,6 +138,7 @@ class WasmLayer {
     const self = this;
     await self._initPromise;
 
+    const externalDataStr = self._wireSerializer.serialize(externalData);
     self._datasetBuilder = new SimulationResultBuilder();
     
     return new Promise((resolve, reject) => {
@@ -159,7 +162,7 @@ class WasmLayer {
       };
       self._worker.postMessage({ 
         type: "runSimulation", 
-        data: { code: code, simulationName: simulationName, data: externalData } 
+        data: { code: code, simulationName: simulationName, data: externalDataStr } 
       });
     });
   }

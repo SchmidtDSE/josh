@@ -137,7 +137,7 @@ class DataFilesPresenter {
     const self = this;
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const contents = e.target.result;
+      const contents = e.target.result.split(",")[1];
       const opfsFile = new OpfsFile(file.name, contents, false, true);
       try {
         await self._fileLayer.putFile(opfsFile);
@@ -309,7 +309,7 @@ class LocalFileLayer {
   async putFile(file) {
     const self = this;
     const name = file.getName();
-    effective_name = file.getIsBinary() ? name : self._enforceTextExtension(name);
+    const effective_name = file.getIsBinary() ? name : self._enforceTextExtension(name);
     await self._sendWorkerMessage("updateItem", effective_name, file.getContents());
   }
 

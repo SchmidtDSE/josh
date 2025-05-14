@@ -78,7 +78,7 @@ public class ServerCommand implements Callable<Integer> {
       server.start();
       System.out.println("Server started on port " + port);
       System.out.println(
-          "Open your browser at http://0.0.0.0:" + port + "/ to run simulations"
+          "Open your browser at http://localhost:" + port + "/ to run simulations"
       );
 
       Thread.currentThread().join();

@@ -57,7 +57,9 @@ public class SyntheticScope implements Scope {
     }
 
     Optional<EngineValue> currentValue = inner.getAttributeValue(name);
-    return currentValue.orElseThrow();
+    return currentValue.orElseThrow(
+        () -> new RuntimeException("Could not find value for " + name)
+    );
   }
 
   @Override

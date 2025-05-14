@@ -330,6 +330,11 @@ public class ShadowingEntity implements MutableEntity {
    */
   private void resolveAttribute(String name) {
     if (resolvingAttributes.contains(name)) {
+      System.err.println("Encountered a loop when resolving " + name);
+      System.err.println("Resolved:");
+      for (String resolving : resolvingAttributes) {
+        System.err.println("\t" + resolving);
+      }
       throw new RuntimeException("Encountered a loop when resolving " + name);
     }
 

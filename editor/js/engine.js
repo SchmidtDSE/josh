@@ -5,7 +5,7 @@
  */
 
 import {OutputDatum, SimulationResultBuilder} from "model";
-import {ResponseReader} from "wire";
+import {ExternalDataSerializer, ResponseReader} from "wire";
 
 
 /**
@@ -99,6 +99,7 @@ class RemoteEngineBackend {
     const self = this;
     self._leaderUrl = leaderUrl;
     self._apiKey = apiKey;
+    self._external_data_serializer = new ExternalDataSerializer();
   }
 
   /**
@@ -126,12 +127,14 @@ class RemoteEngineBackend {
      */
     const createFormData = () => {
       const formData = new FormData();
+
+      const externalDataStr = self._external_data_serializer.serialize(externalData);
       
       formData.append("code", simCode);
       formData.append("name", runRequest.getSimName());
       formData.append("replicates", runRequest.getReplicates().toString());
       formData.append("apiKey", self._apiKey);
-      formData.append("externalData", externalData);
+      formData.append("externalData", externalDataStr);
       
       return formData;
     };
