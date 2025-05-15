@@ -32,16 +32,19 @@
       <section id="overview">
         <h2>Overview</h2>
         <p>
-          Josh aims to make it easy to build spatial vegitation models. It is specifically designed to help you easily handle some of the logistics of building these simulations. This includes agents, geospatial data, scalability, and stochastic behavior. We found though that expressing these systems in general purpose languages like Python can require a lot of code and sometimes a lot of engineering talent. So, we build Josh Lang, a configuration language which is designed specifically for this use case and which includes syntax that, not only cutting down on number of lines of code, tries to improve clarity of how these systems work. While we are excited to show you everything that Josh can do, we start our journey by introducing the foundational concepts which make Josh and Josh Lang work. If you want to learn more about what Josh does, see <a href="/purpose.html">our features</a>.
+          Josh aims to make it easy to build spatial vegitation models. It is intended to help with the logistics of simulations including agents, geospatial data, scalability, and stochastic behavior. In these tutorials, we will explore these <a href="/purpose.html">features</a> in hands-on practical examples.
         </p>
         <p>
-          With that introductory goal in mind, we are going to simulate a very basic system. We are going to model a ForeverTree. This fake species for this toy demo just grows and gets older. While this seems simple, this basic entry point will enable us to explore all of the core concepts of Josh.
+          Sometimes expressing these systems in general purpose languages like Python can require a lot of code. We built Josh Lang to be a configuration language which is designed specifically for this use case and which includes syntax that, not only cutting down on development time, tries to improve clarity in the code defining how these systems work.
+        </p>
+        <p>
+          With these goals in mind, we are going to simulate a very basic system. We are going to model a ForeverTree. This fake species for this toy demo just grows and gets older. While this seems simple, this basic entry point will enable us to explore all of the core concepts of Josh.
         </p>
       </section>
 
       <section id="editor">
         <h2>Editor</h2>
-        <p>The easiest way to use Josh is to take advantage of <a href="https://editor.joshsim.org" target="_blank">our browser-based development environment</a>. You don't need to install any software. Thanks to the wonders of WebAssembly, you can run simulations using your computer right from your browser. This will not share your simulation or data with us (unless you opt to run on <a href="/community.html">Josh Cloud</a>). Also, your work is saved within your browser. All of this means that you can program in safety and privacy but also don't need to configure your computer. Of course, we will discuss <a href="/guides/cli.html">running simulations outside your browser</a> later. This can be much faster! However, we will assume that you are using this <a href="https://editor.joshsim.org" target="_blank">Josh IDE</a> for the purposes of this guide.</p>
+        <p>The easiest way to use Josh is to take advantage of <a href="https://editor.joshsim.org" target="_blank">our online development environment</a>. You don't need to install any software. Thanks to the wonders of WebAssembly, you can run simulations without leaving your browser. This will not share your simulation or data with us (unless you opt to run on <a href="/community.html">Josh Cloud</a>). Also, your work is saved within your browser. All of this means that you can program in safety and privacy but also don't need to configure your computer. Of course, we will discuss <a href="/guides/cli.html">running simulations outside your browser</a> later. This can be much faster! However, we will assume that you are using this <a href="https://editor.joshsim.org" target="_blank">Josh IDE</a> for the purposes of this guide.</p>
       </section>
 
       <section id="simulation">
@@ -58,12 +61,17 @@
   steps.high = 10 count
 
 end simulation</pre>
-        <p>We called this simulation Main but you could call it anything you like. Note that Josh runs simulations where it computes everything within our simulated area once per step. So, steps.low / steps.high tells Josh for how many timesteps you want to execute your work. In our case, we will assume that each step is a year and we run from year 0 to year 11. However, you can run simulations where each step is a day or a month. All told, this means that Josh will simulate each 1 km "patch" within our simulation area for each year from year 0 to year 10.</p>
+        <p>
+          We called this simulation Main but you could call it anything you like. Note that Josh runs simulations where it computes everything within our simulated area once per step. So, steps.low / steps.high tells Josh for how many timesteps you want to execute your work. In our case, we will assume that each step is a year and we run from year 0 to year 11. However, you can run simulations where each step is a day or a month.
+        </p>
+        <p>
+          All together, this means that Josh will simulate each 1 km "patch" within our simulation area for each year from year 0 to year 10.
+        </p>
       </section>
 
       <section id="patch">
         <h2>Patch</h2>
-        <p>Next, we need to tell Josh about our grid cells which are referred to as patches. Here, we will create ten trees on each patch. Josh knows which kind of patch to use beacuse of the name we specified above.</p>
+        <p>Next, we need to tell Josh about our grid cells. These are referred to as patches. Here, we will create ten trees on each patch. Josh knows which kind of patch to use beacuse of the name we specified above.</p>
         <pre>start patch Default
 
   ForeverTree.init = create 10 count of ForeverTree
@@ -74,7 +82,7 @@ end patch</pre>
 
       <section id="organism">
         <h2>Organism</h2>
-        <p>We've told Josh about our grid and we've told it about the patches we want to fill that grid. At last, we can tell Josh how we want our organism (Forever Tree) to behave.</p>
+        <p>We've told Josh about our grid and we've told it about the patches we want to fill that grid. At last, we can tell Josh how we want our organism (ForeverTree) to behave.</p>
         <pre>start organism ForeverTree
 
   age.init = 0 year
@@ -84,7 +92,8 @@ end patch</pre>
   height.step = prior.height + sample uniform from 0 meters to 1 meters
 
 end organism</pre>
-        <p>Some of this code should look familiar. When we create a new ForeverTree, we give it an age. In this case, it starts as zero years old. However, we now see not just the use of the init event callback but the step event callback. In other words, on each timestep, Josh should add one year to the tree's age prior to that step starting. Something similar happens for height but with a twist. Note that we are sampling the annual growth for each tree from a random uniform distribution. Later tutorials will look at other random distributions like the normal distribution.</p>
+        <p>Some of this code should look familiar. When we create a new ForeverTree, we give it an age. In this case, it starts as zero years old. However, we now see not just the use of the init event callback but the step event callback.</p>
+        <p>Using the step callback, Josh will add one year to the tree's age (prior means the value of the variable prior to that step starting). Something similar happens for height but with a twist: we are sampling the annual growth for each tree from a random uniform distribution. Later tutorials will look at other random distributions like the normal distribution.</p>
       </section>
 
       <section id="units">
@@ -137,7 +146,12 @@ end simulation</pre>
       </section>
       <section id="replicates">
         <h2>Replicates</h2>
-        <p>So far, we've only run with a single replicate. However, if you go back to the run dialog, you can indicate that you want more than one replicate. This can be a bit slow to execute in your browser. If you are <a href="/guides/cli.html">running Josh locally</a>, have access to <a href="/community.html">Josh Cloud</a>, or have an <a href="/use.html">IT team which has set up a data center</a>, you can run multiple replicates in parallel. If you have access to one of those other systems, give it a try now with 10 replicates. Otherwise, go ahead and run in your browser with 2.</p>
+        <p>So far, we've only run with a single replicate. However, if you go back to the run dialog, you can indicate that you want more than one replicate. This can be a bit slow to execute in your browser. If you are <a href="/guides/cli.html">running Josh locally</a>, have access to <a href="/community.html">Josh Cloud</a>, or have an <a href="/use.html">IT team which has set up a data center</a>, you can run multiple replicates in parallel.</p>
+        <p>If you have access to one of those other systems, give it a try now with 10 replicates. Otherwise, go ahead and run in your browser with 2.</p>
+      </section>
+      <section id="replicates">
+        <h2>Replicates</h2>
+        <p>After running for a larger number of replicates, note the </p>
       </section>
       <section id="wrap">
         <h2>Wrap</h2>
