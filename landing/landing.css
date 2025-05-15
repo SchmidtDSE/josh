@@ -137,6 +137,14 @@ pre {
   background-color: #5050C0;
 }
 
+.guide {
+  margin: 20px 30px;
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid #E0E0E0;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+}
+
 .guide main {
   background-color: white;
   padding: 15px;
