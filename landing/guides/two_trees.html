@@ -1,7 +1,7 @@
 
 <html>
   <head>
-    <title>Josh Guide: Succession Modeling</title>
+    <title>Josh Guide: Two Trees</title>
     <link href="/landing.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
@@ -11,8 +11,257 @@
     <main id="main" class="guide">
       <section id="intro">
         <div class="back-panel">This tutorial is part of the <a href="/guide.html">Josh Simulation Engine Guide</a>.</div>
-        <h1>Succession Modeling</h1>
-        <p>This tutorial is under construction. Check back soon for more details!</p>
+        <h1>Two Trees</h1>
+        <p>
+          In our <a href="/guides/grass_shrub_fire.html">previous tutorial</a>, we explored patch-based modeling. In this next step, we will look at modeling where we are simulating individual organsims.
+        </p>
+      </section>
+      <section id="overview">
+        <h2>Overview</h2>
+        <p>
+          You are already becoming an expert in Josh! This next example is just using what you already learned but making it a little bigger. Specifically, we are going to run a simulation with lots of agents with each representing a single tree.
+        </p>
+        <p>
+          As with the other tutorials, this is a toy model using fake species. The use of specific location is just so that we can use external data.
+        </p>
+      </section>
+
+      <section id="data">
+        <h2>Data</h2>
+        <p>
+          This time we are going to use data from <a href="https://cal-adapt.org/">Cal-Adapt</a> which provides its data as netCDF files. Again, a <a href="/builds/data.html">later tutorial will go into the details of preprocessing</a> for speed. For now, go ahead and grab our preprocessed <a href="/guides/two_trees/temperature.jshd">temperature data</a> and <a href="/guides/two_trees/precipitation.jshd">precipitation data</a>. Then, delete the data from the prior tutorial and upload these new files.
+        </p>
+      </section>
+
+      <section id="simulation">
+        <h2>Simulation</h2>
+        <p>
+          The simulation here will look pretty similar. Let's go ahead and define our boundaries and time range.
+        </p>
+        <pre>start simulation Main
+
+  # Specify where the simluation runs
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  # Specify when the simulation runs (2024 to 2054)
+  steps.low = 0 count
+  steps.high = 30 count
+
+  startYear.init = 2024
+  year.init = startYear
+  year.step = prior.year + 1
+
+  # Indicate ecological and spatial limits
+  constraints.maxOccupants = 100 count
+  constraints.minViableTemperature = 273 K
+  constraints.maxViableTemperature = 373 K
+
+end simulation</pre>
+        <p>
+          As <a href="/guides/grass_shrub_fire.html">before</a>, we have some constants that we will use across multiple organisms.
+        </p>
+      </section>
+
+      <section id="patch">
+        <h2>Patch</h2>
+        <p>
+          Our patch will look mostly similar to what you've seen before with two exceptions.</p>
+        <p>
+          Let's start with step phases. You may notice below that there is also a start and end event handler type in addition to init and step like for the "newCount.end" handler. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations.
+          </p>
+          <p>
+            Second, we are getting a look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages but they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets. For example, "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
+          </p>
+        </p>
+        <pre>start patch Default
+
+  # Randomize starting occupancy
+  countOccupancy.init = sample uniform from 0 count to meta.constraints.maxOccupants
+  initialACount.init = (sample uniform from 0% to 100%) * countOccupancy
+  initialBCount.init = countOccupancy - initialACount
+
+  # Create initial occupants
+  SpeciesA.init = create initialACount of SpeciesA
+  SpeciesB.init = create initialBCount of SpeciesB
+
+  # Remove dead occupants at start of simulation step
+  SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
+  SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
+  speciesACount.start = count(SpeciesA)
+  speciesBCount.start = count(SpeciesB)
+  totalCount.start = speciesACount + speciesBCount
+
+  # Determine if in an extreme temperature event
+  inExtremeTemperature.step = {
+    const currentTemperature = external temperature
+    const inExtremeCold = currentTemperature < meta.constraints.minViableTemperature
+    const inExtremeHot = currentTemperature > meta.constraints.maxViableTemperature
+    return inExtremeCold or inExtremeHot
+  }
+
+  # Calculate num new occupants end step (to have their first step on next step)
+  newCount.end = {
+    const probabilityNewRaw = (-1 count * (totalCount - 5 count) ^ 2 / 20 count) + 110 %
+    const probabilityNew = limit probabilityNewRaw to [0%, 100%]
+    const maxNewCount = (meta.constraints.maxOccupants - totalCount) * probabilityNew
+    return sample uniform from 0 count to maxNewCount
+  }
+
+  # If empty, split evenly
+  newSpeciesACount.end = {
+    if (totalCount > 0) {
+      return floor((speciesACount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
+
+  newSpeciesBCount.end = {
+    if (totalCount > 0) {
+      return floor((speciesACount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
+
+  # Make the new agents and concatenate to ("|" or add to end of) the current list.
+  SpeciesA.end = prior.SpeciesA | create newSpeciesACount of SpeciesA
+  SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
+
+  # Export counts
+  export.newSpeciesACount.step = newSpeciesACount
+  export.newSpeciesBCount.step = newSpeciesBCount
+
+end patch</pre>
+        <p>Before finishing up this step, note that SpeciesA is a variable or attribute of the Default patch but, by convention, it uses the same name as the organism. You could also call it "SpeciesAPresent" and things would work out.</p>
+      </section>
+
+      <section id="species-a">
+        <h2>SpeciesA</h2>
+        <p>
+          That was most of the new stuff! Let's go ahead and use some of our prior tools to define these two tree species.
+        </p>
+        <p>
+          Each of these will work by looking at by how much growing conditions deviate from species-specific optimal values. These are defined through a quadratic for temperature and sigmoid for precipiation. We use these to determine what percent of optimal growth each agent sees in each time step. This is done by multiplying two "impact" values together as a scale variable.
+        </p>
+        <pre>start organism SpeciesA
+
+# Start a zero height except when if this is the simulation start
+dead.init = false
+height.init = {
+  const isFirstYear = meta.startYear == meta.year
+  const heightSample = sample normal with mean of 20 meters std of 5 meters
+  const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+  return heightSampleLimit if isFirstYear else 0 meters
+}
+
+# At each step, determine impact of temperature
+temperatureImpact.step = map external temperature
+  from [270 K, 330 K]
+  to [0%, 100%]
+  quadratic
+
+# At each step, determine impact of precipitation
+precipitationImpact.step = map external precipitation
+  from [300 mm, 500 mm]
+  to [0%, 100%]
+  sigmoid
+
+# At each step, determine overall growth
+newGrowth.step = 1 m * temperatureImpact * precipitationImpact
+height.step = prior.height + newGrowth
+
+# At each step end, determine death if over survival probability
+dead.end = {
+  const deadByChance = (sample uniform from 0% to 100%) > 30%
+  const deadByExtremeTemp = here.inExtremeTemperature
+  return deadByChance or deadByExtremeTemp
+}
+
+end organism</pre>
+        <p>
+          There are two things to highlight in this code. First, we can see now where the variable in the slice used above gets used. Second, like how we did a map with a sigmoid before, we use a quadratic here. By default, quadratic puts the center of the range at the maximum (upside down parabola) but this can be modified by using "quadratic(false)" instead.
+        </p>
+      </section>
+
+      <section id="species-b">
+        <h2>SpeciesB</h2>
+        <p>
+          In practice, different species will probably vary quite a bit from each other in their defintion. However, for this toy example, SpeciesB will be about the same as SpeciesA just with some different parameters. Let's take a look!
+        </p>
+        <pre>start organism SpeciesB
+
+  # Start a zero height except when if this is the simulation start
+  dead.init = false
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+
+  # At each step, determine impact of temperature
+  temperatureImpact.step = map external temperature
+    from [290 K, 350 K]
+    to [0%, 100%]
+    quadratic
+
+  # At each step, determine impact of precipitation
+  precipitationImpact.step = map external precipitation
+    from [200 mm, 400 mm]
+    to [0%, 100%]
+    sigmoid
+
+  # At each step, determine overall growth
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
+  height.step = prior.height + newGrowth
+
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 30%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
+
+end organism</pre>
+        <p>
+          Everything is about the same here except for the parameterization of those important temperature and precipitation impact variables.
+        </p>
+      </section>
+
+      <section id="wrap">
+        <h2>Wrap</h2>
+        <p>
+          Let's wrap this up! We just need our units. This time, we will also demonstrate use of unit conversions. Try changing one of the temperature values above to celcius to give it a shot.
+        </p>
+        <pre>start unit K
+
+  alias Kelvins
+  alias Kelvin
+
+end unit
+
+
+start unit C
+
+  alias Celcius
+
+  K = 272.15 + current
+
+end unit
+
+
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit</pre>
+        <p>Go ahead and give it a run. This one might take a little longer! If you have <a href="/community.html">Josh Cloud</a>, this might be a good time to give it a shot. When ready, let's move forward to a <a href="/landing/guides/data.html">tutorial on data preprocessing</a>.</p>
       </section>
     </main>
   </body>

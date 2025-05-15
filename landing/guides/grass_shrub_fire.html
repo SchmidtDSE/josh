@@ -11,7 +11,7 @@
       <section id="intro">
         <div class="back-panel">This tutorial is part of the <a href="/guide.html">Josh Simulation Engine Guide</a>.</div>
         <h1>Grass, Shrub, Fire</h1>
-        <p>In the <a href="/guides/hello.html">previous tutorial</a>, we explored some of Josh's features at a high level by simulating about 35,000 trees over an 11 year period. In this next step, we are going to zoom into one specific common use of this software: running formulas spatially.</p>
+        <p>In the <a href="/guides/hello.html">previous tutorial</a>, we explored some of Josh's features at a high level by simulating about 35,000 trees over an 11 year period. In this next step, we are going to zoom into one common use of this software: patch-based execution.</p>
       </section>
       <section id="overview">
         <h2>Overview</h2>
@@ -19,22 +19,25 @@
           Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that computation across many machines like through <a href="/community.html">Josh Cloud</a>.
         </p>
         <p>
-          In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this simulation, we will use external data from <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6</a> that offers predictions of future precipitation. 
+          In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this demo, we will use external data from <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6</a> that offers predictions of future precipitation. 
+        </p>
+        <p>
+          Once again, this is not meant to be an ecologically sound model. It's not simulating specific species or a specific environment. It's just a toy demo.
         </p>
       </section>
       <section id="data">
         <h2>Data</h2>
         <p>
-          The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are origianlly provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocessing of these files which allows Josh to do some up-front work which ensures high simulation execution speeds. These are in Josh Data Files or (.jshd).
+          The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files or (.jshd).
         </p>
         <p>
-          All that in mind, we've gone ahead and preprocessed these data for you. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
+          All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
         </p>
       </section>
       <section id="simulation">
         <h2>Simulation</h2>
         <p>
-          As before in our <a href="/guides/hello.html">ForeverTree example</a>, we will define an area where we want to simulate. Once again, this is not meant to be an ecologically sound model. It's not simulating specific species or a specific environment. It's just a toy demo.
+          As before in our <a href="/guides/hello.html">ForeverTree example</a>, we will define an area we want to simulate.
         </p>
         <pre>start simulation Main
 
@@ -63,7 +66,7 @@
 
 end simulation</pre>
         <p>
-          This is a little longer than before because we are including some constants This can be helpful if you want to hav multiple versions of a simulation that you want to compare. Maybe you have LosPadres as one simulation and SantaCruz as another which might have slightly different parameters.
+          This is a little longer than before because we are including some constants This can be helpful if you want to have multiple versions of a simulation that you want to compare. Maybe you have LosPadres as one simulation and SantaCruz as another which might have slightly different parameters.
         </p>
       </section>
 
@@ -80,7 +83,7 @@ end simulation</pre>
   
 end patch</pre>
       <p>
-        This simply indicates that the patch is covered by up to 20% of grass and or shrubs. Note that our simulation stanza didn't specify the name of the patch to use. That is because "Default" if none is specified.
+        This simply indicates that the patch is covered by up to 20% of grass and or shrubs. Note that our simulation stanza didn't specify the name of the patch to use. That is because Josh will use "Default" if none is specified.
       </p>
       </section>
 
@@ -105,14 +108,14 @@ end patch</pre>
 end patch
         </pre>
         <p>
-          This snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. We can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
+          First, this snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. Here, we can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
         </p>
       </section>
 
       <section id="fire">
         <h2>Growth</h2>
         <p>
-          Hopefully our grass and shrubs can do more than combust! Let's model bew growth. For this, we will use a sigmoid that has horizontal asymptotes at 0% and 5% growth for grass while having horizontal asymptotes at 0% and 3% for shrubs. It will reach these asymptotes at different precipitation levels where grass should grow faster in good precipitation but shrubs should be sturdier in drought.
+          Hopefully our grass and shrubs can do more than combust! Let's model new growth as well. For this, we will use a sigmoid that has horizontal asymptotes at 0% and 5% growth for grass while having horizontal asymptotes at 0% and 3% for shrubs. It will reach these asymptotes at different precipitation levels where grass should grow faster in good precipitation but shrubs should be sturdier in drought.
         </p>
         <pre>start patch Default
 

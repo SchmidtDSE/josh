@@ -92,6 +92,10 @@ start patch Default
   SpeciesA.end = prior.SpeciesA | create newSpeciesACount of SpeciesA
   SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
 
+  # Export counts
+  export.newSpeciesACount.step = newSpeciesACount
+  export.newSpeciesBCount.step = newSpeciesBCount
+
 end patch
 
 
