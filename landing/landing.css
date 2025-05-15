@@ -49,6 +49,7 @@ header {
   margin-bottom: 30px;
   padding-bottom: 30px;
   font-size: 20px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
 }
 
 header nav {
@@ -69,21 +70,11 @@ header nav .nav-option a, header nav .nav-option a:link, header nav .nav-option 
 }
 
 header nav .nav-option.selected a, header nav .nav-option.selected a:link, header nav .nav-option.selected a:visited {
-  background-color: #204020;
+  background-color: #333333;
 }
 
 header nav .nav-option a:focus, header nav .nav-option a:hover, header nav .nav-option a:active {
   background-color: #507050;
-}
-
-main {
-  background-color: white;
-  padding: 15px;
-  font-size: 15px;
-  border: 1px solid #A0A0A0;
-  border-radius: 10px;
-  margin-bottom: 30px;
-  padding-bottom: 30px;
 }
 
 pre {
@@ -93,10 +84,6 @@ pre {
   padding: 7px;
   border: 1px solid black;
   border-radius: 5px;
-}
-
-section {
-  margin-bottom: 50px;
 }
 
 .back-panel {
@@ -116,6 +103,13 @@ section {
   color: #E0E0E0;
 }
 
+.call-to-action {
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 1px dotted #A0A0A0;
+  text-align: center;
+}
+
 .call-to-action a, .call-to-action a:link, .call-to-action a:visited {
   background-color: #7070C0;
   color: white;
@@ -126,6 +120,31 @@ section {
 
 .call-to-action a:focus, .call-to-action a:hover, .call-to-action a:active {
   background-color: #5050C0;
+}
+
+.guide main {
+  background-color: white;
+  padding: 15px;
+  font-size: 15px;
+  border: 1px solid #A0A0A0;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+}
+
+.guide section {
+  margin-bottom: 50px;
+}
+
+.landing section {
+  background-color: white;
+  padding: 15px;
+  font-size: 15px;
+  border: 1px solid #A0A0A0;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
 }
 
 .skip-link {
