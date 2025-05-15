@@ -229,9 +229,11 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "EDITOR_DIRECTORY=editor.joshsim.org" >> $GITHUB_ENV
+            echo "LANDING_DIRECTORY=joshsim.org" >> $GITHUB_ENV
             echo "Deploying to production environment"
           else
             echo "EDITOR_DIRECTORY=editor.joshsim.org/dev" >> $GITHUB_ENV
+            echo "LANDING_DIRECTORY=joshsim.org/dev" >> $GITHUB_ENV
             echo "Deploying to directory environment"
           fi
       - name: Set branch name
@@ -271,7 +273,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build'
-          remotePath: './editor.joshsim.org'
+          remotePath: ${{ env.EDITOR_DIRECTORY }}
       - name: Download landing
         uses: actions/download-artifact@v4
         with:
@@ -285,7 +287,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './landing-build'
-          remotePath: './joshsim.org'
+          remotePath: ${{ env.LANDING_DIRECTORY }}
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
