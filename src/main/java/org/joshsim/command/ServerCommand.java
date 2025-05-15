@@ -14,6 +14,7 @@ package org.joshsim.command;
 import java.util.concurrent.Callable;
 import org.joshsim.cloud.EnvCloudApiDataLayer;
 import org.joshsim.cloud.JoshSimServer;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 
