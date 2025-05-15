@@ -73,7 +73,7 @@ public class GridFromSimFactory {
     GridInfoExtractor extractor = new GridInfoExtractor(simulation, valueFactory);
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
-    String patchName = extractor.getPatchName();
+    String patchName = extractor.getPatchName().replaceAll("\"", "");
 
     PatchBuilderExtents extents = buildExtents(startStr, endStr);
     EngineValue sizeValueRaw = extractor.getSize();

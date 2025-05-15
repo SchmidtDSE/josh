@@ -36,7 +36,7 @@ public class ServerCommand implements Callable<Integer> {
   @Option(
       names = "--concurrent-workers",
       description = "Number of concurrent workers allowed",
-      defaultValue = "0"
+      defaultValue = "1"
   )
   private int workers;
 

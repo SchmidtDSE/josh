@@ -1,0 +1,59 @@
+<html>
+  <head>
+    <title>Josh Simulation Engine: Use</title>
+    <link href="/landing.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div class="skip-link">
+      <a href="#main">Skip to content</a>
+    </div>
+    <header>
+      <h1>Use</h1>
+      Take Josh anywhere and travel with ease.
+      <nav>
+        <span class="nav-option"><a href="/">Home</a></span>
+        <span class="nav-option"><a href="/purpose.html">Purpose</a></span>
+        <span class="nav-option selected"><a href="/use.html">Use</a></span>
+        <span class="nav-option"><a href="/guide.html">Guide</a></span>
+        <span class="nav-option"><a href="/community.html">Community</a></span>
+      </nav>
+    </header>
+    <main id="main">
+      <section id="meet">
+        <h2>Start in your browser.</h2>
+        <p>Just type in a url and you are ready to program. Josh can run in WebAssembly meaning that you just have to send your browser to our IDE and you can start running simulations. All of your code and data stay on your computer unless you select our cloud.</p>
+        <div class="call-to-action">
+          <a href="https://editor.joshsim.org/">Open Josh IDE</a>
+        </div>
+      </section>
+      <section id="joshcloud">
+        <h2>Run in our cloud.</h2>
+        <p>Scaling to the cloud is easy. Get access to on-demand machines in our community cloud which can run different replicates in parallel on high performance infrastructure. This can be executed form the Josh IDE or from other tools like Python. Josh Cloud is free and respects your privacy. It also just takes a minute and your code is already ready to distribute.</p>
+        <div class="call-to-action">
+          <a href="https://editor.joshsim.org/">Open Josh IDE</a>
+        </div>
+      </section>
+      <section>
+        <h2>Take it to your computer.</h2>
+        <p>Josh is written in Java and easy to execute on your own machine. This can happen either through the command line or through a local user interface. The JVM runtime can also be quite a bit faster than WebAssembly so, when you are ready to make bigger or more involved simulations, this is often a great place to go.</p>
+        <div class="call-to-action">
+          <a href="/guides/cli.html">Try Josh Locally</a>
+        </div>
+      </section>
+      <section>
+        <h2>Run in your own cloud.</h2>
+        <p>If you have the Josh jar, running the "server" command starts a node which can respond either as a leader or a follower. This endpoint can be provided in the Josh IDE or in the Python client. By default, local access does not enforce API keys. However, you can add API keys by setting the JOSH_API_KEYS environment variable which should have valid alphanumeric keys separated by commas. The maximum concurrency (number of parallel replicates) can be specified by "--concurrent-workers" and the url where leaders should send worker requests (like to a load balancer) along with the requstor's API key can be specified by the "--worker-url" option. Note that the worker and the leader both check API keys. Also, external data are sent in the request body which may require use of the "--use-http2" option in some environments.</p>
+        <div class="call-to-action">
+          <a href="/dist/main/">Download Josh</a>
+        </div>
+      </section>
+      <section>
+        <h2>Link up with Python.</h2>
+        <p>Josh can also be used from Python. Though more features are coming soon, this can be another way to integrate Josh into larger workflows and it can interoperate with other common data science libaries. Simply pip install joshpy!</p>
+        <div class="call-to-action">
+          <a href="/guides/python.html">Learn about Josh and Python</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
