@@ -237,11 +237,12 @@ public class SingleThreadEventHandlerMachineTest {
   @Test
   void applyMap_shouldApplyMapOperation() {
     // Given
-    EngineValue operand = makeIntScalar(5);      // Value to map
-    EngineValue fromLow = makeIntScalar(0);      // Original range start
-    EngineValue fromHigh = makeIntScalar(10);    // Original range end
-    EngineValue toLow = makeIntScalar(0);        // Target range start
-    EngineValue toHigh = makeIntScalar(100);     // Target range end
+    EngineValue operand = makeIntScalar(5); // Value to map
+    EngineValue fromLow = makeIntScalar(0); // Original range start
+    EngineValue fromHigh = makeIntScalar(10); // Original range end
+    EngineValue toLow = makeIntScalar(0); // Target range start
+    EngineValue toHigh = makeIntScalar(100); // Target range end
+    EngineValue ignoredArg = makeIntScalar(1);
 
     // When - stack order: operand, fromLow, fromHigh, toLow, toHigh
     machine.push(operand);
@@ -249,6 +250,7 @@ public class SingleThreadEventHandlerMachineTest {
     machine.push(fromHigh);
     machine.push(toLow);
     machine.push(toHigh);
+    machine.push(ignoredArg);
     machine.applyMap("linear");
 
     // Then - 5 is 50% of way from 0 to 10, so result should be 50 (50% of way from 0 to 100)
