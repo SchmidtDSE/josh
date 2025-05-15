@@ -19,7 +19,7 @@
       <section id="overview">
         <h2>Overview</h2>
         <p>
-          You are already becoming an expert in Josh! This next example is just using what you already learned but making it a little bigger. Specifically, we are going to run a simulation with lots of agents with each representing a single tree.
+          You are already becoming an expert in Josh! This next example is just using what you already learned but making it a little bigger. Specifically, we are going to run a simulation with lots of agents with each representing a single tree. This can sometimes be useful to include dynamics which are difficult to describe at the patch.
         </p>
         <p>
           As with the other tutorials, this is a toy model using fake species. The use of specific location is just so that we can use external data.
@@ -54,9 +54,12 @@
   year.step = prior.year + 1
 
   # Indicate ecological and spatial limits
-  constraints.maxOccupants = 100 count
+  constraints.maxOccupants = 30 count
   constraints.minViableTemperature = 273 K
   constraints.maxViableTemperature = 373 K
+
+  # Indicate exports
+  exportFiles.patch = "memory://editor/patches"
 
 end simulation</pre>
         <p>
@@ -64,16 +67,10 @@ end simulation</pre>
         </p>
       </section>
 
-      <section id="patch">
-        <h2>Patch</h2>
+      <section id="init">
+        <h2>Init</h2>
         <p>
-          Our patch will look mostly similar to what you've seen before with two exceptions.</p>
-        <p>
-          Let's start with step phases. You may notice below that there is also a start and end event handler type in addition to init and step like for the "newCount.end" handler. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations.
-          </p>
-          <p>
-            Second, we are getting a look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages but they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets. For example, "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
-          </p>
+          Let's start with initializing occupancy of these patches. We want to have this step use the maximum occupancy from the simulation definition.
         </p>
         <pre>start patch Default
 
@@ -86,12 +83,36 @@ end simulation</pre>
   SpeciesA.init = create initialACount of SpeciesA
   SpeciesB.init = create initialBCount of SpeciesB
 
+end patch</pre>
+      </section>
+      <section id="death">
+        <h2>Death</h2>
+        <p>
+          Unlike our ForeverTree, these trees can die. We will set a property on our agents called dead and remove those from the patch that have dead == true.
+        </p>
+        <pre>start patch Default
+
+  # ... prior code here ...
+
   # Remove dead occupants at start of simulation step
   SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
   SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
   speciesACount.start = count(SpeciesA)
   speciesBCount.start = count(SpeciesB)
-  totalCount.start = speciesACount + speciesBCount
+          
+end patch</pre>
+        <p>
+          This looks look mostly similar to what you've seen before but you may notice that there is also a start event handler type in addition to init and step like for the "newCount.end" handler. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations. Also, this is the first time we see a slice. For example, "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
+        </p>
+      </section>
+      <section id="extremes">
+        <h2>Extremes</h2>
+        <p>
+          Next, we will also check for extreme temperature events which our organisms will respond to.
+        </p>
+        <pre>start patch Default
+
+  # ... prior code here ...
 
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
@@ -101,7 +122,20 @@ end simulation</pre>
     return inExtremeCold or inExtremeHot
   }
 
+end patch</pre>
+        <p>Don't worry! You will see the organisms (agents) use this soon.</p>
+      </section>
+      <section id="birth">
+        <h2>Birth</h2>
+        <p>
+          Next, we also want to take care of the birth. Let's look at making new trees as well.
+        </p>
+        <pre>start patch Default
+
+  # ... prior code here ...
+
   # Calculate num new occupants end step (to have their first step on next step)
+  totalCount.start = speciesACount + speciesBCount
   newCount.end = {
     const probabilityNewRaw = (-1 count * (totalCount - 5 count) ^ 2 / 20 count) + 110 %
     const probabilityNew = limit probabilityNewRaw to [0%, 100%]
@@ -131,11 +165,16 @@ end simulation</pre>
   SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
 
   # Export counts
-  export.newSpeciesACount.step = newSpeciesACount
-  export.newSpeciesBCount.step = newSpeciesBCount
+  export.newSpeciesACount.end = newSpeciesACount
+  export.newSpeciesBCount.end = newSpeciesBCount
 
 end patch</pre>
-        <p>Before finishing up this step, note that SpeciesA is a variable or attribute of the Default patch but, by convention, it uses the same name as the organism. You could also call it "SpeciesAPresent" and things would work out.</p>
+        <p>
+          Here, we are getting a closer look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages but they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets like we saw in our discussion of slices.
+        </p>
+        <p>
+          Before finishing up this step, note that SpeciesA is a variable or attribute of the Default patch but, by convention, it uses the same name as the organism. You could also call it "SpeciesAPresent" and things would work out.
+        </p>
       </section>
 
       <section id="species-a">
@@ -148,37 +187,37 @@ end patch</pre>
         </p>
         <pre>start organism SpeciesA
 
-# Start a zero height except when if this is the simulation start
-dead.init = false
-height.init = {
-  const isFirstYear = meta.startYear == meta.year
-  const heightSample = sample normal with mean of 20 meters std of 5 meters
-  const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
-  return heightSampleLimit if isFirstYear else 0 meters
-}
-
-# At each step, determine impact of temperature
-temperatureImpact.step = map external temperature
-  from [270 K, 330 K]
-  to [0%, 100%]
-  quadratic
-
-# At each step, determine impact of precipitation
-precipitationImpact.step = map external precipitation
-  from [300 mm, 500 mm]
-  to [0%, 100%]
-  sigmoid
-
-# At each step, determine overall growth
-newGrowth.step = 1 m * temperatureImpact * precipitationImpact
-height.step = prior.height + newGrowth
-
-# At each step end, determine death if over survival probability
-dead.end = {
-  const deadByChance = (sample uniform from 0% to 100%) > 30%
-  const deadByExtremeTemp = here.inExtremeTemperature
-  return deadByChance or deadByExtremeTemp
-}
+  # Start a zero height except when if this is the simulation start
+  dead.init = false
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+  
+  # At each step, determine impact of temperature
+  temperatureImpact.step = map external temperature
+    from [270 K, 330 K]
+    to [0%, 100%]
+    quadratic
+  
+  # At each step, determine impact of precipitation
+  precipitationImpact.step = map external precipitation
+    from [300 mm, 500 mm]
+    to [0%, 100%]
+    sigmoid
+  
+  # At each step, determine overall growth
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
+  height.step = prior.height + newGrowth
+  
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 30%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
 
 end organism</pre>
         <p>
