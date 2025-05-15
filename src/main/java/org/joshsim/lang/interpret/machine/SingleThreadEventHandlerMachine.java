@@ -117,6 +117,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue operand = pop();
     endConversionGroup();
 
+    mappingBuilder.setValueFactory(valueFactory);
     MapStrategy strategy = mappingBuilder.build(strategyName);
 
     EngineValue result = strategy.apply(operand);
