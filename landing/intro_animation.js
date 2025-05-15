@@ -48,9 +48,9 @@ function runIntroAnimation() {
      .attr("fill", "#ffffff")
      .attr("opacity", 0)
      .transition()
-     .delay(() => Math.random() * 2000)
+     .delay(() => Math.random() * 5000)
      .duration(1000)
-     .attr("opacity", () => Math.random() * 0.5);
+     .attr("opacity", () => Math.random() * 0.4);
 }
 
 /**
