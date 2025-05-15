@@ -97,10 +97,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
-    startConversionGroup();
     EngineValue param = pop();
+    
+    startConversionGroup();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
+    endConversionGroup();
+
+    startConversionGroup();
     EngineValue fromHigh = pop();
     EngineValue fromLow = pop();
     EngineValue operand = pop();
