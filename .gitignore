@@ -31,5 +31,8 @@ editor/third_party
 # Editor war
 editor/war
 
+# Third party in landing
+landing/publicsans
+
 *.jshd
 *.wasm

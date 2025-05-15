@@ -192,6 +192,8 @@ jobs:
         run: sudo apt-get install -y wget
       - name: Load JS deps
         run: cd editor/third_party; bash install_deps.sh
+      - name: Install landing deps
+        run: cd landing; bash install_deps.sh
       - name: Upload war
         uses: actions/upload-artifact@v4
         with:
@@ -211,6 +213,11 @@ jobs:
         with:
           name: editor
           path: editor
+      - name: Upload landing
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing
+          path: landing
   deployStatic:
     environment: Deploy
     runs-on: ubuntu-latest
@@ -256,8 +263,6 @@ jobs:
         with:
           name: editor
           path: ./editor-build
-      - name: Verify editor
-        run: ls editor-build/
       - name: Upload Editor via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -267,6 +272,20 @@ jobs:
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build'
           remotePath: './${{ env.EDITOR_DIRECTORY }}'
+      - name: Download landing
+        uses: actions/download-artifact@v4
+        with:
+          name: landing
+          path: ./landing-build
+      - name: Upload Editor via SFTP
+        uses: Creepios/sftp-action@v1.0.3
+        with:
+          host: ${{ secrets.SFTPHOST }}
+          port: 22
+          username: ${{ secrets.SFTPUSER }}
+          password: ${{ secrets.SFTPPASSWORD }}
+          localPath: './landing-build'
+          remotePath: './${{ env.LANDING_DIRECTORY }}'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
