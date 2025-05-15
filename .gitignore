@@ -38,3 +38,4 @@ landing/publicsans
 *.wasm
 
 landing/publicsans
+landing/d3.min.js
