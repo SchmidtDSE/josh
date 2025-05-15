@@ -35,6 +35,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
+import org.joshsim.lang.interpret.mapping.MappingBuilder;
 import org.joshsim.lang.interpret.mapping.QuadraticMapStrategy;
 import org.joshsim.lang.interpret.mapping.SigmoidMapStrategy;
 
@@ -97,35 +98,27 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
-    startConversionGroup();
+    MappingBuilder mappingBuilder = new MappingBuilder();
+    
     EngineValue param = pop();
+    mappingBuilder.setMapBehaviorArgument(param);
+    
+    startConversionGroup();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
+    mappingBuilder.setRange(new MapBounds(toLow, toHigh));
+    endConversionGroup();
+
+    startConversionGroup();
     EngineValue fromHigh = pop();
     EngineValue fromLow = pop();
+    mappingBuilder.setDomain(new MapBounds(fromLow, fromHigh));
+    
     EngineValue operand = pop();
     endConversionGroup();
 
-    MapStrategy strategy = switch (strategyName) {
-      case "linear" -> new LinearMapStrategy(
-          valueFactory,
-          new MapBounds(fromLow, fromHigh),
-          new MapBounds(toLow, toHigh)
-      );
-      case "quadratic" -> new QuadraticMapStrategy(
-          valueFactory,
-          new MapBounds(fromLow, fromHigh),
-          new MapBounds(toLow, toHigh),
-          param.getAsBoolean()
-      );
-      case "sigmoid" -> new SigmoidMapStrategy(
-          valueFactory,
-          new MapBounds(fromLow, fromHigh),
-          new MapBounds(toLow, toHigh),
-          param.getAsBoolean()
-      );
-      default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
-    };
+    mappingBuilder.setValueFactory(valueFactory);
+    MapStrategy strategy = mappingBuilder.build(strategyName);
 
     EngineValue result = strategy.apply(operand);
 
