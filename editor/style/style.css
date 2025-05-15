@@ -171,6 +171,12 @@ main {
   overflow-y: auto;
 }
 
+.file-upload-active-panel {
+  padding: 15px;
+  background-color: #E0E0E0;
+  border-radius: 5px;
+}
+
 .file-upload-input-holder {
   margin-bottom: 15px;
 }

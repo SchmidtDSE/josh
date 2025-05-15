@@ -11,7 +11,21 @@
       <section id="intro">
         <div class="back-panel">This tutorial is part of the <a href="/guide.html">Josh Simulation Engine Guide</a>.</div>
         <h1>Grass, Shrub, Fire</h1>
-        <p>This tutorial is under construction. Check back soon for more details!</p>
+        <p>In the <a href="/guides/hello.html">previous tutorial</a>, we explored some of Josh's features at a high level by simulating about 35,000 trees over an 11 year period. In this next step, we are going to zoom into one specific common use of this software: running formulas spatially.</p>
+      </section>
+      <section id="overview">
+        <h2>Overview</h2>
+        <p>
+          Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that computation across many machines like through <a href="/community.html">Josh Cloud</a>.
+        </p>
+        <p>
+          In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this simulation, we will use external data from <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6</a> that offers predictions of future precipitation. 
+        </p>
+      </section>
+      <section id="data">
+        <h2>Data</h2>
+        <p>The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are origianlly provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocessing of these files which allows Josh to do some up-front work which ensures high simulation execution speeds. These are in Josh Data Files or (.jshd).</p>
+        <p>All that in mind, we've gone ahead and preprocessed these data for you. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.</p>
       </section>
     </main>
   </body>

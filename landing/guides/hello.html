@@ -111,7 +111,7 @@ end unit</pre>
 
       <section id="run">
         <h2>Run</h2>
-        <p>You have everything you need to run your first simulation! Go ahead and copy the four stanzas above into the text editor and run in your browser. Give it a minute or two to do its job and let's look at the output.</p>
+        <p>You have everything you need to run your first simulation! Go ahead and copy the four stanzas above into the text editor and run in your browser. Give it a minute or two to do its job. You are simulating about 35,000 trees! Then, let's look at the output.</p>
       </section>
 
       <section id="exports">
@@ -119,7 +119,7 @@ end unit</pre>
         <p>Your simulation probably ran but you likely didn't see any outputs. We have to tell Josh which variables to export. You can send data from your simulations to CSV files which you can open in spreadsheet software, COGs / geotiffs, or netCDF files. You can also do these exports from simulations, patches, or organisms. That said, the Josh browser-based code editor is optimized for CSV files from patches. Let's start there.</p>
         <pre>start patch Default
 
-  ForeverTree.init = create ForeverTree
+  ForeverTree.init = create 10 count of ForeverTree
 
   export.averageAge.step = mean(ForeverTree.age)
   export.averageHeight.step = mean(ForeverTree.height)
