@@ -8,6 +8,7 @@
  */
 
 package org.joshsim.lang.interpret.mapping;
+
 import java.util.Optional;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -42,7 +43,7 @@ public class MappingBuilder {
    * @return This builder instance for method chaining.
    */
   public MappingBuilder setValueFactory(EngineValueFactory valueFactory) {
-    this.valueFactory = Optional.ofNullable(valueFactory);
+    this.valueFactory = Optional.of(valueFactory);
     return this;
   }
 
@@ -53,7 +54,7 @@ public class MappingBuilder {
    * @return This builder instance for method chaining.
    */
   public MappingBuilder setDomain(MapBounds domain) {
-    this.domain = Optional.ofNullable(domain);
+    this.domain = Optional.of(domain);
     return this;
   }
 
@@ -64,7 +65,7 @@ public class MappingBuilder {
    * @return This builder instance for method chaining.
    */
   public MappingBuilder setRange(MapBounds range) {
-    this.range = Optional.ofNullable(range);
+    this.range = Optional.of(range);
     return this;
   }
 
@@ -75,7 +76,7 @@ public class MappingBuilder {
    * @return This builder instance for method chaining.
    */
   public MappingBuilder setMapBehaviorArgument(EngineValue mapBehaviorArgument) {
-    this.mapBehaviorArgument = Optional.ofNullable(mapBehaviorArgument);
+    this.mapBehaviorArgument = Optional.of(mapBehaviorArgument);
     return this;
   }
   
