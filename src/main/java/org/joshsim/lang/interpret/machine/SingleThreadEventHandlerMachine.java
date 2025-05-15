@@ -35,6 +35,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
+import org.joshsim.lang.interpret.mapping.MappingBuilder;
 import org.joshsim.lang.interpret.mapping.QuadraticMapStrategy;
 import org.joshsim.lang.interpret.mapping.SigmoidMapStrategy;
 
@@ -97,20 +98,26 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
+    MappingBuilder mappingBuilder = new MappingBuilder();
+    
     EngineValue param = pop();
+    mappingBuilder.setMapBehaviorArgument(param);
     
     startConversionGroup();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
+    mappingBuilder.setRange(new MapBounds(toLow, toHigh));
     endConversionGroup();
 
     startConversionGroup();
     EngineValue fromHigh = pop();
     EngineValue fromLow = pop();
+    mappingBuilder.setDomain(new MapBounds(fromLow, fromHigh));
+    
     EngineValue operand = pop();
     endConversionGroup();
 
-    MapStrategy strategy = ;
+    MapStrategy strategy = mappingBuilder.build(strategyName);
 
     EngineValue result = strategy.apply(operand);
 

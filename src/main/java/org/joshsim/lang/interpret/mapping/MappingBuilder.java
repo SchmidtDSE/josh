@@ -26,7 +26,7 @@ public class MappingBuilder {
   private Optional<EngineValue> mapBehaviorArgument;
 
   /**
-   * Create a new mapping builder with empty optional fields.
+   * Create a new mapping builder.
    */
   public MappingBuilder() {
     valueFactory = Optional.empty();
@@ -82,9 +82,11 @@ public class MappingBuilder {
   /**
    * Build a mapping strategy based on the provided strategy name and builder settings.
    *
-   * @param strategyName The name of the mapping strategy to build ("linear", "quadratic", or "sigmoid").
+   * @param strategyName The name of the mapping strategy to build ("linear", "quadratic", or
+   *     "sigmoid").
    * @return The constructed mapping strategy.
-   * @throws IllegalArgumentException if the strategy name is unknown or required fields are missing.
+   * @throws IllegalArgumentException if the strategy name is unknown or required fields are
+   *     missing.
    */
   public MapStrategy build(String strategyName) {
     return switch (strategyName) {
