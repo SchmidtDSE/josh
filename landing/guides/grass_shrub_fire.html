@@ -11,7 +11,189 @@
       <section id="intro">
         <div class="back-panel">This tutorial is part of the <a href="/guide.html">Josh Simulation Engine Guide</a>.</div>
         <h1>Grass, Shrub, Fire</h1>
-        <p>This tutorial is under construction. Check back soon for more details!</p>
+        <p>In the <a href="/guides/hello.html">previous tutorial</a>, we explored some of Josh's features at a high level by simulating more than 30,000 trees over an 11 year period. In this next step, we are going to zoom into one common use of this software: patch-based execution.</p>
+      </section>
+      <section id="overview">
+        <h2>Overview</h2>
+        <p>
+          Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that computation across many machines like through <a href="/community.html">Josh Cloud</a>.
+        </p>
+        <p>
+          In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this demo, we will use external data from <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6</a> that offers predictions of future precipitation. 
+        </p>
+        <p>
+          Once again, this is not meant to be an ecologically sound model. It's not simulating specific species or a specific environment. It's just a toy demo.
+        </p>
+      </section>
+      <section id="data">
+        <h2>Data</h2>
+        <p>
+          The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files or (.jshd).
+        </p>
+        <p>
+          All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
+        </p>
+      </section>
+      <section id="simulation">
+        <h2>Simulation</h2>
+        <p>
+          As before in our <a href="/guides/hello.html">ForeverTree example</a>, we will define an area we want to simulate.
+        </p>
+        <pre>start simulation Main
+
+  # Specify location of simulation
+  grid.size = 1000 m
+  grid.low = 35.5 degrees latitude, -120 degrees longitude
+  grid.high = 34.5 degrees latitude, -119 degrees longitude
+
+  # Specify the years for the simulation
+  steps.low = 0 count
+  steps.high = 10 count
+
+  startYear.init = 2025
+  year.init = startYear
+  year.step = prior.year + 1
+
+  # Indicate output should go to the code editor
+  exportFiles.patch = "memory://editor/patches"
+
+  # Fire parameters
+  fire.trigger.coverThreshold = 15%
+  fire.trigger.high = 5%
+  fire.trigger.typical = 1%
+  fire.damage.grass = 70%
+  fire.damage.shrub = 90%
+
+end simulation</pre>
+        <p>
+          This is a little longer than before because we are including some constants This can be helpful if you want to have multiple versions of a simulation that you want to compare. Maybe you have LosPadres as one simulation and SantaCruz as another which might have slightly different parameters.
+        </p>
+      </section>
+
+      <section id="init">
+        <h2>Init</h2>
+        <p>
+          Our patch will hold all of our computation this time so it will be a bit more involved. Let's start by setting our grid to random initial cover levels of grasses and shrubs. In practice, this may come from an external data.
+        </p>
+        <pre>start patch Default
+
+  # Initalize to up to 20% each type
+  grassCover.init = sample uniform from 0% to 20%
+  shrubCover.init = sample uniform from 0% to 20%
+  
+end patch</pre>
+      <p>
+        This simply indicates that the patch is covered by up to 20% of grass and or shrubs. Note that our simulation stanza didn't specify the name of the patch to use. That is because Josh will use "Default" if none is specified.
+      </p>
+      </section>
+
+      <section id="fire">
+        <h2>Fire</h2>
+        <p>
+          Next, we want to determine the probability that the patch is on fire which, for this very simple demo model, will simply look at the amount of grass coverage.
+        </p>
+        <pre>start patch Default
+  
+  # ... existing code here ...
+  
+  # Determine if on fire
+  isHighCover.step = prior.grassCover > meta.fire.trigger.coverThreshold
+  fireProbability.step = meta.fire.trigger.high if isHighCover else meta.fire.trigger.typical
+  onFire.step = (sample uniform from 0% to 100%) < fireProbability
+
+  # Determine possible destruction
+  destroy.grass.step = sample normal with mean of 70% std of 10%
+  destroy.shrub.step = sample normal with mean of 90% std of 20%
+                                                   
+end patch
+        </pre>
+        <p>
+          First, this snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. Here, we can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
+        </p>
+      </section>
+
+      <section id="fire">
+        <h2>Growth</h2>
+        <p>
+          Hopefully our grass and shrubs can do more than combust! Let's model new growth as well. For this, we will use a sigmoid that has horizontal asymptotes at 0% and 5% growth for grass while having horizontal asymptotes at 0% and 3% for shrubs. It will reach these asymptotes at different precipitation levels where grass should grow faster in good precipitation but shrubs should be sturdier in drought.
+        </p>
+        <pre>start patch Default
+
+  # ... existing code here ...
+
+  # Determine possible growth
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
+
+end patch</pre>
+        <p>
+          Josh can fit these curves for you given a description of the domain and range. Note that it also does this mapping across units. We will come back to defining those units shortly!
+        </p>
+      </section>
+
+      <section id="apply">
+        <h2>Apply</h2>
+        <p>
+          We are almost done. Let's next tie it all together and apply the change in cover at each year.
+        </p>
+        <pre>start patch Default
+
+  # ... existing code here ...
+
+  # Apply change based on if on fire
+  grassCover.step = {
+    const afterDestroy = prior.grassCover * destroy.grass
+    const afterGrowth = prior.grassCover + growth.grass
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+  shrubCover.step = {
+    const afterDestroy = prior.shrubCover * destroy.shrub
+    const afterGrowth = prior.shrubCover + growth.shrub
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+end patch</pre>
+        <p>
+          Here, we ask Josh to calculate how cover would change depending on if the patch was on fire in the given year. Then, we apply based on if it was actually on fire. Note that, in this step, we have a function defintion. Whereas our previous event handlers were each on line, use of the curly braces lets us write multiple lines of code. This is called a function and we can define variables using const that live only within that function. These are like const variables in other programming languages in that they can be written to once and read as many times as you like.
+        </p>
+      </section>
+
+      <section id="export">
+        <h2>Export</h2>
+        <p>
+          This last part is probably pretty familiar. Let's go ahead and save the cover variables as exports.
+        </p>
+        <pre>start patch Default
+
+  # ... existing code here ...
+
+    # Save exports
+    export.grassCover.step = grassCover
+    export.shrubeCover.step = shrubCover
+
+  end patch
+</pre>
+        <p>
+          Note that the ordering of handlers does not matter. If you refer to a variable, Josh will go and calculate that variable and then return to the line of code where you referenced it to continue its work. That means that you can organize your event handlers for readibility, letting Josh worry about dependencies between formulas.
+        </p>
+      </section>
+      <section>
+        <h2>Wrap</h2>
+        <p>
+          We are just about at the end. We used millimeters as a unit so we need to define it for Josh:
+        </p>
+        <pre>start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit</pre>
+        <p>With all that in place, go ahead and give your code a run! When you are ready, let's contiune this exploration by <a href="/guides/two_trees.html">returning to agents</a>.</p>
       </section>
     </main>
   </body>

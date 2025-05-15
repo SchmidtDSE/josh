@@ -23,13 +23,13 @@ class SigmoidMapStrategyTest {
     valueFactory = new EngineValueFactory();
 
     // Set up domain values (0 to 10)
-    EngineValue domainLow = valueFactory.build(new BigDecimal("0"), Units.EMPTY);
-    EngineValue domainHigh = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
+    EngineValue domainLow = valueFactory.build(new BigDecimal("0"), Units.METERS);
+    EngineValue domainHigh = valueFactory.build(new BigDecimal("10"), Units.METERS);
     domain = new MapBounds(domainLow, domainHigh);
 
     // Set up range values (10 to 20)
-    EngineValue rangeLow = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
-    EngineValue rangeHigh = valueFactory.build(new BigDecimal("20"), Units.EMPTY);
+    EngineValue rangeLow = valueFactory.build(new BigDecimal("10"), Units.DEGREES);
+    EngineValue rangeHigh = valueFactory.build(new BigDecimal("20"), Units.DEGREES);
     range = new MapBounds(rangeLow, rangeHigh);
 
     increasingStrategy = new SigmoidMapStrategy(valueFactory, domain, range, true);
@@ -39,42 +39,42 @@ class SigmoidMapStrategyTest {
   @Test
   @DisplayName("Increasing: Should map domain start (0) to range start (10)")
   void testIncreasingMapDomainStart() {
-    EngineValue input = valueFactory.build(new BigDecimal("0"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("0"), Units.METERS);
     assertEquals(10.0, increasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 
   @Test
   @DisplayName("Increasing: Should map domain middle (5) to range middle (15)")
   void testIncreasingMapDomainMiddle() {
-    EngineValue input = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("5"), Units.METERS);
     assertEquals(15.0, increasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 
   @Test
   @DisplayName("Increasing: Should map domain end (10) to range end (20)")
   void testIncreasingMapDomainEnd() {
-    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.METERS);
     assertEquals(20.0, increasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 
   @Test
   @DisplayName("Decreasing: Should map domain start (0) to range end (20)")
   void testDecreasingMapDomainStart() {
-    EngineValue input = valueFactory.build(new BigDecimal("0"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("0"), Units.METERS);
     assertEquals(20.0, decreasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 
   @Test
   @DisplayName("Decreasing: Should map domain middle (5) to range middle (15)")
   void testDecreasingMapDomainMiddle() {
-    EngineValue input = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("5"), Units.METERS);
     assertEquals(15.0, decreasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 
   @Test
   @DisplayName("Decreasing: Should map domain end (10) to range start (10)")
   void testDecreasingMapDomainEnd() {
-    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.METERS);
     assertEquals(10.0, decreasingStrategy.apply(input).getAsDecimal().doubleValue(), 0.1);
   }
 }

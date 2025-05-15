@@ -49,13 +49,13 @@ start patch Default
   fireProbability.step = meta.fire.trigger.high if isHighCover else meta.fire.trigger.typical
   onFire.step = (sample uniform from 0% to 100%) < fireProbability
 
-  # Determine possible growth
-  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
-  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
-
   # Determine possible destruction
   destroy.grass.step = sample normal with mean of 70% std of 10%
   destroy.shrub.step = sample normal with mean of 90% std of 20%
+
+  # Determine possible growth
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
 
   # Apply change based on if on fire
   grassCover.step = {
@@ -72,24 +72,11 @@ start patch Default
     return limit newValueRaw to [0%, 100%]
   }
 
+  # Save exports
+  export.grassCover.step = grassCover
+  export.shrubeCover.step = shrubCover
+
 end patch
-
-
-start unit K
-
-  alias Kelvins
-  alias Kelvin
-
-end unit
-
-
-start unit C
-
-  alias Celcius
-
-  K = 272.15 + current
-
-end unit
 
 
 start unit mm

@@ -23,13 +23,13 @@ class QuadraticMapStrategyTest {
     valueFactory = new EngineValueFactory();
 
     // Set up domain values (5 to 15)
-    EngineValue domainLow = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
-    EngineValue domainHigh = valueFactory.build(new BigDecimal("15"), Units.EMPTY);
+    EngineValue domainLow = valueFactory.build(new BigDecimal("5"), Units.METERS);
+    EngineValue domainHigh = valueFactory.build(new BigDecimal("15"), Units.METERS);
     domain = new MapBounds(domainLow, domainHigh);
 
     // Set up range values (0 to 100)
-    EngineValue rangeLow = valueFactory.build(new BigDecimal("0"), Units.EMPTY);
-    EngineValue rangeHigh = valueFactory.build(new BigDecimal("100"), Units.EMPTY);
+    EngineValue rangeLow = valueFactory.build(new BigDecimal("0"), Units.DEGREES);
+    EngineValue rangeHigh = valueFactory.build(new BigDecimal("100"), Units.DEGREES);
     range = new MapBounds(rangeLow, rangeHigh);
 
     maxStrategy = new QuadraticMapStrategy(valueFactory, domain, range, true);
@@ -39,8 +39,8 @@ class QuadraticMapStrategyTest {
   @Test
   @DisplayName("When center is maximum, domain endpoints should map to range minimum")
   void testMaxStrategyEndpoints() {
-    EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
-    EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.EMPTY);
+    EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.METERS);
+    EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.METERS);
 
     assertEquals(0, maxStrategy.apply(input1).getAsDecimal().doubleValue(), 0.00001);
     assertEquals(0, maxStrategy.apply(input2).getAsDecimal().doubleValue(), 0.00001);
@@ -49,15 +49,15 @@ class QuadraticMapStrategyTest {
   @Test
   @DisplayName("When center is maximum, domain midpoint should map to range maximum")
   void testMaxStrategyMidpoint() {
-    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.METERS);
     assertEquals(100, maxStrategy.apply(input).getAsDecimal().doubleValue(), 0.00001);
   }
 
   @Test
   @DisplayName("When center is minimum, domain endpoints should map to range maximum")
   void testMinStrategyEndpoints() {
-    EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.EMPTY);
-    EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.EMPTY);
+    EngineValue input1 = valueFactory.build(new BigDecimal("5"), Units.METERS);
+    EngineValue input2 = valueFactory.build(new BigDecimal("15"), Units.METERS);
 
     assertEquals(100, minStrategy.apply(input1).getAsDecimal().doubleValue(), 0.00001);
     assertEquals(100, minStrategy.apply(input2).getAsDecimal().doubleValue(), 0.00001);
@@ -66,7 +66,7 @@ class QuadraticMapStrategyTest {
   @Test
   @DisplayName("When center is minimum, domain midpoint should map to range minimum")
   void testMinStrategyMidpoint() {
-    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.EMPTY);
+    EngineValue input = valueFactory.build(new BigDecimal("10"), Units.METERS);
     assertEquals(0, minStrategy.apply(input).getAsDecimal().doubleValue(), 0.00001);
   }
 }
