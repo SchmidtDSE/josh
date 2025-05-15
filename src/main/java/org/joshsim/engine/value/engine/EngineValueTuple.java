@@ -207,7 +207,15 @@ public class EngineValueTuple {
      * Determine if these two identities are compatible without furter casting.
      */
     public boolean getAreCompatible() {
-      return getFirst().equals(getSecond());
+      if (getFirst().equals(getSecond())) {
+        return true;
+      } else if (getFirst().toString().isBlank()) {
+        return true;
+      } else if (getSecond().toString().isBlank()) {
+        return true;
+      } else {
+        return false;
+      }
     }
 
     @Override
