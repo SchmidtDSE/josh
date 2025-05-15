@@ -1,3 +1,9 @@
+/**
+ * Logic to run landing page.
+ *
+ * @license BSD-3-Clause
+ */
+
 
 /**
  * Animate the header.
@@ -8,13 +14,13 @@
  * a duration of 1 second, the opacity is set randomly between 0% and 20%.
  */
 function runIntroAnimation() {
-  const svg = d3.select('.header-intro');
-  const header = document.querySelector('header');
+  const svg = d3.select(".header-intro");
+  const header = document.querySelector("header");
   const width = header.offsetWidth;
   const height = header.offsetHeight;
   
-  svg.attr('width', width)
-     .attr('height', height);
+  svg.attr("width", width)
+     .attr("height", height);
 
   const squareSize = width / 50;
   const numRows = Math.ceil(height / squareSize);
@@ -31,20 +37,20 @@ function runIntroAnimation() {
     }
   }
 
-  svg.selectAll('rect')
+  svg.selectAll("rect")
      .data(squares)
      .enter()
-     .append('rect')
-     .attr('x', d => d.x)
-     .attr('y', d => d.y)
-     .attr('width', d => d.size * 0.9)
-     .attr('height', d => d.size * 0.9)
-     .attr('fill', '#ffffff')
-     .attr('opacity', 0)
+     .append("rect")
+     .attr("x", d => d.x)
+     .attr("y", d => d.y)
+     .attr("width", d => d.size * 0.9)
+     .attr("height", d => d.size * 0.9)
+     .attr("fill", "#ffffff")
+     .attr("opacity", 0)
      .transition()
      .delay(() => Math.random() * 2000)
      .duration(1000)
-     .attr('opacity', () => Math.random() * 0.2);
+     .attr("opacity", () => Math.random() * 0.5);
 }
 
 /**
@@ -53,3 +59,6 @@ function runIntroAnimation() {
 function main() {
   setTimeout(() => runIntroAnimation(), 500);
 }
+
+
+main();

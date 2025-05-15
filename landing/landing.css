@@ -1,6 +1,6 @@
 @font-face {
   font-family: PublicSans;
-  src: url("/third_party/publicsans/fonts/otf/PublicSans-Regular.otf") format("opentype");
+  src: url("/publicsans/fonts/otf/PublicSans-Regular.otf") format("opentype");
 }
 
 a, a:link, a:visited {
@@ -148,6 +148,10 @@ pre {
 
 .guide section {
   margin-bottom: 50px;
+}
+
+.icon {
+  font-family: sans-serif;
 }
 
 .landing section {
