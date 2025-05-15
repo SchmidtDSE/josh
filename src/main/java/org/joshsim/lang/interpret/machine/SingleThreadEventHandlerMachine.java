@@ -32,12 +32,9 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.mapping.LinearMapStrategy;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
-import org.joshsim.lang.interpret.mapping.QuadraticMapStrategy;
-import org.joshsim.lang.interpret.mapping.SigmoidMapStrategy;
 
 
 /**
