@@ -7,3 +7,5 @@ if [ ! -e publicsans/fonts/otf/PublicSans-Regular.otf ]; then
   unzip public-sans-v2.001.zip
   cd ..
 fi
+
+[ ! -e d3.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js -O d3.min.js

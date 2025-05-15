@@ -271,13 +271,13 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './editor-build'
-          remotePath: './${{ env.EDITOR_DIRECTORY }}'
+          remotePath: './editor.joshsim.org'
       - name: Download landing
         uses: actions/download-artifact@v4
         with:
           name: landing
           path: ./landing-build
-      - name: Upload Editor via SFTP
+      - name: Upload landing via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
           host: ${{ secrets.SFTPHOST }}
@@ -285,7 +285,7 @@ jobs:
           username: ${{ secrets.SFTPUSER }}
           password: ${{ secrets.SFTPPASSWORD }}
           localPath: './landing-build'
-          remotePath: './${{ env.LANDING_DIRECTORY }}'
+          remotePath: './joshsim.org'
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
