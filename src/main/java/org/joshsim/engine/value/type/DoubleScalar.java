@@ -6,10 +6,9 @@
 
 package org.joshsim.engine.value.type;
 
+import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-
-import java.math.BigDecimal;
 
 
 /**

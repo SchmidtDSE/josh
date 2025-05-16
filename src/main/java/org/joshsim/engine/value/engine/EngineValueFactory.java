@@ -1,4 +1,3 @@
-
 /**
  * Data structures describing initialization helpers for EngineValues.
  *
@@ -13,7 +12,15 @@ import java.util.List;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.type.*;
+import org.joshsim.engine.value.type.BooleanScalar;
+import org.joshsim.engine.value.type.DecimalScalar;
+import org.joshsim.engine.value.type.DoubleScalar;
+import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.EntityValue;
+import org.joshsim.engine.value.type.IntScalar;
+import org.joshsim.engine.value.type.MutableEntityValue;
+import org.joshsim.engine.value.type.RealizedDistribution;
+import org.joshsim.engine.value.type.StringScalar;
 
 
 /**
@@ -150,13 +157,32 @@ public class EngineValueFactory {
    * Parse a number from a string.
    *
    * @param target The string to be parsed.
+   * @param units The units to be associated with the returned value.
    * @return An EngineValue backed by either a double or BigDecimal depending on factory settings.
    */
-  public EngineValue parseNumber(String target) {
+  public EngineValue parseNumber(String target, Units units) {
     if (favorBigDecimal) {
-      return build(new BigDecimal(target), Units.EMPTY);
+      return build(new BigDecimal(target), units);
     } else {
-      return build(Double.parseDouble(target), Units.EMPTY);
+      return build(Double.parseDouble(target), units);
+    }
+  }
+
+  /**
+   * Build an EngineValue for a number.
+   *
+   * <p>Builds an EngineValue using the provided number and units. Determines whether to use a
+   * BigDecimal or a double for the EngineValue based on the factory settings.</p>
+   *
+   * @param number The numeric value to be decorated into an EngineValue.
+   * @param units The units associated with the value.
+   * @return An EngineValue representing the specified number and units.
+   */
+  public EngineValue buildForNumber(double number, Units units) {
+    if (favorBigDecimal) {
+      return build(new BigDecimal(number), units);
+    } else {
+      return build(number, units);
     }
   }
 

@@ -6,7 +6,6 @@
 
 package org.joshsim.geo.external.readers;
 
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 

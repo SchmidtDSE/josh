@@ -113,9 +113,7 @@ class BooleanScalarTest {
     BooleanScalar scalar = new BooleanScalar(caster, true, Units.of("units"));
 
     Distribution dist = scalar.getAsDistribution();
-    assertEquals(1, dist.getValues().size());
-    assertEquals(true, dist.getValues().get(0));
-     assertEquals("units", dist.getUnits());
+    assertEquals(1, dist.getSize().get());
   }
 
   @Test

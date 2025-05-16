@@ -3,7 +3,6 @@ package org.joshsim.engine.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.junit.jupiter.api.BeforeEach;

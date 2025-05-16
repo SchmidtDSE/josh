@@ -9,7 +9,6 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.engine.EngineValueFactory;

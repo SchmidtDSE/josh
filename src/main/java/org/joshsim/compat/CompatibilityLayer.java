@@ -6,9 +6,8 @@
 
 package org.joshsim.compat;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
-
 import java.math.BigDecimal;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 
 /**
  * Layer which offers access to platform-specific functionality and preferences.

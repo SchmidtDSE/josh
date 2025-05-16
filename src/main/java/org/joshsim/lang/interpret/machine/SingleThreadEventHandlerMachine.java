@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 import java.util.stream.StreamSupport;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -98,10 +97,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
     MappingBuilder mappingBuilder = new MappingBuilder();
-    
+
     EngineValue param = pop();
     mappingBuilder.setMapBehaviorArgument(param);
-    
+
     startConversionGroup();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
@@ -112,7 +111,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue fromHigh = pop();
     EngineValue fromLow = pop();
     mappingBuilder.setDomain(new MapBounds(fromLow, fromHigh));
-    
+
     EngineValue operand = pop();
     endConversionGroup();
 

@@ -9,7 +9,6 @@ package org.joshsim.precompute;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -17,7 +16,6 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**

@@ -6,8 +6,6 @@
 
 package org.joshsim.compat;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
-
 import java.math.BigDecimal;
 
 

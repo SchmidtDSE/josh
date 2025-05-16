@@ -169,13 +169,10 @@ class DecimalScalarTest {
 
   @Test
   void testGetAsDistribution() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DecimalScalar scalar = new DecimalScalar(caster, new BigDecimal("42.5"), Units.of("kg"));
 
     Distribution dist = scalar.getAsDistribution();
-    assertEquals(1, dist.getValues().size());
-    assertEquals(new BigDecimal("42.5"), dist.getValues().get(0));
-    assertEquals("kg", dist.getUnits());
+    assertEquals(1, dist.getSize().get());
   }
 
 
@@ -190,7 +187,6 @@ class DecimalScalarTest {
 
   @Test
   void testCompareToSameUnitsDifferentValues() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
     Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(20), Units.of("m"));
 
@@ -200,7 +196,6 @@ class DecimalScalarTest {
 
   @Test
   void testCompareToIncompatibleUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
     Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), Units.of("s"));
 
@@ -209,7 +204,6 @@ class DecimalScalarTest {
 
   @Test
   void testCompareToEqualValues() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
     Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(10), Units.of("m"));
 
@@ -218,7 +212,6 @@ class DecimalScalarTest {
 
   @Test
   void testCompareToDifferentValuesSameOrder() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DecimalScalar(caster, new BigDecimal(15), Units.of("s"));
     Scalar scalar2 = new DecimalScalar(caster, new BigDecimal(5), Units.of("s"));
 

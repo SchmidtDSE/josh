@@ -8,7 +8,6 @@ package org.joshsim.engine.value.type;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;

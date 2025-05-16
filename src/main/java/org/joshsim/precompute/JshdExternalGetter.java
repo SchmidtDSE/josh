@@ -8,7 +8,6 @@ package org.joshsim.precompute;
 
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.ExternalResourceGetter;
