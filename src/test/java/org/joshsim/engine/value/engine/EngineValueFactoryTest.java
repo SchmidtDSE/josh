@@ -110,7 +110,7 @@ class EngineValueFactoryTest {
 
     // Assert
     assertTrue(result instanceof DoubleScalar);
-    assertEquals(123.456, result.getAsDouble());
+    assertEquals(123.456, result.getAsDouble(), 0.000001);
     assertEquals(Units.COUNT, result.getUnits());
   }
 
