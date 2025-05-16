@@ -1,14 +1,15 @@
 package org.joshsim.engine.value.engine;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.DoubleScalar;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.Test;
-
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 
 class EngineValueFactoryTest {
