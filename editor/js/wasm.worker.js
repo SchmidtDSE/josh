@@ -78,7 +78,12 @@ self.onmessage = async function(e) {
         break;
       
       case "runSimulation":
-        wasmLayer.exports.runSimulation(data.code, data.simulationName, data.data);
+        wasmLayer.exports.runSimulation(
+          data.code,
+          data.simulationName,
+          data.data,
+          data.preferBigDecimal
+        );
         self.postMessage({ type: "runSimulation", success: true });
         break;
 

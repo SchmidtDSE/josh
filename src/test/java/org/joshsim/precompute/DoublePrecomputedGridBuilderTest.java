@@ -22,6 +22,7 @@ class DoublePrecomputedGridBuilderTest {
   private PatchBuilderExtents mockExtents;
 
   private DoublePrecomputedGridBuilder builder;
+  private EngineValueFactory engineValueFactory;
   private final Units testUnits = Units.of("meters");
   private final long minTimestep = 0;
   private final long maxTimestep = 10;
@@ -34,13 +35,14 @@ class DoublePrecomputedGridBuilderTest {
     when(mockExtents.getBottomRightY()).thenReturn(BigDecimal.TEN);
 
     builder = new DoublePrecomputedGridBuilder();
+    engineValueFactory = new EngineValueFactory();
   }
 
   @Test
   void testBuildWithRequiredParameters() {
     // When
     DoublePrecomputedGrid grid = builder
-        .setEngineValueFactory(EngineValueFactory.getDefault())
+        .setEngineValueFactory(engineValueFactory)
         .setExtents(mockExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(testUnits)
@@ -58,7 +60,7 @@ class DoublePrecomputedGridBuilderTest {
 
     // When
     DoublePrecomputedGrid grid = builder
-        .setEngineValueFactory(EngineValueFactory.getDefault())
+        .setEngineValueFactory(engineValueFactory)
         .setExtents(mockExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(testUnits)
@@ -87,7 +89,7 @@ class DoublePrecomputedGridBuilderTest {
     // When/Then
     assertThrows(IllegalArgumentException.class, () -> {
       builder
-          .setEngineValueFactory(EngineValueFactory.getDefault())
+          .setEngineValueFactory(engineValueFactory)
           .setTimestepRange(minTimestep, maxTimestep)
           .setUnits(testUnits)
           .build();
@@ -99,7 +101,7 @@ class DoublePrecomputedGridBuilderTest {
     // When/Then
     assertThrows(IllegalArgumentException.class, () -> {
       builder
-          .setEngineValueFactory(EngineValueFactory.getDefault())
+          .setEngineValueFactory(engineValueFactory)
           .setExtents(mockExtents)
           .setTimestepRange(minTimestep, maxTimestep)
           .build();

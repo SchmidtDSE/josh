@@ -17,7 +17,7 @@ class ExtentsUtilTest {
   @BeforeEach
   void setUp() {
     builder = new PatchBuilderExtentsBuilder();
-    valueFactory = EngineValueFactory.getDefault();
+    valueFactory = new EngineValueFactory();
   }
 
   @Test

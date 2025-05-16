@@ -27,6 +27,7 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -45,6 +46,7 @@ public class ShadowingEntity implements MutableEntity {
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
+  private final EngineValueFactory valueFactory;
   private final MutableEntity inner;
   private final Entity here;
   private final Entity meta;
@@ -58,10 +60,12 @@ public class ShadowingEntity implements MutableEntity {
   /**
    * Create a new ShadowingEntity for a Patch or Simulation.
    *
-   * @param inner entity to decorate.
-   * @param meta reference to simulation or simulation-like entity. May be self.
+   * @param valueFactory Factory for creating EngineValue objects drived from this entity.
+   * @param inner Entity to decorate.
+   * @param meta Reference to simulation or simulation-like entity. May be self.
    */
-  public ShadowingEntity(MutableEntity inner, Entity meta) {
+  public ShadowingEntity(EngineValueFactory valueFactory, MutableEntity inner, Entity meta) {
+    this.valueFactory = valueFactory;
     this.inner = inner;
     this.here = this;
     this.meta = meta;
@@ -86,7 +90,9 @@ public class ShadowingEntity implements MutableEntity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(MutableEntity inner, Entity here, Entity meta) {
+  public ShadowingEntity(EngineValueFactory valueFactory, MutableEntity inner, Entity here,
+        Entity meta) {
+    this.valueFactory = valueFactory;
     this.inner = inner;
     this.here = here;
     this.meta = meta;
@@ -95,6 +101,15 @@ public class ShadowingEntity implements MutableEntity {
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
     handlersForAttribute = new HashMap<>();
+  }
+
+  /**
+   * Get the value factory to use in building derivative values from this entity.
+   *
+   * @return EngineValueFactory available for use in building values from this entity.
+   */
+  public EngineValueFactory getValueFactory() {
+    return valueFactory;
   }
 
   /**

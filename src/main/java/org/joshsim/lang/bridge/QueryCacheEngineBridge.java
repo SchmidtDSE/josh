@@ -19,6 +19,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 
 
 /**
@@ -34,6 +35,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * <p>Version of EngineBridge which caches patches found in queries that cross the bridge,
    * speeding up geospatial operations in exchange for some in-memory space.</p>
    *
+   * @param valueFactory Factory to use in constructing engine values.
    * @param geometryFactory Factory to use in constructing engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
@@ -41,16 +43,25 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to get external resources.
    */
-  public QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore,
-        ExternalResourceGetter externalResourceGetter) {
-    super(geometryFactory, simulation, converter, prototypeStore, externalResourceGetter);
+  public QueryCacheEngineBridge(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter) {
+
+    super(
+        valueFactory,
+        geometryFactory,
+        simulation,
+        converter,
+        prototypeStore,
+        externalResourceGetter
+    );
     cachedPatchesByGeometry = new HashMap<>();
   }
 
   /**
    * Constructs a caching EngineBridge with a given Replicate for testing.
    *
+   * @param valueFactory Factory to use in constructing engine values.
    * @param geometryFactory Factory to use in constructing engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
@@ -59,10 +70,11 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param externalResourceGetter Strategy to get external resources.
    * @param replicate The replicate to use for testing.
    */
-  QueryCacheEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
-        Converter converter, EntityPrototypeStore prototypeStore,
+  QueryCacheEngineBridge(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
+        MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, Replicate replicate) {
     super(
+        valueFactory,
         geometryFactory,
         simulation,
         converter,

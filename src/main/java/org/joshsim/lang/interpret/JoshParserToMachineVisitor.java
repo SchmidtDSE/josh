@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.interpret;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -59,13 +58,16 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   /**
    * Create a new visitor which has some commonly used values cached.
+   *
+   * @param valueFactory The factory to use in building engine values within this visitor.
+   * @param bridgeGetter The bridge getter to use in accessing a bridge for operations.
    */
-  public JoshParserToMachineVisitor(BridgeGetter bridgeGetter) {
+  public JoshParserToMachineVisitor(EngineValueFactory valueFactory, BridgeGetter bridgeGetter) {
     super();
 
     this.bridgeGetter = bridgeGetter;
 
-    engineValueFactory = EngineValueFactory.getDefault();
+    engineValueFactory = valueFactory;
     singleCount = engineValueFactory.build(1, Units.of("count"));
     allString = engineValueFactory.build("all", Units.of(""));
     trueValue = engineValueFactory.build(true, Units.of(""));
@@ -73,14 +75,14 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
-    ValueResolver resolver = new ValueResolver(identifierName);
+    ValueResolver resolver = new ValueResolver(engineValueFactory, identifierName);
     EventHandlerAction action = (machine) -> machine.push(resolver);
     return new ActionFragment(action);
   }
 
   public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
-    BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
-    EngineValue value = engineValueFactory.build(number, Units.of("count"));
+    String numberStr = ctx.getChild(0).getText();
+    EngineValue value = engineValueFactory.parseNumber(numberStr, Units.of("count"));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
   }
@@ -513,7 +515,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(this).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
-    ValueResolver resolver = new ValueResolver(attrName);
+    ValueResolver resolver = new ValueResolver(engineValueFactory, attrName);
 
     EventHandlerAction action = (machine) -> {
       expressionAction.apply(machine);
@@ -525,7 +527,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    ValueResolver targetResolver = new ValueResolver(ctx.target.toString());
+    ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.toString());
     EventHandlerAction distanceAction = ctx.distance.accept(this).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
@@ -900,12 +902,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     }
 
     if (isPercent) {
-      BigDecimal percent = BigDecimal.valueOf(Double.parseDouble(numberStr));
-      BigDecimal converted = percent.divide(BigDecimal.valueOf(100));
-      return engineValueFactory.build(converted, Units.of("count"));
+      double percent = Double.parseDouble(numberStr);
+      double converted = percent / 100;
+      return engineValueFactory.buildForNumber(converted, Units.of("count"));
     } else if (hasDecimal) {
-      BigDecimal number = BigDecimal.valueOf(Double.parseDouble(numberStr));
-      return engineValueFactory.build(number, Units.of(unitsText));
+      return engineValueFactory.parseNumber(numberStr, Units.of(unitsText));
     } else {
       long number = Long.parseLong(numberStr);
       return engineValueFactory.build(number, Units.of(unitsText));

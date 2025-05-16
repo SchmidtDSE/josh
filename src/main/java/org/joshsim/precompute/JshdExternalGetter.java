@@ -25,16 +25,6 @@ public class JshdExternalGetter implements ExternalResourceGetter {
    * Create a new decorator around an input getter to read jshd files.
    *
    * @param inputStrategy The strategy to use in loading files from which jshd will be parsed.
-   */
-  public JshdExternalGetter(InputGetterStrategy inputStrategy) {
-    this.inputStrategy = inputStrategy;
-    this.valueFactory = EngineValueFactory.getDefault();
-  }
-
-  /**
-   * Create a new decorator around an input getter to read jshd files.
-   *
-   * @param inputStrategy The strategy to use in loading files from which jshd will be parsed.
    * @param valueFactory The factory to use in making new EngineValues.
    */
   public JshdExternalGetter(InputGetterStrategy inputStrategy, EngineValueFactory valueFactory) {

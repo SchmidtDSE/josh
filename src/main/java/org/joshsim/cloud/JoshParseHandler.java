@@ -150,6 +150,7 @@ public class JoshParseHandler implements HttpHandler {
 
     if (!result.hasErrors()) {
       JoshProgram facade = JoshSimFacadeUtil.interpret(
+          new EngineValueFactory(),
           geometryFactory,
           result,
           inputOutputLayer
@@ -165,10 +166,14 @@ public class JoshParseHandler implements HttpHandler {
         String simName = formData.getFirst("name").getValue();
         try {
           MutableEntity simEntityRaw = facade.getSimulations().getProtoype(simName).build();
-          MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+          MutableEntity simEntity = new ShadowingEntity(
+              new EngineValueFactory(),
+              simEntityRaw,
+              simEntityRaw
+          );
           GridInfoExtractor extractor = new GridInfoExtractor(
               simEntity,
-              EngineValueFactory.getDefault()
+              new EngineValueFactory()
           );
 
           EngineValue size = extractor.getSize();
@@ -176,7 +181,7 @@ public class JoshParseHandler implements HttpHandler {
               "%s:%s:%s %s",
               extractor.getStartStr(),
               extractor.getEndStr(),
-              size.getAsDecimal().toString(),
+              size.getAsString(),
               size.getUnits().toString()
           );
         } catch (Exception e) {

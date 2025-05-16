@@ -129,7 +129,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
     boolean hasName = formData.contains("name");
     boolean hasReplicates = formData.contains("replicates");
     boolean hasExternalData = formData.contains("externalData");
-    boolean hasRequired = hasCode && hasName && hasReplicates && hasExternalData;
+    boolean hasFavorBigDecimal = formData.contains("favorBigDecimal");
+    boolean hasRequired = (
+        hasCode && hasName && hasReplicates && hasExternalData && hasFavorBigDecimal
+    );
     if (!hasRequired) {
       httpServerExchange.setStatusCode(400);
       return Optional.of(apiKey);
@@ -151,6 +154,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     }
 
     String externalData = formData.getFirst("externalData").getValue();
+    boolean favorBigDecimal = Boolean.parseBoolean(formData.getFirst("favorBigDecimal").getValue());
 
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
@@ -159,7 +163,14 @@ public class JoshSimLeaderHandler implements HttpHandler {
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
       futures.add(executor.submit(
-          () -> executeReplicate(code, simulationName, replicateNumber, apiKey, externalData)
+          () -> executeReplicate(
+              code,
+              simulationName,
+              replicateNumber,
+              apiKey,
+              externalData,
+              favorBigDecimal
+          )
       ));
     }
 
@@ -192,18 +203,21 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * @param replicateNumber The number of the replicate to execute.
    * @param apiKey The API key to include in the request.
    * @param externalData String serialization of external data available to the simulation.
+   * @param favorBigDecimal Flag indicating if BigDecimal should be used for numbers. True if
+   *     BigDecimal should be used or false for double.
    * @return A string with the result, including the replicate number for each line of output.
    * @throws IOException If an I/O error occurs when sending or receiving.
    * @throws InterruptedException If the operation is interrupted.
    */
   private String executeReplicate(String code, String simulationName, int replicateNumber,
-        String apiKey, String externalData) {
+        String apiKey, String externalData, boolean favorBigDecimal) {
     String bodyString = String.format(
-        "code=%s&name=%s&apiKey=%s&externalData=%s",
+        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
         URLEncoder.encode(code, StandardCharsets.UTF_8),
         URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
         URLEncoder.encode(apiKey, StandardCharsets.UTF_8),
-        URLEncoder.encode(externalData, StandardCharsets.UTF_8)
+        URLEncoder.encode(externalData, StandardCharsets.UTF_8),
+        URLEncoder.encode(favorBigDecimal ? "true" : "false", StandardCharsets.UTF_8)
     );
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
 

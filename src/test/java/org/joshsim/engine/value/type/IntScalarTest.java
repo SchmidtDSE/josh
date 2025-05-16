@@ -14,7 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
@@ -23,9 +25,17 @@ import org.junit.jupiter.api.Test;
  */
 class IntScalarTest {
 
+  private EngineValueCaster caster;
+
+  @BeforeEach
+  void setUp() {
+    caster = new EngineValueWideningCaster(
+        new EngineValueFactory()
+    );
+  }
+
   @Test
   void testConstructorAndGetters() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar = new IntScalar(caster, 10L, Units.of("m"));
 
     assertEquals(10L, scalar.getAsInt());
@@ -38,7 +48,6 @@ class IntScalarTest {
 
   @Test
   void testGetAsBoolean() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar nonZeroScalar = new IntScalar(caster, 10L, Units.EMPTY);
     IntScalar zeroScalar = new IntScalar(caster, 0L, Units.EMPTY);
     IntScalar oneScalar = new IntScalar(caster, 1L, Units.EMPTY);
@@ -50,7 +59,6 @@ class IntScalarTest {
 
   @Test
   void testAdd() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("m"));
 
@@ -61,7 +69,6 @@ class IntScalarTest {
 
   @Test
   void testAddWithDifferentUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 
@@ -70,7 +77,6 @@ class IntScalarTest {
 
   @Test
   void testSubtract() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("m"));
 
@@ -81,7 +87,6 @@ class IntScalarTest {
 
   @Test
   void testSubtractWithDifferentUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 
@@ -90,7 +95,6 @@ class IntScalarTest {
 
   @Test
   void testMultiply() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
@@ -101,7 +105,6 @@ class IntScalarTest {
 
   @Test
   void testDivide() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
@@ -112,7 +115,6 @@ class IntScalarTest {
 
   @Test
   void testDivideByZero() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar zeroScalar = new IntScalar(caster, 0L, Units.of("s"));
 
@@ -121,7 +123,6 @@ class IntScalarTest {
 
   @Test
   void testDivisionRounding() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 7L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
@@ -132,7 +133,6 @@ class IntScalarTest {
 
   @Test
   void testRaiseToPower() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 2L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 3L, Units.EMPTY);
 
@@ -143,7 +143,6 @@ class IntScalarTest {
 
   @Test
   void testRaiseToPowerWithUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 2L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 3L, Units.of("s"));
 
@@ -152,7 +151,6 @@ class IntScalarTest {
 
   @Test
   void testGetAsEntityThrowsException() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     BooleanScalar scalar = new BooleanScalar(caster, true, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
@@ -171,7 +169,6 @@ class IntScalarTest {
 
   @Test
   void testNegativeNumbers() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar = new IntScalar(caster, -42L, Units.of("m"));
 
     assertEquals(-42L, scalar.getAsInt());
@@ -181,7 +178,6 @@ class IntScalarTest {
 
   @Test
   void testMaxIntValue() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     long maxValue = Long.MAX_VALUE;
     IntScalar scalar = new IntScalar(caster, maxValue, Units.EMPTY);
 
@@ -191,7 +187,6 @@ class IntScalarTest {
 
   @Test
   void testMinIntValue() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     long minValue = Long.MIN_VALUE;
     IntScalar scalar = new IntScalar(caster, minValue, Units.EMPTY);
 
@@ -201,7 +196,6 @@ class IntScalarTest {
 
   @Test
   void testCompareToSameUnitsDifferentValues() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 20L, Units.of("m"));
 
@@ -211,7 +205,6 @@ class IntScalarTest {
 
   @Test
   void testCompareToIncompatibleUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 10L, Units.of("s"));
 
@@ -220,7 +213,6 @@ class IntScalarTest {
 
   @Test
   void testCompareToEqualValues() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 10L, Units.of("m"));
 
@@ -229,7 +221,6 @@ class IntScalarTest {
 
   @Test
   void testCompareToDifferentValuesSameOrder() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     IntScalar scalar1 = new IntScalar(caster, 15L, Units.of("s"));
     IntScalar scalar2 = new IntScalar(caster, 5L, Units.of("s"));
 

@@ -8,7 +8,6 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -18,6 +17,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +42,7 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EventHandlerGroup mockNestedGroup;
   @Mock(lenient = true) private EventHandler mockNestedHandler;
 
+  private EngineValueFactory valueFactory;
   private Scope scope;
   private ValueResolver resolver;
 
@@ -50,6 +51,8 @@ public class ValueResolverTest {
    */
   @BeforeEach
   void setUp() {
+    valueFactory = new EngineValueFactory();
+
     // Set up nested reference on root
     when(mockNestedHandler.getAttributeName()).thenReturn("nested");
     when(mockNestedHandler.getEventName()).thenReturn("init");
@@ -82,7 +85,7 @@ public class ValueResolverTest {
 
   @Test
   void testDirectValueResolution() {
-    resolver = new ValueResolver("direct");
+    resolver = new ValueResolver(valueFactory, "direct");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve direct value");
@@ -91,7 +94,7 @@ public class ValueResolverTest {
 
   @Test
   void testNestedValueResolution() {
-    resolver = new ValueResolver("entity.nested");
+    resolver = new ValueResolver(valueFactory, "entity.nested");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve nested value");
@@ -100,7 +103,7 @@ public class ValueResolverTest {
 
   @Test
   void testLocalDotValueResolution() {
-    resolver = new ValueResolver("local.value");
+    resolver = new ValueResolver(valueFactory, "local.value");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve local.value");

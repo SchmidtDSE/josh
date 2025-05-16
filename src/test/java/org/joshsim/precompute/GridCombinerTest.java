@@ -30,8 +30,8 @@ class GridCombinerTest {
   @BeforeEach
   void setUp() {
     geometryFactory = new GridGeometryFactory();
-    valueFactory = EngineValueFactory.getDefault();
-    gridCombiner = new GridCombiner(geometryFactory);
+    valueFactory = new EngineValueFactory();
+    gridCombiner = new GridCombiner(valueFactory, geometryFactory);
 
     // Create extents for left grid (0,0 to 2,2)
     PatchBuilderExtents leftExtents = new PatchBuilderExtentsBuilder()

@@ -125,6 +125,11 @@ public abstract class Distribution extends EngineValue {
   }
 
   @Override
+  public double getAsDouble() {
+    return sample().getAsDouble();
+  }
+
+  @Override
   public boolean getAsBoolean() {
     return sample().getAsBoolean();
   }
