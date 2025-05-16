@@ -168,8 +168,7 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Initialize an external geo mapper
-    EngineValueFactory valueFactory = new EngineValueFactory();
-    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder(valueFactory);
+    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
     geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
@@ -189,10 +188,10 @@ public class PreprocessCommand implements Callable<Integer> {
 
     // Get metadata
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
     // Create grid from streaming data
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     EngineValue size = extractor.getSize();
@@ -205,15 +204,14 @@ public class PreprocessCommand implements Callable<Integer> {
       System.out.println("Failed to read CRS code due to: " + e);
       return 1;
     }
-    EngineGeometryFactory geometryFactory = new EarthGeometryFactory(crs);
+    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
 
     EngineBridge bridge = new QueryCacheEngineBridge(
-        valueFactory,
-        geometryFactory,
+        engineGeometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
+        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy())
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);
@@ -233,7 +231,7 @@ public class PreprocessCommand implements Callable<Integer> {
     long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
 
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
-        valueFactory,
+        EngineValueFactory.getDefault(),
         (timestep) -> {
           System.out.println("Preprocessing: " + timestep);
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
@@ -264,11 +262,11 @@ public class PreprocessCommand implements Callable<Integer> {
     DataGridLayer finalGrid = grid;
     if (amend && outputFile.exists()) {
       BinaryGridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
-          valueFactory
+          EngineValueFactory.getDefault()
       );
       try (FileInputStream inputStream = new FileInputStream(outputFile)) {
         DataGridLayer existingGrid = deserializer.deserialize(inputStream);
-        GridCombiner combiner = new GridCombiner(valueFactory, geometryFactory);
+        GridCombiner combiner = new GridCombiner(engineGeometryFactory);
         finalGrid = combiner.combine(existingGrid, grid);
       } catch (IOException e) {
         throw new RuntimeException("Error reading existing grid file: " + e);
@@ -277,7 +275,7 @@ public class PreprocessCommand implements Callable<Integer> {
 
     // Serialize to binary file
     BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
-        valueFactory
+        EngineValueFactory.getDefault()
     );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(finalGrid, outputStream);

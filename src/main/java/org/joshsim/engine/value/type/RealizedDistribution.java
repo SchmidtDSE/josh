@@ -77,8 +77,8 @@ public class RealizedDistribution extends Distribution {
     requireNonEmpty();
     DoubleSummaryStatistics newStats = values.stream()
         .map(EngineValue::getAsScalar)
-        .map(Scalar::getAsDouble)
-        .collect(Collectors.summarizingDouble(Double::doubleValue));
+        .map(Scalar::getAsDecimal)
+        .collect(Collectors.summarizingDouble(BigDecimal::doubleValue));
     stats = Optional.of(newStats);
   }
 
@@ -307,9 +307,9 @@ public class RealizedDistribution extends Distribution {
     double mean = stats.get().getAverage();
     double variance = values.stream()
         .map(EngineValue::getAsScalar)
-        .map(Scalar::getAsDouble)
+        .map(Scalar::getAsDecimal)
+        .mapToDouble(BigDecimal::doubleValue)
         .map(value -> Math.pow(value - mean, 2))
-        .mapToDouble(Double::doubleValue)
         .sum() / (values.size() - 1);
     double stdDev = Math.sqrt(variance);
     DecimalScalar result = new DecimalScalar(getCaster(), BigDecimal.valueOf(stdDev), getUnits());

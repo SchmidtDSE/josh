@@ -16,7 +16,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.io.InputOutputLayer;
@@ -46,7 +45,7 @@ public class FutureBridgeGetterTest {
    */
   @BeforeEach
   void setUp() {
-    bridgeGetter = new FutureBridgeGetter(new EngineValueFactory());
+    bridgeGetter = new FutureBridgeGetter();
 
     when(mockProgram.getSimulations()).thenReturn(mockSimStore);
     when(mockProgram.getPrototypes()).thenReturn(mockPrototypeStore);

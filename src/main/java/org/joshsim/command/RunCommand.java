@@ -57,13 +57,6 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--replicate", description = "Replicate number", defaultValue = "0")
   private int replicateNumber;
 
-  @Option(
-      names = "--use-float-64",
-      description = "Use double instead of BigDecimal, offering speed but lower precision.",
-      defaultValue = "false"
-  )
-  private boolean useFloat64;
-
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -116,15 +109,13 @@ public class RunCommand implements Callable<Integer> {
       return 4;
     }
 
-    boolean favorBigDecimal = !useFloat64;
     JoshSimFacade.runSimulation(
         geometryFactory,
         program,
         simulation,
         (step) -> output.printInfo(String.format("Completed step %d.", step)),
         serialPatches,
-        replicateNumber,
-        favorBigDecimal
+        replicateNumber
     );
 
     if (minioOptions.isMinioOutput()) {

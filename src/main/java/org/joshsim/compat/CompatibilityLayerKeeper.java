@@ -23,6 +23,7 @@ public class CompatibilityLayerKeeper {
    * Sets the platform-specific CompatibilityLayer implementation.
    *
    * @param newLayer The CompatibilityLayer implementation to use
+   * @throws IllegalStateException if a layer has already been set
    */
   public static void set(CompatibilityLayer newLayer) {
     layer = Optional.of(newLayer);

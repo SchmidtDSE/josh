@@ -67,6 +67,16 @@ public class CsvExternalDataReaderFactory {
   }
 
   /**
+   * Creates a CsvExternalDataReaderFactory instance using default configurations.
+   *
+   * @return a new instance of CsvExternalDataReaderFactory initialized with a default
+   *     EngineValueFactory.
+   */
+  public static CsvExternalDataReaderFactory createWithDefaults() {
+    return new CsvExternalDataReaderFactory(new EngineValueFactory());
+  }
+
+  /**
    * Retrieves the current instance of the EngineValueFactory used by this factory.
    *
    * @return the EngineValueFactory instance used for creating EngineValue objects for data

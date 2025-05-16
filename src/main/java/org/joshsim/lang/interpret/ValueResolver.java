@@ -14,7 +14,6 @@ import org.joshsim.engine.func.DistributionScope;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
@@ -26,7 +25,6 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class ValueResolver {
 
-  private final EngineValueFactory valueFactory;
   private final String path;
 
   private String foundPath;
@@ -35,11 +33,9 @@ public class ValueResolver {
   /**
    * Creates a new ValueResolver for resolving dot-separated paths.
    *
-   * @param valueFactory The value factory to use in constructing returned and supporting values.
    * @param path The dot-separated path to resolve (e.g. "entity.attribute").
    */
-  public ValueResolver(EngineValueFactory valueFactory, String path) {
-    this.valueFactory = valueFactory;
+  public ValueResolver(String path) {
     this.path = path;
     memoizedContinuationResolver = null;
     foundPath = null;
@@ -85,7 +81,7 @@ public class ValueResolver {
             Units.EMPTY
         ));
       } else {
-        newScope = new DistributionScope(valueFactory, resolved.getAsDistribution());
+        newScope = new DistributionScope(resolved.getAsDistribution());
       }
 
       return continuationResolver.get(newScope);
@@ -142,9 +138,7 @@ public class ValueResolver {
             remainingJoiner.add(pieces[i]);
           }
           String remainingPath = remainingJoiner.toString();
-          memoizedContinuationResolver = Optional.of(
-              new ValueResolver(valueFactory, remainingPath)
-          );
+          memoizedContinuationResolver = Optional.of(new ValueResolver(remainingPath));
         }
 
         return memoizedContinuationResolver;

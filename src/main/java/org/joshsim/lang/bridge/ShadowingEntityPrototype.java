@@ -6,7 +6,6 @@ import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 
 
 /**
@@ -14,20 +13,16 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
  */
 public class ShadowingEntityPrototype implements EntityPrototype {
 
-  private final EngineValueFactory valueFactory;
   private final EntityPrototype inner;
   private final Scope scope;
 
   /**
    * Decorate a prototype with parent information.
    *
-   * @param valueFactory Factory to use in constructing engine values.
    * @param inner Prototype for entity to be decorated as a ShadowingEntity.
    * @param scope The Scope from which to read required attributes.
    */
-  public ShadowingEntityPrototype(EngineValueFactory valueFactory, EntityPrototype inner,
-        Scope scope) {
-    this.valueFactory = valueFactory;
+  public ShadowingEntityPrototype(EntityPrototype inner, Scope scope) {
     this.inner = inner;
     this.scope = scope;
   }
@@ -69,7 +64,6 @@ public class ShadowingEntityPrototype implements EntityPrototype {
 
   private MutableEntity wrap(MutableEntity entityToWrap) {
     return new ShadowingEntity(
-        valueFactory,
         entityToWrap,
         scope.get("here").getAsEntity(),
         scope.get("meta").getAsEntity()

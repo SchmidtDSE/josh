@@ -74,13 +74,6 @@ public abstract class EngineValue {
   public abstract BigDecimal getAsDecimal();
 
   /**
-   * Gets the value as a double or samples randomly if a distribution.
-   *
-   * @return the scalar value as a double or distribution sampled.
-   */
-  public abstract double getAsDouble();
-
-  /**
    * Gets the value as a boolean or samples randomly if a distribution.
    *
    * @return the scalar value as a boolean or distribution sampled.

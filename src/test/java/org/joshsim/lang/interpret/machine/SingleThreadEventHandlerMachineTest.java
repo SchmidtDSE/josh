@@ -71,11 +71,8 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockMutableEntity.getSubstep()).thenReturn(Optional.of("start"));
     when(mockEntityValue.getAsMutableEntity()).thenReturn(mockMutableEntity);
     when(mockScope.get("current")).thenReturn(mockEntityValue);
-
-    factory = new EngineValueFactory();
-    when(mockBridge.getEngineValueFactory()).thenReturn(factory);
-
     machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
+    factory = new EngineValueFactory();
   }
 
   @Test
@@ -773,8 +770,8 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal value = result.getAsDecimal();
 
     // Most values in a normal distribution fall within 3 standard deviations
-    assertTrue(value.compareTo(new BigDecimal("2.5")) >= 0);
-    assertTrue(value.compareTo(new BigDecimal("8.5")) <= 0);
+    assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
+    assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
   }
 
   @Test
@@ -821,7 +818,7 @@ public class SingleThreadEventHandlerMachineTest {
     // When
     machine.push(value);
     machine.saveLocalVariable("localConstant");
-    machine.push(new ValueResolver(new EngineValueFactory(), "localConstant"));
+    machine.push(new ValueResolver("localConstant"));
 
     // Then
     machine.end();
@@ -957,7 +954,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new ValueResolver(new EngineValueFactory(), "testAttr"));
+    machine.executeSpatialQuery(new ValueResolver("testAttr"));
 
     // Then
     machine.end();

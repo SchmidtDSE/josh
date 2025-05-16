@@ -131,12 +131,10 @@ class WasmLayer {
    * @param {Object} externalData - JSON-serializable object containing external data resources.
    * @param {function} stepCallback - The function to invoke when a step is completed, passing the
    *     number of steps completed.
-   * @param {bool} preferBigDecimal - Flag indicating if BigDecimal should be preferred for numbers
-   *     or not. True if BigDecimal and false if double / float64.
    * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
    *     simulation is concluded with data on this single replicate.
    */
-  async runSimulation(code, simulationName, externalData, stepCallback, preferBigDecimal) {
+  async runSimulation(code, simulationName, externalData, stepCallback) {
     const self = this;
     await self._initPromise;
 
@@ -163,13 +161,8 @@ class WasmLayer {
         }
       };
       self._worker.postMessage({ 
-        type: "runSimulation",
-        data: {
-          code: code,
-          simulationName: simulationName,
-          data: externalDataStr,
-          preferBigDecimal: preferBigDecimal
-        } 
+        type: "runSimulation", 
+        data: { code: code, simulationName: simulationName, data: externalDataStr } 
       });
     });
   }

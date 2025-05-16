@@ -36,7 +36,7 @@ public class GridFromSimFactory {
   public GridFromSimFactory(EngineBridge bridge) {
     this.bridge = bridge;
 
-    valueFactory = bridge.getEngineValueFactory();
+    valueFactory = EngineValueFactory.getDefault();
   }
 
   /**

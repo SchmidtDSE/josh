@@ -35,7 +35,7 @@ public class SyntheticScope implements Scope {
    */
   public SyntheticScope(ShadowingEntity inner) {
     this.inner = inner;
-    this.valueFactory = inner.getValueFactory();
+    this.valueFactory = EngineValueFactory.getDefault();
   }
 
   /**

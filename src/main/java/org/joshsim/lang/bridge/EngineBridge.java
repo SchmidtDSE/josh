@@ -16,7 +16,6 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.EnginePoint;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -166,12 +165,4 @@ public interface EngineBridge {
    * @return The value from the external resource at the given step.
    */
   EngineValue getExternal(GeoKey key, String name, long step);
-
-  /**
-   * Get the factory to use in building engine values.
-   *
-   * @return Value factory to use across the simulation this bridge supports.
-   */
-  EngineValueFactory getEngineValueFactory();
-
 }

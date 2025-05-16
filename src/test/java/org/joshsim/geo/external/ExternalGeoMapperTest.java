@@ -70,7 +70,7 @@ public class ExternalGeoMapperTest {
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
     // Create mapper with real components
-    mapper = new ExternalGeoMapperBuilder(new EngineValueFactory())
+    mapper = new ExternalGeoMapperBuilder()
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)
@@ -657,7 +657,6 @@ public class ExternalGeoMapperTest {
 
     // Process multiple time steps
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
-        new EngineValueFactory(),
         riversideFilePath
     )) {
       reader.open(riversideFilePath);

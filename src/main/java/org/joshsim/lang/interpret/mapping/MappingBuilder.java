@@ -79,7 +79,7 @@ public class MappingBuilder {
     this.mapBehaviorArgument = Optional.of(mapBehaviorArgument);
     return this;
   }
-
+  
   /**
    * Build a mapping strategy based on the provided strategy name and builder settings.
    *

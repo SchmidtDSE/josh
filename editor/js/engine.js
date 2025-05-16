@@ -69,8 +69,7 @@ class WasmEngineBackend {
           simCode,
           simName,
           externalData,
-          multiReplicate ? (x) => x : (x) => onStepExternal(x),
-          runRequest.getPreferBigDecimal()
+          multiReplicate ? (x) => x : (x) => onStepExternal(x)
         ).then(
           (x) => { onSimulationComplete(x); },
           (x) => { onError(x); }
@@ -136,7 +135,6 @@ class RemoteEngineBackend {
       formData.append("replicates", runRequest.getReplicates().toString());
       formData.append("apiKey", self._apiKey);
       formData.append("externalData", externalDataStr);
-      formData.append("favorBigDecimal", runRequest.getPreferBigDecimal() ? "true" : "false")
       
       return formData;
     };
@@ -214,17 +212,13 @@ class RunRequest {
    *     "/runReplicates" and, if it does not, it will be appended. Null if not using server. May
    *     be empty if running locally such that an empty string should be passed for API key. If null
    *     and useServer is true, will use a default.
-   * @param {bool} preferBigDecimal - Flag indicating if non-integer numbers should prefer to be in
-   *     BigDecimal or double. True for BigDecimal and false for double.
    * @throws {Error} If useServer is true but apiKey is null.
    */
-  constructor(simName, replicates, useServer, apiKey, endpoint, preferBigDecimal) {
+  constructor(simName, replicates, useServer, apiKey, endpoint) {
     const self = this;
-    
     self._simName = simName;
     self._replicates = replicates;
     self._useServer = useServer;
-    self._preferBigDecimal = preferBigDecimal;
     
     if (useServer && apiKey === null) {
       throw new Error("API key cannot be null when using server");
@@ -287,17 +281,6 @@ class RunRequest {
   getApiKey() {
     const self = this;
     return self._apiKey;
-  }
-
-  /**
-   * Determine if decimal or double (64-bit float) is preferred.
-   *
-   * @returns {bool} Flag indicating if non-integer numbers should prefer to be in BigDecimal or
-   *     double. True for BigDecimal and false for double.
-   */
-  getPreferBigDecimal() {
-    const self = this;
-    return self._preferBigDecimal;
   }
 }
 

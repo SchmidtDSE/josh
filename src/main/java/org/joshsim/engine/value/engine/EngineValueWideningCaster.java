@@ -25,65 +25,53 @@ public class EngineValueWideningCaster implements EngineValueCaster {
 
   /**
    * Create a new widening caster with default allowed casts.
-   *
-   * @param valueFactory The factory to use in constructing values returned by this caster.
    */
-  public EngineValueWideningCaster(EngineValueFactory valueFactory) {
+  public EngineValueWideningCaster() {
     strategies = new HashMap<>();
+
+    EngineValueFactory factory = new EngineValueFactory(this);
 
     // Options for boolean
     addCast(
         "boolean",
         "int",
-        x -> valueFactory.build(x.getAsInt(), x.getUnits())
+        x -> factory.build(x.getAsInt(), x.getUnits())
     );
     addCast(
         "boolean",
         "decimal",
-        x -> {
-          if (valueFactory.isFavoringBigDecimal()) {
-            return valueFactory.build(x.getAsDecimal(), x.getUnits());
-          } else {
-            return valueFactory.build(x.getAsDouble(), x.getUnits());
-          }
-        }
+        x -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
         "boolean",
         "string",
-        x -> valueFactory.build(x.getAsString(), x.getUnits())
+        x -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for int
     addCast(
         "int",
         "decimal",
-        x -> {
-          if (valueFactory.isFavoringBigDecimal()) {
-            return valueFactory.build(x.getAsDecimal(), x.getUnits());
-          } else {
-            return valueFactory.build(x.getAsDouble(), x.getUnits());
-          }
-        }
+        x -> factory.build(x.getAsDecimal(), x.getUnits())
     );
     addCast(
         "int",
         "string",
-        x -> valueFactory.build(x.getAsString(), x.getUnits())
+        x -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for decimal
     addCast(
         "decimal",
         "string",
-        x -> valueFactory.build(x.getAsString(), x.getUnits())
+        x -> factory.build(x.getAsString(), x.getUnits())
     );
 
     // Options for empty
     addCast(
         "empty",
         "boolean",
-        x -> valueFactory.build(false, x.getUnits())
+        x -> factory.build(false, x.getUnits())
     );
   }
 

@@ -27,18 +27,15 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class GridCombiner {
 
-  private final EngineValueFactory valueFactory;
   private final EngineGeometryFactory geometryFactory;
 
   /**
    * Create a new grid combiner which uses the given factory to build geometries.
    *
-   * @param valueFactory The factory to use when building non-geomteric values.
    * @param geometryFactory The factory to use when building geometries within the new grid or when
    *     supporting its construction.
    */
-  public GridCombiner(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory) {
-    this.valueFactory = valueFactory;
+  public GridCombiner(EngineGeometryFactory geometryFactory) {
     this.geometryFactory = geometryFactory;
   }
 
@@ -62,7 +59,7 @@ public class GridCombiner {
     Units units = getUnits(left, right);
 
     DoublePrecomputedGrid combinedGrid = new DoublePrecomputedGridBuilder()
-        .setEngineValueFactory(valueFactory)
+        .setEngineValueFactory(EngineValueFactory.getDefault())
         .setExtents(combinedExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(units)
@@ -187,7 +184,7 @@ public class GridCombiner {
           );
           GeoKey key = new GeoKey(Optional.of(geometry), "");
           EngineValue value = source.getAt(key, timestep);
-          combinedGrid.setAt(x, y, timestep, value.getAsDouble());
+          combinedGrid.setAt(x, y, timestep, value.getAsDecimal().doubleValue());
         }
       }
     }

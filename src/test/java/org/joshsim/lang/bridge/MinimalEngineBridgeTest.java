@@ -30,7 +30,6 @@ import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +64,6 @@ public class MinimalEngineBridgeTest {
   void setUp() {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     bridge = new MinimalEngineBridge(
-        new EngineValueFactory(),
         geometryFactory,
         mockSimulation,
         mockConverter,

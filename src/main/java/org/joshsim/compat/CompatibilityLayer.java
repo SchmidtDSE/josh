@@ -9,11 +9,10 @@ package org.joshsim.compat;
 import java.math.BigDecimal;
 
 /**
- * Layer which offers access to platform-specific functionality and preferences.
+ * Layer which offers access to platform-specific functionality (JVM vs WASM).
  *
  * <p>Layer which allows abstraction over different runtime virtual machines, specifically offering
- * Compatibility objects which work on either a plain old JVM or in WebAssembly. This also handles
- * user runtime preferences like BigDecimal vs double</p>
+ * Compatibility objects which work on either a plain old JVM or in WebAssembly.</p>
  */
 public interface CompatibilityLayer {
 

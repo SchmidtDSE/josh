@@ -8,7 +8,6 @@ package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.io.InputOutputLayer;
@@ -24,20 +23,19 @@ public class JoshInterpreter {
    * Interpret a Josh source into a JoshProgram.
    *
    * @param parseResult The result of parsing to interpret.
-   * @param valueFactory Factory through which to build engine values.
    * @param geometryFactory Factory through which to build engine geometries
    * @param inputOutputLayer Layer to use in interacting with external files.
    * @return Parsed simulations.
    */
-  public JoshProgram interpret(ParseResult parseResult, EngineValueFactory valueFactory,
-        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer) {
+  public JoshProgram interpret(ParseResult parseResult, EngineGeometryFactory geometryFactory,
+        InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");
     }
 
-    FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
+    FutureBridgeGetter bridgeGetter = new FutureBridgeGetter();
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
+    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter);
     Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();
@@ -59,21 +57,19 @@ public class JoshInterpreter {
    *
    * @param parseResult The result of parsing to interpret.
    * @param simulationName The name of the simulation to be executed.
-   * @param valueFactory Factory through which to build engine values.
    * @param geometryFactory Factory through which to build engine geometries.
    * @param inputOutputLayer Layer to use in interacting with external files.
    * @return Parsed simulations.
    */
   public JoshProgram interpret(ParseResult parseResult, String simulationName,
-        EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
-        InputOutputLayer inputOutputLayer) {
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");
     }
 
-    FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
+    FutureBridgeGetter bridgeGetter = new FutureBridgeGetter();
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
+    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(bridgeGetter);
     Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();

@@ -13,7 +13,7 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
 
 
 /**
- * Engine value which provides a single decimal value backed by a BigDecimal.
+ * Engine value which only has a single discrete decimal value.
  */
 public class DecimalScalar extends Scalar {
 
@@ -34,11 +34,6 @@ public class DecimalScalar extends Scalar {
   @Override
   public BigDecimal getAsDecimal() {
     return innerValue;
-  }
-
-  @Override
-  public double getAsDouble() {
-    return innerValue.doubleValue();
   }
 
   @Override
@@ -111,9 +106,9 @@ public class DecimalScalar extends Scalar {
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
 
-    double base = getAsDouble();
-    double exponent = other.getAsDouble();
-    double remainder = Math.abs(other.getAsInt() - other.getAsDouble());
+    double base = getAsDecimal().doubleValue();
+    double exponent = other.getAsDecimal().doubleValue();
+    double remainder = Math.abs(other.getAsInt() - other.getAsDecimal().doubleValue());
     boolean otherIsInteger = remainder < 1e-7;
     if (!otherIsInteger && !canBePower()) {
       throw new UnsupportedOperationException("Non-integer exponents with units are not supported");

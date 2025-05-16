@@ -6,6 +6,7 @@
 
 package org.joshsim.precompute;
 
+import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -116,7 +117,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
     double value = innerValues[timestepCut][vertCut][horizCut];
-    return factory.buildForNumber(value, units);
+    return factory.build(BigDecimal.valueOf(value), units);
   }
 
   @Override

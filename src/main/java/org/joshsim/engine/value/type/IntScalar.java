@@ -36,11 +36,6 @@ public class IntScalar extends Scalar {
   }
 
   @Override
-  public double getAsDouble() {
-    return innerValue;
-  }
-
-  @Override
   public boolean getAsBoolean() {
     if (innerValue == 0) {
       return false;

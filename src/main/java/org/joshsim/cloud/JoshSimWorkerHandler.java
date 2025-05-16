@@ -19,7 +19,6 @@ import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
@@ -143,8 +142,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     boolean hasCode = formData.contains("code");
     boolean hasName = formData.contains("name");
     boolean hasExternalData = formData.contains("externalData");
-    boolean hasFavorBigDecimal = formData.contains("favorBigDecimal");
-    boolean hasRequired = hasCode && hasName && hasExternalData && hasFavorBigDecimal;
+    boolean hasRequired = hasCode && hasName && hasExternalData;
     if (!hasRequired) {
       httpServerExchange.setStatusCode(400);
       return Optional.of(apiKey);
@@ -153,9 +151,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
     String code = formData.getFirst("code").getValue();
     String simulationName = formData.getFirst("name").getValue();
     String externalData = formData.getFirst("externalData").getValue();
-    boolean favorBigDecimal = Boolean.parseBoolean(
-        formData.getFirst("favorBigDecimal").getValue()
-    );
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -166,14 +161,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory,
-        geometryFactory,
-        result,
-        inputOutputLayer
-    );
-
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
       return Optional.of(apiKey);
@@ -181,7 +169,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     InputOutputLayer layer = getLayer(httpServerExchange, externalData);
     JoshSimFacadeUtil.runSimulation(
-        valueFactory,
         geometryFactory,
         layer,
         program,

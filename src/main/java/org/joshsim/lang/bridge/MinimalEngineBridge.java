@@ -61,19 +61,14 @@ public class MinimalEngineBridge implements EngineBridge {
    * interpreter. It facilitates interactions with the engine's simulation and replicate components,
    * as well as value conversion.</p>
    *
-   * @param engineValueFactory The factory to use for building engine values.
    * @param geometryFactory The factory to use for building engine geometries.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
-   * @param prototypeStore The set of prototypes to use to build new entities.
-   * @param externalResourceGetter Strategy to use in loading external resources.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
-        EngineGeometryFactory geometryFactory, MutableEntity simulation,
+  public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter) {
-    this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
@@ -81,6 +76,8 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
 
     replicate = Optional.empty();
+
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
@@ -104,24 +101,24 @@ public class MinimalEngineBridge implements EngineBridge {
   /**
    * Constructs an EngineBridge with a given Replicate for testing.
    *
-   * @param engineValueFactory The factory to use for building engine values.
    * @param simulation The simulation instance to be used for retrieving or manipulating simulation
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param replicate The replicate to use for testing.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
-        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
-        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
-        Replicate replicate) {
-    this.engineValueFactory = engineValueFactory;
+  public MinimalEngineBridge(EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, Replicate replicate) {
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
     this.externalResourceGetter = externalResourceGetter;
+
     this.replicate = Optional.of(replicate);
+
+    engineValueFactory = EngineValueFactory.getDefault();
 
     simulation.startSubstep("constant");
 
@@ -185,11 +182,6 @@ public class MinimalEngineBridge implements EngineBridge {
       externalData.put(name, externalResourceGetter.getResource(name));
     }
     return externalData.get(name).getAt(key, step);
-  }
-
-  @Override
-  public EngineValueFactory getEngineValueFactory() {
-    return engineValueFactory;
   }
 
   @Override
@@ -309,7 +301,7 @@ public class MinimalEngineBridge implements EngineBridge {
     @Override
     public MutableEntity next() {
       MutableEntity patch = patches.next();
-      return new ShadowingEntity(engineValueFactory, patch, simulation);
+      return new ShadowingEntity(patch, simulation);
     }
 
     @Override

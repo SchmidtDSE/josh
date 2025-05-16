@@ -58,7 +58,7 @@ class DistributionScopeTest {
         Arrays.asList(mockEntityValue, mockEntityValue, mockEntityValue)
     );
 
-    scope = new DistributionScope(new EngineValueFactory(), mockDistribution);
+    scope = new DistributionScope(mockDistribution);
   }
 
   @Test

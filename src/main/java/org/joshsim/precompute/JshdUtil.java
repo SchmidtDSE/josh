@@ -141,7 +141,7 @@ public class JshdUtil {
     for (long timestep = target.getMinTimestep(); timestep <= maxTimestep; timestep++) {
       for (long y = target.getMinY(); y <= maxY; y++) {
         for (long  x = target.getMinX(); x <= maxX; x++) {
-          buffer.putDouble(target.getAt(x, y, timestep).getAsDouble());
+          buffer.putDouble(target.getAt(x, y, timestep).getAsDecimal().doubleValue());
         }
       }
     }

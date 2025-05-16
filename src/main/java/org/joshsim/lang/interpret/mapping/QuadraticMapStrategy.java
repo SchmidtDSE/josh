@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.interpret.mapping;
 
+import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -46,7 +47,7 @@ public class QuadraticMapStrategy implements MapStrategy {
     // Calculate domain midpoint
     EngineValue domainMid = domain.getHigh()
         .subtract(domain.getLow())
-        .divide(valueFactory.buildForNumber(2, Units.EMPTY))
+        .divide(valueFactory.build(new BigDecimal("2"), Units.EMPTY))
         .add(domain.getLow());
 
     // Scale factor is based on range and domain
@@ -54,7 +55,7 @@ public class QuadraticMapStrategy implements MapStrategy {
     EngineValue domainSpan = domain.getHigh().subtract(domain.getLow());
     EngineValue scaleFactor = rangeSpan.divide(
         domainSpan.multiply(
-            domainSpan.divide(valueFactory.buildForNumber(4, Units.EMPTY))
+            domainSpan.divide(valueFactory.build(new BigDecimal("4"), Units.EMPTY))
         )
     );
 

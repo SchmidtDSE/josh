@@ -61,9 +61,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      EngineValueFactory valueFactory = new EngineValueFactory();
-      EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-      interpreter.interpret(result, valueFactory, geometryFactory, getInputOutputLayer());
+      interpreter.interpret(result, new GridGeometryFactory(), getInputOutputLayer());
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -89,7 +87,6 @@ public class JoshJsSimFacade {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     JoshProgram program = JoshSimFacadeUtil.interpret(
-        new EngineValueFactory(),
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -114,14 +111,11 @@ public class JoshJsSimFacade {
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
    * @param externalData The serialization of the virtual file system to use in this simulation.
-   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
-   *     not specified. True if BigDecimal and false otherwise.
    */
   @JSExport
-  public static void runSimulation(String code, String simulationName, String externalData,
-        boolean favorBigDecimal) {
+  public static void runSimulation(String code, String simulationName, String externalData) {
     try {
-      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal);
+      runSimulationUnsafe(code, simulationName, externalData);
     } catch (Exception e) {
       reportError(e.toString());
     }
@@ -152,9 +146,7 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    EngineValueFactory engineValueFactory = new EngineValueFactory();
     JoshProgram program = JoshSimFacadeUtil.interpret(
-        engineValueFactory,
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -162,8 +154,8 @@ public class JoshJsSimFacade {
     program.getSimulations().getProtoype(simulationName);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
-    MutableEntity simEntity = new ShadowingEntity(engineValueFactory, simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, engineValueFactory);
+    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
 
     Map<String, String> outputRecord = new HashMap<>();
     outputRecord.put("name", simulationName);
@@ -176,7 +168,7 @@ public class JoshJsSimFacade {
     EngineValue size = extractor.getSize();
     outputRecord.put("sizeStr", String.format(
         "%s %s",
-        size.getAsString(),
+        size.getAsDecimal().toString(),
         size.getUnits().toString()
     ));
 
@@ -205,12 +197,9 @@ public class JoshJsSimFacade {
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
    * @param externalData The serialization of the virtual file system to use within this simulation.
-   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
-   *     not specified. True if BigDecimal and false otherwise.
    * @throws RuntimeException If parsing the code results in errors.
    */
-  private static void runSimulationUnsafe(String code, String simulationName, String externalData,
-        boolean favorBigDecimal) {
+  private static void runSimulationUnsafe(String code, String simulationName, String externalData) {
     setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -218,19 +207,12 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory,
-        geometryFactory,
-        result,
-        inputOutputLayer
-    );
+    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
 
     JoshSimFacadeUtil.runSimulation(
-        valueFactory,
         geometryFactory,
         inputOutputLayer,
         program,
