@@ -36,6 +36,11 @@ public class StringScalar extends Scalar {
   }
 
   @Override
+  public double getAsDouble() {
+    return Double.parseDouble(innerValue);
+  }
+
+  @Override
   public boolean getAsBoolean() {
     if ("true".equals(innerValue)) {
       return true;
