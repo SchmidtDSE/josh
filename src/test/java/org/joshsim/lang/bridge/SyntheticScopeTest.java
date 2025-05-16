@@ -54,6 +54,7 @@ public class SyntheticScopeTest {
    */
   @BeforeEach
   void setUp() {
+    when(mockInner.getValueFactory()).thenReturn(new EngineValueFactory());
     when(mockInner.getAttributeNames()).thenReturn(Set.of("testAttr"));
     when(mockInner.hasAttribute("testAttr")).thenReturn(true);
     when(mockInner.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));

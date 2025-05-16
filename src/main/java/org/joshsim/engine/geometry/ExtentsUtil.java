@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.geometry;
 
-import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -53,7 +52,7 @@ public class ExtentsUtil {
   public static EngineValue parseExtentComponent(String target, EngineValueFactory valueFactory) {
     String engineValStr = target.strip().replaceAll(" latitude", "").replaceAll(" longitude", "");
     String[] pieces = engineValStr.split(" ");
-    return valueFactory.build(new BigDecimal(pieces[0]), Units.of(pieces[1]));
+    return valueFactory.parseNumber(pieces[0], Units.of(pieces[1]));
   }
 
 }

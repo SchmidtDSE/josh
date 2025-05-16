@@ -30,7 +30,7 @@ class JshdExternalGetterTest {
 
   @BeforeEach
   void setUp() {
-    factory = EngineValueFactory.getDefault();
+    factory = new EngineValueFactory();
     getter = new JshdExternalGetter(mockInputStrategy, factory);
   }
 

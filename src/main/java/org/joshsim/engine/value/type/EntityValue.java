@@ -50,6 +50,11 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  public double getAsDouble() {
+    throw new UnsupportedOperationException("Entity conversion to decimal is not defined.");
+  }
+
+  @Override
   public boolean getAsBoolean() {
     throw new UnsupportedOperationException("Entity conversion to boolean is not defined.");
   }

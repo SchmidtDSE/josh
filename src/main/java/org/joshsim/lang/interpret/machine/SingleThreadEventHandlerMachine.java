@@ -48,13 +48,15 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private static final Units EMPTY_UNITS = Units.of("");
   private static final Units COUNT_UNITS = Units.of("count");
   private static final Units METER_UNITS = Units.of("meters");
-  private static final ValueResolver CURRENT_VALUE_RESOLVER = new ValueResolver("current");
+
+  private final ValueResolver currentValueResolver;
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
   private final LocalScope scope;
   private final EngineValueFactory valueFactory;
   private final Random random;
+  private final boolean favorBigDecimal;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -73,7 +75,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = EngineValueFactory.getDefault();
+    valueFactory = bridge.getEngineValueFactory();
+    currentValueResolver = new ValueResolver(valueFactory, "current");
+    favorBigDecimal = valueFactory.isFavoringBigDecimal();
     random = new Random();
     isEnded = false;
   }
@@ -96,10 +100,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
     MappingBuilder mappingBuilder = new MappingBuilder();
-    
+
     EngineValue param = pop();
     mappingBuilder.setMapBehaviorArgument(param);
-    
+
     startConversionGroup();
     EngineValue toHigh = pop();
     EngineValue toLow = pop();
@@ -110,7 +114,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue fromHigh = pop();
     EngineValue fromLow = pop();
     mappingBuilder.setDomain(new MapBounds(fromLow, fromHigh));
-    
+
     EngineValue operand = pop();
     endConversionGroup();
 
@@ -419,6 +423,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         parent
     );
     EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
+        valueFactory,
         innerDecorated,
         scope
     );
@@ -451,7 +456,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine executeSpatialQuery(ValueResolver resolver) {
     EngineValue distance = convert(pop(), METER_UNITS);
 
-    Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
+    Entity executingEntity = currentValueResolver.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
     EngineGeometry queryGeometry = bridge.getGeometryFactory().createCircle(
         centerGeometry.getCenterX(), centerGeometry.getCenterY(), distance.getAsDecimal()
@@ -488,8 +493,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue min = pop();
     endConversionGroup();
 
-    double minDouble = min.getAsDecimal().doubleValue();
-    double maxDouble = max.getAsDecimal().doubleValue();
+    double minDouble = min.getAsDouble();
+    double maxDouble = max.getAsDouble();
 
     double doubleResult;
     if (Math.abs(maxDouble - minDouble) < 1e-7) {
@@ -498,9 +503,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       doubleResult = random.nextDouble(minDouble, maxDouble);
     }
 
-    BigDecimal result = BigDecimal.valueOf(doubleResult);
-
-    EngineValue decoratedResult = valueFactory.build(result, min.getUnits());
+    EngineValue decoratedResult = valueFactory.buildForNumber(doubleResult, min.getUnits());
     memory.push(decoratedResult);
 
     return this;
@@ -513,12 +516,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue mean = pop();
     endConversionGroup();
 
-    double meanDouble = mean.getAsDecimal().doubleValue();
-    double stdDouble = std.getAsDecimal().doubleValue();
+    double meanDouble = mean.getAsDouble();
+    double stdDouble = std.getAsDouble();
     double randGauss = random.nextGaussian(meanDouble, stdDouble);
-    BigDecimal randomValue = BigDecimal.valueOf(randGauss);
 
-    EngineValue result = valueFactory.build(randomValue, mean.getUnits());
+    EngineValue result = valueFactory.buildForNumber(randGauss, mean.getUnits());
     memory.push(result);
 
     return this;
@@ -532,8 +534,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       throw new IllegalArgumentException("Cannot apply abs to a distribution.");
     }
 
-    BigDecimal absValue = value.getAsDecimal().abs();
-    EngineValue result = valueFactory.build(absValue, value.getUnits());
+    EngineValue result;
+    if (favorBigDecimal) {
+      BigDecimal absValue = value.getAsDecimal().abs();
+      result = valueFactory.build(absValue, value.getUnits());
+    } else {
+      double absValue = Math.abs(value.getAsDouble());
+      result = valueFactory.build(absValue, value.getUnits());
+    }
     memory.push(result);
 
     return this;
@@ -547,8 +555,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       throw new IllegalArgumentException("Cannot apply ceil to a distribution.");
     }
 
-    BigDecimal ceilValue = value.getAsDecimal().setScale(0, RoundingMode.CEILING);
-    EngineValue result = valueFactory.build(ceilValue, value.getUnits());
+    EngineValue result;
+    if (favorBigDecimal) {
+      BigDecimal ceilValue = value.getAsDecimal().setScale(0, RoundingMode.CEILING);
+      result = valueFactory.build(ceilValue, value.getUnits());
+    } else {
+      double ceilValue = Math.ceil(value.getAsDouble());
+      result = valueFactory.build(ceilValue, value.getUnits());
+    }
     memory.push(result);
 
     return this;
@@ -562,8 +576,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       throw new IllegalArgumentException("Cannot apply floor to a distribution.");
     }
 
-    BigDecimal floorValue = value.getAsDecimal().setScale(0, RoundingMode.FLOOR);
-    EngineValue result = valueFactory.build(floorValue, value.getUnits());
+    EngineValue result;
+    if (favorBigDecimal) {
+      BigDecimal floorValue = value.getAsDecimal().setScale(0, RoundingMode.FLOOR);
+      result = valueFactory.build(floorValue, value.getUnits());
+    } else {
+      double floorValue = Math.floor(value.getAsDouble());
+      result = valueFactory.build(floorValue, value.getUnits());
+    }
     memory.push(result);
 
     return this;
@@ -577,8 +597,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       throw new IllegalArgumentException("Cannot apply round to a distribution.");
     }
 
-    BigDecimal roundedValue = value.getAsDecimal().setScale(0, RoundingMode.HALF_UP);
-    EngineValue result = valueFactory.build(roundedValue, value.getUnits());
+    EngineValue result;
+    if (favorBigDecimal) {
+      BigDecimal roundedValue = value.getAsDecimal().setScale(0, RoundingMode.HALF_UP);
+      result = valueFactory.build(roundedValue, value.getUnits());
+    } else {
+      double roundedValue = Math.round(value.getAsDouble());
+      result = valueFactory.build(roundedValue, value.getUnits());
+    }
     memory.push(result);
 
     return this;
@@ -596,9 +622,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
     }
 
-    double logValue = Math.log10(value.getAsDecimal().doubleValue());
-    BigDecimal resultValue = BigDecimal.valueOf(logValue);
-    EngineValue result = valueFactory.build(resultValue, value.getUnits());
+    double logValue = Math.log10(value.getAsDouble());
+    EngineValue result = valueFactory.buildForNumber(logValue, value.getUnits());
     memory.push(result);
 
     return this;
@@ -618,9 +643,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       );
     }
 
-    double lnValue = Math.log(value.getAsDecimal().doubleValue());
-    BigDecimal resultValue = BigDecimal.valueOf(lnValue);
-    EngineValue result = valueFactory.build(resultValue, value.getUnits());
+    double lnValue = Math.log(value.getAsDouble());
+    EngineValue result = valueFactory.buildForNumber(lnValue, value.getUnits());
     memory.push(result);
 
     return this;
@@ -731,10 +755,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     String complete = String.format(
         "%s %s %s, %s %s %s",
-        val1.getAsDecimal(),
+        val1.getAsString(),
         firstUnitsSafe,
         type1.getAsString(),
-        val2.getAsDecimal(),
+        val2.getAsString(),
         secondUnitsSafe,
         type2.getAsString()
     );

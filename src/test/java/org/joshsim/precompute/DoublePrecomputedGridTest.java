@@ -59,7 +59,7 @@ class DoublePrecomputedGridTest {
     long y = 2;
     long timestep = 3;
     double expectedValue = 45.0;
-    when(mockFactory.build(BigDecimal.valueOf(expectedValue), testUnits))
+    when(mockFactory.buildForNumber(expectedValue, testUnits))
         .thenReturn(mockEngineValue);
 
     // When

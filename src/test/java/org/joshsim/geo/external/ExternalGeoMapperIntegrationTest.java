@@ -63,7 +63,7 @@ public class ExternalGeoMapperIntegrationTest {
     }
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
-    mapper = new ExternalGeoMapperBuilder()
+    mapper = new ExternalGeoMapperBuilder(new EngineValueFactory())
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)

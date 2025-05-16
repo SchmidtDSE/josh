@@ -59,7 +59,12 @@ public class JoshSimFacade {
   public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
         ParseResult parsed, InputOutputLayer inputOutputLayer) {
     setupForJvm();
-    return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed, inputOutputLayer);
+    return JoshSimFacadeUtil.interpret(
+        new EngineValueFactory(),
+        engineGeometryFactory,
+        parsed,
+        inputOutputLayer
+    );
   }
 
   /**
@@ -68,7 +73,7 @@ public class JoshSimFacade {
    * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
-   * @param engineGeometryFactory Factory with which to build engine geometries.
+   * @param geometryFactory Factory with which to build engine geometries.
    * @param program The Josh program containing the simulation to run. This is the program in which
    *     the simulation will be initalized.
    * @param simulationName The name of the simulation to execute from the program. This will be
@@ -78,15 +83,19 @@ public class JoshSimFacade {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    * @param replicateNumber The replicate number for the replicate to be run.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
-  public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
+  public static void runSimulation(EngineGeometryFactory geometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
-        boolean serialPatches, int replicateNumber) {
+        boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
     setupForJvm();
 
+    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
     boolean hasDegrees = extractor.getStartStr().contains("degree");
 
     EngineValue sizeValueRaw = extractor.getSize();
@@ -99,7 +108,6 @@ public class JoshSimFacade {
     JvmInputOutputLayer inputOutputLayer;
     if (hasDegrees && sizeMeters) {
       PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
-      EngineValueFactory valueFactory = EngineValueFactory.getDefault();
       ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
       ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
       BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
@@ -113,7 +121,8 @@ public class JoshSimFacade {
     }
 
     JoshSimFacadeUtil.runSimulation(
-        engineGeometryFactory,
+        valueFactory,
+        geometryFactory,
         inputOutputLayer,
         program,
         simulationName,

@@ -37,6 +37,11 @@ public class BooleanScalar extends Scalar {
   }
 
   @Override
+  public double getAsDouble() {
+    return getAsInt();
+  }
+
+  @Override
   public boolean getAsBoolean() {
     return innerValue;
   }

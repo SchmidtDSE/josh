@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -18,6 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class ExternalGeoMapper {
 
+  private final EngineValueFactory valueFactory;
   private final ExternalCoordinateTransformer coordinateTransformer;
   private final GeoInterpolationStrategy interpolationStrategy;
   private final String dimensionX;
@@ -30,6 +32,7 @@ public class ExternalGeoMapper {
   /**
    * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
    *
+   * @param valueFactory Value factory for creating EngineValue objects within this mapper.
    * @param coordinateTransformer Coordinate transformer for spatial conversions
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
@@ -38,6 +41,7 @@ public class ExternalGeoMapper {
    * @param crsCode The coordinate reference system code (can be null)
    */
   public ExternalGeoMapper(
+      EngineValueFactory valueFactory,
       ExternalCoordinateTransformer coordinateTransformer,
       GeoInterpolationStrategy interpolationStrategy,
       String dimensionX,
@@ -45,6 +49,7 @@ public class ExternalGeoMapper {
       String timeDimension,
       String crsCode
   ) {
+    this.valueFactory = valueFactory;
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;
@@ -57,6 +62,7 @@ public class ExternalGeoMapper {
   /**
    * Constructs an ExternalGeospatialMapper with the specified components and dimension settings.
    *
+   * @param valueFactory Value factory for creating EngineValue objects within this mapper.
    * @param coordinateTransformer Coordinate transformer for spatial conversions
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
@@ -66,6 +72,7 @@ public class ExternalGeoMapper {
    * @param forcedTimestep If provided, all values read will be assumed to have this timestep
    */
   public ExternalGeoMapper(
+      EngineValueFactory valueFactory,
       ExternalCoordinateTransformer coordinateTransformer,
       GeoInterpolationStrategy interpolationStrategy,
       String dimensionX,
@@ -74,6 +81,7 @@ public class ExternalGeoMapper {
       String crsCode,
       Optional<Long> forcedTimestep
   ) {
+    this.valueFactory = valueFactory;
     this.coordinateTransformer = coordinateTransformer;
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;
@@ -115,6 +123,7 @@ public class ExternalGeoMapper {
 
     // Get appropriate reader for this file
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
+          valueFactory,
           dataFilePath
       )) {
       // Open data source
@@ -228,7 +237,7 @@ public class ExternalGeoMapper {
         // Create a thread-local reader only for parallel processing
         ExternalDataReader threadLocalReader = null;
         if (useParallelProcessing) {
-          threadLocalReader = ExternalDataReaderFactory.createReader(dataFilePath);
+          threadLocalReader = ExternalDataReaderFactory.createReader(valueFactory, dataFilePath);
           threadLocalReader.open(dataFilePath);
           threadLocalReader.setDimensions(
                 dimensionX, dimensionY, Optional.ofNullable(timeDimension));
@@ -290,7 +299,7 @@ public class ExternalGeoMapper {
       PatchSet patchSet) throws IOException {
 
     // Create and configure reader
-    ExternalDataReader reader = ExternalDataReaderFactory.createReader(dataFilePath);
+    ExternalDataReader reader = ExternalDataReaderFactory.createReader(valueFactory, dataFilePath);
     reader.open(dataFilePath);
     reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
     if (crsCode != null) {

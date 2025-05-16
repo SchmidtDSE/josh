@@ -29,21 +29,21 @@ class RunPanelPresenter {
     self._onRun = onRun;
 
     self._availablePanel = self._root.querySelector("#available-panel");
-    self._runLocalDialog = self._root.querySelector("#run-local-dialog");
+    self._runDialog = self._root.querySelector("#run-local-dialog");
 
-    self._localPanel = self._runLocalDialog.querySelector("#local-run-instructions");
-    self._joshCloudPanel = self._runLocalDialog.querySelector("#josh-run-settings");
-    self._customCloudPanel = self._runLocalDialog.querySelector("#custom-cloud-run-settings");
+    self._localPanel = self._runDialog.querySelector("#local-run-instructions");
+    self._joshCloudPanel = self._runDialog.querySelector("#josh-run-settings");
+    self._customCloudPanel = self._runDialog.querySelector("#custom-cloud-run-settings");
 
-    self._browserRadio = self._runLocalDialog.querySelector("#engine-browser");
-    self._localRadio = self._runLocalDialog.querySelector("#engine-computer");
-    self._joshCloudRadio = self._runLocalDialog.querySelector("#engine-josh-cloud");
-    self._customCloudRadio = self._runLocalDialog.querySelector("#engine-your-cloud");
+    self._browserRadio = self._runDialog.querySelector("#engine-browser");
+    self._localRadio = self._runDialog.querySelector("#engine-computer");
+    self._joshCloudRadio = self._runDialog.querySelector("#engine-josh-cloud");
+    self._customCloudRadio = self._runDialog.querySelector("#engine-your-cloud");
 
-    self._notFoundMessage = self._runLocalDialog.querySelector("#app-not-found-message");
-    self._foundMessage = self._runLocalDialog.querySelector("#app-found-message");
+    self._notFoundMessage = self._runDialog.querySelector("#app-not-found-message");
+    self._foundMessage = self._runDialog.querySelector("#app-found-message");
 
-    tippy("[data-tippy-content]", { appendTo: self._runLocalDialog });
+    tippy("[data-tippy-content]", { appendTo: self._runDialog });
 
     self._setupDialog();
     self._updateVisibility();
@@ -75,9 +75,9 @@ class RunPanelPresenter {
 
     self._root.querySelector("#open-run-dialog-button").addEventListener("click", (event) => {
       event.preventDefault();
-      self._runLocalDialog.showModal();
+      self._runDialog.showModal();
 
-      const simSelect = self._runLocalDialog.querySelector(".simulation-select");
+      const simSelect = self._runDialog.querySelector(".simulation-select");
       simSelect.innerHTML = "";
       self._getSimulations().then((simulations) => {
         simulations.forEach((simulation) => {
@@ -98,22 +98,25 @@ class RunPanelPresenter {
       self._detectLocalApp();
     });
     
-    self._runLocalDialog.querySelector(".cancel-button").addEventListener("click", (event) => {
+    self._runDialog.querySelector(".cancel-button").addEventListener("click", (event) => {
       event.preventDefault();
-      self._runLocalDialog.close();
+      self._runDialog.close();
     });
 
-    self._runLocalDialog.querySelector(".run-button").addEventListener("click", (event) => {
+    self._runDialog.querySelector(".run-button").addEventListener("click", (event) => {
       event.preventDefault();
 
-      const simulationName = self._runLocalDialog.querySelector(".simulation-select").value;
+      const simulationName = self._runDialog.querySelector(".simulation-select").value;
 
-      const replicatesStr = self._runLocalDialog.querySelector(".replicates-input").value;
+      const replicatesStr = self._runDialog.querySelector(".replicates-input").value;
       const replicates = parseInt(replicatesStr);
       if (isNaN(replicates) || replicates <= 0) {
         alert("Replicates must be a positive number.");
         return;
       }
+
+      const precisionStr = self._runDialog.querySelector(".precision-input").value;
+      const preferBigDecimal = precisionStr === "high";
 
       const useServer = self._browserRadio.checked ? false : true;
       const apiKey = self._getApiKey();
@@ -124,10 +127,11 @@ class RunPanelPresenter {
         replicates,
         useServer,
         apiKey,
-        endpoint
+        endpoint,
+        preferBigDecimal
       );
       
-      self._runLocalDialog.close();
+      self._runDialog.close();
       self._onRun(runRequest);
     });
   }
@@ -140,7 +144,7 @@ class RunPanelPresenter {
   _determineEndpoint() {
     const self = this;
     if (self._customCloudRadio.checked) {
-      return self._runLocalDialog.querySelector("#your-cloud-endpoint").value;
+      return self._runDialog.querySelector("#your-cloud-endpoint").value;
     } else if (self._joshCloudRadio.checked) {
       return DEFAULT_ENDPOINT;
     } else {
@@ -156,9 +160,9 @@ class RunPanelPresenter {
   _getApiKey() {
     const self = this;
     if (self._joshCloudRadio.checked) {
-      return self._runLocalDialog.querySelector("#josh-cloud-api-key").value;
+      return self._runDialog.querySelector("#josh-cloud-api-key").value;
     } else if (self._customCloudRadio.checked) {
-      return self._runLocalDialog.querySelector("#your-cloud-api-key").value;
+      return self._runDialog.querySelector("#your-cloud-api-key").value;
     } else {
       return "";
     }

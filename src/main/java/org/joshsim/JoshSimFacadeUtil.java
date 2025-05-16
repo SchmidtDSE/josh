@@ -8,6 +8,7 @@ package org.joshsim;
 
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -44,15 +45,17 @@ public class JoshSimFacadeUtil {
   /**
    * Interpret a parsed Josh script to Java objects which can run the simulation.
    *
-   * @param engineGeometryFactory Factory though which to build simulation engine geometries.
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory though which to build simulation engine geometries.
    * @param parsed The result of parsing the Josh source successfully.
    * @param inputOutputLayer Layer to use to interact with external files and resources.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
-  public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
-        ParseResult parsed, InputOutputLayer inputOutputLayer) {
+  public static JoshProgram interpret(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, ParseResult parsed,
+        InputOutputLayer inputOutputLayer) {
     JoshInterpreter interpreter = new JoshInterpreter();
-    return interpreter.interpret(parsed, engineGeometryFactory, inputOutputLayer);
+    return interpreter.interpret(parsed, valueFactory, geometryFactory, inputOutputLayer);
   }
 
   /**
@@ -61,7 +64,8 @@ public class JoshSimFacadeUtil {
    * <p>Creates and executes a simulation using the provided program and simulation name.
    * The callback is invoked after each simulation step is completed.</p>
    *
-   * @param engineGeometryFactory Factory with which to build engine geometries.
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory with which to build engine geometries.
    * @param program The Josh program containing the simulation to run. This is the program in which
    *     the simulation will be initalized.
    * @param simulationName The name of the simulation to execute from the program. This will be
@@ -71,18 +75,20 @@ public class JoshSimFacadeUtil {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    */
-  public static void runSimulation(EngineGeometryFactory engineGeometryFactory,
-        InputOutputLayer inputOutputLayer, JoshProgram program, String simulationName,
-        SimulationStepCallback callback, boolean serialPatches) {
+  public static void runSimulation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
+        JoshProgram program, String simulationName, SimulationStepCallback callback,
+        boolean serialPatches) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
     EngineBridge bridge = new QueryCacheEngineBridge(
-        engineGeometryFactory,
+        valueFactory,
+        geometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(inputOutputLayer.getInputStrategy())
+        new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory)
     );
 
     CombinedExportFacade exportFacade = new CombinedExportFacade(
