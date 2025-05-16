@@ -111,9 +111,9 @@ public class DecimalScalar extends Scalar {
   protected EngineValue unsafeRaiseToPower(EngineValue other) {
     assertScalarCompatible(other);
 
-    double base = getAsDecimal().doubleValue();
-    double exponent = other.getAsDecimal().doubleValue();
-    double remainder = Math.abs(other.getAsInt() - other.getAsDecimal().doubleValue());
+    double base = getAsDouble();
+    double exponent = other.getAsDouble();
+    double remainder = Math.abs(other.getAsInt() - other.getAsDouble());
     boolean otherIsInteger = remainder < 1e-7;
     if (!otherIsInteger && !canBePower()) {
       throw new UnsupportedOperationException("Non-integer exponents with units are not supported");

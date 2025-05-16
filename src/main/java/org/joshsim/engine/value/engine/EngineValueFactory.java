@@ -186,4 +186,16 @@ public class EngineValueFactory {
     }
   }
 
+  /**
+   * Determine if BigDecimal is favored in this factory.
+   *
+   * <p>Indicates whether the factory is configured to favor BigDecimal over double
+   * when producing decimal values.</p>
+   *
+   * @return true if the factory favors BigDecimal for decimal values; false otherwise.
+   */
+  public boolean isFavoringBigDecimal() {
+    return favorBigDecimal;
+  }
+
 }

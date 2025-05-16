@@ -184,7 +184,7 @@ public class GridCombiner {
           );
           GeoKey key = new GeoKey(Optional.of(geometry), "");
           EngineValue value = source.getAt(key, timestep);
-          combinedGrid.setAt(x, y, timestep, value.getAsDecimal().doubleValue());
+          combinedGrid.setAt(x, y, timestep, value.getAsDouble());
         }
       }
     }

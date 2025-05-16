@@ -95,7 +95,12 @@ class EngineValueFactoryTest {
 
     // Assert
     assertTrue(result instanceof DecimalScalar);
-    assertEquals(new BigDecimal("123.456"), result.getAsDecimal());
+    assertTrue(
+        (new BigDecimal("123.456"))
+            .subtract(result.getAsDecimal())
+            .abs()
+            .doubleValue() < 0.0001
+    );
     assertEquals(Units.COUNT, result.getUnits());
   }
 

@@ -173,7 +173,7 @@ public class JoshJsSimFacade {
     EngineValue size = extractor.getSize();
     outputRecord.put("sizeStr", String.format(
         "%s %s",
-        size.getAsDecimal().toString(),
+        size.getAsString(),
         size.getUnits().toString()
     ));
 

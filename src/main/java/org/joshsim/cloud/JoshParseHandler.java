@@ -176,7 +176,7 @@ public class JoshParseHandler implements HttpHandler {
               "%s:%s:%s %s",
               extractor.getStartStr(),
               extractor.getEndStr(),
-              size.getAsDecimal().toString(),
+              size.getAsString(),
               size.getUnits().toString()
           );
         } catch (Exception e) {

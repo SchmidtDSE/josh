@@ -40,7 +40,13 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     addCast(
         "boolean",
         "decimal",
-        x -> valueFactory.build(x.getAsDecimal(), x.getUnits())
+        x -> {
+          if (valueFactory.isFavoringBigDecimal()) {
+            return valueFactory.build(x.getAsDecimal(), x.getUnits());
+          } else {
+            return valueFactory.build(x.getAsDouble(), x.getUnits());
+          }
+        }
     );
     addCast(
         "boolean",
@@ -52,7 +58,13 @@ public class EngineValueWideningCaster implements EngineValueCaster {
     addCast(
         "int",
         "decimal",
-        x -> valueFactory.build(x.getAsDecimal(), x.getUnits())
+        x -> {
+          if (valueFactory.isFavoringBigDecimal()) {
+            return valueFactory.build(x.getAsDecimal(), x.getUnits());
+          } else {
+            return valueFactory.build(x.getAsDouble(), x.getUnits());
+          }
+        }
     );
     addCast(
         "int",
