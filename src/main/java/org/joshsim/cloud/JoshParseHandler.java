@@ -19,10 +19,10 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.JoshSimFacadeUtil;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -150,6 +150,7 @@ public class JoshParseHandler implements HttpHandler {
 
     if (!result.hasErrors()) {
       JoshProgram facade = JoshSimFacadeUtil.interpret(
+          new EngineValueFactory(),
           geometryFactory,
           result,
           inputOutputLayer
@@ -165,10 +166,14 @@ public class JoshParseHandler implements HttpHandler {
         String simName = formData.getFirst("name").getValue();
         try {
           MutableEntity simEntityRaw = facade.getSimulations().getProtoype(simName).build();
-          MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+          MutableEntity simEntity = new ShadowingEntity(
+              new EngineValueFactory(),
+              simEntityRaw,
+              simEntityRaw
+          );
           GridInfoExtractor extractor = new GridInfoExtractor(
               simEntity,
-              CompatibilityLayerKeeper.get().getEngineValueFactory()
+              new EngineValueFactory()
           );
 
           EngineValue size = extractor.getSize();

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -31,8 +30,8 @@ class GridCombinerTest {
   @BeforeEach
   void setUp() {
     geometryFactory = new GridGeometryFactory();
-    valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
-    gridCombiner = new GridCombiner(geometryFactory);
+    valueFactory = new EngineValueFactory();
+    gridCombiner = new GridCombiner(valueFactory, geometryFactory);
 
     // Create extents for left grid (0,0 to 2,2)
     PatchBuilderExtents leftExtents = new PatchBuilderExtentsBuilder()

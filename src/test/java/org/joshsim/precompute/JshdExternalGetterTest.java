@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
@@ -31,7 +30,7 @@ class JshdExternalGetterTest {
 
   @BeforeEach
   void setUp() {
-    factory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    factory = new EngineValueFactory();
     getter = new JshdExternalGetter(mockInputStrategy, factory);
   }
 

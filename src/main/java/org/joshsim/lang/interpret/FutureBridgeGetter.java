@@ -12,6 +12,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
@@ -27,6 +28,7 @@ import org.joshsim.precompute.JshdExternalGetter;
  */
 public class FutureBridgeGetter implements BridgeGetter {
 
+  private final EngineValueFactory valueFactory;
   private Optional<JoshProgram> program;
   private Optional<String> simulationName;
   private Optional<EngineBridge> builtBridge;
@@ -35,8 +37,11 @@ public class FutureBridgeGetter implements BridgeGetter {
 
   /**
    * Creates a new future bridge getter with no initial configuration.
+   *
+   * @param valueFactory The value factory to use in constructing returned and supporting values.
    */
-  public FutureBridgeGetter() {
+  public FutureBridgeGetter(EngineValueFactory valueFactory) {
+    this.valueFactory = valueFactory;
     this.program = Optional.empty();
     this.simulationName = Optional.empty();
     this.builtBridge = Optional.empty();
@@ -133,11 +138,12 @@ public class FutureBridgeGetter implements BridgeGetter {
     EntityPrototypeStore prototypeStore = programRealized.getPrototypes();
 
     EngineBridge newBridge = new MinimalEngineBridge(
+        valueFactory,
         geometryFactoryRealized,
         simulation,
         converter,
         prototypeStore,
-        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy())
+        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
     );
 
     builtBridge = Optional.of(newBridge);

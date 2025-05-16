@@ -6,7 +6,6 @@
 
 package org.joshsim.precompute;
 
-import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;

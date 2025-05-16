@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 import java.util.stream.StreamSupport;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -49,7 +48,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private static final Units EMPTY_UNITS = Units.of("");
   private static final Units COUNT_UNITS = Units.of("count");
   private static final Units METER_UNITS = Units.of("meters");
-  private static final ValueResolver CURRENT_VALUE_RESOLVER = new ValueResolver("current");
+
+  private final ValueResolver currentValueResolver;
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
@@ -75,7 +75,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    valueFactory = bridge.getEngineValueFactory();
+    currentValueResolver = new ValueResolver(valueFactory, "current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
     random = new Random();
     isEnded = false;
@@ -422,6 +423,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         parent
     );
     EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
+        valueFactory,
         innerDecorated,
         scope
     );
@@ -454,7 +456,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine executeSpatialQuery(ValueResolver resolver) {
     EngineValue distance = convert(pop(), METER_UNITS);
 
-    Entity executingEntity = CURRENT_VALUE_RESOLVER.get(scope).orElseThrow().getAsEntity();
+    Entity executingEntity = currentValueResolver.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
     EngineGeometry queryGeometry = bridge.getGeometryFactory().createCircle(
         centerGeometry.getCenterX(), centerGeometry.getCenterY(), distance.getAsDecimal()

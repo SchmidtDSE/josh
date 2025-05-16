@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -22,15 +21,18 @@ import org.joshsim.lang.interpret.ValueResolver;
  */
 public class DistributionScope implements Scope {
 
+  private final EngineValueFactory valueFactory;
   private final Distribution value;
   private final Set<String> expectedAttrs;
 
   /**
    * Create a scope decorator around this distribution.
    *
+   * @param valueFactory Factory to use for creating transformed EngineValues.
    * @param value Distribution to use for current.
    */
-  public DistributionScope(Distribution value) {
+  public DistributionScope(EngineValueFactory valueFactory, Distribution value) {
+    this.valueFactory = valueFactory;
     this.value = value;
     this.expectedAttrs = getAttributes(value);
   }
@@ -39,8 +41,7 @@ public class DistributionScope implements Scope {
   public EngineValue get(String name) {
     Iterable<EngineValue> values = value.getContents(value.getSize().orElseThrow(), false);
 
-    ValueResolver innerResolver = new ValueResolver(name);
-    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    ValueResolver innerResolver = new ValueResolver(valueFactory, name);
 
     List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
         .map((x) -> new EntityScope(x.getAsEntity()))

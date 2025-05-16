@@ -9,6 +9,8 @@ import org.joshsim.geo.external.GeoInterpolationStrategyFactory.InterpolationMet
  * Creates and configures ExternalGeoMapper instances.
  */
 public class ExternalGeoMapperBuilder {
+
+  private final EngineValueFactory valueFactory;
   private ExternalCoordinateTransformer coordinateTransformer;
   private GeoInterpolationStrategy interpolationStrategy;
   private String dimensionX;
@@ -16,6 +18,15 @@ public class ExternalGeoMapperBuilder {
   private String timeDimension;
   private String crsCode;
   private Optional<Long> forcedTimestep = Optional.empty();
+
+  /**
+   * Create a new builder.
+   *
+   * @param valueFactory Factory for creating EngineValue objects in mappers built by this builder.
+   */
+  public ExternalGeoMapperBuilder(EngineValueFactory valueFactory) {
+    this.valueFactory = valueFactory;
+  }
 
   /**
    * Sets the coordinate transformer for the mapper.
@@ -116,6 +127,7 @@ public class ExternalGeoMapperBuilder {
     }
 
     return new ExternalGeoMapper(
+        valueFactory,
         coordinateTransformer,
         interpolationStrategy,
         dimensionX,

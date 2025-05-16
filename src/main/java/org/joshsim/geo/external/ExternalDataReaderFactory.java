@@ -1,7 +1,6 @@
 package org.joshsim.geo.external;
 
 import java.io.IOException;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.readers.CsvExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.GeotiffExternalDataReaderFactory;
@@ -16,15 +15,15 @@ public class ExternalDataReaderFactory {
   /**
    * Creates a ExternalDataReader appropriate for the given file path.
    *
+   * @param valueFactory Factory for creating EngineValue objects from external data.
    * @param filePath Path to the data file
    * @return A ExternalDataReader instance that can handle the file
    * @throws IOException If no suitable reader is found or there's an error opening the file
    */
   public static ExternalDataReader createReader(
+        EngineValueFactory valueFactory,
         String filePath
   ) throws IOException {
-    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
-
     if (isNetCdfFile(filePath)) {
       NetcdfExternalDataReaderFactory netcdfReaderFactory = new NetcdfExternalDataReaderFactory(
           valueFactory

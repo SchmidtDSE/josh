@@ -8,7 +8,6 @@ package org.joshsim.engine.value.type;
 
 import java.util.List;
 import java.util.Optional;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
@@ -45,7 +44,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    EngineValueFactory factory = new EngineValueFactory();
     List<EngineValue> values = List.of(this);
     return factory.buildRealizedDistribution(values, getUnits());
   }

@@ -7,7 +7,6 @@
 
 package org.joshsim.lang.interpret.mapping;
 
-import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;

@@ -17,7 +17,6 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -169,7 +168,8 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Initialize an external geo mapper
-    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder();
+    EngineValueFactory valueFactory = new EngineValueFactory();
+    ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder(valueFactory);
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
     geoMapperBuilder.addCoordinateTransformer(new NoopExternalCoordinateTransformer());
@@ -189,10 +189,9 @@ public class PreprocessCommand implements Callable<Integer> {
 
     // Get metadata
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
+    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
 
     // Create grid from streaming data
-    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
     GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
@@ -206,14 +205,15 @@ public class PreprocessCommand implements Callable<Integer> {
       System.out.println("Failed to read CRS code due to: " + e);
       return 1;
     }
-    EngineGeometryFactory engineGeometryFactory = new EarthGeometryFactory(crs);
+    EngineGeometryFactory geometryFactory = new EarthGeometryFactory(crs);
 
     EngineBridge bridge = new QueryCacheEngineBridge(
-        engineGeometryFactory,
+        valueFactory,
+        geometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy())
+        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);
@@ -268,7 +268,7 @@ public class PreprocessCommand implements Callable<Integer> {
       );
       try (FileInputStream inputStream = new FileInputStream(outputFile)) {
         DataGridLayer existingGrid = deserializer.deserialize(inputStream);
-        GridCombiner combiner = new GridCombiner(engineGeometryFactory);
+        GridCombiner combiner = new GridCombiner(valueFactory, geometryFactory);
         finalGrid = combiner.combine(existingGrid, grid);
       } catch (IOException e) {
         throw new RuntimeException("Error reading existing grid file: " + e);

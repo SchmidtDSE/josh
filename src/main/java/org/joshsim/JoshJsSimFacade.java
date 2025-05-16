@@ -15,6 +15,7 @@ import org.joshsim.compat.EmulatedCompatibilityLayer;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -44,7 +45,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String validate(String code) {
-    setupForWasm(true);
+    setupForWasm();
 
     JoshParser parser = new JoshParser();
     ParseResult result = parser.parse(code);
@@ -60,7 +61,9 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      interpreter.interpret(result, new GridGeometryFactory(), getInputOutputLayer());
+      EngineValueFactory valueFactory = new EngineValueFactory();
+      EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+      interpreter.interpret(result, valueFactory, geometryFactory, getInputOutputLayer());
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -76,7 +79,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String getSimulations(String code) {
-    setupForWasm(true);
+    setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -86,6 +89,7 @@ public class JoshJsSimFacade {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     JoshProgram program = JoshSimFacadeUtil.interpret(
+        new EngineValueFactory(),
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -139,7 +143,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String getSimulationMetadata(String code, String simulationName) {
-    setupForWasm(true);
+    setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -148,7 +152,9 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
+    EngineValueFactory engineValueFactory = new EngineValueFactory();
     JoshProgram program = JoshSimFacadeUtil.interpret(
+        engineValueFactory,
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -156,11 +162,8 @@ public class JoshJsSimFacade {
     program.getSimulations().getProtoype(simulationName);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
-    MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(
-        simEntity,
-        CompatibilityLayerKeeper.get().getEngineValueFactory()
-    );
+    MutableEntity simEntity = new ShadowingEntity(engineValueFactory, simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, engineValueFactory);
 
     Map<String, String> outputRecord = new HashMap<>();
     outputRecord.put("name", simulationName);
@@ -186,12 +189,9 @@ public class JoshJsSimFacade {
    * <p>This method sets the platform-specific compatibility layer to an instance of
    * EmulatedCompatibilityLaye}, which provides the necessary abstractions to enable simulations to
    * run within the WebAssembly virtual machine.</p>
-   *
-   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
-   *     not specified. True if BigDecimal and false otherwise.
    */
-  private static void setupForWasm(boolean favorBigDecimal) {
-    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer(favorBigDecimal));
+  private static void setupForWasm() {
+    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer());
   }
 
   /**
@@ -211,19 +211,26 @@ public class JoshJsSimFacade {
    */
   private static void runSimulationUnsafe(String code, String simulationName, String externalData,
         boolean favorBigDecimal) {
-    setupForWasm(favorBigDecimal);
+    setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
+    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(geometryFactory, result, inputOutputLayer);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        valueFactory,
+        geometryFactory,
+        result,
+        inputOutputLayer
+    );
 
     JoshSimFacadeUtil.runSimulation(
+        valueFactory,
         geometryFactory,
         inputOutputLayer,
         program,

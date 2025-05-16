@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -36,7 +35,7 @@ class DoublePrecomputedGridBuilderTest {
     when(mockExtents.getBottomRightY()).thenReturn(BigDecimal.TEN);
 
     builder = new DoublePrecomputedGridBuilder();
-    engineValueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    engineValueFactory = new EngineValueFactory();
   }
 
   @Test

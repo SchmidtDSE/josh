@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -22,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class JshdUtilTest {
 
-  private final EngineValueFactory factory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+  private final EngineValueFactory factory = new EngineValueFactory();
 
   @Mock
   private EngineValue mockEngineValue;

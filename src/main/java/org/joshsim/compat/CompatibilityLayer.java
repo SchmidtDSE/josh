@@ -7,7 +7,6 @@
 package org.joshsim.compat;
 
 import java.math.BigDecimal;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 
 /**
  * Layer which offers access to platform-specific functionality and preferences.
@@ -47,12 +46,5 @@ public interface CompatibilityLayer {
    * @return A new CompatibleLock instance
    */
   CompatibleLock getLock();
-
-  /**
-   * Get the factory that should be used to build engine values.
-   *
-   * @return The engine value factory in use.
-   */
-  EngineValueFactory getEngineValueFactory();
 
 }

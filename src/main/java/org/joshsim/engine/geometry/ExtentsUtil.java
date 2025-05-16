@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.geometry;
 
-import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;

@@ -71,8 +71,11 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockMutableEntity.getSubstep()).thenReturn(Optional.of("start"));
     when(mockEntityValue.getAsMutableEntity()).thenReturn(mockMutableEntity);
     when(mockScope.get("current")).thenReturn(mockEntityValue);
-    machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
+
     factory = new EngineValueFactory();
+    when(mockBridge.getEngineValueFactory()).thenReturn(factory);
+
+    machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
   }
 
   @Test
@@ -818,7 +821,7 @@ public class SingleThreadEventHandlerMachineTest {
     // When
     machine.push(value);
     machine.saveLocalVariable("localConstant");
-    machine.push(new ValueResolver("localConstant"));
+    machine.push(new ValueResolver(new EngineValueFactory(), "localConstant"));
 
     // Then
     machine.end();
@@ -954,7 +957,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new ValueResolver("testAttr"));
+    machine.executeSpatialQuery(new ValueResolver(new EngineValueFactory(), "testAttr"));
 
     // Then
     machine.end();

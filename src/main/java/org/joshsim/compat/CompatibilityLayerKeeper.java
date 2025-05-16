@@ -35,7 +35,7 @@ public class CompatibilityLayerKeeper {
    */
   public static CompatibilityLayer get() {
     if (!layer.isPresent()) {
-      layer = Optional.of(new EmulatedCompatibilityLayer(true));
+      layer = Optional.of(new EmulatedCompatibilityLayer());
     }
 
     return layer.get();
