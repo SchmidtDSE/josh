@@ -65,7 +65,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     this.bridgeGetter = bridgeGetter;
 
-    engineValueFactory = EngineValueFactory.getDefault();
+    engineValueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
     singleCount = engineValueFactory.build(1, Units.of("count"));
     allString = engineValueFactory.build("all", Units.of(""));
     trueValue = engineValueFactory.build(true, Units.of(""));

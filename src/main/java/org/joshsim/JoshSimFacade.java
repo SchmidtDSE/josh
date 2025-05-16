@@ -43,7 +43,7 @@ public class JoshSimFacade {
    *     issues found.
    */
   public static ParseResult parse(String code) {
-    setupForJvm();
+    setupForJvm(true);
     return JoshSimFacadeUtil.parse(code);
   }
 
@@ -58,7 +58,7 @@ public class JoshSimFacade {
    */
   public static JoshProgram interpret(EngineGeometryFactory engineGeometryFactory,
         ParseResult parsed, InputOutputLayer inputOutputLayer) {
-    setupForJvm();
+    setupForJvm(true);
     return JoshSimFacadeUtil.interpret(engineGeometryFactory, parsed, inputOutputLayer);
   }
 
@@ -78,15 +78,18 @@ public class JoshSimFacade {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    * @param replicateNumber The replicate number for the replicate to be run.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
   public static void runSimulation(EngineGeometryFactory engineGeometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
-        boolean serialPatches, int replicateNumber) {
-    setupForJvm();
+        boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
+    setupForJvm(favorBigDecimal);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
     boolean hasDegrees = extractor.getStartStr().contains("degree");
 
     EngineValue sizeValueRaw = extractor.getSize();
@@ -99,7 +102,6 @@ public class JoshSimFacade {
     JvmInputOutputLayer inputOutputLayer;
     if (hasDegrees && sizeMeters) {
       PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
-      EngineValueFactory valueFactory = EngineValueFactory.getDefault();
       ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
       ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
       BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
@@ -128,9 +130,12 @@ public class JoshSimFacade {
    * <p>This method sets the platform-specific compatibility layer to an instance of
    * JvmCompatibilityLayer, which provides the necessary abstractions to enable simulations to run
    * within the standard JVM environment.</p>
+   *
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
-  private static void setupForJvm() {
-    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
+  private static void setupForJvm(boolean favorBigDecimal) {
+    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer(favorBigDecimal));
   }
 
 }

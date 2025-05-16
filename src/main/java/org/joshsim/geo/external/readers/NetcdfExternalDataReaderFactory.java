@@ -76,13 +76,6 @@ public class NetcdfExternalDataReaderFactory {
   }
 
   /**
-   * Creates a factory with system default settings for the engine value factory.
-   */
-  public static NetcdfExternalDataReaderFactory createWithDefaults() {
-    return new NetcdfExternalDataReaderFactory(new EngineValueFactory());
-  }
-
-  /**
    * Gets the value factory used by this reader factory.
    */
   public EngineValueFactory getValueFactory() {

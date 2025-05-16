@@ -45,7 +45,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String validate(String code) {
-    setupForWasm();
+    setupForWasm(true);
 
     JoshParser parser = new JoshParser();
     ParseResult result = parser.parse(code);
@@ -77,7 +77,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String getSimulations(String code) {
-    setupForWasm();
+    setupForWasm(true);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -111,11 +111,14 @@ public class JoshJsSimFacade {
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
    * @param externalData The serialization of the virtual file system to use in this simulation.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
   @JSExport
-  public static void runSimulation(String code, String simulationName, String externalData) {
+  public static void runSimulation(String code, String simulationName, String externalData,
+        boolean favorBigDecimal) {
     try {
-      runSimulationUnsafe(code, simulationName, externalData);
+      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal);
     } catch (Exception e) {
       reportError(e.toString());
     }
@@ -137,7 +140,7 @@ public class JoshJsSimFacade {
    */
   @JSExport
   public static String getSimulationMetadata(String code, String simulationName) {
-    setupForWasm();
+    setupForWasm(true);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -155,7 +158,10 @@ public class JoshJsSimFacade {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    GridInfoExtractor extractor = new GridInfoExtractor(
+        simEntity,
+        CompatibilityLayerKeeper.get().getEngineValueFactory()
+    );
 
     Map<String, String> outputRecord = new HashMap<>();
     outputRecord.put("name", simulationName);
@@ -181,9 +187,12 @@ public class JoshJsSimFacade {
    * <p>This method sets the platform-specific compatibility layer to an instance of
    * EmulatedCompatibilityLaye}, which provides the necessary abstractions to enable simulations to
    * run within the WebAssembly virtual machine.</p>
+   *
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
-  private static void setupForWasm() {
-    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer());
+  private static void setupForWasm(boolean favorBigDecimal) {
+    CompatibilityLayerKeeper.set(new EmulatedCompatibilityLayer(favorBigDecimal));
   }
 
   /**
@@ -197,10 +206,13 @@ public class JoshJsSimFacade {
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
    * @param externalData The serialization of the virtual file system to use within this simulation.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    * @throws RuntimeException If parsing the code results in errors.
    */
-  private static void runSimulationUnsafe(String code, String simulationName, String externalData) {
-    setupForWasm();
+  private static void runSimulationUnsafe(String code, String simulationName, String externalData,
+        boolean favorBigDecimal) {
+    setupForWasm(favorBigDecimal);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {

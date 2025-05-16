@@ -15,8 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +38,8 @@ class RealizedDistributionTest {
 
   @BeforeEach
   void setUp() {
-    caster = new EngineValueWideningCaster();
+    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    caster = new EngineValueWideningCaster(valueFactory);
     values = new ArrayList<>();
     nakedValues = new ArrayList<>();
 

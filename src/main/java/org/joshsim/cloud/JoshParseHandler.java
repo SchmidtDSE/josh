@@ -19,10 +19,10 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.JoshSimFacadeUtil;
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -168,7 +168,7 @@ public class JoshParseHandler implements HttpHandler {
           MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
           GridInfoExtractor extractor = new GridInfoExtractor(
               simEntity,
-              EngineValueFactory.getDefault()
+              CompatibilityLayerKeeper.get().getEngineValueFactory()
           );
 
           EngineValue size = extractor.getSize();

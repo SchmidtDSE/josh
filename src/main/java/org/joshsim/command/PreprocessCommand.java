@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -191,7 +192,8 @@ public class PreprocessCommand implements Callable<Integer> {
     MutableEntity simEntity = new ShadowingEntity(simEntityRaw, simEntityRaw);
 
     // Create grid from streaming data
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, EngineValueFactory.getDefault());
+    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
     String startStr = extractor.getStartStr();
     String endStr = extractor.getEndStr();
     EngineValue size = extractor.getSize();
@@ -231,7 +233,7 @@ public class PreprocessCommand implements Callable<Integer> {
     long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
 
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
-        EngineValueFactory.getDefault(),
+        valueFactory,
         (timestep) -> {
           System.out.println("Preprocessing: " + timestep);
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
@@ -262,7 +264,7 @@ public class PreprocessCommand implements Callable<Integer> {
     DataGridLayer finalGrid = grid;
     if (amend && outputFile.exists()) {
       BinaryGridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
-          EngineValueFactory.getDefault()
+          valueFactory
       );
       try (FileInputStream inputStream = new FileInputStream(outputFile)) {
         DataGridLayer existingGrid = deserializer.deserialize(inputStream);
@@ -275,7 +277,7 @@ public class PreprocessCommand implements Callable<Integer> {
 
     // Serialize to binary file
     BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
-        EngineValueFactory.getDefault()
+        valueFactory
     );
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(finalGrid, outputStream);

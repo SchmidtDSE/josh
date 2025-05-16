@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -77,7 +79,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     replicate = Optional.empty();
 
-    engineValueFactory = EngineValueFactory.getDefault();
+    engineValueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
 
     simulation.startSubstep("constant");
 
@@ -118,7 +120,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     this.replicate = Optional.of(replicate);
 
-    engineValueFactory = EngineValueFactory.getDefault();
+    engineValueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
 
     simulation.startSubstep("constant");
 

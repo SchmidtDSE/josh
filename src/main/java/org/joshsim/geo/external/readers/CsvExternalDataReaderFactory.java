@@ -6,6 +6,7 @@
 
 package org.joshsim.geo.external.readers;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 
@@ -64,16 +65,6 @@ public class CsvExternalDataReaderFactory {
       }
       throw new RuntimeException("Failed to open CSV file: " + filePath, e);
     }
-  }
-
-  /**
-   * Creates a CsvExternalDataReaderFactory instance using default configurations.
-   *
-   * @return a new instance of CsvExternalDataReaderFactory initialized with a default
-   *     EngineValueFactory.
-   */
-  public static CsvExternalDataReaderFactory createWithDefaults() {
-    return new CsvExternalDataReaderFactory(new EngineValueFactory());
   }
 
   /**

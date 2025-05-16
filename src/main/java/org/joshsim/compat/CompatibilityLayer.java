@@ -6,13 +6,16 @@
 
 package org.joshsim.compat;
 
+import org.joshsim.engine.value.engine.EngineValueFactory;
+
 import java.math.BigDecimal;
 
 /**
- * Layer which offers access to platform-specific functionality (JVM vs WASM).
+ * Layer which offers access to platform-specific functionality and preferences.
  *
  * <p>Layer which allows abstraction over different runtime virtual machines, specifically offering
- * Compatibility objects which work on either a plain old JVM or in WebAssembly.</p>
+ * Compatibility objects which work on either a plain old JVM or in WebAssembly. This also handles
+ * user runtime preferences like BigDecimal vs double</p>
  */
 public interface CompatibilityLayer {
 
@@ -45,5 +48,12 @@ public interface CompatibilityLayer {
    * @return A new CompatibleLock instance
    */
   CompatibleLock getLock();
+
+  /**
+   * Get the factory that should be used to build engine values.
+   *
+   * @return The engine value factory in use.
+   */
+  EngineValueFactory getEngineValueFactory();
 
 }

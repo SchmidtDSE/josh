@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -39,7 +41,7 @@ public class DistributionScope implements Scope {
     Iterable<EngineValue> values = value.getContents(value.getSize().orElseThrow(), false);
 
     ValueResolver innerResolver = new ValueResolver(name);
-    EngineValueFactory valueFactory = EngineValueFactory.getDefault();
+    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
 
     List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
         .map((x) -> new EntityScope(x.getAsEntity()))

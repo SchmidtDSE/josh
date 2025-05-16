@@ -12,9 +12,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -22,9 +25,17 @@ import org.junit.jupiter.api.Test;
  */
 class DoubleScalarTest {
 
+  private EngineValueCaster caster;
+
+  @BeforeEach
+  void setUp() {
+    caster = new EngineValueWideningCaster(
+        CompatibilityLayerKeeper.get().getEngineValueFactory()
+    );
+  }
+
   @Test
   void testConstructorAndGetters() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar = new DoubleScalar(caster, 42.5, Units.of("m"));
 
     assertEquals(new BigDecimal("42.5"), scalar.getAsDecimal());
@@ -36,7 +47,6 @@ class DoubleScalarTest {
 
   @Test
   void testGetAsBoolean() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar nonZeroScalar = new DoubleScalar(caster, 42.5, Units.EMPTY);
     DoubleScalar zeroScalar = new DoubleScalar(caster, 0.0, Units.EMPTY);
 
@@ -46,7 +56,6 @@ class DoubleScalarTest {
 
   @Test
   void testGetAsInt() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar = new DoubleScalar(caster, 42.5, Units.EMPTY);
 
     assertEquals(42L, scalar.getAsInt());
@@ -54,7 +63,6 @@ class DoubleScalarTest {
 
   @Test
   void testAdd() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 5.3, Units.of("m"));
 
@@ -65,7 +73,6 @@ class DoubleScalarTest {
 
   @Test
   void testAddWithDifferentUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 5.3, Units.of("s"));
 
@@ -74,7 +81,6 @@ class DoubleScalarTest {
 
   @Test
   void testSubtract() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 5.3, Units.of("m"));
 
@@ -85,7 +91,6 @@ class DoubleScalarTest {
 
   @Test
   void testSubtractWithDifferentUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 5.3, Units.of("s"));
 
@@ -94,7 +99,6 @@ class DoubleScalarTest {
 
   @Test
   void testMultiply() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 2.0, Units.of("s"));
 
@@ -105,7 +109,6 @@ class DoubleScalarTest {
 
   @Test
   void testDivide() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 2.0, Units.of("s"));
 
@@ -116,7 +119,6 @@ class DoubleScalarTest {
 
   @Test
   void testRaiseToPower() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 2.0, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 3.0, Units.EMPTY);
 
@@ -127,7 +129,6 @@ class DoubleScalarTest {
 
   @Test
   void testRaiseToPowerWithUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 2.0, Units.of("m"));
     DoubleScalar scalar2 = new DoubleScalar(caster, 3.0, Units.of("s"));
 
@@ -136,7 +137,6 @@ class DoubleScalarTest {
 
   @Test
   void testCompareToSameUnitsDifferentValues() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DoubleScalar(caster, 10.0, Units.of("m"));
     Scalar scalar2 = new DoubleScalar(caster, 20.0, Units.of("m"));
 
@@ -146,7 +146,6 @@ class DoubleScalarTest {
 
   @Test
   void testCompareToIncompatibleUnits() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     Scalar scalar1 = new DoubleScalar(caster, 10.0, Units.of("m"));
     Scalar scalar2 = new DoubleScalar(caster, 10.0, Units.of("s"));
 
@@ -155,7 +154,6 @@ class DoubleScalarTest {
 
   @Test
   void testGetAsEntityThrowsException() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar = new DoubleScalar(caster, 42.5, Units.EMPTY);
 
     assertThrows(UnsupportedOperationException.class, scalar::getAsEntity);
@@ -163,7 +161,6 @@ class DoubleScalarTest {
 
   @Test
   void testScaleAndPrecision() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar = new DoubleScalar(caster, 123.456789, Units.EMPTY);
 
     assertEquals(123.456789, scalar.getAsDouble(), 0.000001);

@@ -9,6 +9,8 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -35,7 +37,7 @@ public class SyntheticScope implements Scope {
    */
   public SyntheticScope(ShadowingEntity inner) {
     this.inner = inner;
-    this.valueFactory = EngineValueFactory.getDefault();
+    this.valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
   }
 
   /**

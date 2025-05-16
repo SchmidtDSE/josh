@@ -52,13 +52,6 @@ public class GeotiffExternalDataReaderFactory {
   }
 
   /**
-   * Creates a factory with system default settings for the engine value factory.
-   */
-  public static GeotiffExternalDataReaderFactory createWithDefaults() {
-    return new GeotiffExternalDataReaderFactory(new EngineValueFactory());
-  }
-
-  /**
    * Gets the value factory used by this reader factory.
    */
   public EngineValueFactory getValueFactory() {

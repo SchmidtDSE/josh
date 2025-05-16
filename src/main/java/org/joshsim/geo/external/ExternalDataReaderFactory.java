@@ -1,6 +1,8 @@
 package org.joshsim.geo.external;
 
 import java.io.IOException;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.readers.CsvExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.GeotiffExternalDataReaderFactory;
@@ -12,14 +14,6 @@ import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
  */
 public class ExternalDataReaderFactory {
 
-  // Specialized reader factories
-  private static final NetcdfExternalDataReaderFactory netcdfReaderFactory =
-      new NetcdfExternalDataReaderFactory(new EngineValueFactory());
-  private static final GeotiffExternalDataReaderFactory geotiffReaderFactory =
-      new GeotiffExternalDataReaderFactory(new EngineValueFactory());
-  private static final CsvExternalDataReaderFactory csvReaderFactory =
-      new CsvExternalDataReaderFactory(new EngineValueFactory());
-
   /**
    * Creates a ExternalDataReader appropriate for the given file path.
    *
@@ -30,11 +24,19 @@ public class ExternalDataReaderFactory {
   public static ExternalDataReader createReader(
         String filePath
   ) throws IOException {
+    EngineValueFactory valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
+
     if (isNetCdfFile(filePath)) {
+      NetcdfExternalDataReaderFactory netcdfReaderFactory = new NetcdfExternalDataReaderFactory(
+          valueFactory
+      );
       return netcdfReaderFactory.createReader();
     }
 
     if (isGeotiffFile(filePath)) {
+      GeotiffExternalDataReaderFactory geotiffReaderFactory = new GeotiffExternalDataReaderFactory(
+          valueFactory
+      );
       return geotiffReaderFactory.createReader();
     }
 
@@ -43,6 +45,9 @@ public class ExternalDataReaderFactory {
     }
 
     if (isCsvFile(filePath)) {
+      CsvExternalDataReaderFactory csvReaderFactory = new CsvExternalDataReaderFactory(
+          valueFactory
+      );
       return csvReaderFactory.createReader();
     }
 

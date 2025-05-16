@@ -7,6 +7,8 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
+
+import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.ExtentsUtil;
@@ -36,7 +38,7 @@ public class GridFromSimFactory {
   public GridFromSimFactory(EngineBridge bridge) {
     this.bridge = bridge;
 
-    valueFactory = EngineValueFactory.getDefault();
+    valueFactory = CompatibilityLayerKeeper.get().getEngineValueFactory();
   }
 
   /**

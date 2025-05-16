@@ -13,14 +13,7 @@ import java.util.List;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.type.BooleanScalar;
-import org.joshsim.engine.value.type.DecimalScalar;
-import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.EntityValue;
-import org.joshsim.engine.value.type.IntScalar;
-import org.joshsim.engine.value.type.MutableEntityValue;
-import org.joshsim.engine.value.type.RealizedDistribution;
-import org.joshsim.engine.value.type.StringScalar;
+import org.joshsim.engine.value.type.*;
 
 
 /**
@@ -28,32 +21,38 @@ import org.joshsim.engine.value.type.StringScalar;
  */
 public class EngineValueFactory {
 
-  private static final EngineValueFactory DEFAULT = new EngineValueFactory();
-
   private final EngineValueCaster caster;
+  private final boolean favorBigDecimal;
 
   /**
-   * Get the default engine value factory with the default caster.
-   *
-   * @return Shared engine value factory with the default caster.
+   * Create a new EnigneValueFactory using a default casting strategy and favoring BigDecimal.
    */
-  public static EngineValueFactory getDefault() {
-    return DEFAULT;
+  public EngineValueFactory() {
+    caster = new EngineValueWideningCaster(this);
+    favorBigDecimal = true;
   }
+
 
   /**
    * Create a new EnigneValueFactory using a default casting strategy.
+   *
+   * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
+   *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
    */
-  public EngineValueFactory() {
-    caster = new EngineValueWideningCaster();
+  public EngineValueFactory(boolean favorBigDecimal) {
+    caster = new EngineValueWideningCaster(this);
+    this.favorBigDecimal = favorBigDecimal;
   }
 
   /**
    * Constructor for EngineValueFactory.
    *
+   * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
+   *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
    * @param caster EngineValueCaster to cast within operations involving the EngineValue.
    */
-  public EngineValueFactory(EngineValueCaster caster) {
+  public EngineValueFactory(boolean favorBigDecimal, EngineValueCaster caster) {
+    this.favorBigDecimal = favorBigDecimal;
     this.caster = caster;
   }
 
@@ -102,6 +101,17 @@ public class EngineValueFactory {
   }
 
   /**
+   * Build a new EngineValue from a double.
+   *
+   * @param innerValue The value to decorate in an EngineValue.
+   * @param units The units to use for this value.
+   * @return The decorated version of innerValue.
+   */
+  public EngineValue build(double innerValue, Units units) {
+    return new DoubleScalar(caster, innerValue, units);
+  }
+
+  /**
    * Build a new EngineValue from an Entity.
    *
    * @param entity the value to decorate in an EngineValue.
@@ -134,6 +144,20 @@ public class EngineValueFactory {
   ) {
     ArrayList<EngineValue> innerArrayList = new ArrayList<EngineValue>(innerValue);;
     return new RealizedDistribution(caster, innerArrayList, units);
+  }
+
+  /**
+   * Parse a number from a string.
+   *
+   * @param target The string to be parsed.
+   * @return An EngineValue backed by either a double or BigDecimal depending on factory settings.
+   */
+  public EngineValue parseNumber(String target) {
+    if (favorBigDecimal) {
+      return build(new BigDecimal(target), Units.EMPTY);
+    } else {
+      return build(Double.parseDouble(target), Units.EMPTY);
+    }
   }
 
 }
