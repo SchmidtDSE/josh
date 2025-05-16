@@ -770,8 +770,8 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal value = result.getAsDecimal();
 
     // Most values in a normal distribution fall within 3 standard deviations
-    assertTrue(value.compareTo(new BigDecimal("2.0")) >= 0); // mean - 3*stdDev
-    assertTrue(value.compareTo(new BigDecimal("8.0")) <= 0); // mean + 3*stdDev
+    assertTrue(value.compareTo(new BigDecimal("2.5")) >= 0);
+    assertTrue(value.compareTo(new BigDecimal("8.5")) <= 0);
   }
 
   @Test
