@@ -63,7 +63,12 @@ public class ShadowingEntityTest {
 
     EngineValueFactory valueFactory = new EngineValueFactory();
     patchEntity = new ShadowingEntity(valueFactory, mockPatch, mockSimulation);
-    spatialEntity = new ShadowingEntity(valueFactory, mockSpatialEntity, patchEntity, mockSimulation);
+    spatialEntity = new ShadowingEntity(
+        valueFactory,
+        mockSpatialEntity,
+        patchEntity,
+        mockSimulation
+    );
   }
 
   @Test
