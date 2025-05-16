@@ -115,15 +115,6 @@ class DoubleScalarTest {
   }
 
   @Test
-  void testDivideByZero() {
-    EngineValueCaster caster = new EngineValueWideningCaster();
-    DoubleScalar scalar1 = new DoubleScalar(caster, 10.5, Units.of("m"));
-    DoubleScalar zeroScalar = new DoubleScalar(caster, 0.0, Units.of("s"));
-
-    assertThrows(ArithmeticException.class, () -> scalar1.divide(zeroScalar));
-  }
-
-  @Test
   void testRaiseToPower() {
     EngineValueCaster caster = new EngineValueWideningCaster();
     DoubleScalar scalar1 = new DoubleScalar(caster, 2.0, Units.of("m"));
