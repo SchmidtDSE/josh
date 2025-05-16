@@ -117,7 +117,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
     double value = innerValues[timestepCut][vertCut][horizCut];
-    return factory.build(BigDecimal.valueOf(value), units);
+    return factory.buildForNumber(value, units);
   }
 
   @Override

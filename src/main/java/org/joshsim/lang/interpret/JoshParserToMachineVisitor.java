@@ -79,8 +79,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
-    BigDecimal number = BigDecimal.valueOf(Double.parseDouble(ctx.getChild(0).getText()));
-    EngineValue value = engineValueFactory.build(number, Units.of("count"));
+    String numberStr = ctx.getChild(0).getText();
+    EngineValue value = engineValueFactory.parseNumber(numberStr, Units.of("count"));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
   }
@@ -900,12 +900,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     }
 
     if (isPercent) {
-      BigDecimal percent = BigDecimal.valueOf(Double.parseDouble(numberStr));
-      BigDecimal converted = percent.divide(BigDecimal.valueOf(100));
-      return engineValueFactory.build(converted, Units.of("count"));
+      double percent = Double.parseDouble(numberStr);
+      double converted = percent / 100;
+      return engineValueFactory.buildForNumber(converted, Units.of("count"));
     } else if (hasDecimal) {
-      BigDecimal number = BigDecimal.valueOf(Double.parseDouble(numberStr));
-      return engineValueFactory.build(number, Units.of(unitsText));
+      return engineValueFactory.parseNumber(numberStr, Units.of(unitsText));
     } else {
       long number = Long.parseLong(numberStr);
       return engineValueFactory.build(number, Units.of(unitsText));

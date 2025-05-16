@@ -41,7 +41,7 @@ public class LinearMapStrategy implements MapStrategy {
     EngineValue toHigh = range.getHigh();
     EngineValue toLow = range.getLow();
 
-    EngineValue zero = valueFactory.build(BigDecimal.ZERO, Units.EMPTY);
+    EngineValue zero = valueFactory.buildForNumber(0, Units.EMPTY);
     EngineValue fromSpan = fromHigh.subtract(fromLow);
     EngineValue toSpan = toHigh.subtract(toLow);
     EngineValue operandDiff = operand.subtract(fromLow);

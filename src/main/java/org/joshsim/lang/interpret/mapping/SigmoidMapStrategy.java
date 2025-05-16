@@ -55,8 +55,8 @@ public class SigmoidMapStrategy implements MapStrategy {
     // Normalize input to domain [-1,1]
     EngineValue normalizedX = operand.subtract(domain.getLow())
         .divide(domain.getHigh().subtract(domain.getLow()))
-        .multiply(valueFactory.build(new BigDecimal("2"), Units.EMPTY))
-        .subtract(valueFactory.build(new BigDecimal("1"), Units.EMPTY));
+        .multiply(valueFactory.buildForNumber(2, Units.EMPTY))
+        .subtract(valueFactory.buildForNumber(1, Units.EMPTY));
 
     // Calculate sigmoid: 1 / (1 + e^(scale * x))
     double x = normalizedX.getAsDouble() * 5;
@@ -64,7 +64,7 @@ public class SigmoidMapStrategy implements MapStrategy {
 
     // Rescale sigmoid output (0,1) to range
     EngineValue rangeSpan = range.getHigh().subtract(range.getLow());
-    return valueFactory.build(new BigDecimal(sigmoid), Units.EMPTY)
+    return valueFactory.buildForNumber(sigmoid, Units.EMPTY)
         .multiply(rangeSpan)
         .add(range.getLow());
   }

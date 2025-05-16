@@ -501,9 +501,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       doubleResult = random.nextDouble(minDouble, maxDouble);
     }
 
-    BigDecimal result = BigDecimal.valueOf(doubleResult);
-
-    EngineValue decoratedResult = valueFactory.build(result, min.getUnits());
+    EngineValue decoratedResult = valueFactory.buildForNumber(doubleResult, min.getUnits());
     memory.push(decoratedResult);
 
     return this;
@@ -519,9 +517,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     double meanDouble = mean.getAsDouble();
     double stdDouble = std.getAsDouble();
     double randGauss = random.nextGaussian(meanDouble, stdDouble);
-    BigDecimal randomValue = BigDecimal.valueOf(randGauss);
 
-    EngineValue result = valueFactory.build(randomValue, mean.getUnits());
+    EngineValue result = valueFactory.buildForNumber(randGauss, mean.getUnits());
     memory.push(result);
 
     return this;
