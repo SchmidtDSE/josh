@@ -169,7 +169,8 @@ class RemoteEngineBackend {
             const value = x.value;
 
             if (done) {
-              if (responseReader.getBuffer().trim()) {
+              const buffer = responseReader.getBuffer().trim();
+              if (buffer !== "") {
                 responseReader.processResponse(buffer);
               }
               resolve(responseReader.getCompleteReplicates());
