@@ -169,10 +169,15 @@ class RemoteEngineBackend {
             const value = x.value;
 
             if (done) {
-              if (responseReader.getBuffer().trim()) {
-                responseReader.processResponse(buffer);
+              try {
+                const buffer = responseReader.getBuffer().trim();
+                if (buffer !== "") {
+                  responseReader.processResponse(buffer);
+                }
+                resolve(responseReader.getCompleteReplicates());
+              } finally {
+                reader.releaseLock();
               }
-              resolve(responseReader.getCompleteReplicates());
               return;
             } else {
               responseReader.processResponse(decoder.decode(value, {stream: true}));
@@ -181,8 +186,12 @@ class RemoteEngineBackend {
           });
         }
 
-        readStream().catch(error => {
-          reject(error);
+        readStream().catch((error) => {
+          try {
+            reader.releaseLock();
+          } finally {
+            reject(error);
+          }
         });
       };
       
