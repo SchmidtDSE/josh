@@ -169,11 +169,15 @@ class RemoteEngineBackend {
             const value = x.value;
 
             if (done) {
-              const buffer = responseReader.getBuffer().trim();
-              if (buffer !== "") {
-                responseReader.processResponse(buffer);
+              try {
+                const buffer = responseReader.getBuffer().trim();
+                if (buffer !== "") {
+                  responseReader.processResponse(buffer);
+                }
+                resolve(responseReader.getCompleteReplicates());
+              } finally {
+                reader.releaseLock();
               }
-              resolve(responseReader.getCompleteReplicates());
               return;
             } else {
               responseReader.processResponse(decoder.decode(value, {stream: true}));
