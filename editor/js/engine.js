@@ -186,7 +186,7 @@ class RemoteEngineBackend {
           });
         }
 
-        readStream().catch(error => {
+        readStream().catch((error) => {
           try {
             reader.releaseLock();
           } finally {
