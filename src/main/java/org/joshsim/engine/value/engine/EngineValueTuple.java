@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.value.engine;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
@@ -141,7 +143,10 @@ public class EngineValueTuple {
      * @returns string representation using root types.
      */
     public String toRootString() {
-      return String.format("types: %s, %s", first.getRootType(), second.getRootType());
+      CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
+      joiner.add(first.getRootType());
+      joiner.add(second.getRootType());
+      return joiner.toString();
     }
 
     /**
