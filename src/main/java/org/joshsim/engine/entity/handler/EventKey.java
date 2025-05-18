@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.entity.handler;
 
-
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 
