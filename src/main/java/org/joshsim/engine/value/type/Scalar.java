@@ -44,9 +44,8 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   @Override
   public Distribution getAsDistribution() {
-    EngineValueFactory factory = new EngineValueFactory();
     List<EngineValue> values = List.of(this);
-    return factory.buildRealizedDistribution(values, getUnits());
+    return new RealizedDistribution(caster, values, getUnits());
   }
 
   /**
