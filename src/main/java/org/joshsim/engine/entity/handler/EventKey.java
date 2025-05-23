@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.entity.handler;
 
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.CompatibleStringJoiner;
 
 /**
  * Composite key for mapping state, attribute, and event.
@@ -97,6 +99,10 @@ public class EventKey {
   }
 
   private String generateStringRepresentation() {
-    return String.format("EventKey(%s, %s, %s)", state, attribute, event);
+    CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
+    joiner.add(state);
+    joiner.add(attribute);
+    joiner.add(event);
+    return joiner.toString();
   }
 }
