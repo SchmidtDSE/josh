@@ -182,7 +182,8 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   /**
    * Visit a spatial query expression.
    *
-   * <p>Process an expression that performs a spatial query to find entities within a specified distance.</p>
+   * <p>Process an expression that performs a spatial query to find entities within a specified
+   * distance.</p>
    *
    * @param ctx The ANTLR context from which to parse the spatial query.
    * @return Fragment containing the spatial query parsed.
@@ -203,7 +204,8 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   /**
    * Visit a position creation expression.
    *
-   * <p>Process an expression that creates a position from two coordinate values with their respective types.</p>
+   * <p>Process an expression that creates a position from two coordinate values with their
+   * respective types.</p>
    *
    * @param ctx The ANTLR context from which to parse the position creation.
    * @return Fragment containing the position creation parsed.

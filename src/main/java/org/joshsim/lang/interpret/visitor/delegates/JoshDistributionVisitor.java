@@ -129,7 +129,8 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a uniform distribution sampling expression.
    *
-   * <p>Parse an expression that samples from a uniform distribution between the low and high bounds.</p>
+   * <p>Parse an expression that samples from a uniform distribution between the low and high
+   * bounds.</p>
    *
    * @param ctx The ANTLR context from which to parse the uniform sampling expression.
    * @return Fragment containing the uniform sampling expression parsed.
@@ -151,7 +152,8 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a normal distribution sampling expression.
    *
-   * <p>Parse an expression that samples from a normal distribution with the specified mean and standard deviation.</p>
+   * <p>Parse an expression that samples from a normal distribution with the specified mean and
+   * standard deviation.</p>
    *
    * @param ctx The ANTLR context from which to parse the normal sampling expression.
    * @return Fragment containing the normal sampling expression parsed.

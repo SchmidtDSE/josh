@@ -110,8 +110,8 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   /**
    * Parse a ternary conditional expression.
    *
-   * <p>Parse a ternary conditional expression of the form "condition ? positive_result : negative_result"
-   * which evaluates the condition and returns one of two possible results.</p>
+   * <p>Parse a ternary conditional expression of the form "condition ? positive_result : 
+   * negative_result" which evaluates the condition and returns one of two possible results.</p>
    *
    * @param ctx The ANTLR context from which to parse the ternary conditional.
    * @return Fragment containing the ternary conditional expression parsed.
@@ -128,8 +128,8 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   /**
    * Parse a full if-elif-else conditional statement.
    *
-   * <p>Parse a complete conditional statement with if, optional elif branches, and an optional else branch.
-   * This builds a chain of conditional actions that will be evaluated in sequence.</p>
+   * <p>Parse a complete conditional statement with if, optional elif branches, and an optional
+   * else branch. This builds a chain of conditional actions that will be evaluated in sequence.</p>
    *
    * @param ctx The ANTLR context from which to parse the full conditional statement.
    * @return Fragment containing the full conditional statement parsed.

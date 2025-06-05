@@ -8,7 +8,6 @@ package org.joshsim.lang.interpret.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
@@ -30,7 +29,15 @@ import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
-import org.joshsim.lang.interpret.visitor.delegates.*;
+import org.joshsim.lang.interpret.visitor.delegates.DelegateToolbox;
+import org.joshsim.lang.interpret.visitor.delegates.JoshDistributionVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshFunctionVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshLogicalVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshMathematicsVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshStanzaVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshStringOperationVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshTypesUnitsVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshValueVisitor;
 
 
 /**

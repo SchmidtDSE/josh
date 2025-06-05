@@ -144,7 +144,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   /**
    * Parse an inner member of an event handler group.
    *
-   * <p>Process the inner content of an event handler group member, extracting the handler action.</p>
+   * <p>Process the inner content of an event handler group member, extracting the handler
+   * action.</p>
    *
    * @param ctx The ANTLR context from which to parse the event handler group member.
    * @return Fragment containing the event handler action.
@@ -158,8 +159,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a conditional 'if' event handler group member.
    *
-   * <p>Process an 'if' condition branch in an event handler group, creating both the action to execute
-   * and the condition that determines whether this branch should be selected.</p>
+   * <p>Process an 'if' condition branch in an event handler group, creating both the action to
+   * execute and the condition that determines whether this branch should be selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the conditional 'if' event handler.
    * @return Fragment containing the compiled callable and selector for the conditional handler.
@@ -181,8 +182,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a conditional 'elif' event handler group member.
    *
-   * <p>Process an 'elif' (else if) condition branch in an event handler group, creating both the action to execute
-   * and the condition that determines whether this branch should be selected.</p>
+   * <p>Process an 'elif' (else if) condition branch in an event handler group, creating both the
+   * action to execute and the condition that determines whether this branch should be selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the conditional 'elif' event handler.
    * @return Fragment containing the compiled callable and selector for the conditional handler.
@@ -289,7 +290,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a general event handler.
    *
-   * <p>Process a general event handler and validate that the attribute name is not a reserved word.</p>
+   * <p>Process a general event handler and validate that the attribute name is not a reserved
+   * word.</p>
    *
    * @param ctx The ANTLR context from which to parse the general event handler.
    * @return Fragment containing the event handler.
@@ -322,7 +324,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    *
    * <p>Parses a dot-separated event name into attribute and event components.
    * If the last component is a valid event name, it's used as the event name.
-   * Otherwise, the entire name is used as the attribute name and "constant" is used as the event name.</p>
+   * Otherwise, the entire name is used as the attribute name and "constant" is used as the event
+   * name.</p>
    *
    * @param fullName The full dot-separated event name to parse.
    * @return An EventKey containing the parsed attribute and event names.

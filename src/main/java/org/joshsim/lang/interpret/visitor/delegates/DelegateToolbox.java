@@ -1,6 +1,7 @@
 /**
  * Structure to assist visitor delegates.
  * 
+ *
  * @license BSD-3-Clause
  */
 
@@ -15,7 +16,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
  * Set of supporting objects to help a delegate.
  */
 public class DelegateToolbox {
-  
+
   private final JoshParserToMachineVisitor parent;
   private final EngineValueFactory valueFactory;
   private final BridgeGetter bridgeGetter;
