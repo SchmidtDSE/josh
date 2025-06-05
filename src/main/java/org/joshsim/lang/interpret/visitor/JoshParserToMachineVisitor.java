@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret;
+package org.joshsim.lang.interpret.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,9 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.ReservedWordChecker;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -42,19 +45,28 @@ import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
+import org.joshsim.lang.interpret.visitor.delegates.*;
 
 
 /**
- * Visitor which parses Josh soruce by using Fragments.
+ * Visitor which parses Josh source by using Fragments.
+ *
+ * <p>Visitor which acts as composite of delegates which handle sections of the language
+ * functionality where each produces a Fragment. These fragments handle the fact that each handler
+ * produces a separate component with a different type that get combined into callable actions which
+ * actually get executed at runtime.</p>
  */
 @SuppressWarnings("checkstyle:MissingJavaDocMethod")  // Can't use override because of generics.
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   private final BridgeGetter bridgeGetter;
   private final EngineValueFactory engineValueFactory;
-  private final EngineValue singleCount;
-  private final EngineValue allString;
-  private final EngineValue trueValue;
+
+  private final JoshValueVisitor valueVisitor;
+  private final JoshMathematicsVisitor mathematicsVisitor;
+  private final JoshStringOpeationVisitor stringOpeationVisitor;
+  private final JoshLogicalVisitor logicalVisitor;
+  private final JoshDistributionVisitor distributionVisitor;
 
   /**
    * Create a new visitor which has some commonly used values cached.
@@ -65,411 +77,139 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   public JoshParserToMachineVisitor(EngineValueFactory valueFactory, BridgeGetter bridgeGetter) {
     super();
 
-    this.bridgeGetter = bridgeGetter;
+    DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory);
+    valueVisitor = new JoshValueVisitor(toolbox);
+    mathematicsVisitor = new JoshMathematicsVisitor(toolbox);
+    stringOpeationVisitor = new JoshStringOpeationVisitor(toolbox);
+    logicalVisitor = new JoshLogicalVisitor(toolbox);
+    distributionVisitor = new JoshDistributionVisitor(toolbox);
 
-    engineValueFactory = valueFactory;
-    singleCount = engineValueFactory.build(1, Units.of("count"));
-    allString = engineValueFactory.build("all", Units.of(""));
-    trueValue = engineValueFactory.build(true, Units.of(""));
+    this.bridgeGetter = bridgeGetter;
+    this.engineValueFactory = valueFactory;
   }
 
   public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
-    String identifierName = ctx.getText();
-    ValueResolver resolver = new ValueResolver(engineValueFactory, identifierName);
-    EventHandlerAction action = (machine) -> machine.push(resolver);
-    return new ActionFragment(action);
+    return valueVisitor.visitIdentifier(ctx);
   }
 
   public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
-    String numberStr = ctx.getChild(0).getText();
-    EngineValue value = engineValueFactory.parseNumber(numberStr, Units.of("count"));
-    EventHandlerAction action = (machine) -> machine.push(value);
-    return new ActionFragment(action);
+    return valueVisitor.visitNumber(ctx);
   }
 
   public Fragment visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
-    EngineValue value = parseUnitsValue(ctx);
-    EventHandlerAction action = (machine) -> machine.push(value);
-    return new ActionFragment(action);
+    return valueVisitor.visitUnitsValue(ctx);
   }
 
   public Fragment visitString(JoshLangParser.StringContext ctx) {
-    String string = ctx.getText();
-    EngineValue value = engineValueFactory.build(string, Units.of(""));
-    EventHandlerAction action = (machine) -> machine.push(value);
-    return new ActionFragment(action);
+    return valueVisitor.visitString(ctx);
   }
 
   public Fragment visitBool(JoshLangParser.BoolContext ctx) {
-    boolean bool = ctx.getChild(0).getText().equals("true");
-    EngineValue value = engineValueFactory.build(bool, Units.of(""));
-    EventHandlerAction action = (machine) -> machine.push(value);
-    return new ActionFragment(action);
+    return valueVisitor.visitBool(ctx);
   }
 
   public Fragment visitAllExpression(JoshLangParser.AllExpressionContext ctx) {
-    EventHandlerAction action = (machine) -> machine.push(allString);
-    return new ActionFragment(action);
+    return valueVisitor.visitAllExpression(ctx);
   }
 
   public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
-    String name = ctx.name.getText();
-    EventHandlerAction action = (machine) -> {
-      long stepCount = machine.getStepCount();
-      machine.pushExternal(name, stepCount);
-      return machine;
-    };
-    return new ActionFragment(action);
+    return valueVisitor.visitExternalValue(ctx);
   }
 
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
-    String name = ctx.getChild(1).getText();
-    EventHandlerAction action = (machine) -> {
-      return machine;
-    };
-    return new ActionFragment(action);
+    return valueVisitor.visitExternalValueAtTime(ctx);
   }
 
   public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
-    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
-    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
-    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      fromLowAction.apply(machine);
-      fromHighAction.apply(machine);
-      toLowAction.apply(machine);
-      toHighAction.apply(machine);
-      machine.push(engineValueFactory.build(true, Units.EMPTY));
-      machine.applyMap("linear");
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitMapLinear(ctx);
   }
 
   public Fragment visitMapParam(JoshLangParser.MapParamContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
-    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
-    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
-    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
-    String method = ctx.method.getText();
-
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      fromLowAction.apply(machine);
-      fromHighAction.apply(machine);
-      toLowAction.apply(machine);
-      toHighAction.apply(machine);
-      machine.push(engineValueFactory.build(true, Units.EMPTY));
-      machine.applyMap(method);
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitMapParam(ctx);
   }
 
   public Fragment visitMapParamParam(JoshLangParser.MapParamParamContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction fromLowAction = ctx.fromlow.accept(this).getCurrentAction();
-    EventHandlerAction fromHighAction = ctx.fromhigh.accept(this).getCurrentAction();
-    EventHandlerAction toLowAction = ctx.tolow.accept(this).getCurrentAction();
-    EventHandlerAction toHighAction = ctx.tohigh.accept(this).getCurrentAction();
-    EventHandlerAction paramAction = ctx.methodarg.accept(this).getCurrentAction();
-    String method = ctx.method.getText();
-
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      fromLowAction.apply(machine);
-      fromHighAction.apply(machine);
-      toLowAction.apply(machine);
-      toHighAction.apply(machine);
-      paramAction.apply(machine);
-      machine.applyMap(method);
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitMapParamParam(ctx);
   }
 
   public Fragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-    boolean isAddition = ctx.op.getText().equals("+");
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      return isAddition ? machine.add() : machine.subtract();
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitAdditionExpression(ctx);
   }
 
   public Fragment visitMultiplyExpression(JoshLangParser.MultiplyExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-    boolean isMultiplication = ctx.op.getText().equals("*");
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      return isMultiplication ? machine.multiply() : machine.divide();
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitMultiplyExpression(ctx);
   }
 
   public Fragment visitPowExpression(JoshLangParser.PowExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      machine.pow();
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      machine.concat();
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitPowExpression(ctx);
   }
 
   public Fragment visitParenExpression(JoshLangParser.ParenExpressionContext ctx) {
-    return ctx.getChild(1).accept(this);
-  }
-
-  public Fragment visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-    String opStr = ctx.op.getText();
-
-    EventHandlerAction innerAction = switch (opStr) {
-      case "and" -> (machine) -> machine.and();
-      case "or" -> (machine) -> machine.or();
-      case "xor" -> (machine) -> machine.xor();
-      default -> throw new IllegalArgumentException(opStr + " is not a valid logical expression.");
-    };
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      innerAction.apply(machine);
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitSlice(JoshLangParser.SliceContext ctx) {
-    EventHandlerAction subjectAction = ctx.subject.accept(this).getCurrentAction();
-    EventHandlerAction selectionAction = ctx.selection.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      subjectAction.apply(machine);
-      selectionAction.apply(machine);
-      return machine.slice();
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitCondition(JoshLangParser.ConditionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(this).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(this).getCurrentAction();
-    String opStr = ctx.op.getText();
-
-    EventHandlerAction innerAction = switch (opStr) {
-      case "!=" -> (machine) -> machine.neq();
-      case ">" -> (machine) -> machine.gt();
-      case "<" -> (machine) -> machine.lt();
-      case "==" -> (machine) -> machine.eq();
-      case "<=" -> (machine) -> machine.lteq();
-      case ">=" -> (machine) -> machine.gteq();
-      default -> throw new IllegalArgumentException(opStr + " is not a valid comparator.");
-    };
-
-    EventHandlerAction action = (machine) -> {
-      leftAction.apply(machine);
-      rightAction.apply(machine);
-      innerAction.apply(machine);
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitConditional(JoshLangParser.ConditionalContext ctx) {
-    EventHandlerAction posAction = ctx.pos.accept(this).getCurrentAction();
-    EventHandlerAction negAction = ctx.neg.accept(this).getCurrentAction();
-    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
-
-    EventHandlerAction action = new ConditionalAction(condAction, posAction, negAction);
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitFullConditional(JoshLangParser.FullConditionalContext ctx) {
-    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
-    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
-
-    ChaniningConditionalBuilder chainBuilder = new ChaniningConditionalBuilder();
-    chainBuilder.add(new ConditionalAction(condAction, posAction));
-
-    int numElse = ctx.getChildCount() - 5;
-    for (int elseIndex = 0; elseIndex < numElse; elseIndex++) {
-      int childIndex = elseIndex + 5;
-      EventHandlerAction elseAction = ctx.getChild(childIndex).accept(this).getCurrentAction();
-      chainBuilder.add(elseAction);
-    }
-
-    EventHandlerAction action = chainBuilder.build();
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitFullElifBranch(JoshLangParser.FullElifBranchContext ctx) {
-    EventHandlerAction condAction = ctx.cond.accept(this).getCurrentAction();
-    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
-
-    EventHandlerAction action = new ConditionalAction(condAction, posAction);
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitFullElseBranch(JoshLangParser.FullElseBranchContext ctx) {
-    EventHandlerAction condAction = (machine) -> machine.push(trueValue);
-    EventHandlerAction posAction = ctx.target.accept(this).getCurrentAction();
-
-    EventHandlerAction action = new ConditionalAction(condAction, posAction);
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
-    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      targetAction.apply(machine);
-      machine.push(singleCount);
-      machine.sample(true);
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitSampleParam(JoshLangParser.SampleParamContext ctx) {
-    EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
-    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      countAction.apply(machine);
-      targetAction.apply(machine);
-      machine.sample(true);
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
-    EventHandlerAction countAction = ctx.count.accept(this).getCurrentAction();
-    EventHandlerAction targetAction = ctx.target.accept(this).getCurrentAction();
-    String replacementStr = ctx.replace.getText();
-    boolean withReplacement = replacementStr.equals("with");
-
-    EventHandlerAction action = (machine) -> {
-      countAction.apply(machine);
-      targetAction.apply(machine);
-      machine.sample(withReplacement);
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
-    EventHandlerAction lowAction = ctx.low.accept(this).getCurrentAction();
-    EventHandlerAction highAction = ctx.high.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      lowAction.apply(machine);
-      highAction.apply(machine);
-      machine.randUniform();
-      return machine;
-    };
-
-    return new ActionFragment(action);
-  }
-
-  public Fragment visitNormalSample(JoshLangParser.NormalSampleContext ctx) {
-    EventHandlerAction meanAction = ctx.mean.accept(this).getCurrentAction();
-    EventHandlerAction stdAction = ctx.stdev.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      meanAction.apply(machine);
-      stdAction.apply(machine);
-      machine.randNorm();
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitParenExpression(ctx);
   }
 
   public Fragment visitLimitBoundExpression(JoshLangParser.LimitBoundExpressionContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction lowerBoundAction = ctx.lower.accept(this).getCurrentAction();
-    EventHandlerAction upperBoundAction = ctx.upper.accept(this).getCurrentAction();
-
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      lowerBoundAction.apply(machine);
-      upperBoundAction.apply(machine);
-      machine.bound(true, true);
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitLimitBoundExpression(ctx);
   }
 
   public Fragment visitLimitMinExpression(JoshLangParser.LimitMinExpressionContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      limitAction.apply(machine);
-      machine.bound(true, false);
-      return machine;
-    };
-
-    return new ActionFragment(action);
+    return mathematicsVisitor.visitLimitMinExpression(ctx);
   }
 
   public Fragment visitLimitMaxExpression(JoshLangParser.LimitMaxExpressionContext ctx) {
-    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
-    EventHandlerAction limitAction = ctx.limit.accept(this).getCurrentAction();
-    EventHandlerAction action = (machine) -> {
-      operandAction.apply(machine);
-      limitAction.apply(machine);
-      machine.bound(false, true);
-      return machine;
-    };
+    return mathematicsVisitor.visitLimitMaxExpression(ctx);
+  }
 
-    return new ActionFragment(action);
+  public Fragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
+    return stringOpeationVisitor.visitConcatExpression(ctx);
+  }
+
+  public Fragment visitLogicalExpression(JoshLangParser.LogicalExpressionContext ctx) {
+    return logicalVisitor.visitLogicalExpression(ctx);
+  }
+
+  public Fragment visitCondition(JoshLangParser.ConditionContext ctx) {
+    return logicalVisitor.visitCondition(ctx);
+  }
+
+  public Fragment visitConditional(JoshLangParser.ConditionalContext ctx) {
+    return logicalVisitor.visitConditional(ctx);
+  }
+
+  public Fragment visitFullConditional(JoshLangParser.FullConditionalContext ctx) {
+    return logicalVisitor.visitFullConditional(ctx);
+  }
+
+  public Fragment visitFullElifBranch(JoshLangParser.FullElifBranchContext ctx) {
+    return logicalVisitor.visitFullElifBranch(ctx);
+  }
+
+  public Fragment visitFullElseBranch(JoshLangParser.FullElseBranchContext ctx) {
+    return logicalVisitor.visitFullElseBranch(ctx);
+  }
+
+  public Fragment visitSlice(JoshLangParser.SliceContext ctx) {
+    return distributionVisitor.visitSlice(ctx);
+  }
+
+  public Fragment visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
+    return distributionVisitor.visitSampleSimple(ctx);
+  }
+
+  public Fragment visitSampleParam(JoshLangParser.SampleParamContext ctx) {
+    return distributionVisitor.visitSampleParam(ctx);
+  }
+
+  public Fragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
+    return distributionVisitor.visitSampleParamReplacement(ctx);
+  }
+
+  public Fragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
+    return distributionVisitor.visitUniformSample(ctx);
+  }
+
+  public Fragment visitNormalSample(JoshLangParser.NormalSampleContext ctx) {
+    return distributionVisitor.visitNormalSample(ctx);
   }
 
   public Fragment visitCast(JoshLangParser.CastContext ctx) {
@@ -889,28 +629,6 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
       builder.add(childFragment);
     }
     return new ProgramFragment(builder);
-  }
-
-  private EngineValue parseUnitsValue(JoshLangParser.UnitsValueContext ctx) {
-    String numberStr = ctx.getChild(0).getText();
-    String unitsText = ctx.getChild(1).getText();
-    boolean hasDecimal = numberStr.contains(".");
-    boolean isPercent = unitsText.equals("percent") || unitsText.equals("%");
-
-    if (unitsText.isBlank()) {
-      unitsText = "count";
-    }
-
-    if (isPercent) {
-      double percent = Double.parseDouble(numberStr);
-      double converted = percent / 100;
-      return engineValueFactory.buildForNumber(converted, Units.of("count"));
-    } else if (hasDecimal) {
-      return engineValueFactory.parseNumber(numberStr, Units.of(unitsText));
-    } else {
-      long number = Long.parseLong(numberStr);
-      return engineValueFactory.build(number, Units.of(unitsText));
-    }
   }
 
   private boolean isEventName(String candidate) {
