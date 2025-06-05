@@ -218,4 +218,33 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  public Fragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
+    EventHandlerAction operandAction = ctx.operand.accept(this).getCurrentAction();
+    String funcName = ctx.name.getText();
+
+    EventHandlerAction functionAction = switch (funcName) {
+      case "abs" -> (machine) -> machine.abs();
+      case "ceil" -> (machine) -> machine.ceil();
+      case "count" -> (machine) -> machine.count();
+      case "floor" -> (machine) -> machine.floor();
+      case "log10" -> (machine) -> machine.log10();
+      case "ln" -> (machine) -> machine.ln();
+      case "max" -> (machine) -> machine.max();
+      case "mean" -> (machine) -> machine.mean();
+      case "min" -> (machine) -> machine.min();
+      case "round" -> (machine) -> machine.round();
+      case "std" -> (machine) -> machine.std();
+      case "sum" -> (machine) -> machine.sum();
+      default -> throw new IllegalArgumentException("Unknown function name: " + funcName);
+    };
+
+    EventHandlerAction action = (machine) -> {
+      operandAction.apply(machine);
+      functionAction.apply(machine);
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
 }

@@ -16,7 +16,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 /**
  * Visitor delegate for handling string operations.
  */
-public class JoshStringOpeationVisitor implements JoshVisitorDelegate{
+public class JoshStringOperationVisitor implements JoshVisitorDelegate{
 
   private final JoshParserToMachineVisitor parent;
 
@@ -25,7 +25,7 @@ public class JoshStringOpeationVisitor implements JoshVisitorDelegate{
    *
    * @param toolbox The toolbox through which visitors can access supporting objects.
    */
-  public JoshStringOpeationVisitor(DelegateToolbox toolbox) {
+  public JoshStringOperationVisitor(DelegateToolbox toolbox) {
     parent = toolbox.getParent();
   }
 

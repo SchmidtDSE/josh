@@ -7,6 +7,7 @@
 package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -17,16 +18,20 @@ public class DelegateToolbox {
   
   private final JoshParserToMachineVisitor parent;
   private final EngineValueFactory valueFactory;
+  private final BridgeGetter bridgeGetter;
 
   /**
    * Constructs a new DelegateToolbox instance.
    *
    * @param parent The parent visitor that this toolbox supports
    * @param valueFactory The factory used for creating engine values
+   * @param bridgeGetter The bridge getter used for getting the current replicate executing.
    */
-  public DelegateToolbox(JoshParserToMachineVisitor parent, EngineValueFactory valueFactory) {
+  public DelegateToolbox(JoshParserToMachineVisitor parent, EngineValueFactory valueFactory,
+        BridgeGetter bridgeGetter) {
     this.parent = parent;
     this.valueFactory = valueFactory;
+    this.bridgeGetter = bridgeGetter;
   }
 
 
@@ -46,6 +51,15 @@ public class DelegateToolbox {
    */
   public EngineValueFactory getValueFactory() {
     return valueFactory;
+  }
+
+  /**
+   * Gets the bridge getter used for getting the current replicate executing.
+   *
+   * @return The BridgeGetter instance to use in the delegate
+   */
+  public BridgeGetter getBridgeGetter() {
+    return bridgeGetter;
   }
 
 }

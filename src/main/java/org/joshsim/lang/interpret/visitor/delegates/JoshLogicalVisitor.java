@@ -30,6 +30,11 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   private final JoshParserToMachineVisitor parent;
   private final EngineValue trueValue;
 
+  /**
+   * Create a new logical delegate.
+   *
+   * @param toolbox The toolbox through which visitors can access supporting objects.
+   */
   public JoshLogicalVisitor(DelegateToolbox toolbox) {
     valueFactory = toolbox.getValueFactory();
     parent = toolbox.getParent();
