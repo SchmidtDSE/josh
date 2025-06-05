@@ -43,8 +43,8 @@ class JoshStringOperationVisitorTest {
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
-    when(parent.visit(context.left)).thenReturn(leftFragment);
-    when(parent.visit(context.right)).thenReturn(rightFragment);
+    when(context.left.accept(parent)).thenReturn(leftFragment);
+    when(context.right.accept(parent)).thenReturn(rightFragment);
     when(leftFragment.getCurrentAction()).thenReturn(leftAction);
     when(rightFragment.getCurrentAction()).thenReturn(rightAction);
 
