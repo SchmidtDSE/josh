@@ -74,6 +74,14 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a return statement in a function body.
+   *
+   * <p>Parse a return statement that ends the execution of a function and returns a value.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the return statement.
+   * @return Fragment containing the return statement parsed.
+   */
   public Fragment visitReturn(JoshLangParser.ReturnContext ctx) {
     EventHandlerAction innerAction = ctx
         .getChild(1)
@@ -89,6 +97,16 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a full function body with multiple statements.
+   *
+   * <p>Parse a function body enclosed in curly braces that may contain multiple statements.
+   * The function must end with a return statement.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the function body.
+   * @return Fragment containing the function body parsed.
+   * @throws IllegalStateException if the function body does not end with a return statement.
+   */
   public Fragment visitFullBody(JoshLangParser.FullBodyContext ctx) {
     List<EventHandlerAction> innerActions = new ArrayList<>();
 
@@ -123,12 +141,29 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse an inner member of an event handler group.
+   *
+   * <p>Process the inner content of an event handler group member, extracting the handler action.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the event handler group member.
+   * @return Fragment containing the event handler action.
+   */
   public Fragment visitEventHandlerGroupMemberInner(
       JoshLangParser.EventHandlerGroupMemberInnerContext ctx) {
     EventHandlerAction handlerAction = ctx.target.accept(parent).getCurrentAction();
     return new ActionFragment(handlerAction);
   }
 
+  /**
+   * Parse a conditional 'if' event handler group member.
+   *
+   * <p>Process an 'if' condition branch in an event handler group, creating both the action to execute
+   * and the condition that determines whether this branch should be selected.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the conditional 'if' event handler.
+   * @return Fragment containing the compiled callable and selector for the conditional handler.
+   */
   public Fragment visitConditionalIfEventHandlerGroupMember(
       JoshLangParser.ConditionalIfEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
@@ -143,6 +178,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
   }
 
+  /**
+   * Parse a conditional 'elif' event handler group member.
+   *
+   * <p>Process an 'elif' (else if) condition branch in an event handler group, creating both the action to execute
+   * and the condition that determines whether this branch should be selected.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the conditional 'elif' event handler.
+   * @return Fragment containing the compiled callable and selector for the conditional handler.
+   */
   public Fragment visitConditionalElifEventHandlerGroupMember(
       JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
@@ -157,6 +201,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new CompiledCallableFragment(decoratedInterpreterAction, decoratedConditionSelector);
   }
 
+  /**
+   * Parse a conditional 'else' event handler group member.
+   *
+   * <p>Process an 'else' branch in an event handler group, which executes when no other
+   * conditional branches are selected.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the 'else' event handler.
+   * @return Fragment containing the compiled callable for the else handler.
+   */
   public Fragment visitConditionalElseEventHandlerGroupMember(
       JoshLangParser.ConditionalElseEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
@@ -164,6 +217,14 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new CompiledCallableFragment(decoratedInterpreterAction);
   }
 
+  /**
+   * Parse a single event handler group.
+   *
+   * <p>Process an event handler with a single implementation (no conditional branches).</p>
+   *
+   * @param ctx The ANTLR context from which to parse the single event handler group.
+   * @return Fragment containing the event handler group.
+   */
   public Fragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
     String fullName = ctx.name.getText();
     Fragment innerFragment = ctx.getChild(1).accept(parent);
@@ -184,6 +245,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new EventHandlerGroupFragment(eventHandlerGroupBuilder);
   }
 
+  /**
+   * Parse a multiple event handler group with conditional branches.
+   *
+   * <p>Process an event handler with multiple implementations selected by conditional branches
+   * (if/elif/else structure).</p>
+   *
+   * @param ctx The ANTLR context from which to parse the multiple event handler group.
+   * @return Fragment containing the event handler group with all conditional branches.
+   */
   public Fragment visitEventHandlerGroupMultiple(
       JoshLangParser.EventHandlerGroupMultipleContext ctx) {
     String fullName = ctx.name.getText();
@@ -216,6 +286,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new EventHandlerGroupFragment(groupBuilder);
   }
 
+  /**
+   * Parse a general event handler.
+   *
+   * <p>Process a general event handler and validate that the attribute name is not a reserved word.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the general event handler.
+   * @return Fragment containing the event handler.
+   * @throws IllegalArgumentException if the attribute name is a reserved word.
+   */
   public Fragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
     Fragment fragment = ctx.getChild(0).accept(parent);
     String attributeName = fragment.getEventHandlerGroup().getAttribute();
@@ -223,6 +302,14 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return fragment;
   }
 
+  /**
+   * Checks if a string is a valid event name.
+   *
+   * <p>Determines if the provided string matches one of the predefined event names.</p>
+   *
+   * @param candidate The string to check.
+   * @return true if the string is a valid event name, false otherwise.
+   */
   private boolean isEventName(String candidate) {
     return switch (candidate) {
       case "init", "start", "step", "end", "remove", "constant" -> true;
@@ -230,6 +317,16 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     };
   }
 
+  /**
+   * Builds an EventKey from a full event name.
+   *
+   * <p>Parses a dot-separated event name into attribute and event components.
+   * If the last component is a valid event name, it's used as the event name.
+   * Otherwise, the entire name is used as the attribute name and "constant" is used as the event name.</p>
+   *
+   * @param fullName The full dot-separated event name to parse.
+   * @return An EventKey containing the parsed attribute and event names.
+   */
   private EventKey buildEventKey(String fullName) {
     String[] namePieces = fullName.split("\\.");
     String candidateEventName = namePieces[namePieces.length - 1];
@@ -257,6 +354,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     return new EventKey(attributeName, eventName);
   }
 
+  /**
+   * Creates a PushDownMachineCallable from an EventHandlerAction.
+   *
+   * <p>Wraps an EventHandlerAction in a PushDownMachineCallable to make it usable
+   * as a CompiledCallable in the event handler system.</p>
+   *
+   * @param action The EventHandlerAction to wrap.
+   * @return A PushDownMachineCallable that wraps the provided action.
+   */
   private PushDownMachineCallable makeCallableMachine(EventHandlerAction action) {
     return new PushDownMachineCallable(action, bridgeGetter);
   }

@@ -72,6 +72,16 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a condition comparison operation.
+   *
+   * <p>Parse a condition comparison operation like equals, not equals, greater than, etc.,
+   * which can be used in conditional statements and expressions.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the condition comparison.
+   * @return Fragment containing the condition comparison operation parsed.
+   * @throws IllegalArgumentException if the operator is not a valid comparator.
+   */
   public Fragment visitCondition(JoshLangParser.ConditionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
@@ -97,6 +107,15 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a ternary conditional expression.
+   *
+   * <p>Parse a ternary conditional expression of the form "condition ? positive_result : negative_result"
+   * which evaluates the condition and returns one of two possible results.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the ternary conditional.
+   * @return Fragment containing the ternary conditional expression parsed.
+   */
   public Fragment visitConditional(JoshLangParser.ConditionalContext ctx) {
     EventHandlerAction posAction = ctx.pos.accept(parent).getCurrentAction();
     EventHandlerAction negAction = ctx.neg.accept(parent).getCurrentAction();
@@ -106,6 +125,15 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a full if-elif-else conditional statement.
+   *
+   * <p>Parse a complete conditional statement with if, optional elif branches, and an optional else branch.
+   * This builds a chain of conditional actions that will be evaluated in sequence.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the full conditional statement.
+   * @return Fragment containing the full conditional statement parsed.
+   */
   public Fragment visitFullConditional(JoshLangParser.FullConditionalContext ctx) {
     EventHandlerAction condAction = ctx.cond.accept(parent).getCurrentAction();
     EventHandlerAction posAction = ctx.target.accept(parent).getCurrentAction();
@@ -124,6 +152,15 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse an 'elif' (else if) branch of a conditional statement.
+   *
+   * <p>Parse an 'elif' branch which contains a condition and a target action to execute
+   * if the condition evaluates to true and all previous conditions were false.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the elif branch.
+   * @return Fragment containing the elif branch parsed.
+   */
   public Fragment visitFullElifBranch(JoshLangParser.FullElifBranchContext ctx) {
     EventHandlerAction condAction = ctx.cond.accept(parent).getCurrentAction();
     EventHandlerAction posAction = ctx.target.accept(parent).getCurrentAction();
@@ -132,6 +169,15 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse an 'else' branch of a conditional statement.
+   *
+   * <p>Parse an 'else' branch which contains a target action to execute
+   * if all previous conditions in the conditional chain were false.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the else branch.
+   * @return Fragment containing the else branch parsed.
+   */
   public Fragment visitFullElseBranch(JoshLangParser.FullElseBranchContext ctx) {
     EventHandlerAction condAction = (machine) -> machine.push(trueValue);
     EventHandlerAction posAction = ctx.target.accept(parent).getCurrentAction();

@@ -73,6 +73,16 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit a user requested casting operation with forcing.
+   *
+   * <p>Visit a user-requested casting operation that operates with forcing. With forcing
+   * means that the cast will happen even if the engine does not believe it to be valid,
+   * which may lead to unexpected results but avoids runtime errors.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the forced cast expression.
+   * @return Fragment containing the forced cast expression parsed.
+   */
   public Fragment visitCastForce(JoshLangParser.CastForceContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     Units newUnits = Units.of(ctx.target.getText());
@@ -86,12 +96,30 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit a no-operation unit conversion.
+   *
+   * <p>Process a unit conversion that doesn't perform any actual conversion but
+   * creates an alias for a unit.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the no-op conversion.
+   * @return Fragment containing the no-op conversion.
+   */
   public Fragment visitNoopConversion(JoshLangParser.NoopConversionContext ctx) {
     String aliasName = ctx.getChild(1).getText();
     Conversion conversion = new NoopConversion(Units.of(aliasName));
     return new ConversionFragment(conversion);
   }
 
+  /**
+   * Visit an active unit conversion.
+   *
+   * <p>Process a unit conversion that actively converts values from one unit to another
+   * using the provided conversion logic.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the active conversion.
+   * @return Fragment containing the active conversion.
+   */
   public Fragment visitActiveConversion(JoshLangParser.ActiveConversionContext ctx) {
     String destinationUnitsName = ctx.getChild(0).getText();
     Units destinationUnits = Units.of(destinationUnitsName);
@@ -107,6 +135,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ConversionFragment(conversion);
   }
 
+  /**
+   * Visit an expression that creates a specified number of entities.
+   *
+   * <p>Process an expression that creates a specified number of entities of a given type.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the create variable expression.
+   * @return Fragment containing the create variable expression parsed.
+   */
   public Fragment visitCreateVariableExpression(
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
@@ -121,6 +157,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit an attribute access expression.
+   *
+   * <p>Process an expression that accesses an attribute of an entity or value.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the attribute expression.
+   * @return Fragment containing the attribute expression parsed.
+   */
   public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(parent).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
@@ -135,6 +179,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit a spatial query expression.
+   *
+   * <p>Process an expression that performs a spatial query to find entities within a specified distance.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the spatial query.
+   * @return Fragment containing the spatial query parsed.
+   */
   public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
     ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.toString());
     EventHandlerAction distanceAction = ctx.distance.accept(parent).getCurrentAction();
@@ -148,6 +200,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit a position creation expression.
+   *
+   * <p>Process an expression that creates a position from two coordinate values with their respective types.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the position creation.
+   * @return Fragment containing the position creation parsed.
+   */
   public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
     Fragment unitsFragment1 = ctx.getChild(0).accept(parent);
     String type1 = ctx.getChild(1).getText();
@@ -166,6 +226,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit an expression that creates a single entity.
+   *
+   * <p>Process an expression that creates exactly one entity of a given type.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the create single expression.
+   * @return Fragment containing the create single expression parsed.
+   */
   public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.target.getText();
 
@@ -178,6 +246,15 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Visit a variable assignment expression.
+   *
+   * <p>Process an expression that assigns a value to a variable.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the assignment.
+   * @return Fragment containing the assignment parsed.
+   * @throws IllegalArgumentException if the identifier name is a reserved word.
+   */
   public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
     ReservedWordChecker.checkVariableDeclaration(identifierName);
@@ -192,6 +269,15 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Creates a PushDownMachineCallable from an EventHandlerAction.
+   *
+   * <p>Wraps an EventHandlerAction in a PushDownMachineCallable to make it usable
+   * as a CompiledCallable in the conversion system.</p>
+   *
+   * @param action The EventHandlerAction to wrap.
+   * @return A PushDownMachineCallable that wraps the provided action.
+   */
   private PushDownMachineCallable makeCallableMachine(EventHandlerAction action) {
     return new PushDownMachineCallable(action, bridgeGetter);
   }
