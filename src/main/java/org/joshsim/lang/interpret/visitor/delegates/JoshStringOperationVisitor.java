@@ -36,8 +36,8 @@ public class JoshStringOperationVisitor implements JoshVisitorDelegate {
    * @return Fragment containing the concatenation expression parsed.
    */
   public Fragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
-    EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
-    EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
+    EventHandlerAction leftAction = parent.visit(ctx.left).getCurrentAction();
+    EventHandlerAction rightAction = parent.visit(ctx.right).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
       leftAction.apply(machine);
