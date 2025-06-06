@@ -146,8 +146,10 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * @return Fragment containing the external value at time reference parsed.
    */
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
-    String name = ctx.getChild(1).getText();
+    String name = ctx.name.getText();
+    long step = Long.parseLong(ctx.step.getText());
     EventHandlerAction action = (machine) -> {
+      machine.pushExternal(name, step);
       return machine;
     };
     return new ActionFragment(action);
