@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -24,7 +26,6 @@ import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 class JoshValueVisitorTest {
 
@@ -203,7 +204,9 @@ class JoshValueVisitorTest {
     // Mock
     ExternalValueContext context = mock(ExternalValueContext.class);
     IdentifierContext nameContext = mock(IdentifierContext.class);
-    when(context.name).thenReturn(nameContext);
+
+    // Mock the identifier() method to return nameContext
+    when(context.identifier()).thenReturn(nameContext);
     when(nameContext.getText()).thenReturn("externalVar");
 
     // Test
@@ -218,6 +221,7 @@ class JoshValueVisitorTest {
 
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
     when(mockMachine.getStepCount()).thenReturn(42L);
+    org.mockito.Mockito.doNothing().when(mockMachine).pushExternal("externalVar", 42L);
 
     action.apply(mockMachine);
 
@@ -229,9 +233,13 @@ class JoshValueVisitorTest {
   void testVisitExternalValueAtTime() {
     // Mock
     ExternalValueAtTimeContext context = mock(ExternalValueAtTimeContext.class);
-    ParseTree nameChild = mock(ParseTree.class);
-    when(context.getChild(1)).thenReturn(nameChild);
-    when(nameChild.getText()).thenReturn("externalVar");
+    IdentifierContext nameContext = mock(IdentifierContext.class);
+    TerminalNode stepNode = mock(TerminalNode.class);
+
+    when(context.identifier()).thenReturn(nameContext);
+    when(nameContext.getText()).thenReturn("externalVar");
+    when(context.INTEGER_()).thenReturn(stepNode);
+    when(stepNode.getText()).thenReturn("123");
 
     // Test
     Fragment result = visitor.visitExternalValueAtTime(context);
@@ -244,9 +252,10 @@ class JoshValueVisitorTest {
     assertNotNull(action);
 
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
+    org.mockito.Mockito.doNothing().when(mockMachine).pushExternal("externalVar", 123L);
 
     action.apply(mockMachine);
 
-    // Note: The implementation of visitExternalValueAtTime is empty, so there's nothing to verify
+    verify(mockMachine).pushExternal("externalVar", 123L);
   }
 }

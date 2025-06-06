@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
@@ -26,12 +27,12 @@ import org.joshsim.lang.antlr.JoshLangParser.UnitStanzaContext;
 import org.joshsim.lang.interpret.fragment.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.EntityFragment;
 import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 class JoshStanzaVisitorTest {
 
@@ -80,10 +81,10 @@ class JoshStanzaVisitorTest {
     // Mock
     EntityStanzaContext context = mock(EntityStanzaContext.class);
     ParseTree entityTypeNode = mock(ParseTree.class);
-    ParseTree identifierNode = mock(ParseTree.class);
-    ParseTree closeEntityTypeNode = mock(ParseTree.class);
-    ParseTree childNode = mock(ParseTree.class);
-    Fragment childFragment = mock(Fragment.class);
+    final ParseTree identifierNode = mock(ParseTree.class);
+    final ParseTree closeEntityTypeNode = mock(ParseTree.class);
+    final ParseTree childNode = mock(ParseTree.class);
+    final Fragment childFragment = mock(Fragment.class);
     EventHandlerGroupBuilder groupBuilder = mock(EventHandlerGroupBuilder.class);
     List<EventHandlerGroupBuilder> groupBuilders = new ArrayList<>();
     groupBuilders.add(groupBuilder);
@@ -161,10 +162,13 @@ class JoshStanzaVisitorTest {
     ProgramContext context = mock(ProgramContext.class);
     ParseTree childNode = mock(ParseTree.class);
     Fragment childFragment = mock(Fragment.class);
+    EntityPrototype entityPrototype = mock(EntityPrototype.class);
 
     when(context.getChildCount()).thenReturn(1);
     when(context.getChild(0)).thenReturn(childNode);
     when(childNode.accept(parent)).thenReturn(childFragment);
+    when(childFragment.getFragmentType()).thenReturn(FragmentType.ENTITY);
+    when(childFragment.getEntity()).thenReturn(entityPrototype);
 
     // Test
     Fragment result = visitor.visitProgram(context);

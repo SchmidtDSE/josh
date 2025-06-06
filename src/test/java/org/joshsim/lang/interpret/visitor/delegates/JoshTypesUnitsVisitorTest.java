@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
@@ -36,7 +37,6 @@ import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

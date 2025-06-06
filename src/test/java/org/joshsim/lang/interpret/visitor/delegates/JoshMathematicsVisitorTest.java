@@ -6,11 +6,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.antlr.v4.runtime.Token;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.AdditionExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
+import org.joshsim.lang.antlr.JoshLangParser.FuncNameContext;
+import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.antlr.JoshLangParser.LimitBoundExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.LimitMaxExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.LimitMinExpressionContext;
@@ -28,9 +31,6 @@ import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
-import org.joshsim.lang.antlr.JoshLangParser.FuncNameContext;
-import org.antlr.v4.runtime.Token;
 
 class JoshMathematicsVisitorTest {
 

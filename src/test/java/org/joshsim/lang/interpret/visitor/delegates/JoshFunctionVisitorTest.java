@@ -12,6 +12,7 @@ import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
+import org.joshsim.lang.antlr.JoshLangParser.CallableContext;
 import org.joshsim.lang.antlr.JoshLangParser.ConditionalElifEventHandlerGroupMemberContext;
 import org.joshsim.lang.antlr.JoshLangParser.ConditionalElseEventHandlerGroupMemberContext;
 import org.joshsim.lang.antlr.JoshLangParser.ConditionalIfEventHandlerGroupMemberContext;
@@ -20,6 +21,7 @@ import org.joshsim.lang.antlr.JoshLangParser.EventHandlerGroupMemberInnerContext
 import org.joshsim.lang.antlr.JoshLangParser.EventHandlerGroupMultipleContext;
 import org.joshsim.lang.antlr.JoshLangParser.EventHandlerGroupSingleContext;
 import org.joshsim.lang.antlr.JoshLangParser.FullBodyContext;
+import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.antlr.JoshLangParser.LambdaContext;
 import org.joshsim.lang.antlr.JoshLangParser.ReturnContext;
 import org.joshsim.lang.interpret.BridgeGetter;
@@ -140,13 +142,15 @@ class JoshFunctionVisitorTest {
     action.apply(mockMachine);
 
     verify(childAction).apply(mockMachine);
-    verify(mockMachine).isEnded();
+    // isEnded() is called twice in the implementation, once in the loop and once after
+    verify(mockMachine, org.mockito.Mockito.times(2)).isEnded();
   }
 
   @Test
   void testVisitEventHandlerGroupMemberInner() {
     // Mock
     EventHandlerGroupMemberInnerContext context = mock(EventHandlerGroupMemberInnerContext.class);
+    context.target = mock(CallableContext.class);
     Fragment targetFragment = mock(Fragment.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -168,7 +172,10 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalIfEventHandlerGroupMember() {
     // Mock
-    ConditionalIfEventHandlerGroupMemberContext context = mock(ConditionalIfEventHandlerGroupMemberContext.class);
+    ConditionalIfEventHandlerGroupMemberContext context = 
+        mock(ConditionalIfEventHandlerGroupMemberContext.class);
+    context.inner = mock(EventHandlerGroupMemberInnerContext.class);
+    context.target = mock(CallableContext.class);
     Fragment innerFragment = mock(Fragment.class);
     Fragment targetFragment = mock(Fragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
@@ -192,7 +199,10 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalElifEventHandlerGroupMember() {
     // Mock
-    ConditionalElifEventHandlerGroupMemberContext context = mock(ConditionalElifEventHandlerGroupMemberContext.class);
+    ConditionalElifEventHandlerGroupMemberContext context = 
+        mock(ConditionalElifEventHandlerGroupMemberContext.class);
+    context.inner = mock(EventHandlerGroupMemberInnerContext.class);
+    context.target = mock(CallableContext.class);
     Fragment innerFragment = mock(Fragment.class);
     Fragment targetFragment = mock(Fragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
@@ -216,7 +226,9 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalElseEventHandlerGroupMember() {
     // Mock
-    ConditionalElseEventHandlerGroupMemberContext context = mock(ConditionalElseEventHandlerGroupMemberContext.class);
+    ConditionalElseEventHandlerGroupMemberContext context = 
+        mock(ConditionalElseEventHandlerGroupMemberContext.class);
+    context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     Fragment innerFragment = mock(Fragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
 
@@ -237,6 +249,7 @@ class JoshFunctionVisitorTest {
   void testVisitEventHandlerGroupSingle() {
     // Mock
     EventHandlerGroupSingleContext context = mock(EventHandlerGroupSingleContext.class);
+    context.name = mock(IdentifierContext.class);
     Fragment innerFragment = mock(Fragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
 
@@ -260,6 +273,7 @@ class JoshFunctionVisitorTest {
   void testVisitEventHandlerGroupMultiple() {
     // Mock
     EventHandlerGroupMultipleContext context = mock(EventHandlerGroupMultipleContext.class);
+    context.name = mock(IdentifierContext.class);
     Fragment childFragment = mock(CompiledCallableFragment.class);
     CompiledCallable compiledCallable = mock(CompiledCallable.class);
     CompiledSelector compiledSelector = mock(CompiledSelector.class);

@@ -156,6 +156,7 @@ class JoshDistributionVisitorTest {
     SampleParamReplacementContext context = mock(SampleParamReplacementContext.class);
     context.count = mock(SampleParamReplacementContext.class);
     context.target = mock(SampleParamReplacementContext.class);
+    context.replace = mock(org.antlr.v4.runtime.Token.class);
 
     Fragment countFragment = mock(Fragment.class);
     Fragment targetFragment = mock(Fragment.class);

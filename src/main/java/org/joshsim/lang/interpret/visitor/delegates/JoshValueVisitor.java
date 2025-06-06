@@ -128,7 +128,7 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * @return Fragment containing the external value reference parsed.
    */
   public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
-    String name = ctx.name.getText();
+    String name = ctx.identifier().getText();
     EventHandlerAction action = (machine) -> {
       long stepCount = machine.getStepCount();
       machine.pushExternal(name, stepCount);
@@ -146,8 +146,10 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * @return Fragment containing the external value at time reference parsed.
    */
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
-    String name = ctx.getChild(1).getText();
+    String name = ctx.identifier().getText();
+    long step = Long.parseLong(ctx.INTEGER_().getText());
     EventHandlerAction action = (machine) -> {
+      machine.pushExternal(name, step);
       return machine;
     };
     return new ActionFragment(action);
