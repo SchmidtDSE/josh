@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.joshsim.engine.value.converter.Units;
@@ -206,7 +207,7 @@ class JoshValueVisitorTest {
     IdentifierContext nameContext = mock(IdentifierContext.class);
 
     // Mock the identifier() method to return nameContext
-    when(context.identifier()).thenReturn(nameContext);
+    context.name = nameContext;
     when(nameContext.getText()).thenReturn("externalVar");
 
     // Test
@@ -234,11 +235,11 @@ class JoshValueVisitorTest {
     // Mock
     ExternalValueAtTimeContext context = mock(ExternalValueAtTimeContext.class);
     IdentifierContext nameContext = mock(IdentifierContext.class);
-    TerminalNode stepNode = mock(TerminalNode.class);
+    Token stepNode = mock(Token.class);
 
-    when(context.identifier()).thenReturn(nameContext);
+    context.name = nameContext;
     when(nameContext.getText()).thenReturn("externalVar");
-    when(context.INTEGER_()).thenReturn(stepNode);
+    context.step = stepNode;
     when(stepNode.getText()).thenReturn("123");
 
     // Test
