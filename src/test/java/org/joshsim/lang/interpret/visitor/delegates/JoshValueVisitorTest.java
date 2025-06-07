@@ -14,7 +14,6 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.AllExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.BoolContext;
-
 import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.antlr.JoshLangParser.NumberContext;
 import org.joshsim.lang.antlr.JoshLangParser.StringContext;
@@ -26,6 +25,7 @@ import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 
 class JoshValueVisitorTest {
 
