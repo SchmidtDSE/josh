@@ -157,9 +157,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Parse a conditional 'if' event handler group member.
+   * Parse a conditional if event handler group member.
    *
-   * <p>Process an 'if' condition branch in an event handler group, creating both the action to
+   * <p>Process an if condition branch in an event handler group, creating both the action to
    * execute and the condition that determines whether this branch should be selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the conditional 'if' event handler.
@@ -180,7 +180,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Parse a conditional 'elif' event handler group member.
+   * Parse a conditional elif event handler group member.
    *
    * <p>Process an 'elif' (else if) condition branch in an event handler group, creating both the
    * action to execute and the condition that determines whether this branch should be selected.</p>
@@ -203,9 +203,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Parse a conditional 'else' event handler group member.
+   * Parse a conditional else event handler group member.
    *
-   * <p>Process an 'else' branch in an event handler group, which executes when no other
+   * <p>Process an else branch in an event handler group, which executes when no other
    * conditional branches are selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the 'else' event handler.
@@ -221,7 +221,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a single event handler group.
    *
-   * <p>Process an event handler with a single implementation (no conditional branches).</p>
+   * <p>Process an event handler with a single implementation in which there are no conditionals
+   * on handler execution (all handlers executed).</p>
    *
    * @param ctx The ANTLR context from which to parse the single event handler group.
    * @return Fragment containing the event handler group.
@@ -250,7 +251,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * Parse a multiple event handler group with conditional branches.
    *
    * <p>Process an event handler with multiple implementations selected by conditional branches
-   * (if/elif/else structure).</p>
+   * (if/elif/else structure). In other words, which handler is used is subject to conditionals.</p>
    *
    * @param ctx The ANTLR context from which to parse the multiple event handler group.
    * @return Fragment containing the event handler group with all conditional branches.
@@ -305,7 +306,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Checks if a string is a valid event name.
+   * Check if a string is a valid event name.
    *
    * <p>Determines if the provided string matches one of the predefined event names.</p>
    *
@@ -320,12 +321,10 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Builds an EventKey from a full event name.
+   * Build an EventKey from a full event name.
    *
-   * <p>Parses a dot-separated event name into attribute and event components.
-   * If the last component is a valid event name, it's used as the event name.
-   * Otherwise, the entire name is used as the attribute name and "constant" is used as the event
-   * name.</p>
+   * <p>Parses a dot-separated event name into attribute and event components. If an event name
+   * like step is not specified, the constant initialization event step is used.</p>
    *
    * @param fullName The full dot-separated event name to parse.
    * @return An EventKey containing the parsed attribute and event names.
@@ -358,7 +357,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   }
 
   /**
-   * Creates a PushDownMachineCallable from an EventHandlerAction.
+   * Create a PushDownMachineCallable from an EventHandlerAction.
    *
    * <p>Wraps an EventHandlerAction in a PushDownMachineCallable to make it usable
    * as a CompiledCallable in the event handler system.</p>

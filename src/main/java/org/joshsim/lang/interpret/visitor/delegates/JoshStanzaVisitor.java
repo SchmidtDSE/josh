@@ -148,7 +148,9 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   /**
    * Visit a configuration statement.
    *
-   * <p>Process a configuration statement, which is currently reserved for future use.</p>
+   * <p>Process a configuration statement, which is currently reserved for future use.
+   * Specifically, this may be used for interacting with the UI for user-controled
+   * configuration.</p>
    *
    * @param ctx The configuration statement context to visit.
    * @return A fragment representing the configuration statement.
@@ -161,7 +163,8 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   /**
    * Visit an import statement.
    *
-   * <p>Process an import statement, which is currently reserved for future use.</p>
+   * <p>Process an import statement, which is currently reserved for future use. Specifically, this
+   * may be used for multi-file scripts.</p>
    *
    * @param ctx The import statement context to visit.
    * @return A fragment representing the import statement.

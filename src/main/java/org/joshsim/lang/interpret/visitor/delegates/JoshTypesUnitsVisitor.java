@@ -160,7 +160,8 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   /**
    * Visit an attribute access expression.
    *
-   * <p>Process an expression that accesses an attribute of an entity or value.</p>
+   * <p>Process an expression that accesses an attribute of an entity or value based on that
+   * complex type's definition.</p>
    *
    * @param ctx The ANTLR context from which to parse the attribute expression.
    * @return Fragment containing the attribute expression parsed.

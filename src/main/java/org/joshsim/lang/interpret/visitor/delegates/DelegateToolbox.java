@@ -22,7 +22,7 @@ public class DelegateToolbox {
   private final BridgeGetter bridgeGetter;
 
   /**
-   * Constructs a new DelegateToolbox instance.
+   * Construct a new DelegateToolbox instance.
    *
    * @param parent The parent visitor that this toolbox supports
    * @param valueFactory The factory used for creating engine values
@@ -37,7 +37,7 @@ public class DelegateToolbox {
 
 
   /**
-   * Gets the parent visitor that this delegate toolbox supports.
+   * Get the parent visitor that this delegate toolbox supports.
    *
    * @return The parent JoshParserToMachineVisitor instance
    */
@@ -46,7 +46,7 @@ public class DelegateToolbox {
   }
 
   /**
-   * Gets the value factory used for creating engine values.
+   * Get the value factory used for creating engine values.
    *
    * @return The EngineValueFactory instance
    */
@@ -55,7 +55,7 @@ public class DelegateToolbox {
   }
 
   /**
-   * Gets the bridge getter used for getting the current replicate executing.
+   * Get the bridge getter used for getting the current replicate executing.
    *
    * @return The BridgeGetter instance to use in the delegate
    */

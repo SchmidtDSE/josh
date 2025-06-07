@@ -201,7 +201,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
   /**
    * Parse a parenthesized expression.
    *
-   * <p>Parse an expression enclosed in parentheses, which affects the order of operations.</p>
+   * <p>Parse an expression enclosed in parentheses, which affects the order of operations through
+   * the parse tree.</p>
    *
    * @param ctx The ANTLR context from which to parse the parenthesized expression.
    * @return Fragment containing the expression within the parentheses.
@@ -213,7 +214,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
   /**
    * Parse a bounded limit expression.
    *
-   * <p>Parse an expression that constrains a value to be within both lower and upper bounds.</p>
+   * <p>Parse an expression that constrains a value to be within both lower and upper bounds,
+   * capping if beyond the allowed range.</p>
    *
    * @param ctx The ANTLR context from which to parse the bounded limit expression.
    * @return Fragment containing the bounded limit operation parsed.
@@ -237,7 +239,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
   /**
    * Parse a minimum limit expression.
    *
-   * <p>Parse an expression that constrains a value to be at least a specified minimum value.</p>
+   * <p>Parse an expression that constrains a value to be at least a specified minimum value. In
+   * other words, a range with infinity as maximum.</p>
    *
    * @param ctx The ANTLR context from which to parse the minimum limit expression.
    * @return Fragment containing the minimum limit operation parsed.
@@ -258,7 +261,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
   /**
    * Parse a maximum limit expression.
    *
-   * <p>Parse an expression that constrains a value to be at most a specified maximum value.</p>
+   * <p>Parse an expression that constrains a value to be at most a specified maximum value. In
+   * other words, a range with infinity as minimum.</p>
    *
    * @param ctx The ANTLR context from which to parse the maximum limit expression.
    * @return Fragment containing the maximum limit operation parsed.
@@ -279,8 +283,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
   /**
    * Parse a single parameter function call.
    *
-   * <p>Parse a function call with a single parameter, such as abs, ceil, floor, etc.
-   * The function to execute is determined by the function name.</p>
+   * <p>Parse a built-in (native) function call with a single parameter, such as abs, ceil, floor,
+   * etc. The function to execute is determined by the function name.</p>
    *
    * @param ctx The ANTLR context from which to parse the function call.
    * @return Fragment containing the function call operation parsed.

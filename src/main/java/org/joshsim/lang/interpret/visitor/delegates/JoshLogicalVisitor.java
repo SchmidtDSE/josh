@@ -21,8 +21,8 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 /**
  * Delegate which handles logical operations and conditionals.
  *
- * <p>Delegate which handles logical operations like and / or as well as supporting conditional
- * execution like if statements.</p>
+ * <p>Delegate which handles logical operations like logical "and" or "or" as well as supporting
+ * conditional execution like if statements.</p>
  */
 public class JoshLogicalVisitor implements JoshVisitorDelegate {
 
@@ -33,7 +33,7 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   /**
    * Create a new logical delegate.
    *
-   * @param toolbox The toolbox through which visitors can access supporting objects.
+   * @param toolbox The toolbox through which this delegate may access supporting objects.
    */
   public JoshLogicalVisitor(DelegateToolbox toolbox) {
     valueFactory = toolbox.getValueFactory();
@@ -75,7 +75,7 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   /**
    * Parse a condition comparison operation.
    *
-   * <p>Parse a condition comparison operation like equals, not equals, greater than, etc.,
+   * <p>Parse a condition comparison operation like equals, not equals, greater than, etc,
    * which can be used in conditional statements and expressions.</p>
    *
    * @param ctx The ANTLR context from which to parse the condition comparison.
@@ -111,7 +111,8 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
    * Parse a ternary conditional expression.
    *
    * <p>Parse a ternary conditional expression of the form "condition ? positive_result : 
-   * negative_result" which evaluates the condition and returns one of two possible results.</p>
+   * negative_result" which evaluates the condition, returning former if true and later if
+   * false.</p>
    *
    * @param ctx The ANTLR context from which to parse the ternary conditional.
    * @return Fragment containing the ternary conditional expression parsed.
