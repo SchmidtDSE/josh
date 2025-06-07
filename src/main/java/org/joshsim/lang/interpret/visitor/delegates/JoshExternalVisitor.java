@@ -24,7 +24,7 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
    * @param toolbox The toolbox through which visitors can access supporting objects.
    */
   public JoshExternalVisitor(DelegateToolbox toolbox) {
-    // No fields needed for this visitor currently
+    // Toolbox taken for consistency but its properties not needed at this time.
   }
 
   /**
