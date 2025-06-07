@@ -119,41 +119,7 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
-  /**
-   * Parse an external value reference.
-   *
-   * <p>Parse a reference to an external value at the current time step.</p>
-   *
-   * @param ctx The context from which to parse the external value reference.
-   * @return Fragment containing the external value reference parsed.
-   */
-  public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
-    String name = ctx.name.getText();
-    EventHandlerAction action = (machine) -> {
-      long stepCount = machine.getStepCount();
-      machine.pushExternal(name, stepCount);
-      return machine;
-    };
-    return new ActionFragment(action);
-  }
-
-  /**
-   * Parse an external value reference at a specific time.
-   *
-   * <p>Parse a reference to an external value at a specified time step.</p>
-   *
-   * @param ctx The context from which to parse the external value at time reference.
-   * @return Fragment containing the external value at time reference parsed.
-   */
-  public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
-    String name = ctx.name.getText();
-    long step = Long.parseLong(ctx.step.getText());
-    EventHandlerAction action = (machine) -> {
-      machine.pushExternal(name, step);
-      return machine;
-    };
-    return new ActionFragment(action);
-  }
+  
 
   /**
    * Parse a value with units into an EngineValue.

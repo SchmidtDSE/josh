@@ -31,6 +31,7 @@ import org.joshsim.lang.interpret.fragment.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.StateFragment;
 import org.joshsim.lang.interpret.visitor.delegates.DelegateToolbox;
 import org.joshsim.lang.interpret.visitor.delegates.JoshDistributionVisitor;
+import org.joshsim.lang.interpret.visitor.delegates.JoshExternalVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshFunctionVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshLogicalVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshMathematicsVisitor;
@@ -51,6 +52,7 @@ import org.joshsim.lang.interpret.visitor.delegates.JoshValueVisitor;
 @SuppressWarnings("checkstyle:MissingJavaDocMethod")  // Can't use override because of generics.
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final JoshValueVisitor valueVisitor;
+  private final JoshExternalVisitor externalVisitor;
   private final JoshMathematicsVisitor mathematicsVisitor;
   private final JoshStringOperationVisitor stringOperationVisitor;
   private final JoshLogicalVisitor logicalVisitor;
@@ -70,6 +72,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
     DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory, bridgeGetter);
     valueVisitor = new JoshValueVisitor(toolbox);
+    externalVisitor = new JoshExternalVisitor(toolbox);
     mathematicsVisitor = new JoshMathematicsVisitor(toolbox);
     stringOperationVisitor = new JoshStringOperationVisitor(toolbox);
     logicalVisitor = new JoshLogicalVisitor(toolbox);
@@ -104,11 +107,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   }
 
   public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
-    return valueVisitor.visitExternalValue(ctx);
+    return externalVisitor.visitExternalValue(ctx);
   }
 
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
-    return valueVisitor.visitExternalValueAtTime(ctx);
+    return externalVisitor.visitExternalValueAtTime(ctx);
   }
 
   public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
