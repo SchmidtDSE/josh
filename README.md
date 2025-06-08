@@ -7,7 +7,7 @@ Ecologist-centered tools for easily describing and running agent-based simulatio
 Focused on vegetation, this platform runs on JVM or WebAssembly via TeaVM allowing for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
 
 ## Usage
-If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, across potentially hundreds of machines via JoshCloud, or on your own infrastructure.
+If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, across potentially many machines via JoshCloud, or on your own infrastructure.
 
 ### JoshCloud usage
 For distributed usage across many machines, the project maintains JoshCloud which provides access via an API key. This service is currently provided to trusted partners in preview. Simply set your API key as an environment variable and use the web-based editor or local tools to submit simulations that will run across our infrastructure.
@@ -29,7 +29,26 @@ $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable
 $ java -jar joshsim.jar run simulation.josh --data output.jshd
 ```
 
-Available commands include `validate` for checking syntax, `run` for executing simulations, `server` for starting a local web interface, and `preprocess` for creating optimized jshd files. Simply run the jar without any command specified to get further help documentation.
+Available commands include:
+
+- `validate` for checking syntax:
+  ```
+  $ java -jar joshsim.jar validate simulation.josh
+  ```
+- `run` for executing simulations:
+  ```
+  $ java -jar joshsim.jar run simulation.josh
+  ```
+- `server` for starting a local web interface:
+  ```
+  $ java -jar joshsim.jar server
+  ```
+- `preprocess` for creating optimized jshd files:
+  ```
+  $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
+  ```
+
+Simply run the jar without any command specified to get further help documentation.
 
 You can also specify an output location:
 
@@ -107,7 +126,7 @@ start organism ForeverTree
 end organism
 ```
 
-This example creates a simple simulation of trees that grow in height over time. Each tree starts at age 0 and height 0, then grows one year older and gains random height each timestep.
+This example creates a simple simulation with a "ForeverTree" organism - trees that grow in height over time. Each tree starts at age 0 and height 0, then grows one year older and gains random height each timestep.
 
 For more comprehensive tutorials and guides, visit [https://joshsim.org/guide.html](https://joshsim.org/guide.html).
 
