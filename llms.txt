@@ -281,9 +281,9 @@ map operand from [fromlow,fromhigh] to [tolow,tohigh] method(arg)  # Method with
 ```
 
 Available mapping methods:
-- **linear**: Linear interpolation between ranges
-- **sigmoid**: S-curve mapping for smooth transitions
-- **quadratic**: Quadratic curve mapping with controllable concavity
+- **linear**: Linear interpolation between ranges. Does not take optional arguments.
+- **sigmoid**: S-curve mapping for smooth transitions. Takes optional argument. True: increasing. False: decreasing.
+- **quadratic**: Quadratic curve mapping with controllable concavity. Takes optional argument. True: the center of the domain maps to range maximum, endpoints to minimum. False: the center maps to range minimum, endpoints to maximum.
 
 ### Spatial Queries
 
@@ -343,8 +343,9 @@ The following keywords are reserved and should not be used for user-defined enti
 A complete Josh program consists of:
 1. Optional configuration statements
 2. Optional import statements  
-3. Unit definitions
-4. Entity stanzas (simulation, patch, organism, etc.)
+3. Simulation definition
+4. Other entity stanzas (patch, organism, etc.)
+5. Unit definitions
 
 Example minimal program:
 ```
