@@ -442,6 +442,24 @@ In this example, `AgeGeotiff` may refer to an External and the ages at this grid
 ### Other grid cells
 These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
 
+### Meta variables
+The `meta` keyword provides access to simulation metadata and context information:
+
+```
+start organism Tree
+
+  age.init
+    :if(meta.stepCount == 0 count) = sample external ObservedAges
+    :else = 0 years
+
+end organism
+```
+
+Available meta variables include:
+
+- **meta.stepCount**: The current simulation time step (0-based)
+- **meta.year**: The current simulation year (if temporal mapping is configured)
+
 ## Lifecycle
 The following define the typical lifecycle of an entity.
 
