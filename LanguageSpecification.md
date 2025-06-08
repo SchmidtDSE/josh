@@ -149,8 +149,8 @@ Settings which dictate behavior of the entire simulation are dictated in a Simul
 start simulation Detailed
 
   grid.size = 1km
-  grid.low = 34 degrees latitude, -116 degrees longitude
-  grid.high = 35 degrees latitude, -115 degrees longitude
+  grid.low = -116 degrees longitude, 34 degrees latitude
+  grid.high = -115 degrees longitude, 35 degrees latitude
 
 end simulation
 ```
@@ -161,6 +161,18 @@ This can specify patches but it uses `Default` if not otherwise specified:
 start simulation Detailed
 
   grid.patch = "Default"
+
+end simulation
+```
+
+Time steps for the simulation can be specified with `steps.low` and `steps.high`:
+
+```
+start simulation Example
+
+  grid.size = 30 m
+  steps.low = 0 count
+  steps.high = 10 count
 
 end simulation
 ```
@@ -200,8 +212,8 @@ These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute na
 start simulation Coarse
 
   grid.size = 1km
-  grid.low = 34 degrees latitude -116 degrees longitude
-  grid.high = 35 degrees latitude -115 degrees longitude
+  grid.low = -116 degrees longitude, 34 degrees latitude
+  grid.high = -115 degrees longitude, 35 degrees latitude
   
   sampling.general = 1000 count
 
@@ -968,6 +980,40 @@ end patch
 ```
 
 Assertions will generate warnings in default execution of the engine but `--ignore-assertions` can be executed in which case they will generate warnings on standard out instead.
+
+## Exports
+
+Josh supports exporting simulation results for analysis and visualization. Export attributes can be defined on patches and simulations to capture computed values at each timestep.
+
+### Export Attributes
+
+Export attributes are defined using the `export.` prefix and are evaluated at each timestep:
+
+```
+start patch Default
+
+  JoshuaTrees.init = create 10 count of JoshuaTree
+  
+  export.treeCount.step = count(current.JoshuaTrees)
+  export.averageAge.step = mean(current.JoshuaTrees.age)
+
+end patch
+```
+
+### Export Files
+
+Export destinations can be configured in simulations using `exportFiles` attributes:
+
+```
+start simulation Example
+
+  grid.size = 30 m
+  exportFiles.patch = "file:///tmp/simulation_results_{replicate}.csv"
+
+end simulation
+```
+
+The `{replicate}` placeholder will be replaced with the replicate number when running multiple simulation replicates.
 
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
