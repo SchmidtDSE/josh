@@ -4,13 +4,18 @@ Ecologist-centered tools for easily describing and running agent-based simulatio
 ![Work in Progress](https://img.shields.io/badge/status-work_in_progress-blue)
 
 ## Purpose
-Focused on vegetation, this JVM-based platform allows for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
+Focused on vegetation, this platform runs on JVM or WebAssembly via TeaVM allowing for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
 
 ## Usage
-If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, or across potentially hundreds of machines.
+If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, across potentially hundreds of machines via JoshCloud, or on your own infrastructure.
+
+### JoshCloud usage
+For distributed usage across many machines, the project maintains JoshCloud which provides access via an API key. This service is currently provided to trusted partners in preview. Simply set your API key as an environment variable and use the web-based editor or local tools to submit simulations that will run across our infrastructure.
 
 ### Web-based usage
-Simply send your browser to [editor.joshsim.org](https://editor.joshsim.org). There, you can build simulations using the [Josh Language](https://language.joshsim.org) all without installing anything new on your machine. Your work is completely private and your simulations never leave your computer unless you ask them to. They run right within your browser! However, when you are ready to push forward, you can either download your work and continue using your local computer or take advantage of our infrastructure to run your simulations across many machines all with the click of a button!
+Simply send your browser to [editor.joshsim.org](https://editor.joshsim.org). There, you can build simulations using the [Josh Language](https://language.joshsim.org) all without installing anything new on your machine. Your work is completely private and your simulations never leave your computer unless you ask them to. They run right within your browser using WebAssembly! However, when you are ready to push forward, you can either download your work and continue using your local computer or take advantage of our infrastructure to run your simulations across many machines all with the click of a button!
+
+The web-based editor includes a sandbox that limits access to only the code and jshd files provided, with no network access otherwise, ensuring security and privacy.
 
 ### Local usage
 The easiest way to get started locally is simply [get yourself a copy of open source Java](https://adoptium.net) and [the latest release of Josh](https://language.joshsim.org/download.html). Then, fire up the command line. Simply write your code to `.josh` files and execute locally like so:
@@ -19,7 +24,16 @@ The easiest way to get started locally is simply [get yourself a copy of open so
 $ java -jar joshsim.jar run simulation.josh
 ```
 
-Simply run the jar without any command specified to get further help documentation. You can also specify an output location
+While COGs, geotiffs, and netCDF files can be provided directly, the preferred approach is to provide a jshd file which preprocesses these geospatial inputs for speed:
+
+```
+$ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
+$ java -jar joshsim.jar run simulation.josh --data output.jshd
+```
+
+Available commands include `validate` for checking syntax, `run` for executing simulations, `server` for starting a local web interface, and `preprocess` for creating optimized jshd files. Simply run the jar without any command specified to get further help documentation.
+
+You can also specify an output location:
 
 ```
 $ java -jar joshsim.jar run simulation.josh --dump-state state.avro
@@ -34,19 +48,63 @@ You can run the local UI through [joshsim-server](https://language.joshsim.org/d
 $ java -jar joshsim-server.jar
 ```
 
-This will start a local web server which makes the UI available via your browser where you can work in private.
+This will start a local web server which makes the UI available via your browser where you can work in private. The local server optionally supports a sandbox mode that limits access to only the code and jshd files provided, with no network access otherwise.
 
 ### Containerized usage
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
 
 ### Distributed usage
-Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Labmda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). You can send the Josh jar over the network to get your script and you can write to cloud storage. All you have to do is provide the command line arguments:
+Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). The Josh server supports HTTP2 for efficient communication. You can send the Josh jar over the network to get your script and you can write to cloud storage. All you have to do is provide the command line arguments:
 
 ```
-$ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http=-basic-pass PASSWORD --simulation TestSimulation --replicates 10 --output minio://your-s3-bucket/test_simulation.avro --minio-key ACCESS_KEY --minio-secret ACCESS_SECRET
+$ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10 --output minio://your-s3-bucket/test_simulation.avro --minio-key ACCESS_KEY --minio-secret ACCESS_SECRET
 ```
 
 More details to follow here.
+
+## Programming
+Josh uses a domain-specific language designed specifically for ecological modeling. Here's a basic hello world example to get you started:
+
+```
+start unit year
+  alias years
+  alias yr  
+  alias yrs
+end unit
+
+start simulation Main
+  grid.size = 1000 m
+  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
+  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
+  grid.patch = "Default"
+  
+  steps.low = 0 count
+  steps.high = 10 count
+  
+  exportFiles.patch = "memory://editor/patches"
+end simulation
+
+start patch Default
+  ForeverTree.init = create 10 count of ForeverTree
+  
+  export.averageAge.step = mean(ForeverTree.age)
+  export.averageHeight.step = mean(ForeverTree.height)
+end patch
+
+start organism ForeverTree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  
+  height.init = 0 meters
+  height.step = prior.height + sample uniform from 0 meters to 1 meters
+end organism
+```
+
+This example creates a simple simulation of trees that grow in height over time. Each tree starts at age 0 and height 0, then grows one year older and gains random height each timestep.
+
+For more comprehensive tutorials and guides, visit [https://joshsim.org/guide.html](https://joshsim.org/guide.html).
+
+The Python interface (joshpy) is coming soon but not yet released.
 
 ## Developing
 We have options available for different kinds of development workflows.
@@ -64,8 +122,7 @@ In addition to a development container we provide instructions for general local
 This will produce your home-built copy of Josh at `build/libs/joshsim-fat.jar`. If you want to develop for the web interface, the following are also required:
 
  - [Install node and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
- - Install node development dependencies with `cd web; npm install --dev`
- - Install vanilla JS production dependencies with `cd web; bash support/install_deps.sh`
+ - Install vanilla JS production dependencies with `editor/third_party/install_deps.sh`
 
 Note that test runners do require an available copy of Chrome or Chromium.
 
@@ -135,21 +192,28 @@ Released under the BSD-3-Clause License. See `LICENSE` for more information.
 We use the following open source technologies:
 
 - [ACE Editor](https://ace.c9.io/) for the code editing interface under [BSD-3](https://github.com/ajaxorg/ace/blob/master/LICENSE).
-- [ANTLR4](https://www.antlr.org/) for parsing the QubecTalk domain-specific language under [BSD-3](https://www.antlr.org/license.html).
-- [Avro Java](https://avro.apache.org/docs/1.11.1/api/java/) under [Apache v2](https://www.apache.org/licenses/).
-- [Chart.js](https://www.chartjs.org/) for rendering some charts and graphs under [MIT](https://github.com/chartjs/Chart.js/blob/master/LICENSE.md).
+- [ANTLR4](https://www.antlr.org/) for parsing the Josh domain-specific language under [BSD-3](https://www.antlr.org/license.html).
+- [Apache Commons Collections](https://commons.apache.org/proper/commons-collections/) for enhanced collections under [Apache v2](https://www.apache.org/licenses/).
+- [Apache Commons CSV](https://commons.apache.org/proper/commons-csv/) for CSV handling under [Apache v2](https://www.apache.org/licenses/).
+- [Apache SIS](https://sis.apache.org/) for coordinate system transformations and COG support under [Apache v2](https://www.apache.org/licenses/).
 - [Checkstyle](https://checkstyle.sourceforge.io) under [LGPL](https://github.com/checkstyle/checkstyle/blob/master/LICENSE).
 - [D3](https://d3js.org/) for data visualization under [ISC](https://github.com/d3/d3/blob/main/LICENSE).
-- [ESLint](https://eslint.org/) for code style enforcement under [MIT](https://github.com/eslint/eslint/blob/main/LICENSE).
+- [GeoTools](https://geotools.org/) for geospatial data processing under [LGPL](https://github.com/geotools/geotools/blob/main/LICENSE.md).
 - [Gradle](https://gradle.org) under [Apache v2](https://github.com/gradle/gradle?tab=Apache-2.0-1-ov-file#readme).
-- [HTTP Components](https://hc.apache.org/httpcomponents-client-5.4.x/index.html) under [Apache v2](https://www.apache.org/licenses/).
-- [Jetty](https://jetty.org/index.html) under [Apache v2](https://jetty.org/docs/jetty/12/index.html).
+- [JTS Topology Suite](https://locationtech.github.io/jts/) for geometry handling under [EDL](https://www.eclipse.org/org/documents/edl-v10.php).
 - [JUnit](https://junit.org/junit5/) under [EPL v2](https://github.com/junit-team/junit5).
+- [Math.js](https://mathjs.org/) for mathematical expressions under [Apache v2](https://github.com/josdejong/mathjs/blob/develop/LICENSE).
 - [Minio Java SDK](https://min.io/docs/minio/linux/developers/java/minio-java.html) under [Apache v2](https://github.com/minio/minio-java?tab=Apache-2.0-1-ov-file#readme).
+- [Mockito](https://site.mockito.org/) for testing under [MIT](https://github.com/mockito/mockito/blob/main/LICENSE).
+- [Picocli](https://picocli.info/) for command line parsing under [Apache v2](https://github.com/remkop/picocli/blob/main/LICENSE).
+- [Popper.js](https://popper.js.org/) for tooltip positioning under [MIT](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).
 - [Public Sans](https://public-sans.digital.gov/) font under [OFL-1.1](https://github.com/uswds/public-sans/blob/master/LICENSE.md).
-- [QUnit](https://qunitjs.com/) for unit front-end testing under [MIT](https://github.com/qunitjs/qunit/blob/main/LICENSE.txt).
-- [SVG Spinners](https://github.com/n3r4zzurr0/svg-spinners?tab=readme-ov-file) under [MIT](https://github.com/n3r4zzurr0/svg-spinners?tab=readme-ov-file)
+- [SLF4J](https://www.slf4j.org/) for logging under [MIT](https://github.com/qos-ch/slf4j/blob/master/LICENSE.txt).
+- [Spotless](https://github.com/diffplug/spotless) for code formatting under [Apache v2](https://github.com/diffplug/spotless/blob/main/LICENSE).
 - [Tabby](https://github.com/cferdinandi/tabby) for tab interface management under [MIT](https://github.com/cferdinandi/tabby/blob/master/LICENSE.md).
-- [Webpack](https://webpack.js.org/) for bundling JavaScript modules under [MIT](https://github.com/webpack/webpack/blob/main/LICENSE).
+- [TeaVM](https://teavm.org/) for WebAssembly compilation under [Apache v2](https://github.com/konsoletyper/teavm/blob/master/LICENSE).
+- [Tippy.js](https://atomiks.github.io/tippyjs/) for tooltips under [MIT](https://github.com/atomiks/tippyjs/blob/master/LICENSE).
+- [UCAR NetCDF](https://www.unidata.ucar.edu/software/netcdf-java/) for NetCDF support under [BSD-3](https://github.com/Unidata/netcdf-java/blob/master/LICENSE).
+- [Undertow](https://undertow.io/) for the local web server under [Apache v2](https://github.com/undertow-io/undertow/blob/master/LICENSE.txt).
 
 Also uses [Tumerin]().
