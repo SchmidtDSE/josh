@@ -53,10 +53,10 @@ Available commands include:
 Run the jar without any command specified to get further help documentation.
 
 ### Local UI
-You can run the local UI through [joshsim-server](https://language.joshsim.org/download.html). Execute:
+You can run the local UI through [joshsim](https://language.joshsim.org/download.html). Execute:
 
 ```
-$ java -jar joshsim-server.jar
+$ java -jar joshsim.jar server
 ```
 
 This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code and jshd files provided, with no network access otherwise.
@@ -71,10 +71,10 @@ Distribution follows a leader / worker node architecture. A leader node will mak
 
 The Josh server supports HTTP2 for efficient communication. You can send Josh code and jshd precomputed data over the network in the request body. Results are returned via HTTP2 streaming back to the user client.
 
-Here's an example of running the server:
+Here's an example of running the server with distribution:
 
 ```
-$ java -jar server --worker-url your-server-url.com/runReplicate
+$ java -jar joshsim.jar server --worker-url your-server-url.com/runReplicate
 ```
 
 See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/cloud-img/Dockerfile.prod).
@@ -145,12 +145,12 @@ In addition to a development container we provide instructions for general local
  - Install the [Gradle build system](https://gradle.org/install/).
  - Build the project with `gradle fatJar`.
 
-This will produce your home-built copy of Josh at `build/libs/joshsim-fat.jar`. If you want to develop for the web interface, also install vanilla JS production dependencies with `editor/third_party/install_deps.sh`. TODO
+This will produce your home-built copy of Josh at `build/libs/joshsim-fat.jar`. If you want to develop for the web interface, also install vanilla JS production dependencies with `editor/third_party/install_deps.sh`. This also requires the WASM build via `bash editor/war/get_from_jar.sh` from the repo root. This can be packaged into the jar itself with `gradle fatJar` afterwards.
 
 ### Development standards
 For Josh itself, please use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). We aim for approximately 80% test coverage and all non-test public members having [JavaDoc](https://www.baeldung.com/javadoc). 
 
-For the web interface, please use the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html) with all non-test public members having [JSDoc](https://jsdoc.app). Note that we use vanilla JavaScript which must be able to run directly in browser so code is not run through webpack or similar prior to deployment. Very limited production dependencies are simply included via minified JS. We do not consider production use of CDNs to be acceptable for privacy reasons.
+For the web interface, please use the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html) with all public members having [JSDoc](https://jsdoc.app). Note that we use vanilla JavaScript which must be able to run directly in browser so code is not run through webpack or similar prior to deployment. Very limited production dependencies are simply included via minified JS. We do not consider production use of CDNs to be acceptable for privacy reasons.
 
 We require that our automated tests and checks pass prior to merging commits.
 
@@ -174,7 +174,7 @@ To check the default examples, execute `bash examples/validate.sh` and `bash exa
 Deployment instructions are provided both inside and outside of CI / CD.
 
 ### Automated deployment
-To deploy a new version of Josh, simply merge to `main` to generate and deploy a new `joshsim.jar`, `joshsim-server.jar`, and web editor resources (including `joshsim.wasm`) via SFTP and [GitHub Actions](https://docs.github.com/en/actions).
+To deploy a new version of Josh, simply merge to `main` to generate and deploy a new `joshsim.jar` and web editor resources (including `joshsim.wasm`) via SFTP and [GitHub Actions](https://docs.github.com/en/actions).
 
 ### Manual deployment
 If deploying outside of our CI / CD systems, only the jar is required to run Josh.
