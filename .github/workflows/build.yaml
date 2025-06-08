@@ -265,6 +265,12 @@ jobs:
         with:
           name: editor
           path: ./editor-build
+      - name: Checkout for llms.txt
+        uses: actions/checkout@v3
+        with:
+          path: ./repo
+      - name: Copy llms.txt to editor
+        run: cp ./repo/llms.txt ./editor-build/
       - name: Upload Editor via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -279,6 +285,8 @@ jobs:
         with:
           name: landing
           path: ./landing-build
+      - name: Copy llms.txt to landing
+        run: cp ./repo/llms.txt ./landing-build/
       - name: Upload landing via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:

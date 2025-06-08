@@ -49,9 +49,12 @@ end <entity_type>
 
 ### Events
 
-- **init**: Initialization event, executed once at entity creation
-- **step**: Step event, executed each simulation timestep
-- **end**: Termination event, executed when entity is removed
+Event handlers are run once per variable and may be made conditional based on values on the entity. When a variable is referenced in an expression, its value will be resolved if it is not yet evaluated, automatically creating a computational graph such that the ordering of event handlers does not matter.
+
+- **init**: Entity construction event, executed once when entity is created
+- **start**: Start of simulation step event, executed at beginning of each timestep
+- **step**: Mid-step event, executed during main simulation timestep
+- **end**: End of step or termination event, executed at end of timestep or when entity is removed
 
 ## Language Features
 
@@ -184,7 +187,15 @@ sample(uniform from 0 to 10)
 - **count()**: Count elements in collection
 - **sample()**: Sample from distribution or collection
 - **create**: Create new entities
-- **force**: Type conversion
+  ```
+  create ForeverTree                    # Create single entity
+  create 10 count of ForeverTree        # Create multiple entities
+  ```
+- **force**: Type conversion and casting
+  ```
+  force myValue as string               # Force conversion to string type
+  force prior.temperature as degrees    # Force unit conversion
+  ```
 
 #### Collection Operations
 ```
@@ -229,13 +240,18 @@ Multi-statement blocks enclosed in curly braces `{}` supporting:
 - Conditional blocks
 - Complex logic
 
-Example:
+Example full body:
 ```
 age.step = {
   const currentAge = prior.age
   const increment = 1 year
   return currentAge + increment
 }
+```
+
+Example lambda (single expression):
+```
+height.step = prior.height + sample uniform from 0 meters to 1 meters
 ```
 
 ### Operations
@@ -257,16 +273,17 @@ limit operand to [min,max]   # Both bounds
 
 #### Mapping
 ```
-map operand from [fromlow,fromhigh] to [tolow,tohigh]
-map operand from [fromlow,fromhigh] to [tolow,tohigh] method
-map operand from [fromlow,fromhigh] to [tolow,tohigh] method(argument)
+map operand from [fromlow,fromhigh] to [tolow,tohigh]              # Linear mapping (default)
+map operand from [fromlow,fromhigh] to [tolow,tohigh] linear       # Linear mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] sigmoid      # Sigmoid mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] quadratic    # Quadratic mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] method(arg)  # Method with argument
 ```
 
-#### Creation
-```
-create EntityType                    # Create single entity
-create count of EntityType          # Create multiple entities
-```
+Available mapping methods:
+- **linear**: Linear interpolation between ranges
+- **sigmoid**: S-curve mapping for smooth transitions
+- **quadratic**: Quadratic curve mapping with controllable concavity
 
 ### Spatial Queries
 
@@ -275,6 +292,8 @@ identifier within distance radial at prior
 ```
 
 ### Imports and Configuration
+
+*Note: Imports and configuration are reserved for future use and are not currently implemented.*
 
 #### Imports
 ```
@@ -306,7 +325,8 @@ exportFiles.type = "output_path"
 
 ### State Management
 
-Entities can define custom states:
+Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
+
 ```
 start state "StateName"
   attribute.event = expression
