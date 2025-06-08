@@ -4,19 +4,21 @@ Ecologist-centered tools for easily describing and running agent-based simulatio
 ![Work in Progress](https://img.shields.io/badge/status-work_in_progress-blue)
 
 ## Purpose
-Focused on vegetation, this platform runs on JVM or WebAssembly via TeaVM allowing for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
+Focused on vegetation, this platform runs on JVM or WebAssembly (via TeaVM). It allows for fluent modeling of organisms, disturbances, and management interventions. This open source project also supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
 
 ## Usage
 If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, across potentially many machines via JoshCloud, or on your own infrastructure.
 
-### JoshCloud usage
-For distributed usage across many machines, the project maintains JoshCloud which provides access via an API key. This service is currently provided to trusted partners in preview. Simply set your API key as an environment variable and use the web-based editor or local tools to submit simulations that will run across our infrastructure.
-
 ### Web-based usage
-Simply send your browser to [editor.joshsim.org](https://editor.joshsim.org). There, you can build simulations using the [Josh Language](https://language.joshsim.org) all without installing anything new on your machine. Your work is completely private and your simulations never leave your computer unless you ask them to. They run right within your browser using WebAssembly! However, when you are ready to push forward, you can either download your work and continue using your local computer or take advantage of our infrastructure to run your simulations across many machines all with the click of a button!
+Simply send your browser to [editor.joshsim.org](https://editor.joshsim.org). There, you can build simulations using the Josh Language all without installing anything new on your machine. Your work is completely private and your simulations never leave your computer unless you ask them to. Computation runs right within your browser using WebAssembly! However, when you are ready to push forward, you can either download your work and continue using your local computer or take advantage of our infrastructure to run your simulations across many machines all with the click of a button!
+
+### JoshCloud usage
+For distributed usage across many machines with absolutely zero setup, the project maintains JoshCloud which provides access via an API key. This service is currently provided to trusted partners in preview. Simply provide your API via the web-based editor running on your machine or at [editor.joshsim.org](https://editor.joshsim.org).
+
+The ability to use local tools to submit simulations that will run across our infrastructure via the CLI are also coming soon.
 
 ### Local usage
-The easiest way to get started locally is simply [get yourself a copy of open source Java](https://adoptium.net) and [the latest release of Josh](https://language.joshsim.org/download.html). Then, fire up the command line. Simply write your code to `.josh` files and execute locally like so:
+The easiest way to get started locally is to simply [get yourself a copy of open source Java](https://adoptium.net) and [the latest release of Josh](https://language.joshsim.org/download.html). Then, fire up the command line. First, write your code to `.josh` files. Then, execute locally like so:
 
 ```
 $ java -jar joshsim.jar run simulation.josh
@@ -48,10 +50,10 @@ Available commands include:
   $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
   ```
 
-Simply run the jar without any command specified to get further help documentation.
+Run the jar without any command specified to get further help documentation.
 
 ### Local UI
-You can run the local UI through [joshsim-server](https://language.joshsim.org/download.html). Simply execute:
+You can run the local UI through [joshsim-server](https://language.joshsim.org/download.html). Execute:
 
 ```
 $ java -jar joshsim-server.jar
@@ -63,16 +65,28 @@ This will start a local web server which makes the UI available via your browser
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
 
 ### Distributed usage
-Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). The Josh server supports HTTP2 for efficient communication. You can send the Josh jar over the network to get your script and you can write to cloud storage.
+Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). 
 
-For results returned via HTTP2 streaming back to the user client:
+Distribution follows a leader / worker node architecture. A leader node will make a request to worker nodes through a URL in which API keys are passed. You may use a load balancer to distribute requests across workers. Note that the server runs both the leader and worker endpoints. Therefore, if desired, nodes may operate in both capacities. In other words, requests to workers and leaders can be at the same URL.
+
+The Josh server supports HTTP2 for efficient communication. You can send Josh code and jshd precomputed data over the network in the request body. Results are returned via HTTP2 streaming back to the user client.
+
+Here's an example of running the server:
 
 ```
-$ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10
+$ java -jar server --worker-url your-server-url.com/runReplicate
 ```
+
+See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/cloud-img/Dockerfile.prod).
+
+## Security
+When running in server mode, some additional security mechanisms are in place.
 
 ### Sandbox
-Josh includes an optional sandbox that limits access to only code and jshd files with no network access otherwise, ensuring security and privacy. The JoshCloud community infrastructure offering runs with the sandbox. At this time, all server-based execution uses the sandbox. If the sandbox is not desired, use local execution from the command line.
+Josh includes a sandbox that limits access to only code and jshd files (with no other network access) when running in server mode. This ensures security and privacy. Note that the JoshCloud community infrastructure offering also runs with the sandbox. If the sandbox is not desired, use local execution from the command line.
+
+### API keys
+The server command will look for API keys in the `JOSH_API_KEYS` environment variable. If it is empty or not specified, all requests are allowed. If a value is given, a comma separated list of valid API keys is expected. If this feature is in use, requests without a valid API key will be rejected.
 
 ## Programming
 Josh uses a domain-specific language designed specifically for ecological modeling. Here's a basic hello world example to get you started:
@@ -131,12 +145,7 @@ In addition to a development container we provide instructions for general local
  - Install the [Gradle build system](https://gradle.org/install/).
  - Build the project with `gradle fatJar`.
 
-This will produce your home-built copy of Josh at `build/libs/joshsim-fat.jar`. If you want to develop for the web interface, the following are also required:
-
- - [Install node and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
- - Install vanilla JS production dependencies with `editor/third_party/install_deps.sh`
-
-Note that test runners do require an available copy of Chrome or Chromium.
+This will produce your home-built copy of Josh at `build/libs/joshsim-fat.jar`. If you want to develop for the web interface, also install vanilla JS production dependencies with `editor/third_party/install_deps.sh`. TODO
 
 ### Development standards
 For Josh itself, please use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). We aim for approximately 80% test coverage and all non-test public members having [JavaDoc](https://www.baeldung.com/javadoc). 
@@ -159,13 +168,7 @@ $ java -jar joshsim.jar validate script.josh
 $ java -jar joshsim.jar test script.josh
 ```
 
-To check the default examples, execute `bash examples/validate.sh` and `bash examples/test.sh`. Finally, front-end tests for the editor can run via grunt:
-
-```
-$ grunt
-```
-
-This requires a node setup.
+To check the default examples, execute `bash examples/validate.sh` and `bash examples/test.sh`.
 
 ## Deployment
 Deployment instructions are provided both inside and outside of CI / CD.
