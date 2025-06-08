@@ -50,14 +50,6 @@ Available commands include:
 
 Simply run the jar without any command specified to get further help documentation.
 
-You can also specify an output location:
-
-```
-$ java -jar joshsim.jar run simulation.josh --dump-state state.avro
-```
-
-This will dump the state at each timestep in [Avro](https://avro.apache.org) though, if only the final timestep is required, add the `--final-only` flag.
-
 ### Local UI
 You can run the local UI through [joshsim-server](https://language.joshsim.org/download.html). Simply execute:
 
@@ -65,7 +57,7 @@ You can run the local UI through [joshsim-server](https://language.joshsim.org/d
 $ java -jar joshsim-server.jar
 ```
 
-This will start a local web server which makes the UI available via your browser where you can work in private. The local server optionally supports a sandbox mode that limits access to only the code and jshd files provided, with no network access otherwise.
+This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code and jshd files provided, with no network access otherwise.
 
 ### Containerized usage
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
@@ -77,12 +69,6 @@ For results returned via HTTP2 streaming back to the user client:
 
 ```
 $ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10
-```
-
-For results saved to an output location (note that avro dumping is currently limited):
-
-```
-$ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10 --output minio://your-s3-bucket/test_simulation.avro --minio-key ACCESS_KEY --minio-secret ACCESS_SECRET
 ```
 
 ### Sandbox
