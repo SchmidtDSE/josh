@@ -128,6 +128,8 @@ end organism
 
 This example creates a simple simulation with a "ForeverTree" organism - trees that grow in height over time. Each tree starts at age 0 and height 0, then grows one year older and gains random height each timestep.
 
+The `exportFiles.patch = "memory://editor/patches"` line configures exports to be sent to the IDE's memory for interactive visualization rather than being saved to disk files. This memory export target allows users to explore and visualize simulation results directly within the web-based editor without creating output files.
+
 For more comprehensive tutorials and guides, visit [https://joshsim.org/guide.html](https://joshsim.org/guide.html).
 
 The Python interface (joshpy) is coming soon but not yet released.

@@ -220,6 +220,8 @@ start simulation Coarse
 end simulation
 ```
 
+Note: Longitude and latitude coordinates may be specified in either order (longitude, latitude or latitude, longitude).
+
 The user should specify the name of the simulation to execute.
 
 ## Patch
@@ -383,6 +385,11 @@ External data can be preprocessed using a preprocessing command that takes:
 5. Units for the data within simulations
 6. Output path for the `.jshd` file
 
+Example invocation:
+```bash
+java -jar joshsim.jar preprocess simulation.josh MySimulation temperature.nc temp celsius temperature.jshd
+```
+
 The preprocessing step handles coordinate system transformations, temporal alignment, and spatial resampling as needed to match the simulation grid specification.
 
 ## Keywords
@@ -459,6 +466,8 @@ Available meta variables include:
 
 - **meta.stepCount**: The current simulation time step (0-based)
 - **meta.year**: The current simulation year (if temporal mapping is configured)
+
+These are the meta variables available by default, but any values defined on the simulation entity can also be accessed via `meta`. For example, if the simulation defines `constraints.maxOccupants`, it can be accessed as `meta.constraints.maxOccupants`.
 
 ## Lifecycle
 The following define the typical lifecycle of an entity.
@@ -813,7 +822,7 @@ This will extrapolate linearly in the range if an input outside the domain is pr
 const a = map b from [0 in, 100 in] to [0 %, 100%] linearly
 ```
 
-Additionally logarithmically and exponentially are available.
+Additionally quadratic and sigmoid are available.
 
 ## Limit
 Limits can be used to enforce a min, max, or range:
@@ -941,7 +950,7 @@ import "file://other.josh"
 These statements must be at top level (not within any stanzas). Paths can be specified with different protocols like `https://`.
 
 ## Interactivity and configuration
-In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas):
+In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas). **Note: This is a future planned feature and not yet fully implemented.**
 
 ```
 config "file://config.json" as configName
@@ -1032,6 +1041,16 @@ end simulation
 ```
 
 The `{replicate}` placeholder will be replaced with the replicate number when running multiple simulation replicates.
+
+Export values can also be provided to memory to be shown in the IDE by using the `memory://` protocol:
+
+```
+start simulation Example
+  exportFiles.patch = "memory://editor/patches"
+end simulation
+```
+
+This sends patch exports to the IDE for visualization and interactive exploration without saving to disk.
 
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
