@@ -15,8 +15,6 @@ For distributed usage across many machines, the project maintains JoshCloud whic
 ### Web-based usage
 Simply send your browser to [editor.joshsim.org](https://editor.joshsim.org). There, you can build simulations using the [Josh Language](https://language.joshsim.org) all without installing anything new on your machine. Your work is completely private and your simulations never leave your computer unless you ask them to. They run right within your browser using WebAssembly! However, when you are ready to push forward, you can either download your work and continue using your local computer or take advantage of our infrastructure to run your simulations across many machines all with the click of a button!
 
-The web-based editor includes a sandbox that limits access to only the code and jshd files provided, with no network access otherwise, ensuring security and privacy.
-
 ### Local usage
 The easiest way to get started locally is simply [get yourself a copy of open source Java](https://adoptium.net) and [the latest release of Josh](https://language.joshsim.org/download.html). Then, fire up the command line. Simply write your code to `.josh` files and execute locally like so:
 
@@ -54,13 +52,22 @@ This will start a local web server which makes the UI available via your browser
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
 
 ### Distributed usage
-Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). The Josh server supports HTTP2 for efficient communication. You can send the Josh jar over the network to get your script and you can write to cloud storage. All you have to do is provide the command line arguments:
+Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). The Josh server supports HTTP2 for efficient communication. You can send the Josh jar over the network to get your script and you can write to cloud storage.
+
+For results returned via HTTP2 streaming back to the user client:
+
+```
+$ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10
+```
+
+For results saved to an output location (note that avro dumping is currently limited):
 
 ```
 $ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http-basic-pass PASSWORD --simulation TestSimulation --replicates 10 --output minio://your-s3-bucket/test_simulation.avro --minio-key ACCESS_KEY --minio-secret ACCESS_SECRET
 ```
 
-More details to follow here.
+### Sandbox
+Josh includes an optional sandbox that limits access to only code and jshd files with no network access otherwise, ensuring security and privacy. The JoshCloud community infrastructure offering runs with the sandbox. At this time, all server-based execution uses the sandbox. If the sandbox is not desired, use local execution from the command line.
 
 ## Programming
 Josh uses a domain-specific language designed specifically for ecological modeling. Here's a basic hello world example to get you started:
@@ -209,11 +216,11 @@ We use the following open source technologies:
 - [Popper.js](https://popper.js.org/) for tooltip positioning under [MIT](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).
 - [Public Sans](https://public-sans.digital.gov/) font under [OFL-1.1](https://github.com/uswds/public-sans/blob/master/LICENSE.md).
 - [SLF4J](https://www.slf4j.org/) for logging under [MIT](https://github.com/qos-ch/slf4j/blob/master/LICENSE.txt).
-- [Spotless](https://github.com/diffplug/spotless) for code formatting under [Apache v2](https://github.com/diffplug/spotless/blob/main/LICENSE).
+- [Spotless](https://github.com/diffplug/spotless) for code formatting under [Apache v2](https://github.com/diffplug/spotless/blob/main/LICENSE.txt).
 - [Tabby](https://github.com/cferdinandi/tabby) for tab interface management under [MIT](https://github.com/cferdinandi/tabby/blob/master/LICENSE.md).
 - [TeaVM](https://teavm.org/) for WebAssembly compilation under [Apache v2](https://github.com/konsoletyper/teavm/blob/master/LICENSE).
 - [Tippy.js](https://atomiks.github.io/tippyjs/) for tooltips under [MIT](https://github.com/atomiks/tippyjs/blob/master/LICENSE).
 - [UCAR NetCDF](https://www.unidata.ucar.edu/software/netcdf-java/) for NetCDF support under [BSD-3](https://github.com/Unidata/netcdf-java/blob/master/LICENSE).
 - [Undertow](https://undertow.io/) for the local web server under [Apache v2](https://github.com/undertow-io/undertow/blob/master/LICENSE.txt).
 
-Also uses [Tumerin]().
+We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).
