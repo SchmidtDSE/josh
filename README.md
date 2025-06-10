@@ -4,7 +4,7 @@ Ecologist-centered tools for easily describing and running agent-based simulatio
 ![Work in Progress](https://img.shields.io/badge/status-work_in_progress-blue)
 
 ## Purpose
-Focused on vegetation, this JVM-based platform allows for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or COGs. Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing all without changing a single line of code.
+Focused on vegetation, this platform running on JVM or WebAssembly via TeaVM allows for fluent modeling of organisms, disturbances, and management interventions. This open source project supports stochastic mechanics and the use of external resources like outside geotiffs or cloud-optimized geotiffs (COGs). Using a highly readable domain specific language crafted just for ecologists, Josh makes it easy to quickly describe ecological systems and run those simulations with highly performant computational machinery with minimal fuss in installation. This suite of tools also allows for running simulations in the browser, local performant parallelized execution to take advantage of a single machine's resources, and large scale distributed processing across many computers all without changing a single line of code.
 
 ## Usage
 If you have a browser, you can use these tools without any installation required. When you are ready to scale up, this software can execute either directly on your machine, in a containerized environment, or across potentially hundreds of machines.
@@ -37,10 +37,10 @@ $ java -jar joshsim-server.jar
 This will start a local web server which makes the UI available via your browser where you can work in private.
 
 ### Containerized usage
-Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
+Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `.devcontainer`.
 
 ### Distributed usage
-Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Labmda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). You can send the Josh jar over the network to get your script and you can write to cloud storage. All you have to do is provide the command line arguments:
+Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Labmda](https://aws.amazon.com/lambda/) or [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). You can send the Josh jar over the network to get your script and you can write to cloud storage. All you have to do is provide the command line arguments:
 
 ```
 $ java -jar joshsim.jar run https://your-url.org/script.josh --http-basic-user USERNAME --http=-basic-pass PASSWORD --simulation TestSimulation --replicates 10 --output minio://your-s3-bucket/test_simulation.avro --minio-key ACCESS_KEY --minio-secret ACCESS_SECRET
