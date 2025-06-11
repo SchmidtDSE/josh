@@ -16,19 +16,19 @@
       <section id="overview">
         <h2>Overview</h2>
         <p>
-          Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that computation across many machines like through <a href="/community.html">Josh Cloud</a>.
+          Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that spatial computation across many machines like through <a href="/community.html">Josh Cloud</a>.
         </p>
         <p>
           In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this demo, we will use external data from <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6</a> that offers predictions of future precipitation. 
         </p>
         <p>
-          Once again, this is not meant to be an ecologically sound model. It's not simulating specific species or a specific environment. It's just a toy demo.
+          Once again, this is not meant to be a real ecological model. It's not simulating specific species or a specific environment. It's just a toy demo.
         </p>
       </section>
       <section id="data">
         <h2>Data</h2>
         <p>
-          The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files or (.jshd).
+          The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
         </p>
         <p>
           All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
@@ -157,14 +157,18 @@ end patch</pre>
 
 end patch</pre>
         <p>
-          Here, we ask Josh to calculate how cover would change depending on if the patch was on fire in the given year. Then, we apply based on if it was actually on fire. Note that, in this step, we have a function defintion. Whereas our previous event handlers were each on line, use of the curly braces lets us write multiple lines of code. This is called a function and we can define variables using const that live only within that function. These are like const variables in other programming languages in that they can be written to once and read as many times as you like.
+          Here, we ask Josh to calculate how cover would change depending on if the patch was on fire in the given year. Then, we apply based on if it was actually on fire. Note that, in this step, we have a function defintion.
         </p>
+        <details>
+          <summary>More about functions</summary>
+          <p>Whereas our previous event handlers were each on a single line, use of the curly braces lets us write multiple lines of code. This is called a function and we can define variables using const that live only within that function. These are like const variables in other programming languages in that they can be written to once and read as many times as you like. Return indicates the value of the function that should be assigned to the specified variable (grassCover or shurbCover) from the event handler.</p>
+        </details>
       </section>
 
       <section id="export">
         <h2>Export</h2>
         <p>
-          This last part is probably pretty familiar. Let's go ahead and save the cover variables as exports.
+          Let's go ahead and save the cover variables as exports.
         </p>
         <pre>start patch Default
 
