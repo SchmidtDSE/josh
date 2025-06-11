@@ -102,7 +102,7 @@ end patch</pre>
           
 end patch</pre>
         <p>
-          This looks look mostly similar to what you've seen before but you may notice that there is also a start event handler type in addition to init and step like for the "newCount.end" handler. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations. Also, this is the first time we see a slice. For example, "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
+          This is mostly similar to what you've seen before but you may notice that there is also a start event handler type in addition to init and step handlers. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations. Also, this is the first time we see a slice. For example, in "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
         </p>
       </section>
       <section id="extremes">
