@@ -31,7 +31,7 @@
           The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
         </p>
         <p>
-          All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guildes/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
+          All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guides/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's 2030 series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
         </p>
       </section>
       <section id="simulation">
@@ -178,7 +178,7 @@ end patch</pre>
     export.grassCover.step = grassCover
     export.shrubeCover.step = shrubCover
 
-  end patch
+end patch
 </pre>
         <p>
           Note that the ordering of handlers does not matter. If you refer to a variable, Josh will go and calculate that variable and then return to the line of code where you referenced it to continue its work. That means that you can organize your event handlers for readibility, letting Josh worry about dependencies between formulas.
