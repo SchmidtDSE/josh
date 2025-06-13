@@ -1,6 +1,6 @@
 /**
  * Interface used as a tag for visitor delegates.
- * 
+ *
  * @license BSD-3-Clause
  */
 

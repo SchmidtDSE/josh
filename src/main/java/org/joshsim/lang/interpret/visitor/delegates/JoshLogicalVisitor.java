@@ -110,7 +110,7 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
   /**
    * Parse a ternary conditional expression.
    *
-   * <p>Parse a ternary conditional expression of the form "condition ? positive_result : 
+   * <p>Parse a ternary conditional expression of the form "condition ? positive_result :
    * negative_result" which evaluates the condition, returning former if true and later if
    * false.</p>
    *

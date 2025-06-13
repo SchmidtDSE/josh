@@ -1,6 +1,6 @@
 /**
  * Structure to assist visitor delegates.
- * 
+ *
  * @license BSD-3-Clause
  */
 

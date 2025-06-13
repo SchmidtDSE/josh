@@ -7,9 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.lang.antlr.JoshLangParser.CallableContext;
@@ -31,11 +29,9 @@ import org.joshsim.lang.interpret.fragment.CompiledCallableFragment;
 import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
-import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 class JoshFunctionVisitorTest {
 
@@ -172,7 +168,7 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalIfEventHandlerGroupMember() {
     // Mock
-    ConditionalIfEventHandlerGroupMemberContext context = 
+    ConditionalIfEventHandlerGroupMemberContext context =
         mock(ConditionalIfEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     context.target = mock(CallableContext.class);
@@ -199,7 +195,7 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalElifEventHandlerGroupMember() {
     // Mock
-    ConditionalElifEventHandlerGroupMemberContext context = 
+    ConditionalElifEventHandlerGroupMemberContext context =
         mock(ConditionalElifEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     context.target = mock(CallableContext.class);
@@ -226,7 +222,7 @@ class JoshFunctionVisitorTest {
   @Test
   void testVisitConditionalElseEventHandlerGroupMember() {
     // Mock
-    ConditionalElseEventHandlerGroupMemberContext context = 
+    ConditionalElseEventHandlerGroupMemberContext context =
         mock(ConditionalElseEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     Fragment innerFragment = mock(Fragment.class);
