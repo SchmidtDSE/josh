@@ -12,6 +12,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.joshsim.lang.parse.ParseResult;
 
 
