@@ -10,7 +10,7 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
-import org.joshsim.lang.interpret.action.ChaniningConditionalBuilder;
+import org.joshsim.lang.interpret.action.ChainingConditionalBuilder;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.ActionFragment;
@@ -139,7 +139,7 @@ public class JoshLogicalVisitor implements JoshVisitorDelegate {
     EventHandlerAction condAction = ctx.cond.accept(parent).getCurrentAction();
     EventHandlerAction posAction = ctx.target.accept(parent).getCurrentAction();
 
-    ChaniningConditionalBuilder chainBuilder = new ChaniningConditionalBuilder();
+    ChainingConditionalBuilder chainBuilder = new ChainingConditionalBuilder();
     chainBuilder.add(new ConditionalAction(condAction, posAction));
 
     int numElse = ctx.getChildCount() - 5;

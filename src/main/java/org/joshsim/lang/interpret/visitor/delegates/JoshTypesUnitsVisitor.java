@@ -190,7 +190,7 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * @return Fragment containing the spatial query parsed.
    */
   public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.toString());
+    ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.getText());
     EventHandlerAction distanceAction = ctx.distance.accept(parent).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {

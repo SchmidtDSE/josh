@@ -16,14 +16,14 @@ import java.util.List;
  * <p>Builder which maintains an ordered list of conditional actions and builds them into a properly
  * chained sequence of ConditionalActions.</p>
  */
-public class ChaniningConditionalBuilder {
+public class ChainingConditionalBuilder {
 
   private final List<ConditionalAction> actions;
 
   /**
    * Creates a new builder for chaining conditional actions which is empty.
    */
-  public ChaniningConditionalBuilder() {
+  public ChainingConditionalBuilder() {
     actions = new ArrayList<>();
   }
 
