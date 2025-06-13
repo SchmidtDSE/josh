@@ -12,7 +12,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueTuple;
 
 
