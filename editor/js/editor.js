@@ -107,6 +107,7 @@ class EditorPresenter {
     self._editor.setOption("enableKeyboardAccessibility", true);
 
     self._editor.setTheme("ace/theme/textmate");
+    self._editor.getSession().setMode("ace/mode/joshlang");
 
     self._editor.getSession().on("change", () => {
       if (self._timeout !== null) {

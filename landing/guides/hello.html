@@ -2,6 +2,7 @@
   <head>
     <title>Josh Guide: Hello Grid</title>
     <link href="/landing.css" rel="stylesheet" type="text/css" />
+    <link href="/prism-tomorrow.min.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
     <div class="skip-link">
@@ -53,7 +54,7 @@
       <section id="simulation">
         <h2>Simulation</h2>
         <p>It all starts with a simulation. This is where we tell Josh where in the world we are running our model and for how long. Let's define a 1 kilometer grid that is around Joshua Tree National Park. We will simulate from 2025 to 2035. Let's take a look at the code.</p>
-        <pre>start simulation Main
+        <pre><code class="language-joshlang">start simulation Main
 
   grid.size = 1000 m
   grid.low = 33.7 degrees latitude, -115.4 degrees longitude
@@ -63,7 +64,7 @@
   steps.low = 0 count
   steps.high = 10 count
 
-end simulation</pre>
+end simulation</code></pre>
         <p>
           We called this simulation Main but you could call it anything you like. Note that Josh runs simulations where it computes everything within our simulated area once per step. So, steps.low and steps.high tells Josh for how many timesteps we want to execute our work. In our case, we will assume that each step is a year and we run from year 0 to year 11. However, you can run simulations where each step is a day or a month.
         </p>
@@ -75,18 +76,18 @@ end simulation</pre>
       <section id="patch">
         <h2>Patch</h2>
         <p>Next, we need to tell Josh about our grid cells. These are referred to as patches. Here, we will create ten trees on each patch. Josh knows which kind of patch to use beacuse of the name we specified above. Here we encounter our first use of init.</p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   ForeverTree.init = create 10 count of ForeverTree
 
-end patch</pre>
+end patch</code></pre>
         <p>Init tells Josh that you want some calculation to run when something is made: in this case when the patch is created in the simulation. In other words, we are telling Josh that, when a patch is created within our simulation, we should place 10 forever trees in that patch.</p>
       </section>
 
       <section id="organism">
         <h2>Organism</h2>
         <p>We've told Josh about our grid and we've told it about the patches we want to fill that grid. At last, we can tell Josh how we want our organism (ForeverTree) to behave.</p>
-        <pre>start organism ForeverTree
+        <pre><code class="language-joshlang">start organism ForeverTree
 
   age.init = 0 year
   age.step = prior.age + 1 year
@@ -94,20 +95,20 @@ end patch</pre>
   height.init = 0 meters
   height.step = prior.height + sample uniform from 0 meters to 1 meters
 
-end organism</pre>
+end organism</code></pre>
         <p>When we create a new ForeverTree, we give it an age. In this case, it starts as zero years old. However, we now see not just the use of the init event callback but the step event. Using this step callback, Josh will add one year to the tree's age (prior means the value of the variable prior to that step starting). Something similar happens for height but with a twist: we are sampling the annual growth for each tree from a random uniform distribution. Later tutorials will look at other random distributions like the normal distribution.</p>
       </section>
 
       <section id="units">
         <h2>Units</h2>
         <p>So far, we've been giving Josh not just numbers like 33.7 but those numbers have units like degrees. Your simulations can do unit dimensional analysis for you, performing conversions if needed. Josh has meters (meter, meters, m), count (count, counts), and degrees (degree, degrees) built in. However, it doesn't know about years. Let's define it.</p>
-        <pre>start unit year
+        <pre><code class="language-joshlang">start unit year
 
   alias years
   alias yr
   alias yrs
 
-end unit</pre>
+end unit</code></pre>
         <p>A later tutorial will discuss unit conversions. For example, you might want to define months and tell Josh that a year is equivalent to 12 months. However, for now, this code snippet simply tells Josh that years is a valid unit and it may go by different names: year, years, yr, yrs.</p>
       </section>
 
@@ -119,16 +120,16 @@ end unit</pre>
       <section id="exports">
         <h2>Exports</h2>
         <p>Your simulation probably ran but you likely didn't see any outputs. We have to tell Josh which variables to export. You can send data from your simulations to CSV files which you can open in spreadsheet software, COGs / geotiffs, or netCDF files. You can also do these exports for variables on simulations, patches, or organisms. That said, you can also send these data into the editor itself. Let's start there.</p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   ForeverTree.init = create 10 count of ForeverTree
 
   export.averageAge.step = mean(ForeverTree.age)
   export.averageHeight.step = mean(ForeverTree.height)
 
-end patch</pre>
+end patch</code></pre>
         <p>This exports the average age of the trees in each patch along with the average height. Finally, we need to tell Josh to send these results to the editor for visualization. That is done on the simulation.</p>
-        <pre>start simulation TestSimpleSimulation
+        <pre><code class="language-joshlang">start simulation TestSimpleSimulation
 
   grid.size = 1000 m
   grid.low = 33.7 degrees latitude, -115.4 degrees longitude
@@ -139,7 +140,7 @@ end patch</pre>
 
   exportFiles.patch = "memory://editor/patches"
 
-end simulation</pre>
+end simulation</code></pre>
         <p>This says to send patches to the editor "in memory" which just means it isn't being saved to your computer. Note that the Josh IDE can only use memory targets. If you want to use disk targets, you need to <a href="/guides/cli.html">run simulations outside your browser</a>. Anyway, with that, give it another shot.</p>
       </section>
       <section id="visualizing">
@@ -162,5 +163,8 @@ end simulation</pre>
         That's it for our first introduction. In the <a href="/guides/grass_shrub_fire.html">next tutorial</a>, we will explore some of the tools that Josh makes avaiable for real world simulation including use of external data and some syntax which makes it easier to define these mathematical systems.
       </section>
     </main>
+    <script src="/prism-core.min.js"></script>
+    <script src="/prism-autoloader.min.js"></script>
+    <script src="/joshlang-prism.js"></script>
   </body>
 </html>
