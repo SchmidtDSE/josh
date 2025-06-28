@@ -167,30 +167,117 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
     EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory,
-        geometryFactory,
-        result,
-        inputOutputLayer
+    
+    // Execute interpretation securely
+    Optional<JoshProgram> programResult = executeInterpretation(
+        valueFactory, geometryFactory, result, inputOutputLayer, httpServerExchange, apiKey
     );
+    if (programResult.isEmpty()) {
+      return Optional.of(apiKey); // 400 already set
+    }
+    JoshProgram program = programResult.get();
 
     if (!program.getSimulations().hasPrototype(simulationName)) {
       httpServerExchange.setStatusCode(404);
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer layer = getLayer(httpServerExchange, externalData);
-    JoshSimFacadeUtil.runSimulation(
-        valueFactory,
-        geometryFactory,
-        layer,
-        program,
-        simulationName,
-        (step) -> {}, // No step reporting needed for worker
-        useSerial
+    // Execute simulation securely
+    boolean simulationSuccess = executeSimulation(
+        valueFactory, geometryFactory, externalData, program, 
+        simulationName, httpServerExchange, apiKey
     );
+    if (!simulationSuccess) {
+      return Optional.of(apiKey); // 400 already set
+    }
     httpServerExchange.endExchange();
     return Optional.of(apiKey);
+  }
+
+  /**
+   * Securely execute interpretation with proper error handling.
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory though which to build simulation engine geometries.
+   * @param parsed The result of parsing the Josh source successfully.
+   * @param inputOutputLayer Layer to use to interact with external files and resources.
+   * @param httpServerExchange The exchange for setting error responses.
+   * @param apiKey The API key for secure logging.
+   * @return Optional JoshProgram on success, empty on failure (400 response set).
+   */
+  private Optional<JoshProgram> executeInterpretation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, ParseResult parsed,
+        InputOutputLayer inputOutputLayer, HttpServerExchange httpServerExchange, String apiKey) {
+    try {
+      JoshProgram program = JoshSimFacadeUtil.interpret(
+          valueFactory,
+          geometryFactory,
+          parsed,
+          inputOutputLayer
+      );
+      return Optional.of(program);
+    } catch (Exception e) {
+      handleSimulationError(e, "interpretation", httpServerExchange, apiKey);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Securely execute simulation with proper error handling.
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory though which to build simulation engine geometries.
+   * @param externalData String serialization of the virtual file system.
+   * @param program The Josh program containing the simulation to run.
+   * @param simulationName The name of the simulation to execute.
+   * @param httpServerExchange The exchange for streaming responses and setting error status.
+   * @param apiKey The API key for secure logging.
+   * @return true on success, false on failure (400 response set).
+   */
+  private boolean executeSimulation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, String externalData, JoshProgram program,
+        String simulationName, HttpServerExchange httpServerExchange, String apiKey) {
+    try {
+      InputOutputLayer layer = getLayer(httpServerExchange, externalData);
+      JoshSimFacadeUtil.runSimulation(
+          valueFactory,
+          geometryFactory,
+          layer,
+          program,
+          simulationName,
+          (step) -> {}, // No step reporting needed for worker
+          useSerial
+      );
+      return true;
+    } catch (Exception e) {
+      handleSimulationError(e, "simulation", httpServerExchange, apiKey);
+      return false;
+    }
+  }
+
+  /**
+   * Handle simulation errors securely by sanitizing messages and logging internally.
+   *
+   * @param exception The exception that occurred.
+   * @param operation The operation that failed (interpretation or simulation).
+   * @param httpServerExchange The exchange for setting error response.
+   * @param apiKey The API key for secure logging.
+   */
+  private void handleSimulationError(Exception exception, String operation,
+        HttpServerExchange httpServerExchange, String apiKey) {
+    
+    // Log full error details securely (API key will be hashed by the logging layer)
+    SecurityUtil.logSecureError(apiDataLayer, apiKey, operation, exception, null);
+    
+    // Create sanitized error for user response
+    final SimulationExecutionException safeException = SecurityUtil.createSafeException(
+        "Error during " + operation + ": " + exception.getMessage(), exception
+    );
+    
+    // Return sanitized error to user as 400 (bad request)
+    httpServerExchange.setStatusCode(400);
+    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+    httpServerExchange.getResponseSender().send(safeException.getUserMessage());
   }
 
   /**
