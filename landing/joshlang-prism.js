@@ -14,7 +14,7 @@
       pattern: /"[^"]*"/,
       greedy: true
     },
-    'keyword': /\b(?:start|end|simulation|patch|organism|disturbance|external|management|unit|state|agent|alias|all|and|as|assert|at|config|const|create|current|elif|else|false|force|from|here|if|import|init|latitude|limit|longitude|map|mean|normal|of|or|prior|radial|replacement|return|sample|std|step|to|true|uniform|with|within|without|xor)\b/,
+    'keyword': /\b(?:start|end|simulation|patch|organism|disturbance|external|management|unit|state|agent|alias|all|and|as|assert|at|config|const|create|current|elif|else|export|exportFiles|false|force|from|grid|here|if|import|init|latitude|limit|longitude|map|mean|normal|of|or|prior|radial|replacement|return|sample|std|step|steps|to|true|uniform|with|within|without|xor)\b/,
     'function': /\b(?:mean|std|sample|create|limit|map)\b/,
     'boolean': /\b(?:true|false)\b/,
     'number': [
@@ -29,10 +29,6 @@
     ],
     'operator': /\+|-|\*|\/|\^|==|!=|<=|>=|<|>|=|\||#/,
     'punctuation': /[{}[\](),.;:]/,
-    'unit': {
-      pattern: /\b(?:m|meter|meters|km|kilometer|kilometers|count|counts|degree|degrees|year|years|yr|yrs|mm|millimeter|millimeters|celsius|fahrenheit|kelvin|%)\b/,
-      alias: 'builtin'
-    },
     'property': {
       pattern: /\b[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+/,
       inside: {
