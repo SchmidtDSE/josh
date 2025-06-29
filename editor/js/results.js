@@ -7,7 +7,7 @@
 import {BasemapDialogPresenter} from "baselayer";
 import {ExportPresenter} from "exporter";
 import {DataQuery, summarizeDatasets} from "summarize";
-import {GridPresenter, ScrubPresenter} from "viz";
+import {GridPresenter, ScrubPresenter, MapConfigPresenter} from "viz";
 
 
 /**
@@ -303,6 +303,10 @@ class ResultsDisplayPresenter {
     self._gridPresenter = new GridPresenter(
       self._root.querySelector("#grid-viz-holder")
     );
+    self._mapConfigPresenter = new MapConfigPresenter(
+      self._root.querySelector("#map-config"),
+      (dimensions) => self._onMapResize(dimensions)
+    );
   }
 
   /**
@@ -374,6 +378,9 @@ class ResultsDisplayPresenter {
     if (self._currentTimestep === null) {
       self._currentTimestep = summary.getMaxTimestep();
     }
+    
+    const defaultDimensions = self._gridPresenter.calculateDefaultDimensions(metadata);
+    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions.width, defaultDimensions.height);
     self._renderInternal(true);
   }
 
@@ -385,6 +392,17 @@ class ResultsDisplayPresenter {
   _onStepSelected(step) {
     const self = this;
     self._currentTimestep = step;
+    self._renderInternal(false);
+  }
+
+  /**
+   * Callback when map dimensions are changed.
+   *
+   * @param {object} dimensions - Object with width and height properties.
+   */
+  _onMapResize(dimensions) {
+    const self = this;
+    self._gridPresenter.setCustomDimensions(dimensions);
     self._renderInternal(false);
   }
 
