@@ -87,7 +87,8 @@ public class ConverterBuilder {
       return;
     }
 
-    Map<Units, Conversion> endingAtSource = conversionsByDestination.get(newSource);
+    // Create a copy to avoid ConcurrentModificationException
+    Map<Units, Conversion> endingAtSource = new HashMap<>(conversionsByDestination.get(newSource));
     for (Conversion conversionToChain : endingAtSource.values()) {
       Conversion chainedConversion = new TransitiveConversion(conversionToChain, newConversion);
       addConversion(chainedConversion);

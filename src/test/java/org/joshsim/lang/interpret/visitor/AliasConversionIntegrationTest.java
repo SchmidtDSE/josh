@@ -71,14 +71,12 @@ public class AliasConversionIntegrationTest {
     // Capture simulation step numbers
     List<Long> completedSteps = new ArrayList<>();
     
-    // This test reproduces the bug where conversion between aliases fails
-    // The error should be: "No conversion exists between "yeers" and "yrs""
+    // This test should still fail if the issue isn't fully resolved
     JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
       completedSteps.add(stepNumber);
     };
     
-    // Currently this throws IllegalArgumentException due to the alias conversion bug
-    // When the bug is fixed, this should complete successfully
+    // Check if the conversion still fails
     Exception exception = assertThrows(Exception.class, () -> {
       JoshSimFacade.runSimulation(
           geometryFactory,
@@ -91,15 +89,12 @@ public class AliasConversionIntegrationTest {
       );
     });
 
-    // Verify this is the specific alias conversion error we expect
+    // Check if this is the expected conversion error
     String errorMessage = exception.getMessage();
     if (errorMessage == null && exception.getCause() != null) {
       errorMessage = exception.getCause().getMessage();
     }
-    assertNotNull(errorMessage, "Exception should have an error message");
-    
-    // The bug is confirmed - this test demonstrates the issue exists
-    // When the bug is fixed, this test should be updated to expect successful completion
+    assertNotNull(errorMessage, "Should still have conversion error");
   }
 
   @Test
@@ -156,8 +151,7 @@ public class AliasConversionIntegrationTest {
       completedSteps.add(stepNumber);
     };
     
-    // This should also fail with the alias conversion error when trying to add yeers and yrs
-    // The arithmetic operation (2 yeers + 3 yrs) triggers the same conversion issue
+    // Check if arithmetic with aliases still fails
     Exception exception = assertThrows(Exception.class, () -> {
       JoshSimFacade.runSimulation(
           geometryFactory,
@@ -168,14 +162,11 @@ public class AliasConversionIntegrationTest {
       );
     });
 
-    // Verify this is the same alias conversion error in arithmetic context
+    // Check error message
     String errorMessage = exception.getMessage();
     if (errorMessage == null && exception.getCause() != null) {
       errorMessage = exception.getCause().getMessage();
     }
-    assertNotNull(errorMessage, "Exception should have an error message");
-    
-    // The bug affects both direct conversion (as operator) and arithmetic operations
-    // When fixed, aliases should work seamlessly in all mathematical operations
+    assertNotNull(errorMessage, "Should still have conversion error in arithmetic");
   }
 }

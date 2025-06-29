@@ -38,24 +38,27 @@ public class MapConverter implements Converter {
   public Conversion getConversion(Units oldUnits, Units newUnits) {
     EngineValueTuple.UnitsTuple tuple = new EngineValueTuple.UnitsTuple(oldUnits, newUnits);
 
+    // First check if there's an explicit conversion (includes aliases via NoopConversion)
+    if (conversions.containsKey(tuple)) {
+      return conversions.get(tuple);
+    }
+
+    // If no explicit conversion exists, check if units are inherently compatible
     if (tuple.getAreCompatible()) {
       return new NoopConversion(newUnits);
     }
 
-    if (!conversions.containsKey(tuple)) {
-      String message = String.format(
-          "No conversion exists between \"%s\" and \"%s\".",
-          oldUnits,
-          newUnits
-      );
-      System.err.println("Failed in conversion");
-      for (EngineValueTuple.UnitsTuple key : conversions.keySet()) {
-        System.err.println(key.getFirst() + " -> " + key.getSecond());
-      }
-      throw new IllegalArgumentException(message);
+    // No conversion found
+    String message = String.format(
+        "No conversion exists between \"%s\" and \"%s\".",
+        oldUnits,
+        newUnits
+    );
+    System.err.println("Failed in conversion");
+    for (EngineValueTuple.UnitsTuple key : conversions.keySet()) {
+      System.err.println(key.getFirst() + " -> " + key.getSecond());
     }
-
-    return conversions.get(tuple);
+    throw new IllegalArgumentException(message);
   }
 
 }
