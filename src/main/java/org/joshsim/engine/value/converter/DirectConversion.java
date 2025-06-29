@@ -18,6 +18,7 @@ public class DirectConversion implements Conversion {
   private final Units sourceUnits;
   private final Units destinationUnits;
   private final CompiledCallable callable;
+  private final boolean isCommunicativeSafe;
 
   /**
    * Constructs a new DirectConversion with the specified units and conversion callable.
@@ -30,6 +31,24 @@ public class DirectConversion implements Conversion {
     this.sourceUnits = sourceUnits;
     this.destinationUnits = destinationUnits;
     this.callable = callable;
+    this.isCommunicativeSafe = false; // Default for non-wrapped conversions
+  }
+
+  /**
+   * Constructs a new DirectConversion with the specified units, conversion callable,
+   * and communicative safety.
+   *
+   * @param sourceUnits the source units for this conversion.
+   * @param destinationUnits the destination units for this conversion.
+   * @param callable the callable that performs the conversion.
+   * @param isCommunicativeSafe whether this conversion is safe for bidirectional use.
+   */
+  public DirectConversion(Units sourceUnits, Units destinationUnits, CompiledCallable callable,
+      boolean isCommunicativeSafe) {
+    this.sourceUnits = sourceUnits;
+    this.destinationUnits = destinationUnits;
+    this.callable = callable;
+    this.isCommunicativeSafe = isCommunicativeSafe;
   }
 
   @Override
@@ -49,7 +68,7 @@ public class DirectConversion implements Conversion {
 
   @Override
   public boolean isCommunicativeSafe() {
-    return false;
+    return isCommunicativeSafe;
   }
 
 }
