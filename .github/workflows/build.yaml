@@ -181,7 +181,7 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocessTutorial ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
