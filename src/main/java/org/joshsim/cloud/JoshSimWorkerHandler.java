@@ -165,21 +165,79 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
+    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
+    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    
+    // Execute interpretation securely
+    Optional<JoshProgram> programResult = executeInterpretation(
+        valueFactory, geometryFactory, result, inputOutputLayer, httpServerExchange, apiKey
+    );
+    if (programResult.isEmpty()) {
+      return Optional.of(apiKey); // Error response already set
+    }
+    JoshProgram program = programResult.get();
+
+    if (!program.getSimulations().hasPrototype(simulationName)) {
+      httpServerExchange.setStatusCode(404);
+      return Optional.of(apiKey);
+    }
+
+    // Execute simulation securely
+    boolean simulationSuccess = executeSimulation(
+        valueFactory, geometryFactory, externalData, program, 
+        simulationName, httpServerExchange, apiKey
+    );
+    if (!simulationSuccess) {
+      return Optional.of(apiKey); // Error response already set
+    }
+    httpServerExchange.endExchange();
+    return Optional.of(apiKey);
+  }
+
+  /**
+   * Securely execute interpretation with proper error handling.
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory though which to build simulation engine geometries.
+   * @param parsed The result of parsing the Josh source successfully.
+   * @param inputOutputLayer Layer to use to interact with external files and resources.
+   * @param httpServerExchange The exchange for setting error responses.
+   * @param apiKey The API key for secure logging.
+   * @return Optional JoshProgram on success, empty on failure (400 response set).
+   */
+  private Optional<JoshProgram> executeInterpretation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, ParseResult parsed,
+        InputOutputLayer inputOutputLayer, HttpServerExchange httpServerExchange, String apiKey) {
     try {
-      InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-      EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
       JoshProgram program = JoshSimFacadeUtil.interpret(
           valueFactory,
           geometryFactory,
-          result,
+          parsed,
           inputOutputLayer
       );
+      return Optional.of(program);
+    } catch (Exception e) {
+      handleSimulationError(e, "interpretation", httpServerExchange, apiKey);
+      return Optional.empty();
+    }
+  }
 
-      if (!program.getSimulations().hasPrototype(simulationName)) {
-        httpServerExchange.setStatusCode(404);
-        return Optional.of(apiKey);
-      }
-
+  /**
+   * Securely execute simulation with proper error handling.
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory though which to build simulation engine geometries.
+   * @param externalData String serialization of the virtual file system.
+   * @param program The Josh program containing the simulation to run.
+   * @param simulationName The name of the simulation to execute.
+   * @param httpServerExchange The exchange for streaming responses and setting error status.
+   * @param apiKey The API key for secure logging.
+   * @return true on success, false on failure (400 response set).
+   */
+  private boolean executeSimulation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, String externalData, JoshProgram program,
+        String simulationName, HttpServerExchange httpServerExchange, String apiKey) {
+    try {
       InputOutputLayer layer = getLayer(httpServerExchange, externalData);
       JoshSimFacadeUtil.runSimulation(
           valueFactory,
@@ -190,23 +248,71 @@ public class JoshSimWorkerHandler implements HttpHandler {
           (step) -> {}, // No step reporting needed for worker
           useSerial
       );
-    } catch (RuntimeException e) {
-      httpServerExchange.setStatusCode(500);
-      httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-      
-      String errorMessage = buildInformativeErrorMessage(e);
-      httpServerExchange.getResponseSender().send(errorMessage);
-      return Optional.of(apiKey);
+      return true;
     } catch (Exception e) {
-      httpServerExchange.setStatusCode(500);
-      httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-      
-      String errorMessage = buildInformativeErrorMessage(e);
-      httpServerExchange.getResponseSender().send(errorMessage);
-      return Optional.of(apiKey);
+      handleSimulationError(e, "simulation", httpServerExchange, apiKey);
+      return false;
     }
-    httpServerExchange.endExchange();
-    return Optional.of(apiKey);
+  }
+
+  /**
+   * Handle simulation errors securely by sanitizing messages and logging internally.
+   * Provides informative error messages for external data issues while maintaining security.
+   *
+   * @param exception The exception that occurred.
+   * @param operation The operation that failed (interpretation or simulation).
+   * @param httpServerExchange The exchange for setting error response.
+   * @param apiKey The API key for secure logging.
+   */
+  private void handleSimulationError(Exception exception, String operation,
+        HttpServerExchange httpServerExchange, String apiKey) {
+    
+    // Log full error details securely (API key will be hashed by the logging layer)
+    SecurityUtil.logSecureError(apiDataLayer, apiKey, operation, exception, null);
+    
+    // Check if this is an external data error that should have an informative message
+    String userMessage;
+    if (isExternalDataError(exception)) {
+      // Use our informative error messages for external data issues
+      userMessage = buildInformativeErrorMessage(exception);
+      // Use 500 status for external data errors (server-side issue)
+      httpServerExchange.setStatusCode(500);
+    } else {
+      // Create sanitized error for other types of errors
+      final SimulationExecutionException safeException = SecurityUtil.createSafeException(
+          "Error during " + operation + ": " + exception.getMessage(), exception
+      );
+      userMessage = safeException.getUserMessage();
+      // Use 400 status for user input errors
+      httpServerExchange.setStatusCode(400);
+    }
+    
+    httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+    httpServerExchange.getResponseSender().send(userMessage);
+  }
+
+  /**
+   * Determine if an exception is related to external data loading issues.
+   *
+   * @param exception The exception to check.
+   * @return true if this appears to be an external data error.
+   */
+  private boolean isExternalDataError(Exception exception) {
+    String message = exception.getMessage();
+    if (message == null) {
+      return false;
+    }
+    
+    return message.contains("Cannot find virtual file")
+        || message.contains("CSV must contain")
+        || message.contains("Invalid numeric value in column")
+        || message.contains("Failure in loading a jshd resource")
+        || message.contains("No suitable reader found for file")
+        || message.contains("No such file or directory")
+        || (exception instanceof IOException
+            && (message.toLowerCase().contains("external")
+                || message.toLowerCase().contains("csv")
+                || message.toLowerCase().contains("data")));
   }
 
   /**
@@ -243,18 +349,21 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (originalMessage.contains("Cannot find virtual file:")) {
       String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
       return String.format(
-          "External data file not found: '%s'. Please ensure the file is included in your external data upload and the filename matches exactly.", 
+          "External data file not found: '%s'. Please ensure the file is included "
+          + "in your external data upload and the filename matches exactly.",
           fileName
       );
     }
     
     if (originalMessage.contains("CSV must contain 'longitude' and 'latitude' columns")) {
-      return "External CSV data is missing required columns. CSV files must contain 'longitude' and 'latitude' columns for geospatial data processing.";
+      return "External CSV data is missing required columns. CSV files must contain "
+          + "'longitude' and 'latitude' columns for geospatial data processing.";
     }
     
     if (originalMessage.contains("Invalid numeric value in column")) {
       return String.format(
-          "External data contains invalid numeric values: %s. Please check that all numeric columns contain valid numbers.", 
+          "External data contains invalid numeric values: %s. Please check that all "
+          + "numeric columns contain valid numbers.",
           originalMessage
       );
     }
@@ -262,7 +371,8 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (originalMessage.contains("Failure in loading a jshd resource:")) {
       String innerMessage = originalMessage.substring(originalMessage.indexOf(": ") + 2);
       return String.format(
-          "Failed to load external data resource: %s. Please verify the file format and contents are correct.", 
+          "Failed to load external data resource: %s. Please verify the file format "
+          + "and contents are correct.",
           innerMessage
       );
     }
@@ -270,7 +380,8 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (originalMessage.contains("No suitable reader found for file:")) {
       String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
       return String.format(
-          "Unsupported external data file format: '%s'. Supported formats include CSV and NetCDF files.", 
+          "Unsupported external data file format: '%s'. Supported formats include "
+          + "CSV and NetCDF files.",
           fileName
       );
     }
@@ -278,21 +389,24 @@ public class JoshSimWorkerHandler implements HttpHandler {
     // Handle IOException from CSV reading
     if (e instanceof IOException || originalMessage.contains("IOException")) {
       if (originalMessage.contains("No such file or directory")) {
-        return "External data file could not be accessed. Please ensure the file exists and is properly uploaded.";
+        return "External data file could not be accessed. Please ensure the file exists "
+            + "and is properly uploaded.";
       }
       return String.format(
-          "Error reading external data file: %s. Please verify the file format and contents.", 
+          "Error reading external data file: %s. Please verify the file format and "
+          + "contents.",
           originalMessage
       );
     }
     
     // Default case for other external data related errors
-    if (originalMessage.toLowerCase().contains("external") || 
-        originalMessage.toLowerCase().contains("file") ||
-        originalMessage.toLowerCase().contains("csv") ||
-        originalMessage.toLowerCase().contains("data")) {
+    if (originalMessage.toLowerCase().contains("external")
+        || originalMessage.toLowerCase().contains("file")
+        || originalMessage.toLowerCase().contains("csv")
+        || originalMessage.toLowerCase().contains("data")) {
       return String.format(
-          "External data processing error: %s. Please check your external data files and try again.", 
+          "External data processing error: %s. Please check your external data files "
+          + "and try again.",
           originalMessage
       );
     }

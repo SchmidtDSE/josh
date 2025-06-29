@@ -1,0 +1,374 @@
+# Josh Language
+
+Josh is a domain-specific language (DSL) designed for ecological modeling, with a particular focus on vegetation and agent-based simulations. The language enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
+
+## Purpose
+
+Josh supports the nexus between science, policy, and software engineering by executing vegetation-focused ecological simulations to support management decisions. The language prioritizes readability and interpretability for a broad audience including ecologists, policy makers, and researchers who may not have extensive software engineering backgrounds.
+
+## Execution Environments
+
+Josh runs across multiple execution environments without requiring code changes:
+
+1. **Browser via WebAssembly**: Complete simulations run directly in web browsers using WebAssembly compilation via TeaVM, requiring no local installation
+2. **Local JVM**: High-performance execution on local machines using Java Virtual Machine for intensive computations and parallelization
+3. **Distributed via JoshCloud**: Community infrastructure for large-scale distributed processing across multiple machines with API key access
+
+## Geospatial Data Preprocessing
+
+Josh supports preprocessing of external geospatial data files into an optimized binary format called `.jshd` (Josh Data) files. The preprocessing workflow converts data from formats like GeoTIFF and NetCDF into a format optimized for simulation execution, handling coordinate system transformations, temporal alignment, and spatial resampling.
+
+Preprocessing command structure:
+```
+java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
+```
+
+## Language Structure
+
+Josh uses a stanza-based approach similar to SmallTalk/HyperTalk languages. Each stanza defines an entity (object) using `start` and `end` blocks. The language is imperative with procedural elements, prioritizing behavioral description over computational specification.
+
+### Entity Types
+
+- **simulation**: Defines simulation parameters, grid specifications, time steps, and export configurations
+- **patch**: Represents spatial cells containing organisms and environmental conditions
+- **organism**: Individual agents with attributes and behaviors that change over time
+- **disturbance**: Events that affect organisms or patches (e.g., fire, drought)
+- **management**: Intentional interventions and management actions
+- **external**: References to external data sources and resources
+- **unit**: Custom unit definitions with conversions and aliases
+
+### Stanza Structure
+
+Each entity stanza follows this pattern:
+```
+start <entity_type> <identifier>
+  <attribute>.<event> = <expression>
+  <attribute>.<event>:<conditional> = <expression>
+end <entity_type>
+```
+
+### Events
+
+Event handlers are run once per variable and may be made conditional based on values on the entity. When a variable is referenced in an expression, its value will be resolved if it is not yet evaluated, automatically creating a computational graph such that the ordering of event handlers does not matter.
+
+- **init**: Entity construction event, executed once when entity is created
+- **start**: Start of simulation step event, executed at beginning of each timestep
+- **step**: Mid-step event, executed during main simulation timestep
+- **end**: End of step or termination event, executed at end of timestep or when entity is removed
+
+## Language Features
+
+### Comments
+Single-line comments use `#` syntax:
+```
+# This is a comment
+```
+
+### Data Types
+
+#### Scalar Values
+Numeric values with optional units:
+```
+5 meters
+10.5 years
+42 count
+33.7 degrees latitude
+```
+
+#### Strings
+String literals enclosed in double quotes:
+```
+"Default"
+"file:///tmp/output.csv"
+```
+
+#### Boolean Values
+```
+true
+false
+```
+
+#### Distributions
+Statistical distributions for stochastic modeling:
+```
+uniform from 0 meters to 1 meters
+normal with mean of 10 years std of 2 years
+```
+
+### Unit System
+
+Units are strongly typed and support conversions:
+
+#### Built-in Units
+- **Percentage**: `%`, `percent`
+- **Count**: `count`, `counts`
+- **Degrees**: `degrees`, `degree` (for latitude/longitude)
+- **Meters**: `meter`, `meters`, `m`
+- **Kilometers**: `kilometer`, `kilometers`, `km`
+- **Boolean**: `bool`
+- **String**: `string`
+
+#### Custom Units
+```
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+```
+
+#### Unit Conversions
+```
+start unit inch
+  meter = 0.0254 meters
+end unit
+```
+
+### Identifiers and Attributes
+
+Identifiers follow the pattern `[A-Za-z][A-Za-z0-9]*` and can be chained with dot notation:
+```
+organism.attribute
+patch.ForeverTree.age
+current.height
+```
+
+### Keywords and Context
+
+#### Temporal Keywords
+- **current**: Current state of entity
+- **prior**: State from previous timestep
+- **meta**: Simulation metadata and context
+  - `meta.stepCount`: Current simulation timestep (0-based)
+  - `meta.year`: Current simulation year
+
+#### Spatial Keywords
+- **here**: Current grid cell context
+- **within**: Spatial query for nearby entities
+
+### Operators
+
+#### Arithmetic Operators
+- `+`: Addition
+- `-`: Subtraction
+- `*`: Multiplication
+- `/`: Division
+- `^`: Exponentiation
+- `%`: Modulo
+
+#### Comparison Operators
+- `==`: Equality
+- `!=`: Inequality
+- `>`: Greater than
+- `>=`: Greater than or equal
+- `<`: Less than
+- `<=`: Less than or equal
+
+#### Logical Operators
+- `and`: Logical AND
+- `or`: Logical OR
+- `xor`: Logical XOR
+
+#### String Operator
+- `|`: String concatenation
+
+### Expressions
+
+#### Function Calls
+```
+function_name(arguments)
+mean(ForeverTree.age)
+sample(uniform from 0 to 10)
+```
+
+#### Built-in Functions
+- **mean()**: Calculate mean of collection
+- **std()**: Calculate standard deviation
+- **count()**: Count elements in collection
+- **sample()**: Sample from distribution or collection
+- **create**: Create new entities
+  ```
+  create ForeverTree                    # Create single entity
+  create 10 count of ForeverTree        # Create multiple entities
+  ```
+- **force**: Type conversion and casting
+  ```
+  force myValue as string               # Force conversion to string type
+  force prior.temperature as degrees    # Force unit conversion
+  ```
+
+#### Collection Operations
+```
+ForeverTree[ForeverTree.age > 5 years]  # Filtering
+all  # All entities of specified type
+```
+
+### Control Flow
+
+#### Conditional Modifiers
+Event handlers can use conditional modifiers:
+```
+attribute.event:if(condition) = expression
+attribute.event:elif(condition) = expression
+attribute.event:else = expression
+```
+
+#### Conditional Expressions
+Ternary-style conditional expressions:
+```
+value if condition else alternative
+```
+
+#### Full Body Conditionals
+Multi-statement conditional blocks:
+```
+if condition {
+  const temp = prior.value
+  return temp + 1
+} elif other_condition {
+  return prior.value
+} else {
+  return 0
+}
+```
+
+### Full Bodies
+
+Multi-statement blocks enclosed in curly braces `{}` supporting:
+- `const` variable declarations
+- `return` statements
+- Conditional blocks
+- Complex logic
+
+Example full body:
+```
+age.step = {
+  const currentAge = prior.age
+  const increment = 1 year
+  return currentAge + increment
+}
+```
+
+Example lambda (single expression):
+```
+height.step = prior.height + sample uniform from 0 meters to 1 meters
+```
+
+### Operations
+
+#### Sampling
+```
+sample uniform from low to high
+sample count from collection
+sample count from collection with replacement
+sample count from collection without replacement
+```
+
+#### Limiting
+```
+limit operand to [min,]      # Minimum bound
+limit operand to [,max]      # Maximum bound
+limit operand to [min,max]   # Both bounds
+```
+
+#### Mapping
+```
+map operand from [fromlow,fromhigh] to [tolow,tohigh]              # Linear mapping (default)
+map operand from [fromlow,fromhigh] to [tolow,tohigh] linear       # Linear mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] sigmoid      # Sigmoid mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] quadratic    # Quadratic mapping
+map operand from [fromlow,fromhigh] to [tolow,tohigh] method(arg)  # Method with argument
+```
+
+Available mapping methods:
+- **linear**: Linear interpolation between ranges. Does not take optional arguments.
+- **sigmoid**: S-curve mapping for smooth transitions. Takes optional argument. True: increasing. False: decreasing.
+- **quadratic**: Quadratic curve mapping with controllable concavity. Takes optional argument. True: the center of the domain maps to range maximum, endpoints to minimum. False: the center maps to range minimum, endpoints to maximum.
+
+### Spatial Queries
+
+```
+identifier within distance radial at prior
+```
+
+### Imports and Configuration
+
+*Note: Imports and configuration are reserved for future use and are not currently implemented.*
+
+#### Imports
+```
+import "filename.josh"
+```
+
+#### Configuration
+```
+config expression as identifier
+```
+
+### Assertions
+
+Validation statements for testing and debugging:
+```
+assert.attribute.event = boolean_expression
+assert.attribute.event:if(condition) = boolean_expression
+```
+
+Assertions expect boolean values and are evaluated during event handler execution.
+
+### Exports
+
+Define simulation outputs:
+```
+export.variable.event = expression
+exportFiles.type = "output_path"
+```
+
+### State Management
+
+Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
+
+```
+start state "StateName"
+  attribute.event = expression
+end state
+```
+
+### Reserved Words
+
+The following keywords are reserved and should not be used for user-defined entities or variables:
+`as`, `const`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`
+
+### Program Structure
+
+A complete Josh program consists of:
+1. Optional configuration statements
+2. Optional import statements  
+3. Simulation definition
+4. Other entity stanzas (patch, organism, etc.)
+5. Unit definitions
+
+Example minimal program:
+```
+start simulation Main
+  grid.size = 1000 m
+  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
+  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
+end simulation
+
+start patch Default
+  ForeverTree.init = create 10 count of ForeverTree
+end patch
+
+start organism ForeverTree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+```
+
+This language specification covers all features defined in the Josh grammar and provides comprehensive documentation for developing ecological simulations using the Josh domain-specific language.

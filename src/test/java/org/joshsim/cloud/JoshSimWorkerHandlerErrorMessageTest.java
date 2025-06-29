@@ -34,9 +34,10 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_VirtualFileNotFound() throws Exception {
+  void testBuildInformativeErrorMessageVirtualFileNotFound() throws Exception {
     // Use reflection to access the private method
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
     RuntimeException exception = new RuntimeException("Cannot find virtual file: test_data.csv");
@@ -47,11 +48,13 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_MissingColumns() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageMissingColumns() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
-    IOException exception = new IOException("CSV must contain 'longitude' and 'latitude' columns");
+    IOException exception = new IOException(
+        "CSV must contain 'longitude' and 'latitude' columns");
     String result = (String) method.invoke(handler, exception);
     
     assertTrue(result.contains("External CSV data is missing required columns"));
@@ -59,11 +62,13 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_InvalidNumericValue() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageInvalidNumericValue() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
-    RuntimeException exception = new RuntimeException("Invalid numeric value in column 'longitude': not_a_number");
+    RuntimeException exception = new RuntimeException(
+        "Invalid numeric value in column 'longitude': not_a_number");
     String result = (String) method.invoke(handler, exception);
     
     assertTrue(result.contains("External data contains invalid numeric values"));
@@ -71,11 +76,13 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_JshdResourceFailure() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageJshdResourceFailure() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
-    RuntimeException exception = new RuntimeException("Failure in loading a jshd resource: File format error");
+    RuntimeException exception = new RuntimeException(
+        "Failure in loading a jshd resource: File format error");
     String result = (String) method.invoke(handler, exception);
     
     assertTrue(result.contains("Failed to load external data resource"));
@@ -83,35 +90,42 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_UnsupportedFileFormat() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageUnsupportedFileFormat() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
-    IOException exception = new IOException("No suitable reader found for file: unknown_format.xyz");
+    IOException exception = new IOException(
+        "No suitable reader found for file: unknown_format.xyz");
     String result = (String) method.invoke(handler, exception);
     
-    assertTrue(result.contains("Unsupported external data file format: 'unknown_format.xyz'"));
+    assertTrue(result.contains(
+        "Unsupported external data file format: 'unknown_format.xyz'"));
     assertTrue(result.contains("Supported formats include CSV and NetCDF"));
   }
 
   @Test
-  void testBuildInformativeErrorMessage_FileAccessError() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageFileAccessError() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
     IOException exception = new IOException("data.csv (No such file or directory)");
     String result = (String) method.invoke(handler, exception);
     
     assertTrue(result.contains("External data file could not be accessed"));
-    assertTrue(result.contains("Please ensure the file exists and is properly uploaded"));
+    assertTrue(result.contains(
+        "Please ensure the file exists and is properly uploaded"));
   }
 
   @Test
-  void testBuildInformativeErrorMessage_GenericExternalDataError() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageGenericExternalDataError() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
-    RuntimeException exception = new RuntimeException("External data processing failed unexpectedly");
+    RuntimeException exception = new RuntimeException(
+        "External data processing failed unexpectedly");
     String result = (String) method.invoke(handler, exception);
     
     assertTrue(result.contains("External data processing error"));
@@ -119,8 +133,9 @@ class JoshSimWorkerHandlerErrorMessageTest {
   }
 
   @Test
-  void testBuildInformativeErrorMessage_FallbackError() throws Exception {
-    Method method = JoshSimWorkerHandler.class.getDeclaredMethod("buildInformativeErrorMessage", Exception.class);
+  void testBuildInformativeErrorMessageFallbackError() throws Exception {
+    Method method = JoshSimWorkerHandler.class.getDeclaredMethod(
+        "buildInformativeErrorMessage", Exception.class);
     method.setAccessible(true);
     
     RuntimeException exception = new RuntimeException("Some unexpected error");

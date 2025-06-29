@@ -74,6 +74,56 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
   }
 
   /**
+   * Logs error details securely with hashed API key.
+   *
+   * @param key The API key (will be hashed for security)
+   * @param operation The operation that failed
+   * @param exception The exception that occurred
+   * @param additionalContext Optional additional context
+   */
+  public void logError(String key, String operation, Throwable exception, 
+        String additionalContext) {
+    CompatibleStringJoiner logJoiner = CompatibilityLayerKeeper.get().createStringJoiner(", ");
+    logJoiner.add(generateHash(key));
+    logJoiner.add("error_" + operation);
+    logJoiner.add(exception.getClass().getSimpleName());
+    logJoiner.add("\"" + sanitizeForLogging(exception.getMessage()) + "\"");
+    
+    if (additionalContext != null && !additionalContext.isEmpty()) {
+      logJoiner.add("\"" + sanitizeForLogging(additionalContext) + "\"");
+    }
+    
+    System.err.println("[josh cloud error] " + logJoiner.toString());
+  }
+
+  /**
+   * Sanitizes a message for logging by removing potential sensitive information.
+   *
+   * @param message The message to sanitize
+   * @return A sanitized version safe for logging
+   */
+  private String sanitizeForLogging(String message) {
+    if (message == null) {
+      return "null";
+    }
+    
+    // Remove potential file paths and replace with generic placeholder
+    String sanitized = message.replaceAll("[/\\\\][^\\s]*", "[PATH]");
+    
+    // Remove potential API keys or tokens (simple pattern)
+    sanitized = sanitized.replaceAll(
+        "(?i)api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[API-KEY]");
+    sanitized = sanitized.replaceAll("(?i)token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[TOKEN]");
+    
+    // Truncate if too long
+    if (sanitized.length() > 200) {
+      sanitized = sanitized.substring(0, 197) + "...";
+    }
+    
+    return sanitized;
+  }
+
+  /**
    * Dependency injection point for testing for getting the environment variable.
    */
   public interface ApiKeyStringGetter {
