@@ -520,13 +520,12 @@ class MapConfigPresenter {
   /**
    * Set the default dimensions in the input fields.
    *
-   * @param {number} width - Default width in pixels.
-   * @param {number} height - Default height in pixels.
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
    */
-  setDefaultDimensions(width, height) {
+  setDefaultDimensions(dimensions) {
     const self = this;
-    self._widthInput.value = width;
-    self._heightInput.value = height;
+    self._widthInput.value = dimensions.getWidth();
+    self._heightInput.value = dimensions.getHeight();
   }
 
   /**

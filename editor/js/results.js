@@ -381,10 +381,7 @@ class ResultsDisplayPresenter {
     }
     
     const defaultDimensions = self._gridPresenter.calculateDefaultDimensions(metadata);
-    self._mapConfigPresenter.setDefaultDimensions(
-        defaultDimensions.getWidth(),
-        defaultDimensions.getHeight()
-    );
+    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions);
     self._renderInternal(true);
   }
 
