@@ -3,6 +3,7 @@
   <head>
     <title>Josh Guide: Two Trees</title>
     <link href="/landing.css" rel="stylesheet" type="text/css" />
+    <link href="/prism-tomorrow.min.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
     <div class="skip-link">
@@ -38,7 +39,7 @@
         <p>
           The simulation here will look pretty similar. Let's go ahead and define our boundaries and time range.
         </p>
-        <pre>start simulation Main
+        <pre><code class="language-joshlang">start simulation Main
 
   # Specify where the simluation runs
   grid.size = 200 m
@@ -61,7 +62,7 @@
   # Indicate exports
   exportFiles.patch = "memory://editor/patches"
 
-end simulation</pre>
+end simulation</code></pre>
         <p>
           As <a href="/guides/grass_shrub_fire.html">before</a>, we have some constants that we will use across multiple organisms.
         </p>
@@ -72,7 +73,7 @@ end simulation</pre>
         <p>
           Let's start with initializing occupancy of these patches. We want to have this step use the maximum occupancy from the simulation definition.
         </p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   # Randomize starting occupancy
   countOccupancy.init = sample uniform from 0 count to meta.constraints.maxOccupants
@@ -83,14 +84,14 @@ end simulation</pre>
   SpeciesA.init = create initialACount of SpeciesA
   SpeciesB.init = create initialBCount of SpeciesB
 
-end patch</pre>
+end patch</code></pre>
       </section>
       <section id="death">
         <h2>Death</h2>
         <p>
           Unlike our ForeverTree, these trees can die. We will set a property on our agents called dead and remove those from the patch that have dead == true.
         </p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   # ... prior code here ...
 
@@ -100,9 +101,9 @@ end patch</pre>
   speciesACount.start = count(SpeciesA)
   speciesBCount.start = count(SpeciesB)
           
-end patch</pre>
+end patch</code></pre>
         <p>
-          This looks look mostly similar to what you've seen before but you may notice that there is also a start event handler type in addition to init and step like for the "newCount.end" handler. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations. Also, this is the first time we see a slice. For example, "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
+          This is mostly similar to what you've seen before but you may notice that there is also a start event handler type in addition to init and step handlers. Each step is actually broken into three phases: start, step, and end. This lets you run multiple calculations on a variable within a single step if needed where you can control the order of those calculations. Also, this is the first time we see a slice. For example, in "SpeciesA[prior.SpeciesA.dead == false]" at the start of each step we remove dead trees by filtering for those that aren't dead and saving the resulting distribution "slice" back to the SpeciesA attribute on Default patch.
         </p>
       </section>
       <section id="extremes">
@@ -110,7 +111,7 @@ end patch</pre>
         <p>
           Next, we will also check for extreme temperature events which our organisms will respond to.
         </p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   # ... prior code here ...
 
@@ -122,7 +123,7 @@ end patch</pre>
     return inExtremeCold or inExtremeHot
   }
 
-end patch</pre>
+end patch</code></pre>
         <p>Don't worry! You will see the organisms (agents) use this soon.</p>
       </section>
       <section id="birth">
@@ -130,7 +131,7 @@ end patch</pre>
         <p>
           Next, we also want to take care of the birth. Let's look at making new trees as well.
         </p>
-        <pre>start patch Default
+        <pre><code class="language-joshlang">start patch Default
 
   # ... prior code here ...
 
@@ -168,7 +169,7 @@ end patch</pre>
   export.newSpeciesACount.end = newSpeciesACount
   export.newSpeciesBCount.end = newSpeciesBCount
 
-end patch</pre>
+end patch</code></pre>
         <p>
           Here, we are getting a closer look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages but they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets like we saw in our discussion of slices.
         </p>
@@ -185,7 +186,7 @@ end patch</pre>
         <p>
           Each of these will work by looking at by how much growing conditions deviate from species-specific optimal values. These are defined through a quadratic for temperature and sigmoid for precipiation. We use these to determine what percent of optimal growth each agent sees in each time step. This is done by multiplying two "impact" values together as a scale variable.
         </p>
-        <pre>start organism SpeciesA
+        <pre><code class="language-joshlang">start organism SpeciesA
 
   # Start a zero height except when if this is the simulation start
   dead.init = false
@@ -219,7 +220,7 @@ end patch</pre>
     return deadByChance or deadByExtremeTemp
   }
 
-end organism</pre>
+end organism</code></pre>
         <p>
           There are two things to highlight in this code. First, we can see now where the variable in the slice used above gets used. Second, like how we did a map with a sigmoid before, we use a quadratic here. By default, quadratic puts the center of the range at the maximum (upside down parabola) but this can be modified by using "quadratic(false)" instead.
         </p>
@@ -230,7 +231,7 @@ end organism</pre>
         <p>
           In practice, different species will probably vary quite a bit from each other in their defintion. However, for this toy example, SpeciesB will be about the same as SpeciesA just with some different parameters. Let's take a look!
         </p>
-        <pre>start organism SpeciesB
+        <pre><code class="language-joshlang">start organism SpeciesB
 
   # Start a zero height except when if this is the simulation start
   dead.init = false
@@ -264,7 +265,7 @@ end organism</pre>
     return deadByChance or deadByExtremeTemp
   }
 
-end organism</pre>
+end organism</code></pre>
         <p>
           Everything is about the same here except for the parameterization of those important temperature and precipitation impact variables.
         </p>
@@ -275,7 +276,7 @@ end organism</pre>
         <p>
           Let's wrap this up! We just need our units. This time, we will also demonstrate use of unit conversions. Try changing one of the temperature values above to celcius to give it a shot.
         </p>
-        <pre>start unit K
+        <pre><code class="language-joshlang">start unit K
 
   alias Kelvins
   alias Kelvin
@@ -299,9 +300,12 @@ start unit mm
 
   m = current / 1000
 
-end unit</pre>
+end unit</code></pre>
         <p>Go ahead and give it a run. This one might take a little longer! If you have <a href="/community.html">Josh Cloud</a>, this might be a good time to give it a shot. When ready, let's move forward to a <a href="/landing/guides/data.html">tutorial on data preprocessing</a>.</p>
       </section>
     </main>
+    <script src="/prism-core.min.js"></script>
+    <script src="/prism-autoloader.min.js"></script>
+    <script src="/joshlang-prism.js"></script>
   </body>
 </html>

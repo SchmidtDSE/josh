@@ -149,8 +149,8 @@ Settings which dictate behavior of the entire simulation are dictated in a Simul
 start simulation Detailed
 
   grid.size = 1km
-  grid.low = 34 degrees latitude, -116 degrees longitude
-  grid.high = 35 degrees latitude, -115 degrees longitude
+  grid.low = -116 degrees longitude, 34 degrees latitude
+  grid.high = -115 degrees longitude, 35 degrees latitude
 
 end simulation
 ```
@@ -161,6 +161,18 @@ This can specify patches but it uses `Default` if not otherwise specified:
 start simulation Detailed
 
   grid.patch = "Default"
+
+end simulation
+```
+
+Time steps for the simulation can be specified with `steps.low` and `steps.high`:
+
+```
+start simulation Example
+
+  grid.size = 30 m
+  steps.low = 0 count
+  steps.high = 10 count
 
 end simulation
 ```
@@ -200,13 +212,15 @@ These names (`JoshuaTrees` and `ShrubGrasses`) should correspond to attribute na
 start simulation Coarse
 
   grid.size = 1km
-  grid.low = 34 degrees latitude -116 degrees longitude
-  grid.high = 35 degrees latitude -115 degrees longitude
+  grid.low = -116 degrees longitude, 34 degrees latitude
+  grid.high = -115 degrees longitude, 35 degrees latitude
   
   sampling.general = 1000 count
 
 end simulation
 ```
+
+Note: Longitude and latitude coordinates may be specified in either order (longitude, latitude or latitude, longitude).
 
 The user should specify the name of the simulation to execute.
 
@@ -347,6 +361,37 @@ end external
 
 These may be used for environmental data such as temperature projections. Location may support different handlers such as `https://`.
 
+## Preprocessing
+
+Josh supports preprocessing of external data files into an optimized binary format called `.jshd` (Josh Data) files. This preprocessing step converts data from formats like GeoTIFF and NetCDF into a format optimized for simulation execution.
+
+### JSHD Format
+
+The `.jshd` format is a binary format designed for efficient access during simulations. It stores gridded data with associated metadata including:
+
+- Spatial extents (minimum/maximum x and y coordinates)
+- Temporal extents (minimum/maximum timesteps) 
+- Units information
+- Grid data organized for optimal access patterns
+
+### Preprocessing Workflow
+
+External data can be preprocessed using a preprocessing command that takes:
+
+1. A Josh script file containing the simulation definition
+2. The simulation name to preprocess for
+3. Path to the source data file (e.g., NetCDF, GeoTIFF)
+4. Variable name or band number to extract
+5. Units for the data within simulations
+6. Output path for the `.jshd` file
+
+Example invocation:
+```bash
+java -jar joshsim.jar preprocess simulation.josh MySimulation temperature.nc temp celsius temperature.jshd
+```
+
+The preprocessing step handles coordinate system transformations, temporal alignment, and spatial resampling as needed to match the simulation grid specification.
+
 ## Keywords
 Entities go through a series of steps which can modify their attributes. To support these calculations, different scoping keywords are provided.
 
@@ -403,6 +448,26 @@ In this example, `AgeGeotiff` may refer to an External and the ages at this grid
 
 ### Other grid cells
 These keywords can only access information in the current grid cell. One may also query for entities through the `within` keyword which will search geospatially. 
+
+### Meta variables
+The `meta` keyword provides access to simulation metadata and context information:
+
+```
+start organism Tree
+
+  age.init
+    :if(meta.stepCount == 0 count) = sample external ObservedAges
+    :else = 0 years
+
+end organism
+```
+
+Available meta variables include:
+
+- **meta.stepCount**: The current simulation time step (0-based)
+- **meta.year**: The current simulation year (if temporal mapping is configured)
+
+These are the meta variables available by default, but any values defined on the simulation entity can also be accessed via `meta`. For example, if the simulation defines `constraints.maxOccupants`, it can be accessed as `meta.constraints.maxOccupants`.
 
 ## Lifecycle
 The following define the typical lifecycle of an entity.
@@ -483,7 +548,7 @@ The CoverTree height will evaluate prior to Grass isShaded which will evaluate p
 If an entity changes states, the handlers for the current event will not run within that state. For example:
 
 ```
-class organism Tree
+start organism Tree
 
   age.init = 0 years
   age.step = prior.age + 1 year
@@ -634,7 +699,7 @@ Users may add additional units with aliases:
 ```
 start unit inch
   alias in
-  alisas inches
+  alias inches
 end unit
 ```
 
@@ -708,14 +773,6 @@ const b = 7 units
 const c = b > c
 ```
 
-Approximately equals also provided with configurable tollerance:
-
-```
-const a = 1.234 meters
-const b = 1.235 meters
-const c = b ~= c with 0.01 tollerance
-```
-
 These operators yield realized distributions of bool values (sampling if applied to virtualized). Python-style logical operators are provided to combine bools (and, or, xor):
 
 ```
@@ -736,7 +793,7 @@ Though additional modifiers may be added in the future, the following modifiers 
 This acts as a function call which takes a single argument which is of type bool.
 
 ### Within event handlers
-If statements are defined as following a Python-like turninary operation:
+If statements are defined as following a Python-like ternary operation:
 
 ```
 const a = 1 if b == 2 else 3
@@ -759,13 +816,13 @@ Mapping one from set of numbers to another is available with the default being l
 const a = map b from [0 in, 100 in] to [0 %, 100%]
 ```
 
-This will extraplote linearlly in the range if an input outside the domain is provided. The following has identical behavior:
+This will extrapolate linearly in the range if an input outside the domain is provided. The following has identical behavior:
 
 ```
-const a = map b from [0 in, 100 in] to [0 %, 100%] linearlly
+const a = map b from [0 in, 100 in] to [0 %, 100%] linearly
 ```
 
-Additionally logarithmically and exponentially are available.
+Additionally quadratic and sigmoid are available.
 
 ## Limit
 Limits can be used to enforce a min, max, or range:
@@ -893,13 +950,13 @@ import "file://other.josh"
 These statements must be at top level (not within any stanzas). Paths can be specified with different protocols like `https://`.
 
 ## Interactivity and configuration
-In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas):
+In this phase of the specification, limited configuration is available and must be loaded at top level (outside stanzas). **Note: This is a future planned feature and not yet fully implemented.**
 
 ```
-config "file://config.json"
+config "file://config.json" as configName
 ```
 
-The JSON file at the location (additoinal protocols like `https://` may be made avialable) should have an object with string keys and string values where the string values should be a numeric followed by a units and msut have valid variable names similar to const:
+The JSON file at the location (additional protocols like `https://` may be made available) should have an object with string keys and string values where the string values should be a numeric followed by a units and must have valid variable names similar to const:
 
 ```
 {
@@ -907,10 +964,10 @@ The JSON file at the location (additoinal protocols like `https://` may be made 
 }
 ```
 
-These values are read only and become available via a config object where config statements at higher line numbers will override config statements at lower line numbers if names collide.
+These values are read only and become available via the specified config identifier where config statements at higher line numbers will override config statements at lower line numbers if names collide.
 
 ```
-const a = config.val1 + 1 count
+const a = configName.val1 + 1 count
 ```
 
 This JSON may, in practice, be generated from user interface elements like sliders depending on the interpreter / compiler.
@@ -950,6 +1007,50 @@ end patch
 ```
 
 Assertions will generate warnings in default execution of the engine but `--ignore-assertions` can be executed in which case they will generate warnings on standard out instead.
+
+## Exports
+
+Josh supports exporting simulation results for analysis and visualization. Export attributes can be defined on patches and simulations to capture computed values at each timestep.
+
+### Export Attributes
+
+Export attributes are defined using the `export.` prefix and are evaluated at each timestep:
+
+```
+start patch Default
+
+  JoshuaTrees.init = create 10 count of JoshuaTree
+  
+  export.treeCount.step = count(current.JoshuaTrees)
+  export.averageAge.step = mean(current.JoshuaTrees.age)
+
+end patch
+```
+
+### Export Files
+
+Export destinations can be configured in simulations using `exportFiles` attributes:
+
+```
+start simulation Example
+
+  grid.size = 30 m
+  exportFiles.patch = "file:///tmp/simulation_results_{replicate}.csv"
+
+end simulation
+```
+
+The `{replicate}` placeholder will be replaced with the replicate number when running multiple simulation replicates.
+
+Export values can also be provided to memory to be shown in the IDE by using the `memory://` protocol:
+
+```
+start simulation Example
+  exportFiles.patch = "memory://editor/patches"
+end simulation
+```
+
+This sends patch exports to the IDE for visualization and interactive exploration without saving to disk.
 
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
@@ -1064,7 +1165,7 @@ start organism TreeA
   shade.start = sum(here.TreeBs[here.TreeBs.height > current.height].shade)
   cover.step = current.height / 5 m * 10 %
   
-  growth.step = map current.age from [0 years, 100 years] to [10 m, 0 m] logrithmically
+  growth.step = map current.age from [0 years, 100 years] to [10 m, 0 m] logarithmically
   growthLimit.step = current.growth * (100 % - current.shade) / 100 %
   
   height.step = prior.height + current.growthLimit
@@ -1079,9 +1180,9 @@ start organism TreeB
   age.init = 1 year
   age.step = prior.age + 10 year
 
-  growth.step = map curent.age from [0 years, 100 years] to [15 m, 0 m] logrithmically
+  growth.step = map current.age from [0 years, 100 years] to [15 m, 0 m] logarithmically
   height.step = prior.height + growth
-  cover.step = curent.height * 10 % / 3 m
+  cover.step = current.height * 10 % / 3 m
   height.end = limit prior.height to [, 30 m]
 
 end organism
@@ -1144,7 +1245,7 @@ Finally, uniform patches are defined.
 ```
 start patch Default
 
-  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
 
 end patch
 ```
@@ -1158,7 +1259,7 @@ This organism will primarily be defined through changes in state. Note that init
 start organism JoshuaTree
 
   age.init
-    :if(meta.stepCount == 0 count) = sample here.ObservedAges
+    :if(meta.stepCount == 0 count) = sample external ObservedAges
     :else = 0 years
 
   age.step = prior.age + 1 year
@@ -1226,7 +1327,7 @@ start patch Default
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTree - deadTrees
@@ -1258,7 +1359,7 @@ This is used as a simple marker:
 ```
 start patch Default
 
-  JoshuaTrees.init = create sum(here.ObservedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTree - deadTrees
@@ -1296,10 +1397,10 @@ This second approach simply uses the patch itself.
 ```
 start patch Default
 
-  JoshuaTrees.init = create sum(here.observedCounts) of JoshuaTree
+  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTree[current.JoshuaTrees.state == "dead"]
-    reutrn current.JoshuaTrees - deadTrees
+    return current.JoshuaTrees - deadTrees
   }
 
   # ...
