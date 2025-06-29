@@ -16,8 +16,8 @@ class ScrubPresenter {
   /**
    * Create a new presenter for the scrub visualization.
    *
-   * @param {Element} selection - Selection over the entire scrub presenter component which includes
-   *     the SVG element where the graphic should actually display.
+   * @param {Element} selection - Selection over the entire scrub presenter component which
+   *     includes the SVG element where the graphic should actually display.
    * @param {function} callback - Function to call when a different timestep is selected.
    */
   constructor(selection, callback) {
@@ -155,8 +155,8 @@ class ScrubPresenter {
   /**
    * Indicate that a timestep was selected.
    *
-   * Indicate that a timestep was selected, selecting and highlighting the specified timestep in the
-   * scrub visualization.
+   * Indicate that a timestep was selected, selecting and highlighting the specified timestep in
+   * the scrub visualization.
    *
    * @param {number} timestep - The specific timestep to select and highlight.
    * @param {d3.ScaleBand} xScale - D3 scale function that maps timesteps to x-axis positions.
@@ -197,7 +197,8 @@ class GridPresenter {
   /**
    * Create a new heatmap visualization.
    *
-   * @param {Element} selection - The containing element in which the SVG and info display is found.
+   * @param {Element} selection - The containing element in which the SVG and info display is
+   *     found.
    */
   constructor(selection) {
     const self = this;
@@ -205,6 +206,7 @@ class GridPresenter {
     self._infoSelection = selection.querySelector("#grid-viz-info");
     self._svgSelection = selection.querySelector("#grid-viz");
     self._d3SvgSelection = d3.select(self._svgSelection);
+    self._customDimensions = null;
 
     const resultsSelection = document.getElementById("results-area");
     resultsSelection.addEventListener("scroll", () => {
@@ -218,6 +220,33 @@ class GridPresenter {
         self._infoSelection.classList.remove("fixed");
       }
     });
+  }
+
+  /**
+   * Set custom dimensions for the visualization.
+   *
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
+   */
+  setCustomDimensions(dimensions) {
+    const self = this;
+    self._customDimensions = dimensions;
+  }
+
+  /**
+   * Calculate the default dimensions for the visualization.
+   *
+   * @param {SimulationMetadata} metadata - Metadata about the grid dimensions.
+   * @returns {MapDimensions} Map dimensions object with default width and height in pixels.
+   */
+  calculateDefaultDimensions(metadata) {
+    const self = this;
+    const gridWidth = metadata.getEndX() - metadata.getStartX() + 1;
+    const gridHeight = metadata.getEndY() - metadata.getStartY() + 1;
+    const patchPixels = self._getPatchPixels(gridWidth, gridHeight);
+    const defaultWidth = (patchPixels + 1) * gridWidth;
+    const defaultHeight = (patchPixels + 1) * gridHeight;
+    
+    return new MapDimensions(defaultWidth, defaultHeight);
   }
 
   /**
@@ -361,6 +390,8 @@ class GridPresenter {
    *
    * This function returns a pixel size used for each square patch in the grid
    * visualization, with smaller sizes for larger grids to fit the visualization area.
+   * If custom dimensions are set, it calculates the optimal patch size to fit within
+   * those dimensions.
    *
    * @param {number} gridWidth - The total number of grid patches along the x-axis.
    * @param {number} gridHeight - The total number of grid patches along the y-axis.
@@ -368,6 +399,16 @@ class GridPresenter {
    */
   _getPatchPixels(gridWidth, gridHeight) {
     const self = this;
+
+    if (self._customDimensions) {
+      const availableWidth = self._customDimensions.getWidth() - gridWidth;
+      const availableHeight = self._customDimensions.getHeight() - gridHeight;
+      
+      const maxPatchWidth = Math.floor(availableWidth / gridWidth);
+      const maxPatchHeight = Math.floor(availableHeight / gridHeight);
+      
+      return Math.max(1, Math.min(maxPatchWidth, maxPatchHeight));
+    }
 
     const largestAxis = Math.max(gridWidth, gridHeight);
 
@@ -410,4 +451,108 @@ class GridPresenter {
 }
 
 
-export {GridPresenter, ScrubPresenter};
+/**
+ * Class representing the dimensions of a map visualization in pixels.
+ */
+class MapDimensions {
+
+  /**
+   * Creates a new map dimensions object.
+   * 
+   * @param {number} width - The width of the map in pixels.
+   * @param {number} height - The height of the map in pixels.
+   */
+  constructor(width, height) {
+    const self = this;
+    self._width = width;
+    self._height = height;
+  }
+
+  /**
+   * Gets the width of the map.
+   * 
+   * @returns {number} The width in pixels.
+   */
+  getWidth() {
+    const self = this;
+    return self._width;
+  }
+
+  /**
+   * Gets the height of the map.
+   * 
+   * @returns {number} The height in pixels.
+   */
+  getHeight() {
+    const self = this;
+    return self._height;
+  }
+  
+}
+
+
+/**
+ * Presenter for custom map sizing controls.
+ * 
+ * Manages the details element that allows users to configure the width and height
+ * of the grid visualization and triggers re-rendering with new dimensions.
+ */
+class MapConfigPresenter {
+
+  /**
+   * Create a new map configuration presenter.
+   *
+   * @param {Element} selection - The details element containing the configuration controls.
+   * @param {function} callback - Function to call when map dimensions should be updated.
+   *     Called with a MapDimensions object.
+   */
+  constructor(selection, callback) {
+    const self = this;
+    self._root = selection;
+    self._callback = callback;
+    self._widthInput = selection.querySelector("#map-width-input");
+    self._heightInput = selection.querySelector("#map-height-input");
+    self._updateButton = selection.querySelector("#update-map-button");
+    
+    self._addEventListeners();
+  }
+
+  /**
+   * Set the default dimensions in the input fields.
+   *
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
+   */
+  setDefaultDimensions(dimensions) {
+    const self = this;
+    self._widthInput.value = dimensions.getWidth();
+    self._heightInput.value = dimensions.getHeight();
+  }
+
+  /**
+   * Get the current dimensions from the input fields.
+   *
+   * @returns {MapDimensions} Map dimensions object with width and height in pixels.
+   */
+  getDimensions() {
+    const self = this;
+    const width = parseInt(self._widthInput.value) || 800;
+    const height = parseInt(self._heightInput.value) || 600;
+    return new MapDimensions(width, height);
+  }
+
+  /**
+   * Add event listeners to the update button.
+   */
+  _addEventListeners() {
+    const self = this;
+    
+    self._updateButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      const dimensions = self.getDimensions();
+      self._callback(dimensions);
+    });
+  }
+}
+
+
+export {GridPresenter, ScrubPresenter, MapConfigPresenter, MapDimensions};
