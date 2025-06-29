@@ -71,7 +71,8 @@ class ResultsPresenter {
    * Handles completion of simulation run, calculating and displaying results.
    *
    * @param {SimulationMetadata} metadata - The metadata of the simulation being displayed.
-   * @param {Array<SimulationResult>} results - Array of simulation results containing output records.
+   * @param {Array<SimulationResult>} results - Array of simulation results containing output
+   *     records.
    */
   onComplete(metadata, results) {
     const self = this;
@@ -174,8 +175,8 @@ class ResultsPresenter {
   /**
    * Callback for when the basemap URL is updated.
    *
-   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no basemap
-   *     image should be provided.
+   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no
+   *     basemap image should be provided.
    */
   _onBasemapChange(basemapUrl) {
     const self = this;
@@ -380,7 +381,10 @@ class ResultsDisplayPresenter {
     }
     
     const defaultDimensions = self._gridPresenter.calculateDefaultDimensions(metadata);
-    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions.getWidth(), defaultDimensions.getHeight());
+    self._mapConfigPresenter.setDefaultDimensions(
+        defaultDimensions.getWidth(),
+        defaultDimensions.getHeight()
+    );
     self._renderInternal(true);
   }
 

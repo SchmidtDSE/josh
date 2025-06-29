@@ -16,8 +16,8 @@ class ScrubPresenter {
   /**
    * Create a new presenter for the scrub visualization.
    *
-   * @param {Element} selection - Selection over the entire scrub presenter component which includes
-   *     the SVG element where the graphic should actually display.
+   * @param {Element} selection - Selection over the entire scrub presenter component which
+   *     includes the SVG element where the graphic should actually display.
    * @param {function} callback - Function to call when a different timestep is selected.
    */
   constructor(selection, callback) {
@@ -155,8 +155,8 @@ class ScrubPresenter {
   /**
    * Indicate that a timestep was selected.
    *
-   * Indicate that a timestep was selected, selecting and highlighting the specified timestep in the
-   * scrub visualization.
+   * Indicate that a timestep was selected, selecting and highlighting the specified timestep in
+   * the scrub visualization.
    *
    * @param {number} timestep - The specific timestep to select and highlight.
    * @param {d3.ScaleBand} xScale - D3 scale function that maps timesteps to x-axis positions.
@@ -197,7 +197,8 @@ class GridPresenter {
   /**
    * Create a new heatmap visualization.
    *
-   * @param {Element} selection - The containing element in which the SVG and info display is found.
+   * @param {Element} selection - The containing element in which the SVG and info display is
+   *     found.
    */
   constructor(selection) {
     const self = this;
