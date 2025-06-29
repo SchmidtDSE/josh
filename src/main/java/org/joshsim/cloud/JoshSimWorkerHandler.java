@@ -268,7 +268,13 @@ public class JoshSimWorkerHandler implements HttpHandler {
         HttpServerExchange httpServerExchange, String apiKey) {
     
     // Log full error details securely (API key will be hashed by the logging layer)
-    SecurityUtil.logSecureError(apiDataLayer, apiKey, operation, exception, null);
+    SecurityUtil.logSecureError(
+        apiDataLayer,
+        apiKey,
+        operation,
+        exception,
+        null
+    );
     
     // Check if this is an external data error that should have an informative message
     String userMessage;
@@ -280,7 +286,8 @@ public class JoshSimWorkerHandler implements HttpHandler {
     } else {
       // Create sanitized error for other types of errors
       final SimulationExecutionException safeException = SecurityUtil.createSafeException(
-          "Error during " + operation + ": " + exception.getMessage(), exception
+          "Error during " + operation + ": " + exception.getMessage(),
+          exception
       );
       userMessage = safeException.getUserMessage();
       // Use 400 status for user input errors
@@ -303,16 +310,41 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return false;
     }
     
-    return message.contains("Cannot find virtual file")
-        || message.contains("CSV must contain")
-        || message.contains("Invalid numeric value in column")
-        || message.contains("Failure in loading a jshd resource")
-        || message.contains("No suitable reader found for file")
-        || message.contains("No such file or directory")
-        || (exception instanceof IOException
-            && (message.toLowerCase().contains("external")
-                || message.toLowerCase().contains("csv")
-                || message.toLowerCase().contains("data")));
+    // Check for specific external data error patterns
+    if (message.contains("Cannot find virtual file")) {
+      return true;
+    }
+    if (message.contains("CSV must contain")) {
+      return true;
+    }
+    if (message.contains("Invalid numeric value in column")) {
+      return true;
+    }
+    if (message.contains("Failure in loading a jshd resource")) {
+      return true;
+    }
+    if (message.contains("No suitable reader found for file")) {
+      return true;
+    }
+    if (message.contains("No such file or directory")) {
+      return true;
+    }
+    
+    // Check for IOException with external data keywords
+    if (exception instanceof IOException) {
+      String lowerMessage = message.toLowerCase();
+      if (lowerMessage.contains("external")) {
+        return true;
+      }
+      if (lowerMessage.contains("csv")) {
+        return true;
+      }
+      if (lowerMessage.contains("data")) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**

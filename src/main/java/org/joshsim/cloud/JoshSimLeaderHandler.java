@@ -252,30 +252,47 @@ public class JoshSimLeaderHandler implements HttpHandler {
         } else if (errorBody.contains("Invalid numeric value")) {
           return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
         } else {
-          return String.format("Replicate %d failed with invalid request: %s",
-                             replicateNumber, errorBody);
+          return String.format(
+              "Replicate %d failed with invalid request: %s",
+              replicateNumber,
+              errorBody
+          );
         }
       case 401:
-        return String.format("Replicate %d failed: Authentication error - invalid API key",
-                           replicateNumber);
+        return String.format(
+            "Replicate %d failed: Authentication error - invalid API key",
+            replicateNumber
+        );
       case 404:
-        return String.format("Replicate %d failed: Simulation '%s' not found in the "
-                           + "provided code", replicateNumber, errorBody);
+        return String.format(
+            "Replicate %d failed: Simulation '%s' not found in the provided code",
+            replicateNumber,
+            errorBody
+        );
       case 405:
-        return String.format("Replicate %d failed: Invalid HTTP method - only POST is "
-                           + "supported", replicateNumber);
+        return String.format(
+            "Replicate %d failed: Invalid HTTP method - only POST is supported",
+            replicateNumber
+        );
       case 500:
         if (errorBody.contains("External data file not found")) {
           return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
         } else if (errorBody.contains("External data")) {
           return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
         } else {
-          return String.format("Replicate %d failed: Internal server error - %s",
-                             replicateNumber, errorBody);
+          return String.format(
+              "Replicate %d failed: Internal server error - %s",
+              replicateNumber,
+              errorBody
+          );
         }
       default:
-        return String.format("Replicate %d failed: Worker returned status %d - %s",
-                           replicateNumber, statusCode, errorBody);
+        return String.format(
+            "Replicate %d failed: Worker returned status %d - %s",
+            replicateNumber,
+            statusCode,
+            errorBody
+        );
     }
   }
 
@@ -334,7 +351,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
       // Handle different error status codes from worker with informative messages
       String errorBody = response.body() != null ? response.body() : "No error details provided";
       String errorMessage = buildWorkerErrorMessage(
-          response.statusCode(), errorBody, replicateNumber);
+          response.statusCode(),
+          errorBody,
+          replicateNumber
+      );
       throw new RuntimeException(errorMessage);
     }
   }
