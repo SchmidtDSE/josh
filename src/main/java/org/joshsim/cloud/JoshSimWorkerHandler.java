@@ -165,30 +165,46 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory,
-        geometryFactory,
-        result,
-        inputOutputLayer
-    );
+    try {
+      InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
+      EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+      JoshProgram program = JoshSimFacadeUtil.interpret(
+          valueFactory,
+          geometryFactory,
+          result,
+          inputOutputLayer
+      );
 
-    if (!program.getSimulations().hasPrototype(simulationName)) {
-      httpServerExchange.setStatusCode(404);
+      if (!program.getSimulations().hasPrototype(simulationName)) {
+        httpServerExchange.setStatusCode(404);
+        return Optional.of(apiKey);
+      }
+
+      InputOutputLayer layer = getLayer(httpServerExchange, externalData);
+      JoshSimFacadeUtil.runSimulation(
+          valueFactory,
+          geometryFactory,
+          layer,
+          program,
+          simulationName,
+          (step) -> {}, // No step reporting needed for worker
+          useSerial
+      );
+    } catch (RuntimeException e) {
+      httpServerExchange.setStatusCode(500);
+      httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+      
+      String errorMessage = buildInformativeErrorMessage(e);
+      httpServerExchange.getResponseSender().send(errorMessage);
+      return Optional.of(apiKey);
+    } catch (Exception e) {
+      httpServerExchange.setStatusCode(500);
+      httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
+      
+      String errorMessage = buildInformativeErrorMessage(e);
+      httpServerExchange.getResponseSender().send(errorMessage);
       return Optional.of(apiKey);
     }
-
-    InputOutputLayer layer = getLayer(httpServerExchange, externalData);
-    JoshSimFacadeUtil.runSimulation(
-        valueFactory,
-        geometryFactory,
-        layer,
-        program,
-        simulationName,
-        (step) -> {}, // No step reporting needed for worker
-        useSerial
-    );
     httpServerExchange.endExchange();
     return Optional.of(apiKey);
   }
@@ -212,6 +228,77 @@ public class JoshSimWorkerHandler implements HttpHandler {
       }
     };
     return new SandboxInputOutputLayer(virtualFiles, exportCallback);
+  }
+
+  /**
+   * Build an informative error message for external data loading failures.
+   *
+   * @param e The exception that occurred during simulation setup or execution.
+   * @return A user-friendly error message describing the external data issue.
+   */
+  private String buildInformativeErrorMessage(Exception e) {
+    String originalMessage = e.getMessage() != null ? e.getMessage() : "";
+    
+    // Handle specific external data error patterns
+    if (originalMessage.contains("Cannot find virtual file:")) {
+      String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "External data file not found: '%s'. Please ensure the file is included in your external data upload and the filename matches exactly.", 
+          fileName
+      );
+    }
+    
+    if (originalMessage.contains("CSV must contain 'longitude' and 'latitude' columns")) {
+      return "External CSV data is missing required columns. CSV files must contain 'longitude' and 'latitude' columns for geospatial data processing.";
+    }
+    
+    if (originalMessage.contains("Invalid numeric value in column")) {
+      return String.format(
+          "External data contains invalid numeric values: %s. Please check that all numeric columns contain valid numbers.", 
+          originalMessage
+      );
+    }
+    
+    if (originalMessage.contains("Failure in loading a jshd resource:")) {
+      String innerMessage = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "Failed to load external data resource: %s. Please verify the file format and contents are correct.", 
+          innerMessage
+      );
+    }
+    
+    if (originalMessage.contains("No suitable reader found for file:")) {
+      String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "Unsupported external data file format: '%s'. Supported formats include CSV and NetCDF files.", 
+          fileName
+      );
+    }
+    
+    // Handle IOException from CSV reading
+    if (e instanceof IOException || originalMessage.contains("IOException")) {
+      if (originalMessage.contains("No such file or directory")) {
+        return "External data file could not be accessed. Please ensure the file exists and is properly uploaded.";
+      }
+      return String.format(
+          "Error reading external data file: %s. Please verify the file format and contents.", 
+          originalMessage
+      );
+    }
+    
+    // Default case for other external data related errors
+    if (originalMessage.toLowerCase().contains("external") || 
+        originalMessage.toLowerCase().contains("file") ||
+        originalMessage.toLowerCase().contains("csv") ||
+        originalMessage.toLowerCase().contains("data")) {
+      return String.format(
+          "External data processing error: %s. Please check your external data files and try again.", 
+          originalMessage
+      );
+    }
+    
+    // Fallback for unrecognized errors
+    return String.format("Simulation error: %s", originalMessage);
   }
 
 }

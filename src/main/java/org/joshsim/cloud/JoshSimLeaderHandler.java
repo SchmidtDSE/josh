@@ -175,21 +175,103 @@ public class JoshSimLeaderHandler implements HttpHandler {
     }
 
     try {
+      boolean hasErrors = false;
       for (Future<String> future : futures) {
-        String result = future.get();
-        if (result != null) {
-          httpServerExchange.getOutputStream().write(result.getBytes());
+        try {
+          String result = future.get();
+          if (result != null) {
+            httpServerExchange.getOutputStream().write(result.getBytes());
+            httpServerExchange.getOutputStream().flush();
+          }
+        } catch (Exception e) {
+          hasErrors = true;
+          // Extract meaningful error message from the exception
+          String errorMessage = extractErrorMessage(e);
+          String errorOutput = String.format("[error] %s\n", errorMessage);
+          httpServerExchange.getOutputStream().write(errorOutput.getBytes());
           httpServerExchange.getOutputStream().flush();
         }
       }
+      
+      if (hasErrors) {
+        httpServerExchange.setStatusCode(500);
+      }
+      
       httpServerExchange.endExchange();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      httpServerExchange.setStatusCode(500);
+      throw new RuntimeException("Critical error in leader execution: " + e.getMessage(), e);
     } finally {
       executor.shutdown();
     }
 
     return Optional.of(apiKey);
+  }
+
+  /**
+   * Extract a meaningful error message from an exception for user display.
+   *
+   * @param e The exception that occurred during replicate execution.
+   * @return A user-friendly error message describing the failure.
+   */
+  private String extractErrorMessage(Exception e) {
+    String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+    
+    // Check if this is a worker error that already contains detailed information
+    if (message.contains("Replicate") && message.contains("failed:")) {
+      return message; // Already formatted by buildWorkerErrorMessage
+    }
+    
+    // Handle specific exception types
+    if (e.getCause() != null) {
+      String causeMessage = e.getCause().getMessage();
+      if (causeMessage != null && causeMessage.contains("External data")) {
+        return causeMessage;
+      }
+    }
+    
+    // Default formatting for other errors
+    return String.format("Execution error: %s", message);
+  }
+
+  /**
+   * Build an informative error message for worker failures.
+   *
+   * @param statusCode The HTTP status code returned by the worker.
+   * @param errorBody The error response body from the worker.
+   * @param replicateNumber The replicate number that failed.
+   * @return A descriptive error message for the leader to propagate.
+   */
+  private String buildWorkerErrorMessage(int statusCode, String errorBody, int replicateNumber) {
+    switch (statusCode) {
+      case 400:
+        if (errorBody.contains("External data file not found")) {
+          return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
+        } else if (errorBody.contains("missing required columns")) {
+          return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
+        } else if (errorBody.contains("Invalid numeric value")) {
+          return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
+        } else {
+          return String.format("Replicate %d failed with invalid request: %s", replicateNumber, errorBody);
+        }
+      case 401:
+        return String.format("Replicate %d failed: Authentication error - invalid API key", replicateNumber);
+      case 404:
+        return String.format("Replicate %d failed: Simulation '%s' not found in the provided code", replicateNumber, errorBody);
+      case 405:
+        return String.format("Replicate %d failed: Invalid HTTP method - only POST is supported", replicateNumber);
+      case 500:
+        if (errorBody.contains("External data file not found")) {
+          return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
+        } else if (errorBody.contains("External data")) {
+          return String.format("Replicate %d failed: %s", replicateNumber, errorBody);
+        } else {
+          return String.format("Replicate %d failed: Internal server error - %s", replicateNumber, errorBody);
+        }
+      default:
+        return String.format("Replicate %d failed: Worker returned status %d - %s", 
+                           replicateNumber, statusCode, errorBody);
+    }
   }
 
   /**
@@ -244,7 +326,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
       result.append(String.format("[end %d]\n", replicateNumber));
       return result.toString();
     } else {
-      throw new RuntimeException("Encountered issue in worker response: " + response.statusCode());
+      // Handle different error status codes from worker with informative messages
+      String errorBody = response.body() != null ? response.body() : "No error details provided";
+      String errorMessage = buildWorkerErrorMessage(response.statusCode(), errorBody, replicateNumber);
+      throw new RuntimeException(errorMessage);
     }
   }
 
