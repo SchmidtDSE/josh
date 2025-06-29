@@ -97,11 +97,11 @@ jobs:
           java-version: '21'
       - name: Run tests
         run: ./gradlew test
-  testPreprocess:
+  testPreprocessTutorial:
     needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
-    name: Test Preprocessing
+    name: Test Tutorial Preprocessing
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -110,20 +110,29 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Download farJar artifact
+      - name: Download fat jar
         uses: actions/download-artifact@v4
         with:
           name: fatJar
-      - name: Move artifact
-        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
-      - name: Run preprocess
-        run: java -jar build/libs/joshsim-fat.jar preprocess examples/simulations/simple_seki.josh TestSimpleSimulation assets/command/maxtemp_tulare_annual.nc Maximum_air_temperature_at_2m celsius test_riverside_tiny.jshd --crs "EPSG:4326" --x-coord "lon" --y-coord "lat" --time-dim "calendar_year"
-      - name: Check result
+      - name: Setup environment
         run: |
-          if [ ! -s "test_riverside_tiny.jshd" ]; then
-            echo "Error: test_riverside_tiny.jshd is empty." >&2
-            exit 1
-          fi
+          mkdir -p landing
+          mv joshsim-fat.jar landing/
+          chmod +x landing/test_preprocess.sh
+      - name: Run comprehensive preprocessing tests
+        run: |
+          cd landing
+          ./test_preprocess.sh
+      - name: Upload preprocessed tutorial data
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preprocessed-tutorial-data
+          path: |
+            landing/preprocessed_data/temperature.jshd
+            landing/preprocessed_data/precipitation.jshd
+            landing/preprocessed_data/precipitation_geotiff.jshd
+          retention-days: 7
   validateExamples:
     needs: buildJava
     environment: Build
@@ -222,7 +231,7 @@ jobs:
     environment: Deploy
     runs-on: ubuntu-latest
     name: Deploy to SFTP
-    needs: [buildWeb]
+    needs: [buildWeb, testPreprocessTutorial]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Set environment variables based on branch
@@ -251,6 +260,11 @@ jobs:
         with:
           name: war
           path: ./deploy/war
+      - name: Download preprocessed tutorial data
+        uses: actions/download-artifact@v4
+        with:
+          name: preprocessed-tutorial-data
+          path: ./deploy/guides/data
       - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:

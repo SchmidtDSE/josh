@@ -37,6 +37,19 @@ landing/publicsans
 *.jshd
 *.wasm
 
+# Tutorial data files (downloaded by CI/CD)
+raw_tutorial_supplement.zip*
+raw_tutorial_supplement/
+landing/CHC-CMIP6_SSP245_CHIRPS_*.tif
+landing/*temp_*.nc
+landing/precip_*.nc
+landing/preprocessed_data/
+
+# Test files (generated during testing)
+landing/test_*_standalone.josh
+landing/temperature.jshd
+landing/precipitation*.jshd
+
 landing/publicsans
 landing/d3.min.js
 landing/prism-*.js
