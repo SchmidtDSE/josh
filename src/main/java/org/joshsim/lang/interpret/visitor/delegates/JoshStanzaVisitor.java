@@ -137,7 +137,8 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       Conversion completeConversion = new DirectConversion(
           sourceUnits,
           incompleteConversion.getDestinationUnits(),
-          incompleteConversion.getConversionCallable()
+          incompleteConversion.getConversionCallable(),
+          incompleteConversion.isCommunicativeSafe()
       );
       conversions.add(completeConversion);
     }

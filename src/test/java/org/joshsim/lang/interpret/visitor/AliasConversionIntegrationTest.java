@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Integration test for alias conversion between different unit aliases.
  *
- * <p>This test reproduces the issue where conversion between aliases (like "yeers" and "yrs")
- * fails with an IllegalArgumentException even though they should be treated as the same unit.
+ * <p>This test verifies that conversion between aliases (like "yeers" and "yrs")
+ * works correctly, allowing them to be treated as the same unit.
  */
 public class AliasConversionIntegrationTest {
 
@@ -71,30 +71,24 @@ public class AliasConversionIntegrationTest {
     // Capture simulation step numbers
     List<Long> completedSteps = new ArrayList<>();
     
-    // This test should still fail if the issue isn't fully resolved
+    // Callback to track simulation progress
     JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
       completedSteps.add(stepNumber);
     };
     
-    // Check if the conversion still fails
-    Exception exception = assertThrows(Exception.class, () -> {
-      JoshSimFacade.runSimulation(
-          geometryFactory,
-          program,
-          "AliasConversionTest",
-          callback,
-          true,  // serial patches
-          1,     // replicate number
-          false  // favor double over BigDecimal
-      );
-    });
+    // Run the simulation - alias conversion should now work
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "AliasConversionTest",
+        callback,
+        true,  // serial patches
+        1,     // replicate number
+        false  // favor double over BigDecimal
+    );
 
-    // Check if this is the expected conversion error
-    String errorMessage = exception.getMessage();
-    if (errorMessage == null && exception.getCause() != null) {
-      errorMessage = exception.getCause().getMessage();
-    }
-    assertNotNull(errorMessage, "Should still have conversion error");
+    // Verify simulation completed successfully
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
   }
 
   @Test
@@ -151,22 +145,16 @@ public class AliasConversionIntegrationTest {
       completedSteps.add(stepNumber);
     };
     
-    // Check if arithmetic with aliases still fails
-    Exception exception = assertThrows(Exception.class, () -> {
-      JoshSimFacade.runSimulation(
-          geometryFactory,
-          program,
-          "MultiAliasCalculationTest",
-          callback,
-          true, 1, false
-      );
-    });
+    // Run simulation - arithmetic with aliases should now work
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "MultiAliasCalculationTest",
+        callback,
+        true, 1, false
+    );
 
-    // Check error message
-    String errorMessage = exception.getMessage();
-    if (errorMessage == null && exception.getCause() != null) {
-      errorMessage = exception.getCause().getMessage();
-    }
-    assertNotNull(errorMessage, "Should still have conversion error in arithmetic");
+    // Verify simulation completed successfully
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
   }
 }
