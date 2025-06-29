@@ -8,14 +8,16 @@ echo "Downloading tutorial data..."
 wget -q https://joshsim.org/guides/raw_tutorial_supplement.zip
 unzip -o -q raw_tutorial_supplement.zip
 
-# Build the fat jar first
-echo "Building fat jar..."
-cd ..
-./gradlew fatJar
-cd landing
-
-# Copy fat jar to current directory
-cp ../build/libs/joshsim-fat.jar ./
+# Check if fat jar exists (provided by CI) or build it locally
+if [ ! -f "joshsim-fat.jar" ]; then
+    echo "Building fat jar locally..."
+    cd ..
+    ./gradlew fatJar
+    cd landing
+    cp ../build/libs/joshsim-fat.jar ./
+else
+    echo "Using provided fat jar..."
+fi
 
 # Create output directory for preprocessed files
 mkdir -p preprocessed_data
@@ -27,14 +29,14 @@ echo "Processing temperature data..."
 java -jar joshsim-fat.jar preprocess \
     ../examples/tutorial/succession.josh \
     Main \
-    meantemp_tulare_annual.nc \
-    Maximum_air_temperature_at_2m \
+    raw_tutorial_supplement/06107_tasmax_mon_FGOALS-g3_ssp245_r1i1p1f1.nc \
+    "tasmax" \
     K \
     preprocessed_data/temperature.jshd \
     --x-coord=lon \
     --y-coord=lat \
     --crs "EPSG:4326" \
-    --time-dim "calendar_year"
+    --time-dim "time"
 
 # Check output
 if [ ! -f "preprocessed_data/temperature.jshd" ] || [ ! -s "preprocessed_data/temperature.jshd" ]; then
@@ -48,14 +50,14 @@ echo "Processing precipitation data..."
 java -jar joshsim-fat.jar preprocess \
     ../examples/tutorial/succession.josh \
     Main \
-    precip_riverside_annual.nc \
-    Precipitation_total \
-    mm \
+    raw_tutorial_supplement/06107_pr_mon_FGOALS-g3_ssp245_r1i1p1f1.nc \
+    "pr" \
+    "kgm2s" \
     preprocessed_data/precipitation.jshd \
     --x-coord=lon \
     --y-coord=lat \
     --crs "EPSG:4326" \
-    --time-dim "calendar_year"
+    --time-dim "time"
 
 # Check output
 if [ ! -f "preprocessed_data/precipitation.jshd" ] || [ ! -s "preprocessed_data/precipitation.jshd" ]; then
@@ -68,13 +70,13 @@ echo "=== Processing Grass-Shrub-Fire Model Data (GeoTIFF) ==="
 
 # Process multiple years of GeoTIFF data
 # The grass_shrub_fire model runs from 2025-2035 (timesteps 0-10)
-# We map historical data 2007-2016 to timesteps 0-9
+# We map historical data 2008-2016 to timesteps 0-8
 
-echo "Processing 2007 precipitation (timestep 0)..."
+echo "Processing 2008 precipitation (timestep 0)..."
 java -jar joshsim-fat.jar preprocess \
     ../examples/tutorial/grass_shrub_fire.josh \
     Main \
-    CHC-CMIP6_SSP245_CHIRPS_2007_annual.tif \
+    raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_2008_annual.tif \
     0 \
     mm \
     preprocessed_data/precipitation_geotiff.jshd \
@@ -85,17 +87,17 @@ if [ ! -f "preprocessed_data/precipitation_geotiff.jshd" ] || [ ! -s "preprocess
     echo "Error: Initial GeoTIFF preprocessing failed!"
     exit 1
 fi
-echo "✓ 2007 GeoTIFF data preprocessed successfully ($(wc -c < preprocessed_data/precipitation_geotiff.jshd) bytes)"
+echo "✓ 2008 GeoTIFF data preprocessed successfully ($(wc -c < preprocessed_data/precipitation_geotiff.jshd) bytes)"
 
 # Process remaining years with --amend
-for year in {2008..2016}; do
-    timestep=$((year - 2007))
+for year in {2009..2016}; do
+    timestep=$((year - 2008))
     echo "Processing ${year} precipitation (timestep ${timestep})..."
     
     java -jar joshsim-fat.jar preprocess \
         ../examples/tutorial/grass_shrub_fire.josh \
         Main \
-        CHC-CMIP6_SSP245_CHIRPS_${year}_annual.tif \
+        raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_${year}_annual.tif \
         0 \
         mm \
         preprocessed_data/precipitation_geotiff.jshd \

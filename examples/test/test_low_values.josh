@@ -1,0 +1,25 @@
+start simulation TestLowValues
+
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  startYear.init = 2024
+  year.init = startYear
+  year.step = prior.year + 1
+
+end simulation
+
+start patch Default
+
+  tempValue.step = external temperature
+  precipValue.step = external precipitation
+  
+  assert.tempExists.step = external temperature > 250.0
+  assert.precipExists.step = external precipitation > -1000.0
+  assert.precipVerySmall.step = external precipitation > 0
+
+end patch

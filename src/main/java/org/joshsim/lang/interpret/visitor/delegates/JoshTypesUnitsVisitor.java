@@ -282,7 +282,14 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * @return A PushDownMachineCallable that wraps the provided action.
    */
   private PushDownMachineCallable makeCallableMachine(EventHandlerAction action) {
-    return new PushDownMachineCallable(action, bridgeGetter);
+    // Unit conversion actions need to end the machine, unlike mathematical operations 
+    // used within larger expressions
+    EventHandlerAction wrappedAction = (machine) -> {
+      action.apply(machine);
+      machine.end();
+      return machine;
+    };
+    return new PushDownMachineCallable(wrappedAction, bridgeGetter);
   }
 
 }

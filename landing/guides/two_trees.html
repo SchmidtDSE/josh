@@ -30,8 +30,19 @@
       <section id="data">
         <h2>Data</h2>
         <p>
-          This time we are going to use data from <a href="https://cal-adapt.org/">Cal-Adapt</a> which provides its data as netCDF files. Again, a <a href="/builds/data.html">later tutorial will go into the details of preprocessing</a> for speed. For now, go ahead and grab our preprocessed <a href="/guides/two_trees/temperature.jshd">temperature data</a> and <a href="/guides/two_trees/precipitation.jshd">precipitation data</a>. Then, delete the data from the prior tutorial and upload these new files.
+          This time we are going to use data from <a href="https://cal-adapt.org/">Cal-Adapt</a> which provides its data as netCDF files for Tulare County, California. The data comes from the FGOALS-g3 climate model under the SSP2-4.5 emissions scenario (2015-2100). Again, a <a href="/builds/data.html">later tutorial will go into the details of preprocessing</a> for speed.
         </p>
+        <p>
+          The climate data uses custom unit conversions in Josh. Temperature data is in Kelvin (K), while precipitation data is provided in kg m⁻² s⁻¹ and automatically converted to mm/year using a custom <code>kgm2s</code> unit definition that multiplies by the number of seconds per year (31,536,000).
+        </p>
+        <p>
+          For now, go ahead and grab our preprocessed <a href="/guides/two_trees/temperature.jshd">temperature data</a> and <a href="/guides/two_trees/precipitation.jshd">precipitation data</a>. Then, delete the data from the prior tutorial and upload these new files.
+        </p>
+        <h3>Data Sources</h3>
+        <ul>
+          <li><strong>Cal-Adapt:</strong> <a href="https://cal-adapt.org/">Cal-Adapt</a> - Climate data under <a href="https://data.ca.gov/dataset/10-model-ensemble-30-year-named-climate-period-average-precipitation">no restrictions</a></li>
+          <li><strong>Model:</strong> FGOALS-g3 SSP2-4.5 scenario for Tulare County (FIPS 06107)</li>
+        </ul>
       </section>
 
       <section id="simulation">

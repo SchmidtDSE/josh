@@ -1,3 +1,13 @@
+start unit kgm2s
+  # kg m-2 s-1 - precipitation rate used in climate data
+  # Define conversion FROM kgm2s TO mm
+  # To convert to mm/year, multiply by seconds per year (31,536,000)
+  # since 1 kg/m² of water = 1 mm of precipitation
+  
+  mm = current * 31536000
+  
+end unit
+
 start simulation Main
 
   # Specify where the simluation runs

@@ -264,7 +264,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: preprocessed-tutorial-data
-          path: ./deploy/guides/data
+          path: ./deploy/guides/temp
+      - name: Organize tutorial data for guides
+        run: |
+          mkdir -p ./deploy/guides/two_trees
+          mkdir -p ./deploy/guides/grass_shrub_fire
+          cp ./deploy/guides/temp/temperature.jshd ./deploy/guides/two_trees/
+          cp ./deploy/guides/temp/precipitation.jshd ./deploy/guides/two_trees/
+          cp ./deploy/guides/temp/precipitation_geotiff.jshd ./deploy/guides/grass_shrub_fire/precipitation.jshd
       - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
