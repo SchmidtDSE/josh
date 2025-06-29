@@ -46,7 +46,7 @@ public class AliasConversionIntegrationTest {
           # Initialize with one unit alias
           testValue.init = 5 yeers
           
-          # Try to convert to another alias - this should work but currently fails
+          # Try to convert to another alias
           convertedValue.step = current.testValue as yrs
           
           # Export values for verification
@@ -76,7 +76,7 @@ public class AliasConversionIntegrationTest {
       completedSteps.add(stepNumber);
     };
     
-    // Run the simulation - alias conversion should now work
+    // Run the simulation - alias conversion works
     JoshSimFacade.runSimulation(
         geometryFactory,
         program,
@@ -145,7 +145,7 @@ public class AliasConversionIntegrationTest {
       completedSteps.add(stepNumber);
     };
     
-    // Run simulation - arithmetic with aliases should now work
+    // Run simulation - arithmetic with aliases works
     JoshSimFacade.runSimulation(
         geometryFactory,
         program,

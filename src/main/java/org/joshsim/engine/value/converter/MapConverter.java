@@ -54,10 +54,6 @@ public class MapConverter implements Converter {
         oldUnits,
         newUnits
     );
-    System.err.println("Failed in conversion");
-    for (EngineValueTuple.UnitsTuple key : conversions.keySet()) {
-      System.err.println(key.getFirst() + " -> " + key.getSecond());
-    }
     throw new IllegalArgumentException(message);
   }
 
