@@ -224,7 +224,7 @@ class GridPresenter {
   /**
    * Set custom dimensions for the visualization.
    *
-   * @param {object} dimensions - Object with width and height properties.
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
    */
   setCustomDimensions(dimensions) {
     const self = this;
@@ -235,7 +235,7 @@ class GridPresenter {
    * Calculate the default dimensions for the visualization.
    *
    * @param {SimulationMetadata} metadata - Metadata about the grid dimensions.
-   * @returns {object} Object with width and height properties for the default dimensions.
+   * @returns {MapDimensions} Map dimensions object with default width and height in pixels.
    */
   calculateDefaultDimensions(metadata) {
     const self = this;
@@ -245,10 +245,7 @@ class GridPresenter {
     const defaultWidth = (patchPixels + 1) * gridWidth;
     const defaultHeight = (patchPixels + 1) * gridHeight;
     
-    return {
-      width: defaultWidth,
-      height: defaultHeight
-    };
+    return new MapDimensions(defaultWidth, defaultHeight);
   }
 
   /**
@@ -403,8 +400,8 @@ class GridPresenter {
     const self = this;
 
     if (self._customDimensions) {
-      const availableWidth = self._customDimensions.width - gridWidth;
-      const availableHeight = self._customDimensions.height - gridHeight;
+      const availableWidth = self._customDimensions.getWidth() - gridWidth;
+      const availableHeight = self._customDimensions.getHeight() - gridHeight;
       
       const maxPatchWidth = Math.floor(availableWidth / gridWidth);
       const maxPatchHeight = Math.floor(availableHeight / gridHeight);
@@ -454,6 +451,46 @@ class GridPresenter {
 
 
 /**
+ * Class representing the dimensions of a map visualization in pixels.
+ */
+class MapDimensions {
+
+  /**
+   * Creates a new map dimensions object.
+   * 
+   * @param {number} width - The width of the map in pixels.
+   * @param {number} height - The height of the map in pixels.
+   */
+  constructor(width, height) {
+    const self = this;
+    self._width = width;
+    self._height = height;
+  }
+
+  /**
+   * Gets the width of the map.
+   * 
+   * @returns {number} The width in pixels.
+   */
+  getWidth() {
+    const self = this;
+    return self._width;
+  }
+
+  /**
+   * Gets the height of the map.
+   * 
+   * @returns {number} The height in pixels.
+   */
+  getHeight() {
+    const self = this;
+    return self._height;
+  }
+  
+}
+
+
+/**
  * Presenter for custom map sizing controls.
  * 
  * Manages the details element that allows users to configure the width and height
@@ -466,7 +503,7 @@ class MapConfigPresenter {
    *
    * @param {Element} selection - The details element containing the configuration controls.
    * @param {function} callback - Function to call when map dimensions should be updated.
-   *     Called with {width: number, height: number}.
+   *     Called with a MapDimensions object.
    */
   constructor(selection, callback) {
     const self = this;
@@ -494,14 +531,13 @@ class MapConfigPresenter {
   /**
    * Get the current dimensions from the input fields.
    *
-   * @returns {object} Object with width and height properties.
+   * @returns {MapDimensions} Map dimensions object with width and height in pixels.
    */
   getDimensions() {
     const self = this;
-    return {
-      width: parseInt(self._widthInput.value) || 800,
-      height: parseInt(self._heightInput.value) || 600
-    };
+    const width = parseInt(self._widthInput.value) || 800;
+    const height = parseInt(self._heightInput.value) || 600;
+    return new MapDimensions(width, height);
   }
 
   /**
@@ -519,4 +555,4 @@ class MapConfigPresenter {
 }
 
 
-export {GridPresenter, ScrubPresenter, MapConfigPresenter};
+export {GridPresenter, ScrubPresenter, MapConfigPresenter, MapDimensions};

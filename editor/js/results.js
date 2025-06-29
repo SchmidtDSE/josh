@@ -380,7 +380,7 @@ class ResultsDisplayPresenter {
     }
     
     const defaultDimensions = self._gridPresenter.calculateDefaultDimensions(metadata);
-    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions.width, defaultDimensions.height);
+    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions.getWidth(), defaultDimensions.getHeight());
     self._renderInternal(true);
   }
 
@@ -398,7 +398,7 @@ class ResultsDisplayPresenter {
   /**
    * Callback when map dimensions are changed.
    *
-   * @param {object} dimensions - Object with width and height properties.
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
    */
   _onMapResize(dimensions) {
     const self = this;
