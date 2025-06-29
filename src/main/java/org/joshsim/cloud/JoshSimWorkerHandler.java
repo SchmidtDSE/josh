@@ -173,7 +173,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         valueFactory, geometryFactory, result, inputOutputLayer, httpServerExchange, apiKey
     );
     if (programResult.isEmpty()) {
-      return Optional.of(apiKey); // 400 already set
+      return Optional.of(apiKey); // Error response already set
     }
     JoshProgram program = programResult.get();
 
@@ -188,7 +188,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         simulationName, httpServerExchange, apiKey
     );
     if (!simulationSuccess) {
-      return Optional.of(apiKey); // 400 already set
+      return Optional.of(apiKey); // Error response already set
     }
     httpServerExchange.endExchange();
     return Optional.of(apiKey);
@@ -257,6 +257,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
   /**
    * Handle simulation errors securely by sanitizing messages and logging internally.
+   * Provides informative error messages for external data issues while maintaining security.
    *
    * @param exception The exception that occurred.
    * @param operation The operation that failed (interpretation or simulation).
@@ -267,17 +268,83 @@ public class JoshSimWorkerHandler implements HttpHandler {
         HttpServerExchange httpServerExchange, String apiKey) {
     
     // Log full error details securely (API key will be hashed by the logging layer)
-    SecurityUtil.logSecureError(apiDataLayer, apiKey, operation, exception, null);
-    
-    // Create sanitized error for user response
-    final SimulationExecutionException safeException = SecurityUtil.createSafeException(
-        "Error during " + operation + ": " + exception.getMessage(), exception
+    SecurityUtil.logSecureError(
+        apiDataLayer,
+        apiKey,
+        operation,
+        exception,
+        null
     );
     
-    // Return sanitized error to user as 400 (bad request)
-    httpServerExchange.setStatusCode(400);
+    // Check if this is an external data error that should have an informative message
+    String userMessage;
+    if (isExternalDataError(exception)) {
+      // Use our informative error messages for external data issues
+      userMessage = buildInformativeErrorMessage(exception);
+      // Use 500 status for external data errors (server-side issue)
+      httpServerExchange.setStatusCode(500);
+    } else {
+      // Create sanitized error for other types of errors
+      final SimulationExecutionException safeException = SecurityUtil.createSafeException(
+          "Error during " + operation + ": " + exception.getMessage(),
+          exception
+      );
+      userMessage = safeException.getUserMessage();
+      // Use 400 status for user input errors
+      httpServerExchange.setStatusCode(400);
+    }
+    
     httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-    httpServerExchange.getResponseSender().send(safeException.getUserMessage());
+    httpServerExchange.getResponseSender().send(userMessage);
+  }
+
+  /**
+   * Determine if an exception is related to external data loading issues.
+   *
+   * @param exception The exception to check.
+   * @return true if this appears to be an external data error.
+   */
+  private boolean isExternalDataError(Exception exception) {
+    String message = exception.getMessage();
+    if (message == null) {
+      return false;
+    }
+    
+    // Check for specific external data error patterns
+    if (message.contains("Cannot find virtual file")) {
+      return true;
+    }
+    if (message.contains("CSV must contain")) {
+      return true;
+    }
+    if (message.contains("Invalid numeric value in column")) {
+      return true;
+    }
+    if (message.contains("Failure in loading a jshd resource")) {
+      return true;
+    }
+    if (message.contains("No suitable reader found for file")) {
+      return true;
+    }
+    if (message.contains("No such file or directory")) {
+      return true;
+    }
+    
+    // Check for IOException with external data keywords
+    if (exception instanceof IOException) {
+      String lowerMessage = message.toLowerCase();
+      if (lowerMessage.contains("external")) {
+        return true;
+      }
+      if (lowerMessage.contains("csv")) {
+        return true;
+      }
+      if (lowerMessage.contains("data")) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -299,6 +366,85 @@ public class JoshSimWorkerHandler implements HttpHandler {
       }
     };
     return new SandboxInputOutputLayer(virtualFiles, exportCallback);
+  }
+
+  /**
+   * Build an informative error message for external data loading failures.
+   *
+   * @param e The exception that occurred during simulation setup or execution.
+   * @return A user-friendly error message describing the external data issue.
+   */
+  private String buildInformativeErrorMessage(Exception e) {
+    String originalMessage = e.getMessage() != null ? e.getMessage() : "";
+    
+    // Handle specific external data error patterns
+    if (originalMessage.contains("Cannot find virtual file:")) {
+      String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "External data file not found: '%s'. Please ensure the file is included "
+          + "in your external data upload and the filename matches exactly.",
+          fileName
+      );
+    }
+    
+    if (originalMessage.contains("CSV must contain 'longitude' and 'latitude' columns")) {
+      return "External CSV data is missing required columns. CSV files must contain "
+          + "'longitude' and 'latitude' columns for geospatial data processing.";
+    }
+    
+    if (originalMessage.contains("Invalid numeric value in column")) {
+      return String.format(
+          "External data contains invalid numeric values: %s. Please check that all "
+          + "numeric columns contain valid numbers.",
+          originalMessage
+      );
+    }
+    
+    if (originalMessage.contains("Failure in loading a jshd resource:")) {
+      String innerMessage = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "Failed to load external data resource: %s. Please verify the file format "
+          + "and contents are correct.",
+          innerMessage
+      );
+    }
+    
+    if (originalMessage.contains("No suitable reader found for file:")) {
+      String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
+      return String.format(
+          "Unsupported external data file format: '%s'. Supported formats include "
+          + "CSV and NetCDF files.",
+          fileName
+      );
+    }
+    
+    // Handle IOException from CSV reading
+    if (e instanceof IOException || originalMessage.contains("IOException")) {
+      if (originalMessage.contains("No such file or directory")) {
+        return "External data file could not be accessed. Please ensure the file exists "
+            + "and is properly uploaded.";
+      }
+      return String.format(
+          "Error reading external data file: %s. Please verify the file format and "
+          + "contents.",
+          originalMessage
+      );
+    }
+    
+    // Default case for other external data related errors
+    if (originalMessage.toLowerCase().contains("external")
+        || originalMessage.toLowerCase().contains("file")
+        || originalMessage.toLowerCase().contains("csv")
+        || originalMessage.toLowerCase().contains("data")) {
+      return String.format(
+          "External data processing error: %s. Please check your external data files "
+          + "and try again.",
+          originalMessage
+      );
+    }
+    
+    // Fallback for unrecognized errors
+    return String.format("Simulation error: %s", originalMessage);
   }
 
 }
