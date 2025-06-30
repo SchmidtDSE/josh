@@ -32,10 +32,10 @@
           The <a href="https://www.chc.ucsb.edu/data/chc-cmip6" target="_blank">CHC-CMIP6 data</a> are originally provided as geotiffs for annual precipitation. A <a href="/guides/data.html">later tutorial</a> will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
         </p>
         <p>
-          The precipitation data is provided in millimeters (mm) per year from 2008-2016, covering multiple annual time steps. This data comes from the CHC-CMIP6 dataset under SSP2-4.5 emissions scenario.
+          Specifically, precipitation data are provided in millimeters (mm) per year from 2008-2016, covering multiple annual time steps. This comes from the SSP2-4.5 emissions scenario in the 2030 timeframe.
         </p>
         <p>
-          All that in mind, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guides/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's annual series</a> and upload them. Click on data files, add file, select the file, and then click add file to confirm.
+          Regardless, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download <a href="/guides/grass_shrub_fire/precipitation.jshd">our preprocessed version of precipitation estimates from CHC-CMIP6's annual series</a> and upload them into the IDE. To do this, click on data files, add file, select the file, and then click add file to confirm.
         </p>
         <details>
           <summary>Data Sources</summary>
@@ -79,6 +79,12 @@ end simulation</code></pre>
         <p>
           This is a little longer than before because we are including some constants This can be helpful if you want to have multiple versions of a simulation that you want to compare. Maybe you have LosPadres as one simulation and SantaCruz as another which might have slightly different parameters.
         </p>
+        <details>
+          <summary>About variable naming with periods</summary>
+          <p>
+            You'll notice we use names like <code>fire.trigger.high</code> and <code>fire.damage.grass</code> in our code. These periods are simply part of the variable names. They help organize our variables but Josh doesn't interpret them as creating any special hierarchy or namespace. To Josh, <code>destroy.grass</code> is just a variable name that happens to contain periods, exactly like how <code>myVariable</code> or <code>grass_cover</code> would be treated. The periods are purely for readability and organization. For those with experience in other systems, they don't create nested objects or namespaces like in some other programming languages.
+          </p>
+        </details>
       </section>
 
       <section id="init">
@@ -121,12 +127,6 @@ end patch
         <p>
           First, this snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. Here, we can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
         </p>
-        <details>
-          <summary>About variable naming with periods</summary>
-          <p>
-            You'll notice we use names like <code>destroy.grass</code> and <code>destroy.shrub</code> in our code. These periods are simply part of the variable names - they help organize our variables but Josh doesn't interpret them as creating any special hierarchy or namespace. To Josh, <code>destroy.grass</code> is just a variable name that happens to contain periods, exactly like how <code>myVariable</code> or <code>grass_cover</code> would be treated. The periods are purely for readability and organization. For those with experience in other systems, they don't create nested objects or namespaces like in some other programming languages.
-          </p>
-        </details>
       </section>
 
       <section id="fire">
@@ -191,15 +191,23 @@ end patch</code></pre>
 
   # ... existing code here ...
 
-    # Save exports
-    export.grassCover.step = grassCover
-    export.shrubeCover.step = shrubCover
+  # Save exports
+  export.grassCover.step = grassCover
+  export.shrubeCover.step = shrubCover
 
 end patch
 </code></pre>
         <p>
           Note that the ordering of handlers does not matter. If you refer to a variable, Josh will go and calculate that variable and then return to the line of code where you referenced it to continue its work. That means that you can organize your event handlers for readibility, letting Josh worry about dependencies between formulas.
         </p>
+        <details>
+          <summary>About imperative programming</summary>
+          <div>
+            <p>It might be worth digging into that last statement about ordering more deeply. Josh is like spreadsheet software or programming languages like SQL. It doesn't matter what order you define your functions in your cells (or the order of columns in your select statments for those working in databases). Instead, you just specify the logic you and the spreadsheet software or query engine is smart enough to figure out what order things need to be done.</p>
+            <p>Josh works in a similar way. You just write out your calculations and the engine will figure out the order in which those calculations need to happen. So, if you have one formula that references a variable defined by another, it doesn't matter which you tell Josh about first in your code. The system will construct a "directed acyclic graph" which is just a fancy way of saying that it will figure out the dependencies and execute for you!</p>
+            <p>The only place where this isn't true is functions which work more like programming lanugages similar to R or Python. There, each line is executed one after another in the order you specify. This really only matters for local variables (like <code>afterDestroy</code> has to be defined before <code>newValueRaw</code> in our example).</code></p>
+          </div>
+        </details>
       </section>
       <section>
         <h2>Wrap</h2>
@@ -214,7 +222,7 @@ end patch
   m = current / 1000
 
 end unit</code></pre>
-        <p>With all that in place, go ahead and give your code a run! When you are ready, let's contiune this exploration by <a href="/guides/two_trees.html">returning to agents</a>.</p>
+        <p>With all that in place, go ahead and give your code a run with a single replicate! When you are ready, let's contiune this exploration by <a href="/guides/two_trees.html">returning to agents</a>.</p>
         <div class="call-to-action">
           <a href="/examples/guide/grass_shrub_fire.josh" download>Download Complete Code</a>
         </div>
