@@ -14,7 +14,7 @@ assert_ok() {
   if [ "$verbose" = true ]; then
     java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate $3 "$1" "$2"
   else
-    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate $3 --supress-info "$1" "$2"
+    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate $3 --suppress-info "$1" "$2"
   fi
   local status=$?
   if [ $status -eq 0 ]; then
@@ -49,3 +49,8 @@ assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 4 || exi
 [ -s "/tmp/simple_josh_averageAge_0_4.tiff" ] || exit 12
 [ -f "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 13
 [ -s "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 14
+
+echo "Testing guide examples..."
+assert_ok examples/guide/hello_cli.josh Main 1 || exit 15
+assert_ok examples/guide/grass_shrub_fire_cli.josh Main 1 || exit 16
+assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 17

@@ -121,6 +121,12 @@ end patch
         <p>
           First, this snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. Here, we can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
         </p>
+        <details>
+          <summary>About variable naming with periods</summary>
+          <p>
+            You'll notice we use names like <code>destroy.grass</code> and <code>destroy.shrub</code> in our code. These periods are simply part of the variable names - they help organize our variables but Josh doesn't interpret them as creating any special hierarchy or namespace. To Josh, <code>destroy.grass.step</code> is just a variable name that happens to contain periods, exactly like how <code>myVariable</code> or <code>grass_cover</code> would be treated. The periods are purely for readability and organization - they don't create nested objects or namespaces like in some other programming languages.
+          </p>
+        </details>
       </section>
 
       <section id="fire">
@@ -209,6 +215,9 @@ end patch
 
 end unit</code></pre>
         <p>With all that in place, go ahead and give your code a run! When you are ready, let's contiune this exploration by <a href="/guides/two_trees.html">returning to agents</a>.</p>
+        <div class="call-to-action">
+          <a href="/examples/guide/grass_shrub_fire.josh" download>Download Complete Code</a>
+        </div>
       </section>
     </main>
     <script src="/prism-core.min.js"></script>

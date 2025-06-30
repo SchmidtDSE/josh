@@ -269,9 +269,19 @@ jobs:
         run: |
           mkdir -p ./deploy/guides/two_trees
           mkdir -p ./deploy/guides/grass_shrub_fire
+          mkdir -p ./deploy/examples/guide
           cp ./deploy/guides/temp/temperature.jshd ./deploy/guides/two_trees/
           cp ./deploy/guides/temp/precipitation.jshd ./deploy/guides/two_trees/
           cp ./deploy/guides/temp/precipitation_geotiff.jshd ./deploy/guides/grass_shrub_fire/precipitation.jshd
+      - name: Checkout for guide examples
+        uses: actions/checkout@v3
+        with:
+          path: ./repo-checkout
+      - name: Copy guide examples
+        run: |
+          cp ./repo-checkout/examples/guide/hello.josh ./deploy/examples/guide/
+          cp ./repo-checkout/examples/guide/grass_shrub_fire.josh ./deploy/examples/guide/
+          cp ./repo-checkout/examples/guide/two_trees.josh ./deploy/examples/guide/
       - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
