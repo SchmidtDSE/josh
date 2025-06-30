@@ -177,6 +177,8 @@ else
 fi
 
 echo "Validating GeoTIFF precipitation data with assertions..."
+# Copy GeoTIFF precipitation data to expected filename for assertion test
+cp precipitation_geotiff.jshd precipitation.jshd
 java -jar joshsim-fat.jar run --replicate 1 ../examples/test/assert_precipitation_geotiff.josh AssertPrecipitationGeotiff
 if [ $? -eq 0 ]; then
     echo "✓ GeoTIFF precipitation data assertions passed"
