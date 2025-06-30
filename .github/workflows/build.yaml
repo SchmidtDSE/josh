@@ -129,8 +129,8 @@ jobs:
         with:
           name: preprocessed-tutorial-data
           path: |
-            landing/preprocessed_data/temperature.jshd
-            landing/preprocessed_data/precipitation.jshd
+            landing/preprocessed_data/temperatureTulare.jshd
+            landing/preprocessed_data/precipitationTulare.jshd
             landing/preprocessed_data/precipitation_geotiff.jshd
           retention-days: 7
   validateExamples:
@@ -275,8 +275,8 @@ jobs:
         run: |
           mkdir -p ./deploy/guides/two_trees
           mkdir -p ./deploy/guides/grass_shrub_fire
-          cp ./deploy/guides/temp/temperature.jshd ./deploy/guides/two_trees/
-          cp ./deploy/guides/temp/precipitation.jshd ./deploy/guides/two_trees/
+          cp ./deploy/guides/temp/temperatureTulare.jshd ./deploy/guides/two_trees/
+          cp ./deploy/guides/temp/precipitationTulare.jshd ./deploy/guides/two_trees/
           cp ./deploy/guides/temp/precipitation_geotiff.jshd ./deploy/guides/grass_shrub_fire/precipitation.jshd
       - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
