@@ -54,7 +54,7 @@
         </p>
         <pre><code class="language-joshlang">start simulation Main
 
-  # Specify where the simluation runs
+  # Specify where the simulation runs
   grid.size = 200 m
   grid.low = 36.52 degrees latitude, -118.68 degrees longitude
   grid.high = 36.42 degrees latitude, -118.45 degrees longitude
@@ -168,7 +168,7 @@ end patch</code></pre>
 
   newSpeciesBCount.end = {
     if (totalCount > 0) {
-      return floor((speciesACount / totalCount) * newCount)
+      return floor((speciesBCount / totalCount) * newCount)
     } else {
       return newCount * 50%
     }
