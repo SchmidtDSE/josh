@@ -128,6 +128,7 @@ public class ExternalGeoMapper {
       )) {
       // Open data source
       reader.open(dataFilePath);
+      // Set dimensions for coordinate mapping
       reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
       if (crsCode != null) {
         reader.setCrsCode(crsCode);

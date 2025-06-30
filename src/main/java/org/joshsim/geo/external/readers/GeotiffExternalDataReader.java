@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,10 +44,8 @@ import org.opengis.util.FactoryException;
  * interpreted as the band index.</p>
  */
 public class GeotiffExternalDataReader implements ExternalDataReader {
-  private static final int STANDARD_COG_TILE_SIZE = 256;
 
   private final EngineValueFactory valueFactory;
-  private final Map<String, double[][]> tileCache;
   private final Units units;
 
   private GeoTiffStore store;
@@ -69,7 +66,6 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
   public GeotiffExternalDataReader(EngineValueFactory valueFactory, Units units) {
     this.valueFactory = valueFactory;
     this.units = units;
-    tileCache = new HashMap<>();
   }
 
   @Override
@@ -133,8 +129,10 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         coordsX.add(minX.add(stepX.multiply(BigDecimal.valueOf(i))));
       }
 
+      // For GeoTIFF, Y coordinates are often from top to bottom (inverted)
+      // Generate Y coordinates from maxY to minY
       for (int i = 0; i < height; i++) {
-        coordsY.add(minY.add(stepY.multiply(BigDecimal.valueOf(i))));
+        coordsY.add(maxY.subtract(stepY.multiply(BigDecimal.valueOf(i))));
       }
 
       return new ExternalSpatialDimensions("x", "y", null, crsCode, coordsX, coordsY);
@@ -155,78 +153,39 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
         throw new IOException("Invalid band index: variable name must be a valid integer", e);
       }
 
-      // Get image coordinates
-      DirectPosition position = new DirectPosition2D(x.doubleValue(), y.doubleValue());
+      // Use NetCDF-style coordinate lookup approach
+      ExternalSpatialDimensions dimensions = getSpatialDimensions();
+      
+      // Find indices of closest X and Y coordinates using NetCDF pattern
+      int indexX = dimensions.findClosestIndexX(x);
+      int indexY = dimensions.findClosestIndexY(y);
 
-      // Calculate tile coordinates
-      long tileX = Math.round(
-          (position.getOrdinate(0) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
-      );
-      long tileY = Math.round(
-          (position.getOrdinate(1) / STANDARD_COG_TILE_SIZE) * STANDARD_COG_TILE_SIZE
-      );
-      String tileKey = String.format("%d_%d_%d", bandIndex, tileX, tileY);
-
-      // Get or load tile data
-      double[][] tileData = tileCache.get(tileKey);
-      if (tileData == null) {
-        // Read tile from coverage
-        GridCoverage data = coverage.read(null);
-        tileData = new double[STANDARD_COG_TILE_SIZE][STANDARD_COG_TILE_SIZE];
-
-        // Get the rendered image from the coverage
-        RenderedImage renderedImage = data.render(null);
-
-        // Create a raster from the rendered image
-        Raster raster = renderedImage.getData();
-
-        // Calculate actual raster bounds
-        int maxX = raster.getWidth();
-        int maxY = raster.getHeight();
-
-        // Read entire tile
-        for (int y1 = 0; y1 < STANDARD_COG_TILE_SIZE; y1++) {
-          for (int x1 = 0; x1 < STANDARD_COG_TILE_SIZE; x1++) {
-            int pixelX = (int) tileX + x1;
-            int pixelY = (int) tileY + y1;
-
-            // Check bounds
-            if (pixelX >= 0 && pixelX < maxX && pixelY >= 0 && pixelY < maxY) {
-              double[] values = new double[data.getSampleDimensions().size()];
-              raster.getPixel(pixelX, pixelY, values);
-              tileData[y1][x1] = values[bandIndex];
-            } else {
-              tileData[y1][x1] = Double.NaN;
-            }
-          }
-        }
-        tileCache.put(tileKey, tileData);
-      }
-
-      // Transform world coordinates to image coordinates using the grid geometry
-      DirectPosition2D worldPos = new DirectPosition2D(
-          position.getOrdinate(0),
-          position.getOrdinate(1)
-      );
-      DirectPosition2D imagePos = new DirectPosition2D();
-      try {
-        geometry.getGridToCRS(PixelInCell.CELL_CENTER).inverse().transform(worldPos, imagePos);
-      } catch (TransformException e) {
-        throw new RuntimeException(e);
-      }
-
-      // Get value from tile using transformed coordinates
-      int localX = (int) Math.round(imagePos.getX() - tileX);
-      int localY = (int) Math.round(imagePos.getY() - tileY);
-
-      // Verify coordinates are within bounds
-      boolean belowMin = localX < 0 || localY < 0;
-      boolean aboveMax = localX >= STANDARD_COG_TILE_SIZE || localY >= STANDARD_COG_TILE_SIZE;
-      if (belowMin || aboveMax) {
+      if (indexX < 0 || indexY < 0) {
         return Optional.empty();
       }
 
-      double value = tileData[localY][localX];
+      // Read the coverage data directly using pixel coordinates
+      GridCoverage data = coverage.read(null);
+      RenderedImage renderedImage = data.render(null);
+      Raster raster = renderedImage.getData();
+
+      // Check bounds against actual raster size
+      int maxX = raster.getWidth();
+      int maxY = raster.getHeight();
+      
+      if (indexX >= maxX || indexY >= maxY) {
+        return Optional.empty();
+      }
+
+      // Read the pixel value directly
+      double[] values = new double[data.getSampleDimensions().size()];
+      raster.getPixel(indexX, indexY, values);
+      
+      if (bandIndex >= values.length) {
+        return Optional.empty();
+      }
+      
+      double value = values[bandIndex];
 
       if (Double.isNaN(value)) {
         return Optional.empty();
@@ -235,7 +194,8 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Create engine value with the result
       BigDecimal valueWrapped = BigDecimal.valueOf(value)
           .setScale(6, RoundingMode.HALF_UP);
-      return Optional.of(valueFactory.build(valueWrapped, units));
+      EngineValue result = valueFactory.build(valueWrapped, units);
+      return Optional.of(result);
 
     } catch (DataStoreException e) {
       throw new IOException("Failed to read value: " + e.getMessage(), e);

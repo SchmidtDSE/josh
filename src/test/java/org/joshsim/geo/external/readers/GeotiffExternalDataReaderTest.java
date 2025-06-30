@@ -70,8 +70,9 @@ public class GeotiffExternalDataReaderTest {
     Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 0);
 
     assertTrue(value.isPresent(), "Value should be present at test coordinates");
+    // Updated expected value based on correct coordinate calculation
     assertEquals(
-        39.580078125,
+        45.040039,
         value.get().getAsDecimal().doubleValue(),
         0.0001,
         "Value at test coordinates does not match expected value"
@@ -101,5 +102,54 @@ public class GeotiffExternalDataReaderTest {
     assertTrue(reader.canHandle("test.tif"));
     assertTrue(reader.canHandle("test.tiff"));
     assertTrue(reader.canHandle("TEST.TIF"));
+  }
+
+  /**
+   * Test reading CHC-CMIP6 precipitation data that should return non-zero values.
+   * This test verifies that the coordinate calculation correctly maps world coordinates
+   * to pixel indices for GeoTIFF files.
+   */
+  @Test
+  public void testChcCmip6PrecipitationNonZeroValues() throws IOException {
+    // Use CHC-CMIP6 data file
+    URL resourceUrl = getClass().getClassLoader()
+        .getResource("cog/CHC-CMIP6_SSP245_CHIRPS_2008_annual.tif");
+    if (resourceUrl == null) {
+      throw new IOException("CHC-CMIP6 test resource not found");
+    }
+    String chcFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
+    
+    // Create new reader for CHC data
+    GeotiffExternalDataReader chcReader = new GeotiffExternalDataReader(
+        valueFactory, Units.of("mm"));
+    
+    try {
+      chcReader.open(chcFilePath);
+      chcReader.setCrsCode("EPSG:4326");
+      
+      // Test coordinates from the grass_shrub_fire simulation area
+      // These are the same coordinates that are failing in preprocessing
+      BigDecimal lat = new BigDecimal("35.4955033919704");
+      BigDecimal lon = new BigDecimal("-119.99447700450675");
+      String variableName = "0"; // First band
+      
+      Optional<EngineValue> value = chcReader.readValueAt(variableName, lon, lat, 0);
+      
+      // Verify that coordinate calculation works correctly
+      assertTrue(value.isPresent(), 
+          "CHC-CMIP6 value should be present at coordinates (" + lon + ", " + lat + ")");
+      
+      // The value should be non-zero for precipitation data
+      double precipValue = value.get().getAsDecimal().doubleValue();
+      assertTrue(precipValue > 0.0, 
+          "CHC-CMIP6 precipitation value should be > 0, got: " + precipValue);
+          
+    } finally {
+      try {
+        chcReader.close();
+      } catch (Exception e) {
+        // Ignore close exceptions in test
+      }
+    }
   }
 }

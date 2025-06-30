@@ -1,3 +1,12 @@
+start unit kgm2s
+  # kg m-2 s-1 - precipitation rate used in climate data
+  # To convert to mm/year, multiply by seconds per year (31,536,000)
+  # since 1 kg/m² of water = 1 mm of precipitation
+  
+  mm = current * 31536000
+  
+end unit
+
 start simulation Main
 
   # Specify where the simulation runs
@@ -42,7 +51,7 @@ start patch Default
 
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
-    const currentTemperature = external temperature
+    const currentTemperature = external temperatureTulare
     const inExtremeCold = currentTemperature < meta.constraints.minViableTemperature
     const inExtremeHot = currentTemperature > meta.constraints.maxViableTemperature
     return inExtremeCold or inExtremeHot
@@ -96,13 +105,13 @@ start organism SpeciesA
   }
   
   # At each step, determine impact of temperature
-  temperatureImpact.step = map external temperature
+  temperatureImpact.step = map external temperatureTulare
     from [270 K, 330 K]
     to [0%, 100%]
     quadratic
   
   # At each step, determine impact of precipitation
-  precipitationImpact.step = map external precipitation
+  precipitationImpact.step = map external precipitationTulare
     from [300 mm, 500 mm]
     to [0%, 100%]
     sigmoid
@@ -132,13 +141,13 @@ start organism SpeciesB
   }
 
   # At each step, determine impact of temperature
-  temperatureImpact.step = map external temperature
+  temperatureImpact.step = map external temperatureTulare
     from [290 K, 350 K]
     to [0%, 100%]
     quadratic
 
   # At each step, determine impact of precipitation
-  precipitationImpact.step = map external precipitation
+  precipitationImpact.step = map external precipitationTulare
     from [200 mm, 400 mm]
     to [0%, 100%]
     sigmoid
