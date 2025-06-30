@@ -87,6 +87,7 @@ STEP_: 'step';
 TO_: 'to';
 TRUE_: 'true';
 UNIFORM_: 'uniform';
+UNBOUNDED_: 'unbounded';
 UNIT_: 'unit';
 WITH_: 'with';
 WITHIN_: 'within';
@@ -138,9 +139,9 @@ expression: unitsValue # simpleExpression
   | LIMIT_ operand=expression TO_ LBRAC_ limit=expression COMMA_ RBRAC_ # limitMinExpression
   | LIMIT_ operand=expression TO_ LBRAC_ COMMA_ limit=expression RBRAC_ # limitMaxExpression
   | LIMIT_ operand=expression TO_ LBRAC_ lower=expression COMMA_ upper=expression RBRAC_ # limitBoundExpression
-  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
-  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
-  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier LPAREN_ methodarg=expression RPAREN_ # mapParamParam
+  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ UNBOUNDED_? # mapLinear
+  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier UNBOUNDED_? # mapParam
+  | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier LPAREN_ methodarg=expression RPAREN_ UNBOUNDED_? # mapParamParam
   | CREATE_ target=identifier # createSingleExpression
   | CREATE_ count=expression OF_ target=identifier # createVariableExpression
   | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery

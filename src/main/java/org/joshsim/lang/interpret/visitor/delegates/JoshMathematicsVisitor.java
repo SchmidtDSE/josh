@@ -51,6 +51,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     EventHandlerAction fromHighAction = ctx.fromhigh.accept(parent).getCurrentAction();
     EventHandlerAction toLowAction = ctx.tolow.accept(parent).getCurrentAction();
     EventHandlerAction toHighAction = ctx.tohigh.accept(parent).getCurrentAction();
+    boolean unbounded = ctx.UNBOUNDED_() != null;
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -59,7 +60,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       toLowAction.apply(machine);
       toHighAction.apply(machine);
       machine.push(engineValueFactory.build(true, Units.EMPTY));
-      machine.applyMap("linear");
+      machine.applyMap("linear", unbounded);
       return machine;
     };
 
@@ -82,6 +83,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     EventHandlerAction toLowAction = ctx.tolow.accept(parent).getCurrentAction();
     EventHandlerAction toHighAction = ctx.tohigh.accept(parent).getCurrentAction();
     String method = ctx.method.getText();
+    boolean unbounded = ctx.UNBOUNDED_() != null;
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -90,7 +92,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       toLowAction.apply(machine);
       toHighAction.apply(machine);
       machine.push(engineValueFactory.build(true, Units.EMPTY));
-      machine.applyMap(method);
+      machine.applyMap(method, unbounded);
       return machine;
     };
 
@@ -115,6 +117,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     EventHandlerAction toHighAction = ctx.tohigh.accept(parent).getCurrentAction();
     EventHandlerAction paramAction = ctx.methodarg.accept(parent).getCurrentAction();
     String method = ctx.method.getText();
+    boolean unbounded = ctx.UNBOUNDED_() != null;
 
     EventHandlerAction action = (machine) -> {
       operandAction.apply(machine);
@@ -123,7 +126,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       toLowAction.apply(machine);
       toHighAction.apply(machine);
       paramAction.apply(machine);
-      machine.applyMap(method);
+      machine.applyMap(method, unbounded);
       return machine;
     };
 

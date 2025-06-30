@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -108,7 +109,68 @@ class JoshMathematicsVisitorTest {
     verify(toLowAction).apply(mockMachine);
     verify(toHighAction).apply(mockMachine);
     verify(mockMachine).push(trueValue);
-    verify(mockMachine).applyMap("linear");
+    verify(mockMachine).applyMap("linear", false);
+  }
+
+  @Test
+  void testVisitMapLinearWithUnbounded() {
+    // Mock
+    MapLinearContext context = mock(MapLinearContext.class);
+    context.operand = mock(ExpressionContext.class);
+    context.fromlow = mock(ExpressionContext.class);
+    context.fromhigh = mock(ExpressionContext.class);
+    context.tolow = mock(ExpressionContext.class);
+    context.tohigh = mock(ExpressionContext.class);
+
+    Fragment operandFragment = mock(Fragment.class);
+    Fragment fromLowFragment = mock(Fragment.class);
+    Fragment fromHighFragment = mock(Fragment.class);
+    Fragment toLowFragment = mock(Fragment.class);
+    Fragment toHighFragment = mock(Fragment.class);
+
+    EventHandlerAction operandAction = mock(EventHandlerAction.class);
+    EventHandlerAction fromLowAction = mock(EventHandlerAction.class);
+    EventHandlerAction fromHighAction = mock(EventHandlerAction.class);
+    EventHandlerAction toLowAction = mock(EventHandlerAction.class);
+    EventHandlerAction toHighAction = mock(EventHandlerAction.class);
+
+    // Mock the UNBOUNDED token
+    TerminalNode unboundedToken = mock(TerminalNode.class);
+    when(context.UNBOUNDED_()).thenReturn(unboundedToken);
+
+    when(context.operand.accept(parent)).thenReturn(operandFragment);
+    when(context.fromlow.accept(parent)).thenReturn(fromLowFragment);
+    when(context.fromhigh.accept(parent)).thenReturn(fromHighFragment);
+    when(context.tolow.accept(parent)).thenReturn(toLowFragment);
+    when(context.tohigh.accept(parent)).thenReturn(toHighFragment);
+
+    when(operandFragment.getCurrentAction()).thenReturn(operandAction);
+    when(fromLowFragment.getCurrentAction()).thenReturn(fromLowAction);
+    when(fromHighFragment.getCurrentAction()).thenReturn(fromHighAction);
+    when(toLowFragment.getCurrentAction()).thenReturn(toLowAction);
+    when(toHighFragment.getCurrentAction()).thenReturn(toHighAction);
+
+    // Test
+    Fragment result = visitor.visitMapLinear(context);
+
+    // Validate
+    assertNotNull(result);
+    assertTrue(result instanceof ActionFragment);
+
+    EventHandlerAction action = result.getCurrentAction();
+    assertNotNull(action);
+
+    EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
+
+    action.apply(mockMachine);
+
+    verify(operandAction).apply(mockMachine);
+    verify(fromLowAction).apply(mockMachine);
+    verify(fromHighAction).apply(mockMachine);
+    verify(toLowAction).apply(mockMachine);
+    verify(toHighAction).apply(mockMachine);
+    verify(mockMachine).push(trueValue);
+    verify(mockMachine).applyMap("linear", true);
   }
 
   @Test
@@ -167,7 +229,7 @@ class JoshMathematicsVisitorTest {
     verify(toLowAction).apply(mockMachine);
     verify(toHighAction).apply(mockMachine);
     verify(mockMachine).push(trueValue);
-    verify(mockMachine).applyMap("linear");
+    verify(mockMachine).applyMap("linear", false);
   }
 
   @Test
@@ -231,7 +293,7 @@ class JoshMathematicsVisitorTest {
     verify(toLowAction).apply(mockMachine);
     verify(toHighAction).apply(mockMachine);
     verify(methodArgAction).apply(mockMachine);
-    verify(mockMachine).applyMap("sigmoid");
+    verify(mockMachine).applyMap("sigmoid", false);
   }
 
   @Test

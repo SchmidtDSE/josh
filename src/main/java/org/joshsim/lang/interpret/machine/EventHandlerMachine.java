@@ -204,6 +204,20 @@ public interface EventHandlerMachine {
   EventHandlerMachine applyMap(String strategy);
 
   /**
+   * Apply a map command based on the given strategy with optional domain validation.
+   *
+   * <p>Apply a map operation using the given strategy with the option to disable domain
+   * validation. When unbounded is true, input values outside the specified domain will not
+   * throw exceptions but will be extrapolated using the mapping function.</p>
+   *
+   * @param strategy Name of strategy to use in this map operation.
+   * @param unbounded Whether to disable domain validation (allows values outside domain).
+   * @return Reference to this machine for chaining.
+   * @throws IllegalArgumentException if unrecognized strategy
+   */
+  EventHandlerMachine applyMap(String strategy, boolean unbounded);
+
+  /**
    * Perform a slice operation.
    *
    * <p>Perform a slice operation and put the result on the top of the stack. First pop the

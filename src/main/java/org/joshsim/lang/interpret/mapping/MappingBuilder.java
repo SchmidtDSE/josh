@@ -25,6 +25,7 @@ public class MappingBuilder {
   private Optional<MapBounds> domain;
   private Optional<MapBounds> range;
   private Optional<EngineValue> mapBehaviorArgument;
+  private boolean unbounded;
 
   /**
    * Create a new mapping builder.
@@ -34,6 +35,7 @@ public class MappingBuilder {
     domain = Optional.empty();
     range = Optional.empty();
     mapBehaviorArgument = Optional.empty();
+    unbounded = false;
   }
 
   /**
@@ -81,6 +83,17 @@ public class MappingBuilder {
   }
 
   /**
+   * Set whether domain validation should be disabled for this mapping.
+   *
+   * @param unbounded Whether to disable domain validation (allows values outside domain).
+   * @return This builder instance for method chaining.
+   */
+  public MappingBuilder setUnbounded(boolean unbounded) {
+    this.unbounded = unbounded;
+    return this;
+  }
+
+  /**
    * Build a mapping strategy based on the provided strategy name and builder settings.
    *
    * @param strategyName The name of the mapping strategy to build ("linear", "quadratic", or
@@ -94,7 +107,8 @@ public class MappingBuilder {
       case "linear" -> new LinearMapStrategy(
           valueFactory.orElseThrow(),
           domain.orElseThrow(),
-          range.orElseThrow()
+          range.orElseThrow(),
+          unbounded
       );
       case "quadratic" -> new QuadraticMapStrategy(
           valueFactory.orElseThrow(),

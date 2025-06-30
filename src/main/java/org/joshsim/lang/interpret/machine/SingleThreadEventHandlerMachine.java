@@ -99,6 +99,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine applyMap(String strategyName) {
+    return applyMap(strategyName, false);
+  }
+
+  @Override
+  public EventHandlerMachine applyMap(String strategyName, boolean unbounded) {
     MappingBuilder mappingBuilder = new MappingBuilder();
 
     EngineValue param = pop();
@@ -115,10 +120,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue fromLow = pop();
     mappingBuilder.setDomain(new MapBounds(fromLow, fromHigh));
 
-    EngineValue operand = pop();
+    final EngineValue operand = pop();
     endConversionGroup();
 
     mappingBuilder.setValueFactory(valueFactory);
+    mappingBuilder.setUnbounded(unbounded);
     MapStrategy strategy = mappingBuilder.build(strategyName);
 
     EngineValue result = strategy.apply(operand);
