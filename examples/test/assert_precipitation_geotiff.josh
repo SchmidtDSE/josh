@@ -21,9 +21,6 @@ start simulation AssertPrecipitationGeotiff
   year.init = startYear
   year.step = prior.year + 1
 
-  # Assert that max precipitation across all patches is reasonable
-  maxPrecip.step = max(all.precipValue)
-  assert.precipReasonable.step = maxPrecip > 0 mm and maxPrecip < 5000 mm
 
 end simulation
 

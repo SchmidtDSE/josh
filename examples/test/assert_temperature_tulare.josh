@@ -27,9 +27,6 @@ start simulation AssertTemperatureTulare
   year.init = startYear
   year.step = prior.year + 1
 
-  # Assert that max temperature across all patches is reasonable
-  maxTemp.step = max(all.tempValue)
-  assert.tempReasonable.step = maxTemp > 250 K and maxTemp < 400 K
 
 end simulation
 
@@ -40,5 +37,6 @@ start patch Default
   # Assert temperature is non-zero and reasonable
   assert.tempNonZero.step = external temperatureTulare > 250 K
   assert.tempNotTooHigh.step = external temperatureTulare < 400 K
+  
 
 end patch
