@@ -106,10 +106,8 @@ public class GeotiffExternalDataReaderTest {
 
   /**
    * Test reading CHC-CMIP6 precipitation data that should return non-zero values.
-   * This test specifically addresses the coordinate calculation bug where all values
-   * returned as zero due to out-of-bounds coordinate calculations.
-   *
-   * <p>This test SHOULD FAIL until the coordinate calculation bug is fixed.</p>
+   * This test verifies that the coordinate calculation correctly maps world coordinates
+   * to pixel indices for GeoTIFF files.
    */
   @Test
   public void testChcCmip6PrecipitationNonZeroValues() throws IOException {
@@ -137,16 +135,14 @@ public class GeotiffExternalDataReaderTest {
       
       Optional<EngineValue> value = chcReader.readValueAt(variableName, lon, lat, 0);
       
-      // This assertion should FAIL until coordinate calculation is fixed
+      // Verify that coordinate calculation works correctly
       assertTrue(value.isPresent(), 
-          "CHC-CMIP6 value should be present at coordinates (" + lon + ", " + lat + ") - "
-          + "if this fails, coordinate calculation is broken");
+          "CHC-CMIP6 value should be present at coordinates (" + lon + ", " + lat + ")");
       
       // The value should be non-zero for precipitation data
       double precipValue = value.get().getAsDecimal().doubleValue();
       assertTrue(precipValue > 0.0, 
-          "CHC-CMIP6 precipitation value should be > 0, got: " + precipValue + " - "
-          + "if this fails, we're reading zeros due to coordinate calculation bug");
+          "CHC-CMIP6 precipitation value should be > 0, got: " + precipValue);
           
     } finally {
       try {
