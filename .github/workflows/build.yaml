@@ -284,14 +284,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: preprocessed-tutorial-data
-          path: ./deploy/guides/temp
-      - name: Organize tutorial data for guides
-        run: |
-          mkdir -p ./deploy/guides/two_trees
-          mkdir -p ./deploy/guides/grass_shrub_fire
-          cp ./deploy/guides/temp/temperatureTulare.jshd ./deploy/guides/two_trees/
-          cp ./deploy/guides/temp/precipitationTulare.jshd ./deploy/guides/two_trees/
-          cp ./deploy/guides/temp/precipitation_geotiff.jshd ./deploy/guides/grass_shrub_fire/precipitation.jshd
+          path: ./tutorial-data-temp
       - name: Upload Jar via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
@@ -328,6 +321,13 @@ jobs:
           path: ./landing-build
       - name: Copy llms.txt to landing
         run: cp ./repo/llms.txt ./landing-build/
+      - name: Organize tutorial data for guides
+        run: |
+          mkdir -p ./landing-build/guides/two_trees
+          mkdir -p ./landing-build/guides/grass_shrub_fire
+          cp ./tutorial-data-temp/temperatureTulare.jshd ./landing-build/guides/two_trees/
+          cp ./tutorial-data-temp/precipitationTulare.jshd ./landing-build/guides/two_trees/
+          cp ./tutorial-data-temp/precipitation_geotiff.jshd ./landing-build/guides/grass_shrub_fire/precipitation.jshd
       - name: Upload landing via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
