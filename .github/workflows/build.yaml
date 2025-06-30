@@ -208,6 +208,15 @@ jobs:
         run: cd editor/third_party; bash install_deps.sh
       - name: Install landing deps
         run: cd landing; bash install_deps.sh
+      - name: Optimize publicsans deployment
+        run: |
+          cd landing
+          if [ -d "publicsans/fonts/otf" ]; then
+            mkdir -p publicsans-minimal/fonts/otf
+            cp publicsans/fonts/otf/PublicSans-Regular.otf publicsans-minimal/fonts/otf/
+            rm -rf publicsans
+            mv publicsans-minimal publicsans
+          fi
       - name: Copy guide examples to landing
         run: |
           mkdir -p landing/examples/guide
