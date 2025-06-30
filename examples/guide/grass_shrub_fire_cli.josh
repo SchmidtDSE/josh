@@ -40,9 +40,9 @@ start patch Default
   destroy.grass.step = sample normal with mean of 70% std of 10%
   destroy.shrub.step = sample normal with mean of 90% std of 20%
 
-  # Determine possible growth (without external data for CLI test)
-  growth.grass.step = sample uniform from 0% to 5%
-  growth.shrub.step = sample uniform from 0% to 3%
+  # Determine possible growth using external precipitation data
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
 
   # Apply change based on if on fire
   grassCover.step = {

@@ -1,0 +1,43 @@
+start unit kgm2s
+  # kg m-2 s-1 - precipitation rate used in climate data
+  # To convert to mm/year, multiply by seconds per year (31,536,000)
+  # since 1 kg/m² of water = 1 mm of precipitation
+  
+  mm = current * 31536000
+  
+end unit
+
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit
+
+start simulation AssertPrecipitationTulare
+
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  startYear.init = 2024
+  year.init = startYear
+  year.step = prior.year + 1
+
+
+end simulation
+
+start patch Default
+
+  precipValue.step = external precipitationTulare
+  
+  # Assert precipitation is non-zero and reasonable
+  assert.precipNonZero.step = external precipitationTulare > 0 mm
+  assert.precipNotTooHigh.step = external precipitationTulare < 5000 mm
+
+end patch

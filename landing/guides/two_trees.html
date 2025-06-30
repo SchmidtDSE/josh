@@ -20,7 +20,10 @@
       <section id="overview">
         <h2>Overview</h2>
         <p>
-          You are already becoming an expert in Josh! This next example is just using what you already learned but making it a little bigger. Specifically, we are going to run a simulation with lots of agents with each representing a single tree. This can sometimes be useful to include dynamics which are difficult to describe at the patch.
+          You are already becoming an expert in Josh!
+        </p>
+        <p>
+          This next example is just using what you already learned but making it a little bigger. Specifically, we are going to run a simulation with lots of agents with each representing a single tree. This can sometimes be useful to include dynamics which are difficult to describe at the patch.
         </p>
         <p>
           As with the other tutorials, this is a toy model using fake species. The use of specific location is just so that we can use external data.
@@ -33,10 +36,10 @@
           This time we are going to use data from <a href="https://cal-adapt.org/">Cal-Adapt</a> which provides its data as netCDF files for Tulare County, California. The data comes from the FGOALS-g3 climate model under the SSP2-4.5 emissions scenario (2015-2100). Again, a <a href="/builds/data.html">later tutorial will go into the details of preprocessing</a> for speed.
         </p>
         <p>
-          The climate data uses custom unit conversions in Josh. Temperature data is in Kelvin (K), while precipitation data is provided in kg m⁻² s⁻¹ and automatically converted to mm/year using a custom <code>kgm2s</code> unit definition that multiplies by the number of seconds per year (31,536,000).
+          The climate data uses custom unit conversions in Josh. Temperature data is in Kelvin (K), while precipitation data is provided in kg m^-2 s^-1 and automatically converted to mm/year using a custom <code>kgm2s</code> unit definition.
         </p>
         <p>
-          For now, go ahead and grab our preprocessed <a href="/guides/two_trees/temperature.jshd">temperature data</a> and <a href="/guides/two_trees/precipitation.jshd">precipitation data</a>. Then, delete the data from the prior tutorial and upload these new files.
+          For now, go ahead and grab our preprocessed <a href="/guides/two_trees/temperatureTulare.jshd">temperature data</a> and <a href="/guides/two_trees/precipitationTulare.jshd">precipitation data</a>. Then, delete the data from the prior tutorial and upload these new files.
         </p>
         <details>
           <summary>Data Sources</summary>
@@ -54,7 +57,7 @@
         </p>
         <pre><code class="language-joshlang">start simulation Main
 
-  # Specify where the simluation runs
+  # Specify where the simulation runs
   grid.size = 200 m
   grid.low = 36.52 degrees latitude, -118.68 degrees longitude
   grid.high = 36.42 degrees latitude, -118.45 degrees longitude
@@ -130,7 +133,7 @@ end patch</code></pre>
 
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
-    const currentTemperature = external temperature
+    const currentTemperature = external temperatureTulare
     const inExtremeCold = currentTemperature < meta.constraints.minViableTemperature
     const inExtremeHot = currentTemperature > meta.constraints.maxViableTemperature
     return inExtremeCold or inExtremeHot
@@ -142,7 +145,7 @@ end patch</code></pre>
       <section id="birth">
         <h2>Birth</h2>
         <p>
-          Next, we also want to take care of the birth. Let's look at making new trees as well.
+          Next, we also want to take care of making new trees.
         </p>
         <pre><code class="language-joshlang">start patch Default
 
@@ -168,7 +171,7 @@ end patch</code></pre>
 
   newSpeciesBCount.end = {
     if (totalCount > 0) {
-      return floor((speciesACount / totalCount) * newCount)
+      return floor((speciesBCount / totalCount) * newCount)
     } else {
       return newCount * 50%
     }
@@ -184,11 +187,15 @@ end patch</code></pre>
 
 end patch</code></pre>
         <p>
-          Here, we are getting a closer look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages but they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets like we saw in our discussion of slices.
+          Here, we are getting a closer look at distributions in Josh. These are collections of numbers similar to lists or arrays in other languages. However, they may also be formal distributions like normal or uniform. We can combine two distributions together using the pipe character ("|") and we can filter the elements within a distribution using square brackets like we saw in our discussion of slices.
         </p>
         <p>
-          Before finishing up this step, note that SpeciesA is a variable or attribute of the Default patch but, by convention, it uses the same name as the organism. You could also call it "SpeciesAPresent" and things would work out.
+          Before finishing up this step, note that SpeciesA is a variable or attribute of the Default patch. By convention, it uses the same name as the organism. That said, you could also call it "SpeciesAPresent" and things would work out.
         </p>
+        <details>
+          <summary>More about conventions</summary>
+          <p>Conventions are informal rules that a community follows even if they are not strictly enforced by the programming language itself. In the Josh language, we recommend use leading lower camelCase to refer to normal variables, leading capital CamelCase to refer to entities, and leading capital CamelCase of the same name as the entity to refer to sub-entities like SpeciesA individuals inside a Default patch. All this in mind, these are just suggestions. You can change this as you like!</p>
+        </details>
       </section>
 
       <section id="species-a">
@@ -211,13 +218,13 @@ end patch</code></pre>
   }
   
   # At each step, determine impact of temperature
-  temperatureImpact.step = map external temperature
+  temperatureImpact.step = map external temperatureTulare
     from [270 K, 330 K]
     to [0%, 100%]
     quadratic
   
   # At each step, determine impact of precipitation
-  precipitationImpact.step = map external precipitation
+  precipitationImpact.step = map external precipitationTulare
     from [300 mm, 500 mm]
     to [0%, 100%]
     sigmoid
@@ -256,13 +263,13 @@ end organism</code></pre>
   }
 
   # At each step, determine impact of temperature
-  temperatureImpact.step = map external temperature
+  temperatureImpact.step = map external temperatureTulare
     from [290 K, 350 K]
     to [0%, 100%]
     quadratic
 
   # At each step, determine impact of precipitation
-  precipitationImpact.step = map external precipitation
+  precipitationImpact.step = map external precipitationTulare
     from [200 mm, 400 mm]
     to [0%, 100%]
     sigmoid
@@ -289,7 +296,16 @@ end organism</code></pre>
         <p>
           Let's wrap this up! We just need our units. This time, we will also demonstrate use of unit conversions. Try changing one of the temperature values above to celcius to give it a shot.
         </p>
-        <pre><code class="language-joshlang">start unit K
+        <pre><code class="language-joshlang">start unit kgm2s
+  # kg m-2 s-1 - precipitation rate used in climate data
+  # To convert to mm/year, multiply by seconds per year (31,536,000)
+  # since 1 kg/m² of water = 1 mm of precipitation
+  
+  mm = current * 31536000
+  
+end unit
+
+start unit K
 
   alias Kelvins
   alias Kelvin

@@ -24,18 +24,21 @@ public class ExternalDataReaderFactory {
         EngineValueFactory valueFactory,
         String filePath
   ) throws IOException {
+    
     if (isNetCdfFile(filePath)) {
       NetcdfExternalDataReaderFactory netcdfReaderFactory = new NetcdfExternalDataReaderFactory(
           valueFactory
       );
-      return netcdfReaderFactory.createReader();
+      ExternalDataReader reader = netcdfReaderFactory.createReader();
+      return reader;
     }
 
     if (isGeotiffFile(filePath)) {
       GeotiffExternalDataReaderFactory geotiffReaderFactory = new GeotiffExternalDataReaderFactory(
           valueFactory
       );
-      return geotiffReaderFactory.createReader();
+      ExternalDataReader reader = geotiffReaderFactory.createReader();
+      return reader;
     }
 
     if (isZarrFile(filePath)) {
