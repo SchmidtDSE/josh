@@ -155,7 +155,7 @@ jobs:
       - name: Validate examples
         run: bash examples/validate.sh
   runTests:
-    needs: validateExamples
+    needs: [validateExamples, testPreprocessTutorial]
     environment: Build
     runs-on: ubuntu-latest
     name: Run Josh examples
@@ -177,6 +177,11 @@ jobs:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Download preprocessed tutorial data
+        uses: actions/download-artifact@v4
+        with:
+          name: preprocessed-tutorial-data
+          path: ./landing/preprocessed_data/
       - name: Run examples
         run: bash examples/test.sh
   buildWeb:

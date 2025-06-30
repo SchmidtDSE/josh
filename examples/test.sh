@@ -52,5 +52,21 @@ assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 4 || exi
 
 echo "Testing guide examples..."
 assert_ok examples/guide/hello_cli.josh Main 1 || exit 15
+
+# Copy required jshd files for CLI tests that now use external data
+if [ -f "landing/preprocessed_data/precipitationGrassfire2008.jshd" ]; then
+    cp landing/preprocessed_data/precipitationGrassfire2008.jshd precipitation.jshd
+elif [ -f "landing/precipitation_geotiff.jshd" ]; then
+    cp landing/precipitation_geotiff.jshd precipitation.jshd
+fi
+
+if [ -f "landing/preprocessed_data/temperatureTulare.jshd" ]; then
+    cp landing/preprocessed_data/temperatureTulare.jshd .
+fi
+
+if [ -f "landing/preprocessed_data/precipitationTulare.jshd" ]; then
+    cp landing/preprocessed_data/precipitationTulare.jshd .
+fi
+
 assert_ok examples/guide/grass_shrub_fire_cli.josh Main 1 || exit 16
 assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 17
