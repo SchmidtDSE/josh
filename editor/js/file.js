@@ -90,7 +90,7 @@ class FilePresenter {
         reader.readAsText(file, "UTF-8");
         reader.onload = (event) => {
           const newCode = event.target.result;
-          onFileOpen(newCode);
+          self._onFileOpen(newCode);
           self.saveCodeToFile(newCode);
           loadFileDialog.close();
         };
