@@ -122,14 +122,18 @@ public class ExternalGeoMapper {
     Map<String, Map<Integer, Map<GeoKey, EngineValue>>> result = new HashMap<>();
 
     // Get appropriate reader for this file
+    System.out.println("DEBUG: ExternalGeoMapper creating reader for file: " + dataFilePath);
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
           valueFactory,
           dataFilePath
       )) {
+      System.out.println("DEBUG: ExternalGeoMapper opening data source: " + dataFilePath);
       // Open data source
       reader.open(dataFilePath);
+      // Set dimensions for coordinate mapping
       reader.setDimensions(dimensionX, dimensionY, Optional.ofNullable(timeDimension));
       if (crsCode != null) {
+        System.out.println("DEBUG: ExternalGeoMapper setting CRS: " + crsCode);
         reader.setCrsCode(crsCode);
       }
 
