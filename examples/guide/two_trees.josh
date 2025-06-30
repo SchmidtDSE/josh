@@ -1,16 +1,6 @@
-start unit kgm2s
-  # kg m-2 s-1 - precipitation rate used in climate data
-  # Define conversion FROM kgm2s TO mm
-  # To convert to mm/year, multiply by seconds per year (31,536,000)
-  # since 1 kg/m² of water = 1 mm of precipitation
-  
-  mm = current * 31536000
-  
-end unit
-
 start simulation Main
 
-  # Specify where the simluation runs
+  # Specify where the simulation runs
   grid.size = 200 m
   grid.low = 36.52 degrees latitude, -118.68 degrees longitude
   grid.high = 36.42 degrees latitude, -118.45 degrees longitude
@@ -28,8 +18,10 @@ start simulation Main
   constraints.minViableTemperature = 273 K
   constraints.maxViableTemperature = 373 K
 
-end simulation
+  # Indicate exports
+  exportFiles.patch = "memory://editor/patches"
 
+end simulation
 
 start patch Default
 
@@ -41,7 +33,13 @@ start patch Default
   # Create initial occupants
   SpeciesA.init = create initialACount of SpeciesA
   SpeciesB.init = create initialBCount of SpeciesB
-  
+
+  # Remove dead occupants at start of simulation step
+  SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
+  SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
+  speciesACount.start = count(SpeciesA)
+  speciesBCount.start = count(SpeciesB)
+
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
     const currentTemperature = external temperature
@@ -50,12 +48,6 @@ start patch Default
     return inExtremeCold or inExtremeHot
   }
 
-  # Remove dead occupants at start of simulation step
-  SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
-  SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
-  speciesACount.start = count(SpeciesA)
-  speciesBCount.start = count(SpeciesB)
-  
   # Calculate num new occupants end step (to have their first step on next step)
   totalCount.start = speciesACount + speciesBCount
   newCount.end = {
@@ -76,7 +68,7 @@ start patch Default
 
   newSpeciesBCount.end = {
     if (totalCount > 0) {
-      return floor((speciesACount / totalCount) * newCount)
+      return floor((speciesBCount / totalCount) * newCount)
     } else {
       return newCount * 50%
     }
@@ -92,9 +84,8 @@ start patch Default
 
 end patch
 
-
 start organism SpeciesA
-  
+
   # Start a zero height except when if this is the simulation start
   dead.init = false
   height.init = {
@@ -126,8 +117,8 @@ start organism SpeciesA
     const deadByExtremeTemp = here.inExtremeTemperature
     return deadByChance or deadByExtremeTemp
   }
-end organism
 
+end organism
 
 start organism SpeciesB
 
@@ -165,14 +156,12 @@ start organism SpeciesB
 
 end organism
 
-
 start unit K
 
   alias Kelvins
   alias Kelvin
 
 end unit
-
 
 start unit C
 
@@ -181,7 +170,6 @@ start unit C
   K = 272.15 + current
 
 end unit
-
 
 start unit mm
 

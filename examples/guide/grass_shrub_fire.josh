@@ -1,0 +1,75 @@
+start simulation Main
+
+  # Specify location of simulation
+  grid.size = 1000 m
+  grid.low = 35.5 degrees latitude, -120 degrees longitude
+  grid.high = 34.5 degrees latitude, -119 degrees longitude
+
+  # Specify the years for the simulation
+  steps.low = 0 count
+  steps.high = 10 count
+
+  startYear.init = 2025
+  year.init = startYear
+  year.step = prior.year + 1
+
+  # Indicate output should go to the code editor
+  exportFiles.patch = "memory://editor/patches"
+
+  # Fire parameters
+  fire.trigger.coverThreshold = 15%
+  fire.trigger.high = 5%
+  fire.trigger.typical = 1%
+  fire.damage.grass = 70%
+  fire.damage.shrub = 90%
+
+end simulation
+
+start patch Default
+
+  # Initialize to up to 20% each type
+  grassCover.init = sample uniform from 0% to 20%
+  shrubCover.init = sample uniform from 0% to 20%
+  
+  # Determine if on fire
+  isHighCover.step = prior.grassCover > meta.fire.trigger.coverThreshold
+  fireProbability.step = meta.fire.trigger.high if isHighCover else meta.fire.trigger.typical
+  onFire.step = (sample uniform from 0% to 100%) < fireProbability
+
+  # Determine possible destruction
+  destroy.grass.step = sample normal with mean of 70% std of 10%
+  destroy.shrub.step = sample normal with mean of 90% std of 20%
+
+  # Determine possible growth
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
+
+  # Apply change based on if on fire
+  grassCover.step = {
+    const afterDestroy = prior.grassCover * destroy.grass
+    const afterGrowth = prior.grassCover + growth.grass
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+  shrubCover.step = {
+    const afterDestroy = prior.shrubCover * destroy.shrub
+    const afterGrowth = prior.shrubCover + growth.shrub
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+  # Save exports
+  export.grassCover.step = grassCover
+  export.shrubCover.step = shrubCover
+
+end patch
+
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit

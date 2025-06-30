@@ -7,7 +7,7 @@
 import {BasemapDialogPresenter} from "baselayer";
 import {ExportPresenter} from "exporter";
 import {DataQuery, summarizeDatasets} from "summarize";
-import {GridPresenter, ScrubPresenter} from "viz";
+import {GridPresenter, ScrubPresenter, MapConfigPresenter} from "viz";
 
 
 /**
@@ -71,7 +71,8 @@ class ResultsPresenter {
    * Handles completion of simulation run, calculating and displaying results.
    *
    * @param {SimulationMetadata} metadata - The metadata of the simulation being displayed.
-   * @param {Array<SimulationResult>} results - Array of simulation results containing output records.
+   * @param {Array<SimulationResult>} results - Array of simulation results containing output
+   *     records.
    */
   onComplete(metadata, results) {
     const self = this;
@@ -174,8 +175,8 @@ class ResultsPresenter {
   /**
    * Callback for when the basemap URL is updated.
    *
-   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no basemap
-   *     image should be provided.
+   * @param {?string} basemapUrl - URL at which the basemap image can be found or null if no
+   *     basemap image should be provided.
    */
   _onBasemapChange(basemapUrl) {
     const self = this;
@@ -303,6 +304,10 @@ class ResultsDisplayPresenter {
     self._gridPresenter = new GridPresenter(
       self._root.querySelector("#grid-viz-holder")
     );
+    self._mapConfigPresenter = new MapConfigPresenter(
+      self._root.querySelector("#map-config"),
+      (dimensions) => self._onMapResize(dimensions)
+    );
   }
 
   /**
@@ -374,6 +379,9 @@ class ResultsDisplayPresenter {
     if (self._currentTimestep === null) {
       self._currentTimestep = summary.getMaxTimestep();
     }
+    
+    const defaultDimensions = self._gridPresenter.calculateDefaultDimensions(metadata);
+    self._mapConfigPresenter.setDefaultDimensions(defaultDimensions);
     self._renderInternal(true);
   }
 
@@ -385,6 +393,17 @@ class ResultsDisplayPresenter {
   _onStepSelected(step) {
     const self = this;
     self._currentTimestep = step;
+    self._renderInternal(false);
+  }
+
+  /**
+   * Callback when map dimensions are changed.
+   *
+   * @param {MapDimensions} dimensions - Map dimensions object with width and height in pixels.
+   */
+  _onMapResize(dimensions) {
+    const self = this;
+    self._gridPresenter.setCustomDimensions(dimensions);
     self._renderInternal(false);
   }
 

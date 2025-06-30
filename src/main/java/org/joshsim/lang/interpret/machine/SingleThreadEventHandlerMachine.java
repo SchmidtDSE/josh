@@ -797,7 +797,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     if (!isEnded) {
-      throw new IllegalStateException("Machine has not ended yet.");
+      throw new IllegalStateException(
+          "Whoops! Something went wrong during simulation processing. This is likely a bug "
+          + "in Josh rather than an issue in your own code. Please help us "
+          + "improve Josh by reporting this error at https://github.com/SchmidtDSE/josh/issues"
+      );
     }
 
     return memory.peek();
