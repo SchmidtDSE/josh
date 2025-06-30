@@ -203,6 +203,12 @@ jobs:
         run: cd editor/third_party; bash install_deps.sh
       - name: Install landing deps
         run: cd landing; bash install_deps.sh
+      - name: Copy guide examples to landing
+        run: |
+          mkdir -p landing/examples/guide
+          cp examples/guide/hello.josh landing/examples/guide/
+          cp examples/guide/grass_shrub_fire.josh landing/examples/guide/
+          cp examples/guide/two_trees.josh landing/examples/guide/
       - name: Upload war
         uses: actions/upload-artifact@v4
         with:

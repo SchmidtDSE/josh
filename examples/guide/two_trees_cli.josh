@@ -1,0 +1,160 @@
+start simulation Main
+
+  # Specify where the simulation runs
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  # Specify when the simulation runs (2024 to 2054) - shorter for testing
+  steps.low = 0 count
+  steps.high = 5 count
+
+  startYear.init = 2024
+  year.init = startYear
+  year.step = prior.year + 1
+
+  # Indicate ecological and spatial limits
+  constraints.maxOccupants = 30 count
+  constraints.minViableTemperature = 273 K
+  constraints.maxViableTemperature = 373 K
+
+  # Indicate exports
+  exportFiles.patch = "file:///tmp/two_trees_josh_{replicate}.csv"
+
+end simulation
+
+start patch Default
+
+  # Randomize starting occupancy
+  countOccupancy.init = sample uniform from 0 count to meta.constraints.maxOccupants
+  initialACount.init = (sample uniform from 0% to 100%) * countOccupancy
+  initialBCount.init = countOccupancy - initialACount
+
+  # Create initial occupants
+  SpeciesA.init = create initialACount of SpeciesA
+  SpeciesB.init = create initialBCount of SpeciesB
+
+  # Remove dead occupants at start of simulation step
+  SpeciesA.start = prior.SpeciesA[prior.SpeciesA.dead == false]
+  SpeciesB.start = prior.SpeciesB[prior.SpeciesB.dead == false]
+  speciesACount.start = count(SpeciesA)
+  speciesBCount.start = count(SpeciesB)
+
+  # Determine if in an extreme temperature event (simplified for CLI test)
+  inExtremeTemperature.step = false
+
+  # Calculate num new occupants end step (to have their first step on next step)
+  totalCount.start = speciesACount + speciesBCount
+  newCount.end = {
+    const probabilityNewRaw = (-1 count * (totalCount - 5 count) ^ 2 / 20 count) + 110 %
+    const probabilityNew = limit probabilityNewRaw to [0%, 100%]
+    const maxNewCount = (meta.constraints.maxOccupants - totalCount) * probabilityNew
+    return sample uniform from 0 count to maxNewCount
+  }
+
+  # If empty, split evenly
+  newSpeciesACount.end = {
+    if (totalCount > 0) {
+      return floor((speciesACount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
+
+  newSpeciesBCount.end = {
+    if (totalCount > 0) {
+      return floor((speciesBCount / totalCount) * newCount)
+    } else {
+      return newCount * 50%
+    }
+  }
+
+  # Make the new agents and concatenate to ("|" or add to end of) the current list.
+  SpeciesA.end = prior.SpeciesA | create newSpeciesACount of SpeciesA
+  SpeciesB.end = prior.SpeciesB | create newSpeciesBCount of SpeciesB
+
+  # Export counts
+  export.newSpeciesACount.end = newSpeciesACount
+  export.newSpeciesBCount.end = newSpeciesBCount
+
+end patch
+
+start organism SpeciesA
+
+  # Start a zero height except when if this is the simulation start
+  dead.init = false
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+  
+  # At each step, determine impact (simplified for CLI test)
+  temperatureImpact.step = sample uniform from 50% to 100%
+  precipitationImpact.step = sample uniform from 50% to 100%
+  
+  # At each step, determine overall growth
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
+  height.step = prior.height + newGrowth
+  
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 70%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
+
+end organism
+
+start organism SpeciesB
+
+  # Start a zero height except when if this is the simulation start
+  dead.init = false
+  height.init = {
+    const isFirstYear = meta.startYear == meta.year
+    const heightSample = sample normal with mean of 20 meters std of 5 meters
+    const heightSampleLimit = limit heightSample to [0 meters, 40 meters]
+    return heightSampleLimit if isFirstYear else 0 meters
+  }
+
+  # At each step, determine impact (simplified for CLI test)
+  temperatureImpact.step = sample uniform from 50% to 100%
+  precipitationImpact.step = sample uniform from 50% to 100%
+
+  # At each step, determine overall growth
+  newGrowth.step = 1 m * temperatureImpact * precipitationImpact
+  height.step = prior.height + newGrowth
+
+  # At each step end, determine death if over survival probability
+  dead.end = {
+    const deadByChance = (sample uniform from 0% to 100%) > 70%
+    const deadByExtremeTemp = here.inExtremeTemperature
+    return deadByChance or deadByExtremeTemp
+  }
+
+end organism
+
+start unit K
+
+  alias Kelvins
+  alias Kelvin
+
+end unit
+
+start unit C
+
+  alias Celcius
+
+  K = 272.15 + current
+
+end unit
+
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit
