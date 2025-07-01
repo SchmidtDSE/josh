@@ -159,14 +159,14 @@ end patch</code></pre>
 
   # Apply change based on if on fire
   grassCover.step = {
-    const afterDestroy = prior.grassCover * destroy.grass
+    const afterDestroy = prior.grassCover * (1 - destroy.grass)
     const afterGrowth = prior.grassCover + growth.grass
     const newValueRaw = afterDestroy if onFire else afterGrowth
     return limit newValueRaw to [0%, 100%]
   }
 
   shrubCover.step = {
-    const afterDestroy = prior.shrubCover * destroy.shrub
+    const afterDestroy = prior.shrubCover * (1 - destroy.shrub)
     const afterGrowth = prior.shrubCover + growth.shrub
     const newValueRaw = afterDestroy if onFire else afterGrowth
     return limit newValueRaw to [0%, 100%]
