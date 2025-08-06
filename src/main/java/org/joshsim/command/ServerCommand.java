@@ -66,10 +66,23 @@ public class ServerCommand implements Callable<Integer> {
         workers = workerUrl.contains("0.0.0.0") ? 1 : numProcessors - 1;
       }
 
+      // Fix worker URL: replace 0.0.0.0 with localhost and update port to match server port
+      String processedWorkerUrl = workerUrl.replaceAll("\"", "").trim();
+      if (processedWorkerUrl.contains("0.0.0.0")) {
+        processedWorkerUrl = processedWorkerUrl.replace("0.0.0.0", "localhost");
+        System.out.println("Updated worker URL from 0.0.0.0 to localhost");
+      }
+      
+      // Update port in worker URL to match server port
+      if (processedWorkerUrl.contains("localhost") && processedWorkerUrl.contains(":8085/")) {
+        processedWorkerUrl = processedWorkerUrl.replace(":8085/", ":" + port + "/");
+        System.out.println("Updated worker URL port to match server port: " + processedWorkerUrl);
+      }
+      
       JoshSimServer server = new JoshSimServer(
           new EnvCloudApiDataLayer(),
           useHttp2,
-          workerUrl.replaceAll("\"", "").trim(),
+          processedWorkerUrl,
           port,
           workers,
           serialPatches

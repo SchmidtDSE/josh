@@ -185,16 +185,14 @@ public class JoshSimLeaderHandler implements HttpHandler {
           }
         } catch (Exception e) {
           hasErrors = true;
+          System.err.println("Exception in replicate execution: " 
+              + e.getClass().getSimpleName() + ": " + e.getMessage());
           // Extract meaningful error message from the exception
           String errorMessage = extractErrorMessage(e);
           String errorOutput = String.format("[error] %s\n", errorMessage);
           httpServerExchange.getOutputStream().write(errorOutput.getBytes());
           httpServerExchange.getOutputStream().flush();
         }
-      }
-      
-      if (hasErrors) {
-        httpServerExchange.setStatusCode(500);
       }
       
       httpServerExchange.endExchange();
@@ -336,6 +334,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
     try {
       response = client.send(request, HttpResponse.BodyHandlers.ofString());
     } catch (IOException | InterruptedException e) {
+      System.err.println("Worker connection failed for replicate " + replicateNumber 
+          + " to " + urlToWorker + ": " + e.getMessage());
       throw new RuntimeException("Encountered issue in worker thread: " + e);
     }
 
