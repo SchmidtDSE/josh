@@ -55,7 +55,7 @@ import picocli.CommandLine;
         ValidateCommand.class,
         RunCommand.class,
         ServerCommand.class,
-        PreprocessCommand.class //Added PreprocessCommand
+        PreprocessCommand.class
     }
 )
 public class JoshSimCommander {
