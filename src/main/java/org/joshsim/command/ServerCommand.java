@@ -11,6 +11,8 @@
 
 package org.joshsim.command;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 import org.joshsim.cloud.EnvCloudApiDataLayer;
 import org.joshsim.cloud.JoshSimServer;
@@ -62,10 +64,6 @@ public class ServerCommand implements Callable<Integer> {
     try {
       int numProcessors = Runtime.getRuntime().availableProcessors();
 
-      if (workers == 0) {
-        workers = workerUrl.contains("0.0.0.0") ? 1 : numProcessors - 1;
-      }
-
       // Fix worker URL: replace 0.0.0.0 with localhost and update port to match server port
       String processedWorkerUrl = workerUrl.replaceAll("\"", "").trim();
       if (processedWorkerUrl.contains("0.0.0.0")) {
@@ -73,10 +71,24 @@ public class ServerCommand implements Callable<Integer> {
         System.out.println("Updated worker URL from 0.0.0.0 to localhost");
       }
       
-      // Update port in worker URL to match server port
-      if (processedWorkerUrl.contains("localhost") && processedWorkerUrl.contains(":8085/")) {
-        processedWorkerUrl = processedWorkerUrl.replace(":8085/", ":" + port + "/");
-        System.out.println("Updated worker URL port to match server port: " + processedWorkerUrl);
+      // Update port in worker URL to match server port using proper URL parsing
+      if (processedWorkerUrl.contains("localhost")) {
+        try {
+          URL url = new URL(processedWorkerUrl);
+          if (url.getPort() != port) {
+            processedWorkerUrl = String.format("%s://%s:%d%s", 
+                url.getProtocol(), url.getHost(), port, url.getPath());
+            System.out.println("Updated worker URL port to match server port: " 
+                + processedWorkerUrl);
+          }
+        } catch (MalformedURLException e) {
+          System.err.println("Warning: Could not parse worker URL for port update: " 
+              + e.getMessage());
+        }
+      }
+      
+      if (workers == 0) {
+        workers = processedWorkerUrl.contains("localhost") ? 1 : numProcessors - 1;
       }
       
       JoshSimServer server = new JoshSimServer(
