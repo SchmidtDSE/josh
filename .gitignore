@@ -26,7 +26,8 @@ src-generated
 editor/third_party
 
 # temp files
-/tmp
+tasks
+tmp
 
 # Editor war
 editor/war
