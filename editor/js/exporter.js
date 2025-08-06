@@ -231,7 +231,7 @@ function buildExportBlob(metadata, dataset, command) {
     };
 
     if (command.isFinalOnly()) {
-      const lastStep = Math.max(...results.map((x) => x.getValue("step")));
+      const lastStep = results.reduce((max, x) => Math.max(max, x.getValue("step")), -Infinity);
       const lastStepResults = results.filter((x) => x.getValue("step") == lastStep);
       addToRows(lastStepResults);
     } else {
