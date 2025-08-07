@@ -293,7 +293,7 @@ class StatusPresenter {
   updateProgressBar(completedSteps, totalSteps) {
     const self = this;
     const percentComplete = (completedSteps / totalSteps) * 100;
-    const percentageBounded = Math.min(100, percentComplete);
+    const percentageBounded = Math.max(Math.min(100, percentComplete), 0);
     self._progressBar.value = percentageBounded;
   }
 
