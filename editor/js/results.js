@@ -302,9 +302,7 @@ class StatusPresenter {
    */
   hideProgressBar() {
     const self = this;
-    if (self._progressBar) {
-      self._progressBar.style.display = "none";
-    }
+    self._progressBar.style.display = "none";
   }
 
 }
