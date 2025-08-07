@@ -48,9 +48,23 @@ class WasmEngineBackend {
     return new Promise((resolve, reject) => {
       const replicateResults = [];
       let stepsPerReplicate = 0;
+      let currentReplicateSteps = 0;
 
       const onSimulationComplete = (results) => {
         replicateResults.push(results);
+        
+        // Validate that all replicates have the same number of steps
+        if (multiReplicate) {
+          if (replicateResults.length === 1) {
+            // First replicate sets the expected step count
+            stepsPerReplicate = currentReplicateSteps;
+          } else if (currentReplicateSteps !== stepsPerReplicate) {
+            throw new Error(`Step count mismatch between replicates: expected ${stepsPerReplicate}, got ${currentReplicateSteps}`);
+          }
+        }
+        
+        // Reset for next replicate
+        currentReplicateSteps = 0;
        
         const replicatesCompleteCount = replicateResults.length;
         onReplicateExternal(replicatesCompleteCount);
@@ -67,14 +81,15 @@ class WasmEngineBackend {
 
       const onStepCallback = (currentStep) => {
         if (multiReplicate) {
-          // Track the maximum step count to determine steps per replicate
-          if (currentStep > stepsPerReplicate) {
-            stepsPerReplicate = currentStep;
-          }
+          // Track current replicate step count
+          currentReplicateSteps = currentStep;
+          
+          // For step calculation, use known stepsPerReplicate or current step if first replicate
+          const knownStepsPerReplicate = stepsPerReplicate || currentStep;
           
           // Calculate cumulative steps across all replicates
           const completedReplicates = replicateResults.length;
-          const totalStepsCompleted = (completedReplicates * stepsPerReplicate) + currentStep;
+          const totalStepsCompleted = (completedReplicates * knownStepsPerReplicate) + currentStep;
           onStepExternal(totalStepsCompleted);
         } else {
           onStepExternal(currentStep);
