@@ -11,6 +11,8 @@
 
 package org.joshsim.command;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 import org.joshsim.cloud.EnvCloudApiDataLayer;
 import org.joshsim.cloud.JoshSimServer;
@@ -62,14 +64,49 @@ public class ServerCommand implements Callable<Integer> {
     try {
       int numProcessors = Runtime.getRuntime().availableProcessors();
 
-      if (workers == 0) {
-        workers = workerUrl.contains("0.0.0.0") ? 1 : numProcessors - 1;
+      // Fix worker URL: replace 0.0.0.0 with localhost and update port to match server port
+      String processedWorkerUrl = workerUrl.replaceAll("\"", "").trim();
+      if (processedWorkerUrl.contains("0.0.0.0")) {
+        processedWorkerUrl = processedWorkerUrl.replace("0.0.0.0", "localhost");
+        System.out.println("Updated worker URL from 0.0.0.0 to localhost");
       }
-
+      
+      // Update port in worker URL to match server port using proper URL parsing
+      if (processedWorkerUrl.contains("localhost")) {
+        try {
+          URL url = new URL(processedWorkerUrl);
+          if (url.getPort() != port) {
+            processedWorkerUrl = String.format(
+                "%s://%s:%d%s", 
+                url.getProtocol(),
+                url.getHost(),
+                port,
+                url.getPath()
+            );
+            String message = String.format(
+                "Updated worker URL port to match server port: %s",
+                processedWorkerUrl
+            );
+            System.out.println(message);
+          }
+        } catch (MalformedURLException e) {
+          String message = String.format(
+              "Warning: Could not parse worker URL: %s. Using %s.",
+              e.getMessage(),
+              processedWorkerUrl
+          );
+          System.out.println(message);
+        }
+      }
+      
+      if (workers == 0) {
+        workers = processedWorkerUrl.contains("localhost") ? 1 : numProcessors - 1;
+      }
+      
       JoshSimServer server = new JoshSimServer(
           new EnvCloudApiDataLayer(),
           useHttp2,
-          workerUrl.replaceAll("\"", "").trim(),
+          processedWorkerUrl,
           port,
           workers,
           serialPatches

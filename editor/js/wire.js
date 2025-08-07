@@ -114,6 +114,8 @@ class ResponseReader {
           );
         }
         self._onReplicateExternal(self._completedReplicates);
+      } else if (intermediate["type"] === "error") {
+        self._onError("Server error: " + intermediate["message"]);
       }
     });
   }
