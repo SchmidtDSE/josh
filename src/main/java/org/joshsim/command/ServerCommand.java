@@ -76,10 +76,18 @@ public class ServerCommand implements Callable<Integer> {
         try {
           URL url = new URL(processedWorkerUrl);
           if (url.getPort() != port) {
-            processedWorkerUrl = String.format("%s://%s:%d%s", 
-                url.getProtocol(), url.getHost(), port, url.getPath());
-            System.out.println("Updated worker URL port to match server port: " 
-                + processedWorkerUrl);
+            processedWorkerUrl = String.format(
+                "%s://%s:%d%s", 
+                url.getProtocol(),
+                url.getHost(),
+                port,
+                url.getPath()
+            );
+            String message = String.format(
+                "Updated worker URL port to match server port: %s",
+                processedWorkerUrl
+            );
+            System.out.println(message);
           }
         } catch (MalformedURLException e) {
           String message = String.format(
