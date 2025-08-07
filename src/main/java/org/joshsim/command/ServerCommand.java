@@ -82,8 +82,12 @@ public class ServerCommand implements Callable<Integer> {
                 + processedWorkerUrl);
           }
         } catch (MalformedURLException e) {
-          System.err.println("Warning: Could not parse worker URL for port update: " 
-              + e.getMessage());
+          String message = String.format(
+              "Warning: Could not parse worker URL: %s. Using %s.",
+              e.getMessage(),
+              processedWorkerUrl
+          );
+          System.out.println(message);
         }
       }
       
