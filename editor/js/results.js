@@ -280,10 +280,8 @@ class StatusPresenter {
    */
   _resetProgressBar() {
     const self = this;
-    if (self._progressBar) {
-      self._progressBar.value = 0;
-      self._progressBar.style.display = "block";
-    }
+    self._progressBar.value = 0;
+    self._progressBar.style.display = "block";
   }
 
   /**
