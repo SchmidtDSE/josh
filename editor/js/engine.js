@@ -85,8 +85,8 @@ class WasmEngineBackend {
           // Track current replicate step count
           currentReplicateSteps = currentStep;
           
-          // For step calculation, use known stepsPerReplicate or current step if first replicate
-          const knownStepsPerReplicate = stepsPerReplicate || currentStep;
+          // For step calculation, use known steps or current step if first replicate
+          const knownStepsPerReplicate = firstStepsPerReplicate || currentStep;
           
           // Calculate cumulative steps across all replicates
           const completedReplicates = replicateResults.length;
