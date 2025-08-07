@@ -32,6 +32,8 @@ class MainPresenter {
     self._replicatesCompleted = 0;
     self._replicateResults = [];
     self._metadata = null;
+    self._totalStepsAcrossReplicates = 0;
+    self._completedStepsAcrossReplicates = 0;
 
     self._wasmLayer = new WasmLayer();
 
@@ -108,6 +110,7 @@ class MainPresenter {
     self._currentRequest = request;
     self._replicatesCompleted = 0;
     self._replicateResults = [];
+    self._completedStepsAcrossReplicates = 0;
 
     const simCode = self._editorPresenter.getCode();
     const simName = self._currentRequest.getSimName();
@@ -118,6 +121,12 @@ class MainPresenter {
     Promise.all([futureMetadata, futureExternalData]).then(
       (results) => {
         self._metadata = results[0];
+        
+        // Calculate total steps across all replicates
+        const totalStepsPerReplicate = self._metadata.getTotalSteps() || 0;
+        const numReplicates = self._currentRequest.getReplicates();
+        self._totalStepsAcrossReplicates = totalStepsPerReplicate * numReplicates;
+        
         self._executeInBackend(results[1]);
       },
       (x) => {
@@ -187,6 +196,23 @@ class MainPresenter {
    */
   _onStepCompleted(numCompleted, typeCompleted) {
     const self = this;
+    
+    if (typeCompleted === "steps") {
+      // For step-level progress, numCompleted is the cumulative steps across replicates
+      self._completedStepsAcrossReplicates = numCompleted;
+    } else if (typeCompleted === "replicates") {
+      // For replicate-level progress, calculate cumulative steps
+      const totalStepsPerReplicate = self._metadata ? self._metadata.getTotalSteps() || 0 : 0;
+      self._completedStepsAcrossReplicates = numCompleted * totalStepsPerReplicate;
+    }
+    
+    // Update progress bar
+    self._resultsPresenter._statusPresenter.updateProgressBar(
+      self._completedStepsAcrossReplicates, 
+      self._totalStepsAcrossReplicates
+    );
+    
+    // Update text status
     self._resultsPresenter.onStep(numCompleted, typeCompleted);
   }
 

@@ -84,6 +84,15 @@ function parseEngineResponse(source) {
     };
   }
 
+  const progressMatch = source.match(/^\[progress (\d+) (\d+)\]$/);
+  if (progressMatch) {
+    return {
+      replicate: parseInt(progressMatch[1], 10),
+      type: "progress",
+      steps: parseInt(progressMatch[2], 10)
+    };
+  }
+
   const match = source.match(/^\[(\d+)\] (.+)$/);
   if (!match) {
     throw "Got error engine response: " + source;

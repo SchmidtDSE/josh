@@ -209,6 +209,7 @@ class StatusPresenter {
   constructor(selection) {
     const self = this;
     self._root = selection;
+    self._progressBar = self._root.querySelector(".step-progress-bar");
   }
 
   /**
@@ -221,6 +222,7 @@ class StatusPresenter {
     self._root.querySelector(".complete-icon").style.display = "none";
     self._root.querySelector(".error-display").style.display = "none";
     self._root.querySelectorAll(".finish-display").forEach((x) => x.style.display = "none");
+    self._resetProgressBar();
   }
 
   /**
@@ -253,6 +255,8 @@ class StatusPresenter {
     self._root.querySelector(".completed-minutes").innerHTML = minutes;
     self._root.querySelector(".completed-seconds").innerHTML = seconds;
     self._root.querySelector(".completed-records").innerHTML = numRecords;
+    
+    self.hideProgressBar();
   }
 
   /**
@@ -269,6 +273,36 @@ class StatusPresenter {
     
     const textNode = document.createTextNode(message);
     errorMessageHolder.appendChild(textNode);
+  }
+
+  /**
+   * Resets the progress bar to 0% and makes it visible.
+   */
+  _resetProgressBar() {
+    const self = this;
+    self._progressBar.value = 0;
+    self._progressBar.style.display = "block";
+  }
+
+  /**
+   * Updates the progress bar with the current progress percentage.
+   *
+   * @param {number} completedSteps - The number of steps completed across all replicates.
+   * @param {number} totalSteps - The total number of steps across all replicates.
+   */
+  updateProgressBar(completedSteps, totalSteps) {
+    const self = this;
+    const percentComplete = (completedSteps / totalSteps) * 100;
+    const percentageBounded = Math.max(Math.min(100, percentComplete), 0);
+    self._progressBar.value = percentageBounded;
+  }
+
+  /**
+   * Hides the progress bar when simulation is complete.
+   */
+  hideProgressBar() {
+    const self = this;
+    self._progressBar.style.display = "none";
   }
 
 }

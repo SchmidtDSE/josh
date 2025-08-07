@@ -27,6 +27,8 @@ public class GridInfoExtractor {
   private final Optional<EngineValue> endStrMaybe;
   private final Optional<EngineValue> patchNameMaybe;
   private final Optional<EngineValue> sizeMaybe;
+  private final Optional<EngineValue> stepsLowMaybe;
+  private final Optional<EngineValue> stepsHighMaybe;
   private final EngineValueFactory valueFactory;
 
   /**
@@ -46,6 +48,8 @@ public class GridInfoExtractor {
     endStrMaybe = simulation.getAttributeValue("grid.high");
     patchNameMaybe = simulation.getAttributeValue("grid.patch");
     sizeMaybe = simulation.getAttributeValue("grid.size");
+    stepsLowMaybe = simulation.getAttributeValue("steps.low");
+    stepsHighMaybe = simulation.getAttributeValue("steps.high");
 
     simulation.endSubstep();
   }
@@ -156,6 +160,59 @@ public class GridInfoExtractor {
    */
   public EngineValue getSize() {
     return getSizeMaybe().orElse(valueFactory.build(1, Units.COUNT));
+  }
+
+  /**
+   * Gets the optional steps low value.
+   *
+   * @return Optional containing the steps low value if defined
+   */
+  public Optional<EngineValue> getStepsLowMaybe() {
+    return stepsLowMaybe;
+  }
+
+  /**
+   * Gets the optional steps high value.
+   *
+   * @return Optional containing the steps high value if defined
+   */
+  public Optional<EngineValue> getStepsHighMaybe() {
+    return stepsHighMaybe;
+  }
+
+  /**
+   * Gets the steps low value or default value of 0.
+   *
+   * @return The steps low value or default EngineValue of 0 count if not defined
+   */
+  public EngineValue getStepsLow() {
+    return getStepsLowMaybe().orElse(valueFactory.build(0, Units.COUNT));
+  }
+
+  /**
+   * Gets the steps high value or default value of 10.
+   *
+   * @return The steps high value or default EngineValue of 10 count if not defined
+   */
+  public EngineValue getStepsHigh() {
+    return getStepsHighMaybe().orElse(valueFactory.build(10, Units.COUNT));
+  }
+
+  /**
+   * Calculates the total number of steps in the simulation.
+   *
+   * <p>Total steps = steps.high - steps.low + 1 (since both endpoints are inclusive).</p>
+   *
+   * @return The total number of steps as a long value
+   */
+  public long getTotalSteps() {
+    EngineValue stepsLow = getStepsLow();
+    EngineValue stepsHigh = getStepsHigh();
+    
+    long lowValue = Math.round(stepsLow.getAsDouble());
+    long highValue = Math.round(stepsHigh.getAsDouble());
+    
+    return highValue - lowValue + 1;
   }
 
   /**
