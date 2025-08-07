@@ -47,7 +47,7 @@ class WasmEngineBackend {
     
     return new Promise((resolve, reject) => {
       const replicateResults = [];
-      let stepsPerReplicate = 0;
+      let firstStepsPerReplicate = 0;
       let currentReplicateSteps = 0;
 
       const onSimulationComplete = (results) => {
@@ -57,9 +57,10 @@ class WasmEngineBackend {
         if (multiReplicate) {
           if (replicateResults.length === 1) {
             // First replicate sets the expected step count
-            stepsPerReplicate = currentReplicateSteps;
-          } else if (currentReplicateSteps !== stepsPerReplicate) {
-            throw new Error(`Step count mismatch between replicates: expected ${stepsPerReplicate}, got ${currentReplicateSteps}`);
+            firstStepsPerReplicate = currentReplicateSteps;
+          } else if (currentReplicateSteps !== firstStepsPerReplicate) {
+            const msg = `Step count mismatch between replicates: expected ${firstStepsPerReplicate}, got ${currentReplicateSteps}`;
+            throw new Error(msg);
           }
         }
         
