@@ -86,14 +86,14 @@ function parseEngineResponse(source) {
 
   const match = source.match(/^\[(\d+)\] (.+)$/);
   if (!match) {
-    throw "Got malformed engine response: " + source;
+    throw "Got error engine response: " + source;
   }
 
   const replicate = parseInt(match[1], 10);
   const data = parseDatum(match[2]);
   
   if (!data) {
-    throw "Got malformed engine response.";
+    throw "Got error engine response.";
   }
 
   return {
