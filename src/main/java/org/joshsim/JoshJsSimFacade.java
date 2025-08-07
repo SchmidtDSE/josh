@@ -180,6 +180,8 @@ public class JoshJsSimFacade {
         size.getUnits().toString()
     ));
 
+    outputRecord.put("totalSteps", String.valueOf(extractor.getTotalSteps()));
+
     return MapToMemoryStringConverter.convert("simulationMetadata", outputRecord);
   }
 

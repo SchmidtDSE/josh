@@ -47,6 +47,7 @@ class WasmEngineBackend {
     
     return new Promise((resolve, reject) => {
       const replicateResults = [];
+      let stepsPerReplicate = 0;
 
       const onSimulationComplete = (results) => {
         replicateResults.push(results);
@@ -64,12 +65,28 @@ class WasmEngineBackend {
         reject(error);
       };
 
+      const onStepCallback = (currentStep) => {
+        if (multiReplicate) {
+          // Track the maximum step count to determine steps per replicate
+          if (currentStep > stepsPerReplicate) {
+            stepsPerReplicate = currentStep;
+          }
+          
+          // Calculate cumulative steps across all replicates
+          const completedReplicates = replicateResults.length;
+          const totalStepsCompleted = (completedReplicates * stepsPerReplicate) + currentStep;
+          onStepExternal(totalStepsCompleted);
+        } else {
+          onStepExternal(currentStep);
+        }
+      };
+
       const runReplicate = () => {
         self._wasmLayer.runSimulation(
           simCode,
           simName,
           externalData,
-          multiReplicate ? (x) => x : (x) => onStepExternal(x),
+          onStepCallback,
           runRequest.getPreferBigDecimal()
         ).then(
           (x) => { onSimulationComplete(x); },
@@ -161,7 +178,7 @@ class RemoteEngineBackend {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        const responseReader = new ResponseReader(onReplicateExternal);
+        const responseReader = new ResponseReader(onReplicateExternal, onStepExternal);
 
         const readStream = () => {
           return reader.read().then((x) => {

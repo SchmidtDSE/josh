@@ -275,12 +275,13 @@ class SimulationMetadata {
    * @param {number} endX - The maximum horizontal position of a patch in grid space.
    * @param {number} endY - The maximum vertical positoin of a patch in grid space.
    * @param {number} patchSize - The size of each patch or cell, typically 1.
+   * @param {?number} totalSteps - The total number of steps in the simulation. Defaults to null.
    * @param {?number} minLongitude - The minimum longitude within this grid. Defaults to null.
    * @param {?number} minLatitude - The minimum latitude within this grid. Defaults to null.
    * @param {?number} maxLongitude - The maximum longitude within this grid. Defaults to null.
    * @param {?number} maxLatitude - The maximum latitude within this grid. Defaults to null.
    */
-  constructor(startX, startY, endX, endY, patchSize, minLongitude, minLatitude, maxLongitude,
+  constructor(startX, startY, endX, endY, patchSize, totalSteps, minLongitude, minLatitude, maxLongitude,
         maxLatitude) {
     const self = this;
     self._startX = startX;
@@ -291,6 +292,7 @@ class SimulationMetadata {
 
     const defaultToNull = (x) => x === undefined ? null : x;
     
+    self._totalSteps = defaultToNull(totalSteps);
     self._minLongitude = defaultToNull(minLongitude);
     self._minLatitude = defaultToNull(minLatitude);
     self._maxLongitude = defaultToNull(maxLongitude);
@@ -387,6 +389,16 @@ class SimulationMetadata {
   getMaxLatitude() {
     const self = this;
     return self._maxLatitude;
+  }
+
+  /**
+   * Gets the total number of steps in the simulation.
+   *
+   * @returns {?number} The total number of steps, or null if not specified.
+   */
+  getTotalSteps() {
+    const self = this;
+    return self._totalSteps;
   }
 
   /**
