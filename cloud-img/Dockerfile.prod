@@ -6,4 +6,4 @@ COPY joshsim-fat.jar /app/
 
 EXPOSE 8085
 
-CMD ["java", "-Xmx8g", "-jar", "joshsim-fat.jar", "server", "--port=8085", "--concurrent-workers=10", "--use-http2=true", "--worker-url=\"https://josh-executor-prod-1007495489273.us-west1.run.app/runReplicate\""]
+CMD ["java", "-Xmx8g", "-jar", "joshsim-fat.jar", "server", "--port=8085", "--concurrent-workers=20", "--use-http2=true", "--worker-url=\"https://josh-executor-prod-1007495489273.us-west1.run.app/runReplicate\""]
