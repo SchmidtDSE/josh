@@ -71,12 +71,14 @@ class ResponseReader {
    * Create a new reader which parses external responses.
    *
    * @param {function} onReplicateExternal - Callback to invoke when replicates are ready.
+   * @param {function} onStepExternal - Callback to invoke when step progress is reported.
    */
-  constructor(onReplicateExternal) {
+  constructor(onReplicateExternal, onStepExternal) {
     const self = this;
     self._replicateReducer = new Map();
     self._completeReplicates = [];
     self._onReplicateExternal = onReplicateExternal;
+    self._onStepExternal = onStepExternal || (() => {});
     self._buffer = "";
     self._completedReplicates = 0;
   }
@@ -114,6 +116,10 @@ class ResponseReader {
           );
         }
         self._onReplicateExternal(self._completedReplicates);
+      } else if (intermediate["type"] === "progress") {
+        self._onStepExternal(intermediate["steps"]);
+      } else if (intermediate["type"] === "error") {
+        self._onError("Server error: " + intermediate["message"]);
       }
     });
   }

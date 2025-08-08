@@ -47,9 +47,25 @@ class WasmEngineBackend {
     
     return new Promise((resolve, reject) => {
       const replicateResults = [];
+      let firstStepsPerReplicate = 0;
+      let currentReplicateSteps = 0;
 
       const onSimulationComplete = (results) => {
         replicateResults.push(results);
+        
+        // Validate that all replicates have the same number of steps
+        if (multiReplicate) {
+          if (replicateResults.length === 1) {
+            // First replicate sets the expected step count
+            firstStepsPerReplicate = currentReplicateSteps;
+          } else if (currentReplicateSteps !== firstStepsPerReplicate) {
+            const msg = `Step count mismatch between replicates: expected ${firstStepsPerReplicate}, got ${currentReplicateSteps}`;
+            throw new Error(msg);
+          }
+        }
+        
+        // Reset for next replicate
+        currentReplicateSteps = 0;
        
         const replicatesCompleteCount = replicateResults.length;
         onReplicateExternal(replicatesCompleteCount);
@@ -64,12 +80,29 @@ class WasmEngineBackend {
         reject(error);
       };
 
+      const onStepCallback = (currentStep) => {
+        if (multiReplicate) {
+          // Track current replicate step count
+          currentReplicateSteps = currentStep;
+          
+          // For step calculation, use known steps or current step if first replicate
+          const knownStepsPerReplicate = firstStepsPerReplicate || currentStep;
+          
+          // Calculate cumulative steps across all replicates
+          const completedReplicates = replicateResults.length;
+          const totalStepsCompleted = (completedReplicates * knownStepsPerReplicate) + currentStep;
+          onStepExternal(totalStepsCompleted);
+        } else {
+          onStepExternal(currentStep);
+        }
+      };
+
       const runReplicate = () => {
         self._wasmLayer.runSimulation(
           simCode,
           simName,
           externalData,
-          multiReplicate ? (x) => x : (x) => onStepExternal(x),
+          onStepCallback,
           runRequest.getPreferBigDecimal()
         ).then(
           (x) => { onSimulationComplete(x); },
@@ -161,7 +194,7 @@ class RemoteEngineBackend {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        const responseReader = new ResponseReader(onReplicateExternal);
+        const responseReader = new ResponseReader(onReplicateExternal, onStepExternal);
 
         const readStream = () => {
           return reader.read().then((x) => {

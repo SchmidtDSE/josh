@@ -10,8 +10,7 @@
  *
  * Presenter which maintains a dialog with settings about how a CSV export should be prepared with
  * dynamic control visibility depending on if the simulation metadata has earth coordinates
- * associated. This will generate a data URI with the download and put it in the download link
- * styled as a button.
+ * associated. This will generate a blob URL for download and configure the download link.
  */
 class ExportPresenter {
 
@@ -34,6 +33,7 @@ class ExportPresenter {
 
     self._metadata = null;
     self._dataset = null;
+    self._currentBlobUrl = null;
     self._downloadLink.style.display = "none";
 
     self._attachListeners();
@@ -56,7 +56,7 @@ class ExportPresenter {
     
     self._downloadLink.style.display = "inline-block";
     
-    self._updateDownloadDataUri();
+    self._updateBlobDownload();
   }
 
   /**
@@ -73,29 +73,52 @@ class ExportPresenter {
     self._cancelLink.addEventListener("click", (event) => {
         event.preventDefault();
         self._dialog.close();
+        
+        // Cleanup blob URL on dialog close
+        if (self._currentBlobUrl) {
+          URL.revokeObjectURL(self._currentBlobUrl);
+          self._currentBlobUrl = null;
+        }
     });
 
     self._seriesSelect.addEventListener("change", () => {
-        self._updateDownloadDataUri();
+        self._updateBlobDownload();
     });
 
     self._stepsSelect.addEventListener("change", () => {
-        self._updateDownloadDataUri();
+        self._updateBlobDownload();
     });
 
     self._convertLocationToDegreesCheck.addEventListener("change", () => {
-        self._updateDownloadDataUri();
+        self._updateBlobDownload();
     });
   }
 
   /**
-   * Update the data URI in the download link.
+   * Update the download link with blob URL.
    */
-  _updateDownloadDataUri() {
+  _updateBlobDownload() {
     const self = this;
+    
+    // Browser support check
+    if (!window.Blob || !window.URL || !window.URL.createObjectURL) {
+      alert("Download feature requires a modern browser. Please update your browser.");
+      return;
+    }
+    
     const exportCommand = self._buildExportCommand();
-    const dataUri = buildExportUri(self._metadata, self._dataset, exportCommand);
-    self._downloadLink.href = dataUri;
+    const csvContent = buildExportBlob(self._metadata, self._dataset, exportCommand);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    // Cleanup previous URL
+    if (self._currentBlobUrl) {
+      URL.revokeObjectURL(self._currentBlobUrl);
+    }
+    
+    self._currentBlobUrl = url;
+    self._downloadLink.href = url;
+    self._downloadLink.download = `${exportCommand.getSeriesName()}.csv`;
   }
 
   /**
@@ -172,21 +195,21 @@ class ExportCommand {
 
 
 /**
- * Generate a data URI string containing a CSV export.
+ * Generate CSV content for export.
  *
  * @param {SimulationMetadata} metadata - Metadata about the simulation executed and for which a
    *     dataset is provided.
-   * @param {Array<SimulationResult>} dataset - The results of each replicate where all replicates
-   *     should be serialized to a URI string.
- * @param {ExportCommand} command - Information about how the export data URI should be generated.
- * @returns {string} Data URI string containing the entire export.
+ * @param {Array<SimulationResult>} dataset - The results of each replicate where all replicates
+   *     should be serialized to CSV.
+ * @param {ExportCommand} command - Information about how the export should be generated.
+ * @returns {string} CSV content string.
  */
-function buildExportUri(metadata, dataset, command) {
+function buildExportBlob(metadata, dataset, command) {
   const convertToDegrees = command.shouldConvertLocationToDegrees();
   const rows = [];
 
   if (dataset.length == 0) {
-    return "data:text/csv;charset=utf-8,";
+    return "";
   }
 
   const seriesName = command.getSeriesName();
@@ -208,7 +231,7 @@ function buildExportUri(metadata, dataset, command) {
     };
 
     if (command.isFinalOnly()) {
-      const lastStep = Math.max(...results.map((x) => x.getValue("step")));
+      const lastStep = results.reduce((max, x) => Math.max(max, x.getValue("step")), -Infinity);
       const lastStepResults = results.filter((x) => x.getValue("step") == lastStep);
       addToRows(lastStepResults);
     } else {
@@ -216,15 +239,7 @@ function buildExportUri(metadata, dataset, command) {
     }
   });
 
-  const addToRows = (resultsTarget) => {
-    resultsTarget.forEach((result) => {
-      rows.push(getCsvRow(result, attributesSorted, replicateNum, metadata, convertToDegrees));
-    });
-  }
-
-  const csvContent = rows.join("\n");
-  const filename = `${seriesName}.csv`;
-  return `data:text/csv;charset=utf-8;filename=${filename},${encodeURIComponent(csvContent)}`;
+  return rows.join("\n");
 }
 
 
