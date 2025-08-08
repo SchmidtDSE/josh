@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 
@@ -40,6 +41,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
   private final CloudApiDataLayer apiInternalLayer;
   private final String urlToWorker;
   private final int maxParallelRequests;
+  private final AtomicInteger cumulativeStepCount = new AtomicInteger(0);
 
   /**
    * Create a new leader handler.
@@ -159,6 +161,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
+    
+    // Reset cumulative step counter for this simulation run
+    cumulativeStepCount.set(0);
+    
     // Execute replicates with streaming approach
     List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
@@ -339,8 +345,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
           try {
             String outputLine;
             if (line.startsWith("[progress ")) {
-              // Pass through progress messages without modification
-              outputLine = line + "\n";
+              // Convert per-replicate progress to cumulative
+              int cumulative = cumulativeStepCount.incrementAndGet();
+              outputLine = String.format("[progress %d]\n", cumulative);
             } else {
               // Prepend replicate number to data lines
               outputLine = String.format("[%d] %s\n", replicateNumber, line);

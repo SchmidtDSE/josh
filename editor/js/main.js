@@ -201,17 +201,18 @@ class MainPresenter {
     if (typeCompleted === "steps") {
       // For step-level progress, numCompleted is the cumulative steps across replicates
       self._completedStepsAcrossReplicates = numCompleted;
+      
+      // Update progress bar only for step events
+      self._resultsPresenter._statusPresenter.updateProgressBar(
+        self._completedStepsAcrossReplicates, 
+        self._totalStepsAcrossReplicates
+      );
     } else if (typeCompleted === "replicates") {
       // For replicate-level progress, calculate cumulative steps
       const totalStepsPerReplicate = self._metadata ? self._metadata.getTotalSteps() || 0 : 0;
       self._completedStepsAcrossReplicates = numCompleted * totalStepsPerReplicate;
+      // Don't update progress bar here to avoid wiggling
     }
-    
-    // Update progress bar
-    self._resultsPresenter._statusPresenter.updateProgressBar(
-      self._completedStepsAcrossReplicates, 
-      self._totalStepsAcrossReplicates
-    );
     
     // Conditionally update status text
     if (self._shouldUpdateStatusText(typeCompleted)) {

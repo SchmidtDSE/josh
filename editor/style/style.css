@@ -287,12 +287,12 @@ main {
   width: 300px;
   height: 10px;
   border-radius: 5px;
-  border: 1px solid #ddd;
+  border: 2px solid #D0D0D0;
   background-color: #F0F0F0;
 }
 
 .step-progress-bar.flash {
-  animation: progress-flash 3s ease-in-out;
+  animation: progress-flash 3s ease-in-out infinite;
 }
 
 .step-progress-bar::-webkit-progress-bar {
@@ -300,9 +300,6 @@ main {
   border-radius: 5px;
 }
 
-.step-progress-bar.flash::-webkit-progress-bar {
-  animation: progress-flash 3s ease-in-out;
-}
 
 .step-progress-bar::-webkit-progress-value {
   background-color: #A0A0C0;
@@ -615,8 +612,8 @@ main {
 }
 
 @keyframes progress-flash {
-  0% { background-color: #F0F0F0; }           /* Initial state */
-  66.67% { background-color: #F0F0F0; }       /* Hold for 2 seconds */
-  83.33% { background-color: white; }         /* Fade to white (0.5s) */
-  100% { background-color: #F0F0F0; }         /* Fade back (0.5s) */
+  0% { border-color: #D0D0D0; }              /* Initial state */
+  66.67% { border-color: #D0D0D0; }          /* Hold for 2 seconds */
+  83.33% { border-color: #303030; }          /* Flash to dark (0.5s) */
+  100% { border-color: #D0D0D0; }            /* Fade back (0.5s) */
 }

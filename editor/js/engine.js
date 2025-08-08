@@ -94,15 +94,17 @@ class WasmEngineBackend {
           // Track current replicate step count
           currentReplicateSteps = currentStep;
           
-          // For step calculation, use known steps or current step if first replicate
-          const knownStepsPerReplicate = firstStepsPerReplicate || currentStep;
+          // For multi-replicate, we need to know the total steps per replicate
+          // firstStepsPerReplicate is set after the first replicate completes
+          // It represents the last step index (0-based), so total steps = firstStepsPerReplicate + 1
+          const stepsPerReplicate = firstStepsPerReplicate !== null ? firstStepsPerReplicate + 1 : currentStep + 1;
           
           // Calculate cumulative steps across all replicates
           const completedReplicates = replicateResults.length;
-          const totalStepsCompleted = (completedReplicates * knownStepsPerReplicate) + currentStep;
+          const totalStepsCompleted = (completedReplicates * stepsPerReplicate) + (currentStep + 1);
           onStepExternal(totalStepsCompleted);
         } else {
-          onStepExternal(currentStep);
+          onStepExternal(currentStep + 1);
         }
       };
 
