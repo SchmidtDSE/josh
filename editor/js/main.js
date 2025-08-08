@@ -227,8 +227,8 @@ class MainPresenter {
    */
   _shouldUpdateStatusText(typeCompleted) {
     const self = this;
-    const hasMultipleReplicates = self._currentRequest.getReplicates() > 1;
-    
+    const hasMultipleReplicates = self._currentRequest && self._currentRequest.getReplicates() > 1;
+
     if (hasMultipleReplicates) {
       // Multiple replicates: only update status text on "replicates" events
       return typeCompleted === "replicates";

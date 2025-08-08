@@ -163,9 +163,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
     List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
-      futures.add(executor.submit(() -> 
-          executeReplicateStreaming(code, simulationName, replicateNumber, 
-                                    apiKey, externalData, favorBigDecimal, 
+      futures.add(executor.submit(() ->
+          executeReplicateStreaming(code, simulationName, replicateNumber,
+                                    apiKey, externalData, favorBigDecimal,
                                     httpServerExchange)
       ));
     }
@@ -305,7 +305,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * @throws InterruptedException If the operation is interrupted.
    */
   private void executeReplicateStreaming(String code, String simulationName, int replicateNumber,
-        String apiKey, String externalData, boolean favorBigDecimal, 
+        String apiKey, String externalData, boolean favorBigDecimal,
         HttpServerExchange clientExchange) {
     String bodyString = String.format(
         "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
@@ -345,7 +345,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
               // Prepend replicate number to data lines
               outputLine = String.format("[%d] %s\n", replicateNumber, line);
             }
-            
+
             // Thread-safe write to client
             synchronized (clientExchange.getOutputStream()) {
               clientExchange.getOutputStream().write(outputLine.getBytes());
@@ -355,7 +355,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
             throw new RuntimeException("Error streaming to client", e);
           }
         });
-        
+
         // Send end marker
         synchronized (clientExchange.getOutputStream()) {
           String endMarker = String.format("[end %d]\n", replicateNumber);
