@@ -245,7 +245,16 @@ public class JoshSimWorkerHandler implements HttpHandler {
           layer,
           program,
           simulationName,
-          (step) -> {}, // No step reporting needed for worker
+          (step) -> {
+            // Send progress message without replicate number
+            String progressMessage = String.format("[progress %d]", step);
+            try {
+              httpServerExchange.getOutputStream().write((progressMessage + "\n").getBytes());
+              httpServerExchange.getOutputStream().flush();
+            } catch (IOException e) {
+              SecurityUtil.logSecureError(apiDataLayer, apiKey, "progress", e, null);
+            }
+          },
           useSerial
       );
       return true;

@@ -24,6 +24,15 @@ class WasmEngineBackend {
   }
 
   /**
+   * Get the backend type for conditional logic.
+   *
+   * @returns {string} The backend type "wasm".
+   */
+  getType() {
+    return "wasm";
+  }
+
+  /**
    * Fulfill a run request.
    *
    * @param simCode {string} - The code to run in this simulation.
@@ -134,6 +143,15 @@ class RemoteEngineBackend {
     self._leaderUrl = leaderUrl;
     self._apiKey = apiKey;
     self._external_data_serializer = new ExternalDataSerializer();
+  }
+
+  /**
+   * Get the backend type for conditional logic.
+   *
+   * @returns {string} The backend type "remote".
+   */
+  getType() {
+    return "remote";
   }
 
   /**
