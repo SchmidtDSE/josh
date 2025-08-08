@@ -170,9 +170,15 @@ public class JoshSimLeaderHandler implements HttpHandler {
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
       futures.add(executor.submit(() ->
-          executeReplicateStreaming(code, simulationName, replicateNumber,
-                                    apiKey, externalData, favorBigDecimal,
-                                    httpServerExchange)
+          executeReplicateStreaming(
+              code,
+              simulationName,
+              replicateNumber,
+              apiKey,
+              externalData,
+              favorBigDecimal,
+              httpServerExchange
+          )
       ));
     }
 
