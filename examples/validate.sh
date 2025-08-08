@@ -14,7 +14,7 @@ assert_ok() {
   if [ "$verbose" = true ]; then
     java -jar build/libs/joshsim-fat.jar validate "$1"
   else
-    java -jar build/libs/joshsim-fat.jar validate --supress-info "$1"
+    java -jar build/libs/joshsim-fat.jar validate --suppress-info "$1"
   fi
   local status=$?
   if [ $status -eq 0 ]; then
@@ -28,7 +28,7 @@ assert_not_ok() {
   if [ "$verbose" = true ]; then
     java -jar build/libs/joshsim-fat.jar validate "$1"
   else
-    java -jar build/libs/joshsim-fat.jar validate --supress-info "$1"
+    java -jar build/libs/joshsim-fat.jar validate --suppress-info "$1"
   fi
   local status=$?
   if [ $status -ne 0 ]; then

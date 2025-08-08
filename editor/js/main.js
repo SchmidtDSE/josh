@@ -144,6 +144,7 @@ class MainPresenter {
   _executeInBackend(externalData) {
     const self = this;
     const engineBackend = self._buildEngineBackend();
+    self._currentEngineBackend = engineBackend; // Store for type detection
     engineBackend.execute(
       self._editorPresenter.getCode(),
       self._currentRequest,
@@ -200,20 +201,42 @@ class MainPresenter {
     if (typeCompleted === "steps") {
       // For step-level progress, numCompleted is the cumulative steps across replicates
       self._completedStepsAcrossReplicates = numCompleted;
+      
+      // Update progress bar only for step events
+      self._resultsPresenter._statusPresenter.updateProgressBar(
+        self._completedStepsAcrossReplicates, 
+        self._totalStepsAcrossReplicates
+      );
     } else if (typeCompleted === "replicates") {
       // For replicate-level progress, calculate cumulative steps
       const totalStepsPerReplicate = self._metadata ? self._metadata.getTotalSteps() || 0 : 0;
       self._completedStepsAcrossReplicates = numCompleted * totalStepsPerReplicate;
+      // Don't update progress bar here to avoid wiggling
     }
     
-    // Update progress bar
-    self._resultsPresenter._statusPresenter.updateProgressBar(
-      self._completedStepsAcrossReplicates, 
-      self._totalStepsAcrossReplicates
-    );
-    
-    // Update text status
-    self._resultsPresenter.onStep(numCompleted, typeCompleted);
+    // Conditionally update status text
+    if (self._shouldUpdateStatusText(typeCompleted)) {
+      self._resultsPresenter.onStep(numCompleted, typeCompleted);
+    }
+  }
+
+  /**
+   * Determine if status text should be updated based on backend type and replicate count.
+   *
+   * @param {string} typeCompleted - The type of items being reported like steps or replicates.
+   * @returns {boolean} True if status text should be updated.
+   */
+  _shouldUpdateStatusText(typeCompleted) {
+    const self = this;
+    const hasMultipleReplicates = self._currentRequest && self._currentRequest.getReplicates() > 1;
+
+    if (hasMultipleReplicates) {
+      // Multiple replicates: only update status text on "replicates" events
+      return typeCompleted === "replicates";
+    } else {
+      // Single replicate: always update status text on "steps" events
+      return typeCompleted === "steps";
+    }
   }
 
   /**

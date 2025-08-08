@@ -25,6 +25,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 
 /**
@@ -39,6 +41,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
   private final CloudApiDataLayer apiInternalLayer;
   private final String urlToWorker;
   private final int maxParallelRequests;
+  private final AtomicInteger cumulativeStepCount = new AtomicInteger(0);
 
   /**
    * Create a new leader handler.
@@ -158,40 +161,42 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
-    List<Future<String>> futures = new ArrayList<>();
-
+    
+    // Reset cumulative step counter for this simulation run
+    cumulativeStepCount.set(0);
+    
+    // Execute replicates with streaming approach
+    List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
       final int replicateNumber = i;
-      futures.add(executor.submit(
-          () -> executeReplicate(
+      futures.add(executor.submit(() ->
+          executeReplicateStreaming(
               code,
               simulationName,
               replicateNumber,
               apiKey,
               externalData,
-              favorBigDecimal
+              favorBigDecimal,
+              httpServerExchange
           )
       ));
     }
 
     try {
-      boolean hasErrors = false;
-      for (Future<String> future : futures) {
+      // Wait for all replicates to complete
+      for (Future<?> future : futures) {
         try {
-          String result = future.get();
-          if (result != null) {
-            httpServerExchange.getOutputStream().write(result.getBytes());
-            httpServerExchange.getOutputStream().flush();
-          }
+          future.get();
         } catch (Exception e) {
-          hasErrors = true;
           System.err.println("Exception in replicate execution: " 
               + e.getClass().getSimpleName() + ": " + e.getMessage());
           // Extract meaningful error message from the exception
           String errorMessage = extractErrorMessage(e);
           String errorOutput = String.format("[error] %s\n", errorMessage);
-          httpServerExchange.getOutputStream().write(errorOutput.getBytes());
-          httpServerExchange.getOutputStream().flush();
+          synchronized (httpServerExchange.getOutputStream()) {
+            httpServerExchange.getOutputStream().write(errorOutput.getBytes());
+            httpServerExchange.getOutputStream().flush();
+          }
         }
       }
       
@@ -311,8 +316,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
    * @throws IOException If an I/O error occurs when sending or receiving.
    * @throws InterruptedException If the operation is interrupted.
    */
-  private String executeReplicate(String code, String simulationName, int replicateNumber,
-        String apiKey, String externalData, boolean favorBigDecimal) {
+  private void executeReplicateStreaming(String code, String simulationName, int replicateNumber,
+        String apiKey, String externalData, boolean favorBigDecimal,
+        HttpServerExchange clientExchange) {
     String bodyString = String.format(
         "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
         URLEncoder.encode(code, StandardCharsets.UTF_8),
@@ -330,9 +336,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
         .POST(body)
         .build();
 
-    HttpResponse<String> response = null;
+    HttpResponse<Stream<String>> response = null;
     try {
-      response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      response = client.send(request, HttpResponse.BodyHandlers.ofLines());
     } catch (IOException | InterruptedException e) {
       System.err.println("Worker connection failed for replicate " + replicateNumber 
           + " to " + urlToWorker + ": " + e.getMessage());
@@ -340,16 +346,41 @@ public class JoshSimLeaderHandler implements HttpHandler {
     }
 
     if (response.statusCode() == 200) {
-      String[] lines = response.body().split("\n");
-      StringBuilder result = new StringBuilder();
-      for (String line : lines) {
-        result.append(String.format("[%d] %s\n", replicateNumber, line));
+      try {
+        response.body().forEach(line -> {
+          try {
+            String outputLine;
+            if (line.startsWith("[progress ")) {
+              // Convert per-replicate progress to cumulative
+              int cumulative = cumulativeStepCount.incrementAndGet();
+              outputLine = String.format("[progress %d]\n", cumulative);
+            } else {
+              // Prepend replicate number to data lines
+              outputLine = String.format("[%d] %s\n", replicateNumber, line);
+            }
+
+            // Thread-safe write to client
+            synchronized (clientExchange.getOutputStream()) {
+              clientExchange.getOutputStream().write(outputLine.getBytes());
+              clientExchange.getOutputStream().flush();
+            }
+          } catch (IOException e) {
+            throw new RuntimeException("Error streaming to client", e);
+          }
+        });
+
+        // Send end marker
+        synchronized (clientExchange.getOutputStream()) {
+          String endMarker = String.format("[end %d]\n", replicateNumber);
+          clientExchange.getOutputStream().write(endMarker.getBytes());
+          clientExchange.getOutputStream().flush();
+        }
+      } catch (Exception e) {
+        throw new RuntimeException("Error processing response stream", e);
       }
-      result.append(String.format("[end %d]\n", replicateNumber));
-      return result.toString();
     } else {
       // Handle different error status codes from worker with informative messages
-      String errorBody = response.body() != null ? response.body() : "No error details provided";
+      String errorBody = "No error details available for streaming response";
       String errorMessage = buildWorkerErrorMessage(
           response.statusCode(),
           errorBody,
