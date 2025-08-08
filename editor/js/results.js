@@ -217,7 +217,7 @@ class StatusPresenter {
    */
   resetProgress() {
     const self = this;
-    self._root.querySelector(".status-text").innerHTML = "Starting...";
+    self._root.querySelector(".status-text").innerHTML = "Running...";
     self._root.querySelector(".running-icon").style.display = "inline-block";
     self._root.querySelector(".complete-icon").style.display = "none";
     self._root.querySelector(".error-display").style.display = "none";
