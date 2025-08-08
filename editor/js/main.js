@@ -144,6 +144,7 @@ class MainPresenter {
   _executeInBackend(externalData) {
     const self = this;
     const engineBackend = self._buildEngineBackend();
+    self._currentEngineBackend = engineBackend; // Store for type detection
     engineBackend.execute(
       self._editorPresenter.getCode(),
       self._currentRequest,
@@ -212,8 +213,29 @@ class MainPresenter {
       self._totalStepsAcrossReplicates
     );
     
-    // Update text status
-    self._resultsPresenter.onStep(numCompleted, typeCompleted);
+    // Conditionally update status text
+    if (self._shouldUpdateStatusText(typeCompleted)) {
+      self._resultsPresenter.onStep(numCompleted, typeCompleted);
+    }
+  }
+
+  /**
+   * Determine if status text should be updated based on backend type and replicate count.
+   *
+   * @param {string} typeCompleted - The type of items being reported like steps or replicates.
+   * @returns {boolean} True if status text should be updated.
+   */
+  _shouldUpdateStatusText(typeCompleted) {
+    const self = this;
+    const hasMultipleReplicates = self._currentRequest && self._currentRequest.getReplicates() > 1;
+
+    if (hasMultipleReplicates) {
+      // Multiple replicates: only update status text on "replicates" events
+      return typeCompleted === "replicates";
+    } else {
+      // Single replicate: always update status text on "steps" events
+      return typeCompleted === "steps";
+    }
   }
 
   /**

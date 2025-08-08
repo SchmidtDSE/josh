@@ -84,12 +84,11 @@ function parseEngineResponse(source) {
     };
   }
 
-  const progressMatch = source.match(/^\[progress (\d+) (\d+)\]$/);
+  const progressMatch = source.match(/^\[progress (\d+)\]$/);
   if (progressMatch) {
     return {
-      replicate: parseInt(progressMatch[1], 10),
       type: "progress",
-      steps: parseInt(progressMatch[2], 10)
+      steps: parseInt(progressMatch[1], 10)
     };
   }
 
