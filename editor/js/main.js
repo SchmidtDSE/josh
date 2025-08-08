@@ -229,12 +229,12 @@ class MainPresenter {
     const self = this;
     const hasMultipleReplicates = self._currentRequest.getReplicates() > 1;
     
-    if (!hasMultipleReplicates) {
-      // Single replicate: always update status text on "steps" events
-      return typeCompleted === "steps";
-    } else {
+    if (hasMultipleReplicates) {
       // Multiple replicates: only update status text on "replicates" events
       return typeCompleted === "replicates";
+    } else {
+      // Single replicate: always update status text on "steps" events
+      return typeCompleted === "steps";
     }
   }
 
