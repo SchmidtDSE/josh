@@ -1,6 +1,6 @@
-importScripts("../war/js/JoshSim.js?v=0.0.3");
-importScripts("../war/wasm-gc/JoshSim.wasm-runtime.js?v=0.0.3");
-importScripts("parse.js?v=0.0.3");
+importScripts("/war/js/JoshSim.js?v=0.0.3");
+importScripts("/war/wasm-gc/JoshSim.wasm-runtime.js?v=0.0.3");
+importScripts("/js/parse.js?v=0.0.3");
 
 let wasmLayer = null;
 let postMessage = null;
@@ -44,7 +44,7 @@ self.onmessage = async function(e) {
   
   if (type === "init") {
     try {
-      wasmLayer = await TeaVM.wasmGC.load("../war/wasm-gc/JoshSim.wasm");
+      wasmLayer = await TeaVM.wasmGC.load("/war/wasm-gc/JoshSim.wasm");
       console.log("Started engine thread with WASM.");
     } catch (e) {
       console.log("Failed to load WASM, falling back to JS due to error:" + e);

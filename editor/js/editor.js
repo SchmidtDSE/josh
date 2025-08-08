@@ -116,7 +116,7 @@ class EditorPresenter {
       self._timeout = setTimeout(() => self._onChange(self.getCode()), 1000);
     });
 
-    ace.config.set("basePath", "third_party");
+    ace.config.set("basePath", "/third_party");
     ace.config.loadModule("ace/ext/searchbox");
   }
 
