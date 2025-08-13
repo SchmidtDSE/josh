@@ -330,16 +330,6 @@ public class ConfigInputParser {
   }
 
   /**
-   * Checks if a character is a plus or minus sign.
-   *
-   * @param c the character to check
-   * @return true if the character is '+' or '-', false otherwise
-   */
-  private boolean isSign(char c) {
-    return c == '+' || c == '-';
-  }
-
-  /**
    * Checks if a character is valid for starting a variable name.
    * 
    * <p>According to Josh grammar: IDENTIFIER_: [A-Za-z][A-Za-z0-9]*</p>
