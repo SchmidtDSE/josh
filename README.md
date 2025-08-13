@@ -232,5 +232,6 @@ We use the following open source technologies:
 - [Tippy.js](https://atomiks.github.io/tippyjs/) for tooltips under [MIT](https://github.com/atomiks/tippyjs/blob/master/LICENSE).
 - [UCAR NetCDF](https://www.unidata.ucar.edu/software/netcdf-java/) for NetCDF support under [BSD-3](https://github.com/Unidata/netcdf-java/blob/master/LICENSE).
 - [Undertow](https://undertow.io/) for the local web server under [Apache v2](https://github.com/undertow-io/undertow/blob/master/LICENSE.txt).
+- [cdibase](https://github.com/sampottinger/cdibase) for automaton parsing patterns under [Apache v2](https://github.com/sampottinger/cdibase/blob/main/LICENSE).
 
 We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).
