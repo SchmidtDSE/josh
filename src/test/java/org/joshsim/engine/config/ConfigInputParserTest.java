@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.StringJoiner;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +25,14 @@ class ConfigInputParserTest {
   @Test
   void testParseExampleJshcFile() {
     // Arrange
-    String input = "# Group 1\n"
-        + "testVar1 = 5 meters\n"
-        + "testVar2 =  10m\n"
-        + "\n"
-        + "# Group 2\n"
-        + "testVar3  = 15  km";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("# Group 1");
+    joiner.add("testVar1 = 5 meters");
+    joiner.add("testVar2 =  10m");
+    joiner.add("");
+    joiner.add("# Group 2");
+    joiner.add("testVar3  = 15  km");
+    String input = joiner.toString();
 
     // Act
     Config config = parser.parse(input);
@@ -70,9 +73,11 @@ class ConfigInputParserTest {
   @Test
   void testParseCommentsOnly() {
     // Arrange
-    String input = "# This is a comment\n"
-        + "# Another comment\n"
-        + "   # Indented comment";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("# This is a comment");
+    joiner.add("# Another comment");
+    joiner.add("   # Indented comment");
+    String input = joiner.toString();
 
     // Act
     Config config = parser.parse(input);
@@ -126,9 +131,11 @@ class ConfigInputParserTest {
   @Test
   void testParseWithVariousWhitespace() {
     // Arrange
-    String input = "   var1   =   42   meters   \n"
-        + "\tvar2\t=\t3.14\tcount\t\n"
-        + "var3= 100 km";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("   var1   =   42   meters   ");
+    joiner.add("\tvar2\t=\t3.14\tcount\t");
+    joiner.add("var3= 100 km");
+    String input = joiner.toString();
 
     // Act
     Config config = parser.parse(input);
@@ -145,8 +152,10 @@ class ConfigInputParserTest {
   @Test
   void testParseWithInlineComments() {
     // Arrange
-    String input = "var1 = 42 meters # This is a comment\n"
-        + "var2 = 3.14 # Another comment";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("var1 = 42 meters # This is a comment");
+    joiner.add("var2 = 3.14 # Another comment");
+    String input = joiner.toString();
 
     // Act
     Config config = parser.parse(input);
@@ -297,10 +306,12 @@ class ConfigInputParserTest {
   @Test
   void testParseMultipleVariables() {
     // Arrange
-    String input = "var1 = 1 count\n"
-        + "var2 = 2.5 meters\n"
-        + "var3 = 100 km\n"
-        + "var4 = 0";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("var1 = 1 count");
+    joiner.add("var2 = 2.5 meters");
+    joiner.add("var3 = 100 km");
+    joiner.add("var4 = 0");
+    String input = joiner.toString();
 
     // Act
     Config config = parser.parse(input);
@@ -349,9 +360,11 @@ class ConfigInputParserTest {
   @Test
   void testParseLineNumberInErrorMessages() {
     // Arrange
-    String input = "var1 = 42\n"
-        + "var2 = 3.14\n"
-        + "invalid@name = 100";
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("var1 = 42");
+    joiner.add("var2 = 3.14");
+    joiner.add("invalid@name = 100");
+    String input = joiner.toString();
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
