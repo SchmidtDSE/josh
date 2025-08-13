@@ -119,7 +119,7 @@ class ResponseReader {
       } else if (intermediate["type"] === "progress") {
         self._onStepExternal(intermediate["steps"]);
       } else if (intermediate["type"] === "error") {
-        self._onError("Server error: " + intermediate["message"]);
+        throw new Error("Server error: " + intermediate["message"]);
       }
     });
   }
