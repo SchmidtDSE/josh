@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.config;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
@@ -85,6 +87,8 @@ public class ConfigInputParser {
 
   /**
    * Resets the parser state for a new parse operation.
+   * 
+   * <p>Initializes all state variables to their default values.</p>
    */
   private void reset() {
     currentState = State.IDLE;
@@ -97,6 +101,13 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IDLE state.
+   * 
+   * <p>Handles the start of new lines, looking for comments or variable names.</p>
+   *
+   * @param c the character to process
+   * @param position the position in the input string
+   * @return the next state to transition to
+   * @throws IllegalArgumentException if an invalid character is encountered
    */
   private State processIdle(char c, int position) {
     return switch (c) {
@@ -118,6 +129,11 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_COMMENT state.
+   * 
+   * <p>Ignores all characters until a newline is encountered.</p>
+   *
+   * @param c the character to process
+   * @return the next state to transition to
    */
   private State processComment(char c) {
     return switch (c) {
@@ -128,6 +144,14 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_VARIABLE_NAME state.
+   * 
+   * <p>Builds up the variable name character by character until an equals sign or
+   * whitespace is encountered.</p>
+   *
+   * @param c the character to process
+   * @param position the position in the input string
+   * @return the next state to transition to
+   * @throws IllegalArgumentException if an invalid character is encountered
    */
   private State processVariableName(char c, int position) {
     return switch (c) {
@@ -161,6 +185,13 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_EQUALS_SECTION state.
+   * 
+   * <p>Handles the area around the equals sign, allowing optional whitespace.</p>
+   *
+   * @param c the character to process
+   * @param position the position in the input string
+   * @return the next state to transition to
+   * @throws IllegalArgumentException if missing equals or value
    */
   private State processEqualsSection(char c, int position) {
     return switch (c) {
@@ -197,6 +228,11 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_VALUE state.
+   * 
+   * <p>Accumulates the value string until a newline or comment is encountered.</p>
+   *
+   * @param c the character to process
+   * @return the next state to transition to
    */
   private State processValue(char c) {
     return switch (c) {
@@ -217,6 +253,10 @@ public class ConfigInputParser {
 
   /**
    * Finalizes the current variable by parsing its value and adding it to the builder.
+   * 
+   * <p>Validates that the variable name and value are non-empty before adding to config.</p>
+   *
+   * @throws IllegalArgumentException if the value is empty
    */
   private void finalizeVariable() {
     if (varName.length() == 0) {
@@ -243,124 +283,83 @@ public class ConfigInputParser {
 
   /**
    * Parses a value string that may contain units.
+   * 
+   * <p>Parses values in the format supported by Josh: optional sign, digits with optional
+   * decimal point, followed by optional units. No exponential notation is supported.</p>
+   *
+   * @param valueString the string containing a number and optional units
+   * @param variableName the name of the variable being parsed (for error messages)
+   * @return the parsed EngineValue with appropriate units
+   * @throws IllegalArgumentException if the value format is invalid
    */
   private EngineValue parseValueWithUnits(String valueString, String variableName) {
     String trimmed = valueString.trim();
     
-    // First try to split on whitespace
-    String[] parts = trimmed.split("\\s+");
+    // Use regex to match Josh number format and units in one pass
+    // Pattern: optional +/-, digits, optional decimal point and more digits, then optional units
+    String valuePattern = "^([+-]?\\d+(?:\\.\\d+)?)\\s*(.*)$";
+    Pattern pattern = Pattern.compile(valuePattern);
+    Matcher matcher = pattern.matcher(trimmed);
     
-    if (parts.length == 1) {
-      // Check if this is a number followed immediately by units (like "10m")
-      String part = parts[0];
-      
-      // Try to find where the number ends and units begin
-      int numberEnd = 0;
-      boolean foundDecimalPoint = false;
-      boolean foundExponent = false;
-      
-      // Handle negative numbers
-      if (numberEnd < part.length()
-          && (part.charAt(numberEnd) == '-' || part.charAt(numberEnd) == '+')) {
-        numberEnd++;
-      }
-      
-      // Find the end of the numeric part
-      while (numberEnd < part.length()) {
-        char c = part.charAt(numberEnd);
-        if (Character.isDigit(c)) {
-          numberEnd++;
-        } else if (c == '.' && !foundDecimalPoint) {
-          foundDecimalPoint = true;
-          numberEnd++;
-        } else if ((c == 'e' || c == 'E') && !foundExponent && numberEnd > 0) {
-          foundExponent = true;
-          numberEnd++;
-          // Check for optional sign after 'e'
-          if (numberEnd < part.length()
-              && (part.charAt(numberEnd) == '-' || part.charAt(numberEnd) == '+')) {
-            numberEnd++;
-          }
-        } else {
-          break; // End of numeric part
-        }
-      }
-      
-      if (numberEnd == 0) {
-        throw new IllegalArgumentException(
-            "Invalid number format '" + part + "' for variable '" + variableName 
-            + "' (line " + lineNumber + ")");
-      }
-      
-      if (numberEnd == part.length()) {
-        // Just a number, no units
-        try {
-          return factory.parseNumber(part, Units.EMPTY);
-        } catch (NumberFormatException e) {
-          throw new IllegalArgumentException(
-              "Invalid number format '" + part + "' for variable '" + variableName 
-              + "' (line " + lineNumber + ")", e);
-        }
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(
+          "Invalid value format '" + trimmed + "' for variable '" + variableName 
+          + "' (line " + lineNumber + ")");
+    }
+    
+    String numberPart = matcher.group(1);
+    String unitsPart = matcher.group(2).trim();
+    
+    try {
+      // Parse based on whether units are present
+      if (unitsPart.isEmpty()) {
+        return factory.parseNumber(numberPart, Units.EMPTY);
       } else {
-        // Number followed by units without space (like "10m")
-        String numberPart = part.substring(0, numberEnd);
-        String unitsPart = part.substring(numberEnd);
-        
-        try {
-          Units units = Units.of(unitsPart);
-          return factory.parseNumber(numberPart, units);
-        } catch (NumberFormatException e) {
-          throw new IllegalArgumentException(
-              "Invalid number format '" + numberPart + "' for variable '" + variableName 
-              + "' (line " + lineNumber + ")", e);
-        } catch (IllegalArgumentException e) {
-          throw new IllegalArgumentException(
-              "Invalid units '" + unitsPart + "' for variable '" + variableName 
-              + "' (line " + lineNumber + ")", e);
-        }
-      }
-    } else if (parts.length >= 2) {
-      // Number with units separated by spaces - reconstruct units from all parts after the first
-      String numberPart = parts[0];
-      StringBuilder unitsBuilder = new StringBuilder();
-      for (int i = 1; i < parts.length; i++) {
-        if (i > 1) {
-          unitsBuilder.append(" ");
-        }
-        unitsBuilder.append(parts[i]);
-      }
-      String unitsPart = unitsBuilder.toString();
-      
-      try {
         Units units = Units.of(unitsPart);
         return factory.parseNumber(numberPart, units);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(
-            "Invalid number format '" + numberPart + "' for variable '" + variableName 
-            + "' (line " + lineNumber + ")", e);
-      } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(
-            "Invalid units '" + unitsPart + "' for variable '" + variableName 
-            + "' (line " + lineNumber + ")", e);
       }
-    } else {
+    } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
-          "Invalid value format '" + valueString + "' for variable '" + variableName 
-          + "' (line " + lineNumber + ")");
+          "Invalid number format '" + numberPart + "' for variable '" + variableName 
+          + "' (line " + lineNumber + ")", e);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid units '" + unitsPart + "' for variable '" + variableName 
+          + "' (line " + lineNumber + ")", e);
     }
   }
 
   /**
+   * Checks if a character is a plus or minus sign.
+   *
+   * @param c the character to check
+   * @return true if the character is '+' or '-', false otherwise
+   */
+  private boolean isSign(char c) {
+    return c == '+' || c == '-';
+  }
+
+  /**
    * Checks if a character is valid for starting a variable name.
+   * 
+   * <p>According to Josh grammar: IDENTIFIER_: [A-Za-z][A-Za-z0-9]*</p>
+   *
+   * @param c the character to check
+   * @return true if the character is a letter, false otherwise
    */
   private boolean isValidVariableNameStart(char c) {
-    return Character.isLetter(c) || c == '_';
+    return Character.isLetter(c);
   }
 
   /**
    * Checks if a character is valid within a variable name.
+   * 
+   * <p>According to Josh grammar: IDENTIFIER_: [A-Za-z][A-Za-z0-9]*</p>
+   *
+   * @param c the character to check
+   * @return true if the character is a letter or digit, false otherwise
    */
   private boolean isValidVariableNameChar(char c) {
-    return Character.isLetterOrDigit(c) || c == '_';
+    return Character.isLetterOrDigit(c);
   }
 }
