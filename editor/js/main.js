@@ -54,7 +54,7 @@ class MainPresenter {
 
     self._dataPresenter = new DataFilesPresenter(
       "open-data-dialog-button",
-      "external-data-dialog"
+      "data-dialog"
     );
 
     self._resultsPresenter = new ResultsPresenter("results");
