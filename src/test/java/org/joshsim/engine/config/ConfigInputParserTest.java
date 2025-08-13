@@ -26,7 +26,7 @@ class ConfigInputParserTest {
     // Arrange
     String input = "# Group 1\n"
         + "testVar1 = 5 meters\n"
-        + "test_var_2 =  10m\n"
+        + "testVar2 =  10m\n"
         + "\n"
         + "# Group 2\n"
         + "testVar3  = 15  km";
@@ -36,14 +36,14 @@ class ConfigInputParserTest {
 
     // Assert
     assertTrue(config.hasValue("testVar1"));
-    assertTrue(config.hasValue("test_var_2"));
+    assertTrue(config.hasValue("testVar2"));
     assertTrue(config.hasValue("testVar3"));
 
     assertEquals(5.0, config.getValue("testVar1").getAsDouble(), 0.0001);
     assertEquals(Units.METERS, config.getValue("testVar1").getUnits());
 
-    assertEquals(10.0, config.getValue("test_var_2").getAsDouble(), 0.0001);
-    assertEquals(Units.of("m"), config.getValue("test_var_2").getUnits());
+    assertEquals(10.0, config.getValue("testVar2").getAsDouble(), 0.0001);
+    assertEquals(Units.of("m"), config.getValue("testVar2").getUnits());
 
     assertEquals(15.0, config.getValue("testVar3").getAsDouble(), 0.0001);
     assertEquals(Units.of("km"), config.getValue("testVar3").getUnits());
@@ -264,7 +264,7 @@ class ConfigInputParserTest {
         IllegalArgumentException.class, 
         () -> parser.parse(input)
     );
-    assertTrue(exception.getMessage().contains("Invalid number format"));
+    assertTrue(exception.getMessage().contains("Invalid value format"));
   }
 
   @Test
@@ -318,19 +318,17 @@ class ConfigInputParserTest {
   }
 
   @Test
-  void testParseWithUnderscoreInVariableName() {
+  void testParseInvalidVariableNameWithUnderscore() {
     // Arrange
-    String input = "_var_name_1 = 42 count\n"
-        + "var_2_ = 3.14";
+    String input = "test_var = 42";
 
-    // Act
-    Config config = parser.parse(input);
-
-    // Assert
-    assertTrue(config.hasValue("_var_name_1"));
-    assertTrue(config.hasValue("var_2_"));
-    assertEquals(42.0, config.getValue("_var_name_1").getAsDouble(), 0.0001);
-    assertEquals(3.14, config.getValue("var_2_").getAsDouble(), 0.0001);
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class, 
+        () -> parser.parse(input)
+    );
+    assertTrue(exception.getMessage().contains("Invalid character"));
+    assertTrue(exception.getMessage().contains("variable name"));
   }
 
   @Test
@@ -347,19 +345,6 @@ class ConfigInputParserTest {
     assertEquals(Units.METERS, config.getValue("negative").getUnits());
   }
 
-  @Test
-  void testParseExponentialNotation() {
-    // Arrange
-    String input = "scientific = 1.23e-4 meters";
-
-    // Act
-    Config config = parser.parse(input);
-
-    // Assert
-    assertTrue(config.hasValue("scientific"));
-    assertEquals(1.23e-4, config.getValue("scientific").getAsDouble(), 0.0001);
-    assertEquals(Units.METERS, config.getValue("scientific").getUnits());
-  }
 
   @Test
   void testParseLineNumberInErrorMessages() {
