@@ -16,6 +16,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
+import org.joshsim.lang.bridge.NoOpConfigGetter;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.precompute.JshdExternalGetter;
 
@@ -143,7 +144,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         simulation,
         converter,
         prototypeStore,
-        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
+        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
+        new NoOpConfigGetter()
     );
 
     builtBridge = Optional.of(newBridge);

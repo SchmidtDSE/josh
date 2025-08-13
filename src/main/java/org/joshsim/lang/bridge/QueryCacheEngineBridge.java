@@ -42,10 +42,12 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to get external resources.
+   * @param configGetter Strategy to get configuration resources.
    */
   public QueryCacheEngineBridge(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
-        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter) {
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
+        ConfigGetter configGetter) {
 
     super(
         valueFactory,
@@ -53,7 +55,8 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         simulation,
         converter,
         prototypeStore,
-        externalResourceGetter
+        externalResourceGetter,
+        configGetter
     );
     cachedPatchesByGeometry = new HashMap<>();
   }
@@ -68,11 +71,13 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to get external resources.
+   * @param configGetter Strategy to get configuration resources.
    * @param replicate The replicate to use for testing.
    */
   QueryCacheEngineBridge(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
         MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
-        ExternalResourceGetter externalResourceGetter, Replicate replicate) {
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter, 
+        Replicate replicate) {
     super(
         valueFactory,
         geometryFactory,
@@ -80,6 +85,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         converter,
         prototypeStore,
         externalResourceGetter,
+        configGetter,
         replicate
     );
     cachedPatchesByGeometry = new HashMap<>();

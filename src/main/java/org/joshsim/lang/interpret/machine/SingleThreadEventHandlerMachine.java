@@ -817,6 +817,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }
 
+  @Override
+  public void pushConfig(String name) {
+    push(bridge.getConfig(name));
+  }
+
   /**
    * Get a value from the top of the stack, converting it if in a conversion group.
    *

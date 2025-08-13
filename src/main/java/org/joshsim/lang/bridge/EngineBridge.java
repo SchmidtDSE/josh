@@ -168,6 +168,14 @@ public interface EngineBridge {
   EngineValue getExternal(GeoKey key, String name, long step);
 
   /**
+   * Get a configuration value by name.
+   *
+   * @param name The name of the configuration value to retrieve.
+   * @return The configuration value as an EngineValue.
+   */
+  EngineValue getConfig(String name);
+
+  /**
    * Get the factory to use in building engine values.
    *
    * @return Value factory to use across the simulation this bridge supports.

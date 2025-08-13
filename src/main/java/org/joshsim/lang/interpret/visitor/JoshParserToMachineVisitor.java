@@ -12,6 +12,7 @@ import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.visitor.delegates.DelegateToolbox;
+import org.joshsim.lang.interpret.visitor.delegates.JoshConfigVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshDistributionVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshExternalVisitor;
 import org.joshsim.lang.interpret.visitor.delegates.JoshFunctionVisitor;
@@ -35,6 +36,7 @@ import org.joshsim.lang.interpret.visitor.delegates.JoshValueVisitor;
 public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
   private final JoshValueVisitor valueVisitor;
   private final JoshExternalVisitor externalVisitor;
+  private final JoshConfigVisitor configVisitor;
   private final JoshMathematicsVisitor mathematicsVisitor;
   private final JoshStringOperationVisitor stringOperationVisitor;
   private final JoshLogicalVisitor logicalVisitor;
@@ -55,6 +57,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory, bridgeGetter);
     valueVisitor = new JoshValueVisitor(toolbox);
     externalVisitor = new JoshExternalVisitor(toolbox);
+    configVisitor = new JoshConfigVisitor(toolbox);
     mathematicsVisitor = new JoshMathematicsVisitor(toolbox);
     stringOperationVisitor = new JoshStringOperationVisitor(toolbox);
     logicalVisitor = new JoshLogicalVisitor(toolbox);
@@ -94,6 +97,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
 
   public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
     return externalVisitor.visitExternalValueAtTime(ctx);
+  }
+
+  public Fragment visitConfigValue(JoshLangParser.ConfigValueContext ctx) {
+    return configVisitor.visitConfigValue(ctx);
   }
 
   public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
