@@ -51,20 +51,20 @@ public class JshcConfigGetter implements ConfigGetter {
     // Ensure the name ends with .jshc
     String fileName = name;
     if (!fileName.endsWith(".jshc")) {
-      fileName = fileName + ".jshc";
+      fileName += ".jshc";
     }
 
     try (InputStream inputStream = inputStrategy.open(fileName)) {
       // Load the file content
       String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-      
+
       // Parse the config
       ConfigInputParser parser = new ConfigInputParser(valueFactory);
       Config config = parser.parse(content);
-      
+
       // Cache it
       configCache.put(name, config);
-      
+
       return config;
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to load config file: " + fileName, e);

@@ -60,14 +60,14 @@ public class ConfigInputParser {
    */
   public Config parse(String input) {
     reset();
-    
+
     for (int i = 0; i < input.length(); i++) {
       char c = input.charAt(i);
-      
+
       if (c == '\n') {
         lineNumber++;
       }
-      
+
       currentState = switch (currentState) {
         case IDLE -> processIdle(c, i);
         case IN_COMMENT -> processComment(c);
@@ -76,18 +76,18 @@ public class ConfigInputParser {
         case IN_VALUE -> processValue(c);
       };
     }
-    
+
     // Handle case where file ends while parsing a value
     if (currentState == State.IN_VALUE) {
       finalizeVariable();
     }
-    
+
     return builder.build();
   }
 
   /**
    * Resets the parser state for a new parse operation.
-   * 
+   *
    * <p>Initializes all state variables to their default values.</p>
    */
   private void reset() {
@@ -101,7 +101,7 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IDLE state.
-   * 
+   *
    * <p>Handles the start of new lines, looking for comments or variable names.</p>
    *
    * @param c the character to process
@@ -120,7 +120,7 @@ public class ConfigInputParser {
           yield State.IN_VARIABLE_NAME;
         } else {
           throw new IllegalArgumentException(
-              "Invalid character '" + c + "' at position " + position 
+              "Invalid character '" + c + "' at position " + position
               + " (line " + lineNumber + "). Expected variable name or comment.");
         }
       }
@@ -129,7 +129,7 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_COMMENT state.
-   * 
+   *
    * <p>Ignores all characters until a newline is encountered.</p>
    *
    * @param c the character to process
@@ -144,7 +144,7 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_VARIABLE_NAME state.
-   * 
+   *
    * <p>Builds up the variable name character by character until an equals sign or
    * whitespace is encountered.</p>
    *
@@ -158,7 +158,7 @@ public class ConfigInputParser {
       case '=' -> {
         if (varName.length() == 0) {
           throw new IllegalArgumentException(
-              "Empty variable name at position " + position 
+              "Empty variable name at position " + position
               + " (line " + lineNumber + ")");
         }
         equalsFound = true;
@@ -167,7 +167,7 @@ public class ConfigInputParser {
       case ' ', '\t' -> State.IN_EQUALS_SECTION;
       case '\n', '\r' -> {
         throw new IllegalArgumentException(
-            "Missing equals sign after variable name '" + varName.toString() 
+            "Missing equals sign after variable name '" + varName.toString()
             + "' at position " + position + " (line " + lineNumber + ")");
       }
       default -> {
@@ -176,7 +176,7 @@ public class ConfigInputParser {
           yield State.IN_VARIABLE_NAME;
         } else {
           throw new IllegalArgumentException(
-              "Invalid character '" + c + "' in variable name at position " + position 
+              "Invalid character '" + c + "' in variable name at position " + position
               + " (line " + lineNumber + ")");
         }
       }
@@ -185,7 +185,7 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_EQUALS_SECTION state.
-   * 
+   *
    * <p>Handles the area around the equals sign, allowing optional whitespace.</p>
    *
    * @param c the character to process
@@ -206,17 +206,17 @@ public class ConfigInputParser {
         if (c == '\n' || c == '\r') {
           if (equalsFound) {
             throw new IllegalArgumentException(
-                "Missing value after equals sign at position " + position 
+                "Missing value after equals sign at position " + position
                 + " (line " + lineNumber + ")");
           } else {
             throw new IllegalArgumentException(
-                "Missing equals sign after variable name '" + varName.toString() 
+                "Missing equals sign after variable name '" + varName.toString()
                 + "' at position " + position + " (line " + lineNumber + ")");
           }
         }
         if (!equalsFound) {
           throw new IllegalArgumentException(
-              "Missing equals sign after variable name '" + varName.toString() 
+              "Missing equals sign after variable name '" + varName.toString()
               + "' at position " + position + " (line " + lineNumber + ")");
         }
         value.setLength(0);
@@ -228,7 +228,7 @@ public class ConfigInputParser {
 
   /**
    * Processes characters in the IN_VALUE state.
-   * 
+   *
    * <p>Accumulates the value string until a newline or comment is encountered.</p>
    *
    * @param c the character to process
@@ -253,7 +253,7 @@ public class ConfigInputParser {
 
   /**
    * Finalizes the current variable by parsing its value and adding it to the builder.
-   * 
+   *
    * <p>Validates that the variable name and value are non-empty before adding to config.</p>
    *
    * @throws IllegalArgumentException if the value is empty
@@ -262,19 +262,19 @@ public class ConfigInputParser {
     if (varName.length() == 0) {
       return; // No variable to finalize
     }
-    
+
     String variableName = varName.toString().trim();
     String valueString = value.toString().trim();
-    
+
     if (valueString.isEmpty()) {
       throw new IllegalArgumentException(
           "Empty value for variable '" + variableName + "' (line " + lineNumber + ")");
     }
-    
+
     // Parse value and units
     EngineValue engineValue = parseValueWithUnits(valueString, variableName);
     builder.addValue(variableName, engineValue);
-    
+
     // Reset for next variable
     varName.setLength(0);
     value.setLength(0);
@@ -283,7 +283,7 @@ public class ConfigInputParser {
 
   /**
    * Parses a value string that may contain units.
-   * 
+   *
    * <p>Parses values in the format supported by Josh: optional sign, digits with optional
    * decimal point, followed by optional units. No exponential notation is supported.</p>
    *
@@ -294,22 +294,22 @@ public class ConfigInputParser {
    */
   private EngineValue parseValueWithUnits(String valueString, String variableName) {
     String trimmed = valueString.trim();
-    
+
     // Use regex to match Josh number format and units in one pass
     // Pattern: optional +/-, digits, optional decimal point and more digits, then optional units
     String valuePattern = "^([+-]?\\d+(?:\\.\\d+)?)\\s*(.*)$";
     Pattern pattern = Pattern.compile(valuePattern);
     Matcher matcher = pattern.matcher(trimmed);
-    
+
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
-          "Invalid value format '" + trimmed + "' for variable '" + variableName 
+          "Invalid value format '" + trimmed + "' for variable '" + variableName
           + "' (line " + lineNumber + ")");
     }
-    
+
     String numberPart = matcher.group(1);
     String unitsPart = matcher.group(2).trim();
-    
+
     try {
       // Parse based on whether units are present
       if (unitsPart.isEmpty()) {
@@ -320,18 +320,18 @@ public class ConfigInputParser {
       }
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
-          "Invalid number format '" + numberPart + "' for variable '" + variableName 
+          "Invalid number format '" + numberPart + "' for variable '" + variableName
           + "' (line " + lineNumber + ")", e);
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
-          "Invalid units '" + unitsPart + "' for variable '" + variableName 
+          "Invalid units '" + unitsPart + "' for variable '" + variableName
           + "' (line " + lineNumber + ")", e);
     }
   }
 
   /**
    * Checks if a character is valid for starting a variable name.
-   * 
+   *
    * <p>According to Josh grammar: IDENTIFIER_: [A-Za-z][A-Za-z0-9]*</p>
    *
    * @param c the character to check
@@ -343,7 +343,7 @@ public class ConfigInputParser {
 
   /**
    * Checks if a character is valid within a variable name.
-   * 
+   *
    * <p>According to Josh grammar: IDENTIFIER_: [A-Za-z][A-Za-z0-9]*</p>
    *
    * @param c the character to check

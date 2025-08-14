@@ -61,11 +61,11 @@ public class JshcConfigGetterTest {
     assertNotNull(config.getValue("testVar"));
     assertEquals(5.0, config.getValue("testVar").getAsDouble(), 0.001);
     assertEquals(Units.of("m"), config.getValue("testVar").getUnits());
-    
+
     assertNotNull(config.getValue("anotherVar"));
     assertEquals(10.0, config.getValue("anotherVar").getAsDouble(), 0.001);
     assertEquals(Units.of("km"), config.getValue("anotherVar").getUnits());
-    
+
     verify(mockInputStrategy).open("test.jshc");
   }
 

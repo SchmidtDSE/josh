@@ -3,8 +3,6 @@ package org.joshsim.lang.interpret.visitor;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Set;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -28,11 +26,11 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
           steps.low = 0 count
           steps.high = config example.stepCount
         end simulation
-        
+
         start patch Default
           Tree.init = create config example.treeCount of Tree
         end patch
-        
+
         start organism Tree
           height.init = config example.initialHeight
           height.step = prior.height + 0.1 meters
@@ -56,4 +54,3 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
     return visitor.visit(tree);
   }
 }
-

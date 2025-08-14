@@ -198,7 +198,7 @@ public class JoshJsSimFacade {
    * Discover configuration variables used in the provided Josh script.
    *
    * <p>Parses the given Josh source code and identifies all configuration variables
-   * referenced using 'config' expressions. For example, "config example.testVar" 
+   * referenced using 'config' expressions. For example, "config example.testVar"
    * would be discovered as "example.testVar".</p>
    *
    * @param code The Josh source code to analyze for configuration variable usage.

@@ -203,7 +203,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid character"));
@@ -217,7 +217,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid character"));
@@ -231,7 +231,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Missing equals sign"));
@@ -244,7 +244,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Missing value"));
@@ -257,7 +257,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Missing value after equals sign"));
@@ -270,7 +270,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid value format"));
@@ -283,7 +283,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid units")
@@ -297,7 +297,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid character"));
@@ -321,7 +321,7 @@ class ConfigInputParserTest {
     assertTrue(config.hasValue("var2"));
     assertTrue(config.hasValue("var3"));
     assertTrue(config.hasValue("var4"));
-    
+
     assertEquals(1.0, config.getValue("var1").getAsDouble(), 0.0001);
     assertEquals(2.5, config.getValue("var2").getAsDouble(), 0.0001);
     assertEquals(100.0, config.getValue("var3").getAsDouble(), 0.0001);
@@ -335,7 +335,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("Invalid character"));
@@ -368,7 +368,7 @@ class ConfigInputParserTest {
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class, 
+        IllegalArgumentException.class,
         () -> parser.parse(input)
     );
     assertTrue(exception.getMessage().contains("line 3"));

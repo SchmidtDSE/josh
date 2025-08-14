@@ -27,7 +27,6 @@ import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.lang.bridge.NoOpConfigGetter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

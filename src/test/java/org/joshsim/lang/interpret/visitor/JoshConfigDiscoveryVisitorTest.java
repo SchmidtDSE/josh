@@ -36,7 +36,7 @@ public class JoshConfigDiscoveryVisitorTest {
           grid.size = config example.gridSize
           steps.high = config params.stepCount
         end simulation
-        
+
         start patch Default
           Tree.init = create config example.treeCount of Tree
         end patch
@@ -96,7 +96,7 @@ public class JoshConfigDiscoveryVisitorTest {
           grid.size = 1000 m
           steps.high = 10 count
         end simulation
-        
+
         start organism Tree
           height.init = config tree.initialHeight
           height.step = prior.height + config tree.growthRate

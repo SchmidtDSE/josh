@@ -26,13 +26,13 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<String>>
     String variableName = ctx.name.getText();
     Set<String> result = new HashSet<>();
     result.add(variableName);
-    
+
     // Continue visiting children to collect any nested config values
     Set<String> childResult = visitChildren(ctx);
     if (childResult != null) {
       result.addAll(childResult);
     }
-    
+
     return result;
   }
 

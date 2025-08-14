@@ -113,7 +113,7 @@ public class JoshConfigDiscoveryHandler implements HttpHandler {
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       JoshLangParser joshParser = new JoshLangParser(tokens);
       ParseTree tree = joshParser.program();
-      
+
       // Check if parsing resulted in syntax errors
       if (joshParser.getNumberOfSyntaxErrors() > 0) {
         httpServerExchange.setStatusCode(400);

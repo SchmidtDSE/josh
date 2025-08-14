@@ -205,7 +205,7 @@ public class MinimalEngineBridge implements EngineBridge {
       }
       String configName = parts[0];
       String variableName = parts[1];
-      
+
       if (!configData.containsKey(configName)) {
         try {
           configData.put(configName, configGetter.getConfig(configName));
@@ -213,7 +213,7 @@ public class MinimalEngineBridge implements EngineBridge {
           return Optional.empty();
         }
       }
-      
+
       Config config = configData.get(configName);
       EngineValue value = config.getValue(variableName);
       return Optional.ofNullable(value);

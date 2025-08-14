@@ -95,7 +95,7 @@ class ConfigBuilderTest {
 
     // Act
     Config config1 = builder.build();
-    
+
     EngineValue value2 = factory.parseNumber("10", Units.of("km"));
     builder.addValue("var2", value2);
     Config config2 = builder.build();
@@ -104,7 +104,7 @@ class ConfigBuilderTest {
     // First config should have only var1
     assertTrue(config1.hasValue("var1"));
     assertFalse(config1.hasValue("var2"));
-    
+
     // Second config should have both (builder accumulates)
     assertTrue(config2.hasValue("var1"));
     assertTrue(config2.hasValue("var2"));

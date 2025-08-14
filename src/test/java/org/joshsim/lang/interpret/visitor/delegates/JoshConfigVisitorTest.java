@@ -68,13 +68,13 @@ class JoshConfigVisitorTest {
     context.name = nameContext;
     context.defaultValue = defaultContext;
     when(nameContext.getText()).thenReturn("config.testVar");
-    
+
     final JoshParserToMachineVisitor parentVisitor = mock(JoshParserToMachineVisitor.class);
     when(toolbox.getParent()).thenReturn(parentVisitor);
-    
+
     final Fragment defaultFragment = mock(Fragment.class);
     when(parentVisitor.visit(defaultContext)).thenReturn(defaultFragment);
-    
+
     final EventHandlerAction defaultAction = mock(EventHandlerAction.class);
     when(defaultFragment.getCurrentAction()).thenReturn(defaultAction);
 
