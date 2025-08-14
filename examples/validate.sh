@@ -38,6 +38,45 @@ assert_not_ok() {
   fi
 }
 
+# Test discoverConfig command
+test_discover_config() {
+  local file="$1"
+  local expected_vars="$2"
+  local exit_code="$3"
+  
+  if [ "$verbose" = true ]; then
+    echo "Testing discoverConfig on $file..."
+  fi
+  
+  # Run discoverConfig and capture output
+  local output
+  if [ "$verbose" = true ]; then
+    output=$(java -jar build/libs/joshsim-fat.jar discoverConfig "$file" 2>&1)
+  else
+    output=$(java -jar build/libs/joshsim-fat.jar discoverConfig "$file" 2>/dev/null)
+  fi
+  local status=$?
+  
+  if [ $status -ne 0 ]; then
+    if [ "$verbose" = true ]; then
+      echo "discoverConfig failed with exit code $status for $file"
+    fi
+    return $status
+  fi
+  
+  # Check expected variables are found
+  for var in $expected_vars; do
+    if ! echo "$output" | grep -q "^$var$"; then
+      if [ "$verbose" = true ]; then
+        echo "Expected variable '$var' not found in output: $output"
+      fi
+      return 1
+    fi
+  done
+  
+  return 0
+}
+
 assert_not_ok examples/features/error.josh || exit 1
 
 assert_ok examples/features/autobox_distribution.josh || exit 2
@@ -73,3 +112,20 @@ assert_ok examples/simulations/simple_geotiff.josh || exit 30
 assert_ok examples/simulations/simple_netcdf.josh || exit 31
 assert_ok examples/simulations/state.josh || exit 32
 assert_ok examples/simulations/variables.josh || exit 33
+
+# Test config example validation
+assert_ok examples/config_example.josh || exit 34
+
+# Test discoverConfig command functionality
+test_discover_config examples/config_example.josh "example.testVar1 example.testVar2" || exit 35
+
+# Test discoverConfig on file with no config variables
+test_discover_config examples/simulations/simple.josh "" || exit 36
+
+# Test discoverConfig error handling with nonexistent file
+if [ "$verbose" = true ]; then
+  java -jar build/libs/joshsim-fat.jar discoverConfig nonexistent.josh >/dev/null 2>&1
+else
+  java -jar build/libs/joshsim-fat.jar discoverConfig nonexistent.josh >/dev/null 2>&1
+fi
+[ $? -eq 1 ] || exit 37
