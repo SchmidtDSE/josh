@@ -196,27 +196,37 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public Optional<EngineValue> getConfigOptional(String name) {
+    try {
+      // Extract the actual config variable from the dot notation
+      String[] parts = name.split("\\.", 2);
+      if (parts.length != 2) {
+        return Optional.empty();
+      }
+      String configName = parts[0];
+      String variableName = parts[1];
+      
+      if (!configData.containsKey(configName)) {
+        try {
+          configData.put(configName, configGetter.getConfig(configName));
+        } catch (Exception e) {
+          return Optional.empty();
+        }
+      }
+      
+      Config config = configData.get(configName);
+      EngineValue value = config.getValue(variableName);
+      return Optional.ofNullable(value);
+    } catch (Exception e) {
+      return Optional.empty();
+    }
+  }
+
+  @Override
   public EngineValue getConfig(String name) {
-    // Extract the actual config variable from the dot notation
-    String[] parts = name.split("\\.", 2);
-    if (parts.length != 2) {
-      throw new IllegalArgumentException(
-          "Config name must be in format 'configName.variableName'. Got: " + name);
-    }
-    String configName = parts[0];
-    String variableName = parts[1];
-    
-    if (!configData.containsKey(configName)) {
-      configData.put(configName, configGetter.getConfig(configName));
-    }
-    
-    Config config = configData.get(configName);
-    EngineValue value = config.getValue(variableName);
-    if (value == null) {
-      throw new IllegalArgumentException("Config variable '" + variableName 
-          + "' not found in config '" + configName + "'");
-    }
-    return value;
+    return getConfigOptional(name).orElseThrow(
+        () -> new IllegalArgumentException("Config value not found: " + name)
+    );
   }
 
   @Override

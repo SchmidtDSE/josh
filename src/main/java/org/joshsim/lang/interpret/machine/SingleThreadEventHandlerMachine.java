@@ -822,6 +822,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     push(bridge.getConfig(name));
   }
 
+  @Override
+  public void pushConfigWithDefault(String name) {
+    EngineValue defaultValue = pop(); // Get default from stack
+    Optional<EngineValue> configValue = bridge.getConfigOptional(name);
+    push(configValue.orElse(defaultValue));
+  }
+
   /**
    * Get a value from the top of the stack, converting it if in a conversion group.
    *

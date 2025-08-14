@@ -7,11 +7,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.joshsim.lang.antlr.JoshLangParser.ConfigValueContext;
+import org.joshsim.lang.antlr.JoshLangParser.ConfigValueWithDefaultContext;
+import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.ActionFragment;
 import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
+import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,5 +55,45 @@ class JoshConfigVisitorTest {
     action.apply(mockMachine);
 
     verify(mockMachine).pushConfig("config.testVar");
+  }
+
+  @Test
+  void testVisitConfigValueWithDefault() {
+    // Mock
+    ConfigValueWithDefaultContext context = mock(ConfigValueWithDefaultContext.class);
+    IdentifierContext nameContext = mock(IdentifierContext.class);
+    ExpressionContext defaultContext = mock(ExpressionContext.class);
+
+    // Mock the context
+    context.name = nameContext;
+    context.defaultValue = defaultContext;
+    when(nameContext.getText()).thenReturn("config.testVar");
+    
+    final JoshParserToMachineVisitor parentVisitor = mock(JoshParserToMachineVisitor.class);
+    when(toolbox.getParent()).thenReturn(parentVisitor);
+    
+    final Fragment defaultFragment = mock(Fragment.class);
+    when(parentVisitor.visit(defaultContext)).thenReturn(defaultFragment);
+    
+    final EventHandlerAction defaultAction = mock(EventHandlerAction.class);
+    when(defaultFragment.getCurrentAction()).thenReturn(defaultAction);
+
+    // Test
+    Fragment result = visitor.visitConfigValueWithDefault(context);
+
+    // Validate
+    assertNotNull(result);
+    assertTrue(result instanceof ActionFragment);
+
+    EventHandlerAction action = result.getCurrentAction();
+    assertNotNull(action);
+
+    EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
+    org.mockito.Mockito.doNothing().when(mockMachine).pushConfigWithDefault("config.testVar");
+
+    action.apply(mockMachine);
+
+    verify(defaultAction).apply(mockMachine);
+    verify(mockMachine).pushConfigWithDefault("config.testVar");
   }
 }

@@ -103,6 +103,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<Fragment> {
     return configVisitor.visitConfigValue(ctx);
   }
 
+  public Fragment visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
+    return configVisitor.visitConfigValueWithDefault(ctx);
+  }
+
   public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
     return mathematicsVisitor.visitMapLinear(ctx);
   }

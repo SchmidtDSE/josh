@@ -123,6 +123,7 @@ expression: unitsValue # simpleExpression
   | EXTERNAL_ name=identifier # externalValue
   | EXTERNAL_ name=identifier AT_ step=(PRIOR_ | INTEGER_) # externalValueAtTime
   | CONFIG_ name=identifier # configValue
+  | CONFIG_ name=identifier ELSE_ defaultValue=expression # configValueWithDefault
   | subject=expression LBRAC_ selection=expression RBRAC_ # slice
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
