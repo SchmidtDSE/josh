@@ -3,10 +3,12 @@ package org.joshsim.lang.interpret.visitor;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.junit.jupiter.api.Test;
@@ -37,14 +39,22 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
         end organism
         """;
 
-    Set<String> discovered = parseAndDiscover(script);
-    assertTrue(discovered.contains("example.gridSize"));
-    assertTrue(discovered.contains("example.stepCount"));
-    assertTrue(discovered.contains("example.treeCount"));
-    assertTrue(discovered.contains("example.initialHeight"));
+    Set<DiscoveredConfigVar> discovered = parseAndDiscover(script);
+    assertTrue(containsVar(discovered, "example.gridSize", Optional.empty()));
+    assertTrue(containsVar(discovered, "example.stepCount", Optional.empty()));
+    assertTrue(containsVar(discovered, "example.treeCount", Optional.empty()));
+    assertTrue(containsVar(discovered, "example.initialHeight", Optional.empty()));
   }
 
-  private Set<String> parseAndDiscover(String script) {
+  /**
+   * Helper method to check if a set contains a specific DiscoveredConfigVar.
+   */
+  private boolean containsVar(Set<DiscoveredConfigVar> vars, String name, Optional<String> defaultValue) {
+    return vars.stream().anyMatch(var -> 
+        var.getName().equals(name) && var.getDefaultValue().equals(defaultValue));
+  }
+
+  private Set<DiscoveredConfigVar> parseAndDiscover(String script) {
     JoshLangLexer lexer = new JoshLangLexer(CharStreams.fromString(script));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshLangParser parser = new JoshLangParser(tokens);

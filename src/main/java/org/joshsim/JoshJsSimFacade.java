@@ -16,6 +16,8 @@ import org.joshsim.cloud.VirtualFileSystemWireDeserializer;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.compat.EmulatedCompatibilityLayer;
+import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
@@ -223,14 +225,9 @@ public class JoshJsSimFacade {
     ParseTree tree = joshParser.program();
 
     JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-    Set<String> configVariables = visitor.visit(tree);
+    Set<DiscoveredConfigVar> configVariables = visitor.visit(tree);
 
-    CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\n");
-    for (String variable : configVariables) {
-      stringJoiner.add(variable);
-    }
-
-    return stringJoiner.toString();
+    return ConfigDiscoverabilityOutputFormatter.format(configVariables);
   }
 
   /**

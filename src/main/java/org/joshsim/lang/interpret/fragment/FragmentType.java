@@ -36,5 +36,14 @@ public enum FragmentType {
   PROGRAM,
 
   /** JoshFragment containing state information for an entity. */
-  STATE
+  STATE,
+
+  /** Fragment for configuration variable discovery. */
+  CONFIG_DISCOVERABILITY,
+
+  /** Fragment containing a set of discovered config variables. */
+  CONFIG_VAR_SET,
+
+  /** Fragment containing a single config value for discovery. */
+  CONFIG_VALUE
 }

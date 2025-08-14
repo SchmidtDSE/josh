@@ -19,6 +19,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -77,11 +79,12 @@ public class DiscoverConfigCommand implements Callable<Integer> {
       ParseTree tree = parser.program();
 
       JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-      Set<String> configVariables = visitor.visit(tree);
+      Set<DiscoveredConfigVar> configVariables = visitor.visit(tree);
 
-      // Print each variable on its own line
-      for (String variable : configVariables) {
-        System.out.println(variable);
+      // Format and print the discovered variables
+      String formattedOutput = ConfigDiscoverabilityOutputFormatter.format(configVariables);
+      if (!formattedOutput.isEmpty()) {
+        System.out.println(formattedOutput);
       }
 
       return 0;
