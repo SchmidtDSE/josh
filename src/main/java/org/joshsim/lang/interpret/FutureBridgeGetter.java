@@ -17,7 +17,7 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.precompute.JshcConfigGetter;
+import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.precompute.JshdExternalGetter;
 
 /**

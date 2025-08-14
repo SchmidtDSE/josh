@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.precompute;
+package org.joshsim.engine.config;
 
 import java.io.IOException;
 import java.io.InputStream;

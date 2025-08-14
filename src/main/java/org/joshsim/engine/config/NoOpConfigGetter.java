@@ -4,9 +4,10 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.bridge;
+package org.joshsim.engine.config;
 
 import org.joshsim.engine.config.Config;
+import org.joshsim.lang.bridge.ConfigGetter;
 
 
 /**
