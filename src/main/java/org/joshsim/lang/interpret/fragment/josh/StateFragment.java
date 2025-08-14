@@ -4,15 +4,16 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 
 /**
  * Create a new fragement containing information from a state stanza within an entity.
  */
-public class StateFragment extends Fragment {
+public class StateFragment extends JoshFragment {
 
   private final Iterable<EventHandlerGroupBuilder> groups;
 

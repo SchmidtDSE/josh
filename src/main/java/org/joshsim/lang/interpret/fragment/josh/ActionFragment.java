@@ -4,15 +4,16 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 /**
- * Fragment of a InterpreterMachineSaffold containing a single action.
+ * JoshFragment of a InterpreterMachineSaffold containing a single action.
  */
-public class ActionFragment extends Fragment {
+public class ActionFragment extends JoshFragment {
 
   private final EventHandlerAction action;
 

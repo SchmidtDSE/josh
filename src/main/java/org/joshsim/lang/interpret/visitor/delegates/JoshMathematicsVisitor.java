@@ -10,8 +10,8 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -43,9 +43,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * start and end of the domain into the start and end of the range.</p>
    *
    * @param ctx The ANTLR context from which to parse the mapping operation.
-   * @return Fragment containing the mapping operation parsed.
+   * @return JoshFragment containing the mapping operation parsed.
    */
-  public Fragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
+  public JoshFragment visitMapLinear(JoshLangParser.MapLinearContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction fromLowAction = ctx.fromlow.accept(parent).getCurrentAction();
     EventHandlerAction fromHighAction = ctx.fromhigh.accept(parent).getCurrentAction();
@@ -73,9 +73,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * parameterized by only a name. This may be linear, for example.</p>
    *
    * @param ctx The ANTLR context from which to parse the mapping operation.
-   * @return Fragment containing the mapping operation parsed.
+   * @return JoshFragment containing the mapping operation parsed.
    */
-  public Fragment visitMapParam(JoshLangParser.MapParamContext ctx) {
+  public JoshFragment visitMapParam(JoshLangParser.MapParamContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction fromLowAction = ctx.fromlow.accept(parent).getCurrentAction();
     EventHandlerAction fromHighAction = ctx.fromhigh.accept(parent).getCurrentAction();
@@ -105,9 +105,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * sigmoid, for example.</p>
    *
    * @param ctx The ANTLR context from which to parse the mapping operation.
-   * @return Fragment containing the mapping operation parsed.
+   * @return JoshFragment containing the mapping operation parsed.
    */
-  public Fragment visitMapParamParam(JoshLangParser.MapParamParamContext ctx) {
+  public JoshFragment visitMapParamParam(JoshLangParser.MapParamParamContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction fromLowAction = ctx.fromlow.accept(parent).getCurrentAction();
     EventHandlerAction fromHighAction = ctx.fromhigh.accept(parent).getCurrentAction();
@@ -137,9 +137,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * based on the operator token (+ or -).</p>
    *
    * @param ctx The ANTLR context from which to parse the addition/subtraction expression.
-   * @return Fragment containing the addition/subtraction operation parsed.
+   * @return JoshFragment containing the addition/subtraction operation parsed.
    */
-  public Fragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
+  public JoshFragment visitAdditionExpression(JoshLangParser.AdditionExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
     boolean isAddition = ctx.op.getText().equals("+");
@@ -160,9 +160,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * based on the operator token (* or /).</p>
    *
    * @param ctx The ANTLR context from which to parse the multiplication/division expression.
-   * @return Fragment containing the multiplication/division operation parsed.
+   * @return JoshFragment containing the multiplication/division operation parsed.
    */
-  public Fragment visitMultiplyExpression(JoshLangParser.MultiplyExpressionContext ctx) {
+  public JoshFragment visitMultiplyExpression(JoshLangParser.MultiplyExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
     boolean isMultiplication = ctx.op.getText().equals("*");
@@ -182,9 +182,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * <p>Parse an expression that raises one value to the power of another value.</p>
    *
    * @param ctx The ANTLR context from which to parse the power expression.
-   * @return Fragment containing the power operation parsed.
+   * @return JoshFragment containing the power operation parsed.
    */
-  public Fragment visitPowExpression(JoshLangParser.PowExpressionContext ctx) {
+  public JoshFragment visitPowExpression(JoshLangParser.PowExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
 
@@ -205,9 +205,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * the parse tree.</p>
    *
    * @param ctx The ANTLR context from which to parse the parenthesized expression.
-   * @return Fragment containing the expression within the parentheses.
+   * @return JoshFragment containing the expression within the parentheses.
    */
-  public Fragment visitParenExpression(JoshLangParser.ParenExpressionContext ctx) {
+  public JoshFragment visitParenExpression(JoshLangParser.ParenExpressionContext ctx) {
     return ctx.getChild(1).accept(parent);
   }
 
@@ -218,9 +218,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * capping if beyond the allowed range.</p>
    *
    * @param ctx The ANTLR context from which to parse the bounded limit expression.
-   * @return Fragment containing the bounded limit operation parsed.
+   * @return JoshFragment containing the bounded limit operation parsed.
    */
-  public Fragment visitLimitBoundExpression(JoshLangParser.LimitBoundExpressionContext ctx) {
+  public JoshFragment visitLimitBoundExpression(JoshLangParser.LimitBoundExpressionContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction lowerBoundAction = ctx.lower.accept(parent).getCurrentAction();
     EventHandlerAction upperBoundAction = ctx.upper.accept(parent).getCurrentAction();
@@ -243,9 +243,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * other words, a range with infinity as maximum.</p>
    *
    * @param ctx The ANTLR context from which to parse the minimum limit expression.
-   * @return Fragment containing the minimum limit operation parsed.
+   * @return JoshFragment containing the minimum limit operation parsed.
    */
-  public Fragment visitLimitMinExpression(JoshLangParser.LimitMinExpressionContext ctx) {
+  public JoshFragment visitLimitMinExpression(JoshLangParser.LimitMinExpressionContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction limitAction = ctx.limit.accept(parent).getCurrentAction();
     EventHandlerAction action = (machine) -> {
@@ -265,9 +265,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * other words, a range with infinity as minimum.</p>
    *
    * @param ctx The ANTLR context from which to parse the maximum limit expression.
-   * @return Fragment containing the maximum limit operation parsed.
+   * @return JoshFragment containing the maximum limit operation parsed.
    */
-  public Fragment visitLimitMaxExpression(JoshLangParser.LimitMaxExpressionContext ctx) {
+  public JoshFragment visitLimitMaxExpression(JoshLangParser.LimitMaxExpressionContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     EventHandlerAction limitAction = ctx.limit.accept(parent).getCurrentAction();
     EventHandlerAction action = (machine) -> {
@@ -287,10 +287,10 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * etc. The function to execute is determined by the function name.</p>
    *
    * @param ctx The ANTLR context from which to parse the function call.
-   * @return Fragment containing the function call operation parsed.
+   * @return JoshFragment containing the function call operation parsed.
    * @throws IllegalArgumentException if the function name is unknown.
    */
-  public Fragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
+  public JoshFragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     String funcName = ctx.name.getText();
 

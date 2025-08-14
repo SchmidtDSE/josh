@@ -9,8 +9,8 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 
 
 /**
@@ -33,9 +33,9 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
    * <p>Parse a reference to an external value at the current time step.</p>
    *
    * @param ctx The context from which to parse the external value reference.
-   * @return Fragment containing the external value reference parsed.
+   * @return JoshFragment containing the external value reference parsed.
    */
-  public Fragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
+  public JoshFragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
       long stepCount = machine.getStepCount();
@@ -51,9 +51,9 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
    * <p>Parse a reference to an external value at a specified time step.</p>
    *
    * @param ctx The context from which to parse the external value at time reference.
-   * @return Fragment containing the external value at time reference parsed.
+   * @return JoshFragment containing the external value at time reference parsed.
    */
-  public Fragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
+  public JoshFragment visitExternalValueAtTime(JoshLangParser.ExternalValueAtTimeContext ctx) {
     String name = ctx.name.getText();
     long step = Long.parseLong(ctx.step.getText());
     EventHandlerAction action = (machine) -> {

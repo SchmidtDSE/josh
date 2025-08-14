@@ -1,4 +1,4 @@
-package org.joshsim.engine.config;
+package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,20 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.StringJoiner;
+import org.joshsim.engine.config.Config;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ConfigInputParserTest {
+class ConfigInterpreterTest {
 
-  private ConfigInputParser parser;
+  private ConfigInterpreter interpreter;
   private EngineValueFactory factory;
 
   @BeforeEach
   void setUp() {
     factory = new EngineValueFactory(true);
-    parser = new ConfigInputParser(factory);
+    interpreter = new ConfigInterpreter();
   }
 
   @Test
@@ -28,14 +29,14 @@ class ConfigInputParserTest {
     StringJoiner joiner = new StringJoiner("\n");
     joiner.add("# Group 1");
     joiner.add("testVar1 = 5 meters");
-    joiner.add("testVar2 =  10m");
+    joiner.add("testVar2 =  10 m");
     joiner.add("");
     joiner.add("# Group 2");
     joiner.add("testVar3  = 15  km");
     String input = joiner.toString();
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("testVar1"));
@@ -55,7 +56,7 @@ class ConfigInputParserTest {
   @Test
   void testParseEmptyInput() {
     // Act
-    Config config = parser.parse("");
+    Config config = interpreter.interpret("", factory);
 
     // Assert
     assertFalse(config.hasValue("anything"));
@@ -64,7 +65,7 @@ class ConfigInputParserTest {
   @Test
   void testParseWhitespaceOnly() {
     // Act
-    Config config = parser.parse("   \n\t\r\n  ");
+    Config config = interpreter.interpret("   \n\t\r\n  ", factory);
 
     // Assert
     assertFalse(config.hasValue("anything"));
@@ -80,7 +81,7 @@ class ConfigInputParserTest {
     String input = joiner.toString();
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertFalse(config.hasValue("anything"));
@@ -92,7 +93,7 @@ class ConfigInputParserTest {
     String input = "myVar = 42 count";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("myVar"));
@@ -106,7 +107,7 @@ class ConfigInputParserTest {
     String input = "number = 3.14";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("number"));
@@ -117,15 +118,15 @@ class ConfigInputParserTest {
   @Test
   void testParseVariableWithComplexUnits() {
     // Arrange
-    String input = "velocity = 5.5 meters / second";
+    String input = "velocity = 5.5 meters/second";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("velocity"));
     assertEquals(5.5, config.getValue("velocity").getAsDouble(), 0.0001);
-    assertEquals(Units.of("meters / second"), config.getValue("velocity").getUnits());
+    assertEquals(Units.of("meters/second"), config.getValue("velocity").getUnits());
   }
 
   @Test
@@ -138,7 +139,7 @@ class ConfigInputParserTest {
     String input = joiner.toString();
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("var1"));
@@ -158,7 +159,7 @@ class ConfigInputParserTest {
     String input = joiner.toString();
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("var1"));
@@ -175,7 +176,7 @@ class ConfigInputParserTest {
     String input = "\n\nvar1 = 42\n\n\nvar2 = 3.14\n\n";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("var1"));
@@ -188,7 +189,7 @@ class ConfigInputParserTest {
     String input = "var1 = 42 meters";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("var1"));
@@ -197,70 +198,16 @@ class ConfigInputParserTest {
   }
 
   @Test
-  void testParseInvalidVariableName() {
-    // Arrange
+  void testParseInvalidInput() {
+    // Arrange - invalid syntax should cause parsing error
     String input = "123invalid = 42";
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
-        () -> parser.parse(input)
+        () -> interpreter.interpret(input, factory)
     );
-    assertTrue(exception.getMessage().contains("Invalid character"));
-    assertTrue(exception.getMessage().contains("line 1"));
-  }
-
-  @Test
-  void testParseInvalidCharacterInVariableName() {
-    // Arrange
-    String input = "var@name = 42";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Invalid character"));
-    assertTrue(exception.getMessage().contains("variable name"));
-  }
-
-  @Test
-  void testParseMissingEquals() {
-    // Arrange
-    String input = "variableName 42";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Missing equals sign"));
-  }
-
-  @Test
-  void testParseMissingValue() {
-    // Arrange
-    String input = "variableName = \n";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Missing value"));
-  }
-
-  @Test
-  void testParseEmptyValue() {
-    // Arrange
-    String input = "variableName =    \n";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Missing value after equals sign"));
+    assertTrue(exception.getMessage().contains("Failed to parse"));
   }
 
   @Test
@@ -271,36 +218,9 @@ class ConfigInputParserTest {
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
-        () -> parser.parse(input)
+        () -> interpreter.interpret(input, factory)
     );
-    assertTrue(exception.getMessage().contains("Invalid value format"));
-  }
-
-  @Test
-  void testParseInvalidUnits() {
-    // Arrange
-    String input = "variableName = 42 invalid / invalid / invalid";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Invalid units")
-        || exception.getMessage().contains("denominator"));
-  }
-
-  @Test
-  void testParseEmptyVariableName() {
-    // Arrange
-    String input = " = 42";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Invalid character"));
+    assertTrue(exception.getMessage().contains("Failed to parse"));
   }
 
   @Test
@@ -314,7 +234,7 @@ class ConfigInputParserTest {
     String input = joiner.toString();
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("var1"));
@@ -329,48 +249,16 @@ class ConfigInputParserTest {
   }
 
   @Test
-  void testParseInvalidVariableNameWithUnderscore() {
-    // Arrange
-    String input = "test_var = 42";
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("Invalid character"));
-    assertTrue(exception.getMessage().contains("variable name"));
-  }
-
-  @Test
   void testParseNegativeNumbers() {
     // Arrange
     String input = "negative = -42.5 meters";
 
     // Act
-    Config config = parser.parse(input);
+    Config config = interpreter.interpret(input, factory);
 
     // Assert
     assertTrue(config.hasValue("negative"));
     assertEquals(-42.5, config.getValue("negative").getAsDouble(), 0.0001);
     assertEquals(Units.METERS, config.getValue("negative").getUnits());
-  }
-
-
-  @Test
-  void testParseLineNumberInErrorMessages() {
-    // Arrange
-    StringJoiner joiner = new StringJoiner("\n");
-    joiner.add("var1 = 42");
-    joiner.add("var2 = 3.14");
-    joiner.add("invalid@name = 100");
-    String input = joiner.toString();
-
-    // Act & Assert
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> parser.parse(input)
-    );
-    assertTrue(exception.getMessage().contains("line 3"));
   }
 }

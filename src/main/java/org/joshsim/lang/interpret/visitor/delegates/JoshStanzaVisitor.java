@@ -17,12 +17,12 @@ import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.lang.antlr.JoshLangParser;
-import org.joshsim.lang.interpret.fragment.ConversionsFragment;
-import org.joshsim.lang.interpret.fragment.EntityFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
-import org.joshsim.lang.interpret.fragment.ProgramFragment;
-import org.joshsim.lang.interpret.fragment.StateFragment;
+import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
+import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
+import org.joshsim.lang.interpret.fragment.josh.ProgramFragment;
+import org.joshsim.lang.interpret.fragment.josh.StateFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -51,14 +51,14 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @param ctx The stanza context to visit.
    * @return A fragment representing the stanza logic.
    */
-  public Fragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
+  public JoshFragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
     List<EventHandlerGroupBuilder> groups = new ArrayList<>();
     String stateName = ctx.getChild(2).getText();
 
     int numHandlerGroups = ctx.getChildCount() - 5;
     for (int handlerGroupIndex = 0; handlerGroupIndex < numHandlerGroups; handlerGroupIndex++) {
       int childIndex = handlerGroupIndex + 3;
-      Fragment childFragment = ctx.getChild(childIndex).accept(parent);
+      JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
       EventHandlerGroupBuilder groupBuilder = childFragment.getEventHandlerGroup();
       groupBuilder.setState(stateName);
       groups.add(groupBuilder);
@@ -77,7 +77,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @return A fragment representing the entity definition.
    * @throws IllegalArgumentException if the stanza start and end types don't match.
    */
-  public Fragment visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
+  public JoshFragment visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
     int numChildren = ctx.getChildCount();
     int numInner = numChildren - 5;
 
@@ -98,7 +98,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
-      Fragment childFragment = ctx.getChild(childIndex).accept(parent);
+      JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
 
       for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {
         entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
@@ -123,7 +123,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @param ctx The unit stanza context to visit.
    * @return A fragment representing the unit conversions.
    */
-  public Fragment visitUnitStanza(JoshLangParser.UnitStanzaContext ctx) {
+  public JoshFragment visitUnitStanza(JoshLangParser.UnitStanzaContext ctx) {
     String sourceUnitName = ctx.getChild(2).getText();
     Units sourceUnits = Units.of(sourceUnitName);
 
@@ -132,7 +132,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     int numConversions = numChildren - 5;
     for (int conversionIndex = 0; conversionIndex < numConversions; conversionIndex++) {
       int childIndex = conversionIndex + 3;
-      Fragment childFragment = ctx.getChild(childIndex).accept(parent);
+      JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
       Conversion incompleteConversion = childFragment.getConversion();
       Conversion completeConversion = new DirectConversion(
           sourceUnits,
@@ -157,7 +157,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @return A fragment representing the configuration statement.
    * @throws RuntimeException as this feature is not yet implemented.
    */
-  public Fragment visitConfigStatement(JoshLangParser.ConfigStatementContext ctx) {
+  public JoshFragment visitConfigStatement(JoshLangParser.ConfigStatementContext ctx) {
     throw new RuntimeException("Configuration statements reserved for future use.");
   }
 
@@ -171,7 +171,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @return A fragment representing the import statement.
    * @throws RuntimeException as this feature is not yet implemented.
    */
-  public Fragment visitImportStatement(JoshLangParser.ImportStatementContext ctx) {
+  public JoshFragment visitImportStatement(JoshLangParser.ImportStatementContext ctx) {
     throw new RuntimeException("Import statements reserved for future use.");
   }
 
@@ -183,11 +183,11 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @param ctx The program context to visit.
    * @return A fragment representing the complete program.
    */
-  public Fragment visitProgram(JoshLangParser.ProgramContext ctx) {
+  public JoshFragment visitProgram(JoshLangParser.ProgramContext ctx) {
     ProgramBuilder builder = new ProgramBuilder();
     int numChildren = ctx.getChildCount();
     for (int i = 0; i < numChildren; i++) {
-      Fragment childFragment = ctx.getChild(i).accept(parent);
+      JoshFragment childFragment = ctx.getChild(i).accept(parent);
       builder.add(childFragment);
     }
     return new ProgramFragment(builder);

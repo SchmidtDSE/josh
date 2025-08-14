@@ -14,27 +14,27 @@ package org.joshsim.lang.interpret.fragment;
  * processed during program interpretation.</p>
  */
 public enum FragmentType {
-  /** Fragment containing an event handler action. */
+  /** JoshFragment containing an event handler action. */
   ACTION,
 
-  /** Fragment containing a compiled callable. */
+  /** JoshFragment containing a compiled callable. */
   COMPILED_CALLABLE,
 
-  /** Fragment containing a single unit conversion. */
+  /** JoshFragment containing a single unit conversion. */
   CONVERSION,
 
-  /** Fragment containing multiple unit conversions. */
+  /** JoshFragment containing multiple unit conversions. */
   CONVERSIONS,
 
-  /** Fragment containing an entity prototype. */
+  /** JoshFragment containing an entity prototype. */
   ENTITY,
 
-  /** Fragment containing a group of event handlers. */
+  /** JoshFragment containing a group of event handlers. */
   EVENT_HANDLER_GROUP,
 
-  /** Fragment containing a complete program. */
+  /** JoshFragment containing a complete program. */
   PROGRAM,
 
-  /** Fragment containing state information for an entity. */
+  /** JoshFragment containing state information for an entity. */
   STATE
 }

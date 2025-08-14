@@ -1,21 +1,21 @@
-
 /**
- * Fragment containing a group of event handlers.
+ * JoshFragment containing a group of event handlers.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 /**
- * Fragment representing a group of event handlers.
+ * JoshFragment representing a group of event handlers.
  *
  * <p>This class wraps an EventHandlerGroupBuilder that helps construct and organize
  * multiple event handlers that respond to simulation events.</p>
  */
-public class EventHandlerGroupFragment extends Fragment {
+public class EventHandlerGroupFragment extends JoshFragment {
 
   private final EventHandlerGroupBuilder eventHandlerGroup;
 

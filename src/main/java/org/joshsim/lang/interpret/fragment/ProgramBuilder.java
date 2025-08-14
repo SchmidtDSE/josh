@@ -45,7 +45,7 @@ public class ProgramBuilder {
    * @param fragment The fragment to add to the program
    * @throws IllegalArgumentException if the fragment type is not supported at the top level
    */
-  public void add(Fragment fragment) {
+  public void add(org.joshsim.lang.interpret.fragment.josh.JoshFragment fragment) {
     switch (fragment.getFragmentType()) {
       case CONVERSIONS -> fragment.getConversions().forEach(converter::addConversion);
       case ENTITY -> addEntity(fragment.getEntity());

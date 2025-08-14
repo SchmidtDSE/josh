@@ -10,7 +10,7 @@ import java.util.Iterator;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
@@ -39,7 +39,7 @@ public class JoshInterpreter {
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
 
     JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
-    Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
+    JoshFragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);
@@ -75,7 +75,7 @@ public class JoshInterpreter {
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
 
     JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
-    Fragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
+    JoshFragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
 
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);

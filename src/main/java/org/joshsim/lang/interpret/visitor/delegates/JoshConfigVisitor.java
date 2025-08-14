@@ -8,8 +8,8 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 
 
 /**
@@ -32,9 +32,9 @@ public class JoshConfigVisitor implements JoshVisitorDelegate {
    * Parse a config value reference.
    *
    * @param ctx The context from which to parse the config value reference.
-   * @return Fragment containing the config value reference parsed.
+   * @return JoshFragment containing the config value reference parsed.
    */
-  public Fragment visitConfigValue(JoshLangParser.ConfigValueContext ctx) {
+  public JoshFragment visitConfigValue(JoshLangParser.ConfigValueContext ctx) {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
       machine.pushConfig(name);
@@ -47,11 +47,11 @@ public class JoshConfigVisitor implements JoshVisitorDelegate {
    * Parse a config value reference with default value.
    *
    * @param ctx The context from which to parse the config value reference with default.
-   * @return Fragment containing the config value reference with default parsed.
+   * @return JoshFragment containing the config value reference with default parsed.
    */
-  public Fragment visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
+  public JoshFragment visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
     String name = ctx.name.getText();
-    Fragment defaultFragment = toolbox.getParent().visit(ctx.defaultValue);
+    JoshFragment defaultFragment = toolbox.getParent().visit(ctx.defaultValue);
     EventHandlerAction action = (machine) -> {
       // Execute default value first to put it on stack
       defaultFragment.getCurrentAction().apply(machine);

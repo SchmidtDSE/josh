@@ -1,22 +1,23 @@
-
 /**
- * Fragment representing a complete program.
+ * JoshFragment representing a complete program.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import java.util.Optional;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.fragment.FragmentType;
+import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 
 /**
- * Fragment representing a potentially completed program.
+ * JoshFragment representing a potentially completed program.
  *
  * <p>This class represents a fragment that contains a complete program that can be
  * executed in the simulation environment.</p>
  */
-public class ProgramFragment extends Fragment {
+public class ProgramFragment extends JoshFragment {
 
   private final ProgramBuilder builder;
   private Optional<JoshProgram> builtProgram;

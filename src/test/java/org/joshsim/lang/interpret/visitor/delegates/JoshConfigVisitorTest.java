@@ -11,8 +11,8 @@ import org.joshsim.lang.antlr.JoshLangParser.ConfigValueWithDefaultContext;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,7 @@ class JoshConfigVisitorTest {
     when(nameContext.getText()).thenReturn("config.testVar");
 
     // Test
-    Fragment result = visitor.visitConfigValue(context);
+    JoshFragment result = visitor.visitConfigValue(context);
 
     // Validate
     assertNotNull(result);
@@ -72,14 +72,14 @@ class JoshConfigVisitorTest {
     final JoshParserToMachineVisitor parentVisitor = mock(JoshParserToMachineVisitor.class);
     when(toolbox.getParent()).thenReturn(parentVisitor);
 
-    final Fragment defaultFragment = mock(Fragment.class);
+    final JoshFragment defaultFragment = mock(JoshFragment.class);
     when(parentVisitor.visit(defaultContext)).thenReturn(defaultFragment);
 
     final EventHandlerAction defaultAction = mock(EventHandlerAction.class);
     when(defaultFragment.getCurrentAction()).thenReturn(defaultAction);
 
     // Test
-    Fragment result = visitor.visitConfigValueWithDefault(context);
+    JoshFragment result = visitor.visitConfigValueWithDefault(context);
 
     // Validate
     assertNotNull(result);

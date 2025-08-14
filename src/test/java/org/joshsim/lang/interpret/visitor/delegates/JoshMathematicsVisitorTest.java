@@ -25,8 +25,8 @@ import org.joshsim.lang.antlr.JoshLangParser.ParenExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.PowExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.SingleParamFunctionCallContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,11 +64,11 @@ class JoshMathematicsVisitorTest {
     context.tolow = mock(ExpressionContext.class);
     context.tohigh = mock(ExpressionContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment fromLowFragment = mock(Fragment.class);
-    Fragment fromHighFragment = mock(Fragment.class);
-    Fragment toLowFragment = mock(Fragment.class);
-    Fragment toHighFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment fromLowFragment = mock(JoshFragment.class);
+    JoshFragment fromHighFragment = mock(JoshFragment.class);
+    JoshFragment toLowFragment = mock(JoshFragment.class);
+    JoshFragment toHighFragment = mock(JoshFragment.class);
 
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction fromLowAction = mock(EventHandlerAction.class);
@@ -89,7 +89,7 @@ class JoshMathematicsVisitorTest {
     when(toHighFragment.getCurrentAction()).thenReturn(toHighAction);
 
     // Test
-    Fragment result = visitor.visitMapLinear(context);
+    JoshFragment result = visitor.visitMapLinear(context);
 
     // Validate
     assertNotNull(result);
@@ -122,11 +122,11 @@ class JoshMathematicsVisitorTest {
     context.tohigh = mock(ExpressionContext.class);
     context.method = mock(IdentifierContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment fromLowFragment = mock(Fragment.class);
-    Fragment fromHighFragment = mock(Fragment.class);
-    Fragment toLowFragment = mock(Fragment.class);
-    Fragment toHighFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment fromLowFragment = mock(JoshFragment.class);
+    JoshFragment fromHighFragment = mock(JoshFragment.class);
+    JoshFragment toLowFragment = mock(JoshFragment.class);
+    JoshFragment toHighFragment = mock(JoshFragment.class);
 
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction fromLowAction = mock(EventHandlerAction.class);
@@ -148,7 +148,7 @@ class JoshMathematicsVisitorTest {
     when(toHighFragment.getCurrentAction()).thenReturn(toHighAction);
 
     // Test
-    Fragment result = visitor.visitMapParam(context);
+    JoshFragment result = visitor.visitMapParam(context);
 
     // Validate
     assertNotNull(result);
@@ -182,12 +182,12 @@ class JoshMathematicsVisitorTest {
     context.methodarg = mock(ExpressionContext.class);
     context.method = mock(IdentifierContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment fromLowFragment = mock(Fragment.class);
-    Fragment fromHighFragment = mock(Fragment.class);
-    Fragment toLowFragment = mock(Fragment.class);
-    Fragment toHighFragment = mock(Fragment.class);
-    Fragment methodArgFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment fromLowFragment = mock(JoshFragment.class);
+    JoshFragment fromHighFragment = mock(JoshFragment.class);
+    JoshFragment toLowFragment = mock(JoshFragment.class);
+    JoshFragment toHighFragment = mock(JoshFragment.class);
+    JoshFragment methodArgFragment = mock(JoshFragment.class);
 
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction fromLowAction = mock(EventHandlerAction.class);
@@ -212,7 +212,7 @@ class JoshMathematicsVisitorTest {
     when(methodArgFragment.getCurrentAction()).thenReturn(methodArgAction);
 
     // Test
-    Fragment result = visitor.visitMapParamParam(context);
+    JoshFragment result = visitor.visitMapParamParam(context);
 
     // Validate
     assertNotNull(result);
@@ -242,8 +242,8 @@ class JoshMathematicsVisitorTest {
     context.right = mock(ExpressionContext.class);
     context.op = mock(Token.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -254,7 +254,7 @@ class JoshMathematicsVisitorTest {
     when(context.op.getText()).thenReturn("+");
 
     // Test
-    Fragment result = visitor.visitAdditionExpression(context);
+    JoshFragment result = visitor.visitAdditionExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -281,8 +281,8 @@ class JoshMathematicsVisitorTest {
     context.right = mock(ExpressionContext.class);
     context.op = mock(Token.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -293,7 +293,7 @@ class JoshMathematicsVisitorTest {
     when(context.op.getText()).thenReturn("*");
 
     // Test
-    Fragment result = visitor.visitMultiplyExpression(context);
+    JoshFragment result = visitor.visitMultiplyExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -319,8 +319,8 @@ class JoshMathematicsVisitorTest {
     context.left = mock(ExpressionContext.class);
     context.right = mock(ExpressionContext.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -330,7 +330,7 @@ class JoshMathematicsVisitorTest {
     when(rightFragment.getCurrentAction()).thenReturn(rightAction);
 
     // Test
-    Fragment result = visitor.visitPowExpression(context);
+    JoshFragment result = visitor.visitPowExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -353,13 +353,13 @@ class JoshMathematicsVisitorTest {
     // Mock
     ParenExpressionContext context = mock(ParenExpressionContext.class);
     ExpressionContext childContext = mock(ExpressionContext.class);
-    Fragment childFragment = mock(Fragment.class);
+    JoshFragment childFragment = mock(JoshFragment.class);
 
     when(context.getChild(1)).thenReturn(childContext);
     when(childContext.accept(parent)).thenReturn(childFragment);
 
     // Test
-    Fragment result = visitor.visitParenExpression(context);
+    JoshFragment result = visitor.visitParenExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -374,9 +374,9 @@ class JoshMathematicsVisitorTest {
     context.lower = mock(ExpressionContext.class);
     context.upper = mock(ExpressionContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment lowerFragment = mock(Fragment.class);
-    Fragment upperFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment lowerFragment = mock(JoshFragment.class);
+    JoshFragment upperFragment = mock(JoshFragment.class);
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction lowerAction = mock(EventHandlerAction.class);
     EventHandlerAction upperAction = mock(EventHandlerAction.class);
@@ -389,7 +389,7 @@ class JoshMathematicsVisitorTest {
     when(upperFragment.getCurrentAction()).thenReturn(upperAction);
 
     // Test
-    Fragment result = visitor.visitLimitBoundExpression(context);
+    JoshFragment result = visitor.visitLimitBoundExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -415,8 +415,8 @@ class JoshMathematicsVisitorTest {
     context.operand = mock(ExpressionContext.class);
     context.limit = mock(ExpressionContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment limitFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment limitFragment = mock(JoshFragment.class);
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction limitAction = mock(EventHandlerAction.class);
 
@@ -426,7 +426,7 @@ class JoshMathematicsVisitorTest {
     when(limitFragment.getCurrentAction()).thenReturn(limitAction);
 
     // Test
-    Fragment result = visitor.visitLimitMinExpression(context);
+    JoshFragment result = visitor.visitLimitMinExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -451,8 +451,8 @@ class JoshMathematicsVisitorTest {
     context.operand = mock(ExpressionContext.class);
     context.limit = mock(ExpressionContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
-    Fragment limitFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
+    JoshFragment limitFragment = mock(JoshFragment.class);
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
     EventHandlerAction limitAction = mock(EventHandlerAction.class);
 
@@ -462,7 +462,7 @@ class JoshMathematicsVisitorTest {
     when(limitFragment.getCurrentAction()).thenReturn(limitAction);
 
     // Test
-    Fragment result = visitor.visitLimitMaxExpression(context);
+    JoshFragment result = visitor.visitLimitMaxExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -487,7 +487,7 @@ class JoshMathematicsVisitorTest {
     context.operand = mock(ExpressionContext.class);
     context.name = mock(FuncNameContext.class);
 
-    Fragment operandFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
     EventHandlerAction operandAction = mock(EventHandlerAction.class);
 
     when(context.operand.accept(parent)).thenReturn(operandFragment);
@@ -495,7 +495,7 @@ class JoshMathematicsVisitorTest {
     when(context.name.getText()).thenReturn("abs");
 
     // Test
-    Fragment result = visitor.visitSingleParamFunctionCall(context);
+    JoshFragment result = visitor.visitSingleParamFunctionCall(context);
 
     // Validate
     assertNotNull(result);

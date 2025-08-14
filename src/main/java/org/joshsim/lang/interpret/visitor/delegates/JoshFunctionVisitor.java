@@ -20,10 +20,10 @@ import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.CompiledCallableFragment;
-import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.CompiledCallableFragment;
+import org.joshsim.lang.interpret.fragment.josh.EventHandlerGroupFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
@@ -57,9 +57,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * conditional event handler.</p>
    *
    * @param ctx The ANTLR context from which to parse the lambda function definition.
-   * @return Fragment containing the lambda function definition parsed.
+   * @return JoshFragment containing the lambda function definition parsed.
    */
-  public Fragment visitLambda(JoshLangParser.LambdaContext ctx) {
+  public JoshFragment visitLambda(JoshLangParser.LambdaContext ctx) {
     EventHandlerAction innerAction = ctx
         .getChild(0)
         .accept(parent)
@@ -80,9 +80,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * <p>Parse a return statement that ends the execution of a function and returns a value.</p>
    *
    * @param ctx The ANTLR context from which to parse the return statement.
-   * @return Fragment containing the return statement parsed.
+   * @return JoshFragment containing the return statement parsed.
    */
-  public Fragment visitReturn(JoshLangParser.ReturnContext ctx) {
+  public JoshFragment visitReturn(JoshLangParser.ReturnContext ctx) {
     EventHandlerAction innerAction = ctx
         .getChild(1)
         .accept(parent)
@@ -104,10 +104,10 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * The function must end with a return statement.</p>
    *
    * @param ctx The ANTLR context from which to parse the function body.
-   * @return Fragment containing the function body parsed.
+   * @return JoshFragment containing the function body parsed.
    * @throws IllegalStateException if the function body does not end with a return statement.
    */
-  public Fragment visitFullBody(JoshLangParser.FullBodyContext ctx) {
+  public JoshFragment visitFullBody(JoshLangParser.FullBodyContext ctx) {
     List<EventHandlerAction> innerActions = new ArrayList<>();
 
     int numChildren = ctx.getChildCount();
@@ -148,9 +148,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * action.</p>
    *
    * @param ctx The ANTLR context from which to parse the event handler group member.
-   * @return Fragment containing the event handler action.
+   * @return JoshFragment containing the event handler action.
    */
-  public Fragment visitEventHandlerGroupMemberInner(
+  public JoshFragment visitEventHandlerGroupMemberInner(
       JoshLangParser.EventHandlerGroupMemberInnerContext ctx) {
     EventHandlerAction handlerAction = ctx.target.accept(parent).getCurrentAction();
     return new ActionFragment(handlerAction);
@@ -163,9 +163,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * execute and the condition that determines whether this branch should be selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the conditional 'if' event handler.
-   * @return Fragment containing the compiled callable and selector for the conditional handler.
+   * @return JoshFragment containing the compiled callable and selector for the conditional handler.
    */
-  public Fragment visitConditionalIfEventHandlerGroupMember(
+  public JoshFragment visitConditionalIfEventHandlerGroupMember(
       JoshLangParser.ConditionalIfEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
     EventHandlerAction conditionAction = ctx.target.accept(parent).getCurrentAction();
@@ -186,9 +186,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * action to execute and the condition that determines whether this branch should be selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the conditional 'elif' event handler.
-   * @return Fragment containing the compiled callable and selector for the conditional handler.
+   * @return JoshFragment containing the compiled callable and selector for the conditional handler.
    */
-  public Fragment visitConditionalElifEventHandlerGroupMember(
+  public JoshFragment visitConditionalElifEventHandlerGroupMember(
       JoshLangParser.ConditionalElifEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
     EventHandlerAction conditionAction = ctx.target.accept(parent).getCurrentAction();
@@ -209,9 +209,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * conditional branches are selected.</p>
    *
    * @param ctx The ANTLR context from which to parse the 'else' event handler.
-   * @return Fragment containing the compiled callable for the else handler.
+   * @return JoshFragment containing the compiled callable for the else handler.
    */
-  public Fragment visitConditionalElseEventHandlerGroupMember(
+  public JoshFragment visitConditionalElseEventHandlerGroupMember(
       JoshLangParser.ConditionalElseEventHandlerGroupMemberContext ctx) {
     EventHandlerAction innerAction = ctx.inner.accept(parent).getCurrentAction();
     CompiledCallable decoratedInterpreterAction = makeCallableMachine(innerAction);
@@ -225,11 +225,11 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * on handler execution (all handlers executed).</p>
    *
    * @param ctx The ANTLR context from which to parse the single event handler group.
-   * @return Fragment containing the event handler group.
+   * @return JoshFragment containing the event handler group.
    */
-  public Fragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
+  public JoshFragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
     String fullName = ctx.name.getText();
-    Fragment innerFragment = ctx.getChild(1).accept(parent);
+    JoshFragment innerFragment = ctx.getChild(1).accept(parent);
 
     CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
@@ -254,9 +254,9 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * (if/elif/else structure). In other words, which handler is used is subject to conditionals.</p>
    *
    * @param ctx The ANTLR context from which to parse the multiple event handler group.
-   * @return Fragment containing the event handler group with all conditional branches.
+   * @return JoshFragment containing the event handler group with all conditional branches.
    */
-  public Fragment visitEventHandlerGroupMultiple(
+  public JoshFragment visitEventHandlerGroupMultiple(
       JoshLangParser.EventHandlerGroupMultipleContext ctx) {
     String fullName = ctx.name.getText();
     EventKey eventKey = buildEventKey(fullName);
@@ -267,7 +267,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     int numBranches = ctx.getChildCount() - 1;
     for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
       int childIndex = branchIndex + 1;
-      Fragment childFragment = ctx.getChild(childIndex).accept(parent);
+      JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
 
       if (childFragment.getCompiledSelector().isPresent()) {
         groupBuilder.addEventHandler(new EventHandler(
@@ -295,11 +295,11 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * word.</p>
    *
    * @param ctx The ANTLR context from which to parse the general event handler.
-   * @return Fragment containing the event handler.
+   * @return JoshFragment containing the event handler.
    * @throws IllegalArgumentException if the attribute name is a reserved word.
    */
-  public Fragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
-    Fragment fragment = ctx.getChild(0).accept(parent);
+  public JoshFragment visitEventHandlerGeneral(JoshLangParser.EventHandlerGeneralContext ctx) {
+    JoshFragment fragment = ctx.getChild(0).accept(parent);
     String attributeName = fragment.getEventHandlerGroup().getAttribute();
     ReservedWordChecker.checkVariableDeclaration(attributeName);
     return fragment;

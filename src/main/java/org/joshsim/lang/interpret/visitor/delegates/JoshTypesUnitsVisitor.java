@@ -18,9 +18,9 @@ import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.ConversionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.ConversionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
@@ -58,9 +58,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * forcing means that the cast will happen even if the engine does not believe it to be valid.</p>
    *
    * @param ctx The ANTLR context from which to parse the cast expression.
-   * @return Fragment containing the cast expression parsed.
+   * @return JoshFragment containing the cast expression parsed.
    */
-  public Fragment visitCast(JoshLangParser.CastContext ctx) {
+  public JoshFragment visitCast(JoshLangParser.CastContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     Units newUnits = Units.of(ctx.target.getText());
 
@@ -81,9 +81,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * which may lead to unexpected results but avoids runtime errors.</p>
    *
    * @param ctx The ANTLR context from which to parse the forced cast expression.
-   * @return Fragment containing the forced cast expression parsed.
+   * @return JoshFragment containing the forced cast expression parsed.
    */
-  public Fragment visitCastForce(JoshLangParser.CastForceContext ctx) {
+  public JoshFragment visitCastForce(JoshLangParser.CastForceContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     Units newUnits = Units.of(ctx.target.getText());
 
@@ -103,9 +103,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * creates an alias for a unit.</p>
    *
    * @param ctx The ANTLR context from which to parse the no-op conversion.
-   * @return Fragment containing the no-op conversion.
+   * @return JoshFragment containing the no-op conversion.
    */
-  public Fragment visitNoopConversion(JoshLangParser.NoopConversionContext ctx) {
+  public JoshFragment visitNoopConversion(JoshLangParser.NoopConversionContext ctx) {
     String aliasName = ctx.getChild(1).getText();
     Conversion conversion = new NoopConversion(Units.of(aliasName));
     return new ConversionFragment(conversion);
@@ -118,9 +118,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * using the provided conversion logic.</p>
    *
    * @param ctx The ANTLR context from which to parse the active conversion.
-   * @return Fragment containing the active conversion.
+   * @return JoshFragment containing the active conversion.
    */
-  public Fragment visitActiveConversion(JoshLangParser.ActiveConversionContext ctx) {
+  public JoshFragment visitActiveConversion(JoshLangParser.ActiveConversionContext ctx) {
     String destinationUnitsName = ctx.getChild(0).getText();
     Units destinationUnits = Units.of(destinationUnitsName);
     EventHandlerAction action = ctx.getChild(2).accept(parent).getCurrentAction();
@@ -141,9 +141,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * <p>Process an expression that creates a specified number of entities of a given type.</p>
    *
    * @param ctx The ANTLR context from which to parse the create variable expression.
-   * @return Fragment containing the create variable expression parsed.
+   * @return JoshFragment containing the create variable expression parsed.
    */
-  public Fragment visitCreateVariableExpression(
+  public JoshFragment visitCreateVariableExpression(
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     String entityName = ctx.target.getText();
@@ -164,9 +164,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * complex type's definition.</p>
    *
    * @param ctx The ANTLR context from which to parse the attribute expression.
-   * @return Fragment containing the attribute expression parsed.
+   * @return JoshFragment containing the attribute expression parsed.
    */
-  public Fragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
+  public JoshFragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(parent).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
     ValueResolver resolver = new ValueResolver(engineValueFactory, attrName);
@@ -187,9 +187,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * distance.</p>
    *
    * @param ctx The ANTLR context from which to parse the spatial query.
-   * @return Fragment containing the spatial query parsed.
+   * @return JoshFragment containing the spatial query parsed.
    */
-  public Fragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
+  public JoshFragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
     ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.getText());
     EventHandlerAction distanceAction = ctx.distance.accept(parent).getCurrentAction();
 
@@ -209,12 +209,12 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * respective types.</p>
    *
    * @param ctx The ANTLR context from which to parse the position creation.
-   * @return Fragment containing the position creation parsed.
+   * @return JoshFragment containing the position creation parsed.
    */
-  public Fragment visitPosition(JoshLangParser.PositionContext ctx) {
-    Fragment unitsFragment1 = ctx.getChild(0).accept(parent);
+  public JoshFragment visitPosition(JoshLangParser.PositionContext ctx) {
+    JoshFragment unitsFragment1 = ctx.getChild(0).accept(parent);
     String type1 = ctx.getChild(1).getText();
-    Fragment unitsFragment2 = ctx.getChild(3).accept(parent);
+    JoshFragment unitsFragment2 = ctx.getChild(3).accept(parent);
     String type2 = ctx.getChild(4).getText();
 
     EventHandlerAction action = (machine) -> {
@@ -235,9 +235,9 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * <p>Process an expression that creates exactly one entity of a given type.</p>
    *
    * @param ctx The ANTLR context from which to parse the create single expression.
-   * @return Fragment containing the create single expression parsed.
+   * @return JoshFragment containing the create single expression parsed.
    */
-  public Fragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
+  public JoshFragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {
@@ -255,10 +255,10 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * <p>Process an expression that assigns a value to a variable.</p>
    *
    * @param ctx The ANTLR context from which to parse the assignment.
-   * @return Fragment containing the assignment parsed.
+   * @return JoshFragment containing the assignment parsed.
    * @throws IllegalArgumentException if the identifier name is a reserved word.
    */
-  public Fragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
+  public JoshFragment visitAssignment(JoshLangParser.AssignmentContext ctx) {
     String identifierName = ctx.getChild(1).getText();
     ReservedWordChecker.checkVariableDeclaration(identifierName);
     EventHandlerAction valAction = ctx.val.accept(parent).getCurrentAction();
