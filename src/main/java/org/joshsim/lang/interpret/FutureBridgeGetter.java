@@ -8,6 +8,7 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
+import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -17,7 +18,6 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.precompute.JshdExternalGetter;
 
 /**

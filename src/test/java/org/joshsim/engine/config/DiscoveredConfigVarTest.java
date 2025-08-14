@@ -23,7 +23,7 @@ class DiscoveredConfigVarTest {
   @Test
   void testConstructorWithoutDefault() {
     DiscoveredConfigVar var = new DiscoveredConfigVar("testVar");
-    
+
     assertEquals("testVar", var.getName());
     assertEquals(Optional.empty(), var.getDefaultValue());
     assertFalse(var.getDefaultValue().isPresent());
@@ -32,7 +32,7 @@ class DiscoveredConfigVarTest {
   @Test
   void testConstructorWithDefault() {
     DiscoveredConfigVar var = new DiscoveredConfigVar("testVar", "5 m");
-    
+
     assertEquals("testVar", var.getName());
     assertEquals(Optional.of("5 m"), var.getDefaultValue());
     assertTrue(var.getDefaultValue().isPresent());

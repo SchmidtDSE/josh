@@ -54,9 +54,9 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("testVar2"),
         new DiscoveredConfigVar("anotherVar", "10 count")
     ));
-    
+
     String result = ConfigDiscoverabilityOutputFormatter.format(vars);
-    
+
     // Variables should be sorted alphabetically
     String expected = "anotherVar(10 count)\ntestVar1(5 m)\ntestVar2";
     assertEquals(expected, result);
@@ -69,9 +69,9 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("aVariable", "1 m"),
         new DiscoveredConfigVar("mVariable", "5 count")
     ));
-    
+
     String result = ConfigDiscoverabilityOutputFormatter.format(vars);
-    
+
     // Should be sorted alphabetically: aVariable, mVariable, zVariable
     String expected = "aVariable(1 m)\nmVariable(5 count)\nzVariable";
     assertEquals(expected, result);
@@ -101,9 +101,9 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("testVar2"),
         new DiscoveredConfigVar("anotherVar", "10 count")
     ));
-    
+
     List<String> result = ConfigDiscoverabilityOutputFormatter.formatAsLines(vars);
-    
+
     assertEquals(3, result.size());
     // Should be sorted alphabetically
     assertEquals("anotherVar(10 count)", result.get(0));
@@ -132,9 +132,9 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("config.value2", "10.5%"),
         new DiscoveredConfigVar("simple")
     ));
-    
+
     String result = ConfigDiscoverabilityOutputFormatter.format(vars);
-    
+
     // Should handle dotted names correctly and sort them
     String expected = "config.value2(10.5%)\nexample.testVar1(5 meters)\nsimple";
     assertEquals(expected, result);
@@ -147,9 +147,9 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("var2", "\"quoted string\""),
         new DiscoveredConfigVar("var3", "100%")
     ));
-    
+
     String result = ConfigDiscoverabilityOutputFormatter.format(vars);
-    
+
     String expected = "var1(5.5 m/s)\nvar2(\"quoted string\")\nvar3(100%)";
     assertEquals(expected, result);
   }
@@ -161,12 +161,12 @@ class ConfigDiscoverabilityOutputFormatterTest {
         new DiscoveredConfigVar("testVar2"),
         new DiscoveredConfigVar("anotherVar", "10 count")
     ));
-    
+
     // Format multiple times to ensure consistent ordering
     String result1 = ConfigDiscoverabilityOutputFormatter.format(vars);
     String result2 = ConfigDiscoverabilityOutputFormatter.format(vars);
     String result3 = ConfigDiscoverabilityOutputFormatter.format(vars);
-    
+
     assertEquals(result1, result2);
     assertEquals(result2, result3);
   }

@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.config;
 
-import org.joshsim.engine.config.Config;
 import org.joshsim.lang.bridge.ConfigGetter;
 
 
