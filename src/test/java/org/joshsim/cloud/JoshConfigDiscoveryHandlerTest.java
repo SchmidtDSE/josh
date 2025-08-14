@@ -374,4 +374,50 @@ public class JoshConfigDiscoveryHandlerTest {
     }
   }
 
+  @Test
+  public void testInvalidJoshCodeReturns400() {
+    // Setup POST request
+    when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
+    when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
+    when(mockExchange.getResponseSender()).thenReturn(mockSender);
+    
+    // Mock FormParserFactory
+    try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
+      FormParserFactory mockFactory = mock(FormParserFactory.class);
+      FormParserFactory.Builder mockBuilder = mock(FormParserFactory.Builder.class);
+      when(FormParserFactory.builder()).thenReturn(mockBuilder);
+      when(mockBuilder.build()).thenReturn(mockFactory);
+      when(mockFactory.createParser(any())).thenReturn(mockFormParser);
+      
+      try {
+        when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
+      } catch (IOException e) {
+        // Won't throw for mock
+      }
+      
+      // Mock valid API key
+      try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
+        ApiKeyUtil.ApiCheckResult validResult = new ApiKeyUtil.ApiCheckResult("test-key", true);
+        apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(validResult);
+        
+        // Mock form data with invalid Josh code (missing end statement)
+        when(mockFormData.contains("code")).thenReturn(true);
+        when(mockFormData.getFirst("code")).thenReturn(mockFormValue);
+        when(mockFormValue.getValue()).thenReturn("""
+            start simulation Test
+              grid.size = config example.gridSize
+            """);  // Missing 'end simulation' - this will cause a parse error
+        
+        // Execute
+        Optional<String> result = handler.handleRequestTrusted(mockExchange);
+        
+        // Verify 400 status code for invalid code
+        assertTrue(result.isPresent());
+        assertEquals("test-key", result.get());
+        verify(mockExchange).setStatusCode(400);
+        verify(mockSender).send("Invalid Josh code: syntax errors found");
+      }
+    }
+  }
+
 }
