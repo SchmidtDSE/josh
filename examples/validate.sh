@@ -114,10 +114,10 @@ assert_ok examples/simulations/state.josh || exit 32
 assert_ok examples/simulations/variables.josh || exit 33
 
 # Test config example validation
-assert_ok examples/config_example.josh || exit 34
+assert_ok examples/features/config_example.josh || exit 34
 
 # Test discoverConfig command functionality
-test_discover_config examples/config_example.josh "example.testVar1 example.testVar2" || exit 35
+test_discover_config examples/features/config_example.josh "example.testVar1 example.testVar2" || exit 35
 
 # Test discoverConfig on file with no config variables
 test_discover_config examples/simulations/simple.josh "" || exit 36

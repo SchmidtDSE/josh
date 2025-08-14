@@ -90,9 +90,9 @@ assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 17
 
 echo "Testing config example with external config file..."
 # Copy the config file to working directory as expected by the config system
-cp examples/config_example.jshc example.jshc || exit 18
+cp examples/features/config_example.jshc example.jshc || exit 18
 rm -f /tmp/config_example_josh.csv
-assert_ok examples/config_example.josh ConfigExample 1 || exit 19
+assert_ok examples/features/config_example.josh ConfigExample 1 || exit 19
 [ -f "/tmp/config_example_josh_1.csv" ] || exit 20
 [ -s "/tmp/config_example_josh_1.csv" ] || exit 21
 echo "Config example test passed successfully!"
