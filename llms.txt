@@ -23,6 +23,39 @@ Preprocessing command structure:
 java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
 ```
 
+## Configuration Files (.jshc)
+
+Josh supports external configuration files using the `.jshc` format for parameterizing simulations without modifying Josh code. This enables users to modify simulation parameters without changing Josh source code.
+
+### Format Specification
+- One variable per line: `variableName = value units`
+- Comments using `#` character (all text after # ignored until newline)
+- Empty lines allowed and ignored
+- Whitespace flexible around equals sign (zero or more spaces/tabs)
+- Variable names follow Josh identifier pattern: `[A-Za-z][A-Za-z0-9]*`
+- Values must be valid EngineValue format (number + optional units)
+
+### Usage in Josh Code
+- Access via `config configName.variableName` expressions
+- Example: `config example.testVar1` references `testVar1` from `example.jshc`
+- Files loaded from working directory or provided with HTTP request
+- Values are constant across all timesteps and spatial locations
+- Configuration variables can be discovered using `discoverConfig` command
+
+### Example Configuration File (example.jshc)
+```
+# Group 1 - Tree parameters
+testVar1 = 5 meters
+testVar2 = 10m
+
+# Group 2 - Environment parameters  
+testVar3 = 15 km
+```
+
+### Commands
+- `discoverConfig script.josh` - Lists all configuration variables used in a Josh script
+- Variables discovered can be used to generate appropriate .jshc files
+
 ## Language Structure
 
 Josh uses a stanza-based approach similar to SmallTalk/HyperTalk languages. Each stanza defines an entity (object) using `start` and `end` blocks. The language is imperative with procedural elements, prioritizing behavioral description over computational specification.
