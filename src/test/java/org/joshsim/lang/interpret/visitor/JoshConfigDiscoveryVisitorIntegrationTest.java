@@ -57,3 +57,4 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
     return visitor.getDiscoveredVariables();
   }
 }
+
