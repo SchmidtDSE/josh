@@ -43,6 +43,8 @@ import org.teavm.jso.JSExport;
  */
 public class JoshJsSimFacade {
 
+  private static final String DEFAULT_CONFIG_CONTENT = "testVariable = 5 m";
+
   /**
    * Validates and interprets the provided code using the JoshParser and JoshInterpreter.
    *
@@ -221,10 +223,9 @@ public class JoshJsSimFacade {
     ParseTree tree = joshParser.program();
 
     JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-    visitor.visit(tree);
-    Set<String> configVariables = visitor.getDiscoveredVariables();
+    Set<String> configVariables = visitor.visit(tree);
 
-    CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
+    CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\n");
     for (String variable : configVariables) {
       stringJoiner.add(variable);
     }

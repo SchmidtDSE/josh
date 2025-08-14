@@ -53,8 +53,7 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
     ParseTree tree = parser.program();
 
     JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-    visitor.visit(tree);
-    return visitor.getDiscoveredVariables();
+    return visitor.visit(tree);
   }
 }
 

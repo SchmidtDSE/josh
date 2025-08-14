@@ -113,18 +113,23 @@ public class JoshConfigDiscoveryHandler implements HttpHandler {
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       JoshLangParser joshParser = new JoshLangParser(tokens);
       ParseTree tree = joshParser.program();
+      
+      // Check if parsing resulted in syntax errors
+      if (joshParser.getNumberOfSyntaxErrors() > 0) {
+        httpServerExchange.setStatusCode(400);
+        httpServerExchange.getResponseSender().send("Invalid Josh code: syntax errors found");
+        return Optional.of(apiKey);
+      }
 
       JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-      visitor.visit(tree);
-      Set<String> configVariables = visitor.getDiscoveredVariables();
+      Set<String> configVariables = visitor.visit(tree);
 
-      // Convert to comma-separated string
+      // Convert to newline-separated string
       String result = configVariables.stream()
-          .collect(Collectors.joining(","));
+          .collect(Collectors.joining("\n"));
 
       httpServerExchange.getResponseSender().send(result);
       return Optional.of(apiKey);
-
     } catch (Exception e) {
       httpServerExchange.setStatusCode(500);
       httpServerExchange.getResponseSender().send("Error parsing code: " + e.getMessage());

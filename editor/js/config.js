@@ -28,7 +28,8 @@ class ConfigDialogPresenter {
     self._cancelButton = self._dialog.querySelector(".config-cancel-button");
 
     self._originalContent = "";
-    self._defaultContent = "testVariable = 5 m";
+    const DEFAULT_CONFIG_CONTENT = "testVariable = 5 m";
+    self._defaultContent = DEFAULT_CONFIG_CONTENT;
 
     self._attachListeners();
   }

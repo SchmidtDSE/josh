@@ -13,7 +13,6 @@ import org.joshsim.lang.antlr.JoshLangParser;
  * would add "example.testVar" to the discovered set.</p>
  */
 public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<String>> {
-  private final Set<String> configVariables = new HashSet<>();
 
   /**
    * Creates a new config discovery visitor.
@@ -25,26 +24,31 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<String>>
   @Override
   public Set<String> visitConfigValue(JoshLangParser.ConfigValueContext ctx) {
     String variableName = ctx.name.getText();
-    configVariables.add(variableName);
-    return configVariables;
+    Set<String> result = new HashSet<>();
+    result.add(variableName);
+    
+    // Continue visiting children to collect any nested config values
+    Set<String> childResult = visitChildren(ctx);
+    if (childResult != null) {
+      result.addAll(childResult);
+    }
+    
+    return result;
   }
 
   @Override
   protected Set<String> defaultResult() {
-    return configVariables;
+    return new HashSet<>();
   }
 
   @Override
   protected Set<String> aggregateResult(Set<String> aggregate, Set<String> nextResult) {
-    return aggregate; // configVariables is modified in place
-  }
-
-  /**
-   * Gets the discovered configuration variables.
-   *
-   * @return Set of configuration variable names found in the script
-   */
-  public Set<String> getDiscoveredVariables() {
-    return new HashSet<>(configVariables);
+    if (aggregate == null) {
+      aggregate = new HashSet<>();
+    }
+    if (nextResult != null) {
+      aggregate.addAll(nextResult);
+    }
+    return aggregate;
   }
 }

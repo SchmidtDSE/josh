@@ -28,13 +28,15 @@ While COGs, geotiffs, and netCDF files can be provided directly, the preferred a
 
 ```
 $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
-$ java -jar joshsim.jar run simulation.josh --data output.jshd
+$ ls output.jshd
+$ java -jar joshsim.jar run simulation.josh
 ```
 
 Configuration files (.jshc) can be provided alongside simulations to parameterize behavior without modifying Josh code:
 
 ```
-$ java -jar joshsim.jar run simulation.josh --config parameters.jshc
+$ ls parameters.jshc
+$ java -jar joshsim.jar run simulation.josh
 ```
 
 Configuration variables can be discovered in Josh scripts:
@@ -75,7 +77,7 @@ You can run the local UI through [joshsim](https://language.joshsim.org/download
 $ java -jar joshsim.jar server
 ```
 
-This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code, jshd, and jshc files provided, with no network access otherwise.
+This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code, jshd, and jshc files provided. However, the sandbox disallows network access otherwise.
 
 ### Containerized usage
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
@@ -107,6 +109,7 @@ The server command will look for API keys in the `JOSH_API_KEYS` environment var
 ## Reserved Features
 
 Some language features are implemented but reserved for future use:
+
 - `config` stanzas for defining configuration sources (currently only working directory and request files are supported)
 - `external` stanzas for defining external data sources (currently only working directory and request files are supported)
 

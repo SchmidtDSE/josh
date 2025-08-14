@@ -77,8 +77,7 @@ public class DiscoverConfigCommand implements Callable<Integer> {
       ParseTree tree = parser.program();
 
       JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-      visitor.visit(tree);
-      Set<String> configVariables = visitor.getDiscoveredVariables();
+      Set<String> configVariables = visitor.visit(tree);
 
       // Print each variable on its own line
       for (String variable : configVariables) {
