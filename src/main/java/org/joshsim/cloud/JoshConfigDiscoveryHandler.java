@@ -89,9 +89,7 @@ public class JoshConfigDiscoveryHandler implements HttpHandler {
     try {
       formData = parser.parseBlocking();
     } catch (IOException e) {
-      httpServerExchange.setStatusCode(500);
-      httpServerExchange.getResponseSender().send("Internal server error");
-      return Optional.empty();
+      throw new RuntimeException(e);
     }
 
     ApiKeyUtil.ApiCheckResult apiCheckResult = ApiKeyUtil.checkApiKey(formData, apiDataLayer);
