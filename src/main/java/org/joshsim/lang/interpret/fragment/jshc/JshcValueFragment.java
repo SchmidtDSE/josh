@@ -35,21 +35,41 @@ public class JshcValueFragment extends JshcFragment {
     this.engineValue = engineValue;
   }
 
+  /**
+   * Gets the numeric value from this fragment.
+   *
+   * @return The numeric value as BigDecimal
+   */
   @Override
   public BigDecimal getNumber() {
     return number;
   }
 
+  /**
+   * Gets the units string from this fragment.
+   *
+   * @return The units string
+   */
   @Override
   public String getUnits() {
     return units;
   }
 
+  /**
+   * Gets the engine value from this fragment.
+   *
+   * @return The EngineValue
+   */
   @Override
   public EngineValue getEngineValue() {
     return engineValue;
   }
 
+  /**
+   * Gets the fragment type.
+   *
+   * @return The fragment type (CONVERSION)
+   */
   @Override
   public FragmentType getFragmentType() {
     // Using CONVERSION as the closest existing type for a value fragment

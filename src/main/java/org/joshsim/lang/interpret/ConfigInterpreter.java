@@ -38,7 +38,7 @@ public class ConfigInterpreter {
       JoshConfigLexer lexer = new JoshConfigLexer(CharStreams.fromString(configContent));
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       JoshConfigParser parser = new JoshConfigParser(tokens);
-      
+
       // Add error handling
       parser.removeErrorListeners(); // Remove default console error listener
       parser.addErrorListener(new org.antlr.v4.runtime.BaseErrorListener() {
@@ -50,14 +50,14 @@ public class ConfigInterpreter {
           throw new IllegalArgumentException(errorMsg);
         }
       });
-      
+
       // Parse the config content
       ParseTree tree = parser.config();
-      
+
       // Create visitor and visit the parse tree
       JoshConfigParserVisitor visitor = new JoshConfigParserVisitor(valueFactory);
       JshcFragment fragment = visitor.visit(tree);
-      
+
       // Extract Config from the resulting fragment
       return fragment.getConfigBuilder().build();
     } catch (Exception e) {

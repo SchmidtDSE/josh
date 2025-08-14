@@ -49,7 +49,8 @@ public class JoshConfigVisitor implements JoshVisitorDelegate {
    * @param ctx The context from which to parse the config value reference with default.
    * @return JoshFragment containing the config value reference with default parsed.
    */
-  public JoshFragment visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
+  public JoshFragment visitConfigValueWithDefault(
+      JoshLangParser.ConfigValueWithDefaultContext ctx) {
     String name = ctx.name.getText();
     JoshFragment defaultFragment = toolbox.getParent().visit(ctx.defaultValue);
     EventHandlerAction action = (machine) -> {

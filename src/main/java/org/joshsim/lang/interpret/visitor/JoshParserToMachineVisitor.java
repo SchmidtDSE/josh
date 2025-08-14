@@ -103,7 +103,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return configVisitor.visitConfigValue(ctx);
   }
 
-  public JoshFragment visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
+  public JoshFragment visitConfigValueWithDefault(
+      JoshLangParser.ConfigValueWithDefaultContext ctx) {
     return configVisitor.visitConfigValueWithDefault(ctx);
   }
 
@@ -147,7 +148,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return mathematicsVisitor.visitLimitMaxExpression(ctx);
   }
 
-  public JoshFragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
+  public JoshFragment visitSingleParamFunctionCall(
+      JoshLangParser.SingleParamFunctionCallContext ctx) {
     return mathematicsVisitor.visitSingleParamFunctionCall(ctx);
   }
 
@@ -191,7 +193,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return distributionVisitor.visitSampleParam(ctx);
   }
 
-  public JoshFragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
+  public JoshFragment visitSampleParamReplacement(
+      JoshLangParser.SampleParamReplacementContext ctx) {
     return distributionVisitor.visitSampleParamReplacement(ctx);
   }
 
@@ -232,7 +235,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return typesUnitsVisitor.visitPosition(ctx);
   }
 
-  public JoshFragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
+  public JoshFragment visitCreateSingleExpression(
+      JoshLangParser.CreateSingleExpressionContext ctx) {
     return typesUnitsVisitor.visitCreateSingleExpression(ctx);
   }
 
@@ -276,7 +280,8 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return functionVisitor.visitConditionalElseEventHandlerGroupMember(ctx);
   }
 
-  public JoshFragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
+  public JoshFragment visitEventHandlerGroupSingle(
+      JoshLangParser.EventHandlerGroupSingleContext ctx) {
     return functionVisitor.visitEventHandlerGroupSingle(ctx);
   }
 

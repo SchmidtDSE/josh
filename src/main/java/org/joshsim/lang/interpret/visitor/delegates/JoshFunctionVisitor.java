@@ -227,7 +227,8 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * @param ctx The ANTLR context from which to parse the single event handler group.
    * @return JoshFragment containing the event handler group.
    */
-  public JoshFragment visitEventHandlerGroupSingle(JoshLangParser.EventHandlerGroupSingleContext ctx) {
+  public JoshFragment visitEventHandlerGroupSingle(
+      JoshLangParser.EventHandlerGroupSingleContext ctx) {
     String fullName = ctx.name.getText();
     JoshFragment innerFragment = ctx.getChild(1).accept(parent);
 

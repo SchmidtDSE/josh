@@ -237,7 +237,8 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * @param ctx The ANTLR context from which to parse the create single expression.
    * @return JoshFragment containing the create single expression parsed.
    */
-  public JoshFragment visitCreateSingleExpression(JoshLangParser.CreateSingleExpressionContext ctx) {
+  public JoshFragment visitCreateSingleExpression(
+      JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.target.getText();
 
     EventHandlerAction action = (machine) -> {

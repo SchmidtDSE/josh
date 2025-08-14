@@ -36,10 +36,16 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
     this.valueFactory = valueFactory;
   }
 
+  /**
+   * Visits the root config context and processes all configuration lines.
+   *
+   * @param ctx The ANTLR config context
+   * @return A JshcFragment containing the complete configuration
+   */
   @Override
   public JshcFragment visitConfig(JoshConfigParser.ConfigContext ctx) {
     ConfigBuilder builder = new ConfigBuilder();
-    
+
     // Process each config line
     for (JoshConfigParser.ConfigLineContext lineContext : ctx.configLine()) {
       if (lineContext.assignment() != null) {
@@ -50,41 +56,53 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
       }
       // Comments and empty lines are automatically ignored by the grammar
     }
-    
+
     return new JshcConfigBuilderFragment(builder);
   }
 
+  /**
+   * Visits an assignment context and creates a config fragment.
+   *
+   * @param ctx The ANTLR assignment context
+   * @return A JshcFragment containing the assignment
+   */
   @Override
   public JshcFragment visitAssignment(JoshConfigParser.AssignmentContext ctx) {
     String variableName = ctx.ID().getText();
     JshcFragment valueFragment = visit(ctx.value());
-    
+
     // Add the value to a new config builder
     ConfigBuilder builder = new ConfigBuilder();
     builder.addValue(variableName, valueFragment.getEngineValue());
-    
+
     return new JshcConfigBuilderFragment(builder);
   }
 
+  /**
+   * Visits a value context and parses the number and units.
+   *
+   * @param ctx The ANTLR value context
+   * @return A JshcFragment containing the parsed value
+   */
   @Override
   public JshcFragment visitValue(JoshConfigParser.ValueContext ctx) {
     String numberText = ctx.NUMBER().getText();
     String unitsText = "";
-    
+
     if (ctx.ID() != null) {
       unitsText = ctx.ID().getText();
     }
-    
+
     try {
       // Parse the number
       BigDecimal number = new BigDecimal(numberText);
-      
+
       // Create units object
       Units units = unitsText.isEmpty() ? Units.EMPTY : Units.of(unitsText);
-      
+
       // Create EngineValue
       EngineValue engineValue = valueFactory.parseNumber(numberText, units);
-      
+
       return new JshcValueFragment(number, unitsText, engineValue);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid number format: " + numberText, e);
@@ -94,12 +112,24 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
     }
   }
 
+  /**
+   * Visits a comment context and returns an empty config builder.
+   *
+   * @param ctx The ANTLR comment context
+   * @return An empty JshcFragment
+   */
   @Override
   public JshcFragment visitComment(JoshConfigParser.CommentContext ctx) {
     // Comments are ignored - return empty builder
     return new JshcConfigBuilderFragment(new ConfigBuilder());
   }
 
+  /**
+   * Visits an empty line context and returns an empty config builder.
+   *
+   * @param ctx The ANTLR empty line context
+   * @return An empty JshcFragment
+   */
   @Override
   public JshcFragment visitEmptyLine(JoshConfigParser.EmptyLineContext ctx) {
     // Empty lines are ignored - return empty builder

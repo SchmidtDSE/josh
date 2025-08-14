@@ -110,7 +110,8 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * @param ctx The ANTLR context from which to parse the sample expression.
    * @return JoshFragment containing the sample expression parsed.
    */
-  public JoshFragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
+  public JoshFragment visitSampleParamReplacement(
+      JoshLangParser.SampleParamReplacementContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     EventHandlerAction targetAction = ctx.target.accept(parent).getCurrentAction();
     String replacementStr = ctx.replace.getText();

@@ -290,7 +290,8 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the function call operation parsed.
    * @throws IllegalArgumentException if the function name is unknown.
    */
-  public JoshFragment visitSingleParamFunctionCall(JoshLangParser.SingleParamFunctionCallContext ctx) {
+  public JoshFragment visitSingleParamFunctionCall(
+      JoshLangParser.SingleParamFunctionCallContext ctx) {
     EventHandlerAction operandAction = ctx.operand.accept(parent).getCurrentAction();
     String funcName = ctx.name.getText();
 
