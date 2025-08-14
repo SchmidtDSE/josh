@@ -8,6 +8,7 @@
  * @license BSD-3-Clause
  */
 
+import {ConfigDialogPresenter} from "config";
 import {DataFilesPresenter} from "data";
 import {EditorPresenter} from "editor";
 import {RemoteEngineBackend, WasmEngineBackend} from "engine";
@@ -55,6 +56,11 @@ class MainPresenter {
     self._dataPresenter = new DataFilesPresenter(
       "open-data-dialog-button",
       "data-dialog"
+    );
+
+    self._configPresenter = new ConfigDialogPresenter(
+      "open-config-dialog-button",
+      "config-dialog"
     );
 
     self._resultsPresenter = new ResultsPresenter("results");
