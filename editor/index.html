@@ -56,7 +56,8 @@
             <div id="code-buttons-panel" class="buttons-panel">
               <div id="available-panel">
                 <a class="primary" id="open-run-dialog-button" href="#run">Run</a>
-                <a class="secondary" id="open-data-dialog-button" href="#data">Data Files</a>
+                <a class="secondary" id="open-data-dialog-button" href="#data-dialog">Data Files</a>
+                <a class="secondary" id="open-config-dialog-button" href="#config">Config</a>
               </div>
               
               <dialog id="run-local-dialog">
@@ -137,10 +138,10 @@
                 </div>
               </dialog>
               
-              <dialog id="external-data-dialog">
+              <dialog id="data-dialog">
                 <h2>Data Files</h2>
                 <p>
-                  These files can be sent along with your simulation as "external" data. Larger data files may be sent by using Josh outside of the browser. These can be used in simulations as external resouces.
+                  These files can be sent along with your simulation. We recommend jshd and jshc for geospatial data and configuration parameters respectively. Larger data files may be sent by using Josh outside of the browser.
                 </p>
                 <div class="files-panel">
                 </div>
@@ -158,6 +159,24 @@
                     <a href="#" class="add-file-cancel-button destructive">Cancel</a>
                     <a href="#" class="add-file-confirm-button primary">Add File</a>
                   </div>
+                </div>
+              </dialog>
+              
+              <dialog id="config-dialog">
+                <h2>Config</h2>
+                <p>
+                  Variables defined here are accessible from <code>config editor.testVariable</code>. 
+                  This file can be edited to configure simulation parameters without modifying Josh code.
+                </p>
+                <div class="form-group">
+                  <div><label for="config-textarea">Configuration (editor.jshc):</label></div>
+                  <div>
+                    <textarea id="config-textarea" name="config-textarea" class="config-textarea long" rows="10" placeholder="testVariable = 5 m"></textarea>
+                  </div>
+                </div>
+                <div class="dialog-buttons buttons-panel bold-buttons">
+                  <a href="#" class="config-save-button primary">Save</a>
+                  <a href="#" class="config-cancel-button destructive">Cancel</a>
                 </div>
               </dialog>
               

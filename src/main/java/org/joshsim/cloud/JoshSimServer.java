@@ -109,6 +109,10 @@ public class JoshSimServer {
             new JoshParseHandler(dataLayer, true, Optional.empty(), serialPatches)
         )
         .addPrefixPath(
+            "/discoverConfig",
+            new JoshConfigDiscoveryHandler(dataLayer)
+        )
+        .addPrefixPath(
             "/runReplicate",
             new JoshSimWorkerHandler(dataLayer, true, Optional.empty(), serialPatches)
         )

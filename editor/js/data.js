@@ -488,4 +488,4 @@ class OpfsFile {
 }
 
 
-export {DataFilesPresenter};
+export {DataFilesPresenter, LocalFileLayer, OpfsFile};

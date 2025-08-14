@@ -1,0 +1,18 @@
+start simulation ConfigExample
+  grid.size = 1 count
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 100 m latitude, 100 m longitude
+  steps.low = 0 count
+  steps.high = 5 count
+  
+  exportFiles.patch = "file:///tmp/config_example_josh_{replicate}.csv"
+end simulation
+
+start patch Default
+  Tree.init = create 3 count of Tree
+end patch
+
+start organism Tree
+  height.init = config example.testVar1
+  height.step = prior.height + config example.testVar2
+end organism
