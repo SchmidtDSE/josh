@@ -30,7 +30,7 @@ COMMENT_ : '#' ~[\r\n]* -> channel(HIDDEN) ;
 
 EQUALS_ : '=' ;
 
-ID_ : [A-Za-z/][A-Za-z0-9%/]* ;
+IDENTIFIER_ : [A-Za-z/][A-Za-z0-9%/]* ;
 
 NEWLINE_ : [\r\n]+ -> skip ;
 
@@ -39,7 +39,7 @@ NUMBER_ : [+-]? ([0-9]+ ('.' [0-9]+)? | '.' [0-9]+) ;
 WS_ : [ \t]+ -> skip ;
 
 // Parser rules
-assignment : ID_ EQUALS_ value ;
+assignment : identifier EQUALS_ value ;
 
 comment : COMMENT_ ;
 
@@ -53,4 +53,8 @@ configLine
 
 emptyLine : NEWLINE_ ;
 
-value : NUMBER_ ID_? ;
+identifier : IDENTIFIER_ ;
+
+number : NUMBER_ ;
+
+value : number identifier? ;

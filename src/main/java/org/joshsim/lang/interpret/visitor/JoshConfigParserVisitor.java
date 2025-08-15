@@ -65,7 +65,9 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
    */
   @Override
   public JshcFragment visitAssignment(JoshConfigParser.AssignmentContext ctx) {
-    String variableName = ctx.ID_().getText();
+    JshcFragment identifierFragment = ctx.identifier().accept(this);
+    // Units field holds the text in identifier fragment
+    String variableName = identifierFragment.getUnits();
     JshcFragment valueFragment = ctx.value().accept(this);
 
     // Add the value to a new config builder
@@ -83,12 +85,14 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
    */
   @Override
   public JshcFragment visitValue(JoshConfigParser.ValueContext ctx) {
-    String numberText = ctx.NUMBER_().getText();
-    String unitsText = ctx.ID_() != null ? ctx.ID_().getText() : "";
+    JshcFragment numberFragment = ctx.number().accept(this);
+    String numberText = numberFragment.getNumber().toString();
+    // The identifier (units) may be omitted if the value has no units
+    String unitsText = ctx.identifier() != null ? ctx.identifier().accept(this).getUnits() : "";
 
     try {
       // Parse the number
-      BigDecimal number = new BigDecimal(numberText);
+      BigDecimal number = numberFragment.getNumber();
 
       // Create units object
       Units units = unitsText.isEmpty() ? Units.EMPTY : Units.of(unitsText);
@@ -124,5 +128,34 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
   public JshcFragment visitEmptyLine(JoshConfigParser.EmptyLineContext ctx) {
     // Empty lines are ignored - return comment fragment with empty builder
     return new JshcCommentFragment();
+  }
+
+  /**
+   * Visits an identifier context and returns a value fragment containing the text.
+   *
+   * @param ctx The ANTLR identifier context
+   * @return A JshcValueFragment containing the identifier text
+   */
+  @Override
+  public JshcFragment visitIdentifier(JoshConfigParser.IdentifierContext ctx) {
+    String text = ctx.IDENTIFIER_().getText();
+    return new JshcValueFragment(null, text, null);
+  }
+
+  /**
+   * Visits a number context and returns a value fragment containing the number.
+   *
+   * @param ctx The ANTLR number context
+   * @return A JshcValueFragment containing the number
+   */
+  @Override
+  public JshcFragment visitNumber(JoshConfigParser.NumberContext ctx) {
+    String numberText = ctx.NUMBER_().getText();
+    try {
+      BigDecimal number = new BigDecimal(numberText);
+      return new JshcValueFragment(number, "", null);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Invalid number format: " + numberText, e);
+    }
   }
 }
