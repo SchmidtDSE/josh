@@ -28,12 +28,8 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    * Creates a new fragment for a simple name without additional value information.
    *
    * @param name The name string
-   * @throws IllegalArgumentException if name is null or empty
    */
   public ConfigValueFragment(String name) {
-    if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException("Name cannot be null or empty");
-    }
     this.name = Optional.of(name.trim());
     this.number = Optional.empty();
     this.units = Optional.empty();
@@ -45,12 +41,8 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    *
    * @param number The numeric value
    * @param units The units string
-   * @throws IllegalArgumentException if number is null
    */
   public ConfigValueFragment(BigDecimal number, String units) {
-    if (number == null) {
-      throw new IllegalArgumentException("Number cannot be null");
-    }
     this.name = Optional.empty();
     this.number = Optional.of(number);
     this.units = Optional.of(units != null ? units.trim() : "");
@@ -61,12 +53,8 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    * Creates a new fragment for an engine value.
    *
    * @param engineValue The engine value
-   * @throws IllegalArgumentException if engineValue is null
    */
   public ConfigValueFragment(EngineValue engineValue) {
-    if (engineValue == null) {
-      throw new IllegalArgumentException("Engine value cannot be null");
-    }
     this.name = Optional.empty();
     this.number = Optional.empty();
     this.units = Optional.empty();

@@ -43,8 +43,10 @@ public class ConfigBuilder {
    */
   public ConfigBuilder combine(ConfigBuilder other) {
     ConfigBuilder combined = new ConfigBuilder();
+
     // Add all values from this builder first
     combined.values.putAll(this.values);
+
     // Add all values from the other builder (will override any duplicates)
     combined.values.putAll(other.values);
     return combined;

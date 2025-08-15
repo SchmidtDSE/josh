@@ -6,6 +6,9 @@
 
 import {LocalFileLayer, OpfsFile} from "data";
 
+const DEFAULT_CONFIG_CONTENT = "testVariable = 5 m";
+const CONFIG_FILENAME = "editor.jshc";
+
 /**
  * Presenter which runs the config dialog and manages the editor.jshc file.
  */
@@ -28,7 +31,6 @@ class ConfigDialogPresenter {
     self._cancelButton = self._dialog.querySelector(".config-cancel-button");
 
     self._originalContent = "";
-    const DEFAULT_CONFIG_CONTENT = "testVariable = 5 m";
     self._defaultContent = DEFAULT_CONFIG_CONTENT;
 
     self._attachListeners();
@@ -62,7 +64,7 @@ class ConfigDialogPresenter {
   async _openDialog() {
     const self = this;
     try {
-      const file = await self._fileLayer.getFile("editor.jshc");
+      const file = await self._fileLayer.getFile(CONFIG_FILENAME);
       if (file.getIsSaved()) {
         self._originalContent = file.getContents();
         self._textarea.value = self._originalContent;
@@ -97,7 +99,7 @@ class ConfigDialogPresenter {
     const self = this;
     try {
       const content = self._textarea.value;
-      const opfsFile = new OpfsFile("editor.jshc", content, false, false);
+      const opfsFile = new OpfsFile(CONFIG_FILENAME, content, false, false);
       await self._fileLayer.putFile(opfsFile);
       self._originalContent = content;
       self._dialog.close();

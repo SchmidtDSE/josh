@@ -13,6 +13,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshConfigBaseVisitor;
 import org.joshsim.lang.antlr.JoshConfigParser;
+import org.joshsim.lang.interpret.fragment.jshc.JshcCommentFragment;
 import org.joshsim.lang.interpret.fragment.jshc.JshcConfigBuilderFragment;
 import org.joshsim.lang.interpret.fragment.jshc.JshcFragment;
 import org.joshsim.lang.interpret.fragment.jshc.JshcValueFragment;
@@ -46,15 +47,11 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
   public JshcFragment visitConfig(JoshConfigParser.ConfigContext ctx) {
     ConfigBuilder builder = new ConfigBuilder();
 
-    // Process each config line
+    // Process each config line using visitor pattern
     for (JoshConfigParser.ConfigLineContext lineContext : ctx.configLine()) {
-      if (lineContext.assignment() != null) {
-        // Process assignment and add to main builder
-        String variableName = lineContext.assignment().ID().getText();
-        JshcFragment valueFragment = lineContext.assignment().value().accept(this);
-        builder.addValue(variableName, valueFragment.getEngineValue());
-      }
-      // Comments and empty lines are automatically ignored by the grammar
+      JshcFragment lineFragment = lineContext.accept(this);
+      ConfigBuilder lineBuilder = lineFragment.getConfigBuilder();
+      builder = builder.combine(lineBuilder);
     }
 
     return new JshcConfigBuilderFragment(builder);
@@ -68,7 +65,7 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
    */
   @Override
   public JshcFragment visitAssignment(JoshConfigParser.AssignmentContext ctx) {
-    String variableName = ctx.ID().getText();
+    String variableName = ctx.ID_().getText();
     JshcFragment valueFragment = ctx.value().accept(this);
 
     // Add the value to a new config builder
@@ -86,12 +83,8 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
    */
   @Override
   public JshcFragment visitValue(JoshConfigParser.ValueContext ctx) {
-    String numberText = ctx.NUMBER().getText();
-    String unitsText = "";
-
-    if (ctx.ID() != null) {
-      unitsText = ctx.ID().getText();
-    }
+    String numberText = ctx.NUMBER_().getText();
+    String unitsText = ctx.ID_() != null ? ctx.ID_().getText() : "";
 
     try {
       // Parse the number
@@ -110,26 +103,26 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
   }
 
   /**
-   * Visits a comment context and returns an empty config builder.
+   * Visits a comment context and returns a comment fragment.
    *
    * @param ctx The ANTLR comment context
-   * @return An empty JshcFragment
+   * @return A JshcCommentFragment for the comment
    */
   @Override
   public JshcFragment visitComment(JoshConfigParser.CommentContext ctx) {
-    // Comments are ignored - return empty builder
-    return new JshcConfigBuilderFragment(new ConfigBuilder());
+    // Comments are ignored - return comment fragment with empty builder
+    return new JshcCommentFragment();
   }
 
   /**
-   * Visits an empty line context and returns an empty config builder.
+   * Visits an empty line context and returns a comment fragment.
    *
    * @param ctx The ANTLR empty line context
-   * @return An empty JshcFragment
+   * @return A JshcCommentFragment for the empty line
    */
   @Override
   public JshcFragment visitEmptyLine(JoshConfigParser.EmptyLineContext ctx) {
-    // Empty lines are ignored - return empty builder
-    return new JshcConfigBuilderFragment(new ConfigBuilder());
+    // Empty lines are ignored - return comment fragment with empty builder
+    return new JshcCommentFragment();
   }
 }

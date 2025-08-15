@@ -17,6 +17,7 @@ import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.value.converter.ConverterBuilder;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 
 /**
  * Builder for constructing programs from fragments.
@@ -45,7 +46,7 @@ public class ProgramBuilder {
    * @param fragment The fragment to add to the program
    * @throws IllegalArgumentException if the fragment type is not supported at the top level
    */
-  public void add(org.joshsim.lang.interpret.fragment.josh.JoshFragment fragment) {
+  public void add(JoshFragment fragment) {
     switch (fragment.getFragmentType()) {
       case CONVERSIONS -> fragment.getConversions().forEach(converter::addConversion);
       case ENTITY -> addEntity(fragment.getEntity());

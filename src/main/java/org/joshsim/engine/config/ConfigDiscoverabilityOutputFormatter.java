@@ -18,10 +18,11 @@ import java.util.List;
  * one per line with defaults shown in parentheses when present.</p>
  *
  * <div>Output format examples:
- * <ul>
- * <li>Variables with defaults: {@code testVar1(5m)}</li>
- * <li>Variables without defaults: {@code testVar2}</li>
- * </ul></div>
+ *   <ul>
+ *     <li>Variables with defaults: {@code testVar1(5m)}</li>
+ *     <li>Variables without defaults: {@code testVar2}</li>
+ *   </ul>
+ * </div>
  */
 public class ConfigDiscoverabilityOutputFormatter {
 
@@ -43,19 +44,7 @@ public class ConfigDiscoverabilityOutputFormatter {
    * @throws IllegalArgumentException if discoveredVars is null
    */
   public static String format(Iterable<DiscoveredConfigVar> discoveredVars) {
-    if (discoveredVars == null) {
-      throw new IllegalArgumentException("Discovered variables iterable cannot be null");
-    }
-
-    List<String> descriptions = new ArrayList<>();
-    for (DiscoveredConfigVar var : discoveredVars) {
-      descriptions.add(var.describe());
-    }
-
-    // Sort for consistent output ordering
-    Collections.sort(descriptions);
-
-    return String.join("\n", descriptions);
+    return String.join("\n", formatAsLines(discoveredVars));
   }
 
   /**

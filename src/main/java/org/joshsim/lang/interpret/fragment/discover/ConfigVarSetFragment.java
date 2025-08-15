@@ -24,12 +24,8 @@ public class ConfigVarSetFragment extends ConfigDiscoverabilityFragment {
    * Creates a new fragment containing the specified set of discovered config variables.
    *
    * @param discoveredVars The set of discovered config variables
-   * @throws IllegalArgumentException if discoveredVars is null
    */
   public ConfigVarSetFragment(Set<DiscoveredConfigVar> discoveredVars) {
-    if (discoveredVars == null) {
-      throw new IllegalArgumentException("Discovered variables set cannot be null");
-    }
     this.discoveredVars = discoveredVars;
   }
 
