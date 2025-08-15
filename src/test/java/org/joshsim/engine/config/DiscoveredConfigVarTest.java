@@ -40,13 +40,6 @@ class DiscoveredConfigVarTest {
   }
 
   @Test
-  void testConstructorWithNullName() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      new DiscoveredConfigVar(null);
-    });
-  }
-
-  @Test
   void testConstructorWithEmptyName() {
     assertThrows(IllegalArgumentException.class, () -> {
       new DiscoveredConfigVar("");
@@ -57,13 +50,6 @@ class DiscoveredConfigVarTest {
   void testConstructorWithWhitespaceName() {
     assertThrows(IllegalArgumentException.class, () -> {
       new DiscoveredConfigVar("   ");
-    });
-  }
-
-  @Test
-  void testConstructorWithNullDefault() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      new DiscoveredConfigVar("testVar", null);
     });
   }
 

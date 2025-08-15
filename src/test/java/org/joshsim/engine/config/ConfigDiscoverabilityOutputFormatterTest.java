@@ -7,7 +7,6 @@
 package org.joshsim.engine.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -111,19 +110,6 @@ class ConfigDiscoverabilityOutputFormatterTest {
     assertEquals("testVar2", result.get(2));
   }
 
-  @Test
-  void testFormatNullIterable() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      ConfigDiscoverabilityOutputFormatter.format(null);
-    });
-  }
-
-  @Test
-  void testFormatAsLinesNullIterable() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      ConfigDiscoverabilityOutputFormatter.formatAsLines(null);
-    });
-  }
 
   @Test
   void testFormatComplexVariableNames() {

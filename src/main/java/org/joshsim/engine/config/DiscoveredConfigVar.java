@@ -24,10 +24,10 @@ public final class DiscoveredConfigVar {
    * Creates a discovered config variable without a default value.
    *
    * @param name The name of the config variable
-   * @throws IllegalArgumentException if name is null or empty
+   * @throws IllegalArgumentException if name is empty
    */
   public DiscoveredConfigVar(String name) {
-    if (name == null || name.trim().isEmpty()) {
+    if (name.trim().isEmpty()) {
       throw new IllegalArgumentException("Config variable name cannot be null or empty");
     }
     this.name = name.trim();
@@ -39,14 +39,11 @@ public final class DiscoveredConfigVar {
    *
    * @param name The name of the config variable
    * @param defaultValue The default value for the config variable
-   * @throws IllegalArgumentException if name is null or empty, or if defaultValue is null
+   * @throws IllegalArgumentException if name is empty
    */
   public DiscoveredConfigVar(String name, String defaultValue) {
-    if (name == null || name.trim().isEmpty()) {
+    if (name.trim().isEmpty()) {
       throw new IllegalArgumentException("Config variable name cannot be null or empty");
-    }
-    if (defaultValue == null) {
-      throw new IllegalArgumentException("Default value cannot be null");
     }
     this.name = name.trim();
     this.defaultValue = Optional.of(defaultValue.trim());

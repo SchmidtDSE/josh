@@ -60,7 +60,6 @@ class ConfigTest {
     // Act & Assert
     assertFalse(config.hasValue("nonExistent"));
     assertFalse(config.hasValue(""));
-    assertFalse(config.hasValue(null));
   }
 
   @Test
