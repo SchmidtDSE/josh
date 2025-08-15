@@ -28,21 +28,11 @@ public class JshcConfigBuilderFragment extends JshcFragment {
     this.configBuilder = configBuilder;
   }
 
-  /**
-   * Gets the ConfigBuilder from this fragment.
-   *
-   * @return The ConfigBuilder instance
-   */
   @Override
   public ConfigBuilder getConfigBuilder() {
     return configBuilder;
   }
 
-  /**
-   * Gets the fragment type.
-   *
-   * @return The fragment type (PROGRAM)
-   */
   @Override
   public FragmentType getFragmentType() {
     // Using PROGRAM as the closest existing type for a builder fragment
