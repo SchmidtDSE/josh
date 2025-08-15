@@ -44,9 +44,6 @@ public class Config {
    * @return true if the value exists, false otherwise
    */
   public boolean hasValue(String name) {
-    if (name == null) {
-      return false;
-    }
     return values.containsKey(name);
   }
 }
