@@ -34,7 +34,6 @@ public class JshcCommentFragment extends JshcFragment {
 
   @Override
   public FragmentType getFragmentType() {
-    // Using CONFIG_VAR_SET as the closest existing type for non-value fragments
-    return FragmentType.CONFIG_VAR_SET;
+    return FragmentType.COMMENT;
   }
 }

@@ -68,11 +68,10 @@ public class JshcValueFragment extends JshcFragment {
   /**
    * Gets the fragment type.
    *
-   * @return The fragment type (CONVERSION)
+   * @return The fragment type (CONFIG)
    */
   @Override
   public FragmentType getFragmentType() {
-    // Using CONVERSION as the closest existing type for a value fragment
-    return FragmentType.CONVERSION;
+    return FragmentType.CONFIG;
   }
 }

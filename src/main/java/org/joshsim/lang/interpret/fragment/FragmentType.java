@@ -45,5 +45,11 @@ public enum FragmentType {
   CONFIG_VAR_SET,
 
   /** Fragment containing a single config value for discovery. */
-  CONFIG_VALUE
+  CONFIG_VALUE,
+
+  /** Fragment containing configuration data. */
+  CONFIG,
+
+  /** Fragment containing a comment or empty line. */
+  COMMENT
 }
