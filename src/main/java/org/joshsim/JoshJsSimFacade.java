@@ -217,7 +217,8 @@ public class JoshJsSimFacade {
     JoshParser parser = new JoshParser();
     ParseResult result = parser.parse(code);
     if (result.hasErrors()) {
-      throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
+      String firstError = result.getErrors().iterator().next().toString();
+      throw new RuntimeException("Failed on: " + firstError);
     }
 
     // Parse the AST to discover config variables
