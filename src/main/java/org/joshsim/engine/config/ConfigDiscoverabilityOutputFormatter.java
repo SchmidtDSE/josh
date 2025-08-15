@@ -41,7 +41,6 @@ public class ConfigDiscoverabilityOutputFormatter {
    *
    * @param discoveredVars Iterable of discovered config variables to format
    * @return Formatted string with one variable per line, or empty string if no variables
-   * @throws IllegalArgumentException if discoveredVars is null
    */
   public static String format(Iterable<DiscoveredConfigVar> discoveredVars) {
     return String.join("\n", formatAsLines(discoveredVars));
@@ -56,13 +55,8 @@ public class ConfigDiscoverabilityOutputFormatter {
    *
    * @param discoveredVars Iterable of discovered config variables to format
    * @return List of formatted strings, one per variable, sorted alphabetically
-   * @throws IllegalArgumentException if discoveredVars is null
    */
   public static List<String> formatAsLines(Iterable<DiscoveredConfigVar> discoveredVars) {
-    if (discoveredVars == null) {
-      throw new IllegalArgumentException("Discovered variables iterable cannot be null");
-    }
-
     List<String> descriptions = new ArrayList<>();
     for (DiscoveredConfigVar var : discoveredVars) {
       descriptions.add(var.describe());
