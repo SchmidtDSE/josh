@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.precompute;
+package org.joshsim.engine.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import org.joshsim.engine.config.Config;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
@@ -61,11 +60,11 @@ public class JshcConfigGetterTest {
     assertNotNull(config.getValue("testVar"));
     assertEquals(5.0, config.getValue("testVar").getAsDouble(), 0.001);
     assertEquals(Units.of("m"), config.getValue("testVar").getUnits());
-    
+
     assertNotNull(config.getValue("anotherVar"));
     assertEquals(10.0, config.getValue("anotherVar").getAsDouble(), 0.001);
     assertEquals(Units.of("km"), config.getValue("anotherVar").getUnits());
-    
+
     verify(mockInputStrategy).open("test.jshc");
   }
 

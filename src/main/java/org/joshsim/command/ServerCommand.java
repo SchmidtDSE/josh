@@ -70,14 +70,14 @@ public class ServerCommand implements Callable<Integer> {
         processedWorkerUrl = processedWorkerUrl.replace("0.0.0.0", "localhost");
         System.out.println("Updated worker URL from 0.0.0.0 to localhost");
       }
-      
+
       // Update port in worker URL to match server port using proper URL parsing
       if (processedWorkerUrl.contains("localhost")) {
         try {
           URL url = new URL(processedWorkerUrl);
           if (url.getPort() != port) {
             processedWorkerUrl = String.format(
-                "%s://%s:%d%s", 
+                "%s://%s:%d%s",
                 url.getProtocol(),
                 url.getHost(),
                 port,
@@ -98,11 +98,11 @@ public class ServerCommand implements Callable<Integer> {
           System.out.println(message);
         }
       }
-      
+
       if (workers == 0) {
         workers = processedWorkerUrl.contains("localhost") ? 1 : numProcessors - 1;
       }
-      
+
       JoshSimServer server = new JoshSimServer(
           new EnvCloudApiDataLayer(),
           useHttp2,

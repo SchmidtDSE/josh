@@ -4,23 +4,22 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.precompute;
+package org.joshsim.engine.config;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
-import org.joshsim.engine.config.Config;
-import org.joshsim.engine.config.ConfigInputParser;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.ConfigGetter;
+import org.joshsim.lang.interpret.ConfigInterpreter;
 import org.joshsim.lang.io.InputGetterStrategy;
 
 /**
  * ConfigGetter implementation that loads and caches Config objects from .jshc files.
  *
  * <p>This class uses an InputGetterStrategy to load .jshc files and parses them using
- * ConfigInputParser. Configs are cached to avoid repeated parsing of the same file.</p>
+ * ConfigInterpreter. Configs are cached to avoid repeated parsing of the same file.</p>
  */
 public class JshcConfigGetter implements ConfigGetter {
 
@@ -51,20 +50,20 @@ public class JshcConfigGetter implements ConfigGetter {
     // Ensure the name ends with .jshc
     String fileName = name;
     if (!fileName.endsWith(".jshc")) {
-      fileName = fileName + ".jshc";
+      fileName += ".jshc";
     }
 
     try (InputStream inputStream = inputStrategy.open(fileName)) {
       // Load the file content
       String content = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-      
+
       // Parse the config
-      ConfigInputParser parser = new ConfigInputParser(valueFactory);
-      Config config = parser.parse(content);
-      
+      ConfigInterpreter interpreter = new ConfigInterpreter();
+      Config config = interpreter.interpret(content, valueFactory);
+
       // Cache it
       configCache.put(name, config);
-      
+
       return config;
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to load config file: " + fileName, e);

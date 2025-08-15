@@ -18,8 +18,8 @@ import org.joshsim.lang.antlr.JoshLangParser.StringContext;
 import org.joshsim.lang.antlr.JoshLangParser.UnitsValueContext;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class JoshValueVisitorTest {
     when(context.getText()).thenReturn("testVar");
 
     // Test
-    Fragment result = visitor.visitIdentifier(context);
+    JoshFragment result = visitor.visitIdentifier(context);
 
     // Validate
     assertNotNull(result);
@@ -80,7 +80,7 @@ class JoshValueVisitorTest {
     when(valueFactory.parseNumber("42", Units.of("count"))).thenReturn(mockValue);
 
     // Test
-    Fragment result = visitor.visitNumber(context);
+    JoshFragment result = visitor.visitNumber(context);
 
     // Validate
     assertNotNull(result);
@@ -109,7 +109,7 @@ class JoshValueVisitorTest {
     when(valueFactory.build(5L, Units.of("meters"))).thenReturn(mockValue);
 
     // Test
-    Fragment result = visitor.visitUnitsValue(context);
+    JoshFragment result = visitor.visitUnitsValue(context);
 
     // Validate
     assertNotNull(result);
@@ -133,7 +133,7 @@ class JoshValueVisitorTest {
     when(valueFactory.build("\"test string\"", Units.of(""))).thenReturn(mockValue);
 
     // Test
-    Fragment result = visitor.visitString(context);
+    JoshFragment result = visitor.visitString(context);
 
     // Validate
     assertNotNull(result);
@@ -159,7 +159,7 @@ class JoshValueVisitorTest {
     when(valueFactory.build(true, Units.of(""))).thenReturn(mockValue);
 
     // Test
-    Fragment result = visitor.visitBool(context);
+    JoshFragment result = visitor.visitBool(context);
 
     // Validate
     assertNotNull(result);
@@ -181,7 +181,7 @@ class JoshValueVisitorTest {
     AllExpressionContext context = mock(AllExpressionContext.class);
 
     // Test
-    Fragment result = visitor.visitAllExpression(context);
+    JoshFragment result = visitor.visitAllExpression(context);
 
     // Validate
     assertNotNull(result);

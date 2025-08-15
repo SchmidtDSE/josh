@@ -1,7 +1,6 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,11 +50,11 @@ public class DiscoverConfigCommandTest {
           steps.low = 0 count
           steps.high = config params.stepCount
         end simulation
-        
+
         start patch Default
           Tree.init = create config example.treeCount of Tree
         end patch
-        
+
         start organism Tree
           height.init = config example.initialHeight
           height.step = prior.height + 0.1 meters
@@ -73,16 +72,16 @@ public class DiscoverConfigCommandTest {
 
     String output = outContent.toString();
     String[] lines = output.trim().split("\n");
-    
+
     // Convert to set to handle order-independent comparison
     Set<String> outputVariables = new HashSet<>(Arrays.asList(lines));
     Set<String> expectedVariables = Set.of(
         "example.gridSize",
-        "params.stepCount", 
+        "params.stepCount",
         "example.treeCount",
         "example.initialHeight"
     );
-    
+
     assertEquals(expectedVariables.size(), outputVariables.size());
     assertEquals(expectedVariables, outputVariables);
   }
@@ -118,11 +117,11 @@ public class DiscoverConfigCommandTest {
           steps.low = 0 count
           steps.high = 10 count
         end simulation
-        
+
         start patch Default
           Tree.init = create 5 count of Tree
         end patch
-        
+
         start organism Tree
           height.init = 0 meters
           height.step = prior.height + 0.1 meters
@@ -139,7 +138,7 @@ public class DiscoverConfigCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString().trim();
-    assertTrue(output.isEmpty());
+    assertEquals("[No variables found]", output);
   }
 
   @Test
@@ -179,11 +178,11 @@ public class DiscoverConfigCommandTest {
           steps.low = 0 count
           steps.high = config simulation.settings.maxSteps
         end simulation
-        
+
         start patch Default
           Tree.init = create config species.tree.initialCount of Tree
         end patch
-        
+
         start organism Tree
           height.init = 0 meters
         end organism
@@ -200,14 +199,14 @@ public class DiscoverConfigCommandTest {
 
     String output = outContent.toString();
     String[] lines = output.trim().split("\n");
-    
+
     Set<String> outputVariables = new HashSet<>(Arrays.asList(lines));
     Set<String> expectedVariables = Set.of(
         "environment.parameters.gridSize",
         "simulation.settings.maxSteps",
         "species.tree.initialCount"
     );
-    
+
     assertEquals(expectedVariables.size(), outputVariables.size());
     assertEquals(expectedVariables, outputVariables);
   }
@@ -222,11 +221,11 @@ public class DiscoverConfigCommandTest {
           steps.low = 0 count
           steps.high = config example.gridSize
         end simulation
-        
+
         start patch Default
           Tree.init = create config example.gridSize of Tree
         end patch
-        
+
         start organism Tree
           height.init = 0 meters
         end organism

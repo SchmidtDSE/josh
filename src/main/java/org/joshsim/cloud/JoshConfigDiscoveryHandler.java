@@ -15,10 +15,11 @@ import io.undertow.util.HttpString;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.visitor.JoshConfigDiscoveryVisitor;
@@ -113,7 +114,7 @@ public class JoshConfigDiscoveryHandler implements HttpHandler {
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       JoshLangParser joshParser = new JoshLangParser(tokens);
       ParseTree tree = joshParser.program();
-      
+
       // Check if parsing resulted in syntax errors
       if (joshParser.getNumberOfSyntaxErrors() > 0) {
         httpServerExchange.setStatusCode(400);
@@ -122,11 +123,10 @@ public class JoshConfigDiscoveryHandler implements HttpHandler {
       }
 
       JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-      Set<String> configVariables = visitor.visit(tree);
+      Set<DiscoveredConfigVar> configVariables = visitor.visit(tree);
 
-      // Convert to newline-separated string
-      String result = configVariables.stream()
-          .collect(Collectors.joining("\n"));
+      // Format the discovered variables with defaults
+      String result = ConfigDiscoverabilityOutputFormatter.format(configVariables);
 
       httpServerExchange.getResponseSender().send(result);
       return Optional.of(apiKey);

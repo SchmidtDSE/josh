@@ -76,7 +76,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    */
   QueryCacheEngineBridge(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
         MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
-        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter, 
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
         Replicate replicate) {
     super(
         valueFactory,

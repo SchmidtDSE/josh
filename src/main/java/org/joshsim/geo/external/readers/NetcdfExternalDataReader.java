@@ -380,7 +380,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         return Optional.empty(); // Invalid index
       }
 
-      
+
       // Check for NaN or missing value
       if (Double.isNaN(value)) {
         return Optional.empty();

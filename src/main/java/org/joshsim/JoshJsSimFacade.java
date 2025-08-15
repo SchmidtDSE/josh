@@ -16,6 +16,8 @@ import org.joshsim.cloud.VirtualFileSystemWireDeserializer;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.compat.EmulatedCompatibilityLayer;
+import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
@@ -198,12 +200,14 @@ public class JoshJsSimFacade {
    * Discover configuration variables used in the provided Josh script.
    *
    * <p>Parses the given Josh source code and identifies all configuration variables
-   * referenced using 'config' expressions. For example, "config example.testVar" 
-   * would be discovered as "example.testVar".</p>
+   * referenced using 'config' expressions. For example, "config example.testVar"
+   * would be discovered as "example.testVar". Variables with default values are
+   * shown with the default in parentheses, such as "example.testVar(5m)".</p>
    *
    * @param code The Josh source code to analyze for configuration variable usage.
-   * @return A comma-separated string of all discovered configuration variable names,
-   *     or an empty string if no configuration variables are found.
+   * @return A line-separated string of all discovered configuration variable names,
+   *     with defaults shown in parentheses when present, or an empty string if no
+   *     configuration variables are found.
    * @throws RuntimeException If parsing the code results in errors.
    */
   @JSExport
@@ -223,14 +227,9 @@ public class JoshJsSimFacade {
     ParseTree tree = joshParser.program();
 
     JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
-    Set<String> configVariables = visitor.visit(tree);
+    Set<DiscoveredConfigVar> configVariables = visitor.visit(tree);
 
-    CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\n");
-    for (String variable : configVariables) {
-      stringJoiner.add(variable);
-    }
-
-    return stringJoiner.toString();
+    return ConfigDiscoverabilityOutputFormatter.format(configVariables);
   }
 
   /**

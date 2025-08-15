@@ -33,6 +33,24 @@ public class ConfigBuilder {
   }
 
   /**
+   * Combines this ConfigBuilder with another ConfigBuilder and returns a new ConfigBuilder.
+   *
+   * <p>Values from the other ConfigBuilder will override values with the same key in this
+   * ConfigBuilder. The original ConfigBuilders are not modified.</p>
+   *
+   * @param other the ConfigBuilder to combine with this one
+   * @return a new ConfigBuilder containing the combined values
+   */
+  public ConfigBuilder combine(ConfigBuilder other) {
+    ConfigBuilder combined = new ConfigBuilder();
+    // Add all values from this builder first
+    combined.values.putAll(this.values);
+    // Add all values from the other builder (will override any duplicates)
+    combined.values.putAll(other.values);
+    return combined;
+  }
+
+  /**
    * Builds and returns a Config based on the added values.
    *
    * @return a new Config instance

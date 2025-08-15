@@ -1,21 +1,21 @@
-
 /**
- * Fragment containing an entity prototype.
+ * JoshFragment containing an entity prototype.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 /**
- * Fragment representing an entity prototype.
+ * JoshFragment representing an entity prototype.
  *
  * <p>This class wraps an EntityPrototype that defines the structure and behavior of
  * an entity in the simulation.</p>
  */
-public class EntityFragment extends Fragment {
+public class EntityFragment extends JoshFragment {
 
   private final EntityPrototype prototype;
 

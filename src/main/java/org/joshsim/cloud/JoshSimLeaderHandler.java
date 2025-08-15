@@ -161,10 +161,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
-    
+
     // Reset cumulative step counter for this simulation run
     cumulativeStepCount.set(0);
-    
+
     // Execute replicates with streaming approach
     List<Future<?>> futures = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
@@ -188,7 +188,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
         try {
           future.get();
         } catch (Exception e) {
-          System.err.println("Exception in replicate execution: " 
+          System.err.println("Exception in replicate execution: "
               + e.getClass().getSimpleName() + ": " + e.getMessage());
           // Extract meaningful error message from the exception
           String errorMessage = extractErrorMessage(e);
@@ -199,7 +199,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
           }
         }
       }
-      
+
       httpServerExchange.endExchange();
     } catch (Exception e) {
       httpServerExchange.setStatusCode(500);
@@ -219,12 +219,12 @@ public class JoshSimLeaderHandler implements HttpHandler {
    */
   private String extractErrorMessage(Exception e) {
     String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-    
+
     // Check if this is a worker error that already contains detailed information
     if (message.contains("Replicate") && message.contains("failed:")) {
       return message; // Already formatted by buildWorkerErrorMessage
     }
-    
+
     // Handle specific exception types
     if (e.getCause() != null) {
       String causeMessage = e.getCause().getMessage();
@@ -232,7 +232,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
         return causeMessage;
       }
     }
-    
+
     // Default formatting for other errors
     return String.format("Execution error: %s", message);
   }
@@ -340,7 +340,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
     try {
       response = client.send(request, HttpResponse.BodyHandlers.ofLines());
     } catch (IOException | InterruptedException e) {
-      System.err.println("Worker connection failed for replicate " + replicateNumber 
+      System.err.println("Worker connection failed for replicate " + replicateNumber
           + " to " + urlToWorker + ": " + e.getMessage());
       throw new RuntimeException("Encountered issue in worker thread: " + e);
     }

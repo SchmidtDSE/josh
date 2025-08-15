@@ -12,7 +12,7 @@ import org.joshsim.engine.config.Config;
 /**
  * Description of strategy for loading configuration resources.
  *
- * <p>Description of strategy for accessing configuration data that can be used as 
+ * <p>Description of strategy for accessing configuration data that can be used as
  * inputs into the simulation.</p>
  */
 public interface ConfigGetter {

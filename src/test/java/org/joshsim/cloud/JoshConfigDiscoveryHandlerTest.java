@@ -11,8 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -41,7 +39,7 @@ public class JoshConfigDiscoveryHandlerTest {
 
   @Mock
   private CloudApiDataLayer mockDataLayer;
-  
+
   @Mock
   private HttpServerExchange mockExchange;
 
@@ -72,7 +70,7 @@ public class JoshConfigDiscoveryHandlerTest {
   public void testHandlerConstructor() {
     // Test that handler can be constructed successfully
     JoshConfigDiscoveryHandler testHandler = new JoshConfigDiscoveryHandler(mockDataLayer);
-    
+
     // Verify handler is created
     assertNotNull(testHandler);
   }
@@ -82,10 +80,10 @@ public class JoshConfigDiscoveryHandlerTest {
     // Setup GET request
     HttpString getMethod = new HttpString("GET");
     when(mockExchange.getRequestMethod()).thenReturn(getMethod);
-    
+
     // Execute
     Optional<String> result = handler.handleRequestTrusted(mockExchange);
-    
+
     // Verify method not allowed
     assertFalse(result.isPresent());
     verify(mockExchange).setStatusCode(405);
@@ -93,13 +91,13 @@ public class JoshConfigDiscoveryHandlerTest {
 
   @Test
   public void testPutMethodReturns405() {
-    // Setup PUT request  
+    // Setup PUT request
     HttpString putMethod = new HttpString("PUT");
     when(mockExchange.getRequestMethod()).thenReturn(putMethod);
-    
+
     // Execute
     Optional<String> result = handler.handleRequestTrusted(mockExchange);
-    
+
     // Verify method not allowed
     assertFalse(result.isPresent());
     verify(mockExchange).setStatusCode(405);
@@ -110,11 +108,11 @@ public class JoshConfigDiscoveryHandlerTest {
     // Setup DELETE request
     HttpString deleteMethod = new HttpString("DELETE");
     when(mockExchange.getRequestMethod()).thenReturn(deleteMethod);
-    
+
     // Execute
     Optional<String> result = handler.handleRequestTrusted(mockExchange);
-    
-    // Verify method not allowed  
+
+    // Verify method not allowed
     assertFalse(result.isPresent());
     verify(mockExchange).setStatusCode(405);
   }
@@ -124,11 +122,11 @@ public class JoshConfigDiscoveryHandlerTest {
     // Setup PATCH request
     HttpString patchMethod = new HttpString("PATCH");
     when(mockExchange.getRequestMethod()).thenReturn(patchMethod);
-    
+
     // Execute
     Optional<String> result = handler.handleRequestTrusted(mockExchange);
-    
-    // Verify method not allowed  
+
+    // Verify method not allowed
     assertFalse(result.isPresent());
     verify(mockExchange).setStatusCode(405);
   }
@@ -138,11 +136,11 @@ public class JoshConfigDiscoveryHandlerTest {
     // Setup OPTIONS request
     HttpString optionsMethod = new HttpString("OPTIONS");
     when(mockExchange.getRequestMethod()).thenReturn(optionsMethod);
-    
+
     // Execute
     Optional<String> result = handler.handleRequestTrusted(mockExchange);
-    
-    // Verify method not allowed  
+
+    // Verify method not allowed
     assertFalse(result.isPresent());
     verify(mockExchange).setStatusCode(405);
   }
@@ -152,7 +150,7 @@ public class JoshConfigDiscoveryHandlerTest {
     // Setup POST request with null form parser
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
-    
+
     // Mock FormParserFactory to return null parser
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -160,10 +158,10 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(null);
-      
+
       // Execute
       Optional<String> result = handler.handleRequestTrusted(mockExchange);
-      
+
       // Verify bad request
       assertFalse(result.isPresent());
       verify(mockExchange).setStatusCode(400);
@@ -176,7 +174,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -184,14 +182,14 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       // Mock parsing to throw IOException
       try {
         when(mockFormParser.parseBlocking()).thenThrow(new IOException("Test IO error"));
       } catch (IOException e) {
         // This won't actually throw since it's a mock
       }
-      
+
       // Execute and expect RuntimeException
       try {
         handler.handleRequestTrusted(mockExchange);
@@ -210,7 +208,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -218,21 +216,21 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       try {
         when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
       } catch (IOException e) {
         // Won't throw for mock
       }
-      
+
       // Mock invalid API key
       try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
         ApiKeyUtil.ApiCheckResult invalidResult = new ApiKeyUtil.ApiCheckResult("", false);
         apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(invalidResult);
-        
+
         // Execute
         Optional<String> result = handler.handleRequestTrusted(mockExchange);
-        
+
         // Verify unauthorized
         assertFalse(result.isPresent());
         verify(mockExchange).setStatusCode(401);
@@ -246,7 +244,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -254,24 +252,24 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       try {
         when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
       } catch (IOException e) {
         // Won't throw for mock
       }
-      
+
       // Mock valid API key
       try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
         ApiKeyUtil.ApiCheckResult validResult = new ApiKeyUtil.ApiCheckResult("test-key", true);
         apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(validResult);
-        
+
         // Mock missing code parameter
         when(mockFormData.contains("code")).thenReturn(false);
-        
+
         // Execute
         Optional<String> result = handler.handleRequestTrusted(mockExchange);
-        
+
         // Verify bad request but API key is returned
         assertTrue(result.isPresent());
         assertEquals("test-key", result.get());
@@ -286,7 +284,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -294,18 +292,18 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       try {
         when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
       } catch (IOException e) {
         // Won't throw for mock
       }
-      
+
       // Mock valid API key
       try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
         ApiKeyUtil.ApiCheckResult validResult = new ApiKeyUtil.ApiCheckResult("test-key", true);
         apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(validResult);
-        
+
         // Mock form data with code parameter
         when(mockFormData.contains("code")).thenReturn(true);
         when(mockFormData.getFirst("code")).thenReturn(mockFormValue);
@@ -315,10 +313,10 @@ public class JoshConfigDiscoveryHandlerTest {
               steps.high = config example.stepCount
             end simulation
             """);
-        
+
         // Execute
         Optional<String> result = handler.handleRequestTrusted(mockExchange);
-        
+
         // Verify success
         assertTrue(result.isPresent());
         assertEquals("test-key", result.get());
@@ -333,7 +331,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -341,18 +339,18 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       try {
         when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
       } catch (IOException e) {
         // Won't throw for mock
       }
-      
+
       // Mock valid API key
       try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
         ApiKeyUtil.ApiCheckResult validResult = new ApiKeyUtil.ApiCheckResult("test-key", true);
         apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(validResult);
-        
+
         // Mock form data with code parameter (no config variables)
         when(mockFormData.contains("code")).thenReturn(true);
         when(mockFormData.getFirst("code")).thenReturn(mockFormValue);
@@ -362,10 +360,10 @@ public class JoshConfigDiscoveryHandlerTest {
               steps.high = 50
             end simulation
             """);
-        
+
         // Execute
         Optional<String> result = handler.handleRequestTrusted(mockExchange);
-        
+
         // Verify success with empty result
         assertTrue(result.isPresent());
         assertEquals("test-key", result.get());
@@ -380,7 +378,7 @@ public class JoshConfigDiscoveryHandlerTest {
     when(mockExchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(mockExchange.getResponseHeaders()).thenReturn(mock(HeaderMap.class));
     when(mockExchange.getResponseSender()).thenReturn(mockSender);
-    
+
     // Mock FormParserFactory
     try (MockedStatic<FormParserFactory> mockStatic = mockStatic(FormParserFactory.class)) {
       FormParserFactory mockFactory = mock(FormParserFactory.class);
@@ -388,18 +386,18 @@ public class JoshConfigDiscoveryHandlerTest {
       when(FormParserFactory.builder()).thenReturn(mockBuilder);
       when(mockBuilder.build()).thenReturn(mockFactory);
       when(mockFactory.createParser(any())).thenReturn(mockFormParser);
-      
+
       try {
         when(mockFormParser.parseBlocking()).thenReturn(mockFormData);
       } catch (IOException e) {
         // Won't throw for mock
       }
-      
+
       // Mock valid API key
       try (MockedStatic<ApiKeyUtil> apiKeyMockStatic = mockStatic(ApiKeyUtil.class)) {
         ApiKeyUtil.ApiCheckResult validResult = new ApiKeyUtil.ApiCheckResult("test-key", true);
         apiKeyMockStatic.when(() -> ApiKeyUtil.checkApiKey(any(), any())).thenReturn(validResult);
-        
+
         // Mock form data with invalid Josh code (missing end statement)
         when(mockFormData.contains("code")).thenReturn(true);
         when(mockFormData.getFirst("code")).thenReturn(mockFormValue);
@@ -407,10 +405,10 @@ public class JoshConfigDiscoveryHandlerTest {
             start simulation Test
               grid.size = config example.gridSize
             """);  // Missing 'end simulation' - this will cause a parse error
-        
+
         // Execute
         Optional<String> result = handler.handleRequestTrusted(mockExchange);
-        
+
         // Verify 400 status code for invalid code
         assertTrue(result.isPresent());
         assertEquals("test-key", result.get());

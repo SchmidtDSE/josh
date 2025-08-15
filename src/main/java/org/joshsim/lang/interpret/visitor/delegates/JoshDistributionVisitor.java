@@ -11,8 +11,8 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -43,9 +43,9 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * Parse a slice expression.
    *
    * @param ctx The ANTLR context from which to parse the slice expression.
-   * @return Fragment containing the slice expression parsed.
+   * @return JoshFragment containing the slice expression parsed.
    */
-  public Fragment visitSlice(JoshLangParser.SliceContext ctx) {
+  public JoshFragment visitSlice(JoshLangParser.SliceContext ctx) {
     EventHandlerAction subjectAction = ctx.subject.accept(parent).getCurrentAction();
     EventHandlerAction selectionAction = ctx.selection.accept(parent).getCurrentAction();
 
@@ -64,9 +64,9 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * <p>Parse a sample expression without a count parameter, defaulting to a single sample.</p>
    *
    * @param ctx The ANTLR context from which to parse the sample expression.
-   * @return Fragment containing the sample expression parsed.
+   * @return JoshFragment containing the sample expression parsed.
    */
-  public Fragment visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
+  public JoshFragment visitSampleSimple(JoshLangParser.SampleSimpleContext ctx) {
     EventHandlerAction targetAction = ctx.target.accept(parent).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
@@ -85,9 +85,9 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * <p>Parse a sample expression with a count parameter specifying how many samples to take.</p>
    *
    * @param ctx The ANTLR context from which to parse the sample expression.
-   * @return Fragment containing the sample expression parsed.
+   * @return JoshFragment containing the sample expression parsed.
    */
-  public Fragment visitSampleParam(JoshLangParser.SampleParamContext ctx) {
+  public JoshFragment visitSampleParam(JoshLangParser.SampleParamContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     EventHandlerAction targetAction = ctx.target.accept(parent).getCurrentAction();
 
@@ -108,9 +108,10 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * behaviors.</p>
    *
    * @param ctx The ANTLR context from which to parse the sample expression.
-   * @return Fragment containing the sample expression parsed.
+   * @return JoshFragment containing the sample expression parsed.
    */
-  public Fragment visitSampleParamReplacement(JoshLangParser.SampleParamReplacementContext ctx) {
+  public JoshFragment visitSampleParamReplacement(
+      JoshLangParser.SampleParamReplacementContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     EventHandlerAction targetAction = ctx.target.accept(parent).getCurrentAction();
     String replacementStr = ctx.replace.getText();
@@ -133,9 +134,9 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * bounds.</p>
    *
    * @param ctx The ANTLR context from which to parse the uniform sampling expression.
-   * @return Fragment containing the uniform sampling expression parsed.
+   * @return JoshFragment containing the uniform sampling expression parsed.
    */
-  public Fragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
+  public JoshFragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
     EventHandlerAction lowAction = ctx.low.accept(parent).getCurrentAction();
     EventHandlerAction highAction = ctx.high.accept(parent).getCurrentAction();
 
@@ -156,9 +157,9 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * standard deviation.</p>
    *
    * @param ctx The ANTLR context from which to parse the normal sampling expression.
-   * @return Fragment containing the normal sampling expression parsed.
+   * @return JoshFragment containing the normal sampling expression parsed.
    */
-  public Fragment visitNormalSample(JoshLangParser.NormalSampleContext ctx) {
+  public JoshFragment visitNormalSample(JoshLangParser.NormalSampleContext ctx) {
     EventHandlerAction meanAction = ctx.mean.accept(parent).getCurrentAction();
     EventHandlerAction stdAction = ctx.stdev.accept(parent).getCurrentAction();
 

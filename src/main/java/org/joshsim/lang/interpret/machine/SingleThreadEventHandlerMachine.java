@@ -819,7 +819,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public void pushConfig(String name) {
-    push(bridge.getConfig(name));
+    Optional<EngineValue> configValue = bridge.getConfigOptional(name);
+    push(configValue.orElseThrow(
+        () -> new IllegalArgumentException("Config value not found: " + name)
+    ));
+  }
+
+  @Override
+  public void pushConfigWithDefault(String name) {
+    EngineValue defaultValue = pop(); // Get default from stack
+    Optional<EngineValue> configValue = bridge.getConfigOptional(name);
+    push(configValue.orElse(defaultValue));
   }
 
   /**

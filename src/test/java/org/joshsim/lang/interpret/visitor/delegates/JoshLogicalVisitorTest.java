@@ -19,8 +19,8 @@ import org.joshsim.lang.antlr.JoshLangParser.FullElseBranchContext;
 import org.joshsim.lang.antlr.JoshLangParser.LogicalExpressionContext;
 import org.joshsim.lang.interpret.action.ConditionalAction;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +56,8 @@ class JoshLogicalVisitorTest {
     context.right = mock(ExpressionContext.class);
     context.op = mock(org.antlr.v4.runtime.Token.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -68,7 +68,7 @@ class JoshLogicalVisitorTest {
     when(context.op.getText()).thenReturn("and");
 
     // Test
-    Fragment result = visitor.visitLogicalExpression(context);
+    JoshFragment result = visitor.visitLogicalExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -94,8 +94,8 @@ class JoshLogicalVisitorTest {
     context.right = mock(ExpressionContext.class);
     context.op = mock(org.antlr.v4.runtime.Token.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -106,7 +106,7 @@ class JoshLogicalVisitorTest {
     when(context.op.getText()).thenReturn("==");
 
     // Test
-    Fragment result = visitor.visitCondition(context);
+    JoshFragment result = visitor.visitCondition(context);
 
     // Validate
     assertNotNull(result);
@@ -132,9 +132,9 @@ class JoshLogicalVisitorTest {
     context.pos = mock(ExpressionContext.class);
     context.neg = mock(ExpressionContext.class);
 
-    Fragment condFragment = mock(Fragment.class);
-    Fragment posFragment = mock(Fragment.class);
-    Fragment negFragment = mock(Fragment.class);
+    JoshFragment condFragment = mock(JoshFragment.class);
+    JoshFragment posFragment = mock(JoshFragment.class);
+    JoshFragment negFragment = mock(JoshFragment.class);
     EventHandlerAction condAction = mock(EventHandlerAction.class);
     EventHandlerAction posAction = mock(EventHandlerAction.class);
     EventHandlerAction negAction = mock(EventHandlerAction.class);
@@ -147,7 +147,7 @@ class JoshLogicalVisitorTest {
     when(negFragment.getCurrentAction()).thenReturn(negAction);
 
     // Test
-    Fragment result = visitor.visitConditional(context);
+    JoshFragment result = visitor.visitConditional(context);
 
     // Validate
     assertNotNull(result);
@@ -165,8 +165,8 @@ class JoshLogicalVisitorTest {
     context.cond = mock(ExpressionContext.class);
     context.target = mock(FullBodyContext.class);
 
-    Fragment condFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment condFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction condAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -177,7 +177,7 @@ class JoshLogicalVisitorTest {
     when(context.getChildCount()).thenReturn(5); // No else branches
 
     // Test
-    Fragment result = visitor.visitFullConditional(context);
+    JoshFragment result = visitor.visitFullConditional(context);
 
     // Validate
     assertNotNull(result);
@@ -194,8 +194,8 @@ class JoshLogicalVisitorTest {
     context.cond = mock(ExpressionContext.class);
     context.target = mock(FullBodyContext.class);
 
-    Fragment condFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment condFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction condAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -205,7 +205,7 @@ class JoshLogicalVisitorTest {
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitFullElifBranch(context);
+    JoshFragment result = visitor.visitFullElifBranch(context);
 
     // Validate
     assertNotNull(result);
@@ -222,14 +222,14 @@ class JoshLogicalVisitorTest {
     FullElseBranchContext context = mock(FullElseBranchContext.class);
     context.target = mock(FullBodyContext.class);
 
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
     when(context.target.accept(parent)).thenReturn(targetFragment);
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitFullElseBranch(context);
+    JoshFragment result = visitor.visitFullElseBranch(context);
 
     // Validate
     assertNotNull(result);

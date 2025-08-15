@@ -21,12 +21,12 @@ import org.joshsim.lang.antlr.JoshLangParser.ImportStatementContext;
 import org.joshsim.lang.antlr.JoshLangParser.ProgramContext;
 import org.joshsim.lang.antlr.JoshLangParser.StateStanzaContext;
 import org.joshsim.lang.antlr.JoshLangParser.UnitStanzaContext;
-import org.joshsim.lang.interpret.fragment.ConversionsFragment;
-import org.joshsim.lang.interpret.fragment.EntityFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
 import org.joshsim.lang.interpret.fragment.FragmentType;
-import org.joshsim.lang.interpret.fragment.ProgramFragment;
-import org.joshsim.lang.interpret.fragment.StateFragment;
+import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
+import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
+import org.joshsim.lang.interpret.fragment.josh.ProgramFragment;
+import org.joshsim.lang.interpret.fragment.josh.StateFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class JoshStanzaVisitorTest {
     StateStanzaContext context = mock(StateStanzaContext.class);
     ParseTree stateNameNode = mock(ParseTree.class);
     ParseTree handlerGroupNode = mock(ParseTree.class);
-    Fragment handlerGroupFragment = mock(Fragment.class);
+    JoshFragment handlerGroupFragment = mock(JoshFragment.class);
     EventHandlerGroupBuilder groupBuilder = mock(EventHandlerGroupBuilder.class);
 
     when(context.getChildCount()).thenReturn(6); // state + name + 1 handler group + 3 other nodes
@@ -64,7 +64,7 @@ class JoshStanzaVisitorTest {
     when(handlerGroupFragment.getEventHandlerGroup()).thenReturn(groupBuilder);
 
     // Test
-    Fragment result = visitor.visitStateStanza(context);
+    JoshFragment result = visitor.visitStateStanza(context);
 
     // Validate
     assertNotNull(result);
@@ -81,7 +81,7 @@ class JoshStanzaVisitorTest {
     final ParseTree identifierNode = mock(ParseTree.class);
     final ParseTree closeEntityTypeNode = mock(ParseTree.class);
     final ParseTree childNode = mock(ParseTree.class);
-    final Fragment childFragment = mock(Fragment.class);
+    final JoshFragment childFragment = mock(JoshFragment.class);
     EventHandlerGroupBuilder groupBuilder = mock(EventHandlerGroupBuilder.class);
     List<EventHandlerGroupBuilder> groupBuilders = new ArrayList<>();
     groupBuilders.add(groupBuilder);
@@ -98,7 +98,7 @@ class JoshStanzaVisitorTest {
     when(childFragment.getEventHandlerGroups()).thenReturn(groupBuilders);
 
     // Test
-    Fragment result = visitor.visitEntityStanza(context);
+    JoshFragment result = visitor.visitEntityStanza(context);
 
     // Validate
     assertNotNull(result);
@@ -111,7 +111,7 @@ class JoshStanzaVisitorTest {
     UnitStanzaContext context = mock(UnitStanzaContext.class);
     ParseTree unitNameNode = mock(ParseTree.class);
     ParseTree conversionNode = mock(ParseTree.class);
-    Fragment conversionFragment = mock(Fragment.class);
+    JoshFragment conversionFragment = mock(JoshFragment.class);
     Conversion incompleteConversion = mock(Conversion.class);
     Units destinationUnits = Units.of("destUnit");
 
@@ -125,7 +125,7 @@ class JoshStanzaVisitorTest {
     when(incompleteConversion.getConversionCallable()).thenReturn(value -> mock(EngineValue.class));
 
     // Test
-    Fragment result = visitor.visitUnitStanza(context);
+    JoshFragment result = visitor.visitUnitStanza(context);
 
     // Validate
     assertNotNull(result);
@@ -158,7 +158,7 @@ class JoshStanzaVisitorTest {
     // Mock
     ProgramContext context = mock(ProgramContext.class);
     ParseTree childNode = mock(ParseTree.class);
-    Fragment childFragment = mock(Fragment.class);
+    JoshFragment childFragment = mock(JoshFragment.class);
     EntityPrototype entityPrototype = mock(EntityPrototype.class);
 
     when(context.getChildCount()).thenReturn(1);
@@ -168,7 +168,7 @@ class JoshStanzaVisitorTest {
     when(childFragment.getEntity()).thenReturn(entityPrototype);
 
     // Test
-    Fragment result = visitor.visitProgram(context);
+    JoshFragment result = visitor.visitProgram(context);
 
     // Validate
     assertNotNull(result);

@@ -81,18 +81,18 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
    * @param exception The exception that occurred
    * @param additionalContext Optional additional context
    */
-  public void logError(String key, String operation, Throwable exception, 
+  public void logError(String key, String operation, Throwable exception,
         String additionalContext) {
     CompatibleStringJoiner logJoiner = CompatibilityLayerKeeper.get().createStringJoiner(", ");
     logJoiner.add(generateHash(key));
     logJoiner.add("error_" + operation);
     logJoiner.add(exception.getClass().getSimpleName());
     logJoiner.add("\"" + sanitizeForLogging(exception.getMessage()) + "\"");
-    
+
     if (additionalContext != null && !additionalContext.isEmpty()) {
       logJoiner.add("\"" + sanitizeForLogging(additionalContext) + "\"");
     }
-    
+
     System.err.println("[josh cloud error] " + logJoiner.toString());
   }
 
@@ -106,20 +106,21 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
     if (message == null) {
       return "null";
     }
-    
+
     // Remove potential file paths and replace with generic placeholder
     String sanitized = message.replaceAll("[/\\\\][^\\s]*", "[PATH]");
-    
+
     // Remove potential API keys or tokens (simple pattern)
     sanitized = sanitized.replaceAll(
-        "(?i)api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[API-KEY]");
-    sanitized = sanitized.replaceAll("(?i)token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[TOKEN]");
-    
+        "(?i)\\s*api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[API-KEY]");
+    sanitized = sanitized.replaceAll(
+        "(?i)\\s*token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[TOKEN]");
+
     // Truncate if too long
     if (sanitized.length() > 200) {
       sanitized = sanitized.substring(0, 197) + "...";
     }
-    
+
     return sanitized;
   }
 

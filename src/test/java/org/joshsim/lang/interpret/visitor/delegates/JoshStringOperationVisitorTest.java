@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 
 import org.joshsim.lang.antlr.JoshLangParser.ConcatExpressionContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +38,8 @@ class JoshStringOperationVisitorTest {
     context.left = mock(ConcatExpressionContext.class);
     context.right = mock(ConcatExpressionContext.class);
 
-    Fragment leftFragment = mock(Fragment.class);
-    Fragment rightFragment = mock(Fragment.class);
+    JoshFragment leftFragment = mock(JoshFragment.class);
+    JoshFragment rightFragment = mock(JoshFragment.class);
     EventHandlerAction leftAction = mock(EventHandlerAction.class);
     EventHandlerAction rightAction = mock(EventHandlerAction.class);
 
@@ -49,7 +49,7 @@ class JoshStringOperationVisitorTest {
     when(rightFragment.getCurrentAction()).thenReturn(rightAction);
 
     // Test
-    Fragment result = visitor.visitConcatExpression(context);
+    JoshFragment result = visitor.visitConcatExpression(context);
 
     // Validate
     assertNotNull(result);

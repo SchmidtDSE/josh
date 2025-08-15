@@ -168,12 +168,13 @@ public interface EngineBridge {
   EngineValue getExternal(GeoKey key, String name, long step);
 
   /**
-   * Get a configuration value by name.
+   * Get a configuration value by name, returning empty if not found.
    *
    * @param name The name of the configuration value to retrieve.
-   * @return The configuration value as an EngineValue.
+   * @return Optional containing the configuration value, or empty if not found.
    */
-  EngineValue getConfig(String name);
+  Optional<EngineValue> getConfigOptional(String name);
+
 
   /**
    * Get the factory to use in building engine values.
