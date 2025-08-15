@@ -106,9 +106,6 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
       return new JshcValueFragment(number, unitsText, engineValue);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid number format: " + numberText, e);
-    } catch (Exception e) {
-      String errorMsg = "Invalid value or units: " + numberText + " " + unitsText;
-      throw new IllegalArgumentException(errorMsg, e);
     }
   }
 
