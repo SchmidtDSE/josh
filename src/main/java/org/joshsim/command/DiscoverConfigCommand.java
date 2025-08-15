@@ -83,7 +83,9 @@ public class DiscoverConfigCommand implements Callable<Integer> {
 
       // Format and print the discovered variables
       String formattedOutput = ConfigDiscoverabilityOutputFormatter.format(configVariables);
-      if (!formattedOutput.isEmpty()) {
+      if (formattedOutput.isEmpty()) {
+        System.out.println("[No variables found]");
+      } else {
         System.out.println(formattedOutput);
       }
 

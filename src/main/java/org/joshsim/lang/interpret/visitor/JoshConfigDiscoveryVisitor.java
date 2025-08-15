@@ -41,7 +41,8 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
   }
 
   @Override
-  public Set<DiscoveredConfigVar> visitConfigValueWithDefault(JoshLangParser.ConfigValueWithDefaultContext ctx) {
+  public Set<DiscoveredConfigVar> visitConfigValueWithDefault(
+      JoshLangParser.ConfigValueWithDefaultContext ctx) {
     String variableName = ctx.name.getText();
     String defaultValueString = extractDefaultValueString(ctx.defaultValue);
     DiscoveredConfigVar discovered = new DiscoveredConfigVar(variableName, defaultValueString);
@@ -72,20 +73,24 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
       return "";
     }
 
-    // Handle simple cases based on context type
-    if (defaultValueContext instanceof JoshLangParser.SimpleExpressionContext) {
-      JoshLangParser.SimpleExpressionContext simpleCtx = (JoshLangParser.SimpleExpressionContext) defaultValueContext;
-      return extractUnitsValueString(simpleCtx.unitsValue());
-    } else if (defaultValueContext instanceof JoshLangParser.SimpleNumberContext) {
-      JoshLangParser.SimpleNumberContext numberCtx = (JoshLangParser.SimpleNumberContext) defaultValueContext;
-      return numberCtx.number().getText();
-    } else if (defaultValueContext instanceof JoshLangParser.SimpleStringContext) {
-      JoshLangParser.SimpleStringContext stringCtx = (JoshLangParser.SimpleStringContext) defaultValueContext;
-      return stringCtx.string().STR_().getText();
+    // Handle simple cases based on context type using new-style switch
+    switch (defaultValueContext.getClass().getSimpleName()) {
+      case "SimpleExpressionContext":
+        JoshLangParser.SimpleExpressionContext simpleCtx =
+            (JoshLangParser.SimpleExpressionContext) defaultValueContext;
+        return extractUnitsValueString(simpleCtx.unitsValue());
+      case "SimpleNumberContext":
+        JoshLangParser.SimpleNumberContext numberCtx =
+            (JoshLangParser.SimpleNumberContext) defaultValueContext;
+        return numberCtx.number().getText();
+      case "SimpleStringContext":
+        JoshLangParser.SimpleStringContext stringCtx =
+            (JoshLangParser.SimpleStringContext) defaultValueContext;
+        return stringCtx.string().STR_().getText();
+      default:
+        // For complex expressions, fall back to getting the full text
+        return defaultValueContext.getText();
     }
-
-    // For complex expressions, fall back to getting the full text
-    return defaultValueContext.getText();
   }
 
   /**
@@ -118,7 +123,8 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
   }
 
   @Override
-  protected Set<DiscoveredConfigVar> aggregateResult(Set<DiscoveredConfigVar> aggregate, Set<DiscoveredConfigVar> nextResult) {
+  protected Set<DiscoveredConfigVar> aggregateResult(
+      Set<DiscoveredConfigVar> aggregate, Set<DiscoveredConfigVar> nextResult) {
     if (aggregate == null) {
       aggregate = new HashSet<>();
     }

@@ -25,12 +25,26 @@ import org.joshsim.lang.interpret.visitor.JoshConfigParserVisitor;
 public class ConfigInterpreter {
 
   /**
+   * Custom error listener for ANTLR parsing that converts syntax errors to
+   * IllegalArgumentException.
+   */
+  private static class ConfigErrorListener extends org.antlr.v4.runtime.BaseErrorListener {
+    @Override
+    public void syntaxError(org.antlr.v4.runtime.Recognizer<?, ?> recognizer,
+                           Object offendingSymbol, int line, int charPositionInLine,
+                           String msg, org.antlr.v4.runtime.RecognitionException e) {
+      String errorMsg = "Parse error at line " + line + ":" + charPositionInLine + " " + msg;
+      throw new IllegalArgumentException(errorMsg);
+    }
+  }
+
+  /**
    * Interprets a Josh configuration file content and returns a Config.
    *
    * @param configContent The content of the .jshc file as a string
    * @param valueFactory The EngineValueFactory to use for creating values
    * @return A Config instance containing the parsed configuration values
-   * @throws RuntimeException if parsing fails
+   * @throws IllegalArgumentException if parsing fails due to syntax errors or invalid content
    */
   public Config interpret(String configContent, EngineValueFactory valueFactory) {
     try {
@@ -41,15 +55,7 @@ public class ConfigInterpreter {
 
       // Add error handling
       parser.removeErrorListeners(); // Remove default console error listener
-      parser.addErrorListener(new org.antlr.v4.runtime.BaseErrorListener() {
-        @Override
-        public void syntaxError(org.antlr.v4.runtime.Recognizer<?, ?> recognizer,
-                               Object offendingSymbol, int line, int charPositionInLine,
-                               String msg, org.antlr.v4.runtime.RecognitionException e) {
-          String errorMsg = "Parse error at line " + line + ":" + charPositionInLine + " " + msg;
-          throw new IllegalArgumentException(errorMsg);
-        }
-      });
+      parser.addErrorListener(new ConfigErrorListener());
 
       // Parse the config content
       ParseTree tree = parser.config();
@@ -60,9 +66,13 @@ public class ConfigInterpreter {
 
       // Extract Config from the resulting fragment
       return fragment.getConfigBuilder().build();
-    } catch (Exception e) {
-      String errorMsg = "Failed to parse configuration file: '" + configContent + "'";
-      throw new IllegalArgumentException(errorMsg, e);
+    } catch (IllegalArgumentException e) {
+      // Re-throw parse errors with consistent messaging
+      if (e.getMessage().startsWith("Parse error at line")) {
+        String errorMsg = "Failed to parse configuration file: '" + configContent + "'";
+        throw new IllegalArgumentException(errorMsg, e);
+      }
+      throw e;
     }
   }
 }

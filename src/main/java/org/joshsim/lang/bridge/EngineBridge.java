@@ -175,15 +175,6 @@ public interface EngineBridge {
    */
   Optional<EngineValue> getConfigOptional(String name);
 
-  /**
-   * Get a configuration value by name.
-   *
-   * @param name The name of the configuration value to retrieve.
-   * @return The configuration value as an EngineValue.
-   * @deprecated Use getConfigOptional instead
-   */
-  @Deprecated
-  EngineValue getConfig(String name);
 
   /**
    * Get the factory to use in building engine values.

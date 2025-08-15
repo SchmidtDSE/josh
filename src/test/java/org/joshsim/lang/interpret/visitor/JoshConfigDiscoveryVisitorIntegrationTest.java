@@ -49,7 +49,8 @@ public class JoshConfigDiscoveryVisitorIntegrationTest {
   /**
    * Helper method to check if a set contains a specific DiscoveredConfigVar.
    */
-  private boolean containsVar(Set<DiscoveredConfigVar> vars, String name, Optional<String> defaultValue) {
+  private boolean containsVar(Set<DiscoveredConfigVar> vars, String name,
+      Optional<String> defaultValue) {
     return vars.stream().anyMatch(var ->
         var.getName().equals(name) && var.getDefaultValue().equals(defaultValue));
   }

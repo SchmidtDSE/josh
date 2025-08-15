@@ -197,37 +197,28 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public Optional<EngineValue> getConfigOptional(String name) {
-    try {
-      // Extract the actual config variable from the dot notation
-      String[] parts = name.split("\\.", 2);
-      if (parts.length != 2) {
-        return Optional.empty();
-      }
-      String configName = parts[0];
-      String variableName = parts[1];
-
-      if (!configData.containsKey(configName)) {
-        try {
-          configData.put(configName, configGetter.getConfig(configName));
-        } catch (Exception e) {
-          return Optional.empty();
-        }
-      }
-
-      Config config = configData.get(configName);
-      EngineValue value = config.getValue(variableName);
-      return Optional.ofNullable(value);
-    } catch (Exception e) {
+    // Extract the actual config variable from the dot notation
+    String[] parts = name.split("\\.", 2);
+    if (parts.length != 2) {
       return Optional.empty();
     }
+    String configName = parts[0];
+    String variableName = parts[1];
+
+    if (!configData.containsKey(configName)) {
+      try {
+        configData.put(configName, configGetter.getConfig(configName));
+      } catch (IllegalArgumentException | UnsupportedOperationException e) {
+        // Config file not found or config support not available
+        return Optional.empty();
+      }
+    }
+
+    Config config = configData.get(configName);
+    EngineValue value = config.getValue(variableName);
+    return Optional.ofNullable(value);
   }
 
-  @Override
-  public EngineValue getConfig(String name) {
-    return getConfigOptional(name).orElseThrow(
-        () -> new IllegalArgumentException("Config value not found: " + name)
-    );
-  }
 
   @Override
   public EngineValueFactory getEngineValueFactory() {

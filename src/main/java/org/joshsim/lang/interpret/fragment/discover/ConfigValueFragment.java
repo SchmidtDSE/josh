@@ -7,6 +7,7 @@
 package org.joshsim.lang.interpret.fragment.discover;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.interpret.fragment.FragmentType;
 
@@ -18,10 +19,10 @@ import org.joshsim.lang.interpret.fragment.FragmentType;
  * that includes both a number and units.</p>
  */
 public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
-  private final String name;
-  private final BigDecimal number;
-  private final String units;
-  private final EngineValue engineValue;
+  private final Optional<String> name;
+  private final Optional<BigDecimal> number;
+  private final Optional<String> units;
+  private final Optional<EngineValue> engineValue;
 
   /**
    * Creates a new fragment for a simple name without additional value information.
@@ -33,10 +34,10 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Name cannot be null or empty");
     }
-    this.name = name.trim();
-    this.number = null;
-    this.units = null;
-    this.engineValue = null;
+    this.name = Optional.of(name.trim());
+    this.number = Optional.empty();
+    this.units = Optional.empty();
+    this.engineValue = Optional.empty();
   }
 
   /**
@@ -50,10 +51,10 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
     if (number == null) {
       throw new IllegalArgumentException("Number cannot be null");
     }
-    this.name = null;
-    this.number = number;
-    this.units = units != null ? units.trim() : "";
-    this.engineValue = null;
+    this.name = Optional.empty();
+    this.number = Optional.of(number);
+    this.units = Optional.of(units != null ? units.trim() : "");
+    this.engineValue = Optional.empty();
   }
 
   /**
@@ -66,10 +67,10 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
     if (engineValue == null) {
       throw new IllegalArgumentException("Engine value cannot be null");
     }
-    this.name = null;
-    this.number = null;
-    this.units = null;
-    this.engineValue = engineValue;
+    this.name = Optional.empty();
+    this.number = Optional.empty();
+    this.units = Optional.empty();
+    this.engineValue = Optional.of(engineValue);
   }
 
   /**
@@ -80,10 +81,7 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    */
   @Override
   public String getName() {
-    if (name == null) {
-      throw new RuntimeException("This fragment does not have a name.");
-    }
-    return name;
+    return name.orElseThrow(() -> new RuntimeException("This fragment does not have a name."));
   }
 
   /**
@@ -94,10 +92,7 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    */
   @Override
   public BigDecimal getNumber() {
-    if (number == null) {
-      throw new RuntimeException("This fragment does not have a number.");
-    }
-    return number;
+    return number.orElseThrow(() -> new RuntimeException("This fragment does not have a number."));
   }
 
   /**
@@ -108,10 +103,7 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    */
   @Override
   public String getUnits() {
-    if (number == null) {
-      throw new RuntimeException("This fragment does not have units.");
-    }
-    return units;
+    return units.orElseThrow(() -> new RuntimeException("This fragment does not have units."));
   }
 
   /**
@@ -122,10 +114,8 @@ public class ConfigValueFragment extends ConfigDiscoverabilityFragment {
    */
   @Override
   public EngineValue getEngineValue() {
-    if (engineValue == null) {
-      throw new RuntimeException("This fragment does not have an engine value.");
-    }
-    return engineValue;
+    return engineValue.orElseThrow(
+        () -> new RuntimeException("This fragment does not have an engine value."));
   }
 
   /**

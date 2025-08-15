@@ -25,7 +25,24 @@ grammar JoshConfig;
 package org.joshsim.lang.antlr;
 }
 
-// Parser rules
+// Lexer rules (sorted alphabetically)
+COMMENT : '#' ~[\r\n]* -> channel(HIDDEN) ;
+
+EQUALS : '=' ;
+
+ID : [A-Za-z/][A-Za-z0-9%/]* ;
+
+NEWLINE : [\r\n]+ -> skip ;
+
+NUMBER : [+-]? ([0-9]+ ('.' [0-9]+)? | '.' [0-9]+) ;
+
+WS : [ \t]+ -> skip ;
+
+// Parser rules (sorted alphabetically)
+assignment : ID EQUALS value ;
+
+comment : COMMENT ;
+
 config : configLine* EOF ;
 
 configLine 
@@ -34,23 +51,6 @@ configLine
     | emptyLine
     ;
 
-assignment : ID EQUALS value ;
-
-value : NUMBER ID? ;
-
-comment : COMMENT ;
-
 emptyLine : NEWLINE ;
 
-// Lexer rules
-ID : [A-Za-z/][A-Za-z0-9%/]* ;
-
-NUMBER : [+-]? ([0-9]+ ('.' [0-9]+)? | '.' [0-9]+) ;
-
-EQUALS : '=' ;
-
-COMMENT : '#' ~[\r\n]* -> channel(HIDDEN) ;
-
-NEWLINE : [\r\n]+ -> skip ;
-
-WS : [ \t]+ -> skip ;
+value : NUMBER ID? ;

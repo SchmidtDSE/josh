@@ -65,23 +65,4 @@ public abstract class JshcFragment {
    * @return The fragment type
    */
   public abstract FragmentType getFragmentType();
-
-  /**
-   * Combines multiple ConfigBuilder instances into a single ConfigBuilder.
-   *
-   * <p>This static method provides a way to merge configuration builders,
-   * similar to the pattern used in JoshFragment. Note: Since ConfigBuilder doesn't
-   * expose its internal values, this method creates a new builder and assumes
-   * the caller will handle the merging through the visitor pattern.</p>
-   *
-   * @param first The first ConfigBuilder
-   * @param second The second ConfigBuilder
-   * @return A new ConfigBuilder for combining (implementation deferred to usage)
-   */
-  public static ConfigBuilder combineConfigBuilders(ConfigBuilder first, ConfigBuilder second) {
-    // Since ConfigBuilder doesn't expose its values, we return a new builder
-    // The actual combining will be handled by the visitor when processing
-    // multiple assignments in a single config file
-    return new ConfigBuilder();
-  }
 }

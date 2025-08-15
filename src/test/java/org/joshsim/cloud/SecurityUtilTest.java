@@ -246,4 +246,40 @@ class SecurityUtilTest {
     assertFalse(result.contains("/path/to/file"));
     assertFalse(result.contains("abc123def"));
   }
+
+  @Test
+  void sanitizeErrorMessage_shouldMatchPatternsWithAndWithoutLeadingSpaces() {
+    // Arrange - Test patterns without leading spaces
+    String messageWithSpaces = "Error: api_key=secret1234567890 and "
+        + "token=token1234567890 password=password123";
+    RuntimeException exception = new RuntimeException(messageWithSpaces);
+
+    // Act
+    String resultWithSpaces = SecurityUtil.sanitizeErrorMessage(messageWithSpaces, exception);
+
+    // Assert - Patterns without leading spaces should still work
+    assertTrue(resultWithSpaces.contains("[REDACTED-API-KEY]"));
+    assertTrue(resultWithSpaces.contains("[REDACTED-TOKEN]"));
+    assertTrue(resultWithSpaces.contains("[REDACTED-PASSWORD]"));
+    assertFalse(resultWithSpaces.contains("secret1234567890"));
+    assertFalse(resultWithSpaces.contains("token1234567890"));
+    assertFalse(resultWithSpaces.contains("password123"));
+
+    // Arrange - Test patterns with leading spaces (common in formatted strings)
+    String messageWithLeadingSpaces = "Error:\n api_key=secret1234567890\n "
+        + "token=token1234567890\n password=password123";
+    RuntimeException exceptionSpaces = new RuntimeException(messageWithLeadingSpaces);
+
+    // Act
+    String resultLeadingSpaces = SecurityUtil.sanitizeErrorMessage(messageWithLeadingSpaces,
+        exceptionSpaces);
+
+    // Assert - Patterns with leading spaces should now work
+    assertTrue(resultLeadingSpaces.contains("[REDACTED-API-KEY]"));
+    assertTrue(resultLeadingSpaces.contains("[REDACTED-TOKEN]"));
+    assertTrue(resultLeadingSpaces.contains("[REDACTED-PASSWORD]"));
+    assertFalse(resultLeadingSpaces.contains("secret1234567890"));
+    assertFalse(resultLeadingSpaces.contains("token1234567890"));
+    assertFalse(resultLeadingSpaces.contains("password123"));
+  }
 }

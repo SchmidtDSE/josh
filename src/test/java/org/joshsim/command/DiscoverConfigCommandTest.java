@@ -1,7 +1,6 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -139,7 +138,7 @@ public class DiscoverConfigCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString().trim();
-    assertTrue(output.isEmpty());
+    assertEquals("[No variables found]", output);
   }
 
   @Test

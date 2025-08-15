@@ -79,7 +79,11 @@ public final class DiscoveredConfigVar {
    * @return Formatted description string
    */
   public String describe() {
-    return defaultValue.map(def -> name + "(" + def + ")").orElse(name);
+    if (defaultValue.isPresent()) {
+      return String.format("%s(%s)", name, defaultValue.get());
+    } else {
+      return name;
+    }
   }
 
   /**
@@ -107,7 +111,11 @@ public final class DiscoveredConfigVar {
       return false;
     }
     DiscoveredConfigVar other = (DiscoveredConfigVar) obj;
-    return Objects.equals(name, other.name) && Objects.equals(defaultValue, other.defaultValue);
+    String otherName = other.getName();
+    Optional<String> otherDefaultValue = other.getDefaultValue();
+    boolean sameName = Objects.equals(name, otherName);
+    boolean sameDefaultValue = Objects.equals(defaultValue, otherDefaultValue);
+    return sameName && sameDefaultValue;
   }
 
   /**

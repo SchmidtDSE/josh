@@ -103,12 +103,13 @@ class DiscoveredConfigVarTest {
     DiscoveredConfigVar var2 = new DiscoveredConfigVar("testVar", "5 m");
     DiscoveredConfigVar var3 = new DiscoveredConfigVar("testVar", "10 m");
     DiscoveredConfigVar var4 = new DiscoveredConfigVar("otherVar", "5 m");
-    DiscoveredConfigVar var5 = new DiscoveredConfigVar("testVar");
 
     // Test equals
     assertEquals(var1, var2);
     assertNotEquals(var1, var3);
     assertNotEquals(var1, var4);
+
+    DiscoveredConfigVar var5 = new DiscoveredConfigVar("testVar");
     assertNotEquals(var1, var5);
     assertNotEquals(var1, null);
     assertNotEquals(var1, "string");

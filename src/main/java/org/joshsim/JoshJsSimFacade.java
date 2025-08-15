@@ -201,11 +201,13 @@ public class JoshJsSimFacade {
    *
    * <p>Parses the given Josh source code and identifies all configuration variables
    * referenced using 'config' expressions. For example, "config example.testVar"
-   * would be discovered as "example.testVar".</p>
+   * would be discovered as "example.testVar". Variables with default values are
+   * shown with the default in parentheses, such as "example.testVar(5m)".</p>
    *
    * @param code The Josh source code to analyze for configuration variable usage.
-   * @return A comma-separated string of all discovered configuration variable names,
-   *     or an empty string if no configuration variables are found.
+   * @return A line-separated string of all discovered configuration variable names,
+   *     with defaults shown in parentheses when present, or an empty string if no
+   *     configuration variables are found.
    * @throws RuntimeException If parsing the code results in errors.
    */
   @JSExport

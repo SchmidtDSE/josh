@@ -51,7 +51,7 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
       if (lineContext.assignment() != null) {
         // Process assignment and add to main builder
         String variableName = lineContext.assignment().ID().getText();
-        JshcFragment valueFragment = visitValue(lineContext.assignment().value());
+        JshcFragment valueFragment = lineContext.assignment().value().accept(this);
         builder.addValue(variableName, valueFragment.getEngineValue());
       }
       // Comments and empty lines are automatically ignored by the grammar
@@ -69,7 +69,7 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
   @Override
   public JshcFragment visitAssignment(JoshConfigParser.AssignmentContext ctx) {
     String variableName = ctx.ID().getText();
-    JshcFragment valueFragment = visit(ctx.value());
+    JshcFragment valueFragment = ctx.value().accept(this);
 
     // Add the value to a new config builder
     ConfigBuilder builder = new ConfigBuilder();

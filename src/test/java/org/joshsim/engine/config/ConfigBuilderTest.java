@@ -132,4 +132,105 @@ class ConfigBuilderTest {
     assertEquals(2.0, config.getValue("two").getAsDouble(), 0.0001);
     assertEquals(3.0, config.getValue("three").getAsDouble(), 0.0001);
   }
+
+  @Test
+  void testCombineBasic() {
+    // Arrange
+    EngineValue value1 = factory.parseNumber("5", Units.METERS);
+    EngineValue value2 = factory.parseNumber("10", Units.COUNT);
+    EngineValue value3 = factory.parseNumber("15", Units.of("kg"));
+
+    ConfigBuilder builder1 = new ConfigBuilder().addValue("var1", value1);
+    ConfigBuilder builder2 = new ConfigBuilder().addValue("var2", value2);
+
+    // Act
+    ConfigBuilder combined = builder1.combine(builder2);
+    Config config = combined.build();
+
+    // Assert
+    assertTrue(config.hasValue("var1"));
+    assertTrue(config.hasValue("var2"));
+    assertEquals(5.0, config.getValue("var1").getAsDouble(), 0.0001);
+    assertEquals(10.0, config.getValue("var2").getAsDouble(), 0.0001);
+  }
+
+  @Test
+  void testCombineWithOverride() {
+    // Arrange
+    EngineValue value1 = factory.parseNumber("5", Units.METERS);
+    EngineValue value2 = factory.parseNumber("10", Units.METERS);
+
+    ConfigBuilder builder1 = new ConfigBuilder().addValue("var", value1);
+    ConfigBuilder builder2 = new ConfigBuilder().addValue("var", value2);
+
+    // Act
+    ConfigBuilder combined = builder1.combine(builder2);
+    Config config = combined.build();
+
+    // Assert
+    assertTrue(config.hasValue("var"));
+    // Should have the value from builder2 (the other builder)
+    assertEquals(10.0, config.getValue("var").getAsDouble(), 0.0001);
+  }
+
+  @Test
+  void testCombineEmpty() {
+    // Arrange
+    EngineValue value1 = factory.parseNumber("5", Units.METERS);
+    ConfigBuilder builder1 = new ConfigBuilder().addValue("var1", value1);
+    ConfigBuilder emptyBuilder = new ConfigBuilder();
+
+    // Act
+    ConfigBuilder combined = builder1.combine(emptyBuilder);
+    Config config = combined.build();
+
+    // Assert
+    assertTrue(config.hasValue("var1"));
+    assertEquals(5.0, config.getValue("var1").getAsDouble(), 0.0001);
+  }
+
+  @Test
+  void testCombineEmptyWithNonEmpty() {
+    // Arrange
+    EngineValue value2 = factory.parseNumber("10", Units.COUNT);
+    ConfigBuilder emptyBuilder = new ConfigBuilder();
+    ConfigBuilder builder2 = new ConfigBuilder().addValue("var2", value2);
+
+    // Act
+    ConfigBuilder combined = emptyBuilder.combine(builder2);
+    Config config = combined.build();
+
+    // Assert
+    assertTrue(config.hasValue("var2"));
+    assertEquals(10.0, config.getValue("var2").getAsDouble(), 0.0001);
+  }
+
+  @Test
+  void testCombineDoesNotModifyOriginal() {
+    // Arrange
+    EngineValue value1 = factory.parseNumber("5", Units.METERS);
+    EngineValue value2 = factory.parseNumber("10", Units.COUNT);
+
+    ConfigBuilder builder1 = new ConfigBuilder().addValue("var1", value1);
+    ConfigBuilder builder2 = new ConfigBuilder().addValue("var2", value2);
+
+    // Act - combine and immediately test
+    final ConfigBuilder combined = builder1.combine(builder2);
+    final Config configCombined = combined.build();
+
+    // Assert
+    // Original builders should only have their original values
+    Config config1 = builder1.build();
+    Config config2 = builder2.build();
+
+    assertTrue(config1.hasValue("var1"));
+    assertFalse(config1.hasValue("var2"));
+
+    assertFalse(config2.hasValue("var1"));
+    assertTrue(config2.hasValue("var2"));
+
+    // Test the combined config
+    assertTrue(configCombined.hasValue("var1"));
+    assertTrue(configCombined.hasValue("var2"));
+  }
 }

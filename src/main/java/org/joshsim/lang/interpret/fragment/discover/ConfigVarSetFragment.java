@@ -33,21 +33,11 @@ public class ConfigVarSetFragment extends ConfigDiscoverabilityFragment {
     this.discoveredVars = discoveredVars;
   }
 
-  /**
-   * Gets the set of discovered config variables from this fragment.
-   *
-   * @return Set of discovered config variables
-   */
   @Override
   public Set<DiscoveredConfigVar> getDiscoveredConfigVars() {
     return discoveredVars;
   }
 
-  /**
-   * Gets the type of this fragment.
-   *
-   * @return CONFIG_VAR_SET fragment type
-   */
   @Override
   public FragmentType getFragmentType() {
     return FragmentType.CONFIG_VAR_SET;

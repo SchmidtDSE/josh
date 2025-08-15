@@ -15,11 +15,11 @@ import java.util.regex.Pattern;
 public class SecurityUtil {
 
   private static final Pattern API_KEY_PATTERN = Pattern.compile(
-      "(?i) api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
+      "(?i)\\s*api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
   private static final Pattern TOKEN_PATTERN = Pattern.compile(
-      "(?i) token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
+      "(?i)\\s*token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
   private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-      "(?i) password[_\\s-]?[:=]?\\s*\\S{6,}");
+      "(?i)\\s*password[_\\s-]?[:=]?\\s*\\S{6,}");
 
   /**
    * Sanitizes an error message to remove potential credential information.

@@ -17,11 +17,11 @@ import java.util.List;
  * across all discovery endpoints (CLI, server, JS export). Variables are formatted
  * one per line with defaults shown in parentheses when present.</p>
  *
- * <p>Output format examples:
+ * <div>Output format examples:
  * <ul>
  * <li>Variables with defaults: {@code testVar1(5m)}</li>
  * <li>Variables without defaults: {@code testVar2}</li>
- * </ul></p>
+ * </ul></div>
  */
 public class ConfigDiscoverabilityOutputFormatter {
 
