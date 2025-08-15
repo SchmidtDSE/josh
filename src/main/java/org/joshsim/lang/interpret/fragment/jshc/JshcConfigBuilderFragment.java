@@ -35,7 +35,6 @@ public class JshcConfigBuilderFragment extends JshcFragment {
 
   @Override
   public FragmentType getFragmentType() {
-    // Using PROGRAM as the closest existing type for a builder fragment
     return FragmentType.PROGRAM;
   }
 }
