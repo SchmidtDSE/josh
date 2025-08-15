@@ -2,7 +2,6 @@ package org.joshsim.lang.interpret.visitor;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +32,7 @@ public class AliasConversionIntegrationTest {
           alias yrs
           alias yeers
         end unit
-        
+
         start simulation AliasConversionTest
           grid.size = 1 count
           grid.low = 0 count latitude, 0 count longitude
@@ -41,14 +40,14 @@ public class AliasConversionIntegrationTest {
           steps.low = 0 count
           steps.high = 3 count
         end simulation
-        
+
         start patch Default
           # Initialize with one unit alias
           testValue.init = 5 yeers
-          
+
           # Try to convert to another alias
           convertedValue.step = current.testValue as yrs
-          
+
           # Export values for verification
           export.originalValue.step = current.testValue
           export.convertedValue.step = current.convertedValue
@@ -57,7 +56,7 @@ public class AliasConversionIntegrationTest {
 
     // Parse the Josh code
     ParseResult parsed = JoshSimFacade.parse(joshCode);
-    assertFalse(parsed.hasErrors(), 
+    assertFalse(parsed.hasErrors(),
         "Josh code should parse without errors. Errors: " + parsed.getErrors());
 
     // Create geometry factory and input/output layer
@@ -70,12 +69,12 @@ public class AliasConversionIntegrationTest {
 
     // Capture simulation step numbers
     List<Long> completedSteps = new ArrayList<>();
-    
+
     // Callback to track simulation progress
     JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
       completedSteps.add(stepNumber);
     };
-    
+
     // Run the simulation - alias conversion works
     JoshSimFacade.runSimulation(
         geometryFactory,
@@ -101,7 +100,7 @@ public class AliasConversionIntegrationTest {
           alias yrs
           alias yeers
         end unit
-        
+
         start simulation MultiAliasCalculationTest
           grid.size = 1 count
           grid.low = 0 count latitude, 0 count longitude
@@ -109,20 +108,20 @@ public class AliasConversionIntegrationTest {
           steps.low = 0 count
           steps.high = 2 count
         end simulation
-        
+
         start patch Default
           # Initialize with different aliases
           value1.init = 2 yeers
           value2.init = 3 yrs
-          
+
           # Perform calculations using different aliases
           sum.step = current.value1 + current.value2
           difference.step = current.value2 - current.value1
-          
+
           # Convert results to different aliases
           sumAsYr.step = current.sum as yr
           sumAsYears.step = current.sum as years
-          
+
           # Export for verification
           export.sum.step = current.sum
           export.sumAsYr.step = current.sumAsYr
@@ -132,19 +131,19 @@ public class AliasConversionIntegrationTest {
 
     // Parse and run the simulation
     ParseResult parsed = JoshSimFacade.parse(joshCode);
-    assertFalse(parsed.hasErrors(), 
+    assertFalse(parsed.hasErrors(),
         "Josh code should parse without errors. Errors: " + parsed.getErrors());
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayer(1);
     JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
-    
+
     // Capture step results
     List<Long> completedSteps = new ArrayList<>();
     JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
       completedSteps.add(stepNumber);
     };
-    
+
     // Run simulation - arithmetic with aliases works
     JoshSimFacade.runSimulation(
         geometryFactory,

@@ -129,7 +129,7 @@ class SecurityUtilTest {
     RuntimeException originalException = new RuntimeException("Internal error");
 
     // Act
-    SimulationExecutionException result = SecurityUtil.createSafeException(userMessage, 
+    SimulationExecutionException result = SecurityUtil.createSafeException(userMessage,
         originalException);
 
     // Assert
@@ -177,7 +177,7 @@ class SecurityUtilTest {
       // Assert
       Mockito.verify(mockDataLayer, Mockito.times(1))
           .log(apiKey, "error_" + operation, 0);
-      
+
       String errorLog = errorOutput.toString();
       assertTrue(errorLog.contains("[josh cloud error]"));
       assertTrue(errorLog.contains("Error in simulation"));
@@ -193,7 +193,7 @@ class SecurityUtilTest {
     CloudApiDataLayer mockDataLayer = Mockito.mock(CloudApiDataLayer.class);
     Mockito.doThrow(new RuntimeException("Logging failed")).when(mockDataLayer)
         .log(Mockito.anyString(), Mockito.anyString(), Mockito.anyLong());
-    
+
     String apiKey = "test-key";
     String operation = "simulation";
     RuntimeException exception = new RuntimeException("Test error");

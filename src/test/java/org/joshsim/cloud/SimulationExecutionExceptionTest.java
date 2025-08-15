@@ -14,7 +14,7 @@ class SimulationExecutionExceptionTest {
     RuntimeException originalCause = new RuntimeException("Internal error details");
 
     // Act
-    SimulationExecutionException exception = new SimulationExecutionException(userMessage, 
+    SimulationExecutionException exception = new SimulationExecutionException(userMessage,
         originalCause);
 
     // Assert
@@ -31,7 +31,7 @@ class SimulationExecutionExceptionTest {
     RuntimeException originalCause = new RuntimeException("Internal error");
 
     // Act
-    SimulationExecutionException exception = new SimulationExecutionException(userMessage, 
+    SimulationExecutionException exception = new SimulationExecutionException(userMessage,
         originalCause);
 
     // Assert
@@ -47,7 +47,7 @@ class SimulationExecutionExceptionTest {
     Throwable originalCause = null;
 
     // Act
-    SimulationExecutionException exception = new SimulationExecutionException(userMessage, 
+    SimulationExecutionException exception = new SimulationExecutionException(userMessage,
         originalCause);
 
     // Assert
@@ -64,7 +64,7 @@ class SimulationExecutionExceptionTest {
     Throwable originalCause = null;
 
     // Act
-    SimulationExecutionException exception = new SimulationExecutionException(userMessage, 
+    SimulationExecutionException exception = new SimulationExecutionException(userMessage,
         originalCause);
 
     // Assert

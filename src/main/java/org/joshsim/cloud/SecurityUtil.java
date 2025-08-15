@@ -15,11 +15,11 @@ import java.util.regex.Pattern;
 public class SecurityUtil {
 
   private static final Pattern API_KEY_PATTERN = Pattern.compile(
-      "(?i)api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
+      "(?i) api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
   private static final Pattern TOKEN_PATTERN = Pattern.compile(
-      "(?i)token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
+      "(?i) token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}");
   private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-      "(?i)password[_\\s-]?[:=]?\\s*\\S{6,}");
+      "(?i) password[_\\s-]?[:=]?\\s*\\S{6,}");
 
   /**
    * Sanitizes an error message to remove potential credential information.
@@ -34,21 +34,21 @@ public class SecurityUtil {
     }
 
     String sanitized = originalMessage;
-    
+
     // Remove potential API keys, tokens, and passwords
     sanitized = API_KEY_PATTERN.matcher(sanitized).replaceAll("[REDACTED-API-KEY]");
     sanitized = TOKEN_PATTERN.matcher(sanitized).replaceAll("[REDACTED-TOKEN]");
     sanitized = PASSWORD_PATTERN.matcher(sanitized).replaceAll("[REDACTED-PASSWORD]");
-    
+
     // Remove file paths that might leak system information
     sanitized = sanitized.replaceAll("/[^\\s]*", "[REDACTED-PATH]");
     sanitized = sanitized.replaceAll("\\\\[^\\s]*", "[REDACTED-PATH]");
-    
+
     // If the sanitized message is too revealing, return a generic message
     if (containsSensitiveKeywords(sanitized)) {
       return getGenericErrorMessage(exception);
     }
-    
+
     return sanitized;
   }
 
@@ -59,7 +59,7 @@ public class SecurityUtil {
    * @param originalException The original exception that occurred
    * @return A new SimulationExecutionException with sanitized message
    */
-  public static SimulationExecutionException createSafeException(String userFriendlyMessage, 
+  public static SimulationExecutionException createSafeException(String userFriendlyMessage,
         Throwable originalException) {
     String sanitizedMessage = sanitizeErrorMessage(userFriendlyMessage, originalException);
     return new SimulationExecutionException(sanitizedMessage, originalException);
@@ -74,13 +74,13 @@ public class SecurityUtil {
    * @param exception The exception that occurred
    * @param additionalContext Optional additional context
    */
-  public static void logSecureError(CloudApiDataLayer apiDataLayer, String apiKey, 
+  public static void logSecureError(CloudApiDataLayer apiDataLayer, String apiKey,
         String operation, Throwable exception, String additionalContext) {
-    
+
     try {
       // Use enhanced logging if available (EnvCloudApiDataLayer)
       if (apiDataLayer instanceof EnvCloudApiDataLayer) {
-        ((EnvCloudApiDataLayer) apiDataLayer).logError(apiKey, operation, exception, 
+        ((EnvCloudApiDataLayer) apiDataLayer).logError(apiKey, operation, exception,
             additionalContext);
       } else {
         // Fallback to standard logging for other implementations
@@ -109,9 +109,9 @@ public class SecurityUtil {
     if (exception == null) {
       return "An error occurred during simulation execution";
     }
-    
+
     String exceptionType = exception.getClass().getSimpleName();
-    
+
     // Provide specific guidance for common exception types
     if (exceptionType.contains("Parse") || exceptionType.contains("Syntax")) {
       return "Invalid simulation code syntax";
@@ -138,22 +138,22 @@ public class SecurityUtil {
     if (message == null) {
       return false;
     }
-    
+
     String lowerMessage = message.toLowerCase();
-    
+
     // Keywords that suggest internal system details
     String[] sensitiveKeywords = {
-      "internal", "system", "database", "server", "host", "port", 
+      "internal", "system", "database", "server", "host", "port",
       "connection", "authentication", "credential", "secret", "private",
       "class ", "method ", "function ", "stack", "trace"
     };
-    
+
     for (String keyword : sensitiveKeywords) {
       if (lowerMessage.contains(keyword)) {
         return true;
       }
     }
-    
+
     return false;
   }
 }
