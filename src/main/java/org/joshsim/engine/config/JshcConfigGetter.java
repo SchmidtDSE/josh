@@ -9,6 +9,7 @@ package org.joshsim.engine.config;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.ConfigGetter;
@@ -25,7 +26,7 @@ public class JshcConfigGetter implements ConfigGetter {
 
   private final InputGetterStrategy inputStrategy;
   private final EngineValueFactory valueFactory;
-  private final ConcurrentHashMap<String, Config> configCache;
+  private final ConcurrentHashMap<String, Optional<Config>> configCache;
 
   /**
    * Creates a new JshcConfigGetter with the specified input strategy and value factory.
@@ -40,17 +41,23 @@ public class JshcConfigGetter implements ConfigGetter {
   }
 
   @Override
-  public Config getConfig(String name) {
-    // Check if it's already cached
-    Config cached = configCache.get(name);
-    if (cached != null) {
-      return cached;
+  public Optional<Config> getConfig(String name) {
+    // Check if it's already cached (including cached empty results)
+    if (configCache.containsKey(name)) {
+      return configCache.get(name);
     }
 
     // Ensure the name ends with .jshc
     String fileName = name;
     if (!fileName.endsWith(".jshc")) {
       fileName += ".jshc";
+    }
+
+    // Check if the file exists before trying to open it
+    if (!inputStrategy.exists(fileName)) {
+      // Cache the empty result to avoid repeated checks
+      configCache.put(name, Optional.empty());
+      return Optional.empty();
     }
 
     try (InputStream inputStream = inputStrategy.open(fileName)) {
@@ -62,11 +69,14 @@ public class JshcConfigGetter implements ConfigGetter {
       Config config = interpreter.interpret(content, valueFactory);
 
       // Cache it
-      configCache.put(name, config);
+      Optional<Config> result = Optional.of(config);
+      configCache.put(name, result);
 
-      return config;
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Failed to load config file: " + fileName, e);
+      return result;
+    } catch (IOException | RuntimeException e) {
+      // If there's an error reading or parsing, cache empty and return empty
+      configCache.put(name, Optional.empty());
+      return Optional.empty();
     }
   }
 }

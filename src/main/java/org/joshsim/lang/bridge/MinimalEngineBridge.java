@@ -206,12 +206,12 @@ public class MinimalEngineBridge implements EngineBridge {
     String variableName = parts[1];
 
     if (!configData.containsKey(configName)) {
-      try {
-        configData.put(configName, configGetter.getConfig(configName));
-      } catch (IllegalArgumentException | UnsupportedOperationException e) {
-        // Config file not found or config support not available
+      Optional<Config> configOptional = configGetter.getConfig(configName);
+      if (configOptional.isEmpty()) {
+        // Config file not found
         return Optional.empty();
       }
+      configData.put(configName, configOptional.get());
     }
 
     Config config = configData.get(configName);
