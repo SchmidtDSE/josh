@@ -39,7 +39,7 @@ $ ls parameters.jshc
 $ java -jar joshsim.jar run simulation.josh
 ```
 
-Configuration variables can be discovered in Josh scripts:
+Configuration variables can be discovered in Josh scripts automatically. The following prints all configuration variables used with defaults if given:
 
 ```
 $ java -jar joshsim.jar discoverConfig simulation.josh
