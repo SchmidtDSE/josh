@@ -15,11 +15,9 @@ import java.math.RoundingMode;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.apache.sis.coverage.grid.GridCoverage;
 import org.apache.sis.coverage.grid.GridGeometry;
-import org.apache.sis.geometry.DirectPosition2D;
 import org.apache.sis.storage.DataStoreException;
 import org.apache.sis.storage.GridCoverageResource;
 import org.apache.sis.storage.Resource;
@@ -32,8 +30,6 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.TransformException;
 import org.opengis.util.FactoryException;
 
 
@@ -155,7 +151,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
 
       // Use NetCDF-style coordinate lookup approach
       ExternalSpatialDimensions dimensions = getSpatialDimensions();
-      
+
       // Find indices of closest X and Y coordinates using NetCDF pattern
       int indexX = dimensions.findClosestIndexX(x);
       int indexY = dimensions.findClosestIndexY(y);
@@ -172,7 +168,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Check bounds against actual raster size
       int maxX = raster.getWidth();
       int maxY = raster.getHeight();
-      
+
       if (indexX >= maxX || indexY >= maxY) {
         return Optional.empty();
       }
@@ -180,11 +176,11 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       // Read the pixel value directly
       double[] values = new double[data.getSampleDimensions().size()];
       raster.getPixel(indexX, indexY, values);
-      
+
       if (bandIndex >= values.length) {
         return Optional.empty();
       }
-      
+
       double value = values[bandIndex];
 
       if (Double.isNaN(value)) {

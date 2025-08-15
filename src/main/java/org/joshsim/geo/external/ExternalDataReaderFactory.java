@@ -24,7 +24,7 @@ public class ExternalDataReaderFactory {
         EngineValueFactory valueFactory,
         String filePath
   ) throws IOException {
-    
+
     if (isNetCdfFile(filePath)) {
       NetcdfExternalDataReaderFactory netcdfReaderFactory = new NetcdfExternalDataReaderFactory(
           valueFactory
