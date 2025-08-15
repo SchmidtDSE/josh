@@ -45,8 +45,6 @@ import org.teavm.jso.JSExport;
  */
 public class JoshJsSimFacade {
 
-  private static final String DEFAULT_CONFIG_CONTENT = "testVariable = 5 m";
-
   /**
    * Validates and interprets the provided code using the JoshParser and JoshInterpreter.
    *
