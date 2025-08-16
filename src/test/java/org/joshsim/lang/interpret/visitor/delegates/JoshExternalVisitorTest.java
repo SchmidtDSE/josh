@@ -12,8 +12,8 @@ import org.joshsim.lang.antlr.JoshLangParser.ExternalValueAtTimeContext;
 import org.joshsim.lang.antlr.JoshLangParser.ExternalValueContext;
 import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class JoshExternalVisitorTest {
     when(nameContext.getText()).thenReturn("externalVar");
 
     // Test
-    Fragment result = visitor.visitExternalValue(context);
+    JoshFragment result = visitor.visitExternalValue(context);
 
     // Validate
     assertNotNull(result);
@@ -72,7 +72,7 @@ class JoshExternalVisitorTest {
     when(stepNode.getText()).thenReturn("123");
 
     // Test
-    Fragment result = visitor.visitExternalValueAtTime(context);
+    JoshFragment result = visitor.visitExternalValueAtTime(context);
 
     // Validate
     assertNotNull(result);

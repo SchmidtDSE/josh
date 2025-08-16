@@ -817,6 +817,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }
 
+  @Override
+  public void pushConfig(String name) {
+    Optional<EngineValue> configValue = bridge.getConfigOptional(name);
+    push(configValue.orElseThrow(
+        () -> new IllegalArgumentException("Config value not found: " + name)
+    ));
+  }
+
+  @Override
+  public void pushConfigWithDefault(String name) {
+    EngineValue defaultValue = pop(); // Get default from stack
+    Optional<EngineValue> configValue = bridge.getConfigOptional(name);
+    push(configValue.orElse(defaultValue));
+  }
+
   /**
    * Get a value from the top of the stack, converting it if in a conversion group.
    *

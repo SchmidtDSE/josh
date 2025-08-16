@@ -112,8 +112,9 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
 
     // Remove potential API keys or tokens (simple pattern)
     sanitized = sanitized.replaceAll(
-        "(?i) api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[API-KEY]");
-    sanitized = sanitized.replaceAll("(?i) token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[TOKEN]");
+        "(?i)\\s*api[_\\s-]?key[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[API-KEY]");
+    sanitized = sanitized.replaceAll(
+        "(?i)\\s*token[_\\s-]?[:=]?\\s*[a-zA-Z0-9+/=]{10,}", "[TOKEN]");
 
     // Truncate if too long
     if (sanitized.length() > 200) {

@@ -8,8 +8,8 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -33,9 +33,9 @@ public class JoshStringOperationVisitor implements JoshVisitorDelegate {
    * Parse a string concatenation expression.
    *
    * @param ctx The ANTLR context from which to parse the concatenation expression.
-   * @return Fragment containing the concatenation expression parsed.
+   * @return JoshFragment containing the concatenation expression parsed.
    */
-  public Fragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
+  public JoshFragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
     EventHandlerAction leftAction = ctx.left.accept(parent).getCurrentAction();
     EventHandlerAction rightAction = ctx.right.accept(parent).getCurrentAction();
 

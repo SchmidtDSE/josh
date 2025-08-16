@@ -1,23 +1,24 @@
 
 /**
- * Fragment containing a compiled callable with optional selector.
+ * JoshFragment containing a compiled callable with optional selector.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import java.util.Optional;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 /**
- * Fragment representing a compiled callable with an optional selector.
+ * JoshFragment representing a compiled callable with an optional selector.
  *
  * <p>This class maintains a compiled callable and optionally a compiled selector
  * that can be used with the callable.</p>
  */
-public class CompiledCallableFragment extends Fragment {
+public class CompiledCallableFragment extends JoshFragment {
 
   private final CompiledCallable callable;
   private final Optional<CompiledSelector> selector;

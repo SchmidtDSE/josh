@@ -8,19 +8,28 @@ package org.joshsim;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.cloud.VirtualFileSystemWireDeserializer;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.compat.EmulatedCompatibilityLayer;
+import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
+import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.antlr.JoshLangLexer;
+import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.visitor.JoshConfigDiscoveryVisitor;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.MapToMemoryStringConverter;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
@@ -183,6 +192,43 @@ public class JoshJsSimFacade {
     outputRecord.put("totalSteps", String.valueOf(extractor.getTotalSteps()));
 
     return MapToMemoryStringConverter.convert("simulationMetadata", outputRecord);
+  }
+
+  /**
+   * Discover configuration variables used in the provided Josh script.
+   *
+   * <p>Parses the given Josh source code and identifies all configuration variables
+   * referenced using 'config' expressions. For example, "config example.testVar"
+   * would be discovered as "example.testVar". Variables with default values are
+   * shown with the default in parentheses, such as "example.testVar(5m)".</p>
+   *
+   * @param code The Josh source code to analyze for configuration variable usage.
+   * @return A line-separated string of all discovered configuration variable names,
+   *     with defaults shown in parentheses when present, or an empty string if no
+   *     configuration variables are found.
+   * @throws RuntimeException If parsing the code results in errors.
+   */
+  @JSExport
+  public static String discoverConfigVariables(String code) {
+    setupForWasm();
+
+    JoshParser parser = new JoshParser();
+    ParseResult result = parser.parse(code);
+    if (result.hasErrors()) {
+      String firstError = result.getErrors().iterator().next().toString();
+      throw new RuntimeException("Failed on: " + firstError);
+    }
+
+    // Parse the AST to discover config variables
+    JoshLangLexer lexer = new JoshLangLexer(CharStreams.fromString(code));
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    JoshLangParser joshParser = new JoshLangParser(tokens);
+    ParseTree tree = joshParser.program();
+
+    JoshConfigDiscoveryVisitor visitor = new JoshConfigDiscoveryVisitor();
+    Set<DiscoveredConfigVar> configVariables = visitor.visit(tree);
+
+    return ConfigDiscoverabilityOutputFormatter.format(configVariables);
   }
 
   /**

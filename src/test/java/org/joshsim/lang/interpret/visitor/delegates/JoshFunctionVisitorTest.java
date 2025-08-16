@@ -24,10 +24,10 @@ import org.joshsim.lang.antlr.JoshLangParser.LambdaContext;
 import org.joshsim.lang.antlr.JoshLangParser.ReturnContext;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.CompiledCallableFragment;
-import org.joshsim.lang.interpret.fragment.EventHandlerGroupFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.CompiledCallableFragment;
+import org.joshsim.lang.interpret.fragment.josh.EventHandlerGroupFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ class JoshFunctionVisitorTest {
   void testVisitLambda() {
     // Mock
     LambdaContext context = mock(LambdaContext.class);
-    Fragment childFragment = mock(Fragment.class);
+    JoshFragment childFragment = mock(JoshFragment.class);
     EventHandlerAction childAction = mock(EventHandlerAction.class);
 
     when(context.getChild(0)).thenReturn(context);
@@ -64,7 +64,7 @@ class JoshFunctionVisitorTest {
     when(childFragment.getCurrentAction()).thenReturn(childAction);
 
     // Test
-    Fragment result = visitor.visitLambda(context);
+    JoshFragment result = visitor.visitLambda(context);
 
     // Validate
     assertNotNull(result);
@@ -85,7 +85,7 @@ class JoshFunctionVisitorTest {
   void testVisitReturn() {
     // Mock
     ReturnContext context = mock(ReturnContext.class);
-    Fragment childFragment = mock(Fragment.class);
+    JoshFragment childFragment = mock(JoshFragment.class);
     EventHandlerAction childAction = mock(EventHandlerAction.class);
 
     when(context.getChild(1)).thenReturn(context);
@@ -93,7 +93,7 @@ class JoshFunctionVisitorTest {
     when(childFragment.getCurrentAction()).thenReturn(childAction);
 
     // Test
-    Fragment result = visitor.visitReturn(context);
+    JoshFragment result = visitor.visitReturn(context);
 
     // Validate
     assertNotNull(result);
@@ -114,7 +114,7 @@ class JoshFunctionVisitorTest {
   void testVisitFullBody() {
     // Mock
     FullBodyContext context = mock(FullBodyContext.class);
-    Fragment childFragment = mock(Fragment.class);
+    JoshFragment childFragment = mock(JoshFragment.class);
     EventHandlerAction childAction = mock(EventHandlerAction.class);
 
     when(context.getChildCount()).thenReturn(3); // { statement }
@@ -126,7 +126,7 @@ class JoshFunctionVisitorTest {
     when(mockMachine.isEnded()).thenReturn(true); // Simulate a return statement
 
     // Test
-    Fragment result = visitor.visitFullBody(context);
+    JoshFragment result = visitor.visitFullBody(context);
 
     // Validate
     assertNotNull(result);
@@ -147,14 +147,14 @@ class JoshFunctionVisitorTest {
     // Mock
     EventHandlerGroupMemberInnerContext context = mock(EventHandlerGroupMemberInnerContext.class);
     context.target = mock(CallableContext.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
     when(context.target.accept(parent)).thenReturn(targetFragment);
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitEventHandlerGroupMemberInner(context);
+    JoshFragment result = visitor.visitEventHandlerGroupMemberInner(context);
 
     // Validate
     assertNotNull(result);
@@ -172,8 +172,8 @@ class JoshFunctionVisitorTest {
         mock(ConditionalIfEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     context.target = mock(CallableContext.class);
-    Fragment innerFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment innerFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -183,7 +183,7 @@ class JoshFunctionVisitorTest {
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitConditionalIfEventHandlerGroupMember(context);
+    JoshFragment result = visitor.visitConditionalIfEventHandlerGroupMember(context);
 
     // Validate
     assertNotNull(result);
@@ -199,8 +199,8 @@ class JoshFunctionVisitorTest {
         mock(ConditionalElifEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
     context.target = mock(CallableContext.class);
-    Fragment innerFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment innerFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -210,7 +210,7 @@ class JoshFunctionVisitorTest {
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitConditionalElifEventHandlerGroupMember(context);
+    JoshFragment result = visitor.visitConditionalElifEventHandlerGroupMember(context);
 
     // Validate
     assertNotNull(result);
@@ -225,14 +225,14 @@ class JoshFunctionVisitorTest {
     ConditionalElseEventHandlerGroupMemberContext context =
         mock(ConditionalElseEventHandlerGroupMemberContext.class);
     context.inner = mock(EventHandlerGroupMemberInnerContext.class);
-    Fragment innerFragment = mock(Fragment.class);
+    JoshFragment innerFragment = mock(JoshFragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
 
     when(context.inner.accept(parent)).thenReturn(innerFragment);
     when(innerFragment.getCurrentAction()).thenReturn(innerAction);
 
     // Test
-    Fragment result = visitor.visitConditionalElseEventHandlerGroupMember(context);
+    JoshFragment result = visitor.visitConditionalElseEventHandlerGroupMember(context);
 
     // Validate
     assertNotNull(result);
@@ -246,7 +246,7 @@ class JoshFunctionVisitorTest {
     // Mock
     EventHandlerGroupSingleContext context = mock(EventHandlerGroupSingleContext.class);
     context.name = mock(IdentifierContext.class);
-    Fragment innerFragment = mock(Fragment.class);
+    JoshFragment innerFragment = mock(JoshFragment.class);
     EventHandlerAction innerAction = mock(EventHandlerAction.class);
 
     when(context.name.getText()).thenReturn("entity.init");
@@ -255,7 +255,7 @@ class JoshFunctionVisitorTest {
     when(innerFragment.getCurrentAction()).thenReturn(innerAction);
 
     // Test
-    Fragment result = visitor.visitEventHandlerGroupSingle(context);
+    JoshFragment result = visitor.visitEventHandlerGroupSingle(context);
 
     // Validate
     assertNotNull(result);
@@ -270,7 +270,7 @@ class JoshFunctionVisitorTest {
     // Mock
     EventHandlerGroupMultipleContext context = mock(EventHandlerGroupMultipleContext.class);
     context.name = mock(IdentifierContext.class);
-    Fragment childFragment = mock(CompiledCallableFragment.class);
+    JoshFragment childFragment = mock(CompiledCallableFragment.class);
     CompiledCallable compiledCallable = mock(CompiledCallable.class);
     CompiledSelector compiledSelector = mock(CompiledSelector.class);
 
@@ -282,7 +282,7 @@ class JoshFunctionVisitorTest {
     when(childFragment.getCompiledSelector()).thenReturn(Optional.of(compiledSelector));
 
     // Test
-    Fragment result = visitor.visitEventHandlerGroupMultiple(context);
+    JoshFragment result = visitor.visitEventHandlerGroupMultiple(context);
 
     // Validate
     assertNotNull(result);
@@ -296,7 +296,7 @@ class JoshFunctionVisitorTest {
   void testVisitEventHandlerGeneral() {
     // Mock
     EventHandlerGeneralContext context = mock(EventHandlerGeneralContext.class);
-    Fragment childFragment = mock(EventHandlerGroupFragment.class);
+    JoshFragment childFragment = mock(EventHandlerGroupFragment.class);
     EventHandlerGroupBuilder groupBuilder = mock(EventHandlerGroupBuilder.class);
 
     when(context.getChild(0)).thenReturn(context);
@@ -305,7 +305,7 @@ class JoshFunctionVisitorTest {
     when(groupBuilder.getAttribute()).thenReturn("validAttribute");
 
     // Test
-    Fragment result = visitor.visitEventHandlerGeneral(context);
+    JoshFragment result = visitor.visitEventHandlerGeneral(context);
 
     // Validate
     assertNotNull(result);

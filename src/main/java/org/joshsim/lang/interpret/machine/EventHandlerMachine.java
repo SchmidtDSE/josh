@@ -548,4 +548,18 @@ public interface EventHandlerMachine {
    *     returned.
    */
   void pushExternal(String name, long step);
+
+  /**
+   * Push a config value onto the stack.
+   *
+   * @param name The name of the config value to push.
+   */
+  void pushConfig(String name);
+
+  /**
+   * Push a config value with optional default onto the stack.
+   *
+   * @param name The name of the config value to push.
+   */
+  void pushConfigWithDefault(String name);
 }

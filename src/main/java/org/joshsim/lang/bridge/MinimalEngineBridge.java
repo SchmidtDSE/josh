@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import org.joshsim.engine.config.Config;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -48,6 +49,8 @@ public class MinimalEngineBridge implements EngineBridge {
   private final EntityPrototypeStore prototypeStore;
   private final Map<String, DataGridLayer> externalData;
   private final ExternalResourceGetter externalResourceGetter;
+  private final Map<String, Config> configData;
+  private final ConfigGetter configGetter;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -68,17 +71,20 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param converter The converter for handling unit conversions between different engine values.
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
    */
   public MinimalEngineBridge(EngineValueFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
-        ExternalResourceGetter externalResourceGetter) {
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
     this.externalResourceGetter = externalResourceGetter;
+    this.configGetter = configGetter;
+    this.configData = new HashMap<>();
 
     replicate = Optional.empty();
 
@@ -114,13 +120,15 @@ public class MinimalEngineBridge implements EngineBridge {
   public MinimalEngineBridge(EngineValueFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
-        Replicate replicate) {
+        ConfigGetter configGetter, Replicate replicate) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
     this.converter = converter;
     this.prototypeStore = prototypeStore;
     this.externalResourceGetter = externalResourceGetter;
+    this.configGetter = configGetter;
+    this.configData = new HashMap<>();
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
@@ -186,6 +194,31 @@ public class MinimalEngineBridge implements EngineBridge {
     }
     return externalData.get(name).getAt(key, step);
   }
+
+  @Override
+  public Optional<EngineValue> getConfigOptional(String name) {
+    // Extract the actual config variable from the dot notation
+    String[] parts = name.split("\\.", 2);
+    if (parts.length != 2) {
+      return Optional.empty();
+    }
+    String configName = parts[0];
+    String variableName = parts[1];
+
+    if (!configData.containsKey(configName)) {
+      Optional<Config> configOptional = configGetter.getConfig(configName);
+      if (configOptional.isEmpty()) {
+        // Config file not found
+        return Optional.empty();
+      }
+      configData.put(configName, configOptional.get());
+    }
+
+    Config config = configData.get(configName);
+    EngineValue value = config.getValue(variableName);
+    return Optional.ofNullable(value);
+  }
+
 
   @Override
   public EngineValueFactory getEngineValueFactory() {

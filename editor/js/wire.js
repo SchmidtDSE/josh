@@ -10,27 +10,29 @@ import {OutputDatum, SimulationResultBuilder} from "model";
 /**
  * Utility to serialize input data into the wire transfer format.
  *
- * Utility to serialize input data into the wire transfer format, converting tabs within file
- * contents into four spaces and sending binary data as base64 while including a flag indicating if
- * the file is binary. This is used to run the virtual file system within the Josh server. In this
- * format, each file is represented as a string with tab-separated values. The first value is the
- * name of the file (path in the virutal file system) followed by a non-spaces tab. The second value
- * is either a 1 if the file's contents are base64 encoded binary data or a 0 if plain text followed
- * by a non- spaces tab. Finally, the third value is the content of the file with tabs replaced with
- * spaces followed by a tab. After the third tab, the next file starts or the string ends if no
- * further files.
+ * Utility to serialize input data into the wire transfer format for both config and 
+ * geospatial data, converting tabs within file contents into four spaces and sending 
+ * binary data as base64 while including a flag indicating if the file is binary. This 
+ * is used to run the virtual file system within the Josh server. In this format, each 
+ * file is represented as a string with tab-separated values. The first value is the
+ * name of the file (path in the virtual file system) followed by a non-spaces tab. 
+ * The second value is either a 1 if the file's contents are base64 encoded binary data 
+ * or a 0 if plain text followed by a non-spaces tab. Finally, the third value is the 
+ * content of the file with tabs replaced with spaces followed by a tab. After the 
+ * third tab, the next file starts or the string ends if no further files.
  */
 class ExternalDataSerializer {
 
   /**
    * Convert from the JSON-serializable object with data files to the string wire transfer format.
    *
-   * @param {Object} data - The JSON serializable object with data file information. This object's
-   *     attributes or keys are the filenames or file paths. Meanwhile, the this object's values are
-   *     the contents of files. For binary files, the contents of the files will be base64 encoded
-   *     strings. For all other files, the contents of the file are plain text strings.
+   * @param {Object} data - The JSON serializable object with data file information including
+   *     both config (.jshc) and geospatial (.jshd) files. This object's attributes or keys 
+   *     are the filenames or file paths. Meanwhile, this object's values are the contents 
+   *     of files. For binary files, the contents of the files will be base64 encoded strings. 
+   *     For all other files, the contents of the file are plain text strings.
    * @returns {string} String serialized encoding of these files in the wire format representing all
-   *     files to use in the virutal file system.
+   *     files to use in the virtual file system.
    */
   serialize(data) {
     const self = this;
@@ -53,7 +55,17 @@ class ExternalDataSerializer {
    */
   _isTextFile(filename) {
     const self = this;
-    return filename.endsWith(".csv") || filename.endsWith(".txt");
+    const extension = filename.substring(filename.lastIndexOf("."));
+    
+    switch (extension) {
+      case ".csv":
+      case ".txt":
+      case ".jshc":
+      case ".josh":
+        return true;
+      default:
+        return false;
+    }
   }
   
 }

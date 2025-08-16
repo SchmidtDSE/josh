@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -213,7 +214,8 @@ public class PreprocessCommand implements Callable<Integer> {
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
+        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory),
+        new JshcConfigGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);
