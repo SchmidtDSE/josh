@@ -20,10 +20,11 @@ class DataFilesPresenter {
    * @param {string} openButtonId - The ID for the button used to open the dialog.
    * @param {string} dialogId - The ID for the dialog in which the user can manipulate the OPFS file
    *     system.
+   * @param {LocalFileLayer} fileLayer - Shared file layer instance for OPFS operations.
    */
-  constructor(openButtonId, dialogId) {
+  constructor(openButtonId, dialogId, fileLayer) {
     const self = this;
-    self._fileLayer = new LocalFileLayer();
+    self._fileLayer = fileLayer;
     self._openButton = document.getElementById(openButtonId);
     self._dialog = document.getElementById(dialogId);
 
@@ -61,8 +62,10 @@ class DataFilesPresenter {
   _attachListeners() {
     const self = this;
 
-    self._openButton.addEventListener("click", (event) => {
+    self._openButton.addEventListener("click", async (event) => {
       event.preventDefault();
+      await self._refreshFilesList();
+      await self._updateSpaceUtilizationDisplay();
       self._dialog.showModal();
     });
 
@@ -301,6 +304,18 @@ class LocalFileLayer {
   }
 
   /**
+   * Check if a file exists in the OPFS file system.
+   *
+   * @param {string} name - The path (name) of the file to check.
+   * @returns {Promise<boolean>} True if the file exists, false otherwise.
+   */
+  async fileExists(name) {
+    const self = this;
+    const files = await self.listFiles();
+    return files.includes(name);
+  }
+
+  /**
    * Add a file to the OPFS file system, overwritting if file perviously present.
    *
    * @param {Promise<OpfsFile>} The file to persist, creating a new file if it does not yet exist or
@@ -410,7 +425,8 @@ class LocalFileLayer {
    */
   _enforceTextExtension(filename) {
     const self = this;
-    const hasExtension = filename.endsWith(".csv") || filename.endsWith(".txt");
+    const hasExtension = filename.endsWith(".csv") || filename.endsWith(".txt") || 
+                         filename.endsWith(".jshc") || filename.endsWith(".josh");
     return hasExtension ? filename : (filename + ".txt");
   }
 }

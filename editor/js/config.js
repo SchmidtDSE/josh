@@ -19,10 +19,11 @@ class ConfigDialogPresenter {
    *
    * @param {string} openButtonId - The ID for the button used to open the dialog.
    * @param {string} dialogId - The ID for the dialog in which the user can edit the config file.
+   * @param {LocalFileLayer} fileLayer - Shared file layer instance for OPFS operations.
    */
-  constructor(openButtonId, dialogId) {
+  constructor(openButtonId, dialogId, fileLayer) {
     const self = this;
-    self._fileLayer = new LocalFileLayer();
+    self._fileLayer = fileLayer;
     self._openButton = document.getElementById(openButtonId);
     self._dialog = document.getElementById(dialogId);
 
@@ -64,8 +65,11 @@ class ConfigDialogPresenter {
   async _openDialog() {
     const self = this;
     try {
-      const file = await self._fileLayer.getFile(CONFIG_FILENAME);
-      if (file.getIsSaved()) {
+      // Check if the file exists first
+      const fileExists = await self._fileLayer.fileExists(CONFIG_FILENAME);
+      
+      if (fileExists) {
+        const file = await self._fileLayer.getFile(CONFIG_FILENAME);
         self._originalContent = file.getContents();
         self._textarea.value = self._originalContent;
       } else {

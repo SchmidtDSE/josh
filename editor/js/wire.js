@@ -55,7 +55,17 @@ class ExternalDataSerializer {
    */
   _isTextFile(filename) {
     const self = this;
-    return filename.endsWith(".csv") || filename.endsWith(".txt");
+    const extension = filename.substring(filename.lastIndexOf("."));
+    
+    switch (extension) {
+      case ".csv":
+      case ".txt":
+      case ".jshc":
+      case ".josh":
+        return true;
+      default:
+        return false;
+    }
   }
   
 }
