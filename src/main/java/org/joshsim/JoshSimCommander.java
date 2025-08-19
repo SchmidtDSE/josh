@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
+import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -55,6 +56,7 @@ import picocli.CommandLine;
     subcommands = {
         ValidateCommand.class,
         RunCommand.class,
+        RunRemoteCommand.class,
         ServerCommand.class,
         PreprocessCommand.class,
         DiscoverConfigCommand.class
