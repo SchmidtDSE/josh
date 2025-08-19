@@ -31,8 +31,9 @@ import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.visitor.JoshConfigDiscoveryVisitor;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.MapToMemoryStringConverter;
+import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
+import org.joshsim.lang.io.WireConverter;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
@@ -191,7 +192,8 @@ public class JoshJsSimFacade {
 
     outputRecord.put("totalSteps", String.valueOf(extractor.getTotalSteps()));
 
-    return MapToMemoryStringConverter.convert("simulationMetadata", outputRecord);
+    NamedMap namedMap = new NamedMap("simulationMetadata", outputRecord);
+    return WireConverter.serializeToString(namedMap);
   }
 
   /**
