@@ -6,40 +6,38 @@
 
 package org.joshsim.lang.io;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 
 
 /**
- * Strategy providing non-sandboxed input access.
+ * Abstract base class providing template method pattern for non-sandboxed input access.
  *
  * <p>Strategy which loads streams from regular resources through the JVM's utilities for working
- * with the native file system and with the network outside of the sandbox.</p>
+ * with the native file system and with the network outside of the sandbox. This class uses the
+ * template method pattern to allow different strategies for loading files while maintaining
+ * consistent URI handling.</p>
  */
-public class JvmInputGetter implements InputGetterStrategy {
+public abstract class JvmInputGetter implements InputGetterStrategy {
 
   @Override
-  public InputStream open(String identifier) {
+  public final InputStream open(String identifier) {
     if (identifier.contains(":")) {
       URI uri = URI.create(identifier);
       return loadFromUri(uri);
     } else {
-      return loadFromWorkingDir(identifier);
+      return readImpliedPath(identifier);
     }
   }
 
   @Override
-  public boolean exists(String identifier) {
+  public final boolean exists(String identifier) {
     if (identifier.contains(":")) {
       // For URIs, we would need to try to open it to check existence
       // For now, assume URIs exist (they might fail when actually opened)
       return true;
     } else {
-      // For files, check if the file exists in the working directory
-      File file = new File(identifier);
-      return file.exists();
+      return checkImpliedPathExists(identifier);
     }
   }
 
@@ -50,7 +48,7 @@ public class JvmInputGetter implements InputGetterStrategy {
    * @return The input stream found at the given URI.
    * @throws RuntimeException raised if error encountered in opening the input stream.
    */
-  private InputStream loadFromUri(URI uri) {
+  protected final InputStream loadFromUri(URI uri) {
     try {
       return uri.toURL().openStream();
     } catch (Exception e) {
@@ -59,18 +57,20 @@ public class JvmInputGetter implements InputGetterStrategy {
   }
 
   /**
-   * Load a file from the working directory.
+   * Template method for reading implied path identifiers (non-URI).
    *
-   * @param name The name of the file to load from working directory.
-   * @return The input stream for the file at the working directory.
+   * @param identifier The identifier to load from the implementation-specific strategy.
+   * @return The input stream for the requested resource.
    * @throws RuntimeException raised if error encountered in opening the input stream.
    */
-  private InputStream loadFromWorkingDir(String name) {
-    try {
-      return new FileInputStream(name);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to open stream from working directory: " + name, e);
-    }
-  }
+  protected abstract InputStream readImpliedPath(String identifier);
+
+  /**
+   * Template method for checking existence of implied path identifiers (non-URI).
+   *
+   * @param identifier The identifier to check for existence.
+   * @return True if the resource exists and can be opened, false otherwise.
+   */
+  protected abstract boolean checkImpliedPathExists(String identifier);
 
 }

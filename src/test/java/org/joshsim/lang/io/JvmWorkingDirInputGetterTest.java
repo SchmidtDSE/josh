@@ -1,7 +1,8 @@
-
 package org.joshsim.lang.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -13,12 +14,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
-class JvmInputGetterTest {
+class JvmWorkingDirInputGetterTest {
 
-  private static final String TEST_FILE_PATH = "/tmp/josh-jvm-example.txt";
-  private static final String TEST_CONTENT = "test text";
+  private static final String TEST_FILE_PATH = "/tmp/josh-working-dir-test.txt";
+  private static final String TEST_CONTENT = "working directory test content";
   private File testFile;
-  private JvmInputGetter inputGetter;
+  private JvmWorkingDirInputGetter inputGetter;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -26,7 +27,6 @@ class JvmInputGetterTest {
     try (FileWriter writer = new FileWriter(testFile)) {
       writer.write(TEST_CONTENT);
     }
-    // Use concrete implementation for testing
     inputGetter = new JvmWorkingDirInputGetter();
   }
 
@@ -38,7 +38,7 @@ class JvmInputGetterTest {
   }
 
   @Test
-  void testOpenFileFromWorkingDirectory() throws Exception {
+  void testOpenExistingFile() throws Exception {
     // Act
     InputStream inputStream = inputGetter.open(TEST_FILE_PATH);
 
@@ -48,14 +48,29 @@ class JvmInputGetterTest {
   }
 
   @Test
-  void testExistsFileFromWorkingDirectory() {
+  void testExistsForExistingFile() {
     // Act & Assert
     assertTrue(inputGetter.exists(TEST_FILE_PATH));
   }
 
   @Test
-  void testUriHandling() {
-    // Act & Assert - URIs should be assumed to exist (they're handled by loadFromUri)
+  void testExistsForNonExistentFile() {
+    // Act & Assert
+    assertFalse(inputGetter.exists("/tmp/non-existent-file.txt"));
+  }
+
+  @Test
+  void testOpenNonExistentFileThrowsException() {
+    // Act & Assert
+    assertThrows(RuntimeException.class, () -> {
+      inputGetter.open("/tmp/non-existent-file.txt");
+    });
+  }
+
+  @Test
+  void testUriExists() {
+    // URIs should always return true for exists check
     assertTrue(inputGetter.exists("http://example.com/test.txt"));
+    assertTrue(inputGetter.exists("file:///tmp/test.txt"));
   }
 }

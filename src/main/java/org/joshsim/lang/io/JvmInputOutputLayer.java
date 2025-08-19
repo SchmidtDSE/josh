@@ -16,12 +16,14 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 public class JvmInputOutputLayer implements InputOutputLayer {
 
   private final JvmExportFacadeFactory exportFactory;
+  private final InputGetterStrategy inputStrategy;
 
   /**
    * Create a new input / output layer with grid-space only asusming zero-th replicate.
    */
   public JvmInputOutputLayer() {
     exportFactory = new JvmExportFacadeFactory(0);
+    inputStrategy = new JvmWorkingDirInputGetter();
   }
 
   /**
@@ -31,6 +33,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    */
   public JvmInputOutputLayer(int replicate) {
     exportFactory = new JvmExportFacadeFactory(replicate);
+    inputStrategy = new JvmWorkingDirInputGetter();
   }
 
   /**
@@ -42,6 +45,32 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width) {
     exportFactory = new JvmExportFacadeFactory(replicate, extents, width);
+    inputStrategy = new JvmWorkingDirInputGetter();
+  }
+
+  /**
+   * Create a new input / output layer with grid-space only and custom input strategy.
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param inputStrategy The strategy for input file access.
+   */
+  public JvmInputOutputLayer(int replicate, InputGetterStrategy inputStrategy) {
+    exportFactory = new JvmExportFacadeFactory(replicate);
+    this.inputStrategy = inputStrategy;
+  }
+
+  /**
+   * Create a new input / output layer with access to Earth-space and custom input strategy.
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space.
+   * @param width The width and height of each patch in meters.
+   * @param inputStrategy The strategy for input file access.
+   */
+  public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                             InputGetterStrategy inputStrategy) {
+    exportFactory = new JvmExportFacadeFactory(replicate, extents, width);
+    this.inputStrategy = inputStrategy;
   }
 
   @Override
@@ -51,7 +80,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
 
   @Override
   public InputGetterStrategy getInputStrategy() {
-    return new JvmInputGetter();
+    return inputStrategy;
   }
 
 }

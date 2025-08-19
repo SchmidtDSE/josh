@@ -12,6 +12,8 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
@@ -20,6 +22,11 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputGetterStrategy;
+import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmMappedInputGetter;
+import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -77,6 +84,13 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean serialPatches;
 
+  @Option(
+      names = "--data",
+      description = "Specify external data files to include (format: filename=path)",
+      split = ","
+  )
+  private String[] dataFiles = new String[0];
+
   @Override
   public Integer call() {
     EngineGeometryFactory geometryFactory;
@@ -92,10 +106,23 @@ public class RunCommand implements Callable<Integer> {
       geometryFactory = new EarthGeometryFactory(crsRealized);
     }
 
+    // Create appropriate InputGetterStrategy based on --data option
+    InputGetterStrategy inputStrategy;
+    if (dataFiles.length == 0) {
+      inputStrategy = new JvmWorkingDirInputGetter();
+    } else {
+      Map<String, String> fileMapping = parseDataFiles(dataFiles);
+      inputStrategy = new JvmMappedInputGetter(fileMapping);
+    }
+
+    // Create InputOutputLayer with the chosen strategy
+    InputOutputLayer inputOutputLayer = new JvmInputOutputLayer(replicateNumber, inputStrategy);
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
         geometryFactory,
         file,
-        output
+        output,
+        inputOutputLayer
     );
 
     if (initResult.getFailureStep().isPresent()) {
@@ -137,5 +164,25 @@ public class RunCommand implements Callable<Integer> {
   private Integer saveToMinio(String subDirectories, File file) {
     boolean successful = JoshSimCommander.saveToMinio(subDirectories, file, minioOptions, output);
     return successful ? 0 : MINIO_ERROR_CODE;
+  }
+
+  /**
+   * Parse the data files option into a mapping from filename to path.
+   *
+   * @param dataFiles Array of data file specifications in format "filename=path".
+   * @return Map from filename to path.
+   * @throws IllegalArgumentException if any data file specification is invalid.
+   */
+  private Map<String, String> parseDataFiles(String[] dataFiles) {
+    Map<String, String> mapping = new HashMap<>();
+    for (String dataFile : dataFiles) {
+      String[] parts = dataFile.split("=", 2);
+      if (parts.length != 2) {
+        throw new IllegalArgumentException("Invalid data file format: " + dataFile
+            + ". Expected format: filename=path");
+      }
+      mapping.put(parts[0].trim(), parts[1].trim());
+    }
+    return mapping;
   }
 }

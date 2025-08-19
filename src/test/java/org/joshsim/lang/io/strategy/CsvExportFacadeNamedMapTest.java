@@ -38,7 +38,7 @@ public class CsvExportFacadeNamedMapTest {
     entityData.put("attribute2", "value2");
     when(serializeStrategy.getRecord(any(Entity.class))).thenReturn(entityData);
 
-    CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
+    final CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
 
     // Create NamedMap with same data
     Map<String, String> namedMapData = new HashMap<>();
@@ -68,7 +68,7 @@ public class CsvExportFacadeNamedMapTest {
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
 
     String[] headers = {"attribute1", "attribute2", "step"};
-    CsvExportFacade facade = new CsvExportFacade(
+    final CsvExportFacade facade = new CsvExportFacade(
         outputStrategy, 
         serializeStrategy, 
         java.util.Arrays.asList(headers)
@@ -88,7 +88,8 @@ public class CsvExportFacadeNamedMapTest {
     // Assert
     String output = outputStream.toString();
     assertTrue(output.length() > 0, "CSV output should not be empty");
-    assertTrue(output.contains("testValue1") || output.contains("10"), "Output should contain our data");
+    assertTrue(output.contains("testValue1") || output.contains("10"), 
+        "Output should contain our data");
   }
 
   @Test
@@ -99,7 +100,7 @@ public class CsvExportFacadeNamedMapTest {
     when(outputStrategy.open()).thenReturn(outputStream);
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
+    final CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
 
     // Create empty NamedMap
     Map<String, String> emptyData = new HashMap<>();
@@ -123,13 +124,13 @@ public class CsvExportFacadeNamedMapTest {
     when(outputStrategy.open()).thenReturn(outputStream);
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
+    final CsvExportFacade facade = new CsvExportFacade(outputStrategy, serializeStrategy);
 
     // Create multiple NamedMaps
     Map<String, String> data1 = new HashMap<>();
     data1.put("name", "entity1");
     data1.put("value", "100");
-    NamedMap namedMap1 = new NamedMap("entity1", data1);
+    final NamedMap namedMap1 = new NamedMap("entity1", data1);
 
     Map<String, String> data2 = new HashMap<>();
     data2.put("name", "entity2");
@@ -145,7 +146,9 @@ public class CsvExportFacadeNamedMapTest {
     // Assert
     String output = outputStream.toString();
     assertTrue(output.length() > 0, "CSV output should not be empty");
-    assertTrue(output.contains("entity1") || output.contains("100"), "Output should contain first entity data");
-    assertTrue(output.contains("entity2") || output.contains("200"), "Output should contain second entity data");
+    assertTrue(output.contains("entity1") || output.contains("100"), 
+        "Output should contain first entity data");
+    assertTrue(output.contains("entity2") || output.contains("200"), 
+        "Output should contain second entity data");
   }
 }

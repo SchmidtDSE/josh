@@ -41,7 +41,8 @@ public class NetcdfExportFacadeNamedMapTest {
     when(serializeStrategy.getRecord(any(Entity.class))).thenReturn(entityData);
 
     List<String> variables = Arrays.asList("temperature", "humidity");
-    NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, variables);
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, 
+        variables);
 
     // Create NamedMap with same data including required position fields
     Map<String, String> namedMapData = new HashMap<>();
@@ -70,7 +71,8 @@ public class NetcdfExportFacadeNamedMapTest {
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
     List<String> variables = Arrays.asList("temperature", "humidity", "pressure");
-    NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, variables);
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, 
+        variables);
 
     // Create NamedMap with missing pressure variable but with required position fields
     Map<String, String> namedMapData = new HashMap<>();
@@ -100,7 +102,8 @@ public class NetcdfExportFacadeNamedMapTest {
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
     List<String> variables = Arrays.asList("elevation");
-    NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, variables);
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, 
+        variables);
 
     // Create NamedMap with coordinate data
     Map<String, String> namedMapData = new HashMap<>();
@@ -128,14 +131,15 @@ public class NetcdfExportFacadeNamedMapTest {
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
     List<String> variables = Arrays.asList("value");
-    NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, variables);
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, 
+        variables);
 
     // Create NamedMaps for different steps with required position fields
     Map<String, String> data1 = new HashMap<>();
     data1.put("position.longitude", "-122.4194");
     data1.put("position.latitude", "37.7749");
     data1.put("value", "10.0");
-    NamedMap namedMap1 = new NamedMap("step1", data1);
+    final NamedMap namedMap1 = new NamedMap("step1", data1);
 
     Map<String, String> data2 = new HashMap<>();
     data2.put("position.longitude", "-122.4195");
@@ -163,7 +167,8 @@ public class NetcdfExportFacadeNamedMapTest {
 
     MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
     List<String> variables = Arrays.asList("temperature");
-    NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, variables);
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy, 
+        variables);
 
     // Create NamedMap with required position fields but no temperature data
     Map<String, String> emptyData = new HashMap<>();
