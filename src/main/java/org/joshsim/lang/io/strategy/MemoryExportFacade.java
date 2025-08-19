@@ -8,10 +8,12 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.MapSerializeStrategy;
+import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.OutputStreamStrategy;
 
 
@@ -51,6 +53,17 @@ public class MemoryExportFacade implements ExportFacade {
   public void write(Entity entity, long step) {
     try {
       Map<String, String> serialized = serializeStrategy.getRecord(entity);
+      serialized.put("step", Long.toString(step));
+      writeStrategy.write(serialized, outputStream);
+    } catch (IOException e) {
+      throw new RuntimeException("Error writing to output stream", e);
+    }
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    try {
+      Map<String, String> serialized = new HashMap<>(namedMap.getTarget());
       serialized.put("step", Long.toString(step));
       writeStrategy.write(serialized, outputStream);
     } catch (IOException e) {
