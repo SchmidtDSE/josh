@@ -53,9 +53,12 @@ import picocli.CommandLine.Parameters;
  */
 @Command(
     name = "runRemote",
-    description = "Run a simulation on a remote JoshSimServer"
+    description = "Run a simulation on Josh Cloud or a custom remote JoshSimServer"
 )
 public class RunRemoteCommand implements Callable<Integer> {
+  private static final String JOSH_CLOUD_ENDPOINT = 
+      "https://josh-executor-prod-1007495489273.us-west1.run.app";
+  
   private static final int HTTP_ERROR_CODE = 101;
   private static final int SERIALIZATION_ERROR_CODE = 102;
   private static final int NETWORK_ERROR_CODE = 103;
@@ -69,14 +72,19 @@ public class RunRemoteCommand implements Callable<Integer> {
 
   @Option(
       names = "--endpoint",
-      description = "Remote JoshSimServer endpoint URL",
-      required = true
+      description = "Remote JoshSimServer endpoint URL. " 
+                   + "Defaults to Josh Cloud (${DEFAULT-VALUE}) if not specified. " 
+                   + "Use custom endpoint for your own infrastructure.",
+      required = false,
+      defaultValue = JOSH_CLOUD_ENDPOINT
   )
-  private String endpoint;
+  private String endpoint = JOSH_CLOUD_ENDPOINT;
 
   @Option(
       names = "--api-key",
-      description = "API key for remote server authentication",
+      description = "API key for authentication. " 
+                   + "Required for Josh Cloud and custom endpoints. " 
+                   + "Get Josh Cloud API key from https://joshsim.org",
       required = true
   )
   private String apiKey;
@@ -111,6 +119,17 @@ public class RunRemoteCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     try {
+      // Detect if using Josh Cloud vs custom endpoint
+      boolean usingJoshCloud = isUsingJoshCloud();
+      
+      if (usingJoshCloud) {
+        output.printInfo("Using Josh Cloud for remote execution");
+        output.printInfo("Your simulation will run on our community infrastructure");
+        validateJoshCloudApiKey();
+      } else {
+        output.printInfo("Using custom endpoint: " + endpoint);
+      }
+      
       // Validate endpoint URL
       URI endpointUri = validateAndParseEndpoint(endpoint);
       
@@ -124,10 +143,24 @@ public class RunRemoteCommand implements Callable<Integer> {
       output.printError("Invalid endpoint URL: " + e.getMessage());
       return HTTP_ERROR_CODE;
     } catch (IOException e) {
-      output.printError("Network error: " + e.getMessage());
+      if (isUsingJoshCloud()) {
+        output.printError("Josh Cloud execution failed: " + e.getMessage());
+        output.printError("Please check your API key and network connection.");
+        output.printError("Visit https://joshsim.org for support.");
+      } else {
+        output.printError("Custom endpoint execution failed: " + e.getMessage());
+        output.printError("Please verify your endpoint URL and API key.");
+      }
       return NETWORK_ERROR_CODE;
     } catch (Exception e) {
-      output.printError("Unexpected error: " + e.getMessage());
+      if (isUsingJoshCloud()) {
+        output.printError("Josh Cloud execution failed: " + e.getMessage());
+        output.printError("Please check your API key and network connection.");
+        output.printError("Visit https://joshsim.org for support.");
+      } else {
+        output.printError("Custom endpoint execution failed: " + e.getMessage());
+        output.printError("Please verify your endpoint URL and API key.");
+      }
       return UNKNOWN_ERROR_CODE;
     }
   }
@@ -414,7 +447,35 @@ public class RunRemoteCommand implements Callable<Integer> {
     
     output.printInfo("Results saved locally via export facade");
   }
-  
+
+  /**
+   * Determines if the current endpoint is Josh Cloud.
+   *
+   * @return true if using Josh Cloud, false for custom endpoint
+   */
+  private boolean isUsingJoshCloud() {
+    return endpoint.equals(JOSH_CLOUD_ENDPOINT);
+  }
+
+  /**
+   * Validates Josh Cloud API key format if applicable.
+   * Josh Cloud API keys should follow specific format patterns.
+   *
+   * @throws IllegalArgumentException if Josh Cloud API key format is invalid
+   */
+  private void validateJoshCloudApiKey() {
+    if (isUsingJoshCloud()) {
+      // Add Josh Cloud API key validation if needed
+      // This could check for specific format requirements
+      if (apiKey == null || apiKey.trim().isEmpty()) {
+        throw new IllegalArgumentException(
+            "API key is required for Josh Cloud. " 
+            + "Get your API key from https://joshsim.org");
+      }
+      
+      output.printInfo("Validated Josh Cloud API key");
+    }
+  }
 
   /**
    * Parses the data files option into a mapping from filename to path.

@@ -229,4 +229,124 @@ public class RunRemoteCommandTest {
     
     assertEquals(0, result.size());
   }
+
+  @Test
+  public void testJoshCloudDefaultEndpoint() throws Exception {
+    // Test that endpoint defaults to Josh Cloud
+    java.lang.reflect.Field endpointField = RunRemoteCommand.class.getDeclaredField("endpoint");
+    endpointField.setAccessible(true);
+    String defaultEndpoint = (String) endpointField.get(command);
+    
+    assertEquals("https://josh-executor-prod-1007495489273.us-west1.run.app", 
+        defaultEndpoint);
+  }
+
+  @Test
+  public void testIsUsingJoshCloudDetection() throws Exception {
+    Method method = RunRemoteCommand.class.getDeclaredMethod("isUsingJoshCloud");
+    method.setAccessible(true);
+    
+    // Test default endpoint detection (should be Josh Cloud)
+    boolean isJoshCloud = (Boolean) method.invoke(command);
+    assertTrue(isJoshCloud);
+    
+    // Test custom endpoint
+    java.lang.reflect.Field endpointField = RunRemoteCommand.class.getDeclaredField("endpoint");
+    endpointField.setAccessible(true);
+    endpointField.set(command, "https://custom-server.com");
+    
+    isJoshCloud = (Boolean) method.invoke(command);
+    assertEquals(false, isJoshCloud);
+  }
+
+  @Test
+  public void testCustomEndpointOverride() throws Exception {
+    // Set custom endpoint via reflection
+    java.lang.reflect.Field endpointField = RunRemoteCommand.class.getDeclaredField("endpoint");
+    endpointField.setAccessible(true);
+    endpointField.set(command, "https://my-custom-server.com");
+    
+    // Test that Josh Cloud detection works correctly
+    Method method = RunRemoteCommand.class.getDeclaredMethod("isUsingJoshCloud");
+    method.setAccessible(true);
+    
+    boolean isJoshCloud = (Boolean) method.invoke(command);
+    assertEquals(false, isJoshCloud);
+    
+    // Test endpoint URL validation still works
+    Method validateMethod = RunRemoteCommand.class.getDeclaredMethod(
+        "validateAndParseEndpoint", String.class);
+    validateMethod.setAccessible(true);
+    
+    URI result = (URI) validateMethod.invoke(command, "https://my-custom-server.com");
+    assertEquals("https://my-custom-server.com/runReplicates", result.toString());
+  }
+
+  @Test
+  public void testJoshCloudApiKeyValidation() throws Exception {
+    // Test validation with valid API key
+    java.lang.reflect.Field apiKeyField = RunRemoteCommand.class.getDeclaredField("apiKey");
+    apiKeyField.setAccessible(true);
+    apiKeyField.set(command, "valid-api-key");
+    
+    Method method = RunRemoteCommand.class.getDeclaredMethod("validateJoshCloudApiKey");
+    method.setAccessible(true);
+    
+    // Should not throw exception for valid API key
+    method.invoke(command);
+    
+    // Test validation with empty API key
+    apiKeyField.set(command, "");
+    
+    assertThrows(java.lang.reflect.InvocationTargetException.class, () -> {
+      method.invoke(command);
+    });
+    
+    // Test validation with null API key
+    apiKeyField.set(command, null);
+    
+    assertThrows(java.lang.reflect.InvocationTargetException.class, () -> {
+      method.invoke(command);
+    });
+  }
+
+  @Test
+  public void testJoshCloudApiKeyValidationCustomEndpoint() throws Exception {
+    // Set custom endpoint
+    java.lang.reflect.Field endpointField = RunRemoteCommand.class.getDeclaredField("endpoint");
+    endpointField.setAccessible(true);
+    endpointField.set(command, "https://custom-server.com");
+    
+    // Set empty API key
+    java.lang.reflect.Field apiKeyField = RunRemoteCommand.class.getDeclaredField("apiKey");
+    apiKeyField.setAccessible(true);
+    apiKeyField.set(command, "");
+    
+    Method method = RunRemoteCommand.class.getDeclaredMethod("validateJoshCloudApiKey");
+    method.setAccessible(true);
+    
+    // Should not validate for custom endpoint (should not throw exception)
+    method.invoke(command);
+  }
+
+  @Test
+  public void testJoshCloudEndpointConstant() {
+    // Verify the constant matches the JavaScript DEFAULT_ENDPOINT
+    assertEquals("https://josh-executor-prod-1007495489273.us-west1.run.app",
+        getJoshCloudEndpointConstant());
+  }
+
+  /**
+   * Helper method to access the JOSH_CLOUD_ENDPOINT constant via reflection.
+   */
+  private String getJoshCloudEndpointConstant() {
+    try {
+      java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField(
+          "JOSH_CLOUD_ENDPOINT");
+      field.setAccessible(true);
+      return (String) field.get(null);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to access JOSH_CLOUD_ENDPOINT constant", e);
+    }
+  }
 }
