@@ -104,13 +104,9 @@ public class ProgressCalculator {
     double currentPercentage = (double) totalCompletedSteps / totalStepsAcrossReplicates * 100.0;
 
     // Generate completion message
-    String message;
-    if (totalReplicates == 1) {
-      message = String.format("Progress: %.1f%% - Simulation completed", currentPercentage);
-    } else {
-      message = String.format("Progress: %.1f%% - Replicate %d/%d completed", 
-          currentPercentage, completedReplicateNumber, totalReplicates);
-    }
+    String message = String.format("Replicate %d/%d completed", 
+        completedReplicateNumber,
+        totalReplicates);
 
     // Reset progress tracking for next replicate
     lastReportedStep = -1;
@@ -132,18 +128,23 @@ public class ProgressCalculator {
    */
   private boolean shouldReportProgress(double currentPercentage, long currentStep) {
     // Always report the first progress update
-    if (lastReportedPercentage < 0) {
+    boolean isFirstUpdate = lastReportedPercentage < 0;
+    if (isFirstUpdate) {
       return true;
     }
 
     // Report on significant percentage milestones (every 5%)
-    if (currentPercentage - lastReportedPercentage >= PROGRESS_REPORT_THRESHOLD) {
+    double deltaPercentFromLastReport = currentPercentage - lastReportedPercentage;
+    boolean hasMilestone = deltaPercentFromLastReport >= PROGRESS_REPORT_THRESHOLD;
+    if (hasMilestone) {
       return true;
     }
 
     // For long-running simulations, report on step intervals with minimum percentage change
-    if (currentStep - lastReportedStep >= MIN_STEP_INTERVAL 
-        && currentPercentage - lastReportedPercentage >= MIN_PERCENTAGE_INTERVAL) {
+    long deltaStepFromLastReport = currentStep - lastReportedStep;
+    boolean aboveMinStepReport = deltaStepFromLastReport >= MIN_STEP_INTERVAL;
+    boolean aboveMinPercentReport = deltaPercentFromLastReport >= MIN_PERCENTAGE_INTERVAL;
+    if (aboveMinStepReport && aboveMinPercentReport) {
       return true;
     }
 
@@ -167,12 +168,17 @@ public class ProgressCalculator {
     if (totalReplicates == 1) {
       // Single replicate: "Progress: 45.2% (step 123/500)"
       return String.format("Progress: %.1f%% (step %d/%d)", 
-          percentage, currentStepInReplicate, totalStepsPerReplicate);
+          percentage,
+          currentStepInReplicate,
+          totalStepsPerReplicate);
     } else {
       // Multiple replicates: "Progress: 45.2% (step 123/500, replicate 2/10)"
       String base = String.format("Progress: %.1f%% (step %d/%d, replicate %d/%d)",
-          percentage, currentStepInReplicate, totalStepsPerReplicate, 
-          currentReplicate, totalReplicates);
+          percentage,
+          currentStepInReplicate,
+          totalStepsPerReplicate,
+          currentReplicate,
+          totalReplicates);
       
       if (isReplicateComplete) {
         base += " - Replicate " + currentReplicate + " completed";
@@ -182,61 +188,4 @@ public class ProgressCalculator {
     }
   }
 
-  /**
-   * Container class for progress update information.
-   *
-   * <p>This class encapsulates the result of a progress calculation, including
-   * whether the update should be reported and the formatted message to display.</p>
-   */
-  public static class ProgressUpdate {
-    private final boolean shouldReport;
-    private final double percentage;
-    private final String message;
-
-    /**
-     * Creates a new ProgressUpdate.
-     *
-     * @param shouldReport Whether this progress update should be reported to the user
-     * @param percentage The current progress percentage (0-100)
-     * @param message The formatted progress message, or null if not reporting
-     */
-    public ProgressUpdate(boolean shouldReport, double percentage, String message) {
-      this.shouldReport = shouldReport;
-      this.percentage = percentage;
-      this.message = message;
-    }
-
-    /**
-     * Returns whether this progress update should be reported.
-     *
-     * @return true if the update should be displayed to the user
-     */
-    public boolean shouldReport() {
-      return shouldReport;
-    }
-
-    /**
-     * Returns the current progress percentage.
-     *
-     * @return Progress percentage (0-100)
-     */
-    public double getPercentage() {
-      return percentage;
-    }
-
-    /**
-     * Returns the formatted progress message.
-     *
-     * @return Formatted message string, or null if not reporting
-     */
-    public String getMessage() {
-      return message;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("ProgressUpdate{shouldReport=%s, percentage=%.1f, message='%s'}",
-          shouldReport, percentage, message);
-    }
-  }
 }

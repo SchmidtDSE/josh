@@ -39,6 +39,7 @@ import org.joshsim.lang.io.WireConverter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SimulationMetadataExtractor;
 import org.joshsim.util.WireResponseParser;
 import picocli.CommandLine.Command;
@@ -446,7 +447,7 @@ public class RunRemoteCommand implements Callable<Integer> {
               
             case PROGRESS:
               currentStep.set(parsed.getStepCount());
-              ProgressCalculator.ProgressUpdate progressUpdate = 
+              ProgressUpdate progressUpdate = 
                   progressCalculator.updateStep(currentStep.get());
               if (progressUpdate.shouldReport()) {
                 output.printInfo(progressUpdate.getMessage());
@@ -455,7 +456,7 @@ public class RunRemoteCommand implements Callable<Integer> {
               
             case END:
               int replicateNum = completedReplicates.incrementAndGet();
-              ProgressCalculator.ProgressUpdate endUpdate = 
+              ProgressUpdate endUpdate = 
                   progressCalculator.updateReplicateCompleted(replicateNum);
               output.printInfo(endUpdate.getMessage());
               break;
