@@ -25,6 +25,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Test cases for RunRemoteCommand functionality.
+ * 
+ * <p>These tests verify the logic and data processing methods of RunRemoteCommand
+ * without generating any actual network traffic. All URL-related tests only perform
+ * URL parsing and validation without making HTTP requests.</p>
  */
 public class RunRemoteCommandTest {
 

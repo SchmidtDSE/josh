@@ -61,9 +61,8 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
   /**
    * Extracts a readable string representation from a default value expression.
    *
-   * <p>This method handles different types of parse tree contexts and builds
-   * a human-readable string representation of the default value, handling common
-   * cases like numbers with units, strings, and simple expressions.</p>
+   * <p>This method uses the visitor pattern to handle different types of parse tree contexts
+   * and builds a human-readable string representation of the default value.</p>
    *
    * @param defaultValueContext The parse tree context for the default value expression
    * @return A string representation of the default value
@@ -73,69 +72,77 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
       return "";
     }
 
-    // Handle specific expression types
-    if (defaultValueContext instanceof JoshLangParser.SimpleExpressionContext) {
-      JoshLangParser.SimpleExpressionContext simpleExpr =
-          (JoshLangParser.SimpleExpressionContext) defaultValueContext;
-      return extractSimpleExpressionString(simpleExpr);
-    } else if (defaultValueContext instanceof JoshLangParser.SimpleNumberContext) {
-      JoshLangParser.SimpleNumberContext simpleNumber =
-          (JoshLangParser.SimpleNumberContext) defaultValueContext;
-      return extractSimpleNumberString(simpleNumber);
-    } else if (defaultValueContext instanceof JoshLangParser.SimpleStringContext) {
-      JoshLangParser.SimpleStringContext simpleString =
-          (JoshLangParser.SimpleStringContext) defaultValueContext;
-      return extractSimpleStringString(simpleString);
-    } else {
-      // For complex expressions not handled by specific methods,
-      // fall back to getting the full text
-      return defaultValueContext.getText();
+    // Use visitor pattern to extract the default value string
+    DefaultValueStringVisitor visitor = new DefaultValueStringVisitor();
+    return defaultValueContext.accept(visitor);
+  }
+
+  /**
+   * Inner visitor class for extracting string representations from parse tree contexts.
+   * 
+   * <p>This visitor uses the proper visitor pattern to avoid instanceof checks
+   * and casting when extracting default value strings from expressions.</p>
+   */
+  private static class DefaultValueStringVisitor extends JoshLangBaseVisitor<String> {
+
+    @Override
+    public String visitSimpleExpression(JoshLangParser.SimpleExpressionContext ctx) {
+      return extractUnitsValueString(ctx.unitsValue());
     }
-  }
 
-  /**
-   * Extracts string representation from a simple expression context.
-   */
-  private String extractSimpleExpressionString(JoshLangParser.SimpleExpressionContext ctx) {
-    return extractUnitsValueString(ctx.unitsValue());
-  }
+    @Override
+    public String visitSimpleNumber(JoshLangParser.SimpleNumberContext ctx) {
+      return ctx.number().getText();
+    }
 
-  /**
-   * Extracts string representation from a simple number context.
-   */
-  private String extractSimpleNumberString(JoshLangParser.SimpleNumberContext ctx) {
-    return ctx.number().getText();
-  }
+    @Override
+    public String visitSimpleString(JoshLangParser.SimpleStringContext ctx) {
+      return ctx.string().STR_().getText();
+    }
 
-  /**
-   * Extracts string representation from a simple string context.
-   */
-  private String extractSimpleStringString(JoshLangParser.SimpleStringContext ctx) {
-    return ctx.string().STR_().getText();
-  }
-
-  /**
-   * Extracts a string representation from a units value (number + optional units).
-   *
-   * @param unitsValueContext The parse tree context for the units value
-   * @return A string representation like "5 m" or "10"
-   */
-  private String extractUnitsValueString(JoshLangParser.UnitsValueContext unitsValueContext) {
-    if (unitsValueContext == null) {
+    @Override
+    protected String defaultResult() {
       return "";
     }
 
-    StringBuilder result = new StringBuilder();
-    result.append(unitsValueContext.number().getText());
-
-    // Check for units - could be identifier or PERCENT_
-    if (unitsValueContext.identifier() != null) {
-      result.append(" ").append(unitsValueContext.identifier().getText());
-    } else if (unitsValueContext.PERCENT_() != null) {
-      result.append(unitsValueContext.PERCENT_().getText());
+    @Override
+    protected String aggregateResult(String aggregate, String nextResult) {
+      // For default value extraction, we typically want the first non-empty result
+      return aggregate != null && !aggregate.isEmpty() 
+          ? aggregate : (nextResult != null ? nextResult : "");
     }
 
-    return result.toString();
+    /**
+     * Extracts a string representation from a units value (number + optional units).
+     *
+     * @param unitsValueContext The parse tree context for the units value
+     * @return A string representation like "5 m" or "10"
+     */
+    private String extractUnitsValueString(JoshLangParser.UnitsValueContext unitsValueContext) {
+      if (unitsValueContext == null) {
+        return "";
+      }
+
+      StringBuilder result = new StringBuilder();
+      result.append(unitsValueContext.number().getText());
+
+      // Check for units - could be identifier or PERCENT_
+      if (unitsValueContext.identifier() != null) {
+        result.append(" ").append(unitsValueContext.identifier().getText());
+      } else if (unitsValueContext.PERCENT_() != null) {
+        result.append(unitsValueContext.PERCENT_().getText());
+      }
+
+      return result.toString();
+    }
+
+    @Override
+    public String visitChildren(org.antlr.v4.runtime.tree.RuleNode node) {
+      // For complex expressions not handled by specific visit methods,
+      // fall back to getting the full text
+      String result = super.visitChildren(node);
+      return result != null && !result.isEmpty() ? result : node.getText();
+    }
   }
 
 

@@ -56,6 +56,8 @@ class JvmInputGetterTest {
   @Test
   void testUriHandling() {
     // Act & Assert - URIs should be assumed to exist (they're handled by loadFromUri)
+    // NOTE: This test does NOT generate network traffic. The exists() method for URIs
+    // simply returns true without making any HTTP requests for performance reasons.
     assertTrue(inputGetter.exists("http://example.com/test.txt"));
   }
 }

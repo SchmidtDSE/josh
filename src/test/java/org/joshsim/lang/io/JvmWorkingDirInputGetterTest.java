@@ -70,6 +70,8 @@ class JvmWorkingDirInputGetterTest {
   @Test
   void testUriExists() {
     // URIs should always return true for exists check
+    // NOTE: This test does NOT generate network traffic. The exists() method for URIs
+    // simply returns true without making any HTTP requests for performance reasons.
     assertTrue(inputGetter.exists("http://example.com/test.txt"));
     assertTrue(inputGetter.exists("file:///tmp/test.txt"));
   }
