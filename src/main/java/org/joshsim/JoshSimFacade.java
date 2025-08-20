@@ -21,6 +21,7 @@ import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseResult;
 
 
@@ -111,13 +112,14 @@ public class JoshSimFacade {
       ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
       ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
       BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-      inputOutputLayer = new JvmInputOutputLayer(
-          replicateNumber,
-          extentsBuilder.build(),
-          sizeValuePrimitive
-      );
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(replicateNumber)
+          .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
+          .build();
     } else {
-      inputOutputLayer = new JvmInputOutputLayer(replicateNumber);
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(replicateNumber)
+          .build();
     }
 
     JoshSimFacadeUtil.runSimulation(

@@ -19,57 +19,20 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   private final InputGetterStrategy inputStrategy;
 
   /**
-   * Create a new input / output layer with grid-space only asusming zero-th replicate.
-   */
-  public JvmInputOutputLayer() {
-    exportFactory = new JvmExportFacadeFactory(0);
-    inputStrategy = new JvmWorkingDirInputGetter();
-  }
-
-  /**
-   * Create a new input / output layer with grid-space only.
+   * Create a new input / output layer with all parameters explicitly specified.
    *
    * @param replicate The replicate number to use in filenames.
-   */
-  public JvmInputOutputLayer(int replicate) {
-    exportFactory = new JvmExportFacadeFactory(replicate);
-    inputStrategy = new JvmWorkingDirInputGetter();
-  }
-
-  /**
-   * Create a new input / output layer with access to Earth-space.
-   *
-   * @param replicate The replicate number to use in filenames.
-   * @param extents The extents of the grid in the simulation in Earth-space.
-   * @param width The width and height of each patch in meters.
-   */
-  public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width) {
-    exportFactory = new JvmExportFacadeFactory(replicate, extents, width);
-    inputStrategy = new JvmWorkingDirInputGetter();
-  }
-
-  /**
-   * Create a new input / output layer with grid-space only and custom input strategy.
-   *
-   * @param replicate The replicate number to use in filenames.
-   * @param inputStrategy The strategy for input file access.
-   */
-  public JvmInputOutputLayer(int replicate, InputGetterStrategy inputStrategy) {
-    exportFactory = new JvmExportFacadeFactory(replicate);
-    this.inputStrategy = inputStrategy;
-  }
-
-  /**
-   * Create a new input / output layer with access to Earth-space and custom input strategy.
-   *
-   * @param replicate The replicate number to use in filenames.
-   * @param extents The extents of the grid in the simulation in Earth-space.
-   * @param width The width and height of each patch in meters.
+   * @param extents The extents of the grid in the simulation in Earth-space (null for grid-only).
+   * @param width The width and height of each patch in meters (null for grid-only).
    * @param inputStrategy The strategy for input file access.
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy) {
-    exportFactory = new JvmExportFacadeFactory(replicate, extents, width);
+    if (extents != null && width != null) {
+      this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width);
+    } else {
+      this.exportFactory = new JvmExportFacadeFactory(replicate);
+    }
     this.inputStrategy = inputStrategy;
   }
 

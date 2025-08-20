@@ -25,6 +25,7 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.util.MinioOptions;
@@ -116,7 +117,10 @@ public class RunCommand implements Callable<Integer> {
     }
 
     // Create InputOutputLayer with the chosen strategy
-    InputOutputLayer inputOutputLayer = new JvmInputOutputLayer(replicateNumber, inputStrategy);
+    InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(replicateNumber)
+        .withInputStrategy(inputStrategy)
+        .build();
 
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
         geometryFactory,

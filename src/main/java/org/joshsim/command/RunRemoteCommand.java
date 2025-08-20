@@ -33,6 +33,7 @@ import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.ExportTarget;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.WireConverter;
 import org.joshsim.util.MinioOptions;
@@ -404,7 +405,9 @@ public class RunRemoteCommand implements Callable<Integer> {
   private void processStreamingResponseWithProgress(Stream<String> responseStream, 
                                                    ProgressCalculator progressCalculator) {
     // Initialize export system using Component 2 infrastructure
-    InputOutputLayer ioLayer = new JvmInputOutputLayer(replicateNumber);
+    InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(replicateNumber)
+        .build();
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
     
     // Map to track export facades per entity name to support multiple data types

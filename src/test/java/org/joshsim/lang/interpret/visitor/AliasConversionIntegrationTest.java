@@ -11,6 +11,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseResult;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +62,9 @@ public class AliasConversionIntegrationTest {
 
     // Create geometry factory and input/output layer
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayer(1);
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
 
     // Interpret the code
     JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
@@ -135,7 +138,9 @@ public class AliasConversionIntegrationTest {
         "Josh code should parse without errors. Errors: " + parsed.getErrors());
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayer(1);
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
     JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
 
     // Capture step results

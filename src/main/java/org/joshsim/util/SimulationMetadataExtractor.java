@@ -24,6 +24,7 @@ import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.util.OutputOptions;
 
 
@@ -142,7 +143,7 @@ public class SimulationMetadataExtractor {
       OutputOptions outputOptions = new OutputOptions();
       // OutputOptions doesn't have setQuiet method, but it has suppressInfo field
       outputOptions.suppressInfo = true; // Suppress output during metadata extraction
-      InputOutputLayer ioLayer = new JvmInputOutputLayer();
+      InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder().build();
 
       JoshSimCommander.ProgramInitResult result = JoshSimCommander.getJoshProgram(
           geometryFactory, tempFile, outputOptions, ioLayer);

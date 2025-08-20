@@ -28,6 +28,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
@@ -141,7 +142,7 @@ public class JoshSimCommander {
       File file,
       OutputOptions output
   ) {
-    InputOutputLayer inputOutputLayer = new JvmInputOutputLayer();
+    InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder().build();
     return getJoshProgram(geometryFactory, file, output, inputOutputLayer);
   }
 
