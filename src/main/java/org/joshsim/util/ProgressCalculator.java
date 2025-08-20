@@ -74,15 +74,15 @@ public class ProgressCalculator {
     // Determine if we should report this progress update
     boolean shouldReport = shouldReportProgress(currentPercentage, currentStepInReplicate);
 
-    String message = null;
     if (shouldReport) {
-      message = formatProgressMessage(currentPercentage, currentStepInReplicate, 
+      String message = formatProgressMessage(currentPercentage, currentStepInReplicate, 
           currentReplicate, false);
       lastReportedStep = currentStepInReplicate;
       lastReportedPercentage = currentPercentage;
+      return new ProgressUpdate(shouldReport, currentPercentage, message);
+    } else {
+      return new ProgressUpdate(shouldReport, currentPercentage, null);
     }
-
-    return new ProgressUpdate(shouldReport, currentPercentage, message);
   }
 
   /**
