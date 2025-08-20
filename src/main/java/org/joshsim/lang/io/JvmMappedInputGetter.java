@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,8 +71,10 @@ public class JvmMappedInputGetter extends JvmInputGetter {
   private InputStream loadFromWorkingDir(String name) {
     try {
       return new FileInputStream(name);
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new RuntimeException("Failed to open stream from working directory: " + name, e);
+    } catch (SecurityException e) {
+      throw new RuntimeException("Access denied to file: " + name, e);
     }
   }
 
