@@ -37,6 +37,8 @@ import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.WireConverter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.SimulationMetadataExtractor;
 import org.joshsim.util.WireResponseParser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -204,6 +206,18 @@ public class RunRemoteCommand implements Callable<Integer> {
    * @throws InterruptedException if the operation is interrupted
    */
   private void executeRemoteSimulation(URI endpointUri) throws IOException, InterruptedException {
+    // Extract simulation metadata for progress tracking
+    SimulationMetadataExtractor.SimulationMetadata metadata = 
+        extractSimulationMetadata();
+    
+    // Initialize progress calculator
+    ProgressCalculator progressCalculator = new ProgressCalculator(
+        metadata.getTotalSteps(), 1 // Currently supporting single replicate
+    );
+    
+    output.printInfo("Simulation has " + metadata.getTotalSteps() + " steps " 
+        + "(from step " + metadata.getStepsLow() + " to " + metadata.getStepsHigh() + ")");
+    
     // Create HTTP client with HTTP/2 support
     HttpClient client = HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_2)
@@ -226,7 +240,7 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
     
     output.printInfo("Connected to remote server, processing streaming response...");
-    processStreamingResponse(response.body());
+    processStreamingResponseWithProgress(response.body(), progressCalculator);
   }
 
   /**
@@ -361,16 +375,34 @@ public class RunRemoteCommand implements Callable<Integer> {
   }
 
   /**
-   * Processes streaming HTTP response from remote server.
+   * Extracts simulation metadata from the input Josh script file.
+   *
+   * @return SimulationMetadata containing step information
+   * @throws RuntimeException if metadata extraction fails
+   */
+  private SimulationMetadataExtractor.SimulationMetadata extractSimulationMetadata() {
+    try {
+      return SimulationMetadataExtractor.extractMetadata(file, simulation);
+    } catch (Exception e) {
+      output.printError("Failed to extract simulation metadata, using defaults: " + e.getMessage());
+      // Return default metadata if extraction fails
+      return new SimulationMetadataExtractor.SimulationMetadata(0, 10, 11);
+    }
+  }
+
+  /**
+   * Processes streaming HTTP response from remote server with enhanced progress display.
    * 
    * <p>Parses each response line using WireResponseParser and persists simulation
-   * data using the configured ExportFacade. Supports real-time progress feedback
-   * and error handling for remote execution failures.</p>
+   * data using the configured ExportFacade. Uses ProgressCalculator for percentage-based
+   * progress feedback with intelligent filtering to reduce verbose output.</p>
    *
    * @param responseStream Stream of response lines from remote server
+   * @param progressCalculator Calculator for enhanced progress display
    * @throws RuntimeException if response parsing or data persistence fails
    */
-  private void processStreamingResponse(Stream<String> responseStream) {
+  private void processStreamingResponseWithProgress(Stream<String> responseStream, 
+                                                   ProgressCalculator progressCalculator) {
     // Initialize export system using Component 2 infrastructure
     InputOutputLayer ioLayer = new JvmInputOutputLayer(replicateNumber);
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
@@ -411,13 +443,18 @@ public class RunRemoteCommand implements Callable<Integer> {
               
             case PROGRESS:
               currentStep.set(parsed.getStepCount());
-              output.printInfo(String.format("Progress: step %d", 
-                  currentStep.get()));
+              ProgressCalculator.ProgressUpdate progressUpdate = 
+                  progressCalculator.updateStep(currentStep.get());
+              if (progressUpdate.shouldReport()) {
+                output.printInfo(progressUpdate.getMessage());
+              }
               break;
               
             case END:
-              completedReplicates.incrementAndGet();
-              output.printInfo("Replicate completed");
+              int replicateNum = completedReplicates.incrementAndGet();
+              ProgressCalculator.ProgressUpdate endUpdate = 
+                  progressCalculator.updateReplicateCompleted(replicateNum);
+              output.printInfo(endUpdate.getMessage());
               break;
               
             case ERROR:
@@ -446,6 +483,23 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
     
     output.printInfo("Results saved locally via export facade");
+  }
+
+  /**
+   * Legacy method for processing streaming response without progress enhancement.
+   * 
+   * <p>This method provides backward compatibility by creating a default progress
+   * calculator and delegating to the enhanced progress method.</p>
+   *
+   * @param responseStream Stream of response lines from remote server
+   * @throws RuntimeException if response parsing or data persistence fails
+   * @deprecated Use processStreamingResponseWithProgress for enhanced progress display
+   */
+  @Deprecated
+  private void processStreamingResponse(Stream<String> responseStream) {
+    // Create default progress calculator for backward compatibility
+    ProgressCalculator defaultCalculator = new ProgressCalculator(11, 1); // Default 11 steps, 1 replicate
+    processStreamingResponseWithProgress(responseStream, defaultCalculator);
   }
 
   /**
