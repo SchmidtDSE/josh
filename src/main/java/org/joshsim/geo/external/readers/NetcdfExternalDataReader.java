@@ -54,7 +54,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   /**
    * Constructs a NetcdfExternalDataReader with the specified value factory.
    *
-   * @param valueFactory Factory for creating EngineValue objects
+   * @par am valueFactory Factory for creating EngineValue objects
    */
   public NetcdfExternalDataReader(EngineValueFactory valueFactory) {
     this.valueFactory = valueFactory;

@@ -21,6 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -437,5 +439,66 @@ public class NetcdfExternalDataReaderTest {
     assertTrue(value.isPresent(), "Value should be present at test coordinates");
     assertEquals(301.4525146, value.get().getAsDecimal().doubleValue(), 1e-5,
         "Value at test coordinates does not match expected value");
+  }
+
+  @ParameterizedTest
+  @CsvFileSource(resources = "/netcdf/maxtemp_tulare_annual_test_points.csv", numLinesToSkip = 1)
+  public void testMaxtempTulareFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, BigDecimal expectedValue) throws IOException {
+    testKnownPointsFromCsv("maxtemp_tulare_annual_test_points.csv", calendarYear, lat, lon, expectedValue);
+  }
+
+  @ParameterizedTest
+  @CsvFileSource(resources = "/netcdf/precip_riverside_annual_test_points.csv", numLinesToSkip = 1)
+  public void testPrecipRiversideFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, BigDecimal expectedValue) throws IOException {
+    testKnownPointsFromCsv("precip_riverside_annual_test_points.csv", calendarYear, lat, lon, expectedValue);
+  }
+
+  private void testKnownPointsFromCsv(String csvFileName, int calendarYear, BigDecimal lat, BigDecimal lon, BigDecimal expectedValue) throws IOException {
+    reader = new NetcdfExternalDataReader(valueFactory);
+    
+    String resourcePath = determineNetcdfResource(csvFileName);
+    
+    URL resourceUrl = getClass().getClassLoader().getResource(resourcePath);
+    assertNotNull(resourceUrl, "Test resource not found: " + resourcePath);
+    String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
+    
+    reader.open(filePath);
+    reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
+    reader.setCrsCode("EPSG:4326");
+    
+    String variableName = determineVariableName(csvFileName);
+    
+    // Calculate time step from calendar year (assuming 2025 = timestep 0)
+    int timeStep = calendarYear - 2025;
+    
+    Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, timeStep);
+    
+    if (expectedValue != null) {
+      assertTrue(value.isPresent(), 
+          String.format("Value should be present at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
+      assertEquals(expectedValue.doubleValue(), value.get().getAsDecimal().doubleValue(), 1e-5,
+          String.format("Value mismatch at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
+    } else {
+      assertFalse(value.isPresent(), 
+          String.format("Value should be null at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
+    }
+  }
+
+  private String determineNetcdfResource(String csvFileName) {
+    if (csvFileName.contains("tulare")) {
+      return "netcdf/maxtemp_tulare_annual.nc";
+    } else if (csvFileName.contains("riverside")) {
+      return "netcdf/precip_riverside_annual_agg.nc";
+    }
+    throw new IllegalArgumentException("Unknown CSV file: " + csvFileName);
+  }
+
+  private String determineVariableName(String csvFileName) {
+    if (csvFileName.contains("maxtemp")) {
+      return "Maximum_air_temperature_at_2m";
+    } else if (csvFileName.contains("precip")) {
+      return "Precipitation_(total)";
+    }
+    throw new IllegalArgumentException("Unknown variable for CSV: " + csvFileName);
   }
 }
