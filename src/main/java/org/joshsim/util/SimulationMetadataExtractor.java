@@ -24,6 +24,7 @@ import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.util.OutputOptions;
 
 
 /**

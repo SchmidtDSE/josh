@@ -210,13 +210,13 @@ public class RunRemoteCommand implements Callable<Integer> {
     SimulationMetadataExtractor.SimulationMetadata metadata = 
         extractSimulationMetadata();
     
-    // Initialize progress calculator
-    ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(), 1 // Currently supporting single replicate
-    );
-    
     output.printInfo("Simulation has " + metadata.getTotalSteps() + " steps " 
         + "(from step " + metadata.getStepsLow() + " to " + metadata.getStepsHigh() + ")");
+    
+    // Initialize progress calculator
+    final ProgressCalculator progressCalculator = new ProgressCalculator(
+        metadata.getTotalSteps(), 1 // Currently supporting single replicate
+    );
     
     // Create HTTP client with HTTP/2 support
     HttpClient client = HttpClient.newBuilder()
@@ -498,7 +498,7 @@ public class RunRemoteCommand implements Callable<Integer> {
   @Deprecated
   private void processStreamingResponse(Stream<String> responseStream) {
     // Create default progress calculator for backward compatibility
-    ProgressCalculator defaultCalculator = new ProgressCalculator(11, 1); // Default 11 steps, 1 replicate
+    ProgressCalculator defaultCalculator = new ProgressCalculator(11, 1); // Default: 11 steps
     processStreamingResponseWithProgress(responseStream, defaultCalculator);
   }
 
