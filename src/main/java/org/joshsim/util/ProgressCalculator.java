@@ -67,7 +67,7 @@ public class ProgressCalculator {
     // Calculate cumulative progress across all replicates
     long stepsFromCompletedReplicates = (currentReplicate - 1) * totalStepsPerReplicate;
     long totalCurrentSteps = stepsFromCompletedReplicates + currentStepInReplicate;
-    
+
     // Calculate percentage (0-100%)
     double currentPercentage = (double) totalCurrentSteps / totalStepsAcrossReplicates * 100.0;
 
@@ -75,7 +75,7 @@ public class ProgressCalculator {
     boolean shouldReport = shouldReportProgress(currentPercentage, currentStepInReplicate);
 
     if (shouldReport) {
-      String message = formatProgressMessage(currentPercentage, currentStepInReplicate, 
+      String message = formatProgressMessage(currentPercentage, currentStepInReplicate,
           currentReplicate, false);
       lastReportedStep = currentStepInReplicate;
       lastReportedPercentage = currentPercentage;
@@ -104,7 +104,8 @@ public class ProgressCalculator {
     double currentPercentage = (double) totalCompletedSteps / totalStepsAcrossReplicates * 100.0;
 
     // Generate completion message
-    String message = String.format("Replicate %d/%d completed", 
+    String message = String.format(
+        "Replicate %d/%d completed",
         completedReplicateNumber,
         totalReplicates);
 
@@ -163,27 +164,29 @@ public class ProgressCalculator {
    * @param isReplicateComplete Whether this is a replicate completion message
    * @return Formatted progress message string
    */
-  private String formatProgressMessage(double percentage, long currentStepInReplicate, 
+  private String formatProgressMessage(double percentage, long currentStepInReplicate,
                                       int currentReplicate, boolean isReplicateComplete) {
     if (totalReplicates == 1) {
       // Single replicate: "Progress: 45.2% (step 123/500)"
-      return String.format("Progress: %.1f%% (step %d/%d)", 
+      return String.format(
+          "Progress: %.1f%% (step %d/%d)",
           percentage,
           currentStepInReplicate,
           totalStepsPerReplicate);
     } else {
       // Multiple replicates: "Progress: 45.2% (step 123/500, replicate 2/10)"
-      String base = String.format("Progress: %.1f%% (step %d/%d, replicate %d/%d)",
+      String base = String.format(
+          "Progress: %.1f%% (step %d/%d, replicate %d/%d)",
           percentage,
           currentStepInReplicate,
           totalStepsPerReplicate,
           currentReplicate,
           totalReplicates);
-      
+
       if (isReplicateComplete) {
         base += " - Replicate " + currentReplicate + " completed";
       }
-      
+
       return base;
     }
   }

@@ -42,13 +42,13 @@ public class SimulationMetadataExtractorTest {
         + "end simulation\n"
         + "start patch Default\n"
         + "end patch";
-    
+
     File tempFile = new File(tempDir, "test.josh");
     Files.writeString(tempFile.toPath(), joshCode);
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadata(tempFile, "Test");
-    
+
     assertNotNull(metadata);
     assertEquals(5, metadata.getStepsLow());
     assertEquals(15, metadata.getStepsHigh());
@@ -64,13 +64,13 @@ public class SimulationMetadataExtractorTest {
         + "end simulation\n"
         + "start patch Default\n"
         + "end patch";
-    
+
     File tempFile = new File(tempDir, "test.josh");
     Files.writeString(tempFile.toPath(), joshCode);
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadata(tempFile, "Test");
-    
+
     assertNotNull(metadata);
     assertEquals(0, metadata.getStepsLow());
     assertEquals(10, metadata.getStepsHigh());
@@ -92,13 +92,13 @@ public class SimulationMetadataExtractorTest {
         + "end simulation\n"
         + "start patch Default\n"
         + "end patch";
-    
+
     File tempFile = new File(tempDir, "custom.josh");
     Files.writeString(tempFile.toPath(), joshCode);
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadata(tempFile, "CustomSim");
-    
+
     assertNotNull(metadata);
     assertEquals(100, metadata.getStepsLow());
     assertEquals(199, metadata.getStepsHigh());
@@ -116,10 +116,10 @@ public class SimulationMetadataExtractorTest {
         + "end simulation\n"
         + "start patch Default\n"
         + "end patch";
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadataFromCode(joshCode, "StringTest");
-    
+
     assertNotNull(metadata);
     assertEquals(20, metadata.getStepsLow());
     assertEquals(29, metadata.getStepsHigh());
@@ -132,11 +132,11 @@ public class SimulationMetadataExtractorTest {
   @Test
   public void testExtractMetadataFromInvalidCode() {
     String invalidJoshCode = "this is not valid josh code at all";
-    
+
     // Should return defaults rather than throwing exception
-    SimulationMetadata metadata = 
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadataFromCode(invalidJoshCode, "Invalid");
-    
+
     assertNotNull(metadata);
     assertEquals(0, metadata.getStepsLow());
     assertEquals(10, metadata.getStepsHigh());
@@ -149,7 +149,7 @@ public class SimulationMetadataExtractorTest {
   @Test
   public void testExtractMetadataFromNonexistentFile() {
     File nonexistentFile = new File(tempDir, "nonexistent.josh");
-    
+
     assertThrows(IllegalArgumentException.class, () -> {
       SimulationMetadataExtractor.extractMetadata(nonexistentFile, "Test");
     });
@@ -160,9 +160,9 @@ public class SimulationMetadataExtractorTest {
    */
   @Test
   public void testSimulationMetadataToString() {
-    SimulationMetadata metadata = 
+    SimulationMetadata metadata =
         new SimulationMetadata(5, 15, 11);
-    
+
     String result = metadata.toString();
     assertNotNull(result);
     assertEquals("SimulationMetadata{stepsLow=5, stepsHigh=15, totalSteps=11}", result);
@@ -205,13 +205,13 @@ public class SimulationMetadataExtractorTest {
         + "  height.init = 0 meters\n"
         + "  height.step = prior.height + sample uniform from 0 meters to 1 meters\n"
         + "end organism";
-    
+
     File tempFile = new File(tempDir, "complex.josh");
     Files.writeString(tempFile.toPath(), complexJoshCode);
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadata(tempFile, "ComplexSim");
-    
+
     assertNotNull(metadata);
     assertEquals(50, metadata.getStepsLow());
     assertEquals(149, metadata.getStepsHigh());
@@ -229,13 +229,13 @@ public class SimulationMetadataExtractorTest {
         + "end simulation\n"
         + "start patch Default\n"
         + "end patch";
-    
+
     File tempFile = new File(tempDir, "fractional.josh");
     Files.writeString(tempFile.toPath(), joshCode);
-    
-    SimulationMetadata metadata = 
+
+    SimulationMetadata metadata =
         SimulationMetadataExtractor.extractMetadata(tempFile, "FractionalTest");
-    
+
     assertNotNull(metadata);
     assertEquals(2, metadata.getStepsLow()); // 2.3 rounded to 2
     assertEquals(8, metadata.getStepsHigh()); // 7.8 rounded to 8

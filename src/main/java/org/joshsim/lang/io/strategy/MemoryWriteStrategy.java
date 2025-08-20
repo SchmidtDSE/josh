@@ -10,8 +10,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import org.joshsim.lang.io.NamedMap;
-import org.joshsim.lang.io.WireConverter;
+import org.joshsim.wire.NamedMap;
+import org.joshsim.wire.WireConverter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing writing to a callback.

@@ -17,8 +17,8 @@ import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.ExportTask;
-import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.wire.NamedMap;
 
 
 /**

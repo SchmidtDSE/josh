@@ -24,7 +24,6 @@ import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;

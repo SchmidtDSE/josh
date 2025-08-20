@@ -62,9 +62,8 @@ public class SimulationMetadata {
 
   @Override
   public String toString() {
-    return String.format("SimulationMetadata{stepsLow=%d, "
-        + "stepsHigh=%d, "
-        + "totalSteps=%d}",
+    return String.format(
+        "SimulationMetadata{stepsLow=%d, stepsHigh=%d, totalSteps=%d}",
         stepsLow,
         stepsHigh,
         totalSteps);

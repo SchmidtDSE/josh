@@ -15,6 +15,7 @@ import static org.mockito.Mockito.mock;
 import java.util.HashMap;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.wire.NamedMap;
 import org.junit.jupiter.api.Test;
 
 /**

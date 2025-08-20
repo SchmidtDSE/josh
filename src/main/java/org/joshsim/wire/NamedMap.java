@@ -8,7 +8,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.wire;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ public class NamedMap {
     if (target == null) {
       throw new IllegalArgumentException("Target map cannot be null");
     }
-    
+
     this.name = name;
     this.target = Collections.unmodifiableMap(new HashMap<>(target));
   }

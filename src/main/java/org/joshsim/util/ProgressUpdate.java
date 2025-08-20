@@ -62,7 +62,8 @@ public class ProgressUpdate {
 
   @Override
   public String toString() {
-    return String.format("ProgressUpdate{shouldReport=%s, percentage=%.1f, message='%s'}",
+    return String.format(
+        "ProgressUpdate{shouldReport=%s, percentage=%.1f, message='%s'}",
         shouldReport,
         percentage,
         message);

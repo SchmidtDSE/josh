@@ -12,6 +12,7 @@ package org.joshsim.lang.io;
 
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.wire.NamedMap;
 
 /**
  * Base class for export tasks that can contain either Entity or NamedMap data.

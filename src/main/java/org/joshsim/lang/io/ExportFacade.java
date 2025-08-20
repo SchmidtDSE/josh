@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.wire.NamedMap;
 
 
 /**

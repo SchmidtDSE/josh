@@ -12,7 +12,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
-import org.joshsim.lang.io.NamedMap;
+import org.joshsim.wire.NamedMap;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -38,7 +37,7 @@ public class GeotiffExportFacadeNamedMapTest {
     entityData.put("elevation", "100.5");
     when(serializeStrategy.getRecord(any(Entity.class))).thenReturn(entityData);
 
-    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator = 
+    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator =
         mock(GeotiffExportFacade.ParameterizedOutputStreamGenerator.class);
     when(streamGenerator.getStream(any())).thenReturn(new ByteArrayOutputStream());
 
@@ -48,15 +47,15 @@ public class GeotiffExportFacadeNamedMapTest {
     BigDecimal topLeftY = new BigDecimal("37.73");
     BigDecimal bottomRightX = new BigDecimal("-118.24");
     BigDecimal bottomRightY = new BigDecimal("34.05");
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, 
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY,
         bottomRightX, bottomRightY);
     BigDecimal width = new BigDecimal("10000");
 
     final GeotiffExportFacade facade = new GeotiffExportFacade(
-        streamGenerator, 
-        serializeStrategy, 
-        variables, 
-        extents, 
+        streamGenerator,
+        serializeStrategy,
+        variables,
+        extents,
         width
     );
 
@@ -80,7 +79,7 @@ public class GeotiffExportFacadeNamedMapTest {
   public void testWriteNamedMapWithMultipleVariables() {
     // Arrange
     final MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator = 
+    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator =
         mock(GeotiffExportFacade.ParameterizedOutputStreamGenerator.class);
     when(streamGenerator.getStream(any())).thenReturn(new ByteArrayOutputStream());
 
@@ -90,15 +89,15 @@ public class GeotiffExportFacadeNamedMapTest {
     BigDecimal topLeftY = new BigDecimal("37.73");
     BigDecimal bottomRightX = new BigDecimal("-118.24");
     BigDecimal bottomRightY = new BigDecimal("34.05");
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, 
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY,
         bottomRightX, bottomRightY);
     BigDecimal width = new BigDecimal("10000");
 
     final GeotiffExportFacade facade = new GeotiffExportFacade(
-        streamGenerator, 
-        serializeStrategy, 
-        variables, 
-        extents, 
+        streamGenerator,
+        serializeStrategy,
+        variables,
+        extents,
         width
     );
 
@@ -124,7 +123,7 @@ public class GeotiffExportFacadeNamedMapTest {
   public void testWriteNamedMapWithMissingCoordinates() {
     // Arrange
     final MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator = 
+    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator =
         mock(GeotiffExportFacade.ParameterizedOutputStreamGenerator.class);
     when(streamGenerator.getStream(any())).thenReturn(new ByteArrayOutputStream());
 
@@ -134,15 +133,15 @@ public class GeotiffExportFacadeNamedMapTest {
     BigDecimal topLeftY = new BigDecimal("37.73");
     BigDecimal bottomRightX = new BigDecimal("-118.24");
     BigDecimal bottomRightY = new BigDecimal("34.05");
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, 
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY,
         bottomRightX, bottomRightY);
     BigDecimal width = new BigDecimal("10000");
 
     final GeotiffExportFacade facade = new GeotiffExportFacade(
-        streamGenerator, 
-        serializeStrategy, 
-        variables, 
-        extents, 
+        streamGenerator,
+        serializeStrategy,
+        variables,
+        extents,
         width
     );
 
@@ -165,7 +164,7 @@ public class GeotiffExportFacadeNamedMapTest {
   public void testWriteNamedMapWithMissingVariable() {
     // Arrange
     final MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator = 
+    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator =
         mock(GeotiffExportFacade.ParameterizedOutputStreamGenerator.class);
     when(streamGenerator.getStream(any())).thenReturn(new ByteArrayOutputStream());
 
@@ -175,15 +174,15 @@ public class GeotiffExportFacadeNamedMapTest {
     BigDecimal topLeftY = new BigDecimal("37.73");
     BigDecimal bottomRightX = new BigDecimal("-118.24");
     BigDecimal bottomRightY = new BigDecimal("34.05");
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, 
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY,
         bottomRightX, bottomRightY);
     BigDecimal width = new BigDecimal("10000");
 
     final GeotiffExportFacade facade = new GeotiffExportFacade(
-        streamGenerator, 
-        serializeStrategy, 
-        variables, 
-        extents, 
+        streamGenerator,
+        serializeStrategy,
+        variables,
+        extents,
         width
     );
 
@@ -208,7 +207,7 @@ public class GeotiffExportFacadeNamedMapTest {
   public void testWriteNamedMapMultipleSteps() {
     // Arrange
     final MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
-    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator = 
+    GeotiffExportFacade.ParameterizedOutputStreamGenerator streamGenerator =
         mock(GeotiffExportFacade.ParameterizedOutputStreamGenerator.class);
     when(streamGenerator.getStream(any())).thenReturn(new ByteArrayOutputStream());
 
@@ -218,15 +217,15 @@ public class GeotiffExportFacadeNamedMapTest {
     BigDecimal topLeftY = new BigDecimal("37.73");
     BigDecimal bottomRightX = new BigDecimal("-118.24");
     BigDecimal bottomRightY = new BigDecimal("34.05");
-    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY, 
+    PatchBuilderExtents extents = new PatchBuilderExtents(topLeftX, topLeftY,
         bottomRightX, bottomRightY);
     BigDecimal width = new BigDecimal("10000");
 
     final GeotiffExportFacade facade = new GeotiffExportFacade(
-        streamGenerator, 
-        serializeStrategy, 
-        variables, 
-        extents, 
+        streamGenerator,
+        serializeStrategy,
+        variables,
+        extents,
         width
     );
 

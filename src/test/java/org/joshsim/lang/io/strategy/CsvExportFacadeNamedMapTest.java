@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.wire.NamedMap;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -69,8 +69,8 @@ public class CsvExportFacadeNamedMapTest {
 
     String[] headers = {"attribute1", "attribute2", "step"};
     final CsvExportFacade facade = new CsvExportFacade(
-        outputStrategy, 
-        serializeStrategy, 
+        outputStrategy,
+        serializeStrategy,
         java.util.Arrays.asList(headers)
     );
 
@@ -88,7 +88,7 @@ public class CsvExportFacadeNamedMapTest {
     // Assert
     String output = outputStream.toString();
     assertTrue(output.length() > 0, "CSV output should not be empty");
-    assertTrue(output.contains("testValue1") || output.contains("10"), 
+    assertTrue(output.contains("testValue1") || output.contains("10"),
         "Output should contain our data");
   }
 
@@ -146,9 +146,9 @@ public class CsvExportFacadeNamedMapTest {
     // Assert
     String output = outputStream.toString();
     assertTrue(output.length() > 0, "CSV output should not be empty");
-    assertTrue(output.contains("entity1") || output.contains("100"), 
+    assertTrue(output.contains("entity1") || output.contains("100"),
         "Output should contain first entity data");
-    assertTrue(output.contains("entity2") || output.contains("200"), 
+    assertTrue(output.contains("entity2") || output.contains("200"),
         "Output should contain second entity data");
   }
 }

@@ -30,14 +30,14 @@ public class EndPatternStrategy implements WireResponseParserStrategy {
 
     String trimmed = line.trim();
     Matcher matcher = END_PATTERN.matcher(trimmed);
-    
+
     if (!matcher.matches()) {
       return WireParseResult.noMatch();
     }
 
     try {
       int replicateNumber = Integer.parseInt(matcher.group(1));
-      ParsedResponse response = 
+      ParsedResponse response =
           new ParsedResponse(ParsedResponse.ResponseType.END, replicateNumber);
       return new WireParseResult(response);
     } catch (NumberFormatException e) {

@@ -31,7 +31,7 @@ public class DatumPatternStrategy implements WireResponseParserStrategy {
 
     String trimmed = line.trim();
     Matcher matcher = DATUM_PATTERN.matcher(trimmed);
-    
+
     if (!matcher.matches()) {
       return WireParseResult.noMatch();
     }
@@ -39,12 +39,12 @@ public class DatumPatternStrategy implements WireResponseParserStrategy {
     try {
       int replicateNumber = Integer.parseInt(matcher.group(1));
       String dataLine = matcher.group(2);
-      
+
       if (dataLine == null || dataLine.trim().isEmpty()) {
         // Ignore empty data - return IGNORED result
         return new WireParseResult();
       }
-      
+
       ParsedResponse response = new ParsedResponse(replicateNumber, dataLine);
       return new WireParseResult(response);
     } catch (NumberFormatException e) {

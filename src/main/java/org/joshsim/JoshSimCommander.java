@@ -27,7 +27,6 @@ import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;

@@ -39,7 +39,6 @@ import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputGetterStrategy;
-import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;

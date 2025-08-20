@@ -1,4 +1,4 @@
-package org.joshsim.lang.io;
+package org.joshsim.wire;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -201,7 +201,7 @@ class WireConverterTest {
     originalTarget.put("key2", "value with spaces");
     originalTarget.put("key3", "");
     originalTarget.put("specialChars", "value\twith\ttabs\nand\nnewlines");
-    
+
     NamedMap originalNamedMap = new NamedMap("RoundTripTest", originalTarget);
 
     // Act
@@ -211,12 +211,12 @@ class WireConverterTest {
     // Assert
     assertEquals(originalNamedMap.getName(), deserialized.getName());
     assertEquals(originalTarget.size(), deserialized.getTarget().size());
-    
+
     // Special characters should be replaced in round trip
     assertEquals("value1", deserialized.getTarget().get("key1"));
     assertEquals("value with spaces", deserialized.getTarget().get("key2"));
     assertEquals("", deserialized.getTarget().get("key3"));
-    assertEquals("value    with    tabs    and    newlines", 
+    assertEquals("value    with    tabs    and    newlines",
                  deserialized.getTarget().get("specialChars"));
   }
 

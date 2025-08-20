@@ -30,7 +30,7 @@ public class ProgressPatternStrategy implements WireResponseParserStrategy {
 
     String trimmed = line.trim();
     Matcher matcher = PROGRESS_PATTERN.matcher(trimmed);
-    
+
     if (!matcher.matches()) {
       return WireParseResult.noMatch();
     }

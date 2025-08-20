@@ -13,8 +13,6 @@ package org.joshsim.util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Optional;
-import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -24,7 +22,6 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseResult;
 
@@ -53,7 +50,7 @@ public class SimulationMetadataExtractor {
    * @throws IOException if the file cannot be read
    * @throws IllegalArgumentException if the Josh script is invalid or cannot be parsed
    */
-  public static SimulationMetadata extractMetadata(File file, String simulationName) 
+  public static SimulationMetadata extractMetadata(File file, String simulationName)
       throws IOException {
     if (!file.exists()) {
       throw new IllegalArgumentException("Josh script file does not exist: " + file.getPath());
@@ -92,7 +89,7 @@ public class SimulationMetadataExtractor {
       // Interpret the parsed code to get JoshProgram
       JoshProgram program = JoshSimFacadeUtil.interpret(
           valueFactory,
-          geometryFactory, 
+          geometryFactory,
           result,
           ioLayer);
 

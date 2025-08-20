@@ -132,12 +132,12 @@ class JvmMappedInputGetterTest {
     // Arrange
     Map<String, String> originalMapping = new HashMap<>();
     originalMapping.put("test.txt", "/tmp/test.txt");
-    
+
     JvmMappedInputGetter getter = new JvmMappedInputGetter(originalMapping);
-    
+
     // Act - modify original mapping
     originalMapping.put("modified.txt", "/tmp/modified.txt");
-    
+
     // Assert - getter's mapping should not be affected
     assertFalse(getter.exists("modified.txt"));
     assertEquals(1, getter.getFileMapping().size());

@@ -31,12 +31,12 @@ import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.visitor.JoshConfigDiscoveryVisitor;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.NamedMap;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
-import org.joshsim.lang.io.WireConverter;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.wire.NamedMap;
+import org.joshsim.wire.WireConverter;
 import org.teavm.jso.JSBody;
 import org.teavm.jso.JSExport;
 

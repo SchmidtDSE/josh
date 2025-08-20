@@ -60,18 +60,20 @@ public class WireResponseParser {
 
     for (WireResponseParserStrategy strategy : STRATEGIES) {
       WireParseResult result = strategy.tryParse(line);
-      
+
       switch (result.getOutcome()) {
-        case PARSED:
+        case PARSED -> {
           return Optional.of(result.getParsedResponse());
-        case IGNORED:
+        }
+        case IGNORED -> {
           return Optional.empty();
-        case NO_MATCH:
+        }
+        case NO_MATCH -> {
           // Continue to next strategy
-          break;
-        default:
+        }
+        default -> {
           // Should never happen with current enum values
-          break;
+        }
       }
     }
 
@@ -79,21 +81,4 @@ public class WireResponseParser {
     throw new IllegalArgumentException("Invalid engine response format: " + line);
   }
 
-  /**
-   * Legacy method for parsing response lines (deprecated).
-   *
-   * <p>This method provides backward compatibility with existing code that expects
-   * null return values for ignored lines. New code should use the Optional-based
-   * parseEngineResponse method instead.</p>
-   *
-   * @param line The response line to parse
-   * @return ParsedResponse object, or null if the line should be ignored
-   * @throws IllegalArgumentException if the line format is invalid
-   * @deprecated Use {@link #parseEngineResponse(String)} instead
-   */
-  @Deprecated
-  public static ParsedResponse parseEngineResponseLegacy(String line) {
-    Optional<ParsedResponse> result = parseEngineResponse(line);
-    return result.orElse(null);
-  }
 }

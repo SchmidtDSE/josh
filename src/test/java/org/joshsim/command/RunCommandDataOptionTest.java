@@ -134,7 +134,7 @@ class RunCommandDataOptionTest {
     Method method = RunCommand.class.getDeclaredMethod("parseDataFiles", String[].class);
     method.setAccessible(true);
     @SuppressWarnings("unchecked")
-    Map<String, String> result = (Map<String, String>) method.invoke(runCommand, 
+    Map<String, String> result = (Map<String, String>) method.invoke(runCommand,
         (Object) dataFiles);
     return result;
   }

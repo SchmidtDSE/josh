@@ -31,7 +31,7 @@ public class ErrorPatternStrategy implements WireResponseParserStrategy {
 
     String trimmed = line.trim();
     Matcher matcher = ERROR_PATTERN.matcher(trimmed);
-    
+
     if (!matcher.matches()) {
       return WireParseResult.noMatch();
     }

@@ -149,6 +149,10 @@ public class ParsedResponse {
             + " data='%s',"
             + " error='%s'"
             + "}",
-        type, replicateNumber, stepCount, dataLine, errorMessage);
+        type,
+        replicateNumber,
+        stepCount,
+        dataLine,
+        errorMessage);
   }
 }

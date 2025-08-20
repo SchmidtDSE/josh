@@ -3,6 +3,7 @@ package org.joshsim.lang.interpret.visitor;
 import java.util.HashSet;
 import java.util.Set;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
 import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -79,7 +80,7 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
 
   /**
    * Inner visitor class for extracting string representations from parse tree contexts.
-   * 
+   *
    * <p>This visitor uses the proper visitor pattern to avoid instanceof checks
    * and casting when extracting default value strings from expressions.</p>
    */
@@ -108,7 +109,7 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
     @Override
     protected String aggregateResult(String aggregate, String nextResult) {
       // For default value extraction, we typically want the first non-empty result
-      return aggregate != null && !aggregate.isEmpty() 
+      return aggregate != null && !aggregate.isEmpty()
           ? aggregate : (nextResult != null ? nextResult : "");
     }
 
@@ -128,7 +129,7 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
 
       // Check for units - could be identifier or PERCENT_
       if (unitsValueContext.identifier() != null) {
-        result.append(" ").append(unitsValueContext.identifier().getText());
+        result.append(" ").append(unitsValueContext.identifier().accept(this));
       } else if (unitsValueContext.PERCENT_() != null) {
         result.append(unitsValueContext.PERCENT_().getText());
       }
@@ -137,7 +138,7 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
     }
 
     @Override
-    public String visitChildren(org.antlr.v4.runtime.tree.RuleNode node) {
+    public String visitChildren(RuleNode node) {
       // For complex expressions not handled by specific visit methods,
       // fall back to getting the full text
       String result = super.visitChildren(node);

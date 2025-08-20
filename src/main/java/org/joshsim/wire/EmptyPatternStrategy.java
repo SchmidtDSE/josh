@@ -32,7 +32,7 @@ public class EmptyPatternStrategy implements WireResponseParserStrategy {
 
     String trimmed = line.trim();
     Matcher matcher = EMPTY_PATTERN.matcher(trimmed);
-    
+
     if (matcher.matches()) {
       // Empty pattern should be ignored - return IGNORED result
       return new WireParseResult();

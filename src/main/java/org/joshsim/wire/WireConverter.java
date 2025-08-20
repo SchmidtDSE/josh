@@ -8,10 +8,12 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.io;
+package org.joshsim.wire;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.joshsim.compat.CompatibilityLayer;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
@@ -42,7 +44,7 @@ public class WireConverter {
     if (namedMap == null) {
       throw new IllegalArgumentException("NamedMap cannot be null");
     }
-    
+
     CompatibilityLayer compatibilityLayer = CompatibilityLayerKeeper.get();
     CompatibleStringJoiner joiner = compatibilityLayer.createStringJoiner("\t");
 
@@ -88,35 +90,34 @@ public class WireConverter {
     String dataSection = wireFormat.substring(colonIndex + 1);
 
     Map<String, String> target = new HashMap<>();
-    
+
     // Handle empty data section (just name:)
     if (dataSection.isEmpty()) {
       return new NamedMap(name, target);
     }
 
-    // Split by tabs to get key-value pairs
-    String[] pairs = dataSection.split("\t");
-    for (String pair : pairs) {
-      if (pair.isEmpty()) {
-        continue; // Skip empty pairs
-      }
-      
-      int equalsIndex = pair.indexOf('=');
-      if (equalsIndex == -1) {
-        throw new IllegalArgumentException(
-            String.format("Invalid key-value pair format: '%s'", pair)
-        );
-      }
-      
-      String key = pair.substring(0, equalsIndex);
-      String value = pair.substring(equalsIndex + 1);
-      
-      if (key.isEmpty()) {
-        throw new IllegalArgumentException("Key cannot be empty in key-value pair");
-      }
-      
-      target.put(key, value);
-    }
+    // Use Stream to split by tabs, filter empty pairs, and collect to map
+    target = Arrays.stream(dataSection.split("\t"))
+        .filter(pair -> !pair.isEmpty())
+        .collect(Collectors.toMap(
+            pair -> {
+              int equalsIndex = pair.indexOf('=');
+              if (equalsIndex == -1) {
+                throw new IllegalArgumentException(
+                    String.format("Invalid key-value pair format: '%s'", pair)
+                );
+              }
+              String key = pair.substring(0, equalsIndex);
+              if (key.isEmpty()) {
+                throw new IllegalArgumentException("Key cannot be empty in key-value pair");
+              }
+              return key;
+            },
+            pair -> {
+              int equalsIndex = pair.indexOf('=');
+              return pair.substring(equalsIndex + 1);
+            }
+        ));
 
     return new NamedMap(name, target);
   }

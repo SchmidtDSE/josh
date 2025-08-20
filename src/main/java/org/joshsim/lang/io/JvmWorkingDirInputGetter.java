@@ -8,6 +8,7 @@ package org.joshsim.lang.io;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 
@@ -41,8 +42,10 @@ public class JvmWorkingDirInputGetter extends JvmInputGetter {
   private InputStream loadFromWorkingDir(String name) {
     try {
       return new FileInputStream(name);
-    } catch (Exception e) {
+    } catch (FileNotFoundException e) {
       throw new RuntimeException("Failed to open stream from working directory: " + name, e);
+    } catch (SecurityException e) {
+      throw new RuntimeException("Security denied access to file in working directory: " + name, e);
     }
   }
 
