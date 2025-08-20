@@ -53,7 +53,7 @@ class NamedMapTest {
     Map<String, String> target = Map.of("key", "value");
 
     // Assert
-    assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(NullPointerException.class, () -> {
       new NamedMap(null, target);
     });
   }

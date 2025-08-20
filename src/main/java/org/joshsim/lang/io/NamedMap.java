@@ -13,6 +13,7 @@ package org.joshsim.lang.io;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Immutable value object for named map data used in wire format conversion.
@@ -31,11 +32,11 @@ public class NamedMap {
    *
    * @param name The identifier name for this map
    * @param target The map of key-value pairs to store (will be defensively copied)
-   * @throws IllegalArgumentException if name is null or empty, or if target is null
+   * @throws IllegalArgumentException if name is empty, or if target is null
    */
   public NamedMap(String name, Map<String, String> target) {
-    if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException("Name cannot be null or empty");
+    if (name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Name cannot be empty");
     }
     if (target == null) {
       throw new IllegalArgumentException("Target map cannot be null");
@@ -77,7 +78,7 @@ public class NamedMap {
 
   @Override
   public int hashCode() {
-    return name.hashCode() * 31 + target.hashCode();
+    return Objects.hash(name, target);
   }
 
   @Override
