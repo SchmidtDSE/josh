@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -42,7 +43,8 @@ import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
-import org.joshsim.util.WireResponseParser;
+import org.joshsim.wire.ParsedResponse;
+import org.joshsim.wire.WireResponseParser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -422,9 +424,14 @@ public class RunRemoteCommand implements Callable<Integer> {
       responseStream.forEach(line -> {
         try {
           // Parse line using WireResponseParser
-          WireResponseParser.ParsedResponse parsed = 
+          Optional<ParsedResponse> optionalParsed = 
               WireResponseParser.parseEngineResponse(line.trim());
           
+          if (!optionalParsed.isPresent()) {
+            return; // Skip ignored lines
+          }
+          
+          ParsedResponse parsed = optionalParsed.get();
           switch (parsed.getType()) {
             case DATUM:
               // Deserialize wire format to NamedMap using Component 1

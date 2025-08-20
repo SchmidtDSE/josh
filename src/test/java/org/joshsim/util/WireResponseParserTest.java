@@ -7,11 +7,15 @@
 package org.joshsim.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.joshsim.util.WireResponseParser.ParsedResponse;
-import org.joshsim.util.WireResponseParser.ResponseType;
+import java.util.Optional;
+import org.joshsim.wire.ParsedResponse;
+import org.joshsim.wire.ParsedResponse.ResponseType;
+import org.joshsim.wire.WireResponseParser;
 import org.junit.jupiter.api.Test;
 
 
@@ -22,8 +26,10 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseEndResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[end 5]");
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse("[end 5]");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.END, result.getType());
     assertEquals(5, result.getReplicateNumber());
     assertNull(result.getDataLine());
@@ -33,8 +39,11 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseProgressResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[progress 42]");
+    Optional<ParsedResponse> optionalResult = 
+        WireResponseParser.parseEngineResponse("[progress 42]");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.PROGRESS, result.getType());
     assertEquals(-1, result.getReplicateNumber());
     assertNull(result.getDataLine());
@@ -44,8 +53,11 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseErrorResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[error] Something went wrong");
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse(
+        "[error] Something went wrong");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.ERROR, result.getType());
     assertEquals(-1, result.getReplicateNumber());
     assertNull(result.getDataLine());
@@ -55,9 +67,11 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseDatumResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse(
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse(
         "[2] target:key1=value1\tkey2=value2");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.DATUM, result.getType());
     assertEquals(2, result.getReplicateNumber());
     assertEquals("target:key1=value1\tkey2=value2", result.getDataLine());
@@ -67,34 +81,34 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseEmptyReplicateResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[3]");
+    Optional<ParsedResponse> result = WireResponseParser.parseEngineResponse("[3]");
     
-    assertNull(result); // Empty replicate responses should be ignored
+    assertFalse(result.isPresent()); // Empty replicate responses should be ignored
   }
 
   @Test
   public void testParseEmptyDataResponse() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[1] ");
+    Optional<ParsedResponse> result = WireResponseParser.parseEngineResponse("[1] ");
     
-    assertNull(result); // Empty data should be ignored
+    assertFalse(result.isPresent()); // Empty data should be ignored
   }
 
   @Test
   public void testParseNullInput() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse(null);
-    assertNull(result);
+    Optional<ParsedResponse> result = WireResponseParser.parseEngineResponse(null);
+    assertFalse(result.isPresent());
   }
 
   @Test
   public void testParseEmptyInput() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("");
-    assertNull(result);
+    Optional<ParsedResponse> result = WireResponseParser.parseEngineResponse("");
+    assertFalse(result.isPresent());
   }
 
   @Test
   public void testParseWhitespaceInput() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("   ");
-    assertNull(result);
+    Optional<ParsedResponse> result = WireResponseParser.parseEngineResponse("   ");
+    assertFalse(result.isPresent());
   }
 
   @Test
@@ -113,16 +127,21 @@ public class WireResponseParserTest {
 
   @Test
   public void testParseEndWithZeroReplicate() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[end 0]");
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse("[end 0]");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.END, result.getType());
     assertEquals(0, result.getReplicateNumber());
   }
 
   @Test
   public void testParseProgressWithZeroStep() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[progress 0]");
+    Optional<ParsedResponse> optionalResult = 
+        WireResponseParser.parseEngineResponse("[progress 0]");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.PROGRESS, result.getType());
     assertEquals(0, result.getStepCount());
   }
@@ -131,8 +150,11 @@ public class WireResponseParserTest {
   public void testParseDatumWithComplexData() {
     String complexData = "patch:variable1=123.45\tvariable2=test value"
         + "\tvariable3=true";
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[1] " + complexData);
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse(
+        "[1] " + complexData);
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.DATUM, result.getType());
     assertEquals(1, result.getReplicateNumber());
     assertEquals(complexData, result.getDataLine());
@@ -142,27 +164,56 @@ public class WireResponseParserTest {
   public void testParseErrorWithLongMessage() {
     String longMessage = "This is a very long error message that contains" 
         + " multiple words and spaces";
-    ParsedResponse result = WireResponseParser.parseEngineResponse("[error] " + longMessage);
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse(
+        "[error] " + longMessage);
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.ERROR, result.getType());
     assertEquals(longMessage, result.getErrorMessage());
   }
 
   @Test
   public void testParseResponseWithLeadingWhitespace() {
-    ParsedResponse result = WireResponseParser.parseEngineResponse("  [progress 10]  ");
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse(
+        "  [progress 10]  ");
     
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse result = optionalResult.get();
     assertEquals(ResponseType.PROGRESS, result.getType());
     assertEquals(10, result.getStepCount());
   }
 
   @Test
   public void testToStringMethod() {
-    ParsedResponse endResponse = WireResponseParser.parseEngineResponse("[end 5]");
+    Optional<ParsedResponse> optionalResult = WireResponseParser.parseEngineResponse("[end 5]");
+    
+    assertTrue(optionalResult.isPresent());
+    ParsedResponse endResponse = optionalResult.get();
     String toString = endResponse.toString();
     
-    // Verify toString contains key information
-    assertEquals(true, toString.contains("END"));
-    assertEquals(true, toString.contains("5"));
+    // Verify toString contains key information and is formatted properly
+    assertTrue(toString.contains("END"));
+    assertTrue(toString.contains("5"));
+    // Check that the new formatting is applied (parameters on separate conceptual lines)
+    assertTrue(toString.contains("type="));
+    assertTrue(toString.contains("replicate="));
+  }
+
+  @Test
+  public void testLegacyParseEngineResponseMethod() {
+    // Test the legacy method for backward compatibility
+    ParsedResponse result = WireResponseParser.parseEngineResponseLegacy("[end 5]");
+    
+    assertEquals(ResponseType.END, result.getType());
+    assertEquals(5, result.getReplicateNumber());
+  }
+
+  @Test
+  public void testLegacyMethodWithIgnoredLine() {
+    // Test that legacy method returns null for ignored lines
+    ParsedResponse result = WireResponseParser.parseEngineResponseLegacy("[3]");
+    
+    assertNull(result);
   }
 }
