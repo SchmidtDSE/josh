@@ -36,12 +36,12 @@ public class JvmMappedInputGetter extends JvmInputGetter {
   }
 
   @Override
-  protected InputStream readImpliedPath(String identifier) {
+  protected InputStream readNamePath(String identifier) {
     return loadFromMappedFiles(identifier);
   }
 
   @Override
-  protected boolean checkImpliedPathExists(String identifier) {
+  protected boolean checkNamePathExists(String identifier) {
     return fileMapping.containsKey(identifier);
   }
 

@@ -21,12 +21,12 @@ import java.io.InputStream;
 public class JvmWorkingDirInputGetter extends JvmInputGetter {
 
   @Override
-  protected InputStream readImpliedPath(String identifier) {
+  protected InputStream readNamePath(String identifier) {
     return loadFromWorkingDir(identifier);
   }
 
   @Override
-  protected boolean checkImpliedPathExists(String identifier) {
+  protected boolean checkNamePathExists(String identifier) {
     File file = new File(identifier);
     return file.exists();
   }

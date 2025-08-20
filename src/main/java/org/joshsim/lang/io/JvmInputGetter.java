@@ -21,23 +21,23 @@ import java.net.URI;
 public abstract class JvmInputGetter implements InputGetterStrategy {
 
   @Override
-  public final InputStream open(String identifier) {
+  public InputStream open(String identifier) {
     if (identifier.contains(":")) {
       URI uri = URI.create(identifier);
       return loadFromUri(uri);
     } else {
-      return readImpliedPath(identifier);
+      return readNamePath(identifier);
     }
   }
 
   @Override
-  public final boolean exists(String identifier) {
+  public boolean exists(String identifier) {
     if (identifier.contains(":")) {
       // For URIs, we would need to try to open it to check existence
       // For now, assume URIs exist (they might fail when actually opened)
       return true;
     } else {
-      return checkImpliedPathExists(identifier);
+      return checkNamePathExists(identifier);
     }
   }
 
@@ -48,7 +48,7 @@ public abstract class JvmInputGetter implements InputGetterStrategy {
    * @return The input stream found at the given URI.
    * @throws RuntimeException raised if error encountered in opening the input stream.
    */
-  protected final InputStream loadFromUri(URI uri) {
+  protected InputStream loadFromUri(URI uri) {
     try {
       return uri.toURL().openStream();
     } catch (Exception e) {
@@ -57,20 +57,20 @@ public abstract class JvmInputGetter implements InputGetterStrategy {
   }
 
   /**
-   * Template method for reading implied path identifiers (non-URI).
+   * Template method for reading name path identifiers (non-URI).
    *
    * @param identifier The identifier to load from the implementation-specific strategy.
    * @return The input stream for the requested resource.
    * @throws RuntimeException raised if error encountered in opening the input stream.
    */
-  protected abstract InputStream readImpliedPath(String identifier);
+  protected abstract InputStream readNamePath(String identifier);
 
   /**
-   * Template method for checking existence of implied path identifiers (non-URI).
+   * Template method for checking existence of name path identifiers (non-URI).
    *
    * @param identifier The identifier to check for existence.
    * @return True if the resource exists and can be opened, false otherwise.
    */
-  protected abstract boolean checkImpliedPathExists(String identifier);
+  protected abstract boolean checkNamePathExists(String identifier);
 
 }
