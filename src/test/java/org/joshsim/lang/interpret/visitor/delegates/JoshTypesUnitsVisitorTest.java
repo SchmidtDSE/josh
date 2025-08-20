@@ -29,9 +29,9 @@ import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.ConversionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.ConversionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,7 +69,7 @@ class JoshTypesUnitsVisitorTest {
     CastContext context = mock(CastContext.class);
     ExpressionContext operandContext = mock(ExpressionContext.class);
     IdentifierContext targetContext = mock(IdentifierContext.class);
-    Fragment operandFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
     final EventHandlerAction operandAction = mock(EventHandlerAction.class);
 
     // Set up the context.operand and context.target fields
@@ -80,7 +80,7 @@ class JoshTypesUnitsVisitorTest {
     when(targetContext.getText()).thenReturn("meters");
 
     // Test
-    Fragment result = visitor.visitCast(context);
+    JoshFragment result = visitor.visitCast(context);
 
     // Validate
     assertNotNull(result);
@@ -103,7 +103,7 @@ class JoshTypesUnitsVisitorTest {
     CastForceContext context = mock(CastForceContext.class);
     ExpressionContext operandContext = mock(ExpressionContext.class);
     IdentifierContext targetContext = mock(IdentifierContext.class);
-    Fragment operandFragment = mock(Fragment.class);
+    JoshFragment operandFragment = mock(JoshFragment.class);
     final EventHandlerAction operandAction = mock(EventHandlerAction.class);
 
     // Set up the context.operand and context.target fields
@@ -114,7 +114,7 @@ class JoshTypesUnitsVisitorTest {
     when(targetContext.getText()).thenReturn("meters");
 
     // Test
-    Fragment result = visitor.visitCastForce(context);
+    JoshFragment result = visitor.visitCastForce(context);
 
     // Validate
     assertNotNull(result);
@@ -141,7 +141,7 @@ class JoshTypesUnitsVisitorTest {
     when(unitContext.getText()).thenReturn("meters");
 
     // Test
-    Fragment result = visitor.visitNoopConversion(context);
+    JoshFragment result = visitor.visitNoopConversion(context);
 
     // Validate
     assertNotNull(result);
@@ -158,7 +158,7 @@ class JoshTypesUnitsVisitorTest {
     ActiveConversionContext context = mock(ActiveConversionContext.class);
     IdentifierContext unitContext = mock(IdentifierContext.class);
     ExpressionContext exprContext = mock(ExpressionContext.class);
-    Fragment exprFragment = mock(Fragment.class);
+    JoshFragment exprFragment = mock(JoshFragment.class);
     EventHandlerAction exprAction = mock(EventHandlerAction.class);
 
     when(context.getChild(0)).thenReturn(unitContext);
@@ -168,7 +168,7 @@ class JoshTypesUnitsVisitorTest {
     when(exprFragment.getCurrentAction()).thenReturn(exprAction);
 
     // Test
-    Fragment result = visitor.visitActiveConversion(context);
+    JoshFragment result = visitor.visitActiveConversion(context);
 
     // Validate
     assertNotNull(result);
@@ -185,7 +185,7 @@ class JoshTypesUnitsVisitorTest {
     CreateVariableExpressionContext context = mock(CreateVariableExpressionContext.class);
     IdentifierContext targetContext = mock(IdentifierContext.class);
     ExpressionContext countContext = mock(ExpressionContext.class);
-    final Fragment countFragment = mock(Fragment.class);
+    final JoshFragment countFragment = mock(JoshFragment.class);
     final EventHandlerAction countAction = mock(EventHandlerAction.class);
 
     // Set up the context.target and context.count fields
@@ -196,7 +196,7 @@ class JoshTypesUnitsVisitorTest {
     when(countFragment.getCurrentAction()).thenReturn(countAction);
 
     // Test
-    Fragment result = visitor.visitCreateVariableExpression(context);
+    JoshFragment result = visitor.visitCreateVariableExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -219,7 +219,7 @@ class JoshTypesUnitsVisitorTest {
     AttrExpressionContext context = mock(AttrExpressionContext.class);
     ExpressionContext exprContext = mock(ExpressionContext.class);
     IdentifierContext attrContext = mock(IdentifierContext.class);
-    Fragment exprFragment = mock(Fragment.class);
+    JoshFragment exprFragment = mock(JoshFragment.class);
     EventHandlerAction exprAction = mock(EventHandlerAction.class);
 
     when(context.getChild(0)).thenReturn(exprContext);
@@ -229,7 +229,7 @@ class JoshTypesUnitsVisitorTest {
     when(attrContext.getText()).thenReturn("testAttr");
 
     // Test
-    Fragment result = visitor.visitAttrExpression(context);
+    JoshFragment result = visitor.visitAttrExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -252,7 +252,7 @@ class JoshTypesUnitsVisitorTest {
     SpatialQueryContext context = mock(SpatialQueryContext.class);
     IdentifierContext targetContext = mock(IdentifierContext.class);
     ExpressionContext distanceContext = mock(ExpressionContext.class);
-    final Fragment distanceFragment = mock(Fragment.class);
+    final JoshFragment distanceFragment = mock(JoshFragment.class);
     final EventHandlerAction distanceAction = mock(EventHandlerAction.class);
 
     // Set up the context.target and context.distance fields
@@ -263,7 +263,7 @@ class JoshTypesUnitsVisitorTest {
     when(distanceFragment.getCurrentAction()).thenReturn(distanceAction);
 
     // Test
-    Fragment result = visitor.visitSpatialQuery(context);
+    JoshFragment result = visitor.visitSpatialQuery(context);
 
     // Validate
     assertNotNull(result);
@@ -288,8 +288,8 @@ class JoshTypesUnitsVisitorTest {
     ExpressionContext coord2Context = mock(ExpressionContext.class);
     IdentifierContext type1Context = mock(IdentifierContext.class);
     IdentifierContext type2Context = mock(IdentifierContext.class);
-    Fragment coord1Fragment = mock(Fragment.class);
-    Fragment coord2Fragment = mock(Fragment.class);
+    JoshFragment coord1Fragment = mock(JoshFragment.class);
+    JoshFragment coord2Fragment = mock(JoshFragment.class);
     EventHandlerAction coord1Action = mock(EventHandlerAction.class);
     EventHandlerAction coord2Action = mock(EventHandlerAction.class);
 
@@ -305,7 +305,7 @@ class JoshTypesUnitsVisitorTest {
     when(coord2Fragment.getCurrentAction()).thenReturn(coord2Action);
 
     // Test
-    Fragment result = visitor.visitPosition(context);
+    JoshFragment result = visitor.visitPosition(context);
 
     // Validate
     assertNotNull(result);
@@ -348,7 +348,7 @@ class JoshTypesUnitsVisitorTest {
     JoshTypesUnitsVisitor testVisitor = new JoshTypesUnitsVisitor(toolbox);
 
     // Test
-    Fragment result = testVisitor.visitCreateSingleExpression(context);
+    JoshFragment result = testVisitor.visitCreateSingleExpression(context);
 
     // Validate
     assertNotNull(result);
@@ -371,7 +371,7 @@ class JoshTypesUnitsVisitorTest {
     AssignmentContext context = mock(AssignmentContext.class);
     IdentifierContext identifierContext = mock(IdentifierContext.class);
     ExpressionContext valContext = mock(ExpressionContext.class);
-    final Fragment valFragment = mock(Fragment.class);
+    final JoshFragment valFragment = mock(JoshFragment.class);
     final EventHandlerAction valAction = mock(EventHandlerAction.class);
 
     // Set up the context.getChild(1) to return the identifier context
@@ -384,7 +384,7 @@ class JoshTypesUnitsVisitorTest {
     when(valFragment.getCurrentAction()).thenReturn(valAction);
 
     // Test
-    Fragment result = visitor.visitAssignment(context);
+    JoshFragment result = visitor.visitAssignment(context);
 
     // Validate
     assertNotNull(result);

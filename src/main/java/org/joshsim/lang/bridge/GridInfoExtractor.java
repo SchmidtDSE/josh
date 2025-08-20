@@ -208,10 +208,10 @@ public class GridInfoExtractor {
   public long getTotalSteps() {
     EngineValue stepsLow = getStepsLow();
     EngineValue stepsHigh = getStepsHigh();
-    
+
     long lowValue = Math.round(stepsLow.getAsDouble());
     long highValue = Math.round(stepsHigh.getAsDouble());
-    
+
     return highValue - lowValue + 1;
   }
 

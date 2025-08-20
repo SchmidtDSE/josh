@@ -8,7 +8,8 @@
  * @license BSD-3-Clause
  */
 
-import {DataFilesPresenter} from "data";
+import {ConfigDialogPresenter} from "config";
+import {DataFilesPresenter, LocalFileLayer} from "data";
 import {EditorPresenter} from "editor";
 import {RemoteEngineBackend, WasmEngineBackend} from "engine";
 import {FilePresenter} from "file";
@@ -52,9 +53,19 @@ class MainPresenter {
       (request) => { self._executeRunRequest(request); }
     );
 
+    // Create a shared LocalFileLayer instance for both data and config dialogs
+    const sharedFileLayer = new LocalFileLayer();
+
     self._dataPresenter = new DataFilesPresenter(
       "open-data-dialog-button",
-      "external-data-dialog"
+      "data-dialog",
+      sharedFileLayer
+    );
+
+    self._configPresenter = new ConfigDialogPresenter(
+      "open-config-dialog-button",
+      "config-dialog",
+      sharedFileLayer
     );
 
     self._resultsPresenter = new ResultsPresenter("results");

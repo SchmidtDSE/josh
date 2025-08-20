@@ -45,6 +45,11 @@ public class SandboxInputGetter implements InputGetterStrategy {
     return virtualFile.getIsBinary() ? makeForBase64(contents) : makeForString(contents);
   }
 
+  @Override
+  public boolean exists(String identifier) {
+    return virtualFiles.containsKey(identifier);
+  }
+
   /**
    * Create an input stream around the plain text content of a file.
    *

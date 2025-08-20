@@ -6,6 +6,7 @@
 
 package org.joshsim;
 
+import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -88,7 +89,8 @@ public class JoshSimFacadeUtil {
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory)
+        new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory),
+        new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory)
     );
 
     CombinedExportFacade exportFacade = new CombinedExportFacade(

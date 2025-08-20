@@ -22,4 +22,12 @@ public interface InputGetterStrategy {
    */
   InputStream open(String identifier);
 
+  /**
+   * Check if an input source exists.
+   *
+   * @param identifier The URI or equivalent for the current environment.
+   * @return True if the resource exists and can be opened, false otherwise.
+   */
+  boolean exists(String identifier);
+
 }

@@ -17,8 +17,8 @@ import org.joshsim.lang.antlr.JoshLangParser.SampleSimpleContext;
 import org.joshsim.lang.antlr.JoshLangParser.SliceContext;
 import org.joshsim.lang.antlr.JoshLangParser.UniformSampleContext;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.machine.EventHandlerMachine;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +53,8 @@ class JoshDistributionVisitorTest {
     context.subject = mock(SliceContext.class);
     context.selection = mock(SliceContext.class);
 
-    Fragment subjectFragment = mock(Fragment.class);
-    Fragment selectionFragment = mock(Fragment.class);
+    JoshFragment subjectFragment = mock(JoshFragment.class);
+    JoshFragment selectionFragment = mock(JoshFragment.class);
     EventHandlerAction subjectAction = mock(EventHandlerAction.class);
     EventHandlerAction selectionAction = mock(EventHandlerAction.class);
 
@@ -64,7 +64,7 @@ class JoshDistributionVisitorTest {
     when(selectionFragment.getCurrentAction()).thenReturn(selectionAction);
 
     // Test
-    Fragment result = visitor.visitSlice(context);
+    JoshFragment result = visitor.visitSlice(context);
 
     // Validate
     assertNotNull(result);
@@ -89,14 +89,14 @@ class JoshDistributionVisitorTest {
     SampleSimpleContext context = mock(SampleSimpleContext.class);
     context.target = mock(SampleSimpleContext.class);
 
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
     when(context.target.accept(parent)).thenReturn(targetFragment);
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitSampleSimple(context);
+    JoshFragment result = visitor.visitSampleSimple(context);
 
     // Validate
     assertNotNull(result);
@@ -121,8 +121,8 @@ class JoshDistributionVisitorTest {
     context.count = mock(SampleParamContext.class);
     context.target = mock(SampleParamContext.class);
 
-    Fragment countFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment countFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction countAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -132,7 +132,7 @@ class JoshDistributionVisitorTest {
     when(targetFragment.getCurrentAction()).thenReturn(targetAction);
 
     // Test
-    Fragment result = visitor.visitSampleParam(context);
+    JoshFragment result = visitor.visitSampleParam(context);
 
     // Validate
     assertNotNull(result);
@@ -158,8 +158,8 @@ class JoshDistributionVisitorTest {
     context.target = mock(SampleParamReplacementContext.class);
     context.replace = mock(org.antlr.v4.runtime.Token.class);
 
-    Fragment countFragment = mock(Fragment.class);
-    Fragment targetFragment = mock(Fragment.class);
+    JoshFragment countFragment = mock(JoshFragment.class);
+    JoshFragment targetFragment = mock(JoshFragment.class);
     EventHandlerAction countAction = mock(EventHandlerAction.class);
     EventHandlerAction targetAction = mock(EventHandlerAction.class);
 
@@ -170,7 +170,7 @@ class JoshDistributionVisitorTest {
     when(context.replace.getText()).thenReturn("with");
 
     // Test
-    Fragment result = visitor.visitSampleParamReplacement(context);
+    JoshFragment result = visitor.visitSampleParamReplacement(context);
 
     // Validate
     assertNotNull(result);
@@ -195,8 +195,8 @@ class JoshDistributionVisitorTest {
     context.low = mock(ExpressionContext.class);
     context.high = mock(ExpressionContext.class);
 
-    Fragment lowFragment = mock(Fragment.class);
-    Fragment highFragment = mock(Fragment.class);
+    JoshFragment lowFragment = mock(JoshFragment.class);
+    JoshFragment highFragment = mock(JoshFragment.class);
     EventHandlerAction lowAction = mock(EventHandlerAction.class);
     EventHandlerAction highAction = mock(EventHandlerAction.class);
 
@@ -206,7 +206,7 @@ class JoshDistributionVisitorTest {
     when(highFragment.getCurrentAction()).thenReturn(highAction);
 
     // Test
-    Fragment result = visitor.visitUniformSample(context);
+    JoshFragment result = visitor.visitUniformSample(context);
 
     // Validate
     assertNotNull(result);
@@ -231,8 +231,8 @@ class JoshDistributionVisitorTest {
     context.mean = mock(ExpressionContext.class);
     context.stdev = mock(ExpressionContext.class);
 
-    Fragment meanFragment = mock(Fragment.class);
-    Fragment stdevFragment = mock(Fragment.class);
+    JoshFragment meanFragment = mock(JoshFragment.class);
+    JoshFragment stdevFragment = mock(JoshFragment.class);
     EventHandlerAction meanAction = mock(EventHandlerAction.class);
     EventHandlerAction stdevAction = mock(EventHandlerAction.class);
 
@@ -242,7 +242,7 @@ class JoshDistributionVisitorTest {
     when(stdevFragment.getCurrentAction()).thenReturn(stdevAction);
 
     // Test
-    Fragment result = visitor.visitNormalSample(context);
+    JoshFragment result = visitor.visitNormalSample(context);
 
     // Validate
     assertNotNull(result);

@@ -118,32 +118,32 @@ public class GeotiffExternalDataReaderTest {
       throw new IOException("CHC-CMIP6 test resource not found");
     }
     String chcFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     // Create new reader for CHC data
     GeotiffExternalDataReader chcReader = new GeotiffExternalDataReader(
         valueFactory, Units.of("mm"));
-    
+
     try {
       chcReader.open(chcFilePath);
       chcReader.setCrsCode("EPSG:4326");
-      
+
       // Test coordinates from the grass_shrub_fire simulation area
       // These are the same coordinates that are failing in preprocessing
       BigDecimal lat = new BigDecimal("35.4955033919704");
       BigDecimal lon = new BigDecimal("-119.99447700450675");
       String variableName = "0"; // First band
-      
+
       Optional<EngineValue> value = chcReader.readValueAt(variableName, lon, lat, 0);
-      
+
       // Verify that coordinate calculation works correctly
-      assertTrue(value.isPresent(), 
+      assertTrue(value.isPresent(),
           "CHC-CMIP6 value should be present at coordinates (" + lon + ", " + lat + ")");
-      
+
       // The value should be non-zero for precipitation data
       double precipValue = value.get().getAsDecimal().doubleValue();
-      assertTrue(precipValue > 0.0, 
+      assertTrue(precipValue > 0.0,
           "CHC-CMIP6 precipitation value should be > 0, got: " + precipValue);
-          
+
     } finally {
       try {
         chcReader.close();

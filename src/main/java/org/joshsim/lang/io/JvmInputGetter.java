@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.io;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
@@ -26,6 +27,19 @@ public class JvmInputGetter implements InputGetterStrategy {
       return loadFromUri(uri);
     } else {
       return loadFromWorkingDir(identifier);
+    }
+  }
+
+  @Override
+  public boolean exists(String identifier) {
+    if (identifier.contains(":")) {
+      // For URIs, we would need to try to open it to check existence
+      // For now, assume URIs exist (they might fail when actually opened)
+      return true;
+    } else {
+      // For files, check if the file exists in the working directory
+      File file = new File(identifier);
+      return file.exists();
     }
   }
 

@@ -8,6 +8,7 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
+import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -143,7 +144,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         simulation,
         converter,
         prototypeStore,
-        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
+        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
+        new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
     );
 
     builtBridge = Optional.of(newBridge);

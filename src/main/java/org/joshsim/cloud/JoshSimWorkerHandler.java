@@ -167,7 +167,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
     EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
-    
+
     // Execute interpretation securely
     Optional<JoshProgram> programResult = executeInterpretation(
         valueFactory, geometryFactory, result, inputOutputLayer, httpServerExchange, apiKey
@@ -184,7 +184,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     // Execute simulation securely
     boolean simulationSuccess = executeSimulation(
-        valueFactory, geometryFactory, externalData, program, 
+        valueFactory, geometryFactory, externalData, program,
         simulationName, httpServerExchange, apiKey
     );
     if (!simulationSuccess) {
@@ -275,7 +275,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   private void handleSimulationError(Exception exception, String operation,
         HttpServerExchange httpServerExchange, String apiKey) {
-    
+
     // Log full error details securely (API key will be hashed by the logging layer)
     SecurityUtil.logSecureError(
         apiDataLayer,
@@ -284,7 +284,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         exception,
         null
     );
-    
+
     // Check if this is an external data error that should have an informative message
     String userMessage;
     if (isExternalDataError(exception)) {
@@ -302,7 +302,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       // Use 400 status for user input errors
       httpServerExchange.setStatusCode(400);
     }
-    
+
     httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
     httpServerExchange.getResponseSender().send(userMessage);
   }
@@ -318,7 +318,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (message == null) {
       return false;
     }
-    
+
     // Check for specific external data error patterns
     if (message.contains("Cannot find virtual file")) {
       return true;
@@ -338,7 +338,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (message.contains("No such file or directory")) {
       return true;
     }
-    
+
     // Check for IOException with external data keywords
     if (exception instanceof IOException) {
       String lowerMessage = message.toLowerCase();
@@ -352,7 +352,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -385,7 +385,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   private String buildInformativeErrorMessage(Exception e) {
     String originalMessage = e.getMessage() != null ? e.getMessage() : "";
-    
+
     // Handle specific external data error patterns
     if (originalMessage.contains("Cannot find virtual file:")) {
       String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
@@ -395,12 +395,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
           fileName
       );
     }
-    
+
     if (originalMessage.contains("CSV must contain 'longitude' and 'latitude' columns")) {
       return "External CSV data is missing required columns. CSV files must contain "
           + "'longitude' and 'latitude' columns for geospatial data processing.";
     }
-    
+
     if (originalMessage.contains("Invalid numeric value in column")) {
       return String.format(
           "External data contains invalid numeric values: %s. Please check that all "
@@ -408,7 +408,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           originalMessage
       );
     }
-    
+
     if (originalMessage.contains("Failure in loading a jshd resource:")) {
       String innerMessage = originalMessage.substring(originalMessage.indexOf(": ") + 2);
       return String.format(
@@ -417,7 +417,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           innerMessage
       );
     }
-    
+
     if (originalMessage.contains("No suitable reader found for file:")) {
       String fileName = originalMessage.substring(originalMessage.indexOf(": ") + 2);
       return String.format(
@@ -426,7 +426,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           fileName
       );
     }
-    
+
     // Handle IOException from CSV reading
     if (e instanceof IOException || originalMessage.contains("IOException")) {
       if (originalMessage.contains("No such file or directory")) {
@@ -439,7 +439,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           originalMessage
       );
     }
-    
+
     // Default case for other external data related errors
     if (originalMessage.toLowerCase().contains("external")
         || originalMessage.toLowerCase().contains("file")
@@ -451,7 +451,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           originalMessage
       );
     }
-    
+
     // Fallback for unrecognized errors
     return String.format("Simulation error: %s", originalMessage);
   }

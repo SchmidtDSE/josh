@@ -24,11 +24,25 @@ The easiest way to get started locally is to simply [get yourself a copy of open
 $ java -jar joshsim.jar run simulation.josh
 ```
 
-While COGs, geotiffs, and netCDF files can be provided directly, the preferred approach is to provide a jshd file which preprocesses these geospatial inputs for speed:
+While COGs, geotiffs, and netCDF files can be provided directly, the preferred approach is to provide a jshd file which preprocesses these geospatial inputs for speed. These jshd files are loaded from the working directory or included with the request:
 
 ```
 $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
-$ java -jar joshsim.jar run simulation.josh --data output.jshd
+$ ls output.jshd
+$ java -jar joshsim.jar run simulation.josh
+```
+
+Configuration files (.jshc) can be provided alongside simulations to parameterize behavior without modifying Josh code:
+
+```
+$ ls parameters.jshc
+$ java -jar joshsim.jar run simulation.josh
+```
+
+Configuration variables can be discovered in Josh scripts automatically. The following prints all configuration variables used with defaults if given:
+
+```
+$ java -jar joshsim.jar discoverConfig simulation.josh
 ```
 
 Available commands include:
@@ -49,6 +63,10 @@ Available commands include:
   ```
   $ java -jar joshsim.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
   ```
+- `discoverConfig` for finding configuration variables in scripts:
+  ```
+  $ java -jar joshsim.jar discoverConfig simulation.josh
+  ```
 
 Run the jar without any command specified to get further help documentation.
 
@@ -59,7 +77,7 @@ You can run the local UI through [joshsim](https://language.joshsim.org/download
 $ java -jar joshsim.jar server
 ```
 
-This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code and jshd files provided, with no network access otherwise.
+This will start a local web server which makes the UI available via your browser where you can work in private. The local server supports a sandbox mode that limits access to only the code, jshd, and jshc files provided. However, the sandbox disallows network access otherwise.
 
 ### Containerized usage
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
@@ -83,10 +101,19 @@ See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/c
 When running in server mode, some additional security mechanisms are in place.
 
 ### Sandbox
-Josh includes a sandbox that limits access to only code and jshd files (with no other network access) when running in server mode. This ensures security and privacy. Note that the JoshCloud community infrastructure offering also runs with the sandbox. If the sandbox is not desired, use local execution from the command line.
+Josh includes a sandbox that limits access to only code, jshd, and jshc files (with no other network access) when running in server mode. This ensures security and privacy. Note that the JoshCloud community infrastructure offering also runs with the sandbox. If the sandbox is not desired, use local execution from the command line.
 
 ### API keys
 The server command will look for API keys in the `JOSH_API_KEYS` environment variable. If it is empty or not specified, all requests are allowed. If a value is given, a comma separated list of valid API keys is expected. If this feature is in use, requests without a valid API key will be rejected.
+
+## Reserved Features
+
+Some language features are implemented but reserved for future use:
+
+- `config` stanzas for defining configuration sources (currently only working directory and request files are supported)
+- `external` stanzas for defining external data sources (currently only working directory and request files are supported)
+
+Currently, only the working directory and files included from the editor or HTTP request are released for config and external data usage.
 
 ## Programming
 Josh uses a domain-specific language designed specifically for ecological modeling. Here's a basic hello world example to get you started:
@@ -232,5 +259,6 @@ We use the following open source technologies:
 - [Tippy.js](https://atomiks.github.io/tippyjs/) for tooltips under [MIT](https://github.com/atomiks/tippyjs/blob/master/LICENSE).
 - [UCAR NetCDF](https://www.unidata.ucar.edu/software/netcdf-java/) for NetCDF support under [BSD-3](https://github.com/Unidata/netcdf-java/blob/master/LICENSE).
 - [Undertow](https://undertow.io/) for the local web server under [Apache v2](https://github.com/undertow-io/undertow/blob/master/LICENSE.txt).
+- [cdibase](https://github.com/sampottinger/cdibase) for automaton parsing patterns under [Apache v2](https://github.com/sampottinger/cdibase/blob/main/LICENSE).
 
 We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).

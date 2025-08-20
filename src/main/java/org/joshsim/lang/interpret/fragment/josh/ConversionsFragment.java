@@ -1,21 +1,22 @@
 
 /**
- * Fragment containing multiple unit conversions.
+ * JoshFragment containing multiple unit conversions.
  *
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import org.joshsim.engine.value.converter.Conversion;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 /**
- * Fragment representing a collection of unit conversions.
+ * JoshFragment representing a collection of unit conversions.
  *
  * <p>This class maintains an iterable collection of Conversion objects that define
  * how to convert between different units.</p>
  */
-public class ConversionsFragment extends Fragment {
+public class ConversionsFragment extends JoshFragment {
 
   private final Iterable<Conversion> conversions;
 

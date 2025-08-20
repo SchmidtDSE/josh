@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.config.NoOpConfigGetter;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
@@ -71,6 +72,7 @@ public class MinimalEngineBridgeTest {
         mockConverter,
         mockPrototypeStore,
         mockExternalResourceGetter,
+        new NoOpConfigGetter(),
         mockReplicate
     );
   }

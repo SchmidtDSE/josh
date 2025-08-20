@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.config.NoOpConfigGetter;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
@@ -65,6 +66,7 @@ public class QueryCacheEngineBridgeTest {
         mockConverter,
         mockPrototypeStore,
         mockExternalResourceGetter,
+        new NoOpConfigGetter(),
         mockReplicate
     );
   }

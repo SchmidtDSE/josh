@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.lang.interpret.fragment;
+package org.joshsim.lang.interpret.fragment.josh;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,12 +15,13 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
+import org.joshsim.lang.interpret.fragment.FragmentType;
 
 
 /**
  * Structure which helps build an interpreter runtime.
  */
-public abstract class Fragment {
+public abstract class JoshFragment {
 
   /**
    * Gets the current event handler action from this fragment.

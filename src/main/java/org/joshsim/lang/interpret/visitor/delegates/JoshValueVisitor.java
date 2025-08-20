@@ -12,8 +12,8 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
-import org.joshsim.lang.interpret.fragment.ActionFragment;
-import org.joshsim.lang.interpret.fragment.Fragment;
+import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
+import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 
 
 /**
@@ -40,9 +40,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * <p>Parse a reference to a variable or other named entity in the program.</p>
    *
    * @param ctx The context from which to parse the identifier.
-   * @return Fragment containing the identifier reference parsed.
+   * @return JoshFragment containing the identifier reference parsed.
    */
-  public Fragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
+  public JoshFragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
     ValueResolver resolver = new ValueResolver(engineValueFactory, identifierName);
     EventHandlerAction action = (machine) -> machine.push(resolver);
@@ -53,9 +53,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * Parse a simple number.
    *
    * @param ctx The context from which to parse that number.
-   * @return Fragment containing the number parsed.
+   * @return JoshFragment containing the number parsed.
    */
-  public Fragment visitNumber(JoshLangParser.NumberContext ctx) {
+  public JoshFragment visitNumber(JoshLangParser.NumberContext ctx) {
     String numberStr = ctx.getChild(0).getText();
     EngineValue value = engineValueFactory.parseNumber(numberStr, Units.of("count"));
     EventHandlerAction action = (machine) -> machine.push(value);
@@ -68,9 +68,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * <p>Parse a numeric value that has associated units, such as "5 km" or "10 percent".</p>
    *
    * @param ctx The context from which to parse the units value.
-   * @return Fragment containing the units value parsed.
+   * @return JoshFragment containing the units value parsed.
    */
-  public Fragment visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
+  public JoshFragment visitUnitsValue(JoshLangParser.UnitsValueContext ctx) {
     EngineValue value = parseUnitsValue(ctx);
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
@@ -82,9 +82,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * <p>Parse a string literal enclosed in quotes.</p>
    *
    * @param ctx The context from which to parse the string.
-   * @return Fragment containing the string literal parsed.
+   * @return JoshFragment containing the string literal parsed.
    */
-  public Fragment visitString(JoshLangParser.StringContext ctx) {
+  public JoshFragment visitString(JoshLangParser.StringContext ctx) {
     String string = ctx.getText();
     EngineValue value = engineValueFactory.build(string, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
@@ -97,9 +97,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * <p>Parse a boolean literal (true or false).</p>
    *
    * @param ctx The context from which to parse the boolean.
-   * @return Fragment containing the boolean literal parsed.
+   * @return JoshFragment containing the boolean literal parsed.
    */
-  public Fragment visitBool(JoshLangParser.BoolContext ctx) {
+  public JoshFragment visitBool(JoshLangParser.BoolContext ctx) {
     boolean bool = ctx.getChild(0).getText().equals("true");
     EngineValue value = engineValueFactory.build(bool, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
@@ -112,9 +112,9 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * <p>Parse an expression that represents all entities or values in a collection.</p>
    *
    * @param ctx The context from which to parse the "all" expression.
-   * @return Fragment containing the "all" expression parsed.
+   * @return JoshFragment containing the "all" expression parsed.
    */
-  public Fragment visitAllExpression(JoshLangParser.AllExpressionContext ctx) {
+  public JoshFragment visitAllExpression(JoshLangParser.AllExpressionContext ctx) {
     EventHandlerAction action = (machine) -> machine.push(allString);
     return new ActionFragment(action);
   }
