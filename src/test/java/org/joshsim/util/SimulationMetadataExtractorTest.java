@@ -46,7 +46,7 @@ public class SimulationMetadataExtractorTest {
     File tempFile = new File(tempDir, "test.josh");
     Files.writeString(tempFile.toPath(), joshCode);
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadata(tempFile, "Test");
     
     assertNotNull(metadata);
@@ -68,7 +68,7 @@ public class SimulationMetadataExtractorTest {
     File tempFile = new File(tempDir, "test.josh");
     Files.writeString(tempFile.toPath(), joshCode);
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadata(tempFile, "Test");
     
     assertNotNull(metadata);
@@ -96,7 +96,7 @@ public class SimulationMetadataExtractorTest {
     File tempFile = new File(tempDir, "custom.josh");
     Files.writeString(tempFile.toPath(), joshCode);
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadata(tempFile, "CustomSim");
     
     assertNotNull(metadata);
@@ -117,7 +117,7 @@ public class SimulationMetadataExtractorTest {
         + "start patch Default\n"
         + "end patch";
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadataFromCode(joshCode, "StringTest");
     
     assertNotNull(metadata);
@@ -134,7 +134,7 @@ public class SimulationMetadataExtractorTest {
     String invalidJoshCode = "this is not valid josh code at all";
     
     // Should return defaults rather than throwing exception
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadataFromCode(invalidJoshCode, "Invalid");
     
     assertNotNull(metadata);
@@ -160,8 +160,8 @@ public class SimulationMetadataExtractorTest {
    */
   @Test
   public void testSimulationMetadataToString() {
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
-        new SimulationMetadataExtractor.SimulationMetadata(5, 15, 11);
+    SimulationMetadata metadata = 
+        new SimulationMetadata(5, 15, 11);
     
     String result = metadata.toString();
     assertNotNull(result);
@@ -209,7 +209,7 @@ public class SimulationMetadataExtractorTest {
     File tempFile = new File(tempDir, "complex.josh");
     Files.writeString(tempFile.toPath(), complexJoshCode);
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadata(tempFile, "ComplexSim");
     
     assertNotNull(metadata);
@@ -233,7 +233,7 @@ public class SimulationMetadataExtractorTest {
     File tempFile = new File(tempDir, "fractional.josh");
     Files.writeString(tempFile.toPath(), joshCode);
     
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         SimulationMetadataExtractor.extractMetadata(tempFile, "FractionalTest");
     
     assertNotNull(metadata);

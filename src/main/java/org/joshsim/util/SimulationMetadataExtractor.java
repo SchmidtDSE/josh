@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
@@ -25,7 +26,7 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
-import org.joshsim.util.OutputOptions;
+import org.joshsim.lang.parse.ParseResult;
 
 
 /**
@@ -38,63 +39,6 @@ import org.joshsim.util.OutputOptions;
  */
 public class SimulationMetadataExtractor {
 
-  /**
-   * Container class for simulation metadata.
-   *
-   * <p>This class encapsulates key simulation parameters extracted from Josh scripts,
-   * providing easy access to step range information needed for progress calculations.</p>
-   */
-  public static class SimulationMetadata {
-    private final long stepsLow;
-    private final long stepsHigh;
-    private final long totalSteps;
-
-    /**
-     * Constructor for SimulationMetadata.
-     *
-     * @param stepsLow The lower bound of simulation steps (inclusive)
-     * @param stepsHigh The upper bound of simulation steps (inclusive)
-     * @param totalSteps The total number of steps in the simulation
-     */
-    public SimulationMetadata(long stepsLow, long stepsHigh, long totalSteps) {
-      this.stepsLow = stepsLow;
-      this.stepsHigh = stepsHigh;
-      this.totalSteps = totalSteps;
-    }
-
-    /**
-     * Gets the lower bound of simulation steps.
-     *
-     * @return The steps.low value from the simulation
-     */
-    public long getStepsLow() {
-      return stepsLow;
-    }
-
-    /**
-     * Gets the upper bound of simulation steps.
-     *
-     * @return The steps.high value from the simulation
-     */
-    public long getStepsHigh() {
-      return stepsHigh;
-    }
-
-    /**
-     * Gets the total number of steps in the simulation.
-     *
-     * @return The total steps (stepsHigh - stepsLow + 1)
-     */
-    public long getTotalSteps() {
-      return totalSteps;
-    }
-
-    @Override
-    public String toString() {
-      return String.format("SimulationMetadata{stepsLow=%d, stepsHigh=%d, totalSteps=%d}",
-          stepsLow, stepsHigh, totalSteps);
-    }
-  }
 
   /**
    * Extracts simulation metadata from a Josh script file.
@@ -123,8 +67,8 @@ public class SimulationMetadataExtractor {
    * Extracts simulation metadata from Josh script code.
    *
    * <p>This method parses the provided Josh script code string and extracts key simulation
-   * parameters including step ranges. It creates a temporary file to leverage existing
-   * parsing infrastructure.</p>
+   * parameters including step ranges. It uses the parsing infrastructure directly without
+   * requiring temporary files.</p>
    *
    * @param joshCode The Josh script code as a string
    * @param simulationName The name of the simulation to extract metadata for
@@ -133,35 +77,26 @@ public class SimulationMetadataExtractor {
    */
   public static SimulationMetadata extractMetadataFromCode(String joshCode, String simulationName) {
     try {
-      // Create temporary file to work with existing infrastructure
-      File tempFile = Files.createTempFile("josh_metadata_", ".josh").toFile();
-      tempFile.deleteOnExit();
-      Files.writeString(tempFile.toPath(), joshCode);
+      // Parse Josh code directly using facade utilities (avoids temporary files)
+      ParseResult result = JoshSimFacadeUtil.parse(joshCode);
+      if (result.hasErrors()) {
+        throw new IllegalArgumentException(
+            "Failed to parse Josh script: " + result.getErrors().iterator().next().toString());
+      }
 
-      // Use existing JoshSimCommander infrastructure to parse the script
+      // Create geometry factory and value factory for interpretation
       EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-      OutputOptions outputOptions = new OutputOptions();
-      // OutputOptions doesn't have setQuiet method, but it has suppressInfo field
-      outputOptions.suppressInfo = true; // Suppress output during metadata extraction
+      EngineValueFactory valueFactory = new EngineValueFactory();
       InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder().build();
 
-      JoshSimCommander.ProgramInitResult result = JoshSimCommander.getJoshProgram(
-          geometryFactory, tempFile, outputOptions, ioLayer);
+      // Interpret the parsed code to get JoshProgram
+      JoshProgram program = JoshSimFacadeUtil.interpret(
+          valueFactory,
+          geometryFactory, 
+          result,
+          ioLayer);
 
-      if (result.getFailureStep().isPresent()) {
-        throw new IllegalArgumentException(
-            "Failed to parse Josh script at step: " + result.getFailureStep().get());
-      }
-
-      Optional<JoshProgram> programMaybe = result.getProgram();
-      if (programMaybe.isEmpty()) {
-        throw new IllegalArgumentException("Failed to extract JoshProgram from script");
-      }
-
-      JoshProgram program = programMaybe.get();
-
-      // Get simulation entity following the pattern from other classes
-      EngineValueFactory valueFactory = new EngineValueFactory();
+      // Get simulation entity following the pattern from JoshJsSimFacade
       MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
       MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
 
@@ -172,15 +107,13 @@ public class SimulationMetadataExtractor {
       long stepsLow = Math.round(extractor.getStepsLow().getAsDouble());
       long stepsHigh = Math.round(extractor.getStepsHigh().getAsDouble());
 
-      // Clean up temporary file
-      tempFile.delete();
-
       return new SimulationMetadata(stepsLow, stepsHigh, totalSteps);
 
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Failed to create temporary file for parsing", e);
-    } catch (Exception e) {
-      // Fallback to defaults if parsing fails
+    } catch (IllegalArgumentException e) {
+      // For parsing errors, return default values as fallback
+      return new SimulationMetadata(0, 10, 11); // Default: steps 0-10 = 11 total
+    } catch (RuntimeException e) {
+      // For other runtime errors, return default values as fallback
       return new SimulationMetadata(0, 10, 11); // Default: steps 0-10 = 11 total
     }
   }

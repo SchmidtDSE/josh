@@ -40,6 +40,7 @@ import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
 import org.joshsim.util.WireResponseParser;
 import picocli.CommandLine.Command;
@@ -209,7 +210,7 @@ public class RunRemoteCommand implements Callable<Integer> {
    */
   private void executeRemoteSimulation(URI endpointUri) throws IOException, InterruptedException {
     // Extract simulation metadata for progress tracking
-    SimulationMetadataExtractor.SimulationMetadata metadata = 
+    SimulationMetadata metadata = 
         extractSimulationMetadata();
     
     output.printInfo("Simulation has " + metadata.getTotalSteps() + " steps " 
@@ -382,13 +383,13 @@ public class RunRemoteCommand implements Callable<Integer> {
    * @return SimulationMetadata containing step information
    * @throws RuntimeException if metadata extraction fails
    */
-  private SimulationMetadataExtractor.SimulationMetadata extractSimulationMetadata() {
+  private SimulationMetadata extractSimulationMetadata() {
     try {
       return SimulationMetadataExtractor.extractMetadata(file, simulation);
     } catch (Exception e) {
       output.printError("Failed to extract simulation metadata, using defaults: " + e.getMessage());
       // Return default metadata if extraction fails
-      return new SimulationMetadataExtractor.SimulationMetadata(0, 10, 11);
+      return new SimulationMetadata(0, 10, 11);
     }
   }
 
