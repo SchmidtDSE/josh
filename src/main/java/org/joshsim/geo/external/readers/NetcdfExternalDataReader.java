@@ -30,7 +30,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
   private final EngineValueFactory valueFactory;
   private Optional<CancelTask> cancelTask = Optional.empty();
-  private final Map<String, Array> variableDataCache = new HashMap<>();
 
   // Dimension names
   private String dimNameX;
@@ -182,6 +181,37 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
     }
 
     return result;
+  }
+
+  /**
+   * Retrieves the time dimension values from the NetCDF file for debugging purposes.
+   * 
+   * @return List of time dimension values, or empty list if not available
+   * @throws IOException If the NetCDF file is not open or an error occurs while reading
+   */
+  public List<Double> getTimeDimensionValues() throws IOException {
+    checkFileOpen();
+    ensureDimensionsSet();
+    
+    if (dimNameTime == null) {
+      return new ArrayList<>();
+    }
+    
+    try {
+      Variable timeVar = ncFile.findVariable(dimNameTime);
+      if (timeVar == null) {
+        return new ArrayList<>();
+      }
+      
+      Array timeArray = timeVar.read();
+      List<Double> timeValues = new ArrayList<>();
+      for (int i = 0; i < timeArray.getSize(); i++) {
+        timeValues.add(timeArray.getDouble(i));
+      }
+      return timeValues;
+    } catch (Exception e) {
+      throw new IOException("Failed to read time dimension values: " + e.getMessage(), e);
+    }
   }
 
   /**
@@ -361,23 +391,16 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         }
       }
 
-      // Get cached data and index into it
-      Array data = getDataForVariable(variableName);
+      // Read the specific data section using NetCDF's proper indexing
       double value;
       try {
-        // Calculate flat array index based on dimension order
-        int index = 0;
-        int multiplier = 1;
-        for (int i = rank - 1; i >= 0; i--) {
-          int pos = i == dimIdxX ? indexX :
-                    i == dimIdxY ? indexY :
-                    i == timeDimIdx ? timeStep : 0;
-          index += pos * multiplier;
-          multiplier *= shape[i];
-        }
-        value = data.getDouble(index);
+        // Use the origin and size arrays to read exactly the data point we want
+        Array sectionData = var.read(origin, size);
+        
+        // Since we're reading a single point (all sizes are 1), get the first element
+        value = sectionData.getDouble(0);
       } catch (Exception e) {
-        return Optional.empty(); // Invalid index
+        return Optional.empty(); // Invalid index or read error
       }
 
 
@@ -406,7 +429,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
       // Create units and BigDecimal value
       Units units = Units.of(unit);
-      BigDecimal bigDecimalValue = new BigDecimal(value).setScale(6, RoundingMode.HALF_UP);
+      BigDecimal bigDecimalValue = new BigDecimal(value);
 
       // Create an EngineValue with the result
       EngineValue result = valueFactory.build(bigDecimalValue, units);
@@ -702,7 +725,6 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         dimNameY = null;
         dimNameTime = null;
         crsCode = null;
-        variableDataCache.clear();
       }
     }
   }
@@ -726,30 +748,4 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
            || lowerPath.endsWith(".nc4");
   }
 
-  /**
-   * Gets cached data array for a variable, loading it if not present.
-   *
-   * @param variableName Name of the variable to load
-   * @return Array containing the variable data
-   * @throws IOException If reading fails
-   */
-  private Array getDataForVariable(String variableName) throws IOException {
-    Array cachedData = variableDataCache.get(variableName);
-    if (cachedData != null) {
-      return cachedData;
-    }
-
-    Variable var = ncFile.findVariable(variableName);
-    if (var == null) {
-      throw new IOException("Variable not found: " + variableName);
-    }
-
-    try {
-      Array data = var.read();
-      variableDataCache.put(variableName, data);
-      return data;
-    } catch (Exception e) {
-      throw new IOException("Failed to read variable data: " + e.getMessage(), e);
-    }
-  }
 }
