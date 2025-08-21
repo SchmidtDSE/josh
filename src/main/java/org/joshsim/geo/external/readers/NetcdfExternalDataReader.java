@@ -185,6 +185,37 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   }
 
   /**
+   * Retrieves the time dimension values from the NetCDF file.
+   *
+   * @return List of time dimension values, or empty list if not available
+   * @throws IOException If the NetCDF file is not open or an error occurs while reading
+   */
+  public List<Double> getTimeDimensionValues() throws IOException {
+    checkFileOpen();
+    ensureDimensionsSet();
+
+    if (dimNameTime == null) {
+      return new ArrayList<>();
+    }
+
+    try {
+      Variable timeVar = ncFile.findVariable(dimNameTime);
+      if (timeVar == null) {
+        return new ArrayList<>();
+      }
+
+      Array timeArray = timeVar.read();
+      List<Double> timeValues = new ArrayList<>();
+      for (int i = 0; i < timeArray.getSize(); i++) {
+        timeValues.add(timeArray.getDouble(i));
+      }
+      return timeValues;
+    } catch (Exception e) {
+      throw new IOException("Failed to read time dimension values: " + e.getMessage(), e);
+    }
+  }
+
+  /**
    * Retrieves the size of the time dimension if it is set and exists in the NetCDF file.
    *
    * <p>@return An Optional containing the size of the time dimension, or an empty Optional if
@@ -406,7 +437,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
       // Create units and BigDecimal value
       Units units = Units.of(unit);
-      BigDecimal bigDecimalValue = new BigDecimal(value).setScale(6, RoundingMode.HALF_UP);
+      BigDecimal bigDecimalValue = new BigDecimal(value);
 
       // Create an EngineValue with the result
       EngineValue result = valueFactory.build(bigDecimalValue, units);
@@ -752,4 +783,5 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
       throw new IOException("Failed to read variable data: " + e.getMessage(), e);
     }
   }
+
 }
