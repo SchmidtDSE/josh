@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
  */
 public class ExternalGeoMapperIntegrationTest {
 
-  private static final String RIVERSIDE_RESOURCE_PATH = "netcdf/precip_riverside_annual_agg.nc";
+  private static final String RIVERSIDE_RESOURCE_PATH = "netcdf/precip_riverside_annual.nc";
   private static final String DIM_X = "lon";
   private static final String DIM_Y = "lat";
   private static final String DIM_TIME = "calendar_year";
