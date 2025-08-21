@@ -241,6 +241,49 @@ public class NetcdfExternalDataReaderTest {
   }
 
   @Test
+  public void testGetTimeDimensionValues() throws IOException {
+    openAndSetExplicitDimensions(riversideFilePath);
+
+    List<Double> timeValues = reader.getTimeDimensionValues();
+
+    // Should have 30 years of data (2024-2053)
+    assertEquals(30, timeValues.size(), "Should have 30 time values");
+    
+    // Check that values are consecutive years starting from 2024
+    for (int i = 0; i < timeValues.size(); i++) {
+      double expectedYear = 2024.0 + i;
+      assertEquals(expectedYear, timeValues.get(i), 0.1, 
+          "Time value at index " + i + " should be year " + expectedYear);
+    }
+    
+    // Test specific years
+    assertTrue(timeValues.contains(2024.0), "Should contain year 2024");
+    assertTrue(timeValues.contains(2035.0), "Should contain year 2035");
+    assertTrue(timeValues.contains(2053.0), "Should contain year 2053");
+  }
+
+  @Test
+  public void testGetTimeDimensionValuesWithoutTimeDimension() throws IOException {
+    reader = new NetcdfExternalDataReader(valueFactory);
+    openAndSetExplicitDimensions(riversideFilePath);
+    
+    // Temporarily remove time dimension for this test
+    reader.setDimensions("lon", "lat", Optional.empty());
+    
+    List<Double> timeValues = reader.getTimeDimensionValues();
+    
+    assertTrue(timeValues.isEmpty(), "Should return empty list when no time dimension is set");
+  }
+
+  @Test
+  public void testGetTimeDimensionValuesFileNotOpen() {
+    reader = new NetcdfExternalDataReader(valueFactory);
+    
+    assertThrows(IOException.class, () -> reader.getTimeDimensionValues(),
+        "Should throw IOException when file is not open");
+  }
+
+  @Test
   public void testGetTimeDimensionSize() throws IOException {
     openAndSetExplicitDimensions(riversideFilePath);
 
