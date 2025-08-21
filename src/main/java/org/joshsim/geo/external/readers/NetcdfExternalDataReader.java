@@ -30,6 +30,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
   private final EngineValueFactory valueFactory;
   private Optional<CancelTask> cancelTask = Optional.empty();
+  private final Map<String, Array> variableDataCache = new HashMap<>();
 
   // Dimension names
   private String dimNameX;
@@ -53,7 +54,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
   /**
    * Constructs a NetcdfExternalDataReader with the specified value factory.
    *
-   * @par am valueFactory Factory for creating EngineValue objects
+   * @param valueFactory Factory for creating EngineValue objects
    */
   public NetcdfExternalDataReader(EngineValueFactory valueFactory) {
     this.valueFactory = valueFactory;
@@ -391,16 +392,23 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         }
       }
 
-      // Read the specific data section using NetCDF's proper indexing
+      // Get cached data and index into it
+      Array data = getDataForVariable(variableName);
       double value;
       try {
-        // Use the origin and size arrays to read exactly the data point we want
-        Array sectionData = var.read(origin, size);
-        
-        // Since we're reading a single point (all sizes are 1), get the first element
-        value = sectionData.getDouble(0);
+        // Calculate flat array index based on dimension order
+        int index = 0;
+        int multiplier = 1;
+        for (int i = rank - 1; i >= 0; i--) {
+          int pos = i == dimIdxX ? indexX :
+                    i == dimIdxY ? indexY :
+                    i == timeDimIdx ? timeStep : 0;
+          index += pos * multiplier;
+          multiplier *= shape[i];
+        }
+        value = data.getDouble(index);
       } catch (Exception e) {
-        return Optional.empty(); // Invalid index or read error
+        return Optional.empty(); // Invalid index
       }
 
 
@@ -725,6 +733,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         dimNameY = null;
         dimNameTime = null;
         crsCode = null;
+        variableDataCache.clear();
       }
     }
   }
@@ -746,6 +755,33 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
            || lowerPath.endsWith(".ncf")
            || lowerPath.endsWith(".netcdf")
            || lowerPath.endsWith(".nc4");
+  }
+
+  /**
+   * Gets cached data array for a variable, loading it if not present.
+   *
+   * @param variableName Name of the variable to load
+   * @return Array containing the variable data
+   * @throws IOException If reading fails
+   */
+  private Array getDataForVariable(String variableName) throws IOException {
+    Array cachedData = variableDataCache.get(variableName);
+    if (cachedData != null) {
+      return cachedData;
+    }
+
+    Variable var = ncFile.findVariable(variableName);
+    if (var == null) {
+      throw new IOException("Variable not found: " + variableName);
+    }
+
+    try {
+      Array data = var.read();
+      variableDataCache.put(variableName, data);
+      return data;
+    } catch (Exception e) {
+      throw new IOException("Failed to read variable data: " + e.getMessage(), e);
+    }
   }
 
 }
