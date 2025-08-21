@@ -3,7 +3,6 @@ package org.joshsim.lang.interpret.visitor;
 import java.util.HashSet;
 import java.util.Set;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
 import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -76,15 +75,15 @@ public class JoshConfigDiscoveryVisitor extends JoshLangBaseVisitor<Set<Discover
 
     // Handle specific expression types
     if (defaultValueContext instanceof JoshLangParser.SimpleExpressionContext) {
-      JoshLangParser.SimpleExpressionContext simpleExpr = 
+      JoshLangParser.SimpleExpressionContext simpleExpr =
           (JoshLangParser.SimpleExpressionContext) defaultValueContext;
       return extractSimpleExpressionString(simpleExpr);
     } else if (defaultValueContext instanceof JoshLangParser.SimpleNumberContext) {
-      JoshLangParser.SimpleNumberContext simpleNumber = 
+      JoshLangParser.SimpleNumberContext simpleNumber =
           (JoshLangParser.SimpleNumberContext) defaultValueContext;
       return extractSimpleNumberString(simpleNumber);
     } else if (defaultValueContext instanceof JoshLangParser.SimpleStringContext) {
-      JoshLangParser.SimpleStringContext simpleString = 
+      JoshLangParser.SimpleStringContext simpleString =
           (JoshLangParser.SimpleStringContext) defaultValueContext;
       return extractSimpleStringString(simpleString);
     } else {

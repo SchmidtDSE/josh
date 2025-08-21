@@ -186,24 +186,24 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
 
   /**
    * Retrieves the time dimension values from the NetCDF file.
-   * 
+   *
    * @return List of time dimension values, or empty list if not available
    * @throws IOException If the NetCDF file is not open or an error occurs while reading
    */
   public List<Double> getTimeDimensionValues() throws IOException {
     checkFileOpen();
     ensureDimensionsSet();
-    
+
     if (dimNameTime == null) {
       return new ArrayList<>();
     }
-    
+
     try {
       Variable timeVar = ncFile.findVariable(dimNameTime);
       if (timeVar == null) {
         return new ArrayList<>();
       }
-      
+
       Array timeArray = timeVar.read();
       List<Double> timeValues = new ArrayList<>();
       for (int i = 0; i < timeArray.getSize(); i++) {

@@ -248,14 +248,14 @@ public class NetcdfExternalDataReaderTest {
 
     // Should have 30 years of data (2024-2053)
     assertEquals(30, timeValues.size(), "Should have 30 time values");
-    
+
     // Check that values are consecutive years starting from 2024
     for (int i = 0; i < timeValues.size(); i++) {
       double expectedYear = 2024.0 + i;
-      assertEquals(expectedYear, timeValues.get(i), 0.1, 
+      assertEquals(expectedYear, timeValues.get(i), 0.1,
           "Time value at index " + i + " should be year " + expectedYear);
     }
-    
+
     // Test specific years
     assertTrue(timeValues.contains(2024.0), "Should contain year 2024");
     assertTrue(timeValues.contains(2035.0), "Should contain year 2035");
@@ -266,19 +266,19 @@ public class NetcdfExternalDataReaderTest {
   public void testGetTimeDimensionValuesWithoutTimeDimension() throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
     openAndSetExplicitDimensions(riversideFilePath);
-    
+
     // Temporarily remove time dimension for this test
     reader.setDimensions("lon", "lat", Optional.empty());
-    
+
     List<Double> timeValues = reader.getTimeDimensionValues();
-    
+
     assertTrue(timeValues.isEmpty(), "Should return empty list when no time dimension is set");
   }
 
   @Test
   public void testGetTimeDimensionValuesFileNotOpen() {
     reader = new NetcdfExternalDataReader(valueFactory);
-    
+
     assertThrows(IOException.class, () -> reader.getTimeDimensionValues(),
         "Should throw IOException when file is not open");
   }
@@ -448,25 +448,25 @@ public class NetcdfExternalDataReaderTest {
 
   private void testKnownPointsFromCsv(String csvFileName, int calendarYear, BigDecimal lat, BigDecimal lon, BigDecimal expectedValue) throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
-    
+
     String resourcePath = determineNetcdfResource(csvFileName);
-    
+
     URL resourceUrl = getClass().getClassLoader().getResource(resourcePath);
     assertNotNull(resourceUrl, "Test resource not found: " + resourcePath);
     String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
-    
+
     reader.open(filePath);
     reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
     reader.setCrsCode("EPSG:4326");
-    
+
     String variableName = determineVariableName(csvFileName);
-    
+
     // Verify coordinate precision matches CSV test points (6 decimal places as per investigation)
     int latScale = lat.scale();
     int lonScale = lon.scale();
     assertTrue(latScale <= 6, String.format("Latitude precision should be 6 decimal places or less, got %d", latScale));
     assertTrue(lonScale <= 6, String.format("Longitude precision should be 6 decimal places or less, got %d", lonScale));
-    
+
     // Find the correct time step by searching the time dimension array (like Python's calendar_year=year)
     int timeStep = -1;
     try {
@@ -483,11 +483,11 @@ public class NetcdfExternalDataReaderTest {
     } catch (IOException e) {
       throw new RuntimeException("Failed to read time dimension: " + e.getMessage(), e);
     }
-    
+
     Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, timeStep);
-    
+
     if (expectedValue != null) {
-      assertTrue(value.isPresent(), 
+      assertTrue(value.isPresent(),
           String.format("Value should be present at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
       assertFloatingPointEquals(expectedValue.doubleValue(), value.get().getAsDecimal().doubleValue(),
           String.format("Value mismatch at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
@@ -513,18 +513,18 @@ public class NetcdfExternalDataReaderTest {
     } else if (Double.isNaN(expected) || Double.isNaN(actual)) {
       fail(message + String.format(": Expected NaN=%b, Actual NaN=%b", Double.isNaN(expected), Double.isNaN(actual)));
     }
-    
+
     // Handle normal floating point comparison with tolerance
     double difference = Math.abs(expected - actual);
     double relativeDifference = Math.abs(difference / expected);
-    
-    // Use absolute tolerance for very small numbers, relative tolerance for larger numbers  
+
+    // Use absolute tolerance for very small numbers, relative tolerance for larger numbers
     // This matches the Python test tolerances from the investigation
-    boolean withinTolerance = difference <= IEEE_754_TOLERANCE || 
+    boolean withinTolerance = difference <= IEEE_754_TOLERANCE ||
                              relativeDifference <= RELATIVE_TOLERANCE;
-    
+
     if (!withinTolerance) {
-      fail(message + String.format(": Expected <%f> but was <%f>, difference=<%e>, relative difference=<%e>", 
+      fail(message + String.format(": Expected <%f> but was <%f>, difference=<%e>, relative difference=<%e>",
            expected, actual, difference, relativeDifference));
     }
   }
