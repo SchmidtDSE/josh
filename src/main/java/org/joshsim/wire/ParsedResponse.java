@@ -142,13 +142,7 @@ public class ParsedResponse {
   @Override
   public String toString() {
     return String.format(
-        "ParsedResponse{"
-            + "type=%s,"
-            + " replicate=%d,"
-            + " step=%d,"
-            + " data='%s',"
-            + " error='%s'"
-            + "}",
+        "ParsedResponse{type=%s, replicate=%d, step=%d, data='%s', error='%s'}",
         type,
         replicateNumber,
         stepCount,
