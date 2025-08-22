@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Strategy for parsing END response patterns from wire format.
  *
  * <p>This strategy parses response lines matching the pattern [end N] where N is
- * the replicate number that completed. It creates ParsedResponse objects of type END.</p>
+ * the replicate number that completed. It creates WireResponse objects of type END.</p>
  */
 public class EndPatternStrategy implements WireResponseParserStrategy {
 
@@ -37,8 +37,8 @@ public class EndPatternStrategy implements WireResponseParserStrategy {
 
     try {
       int replicateNumber = Integer.parseInt(matcher.group(1));
-      ParsedResponse response =
-          new ParsedResponse(ParsedResponse.ResponseType.END, replicateNumber);
+      WireResponse response =
+          new WireResponse(WireResponse.ResponseType.END, replicateNumber);
       return new WireParseResult(response);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid replicate number in END response: " + line, e);

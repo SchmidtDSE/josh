@@ -41,8 +41,8 @@ import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
 import org.joshsim.wire.NamedMap;
-import org.joshsim.wire.ParsedResponse;
 import org.joshsim.wire.WireConverter;
+import org.joshsim.wire.WireResponse;
 import org.joshsim.wire.WireResponseParser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -418,14 +418,14 @@ public class RunRemoteCommand implements Callable<Integer> {
       responseStream.forEach(line -> {
         try {
           // Parse line using WireResponseParser
-          Optional<ParsedResponse> optionalParsed =
+          Optional<WireResponse> optionalParsed =
               WireResponseParser.parseEngineResponse(line.trim());
 
           if (!optionalParsed.isPresent()) {
             return; // Skip ignored lines
           }
 
-          ParsedResponse parsed = optionalParsed.get();
+          WireResponse parsed = optionalParsed.get();
           switch (parsed.getType()) {
             case DATUM -> {
               // Deserialize wire format to NamedMap using Component 1

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Strategy for parsing error response patterns from wire format.
  *
  * <p>This strategy parses response lines matching the pattern [error] message
- * where message contains the error description. It creates ParsedResponse objects
+ * where message contains the error description. It creates WireResponse objects
  * of type ERROR.</p>
  */
 public class ErrorPatternStrategy implements WireResponseParserStrategy {
@@ -37,7 +37,7 @@ public class ErrorPatternStrategy implements WireResponseParserStrategy {
     }
 
     String errorMessage = matcher.group(1);
-    ParsedResponse response = new ParsedResponse(errorMessage);
+    WireResponse response = new WireResponse(errorMessage);
     return new WireParseResult(response);
   }
 }

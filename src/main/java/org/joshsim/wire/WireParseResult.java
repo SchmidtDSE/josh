@@ -18,16 +18,16 @@ package org.joshsim.wire;
  */
 public class WireParseResult {
   private final WireParseOutcome outcome;
-  private final ParsedResponse parsedResponse;
+  private final WireResponse parsedResponse;
 
   /**
    * Constructor for successful parse results.
    *
    * @param parsedResponse The successfully parsed response data
    */
-  public WireParseResult(ParsedResponse parsedResponse) {
+  public WireParseResult(WireResponse parsedResponse) {
     if (parsedResponse == null) {
-      throw new IllegalArgumentException("ParsedResponse cannot be null");
+      throw new IllegalArgumentException("WireResponse cannot be null");
     }
     this.outcome = WireParseOutcome.PARSED;
     this.parsedResponse = parsedResponse;
@@ -69,7 +69,7 @@ public class WireParseResult {
    *
    * @return The parsed response data, or null if not parsed
    */
-  public ParsedResponse getParsedResponse() {
+  public WireResponse getParsedResponse() {
     return parsedResponse;
   }
 
