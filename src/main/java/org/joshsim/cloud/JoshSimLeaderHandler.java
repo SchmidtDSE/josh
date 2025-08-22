@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+import org.joshsim.wire.ParsedResponse;
+import org.joshsim.wire.WireResponseParser;
 
 
 /**
@@ -349,14 +351,37 @@ public class JoshSimLeaderHandler implements HttpHandler {
       try {
         response.body().forEach(line -> {
           try {
+            // Parse worker response using existing wire format parser
+            Optional<ParsedResponse> parsed = WireResponseParser.parseEngineResponse(line);
+            if (parsed.isEmpty()) {
+              return; // Skip empty or ignored lines
+            }
+            
+            ParsedResponse parsedResponse = parsed.get();
             String outputLine;
-            if (line.startsWith("[progress ")) {
-              // Convert per-replicate progress to cumulative
-              int cumulative = cumulativeStepCount.incrementAndGet();
-              outputLine = String.format("[progress %d]\n", cumulative);
-            } else {
-              // Prepend replicate number to data lines
-              outputLine = String.format("[%d] %s\n", replicateNumber, line);
+            
+            switch (parsedResponse.getType()) {
+              case PROGRESS:
+                // Convert per-replicate progress to cumulative
+                int cumulative = cumulativeStepCount.incrementAndGet();
+                outputLine = String.format("[progress %d]\n", cumulative);
+                break;
+              case DATUM:
+                // Rewrite replicate number from worker's 0 to actual replicate number
+                outputLine = String.format(
+                    "[%d] %s\n", replicateNumber, parsedResponse.getDataLine());
+                break;
+              case END:
+                // Rewrite end marker with correct replicate number
+                outputLine = String.format("[end %d]\n", replicateNumber);
+                break;
+              case ERROR:
+                // Forward error messages unchanged
+                outputLine = String.format("[error] %s\n", parsedResponse.getErrorMessage());
+                break;
+              default:
+                // Skip unknown types
+                return;
             }
 
             // Thread-safe write to client
@@ -364,17 +389,21 @@ public class JoshSimLeaderHandler implements HttpHandler {
               clientExchange.getOutputStream().write(outputLine.getBytes());
               clientExchange.getOutputStream().flush();
             }
+          } catch (IllegalArgumentException e) {
+            // Handle lines that don't match wire format - pass through as-is with replicate prefix
+            String fallbackOutput = String.format("[%d] %s\n", replicateNumber, line);
+            try {
+              synchronized (clientExchange.getOutputStream()) {
+                clientExchange.getOutputStream().write(fallbackOutput.getBytes());
+                clientExchange.getOutputStream().flush();
+              }
+            } catch (IOException ioException) {
+              throw new RuntimeException("Error streaming fallback to client", ioException);
+            }
           } catch (IOException e) {
             throw new RuntimeException("Error streaming to client", e);
           }
         });
-
-        // Send end marker
-        synchronized (clientExchange.getOutputStream()) {
-          String endMarker = String.format("[end %d]\n", replicateNumber);
-          clientExchange.getOutputStream().write(endMarker.getBytes());
-          clientExchange.getOutputStream().flush();
-        }
       } catch (Exception e) {
         throw new RuntimeException("Error processing response stream", e);
       }

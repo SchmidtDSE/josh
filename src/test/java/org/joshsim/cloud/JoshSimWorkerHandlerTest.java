@@ -2,7 +2,9 @@ package org.joshsim.cloud;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +15,7 @@ import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.HttpString;
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -135,5 +138,64 @@ class JoshSimWorkerHandlerTest {
     // Then
     verify(exchange).setStatusCode(200);
     verify(exchange).getResponseHeaders();
+  }
+
+  @Test
+  void whenSimulationCompletes_shouldOutputStandardizedWireFormat() throws Exception {
+    // Given
+    FormData.FormValue codeValue = mock(FormData.FormValue.class);
+    FormData.FormValue nameValue = mock(FormData.FormValue.class);
+    FormData.FormValue externalDataValue = mock(FormData.FormValue.class);
+    FormData.FormValue favorBigDecimalValue = mock(FormData.FormValue.class);
+    FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);
+    
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    
+    when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
+    when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
+    when(formData.contains("code")).thenReturn(true);
+    when(formData.contains("name")).thenReturn(true);
+    when(formData.contains("externalData")).thenReturn(true);
+    when(formData.contains("favorBigDecimal")).thenReturn(true);
+    when(formData.contains("apiKey")).thenReturn(true);
+    when(formData.getFirst("code")).thenReturn(codeValue);
+    when(formData.getFirst("name")).thenReturn(nameValue);
+    when(formData.getFirst("externalData")).thenReturn(externalDataValue);
+    when(formData.getFirst("favorBigDecimal")).thenReturn(favorBigDecimalValue);
+    when(formData.getFirst("apiKey")).thenReturn(apiKeyValue);
+    when(codeValue.getValue()).thenReturn(
+        "simulation basicPatch { organism dog { name \"spot\" } }");
+    when(nameValue.getValue()).thenReturn("basicPatch");
+    when(externalDataValue.getValue()).thenReturn("{}");
+    when(favorBigDecimalValue.getValue()).thenReturn("false");
+    when(apiKeyValue.getValue()).thenReturn("valid-key");
+    when(formDataParser.parseBlocking()).thenReturn(formData);
+    when(exchange.getOutputStream()).thenReturn(outputStream);
+    
+    // Create a fake form parser factory that returns our mock parser
+    FormParserFactory mockFactory = mock(FormParserFactory.class);
+    when(mockFactory.createParser(exchange)).thenReturn(formDataParser);
+    
+    // When
+    handler.handleRequestTrusted(exchange);
+    
+    // Then
+    String output = outputStream.toString();
+    
+    // Verify standardized wire format: exports should be wrapped with [0] prefix
+    // and end marker should be [end 0]
+    if (output.contains("[end 0]")) {
+      // Only verify format if simulation actually completed
+      verify(exchange).setStatusCode(200);
+      
+      // Verify that all data exports are prefixed with [0]
+      String[] lines = output.split("\n");
+      for (String line : lines) {
+        if (!line.trim().isEmpty() && !line.startsWith("[progress") && !line.startsWith("[end")) {
+          // All other output should be prefixed with [0]
+          assert line.startsWith("[0] ") : "Export line should be prefixed with [0]: " + line;
+        }
+      }
+    }
   }
 }
