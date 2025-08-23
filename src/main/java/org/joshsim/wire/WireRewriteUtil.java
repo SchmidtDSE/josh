@@ -80,25 +80,13 @@ public class WireRewriteUtil {
       throw new IllegalArgumentException("Response cannot be null");
     }
 
-    switch (response.getType()) {
-      case DATUM -> {
-        return new WireResponse(newReplicateNumber, response.getDataLine());
-      }
-      case END -> {
-        return new WireResponse(WireResponse.ResponseType.END, newReplicateNumber);
-      }
-      case PROGRESS -> {
-        // Progress responses don't have replicate numbers - return original
-        return response;
-      }
-      case ERROR -> {
-        // Error responses don't have replicate numbers - return original
-        return response;
-      }
-      default -> {
-        throw new IllegalArgumentException("Unknown response type: " + response.getType());
-      }
-    }
+    return switch (response.getType()) {
+      case DATUM -> new WireResponse(newReplicateNumber, response.getDataLine());
+      case END -> new WireResponse(WireResponse.ResponseType.END, newReplicateNumber);
+      case PROGRESS -> response; // Progress responses don't have replicate numbers
+      case ERROR -> response;    // Error responses don't have replicate numbers
+      default -> throw new IllegalArgumentException("Unknown response type: " + response.getType());
+    };
   }
 
   /**
