@@ -53,10 +53,10 @@ jobs:
           allowed_tools: "Bash(./gradlew:*),Bash(find:*),Bash(grep:*),Bash(java:*)"
           
           # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
+          custom_instructions: |
+            Please review README.md and llms.txt before starting.
+            Please use ./gradlew test checkstyleMain checkstyleTest when done
+            Please try to follow conventions of existing codebase where possible
           
           # Optional: Custom environment variables for Claude
           # claude_env: |
