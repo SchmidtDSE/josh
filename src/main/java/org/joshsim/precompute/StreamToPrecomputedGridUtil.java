@@ -1,5 +1,6 @@
 package org.joshsim.precompute;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
@@ -28,6 +29,25 @@ public class StreamToPrecomputedGridUtil {
   public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units) {
+    return streamToGrid(engineValueFactory, streamGetter, extents, minTimestep, maxTimestep,
+        units, Optional.empty());
+  }
+
+  /**
+   * Convert a set of streams of geo keys and values to a precomputed grid with default value.
+   *
+   * @param engineValueFactory The factory which should be used in creating values returned.
+   * @param streamGetter The stream getter which will provide the streams for each timestep.
+   * @param extents The extents of the grid to be created.
+   * @param minTimestep The start of the timestep series that should be supported in this grid.
+   * @param maxTimestep The end of the timestep series that should be supported in this grid.
+   * @param units The units that returned EngineValues should be created with.
+   * @param defaultValue Optional default value to fill grid spaces before copying data.
+   * @return The precomputed grid created from the streams.
+   */
+  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
+        StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
+        long maxTimestep, Units units, Optional<Double> defaultValue) {
 
     DoublePrecomputedGrid grid = new DoublePrecomputedGrid(
         engineValueFactory,
@@ -36,6 +56,11 @@ public class StreamToPrecomputedGridUtil {
         maxTimestep,
         units
     );
+
+    // Fill with default value if provided
+    if (defaultValue.isPresent()) {
+      grid.fill(defaultValue.get());
+    }
 
     for (long timestep = minTimestep; timestep <= maxTimestep; timestep++) {
       Stream<PatchKeyConverter.ProjectedValue> values = streamGetter.getForTimestep(timestep);

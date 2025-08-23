@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
@@ -87,6 +88,59 @@ class StreamToPrecomputedGridUtilTest {
         minTimestep,
         maxTimestep,
         testUnits
+    );
+
+    // Then
+    assertEquals(true, grid.isCompatible(mockExtents, minTimestep, maxTimestep));
+  }
+
+  @Test
+  void testStreamToGridWithDefaultValue() {
+    // Given
+    double defaultValue = -999.0;
+    
+    // Empty stream to test that default values are applied
+    StreamToPrecomputedGridUtil.StreamGetter streamGetter =
+        timestep -> Stream.empty();
+
+    // When
+    DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
+        mockFactory,
+        streamGetter,
+        mockExtents,
+        minTimestep,
+        maxTimestep,
+        testUnits,
+        Optional.of(defaultValue)
+    );
+
+    // Then
+    assertEquals(true, grid.isCompatible(mockExtents, minTimestep, maxTimestep));
+    // Additional verification that the grid is properly filled would require
+    // accessing the internal values, which is not exposed through the interface
+  }
+
+  @Test
+  void testStreamToGridWithoutDefaultValue() {
+    // Given
+    PatchKeyConverter.ProjectedValue projectedValue = new PatchKeyConverter.ProjectedValue(
+        BigDecimal.ONE,
+        BigDecimal.ONE,
+        BigDecimal.valueOf(42.0)
+    );
+
+    StreamToPrecomputedGridUtil.StreamGetter streamGetter =
+        timestep -> Stream.of(projectedValue);
+
+    // When
+    DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
+        mockFactory,
+        streamGetter,
+        mockExtents,
+        minTimestep,
+        maxTimestep,
+        testUnits,
+        Optional.empty()
     );
 
     // Then

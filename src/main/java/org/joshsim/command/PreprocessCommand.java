@@ -140,6 +140,12 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private String timestep;
 
+  @Option(
+      names = "--default-value",
+      description = "Default value to fill grid spaces before copying data from source file"
+  )
+  private String defaultValue;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -186,7 +192,7 @@ public class PreprocessCommand implements Callable<Integer> {
       geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
     }
 
-    ExternalGeoMapper mapper = geoMapperBuilder.build();
+    final ExternalGeoMapper mapper = geoMapperBuilder.build();
 
     // Get metadata
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
@@ -234,10 +240,20 @@ public class PreprocessCommand implements Callable<Integer> {
     long startTimestep = forcedTimestep.orElse(bridge.getStartTimestep());
     long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
 
+    // Parse default value if provided, but only use it for non-amend operations
+    Optional<Double> parsedDefaultValue = Optional.empty();
+    if (defaultValue != null && !defaultValue.trim().isEmpty() && !amend) {
+      try {
+        parsedDefaultValue = Optional.of(Double.parseDouble(defaultValue));
+      } catch (NumberFormatException e) {
+        output.printError("Invalid default value: " + defaultValue + ". Must be a valid number.");
+        return 5;
+      }
+    }
+
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         valueFactory,
         (timestep) -> {
-          System.out.println("Preprocessing: " + timestep);
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
           try {
             geoStream = mapper.streamVariableTimeStepToPatches(
@@ -259,7 +275,8 @@ public class PreprocessCommand implements Callable<Integer> {
         ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
         startTimestep,
         endTimestep,
-        Units.of(unitsStr)
+        Units.of(unitsStr),
+        parsedDefaultValue
     );
 
     // If amending, combine with existing grid
