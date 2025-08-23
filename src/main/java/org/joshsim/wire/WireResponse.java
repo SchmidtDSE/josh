@@ -150,29 +150,23 @@ public class WireResponse {
    * @throws IllegalStateException if the response is in an invalid state
    */
   public String toWireFormat() {
-    switch (type) {
+    return switch (type) {
       case DATUM -> {
         if (dataLine == null) {
           throw new IllegalStateException("DATUM response must have dataLine");
         }
-        return String.format("[%d] %s", replicateNumber, dataLine);
+        yield String.format("[%d] %s", replicateNumber, dataLine);
       }
-      case PROGRESS -> {
-        return String.format("[progress %d]", stepCount);
-      }
-      case END -> {
-        return String.format("[end %d]", replicateNumber);
-      }
+      case PROGRESS -> String.format("[progress %d]", stepCount);
+      case END -> String.format("[end %d]", replicateNumber);
       case ERROR -> {
         if (errorMessage == null) {
           throw new IllegalStateException("ERROR response must have errorMessage");
         }
-        return String.format("[error] %s", errorMessage);
+        yield String.format("[error] %s", errorMessage);
       }
-      default -> {
-        throw new IllegalStateException("Unknown response type: " + type);
-      }
-    }
+      default -> throw new IllegalStateException("Unknown response type: " + type);
+    };
   }
 
   @Override
