@@ -97,11 +97,11 @@ jobs:
           java-version: '21'
       - name: Run tests
         run: ./gradlew test
-  testPreprocessTutorial:
+  testPreprocess:
     needs: buildJava
     environment: Build
     runs-on: ubuntu-latest
-    name: Test Tutorial Preprocessing
+    name: Test Preprocessing
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -116,23 +116,11 @@ jobs:
           name: fatJar
       - name: Setup environment
         run: |
-          mkdir -p landing
-          mv joshsim-fat.jar landing/
-          chmod +x landing/test_preprocess.sh
-      - name: Run comprehensive preprocessing tests
-        run: |
-          cd landing
-          ./test_preprocess.sh
-      - name: Upload preprocessed tutorial data
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: preprocessed-tutorial-data
-          path: |
-            landing/preprocessed_data/temperatureTulare.jshd
-            landing/preprocessed_data/precipitationTulare.jshd
-            landing/preprocessed_data/precipitation_geotiff.jshd
-          retention-days: 7
+          mkdir -p build/libs
+          mv joshsim-fat.jar build/libs/
+          chmod +x examples/test_basic_preprocess.sh
+      - name: Run basic preprocessing tests
+        run: bash examples/test_basic_preprocess.sh
   validateExamples:
     needs: buildJava
     environment: Build
@@ -155,7 +143,7 @@ jobs:
       - name: Validate examples
         run: bash examples/validate.sh
   runTests:
-    needs: [validateExamples, testPreprocessTutorial]
+    needs: [validateExamples, testPreprocess]
     environment: Build
     runs-on: ubuntu-latest
     name: Run Josh examples
@@ -186,7 +174,7 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocessTutorial ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
@@ -251,7 +239,7 @@ jobs:
     environment: Deploy
     runs-on: ubuntu-latest
     name: Deploy to SFTP
-    needs: [buildWeb, testPreprocessTutorial]
+    needs: [buildWeb, testPreprocess]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Set environment variables based on branch
