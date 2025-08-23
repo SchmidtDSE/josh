@@ -113,7 +113,7 @@ public class WireRewriteUtil {
    * @return A new WireResponse with cumulative progress count
    * @throws IllegalArgumentException if the response is not a PROGRESS type
    */
-  public static WireResponse rewriteProgressToCumulative(WireResponse response, 
+  public static WireResponse rewriteProgressToCumulative(WireResponse response,
                                                         AtomicInteger cumulativeCounter) {
     if (response == null) {
       throw new IllegalArgumentException("Response cannot be null");

@@ -59,7 +59,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     // Create HTTP request for remote leader
     HttpRequest request = createRemoteLeaderRequest(context);
 
-    context.getOutputOptions().printInfo("Sending simulation request to " 
+    context.getOutputOptions().printInfo("Sending simulation request to "
         + context.getEndpointUri());
 
     // Send request and process streaming response
@@ -69,7 +69,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     );
 
     if (response.statusCode() != 200) {
-      throw new RuntimeException("Remote execution failed with status: " 
+      throw new RuntimeException("Remote execution failed with status: "
           + response.statusCode());
     }
 

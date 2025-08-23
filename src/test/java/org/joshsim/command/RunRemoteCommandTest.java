@@ -393,7 +393,7 @@ public class RunRemoteCommandTest {
     RunRemoteStrategy strategy1 = (RunRemoteStrategy) selectMethod.invoke(command);
     assertInstanceOf(RunRemoteOffloadLeaderStrategy.class, strategy1);
 
-    // Test false -> LocalLeaderStrategy  
+    // Test false -> LocalLeaderStrategy
     remoteLeaderField.set(command, false);
     RunRemoteStrategy strategy2 = (RunRemoteStrategy) selectMethod.invoke(command);
     assertInstanceOf(RunRemoteLocalLeaderStrategy.class, strategy2);
@@ -413,18 +413,18 @@ public class RunRemoteCommandTest {
     }
   }
 
-  @Test 
+  @Test
   public void testStrategyPatternIntegration() throws Exception {
     // Test that the command properly integrates with strategy pattern
     Method selectMethod = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");
     selectMethod.setAccessible(true);
 
     RunRemoteStrategy strategy = (RunRemoteStrategy) selectMethod.invoke(command);
-    
+
     // Verify strategy implements the interface and can be executed
     assertNotNull(strategy);
     assertInstanceOf(RunRemoteStrategy.class, strategy);
-    
+
     // Default should be local leader strategy
     assertInstanceOf(RunRemoteLocalLeaderStrategy.class, strategy);
   }

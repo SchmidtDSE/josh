@@ -16,7 +16,7 @@ import org.joshsim.wire.WireRewriteUtil;
 
 /**
  * Response handler for processing worker responses in the leader context.
- * 
+ *
  * <p>This class handles streaming responses from worker nodes, parsing wire format messages
  * and rewriting them with appropriate replicate numbers and cumulative progress counts
  * for the leader's client connection.</p>
@@ -33,10 +33,10 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
       if (parsed.isEmpty()) {
         return; // Skip empty or ignored lines
       }
-      
+
       WireResponse parsedResponse = parsed.get();
       String outputLine = generateOutputLine(parsedResponse, replicateNumber, cumulativeStepCount);
-      
+
       // Thread-safe write to client
       synchronized (clientExchange.getOutputStream()) {
         clientExchange.getOutputStream().write(outputLine.getBytes());
@@ -48,7 +48,7 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
       throw new RuntimeException("Error streaming to client", e);
     }
   }
-  
+
   /**
    * Generate the appropriate output line based on the parsed wire response.
    *
@@ -58,24 +58,24 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
    * @return The formatted output line to send to the client.
    * @throws IllegalArgumentException If the response type is unknown.
    */
-  private String generateOutputLine(WireResponse parsedResponse, int replicateNumber, 
+  private String generateOutputLine(WireResponse parsedResponse, int replicateNumber,
                                    AtomicInteger cumulativeStepCount) {
     return switch (parsedResponse.getType()) {
       case PROGRESS -> {
         // Convert per-replicate progress to cumulative
-        WireResponse cumulativeResponse = 
+        WireResponse cumulativeResponse =
             WireRewriteUtil.rewriteProgressToCumulative(parsedResponse, cumulativeStepCount);
         yield WireRewriteUtil.formatWireResponse(cumulativeResponse);
       }
       case DATUM -> {
         // Rewrite replicate number from worker's 0 to actual replicate number
-        WireResponse rewrittenDatum = 
+        WireResponse rewrittenDatum =
             WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
         yield WireRewriteUtil.formatWireResponse(rewrittenDatum);
       }
       case END -> {
         // Rewrite end marker with correct replicate number
-        WireResponse rewrittenEnd = 
+        WireResponse rewrittenEnd =
             WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
         yield WireRewriteUtil.formatWireResponse(rewrittenEnd);
       }
@@ -87,7 +87,7 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
           "Unknown wire response type: " + parsedResponse.getType());
     };
   }
-  
+
   /**
    * Handle exceptions that occur during leader response processing.
    *

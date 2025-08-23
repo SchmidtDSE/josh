@@ -20,8 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.joshsim.cloud.pipeline.LeaderResponseHandler;
 import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
 import org.joshsim.cloud.pipeline.WorkerTask;
-import org.joshsim.wire.WireResponse;
-import org.joshsim.wire.WireResponseParser;
 import org.joshsim.wire.WireRewriteUtil;
 
 
@@ -166,14 +164,14 @@ public class JoshSimLeaderHandler implements HttpHandler {
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
       WorkerTask task =
-          new WorkerTask(code, simulationName, apiKey, externalData, 
+          new WorkerTask(code, simulationName, apiKey, externalData,
                          favorBigDecimal, i);
       tasks.add(task);
     }
 
     // Execute tasks in parallel using ParallelWorkerHandler
     try {
-      parallelWorkerHandler.executeInParallel(tasks, httpServerExchange, 
+      parallelWorkerHandler.executeInParallel(tasks, httpServerExchange,
                                              new LeaderResponseHandler());
       httpServerExchange.endExchange();
     } catch (Exception e) {

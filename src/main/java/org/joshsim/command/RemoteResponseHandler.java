@@ -3,7 +3,7 @@
  *
  * <p>This class consolidates the duplicate response handling logic that was previously
  * spread across RunRemoteOffloadLeaderStrategy and RunRemoteLocalLeaderStrategy. It
- * provides a unified way to process wire format responses, manage export facades, 
+ * provides a unified way to process wire format responses, manage export facades,
  * and track progress across different remote execution strategies.</p>
  *
  * @license BSD-3-Clause
@@ -49,7 +49,7 @@ public class RemoteResponseHandler {
    * @param exportFactory Factory for creating export facades
    * @param useCumulativeProgress Whether to use cumulative progress tracking for coordination
    */
-  public RemoteResponseHandler(RunRemoteContext context, 
+  public RemoteResponseHandler(RunRemoteContext context,
                               ExportFacadeFactory exportFactory,
                               boolean useCumulativeProgress) {
     this.context = context;
@@ -96,7 +96,7 @@ public class RemoteResponseHandler {
   private Optional<WireResponse> parseResponseLineUnsafe(String line, int replicateNumber,
                                                         AtomicInteger cumulativeStepCount) {
     // Parse line using WireResponseParser
-    Optional<WireResponse> optionalParsed = 
+    Optional<WireResponse> optionalParsed =
         WireResponseParser.parseEngineResponse(line.trim());
 
     if (!optionalParsed.isPresent()) {
@@ -104,7 +104,7 @@ public class RemoteResponseHandler {
     }
 
     WireResponse parsed = optionalParsed.get();
-    
+
     switch (parsed.getType()) {
       case DATUM -> {
         handleDatumResponse(parsed);
@@ -119,7 +119,7 @@ public class RemoteResponseHandler {
       }
 
       case ERROR -> {
-        throw new RuntimeException("Remote execution error for replicate " 
+        throw new RuntimeException("Remote execution error for replicate "
             + replicateNumber + ": " + parsed.getErrorMessage());
       }
 
@@ -163,9 +163,9 @@ public class RemoteResponseHandler {
    */
   private void handleProgressResponse(WireResponse response, AtomicInteger cumulativeStepCount) {
     currentStep.set(response.getStepCount());
-    
+
     long stepCountToReport = response.getStepCount();
-    
+
     if (useCumulativeProgress && cumulativeStepCount != null) {
       // Use cumulative progress for coordinated reporting
       WireResponse cumulativeProgress = WireRewriteUtil.rewriteProgressToCumulative(
@@ -174,7 +174,7 @@ public class RemoteResponseHandler {
       );
       stepCountToReport = cumulativeProgress.getStepCount();
     }
-    
+
     ProgressUpdate progressUpdate = context.getProgressCalculator()
         .updateStep(stepCountToReport);
     if (progressUpdate.shouldReport()) {
@@ -230,7 +230,7 @@ public class RemoteResponseHandler {
       try {
         facade.join();
       } catch (Exception e) {
-        context.getOutputOptions().printError("Failed to close export facade: " 
+        context.getOutputOptions().printError("Failed to close export facade: "
             + e.getMessage());
       }
     }

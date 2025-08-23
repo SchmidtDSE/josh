@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -67,7 +66,7 @@ public class RemoteResponseHandlerTest {
     when(progressCalculator.updateStep(42)).thenReturn(progressUpdate);
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(progressLine, 0, null);
 
     // Assert
@@ -86,7 +85,7 @@ public class RemoteResponseHandlerTest {
     when(progressCalculator.updateStep(40)).thenReturn(progressUpdate);
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         cumulativeHandler.processResponseLine(progressLine, 0, cumulativeCounter);
 
     // Assert
@@ -104,7 +103,7 @@ public class RemoteResponseHandlerTest {
     when(progressCalculator.updateStep(15)).thenReturn(progressUpdate);
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(progressLine, 0, null);
 
     // Assert
@@ -119,13 +118,13 @@ public class RemoteResponseHandlerTest {
     String datumLine = "[0] TestEntity:x=1\ty=2";
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(datumLine, 0, null);
 
     // Assert
     assertTrue(result.isPresent());
     assertEquals(org.joshsim.wire.WireResponse.ResponseType.DATUM, result.get().getType());
-    
+
     // Verify export facade was created and started
     verify(exportFactory).build(any(ExportTarget.class));
     verify(exportFacade).start();
@@ -156,7 +155,7 @@ public class RemoteResponseHandlerTest {
     when(exportFactory.build(any(ExportTarget.class)))
         .thenReturn(exportFacade)  // First call
         .thenReturn(exportFacade2); // Second call
-    
+
     String datumLine1 = "[0] Entity1:x=1\ty=2";
     String datumLine2 = "[0] Entity2:a=3\tb=4";
 
@@ -181,7 +180,7 @@ public class RemoteResponseHandlerTest {
     when(progressCalculator.updateReplicateCompleted(1)).thenReturn(endUpdate);
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(endLine, 0, null);
 
     // Assert
@@ -221,7 +220,7 @@ public class RemoteResponseHandlerTest {
     RuntimeException exception = assertThrows(RuntimeException.class, () -> {
       handler.processResponseLine(errorLine, 5, null);
     });
-    
+
     assertTrue(exception.getMessage().contains("Remote execution error for replicate 5"));
     assertTrue(exception.getMessage().contains("Simulation failed with error XYZ"));
   }
@@ -235,7 +234,7 @@ public class RemoteResponseHandlerTest {
     RuntimeException exception = assertThrows(RuntimeException.class, () -> {
       handler.processResponseLine(ignoredLine, 0, null);
     });
-    
+
     assertTrue(exception.getMessage().contains("Failed to process response for replicate 0"));
     assertTrue(exception.getCause().getMessage().contains("Invalid engine response format"));
   }
@@ -246,7 +245,7 @@ public class RemoteResponseHandlerTest {
     String emptyLine = "";
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(emptyLine, 0, null);
 
     // Assert
@@ -259,7 +258,7 @@ public class RemoteResponseHandlerTest {
     String whitespaceLine = "   \t  \n  ";
 
     // Act
-    Optional<org.joshsim.wire.WireResponse> result = 
+    Optional<org.joshsim.wire.WireResponse> result =
         handler.processResponseLine(whitespaceLine, 0, null);
 
     // Assert
@@ -271,12 +270,12 @@ public class RemoteResponseHandlerTest {
     // Arrange
     String datumLine1 = "[0] Entity1:x=1\ty=2";
     String datumLine2 = "[0] Entity2:a=3\tb=4";
-    
+
     ExportFacade exportFacade2 = mock(ExportFacade.class);
     when(exportFactory.build(any(ExportTarget.class)))
         .thenReturn(exportFacade)
         .thenReturn(exportFacade2);
-    
+
     // Process responses to create facades
     handler.processResponseLine(datumLine1, 0, null);
     handler.processResponseLine(datumLine2, 0, null);
@@ -294,7 +293,7 @@ public class RemoteResponseHandlerTest {
     // Arrange
     String datumLine = "[0] Entity1:x=1\ty=2";
     handler.processResponseLine(datumLine, 0, null);
-    
+
     doThrow(new RuntimeException("Join failed")).when(exportFacade).join();
 
     // Act - should not throw
@@ -339,7 +338,7 @@ public class RemoteResponseHandlerTest {
     RuntimeException exception = assertThrows(RuntimeException.class, () -> {
       handler.processResponseLine(malformedLine, 3, null);
     });
-    
+
     assertTrue(exception.getMessage().contains("Failed to process response for replicate 3"));
     assertTrue(exception.getCause().getMessage()
         .contains("Wire format must contain a colon separator"));

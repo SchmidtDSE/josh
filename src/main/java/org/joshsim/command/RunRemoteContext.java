@@ -26,33 +26,33 @@ import org.joshsim.util.SimulationMetadata;
  * execution options.</p>
  */
 public class RunRemoteContext {
-  
+
   // Basic simulation parameters
   private final File file;
   private final String simulation;
   private final int replicateNumber;
   private final boolean useFloat64;
-  
+
   // Remote endpoint configuration
   private final URI endpointUri;
   private final String apiKey;
   private final String[] dataFiles;
-  
+
   // Josh simulation code and external data
   private final String joshCode;
   private final String externalDataSerialized;
-  
+
   // Progress tracking and metadata
   private final SimulationMetadata metadata;
   private final ProgressCalculator progressCalculator;
-  
+
   // Output and configuration options
   private final OutputOptions outputOptions;
   private final MinioOptions minioOptions;
-  
+
   // Execution parameters for local leader mode
   private final int maxConcurrentWorkers;
-  
+
   /**
    * Creates a new RunRemoteContext with all necessary parameters.
    *

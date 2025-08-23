@@ -33,7 +33,7 @@ public class WorkerTask {
    * @param favorBigDecimal Whether to favor BigDecimal precision
    * @param replicateNumber The replicate number for this task
    */
-  public WorkerTask(String code, String simulationName, String apiKey, 
+  public WorkerTask(String code, String simulationName, String apiKey,
                    String externalData, boolean favorBigDecimal, int replicateNumber) {
     this.code = code;
     this.simulationName = simulationName;

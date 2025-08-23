@@ -2,9 +2,7 @@ package org.joshsim.cloud;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -148,9 +146,9 @@ class JoshSimWorkerHandlerTest {
     FormData.FormValue externalDataValue = mock(FormData.FormValue.class);
     FormData.FormValue favorBigDecimalValue = mock(FormData.FormValue.class);
     FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);
-    
+
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    
+
     when(apiDataLayer.apiKeyIsValid(anyString())).thenReturn(true);
     when(exchange.getRequestMethod()).thenReturn(new HttpString("POST"));
     when(formData.contains("code")).thenReturn(true);
@@ -171,23 +169,23 @@ class JoshSimWorkerHandlerTest {
     when(apiKeyValue.getValue()).thenReturn("valid-key");
     when(formDataParser.parseBlocking()).thenReturn(formData);
     when(exchange.getOutputStream()).thenReturn(outputStream);
-    
+
     // Create a fake form parser factory that returns our mock parser
     FormParserFactory mockFactory = mock(FormParserFactory.class);
     when(mockFactory.createParser(exchange)).thenReturn(formDataParser);
-    
+
     // When
     handler.handleRequestTrusted(exchange);
-    
+
     // Then
     String output = outputStream.toString();
-    
+
     // Verify standardized wire format: exports should be wrapped with [0] prefix
     // and end marker should be [end 0]
     if (output.contains("[end 0]")) {
       // Only verify format if simulation actually completed
       verify(exchange).setStatusCode(200);
-      
+
       // Verify that all data exports are prefixed with [0]
       String[] lines = output.split("\n");
       for (String line : lines) {

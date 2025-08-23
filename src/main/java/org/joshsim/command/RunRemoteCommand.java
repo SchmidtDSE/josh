@@ -226,14 +226,23 @@ public class RunRemoteCommand implements Callable<Integer> {
     // Serialize external data
     String externalDataSerialized = serializeExternalData();
 
-    // Create execution context
-    RunRemoteContext context = new RunRemoteContext(
-        file, simulation, replicateNumber, useFloat64,
-        endpointUri, apiKey, dataFiles,
-        joshCode, externalDataSerialized,
-        metadata, progressCalculator,
-        output, minioOptions, concurrentWorkers
-    );
+    // Create execution context using builder
+    RunRemoteContext context = new RunRemoteContextBuilder()
+        .withFile(file)
+        .withSimulation(simulation)
+        .withReplicateNumber(replicateNumber)
+        .withUseFloat64(useFloat64)
+        .withEndpointUri(endpointUri)
+        .withApiKey(apiKey)
+        .withDataFiles(dataFiles)
+        .withJoshCode(joshCode)
+        .withExternalDataSerialized(externalDataSerialized)
+        .withMetadata(metadata)
+        .withProgressCalculator(progressCalculator)
+        .withOutputOptions(output)
+        .withMinioOptions(minioOptions)
+        .withMaxConcurrentWorkers(concurrentWorkers)
+        .build();
 
     // Select and execute strategy
     RunRemoteStrategy strategy = selectExecutionStrategy();

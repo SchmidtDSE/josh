@@ -49,7 +49,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
   @Override
   public void execute(RunRemoteContext context) throws IOException, InterruptedException {
     context.getOutputOptions().printInfo("Using local leader mode - "
-        + "coordinating " + context.getMaxConcurrentWorkers() 
+        + "coordinating " + context.getMaxConcurrentWorkers()
         + " concurrent workers locally");
 
     // Convert the endpoint URI to point to worker handler instead of leader
@@ -75,14 +75,14 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
         context, exportFactory, true); // useCumulativeProgress = true for local coordination
 
     // Create wire response handler that delegates to shared handler
-    LocalLeaderWireResponseHandler wireResponseHandler = 
+    LocalLeaderWireResponseHandler wireResponseHandler =
         new LocalLeaderWireResponseHandler(responseHandler, cumulativeStepCount);
 
     try {
       // Create worker tasks - currently supporting single replicate but structured for multiple
       List<WorkerTask> tasks = createWorkerTasks(context);
-      
-      context.getOutputOptions().printInfo("Executing " + tasks.size() 
+
+      context.getOutputOptions().printInfo("Executing " + tasks.size()
           + " worker tasks in parallel");
 
       // Execute tasks using ParallelWorkerHandler with wire response handling
@@ -112,7 +112,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
     try {
       String path = leaderUri.getPath();
       String workerPath = path.replace("/runReplicates", "/runReplicate");
-      
+
       return new URI(
           leaderUri.getScheme(),
           leaderUri.getUserInfo(),
@@ -139,7 +139,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
    */
   private List<WorkerTask> createWorkerTasks(RunRemoteContext context) {
     List<WorkerTask> tasks = new ArrayList<>();
-    
+
     // Currently supporting single replicate - can be extended for multiple replicates
     WorkerTask task = new WorkerTask(
         context.getJoshCode(),
@@ -149,7 +149,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
         !context.isUseFloat64(), // favorBigDecimal is inverse of useFloat64
         context.getReplicateNumber()
     );
-    
+
     tasks.add(task);
     return tasks;
   }
@@ -161,9 +161,9 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
    * to the shared RemoteResponseHandler for consistent response processing.
    * It adapts the WireResponseHandler interface to work with the shared handler.</p>
    */
-  private static class LocalLeaderWireResponseHandler 
+  private static class LocalLeaderWireResponseHandler
       implements WireResponseHandler {
-    
+
     private final RemoteResponseHandler sharedHandler;
     private final AtomicInteger cumulativeStepCount;
 
@@ -197,7 +197,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
       // Convert WireResponse back to string format for shared handler
       // This avoids duplicating all the processing logic
       String wireFormatLine = response.toWireFormat();
-      
+
       // Delegate to shared handler with our cumulative step count
       sharedHandler.processResponseLine(wireFormatLine, replicateNumber, this.cumulativeStepCount);
     }

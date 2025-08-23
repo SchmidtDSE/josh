@@ -9,7 +9,6 @@ package org.joshsim.cloud.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -30,11 +29,11 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWorkerTaskConstruction() {
     WorkerTask task = new WorkerTask(
-        "simulation code", 
-        "test-simulation", 
-        "api-key-123", 
-        "external-data", 
-        true, 
+        "simulation code",
+        "test-simulation",
+        "api-key-123",
+        "external-data",
+        true,
         5
     );
 
@@ -49,11 +48,11 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWorkerTaskConstructionWithDefaults() {
     WorkerTask task = new WorkerTask(
-        "code", 
-        "name", 
-        "", 
-        "", 
-        false, 
+        "code",
+        "name",
+        "",
+        "",
+        false,
         0
     );
 
@@ -68,14 +67,14 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testParallelWorkerHandlerConstruction() {
     AtomicInteger counter = new AtomicInteger(0);
-    
+
     ParallelWorkerHandler handler = new ParallelWorkerHandler(
-        "http://localhost:8080/worker", 
-        10, 
+        "http://localhost:8080/worker",
+        10,
         counter
     );
 
-    // Constructor should succeed - we can't easily test internals without 
+    // Constructor should succeed - we can't easily test internals without
     // making fields package-private or adding getters
     // This test mainly verifies the constructor doesn't throw exceptions
     assertEquals(0, counter.get());
@@ -84,10 +83,10 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testParallelWorkerHandlerWithDifferentParameters() {
     AtomicInteger counter = new AtomicInteger(42);
-    
+
     ParallelWorkerHandler handler = new ParallelWorkerHandler(
-        "https://worker.example.com/api", 
-        5, 
+        "https://worker.example.com/api",
+        5,
         counter
     );
 
@@ -98,11 +97,11 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWorkerResponseHandlerInterface() {
     // Test that the WorkerResponseHandler interface can be implemented
-    WorkerResponseHandler handler = 
+    WorkerResponseHandler handler =
         (line, replicateNumber, exchange, cumulativeStepCount) -> {
           // Mock implementation for testing interface
         };
-    
+
     // This test mainly verifies the interface can be implemented
     // The actual functionality is tested in integration tests
   }
@@ -110,36 +109,36 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWireResponseHandlerInterface() {
     // Test that the WireResponseHandler interface can be implemented
-    WireResponseHandler handler = 
+    WireResponseHandler handler =
         mock(WireResponseHandler.class);
-    
+
     // Create a mock wire response to test with
     WireResponse mockResponse = new WireResponse(42L); // PROGRESS response
     AtomicInteger counter = new AtomicInteger(0);
-    
+
     // Call the handler interface method
     handler.handleWireResponse(mockResponse, 0, null, counter);
-    
+
     // Verify the method was called
     verify(handler).handleWireResponse(eq(mockResponse), eq(0), eq(null), eq(counter));
   }
 
   @Test
   public void testWireResponseHandlerWithDifferentResponseTypes() {
-    WireResponseHandler handler = 
+    WireResponseHandler handler =
         mock(WireResponseHandler.class);
     AtomicInteger counter = new AtomicInteger(0);
-    
+
     // Test with DATUM response
     WireResponse datumResponse = new WireResponse(0, "name=test,value=123");
     handler.handleWireResponse(datumResponse, 0, null, counter);
     verify(handler).handleWireResponse(eq(datumResponse), eq(0), eq(null), eq(counter));
-    
+
     // Test with END response
     WireResponse endResponse = new WireResponse(WireResponse.ResponseType.END, 1);
     handler.handleWireResponse(endResponse, 1, null, counter);
     verify(handler).handleWireResponse(eq(endResponse), eq(1), eq(null), eq(counter));
-    
+
     // Test with ERROR response
     WireResponse errorResponse = new WireResponse("Test error message");
     handler.handleWireResponse(errorResponse, 2, null, counter);
@@ -148,9 +147,9 @@ public class ParallelWorkerHandlerTest {
 
   // Note: Testing executeInParallel and executeInParallelWire would require either:
   // 1. A mock HTTP server setup (complex integration test)
-  // 2. Dependency injection to mock HTTP components 
+  // 2. Dependency injection to mock HTTP components
   // 3. End-to-end testing with real worker instances
-  // 
+  //
   // For now, we rely on:
   // - Unit tests of individual components (WorkerTask, constructor, interfaces)
   // - Integration tests in the existing test suite

@@ -257,7 +257,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
           },
           useSerial
       );
-      
+
       // Add end marker for replicate 0 to standardize wire format
       try {
         String endMarker = "[end 0]\n";
@@ -266,7 +266,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       } catch (IOException e) {
         SecurityUtil.logSecureError(apiDataLayer, apiKey, "end marker", e, null);
       }
-      
+
       return true;
     } catch (Exception e) {
       handleSimulationError(e, "simulation", httpServerExchange, apiKey);

@@ -13,9 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
-import org.joshsim.wire.WireResponse;
 import org.joshsim.wire.WireResponse.ResponseType;
-import org.joshsim.wire.WireResponseParser;
 import org.junit.jupiter.api.Test;
 
 

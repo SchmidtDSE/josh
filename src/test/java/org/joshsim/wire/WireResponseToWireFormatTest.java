@@ -7,7 +7,6 @@
 package org.joshsim.wire;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -107,7 +106,7 @@ public class WireResponseToWireFormatTest {
 
   // Test invalid states - these should throw IllegalStateException
 
-  @Test 
+  @Test
   public void testInvalidDatumState() {
     // Create a datum response with null dataLine (this would be an internal error)
     // We can't easily create this state with public constructors, so we'll skip this test

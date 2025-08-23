@@ -60,7 +60,7 @@ public class WireRewriteUtilTest {
   public void testRewriteReplicateNumberDatum() {
     WireResponse original = new WireResponse(0, "test data");
     WireResponse rewritten = WireRewriteUtil.rewriteReplicateNumber(original, 5);
-    
+
     assertEquals(WireResponse.ResponseType.DATUM, rewritten.getType());
     assertEquals(5, rewritten.getReplicateNumber());
     assertEquals("test data", rewritten.getDataLine());
@@ -70,7 +70,7 @@ public class WireRewriteUtilTest {
   public void testRewriteReplicateNumberEnd() {
     WireResponse original = new WireResponse(WireResponse.ResponseType.END, 0);
     WireResponse rewritten = WireRewriteUtil.rewriteReplicateNumber(original, 7);
-    
+
     assertEquals(WireResponse.ResponseType.END, rewritten.getType());
     assertEquals(7, rewritten.getReplicateNumber());
   }
@@ -79,7 +79,7 @@ public class WireRewriteUtilTest {
   public void testRewriteReplicateNumberProgress() {
     WireResponse original = new WireResponse(42);
     WireResponse rewritten = WireRewriteUtil.rewriteReplicateNumber(original, 5);
-    
+
     // Progress responses don't have replicate numbers - should return original
     assertEquals(original, rewritten);
     assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
@@ -90,7 +90,7 @@ public class WireRewriteUtilTest {
   public void testRewriteReplicateNumberError() {
     WireResponse original = new WireResponse("Error message");
     WireResponse rewritten = WireRewriteUtil.rewriteReplicateNumber(original, 5);
-    
+
     // Error responses don't have replicate numbers - should return original
     assertEquals(original, rewritten);
     assertEquals(WireResponse.ResponseType.ERROR, rewritten.getType());
@@ -108,10 +108,10 @@ public class WireRewriteUtilTest {
   public void testRewriteProgressToCumulative() {
     AtomicInteger cumulativeCounter = new AtomicInteger(10);
     WireResponse original = new WireResponse(5);
-    
-    WireResponse rewritten = 
+
+    WireResponse rewritten =
         WireRewriteUtil.rewriteProgressToCumulative(original, cumulativeCounter);
-    
+
     assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
     assertEquals(15, rewritten.getStepCount()); // 10 + 5
     assertEquals(15, cumulativeCounter.get()); // Counter should be updated
@@ -120,15 +120,15 @@ public class WireRewriteUtilTest {
   @Test
   public void testRewriteProgressToCumulativeMultipleTimes() {
     AtomicInteger cumulativeCounter = new AtomicInteger(0);
-    
+
     WireResponse first = new WireResponse(10);
-    WireResponse rewritten1 = 
+    WireResponse rewritten1 =
         WireRewriteUtil.rewriteProgressToCumulative(first, cumulativeCounter);
     assertEquals(10, rewritten1.getStepCount());
     assertEquals(10, cumulativeCounter.get());
-    
+
     WireResponse second = new WireResponse(5);
-    WireResponse rewritten2 = 
+    WireResponse rewritten2 =
         WireRewriteUtil.rewriteProgressToCumulative(second, cumulativeCounter);
     assertEquals(15, rewritten2.getStepCount());
     assertEquals(15, cumulativeCounter.get());
@@ -146,7 +146,7 @@ public class WireRewriteUtilTest {
   public void testRewriteProgressToCumulativeNonProgressResponse() {
     AtomicInteger cumulativeCounter = new AtomicInteger(0);
     WireResponse datumResponse = new WireResponse(5, "data");
-    
+
     assertThrows(IllegalArgumentException.class, () -> {
       WireRewriteUtil.rewriteProgressToCumulative(datumResponse, cumulativeCounter);
     });
@@ -189,13 +189,13 @@ public class WireRewriteUtilTest {
 
   @Test
   public void testWireResponseToWireFormatIntegration() {
-    // Test that WireRewriteUtil.formatWireResponse produces same result as 
+    // Test that WireRewriteUtil.formatWireResponse produces same result as
     // response.toWireFormat() + "\n"
     WireResponse response = new WireResponse(2, "test data");
-    
+
     String viaUtil = WireRewriteUtil.formatWireResponse(response);
     String viaMethod = response.toWireFormat() + "\n";
-    
+
     assertEquals(viaMethod, viaUtil);
   }
 }

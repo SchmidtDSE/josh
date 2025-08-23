@@ -49,7 +49,7 @@ public class ParallelWorkerHandler {
    * @param maxParallelRequests Maximum number of concurrent requests
    * @param cumulativeStepCount Shared counter for cumulative progress tracking
    */
-  public ParallelWorkerHandler(String workerUrl, int maxParallelRequests, 
+  public ParallelWorkerHandler(String workerUrl, int maxParallelRequests,
                               AtomicInteger cumulativeStepCount) {
     this.workerUrl = workerUrl;
     this.maxParallelRequests = maxParallelRequests;
@@ -70,7 +70,7 @@ public class ParallelWorkerHandler {
    */
   public void executeInParallel(List<WorkerTask> tasks, HttpServerExchange clientExchange,
                                WorkerResponseHandler responseHandler) {
-    executeInParallelCommon(tasks, clientExchange, 
+    executeInParallelCommon(tasks, clientExchange,
         task -> executeWorkerTask(task, clientExchange, cumulativeStepCount, responseHandler));
   }
 
@@ -89,7 +89,7 @@ public class ParallelWorkerHandler {
   public void executeInParallelWire(List<WorkerTask> tasks, HttpServerExchange clientExchange,
                                    WireResponseHandler wireResponseHandler) {
     executeInParallelCommon(tasks, clientExchange,
-        task -> executeWorkerTaskWire(task, clientExchange, cumulativeStepCount, 
+        task -> executeWorkerTaskWire(task, clientExchange, cumulativeStepCount,
                                      wireResponseHandler));
   }
 
@@ -112,7 +112,7 @@ public class ParallelWorkerHandler {
       // Execute tasks with streaming approach
       List<Future<?>> futures = new ArrayList<>();
       for (WorkerTask task : tasks) {
-        futures.add(executor.submit(() -> 
+        futures.add(executor.submit(() ->
             taskExecutor.execute(task)));
       }
 
@@ -154,8 +154,8 @@ public class ParallelWorkerHandler {
 
     if (response.statusCode() == 200) {
       try {
-        response.body().forEach(line -> 
-            responseHandler.handleResponseLine(line, task.getReplicateNumber(), 
+        response.body().forEach(line ->
+            responseHandler.handleResponseLine(line, task.getReplicateNumber(),
                                              clientExchange, cumulativeStepCount));
       } catch (Exception e) {
         throw new RuntimeException("Error processing response stream", e);
@@ -185,10 +185,10 @@ public class ParallelWorkerHandler {
     if (response.statusCode() == 200) {
       try {
         response.body().forEach(line -> {
-          Optional<WireResponse> parsedResponse = 
+          Optional<WireResponse> parsedResponse =
               WireResponseParser.parseEngineResponse(line.trim());
           if (parsedResponse.isPresent()) {
-            wireResponseHandler.handleWireResponse(parsedResponse.get(), 
+            wireResponseHandler.handleWireResponse(parsedResponse.get(),
                 task.getReplicateNumber(), clientExchange, cumulativeStepCount);
           }
         });

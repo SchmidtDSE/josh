@@ -40,7 +40,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
   @BeforeEach
   public void setUp() throws Exception {
     strategy = new RunRemoteOffloadLeaderStrategy();
-    
+
     // Create test context with valid parameters
     File testFile = new File("test.josh");
     String simulation = "TestSimulation";
@@ -108,13 +108,13 @@ public class RunRemoteOffloadLeaderStrategyTest {
   public void testBuildFormDataWithFloat64() throws Exception {
     // Create context with float64 enabled
     RunRemoteContext float64Context = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(), 
+        testContext.getFile(), testContext.getSimulation(),
         testContext.getReplicateNumber(), true, // useFloat64 = true
-        testContext.getEndpointUri(), testContext.getApiKey(), 
+        testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
-        testContext.getOutputOptions(), testContext.getMinioOptions(), 
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
         testContext.getMaxConcurrentWorkers()
     );
 
@@ -132,13 +132,13 @@ public class RunRemoteOffloadLeaderStrategyTest {
   public void testBuildFormDataUrlEncoding() throws Exception {
     // Create context with special characters that need URL encoding
     RunRemoteContext specialCharContext = new RunRemoteContext(
-        testContext.getFile(), "Test Simulation & More", 
+        testContext.getFile(), "Test Simulation & More",
         testContext.getReplicateNumber(), testContext.isUseFloat64(),
-        testContext.getEndpointUri(), "api-key/with+special&chars", 
+        testContext.getEndpointUri(), "api-key/with+special&chars",
         testContext.getDataFiles(),
         "simulation code with spaces", "external data with spaces",
         testContext.getMetadata(), testContext.getProgressCalculator(),
-        testContext.getOutputOptions(), testContext.getMinioOptions(), 
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
         testContext.getMaxConcurrentWorkers()
     );
 
@@ -159,7 +159,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
   public void testProcessStreamingResponseMethod() throws Exception {
     // Test that the streaming response processing method exists
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
-        "processStreamingResponse", 
+        "processStreamingResponse",
         java.util.stream.Stream.class, RunRemoteContext.class);
     method.setAccessible(true);
 
@@ -187,7 +187,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     assertEquals("config.jshc\t0\ttest config\t", formFields.get("externalData"));
   }
 
-  @Test 
+  @Test
   public void testNullContextHandling() {
     // Test that null context is handled appropriately
     assertThrows(Exception.class, () -> {
@@ -204,7 +204,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
   private Map<String, String> parseFormData(String formData) {
     Map<String, String> fields = new HashMap<>();
     String[] pairs = formData.split("&");
-    
+
     for (String pair : pairs) {
       String[] keyValue = pair.split("=", 2);
       if (keyValue.length == 2) {
@@ -217,7 +217,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         }
       }
     }
-    
+
     return fields;
   }
 
@@ -226,13 +226,13 @@ public class RunRemoteOffloadLeaderStrategyTest {
     // This test documents that execute() method requires network mocking
     // for comprehensive testing. The method structure is validated through
     // other tests that check individual components.
-    
+
     // Note: Full execute() testing would require:
     // 1. HTTP client mocking
-    // 2. Streaming response simulation  
+    // 2. Streaming response simulation
     // 3. Export facade mocking
     // This is beyond the scope of unit tests and would be integration tests
-    
+
     assertNotNull(strategy);
     assertNotNull(testContext);
   }

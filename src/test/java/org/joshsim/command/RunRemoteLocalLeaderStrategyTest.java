@@ -15,7 +15,6 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
-import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
 import org.joshsim.cloud.pipeline.WireResponseHandler;
 import org.joshsim.cloud.pipeline.WorkerTask;
 import org.joshsim.util.MinioOptions;
@@ -42,7 +41,7 @@ public class RunRemoteLocalLeaderStrategyTest {
   @BeforeEach
   public void setUp() throws Exception {
     strategy = new RunRemoteLocalLeaderStrategy();
-    
+
     // Create test context with valid parameters
     File testFile = new File("test.josh");
     String simulation = "TestSimulation";
@@ -111,7 +110,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     URI leaderUri = new URI("https://example.com/runReplicates?param=value#section");
     URI workerUri = (URI) method.invoke(strategy, leaderUri);
 
-    assertEquals("https://example.com/runReplicate?param=value#section", 
+    assertEquals("https://example.com/runReplicate?param=value#section",
         workerUri.toString());
   }
 
@@ -123,7 +122,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<WorkerTask> tasks = 
+    List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, testContext);
 
     // Verify task creation
@@ -143,13 +142,13 @@ public class RunRemoteLocalLeaderStrategyTest {
   public void testCreateWorkerTasksWithFloat64() throws Exception {
     // Create context with float64 enabled
     RunRemoteContext float64Context = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(), 
+        testContext.getFile(), testContext.getSimulation(),
         testContext.getReplicateNumber(), true, // useFloat64 = true
-        testContext.getEndpointUri(), testContext.getApiKey(), 
+        testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
-        testContext.getOutputOptions(), testContext.getMinioOptions(), 
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
         testContext.getMaxConcurrentWorkers()
     );
 
@@ -158,7 +157,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<WorkerTask> tasks = 
+    List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, float64Context);
 
     WorkerTask task = tasks.get(0);
@@ -169,14 +168,14 @@ public class RunRemoteLocalLeaderStrategyTest {
   public void testCreateWorkerTasksWithDifferentReplicate() throws Exception {
     // Create context with different replicate number
     RunRemoteContext differentReplicateContext = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(), 
+        testContext.getFile(), testContext.getSimulation(),
         3, // different replicate number
         testContext.isUseFloat64(),
-        testContext.getEndpointUri(), testContext.getApiKey(), 
+        testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
-        testContext.getOutputOptions(), testContext.getMinioOptions(), 
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
         testContext.getMaxConcurrentWorkers()
     );
 
@@ -185,7 +184,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<WorkerTask> tasks = 
+    List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, differentReplicateContext);
 
     WorkerTask task = tasks.get(0);
@@ -196,23 +195,23 @@ public class RunRemoteLocalLeaderStrategyTest {
   public void testLocalLeaderWireResponseHandlerExists() throws Exception {
     // Verify the inner LocalLeaderWireResponseHandler class exists and is accessible
     Class<?>[] innerClasses = RunRemoteLocalLeaderStrategy.class.getDeclaredClasses();
-    
+
     boolean foundWireResponseHandler = false;
     for (Class<?> innerClass : innerClasses) {
       if (innerClass.getSimpleName().equals("LocalLeaderWireResponseHandler")) {
         foundWireResponseHandler = true;
-        
+
         // Verify it implements the correct interface
         assertTrue(WireResponseHandler.class
             .isAssignableFrom(innerClass));
         break;
       }
     }
-    
+
     assertTrue(foundWireResponseHandler, "LocalLeaderWireResponseHandler inner class should exist");
   }
 
-  @Test 
+  @Test
   public void testNullContextHandling() {
     // Test that null context is handled appropriately
     assertThrows(Exception.class, () -> {
@@ -229,7 +228,7 @@ public class RunRemoteLocalLeaderStrategyTest {
 
     URI basicUri = new URI("http://example.com/test");
     URI result = (URI) method.invoke(strategy, basicUri);
-    
+
     // The method only replaces "runReplicates" with "runReplicate", so paths without
     // "runReplicates" remain unchanged
     assertEquals("http://example.com/test", result.toString());
@@ -243,11 +242,11 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<WorkerTask> tasks = 
+    List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, testContext);
 
     WorkerTask task = tasks.get(0);
-    
+
     // Verify all parameters match the context
     assertEquals(testContext.getJoshCode(), task.getCode());
     assertEquals(testContext.getSimulation(), task.getSimulationName());
@@ -261,14 +260,14 @@ public class RunRemoteLocalLeaderStrategyTest {
   public void testExecuteRequiresComplexMocking() {
     // This test documents that execute() method requires complex mocking
     // for comprehensive testing including ParallelWorkerHandler coordination.
-    
+
     // Note: Full execute() testing would require:
     // 1. ParallelWorkerHandler mocking
     // 2. Export facade factory mocking
     // 3. Worker response simulation
     // 4. Progress calculator interaction testing
     // This is beyond the scope of unit tests and would be integration tests
-    
+
     assertNotNull(strategy);
     assertNotNull(testContext);
     assertEquals(5, testContext.getMaxConcurrentWorkers());
