@@ -57,6 +57,59 @@ jobs:
             Please review README.md and llms.txt before starting.
             Please use ./gradlew test checkstyleMain checkstyleTest when done
             Please try to follow conventions of existing codebase where possible
+            
+            ## Available Specialized Agents
+            
+            The following specialized agents are available in .claude/agents/:
+            - component-planner: For refining and detailing implementation plans
+            - component-implementer: For implementing planned components from specifications
+            - component-validator: For reviewing and validating component implementations
+            - feedback-responder: For incorporating pull request feedback into specific files
+            
+            When using these agents, create task files in the tasks/ directory (except background.md) for context.
+            These task files do not need to be committed to git.
+            
+            ### Using the feedback-responder agent
+            When instructed to use the feedback-responder agent for pull request feedback:
+            - Call the agent ONCE per file that has feedback
+            - Provide three parameters:
+              1. Path to the task file
+              2. Path to the file being revised
+              3. The specific feedback for that file
+            
+            ### Using the component agents (planner, implementer, validator)
+            When instructed to use the component agents, follow this workflow:
+            
+            1. Create a task file with:
+               - Background section with project context
+               - Objective section with goals  
+               - Components section with detailed requirements
+               - Include ALL details from the GitHub action request (specific files, patterns, instructions)
+            
+            2. Create a detailed todo list including:
+               - Call component-planner with task file path and component name/number
+               - Call component-implementer with task file path and component name/number  
+               - Call component-validator with task file path and component name/number
+               - This sequence should be repeated for each component
+            
+            3. Workflow for each component:
+               - Execute the three agents in order: planner → implementer → validator
+               - After each component (including the final one):
+                 * Use git diff to review the changes
+                 * Make any necessary refinements
+                 * Run: ./gradlew test checkstyleMain checkstyleTest
+                 * Commit the changes with a single-line message (max 80 chars)
+                 * Commits will be squashed, so keep messages concise
+            
+            4. Important: There should be at least one commit per component when using component agents
+            
+            ### Task File Guidelines
+            When creating task markdown files:
+            - Capture ALL details provided in the GitHub action request
+            - Include specific files mentioned by the user
+            - Document software engineering patterns requested
+            - Preserve any special instructions or constraints
+            - Ensure agents have complete context to execute properly
           
           # Optional: Custom environment variables for Claude
           # claude_env: |
