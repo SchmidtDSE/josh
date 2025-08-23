@@ -75,45 +75,60 @@ public class RemoteResponseHandler {
   public Optional<WireResponse> processResponseLine(String line, int replicateNumber,
                                                    AtomicInteger cumulativeStepCount) {
     try {
-      // Parse line using WireResponseParser
-      Optional<WireResponse> optionalParsed = 
-          WireResponseParser.parseEngineResponse(line.trim());
-
-      if (!optionalParsed.isPresent()) {
-        return Optional.empty(); // Skip ignored lines
-      }
-
-      WireResponse parsed = optionalParsed.get();
-      
-      switch (parsed.getType()) {
-        case DATUM -> {
-          handleDatumResponse(parsed);
-        }
-
-        case PROGRESS -> {
-          handleProgressResponse(parsed, cumulativeStepCount);
-        }
-
-        case END -> {
-          handleEndResponse();
-        }
-
-        case ERROR -> {
-          throw new RuntimeException("Remote execution error for replicate " 
-              + replicateNumber + ": " + parsed.getErrorMessage());
-        }
-
-        default -> {
-          // No action needed for unknown types
-        }
-      }
-
-      return optionalParsed;
-
+      return parseResponseLineUnsafe(line, replicateNumber, cumulativeStepCount);
     } catch (Exception e) {
       throw new RuntimeException("Failed to process response for replicate "
           + replicateNumber + ": " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Parses a response line without exception handling.
+   *
+   * <p>This method contains the core parsing logic without try/catch handling,
+   * allowing the calling method to handle exceptions appropriately.</p>
+   *
+   * @param line The response line from the remote server or worker
+   * @param replicateNumber The replicate number for this response (for error reporting)
+   * @param cumulativeStepCount Optional cumulative step counter for progress coordination
+   * @return The parsed WireResponse for further processing by the caller, or empty if ignored
+   */
+  private Optional<WireResponse> parseResponseLineUnsafe(String line, int replicateNumber,
+                                                        AtomicInteger cumulativeStepCount) {
+    // Parse line using WireResponseParser
+    Optional<WireResponse> optionalParsed = 
+        WireResponseParser.parseEngineResponse(line.trim());
+
+    if (!optionalParsed.isPresent()) {
+      return Optional.empty(); // Skip ignored lines
+    }
+
+    WireResponse parsed = optionalParsed.get();
+    
+    switch (parsed.getType()) {
+      case DATUM -> {
+        handleDatumResponse(parsed);
+      }
+
+      case PROGRESS -> {
+        handleProgressResponse(parsed, cumulativeStepCount);
+      }
+
+      case END -> {
+        handleEndResponse();
+      }
+
+      case ERROR -> {
+        throw new RuntimeException("Remote execution error for replicate " 
+            + replicateNumber + ": " + parsed.getErrorMessage());
+      }
+
+      default -> {
+        throw new IllegalArgumentException("Unknown wire response type: " + parsed.getType());
+      }
+    }
+
+    return optionalParsed;
   }
 
   /**
@@ -154,7 +169,9 @@ public class RemoteResponseHandler {
     if (useCumulativeProgress && cumulativeStepCount != null) {
       // Use cumulative progress for coordinated reporting
       WireResponse cumulativeProgress = WireRewriteUtil.rewriteProgressToCumulative(
-          response, cumulativeStepCount);
+          response,
+          cumulativeStepCount
+      );
       stepCountToReport = cumulativeProgress.getStepCount();
     }
     
