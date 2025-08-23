@@ -7,6 +7,8 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -184,39 +186,37 @@ public class RunRemoteCommandTest {
   }
 
   @Test
-  public void testBuildFormData() throws Exception {
-    Method method = RunRemoteCommand.class.getDeclaredMethod("buildFormData",
-        String.class, String.class, String.class, String.class);
-    method.setAccessible(true);
-
-    String result = (String) method.invoke(command,
-        "simulation code", "TestSim", "test-api-key", "external data");
-
-    // Verify all required fields are present and URL encoded (spaces become + in URL encoding)
-    assertTrue(result.contains("code=simulation+code"));
-    assertTrue(result.contains("name=TestSim"));
-    assertTrue(result.contains("apiKey=test-api-key"));
-    assertTrue(result.contains("externalData=external+data"));
-    assertTrue(result.contains("replicates=1"));
-    assertTrue(result.contains("favorBigDecimal=true"));
-  }
-
-  @Test
-  public void testBuildFormDataWithFloat64() throws Exception {
-    // Set useFloat64 to true via reflection
+  public void testSelectExecutionStrategyRemoteLeaderTrue() throws Exception {
+    // Set useRemoteLeader to true via reflection
     java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField(
-        "useFloat64");
+        "useRemoteLeader");
     field.setAccessible(true);
     field.set(command, true);
 
-    Method method = RunRemoteCommand.class.getDeclaredMethod("buildFormData",
-        String.class, String.class, String.class, String.class);
+    Method method = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");
     method.setAccessible(true);
 
-    String result = (String) method.invoke(command,
-        "simulation code", "TestSim", "test-api-key", "external data");
+    RunRemoteStrategy strategy = (RunRemoteStrategy) method.invoke(command);
 
-    assertTrue(result.contains("favorBigDecimal=false"));
+    assertNotNull(strategy);
+    assertInstanceOf(RunRemoteOffloadLeaderStrategy.class, strategy);
+  }
+
+  @Test
+  public void testSelectExecutionStrategyRemoteLeaderFalse() throws Exception {
+    // Set useRemoteLeader to false via reflection (default value)
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField(
+        "useRemoteLeader");
+    field.setAccessible(true);
+    field.set(command, false);
+
+    Method method = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");
+    method.setAccessible(true);
+
+    RunRemoteStrategy strategy = (RunRemoteStrategy) method.invoke(command);
+
+    assertNotNull(strategy);
+    assertInstanceOf(RunRemoteLocalLeaderStrategy.class, strategy);
   }
 
   @Test
@@ -258,6 +258,26 @@ public class RunRemoteCommandTest {
 
     isJoshCloud = (Boolean) method.invoke(command);
     assertEquals(false, isJoshCloud);
+  }
+
+  @Test
+  public void testConcurrentWorkersDefaultValue() throws Exception {
+    // Test default value for concurrent workers
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("concurrentWorkers");
+    field.setAccessible(true);
+    int defaultValue = (Integer) field.get(command);
+
+    assertEquals(10, defaultValue);
+  }
+
+  @Test
+  public void testRemoteLeaderDefaultValue() throws Exception {
+    // Test default value for remote leader option
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("useRemoteLeader");
+    field.setAccessible(true);
+    boolean defaultValue = (Boolean) field.get(command);
+
+    assertEquals(false, defaultValue); // Default should be false for local leader mode
   }
 
   @Test
@@ -337,6 +357,48 @@ public class RunRemoteCommandTest {
         getJoshCloudEndpointConstant());
   }
 
+  @Test
+  public void testConcurrentWorkersFieldAccess() throws Exception {
+    // Test that concurrent workers field can be set and retrieved
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("concurrentWorkers");
+    field.setAccessible(true);
+    field.set(command, 20);
+
+    int value = (Integer) field.get(command);
+    assertEquals(20, value);
+  }
+
+  @Test
+  public void testRemoteLeaderFieldAccess() throws Exception {
+    // Test that remote leader field can be set and retrieved
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("useRemoteLeader");
+    field.setAccessible(true);
+    field.set(command, true);
+
+    boolean value = (Boolean) field.get(command);
+    assertEquals(true, value);
+  }
+
+  @Test
+  public void testStrategySelectionConsistency() throws Exception {
+    // Test that strategy selection is consistent with flag values
+    java.lang.reflect.Field remoteLeaderField = RunRemoteCommand.class
+        .getDeclaredField("useRemoteLeader");
+    remoteLeaderField.setAccessible(true);
+    Method selectMethod = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");
+    selectMethod.setAccessible(true);
+
+    // Test true -> OffloadLeaderStrategy
+    remoteLeaderField.set(command, true);
+    RunRemoteStrategy strategy1 = (RunRemoteStrategy) selectMethod.invoke(command);
+    assertInstanceOf(RunRemoteOffloadLeaderStrategy.class, strategy1);
+
+    // Test false -> LocalLeaderStrategy  
+    remoteLeaderField.set(command, false);
+    RunRemoteStrategy strategy2 = (RunRemoteStrategy) selectMethod.invoke(command);
+    assertInstanceOf(RunRemoteLocalLeaderStrategy.class, strategy2);
+  }
+
   /**
    * Helper method to access the JOSH_CLOUD_ENDPOINT constant via reflection.
    */
@@ -349,5 +411,21 @@ public class RunRemoteCommandTest {
     } catch (Exception e) {
       throw new RuntimeException("Failed to access JOSH_CLOUD_ENDPOINT constant", e);
     }
+  }
+
+  @Test 
+  public void testStrategyPatternIntegration() throws Exception {
+    // Test that the command properly integrates with strategy pattern
+    Method selectMethod = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");
+    selectMethod.setAccessible(true);
+
+    RunRemoteStrategy strategy = (RunRemoteStrategy) selectMethod.invoke(command);
+    
+    // Verify strategy implements the interface and can be executed
+    assertNotNull(strategy);
+    assertInstanceOf(RunRemoteStrategy.class, strategy);
+    
+    // Default should be local leader strategy
+    assertInstanceOf(RunRemoteLocalLeaderStrategy.class, strategy);
   }
 }
