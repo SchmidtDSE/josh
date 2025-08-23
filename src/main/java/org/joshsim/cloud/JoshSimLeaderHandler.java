@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.joshsim.cloud.pipeline.LeaderResponseHandler;
 import org.joshsim.wire.WireResponse;
 import org.joshsim.wire.WireResponseParser;
 import org.joshsim.wire.WireRewriteUtil;
@@ -51,78 +52,13 @@ public class JoshSimLeaderHandler implements HttpHandler {
     this.apiInternalLayer = apiInternalLayer;
     this.urlToWorker = urlToWorker;
     this.maxParallelRequests = maxParallelRequests;
-    this.parallelWorkerHandler = new ParallelWorkerHandler(urlToWorker, 
-                                                            maxParallelRequests, 
-                                                            cumulativeStepCount);
+    this.parallelWorkerHandler = new ParallelWorkerHandler(
+        urlToWorker,
+        maxParallelRequests,
+        cumulativeStepCount
+    );
   }
 
-  /**
-   * Response handler for processing worker responses in the leader context.
-   */
-  private class LeaderResponseHandler implements ParallelWorkerHandler.WorkerResponseHandler {
-    @Override
-    public void handleResponseLine(String line, int replicateNumber, 
-                                  HttpServerExchange clientExchange, 
-                                  AtomicInteger cumulativeStepCount) {
-      try {
-        // Parse worker response using existing wire format parser
-        Optional<WireResponse> parsed = WireResponseParser.parseEngineResponse(line);
-        if (parsed.isEmpty()) {
-          return; // Skip empty or ignored lines
-        }
-        
-        WireResponse parsedResponse = parsed.get();
-        String outputLine;
-        
-        switch (parsedResponse.getType()) {
-          case PROGRESS:
-            // Convert per-replicate progress to cumulative
-            WireResponse cumulativeResponse = 
-                WireRewriteUtil.rewriteProgressToCumulative(parsedResponse, cumulativeStepCount);
-            outputLine = WireRewriteUtil.formatWireResponse(cumulativeResponse);
-            break;
-          case DATUM:
-            // Rewrite replicate number from worker's 0 to actual replicate number
-            WireResponse rewrittenDatum = 
-                WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
-            outputLine = WireRewriteUtil.formatWireResponse(rewrittenDatum);
-            break;
-          case END:
-            // Rewrite end marker with correct replicate number
-            WireResponse rewrittenEnd = 
-                WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
-            outputLine = WireRewriteUtil.formatWireResponse(rewrittenEnd);
-            break;
-          case ERROR:
-            // Forward error messages unchanged
-            outputLine = WireRewriteUtil.formatWireResponse(parsedResponse);
-            break;
-          default:
-            // Skip unknown types
-            return;
-        }
-
-        // Thread-safe write to client
-        synchronized (clientExchange.getOutputStream()) {
-          clientExchange.getOutputStream().write(outputLine.getBytes());
-          clientExchange.getOutputStream().flush();
-        }
-      } catch (IllegalArgumentException e) {
-        // Handle lines that don't match wire format - pass through as-is with replicate prefix
-        String fallbackOutput = WireRewriteUtil.formatDatumResponse(replicateNumber, line);
-        try {
-          synchronized (clientExchange.getOutputStream()) {
-            clientExchange.getOutputStream().write(fallbackOutput.getBytes());
-            clientExchange.getOutputStream().flush();
-          }
-        } catch (IOException ioException) {
-          throw new RuntimeException("Error streaming fallback to client", ioException);
-        }
-      } catch (IOException e) {
-        throw new RuntimeException("Error streaming to client", e);
-      }
-    }
-  }
 
   /**
    * Call up to maxParallelRequests to execute on workers.
@@ -227,8 +163,10 @@ public class JoshSimLeaderHandler implements HttpHandler {
     // Prepare tasks for parallel execution
     List<ParallelWorkerHandler.WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
-      tasks.add(new ParallelWorkerHandler.WorkerTask(
-          code, simulationName, apiKey, externalData, favorBigDecimal, i));
+      ParallelWorkerHandler.WorkerTask task =
+          new ParallelWorkerHandler.WorkerTask(code, simulationName, apiKey, externalData, 
+                                               favorBigDecimal, i);
+      tasks.add(task);
     }
 
     // Execute tasks in parallel using ParallelWorkerHandler
