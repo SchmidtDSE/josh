@@ -93,58 +93,128 @@ public class RunRemoteContext {
     this.maxConcurrentWorkers = maxConcurrentWorkers;
   }
 
+  /**
+   * Gets the Josh simulation file.
+   *
+   * @return The file containing the Josh simulation code
+   */
   public File getFile() {
     return file;
   }
 
+  /**
+   * Gets the simulation name to execute.
+   *
+   * @return The name of the simulation to run
+   */
   public String getSimulation() {
     return simulation;
   }
 
+  /**
+   * Gets the replicate number for this execution.
+   *
+   * @return The replicate number
+   */
   public int getReplicateNumber() {
     return replicateNumber;
   }
 
+  /**
+   * Checks if double precision should be used instead of BigDecimal.
+   *
+   * @return true if double precision should be used, false for BigDecimal
+   */
   public boolean isUseFloat64() {
     return useFloat64;
   }
 
+  /**
+   * Gets the validated endpoint URI for remote execution.
+   *
+   * @return The URI of the remote Josh simulation endpoint
+   */
   public URI getEndpointUri() {
     return endpointUri;
   }
 
+  /**
+   * Gets the API key for authentication.
+   *
+   * @return The API key used for remote endpoint authentication
+   */
   public String getApiKey() {
     return apiKey;
   }
 
+  /**
+   * Gets the external data file specifications.
+   *
+   * @return Array of external data file specifications, may be null
+   */
   public String[] getDataFiles() {
     return dataFiles;
   }
 
+  /**
+   * Gets the Josh simulation code content.
+   *
+   * @return The complete Josh simulation code as a string
+   */
   public String getJoshCode() {
     return joshCode;
   }
 
+  /**
+   * Gets the serialized external data.
+   *
+   * @return The external data in serialized format, may be null
+   */
   public String getExternalDataSerialized() {
     return externalDataSerialized;
   }
 
+  /**
+   * Gets the simulation metadata for progress tracking.
+   *
+   * @return The simulation metadata containing step count and other tracking information
+   */
   public SimulationMetadata getMetadata() {
     return metadata;
   }
 
+  /**
+   * Gets the progress calculator instance.
+   *
+   * @return The progress calculator for tracking simulation progress
+   */
   public ProgressCalculator getProgressCalculator() {
     return progressCalculator;
   }
 
+  /**
+   * Gets the output options for logging and display.
+   *
+   * @return The output options configuration
+   */
   public OutputOptions getOutputOptions() {
     return outputOptions;
   }
 
+  /**
+   * Gets the MinIO options for cloud storage.
+   *
+   * @return The MinIO options configuration, may be null
+   */
   public MinioOptions getMinioOptions() {
     return minioOptions;
   }
 
+  /**
+   * Gets the maximum number of concurrent workers for local leader mode.
+   *
+   * @return The maximum concurrent workers allowed
+   */
   public int getMaxConcurrentWorkers() {
     return maxConcurrentWorkers;
   }
