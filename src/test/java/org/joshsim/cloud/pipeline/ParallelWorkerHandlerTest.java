@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.cloud;
+package org.joshsim.cloud.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,7 +29,7 @@ public class ParallelWorkerHandlerTest {
 
   @Test
   public void testWorkerTaskConstruction() {
-    ParallelWorkerHandler.WorkerTask task = new ParallelWorkerHandler.WorkerTask(
+    WorkerTask task = new WorkerTask(
         "simulation code", 
         "test-simulation", 
         "api-key-123", 
@@ -48,7 +48,7 @@ public class ParallelWorkerHandlerTest {
 
   @Test
   public void testWorkerTaskConstructionWithDefaults() {
-    ParallelWorkerHandler.WorkerTask task = new ParallelWorkerHandler.WorkerTask(
+    WorkerTask task = new WorkerTask(
         "code", 
         "name", 
         "", 
@@ -98,7 +98,7 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWorkerResponseHandlerInterface() {
     // Test that the WorkerResponseHandler interface can be implemented
-    ParallelWorkerHandler.WorkerResponseHandler handler = 
+    WorkerResponseHandler handler = 
         (line, replicateNumber, exchange, cumulativeStepCount) -> {
           // Mock implementation for testing interface
         };
@@ -110,8 +110,8 @@ public class ParallelWorkerHandlerTest {
   @Test
   public void testWireResponseHandlerInterface() {
     // Test that the WireResponseHandler interface can be implemented
-    ParallelWorkerHandler.WireResponseHandler handler = 
-        mock(ParallelWorkerHandler.WireResponseHandler.class);
+    WireResponseHandler handler = 
+        mock(WireResponseHandler.class);
     
     // Create a mock wire response to test with
     WireResponse mockResponse = new WireResponse(42L); // PROGRESS response
@@ -126,8 +126,8 @@ public class ParallelWorkerHandlerTest {
 
   @Test
   public void testWireResponseHandlerWithDifferentResponseTypes() {
-    ParallelWorkerHandler.WireResponseHandler handler = 
-        mock(ParallelWorkerHandler.WireResponseHandler.class);
+    WireResponseHandler handler = 
+        mock(WireResponseHandler.class);
     AtomicInteger counter = new AtomicInteger(0);
     
     // Test with DATUM response

@@ -16,7 +16,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.joshsim.cloud.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.WireResponseHandler;
+import org.joshsim.cloud.pipeline.WorkerTask;
 import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
@@ -78,7 +80,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
 
     try {
       // Create worker tasks - currently supporting single replicate but structured for multiple
-      List<ParallelWorkerHandler.WorkerTask> tasks = createWorkerTasks(context);
+      List<WorkerTask> tasks = createWorkerTasks(context);
       
       context.getOutputOptions().printInfo("Executing " + tasks.size() 
           + " worker tasks in parallel");
@@ -135,11 +137,11 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
    * @param context The execution context
    * @return List of worker tasks to execute
    */
-  private List<ParallelWorkerHandler.WorkerTask> createWorkerTasks(RunRemoteContext context) {
-    List<ParallelWorkerHandler.WorkerTask> tasks = new ArrayList<>();
+  private List<WorkerTask> createWorkerTasks(RunRemoteContext context) {
+    List<WorkerTask> tasks = new ArrayList<>();
     
     // Currently supporting single replicate - can be extended for multiple replicates
-    ParallelWorkerHandler.WorkerTask task = new ParallelWorkerHandler.WorkerTask(
+    WorkerTask task = new WorkerTask(
         context.getJoshCode(),
         context.getSimulation(),
         context.getApiKey(),
@@ -160,7 +162,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
    * It adapts the WireResponseHandler interface to work with the shared handler.</p>
    */
   private static class LocalLeaderWireResponseHandler 
-      implements ParallelWorkerHandler.WireResponseHandler {
+      implements WireResponseHandler {
     
     private final RemoteResponseHandler sharedHandler;
     private final AtomicInteger cumulativeStepCount;

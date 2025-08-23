@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.joshsim.cloud.pipeline.LeaderResponseHandler;
+import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.WorkerTask;
 import org.joshsim.wire.WireResponse;
 import org.joshsim.wire.WireResponseParser;
 import org.joshsim.wire.WireRewriteUtil;
@@ -161,11 +163,11 @@ public class JoshSimLeaderHandler implements HttpHandler {
     boolean favorBigDecimal = Boolean.parseBoolean(formData.getFirst("favorBigDecimal").getValue());
 
     // Prepare tasks for parallel execution
-    List<ParallelWorkerHandler.WorkerTask> tasks = new ArrayList<>();
+    List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
-      ParallelWorkerHandler.WorkerTask task =
-          new ParallelWorkerHandler.WorkerTask(code, simulationName, apiKey, externalData, 
-                                               favorBigDecimal, i);
+      WorkerTask task =
+          new WorkerTask(code, simulationName, apiKey, externalData, 
+                         favorBigDecimal, i);
       tasks.add(task);
     }
 

@@ -8,7 +8,7 @@
  * @license BSD-3-Clause
  */
 
-package org.joshsim.cloud;
+package org.joshsim.cloud.pipeline;
 
 import io.undertow.server.HttpServerExchange;
 import java.io.IOException;
@@ -57,104 +57,6 @@ public class ParallelWorkerHandler {
   }
 
   /**
-   * Task configuration for worker execution.
-   *
-   * <p>This class encapsulates all the parameters needed to execute a single
-   * replicate task on a worker instance.</p>
-   */
-  public static class WorkerTask {
-    private final String code;
-    private final String simulationName;
-    private final String apiKey;
-    private final String externalData;
-    private final boolean favorBigDecimal;
-    private final int replicateNumber;
-
-    /**
-     * Creates a new WorkerTask.
-     *
-     * @param code The Josh simulation code
-     * @param simulationName The name of the simulation
-     * @param apiKey The API key for authentication
-     * @param externalData External data for the simulation
-     * @param favorBigDecimal Whether to favor BigDecimal precision
-     * @param replicateNumber The replicate number for this task
-     */
-    public WorkerTask(String code, String simulationName, String apiKey, 
-                     String externalData, boolean favorBigDecimal, int replicateNumber) {
-      this.code = code;
-      this.simulationName = simulationName;
-      this.apiKey = apiKey;
-      this.externalData = externalData;
-      this.favorBigDecimal = favorBigDecimal;
-      this.replicateNumber = replicateNumber;
-    }
-
-    public String getCode() {
-      return code;
-    }
-
-    public String getSimulationName() {
-      return simulationName;
-    }
-
-    public String getApiKey() {
-      return apiKey;
-    }
-
-    public String getExternalData() {
-      return externalData;
-    }
-
-    public boolean isFavorBigDecimal() {
-      return favorBigDecimal;
-    }
-
-    public int getReplicateNumber() {
-      return replicateNumber;
-    }
-  }
-
-  /**
-   * Interface for handling worker response callbacks.
-   *
-   * <p>Implementations of this interface can process streaming responses from workers
-   * and determine how to handle different types of responses.</p>
-   */
-  public interface WorkerResponseHandler {
-    /**
-     * Handles a line of streaming response from a worker.
-     *
-     * @param line The response line from the worker
-     * @param replicateNumber The replicate number for this response
-     * @param clientExchange The client exchange for sending responses
-     * @param cumulativeStepCount Shared cumulative step counter
-     */
-    void handleResponseLine(String line, int replicateNumber, 
-                           HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
-  }
-
-  /**
-   * Interface for handling parsed wire responses from workers.
-   *
-   * <p>This interface provides a higher-level abstraction for handling worker responses
-   * using parsed WireResponse objects instead of raw string lines. This avoids the need
-   * for repeated parsing and enables better response manipulation.</p>
-   */
-  public interface WireResponseHandler {
-    /**
-     * Handles a parsed wire response from a worker.
-     *
-     * @param response The parsed wire response from the worker
-     * @param replicateNumber The replicate number for this response
-     * @param clientExchange The client exchange for sending responses
-     * @param cumulativeStepCount Shared cumulative step counter
-     */
-    void handleWireResponse(org.joshsim.wire.WireResponse response, int replicateNumber,
-                           HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
-  }
-
-  /**
    * Executes tasks in parallel across multiple worker instances.
    *
    * <p>This method creates a thread pool and distributes the provided tasks across
@@ -168,33 +70,8 @@ public class ParallelWorkerHandler {
    */
   public void executeInParallel(List<WorkerTask> tasks, HttpServerExchange clientExchange,
                                WorkerResponseHandler responseHandler) {
-    int effectiveThreadCount = Math.min(tasks.size(), maxParallelRequests);
-    ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
-
-    // Reset cumulative step counter for this execution
-    cumulativeStepCount.set(0);
-
-    try {
-      // Execute tasks with streaming approach
-      List<Future<?>> futures = new ArrayList<>();
-      for (WorkerTask task : tasks) {
-        futures.add(executor.submit(() -> 
-            executeWorkerTask(task, clientExchange, responseHandler)));
-      }
-
-      // Wait for all tasks to complete
-      for (Future<?> future : futures) {
-        try {
-          future.get();
-        } catch (Exception e) {
-          System.err.println("Exception in worker task execution: "
-              + e.getClass().getSimpleName() + ": " + e.getMessage());
-          throw new RuntimeException("Worker task execution failed", e);
-        }
-      }
-    } finally {
-      executor.shutdown();
-    }
+    executeInParallelCommon(tasks, clientExchange, 
+        task -> executeWorkerTask(task, clientExchange, cumulativeStepCount, responseHandler));
   }
 
   /**
@@ -211,6 +88,20 @@ public class ParallelWorkerHandler {
    */
   public void executeInParallelWire(List<WorkerTask> tasks, HttpServerExchange clientExchange,
                                    WireResponseHandler wireResponseHandler) {
+    executeInParallelCommon(tasks, clientExchange,
+        task -> executeWorkerTaskWire(task, clientExchange, cumulativeStepCount, 
+                                     wireResponseHandler));
+  }
+
+  /**
+   * Common implementation for parallel task execution.
+   *
+   * @param tasks The list of tasks to execute
+   * @param clientExchange The client exchange for sending consolidated responses
+   * @param taskExecutor Function that executes a single task
+   */
+  private void executeInParallelCommon(List<WorkerTask> tasks, HttpServerExchange clientExchange,
+                                      TaskExecutor taskExecutor) {
     int effectiveThreadCount = Math.min(tasks.size(), maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
 
@@ -218,11 +109,11 @@ public class ParallelWorkerHandler {
     cumulativeStepCount.set(0);
 
     try {
-      // Execute tasks with wire response streaming approach
+      // Execute tasks with streaming approach
       List<Future<?>> futures = new ArrayList<>();
       for (WorkerTask task : tasks) {
         futures.add(executor.submit(() -> 
-            executeWorkerTaskWire(task, clientExchange, wireResponseHandler)));
+            taskExecutor.execute(task)));
       }
 
       // Wait for all tasks to complete
@@ -241,39 +132,25 @@ public class ParallelWorkerHandler {
   }
 
   /**
+   * Functional interface for task execution strategies.
+   */
+  @FunctionalInterface
+  private interface TaskExecutor {
+    void execute(WorkerTask task);
+  }
+
+  /**
    * Executes a single worker task via HTTP streaming.
    *
    * @param task The task to execute
    * @param clientExchange The client exchange for sending responses
+   * @param cumulativeStepCount Shared cumulative step counter
    * @param responseHandler Handler for processing worker responses
    */
   private void executeWorkerTask(WorkerTask task, HttpServerExchange clientExchange,
+                                AtomicInteger cumulativeStepCount,
                                 WorkerResponseHandler responseHandler) {
-    String bodyString = String.format(
-        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
-        URLEncoder.encode(task.getCode(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getSimulationName(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getApiKey(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getExternalData(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.isFavorBigDecimal() ? "true" : "false", StandardCharsets.UTF_8)
-    );
-    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
-
-    HttpClient client = HttpClient.newBuilder().build();
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(workerUrl))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .POST(body)
-        .build();
-
-    HttpResponse<Stream<String>> response = null;
-    try {
-      response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-    } catch (IOException | InterruptedException e) {
-      System.err.println("Worker connection failed for replicate " + task.getReplicateNumber()
-          + " to " + workerUrl + ": " + e.getMessage());
-      throw new RuntimeException("Encountered issue in worker thread: " + e);
-    }
+    HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
       try {
@@ -284,10 +161,7 @@ public class ParallelWorkerHandler {
         throw new RuntimeException("Error processing response stream", e);
       }
     } else {
-      // Handle different error status codes from worker
-      String errorMessage = String.format("Replicate %d failed: HTTP %d from %s",
-          task.getReplicateNumber(), response.statusCode(), workerUrl);
-      throw new RuntimeException(errorMessage);
+      handleWorkerError(task, response.statusCode());
     }
   }
 
@@ -300,35 +174,13 @@ public class ParallelWorkerHandler {
    *
    * @param task The task to execute
    * @param clientExchange The client exchange for sending responses
+   * @param cumulativeStepCount Shared cumulative step counter
    * @param wireResponseHandler Handler for processing parsed wire responses
    */
   private void executeWorkerTaskWire(WorkerTask task, HttpServerExchange clientExchange,
+                                    AtomicInteger cumulativeStepCount,
                                     WireResponseHandler wireResponseHandler) {
-    String bodyString = String.format(
-        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
-        URLEncoder.encode(task.getCode(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getSimulationName(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getApiKey(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.getExternalData(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.isFavorBigDecimal() ? "true" : "false", StandardCharsets.UTF_8)
-    );
-    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
-
-    HttpClient client = HttpClient.newBuilder().build();
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(workerUrl))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .POST(body)
-        .build();
-
-    HttpResponse<Stream<String>> response = null;
-    try {
-      response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-    } catch (IOException | InterruptedException e) {
-      System.err.println("Worker connection failed for replicate " + task.getReplicateNumber()
-          + " to " + workerUrl + ": " + e.getMessage());
-      throw new RuntimeException("Encountered issue in worker thread: " + e);
-    }
+    HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
       try {
@@ -344,10 +196,52 @@ public class ParallelWorkerHandler {
         throw new RuntimeException("Error processing wire response stream", e);
       }
     } else {
-      // Handle different error status codes from worker
-      String errorMessage = String.format("Replicate %d failed: HTTP %d from %s",
-          task.getReplicateNumber(), response.statusCode(), workerUrl);
-      throw new RuntimeException(errorMessage);
+      handleWorkerError(task, response.statusCode());
     }
+  }
+
+  /**
+   * Sends an HTTP request to the worker for the given task.
+   *
+   * @param task The task to execute
+   * @return The HTTP response from the worker
+   */
+  private HttpResponse<Stream<String>> sendWorkerRequest(WorkerTask task) {
+    String bodyString = String.format(
+        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
+        URLEncoder.encode(task.getCode(), StandardCharsets.UTF_8),
+        URLEncoder.encode(task.getSimulationName(), StandardCharsets.UTF_8),
+        URLEncoder.encode(task.getApiKey(), StandardCharsets.UTF_8),
+        URLEncoder.encode(task.getExternalData(), StandardCharsets.UTF_8),
+        URLEncoder.encode(task.isFavorBigDecimal() ? "true" : "false", StandardCharsets.UTF_8)
+    );
+    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
+
+    HttpClient client = HttpClient.newBuilder().build();
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(workerUrl))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .POST(body)
+        .build();
+
+    try {
+      return client.send(request, HttpResponse.BodyHandlers.ofLines());
+    } catch (IOException | InterruptedException e) {
+      System.err.println("Worker connection failed for replicate " + task.getReplicateNumber()
+          + " to " + workerUrl + ": " + e.getMessage());
+      throw new RuntimeException("Encountered issue in worker thread: " + e);
+    }
+  }
+
+  /**
+   * Handles worker error responses.
+   *
+   * @param task The task that failed
+   * @param statusCode The HTTP status code from the worker
+   */
+  private void handleWorkerError(WorkerTask task, int statusCode) {
+    String errorMessage = String.format("Replicate %d failed: HTTP %d from %s",
+        task.getReplicateNumber(), statusCode, workerUrl);
+    throw new RuntimeException(errorMessage);
   }
 }

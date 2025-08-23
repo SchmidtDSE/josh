@@ -15,7 +15,9 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
-import org.joshsim.cloud.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.WireResponseHandler;
+import org.joshsim.cloud.pipeline.WorkerTask;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -121,14 +123,14 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<ParallelWorkerHandler.WorkerTask> tasks = 
-        (List<ParallelWorkerHandler.WorkerTask>) method.invoke(strategy, testContext);
+    List<WorkerTask> tasks = 
+        (List<WorkerTask>) method.invoke(strategy, testContext);
 
     // Verify task creation
     assertNotNull(tasks);
     assertEquals(1, tasks.size()); // Currently single replicate support
 
-    ParallelWorkerHandler.WorkerTask task = tasks.get(0);
+    WorkerTask task = tasks.get(0);
     assertEquals("simulation TestSim {}", task.getCode());
     assertEquals("TestSimulation", task.getSimulationName());
     assertEquals("test-api-key", task.getApiKey());
@@ -156,10 +158,10 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<ParallelWorkerHandler.WorkerTask> tasks = 
-        (List<ParallelWorkerHandler.WorkerTask>) method.invoke(strategy, float64Context);
+    List<WorkerTask> tasks = 
+        (List<WorkerTask>) method.invoke(strategy, float64Context);
 
-    ParallelWorkerHandler.WorkerTask task = tasks.get(0);
+    WorkerTask task = tasks.get(0);
     assertEquals(false, task.isFavorBigDecimal()); // !useFloat64 when useFloat64=true
   }
 
@@ -183,10 +185,10 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<ParallelWorkerHandler.WorkerTask> tasks = 
-        (List<ParallelWorkerHandler.WorkerTask>) method.invoke(strategy, differentReplicateContext);
+    List<WorkerTask> tasks = 
+        (List<WorkerTask>) method.invoke(strategy, differentReplicateContext);
 
-    ParallelWorkerHandler.WorkerTask task = tasks.get(0);
+    WorkerTask task = tasks.get(0);
     assertEquals(3, task.getReplicateNumber());
   }
 
@@ -201,7 +203,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         foundWireResponseHandler = true;
         
         // Verify it implements the correct interface
-        assertTrue(ParallelWorkerHandler.WireResponseHandler.class
+        assertTrue(WireResponseHandler.class
             .isAssignableFrom(innerClass));
         break;
       }
@@ -241,10 +243,10 @@ public class RunRemoteLocalLeaderStrategyTest {
     method.setAccessible(true);
 
     @SuppressWarnings("unchecked")
-    List<ParallelWorkerHandler.WorkerTask> tasks = 
-        (List<ParallelWorkerHandler.WorkerTask>) method.invoke(strategy, testContext);
+    List<WorkerTask> tasks = 
+        (List<WorkerTask>) method.invoke(strategy, testContext);
 
-    ParallelWorkerHandler.WorkerTask task = tasks.get(0);
+    WorkerTask task = tasks.get(0);
     
     // Verify all parameters match the context
     assertEquals(testContext.getJoshCode(), task.getCode());

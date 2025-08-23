@@ -10,7 +10,6 @@ import io.undertow.server.HttpServerExchange;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.joshsim.cloud.ParallelWorkerHandler;
 import org.joshsim.wire.WireResponse;
 import org.joshsim.wire.WireResponseParser;
 import org.joshsim.wire.WireRewriteUtil;
@@ -22,7 +21,7 @@ import org.joshsim.wire.WireRewriteUtil;
  * and rewriting them with appropriate replicate numbers and cumulative progress counts
  * for the leader's client connection.</p>
  */
-public class LeaderResponseHandler implements ParallelWorkerHandler.WorkerResponseHandler {
+public class LeaderResponseHandler implements WorkerResponseHandler {
 
   @Override
   public void handleResponseLine(String line, int replicateNumber,
