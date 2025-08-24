@@ -63,20 +63,26 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
     return switch (parsedResponse.getType()) {
       case PROGRESS -> {
         // Convert per-replicate progress to cumulative
-        WireResponse cumulativeResponse =
-            WireRewriteUtil.rewriteProgressToCumulative(parsedResponse, cumulativeStepCount);
+        WireResponse cumulativeResponse = WireRewriteUtil.rewriteProgressToCumulative(
+            parsedResponse,
+            cumulativeStepCount
+        );
         yield WireRewriteUtil.formatWireResponse(cumulativeResponse);
       }
       case DATUM -> {
         // Rewrite replicate number from worker's 0 to actual replicate number
-        WireResponse rewrittenDatum =
-            WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
+        WireResponse rewrittenDatum = WireRewriteUtil.rewriteReplicateNumber(
+            parsedResponse,
+            replicateNumber
+        );
         yield WireRewriteUtil.formatWireResponse(rewrittenDatum);
       }
       case END -> {
         // Rewrite end marker with correct replicate number
-        WireResponse rewrittenEnd =
-            WireRewriteUtil.rewriteReplicateNumber(parsedResponse, replicateNumber);
+        WireResponse rewrittenEnd = WireRewriteUtil.rewriteReplicateNumber(
+            parsedResponse,
+            replicateNumber
+        );
         yield WireRewriteUtil.formatWireResponse(rewrittenEnd);
       }
       case ERROR -> {

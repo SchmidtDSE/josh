@@ -12,6 +12,7 @@ package org.joshsim.command;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Optional;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -27,27 +28,27 @@ import org.joshsim.util.SimulationMetadata;
 public class RunRemoteContextBuilder {
 
   // Basic simulation parameters
-  private File file;
-  private String simulation;
+  private Optional<File> file = Optional.empty();
+  private Optional<String> simulation = Optional.empty();
   private int replicateNumber = 0;
   private boolean useFloat64 = false;
 
   // Remote endpoint configuration
-  private URI endpointUri;
-  private String apiKey;
+  private Optional<URI> endpointUri = Optional.empty();
+  private Optional<String> apiKey = Optional.empty();
   private String[] dataFiles = new String[0];
 
   // Josh simulation code and external data
-  private String joshCode;
-  private String externalDataSerialized;
+  private Optional<String> joshCode = Optional.empty();
+  private Optional<String> externalDataSerialized = Optional.empty();
 
   // Progress tracking and metadata
-  private SimulationMetadata metadata;
-  private ProgressCalculator progressCalculator;
+  private Optional<SimulationMetadata> metadata = Optional.empty();
+  private Optional<ProgressCalculator> progressCalculator = Optional.empty();
 
   // Output and configuration options
-  private OutputOptions outputOptions;
-  private MinioOptions minioOptions;
+  private Optional<OutputOptions> outputOptions = Optional.empty();
+  private Optional<MinioOptions> minioOptions = Optional.empty();
 
   // Execution parameters for local leader mode
   private int maxConcurrentWorkers = 10;
@@ -59,7 +60,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withFile(File file) {
-    this.file = file;
+    this.file = Optional.ofNullable(file);
     return this;
   }
 
@@ -70,7 +71,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withSimulation(String simulation) {
-    this.simulation = simulation;
+    this.simulation = Optional.ofNullable(simulation);
     return this;
   }
 
@@ -103,7 +104,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withEndpointUri(URI endpointUri) {
-    this.endpointUri = endpointUri;
+    this.endpointUri = Optional.ofNullable(endpointUri);
     return this;
   }
 
@@ -114,7 +115,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withApiKey(String apiKey) {
-    this.apiKey = apiKey;
+    this.apiKey = Optional.ofNullable(apiKey);
     return this;
   }
 
@@ -136,7 +137,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withJoshCode(String joshCode) {
-    this.joshCode = joshCode;
+    this.joshCode = Optional.ofNullable(joshCode);
     return this;
   }
 
@@ -147,7 +148,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withExternalDataSerialized(String externalDataSerialized) {
-    this.externalDataSerialized = externalDataSerialized;
+    this.externalDataSerialized = Optional.ofNullable(externalDataSerialized);
     return this;
   }
 
@@ -158,7 +159,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withMetadata(SimulationMetadata metadata) {
-    this.metadata = metadata;
+    this.metadata = Optional.ofNullable(metadata);
     return this;
   }
 
@@ -169,7 +170,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withProgressCalculator(ProgressCalculator progressCalculator) {
-    this.progressCalculator = progressCalculator;
+    this.progressCalculator = Optional.ofNullable(progressCalculator);
     return this;
   }
 
@@ -180,7 +181,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withOutputOptions(OutputOptions outputOptions) {
-    this.outputOptions = outputOptions;
+    this.outputOptions = Optional.ofNullable(outputOptions);
     return this;
   }
 
@@ -191,7 +192,7 @@ public class RunRemoteContextBuilder {
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withMinioOptions(MinioOptions minioOptions) {
-    this.minioOptions = minioOptions;
+    this.minioOptions = Optional.ofNullable(minioOptions);
     return this;
   }
 
@@ -216,11 +217,11 @@ public class RunRemoteContextBuilder {
     validateRequiredParameters();
 
     return new RunRemoteContext(
-        file, simulation, replicateNumber, useFloat64,
-        endpointUri, apiKey, dataFiles,
-        joshCode, externalDataSerialized,
-        metadata, progressCalculator,
-        outputOptions, minioOptions,
+        file.get(), simulation.get(), replicateNumber, useFloat64,
+        endpointUri.get(), apiKey.get(), dataFiles,
+        joshCode.get(), externalDataSerialized.get(),
+        metadata.get(), progressCalculator.get(),
+        outputOptions.get(), minioOptions.get(),
         maxConcurrentWorkers
     );
   }
@@ -231,34 +232,34 @@ public class RunRemoteContextBuilder {
    * @throws IllegalStateException if any required parameter is null
    */
   private void validateRequiredParameters() {
-    if (file == null) {
+    if (!file.isPresent()) {
       throw new IllegalStateException("File is required");
     }
-    if (simulation == null) {
+    if (!simulation.isPresent()) {
       throw new IllegalStateException("Simulation name is required");
     }
-    if (endpointUri == null) {
+    if (!endpointUri.isPresent()) {
       throw new IllegalStateException("Endpoint URI is required");
     }
-    if (apiKey == null) {
+    if (!apiKey.isPresent()) {
       throw new IllegalStateException("API key is required");
     }
-    if (joshCode == null) {
+    if (!joshCode.isPresent()) {
       throw new IllegalStateException("Josh code is required");
     }
-    if (externalDataSerialized == null) {
+    if (!externalDataSerialized.isPresent()) {
       throw new IllegalStateException("External data serialized is required");
     }
-    if (metadata == null) {
+    if (!metadata.isPresent()) {
       throw new IllegalStateException("Metadata is required");
     }
-    if (progressCalculator == null) {
+    if (!progressCalculator.isPresent()) {
       throw new IllegalStateException("Progress calculator is required");
     }
-    if (outputOptions == null) {
+    if (!outputOptions.isPresent()) {
       throw new IllegalStateException("Output options are required");
     }
-    if (minioOptions == null) {
+    if (!minioOptions.isPresent()) {
       throw new IllegalStateException("Minio options are required");
     }
   }

@@ -163,16 +163,23 @@ public class JoshSimLeaderHandler implements HttpHandler {
     // Prepare tasks for parallel execution
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
-      WorkerTask task =
-          new WorkerTask(code, simulationName, apiKey, externalData,
-                         favorBigDecimal, i);
+      WorkerTask task = new WorkerTask(
+          code,
+          simulationName,
+          apiKey,
+          externalData,
+          favorBigDecimal,
+          i
+      );
       tasks.add(task);
     }
 
-    // Execute tasks in parallel using ParallelWorkerHandler
     try {
-      parallelWorkerHandler.executeInParallel(tasks, httpServerExchange,
-                                             new LeaderResponseHandler());
+      parallelWorkerHandler.executeInParallel(
+          tasks,
+          httpServerExchange,
+          new LeaderResponseHandler()
+      );
       httpServerExchange.endExchange();
     } catch (Exception e) {
       System.err.println("Exception in parallel worker execution: "

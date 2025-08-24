@@ -31,5 +31,5 @@ public interface WireResponseHandler {
    * @param cumulativeStepCount Shared cumulative step counter
    */
   void handleWireResponse(WireResponse response, int replicateNumber,
-                         HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
+      HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
 }

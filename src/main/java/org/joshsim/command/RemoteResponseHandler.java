@@ -50,8 +50,8 @@ public class RemoteResponseHandler {
    * @param useCumulativeProgress Whether to use cumulative progress tracking for coordination
    */
   public RemoteResponseHandler(RunRemoteContext context,
-                              ExportFacadeFactory exportFactory,
-                              boolean useCumulativeProgress) {
+      ExportFacadeFactory exportFactory,
+      boolean useCumulativeProgress) {
     this.context = context;
     this.exportFactory = exportFactory;
     this.exportFacades = new HashMap<>();
@@ -73,7 +73,7 @@ public class RemoteResponseHandler {
    * @return The parsed WireResponse for further processing by the caller, or empty if ignored
    */
   public Optional<WireResponse> processResponseLine(String line, int replicateNumber,
-                                                   AtomicInteger cumulativeStepCount) {
+      AtomicInteger cumulativeStepCount) {
     try {
       return parseResponseLineUnsafe(line, replicateNumber, cumulativeStepCount);
     } catch (Exception e) {
@@ -94,7 +94,7 @@ public class RemoteResponseHandler {
    * @return The parsed WireResponse for further processing by the caller, or empty if ignored
    */
   private Optional<WireResponse> parseResponseLineUnsafe(String line, int replicateNumber,
-                                                        AtomicInteger cumulativeStepCount) {
+      AtomicInteger cumulativeStepCount) {
     // Parse line using WireResponseParser
     Optional<WireResponse> optionalParsed =
         WireResponseParser.parseEngineResponse(line.trim());

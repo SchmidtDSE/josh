@@ -28,5 +28,5 @@ public interface WorkerResponseHandler {
    * @param cumulativeStepCount Shared cumulative step counter
    */
   void handleResponseLine(String line, int replicateNumber,
-                         HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
+      HttpServerExchange clientExchange, AtomicInteger cumulativeStepCount);
 }

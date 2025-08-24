@@ -34,7 +34,7 @@ public class WorkerTask {
    * @param replicateNumber The replicate number for this task
    */
   public WorkerTask(String code, String simulationName, String apiKey,
-                   String externalData, boolean favorBigDecimal, int replicateNumber) {
+      String externalData, boolean favorBigDecimal, int replicateNumber) {
     this.code = code;
     this.simulationName = simulationName;
     this.apiKey = apiKey;

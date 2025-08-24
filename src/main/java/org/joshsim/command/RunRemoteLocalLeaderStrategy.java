@@ -141,12 +141,13 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
     List<WorkerTask> tasks = new ArrayList<>();
 
     // Currently supporting single replicate - can be extended for multiple replicates
+    boolean favorBigDecimal = !context.isUseFloat64();
     WorkerTask task = new WorkerTask(
         context.getJoshCode(),
         context.getSimulation(),
         context.getApiKey(),
         context.getExternalDataSerialized(),
-        !context.isUseFloat64(), // favorBigDecimal is inverse of useFloat64
+        favorBigDecimal,
         context.getReplicateNumber()
     );
 

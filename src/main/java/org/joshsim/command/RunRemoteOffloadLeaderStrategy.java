@@ -11,6 +11,7 @@
 package org.joshsim.command;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -129,8 +130,14 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
       first = false;
 
       try {
-        String encodedKey = java.net.URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
-        String encodedValue = java.net.URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8);
+        String encodedKey = URLEncoder.encode(
+            entry.getKey(),
+            StandardCharsets.UTF_8
+        );
+        String encodedValue = URLEncoder.encode(
+            entry.getValue(),
+            StandardCharsets.UTF_8
+        );
         formBody.append(encodedKey).append("=").append(encodedValue);
       } catch (Exception e) {
         throw new RuntimeException("Failed to encode form data", e);
@@ -161,12 +168,18 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
 
     // Create shared response handler - no cumulative progress needed for remote leader
     RemoteResponseHandler responseHandler = new RemoteResponseHandler(
-        context, exportFactory, false); // useCumulativeProgress = false
+        context,
+        exportFactory,
+        false
+    );
 
     try {
       responseStream.forEach(line -> {
-        // Use shared handler to process each line
-        responseHandler.processResponseLine(line, 0, null);
+        responseHandler.processResponseLine(
+            line,
+            0,
+            null
+        );
       });
 
     } finally {

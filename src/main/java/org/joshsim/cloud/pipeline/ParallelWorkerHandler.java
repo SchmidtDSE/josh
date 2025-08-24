@@ -49,8 +49,10 @@ public class ParallelWorkerHandler {
    * @param maxParallelRequests Maximum number of concurrent requests
    * @param cumulativeStepCount Shared counter for cumulative progress tracking
    */
-  public ParallelWorkerHandler(String workerUrl, int maxParallelRequests,
-                              AtomicInteger cumulativeStepCount) {
+  public ParallelWorkerHandler(
+      String workerUrl,
+      int maxParallelRequests,
+      AtomicInteger cumulativeStepCount) {
     this.workerUrl = workerUrl;
     this.maxParallelRequests = maxParallelRequests;
     this.cumulativeStepCount = cumulativeStepCount;
@@ -68,10 +70,13 @@ public class ParallelWorkerHandler {
    * @param responseHandler Handler for processing worker responses
    * @throws RuntimeException if any worker execution fails
    */
-  public void executeInParallel(List<WorkerTask> tasks, HttpServerExchange clientExchange,
-                               WorkerResponseHandler responseHandler) {
-    executeInParallelCommon(tasks, clientExchange,
-        task -> executeWorkerTask(task, clientExchange, cumulativeStepCount, responseHandler));
+  public void executeInParallel(
+      List<WorkerTask> tasks,
+      HttpServerExchange clientExchange,
+      WorkerResponseHandler responseHandler) {
+    TaskExecutor taskExecutor = task ->
+        executeWorkerTask(task, clientExchange, cumulativeStepCount, responseHandler);
+    executeInParallelCommon(tasks, clientExchange, taskExecutor);
   }
 
   /**
@@ -86,11 +91,13 @@ public class ParallelWorkerHandler {
    * @param wireResponseHandler Handler for processing parsed wire responses
    * @throws RuntimeException if any worker execution fails
    */
-  public void executeInParallelWire(List<WorkerTask> tasks, HttpServerExchange clientExchange,
-                                   WireResponseHandler wireResponseHandler) {
-    executeInParallelCommon(tasks, clientExchange,
-        task -> executeWorkerTaskWire(task, clientExchange, cumulativeStepCount,
-                                     wireResponseHandler));
+  public void executeInParallelWire(
+      List<WorkerTask> tasks,
+      HttpServerExchange clientExchange,
+      WireResponseHandler wireResponseHandler) {
+    TaskExecutor taskExecutor = task ->
+        executeWorkerTaskWire(task, clientExchange, cumulativeStepCount, wireResponseHandler);
+    executeInParallelCommon(tasks, clientExchange, taskExecutor);
   }
 
   /**
@@ -100,8 +107,14 @@ public class ParallelWorkerHandler {
    * @param clientExchange The client exchange for sending consolidated responses
    * @param taskExecutor Function that executes a single task
    */
-  private void executeInParallelCommon(List<WorkerTask> tasks, HttpServerExchange clientExchange,
-                                      TaskExecutor taskExecutor) {
+  private void executeInParallelCommon(
+      List<WorkerTask> tasks,
+      HttpServerExchange clientExchange,
+      TaskExecutor taskExecutor) {
+    if (tasks.isEmpty()) {
+      return;
+    }
+
     int effectiveThreadCount = Math.min(tasks.size(), maxParallelRequests);
     ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
 
@@ -112,8 +125,10 @@ public class ParallelWorkerHandler {
       // Execute tasks with streaming approach
       List<Future<?>> futures = new ArrayList<>();
       for (WorkerTask task : tasks) {
-        futures.add(executor.submit(() ->
-            taskExecutor.execute(task)));
+        Runnable taskRunnable = () -> taskExecutor.execute(task);
+        futures.add(
+            executor.submit(taskRunnable)
+        );
       }
 
       // Wait for all tasks to complete
@@ -147,16 +162,22 @@ public class ParallelWorkerHandler {
    * @param cumulativeStepCount Shared cumulative step counter
    * @param responseHandler Handler for processing worker responses
    */
-  private void executeWorkerTask(WorkerTask task, HttpServerExchange clientExchange,
-                                AtomicInteger cumulativeStepCount,
-                                WorkerResponseHandler responseHandler) {
+  private void executeWorkerTask(
+      WorkerTask task,
+      HttpServerExchange clientExchange,
+      AtomicInteger cumulativeStepCount,
+      WorkerResponseHandler responseHandler) {
     HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
       try {
+        int replicateNum = task.getReplicateNumber();
         response.body().forEach(line ->
-            responseHandler.handleResponseLine(line, task.getReplicateNumber(),
-                                             clientExchange, cumulativeStepCount));
+            responseHandler.handleResponseLine(
+                line,
+                replicateNum,
+                clientExchange,
+                cumulativeStepCount));
       } catch (Exception e) {
         throw new RuntimeException("Error processing response stream", e);
       }
@@ -177,19 +198,26 @@ public class ParallelWorkerHandler {
    * @param cumulativeStepCount Shared cumulative step counter
    * @param wireResponseHandler Handler for processing parsed wire responses
    */
-  private void executeWorkerTaskWire(WorkerTask task, HttpServerExchange clientExchange,
-                                    AtomicInteger cumulativeStepCount,
-                                    WireResponseHandler wireResponseHandler) {
+  private void executeWorkerTaskWire(
+      WorkerTask task,
+      HttpServerExchange clientExchange,
+      AtomicInteger cumulativeStepCount,
+      WireResponseHandler wireResponseHandler) {
     HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
       try {
+        int replicateNum = task.getReplicateNumber();
         response.body().forEach(line -> {
           Optional<WireResponse> parsedResponse =
               WireResponseParser.parseEngineResponse(line.trim());
           if (parsedResponse.isPresent()) {
-            wireResponseHandler.handleWireResponse(parsedResponse.get(),
-                task.getReplicateNumber(), clientExchange, cumulativeStepCount);
+            WireResponse wireResponse = parsedResponse.get();
+            wireResponseHandler.handleWireResponse(
+                wireResponse,
+                replicateNum,
+                clientExchange,
+                cumulativeStepCount);
           }
         });
       } catch (Exception e) {
