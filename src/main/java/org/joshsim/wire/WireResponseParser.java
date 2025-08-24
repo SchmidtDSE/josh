@@ -50,10 +50,10 @@ public class WireResponseParser {
    * </ul>
    *
    * @param line The response line to parse
-   * @return Optional containing ParsedResponse if parsing was successful, empty if ignored
+   * @return Optional containing WireResponse if parsing was successful, empty if ignored
    * @throws IllegalArgumentException if the line format is invalid
    */
-  public static Optional<ParsedResponse> parseEngineResponse(String line) {
+  public static Optional<WireResponse> parseEngineResponse(String line) {
     if (line == null || line.trim().isEmpty()) {
       return Optional.empty();
     }

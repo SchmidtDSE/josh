@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  *
  * <p>This strategy parses response lines matching the pattern [N] data where N is
  * the replicate number and data is the wire format data payload. It creates
- * ParsedResponse objects of type DATUM. Lines with empty data are ignored.</p>
+ * WireResponse objects of type DATUM. Lines with empty data are ignored.</p>
  */
 public class DatumPatternStrategy implements WireResponseParserStrategy {
 
@@ -45,7 +45,7 @@ public class DatumPatternStrategy implements WireResponseParserStrategy {
         return new WireParseResult();
       }
 
-      ParsedResponse response = new ParsedResponse(replicateNumber, dataLine);
+      WireResponse response = new WireResponse(replicateNumber, dataLine);
       return new WireParseResult(response);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid replicate number in DATUM response: " + line, e);

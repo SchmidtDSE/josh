@@ -257,6 +257,16 @@ public class JoshSimWorkerHandler implements HttpHandler {
           },
           useSerial
       );
+
+      // Add end marker for replicate 0 to standardize wire format
+      try {
+        String endMarker = "[end 0]\n";
+        httpServerExchange.getOutputStream().write(endMarker.getBytes());
+        httpServerExchange.getOutputStream().flush();
+      } catch (IOException e) {
+        SecurityUtil.logSecureError(apiDataLayer, apiKey, "end marker", e, null);
+      }
+
       return true;
     } catch (Exception e) {
       handleSimulationError(e, "simulation", httpServerExchange, apiKey);
@@ -368,7 +378,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     SandboxExportCallback exportCallback = (export) -> {
       try {
-        httpServerExchange.getOutputStream().write((export + "\n").getBytes());
+        // Wrap export data with replicate 0 prefix to standardize wire format
+        String wireOutput = String.format("[0] %s\n", export);
+        httpServerExchange.getOutputStream().write(wireOutput.getBytes());
         httpServerExchange.getOutputStream().flush();
       } catch (IOException e) {
         throw new RuntimeException("Error streaming response", e);

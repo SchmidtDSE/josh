@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Strategy for parsing progress response patterns from wire format.
  *
  * <p>This strategy parses response lines matching the pattern [progress N]
- * where N is the current step count. It creates ParsedResponse objects of type PROGRESS.</p>
+ * where N is the current step count. It creates WireResponse objects of type PROGRESS.</p>
  */
 public class ProgressPatternStrategy implements WireResponseParserStrategy {
 
@@ -37,7 +37,7 @@ public class ProgressPatternStrategy implements WireResponseParserStrategy {
 
     try {
       long stepCount = Long.parseLong(matcher.group(1));
-      ParsedResponse response = new ParsedResponse(stepCount);
+      WireResponse response = new WireResponse(stepCount);
       return new WireParseResult(response);
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("Invalid step count in PROGRESS response: " + line, e);

@@ -14,36 +14,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
-import org.joshsim.lang.io.ExportFacade;
-import org.joshsim.lang.io.ExportFacadeFactory;
-import org.joshsim.lang.io.ExportTarget;
-import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
-import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
-import org.joshsim.wire.NamedMap;
-import org.joshsim.wire.ParsedResponse;
-import org.joshsim.wire.WireConverter;
-import org.joshsim.wire.WireResponseParser;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -122,6 +104,23 @@ public class RunRemoteCommand implements Callable<Integer> {
   @Mixin
   private MinioOptions minioOptions = new MinioOptions();
 
+  @Option(
+      names = "--remote-leader",
+      description = "Use remote leader for coordination (true) or manage locally (false). "
+                  + "Default: false. When false, coordinates multiple parallel worker calls "
+                  + "locally. When true, offloads all coordination to remote JoshSimLeaderHandler.",
+      defaultValue = "false"
+  )
+  private boolean useRemoteLeader;
+
+  @Option(
+      names = "--concurrent-workers",
+      description = "Maximum number of concurrent worker requests when using local leader mode. "
+                  + "Ignored when --remote-leader=true. Default: 10.",
+      defaultValue = "10"
+  )
+  private int concurrentWorkers = 10;
+
   @Override
   public Integer call() {
     try {
@@ -139,7 +138,7 @@ public class RunRemoteCommand implements Callable<Integer> {
       // Validate endpoint URL
       URI endpointUri = validateAndParseEndpoint(endpoint);
 
-      // Execute remote simulation
+      // Execute remote simulation using strategy pattern
       executeRemoteSimulation(endpointUri);
 
       output.printInfo("Remote simulation completed successfully");
@@ -203,7 +202,7 @@ public class RunRemoteCommand implements Callable<Integer> {
   }
 
   /**
-   * Executes the simulation on the remote server via HTTP streaming.
+   * Executes the simulation using the strategy pattern.
    *
    * @param endpointUri The validated endpoint URI
    * @throws IOException if network communication fails
@@ -211,66 +210,58 @@ public class RunRemoteCommand implements Callable<Integer> {
    */
   private void executeRemoteSimulation(URI endpointUri) throws IOException, InterruptedException {
     // Extract simulation metadata for progress tracking
-    SimulationMetadata metadata =
-        extractSimulationMetadata();
+    SimulationMetadata metadata = extractSimulationMetadata();
 
     output.printInfo("Simulation has " + metadata.getTotalSteps() + " steps "
         + "(from step " + metadata.getStepsLow() + " to " + metadata.getStepsHigh() + ")");
 
     // Initialize progress calculator
-    final ProgressCalculator progressCalculator = new ProgressCalculator(
+    ProgressCalculator progressCalculator = new ProgressCalculator(
         metadata.getTotalSteps(), 1 // Currently supporting single replicate
     );
 
-    // Create HTTP client with HTTP/2 support
-    HttpClient client = HttpClient.newBuilder()
-        .version(HttpClient.Version.HTTP_2)
-        .connectTimeout(Duration.ofSeconds(30))
+    // Read Josh simulation code
+    String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+
+    // Serialize external data
+    String externalDataSerialized = serializeExternalData();
+
+    // Create execution context using builder
+    RunRemoteContext context = new RunRemoteContextBuilder()
+        .withFile(file)
+        .withSimulation(simulation)
+        .withReplicateNumber(replicateNumber)
+        .withUseFloat64(useFloat64)
+        .withEndpointUri(endpointUri)
+        .withApiKey(apiKey)
+        .withDataFiles(dataFiles)
+        .withJoshCode(joshCode)
+        .withExternalDataSerialized(externalDataSerialized)
+        .withMetadata(metadata)
+        .withProgressCalculator(progressCalculator)
+        .withOutputOptions(output)
+        .withMinioOptions(minioOptions)
+        .withMaxConcurrentWorkers(concurrentWorkers)
         .build();
 
-    // Create HTTP request
-    HttpRequest request = createRemoteRequest(endpointUri);
-
-    output.printInfo("Sending simulation request to " + endpointUri);
-
-    // Send request and process streaming response
-    HttpResponse<Stream<String>> response = client.send(
-        request,
-        HttpResponse.BodyHandlers.ofLines()
-    );
-
-    if (response.statusCode() != 200) {
-      throw new RuntimeException("Remote execution failed with status: " + response.statusCode());
-    }
-
-    output.printInfo("Connected to remote server, processing streaming response...");
-    processStreamingResponseWithProgress(response.body(), progressCalculator);
+    // Select and execute strategy
+    RunRemoteStrategy strategy = selectExecutionStrategy();
+    strategy.execute(context);
   }
 
   /**
-   * Creates the HTTP request with simulation code and external data.
+   * Selects the appropriate execution strategy based on command line options.
    *
-   * @param endpointUri The endpoint URI
-   * @return The configured HTTP request
-   * @throws IOException if file reading fails
+   * @return The execution strategy to use
    */
-  private HttpRequest createRemoteRequest(URI endpointUri) throws IOException {
-    // Read simulation file content
-    String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-
-    // Serialize external data files
-    String externalDataSerialized = serializeExternalData();
-
-    // Build form data
-    String formBody = buildFormData(joshCode, simulation, apiKey, externalDataSerialized);
-
-    return HttpRequest.newBuilder()
-        .uri(endpointUri)
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .timeout(Duration.ofMinutes(30))
-        .POST(HttpRequest.BodyPublishers.ofString(formBody))
-        .build();
+  private RunRemoteStrategy selectExecutionStrategy() {
+    if (useRemoteLeader) {
+      return new RunRemoteOffloadLeaderStrategy();
+    } else {
+      return new RunRemoteLocalLeaderStrategy();
+    }
   }
+
 
   /**
    * Serializes external data files using the wire format.
@@ -330,48 +321,6 @@ public class RunRemoteCommand implements Callable<Integer> {
     };
   }
 
-  /**
-   * Builds the form data for the HTTP request.
-   *
-   * <p>Creates URL-encoded form data compatible with JoshSimServer /runReplicates endpoint.
-   * Includes simulation code, name, API key, external data, and configuration options.</p>
-   *
-   * @param joshCode The simulation code
-   * @param simulation The simulation name
-   * @param apiKey The API key for authentication
-   * @param externalData The serialized external data in wire format
-   * @return The URL-encoded form request body
-   */
-  private String buildFormData(String joshCode, String simulation, String apiKey,
-                              String externalData) {
-    Map<String, String> formData = new HashMap<>();
-    formData.put("code", joshCode);
-    formData.put("name", simulation);
-    formData.put("replicates", "1"); // Currently supporting single replicate
-    formData.put("apiKey", apiKey);
-    formData.put("externalData", externalData);
-    formData.put("favorBigDecimal", String.valueOf(!useFloat64));
-
-    // URL encode the form data
-    StringBuilder formBody = new StringBuilder();
-    boolean first = true;
-    for (Map.Entry<String, String> entry : formData.entrySet()) {
-      if (!first) {
-        formBody.append("&");
-      }
-      first = false;
-
-      try {
-        String encodedKey = java.net.URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8);
-        String encodedValue = java.net.URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8);
-        formBody.append(encodedKey).append("=").append(encodedValue);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to encode form data", e);
-      }
-    }
-
-    return formBody.toString();
-  }
 
   /**
    * Extracts simulation metadata from the input Josh script file.
@@ -389,124 +338,7 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
   }
 
-  /**
-   * Processes streaming HTTP response from remote server with enhanced progress display.
-   *
-   * <p>Parses each response line using WireResponseParser and persists simulation
-   * data using the configured ExportFacade. Uses ProgressCalculator for percentage-based
-   * progress feedback with intelligent filtering to reduce verbose output.</p>
-   *
-   * @param responseStream Stream of response lines from remote server
-   * @param progressCalculator Calculator for enhanced progress display
-   * @throws RuntimeException if response parsing or data persistence fails
-   */
-  private void processStreamingResponseWithProgress(Stream<String> responseStream,
-                                                   ProgressCalculator progressCalculator) {
-    // Initialize export system using Component 2 infrastructure
-    InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
-        .withReplicate(replicateNumber)
-        .build();
-    ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
 
-    // Map to track export facades per entity name to support multiple data types
-    Map<String, ExportFacade> exportFacades = new HashMap<>();
-
-    AtomicLong currentStep = new AtomicLong(0);
-    AtomicInteger completedReplicates = new AtomicInteger(0);
-
-    try {
-      responseStream.forEach(line -> {
-        try {
-          // Parse line using WireResponseParser
-          Optional<ParsedResponse> optionalParsed =
-              WireResponseParser.parseEngineResponse(line.trim());
-
-          if (!optionalParsed.isPresent()) {
-            return; // Skip ignored lines
-          }
-
-          ParsedResponse parsed = optionalParsed.get();
-          switch (parsed.getType()) {
-            case DATUM -> {
-              // Deserialize wire format to NamedMap using Component 1
-              NamedMap namedMap = WireConverter.deserializeFromString(
-                  parsed.getDataLine());
-
-              // Get or create export facade for this entity type
-              String entityName = namedMap.getName();
-              ExportFacade exportFacade = exportFacades.get(entityName);
-              if (exportFacade == null) {
-                // Create export target for CSV output
-                ExportTarget target = new ExportTarget("file", entityName + ".csv");
-                exportFacade = exportFactory.build(target);
-                exportFacade.start();
-                exportFacades.put(entityName, exportFacade);
-              }
-
-              // Persist using Component 2 NamedMap write capability
-              exportFacade.write(namedMap, currentStep.get());
-            }
-
-            case PROGRESS -> {
-              currentStep.set(parsed.getStepCount());
-              ProgressUpdate progressUpdate =
-                  progressCalculator.updateStep(currentStep.get());
-              if (progressUpdate.shouldReport()) {
-                output.printInfo(progressUpdate.getMessage());
-              }
-            }
-
-            case END -> {
-              int replicateNum = completedReplicates.incrementAndGet();
-              ProgressUpdate endUpdate =
-                  progressCalculator.updateReplicateCompleted(replicateNum);
-              output.printInfo(endUpdate.getMessage());
-            }
-
-            case ERROR -> throw new RuntimeException("Remote execution error: "
-                  + parsed.getErrorMessage());
-
-            default -> {
-              // No action needed for unknown types
-            }
-          }
-
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to process streaming response: "
-              + e.getMessage(), e);
-        }
-      });
-
-    } finally {
-      // Ensure all export facades are properly closed
-      for (ExportFacade facade : exportFacades.values()) {
-        try {
-          facade.join();
-        } catch (Exception e) {
-          output.printError("Failed to close export facade: " + e.getMessage());
-        }
-      }
-    }
-
-    output.printInfo("Results saved locally via export facade");
-  }
-
-  /**
-   * Legacy method for processing streaming response without progress enhancement.
-   *
-   * <p>This method provides backward compatibility by creating a default progress
-   * calculator and delegating to the enhanced progress method.</p>
-   *
-   * @param responseStream Stream of response lines from remote server
-   * @throws RuntimeException if response parsing or data persistence fails
-   * @deprecated Use processStreamingResponseWithProgress for enhanced progress display
-   */
-  @Deprecated
-  private void processStreamingResponse(Stream<String> responseStream) {
-    // Create default progress calculator for backward compatibility
-    ProgressCalculator defaultCalculator = new ProgressCalculator(11, 1); // Default: 11 steps
-    processStreamingResponseWithProgress(responseStream, defaultCalculator);
-  }
 
   /**
    * Determines if the current endpoint is Josh Cloud.

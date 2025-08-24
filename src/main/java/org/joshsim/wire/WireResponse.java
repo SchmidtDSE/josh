@@ -1,5 +1,5 @@
 /**
- * Container class for parsed response data from wire format responses.
+ * Container class for wire format response data.
  *
  * <p>This class encapsulates the different types of information that can be
  * contained in a streaming response line from a remote Josh server.</p>
@@ -10,12 +10,12 @@
 package org.joshsim.wire;
 
 /**
- * Container class for parsed response data.
+ * Container class for wire format response data.
  *
  * <p>This class encapsulates the different types of information that can be
  * contained in a streaming response line from a remote Josh server.</p>
  */
-public class ParsedResponse {
+public class WireResponse {
 
   /**
    * Enumeration of possible response types from the remote engine.
@@ -43,7 +43,7 @@ public class ParsedResponse {
    * @param replicateNumber The replicate number this data belongs to
    * @param dataLine The wire format data line
    */
-  public ParsedResponse(int replicateNumber, String dataLine) {
+  public WireResponse(int replicateNumber, String dataLine) {
     this.type = ResponseType.DATUM;
     this.replicateNumber = replicateNumber;
     this.dataLine = dataLine;
@@ -56,7 +56,7 @@ public class ParsedResponse {
    *
    * @param stepCount The current step number
    */
-  public ParsedResponse(long stepCount) {
+  public WireResponse(long stepCount) {
     this.type = ResponseType.PROGRESS;
     this.replicateNumber = -1;
     this.dataLine = null;
@@ -70,7 +70,7 @@ public class ParsedResponse {
    * @param type The response type (must be END)
    * @param replicateNumber The replicate number that completed
    */
-  public ParsedResponse(ResponseType type, int replicateNumber) {
+  public WireResponse(ResponseType type, int replicateNumber) {
     if (type != ResponseType.END) {
       throw new IllegalArgumentException("This constructor is only for END responses");
     }
@@ -86,7 +86,7 @@ public class ParsedResponse {
    *
    * @param errorMessage The error message from the remote server
    */
-  public ParsedResponse(String errorMessage) {
+  public WireResponse(String errorMessage) {
     this.type = ResponseType.ERROR;
     this.replicateNumber = -1;
     this.dataLine = null;
@@ -139,16 +139,40 @@ public class ParsedResponse {
     return errorMessage;
   }
 
+  /**
+   * Converts this response back to wire format string.
+   *
+   * <p>This method provides bidirectional conversion from parsed response data
+   * back to the original wire format. The returned string can be sent over the
+   * wire to clients expecting standard Josh wire format.</p>
+   *
+   * @return The wire format representation of this response
+   * @throws IllegalStateException if the response is in an invalid state
+   */
+  public String toWireFormat() {
+    return switch (type) {
+      case DATUM -> {
+        if (dataLine == null) {
+          throw new IllegalStateException("DATUM response must have dataLine");
+        }
+        yield String.format("[%d] %s", replicateNumber, dataLine);
+      }
+      case PROGRESS -> String.format("[progress %d]", stepCount);
+      case END -> String.format("[end %d]", replicateNumber);
+      case ERROR -> {
+        if (errorMessage == null) {
+          throw new IllegalStateException("ERROR response must have errorMessage");
+        }
+        yield String.format("[error] %s", errorMessage);
+      }
+      default -> throw new IllegalStateException("Unknown response type: " + type);
+    };
+  }
+
   @Override
   public String toString() {
     return String.format(
-        "ParsedResponse{"
-            + "type=%s,"
-            + " replicate=%d,"
-            + " step=%d,"
-            + " data='%s',"
-            + " error='%s'"
-            + "}",
+        "WireResponse{type=%s, replicate=%d, step=%d, data='%s', error='%s'}",
         type,
         replicateNumber,
         stepCount,
