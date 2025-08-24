@@ -12,7 +12,6 @@
 package org.joshsim.command;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import org.apache.sis.referencing.CRS;
@@ -27,6 +26,9 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.pipeline.DataFilesStringParser;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -65,8 +67,6 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
   private String crs;
 
-  @Option(names = "--replicate-number", description = "Replicate number", defaultValue = "0")
-  private int replicateNumber;
 
   @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
   private int replicates = 1;
@@ -118,18 +118,22 @@ public class RunCommand implements Callable<Integer> {
       geometryFactory = new EarthGeometryFactory(crsRealized);
     }
 
-    // Create appropriate InputGetterStrategy based on --data option
+    // Create job configuration using DataFilesStringParser
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(replicates);
+    DataFilesStringParser parser = new DataFilesStringParser();
+    JoshJob job = parser.parseDataFiles(jobBuilder, dataFiles).build();
+
+    // Create appropriate InputGetterStrategy based on job configuration
     InputGetterStrategy inputStrategy;
-    if (dataFiles.length == 0) {
+    if (job.getFilePaths().isEmpty()) {
       inputStrategy = new JvmWorkingDirInputGetter();
     } else {
-      Map<String, String> fileMapping = parseDataFiles(dataFiles);
-      inputStrategy = new JvmMappedInputGetter(fileMapping);
+      inputStrategy = new JvmMappedInputGetter(job.getFilePaths());
     }
 
     // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
     InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
-        .withReplicate(replicateNumber)
+        .withReplicate(0)
         .withInputStrategy(inputStrategy)
         .build();
 
@@ -172,17 +176,17 @@ public class RunCommand implements Callable<Integer> {
 
     ProgressCalculator progressCalculator = new ProgressCalculator(
         metadata.getTotalSteps(),
-        replicates
+        job.getReplicates()
     );
 
     // Execute simulation for each replicate
-    for (int currentReplicate = 0; currentReplicate < replicates; currentReplicate++) {
+    for (int currentReplicate = 0; currentReplicate < job.getReplicates(); currentReplicate++) {
       // Reset progress tracking for each new replicate (except first)
       if (currentReplicate > 0) {
         progressCalculator.resetForNextReplicate(currentReplicate + 1);
       }
       
-      final int replicateNum = replicateNumber + currentReplicate;
+      final int replicateNum = currentReplicate;
       JoshSimFacade.runSimulation(
           geometryFactory,
           program,
@@ -199,7 +203,7 @@ public class RunCommand implements Callable<Integer> {
       );
 
       // Report replicate completion (except for the last replicate)
-      if (currentReplicate < replicates - 1) {
+      if (currentReplicate < job.getReplicates() - 1) {
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
             currentReplicate + 1);
         output.printInfo(completion.getMessage());
@@ -218,23 +222,4 @@ public class RunCommand implements Callable<Integer> {
     return successful ? 0 : MINIO_ERROR_CODE;
   }
 
-  /**
-   * Parse the data files option into a mapping from filename to path.
-   *
-   * @param dataFiles Array of data file specifications in format "filename=path".
-   * @return Map from filename to path.
-   * @throws IllegalArgumentException if any data file specification is invalid.
-   */
-  private Map<String, String> parseDataFiles(String[] dataFiles) {
-    Map<String, String> mapping = new HashMap<>();
-    for (String dataFile : dataFiles) {
-      String[] parts = dataFile.split("=", 2);
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("Invalid data file format: " + dataFile
-            + ". Expected format: filename=path");
-      }
-      mapping.put(parts[0].trim(), parts[1].trim());
-    }
-    return mapping;
-  }
 }

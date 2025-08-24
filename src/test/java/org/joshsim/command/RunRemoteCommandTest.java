@@ -17,6 +17,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import org.joshsim.pipeline.DataFilesStringParser;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.remote.RunRemoteLocalLeaderStrategy;
 import org.joshsim.pipeline.remote.RunRemoteOffloadLeaderStrategy;
 import org.joshsim.pipeline.remote.RunRemoteStrategy;
@@ -35,6 +38,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class RunRemoteCommandTest {
 
   private RunRemoteCommand command;
+  private DataFilesStringParser parser;
 
   /**
    * Set up test instance.
@@ -42,6 +46,7 @@ public class RunRemoteCommandTest {
   @BeforeEach
   public void setUp() {
     command = new RunRemoteCommand();
+    parser = new DataFilesStringParser();
   }
 
   @Test
@@ -103,11 +108,11 @@ public class RunRemoteCommandTest {
 
   @Test
   public void testParseDataFiles() throws Exception {
-    Method method = RunRemoteCommand.class.getDeclaredMethod("parseDataFiles", String[].class);
-    method.setAccessible(true);
-
     String[] dataFiles = {"config.jshc=/path/to/config.jshc", "data.jshd=/path/to/data.jshd"};
-    Map<String, String> result = (Map<String, String>) method.invoke(command, (Object) dataFiles);
+    
+    JoshJobBuilder builder = new JoshJobBuilder();
+    JoshJob job = parser.parseDataFiles(builder, dataFiles).build();
+    Map<String, String> result = job.getFilePaths();
 
     assertEquals(2, result.size());
     assertEquals("/path/to/config.jshc", result.get("config.jshc"));
@@ -116,26 +121,22 @@ public class RunRemoteCommandTest {
 
   @Test
   public void testParseDataFilesInvalidFormat() throws Exception {
-    Method method = RunRemoteCommand.class.getDeclaredMethod("parseDataFiles", String[].class);
-    method.setAccessible(true);
-
     String[] invalidDataFiles = {"invalid_format"};
 
-    assertThrows(java.lang.reflect.InvocationTargetException.class, () -> {
-      method.invoke(command, (Object) invalidDataFiles);
+    JoshJobBuilder builder = new JoshJobBuilder();
+    assertThrows(IllegalArgumentException.class, () -> {
+      parser.parseDataFiles(builder, invalidDataFiles);
     });
   }
 
   @Test
   public void testParseDataFilesWithSpaces() throws Exception {
-    Method method = RunRemoteCommand.class.getDeclaredMethod(
-        "parseDataFiles", String[].class);
-    method.setAccessible(true);
-
     String[] dataFiles = {" config.jshc = /path/to/config.jshc ",
         " data.jshd = /path/to/data.jshd "};
-    Map<String, String> result = (Map<String, String>) method.invoke(
-        command, (Object) dataFiles);
+    
+    JoshJobBuilder builder = new JoshJobBuilder();
+    JoshJob job = parser.parseDataFiles(builder, dataFiles).build();
+    Map<String, String> result = job.getFilePaths();
 
     assertEquals(2, result.size());
     assertEquals("/path/to/config.jshc", result.get("config.jshc"));
@@ -224,12 +225,11 @@ public class RunRemoteCommandTest {
 
   @Test
   public void testEmptyDataFiles() throws Exception {
-    Method method = RunRemoteCommand.class.getDeclaredMethod("parseDataFiles", String[].class);
-    method.setAccessible(true);
-
     String[] emptyDataFiles = {};
-    Map<String, String> result = (Map<String, String>) method.invoke(
-        command, (Object) emptyDataFiles);
+    
+    JoshJobBuilder builder = new JoshJobBuilder();
+    JoshJob job = parser.parseDataFiles(builder, emptyDataFiles).build();
+    Map<String, String> result = job.getFilePaths();
 
     assertEquals(0, result.size());
   }

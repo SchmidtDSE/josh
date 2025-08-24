@@ -15,6 +15,9 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import org.joshsim.pipeline.DataFilesStringParser;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.pipeline.remote.RunRemoteOffloadLeaderStrategy;
 import org.joshsim.pipeline.remote.RunRemoteStrategy;
@@ -47,7 +50,6 @@ public class RunRemoteOffloadLeaderStrategyTest {
     // Create test context with valid parameters
     File testFile = new File("test.josh");
     String simulation = "TestSimulation";
-    int replicateNumber = 0;
     int replicates = 3;
     boolean useFloat64 = false;
     URI endpointUri = new URI("https://example.com/runReplicates");
@@ -61,9 +63,14 @@ public class RunRemoteOffloadLeaderStrategyTest {
     MinioOptions minioOptions = new MinioOptions();
     int maxConcurrentWorkers = 10;
 
+    // Create JoshJob from dataFiles using DataFilesStringParser
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(replicates);
+    DataFilesStringParser parser = new DataFilesStringParser();
+    JoshJob job = parser.parseDataFiles(jobBuilder, dataFiles).build();
+
     testContext = new RunRemoteContext(
-        testFile, simulation, replicateNumber, replicates, useFloat64,
-        endpointUri, apiKey, dataFiles,
+        testFile, simulation, useFloat64,
+        endpointUri, apiKey, job,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
         outputOptions, minioOptions, maxConcurrentWorkers
@@ -110,12 +117,11 @@ public class RunRemoteOffloadLeaderStrategyTest {
 
   @Test
   public void testBuildFormDataWithFloat64() throws Exception {
-    // Create context with float64 enabled
+    // Create context with float64 enabled using job from main context
     RunRemoteContext float64Context = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(),
-        testContext.getReplicateNumber(), testContext.getReplicates(), true, // useFloat64 = true
+        testContext.getFile(), testContext.getSimulation(), true, // useFloat64 = true
         testContext.getEndpointUri(), testContext.getApiKey(),
-        testContext.getDataFiles(),
+        testContext.getJob(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
@@ -136,10 +142,9 @@ public class RunRemoteOffloadLeaderStrategyTest {
   public void testBuildFormDataUrlEncoding() throws Exception {
     // Create context with special characters that need URL encoding
     RunRemoteContext specialCharContext = new RunRemoteContext(
-        testContext.getFile(), "Test Simulation & More",
-        testContext.getReplicateNumber(), testContext.getReplicates(), testContext.isUseFloat64(),
+        testContext.getFile(), "Test Simulation & More", testContext.isUseFloat64(),
         testContext.getEndpointUri(), "api-key/with+special&chars",
-        testContext.getDataFiles(),
+        testContext.getJob(),
         "simulation code with spaces", "external data with spaces",
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
@@ -243,12 +248,17 @@ public class RunRemoteOffloadLeaderStrategyTest {
 
   @Test
   public void testBuildFormDataWithDifferentReplicates() throws Exception {
+    // Create job with different replicate count
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(7);
+    DataFilesStringParser parser = new DataFilesStringParser();
+    String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
+    JoshJob jobWith7Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
+    
     // Create context with different replicate count
     RunRemoteContext differentReplicatesContext = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(),
-        testContext.getReplicateNumber(), 7, testContext.isUseFloat64(), // 7 replicates
+        testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
         testContext.getEndpointUri(), testContext.getApiKey(),
-        testContext.getDataFiles(),
+        jobWith7Replicates,
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
@@ -267,12 +277,17 @@ public class RunRemoteOffloadLeaderStrategyTest {
 
   @Test
   public void testBuildFormDataWithSingleReplicate() throws Exception {
+    // Create job with single replicate
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(1);
+    DataFilesStringParser parser = new DataFilesStringParser();
+    String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
+    JoshJob jobWith1Replicate = parser.parseDataFiles(jobBuilder, dataFiles).build();
+    
     // Create context with single replicate (default behavior)
     RunRemoteContext singleReplicateContext = new RunRemoteContext(
-        testContext.getFile(), testContext.getSimulation(),
-        testContext.getReplicateNumber(), 1, testContext.isUseFloat64(), // 1 replicate
+        testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
         testContext.getEndpointUri(), testContext.getApiKey(),
-        testContext.getDataFiles(),
+        jobWith1Replicate,
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),

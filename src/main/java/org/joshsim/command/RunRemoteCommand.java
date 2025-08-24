@@ -21,6 +21,9 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.joshsim.pipeline.DataFilesStringParser;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.pipeline.remote.RunRemoteLocalLeaderStrategy;
@@ -89,12 +92,6 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private String[] dataFiles = new String[0];
 
-  @Option(
-      names = "--replicate",
-      description = "Replicate number",
-      defaultValue = "0"
-  )
-  private int replicateNumber;
 
   @Option(
       names = "--use-float-64",
@@ -237,22 +234,25 @@ public class RunRemoteCommand implements Callable<Integer> {
         metadata.getTotalSteps(), replicates
     );
 
+    // Create job configuration using DataFilesStringParser
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(replicates);
+    DataFilesStringParser parser = new DataFilesStringParser();
+    JoshJob job = parser.parseDataFiles(jobBuilder, dataFiles).build();
+
     // Read Josh simulation code
     String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
 
     // Serialize external data
     String externalDataSerialized = serializeExternalData();
 
-    // Create execution context using builder
+    // Create execution context using builder with job
     RunRemoteContext context = new RunRemoteContextBuilder()
         .withFile(file)
         .withSimulation(simulation)
-        .withReplicateNumber(replicateNumber)
-        .withReplicates(replicates)
         .withUseFloat64(useFloat64)
         .withEndpointUri(endpointUri)
         .withApiKey(apiKey)
-        .withDataFiles(dataFiles)
+        .withJob(job)
         .withJoshCode(joshCode)
         .withExternalDataSerialized(externalDataSerialized)
         .withMetadata(metadata)
@@ -293,7 +293,10 @@ public class RunRemoteCommand implements Callable<Integer> {
    * @throws IOException if file reading fails
    */
   private String serializeExternalData() throws IOException {
-    Map<String, String> fileMapping = parseDataFiles(dataFiles);
+    JoshJobBuilder tempBuilder = new JoshJobBuilder();
+    DataFilesStringParser parser = new DataFilesStringParser();
+    JoshJob tempJob = parser.parseDataFiles(tempBuilder, dataFiles).build();
+    Map<String, String> fileMapping = tempJob.getFilePaths();
     StringBuilder serialized = new StringBuilder();
 
     for (Map.Entry<String, String> entry : fileMapping.entrySet()) {
@@ -387,23 +390,4 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
   }
 
-  /**
-   * Parses the data files option into a mapping from filename to path.
-   *
-   * @param dataFiles Array of data file specifications in format "filename=path"
-   * @return Map from filename to path
-   * @throws IllegalArgumentException if any data file specification is invalid
-   */
-  private Map<String, String> parseDataFiles(String[] dataFiles) {
-    Map<String, String> mapping = new HashMap<>();
-    for (String dataFile : dataFiles) {
-      String[] parts = dataFile.split("=", 2);
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("Invalid data file format: " + dataFile
-            + ". Expected format: filename=path");
-      }
-      mapping.put(parts[0].trim(), parts[1].trim());
-    }
-    return mapping;
-  }
 }

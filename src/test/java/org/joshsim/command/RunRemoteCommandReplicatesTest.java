@@ -19,6 +19,8 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.util.MinioOptions;
@@ -130,12 +132,13 @@ public class RunRemoteCommandReplicatesTest {
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, "simulation test_sim {}");
     
+    JoshJob testJob = new JoshJobBuilder().setReplicates(3).build();
     RunRemoteContextBuilder builder = new RunRemoteContextBuilder();
-    builder.withReplicates(3);
+    builder.withJob(testJob);
 
-    // Test the builder method
-    assertEquals(3, getReplicatesFromBuilder(builder),
-        "Builder should accept and store replicates value");
+    // Test the builder method - now get replicates from job
+    assertEquals(3, testJob.getReplicates(),
+        "Job should contain the replicates value");
   }
 
   @Test
@@ -242,15 +245,15 @@ public class RunRemoteCommandReplicatesTest {
    */
   private RunRemoteContext createTestContextWithOffset(File joshFile, int replicates, int offset)
       throws Exception {
+    // Note: offset parameter is ignored in job-based execution (always 0)
+    JoshJob job = new JoshJobBuilder().setReplicates(replicates).build();
     return new RunRemoteContextBuilder()
         .withFile(joshFile)
         .withSimulation("test_sim")
-        .withReplicateNumber(offset)
-        .withReplicates(replicates)
         .withUseFloat64(false)
         .withEndpointUri(java.net.URI.create("https://example.com/runReplicates"))
         .withApiKey("test-api-key")
-        .withDataFiles(new String[0])
+        .withJob(job)
         .withJoshCode("simulation test_sim {}")
         .withExternalDataSerialized("")
         .withMetadata(new org.joshsim.util.SimulationMetadata(0, 10, 11))

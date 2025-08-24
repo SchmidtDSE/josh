@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.lang.reflect.Method;
 import java.util.Map;
+import org.joshsim.pipeline.DataFilesStringParser;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,7 @@ class RunCommandDataOptionTest {
   private static final String TEST_CONTENT = "test content";
   private File testFile1;
   private File testFile2;
-  private RunCommand runCommand;
+  private DataFilesStringParser parser;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -32,7 +34,7 @@ class RunCommandDataOptionTest {
       writer.write(TEST_CONTENT);
     }
 
-    runCommand = new RunCommand();
+    parser = new DataFilesStringParser();
   }
 
   @AfterEach
@@ -128,14 +130,11 @@ class RunCommandDataOptionTest {
   }
 
   /**
-   * Helper method to invoke the private parseDataFiles method using reflection.
+   * Helper method to parse data files using DataFilesStringParser.
    */
   private Map<String, String> invokeParseDataFiles(String[] dataFiles) throws Exception {
-    Method method = RunCommand.class.getDeclaredMethod("parseDataFiles", String[].class);
-    method.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    Map<String, String> result = (Map<String, String>) method.invoke(runCommand,
-        (Object) dataFiles);
-    return result;
+    JoshJobBuilder builder = new JoshJobBuilder();
+    JoshJob job = parser.parseDataFiles(builder, dataFiles).build();
+    return job.getFilePaths();
   }
 }
