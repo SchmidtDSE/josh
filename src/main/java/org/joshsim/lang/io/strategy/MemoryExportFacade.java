@@ -9,6 +9,7 @@ package org.joshsim.lang.io.strategy;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
@@ -50,10 +51,21 @@ public class MemoryExportFacade implements ExportFacade {
   public void join() {}
 
   @Override
-  public void write(Entity entity, long step) {
+  public void write(Entity entity, long step, int replicateNumber) {
     try {
-      Map<String, String> serialized = serializeStrategy.getRecord(entity);
+      Map<String, String> original = serializeStrategy.getRecord(entity);
+      
+      // Create a LinkedHashMap to preserve ordering and ensure replicate is last
+      Map<String, String> serialized = new LinkedHashMap<>();
+      
+      // Add all original data first
+      original.entrySet().forEach(entry -> serialized.put(entry.getKey(), entry.getValue()));
+      
+      // Add step column (before replicate)
       serialized.put("step", Long.toString(step));
+      
+      // Add replicate column as the last column
+      serialized.put("replicate", Integer.toString(replicateNumber));
       writeStrategy.write(serialized, outputStream);
     } catch (IOException e) {
       throw new RuntimeException("Error writing to output stream", e);
@@ -61,10 +73,20 @@ public class MemoryExportFacade implements ExportFacade {
   }
 
   @Override
-  public void write(NamedMap namedMap, long step) {
+  public void write(NamedMap namedMap, long step, int replicateNumber) {
     try {
-      Map<String, String> serialized = new HashMap<>(namedMap.getTarget());
+      // Create a LinkedHashMap to preserve ordering and ensure replicate is last
+      Map<String, String> serialized = new LinkedHashMap<>();
+      
+      // Add all original data first
+      namedMap.getTarget().entrySet().forEach(entry -> 
+          serialized.put(entry.getKey(), entry.getValue()));
+      
+      // Add step column (before replicate)
       serialized.put("step", Long.toString(step));
+      
+      // Add replicate column as the last column
+      serialized.put("replicate", Integer.toString(replicateNumber));
       writeStrategy.write(serialized, outputStream);
     } catch (IOException e) {
       throw new RuntimeException("Error writing to output stream", e);

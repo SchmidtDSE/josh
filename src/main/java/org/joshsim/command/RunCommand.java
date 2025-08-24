@@ -127,7 +127,7 @@ public class RunCommand implements Callable<Integer> {
       inputStrategy = new JvmMappedInputGetter(fileMapping);
     }
 
-    // Create InputOutputLayer with the chosen strategy
+    // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
     InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(replicateNumber)
         .withInputStrategy(inputStrategy)

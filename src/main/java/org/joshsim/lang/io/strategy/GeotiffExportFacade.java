@@ -65,13 +65,15 @@ public class GeotiffExportFacade implements ExportFacade {
   }
 
   @Override
-  public void write(Entity entity, long step) {
+  public void write(Entity entity, long step, int replicateNumber) {
+    // For GeoTIFF, replicate number is handled by file separation, not as data column
     Map<String, String> serialized = serializeStrategy.getRecord(entity);
     writeFromSerializedData(serialized, step);
   }
 
   @Override
-  public void write(NamedMap namedMap, long step) {
+  public void write(NamedMap namedMap, long step, int replicateNumber) {
+    // For GeoTIFF, replicate number is handled by file separation, not as data column
     writeFromSerializedData(namedMap.getTarget(), step);
   }
 

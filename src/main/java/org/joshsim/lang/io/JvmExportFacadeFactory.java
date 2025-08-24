@@ -85,13 +85,20 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   @Override
   public String getPath(String template) {
-    String replicateStr = ((Integer) replicate).toString();
-    String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
-
-    // TODO: need a better option
-    String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
+    // For spatial formats (NetCDF, GeoTIFF), preserve replicate template behavior  
+    if (template.contains(".nc") || template.contains(".tif") || template.contains(".tiff")) {
+      String replicateStr = ((Integer) replicate).toString();
+      String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
+      String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
+      String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
+      return withVariable;
+    }
+    
+    // For tabular formats (CSV, memory), remove replicate template
+    String withStep = template.replaceAll("\\{step\\}", "__step__");
     String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
-    return withVariable;
+    // Remove any {replicate} templates for tabular formats
+    return withVariable.replaceAll("\\{replicate\\}", "");
   }
 
   /**

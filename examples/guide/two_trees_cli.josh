@@ -28,7 +28,7 @@ start simulation Main
   constraints.maxViableTemperature = 373 K
 
   # Indicate exports
-  exportFiles.patch = "file:///tmp/two_trees_josh_{replicate}.csv"
+  exportFiles.patch = "file:///tmp/two_trees_josh.csv"
 
 end simulation
 
