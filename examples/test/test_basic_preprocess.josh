@@ -1,0 +1,36 @@
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit
+
+start simulation Main
+
+  # Same bounds as grass_shrub_fire example for CHC-CMIP6 data compatibility
+  grid.size = 1000 m
+  grid.low = 35.5 degrees latitude, -120 degrees longitude
+  grid.high = 34.5 degrees latitude, -119 degrees longitude
+
+  # Simple time range for basic preprocessing test
+  steps.low = 0 count
+  steps.high = 0 count  # Single timestep for basic test
+
+  startYear.init = 2025
+  year.init = startYear
+  year.step = prior.year + 1
+
+end simulation
+
+start patch Default
+
+  # Access external precipitation data
+  precipValue.step = external data
+  
+  # Basic assertions for reasonable precipitation values
+  assert.precipNotNegative.step = external data >= 0 mm
+  assert.precipNotTooHigh.step = external data < 5000 mm
+
+end patch

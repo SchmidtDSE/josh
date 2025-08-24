@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import org.joshsim.command.DiscoverConfigCommand;
+import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.ServerCommand;
@@ -45,7 +46,8 @@ import picocli.CommandLine;
  * @mixinStandardHelpOptions true
  * @version 1.0
  * @description "JoshSim command line interface"
- * @subcommands { ValidateCommand, RunCommand, ServerCommand, PreprocessCommand }
+ * @subcommands { ValidateCommand, RunCommand, ServerCommand, PreprocessCommand,
+ *                 InspectJshdCommand }
  */
 @CommandLine.Command(
     name = "joshsim",
@@ -57,7 +59,8 @@ import picocli.CommandLine;
         RunCommand.class,
         ServerCommand.class,
         PreprocessCommand.class,
-        DiscoverConfigCommand.class
+        DiscoverConfigCommand.class,
+        InspectJshdCommand.class
     }
 )
 public class JoshSimCommander {

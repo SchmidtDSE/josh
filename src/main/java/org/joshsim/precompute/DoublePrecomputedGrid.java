@@ -111,6 +111,17 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
   }
 
   @Override
+  public void fill(Double value) {
+    for (int t = 0; t < innerValues.length; t++) {
+      for (int y = 0; y < innerValues[t].length; y++) {
+        for (int x = 0; x < innerValues[t][y].length; x++) {
+          innerValues[t][y][x] = value;
+        }
+      }
+    }
+  }
+
+  @Override
   public EngineValue getAt(long x, long y, long timestep) {
     int horizCut = (int) (x - getMinX());
     int vertCut = (int) (y - getMinY());
