@@ -19,6 +19,8 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.joshsim.pipeline.remote.RunRemoteContext;
+import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;

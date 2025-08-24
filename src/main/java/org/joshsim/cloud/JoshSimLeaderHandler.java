@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.joshsim.cloud.pipeline.LeaderResponseHandler;
-import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
-import org.joshsim.cloud.pipeline.WorkerTask;
+import org.joshsim.pipeline.remote.LeaderResponseHandler;
+import org.joshsim.pipeline.remote.ParallelWorkerHandler;
+import org.joshsim.pipeline.remote.WorkerTask;
 import org.joshsim.wire.WireRewriteUtil;
 
 
