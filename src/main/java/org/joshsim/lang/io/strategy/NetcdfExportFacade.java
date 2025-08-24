@@ -58,14 +58,12 @@ public class NetcdfExportFacade implements ExportFacade {
 
   @Override
   public void write(Entity entity, long step, int replicateNumber) {
-    // For NetCDF, replicate number is handled by file separation, not as data column
     ExportTask task = new ExportTask(entity, step, replicateNumber);
     write(task);
   }
 
   @Override
   public void write(NamedMap namedMap, long step, int replicateNumber) {
-    // For NetCDF, replicate number is handled by file separation, not as data column
     ExportTask task = new ExportTask(namedMap, step, replicateNumber);
     write(task);
   }
@@ -123,6 +121,7 @@ public class NetcdfExportFacade implements ExportFacade {
 
       ExportTask task = (ExportTask) taskMaybe.get();
       long step = task.getStep();
+      int replicateNumber = task.getReplicateNumber();
 
       try {
         Map<String, String> serialized;
@@ -136,6 +135,7 @@ public class NetcdfExportFacade implements ExportFacade {
           serialized = new HashMap<>(namedMap.getTarget());
         }
         serialized.put("step", Long.toString(step));
+        serialized.put("replicate", Integer.toString(replicateNumber));
         writeStrategy.write(serialized, outputStream);
       } catch (IOException e) {
         throw new RuntimeException("Error writing to output stream", e);

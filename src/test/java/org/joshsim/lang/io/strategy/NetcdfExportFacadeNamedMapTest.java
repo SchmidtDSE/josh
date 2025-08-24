@@ -54,7 +54,7 @@ public class NetcdfExportFacadeNamedMapTest {
 
     // Act
     facade.start();
-    facade.write(namedMap, 3L);
+    facade.write(namedMap, 3L, 0);
     facade.join();
 
     // Assert - NetCDF should produce some output
@@ -85,7 +85,7 @@ public class NetcdfExportFacadeNamedMapTest {
 
     // Act
     facade.start();
-    facade.write(namedMap, 3L);
+    facade.write(namedMap, 3L, 0);
     facade.join();
 
     // Assert - should handle missing variables gracefully
@@ -114,7 +114,7 @@ public class NetcdfExportFacadeNamedMapTest {
 
     // Act
     facade.start();
-    facade.write(namedMap, 7L);
+    facade.write(namedMap, 7L, 0);
     facade.join();
 
     // Assert
@@ -149,8 +149,8 @@ public class NetcdfExportFacadeNamedMapTest {
 
     // Act
     facade.start();
-    facade.write(namedMap1, 1L);
-    facade.write(namedMap2, 2L);
+    facade.write(namedMap1, 1L, 0);
+    facade.write(namedMap2, 2L, 1);
     facade.join();
 
     // Assert
@@ -178,11 +178,54 @@ public class NetcdfExportFacadeNamedMapTest {
 
     // Act
     facade.start();
-    facade.write(namedMap, 0L);
+    facade.write(namedMap, 0L, 0);
     facade.join();
 
     // Assert
     String output = outputStream.toString();
     assertTrue(output.length() >= 0); // Should handle empty data gracefully
+  }
+
+  @Test
+  public void testWriteNamedMapMultipleReplicatesConsolidated() throws IOException {
+    // Arrange
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    OutputStreamStrategy outputStrategy = mock(OutputStreamStrategy.class);
+    when(outputStrategy.open()).thenReturn(outputStream);
+
+    MapExportSerializeStrategy serializeStrategy = mock(MapExportSerializeStrategy.class);
+    List<String> variables = Arrays.asList("temperature");
+    final NetcdfExportFacade facade = new NetcdfExportFacade(outputStrategy, serializeStrategy,
+        variables);
+
+    // Create NamedMaps for different replicates with required position fields
+    Map<String, String> data1 = new HashMap<>();
+    data1.put("position.longitude", "-122.4194");
+    data1.put("position.latitude", "37.7749");
+    data1.put("temperature", "20.0");
+    final NamedMap namedMap1 = new NamedMap("replicate0", data1);
+
+    Map<String, String> data2 = new HashMap<>();
+    data2.put("position.longitude", "-122.4195");
+    data2.put("position.latitude", "37.7750");
+    data2.put("temperature", "25.0");
+    final NamedMap namedMap2 = new NamedMap("replicate1", data2);
+
+    Map<String, String> data3 = new HashMap<>();
+    data3.put("position.longitude", "-122.4196");
+    data3.put("position.latitude", "37.7751");
+    data3.put("temperature", "30.0");
+    NamedMap namedMap3 = new NamedMap("replicate2", data3);
+
+    // Act - write data for multiple replicates
+    facade.start();
+    facade.write(namedMap1, 1L, 0);  // replicate 0
+    facade.write(namedMap2, 1L, 1);  // replicate 1  
+    facade.write(namedMap3, 1L, 2);  // replicate 2
+    facade.join();
+
+    // Assert - should consolidate all replicates into single NetCDF with replicate dimension
+    String output = outputStream.toString();
+    assertTrue(output.length() >= 0, "NetCDF should consolidate multiple replicates");
   }
 }

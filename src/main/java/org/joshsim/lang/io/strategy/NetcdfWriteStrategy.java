@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import ucar.ma2.Array;
@@ -54,23 +55,50 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
     variablesRequired.add("position.longitude");
     variablesRequired.add("position.latitude");
     variablesRequired.add("step");
+    variablesRequired.add("replicate");
     return variablesRequired;
   }
 
   @Override
   public void writeAll(List<Map<String, String>> records, OutputStream outputStream) {
-    File tempFile = writeToTempFile(records);
+    Map<Integer, List<Map<String, String>>> recordsByReplicate = groupRecordsByReplicate(records);
+    File tempFile = writeToTempFile(recordsByReplicate);
     redirectFileToStream(tempFile, outputStream);
+  }
+
+  /**
+   * Groups records by their replicate number.
+   *
+   * @param records The list of records to group by replicate.
+   * @return A map from replicate number to list of records for that replicate.
+   */
+  private Map<Integer, List<Map<String, String>>> groupRecordsByReplicate(
+        List<Map<String, String>> records) {
+    Map<Integer, List<Map<String, String>>> recordsByReplicate = new LinkedHashMap<>();
+    
+    for (Map<String, String> record : records) {
+      String replicateStr = record.getOrDefault("replicate", "0");
+      int replicate;
+      try {
+        replicate = Integer.parseInt(replicateStr);
+      } catch (NumberFormatException e) {
+        replicate = 0;
+      }
+      
+      recordsByReplicate.computeIfAbsent(replicate, k -> new ArrayList<>()).add(record);
+    }
+    
+    return recordsByReplicate;
   }
 
   /**
    * Write all pending records to a new temporary file.
    *
-   * @param pendingRecords The records which should be written in batch.
+   * @param recordsByReplicate The records grouped by replicate number.
    * @return The temporary file where all pending records are written before being redirected to
    *     the output stream.
    */
-  private File writeToTempFile(List<Map<String, String>> pendingRecords) {
+  private File writeToTempFile(Map<Integer, List<Map<String, String>>> recordsByReplicate) {
     try {
       File tempFile = File.createTempFile("netcdf", ".nc");
       tempFile.deleteOnExit();
@@ -82,47 +110,81 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
           Nc4ChunkingStrategy.factory(Nc4Chunking.Strategy.standard, 0, true)
       );
 
-      // Add dimensions
-      int numRecords = pendingRecords.size();
+      // Determine dimensions
+      int numReplicates = recordsByReplicate.size();
+      int maxTimeSteps = recordsByReplicate.values().stream()
+          .mapToInt(List::size)
+          .max()
+          .orElse(0);
+
+      // Handle empty records case - ensure at least 1 for dimension
+      if (numReplicates == 0) {
+        numReplicates = 1;
+      }
+      if (maxTimeSteps == 0) {
+        maxTimeSteps = 1;
+      }
+
+      // Add dimensions - replicate first, then time
+      Dimension replicateDim = Dimension.builder()
+          .setName("replicate")
+          .setLength(numReplicates)
+          .build();
+      builder.addDimension(replicateDim);
+      
       Dimension timeDim = Dimension.builder()
           .setName("time")
-          .setLength(numRecords)
+          .setLength(maxTimeSteps)
           .build();
       builder.addDimension(timeDim);
 
-      // Add variables including time, latitude, and longitude
-      builder.addVariable("time", DataType.DOUBLE, "time");
-      builder.addVariable("latitude", DataType.DOUBLE, "time");
-      builder.addVariable("longitude", DataType.DOUBLE, "time");
+      // Add variables with 2D dimensions (replicate, time)
+      builder.addVariable("time", DataType.DOUBLE, "replicate time");
+      builder.addVariable("latitude", DataType.DOUBLE, "replicate time");
+      builder.addVariable("longitude", DataType.DOUBLE, "replicate time");
 
       for (String varName : variables) {
-        Variable.Builder<?> varBuilder = Variable.builder()
-            .setName(varName)
-            .setDataType(DataType.DOUBLE);
-        builder.addVariable(varName, DataType.DOUBLE, "time");
+        builder.addVariable(varName, DataType.DOUBLE, "replicate time");
       }
 
       // Build and get the writer
       try (NetcdfFormatWriter writer = builder.build()) {
-        // Write time data
-        Array timeData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
-        double[] timeArray = (double[]) timeData.get1DJavaArray(DataType.DOUBLE);
+        // Create 2D arrays for all variables
+        int[] shape = new int[]{numReplicates, maxTimeSteps};
+        
+        Array timeData = Array.factory(DataType.DOUBLE, shape);
+        double[][] timeArray = (double[][]) timeData.copyToNDJavaArray();
+        
+        Array latData = Array.factory(DataType.DOUBLE, shape);
+        double[][] latArray = (double[][]) latData.copyToNDJavaArray();
+        
+        Array lonData = Array.factory(DataType.DOUBLE, shape);
+        double[][] lonArray = (double[][]) lonData.copyToNDJavaArray();
 
-        // Write latitude data
-        Array latData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
-        double[] latArray = (double[]) latData.get1DJavaArray(DataType.DOUBLE);
-
-        // Write longitude data
-        Array lonData = Array.factory(DataType.DOUBLE, new int[]{numRecords});
-        double[] lonArray = (double[]) lonData.get1DJavaArray(DataType.DOUBLE);
-
-        // Fill coordinate and time arrays
-        int index = 0;
-        for (Map<String, String> record : pendingRecords) {
-          timeArray[index] = Double.parseDouble(record.getOrDefault("step", "0.0"));
-          latArray[index] = Double.parseDouble(record.getOrDefault("position.latitude", "0.0"));
-          lonArray[index] = Double.parseDouble(record.getOrDefault("position.longitude", "0.0"));
-          index++;
+        // Fill coordinate and time arrays by replicate
+        int replicateIndex = 0;
+        for (Map.Entry<Integer, List<Map<String, String>>> entry 
+                : recordsByReplicate.entrySet()) {
+          List<Map<String, String>> records = entry.getValue();
+          
+          for (int timeIndex = 0; timeIndex < records.size(); timeIndex++) {
+            Map<String, String> record = records.get(timeIndex);
+            timeArray[replicateIndex][timeIndex] = Double.parseDouble(
+                record.getOrDefault("step", "0.0"));
+            latArray[replicateIndex][timeIndex] = Double.parseDouble(
+                record.getOrDefault("position.latitude", "0.0"));
+            lonArray[replicateIndex][timeIndex] = Double.parseDouble(
+                record.getOrDefault("position.longitude", "0.0"));
+          }
+          
+          // Fill remaining time steps with NaN for shorter replicates
+          for (int timeIndex = records.size(); timeIndex < maxTimeSteps; timeIndex++) {
+            timeArray[replicateIndex][timeIndex] = Double.NaN;
+            latArray[replicateIndex][timeIndex] = Double.NaN;
+            lonArray[replicateIndex][timeIndex] = Double.NaN;
+          }
+          
+          replicateIndex++;
         }
 
         writer.write("time", timeData);
@@ -131,26 +193,38 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
 
         // Write data for each variable
         for (String varName : variables) {
-          Array data = Array.factory(DataType.DOUBLE, new int[]{numRecords});
-          double[] dataArray = (double[]) data.get1DJavaArray(DataType.DOUBLE);
-          index = 0;
-          for (Map<String, String> record : pendingRecords) {
-            String value = record.getOrDefault(varName, "0.0");
-            try {
-              dataArray[index] = Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-              dataArray[index] = 0.0;
+          Array data = Array.factory(DataType.DOUBLE, shape);
+          double[][] dataArray = (double[][]) data.copyToNDJavaArray();
+          
+          replicateIndex = 0;
+          for (Map.Entry<Integer, List<Map<String, String>>> entry 
+                : recordsByReplicate.entrySet()) {
+            List<Map<String, String>> records = entry.getValue();
+            
+            for (int timeIndex = 0; timeIndex < records.size(); timeIndex++) {
+              Map<String, String> record = records.get(timeIndex);
+              String value = record.getOrDefault(varName, "0.0");
+              try {
+                dataArray[replicateIndex][timeIndex] = Double.parseDouble(value);
+              } catch (NumberFormatException e) {
+                dataArray[replicateIndex][timeIndex] = 0.0;
+              }
             }
-            index++;
+            
+            // Fill remaining time steps with NaN for shorter replicates
+            for (int timeIndex = records.size(); timeIndex < maxTimeSteps; timeIndex++) {
+              dataArray[replicateIndex][timeIndex] = Double.NaN;
+            }
+            
+            replicateIndex++;
           }
+          
           writer.write(varName, data);
         }
       }
 
       return tempFile;
     } catch (IOException | InvalidRangeException e) {
-      System.err.println("Exception details: " + e.getMessage());
-      e.printStackTrace();
       throw new RuntimeException("Failed to write NetCDF file", e);
     }
   }
@@ -177,15 +251,4 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
     }
   }
 
-  /**
-   * Check that a variable name is present on a record.
-   *
-   * @param record The record in which to check for the variable.
-   * @param varName The name of the variable to check for.
-   */
-  private void checkPresent(Map<String, String> record, String varName) {
-    if (!record.containsKey(varName)) {
-      throw new RuntimeException("Record does not contain variable " + varName);
-    }
-  }
 }

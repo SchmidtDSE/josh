@@ -38,22 +38,22 @@ public class JvmExportFacadeFactoryReplicateTest {
   }
 
   /**
-   * Test that NetCDF file paths preserve replicate template with substitution.
+   * Test that NetCDF file paths now remove replicate template (aligned with CSV behavior).
    */
   @Test
-  public void testNetcdfPathPreservesReplicateTemplate() {
+  public void testNetcdfPathRemovesReplicateTemplate() {
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3);
     
     String template = "file:///tmp/test_{replicate}.nc";
     String result = factory.getPath(template);
     
-    // Should substitute {replicate} with actual replicate number
+    // Should remove {replicate} template like CSV (consolidated files with replicate dimension)
     assertFalse(result.contains("{replicate}"), 
         "NetCDF path should not contain replicate template placeholder");
-    assertTrue(result.contains("3"), 
-        "NetCDF path should contain replicate number");
-    assertEquals("file:///tmp/test_3.nc", result,
-        "NetCDF path should substitute replicate template");
+    assertFalse(result.contains("3"), 
+        "NetCDF path should not contain replicate number");
+    assertEquals("file:///tmp/test_.nc", result,
+        "NetCDF path should remove replicate template");
   }
 
   /**
@@ -125,11 +125,11 @@ public class JvmExportFacadeFactoryReplicateTest {
     assertEquals("file:///tmp/__variable_____step__.csv", csvResult,
         "CSV should process step and variable templates");
     
-    // NetCDF with all templates
+    // NetCDF with all templates - replicate should now be removed
     String ncTemplate = "file:///tmp/{variable}_{step}_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
-    assertEquals("file:///tmp/__variable_____step___1.nc", ncResult,
-        "NetCDF should process all templates including replicate");
+    assertEquals("file:///tmp/__variable_____step___.nc", ncResult,
+        "NetCDF should process step/variable templates but remove replicate");
   }
 
   /**
@@ -145,15 +145,15 @@ public class JvmExportFacadeFactoryReplicateTest {
     assertEquals("file:///tmp/output___variable___step__step___rep_final.csv", csvResult,
         "Complex CSV template should remove replicate but keep others");
     
-    // Complex NetCDF template - all should be processed  
+    // Complex NetCDF template - replicate should be removed, others processed
     String ncTemplate = "file:///tmp/output_{variable}_step{step}_rep{replicate}_final.nc";
     String ncResult = factory.getPath(ncTemplate);
-    assertEquals("file:///tmp/output___variable___step__step___rep42_final.nc", ncResult,
-        "Complex NetCDF template should process all templates");
+    assertEquals("file:///tmp/output___variable___step__step___rep_final.nc", ncResult,
+        "Complex NetCDF template should remove replicate but keep others");
   }
 
   /**
-   * Test replicate number zero is handled correctly.
+   * Test replicate number zero is handled correctly (now removes replicate).
    */
   @Test
   public void testReplicateZero() {
@@ -162,14 +162,14 @@ public class JvmExportFacadeFactoryReplicateTest {
     String ncTemplate = "file:///tmp/test_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
     
-    assertTrue(ncResult.contains("0"), 
-        "NetCDF path should handle replicate zero correctly");
-    assertEquals("file:///tmp/test_0.nc", ncResult,
-        "NetCDF path should substitute replicate zero");
+    assertFalse(ncResult.contains("0"), 
+        "NetCDF path should remove replicate template, not substitute with zero");
+    assertEquals("file:///tmp/test_.nc", ncResult,
+        "NetCDF path should remove replicate template");
   }
 
   /**
-   * Test large replicate numbers are handled correctly.
+   * Test large replicate numbers are handled correctly (now removes replicate).
    */
   @Test
   public void testLargeReplicateNumber() {
@@ -178,9 +178,9 @@ public class JvmExportFacadeFactoryReplicateTest {
     String ncTemplate = "file:///tmp/test_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
     
-    assertTrue(ncResult.contains("999999"), 
-        "NetCDF path should handle large replicate numbers");
-    assertEquals("file:///tmp/test_999999.nc", ncResult,
-        "NetCDF path should substitute large replicate numbers");
+    assertFalse(ncResult.contains("999999"), 
+        "NetCDF path should remove replicate template, not substitute with large numbers");
+    assertEquals("file:///tmp/test_.nc", ncResult,
+        "NetCDF path should remove replicate template");
   }
 }

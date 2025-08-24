@@ -96,12 +96,11 @@ class RunCommandDataOptionTest {
     String[] dataFiles = {"invalid-format-no-equals"};
 
     // Act & Assert
-    Exception exception = assertThrows(Exception.class, () -> {
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
       invokeParseDataFiles(dataFiles);
     });
-    // Check if it's the expected IllegalArgumentException wrapped in InvocationTargetException
-    assertTrue(exception.getCause() instanceof IllegalArgumentException);
-    assertTrue(exception.getCause().getMessage().contains("Invalid data file format"));
+    // Check if it's the expected IllegalArgumentException message
+    assertTrue(exception.getMessage().contains("Invalid data file format"));
   }
 
   @Test
