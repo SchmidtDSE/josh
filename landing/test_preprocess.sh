@@ -3,20 +3,43 @@ set -e  # Exit on any error
 
 echo "=== Josh Preprocessing Test ==="
 
+# Determine if we're running from root or landing directory
+if [ -d "landing" ]; then
+    # Running from root directory (CI/CD)
+    cd landing
+    JOSH_PATH="../examples/guide"
+else
+    # Running from landing directory (local)
+    JOSH_PATH="../examples/guide"
+fi
+
 # Download and extract tutorial data
 echo "Downloading tutorial data..."
 wget -q https://joshsim.org/guides/raw_tutorial_supplement.zip
 unzip -o -q raw_tutorial_supplement.zip
 
 # Check if fat jar exists (provided by CI) or build it locally
-if [ ! -f "joshsim-fat.jar" ]; then
-    echo "Building fat jar locally..."
-    cd ..
-    ./gradlew fatJar
-    cd landing
-    cp ../build/libs/joshsim-fat.jar ./
-else
+# In CI/CD, the jar is in build/libs/joshsim-fat.jar at repo root
+if [ -f "../build/libs/joshsim-fat.jar" ]; then
+    echo "Using CI/CD fat jar from build/libs..."
+    cp ../build/libs/joshsim-fat.jar ./joshsim-fat.jar
+elif [ -f "joshsim-fat.jar" ]; then
     echo "Using provided fat jar..."
+elif [ -f "build/libs/joshsim-fat.jar" ]; then
+    echo "Using local fat jar from build/libs..."
+    cp build/libs/joshsim-fat.jar ./joshsim-fat.jar
+else
+    echo "Building fat jar locally..."
+    if [ -f "../gradlew" ]; then
+        ORIGINAL_DIR=$(pwd)
+        cd ..
+        ./gradlew fatJar
+        cd "$ORIGINAL_DIR"
+        cp ../build/libs/joshsim-fat.jar ./joshsim-fat.jar
+    else
+        echo "Error: Cannot find gradlew to build fat jar"
+        exit 1
+    fi
 fi
 
 # Create output directory for preprocessed files
@@ -27,7 +50,7 @@ echo "=== Processing Succession Model Data (NetCDF) ==="
 # Process temperature data
 echo "Processing temperature data..."
 java -jar joshsim-fat.jar preprocess \
-    ../examples/guide/succession.josh \
+    $JOSH_PATH/succession.josh \
     Main \
     raw_tutorial_supplement/06107_tasmax_mon_FGOALS-g3_ssp245_r1i1p1f1.nc \
     "tasmax" \
@@ -48,7 +71,7 @@ echo "✓ Temperature data preprocessed successfully ($(wc -c < preprocessed_dat
 # Process precipitation data
 echo "Processing precipitation data..."
 java -jar joshsim-fat.jar preprocess \
-    ../examples/guide/succession.josh \
+    $JOSH_PATH/succession.josh \
     Main \
     raw_tutorial_supplement/06107_pr_mon_FGOALS-g3_ssp245_r1i1p1f1.nc \
     "pr" \
@@ -74,7 +97,7 @@ echo "=== Processing Grass-Shrub-Fire Model Data (GeoTIFF) ==="
 
 echo "Processing 2008 precipitation (timestep 0)..."
 java -jar joshsim-fat.jar preprocess \
-    ../examples/guide/grass_shrub_fire.josh \
+    $JOSH_PATH/grass_shrub_fire.josh \
     Main \
     raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_2008_annual.tif \
     0 \
