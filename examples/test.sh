@@ -93,6 +93,6 @@ echo "Testing config example with external config file..."
 cp examples/features/config_example.jshc example.jshc || exit 18
 rm -f /tmp/config_example_josh.csv
 assert_ok examples/features/config_example.josh ConfigExample 1 || exit 19
-[ -f "/tmp/config_example_josh_1.csv" ] || exit 20
-[ -s "/tmp/config_example_josh_1.csv" ] || exit 21
+[ -f "/tmp/config_example_josh.csv" ] || exit 20
+[ -s "/tmp/config_example_josh.csv" ] || exit 21
 echo "Config example test passed successfully!"
