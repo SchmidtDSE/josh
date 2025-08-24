@@ -121,6 +121,41 @@ jobs:
           chmod +x examples/test_basic_preprocess.sh
       - name: Run basic preprocessing tests
         run: bash examples/test_basic_preprocess.sh
+      - name: Run spatial preprocessing tests
+        run: bash examples/test_spatial_preprocess.sh
+  preprocessTutorialData:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Preprocess Tutorial Data
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
+      - name: Download fat jar
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Setup environment
+        run: |
+          mkdir -p build/libs
+          mv joshsim-fat.jar build/libs/
+          chmod +x landing/test_preprocess.sh
+      - name: Run temporal preprocessing tests
+        run: bash landing/test_preprocess.sh
+      - name: Upload preprocessed tutorial data
+        uses: actions/upload-artifact@v4
+        with:
+          name: preprocessed-tutorial-data
+          path: landing/preprocessed_data/
   validateExamples:
     needs: buildJava
     environment: Build
@@ -143,7 +178,7 @@ jobs:
       - name: Validate examples
         run: bash examples/validate.sh
   runTests:
-    needs: [validateExamples, testPreprocess]
+    needs: [validateExamples, testPreprocess, preprocessTutorialData]
     environment: Build
     runs-on: ubuntu-latest
     name: Run Josh examples
@@ -174,7 +209,7 @@ jobs:
         run: bash examples/test.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocess, preprocessTutorialData ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
@@ -239,7 +274,7 @@ jobs:
     environment: Deploy
     runs-on: ubuntu-latest
     name: Deploy to SFTP
-    needs: [buildWeb, testPreprocess]
+    needs: [buildWeb, preprocessTutorialData]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Set environment variables based on branch
