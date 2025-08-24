@@ -30,6 +30,7 @@ public class RunRemoteContextTest {
   private File testFile;
   private String simulation;
   private int replicateNumber;
+  private int replicates;
   private boolean useFloat64;
   private URI endpointUri;
   private String apiKey;
@@ -51,6 +52,7 @@ public class RunRemoteContextTest {
     testFile = new File("test.josh");
     simulation = "TestSimulation";
     replicateNumber = 1;
+    replicates = 3;
     useFloat64 = false;
     endpointUri = new URI("https://example.com/runReplicates");
     apiKey = "test-api-key";
@@ -64,7 +66,7 @@ public class RunRemoteContextTest {
     maxConcurrentWorkers = 5;
 
     context = new RunRemoteContext(
-        testFile, simulation, replicateNumber, useFloat64,
+        testFile, simulation, replicateNumber, replicates, useFloat64,
         endpointUri, apiKey, dataFiles,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
@@ -85,6 +87,11 @@ public class RunRemoteContextTest {
   @Test
   public void testGetReplicateNumber() {
     assertEquals(replicateNumber, context.getReplicateNumber());
+  }
+
+  @Test
+  public void testGetReplicates() {
+    assertEquals(replicates, context.getReplicates());
   }
 
   @Test
@@ -145,7 +152,7 @@ public class RunRemoteContextTest {
   @Test
   public void testContextWithFloat64Enabled() throws Exception {
     RunRemoteContext float64Context = new RunRemoteContext(
-        testFile, simulation, replicateNumber, true, // useFloat64 = true
+        testFile, simulation, replicateNumber, replicates, true, // useFloat64 = true
         endpointUri, apiKey, dataFiles,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
@@ -158,7 +165,7 @@ public class RunRemoteContextTest {
   @Test
   public void testContextWithDifferentConcurrentWorkers() throws Exception {
     RunRemoteContext differentWorkersContext = new RunRemoteContext(
-        testFile, simulation, replicateNumber, useFloat64,
+        testFile, simulation, replicateNumber, replicates, useFloat64,
         endpointUri, apiKey, dataFiles,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
@@ -172,7 +179,7 @@ public class RunRemoteContextTest {
   public void testContextWithEmptyDataFiles() throws Exception {
     String[] emptyDataFiles = new String[0];
     RunRemoteContext emptyDataContext = new RunRemoteContext(
-        testFile, simulation, replicateNumber, useFloat64,
+        testFile, simulation, replicateNumber, replicates, useFloat64,
         endpointUri, apiKey, emptyDataFiles,
         joshCode, "",
         metadata, progressCalculator,
@@ -181,6 +188,21 @@ public class RunRemoteContextTest {
 
     assertEquals(0, emptyDataContext.getDataFiles().length);
     assertEquals("", emptyDataContext.getExternalDataSerialized());
+  }
+
+  @Test
+  public void testContextWithDifferentReplicates() throws Exception {
+    RunRemoteContext differentReplicatesContext = new RunRemoteContext(
+        testFile, simulation, replicateNumber, 10, useFloat64, // 10 replicates
+        endpointUri, apiKey, dataFiles,
+        joshCode, externalDataSerialized,
+        metadata, progressCalculator,
+        outputOptions, minioOptions, maxConcurrentWorkers
+    );
+
+    assertEquals(10, differentReplicatesContext.getReplicates());
+    assertEquals(replicateNumber, 
+        differentReplicatesContext.getReplicateNumber()); // offset should remain the same
   }
 
   @Test

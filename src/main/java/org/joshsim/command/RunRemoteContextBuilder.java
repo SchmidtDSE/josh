@@ -31,6 +31,7 @@ public class RunRemoteContextBuilder {
   private Optional<File> file = Optional.empty();
   private Optional<String> simulation = Optional.empty();
   private int replicateNumber = 0;
+  private int replicates = 1;
   private boolean useFloat64 = false;
 
   // Remote endpoint configuration
@@ -83,6 +84,17 @@ public class RunRemoteContextBuilder {
    */
   public RunRemoteContextBuilder withReplicateNumber(int replicateNumber) {
     this.replicateNumber = replicateNumber;
+    return this;
+  }
+
+  /**
+   * Set the number of replicates to run.
+   *
+   * @param replicates The number of replicates
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withReplicates(int replicates) {
+    this.replicates = replicates;
     return this;
   }
 
@@ -217,7 +229,7 @@ public class RunRemoteContextBuilder {
     validateRequiredParameters();
 
     return new RunRemoteContext(
-        file.get(), simulation.get(), replicateNumber, useFloat64,
+        file.get(), simulation.get(), replicateNumber, replicates, useFloat64,
         endpointUri.get(), apiKey.get(), dataFiles,
         joshCode.get(), externalDataSerialized.get(),
         metadata.get(), progressCalculator.get(),

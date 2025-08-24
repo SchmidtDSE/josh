@@ -121,8 +121,20 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private int concurrentWorkers = 10;
 
+  @Option(
+      names = "--replicates",
+      description = "Number of replicates to run",
+      defaultValue = "1"
+  )
+  private int replicates = 1;
+
   @Override
   public Integer call() {
+    // Validate replicates parameter
+    if (replicates < 1) {
+      output.printError("Number of replicates must be at least 1");
+      return SERIALIZATION_ERROR_CODE;
+    }
     try {
       // Detect if using Josh Cloud vs custom endpoint
       boolean usingJoshCloud = isUsingJoshCloud();
@@ -217,7 +229,7 @@ public class RunRemoteCommand implements Callable<Integer> {
 
     // Initialize progress calculator
     ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(), 1 // Currently supporting single replicate
+        metadata.getTotalSteps(), replicates
     );
 
     // Read Josh simulation code
@@ -231,6 +243,7 @@ public class RunRemoteCommand implements Callable<Integer> {
         .withFile(file)
         .withSimulation(simulation)
         .withReplicateNumber(replicateNumber)
+        .withReplicates(replicates)
         .withUseFloat64(useFloat64)
         .withEndpointUri(endpointUri)
         .withApiKey(apiKey)

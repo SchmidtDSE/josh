@@ -105,8 +105,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
    * Builds the form data for the remote leader request.
    *
    * <p>Creates URL-encoded form data compatible with JoshSimLeaderHandler /runReplicates
-   * endpoint. Currently configured for single replicate execution but structured to
-   * support multiple replicates in the future.</p>
+   * endpoint. Supports dynamic replicate count based on context configuration.</p>
    *
    * @param context The execution context
    * @return The URL-encoded form request body
@@ -115,7 +114,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     Map<String, String> formData = new HashMap<>();
     formData.put("code", context.getJoshCode());
     formData.put("name", context.getSimulation());
-    formData.put("replicates", "1"); // Currently supporting single replicate
+    formData.put("replicates", String.valueOf(context.getReplicates()));
     formData.put("apiKey", context.getApiKey());
     formData.put("externalData", context.getExternalDataSerialized());
     formData.put("favorBigDecimal", String.valueOf(!context.isUseFloat64()));
