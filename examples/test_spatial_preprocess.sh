@@ -20,7 +20,17 @@ trap cleanup EXIT
 
 # Copy necessary files to working directory
 echo "Setting up test environment..."
-cp /home/sam/josh/examples/test/test_spatial_combination.josh ./
+# Use relative path for CI/CD compatibility
+if [ -f "../examples/test/test_spatial_combination.josh" ]; then
+    cp ../examples/test/test_spatial_combination.josh ./
+elif [ -f "examples/test/test_spatial_combination.josh" ]; then
+    cp examples/test/test_spatial_combination.josh ./
+elif [ -f "test_spatial_combination.josh" ]; then
+    echo "Josh script already in test directory"
+else
+    echo "Error: Cannot find test_spatial_combination.josh"
+    exit 1
+fi
 mkdir -p preprocessed_data
 
 # Check if we need to download tutorial data
@@ -38,11 +48,19 @@ fi
 
 # Check if fat jar exists or needs to be built
 if [ ! -f "joshsim-fat.jar" ]; then
-    echo "Building fat jar..."
-    cd /home/sam/josh
-    ./gradlew fatJar
-    cp build/libs/joshsim-fat.jar "$TEST_DIR/"
-    cd "$TEST_DIR"
+    # In CI/CD, jar should be in build/libs relative to repo root
+    if [ -f "../build/libs/joshsim-fat.jar" ]; then
+        cp ../build/libs/joshsim-fat.jar ./
+    elif [ -f "build/libs/joshsim-fat.jar" ]; then
+        cp build/libs/joshsim-fat.jar ./
+    else
+        echo "Building fat jar..."
+        ORIGINAL_DIR=$(pwd)
+        cd ..
+        ./gradlew fatJar
+        cd "$ORIGINAL_DIR"
+        cp ../build/libs/joshsim-fat.jar ./
+    fi
     echo "✓ Fat jar built successfully"
 else
     echo "✓ Fat jar found"
