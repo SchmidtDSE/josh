@@ -22,12 +22,13 @@ import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
+import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.MinioOptions;
@@ -57,6 +58,7 @@ import picocli.CommandLine;
     subcommands = {
         ValidateCommand.class,
         RunCommand.class,
+        RunRemoteCommand.class,
         ServerCommand.class,
         PreprocessCommand.class,
         DiscoverConfigCommand.class,
@@ -142,6 +144,26 @@ public class JoshSimCommander {
       File file,
       OutputOptions output
   ) {
+    InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder().build();
+    return getJoshProgram(geometryFactory, file, output, inputOutputLayer);
+  }
+
+  /**
+   * Retrieves and initializes a Josh program from a file with custom input/output layer.
+   *
+   * @param geometryFactory The factory for creating geometry objects.
+   * @param file The file containing the Josh program code.
+   * @param output Options for handling output messages.
+   * @param inputOutputLayer The input/output layer to use for file access and exports.
+   * @return A ProgramInitResult containing either the initialized JoshProgram or information about
+   *     the failure.
+   */
+  public static ProgramInitResult getJoshProgram(
+      EngineGeometryFactory geometryFactory,
+      File file,
+      OutputOptions output,
+      InputOutputLayer inputOutputLayer
+  ) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -173,7 +195,6 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    InputOutputLayer inputOutputLayer = new JvmInputOutputLayer();
     JoshProgram program = JoshSimFacade.interpret(geometryFactory, result, inputOutputLayer);
     assert program != null;
 

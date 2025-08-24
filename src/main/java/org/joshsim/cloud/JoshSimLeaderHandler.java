@@ -13,20 +13,14 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
+import org.joshsim.cloud.pipeline.LeaderResponseHandler;
+import org.joshsim.cloud.pipeline.ParallelWorkerHandler;
+import org.joshsim.cloud.pipeline.WorkerTask;
+import org.joshsim.wire.WireRewriteUtil;
 
 
 /**
@@ -42,6 +36,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
   private final String urlToWorker;
   private final int maxParallelRequests;
   private final AtomicInteger cumulativeStepCount = new AtomicInteger(0);
+  private final ParallelWorkerHandler parallelWorkerHandler;
 
   /**
    * Create a new leader handler.
@@ -57,7 +52,13 @@ public class JoshSimLeaderHandler implements HttpHandler {
     this.apiInternalLayer = apiInternalLayer;
     this.urlToWorker = urlToWorker;
     this.maxParallelRequests = maxParallelRequests;
+    this.parallelWorkerHandler = new ParallelWorkerHandler(
+        urlToWorker,
+        maxParallelRequests,
+        cumulativeStepCount
+    );
   }
+
 
   /**
    * Call up to maxParallelRequests to execute on workers.
@@ -159,53 +160,43 @@ public class JoshSimLeaderHandler implements HttpHandler {
     String externalData = formData.getFirst("externalData").getValue();
     boolean favorBigDecimal = Boolean.parseBoolean(formData.getFirst("favorBigDecimal").getValue());
 
-    int effectiveThreadCount = Math.min(replicates, maxParallelRequests);
-    ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount);
-
-    // Reset cumulative step counter for this simulation run
-    cumulativeStepCount.set(0);
-
-    // Execute replicates with streaming approach
-    List<Future<?>> futures = new ArrayList<>();
+    // Prepare tasks for parallel execution
+    List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
-      final int replicateNumber = i;
-      futures.add(executor.submit(() ->
-          executeReplicateStreaming(
-              code,
-              simulationName,
-              replicateNumber,
-              apiKey,
-              externalData,
-              favorBigDecimal,
-              httpServerExchange
-          )
-      ));
+      WorkerTask task = new WorkerTask(
+          code,
+          simulationName,
+          apiKey,
+          externalData,
+          favorBigDecimal,
+          i
+      );
+      tasks.add(task);
     }
 
     try {
-      // Wait for all replicates to complete
-      for (Future<?> future : futures) {
-        try {
-          future.get();
-        } catch (Exception e) {
-          System.err.println("Exception in replicate execution: "
-              + e.getClass().getSimpleName() + ": " + e.getMessage());
-          // Extract meaningful error message from the exception
-          String errorMessage = extractErrorMessage(e);
-          String errorOutput = String.format("[error] %s\n", errorMessage);
-          synchronized (httpServerExchange.getOutputStream()) {
-            httpServerExchange.getOutputStream().write(errorOutput.getBytes());
-            httpServerExchange.getOutputStream().flush();
-          }
-        }
-      }
-
+      parallelWorkerHandler.executeInParallel(
+          tasks,
+          httpServerExchange,
+          new LeaderResponseHandler()
+      );
       httpServerExchange.endExchange();
     } catch (Exception e) {
+      System.err.println("Exception in parallel worker execution: "
+          + e.getClass().getSimpleName() + ": " + e.getMessage());
+      // Extract meaningful error message from the exception
+      String errorMessage = extractErrorMessage(e);
+      String errorOutput = WireRewriteUtil.formatErrorResponse(errorMessage);
+      try {
+        synchronized (httpServerExchange.getOutputStream()) {
+          httpServerExchange.getOutputStream().write(errorOutput.getBytes());
+          httpServerExchange.getOutputStream().flush();
+        }
+      } catch (IOException ioException) {
+        throw new RuntimeException("Error streaming error message to client", ioException);
+      }
       httpServerExchange.setStatusCode(500);
       throw new RuntimeException("Critical error in leader execution: " + e.getMessage(), e);
-    } finally {
-      executor.shutdown();
     }
 
     return Optional.of(apiKey);
@@ -298,96 +289,4 @@ public class JoshSimLeaderHandler implements HttpHandler {
         );
     }
   }
-
-  /**
-   * Execute a replicate of the simulation with given parameters.
-   *
-   * <p>This method constructs a HTTP request to send to the worker server, using the provided
-   * code and simulation name. The replicate number is included in the request body.</p>
-   *
-   * @param code The code to execute for the simulation.
-   * @param simulationName The name of the simulation to run.
-   * @param replicateNumber The number of the replicate to execute.
-   * @param apiKey The API key to include in the request.
-   * @param externalData String serialization of external data available to the simulation.
-   * @param favorBigDecimal Flag indicating if BigDecimal should be used for numbers. True if
-   *     BigDecimal should be used or false for double.
-   * @return A string with the result, including the replicate number for each line of output.
-   * @throws IOException If an I/O error occurs when sending or receiving.
-   * @throws InterruptedException If the operation is interrupted.
-   */
-  private void executeReplicateStreaming(String code, String simulationName, int replicateNumber,
-        String apiKey, String externalData, boolean favorBigDecimal,
-        HttpServerExchange clientExchange) {
-    String bodyString = String.format(
-        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
-        URLEncoder.encode(code, StandardCharsets.UTF_8),
-        URLEncoder.encode(simulationName, StandardCharsets.UTF_8),
-        URLEncoder.encode(apiKey, StandardCharsets.UTF_8),
-        URLEncoder.encode(externalData, StandardCharsets.UTF_8),
-        URLEncoder.encode(favorBigDecimal ? "true" : "false", StandardCharsets.UTF_8)
-    );
-    HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
-
-    HttpClient client = HttpClient.newBuilder().build();
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(urlToWorker))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .POST(body)
-        .build();
-
-    HttpResponse<Stream<String>> response = null;
-    try {
-      response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-    } catch (IOException | InterruptedException e) {
-      System.err.println("Worker connection failed for replicate " + replicateNumber
-          + " to " + urlToWorker + ": " + e.getMessage());
-      throw new RuntimeException("Encountered issue in worker thread: " + e);
-    }
-
-    if (response.statusCode() == 200) {
-      try {
-        response.body().forEach(line -> {
-          try {
-            String outputLine;
-            if (line.startsWith("[progress ")) {
-              // Convert per-replicate progress to cumulative
-              int cumulative = cumulativeStepCount.incrementAndGet();
-              outputLine = String.format("[progress %d]\n", cumulative);
-            } else {
-              // Prepend replicate number to data lines
-              outputLine = String.format("[%d] %s\n", replicateNumber, line);
-            }
-
-            // Thread-safe write to client
-            synchronized (clientExchange.getOutputStream()) {
-              clientExchange.getOutputStream().write(outputLine.getBytes());
-              clientExchange.getOutputStream().flush();
-            }
-          } catch (IOException e) {
-            throw new RuntimeException("Error streaming to client", e);
-          }
-        });
-
-        // Send end marker
-        synchronized (clientExchange.getOutputStream()) {
-          String endMarker = String.format("[end %d]\n", replicateNumber);
-          clientExchange.getOutputStream().write(endMarker.getBytes());
-          clientExchange.getOutputStream().flush();
-        }
-      } catch (Exception e) {
-        throw new RuntimeException("Error processing response stream", e);
-      }
-    } else {
-      // Handle different error status codes from worker with informative messages
-      String errorBody = "No error details available for streaming response";
-      String errorMessage = buildWorkerErrorMessage(
-          response.statusCode(),
-          errorBody,
-          replicateNumber
-      );
-      throw new RuntimeException(errorMessage);
-    }
-  }
-
 }

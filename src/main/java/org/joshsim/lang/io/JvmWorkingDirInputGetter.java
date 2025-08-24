@@ -1,0 +1,52 @@
+/**
+ * Implementation providing working directory input access.
+ *
+ * @license BSD-3-Clause
+ */
+
+package org.joshsim.lang.io;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
+
+/**
+ * Strategy providing working directory file access.
+ *
+ * <p>Implementation of JvmInputGetter that loads files from the working directory,
+ * preserving the original behavior of the JvmInputGetter class. This is the default
+ * strategy for all commands except RunCommand with --data option.</p>
+ */
+public class JvmWorkingDirInputGetter extends JvmInputGetter {
+
+  @Override
+  protected InputStream readNamePath(String identifier) {
+    return loadFromWorkingDir(identifier);
+  }
+
+  @Override
+  protected boolean checkNamePathExists(String identifier) {
+    File file = new File(identifier);
+    return file.exists();
+  }
+
+  /**
+   * Load a file from the working directory.
+   *
+   * @param name The name of the file to load from working directory.
+   * @return The input stream for the file at the working directory.
+   * @throws RuntimeException raised if error encountered in opening the input stream.
+   */
+  private InputStream loadFromWorkingDir(String name) {
+    try {
+      return new FileInputStream(name);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Failed to open stream from working directory: " + name, e);
+    } catch (SecurityException e) {
+      throw new RuntimeException("Security denied access to file in working directory: " + name, e);
+    }
+  }
+
+}

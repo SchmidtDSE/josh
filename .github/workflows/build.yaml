@@ -187,6 +187,8 @@ jobs:
           path: ./landing/preprocessed_data/
       - name: Run examples
         run: bash examples/test.sh
+      - name: Test external data with --data option
+        run: bash examples/test_data_option.sh
   buildWeb:
     environment: Build
     needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocessing ]

@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.wire.NamedMap;
 
 
 /**
@@ -40,5 +41,17 @@ public interface ExportFacade {
    * @param step The step number from the simulation from which this entity snapshot was created.
    */
   void write(Entity target, long step);
+
+  /**
+   * Adds the specified NamedMap to the queue for processing and writing to the export target.
+   *
+   * <p>This method allows wire format deserializers to bypass Entity serialization by providing
+   * pre-serialized data directly. The NamedMap contains both the name identifier and the
+   * key-value pairs that would normally be produced by serializing an Entity.</p>
+   *
+   * @param namedMap The NamedMap containing name and serialized data to be written to output.
+   * @param step The step number from the simulation from which this data was created.
+   */
+  void write(NamedMap namedMap, long step);
 
 }

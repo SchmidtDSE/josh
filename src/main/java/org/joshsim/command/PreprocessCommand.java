@@ -44,7 +44,8 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.InputGetterStrategy;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
@@ -230,14 +231,15 @@ public class PreprocessCommand implements Callable<Integer> {
     }
     EngineGeometryFactory geometryFactory = new EarthGeometryFactory(crs);
 
+    InputGetterStrategy inputStrategy = new JvmInputOutputLayerBuilder().build().getInputStrategy();
     EngineBridge bridge = new QueryCacheEngineBridge(
         valueFactory,
         geometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory),
-        new JshcConfigGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
+        new JshdExternalGetter(inputStrategy, valueFactory),
+        new JshcConfigGetter(inputStrategy, valueFactory)
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);

@@ -19,6 +19,7 @@ import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.wire.NamedMap;
 
 
 /**
@@ -66,6 +67,30 @@ public class GeotiffExportFacade implements ExportFacade {
   @Override
   public void write(Entity entity, long step) {
     Map<String, String> serialized = serializeStrategy.getRecord(entity);
+    writeFromSerializedData(serialized, step);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    writeFromSerializedData(namedMap.getTarget(), step);
+  }
+
+  /**
+   * Adds a task to the queue for processing.
+   *
+   * @param task The task containing coordinates and value data to be queued for export processing.
+   */
+  public void write(Task task) {
+    queueService.add(task);
+  }
+
+  /**
+   * Common method to write from serialized data regardless of source (Entity or NamedMap).
+   *
+   * @param serialized The serialized data map containing coordinates and variable values
+   * @param step The simulation step number
+   */
+  private void writeFromSerializedData(Map<String, String> serialized, long step) {
     String longitude = serialized.get("position.longitude");
     String latitude = serialized.get("position.latitude");
     String stepStr = "" + step;
@@ -77,15 +102,6 @@ public class GeotiffExportFacade implements ExportFacade {
       Task task = new Task(reference, longitude, latitude, value);
       write(task);
     }
-  }
-
-  /**
-   * Adds a task to the queue for processing.
-   *
-   * @param task The task containing an entity and step value to be queued for export processing.
-   */
-  public void write(Task task) {
-    queueService.add(task);
   }
 
   /**

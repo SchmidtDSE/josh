@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import org.joshsim.lang.io.MapToMemoryStringConverter;
+import org.joshsim.wire.NamedMap;
+import org.joshsim.wire.WireConverter;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing writing to a callback.
@@ -33,7 +34,8 @@ public class MemoryWriteStrategy implements StringMapWriteStrategy {
 
   @Override
   public void write(Map<String, String> record, OutputStream output) throws IOException {
-    String completeStr = MapToMemoryStringConverter.convert(name, record);
+    NamedMap namedMap = new NamedMap(name, record);
+    String completeStr = WireConverter.serializeToString(namedMap);
     output.write(completeStr.getBytes(StandardCharsets.UTF_8));
     output.flush();
   }
