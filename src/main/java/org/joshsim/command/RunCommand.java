@@ -29,6 +29,10 @@ import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SimulationMetadata;
+import org.joshsim.util.SimulationMetadataExtractor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
 import picocli.CommandLine.Command;
@@ -61,8 +65,11 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
   private String crs;
 
-  @Option(names = "--replicate", description = "Replicate number", defaultValue = "0")
+  @Option(names = "--replicate-number", description = "Replicate number", defaultValue = "0")
   private int replicateNumber;
+
+  @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
+  private int replicates = 1;
 
   @Option(
       names = "--use-float-64",
@@ -93,6 +100,11 @@ public class RunCommand implements Callable<Integer> {
 
   @Override
   public Integer call() {
+    // Validate replicates parameter
+    if (replicates < 1) {
+      output.printError("Number of replicates must be at least 1");
+      return 1;
+    }
     EngineGeometryFactory geometryFactory;
     if (crs.isEmpty()) {
       geometryFactory = new GridGeometryFactory();
@@ -115,7 +127,7 @@ public class RunCommand implements Callable<Integer> {
       inputStrategy = new JvmMappedInputGetter(fileMapping);
     }
 
-    // Create InputOutputLayer with the chosen strategy
+    // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
     InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(replicateNumber)
         .withInputStrategy(inputStrategy)
@@ -147,15 +159,52 @@ public class RunCommand implements Callable<Integer> {
     }
 
     boolean favorBigDecimal = !useFloat64;
-    JoshSimFacade.runSimulation(
-        geometryFactory,
-        program,
-        simulation,
-        (step) -> output.printInfo(String.format("Completed step %d.", step)),
-        serialPatches,
-        replicateNumber,
-        favorBigDecimal
+
+    // Extract simulation metadata for progress tracking
+    SimulationMetadata metadata;
+    try {
+      metadata = SimulationMetadataExtractor.extractMetadata(file, simulation);
+    } catch (Exception e) {
+      // Use default metadata if extraction fails
+      metadata = new SimulationMetadata(0, 10, 11);
+      output.printInfo("Using default metadata for progress tracking: " + e.getMessage());
+    }
+
+    ProgressCalculator progressCalculator = new ProgressCalculator(
+        metadata.getTotalSteps(),
+        replicates
     );
+
+    // Execute simulation for each replicate
+    for (int currentReplicate = 0; currentReplicate < replicates; currentReplicate++) {
+      // Reset progress tracking for each new replicate (except first)
+      if (currentReplicate > 0) {
+        progressCalculator.resetForNextReplicate(currentReplicate + 1);
+      }
+      
+      final int replicateNum = replicateNumber + currentReplicate;
+      JoshSimFacade.runSimulation(
+          geometryFactory,
+          program,
+          simulation,
+          (step) -> {
+            ProgressUpdate update = progressCalculator.updateStep(step);
+            if (update.shouldReport()) {
+              output.printInfo(update.getMessage());
+            }
+          },
+          serialPatches,
+          replicateNum,
+          favorBigDecimal
+      );
+
+      // Report replicate completion (except for the last replicate)
+      if (currentReplicate < replicates - 1) {
+        ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
+            currentReplicate + 1);
+        output.printInfo(completion.getMessage());
+      }
+    }
 
     if (minioOptions.isMinioOutput()) {
       return saveToMinio("run", file);

@@ -5,7 +5,7 @@ start simulation ConfigExample
   steps.low = 0 count
   steps.high = 5 count
   
-  exportFiles.patch = "file:///tmp/config_example_josh_{replicate}.csv"
+  exportFiles.patch = "file:///tmp/config_example_josh.csv"
 end simulation
 
 start patch Default

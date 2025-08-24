@@ -56,6 +56,7 @@ public class RunRemoteContextBuilderTest {
         .withFile(testFile)
         .withSimulation("TestSim")
         .withReplicateNumber(5)
+        .withReplicates(3)
         .withUseFloat64(true)
         .withEndpointUri(testEndpointUri)
         .withApiKey("test-api-key")
@@ -73,6 +74,7 @@ public class RunRemoteContextBuilderTest {
     assertEquals(testFile, context.getFile());
     assertEquals("TestSim", context.getSimulation());
     assertEquals(5, context.getReplicateNumber());
+    assertEquals(3, context.getReplicates());
     assertTrue(context.isUseFloat64());
     assertEquals(testEndpointUri, context.getEndpointUri());
     assertEquals("test-api-key", context.getApiKey());
@@ -103,6 +105,7 @@ public class RunRemoteContextBuilderTest {
 
     assertNotNull(context);
     assertEquals(0, context.getReplicateNumber()); // default
+    assertEquals(1, context.getReplicates()); // default
     assertEquals(false, context.isUseFloat64()); // default
     assertArrayEquals(new String[0], context.getDataFiles()); // default
     assertEquals(10, context.getMaxConcurrentWorkers()); // default
@@ -305,6 +308,7 @@ public class RunRemoteContextBuilderTest {
         .withFile(testFile)
         .withSimulation("TestSim")
         .withReplicateNumber(1)
+        .withReplicates(2)
         .withUseFloat64(true)
         .withEndpointUri(testEndpointUri)
         .withApiKey("test-key")
@@ -318,5 +322,43 @@ public class RunRemoteContextBuilderTest {
         .withMaxConcurrentWorkers(15);
 
     assertEquals(builder, result);
+  }
+
+  @Test
+  void testWithReplicatesMethod() throws Exception {
+    RunRemoteContext context = builder
+        .withFile(testFile)
+        .withSimulation("TestSim")
+        .withReplicateNumber(0)
+        .withReplicates(5)
+        .withEndpointUri(testEndpointUri)
+        .withApiKey("test-api-key")
+        .withJoshCode("start simulation TestSim end simulation")
+        .withExternalDataSerialized("serialized-data")
+        .withMetadata(testMetadata)
+        .withProgressCalculator(testProgressCalculator)
+        .withOutputOptions(testOutputOptions)
+        .withMinioOptions(testMinioOptions)
+        .build();
+
+    assertEquals(5, context.getReplicates());
+  }
+
+  @Test
+  void testWithReplicatesDefaultValue() throws Exception {
+    RunRemoteContext context = builder
+        .withFile(testFile)
+        .withSimulation("TestSim")
+        .withEndpointUri(testEndpointUri)
+        .withApiKey("test-api-key")
+        .withJoshCode("start simulation TestSim end simulation")
+        .withExternalDataSerialized("serialized-data")
+        .withMetadata(testMetadata)
+        .withProgressCalculator(testProgressCalculator)
+        .withOutputOptions(testOutputOptions)
+        .withMinioOptions(testMinioOptions)
+        .build();
+
+    assertEquals(1, context.getReplicates(), "Default replicates should be 1");
   }
 }

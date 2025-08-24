@@ -45,6 +45,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     File testFile = new File("test.josh");
     String simulation = "TestSimulation";
     int replicateNumber = 0;
+    int replicates = 3;
     boolean useFloat64 = false;
     URI endpointUri = new URI("https://example.com/runReplicates");
     String apiKey = "test-api-key";
@@ -52,13 +53,13 @@ public class RunRemoteOffloadLeaderStrategyTest {
     String joshCode = "simulation TestSim {}";
     String externalDataSerialized = "config.jshc\t0\ttest config\t";
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
-    ProgressCalculator progressCalculator = new ProgressCalculator(11, 1);
+    ProgressCalculator progressCalculator = new ProgressCalculator(11, replicates);
     OutputOptions outputOptions = new OutputOptions();
     MinioOptions minioOptions = new MinioOptions();
     int maxConcurrentWorkers = 10;
 
     testContext = new RunRemoteContext(
-        testFile, simulation, replicateNumber, useFloat64,
+        testFile, simulation, replicateNumber, replicates, useFloat64,
         endpointUri, apiKey, dataFiles,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
@@ -99,7 +100,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     assertEquals(true, result.contains("code="));
     assertEquals(true, result.contains("name=TestSimulation"));
     assertEquals(true, result.contains("apiKey=test-api-key"));
-    assertEquals(true, result.contains("replicates=1"));
+    assertEquals(true, result.contains("replicates=3"));
     assertEquals(true, result.contains("favorBigDecimal=true"));
     assertEquals(true, result.contains("externalData="));
   }
@@ -109,7 +110,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     // Create context with float64 enabled
     RunRemoteContext float64Context = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(),
-        testContext.getReplicateNumber(), true, // useFloat64 = true
+        testContext.getReplicateNumber(), testContext.getReplicates(), true, // useFloat64 = true
         testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
@@ -133,7 +134,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     // Create context with special characters that need URL encoding
     RunRemoteContext specialCharContext = new RunRemoteContext(
         testContext.getFile(), "Test Simulation & More",
-        testContext.getReplicateNumber(), testContext.isUseFloat64(),
+        testContext.getReplicateNumber(), testContext.getReplicates(), testContext.isUseFloat64(),
         testContext.getEndpointUri(), "api-key/with+special&chars",
         testContext.getDataFiles(),
         "simulation code with spaces", "external data with spaces",
@@ -182,7 +183,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     assertEquals("simulation TestSim {}", formFields.get("code"));
     assertEquals("TestSimulation", formFields.get("name"));
     assertEquals("test-api-key", formFields.get("apiKey"));
-    assertEquals("1", formFields.get("replicates"));
+    assertEquals("3", formFields.get("replicates"));
     assertEquals("true", formFields.get("favorBigDecimal"));
     assertEquals("config.jshc\t0\ttest config\t", formFields.get("externalData"));
   }
@@ -235,5 +236,53 @@ public class RunRemoteOffloadLeaderStrategyTest {
 
     assertNotNull(strategy);
     assertNotNull(testContext);
+  }
+
+  @Test
+  public void testBuildFormDataWithDifferentReplicates() throws Exception {
+    // Create context with different replicate count
+    RunRemoteContext differentReplicatesContext = new RunRemoteContext(
+        testContext.getFile(), testContext.getSimulation(),
+        testContext.getReplicateNumber(), 7, testContext.isUseFloat64(), // 7 replicates
+        testContext.getEndpointUri(), testContext.getApiKey(),
+        testContext.getDataFiles(),
+        testContext.getJoshCode(), testContext.getExternalDataSerialized(),
+        testContext.getMetadata(), testContext.getProgressCalculator(),
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
+        testContext.getMaxConcurrentWorkers()
+    );
+
+    Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
+        "buildFormData", RunRemoteContext.class);
+    method.setAccessible(true);
+
+    String result = (String) method.invoke(strategy, differentReplicatesContext);
+
+    // Verify replicates field contains the dynamic value
+    assertEquals(true, result.contains("replicates=7"));
+  }
+
+  @Test
+  public void testBuildFormDataWithSingleReplicate() throws Exception {
+    // Create context with single replicate (default behavior)
+    RunRemoteContext singleReplicateContext = new RunRemoteContext(
+        testContext.getFile(), testContext.getSimulation(),
+        testContext.getReplicateNumber(), 1, testContext.isUseFloat64(), // 1 replicate
+        testContext.getEndpointUri(), testContext.getApiKey(),
+        testContext.getDataFiles(),
+        testContext.getJoshCode(), testContext.getExternalDataSerialized(),
+        testContext.getMetadata(), testContext.getProgressCalculator(),
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
+        testContext.getMaxConcurrentWorkers()
+    );
+
+    Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
+        "buildFormData", RunRemoteContext.class);
+    method.setAccessible(true);
+
+    String result = (String) method.invoke(strategy, singleReplicateContext);
+
+    // Verify replicates field contains the single value
+    assertEquals(true, result.contains("replicates=1"));
   }
 }

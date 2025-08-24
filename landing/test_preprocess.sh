@@ -318,7 +318,7 @@ fi
 echo "=== Running Data Validation Assertions ==="
 
 echo "Validating temperature data with assertions..."
-java -jar joshsim-fat.jar run --replicate 1 ../examples/test/assert_temperature_tulare.josh AssertTemperatureTulare
+java -jar joshsim-fat.jar run --replicate-number 1 ../examples/test/assert_temperature_tulare.josh AssertTemperatureTulare
 if [ $? -eq 0 ]; then
     echo "✓ Temperature data assertions passed"
 else
@@ -327,7 +327,7 @@ else
 fi
 
 echo "Validating precipitation data with assertions..."
-java -jar joshsim-fat.jar run --replicate 1 ../examples/test/assert_precipitation_tulare.josh AssertPrecipitationTulare
+java -jar joshsim-fat.jar run --replicate-number 1 ../examples/test/assert_precipitation_tulare.josh AssertPrecipitationTulare
 if [ $? -eq 0 ]; then
     echo "✓ Precipitation data assertions passed"
 else
@@ -338,7 +338,7 @@ fi
 echo "Validating GeoTIFF precipitation data with assertions..."
 # Copy GeoTIFF precipitation data to expected filename for assertion test
 cp precipitation_geotiff.jshd precipitation.jshd
-java -jar joshsim-fat.jar run --replicate 1 ../examples/test/assert_precipitation_geotiff.josh AssertPrecipitationGeotiff
+java -jar joshsim-fat.jar run --replicate-number 1 ../examples/test/assert_precipitation_geotiff.josh AssertPrecipitationGeotiff
 if [ $? -eq 0 ]; then
     echo "✓ GeoTIFF precipitation data assertions passed"
 else

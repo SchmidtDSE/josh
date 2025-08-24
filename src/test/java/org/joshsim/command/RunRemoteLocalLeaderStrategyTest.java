@@ -46,6 +46,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     File testFile = new File("test.josh");
     String simulation = "TestSimulation";
     int replicateNumber = 0;
+    int replicates = 4;
     boolean useFloat64 = false;
     URI endpointUri = new URI("https://example.com/runReplicates");
     String apiKey = "test-api-key";
@@ -53,13 +54,13 @@ public class RunRemoteLocalLeaderStrategyTest {
     String joshCode = "simulation TestSim {}";
     String externalDataSerialized = "config.jshc\t0\ttest config\t";
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
-    ProgressCalculator progressCalculator = new ProgressCalculator(11, 1);
+    ProgressCalculator progressCalculator = new ProgressCalculator(11, replicates);
     OutputOptions outputOptions = new OutputOptions();
     MinioOptions minioOptions = new MinioOptions();
     int maxConcurrentWorkers = 5;
 
     testContext = new RunRemoteContext(
-        testFile, simulation, replicateNumber, useFloat64,
+        testFile, simulation, replicateNumber, replicates, useFloat64,
         endpointUri, apiKey, dataFiles,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
@@ -125,17 +126,28 @@ public class RunRemoteLocalLeaderStrategyTest {
     List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, testContext);
 
-    // Verify task creation
+    // Verify task creation - should create multiple tasks based on replicates count
     assertNotNull(tasks);
-    assertEquals(1, tasks.size()); // Currently single replicate support
+    assertEquals(4, tasks.size()); // Multiple replicates support
 
-    WorkerTask task = tasks.get(0);
-    assertEquals("simulation TestSim {}", task.getCode());
-    assertEquals("TestSimulation", task.getSimulationName());
-    assertEquals("test-api-key", task.getApiKey());
-    assertEquals("config.jshc\t0\ttest config\t", task.getExternalData());
-    assertEquals(true, task.isFavorBigDecimal()); // !useFloat64
-    assertEquals(0, task.getReplicateNumber());
+    // Verify first task
+    WorkerTask task0 = tasks.get(0);
+    assertEquals("simulation TestSim {}", task0.getCode());
+    assertEquals("TestSimulation", task0.getSimulationName());
+    assertEquals("test-api-key", task0.getApiKey());
+    assertEquals("config.jshc\t0\ttest config\t", task0.getExternalData());
+    assertEquals(true, task0.isFavorBigDecimal()); // !useFloat64
+    assertEquals(0, task0.getReplicateNumber()); // replicateNumber + 0
+
+    // Verify subsequent tasks have correct replicate numbering
+    WorkerTask task1 = tasks.get(1);
+    assertEquals(1, task1.getReplicateNumber()); // replicateNumber + 1
+    
+    WorkerTask task2 = tasks.get(2);
+    assertEquals(2, task2.getReplicateNumber()); // replicateNumber + 2
+    
+    WorkerTask task3 = tasks.get(3);
+    assertEquals(3, task3.getReplicateNumber()); // replicateNumber + 3
   }
 
   @Test
@@ -143,7 +155,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     // Create context with float64 enabled
     RunRemoteContext float64Context = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(),
-        testContext.getReplicateNumber(), true, // useFloat64 = true
+        testContext.getReplicateNumber(), testContext.getReplicates(), true, // useFloat64 = true
         testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
@@ -170,7 +182,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     RunRemoteContext differentReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(),
         3, // different replicate number
-        testContext.isUseFloat64(),
+        testContext.getReplicates(), testContext.isUseFloat64(),
         testContext.getEndpointUri(), testContext.getApiKey(),
         testContext.getDataFiles(),
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
@@ -187,8 +199,17 @@ public class RunRemoteLocalLeaderStrategyTest {
     List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, differentReplicateContext);
 
-    WorkerTask task = tasks.get(0);
-    assertEquals(3, task.getReplicateNumber());
+    // Should still create 4 tasks with offset starting from 3
+    assertEquals(4, tasks.size());
+    
+    WorkerTask task0 = tasks.get(0);
+    assertEquals(3, task0.getReplicateNumber()); // replicateNumber (3) + 0
+    
+    WorkerTask task1 = tasks.get(1);
+    assertEquals(4, task1.getReplicateNumber()); // replicateNumber (3) + 1
+    
+    WorkerTask task3 = tasks.get(3);
+    assertEquals(6, task3.getReplicateNumber()); // replicateNumber (3) + 3
   }
 
   @Test
@@ -271,5 +292,64 @@ public class RunRemoteLocalLeaderStrategyTest {
     assertNotNull(strategy);
     assertNotNull(testContext);
     assertEquals(5, testContext.getMaxConcurrentWorkers());
+  }
+
+  @Test
+  public void testCreateWorkerTasksWithSingleReplicate() throws Exception {
+    // Create context with single replicate for backward compatibility
+    RunRemoteContext singleReplicateContext = new RunRemoteContext(
+        testContext.getFile(), testContext.getSimulation(),
+        testContext.getReplicateNumber(), 1, testContext.isUseFloat64(), // 1 replicate
+        testContext.getEndpointUri(), testContext.getApiKey(),
+        testContext.getDataFiles(),
+        testContext.getJoshCode(), testContext.getExternalDataSerialized(),
+        testContext.getMetadata(), testContext.getProgressCalculator(),
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
+        testContext.getMaxConcurrentWorkers()
+    );
+
+    Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
+        "createWorkerTasks", RunRemoteContext.class);
+    method.setAccessible(true);
+
+    @SuppressWarnings("unchecked")
+    List<WorkerTask> tasks =
+        (List<WorkerTask>) method.invoke(strategy, singleReplicateContext);
+
+    // Should create only one task for single replicate
+    assertEquals(1, tasks.size());
+    
+    WorkerTask task = tasks.get(0);
+    assertEquals(0, task.getReplicateNumber());
+  }
+
+  @Test
+  public void testCreateWorkerTasksWithLargeReplicateCount() throws Exception {
+    // Create context with large replicate count
+    RunRemoteContext largeReplicateContext = new RunRemoteContext(
+        testContext.getFile(), testContext.getSimulation(),
+        testContext.getReplicateNumber(), 10, testContext.isUseFloat64(), // 10 replicates
+        testContext.getEndpointUri(), testContext.getApiKey(),
+        testContext.getDataFiles(),
+        testContext.getJoshCode(), testContext.getExternalDataSerialized(),
+        testContext.getMetadata(), testContext.getProgressCalculator(),
+        testContext.getOutputOptions(), testContext.getMinioOptions(),
+        testContext.getMaxConcurrentWorkers()
+    );
+
+    Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
+        "createWorkerTasks", RunRemoteContext.class);
+    method.setAccessible(true);
+
+    @SuppressWarnings("unchecked")
+    List<WorkerTask> tasks =
+        (List<WorkerTask>) method.invoke(strategy, largeReplicateContext);
+
+    // Should create 10 tasks
+    assertEquals(10, tasks.size());
+    
+    // Verify last task has correct replicate number
+    WorkerTask lastTask = tasks.get(9);
+    assertEquals(9, lastTask.getReplicateNumber()); // replicateNumber (0) + 9
   }
 }

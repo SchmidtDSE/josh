@@ -27,6 +27,7 @@ public class ExportTask {
   private final Optional<Entity> entity;
   private final Optional<NamedMap> namedMap;
   private final long step;
+  private final int replicateNumber;
 
   /**
    * Creates a new ExportTask containing an Entity.
@@ -36,15 +37,31 @@ public class ExportTask {
    *
    * @param entity The entity to be serialized and exported
    * @param step The simulation step number associated with this task
+   * @param replicateNumber The replicate number associated with this task
    * @throws IllegalArgumentException if entity is null
    */
-  public ExportTask(Entity entity, long step) {
+  public ExportTask(Entity entity, long step, int replicateNumber) {
     if (entity == null) {
       throw new IllegalArgumentException("Entity cannot be null");
     }
     this.entity = Optional.of(entity);
     this.namedMap = Optional.empty();
     this.step = step;
+    this.replicateNumber = replicateNumber;
+  }
+
+  /**
+   * Creates a new ExportTask containing an Entity with default replicate number.
+   *
+   * <p>This constructor is provided for backward compatibility and defaults the replicate 
+   * number to 0.</p>
+   *
+   * @param entity The entity to be serialized and exported
+   * @param step The simulation step number associated with this task
+   * @throws IllegalArgumentException if entity is null
+   */
+  public ExportTask(Entity entity, long step) {
+    this(entity, step, 0);
   }
 
   /**
@@ -56,15 +73,31 @@ public class ExportTask {
    *
    * @param namedMap The pre-serialized named map to be exported
    * @param step The simulation step number associated with this task
+   * @param replicateNumber The replicate number associated with this task
    * @throws IllegalArgumentException if namedMap is null
    */
-  public ExportTask(NamedMap namedMap, long step) {
+  public ExportTask(NamedMap namedMap, long step, int replicateNumber) {
     if (namedMap == null) {
       throw new IllegalArgumentException("NamedMap cannot be null");
     }
     this.entity = Optional.empty();
     this.namedMap = Optional.of(namedMap);
     this.step = step;
+    this.replicateNumber = replicateNumber;
+  }
+
+  /**
+   * Creates a new ExportTask containing a NamedMap with default replicate number.
+   *
+   * <p>This constructor is provided for backward compatibility and defaults the replicate
+   * number to 0.</p>
+   *
+   * @param namedMap The pre-serialized named map to be exported
+   * @param step The simulation step number associated with this task
+   * @throws IllegalArgumentException if namedMap is null
+   */
+  public ExportTask(NamedMap namedMap, long step) {
+    this(namedMap, step, 0);
   }
 
   /**
@@ -95,6 +128,15 @@ public class ExportTask {
   }
 
   /**
+   * Gets the replicate number for this task.
+   *
+   * @return The replicate number as an int value
+   */
+  public int getReplicateNumber() {
+    return replicateNumber;
+  }
+
+  /**
    * Checks if this task contains an Entity.
    *
    * @return true if this task contains an Entity, false if it contains a NamedMap
@@ -115,9 +157,11 @@ public class ExportTask {
   @Override
   public String toString() {
     if (hasEntity()) {
-      return String.format("ExportTask{entity=%s, step=%d}", entity.get(), step);
+      return String.format("ExportTask{entity=%s, step=%d, replicate=%d}", 
+          entity.get(), step, replicateNumber);
     } else {
-      return String.format("ExportTask{namedMap=%s, step=%d}", namedMap.get(), step);
+      return String.format("ExportTask{namedMap=%s, step=%d, replicate=%d}", 
+          namedMap.get(), step, replicateNumber);
     }
   }
 }

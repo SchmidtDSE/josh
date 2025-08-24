@@ -79,7 +79,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
         new LocalLeaderWireResponseHandler(responseHandler, cumulativeStepCount);
 
     try {
-      // Create worker tasks - currently supporting single replicate but structured for multiple
+      // Create worker tasks based on replicate count
       List<WorkerTask> tasks = createWorkerTasks(context);
 
       context.getOutputOptions().printInfo("Executing " + tasks.size()
@@ -130,28 +130,29 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
   /**
    * Creates worker tasks for parallel execution.
    *
-   * <p>Currently creates a single task for single replicate execution, but structured
-   * to support multiple replicates in the future. Each task contains all the parameters
-   * needed for a worker to execute one replicate.</p>
+   * <p>Creates multiple tasks based on the replicate count specified in the context.
+   * Each task contains all the parameters needed for a worker to execute one replicate
+   * with proper replicate numbering using the offset from replicateNumber.</p>
    *
    * @param context The execution context
    * @return List of worker tasks to execute
    */
   private List<WorkerTask> createWorkerTasks(RunRemoteContext context) {
     List<WorkerTask> tasks = new ArrayList<>();
-
-    // Currently supporting single replicate - can be extended for multiple replicates
     boolean favorBigDecimal = !context.isUseFloat64();
-    WorkerTask task = new WorkerTask(
-        context.getJoshCode(),
-        context.getSimulation(),
-        context.getApiKey(),
-        context.getExternalDataSerialized(),
-        favorBigDecimal,
-        context.getReplicateNumber()
-    );
-
-    tasks.add(task);
+    
+    for (int i = 0; i < context.getReplicates(); i++) {
+      WorkerTask task = new WorkerTask(
+          context.getJoshCode(),
+          context.getSimulation(),
+          context.getApiKey(),
+          context.getExternalDataSerialized(),
+          favorBigDecimal,
+          context.getReplicateNumber() + i  // Offset by replicateNumber
+      );
+      tasks.add(task);
+    }
+    
     return tasks;
   }
 

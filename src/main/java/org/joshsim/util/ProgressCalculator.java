@@ -14,9 +14,10 @@ package org.joshsim.util;
 /**
  * Calculator for simulation progress with intelligent message filtering.
  *
- * <p>This class tracks simulation progress across multiple replicates and provides
- * percentage-based progress calculations with intelligent filtering to reduce verbose
- * output. It formats progress messages consistently with the HTML editor experience.</p>
+ * <p>This class tracks simulation progress with per-replicate progress tracking (0-100%
+ * within each replicate) and provides percentage-based progress calculations with intelligent
+ * filtering to reduce verbose output. It formats progress messages consistently with the
+ * HTML editor experience and supports progress resets between replicates.</p>
  */
 public class ProgressCalculator {
 
@@ -27,13 +28,11 @@ public class ProgressCalculator {
 
   private final long totalStepsPerReplicate;
   private final int totalReplicates;
-  private final long totalStepsAcrossReplicates;
 
   // Tracking state
   private long lastReportedStep = -1;
   private double lastReportedPercentage = -1.0;
   private int currentReplicate = 1;
-  private long totalCompletedSteps = 0;
 
   /**
    * Creates a new ProgressCalculator for tracking simulation progress.
@@ -51,7 +50,6 @@ public class ProgressCalculator {
 
     this.totalStepsPerReplicate = totalStepsPerReplicate;
     this.totalReplicates = totalReplicates;
-    this.totalStepsAcrossReplicates = totalStepsPerReplicate * totalReplicates;
   }
 
   /**
@@ -64,12 +62,8 @@ public class ProgressCalculator {
    * @return ProgressUpdate indicating whether to report and what message to show
    */
   public ProgressUpdate updateStep(long currentStepInReplicate) {
-    // Calculate cumulative progress across all replicates
-    long stepsFromCompletedReplicates = (currentReplicate - 1) * totalStepsPerReplicate;
-    long totalCurrentSteps = stepsFromCompletedReplicates + currentStepInReplicate;
-
-    // Calculate percentage (0-100%)
-    double currentPercentage = (double) totalCurrentSteps / totalStepsAcrossReplicates * 100.0;
+    // Calculate per-replicate progress (0-100% within current replicate)
+    double currentPercentage = (double) currentStepInReplicate / totalStepsPerReplicate * 100.0;
 
     // Determine if we should report this progress update
     boolean shouldReport = shouldReportProgress(currentPercentage, currentStepInReplicate);
@@ -96,22 +90,14 @@ public class ProgressCalculator {
    * @return ProgressUpdate with a completion message
    */
   public ProgressUpdate updateReplicateCompleted(int completedReplicateNumber) {
-    // Update tracking for the completed replicate
-    totalCompletedSteps = completedReplicateNumber * totalStepsPerReplicate;
-    currentReplicate = completedReplicateNumber + 1;
-
-    // Calculate percentage at completion of this replicate
-    double currentPercentage = (double) totalCompletedSteps / totalStepsAcrossReplicates * 100.0;
+    // Per-replicate completion is always 100%
+    double currentPercentage = 100.0;
 
     // Generate completion message
     String message = String.format(
         "Replicate %d/%d completed",
         completedReplicateNumber,
         totalReplicates);
-
-    // Reset progress tracking for next replicate
-    lastReportedStep = -1;
-    lastReportedPercentage = currentPercentage;
 
     return new ProgressUpdate(true, currentPercentage, message);
   }
@@ -174,21 +160,36 @@ public class ProgressCalculator {
           currentStepInReplicate,
           totalStepsPerReplicate);
     } else {
-      // Multiple replicates: "Progress: 45.2% (step 123/500, replicate 2/10)"
-      String base = String.format(
-          "Progress: %.1f%% (step %d/%d, replicate %d/%d)",
+      // Multiple replicates: "Replicate 2/10: Progress: 45.2% (step 123/500)"
+      return String.format(
+          "Replicate %d/%d: Progress: %.1f%% (step %d/%d)",
+          currentReplicate,
+          totalReplicates,
           percentage,
           currentStepInReplicate,
-          totalStepsPerReplicate,
-          currentReplicate,
-          totalReplicates);
-
-      if (isReplicateComplete) {
-        base += " - Replicate " + currentReplicate + " completed";
-      }
-
-      return base;
+          totalStepsPerReplicate);
     }
+  }
+
+  /**
+   * Resets progress tracking for the next replicate.
+   *
+   * <p>This method resets the internal progress tracking state to prepare for a new replicate.
+   * It updates the current replicate number and resets the reporting thresholds, ensuring
+   * that progress starts fresh at 0% for the new replicate.</p>
+   *
+   * @param nextReplicateNumber The replicate number starting next (1-based)
+   * @throws IllegalArgumentException if nextReplicateNumber is invalid
+   */
+  public void resetForNextReplicate(int nextReplicateNumber) {
+    if (nextReplicateNumber < 1 || nextReplicateNumber > totalReplicates) {
+      throw new IllegalArgumentException("Invalid replicate number: " + nextReplicateNumber
+          + " (must be between 1 and " + totalReplicates + ")");
+    }
+
+    this.currentReplicate = nextReplicateNumber;
+    this.lastReportedStep = -1;
+    this.lastReportedPercentage = -1.0;
   }
 
 }

@@ -57,14 +57,16 @@ public class NetcdfExportFacade implements ExportFacade {
   }
 
   @Override
-  public void write(Entity entity, long step) {
-    ExportTask task = new ExportTask(entity, step);
+  public void write(Entity entity, long step, int replicateNumber) {
+    // For NetCDF, replicate number is handled by file separation, not as data column
+    ExportTask task = new ExportTask(entity, step, replicateNumber);
     write(task);
   }
 
   @Override
-  public void write(NamedMap namedMap, long step) {
-    ExportTask task = new ExportTask(namedMap, step);
+  public void write(NamedMap namedMap, long step, int replicateNumber) {
+    // For NetCDF, replicate number is handled by file separation, not as data column
+    ExportTask task = new ExportTask(namedMap, step, replicateNumber);
     write(task);
   }
 

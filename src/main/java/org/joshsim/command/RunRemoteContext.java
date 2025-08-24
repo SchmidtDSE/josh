@@ -31,6 +31,7 @@ public class RunRemoteContext {
   private final File file;
   private final String simulation;
   private final int replicateNumber;
+  private final int replicates;
   private final boolean useFloat64;
 
   // Remote endpoint configuration
@@ -59,6 +60,7 @@ public class RunRemoteContext {
    * @param file The Josh simulation file
    * @param simulation The simulation name to execute
    * @param replicateNumber The replicate number
+   * @param replicates The number of replicates to run
    * @param useFloat64 Whether to use double precision instead of BigDecimal
    * @param endpointUri The validated endpoint URI
    * @param apiKey The API key for authentication
@@ -71,8 +73,8 @@ public class RunRemoteContext {
    * @param minioOptions The MinIO options for cloud storage
    * @param maxConcurrentWorkers Maximum concurrent workers for local leader mode
    */
-  public RunRemoteContext(File file, String simulation, int replicateNumber, boolean useFloat64,
-      URI endpointUri, String apiKey, String[] dataFiles,
+  public RunRemoteContext(File file, String simulation, int replicateNumber, int replicates,
+      boolean useFloat64, URI endpointUri, String apiKey, String[] dataFiles,
       String joshCode, String externalDataSerialized,
       SimulationMetadata metadata, ProgressCalculator progressCalculator,
       OutputOptions outputOptions, MinioOptions minioOptions,
@@ -80,6 +82,7 @@ public class RunRemoteContext {
     this.file = file;
     this.simulation = simulation;
     this.replicateNumber = replicateNumber;
+    this.replicates = replicates;
     this.useFloat64 = useFloat64;
     this.endpointUri = endpointUri;
     this.apiKey = apiKey;
@@ -118,6 +121,15 @@ public class RunRemoteContext {
    */
   public int getReplicateNumber() {
     return replicateNumber;
+  }
+
+  /**
+   * Gets the number of replicates to run.
+   *
+   * @return The number of replicates
+   */
+  public int getReplicates() {
+    return replicates;
   }
 
   /**

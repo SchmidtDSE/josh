@@ -35,6 +35,7 @@ public class ExportTaskTest {
     assertEquals(mockEntity, task.getEntity().get());
     assertTrue(task.getNamedMap().isEmpty());
     assertEquals(step, task.getStep());
+    assertEquals(0, task.getReplicateNumber()); // Default replicate number
   }
 
   @Test
@@ -52,6 +53,7 @@ public class ExportTaskTest {
     assertTrue(task.getEntity().isEmpty());
     assertEquals(namedMap, task.getNamedMap().get());
     assertEquals(step, task.getStep());
+    assertEquals(0, task.getReplicateNumber()); // Default replicate number
   }
 
   @Test
@@ -102,6 +104,80 @@ public class ExportTaskTest {
     for (long step : testSteps) {
       ExportTask task = new ExportTask(mockEntity, step);
       assertEquals(step, task.getStep());
+    }
+  }
+
+  @Test
+  public void testEntityConstructorWithReplicate() {
+    Entity mockEntity = mock(Entity.class);
+    long step = 42L;
+    int replicateNumber = 5;
+
+    ExportTask task = new ExportTask(mockEntity, step, replicateNumber);
+
+    assertTrue(task.hasEntity());
+    assertFalse(task.hasNamedMap());
+    assertEquals(mockEntity, task.getEntity().get());
+    assertTrue(task.getNamedMap().isEmpty());
+    assertEquals(step, task.getStep());
+    assertEquals(replicateNumber, task.getReplicateNumber());
+  }
+
+  @Test
+  public void testNamedMapConstructorWithReplicate() {
+    Map<String, String> testMap = new HashMap<>();
+    testMap.put("key1", "value1");
+    testMap.put("key2", "value2");
+    NamedMap namedMap = new NamedMap("testName", testMap);
+    long step = 123L;
+    int replicateNumber = 3;
+
+    ExportTask task = new ExportTask(namedMap, step, replicateNumber);
+
+    assertFalse(task.hasEntity());
+    assertTrue(task.hasNamedMap());
+    assertTrue(task.getEntity().isEmpty());
+    assertEquals(namedMap, task.getNamedMap().get());
+    assertEquals(step, task.getStep());
+    assertEquals(replicateNumber, task.getReplicateNumber());
+  }
+
+  @Test
+  public void testToStringWithEntityIncludesReplicate() {
+    Entity mockEntity = mock(Entity.class);
+    ExportTask task = new ExportTask(mockEntity, 42L, 7);
+
+    String result = task.toString();
+
+    assertTrue(result.contains("ExportTask"));
+    assertTrue(result.contains("entity="));
+    assertTrue(result.contains("step=42"));
+    assertTrue(result.contains("replicate=7"));
+  }
+
+  @Test
+  public void testToStringWithNamedMapIncludesReplicate() {
+    Map<String, String> testMap = new HashMap<>();
+    testMap.put("test", "value");
+    NamedMap namedMap = new NamedMap("testName", testMap);
+    ExportTask task = new ExportTask(namedMap, 123L, 2);
+
+    String result = task.toString();
+
+    assertTrue(result.contains("ExportTask"));
+    assertTrue(result.contains("namedMap="));
+    assertTrue(result.contains("step=123"));
+    assertTrue(result.contains("replicate=2"));
+  }
+
+  @Test
+  public void testReplicateNumberValues() {
+    Entity mockEntity = mock(Entity.class);
+    int[] testReplicates = {0, 1, 5, 100, Integer.MAX_VALUE};
+
+    for (int replicate : testReplicates) {
+      ExportTask task = new ExportTask(mockEntity, 1L, replicate);
+      assertEquals(replicate, task.getReplicateNumber());
     }
   }
 }
