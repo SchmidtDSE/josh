@@ -68,25 +68,27 @@ public class ProgressCalculatorTest {
     ProgressUpdate update1 = calc.updateStep(0);
     assertTrue(update1.shouldReport());
     assertEquals(0.0, update1.getPercentage(), 0.1);
-    assertEquals("Progress: 0.0% (step 0/20, replicate 1/5)", update1.getMessage());
+    assertEquals("Replicate 1/5: Progress: 0.0% (step 0/20)", update1.getMessage());
 
-    // Test 25% through first replicate (5% total progress)
+    // Test 25% through first replicate (25% within replicate)
     ProgressUpdate update5 = calc.updateStep(5);
     assertTrue(update5.shouldReport());
-    assertEquals(5.0, update5.getPercentage(), 0.1);
-    assertEquals("Progress: 5.0% (step 5/20, replicate 1/5)", update5.getMessage());
+    assertEquals(25.0, update5.getPercentage(), 0.1);
+    assertEquals("Replicate 1/5: Progress: 25.0% (step 5/20)", update5.getMessage());
 
     // Test completion of first replicate
     ProgressUpdate endUpdate1 = calc.updateReplicateCompleted(1);
     assertTrue(endUpdate1.shouldReport());
-    assertEquals(20.0, endUpdate1.getPercentage(), 0.1);
+    assertEquals(100.0, endUpdate1.getPercentage(), 0.1);
     assertEquals("Replicate 1/5 completed", endUpdate1.getMessage());
 
     // Test progress in second replicate (should now be replicate 2)
+    // First reset for replicate 2
+    calc.resetForNextReplicate(2);
     ProgressUpdate update21 = calc.updateStep(10);
     assertTrue(update21.shouldReport()); // First update of new replicate should report
-    assertEquals(30.0, update21.getPercentage(), 0.1); // 20 + 10 = 30 out of 100 total
-    assertEquals("Progress: 30.0% (step 10/20, replicate 2/5)", update21.getMessage());
+    assertEquals(50.0, update21.getPercentage(), 0.1); // 10/20 = 50% within replicate
+    assertEquals("Replicate 2/5: Progress: 50.0% (step 10/20)", update21.getMessage());
   }
 
   /**
@@ -99,13 +101,13 @@ public class ProgressCalculatorTest {
     // Complete first replicate
     ProgressUpdate end1 = calc.updateReplicateCompleted(1);
     assertTrue(end1.shouldReport());
-    assertEquals(33.3, end1.getPercentage(), 0.1);
+    assertEquals(100.0, end1.getPercentage(), 0.1);
     assertTrue(end1.getMessage().contains("Replicate 1/3 completed"));
 
     // Complete second replicate
     ProgressUpdate end2 = calc.updateReplicateCompleted(2);
     assertTrue(end2.shouldReport());
-    assertEquals(66.7, end2.getPercentage(), 0.1);
+    assertEquals(100.0, end2.getPercentage(), 0.1);
     assertTrue(end2.getMessage().contains("Replicate 2/3 completed"));
 
     // Complete final replicate
@@ -228,12 +230,12 @@ public class ProgressCalculatorTest {
     // Test step 1 of 7 in first replicate
     ProgressUpdate update1 = calc.updateStep(1);
     assertTrue(update1.shouldReport());
-    assertEquals(4.8, update1.getPercentage(), 0.1); // 1/21 * 100 ≈ 4.76%
+    assertEquals(14.3, update1.getPercentage(), 0.1); // 1/7 * 100 ≈ 14.29%
 
     // Test step 3 of 7 in first replicate
     ProgressUpdate update3 = calc.updateStep(3);
     assertTrue(update3.shouldReport()); // Should report due to 5% threshold
-    assertEquals(14.3, update3.getPercentage(), 0.1); // 3/21 * 100 ≈ 14.29%
+    assertEquals(42.9, update3.getPercentage(), 0.1); // 3/7 * 100 ≈ 42.86%
   }
 
   /**
@@ -249,7 +251,7 @@ public class ProgressCalculatorTest {
     // Multi-replicate formatting
     ProgressCalculator calc2 = new ProgressCalculator(50, 3);
     ProgressUpdate update2 = calc2.updateStep(25);
-    assertEquals("Progress: 16.7% (step 25/50, replicate 1/3)", update2.getMessage());
+    assertEquals("Replicate 1/3: Progress: 50.0% (step 25/50)", update2.getMessage());
 
     // Completion formatting
     ProgressUpdate end2 = calc2.updateReplicateCompleted(1);
@@ -261,30 +263,94 @@ public class ProgressCalculatorTest {
    */
   @Test
   public void testMultipleReplicateTransitions() {
-    ProgressCalculator calc = new ProgressCalculator(4, 4); // 4 steps, 4 replicates = 16 total
+    ProgressCalculator calc = new ProgressCalculator(4, 4); // 4 steps, 4 replicates
 
     // Progress through first replicate
     ProgressUpdate step2 = calc.updateStep(2);
-    assertEquals(12.5, step2.getPercentage(), 0.1); // 2/16 * 100
+    assertEquals(50.0, step2.getPercentage(), 0.1); // 2/4 * 100 within replicate
 
     // Complete first replicate
     ProgressUpdate end1 = calc.updateReplicateCompleted(1);
-    assertEquals(25.0, end1.getPercentage(), 0.1); // 4/16 * 100
+    assertEquals(100.0, end1.getPercentage(), 0.1); // Completion is always 100%
 
-    // Progress in second replicate
+    // Reset and progress in second replicate
+    calc.resetForNextReplicate(2);
     ProgressUpdate step6 = calc.updateStep(2);
-    assertEquals(37.5, step6.getPercentage(), 0.1); // (4+2)/16 * 100
+    assertEquals(50.0, step6.getPercentage(), 0.1); // 2/4 * 100 within replicate
 
     // Complete second replicate
     ProgressUpdate end2 = calc.updateReplicateCompleted(2);
-    assertEquals(50.0, end2.getPercentage(), 0.1); // 8/16 * 100
+    assertEquals(100.0, end2.getPercentage(), 0.1); // Completion is always 100%
 
     // Complete third replicate
     ProgressUpdate end3 = calc.updateReplicateCompleted(3);
-    assertEquals(75.0, end3.getPercentage(), 0.1); // 12/16 * 100
+    assertEquals(100.0, end3.getPercentage(), 0.1); // Completion is always 100%
 
     // Complete final replicate
     ProgressUpdate end4 = calc.updateReplicateCompleted(4);
-    assertEquals(100.0, end4.getPercentage(), 0.1); // 16/16 * 100
+    assertEquals(100.0, end4.getPercentage(), 0.1); // Completion is always 100%
+  }
+
+  /**
+   * Tests the resetForNextReplicate method functionality.
+   */
+  @Test
+  public void testResetForNextReplicate() {
+    ProgressCalculator calc = new ProgressCalculator(10, 3);
+
+    // Progress through first replicate
+    ProgressUpdate update1 = calc.updateStep(5);
+    assertTrue(update1.shouldReport());
+    assertEquals(50.0, update1.getPercentage(), 0.1);
+    assertEquals("Replicate 1/3: Progress: 50.0% (step 5/10)", update1.getMessage());
+
+    // Small step should not report due to filtering (small percentage increase)  
+    ProgressUpdate update2 = calc.updateStep(5); // Same step again, should not report
+    assertFalse(update2.shouldReport());
+
+    // Reset for second replicate
+    calc.resetForNextReplicate(2);
+
+    // First step after reset should always report
+    ProgressUpdate update3 = calc.updateStep(3);
+    assertTrue(update3.shouldReport());
+    assertEquals(30.0, update3.getPercentage(), 0.1);
+    assertEquals("Replicate 2/3: Progress: 30.0% (step 3/10)", update3.getMessage());
+
+    // Test that filtering continues to work after reset (small step change)
+    ProgressUpdate update4 = calc.updateStep(3); // Same step, should not report again
+    assertFalse(update4.shouldReport()); // Should be filtered
+
+    // Test reset for final replicate
+    calc.resetForNextReplicate(3);
+    ProgressUpdate update5 = calc.updateStep(7);
+    assertTrue(update5.shouldReport());
+    assertEquals(70.0, update5.getPercentage(), 0.1);
+    assertEquals("Replicate 3/3: Progress: 70.0% (step 7/10)", update5.getMessage());
+  }
+
+  /**
+   * Tests resetForNextReplicate validation.
+   */
+  @Test
+  public void testResetForNextReplicateValidation() {
+    ProgressCalculator calc = new ProgressCalculator(10, 3);
+
+    // Valid reset
+    calc.resetForNextReplicate(2);
+    calc.resetForNextReplicate(3);
+
+    // Invalid resets should throw exceptions
+    assertThrows(IllegalArgumentException.class, () -> {
+      calc.resetForNextReplicate(0); // Too low
+    });
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      calc.resetForNextReplicate(4); // Too high
+    });
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      calc.resetForNextReplicate(-1); // Negative
+    });
   }
 }

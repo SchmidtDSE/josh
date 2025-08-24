@@ -41,6 +41,7 @@ public class RemoteResponseHandler {
   private final AtomicLong currentStep;
   private final AtomicInteger completedReplicates;
   private final boolean useCumulativeProgress;
+  private int lastProcessedReplicate = -1;
 
   /**
    * Creates a new RemoteResponseHandler.
@@ -190,6 +191,11 @@ public class RemoteResponseHandler {
     ProgressUpdate endUpdate = context.getProgressCalculator()
         .updateReplicateCompleted(completedCount);
     context.getOutputOptions().printInfo(endUpdate.getMessage());
+    
+    // Prepare for next replicate if there are more replicates to process
+    if (completedCount < context.getReplicates()) {
+      context.getProgressCalculator().resetForNextReplicate(completedCount + 1);
+    }
   }
 
   /**

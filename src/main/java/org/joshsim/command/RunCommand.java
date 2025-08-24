@@ -177,6 +177,11 @@ public class RunCommand implements Callable<Integer> {
 
     // Execute simulation for each replicate
     for (int currentReplicate = 0; currentReplicate < replicates; currentReplicate++) {
+      // Reset progress tracking for each new replicate (except first)
+      if (currentReplicate > 0) {
+        progressCalculator.resetForNextReplicate(currentReplicate + 1);
+      }
+      
       final int replicateNum = replicateNumber + currentReplicate;
       JoshSimFacade.runSimulation(
           geometryFactory,
