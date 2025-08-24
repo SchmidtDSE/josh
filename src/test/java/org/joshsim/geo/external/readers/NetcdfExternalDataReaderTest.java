@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -34,7 +37,7 @@ import org.opengis.util.FactoryException;
 @ExtendWith(MockitoExtension.class)
 public class NetcdfExternalDataReaderTest {
 
-  private static final String RIVERSIDE_RESOURCE_PATH = "netcdf/precip_riverside_annual_agg.nc";
+  private static final String RIVERSIDE_RESOURCE_PATH = "netcdf/precip_riverside_annual.nc";
   private String riversideFilePath;
 
   // Define the explicit dimension names
@@ -45,6 +48,11 @@ public class NetcdfExternalDataReaderTest {
   private NetcdfExternalDataReader reader;
 
   private EngineValueFactory valueFactory;
+
+  // Tolerance for floating point comparisons to handle IEEE 754 precision artifacts
+  // Based on investigation: use 1e-12 relative tolerance like Python tests
+  private static final double IEEE_754_TOLERANCE = 1e-15;  // Absolute tolerance for small numbers
+  private static final double RELATIVE_TOLERANCE = 1e-12;  // Relative tolerance (0.000000000001%)
 
   @Mock
   private EngineValue mockEngineValue;
@@ -233,6 +241,49 @@ public class NetcdfExternalDataReaderTest {
   }
 
   @Test
+  public void testGetTimeDimensionValues() throws IOException {
+    openAndSetExplicitDimensions(riversideFilePath);
+
+    List<Double> timeValues = reader.getTimeDimensionValues();
+
+    // Should have 30 years of data (2024-2053)
+    assertEquals(30, timeValues.size(), "Should have 30 time values");
+
+    // Check that values are consecutive years starting from 2024
+    for (int i = 0; i < timeValues.size(); i++) {
+      double expectedYear = 2024.0 + i;
+      assertEquals(expectedYear, timeValues.get(i), 0.1,
+          "Time value at index " + i + " should be year " + expectedYear);
+    }
+
+    // Test specific years
+    assertTrue(timeValues.contains(2024.0), "Should contain year 2024");
+    assertTrue(timeValues.contains(2035.0), "Should contain year 2035");
+    assertTrue(timeValues.contains(2053.0), "Should contain year 2053");
+  }
+
+  @Test
+  public void testGetTimeDimensionValuesWithoutTimeDimension() throws IOException {
+    reader = new NetcdfExternalDataReader(valueFactory);
+    openAndSetExplicitDimensions(riversideFilePath);
+
+    // Temporarily remove time dimension for this test
+    reader.setDimensions("lon", "lat", Optional.empty());
+
+    List<Double> timeValues = reader.getTimeDimensionValues();
+
+    assertTrue(timeValues.isEmpty(), "Should return empty list when no time dimension is set");
+  }
+
+  @Test
+  public void testGetTimeDimensionValuesFileNotOpen() {
+    reader = new NetcdfExternalDataReader(valueFactory);
+
+    assertThrows(IOException.class, () -> reader.getTimeDimensionValues(),
+        "Should throw IOException when file is not open");
+  }
+
+  @Test
   public void testGetTimeDimensionSize() throws IOException {
     openAndSetExplicitDimensions(riversideFilePath);
 
@@ -383,59 +434,135 @@ public class NetcdfExternalDataReaderTest {
         "Should throw IOException if dimensions not set");
   }
 
-  @Test
-  public void testKnownPoint1() throws IOException {
-    reader = new NetcdfExternalDataReader(valueFactory);
-
-    // Get resource path for test file
-    URL resourceUrl = getClass().getClassLoader().getResource(
-        "netcdf/maxtemp_tulare_annual.nc"
-    );
-    assertNotNull(resourceUrl, "Test resource not found");
-    String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
-
-    // Open file and set dimensions
-    reader.open(filePath);
-    reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
-    reader.setCrsCode("EPSG:4326");
-
-    // Test specific point
-    BigDecimal lon = new BigDecimal("-118.828125");
-    BigDecimal lat = new BigDecimal("35.890625");
-    String variableName = "Maximum_air_temperature_at_2m";
-
-    Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 0);
-
-    assertTrue(value.isPresent(), "Value should be present at test coordinates");
-    assertEquals(286.059326171875, value.get().getAsDecimal().doubleValue(), 1e-5,
-        "Value at test coordinates does not match expected value");
+  /**
+   * Tests maximum temperature data from Tulare CSV against NetCDF file.
+   */
+  @ParameterizedTest
+  @CsvFileSource(resources = "/netcdf/maxtemp_tulare_annual_test_points.csv", numLinesToSkip = 1)
+  public void testMaxtempTulareFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, 
+      BigDecimal expectedValue) throws IOException {
+    testKnownPointsFromCsv("maxtemp_tulare_annual_test_points.csv", calendarYear, lat, lon, 
+        expectedValue);
   }
 
-  @Test
-  public void testKnownPoint2() throws IOException {
+  /**
+   * Tests precipitation data from Riverside CSV against NetCDF file.
+   */
+  @ParameterizedTest
+  @CsvFileSource(resources = "/netcdf/precip_riverside_annual_test_points.csv", numLinesToSkip = 1)
+  public void testPrecipRiversideFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, 
+      BigDecimal expectedValue) throws IOException {
+    testKnownPointsFromCsv("precip_riverside_annual_test_points.csv", calendarYear, lat, lon, 
+        expectedValue);
+  }
+
+  private void testKnownPointsFromCsv(String csvFileName, int calendarYear, BigDecimal lat, 
+      BigDecimal lon, BigDecimal expectedValue) throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
 
-    // Get resource path for test file
-    URL resourceUrl = getClass().getClassLoader().getResource(
-        "netcdf/maxtemp_tulare_annual.nc"
-    );
-    assertNotNull(resourceUrl, "Test resource not found");
+    String resourcePath = determineNetcdfResource(csvFileName);
+
+    URL resourceUrl = getClass().getClassLoader().getResource(resourcePath);
+    assertNotNull(resourceUrl, "Test resource not found: " + resourcePath);
     String filePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
-    // Open file and set dimensions
     reader.open(filePath);
     reader.setDimensions("lon", "lat", Optional.of("calendar_year"));
     reader.setCrsCode("EPSG:4326");
 
-    // Test specific point
-    BigDecimal lon = new BigDecimal("-118.421875");
-    BigDecimal lat = new BigDecimal("35.953125");
-    String variableName = "Maximum_air_temperature_at_2m";
+    final String variableName = determineVariableName(csvFileName);
 
-    Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 15);
+    // Verify coordinate precision matches CSV test points (6 decimal places as per investigation)
+    int latScale = lat.scale();
+    int lonScale = lon.scale();
+    assertTrue(latScale <= 6, 
+        String.format("Latitude precision should be 6 decimal places or less, got %d", latScale));
+    assertTrue(lonScale <= 6, 
+        String.format("Longitude precision should be 6 decimal places or less, got %d", lonScale));
 
-    assertTrue(value.isPresent(), "Value should be present at test coordinates");
-    assertEquals(301.4525146, value.get().getAsDecimal().doubleValue(), 1e-5,
-        "Value at test coordinates does not match expected value");
+    // Find the correct time step by searching the time dimension array 
+    // (like Python's calendar_year=year)
+    int timeStep = -1;
+    try {
+      List<Double> timeValues = reader.getTimeDimensionValues();
+      for (int i = 0; i < timeValues.size(); i++) {
+        if (Math.abs(timeValues.get(i) - calendarYear) < 0.1) {
+          timeStep = i;
+          break;
+        }
+      }
+      if (timeStep == -1) {
+        throw new IllegalArgumentException("Year " + calendarYear + " not found in time dimension");
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to read time dimension: " + e.getMessage(), e);
+    }
+
+    Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, timeStep);
+
+    if (expectedValue != null) {
+      assertTrue(value.isPresent(),
+          String.format("Value should be present at lat=%s, lon=%s, year=%d", 
+              lat, lon, calendarYear));
+      assertFloatingPointEquals(expectedValue.doubleValue(), 
+          value.get().getAsDecimal().doubleValue(),
+          String.format("Value mismatch at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
+    } else {
+      // Handle NaN values - expectedValue being null indicates NaN in the CSV
+      if (value.isPresent()) {
+        double actualValue = value.get().getAsDecimal().doubleValue();
+        assertTrue(Double.isNaN(actualValue),
+            String.format("Expected NaN but got %f at lat=%s, lon=%s, year=%d", 
+                actualValue, lat, lon, calendarYear));
+      }
+      // If value is not present, that's also acceptable for NaN cases
+    }
+  }
+
+  /**
+   * Helper method for floating point comparisons with proper tolerance and NaN handling.
+   * Handles the IEEE 754 precision artifacts mentioned in the investigation.
+   */
+  private void assertFloatingPointEquals(double expected, double actual, String message) {
+    // Handle NaN cases first
+    if (Double.isNaN(expected) && Double.isNaN(actual)) {
+      return; // Both NaN - this is a match
+    } else if (Double.isNaN(expected) || Double.isNaN(actual)) {
+      fail(message + String.format(": Expected NaN=%b, Actual NaN=%b", 
+          Double.isNaN(expected), Double.isNaN(actual)));
+    }
+
+    // Handle normal floating point comparison with tolerance
+    double difference = Math.abs(expected - actual);
+    double relativeDifference = Math.abs(difference / expected);
+
+    // Use absolute tolerance for very small numbers, relative tolerance for larger numbers
+    // This matches the Python test tolerances from the investigation
+    boolean withinTolerance = difference <= IEEE_754_TOLERANCE 
+                             || relativeDifference <= RELATIVE_TOLERANCE;
+
+    if (!withinTolerance) {
+      fail(message + String.format(
+          ": Expected <%f> but was <%f>, difference=<%e>, relative difference=<%e>",
+          expected, actual, difference, relativeDifference));
+    }
+  }
+
+  private String determineNetcdfResource(String csvFileName) {
+    if (csvFileName.contains("tulare")) {
+      return "netcdf/maxtemp_tulare_annual.nc";
+    } else if (csvFileName.contains("riverside")) {
+      return "netcdf/precip_riverside_annual.nc";
+    }
+    throw new IllegalArgumentException("Unknown CSV file: " + csvFileName);
+  }
+
+  private String determineVariableName(String csvFileName) {
+    if (csvFileName.contains("maxtemp")) {
+      return "Maximum_air_temperature_at_2m";
+    } else if (csvFileName.contains("precip")) {
+      return "Precipitation_(total)";
+    }
+    throw new IllegalArgumentException("Unknown variable for CSV: " + csvFileName);
   }
 }
