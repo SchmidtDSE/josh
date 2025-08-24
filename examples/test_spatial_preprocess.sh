@@ -5,6 +5,9 @@ echo "=== Spatial Combination Test ==="
 echo "This test demonstrates combining CHC-CMIP6 GeoTIFF and Cal-Adapt NetCDF data"
 echo "using default values to handle non-overlapping spatial regions."
 
+# Save original directory before changing
+ORIGINAL_DIR=$(pwd)
+
 # Setup working directory
 TEST_DIR=$(mktemp -d)
 echo "Working in temporary directory: $TEST_DIR"
@@ -20,15 +23,19 @@ trap cleanup EXIT
 
 # Copy necessary files to working directory
 echo "Setting up test environment..."
-# Use relative path for CI/CD compatibility
-if [ -f "../examples/test/test_spatial_combination.josh" ]; then
-    cp ../examples/test/test_spatial_combination.josh ./
-elif [ -f "examples/test/test_spatial_combination.josh" ]; then
-    cp examples/test/test_spatial_combination.josh ./
-elif [ -f "test_spatial_combination.josh" ]; then
-    echo "Josh script already in test directory"
+# Look for Josh file relative to original directory
+if [ -f "$ORIGINAL_DIR/examples/test/test_spatial_combination.josh" ]; then
+    cp "$ORIGINAL_DIR/examples/test/test_spatial_combination.josh" ./
+elif [ -f "$ORIGINAL_DIR/../examples/test/test_spatial_combination.josh" ]; then
+    cp "$ORIGINAL_DIR/../examples/test/test_spatial_combination.josh" ./
+elif [ -f "$ORIGINAL_DIR/test_spatial_combination.josh" ]; then
+    cp "$ORIGINAL_DIR/test_spatial_combination.josh" ./
 else
     echo "Error: Cannot find test_spatial_combination.josh"
+    echo "Searched in:"
+    echo "  $ORIGINAL_DIR/examples/test/"
+    echo "  $ORIGINAL_DIR/../examples/test/"
+    echo "  $ORIGINAL_DIR/"
     exit 1
 fi
 mkdir -p preprocessed_data
@@ -49,17 +56,26 @@ fi
 # Check if fat jar exists or needs to be built
 if [ ! -f "joshsim-fat.jar" ]; then
     # In CI/CD, jar should be in build/libs relative to repo root
-    if [ -f "../build/libs/joshsim-fat.jar" ]; then
-        cp ../build/libs/joshsim-fat.jar ./
-    elif [ -f "build/libs/joshsim-fat.jar" ]; then
-        cp build/libs/joshsim-fat.jar ./
+    if [ -f "$ORIGINAL_DIR/build/libs/joshsim-fat.jar" ]; then
+        cp "$ORIGINAL_DIR/build/libs/joshsim-fat.jar" ./
+    elif [ -f "$ORIGINAL_DIR/../build/libs/joshsim-fat.jar" ]; then
+        cp "$ORIGINAL_DIR/../build/libs/joshsim-fat.jar" ./
     else
         echo "Building fat jar..."
-        ORIGINAL_DIR=$(pwd)
-        cd ..
-        ./gradlew fatJar
         cd "$ORIGINAL_DIR"
-        cp ../build/libs/joshsim-fat.jar ./
+        if [ -f "./gradlew" ]; then
+            ./gradlew fatJar
+        elif [ -f "../gradlew" ]; then
+            cd ..
+            ./gradlew fatJar
+            cd "$ORIGINAL_DIR"
+        fi
+        cd "$TEST_DIR"
+        if [ -f "$ORIGINAL_DIR/build/libs/joshsim-fat.jar" ]; then
+            cp "$ORIGINAL_DIR/build/libs/joshsim-fat.jar" ./
+        elif [ -f "$ORIGINAL_DIR/../build/libs/joshsim-fat.jar" ]; then
+            cp "$ORIGINAL_DIR/../build/libs/joshsim-fat.jar" ./
+        fi
     fi
     echo "✓ Fat jar built successfully"
 else
