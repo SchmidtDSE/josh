@@ -18,7 +18,7 @@ cp examples/features/config_example.jshc test_data/example.jshc
 
 # Test with --data option - this should use JvmMappedInputGetter
 java -Xmx6g -jar build/libs/joshsim-fat.jar run \
-  --replicate 999 \
+  --replicate-number 999 \
   --data example.jshc=test_data/example.jshc \
   examples/features/config_example.josh ConfigExample
 
@@ -37,7 +37,7 @@ rm -f example.jshc /tmp/config_example_josh_998.csv
 # This should work - file is in working directory and no --data option
 cp test_data/hidden.jshc example.jshc
 java -Xmx6g -jar build/libs/joshsim-fat.jar run \
-  --replicate 998 \
+  --replicate-number 998 \
   examples/features/config_example.josh ConfigExample || exit 3
 
 # Clean up after test

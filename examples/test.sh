@@ -12,9 +12,9 @@ fi
 
 assert_ok() {
   if [ "$verbose" = true ]; then
-    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate $3 "$1" "$2"
+    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate-number $3 "$1" "$2"
   else
-    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate $3 --suppress-info "$1" "$2"
+    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate-number $3 --suppress-info "$1" "$2"
   fi
   local status=$?
   if [ $status -eq 0 ]; then
