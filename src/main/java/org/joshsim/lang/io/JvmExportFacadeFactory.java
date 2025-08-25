@@ -18,6 +18,9 @@ import org.joshsim.lang.io.strategy.CsvExportFacade;
 import org.joshsim.lang.io.strategy.GeotiffExportFacade;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.lang.io.strategy.NetcdfExportFacade;
+import org.joshsim.lang.io.strategy.ParameterizedCsvExportFacade;
+import org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade;
+import org.joshsim.pipeline.job.config.TemplateResult;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 
 
@@ -31,6 +34,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
   private final TemplateStringRenderer templateRenderer;
+  private TemplateResult lastTemplateResult;
 
   /**
    * Create a new JvmExportFacadeFactory with only grid-space.
@@ -123,7 +127,9 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   @Override
   public String getPath(String template) {
     if (templateRenderer != null) {
-      return templateRenderer.renderTemplate(template);
+      // Use new strategy-aware template processing
+      lastTemplateResult = templateRenderer.renderTemplateWithStrategy(template);
+      return lastTemplateResult.getProcessedTemplate();
     } else {
       // Fallback to legacy template processing for backward compatibility
       return getPathLegacy(template);
@@ -167,6 +173,24 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   }
 
   /**
+   * Determines if the current export target requires parameterized output (multi-file strategy).
+   *
+   * <p>Returns true if the last processed template contained {replicate}, indicating that
+   * separate files should be created per replicate for memory efficiency.</p>
+   *
+   * @param target The export target (used for legacy fallback detection)
+   * @return True if parameterized output is required
+   */
+  private boolean requiresParameterizedOutput(ExportTarget target) {
+    if (lastTemplateResult != null) {
+      return lastTemplateResult.requiresParameterizedOutput();
+    } else {
+      // Legacy fallback: check if target path contains {replicate}
+      return target.getPath().contains("{replicate}");
+    }
+  }
+
+  /**
    * Build an ExportFacade that writes to a CSV file.
    *
    * @param target Record describing where the export should be written and format details.
@@ -183,6 +207,22 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException(message);
     }
 
+    if (requiresParameterizedOutput(target)) {
+      return buildParameterizedCsv(target, header);
+    } else {
+      return buildConsolidatedCsv(target, header);
+    }
+  }
+
+  /**
+   * Build a consolidated CSV export facade (single file with replicate column).
+   *
+   * @param target The export target configuration
+   * @param header Optional header columns for the CSV
+   * @return CsvExportFacade for consolidated export
+   */
+  private ExportFacade buildConsolidatedCsv(ExportTarget target, 
+                                            Optional<Iterable<String>> header) {
     String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
@@ -190,6 +230,25 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());
     } else {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy);
+    }
+  }
+
+  /**
+   * Build a parameterized CSV export facade (separate files per replicate).
+   *
+   * @param target The export target configuration
+   * @param header Optional header columns for the CSV
+   * @return ParameterizedCsvExportFacade for multi-file export
+   */
+  private ExportFacade buildParameterizedCsv(ExportTarget target, 
+                                             Optional<Iterable<String>> header) {
+    String path = target.getPath();
+    ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(path);
+
+    if (header.isPresent()) {
+      return new ParameterizedCsvExportFacade(streamGenerator, serializeStrategy, header.get());
+    } else {
+      return new ParameterizedCsvExportFacade(streamGenerator, serializeStrategy);
     }
   }
 
@@ -217,6 +276,22 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       throw new IllegalArgumentException("Variable names must be specified for netCDF.");
     }
 
+    if (requiresParameterizedOutput(target)) {
+      return buildParameterizedNetcdf(target, header);
+    } else {
+      return buildConsolidatedNetcdf(target, header);
+    }
+  }
+
+  /**
+   * Build a consolidated NetCDF export facade (single file with replicate dimension).
+   *
+   * @param target The export target configuration
+   * @param header Variable names to include in the NetCDF file
+   * @return NetcdfExportFacade for consolidated export
+   */
+  private ExportFacade buildConsolidatedNetcdf(ExportTarget target, 
+                                               Optional<Iterable<String>> header) {
     String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
 
@@ -227,6 +302,23 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
         serializeStrategy,
         variablesList
     );
+  }
+
+  /**
+   * Build a parameterized NetCDF export facade (separate files per replicate).
+   *
+   * @param target The export target configuration
+   * @param header Variable names to include in each NetCDF file
+   * @return ParameterizedNetcdfExportFacade for multi-file export
+   */
+  private ExportFacade buildParameterizedNetcdf(ExportTarget target, 
+                                                Optional<Iterable<String>> header) {
+    String path = target.getPath();
+    ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(path);
+
+    List<String> variablesList = new ArrayList<>();
+    header.get().forEach(variablesList::add);
+    return new ParameterizedNetcdfExportFacade(streamGenerator, serializeStrategy, variablesList);
   }
 
   private ExportFacade buildForGeotiff(ExportTarget target, Optional<Iterable<String>> header) {
