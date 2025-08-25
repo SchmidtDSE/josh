@@ -26,9 +26,9 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
-import org.joshsim.pipeline.DataFilesStringParser;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.config.JobVariationParser;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -93,8 +93,7 @@ public class RunCommand implements Callable<Integer> {
 
   @Option(
       names = "--data",
-      description = "Specify external data files to include (format: filename=path)",
-      split = ","
+      description = "Specify external data files to include (format: filename=path;filename2=path2)"
   )
   private String[] dataFiles = new String[0];
 
@@ -118,9 +117,9 @@ public class RunCommand implements Callable<Integer> {
       geometryFactory = new EarthGeometryFactory(crsRealized);
     }
 
-    // Create job configuration using DataFilesStringParser
+    // Create job configuration using JobVariationParser
     JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(replicates);
-    DataFilesStringParser parser = new DataFilesStringParser();
+    JobVariationParser parser = new JobVariationParser();
     JoshJob job = parser.parseDataFiles(jobBuilder, dataFiles).build();
 
     // Create appropriate InputGetterStrategy based on job configuration

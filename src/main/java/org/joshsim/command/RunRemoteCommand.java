@@ -21,9 +21,9 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import org.joshsim.pipeline.DataFilesStringParser;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.config.JobVariationParser;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.pipeline.remote.RunRemoteLocalLeaderStrategy;
@@ -87,8 +87,7 @@ public class RunRemoteCommand implements Callable<Integer> {
 
   @Option(
       names = "--data",
-      description = "External data files to include (format: filename=path)",
-      split = ","
+      description = "External data files to include (format: filename=path;filename2=path2)"
   )
   private String[] dataFiles = new String[0];
 
@@ -234,9 +233,9 @@ public class RunRemoteCommand implements Callable<Integer> {
         metadata.getTotalSteps(), replicates
     );
 
-    // Create job configuration using DataFilesStringParser
+    // Create job configuration using JobVariationParser
     JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(replicates);
-    DataFilesStringParser parser = new DataFilesStringParser();
+    JobVariationParser parser = new JobVariationParser();
     JoshJob job = parser.parseDataFiles(jobBuilder, dataFiles).build();
 
     // Read Josh simulation code
@@ -294,7 +293,7 @@ public class RunRemoteCommand implements Callable<Integer> {
    */
   private String serializeExternalData() throws IOException {
     JoshJobBuilder tempBuilder = new JoshJobBuilder();
-    DataFilesStringParser parser = new DataFilesStringParser();
+    JobVariationParser parser = new JobVariationParser();
     JoshJob tempJob = parser.parseDataFiles(tempBuilder, dataFiles).build();
     Map<String, String> fileMapping = tempJob.getFilePaths();
     StringBuilder serialized = new StringBuilder();
