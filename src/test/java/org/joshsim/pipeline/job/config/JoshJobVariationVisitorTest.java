@@ -47,23 +47,23 @@ public class JoshJobVariationVisitorTest {
         IllegalArgumentException.class,
         () -> new JoshJobVariationVisitor(null)
     );
-    
+
     assertEquals("JoshJobBuilder cannot be null", exception.getMessage());
   }
 
   @Test
   public void testVisitSingleFileSpec() {
     String specification = "example.jshc=test_data/example_1.jshc";
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     assertSame(builder, result);
     JoshJob job = result.build();
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
@@ -74,16 +74,16 @@ public class JoshJobVariationVisitorTest {
   public void testVisitMultipleFileSpecs() {
     String specification = "example.jshc=test_data/example_1.jshc;"
         + "other.jshd=test_data/other_1.jshd";
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     assertSame(builder, result);
     JoshJob job = result.build();
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
@@ -94,16 +94,16 @@ public class JoshJobVariationVisitorTest {
   @Test
   public void testVisitEmptySpecification() {
     String specification = "";  // Empty string - should parse to empty tree
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     assertSame(builder, result);
     JoshJob job = result.build();
     assertEquals(0, job.getFileNames().size());
@@ -112,16 +112,16 @@ public class JoshJobVariationVisitorTest {
   @Test
   public void testVisitWithWhitespace() {
     String specification = "  example.jshc  =  test_data/example_1.jshc  ";
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     JoshJob job = result.build();
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
   }
@@ -130,16 +130,16 @@ public class JoshJobVariationVisitorTest {
   public void testVisitComplexPaths() {
     String specification = "config.jshc=C:\\Users\\test\\config.jshc;"
         + "url.jshc=https://example.com:8080/config.jshc";
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     JoshJob job = result.build();
     assertEquals("C:\\Users\\test\\config.jshc", job.getFilePath("config.jshc"));
     assertEquals("https://example.com:8080/config.jshc", job.getFilePath("url.jshc"));
@@ -150,18 +150,18 @@ public class JoshJobVariationVisitorTest {
   public void testVisitIntegrationWithExistingBuilder() {
     // Pre-configure builder
     builder.setReplicates(5);
-    
+
     String specification = "example.jshc=test_data/example_1.jshc";
-    
+
     JoshJobVariationLexer lexer = new JoshJobVariationLexer(CharStreams.fromString(specification));
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-    
+
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
-    
+
     JoshJobBuilder result = visitor.visit(tree);
-    
+
     JoshJob job = result.build();
     assertEquals(5, job.getReplicates());  // Should preserve existing configuration
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));

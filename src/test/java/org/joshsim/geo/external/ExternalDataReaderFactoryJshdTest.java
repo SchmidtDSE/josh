@@ -43,13 +43,13 @@ public class ExternalDataReaderFactoryJshdTest {
   public void testCreateReaderForJshdFile() throws Exception {
     // Create a test JSHD file
     Path testJshdFile = createTestJshdFile();
-    
+
     ExternalDataReader reader = ExternalDataReaderFactory.createReader(
         valueFactory, testJshdFile.toString());
-    
+
     assertNotNull(reader);
     assertTrue(reader instanceof JshdExternalDataReader);
-    
+
     reader.close();
   }
 
@@ -57,13 +57,13 @@ public class ExternalDataReaderFactoryJshdTest {
   public void testCreateReaderForJshdFileCaseInsensitive() throws Exception {
     // Create a test JSHD file with uppercase extension
     Path testJshdFile = createTestJshdFile("TEST.JSHD");
-    
+
     ExternalDataReader reader = ExternalDataReaderFactory.createReader(
         valueFactory, testJshdFile.toString());
-    
+
     assertNotNull(reader);
     assertTrue(reader instanceof JshdExternalDataReader);
-    
+
     reader.close();
   }
 

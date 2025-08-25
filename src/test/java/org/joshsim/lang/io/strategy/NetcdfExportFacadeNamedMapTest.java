@@ -220,7 +220,7 @@ public class NetcdfExportFacadeNamedMapTest {
     // Act - write data for multiple replicates
     facade.start();
     facade.write(namedMap1, 1L, 0);  // replicate 0
-    facade.write(namedMap2, 1L, 1);  // replicate 1  
+    facade.write(namedMap2, 1L, 1);  // replicate 1
     facade.write(namedMap3, 1L, 2);  // replicate 2
     facade.join();
 

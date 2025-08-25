@@ -138,7 +138,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
   private List<WorkerTask> createWorkerTasks(RunRemoteContext context) {
     List<WorkerTask> tasks = new ArrayList<>();
     boolean favorBigDecimal = !context.isUseFloat64();
-    
+
     for (int i = 0; i < context.getReplicates(); i++) {
       WorkerTask task = new WorkerTask(
           context.getJoshCode(),
@@ -150,7 +150,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
       );
       tasks.add(task);
     }
-    
+
     return tasks;
   }
 

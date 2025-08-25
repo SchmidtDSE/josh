@@ -147,10 +147,10 @@ public class RunRemoteLocalLeaderStrategyTest {
     // Verify subsequent tasks have correct replicate numbering
     WorkerTask task1 = tasks.get(1);
     assertEquals(1, task1.getReplicateNumber()); // replicateNumber + 1
-    
+
     WorkerTask task2 = tasks.get(2);
     assertEquals(2, task2.getReplicateNumber()); // replicateNumber + 2
-    
+
     WorkerTask task3 = tasks.get(3);
     assertEquals(3, task3.getReplicateNumber()); // replicateNumber + 3
   }
@@ -187,7 +187,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
     JoshJob jobWith8Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
-    
+
     // Create context with different replicate count
     RunRemoteContext differentReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
@@ -209,13 +209,13 @@ public class RunRemoteLocalLeaderStrategyTest {
 
     // Should still create 4 tasks with offset starting from 3
     assertEquals(4, tasks.size());
-    
+
     WorkerTask task0 = tasks.get(0);
     assertEquals(3, task0.getReplicateNumber()); // replicateNumber (3) + 0
-    
+
     WorkerTask task1 = tasks.get(1);
     assertEquals(4, task1.getReplicateNumber()); // replicateNumber (3) + 1
-    
+
     WorkerTask task3 = tasks.get(3);
     assertEquals(6, task3.getReplicateNumber()); // replicateNumber (3) + 3
   }
@@ -309,7 +309,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
     JoshJob jobWith1Replicate = parser.parseDataFiles(jobBuilder, dataFiles).build();
-    
+
     // Create context with single replicate for backward compatibility
     RunRemoteContext singleReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
@@ -331,7 +331,7 @@ public class RunRemoteLocalLeaderStrategyTest {
 
     // Should create only one task for single replicate
     assertEquals(1, tasks.size());
-    
+
     WorkerTask task = tasks.get(0);
     assertEquals(0, task.getReplicateNumber());
   }
@@ -343,7 +343,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
     JoshJob jobWith10Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
-    
+
     // Create context with large replicate count
     RunRemoteContext largeReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
@@ -365,7 +365,7 @@ public class RunRemoteLocalLeaderStrategyTest {
 
     // Should create 10 tasks
     assertEquals(10, tasks.size());
-    
+
     // Verify last task has correct replicate number
     WorkerTask lastTask = tasks.get(9);
     assertEquals(9, lastTask.getReplicateNumber()); // replicateNumber (0) + 9

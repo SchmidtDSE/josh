@@ -42,7 +42,7 @@ public class JoshJobBuilderTest {
     JoshJobBuilder result = builder
         .setFilePath("example.jshc", "test_data/example_1.jshc")
         .setReplicates(5);
-    
+
     // Should return the same builder instance for chaining
     assertSame(builder, result);
   }
@@ -55,7 +55,7 @@ public class JoshJobBuilderTest {
         .setFilePath("other.jshd", "test_data/other_1.jshd")
         .setReplicates(3)
         .build();
-    
+
     assertNotNull(job);
     assertEquals(3, job.getReplicates());
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
@@ -69,7 +69,7 @@ public class JoshJobBuilderTest {
     JoshJob job = builder
         .setFilePath("example.jshc", "test_data/example_1.jshc")
         .build();
-    
+
     assertEquals(1, job.getReplicates()); // Default should be 1
   }
 
@@ -78,7 +78,7 @@ public class JoshJobBuilderTest {
     JoshJob job = builder
         .setReplicates(2)
         .build();
-    
+
     assertNotNull(job);
     assertEquals(2, job.getReplicates());
     assertTrue(job.getFileNames().isEmpty());
@@ -91,7 +91,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath(null, "test_data/example.jshc")
     );
-    
+
     assertTrue(exception.getMessage().contains("Logical file name cannot be null or empty"));
   }
 
@@ -102,7 +102,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath("", "test_data/example.jshc")
     );
-    
+
     assertTrue(exception.getMessage().contains("Logical file name cannot be null or empty"));
   }
 
@@ -113,7 +113,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath("   ", "test_data/example.jshc")
     );
-    
+
     assertTrue(exception.getMessage().contains("Logical file name cannot be null or empty"));
   }
 
@@ -124,7 +124,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath("example.jshc", null)
     );
-    
+
     assertTrue(exception.getMessage().contains("Path cannot be null or empty"));
   }
 
@@ -135,7 +135,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath("example.jshc", "")
     );
-    
+
     assertTrue(exception.getMessage().contains("Path cannot be null or empty"));
   }
 
@@ -146,7 +146,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFilePath("example.jshc", "   ")
     );
-    
+
     assertTrue(exception.getMessage().contains("Path cannot be null or empty"));
   }
 
@@ -156,7 +156,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setReplicates(0)
     );
-    
+
     assertTrue(exception.getMessage().contains("Number of replicates must be greater than 0"));
   }
 
@@ -166,7 +166,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setReplicates(-5)
     );
-    
+
     assertTrue(exception.getMessage().contains("Number of replicates must be greater than 0"));
   }
 
@@ -177,7 +177,7 @@ public class JoshJobBuilderTest {
         .setFilePath("example.jshc", "test_data/example_1.jshc")
         .setFilePath("example.jshc", "test_data/example_2.jshc")  // Overwrite
         .build();
-    
+
     assertEquals("test_data/example_2.jshc", job.getFilePath("example.jshc"));
     assertEquals(1, job.getFileNames().size());
   }
@@ -188,7 +188,7 @@ public class JoshJobBuilderTest {
     JoshJob job = builder
         .setFilePath("  example.jshc  ", "  test_data/example_1.jshc  ")
         .build();
-    
+
     // Trimmed name and path should be used
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
     assertTrue(job.getFileNames().contains("example.jshc"));
@@ -198,14 +198,14 @@ public class JoshJobBuilderTest {
   @SuppressWarnings("deprecation")
   public void testMultipleBuildsFromSameBuilder() {
     builder.setFilePath("example.jshc", "test_data/example_1.jshc");
-    
+
     JoshJob job1 = builder.setReplicates(3).build();
     JoshJob job2 = builder.setReplicates(5).build();
-    
+
     // Each build should create a new job with current state
     assertEquals(3, job1.getReplicates());
     assertEquals(5, job2.getReplicates());
-    
+
     // Both should have the same file mapping
     assertEquals("test_data/example_1.jshc", job1.getFilePath("example.jshc"));
     assertEquals("test_data/example_1.jshc", job2.getFilePath("example.jshc"));
@@ -220,7 +220,7 @@ public class JoshJobBuilderTest {
         .setFilePath("data1.jshd", "path1.jshd")
         .setReplicates(10)
         .build();
-    
+
     assertNotNull(job);
     assertEquals(10, job.getReplicates());
     assertEquals(3, job.getFileNames().size());
@@ -234,20 +234,20 @@ public class JoshJobBuilderTest {
     JoshJob job = builder
         .setReplicates(Integer.MAX_VALUE)
         .build();
-    
+
     assertEquals(Integer.MAX_VALUE, job.getReplicates());
   }
 
   @Test
   public void testSetFileInfoWithObject() {
     JoshJobFileInfo fileInfo = new JoshJobFileInfo("example_1", "test_data/example_1.jshc");
-    
+
     JoshJobBuilder result = builder.setFileInfo("example.jshc", fileInfo);
     JoshJob job = builder.build();
-    
+
     // Should return the same builder instance for chaining
     assertSame(builder, result);
-    
+
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
     assertEquals(fileInfo, job.getFileInfo("example.jshc"));
     assertEquals("example_1", job.getFileInfo("example.jshc").getName());
@@ -255,13 +255,13 @@ public class JoshJobBuilderTest {
 
   @Test
   public void testSetFileInfoWithNameAndPath() {
-    JoshJobBuilder result = builder.setFileInfo("example.jshc", "example_1", 
+    JoshJobBuilder result = builder.setFileInfo("example.jshc", "example_1",
         "test_data/example_1.jshc");
     JoshJob job = builder.build();
-    
+
     // Should return the same builder instance for chaining
     assertSame(builder, result);
-    
+
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
     JoshJobFileInfo fileInfo = job.getFileInfo("example.jshc");
     assertEquals("example_1", fileInfo.getName());
@@ -271,24 +271,24 @@ public class JoshJobBuilderTest {
   @Test
   public void testSetFileInfoNullLogicalName() {
     JoshJobFileInfo fileInfo = new JoshJobFileInfo("example_1", "test_data/example_1.jshc");
-    
+
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
         () -> builder.setFileInfo(null, fileInfo)
     );
-    
+
     assertTrue(exception.getMessage().contains("Logical file name cannot be null or empty"));
   }
 
   @Test
   public void testSetFileInfoEmptyLogicalName() {
     JoshJobFileInfo fileInfo = new JoshJobFileInfo("example_1", "test_data/example_1.jshc");
-    
+
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
         () -> builder.setFileInfo("", fileInfo)
     );
-    
+
     assertTrue(exception.getMessage().contains("Logical file name cannot be null or empty"));
   }
 
@@ -298,7 +298,7 @@ public class JoshJobBuilderTest {
         IllegalArgumentException.class,
         () -> builder.setFileInfo("example.jshc", null)
     );
-    
+
     assertTrue(exception.getMessage().contains("File info cannot be null"));
   }
 
@@ -308,10 +308,10 @@ public class JoshJobBuilderTest {
     // Test that the deprecated method still works and creates JoshJobFileInfo internally
     JoshJobBuilder result = builder.setFilePath("example.jshc", "test_data/example_1.jshc");
     JoshJob job = builder.build();
-    
+
     // Should return the same builder instance for chaining
     assertSame(builder, result);
-    
+
     // Should work with both old and new API
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
     JoshJobFileInfo fileInfo = job.getFileInfo("example.jshc");
@@ -323,26 +323,26 @@ public class JoshJobBuilderTest {
   @Test
   public void testMixedFileInfoAndFilePathMethods() {
     JoshJobFileInfo customFileInfo = new JoshJobFileInfo("custom_name", "test_data/example_1.jshc");
-    
+
     @SuppressWarnings("deprecation")
     JoshJob job = builder
         .setFileInfo("example.jshc", customFileInfo)
         .setFilePath("other.jshd", "test_data/other_1.jshd")  // Uses deprecated method
         .setFileInfo("third.jshc", "third_name", "test_data/third.jshc")
         .build();
-    
+
     // Custom file info should preserve custom name
     assertEquals("custom_name", job.getFileInfo("example.jshc").getName());
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
-    
+
     // Deprecated method should extract name from path
     assertEquals("other_1", job.getFileInfo("other.jshd").getName());
     assertEquals("test_data/other_1.jshd", job.getFilePath("other.jshd"));
-    
+
     // Direct name specification should use provided name
     assertEquals("third_name", job.getFileInfo("third.jshc").getName());
     assertEquals("test_data/third.jshc", job.getFilePath("third.jshc"));
-    
+
     assertEquals(3, job.getFileNames().size());
   }
 }

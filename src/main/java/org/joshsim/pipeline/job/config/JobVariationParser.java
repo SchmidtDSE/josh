@@ -34,7 +34,7 @@ public class JobVariationParser {
 
   /**
    * Parses job variation specification using ANTLR grammar.
-   * 
+   *
    * <p>This method maintains compatibility with the existing DataFilesStringParser
    * interface while using the new ANTLR-based parsing approach. It currently
    * processes only the first element of the iterable (Component 9 will handle
@@ -49,7 +49,7 @@ public class JobVariationParser {
     if (dataFiles == null || !dataFiles.iterator().hasNext()) {
       return builder;
     }
-    
+
     // Process only first element for now (Component 9 will handle multiple)
     String specification = dataFiles.iterator().next();
     return parseSpecification(builder, specification);
@@ -79,23 +79,23 @@ public class JobVariationParser {
     if (specification == null || specification.trim().isEmpty()) {
       return builder;
     }
-    
+
     try {
       // Create ANTLR lexer and parser
       JoshJobVariationLexer lexer = new JoshJobVariationLexer(
           CharStreams.fromString(specification));
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       JoshJobVariationParser parser = new JoshJobVariationParser(tokens);
-      
+
       // Add error handling following ConfigInterpreter pattern
       parser.removeErrorListeners();
       parser.addErrorListener(new JobVariationErrorListener());
-      
+
       // Parse and visit
       ParseTree tree = parser.jobVariation();
       JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
       return visitor.visit(tree);
-      
+
     } catch (Exception e) {
       String errorMessage = "Failed to parse job variation specification: '" + specification + "'";
       if (specification.contains(",") && !specification.contains(";")) {

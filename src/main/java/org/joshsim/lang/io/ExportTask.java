@@ -53,7 +53,7 @@ public class ExportTask {
   /**
    * Creates a new ExportTask containing an Entity with default replicate number.
    *
-   * <p>This constructor is provided for backward compatibility and defaults the replicate 
+   * <p>This constructor is provided for backward compatibility and defaults the replicate
    * number to 0.</p>
    *
    * @param entity The entity to be serialized and exported
@@ -157,10 +157,10 @@ public class ExportTask {
   @Override
   public String toString() {
     if (hasEntity()) {
-      return String.format("ExportTask{entity=%s, step=%d, replicate=%d}", 
+      return String.format("ExportTask{entity=%s, step=%d, replicate=%d}",
           entity.get(), step, replicateNumber);
     } else {
-      return String.format("ExportTask{namedMap=%s, step=%d, replicate=%d}", 
+      return String.format("ExportTask{namedMap=%s, step=%d, replicate=%d}",
           namedMap.get(), step, replicateNumber);
     }
   }

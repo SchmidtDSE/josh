@@ -6,11 +6,9 @@
 
 package org.joshsim.lang.io.strategy;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,9 +19,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test suite for NetcdfWriteStrategy with replicate dimension support.
- * 
+ *
  * <p>This test verifies that NetCDF files are written with proper replicate dimensions
- * and that multiple replicates are consolidated into single files with replicate 
+ * and that multiple replicates are consolidated into single files with replicate
  * as the first dimension.</p>
  */
 public class NetcdfWriteStrategyReplicateTest {
@@ -58,13 +56,13 @@ public class NetcdfWriteStrategyReplicateTest {
 
     // Act - using package access to test private method indirectly through writeAll
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    
+
     // Add required position fields for NetCDF
     for (Map<String, String> record : records) {
       record.put("position.longitude", "-122.4194");
       record.put("position.latitude", "37.7749");
     }
-    
+
     strategy.writeAll(records, outputStream);
 
     // Assert - should produce NetCDF output
@@ -75,7 +73,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testGroupRecordsByReplicateMultipleReplicates() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     // Replicate 0 records
     Map<String, String> record1 = new HashMap<>();
     record1.put("replicate", "0");
@@ -110,7 +108,7 @@ public class NetcdfWriteStrategyReplicateTest {
     strategy.writeAll(records, outputStream);
 
     // Assert - should produce NetCDF output with multiple replicates
-    assertTrue(outputStream.size() > 0, 
+    assertTrue(outputStream.size() > 0,
         "NetCDF output should be generated for multiple replicates");
   }
 
@@ -118,7 +116,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testGroupRecordsByReplicateWithMissingReplicateField() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     // Record without replicate field - should default to 0
     Map<String, String> record1 = new HashMap<>();
     record1.put("step", "0");
@@ -148,7 +146,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testGroupRecordsByReplicateWithInvalidReplicateField() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     // Record with invalid replicate field - should default to 0
     Map<String, String> record1 = new HashMap<>();
     record1.put("replicate", "invalid_number");
@@ -170,7 +168,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testUnevenReplicateTimeSeriesLengths() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     // Replicate 0 - 2 time steps
     Map<String, String> record1 = new HashMap<>();
     record1.put("replicate", "0");
@@ -202,7 +200,7 @@ public class NetcdfWriteStrategyReplicateTest {
     strategy.writeAll(records, outputStream);
 
     // Assert - should handle uneven time series lengths (padding with NaN)
-    assertTrue(outputStream.size() > 0, 
+    assertTrue(outputStream.size() > 0,
         "NetCDF output should handle uneven time series lengths");
   }
 
@@ -217,11 +215,11 @@ public class NetcdfWriteStrategyReplicateTest {
     records.add(record);
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    
+
     // This should work because getRequiredVariables now includes replicate
     // and missing values are handled gracefully
     strategy.writeAll(records, outputStream);
-    
+
     // Assert - should produce some output despite missing fields
     assertTrue(outputStream.size() >= 0, "Should handle missing required variables gracefully");
   }
@@ -243,7 +241,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testLargeNumberOfReplicates() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     // Create records for 10 replicates, each with 2 time steps
     for (int replicate = 0; replicate < 10; replicate++) {
       for (int step = 0; step < 2; step++) {
@@ -269,7 +267,7 @@ public class NetcdfWriteStrategyReplicateTest {
   public void testMissingVariableData() {
     // Arrange
     final List<Map<String, String>> records = new ArrayList<>();
-    
+
     Map<String, String> record = new HashMap<>();
     record.put("replicate", "0");
     record.put("step", "0");

@@ -202,7 +202,7 @@ public class JoshJobFileInfoTest {
     JoshJobFileInfo fileInfo = new JoshJobFileInfo("example_1", "test_data/example_1.jshc");
     String originalName = fileInfo.getName();
     String originalPath = fileInfo.getPath();
-    
+
     // Multiple calls should return the same values
     assertEquals(originalName, fileInfo.getName());
     assertEquals(originalPath, fileInfo.getPath());

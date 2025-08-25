@@ -32,17 +32,17 @@ public class JobVariationErrorListener extends BaseErrorListener {
   @Override
   public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
       int line, int charPositionInLine, String msg, RecognitionException e) {
-    
+
     String errorMessage = String.format(
-        "Syntax error at line %d, position %d: %s", 
+        "Syntax error at line %d, position %d: %s",
         line, charPositionInLine, msg);
-    
+
     // Add helpful guidance for common syntax errors
     String guidance = getErrorGuidance(msg);
     if (!guidance.isEmpty()) {
       errorMessage += ". " + guidance;
     }
-    
+
     throw new IllegalArgumentException(errorMessage, e);
   }
 

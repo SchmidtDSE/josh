@@ -57,11 +57,11 @@ public interface ExportFacade {
   void write(NamedMap namedMap, long step, int replicateNumber);
 
   /**
-   * Adds the specified entity to the queue with default replicate number for backward 
+   * Adds the specified entity to the queue with default replicate number for backward
    * compatibility.
    *
    * @param target The entity to be serialized and written to the output.
-   * @param step The step number from the simulation from which this entity snapshot was 
+   * @param step The step number from the simulation from which this entity snapshot was
    *        created.
    */
   default void write(Entity target, long step) {

@@ -253,7 +253,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
     JoshJob jobWith7Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
-    
+
     // Create context with different replicate count
     RunRemoteContext differentReplicatesContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
@@ -282,7 +282,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
     JoshJob jobWith1Replicate = parser.parseDataFiles(jobBuilder, dataFiles).build();
-    
+
     // Create context with single replicate (default behavior)
     RunRemoteContext singleReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),

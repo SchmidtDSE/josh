@@ -108,7 +108,7 @@ public class InspectJshdCommand implements Callable<Integer> {
     EngineValueFactory valueFactory = new EngineValueFactory();
     try (JshdExternalDataReader reader = new JshdExternalDataReader(valueFactory)) {
       reader.open(jshdFile.getAbsolutePath());
-      
+
       // Validate variable name exists
       if (!reader.getVariableNames().contains(variable)) {
         output.printError("Variable '" + variable + "' not found in JSHD file. "
@@ -118,11 +118,11 @@ public class InspectJshdCommand implements Callable<Integer> {
 
       // Read the value at the specified coordinates and timestep
       Optional<EngineValue> value = reader.readValueAt(variable, x, y, (int) timePoint);
-      
+
       if (value.isPresent()) {
         EngineValue engineValue = value.get();
         String unitsStr = engineValue.getUnits().toString();
-        
+
         // Print the value with units
         output.printInfo(String.format("Value at (%s, %s, %d): %s %s",
             xcoordinate, ycoordinate, timePoint,

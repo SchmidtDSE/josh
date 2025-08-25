@@ -19,7 +19,6 @@ import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
-import ucar.nc2.Variable;
 import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFileFormat;
@@ -75,7 +74,7 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
   private Map<Integer, List<Map<String, String>>> groupRecordsByReplicate(
         List<Map<String, String>> records) {
     Map<Integer, List<Map<String, String>>> recordsByReplicate = new LinkedHashMap<>();
-    
+
     for (Map<String, String> record : records) {
       String replicateStr = record.getOrDefault("replicate", "0");
       int replicate;
@@ -84,10 +83,10 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
       } catch (NumberFormatException e) {
         replicate = 0;
       }
-      
+
       recordsByReplicate.computeIfAbsent(replicate, k -> new ArrayList<>()).add(record);
     }
-    
+
     return recordsByReplicate;
   }
 
@@ -131,7 +130,7 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
           .setLength(numReplicates)
           .build();
       builder.addDimension(replicateDim);
-      
+
       Dimension timeDim = Dimension.builder()
           .setName("time")
           .setLength(maxTimeSteps)
@@ -151,22 +150,22 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
       try (NetcdfFormatWriter writer = builder.build()) {
         // Create 2D arrays for all variables
         int[] shape = new int[]{numReplicates, maxTimeSteps};
-        
+
         Array timeData = Array.factory(DataType.DOUBLE, shape);
         double[][] timeArray = (double[][]) timeData.copyToNDJavaArray();
-        
+
         Array latData = Array.factory(DataType.DOUBLE, shape);
         double[][] latArray = (double[][]) latData.copyToNDJavaArray();
-        
+
         Array lonData = Array.factory(DataType.DOUBLE, shape);
         double[][] lonArray = (double[][]) lonData.copyToNDJavaArray();
 
         // Fill coordinate and time arrays by replicate
         int replicateIndex = 0;
-        for (Map.Entry<Integer, List<Map<String, String>>> entry 
+        for (Map.Entry<Integer, List<Map<String, String>>> entry
                 : recordsByReplicate.entrySet()) {
           List<Map<String, String>> records = entry.getValue();
-          
+
           for (int timeIndex = 0; timeIndex < records.size(); timeIndex++) {
             Map<String, String> record = records.get(timeIndex);
             timeArray[replicateIndex][timeIndex] = Double.parseDouble(
@@ -176,14 +175,14 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
             lonArray[replicateIndex][timeIndex] = Double.parseDouble(
                 record.getOrDefault("position.longitude", "0.0"));
           }
-          
+
           // Fill remaining time steps with NaN for shorter replicates
           for (int timeIndex = records.size(); timeIndex < maxTimeSteps; timeIndex++) {
             timeArray[replicateIndex][timeIndex] = Double.NaN;
             latArray[replicateIndex][timeIndex] = Double.NaN;
             lonArray[replicateIndex][timeIndex] = Double.NaN;
           }
-          
+
           replicateIndex++;
         }
 
@@ -195,12 +194,12 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
         for (String varName : variables) {
           Array data = Array.factory(DataType.DOUBLE, shape);
           double[][] dataArray = (double[][]) data.copyToNDJavaArray();
-          
+
           replicateIndex = 0;
-          for (Map.Entry<Integer, List<Map<String, String>>> entry 
+          for (Map.Entry<Integer, List<Map<String, String>>> entry
                 : recordsByReplicate.entrySet()) {
             List<Map<String, String>> records = entry.getValue();
-            
+
             for (int timeIndex = 0; timeIndex < records.size(); timeIndex++) {
               Map<String, String> record = records.get(timeIndex);
               String value = record.getOrDefault(varName, "0.0");
@@ -210,15 +209,15 @@ public class NetcdfWriteStrategy extends PendingRecordWriteStrategy {
                 dataArray[replicateIndex][timeIndex] = 0.0;
               }
             }
-            
+
             // Fill remaining time steps with NaN for shorter replicates
             for (int timeIndex = records.size(); timeIndex < maxTimeSteps; timeIndex++) {
               dataArray[replicateIndex][timeIndex] = Double.NaN;
             }
-            
+
             replicateIndex++;
           }
-          
+
           writer.write(varName, data);
         }
       }

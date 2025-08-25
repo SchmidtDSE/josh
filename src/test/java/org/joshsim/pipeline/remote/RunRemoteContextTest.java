@@ -55,13 +55,13 @@ public class RunRemoteContextTest {
     useFloat64 = false;
     endpointUri = new URI("https://example.com/runReplicates");
     apiKey = "test-api-key";
-    
+
     // Create test job with file mapping and replicates
     testJob = new JoshJobBuilder()
         .setFilePath("config.jshc", "/path/to/config")
         .setReplicates(3)
         .build();
-        
+
     joshCode = "simulation TestSim {}";
     externalDataSerialized = "config.jshc\t0\ttest config\t";
     metadata = new SimulationMetadata(0, 10, 11);
@@ -216,7 +216,7 @@ public class RunRemoteContextTest {
         .setFilePath("config.jshc", "/path/to/config")
         .setReplicates(10) // 10 replicates
         .build();
-        
+
     RunRemoteContext differentReplicatesContext = new RunRemoteContext(
         testFile, simulation, useFloat64,
         endpointUri, apiKey, tenReplicatesJob,

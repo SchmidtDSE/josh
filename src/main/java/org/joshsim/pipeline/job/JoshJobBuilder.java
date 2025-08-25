@@ -40,7 +40,7 @@ public class JoshJobBuilder {
     if (fileInfo == null) {
       throw new IllegalArgumentException("File info cannot be null");
     }
-    
+
     fileInfos.put(logicalName.trim(), fileInfo);
     return this;
   }
@@ -66,7 +66,7 @@ public class JoshJobBuilder {
    * @param path The path to the file (e.g., "test_data/example_1.jshc")
    * @return This builder instance for method chaining
    * @throws IllegalArgumentException if name or path is null or empty
-   * @deprecated Use {@link #setFileInfo(String, String, String)} or 
+   * @deprecated Use {@link #setFileInfo(String, String, String)} or
    *             {@link #setFileInfo(String, JoshJobFileInfo)} instead
    */
   @Deprecated
@@ -84,10 +84,10 @@ public class JoshJobBuilder {
    */
   public JoshJobBuilder setReplicates(int replicates) {
     if (replicates <= 0) {
-      throw new IllegalArgumentException("Number of replicates must be greater than 0, got: " 
+      throw new IllegalArgumentException("Number of replicates must be greater than 0, got: "
           + replicates);
     }
-    
+
     this.replicates = replicates;
     return this;
   }

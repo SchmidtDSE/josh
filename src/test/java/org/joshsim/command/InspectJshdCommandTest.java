@@ -69,7 +69,7 @@ public class InspectJshdCommandTest {
    * Creates a test JSHD file with known data for testing purposes.
    * The grid has values at specific locations:
    * - (0,0,0) = 1.0 meters
-   * - (1,1,0) = 2.0 meters  
+   * - (1,1,0) = 2.0 meters
    * - (2,2,0) = 3.0 meters
    * - (0,0,1) = 4.0 meters
    * - (1,1,1) = 5.0 meters
@@ -86,12 +86,12 @@ public class InspectJshdCommandTest {
 
     // Create test data: 2 timesteps, 3x3 grid
     double[][][] innerValues = new double[2][3][3];
-    
+
     // Timestep 0
     innerValues[0][0][0] = 1.0; // (0,0,0)
     innerValues[0][1][1] = 2.0; // (1,1,0)
     innerValues[0][2][2] = 3.0; // (2,2,0)
-    
+
     // Timestep 1
     innerValues[1][0][0] = 4.0; // (0,0,1)
     innerValues[1][1][1] = 5.0; // (1,1,1)
@@ -102,7 +102,7 @@ public class InspectJshdCommandTest {
         valueFactory,
         extents,
         0, // minTimestep
-        1, // maxTimestep  
+        1, // maxTimestep
         Units.of("meters"),
         innerValues
     );
@@ -166,7 +166,7 @@ public class InspectJshdCommandTest {
   @Test
   public void testFileNotFound() {
     File nonExistentFile = new File("nonexistent.jshd");
-    
+
     InspectJshdCommand command = new InspectJshdCommand();
     setField(command, "jshdFile", nonExistentFile);
     setField(command, "variable", "data");
@@ -279,7 +279,7 @@ public class InspectJshdCommandTest {
     assertEquals(7, result);
 
     String output = errContent.toString();
-    assertEquals("No value found at coordinates (10, 0) for timestep 0 in variable 'data'\n", 
+    assertEquals("No value found at coordinates (10, 0) for timestep 0 in variable 'data'\n",
         output);
   }
 
@@ -296,7 +296,7 @@ public class InspectJshdCommandTest {
     assertEquals(7, result);
 
     String output = errContent.toString();
-    assertEquals("No value found at coordinates (0, 0) for timestep 5 in variable 'data'\n", 
+    assertEquals("No value found at coordinates (0, 0) for timestep 5 in variable 'data'\n",
         output);
   }
 
@@ -313,7 +313,7 @@ public class InspectJshdCommandTest {
     assertEquals(7, result);
 
     String output = errContent.toString();
-    assertEquals("No value found at coordinates (-1, 0) for timestep 0 in variable 'data'\n", 
+    assertEquals("No value found at coordinates (-1, 0) for timestep 0 in variable 'data'\n",
         output);
   }
 

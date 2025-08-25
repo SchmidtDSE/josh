@@ -18,6 +18,7 @@ import org.joshsim.lang.io.strategy.CsvExportFacade;
 import org.joshsim.lang.io.strategy.GeotiffExportFacade;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.lang.io.strategy.NetcdfExportFacade;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 
 
 /**
@@ -29,6 +30,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private final MapExportSerializeStrategy serializeStrategy;
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
+  private final TemplateStringRenderer templateRenderer;
 
   /**
    * Create a new JvmExportFacadeFactory with only grid-space.
@@ -37,12 +39,28 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
    *
    * @param replicate The replicate number to use in filenames.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
    */
-  public JvmExportFacadeFactory(int replicate) {
+  public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer) {
     this.replicate = replicate;
+    this.templateRenderer = templateRenderer;
     serializeStrategy = new MapSerializeStrategy();
     extents = Optional.empty();
     width = Optional.empty();
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with only grid-space (legacy constructor).
+   *
+   * <p>Creates a new export facade factory which does not try to add latitude and longitude to
+   * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @deprecated Use constructor with TemplateStringRenderer parameter instead
+   */
+  @Deprecated
+  public JvmExportFacadeFactory(int replicate) {
+    this(replicate, (TemplateStringRenderer) null);
   }
 
   /**
@@ -54,13 +72,32 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param replicate The replicate number to use in filenames.
    * @param extents The extents of the grid in the simulation in Earth-space.
    * @param width The width and height of each patch in meters.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
    */
-  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width) {
+  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                                TemplateStringRenderer templateRenderer) {
     this.replicate = replicate;
+    this.templateRenderer = templateRenderer;
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
     serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner);
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with access to Earth-space (legacy constructor).
+   *
+   * <p>Creates a new export facade factory which adds latitude and longitude to returned records,
+   * allowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space.
+   * @param width The width and height of each patch in meters.
+   * @deprecated Use constructor with TemplateStringRenderer parameter instead
+   */
+  @Deprecated
+  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width) {
+    this(replicate, extents, width, null);
   }
 
   @Override
@@ -85,6 +122,25 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
   @Override
   public String getPath(String template) {
+    if (templateRenderer != null) {
+      return templateRenderer.renderTemplate(template);
+    } else {
+      // Fallback to legacy template processing for backward compatibility
+      return getPathLegacy(template);
+    }
+  }
+
+  /**
+   * Legacy template processing logic for backward compatibility.
+   *
+   * <p>This method contains the original template processing logic from before
+   * TemplateStringRenderer was introduced. It is kept for backward compatibility
+   * when templateRenderer is null.</p>
+   *
+   * @param template The template string to process
+   * @return The processed template string
+   */
+  private String getPathLegacy(String template) {
     // For GeoTIFF only, preserve replicate template behavior for separate files
     if (template.contains(".tif") || template.contains(".tiff")) {
       String replicateStr = ((Integer) replicate).toString();
@@ -93,7 +149,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
       return withVariable;
     }
-    
+
     // For tabular and NetCDF formats, remove replicate template (consolidated files)
     String withStep = template.replaceAll("\\{step\\}", "__step__");
     String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");

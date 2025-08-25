@@ -53,25 +53,25 @@ public class JoshJobVariationVisitor extends JoshJobVariationBaseVisitor<JoshJob
   /**
    * Visits a file specification context and adds the mapping to the builder.
    *
-   * @param ctx The ANTLR file specification context  
+   * @param ctx The ANTLR file specification context
    * @return The modified JoshJobBuilder instance
    */
-  @Override  
+  @Override
   public JoshJobBuilder visitFileSpec(JoshJobVariationParser.FileSpecContext ctx) {
     // Handle null contexts gracefully
     if (ctx.filename() == null || ctx.filepath() == null) {
       return builder;
     }
-    
+
     String logicalName = ctx.filename().getText().trim();
-    
+
     // Reconstruct full filepath from TEXT_ tokens and EQUALS_ tokens
     StringBuilder pathBuilder = new StringBuilder();
     for (int i = 0; i < ctx.filepath().getChildCount(); i++) {
       pathBuilder.append(ctx.filepath().getChild(i).getText());
     }
     String path = pathBuilder.toString().trim();
-    
+
     // Validate that we have non-empty strings
     if (logicalName.isEmpty()) {
       throw new IllegalArgumentException("File logical name cannot be empty");
@@ -79,11 +79,11 @@ public class JoshJobVariationVisitor extends JoshJobVariationBaseVisitor<JoshJob
     if (path.isEmpty()) {
       throw new IllegalArgumentException("File path cannot be empty for: " + logicalName);
     }
-    
+
     // Create JoshJobFileInfo with extracted template name from path
     JoshJobFileInfo fileInfo = JoshJobFileInfo.fromPath(path);
     builder.setFileInfo(logicalName, fileInfo);
-    
+
     return builder;
   }
 }

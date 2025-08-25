@@ -1,8 +1,6 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,7 +9,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
@@ -19,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.util.Optional;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacade;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -141,11 +137,11 @@ class RunCommandReplicatesTest {
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
          MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
-         MockedStatic<SimulationMetadataExtractor> extractorMock = 
+         MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
       // Mock the commander initialization
-      JoshSimCommander.ProgramInitResult mockResult = 
+      JoshSimCommander.ProgramInitResult mockResult =
           new JoshSimCommander.ProgramInitResult(mockProgram);
       commanderMock.when(() -> JoshSimCommander.getJoshProgram(
           any(EngineGeometryFactory.class), any(File.class), any(OutputOptions.class), any()))
@@ -184,11 +180,11 @@ class RunCommandReplicatesTest {
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
          MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
-         MockedStatic<SimulationMetadataExtractor> extractorMock = 
+         MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
       // Mock the commander initialization
-      JoshSimCommander.ProgramInitResult mockResult = 
+      JoshSimCommander.ProgramInitResult mockResult =
           new JoshSimCommander.ProgramInitResult(mockProgram);
       commanderMock.when(() -> JoshSimCommander.getJoshProgram(
           any(EngineGeometryFactory.class), any(File.class), any(OutputOptions.class), any()))
@@ -214,7 +210,7 @@ class RunCommandReplicatesTest {
           eq(0), // replicate number for first run
           anyBoolean() // favorBigDecimal
       ), times(1));
-      
+
       facadeMock.verify(() -> JoshSimFacade.runSimulation(
           any(EngineGeometryFactory.class),
           eq(mockProgram),
@@ -224,7 +220,7 @@ class RunCommandReplicatesTest {
           eq(1), // replicate number for second run
           anyBoolean() // favorBigDecimal
       ), times(1));
-      
+
       facadeMock.verify(() -> JoshSimFacade.runSimulation(
           any(EngineGeometryFactory.class),
           eq(mockProgram),
@@ -249,11 +245,11 @@ class RunCommandReplicatesTest {
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
          MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
-         MockedStatic<SimulationMetadataExtractor> extractorMock = 
+         MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
       // Mock the commander initialization
-      JoshSimCommander.ProgramInitResult mockResult = 
+      JoshSimCommander.ProgramInitResult mockResult =
           new JoshSimCommander.ProgramInitResult(mockProgram);
       commanderMock.when(() -> JoshSimCommander.getJoshProgram(
           any(EngineGeometryFactory.class), any(File.class), any(OutputOptions.class), any()))
@@ -279,7 +275,7 @@ class RunCommandReplicatesTest {
           eq(5), // replicate number for first run (5 + 0)
           anyBoolean() // favorBigDecimal
       ), times(1));
-      
+
       facadeMock.verify(() -> JoshSimFacade.runSimulation(
           any(EngineGeometryFactory.class),
           eq(mockProgram),
@@ -301,11 +297,11 @@ class RunCommandReplicatesTest {
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
          MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
-         MockedStatic<SimulationMetadataExtractor> extractorMock = 
+         MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
       // Mock the commander initialization
-      JoshSimCommander.ProgramInitResult mockResult = 
+      JoshSimCommander.ProgramInitResult mockResult =
           new JoshSimCommander.ProgramInitResult(mockProgram);
       commanderMock.when(() -> JoshSimCommander.getJoshProgram(
           any(EngineGeometryFactory.class), any(File.class), any(OutputOptions.class), any()))
@@ -347,7 +343,7 @@ class RunCommandReplicatesTest {
          MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class)) {
 
       // Mock the commander initialization
-      JoshSimCommander.ProgramInitResult mockResult = 
+      JoshSimCommander.ProgramInitResult mockResult =
           new JoshSimCommander.ProgramInitResult(mockProgram);
       commanderMock.when(() -> JoshSimCommander.getJoshProgram(
           any(EngineGeometryFactory.class), any(File.class), any(OutputOptions.class), any()))
@@ -395,6 +391,6 @@ class RunCommandReplicatesTest {
     setFieldValue(command, "file", mockFile);
     setFieldValue(command, "crs", "");
     setFieldValue(command, "dataFiles", new String[0]);
-    setFieldValue(command, "replicateNumber", 0);
+    setFieldValue(command, "replicates", 1);
   }
 }

@@ -38,22 +38,22 @@ public class DataFilesStringParser {
     if (dataFiles == null) {
       return builder;
     }
-    
+
     for (String dataFile : dataFiles) {
       String[] parts = dataFile.split("=", 2);
       if (parts.length != 2) {
         throw new IllegalArgumentException("Invalid data file format: " + dataFile
             + ". Expected format: filename=path");
       }
-      
+
       String logicalName = parts[0].trim();
       String path = parts[1].trim();
-      
+
       // Create JoshJobFileInfo with extracted filename stem for template name
       JoshJobFileInfo fileInfo = JoshJobFileInfo.fromPath(path);
       builder.setFileInfo(logicalName, fileInfo);
     }
-    
+
     return builder;
   }
 }

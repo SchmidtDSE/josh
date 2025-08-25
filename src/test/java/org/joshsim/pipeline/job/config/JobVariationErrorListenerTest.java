@@ -41,7 +41,7 @@ public class JobVariationErrorListenerTest {
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 1, 5, "test error", null)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Syntax error at line 1, position 5"));
     assertTrue(message.contains("test error"));
@@ -50,12 +50,12 @@ public class JobVariationErrorListenerTest {
   @Test
   public void testSyntaxErrorWithRecognitionException() {
     RecognitionException recognitionException = new RecognitionException(null, null, null);
-    
+
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 2, 10, "parsing failed", recognitionException)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Syntax error at line 2, position 10"));
     assertTrue(message.contains("parsing failed"));
@@ -68,7 +68,7 @@ public class JobVariationErrorListenerTest {
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 1, 0, "missing '='", null)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Each file specification must have exactly one equals sign"));
     assertTrue(message.contains("Expected format: filename=path"));
@@ -80,7 +80,7 @@ public class JobVariationErrorListenerTest {
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 1, 0, "missing ';'", null)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Use semicolon (;) to separate"));
     assertTrue(message.contains("file1=path1;file2=path2"));
@@ -92,7 +92,7 @@ public class JobVariationErrorListenerTest {
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 3, 15, "unknown token", null)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Syntax error at line 3, position 15"));
     assertTrue(message.contains("unknown token"));
@@ -122,7 +122,7 @@ public class JobVariationErrorListenerTest {
         IllegalArgumentException.class,
         () -> errorListener.syntaxError(null, null, 1, 5, null, null)
     );
-    
+
     String message = exception.getMessage();
     assertTrue(message.contains("Syntax error at line 1, position 5"));
     assertTrue(message.contains("null"));

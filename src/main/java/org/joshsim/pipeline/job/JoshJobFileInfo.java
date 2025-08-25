@@ -10,8 +10,6 @@
 
 package org.joshsim.pipeline.job;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Immutable file information for Josh job execution.
@@ -40,7 +38,7 @@ public class JoshJobFileInfo {
     if (path == null || path.trim().isEmpty()) {
       throw new IllegalArgumentException("File path cannot be null or empty");
     }
-    
+
     this.name = name.trim();
     this.path = path.trim();
   }
@@ -80,7 +78,7 @@ public class JoshJobFileInfo {
     if (path == null || path.trim().isEmpty()) {
       throw new IllegalArgumentException("Path cannot be null or empty");
     }
-    
+
     String trimmedPath = path.trim();
     String extractedName = extractFilenameStem(trimmedPath);
     return new JoshJobFileInfo(extractedName, trimmedPath);
@@ -113,16 +111,16 @@ public class JoshJobFileInfo {
     // Handle both Unix and Windows path separators manually
     // Using manual extraction to avoid platform-specific Path behavior
     String filename = filePath;
-    
+
     // Extract the filename part after the last path separator
     int lastUnixSeparator = filename.lastIndexOf('/');
     int lastWindowsSeparator = filename.lastIndexOf('\\');
     int lastSeparator = Math.max(lastUnixSeparator, lastWindowsSeparator);
-    
+
     if (lastSeparator >= 0) {
       filename = filename.substring(lastSeparator + 1);
     }
-    
+
     // Remove the extension if present
     int lastDotIndex = filename.lastIndexOf('.');
     if (lastDotIndex > 0) {
@@ -141,7 +139,7 @@ public class JoshJobFileInfo {
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    
+
     JoshJobFileInfo that = (JoshJobFileInfo) obj;
     return name.equals(that.name) && path.equals(that.path);
   }

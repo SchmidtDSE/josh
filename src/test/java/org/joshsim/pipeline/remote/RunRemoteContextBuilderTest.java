@@ -49,7 +49,7 @@ public class RunRemoteContextBuilderTest {
     testProgressCalculator = new ProgressCalculator(11, 1);
     testOutputOptions = new OutputOptions();
     testMinioOptions = new MinioOptions();
-    
+
     // Create a test job with file mappings and replicates
     testJob = new JoshJobBuilder()
         .setFilePath("file1.jshd", "path/to/file1.jshd")
@@ -99,7 +99,7 @@ public class RunRemoteContextBuilderTest {
   @Test
   void testBuilderWithDefaults() throws Exception {
     JoshJob defaultJob = new JoshJobBuilder().setReplicates(1).build(); // Minimal job
-    
+
     RunRemoteContext context = builder
         .withFile(testFile)
         .withSimulation("TestSim")
@@ -366,7 +366,7 @@ public class RunRemoteContextBuilderTest {
   @Test
   void testWithJobReplicates() throws Exception {
     JoshJob customJob = new JoshJobBuilder().setReplicates(5).build();
-    
+
     RunRemoteContext context = builder
         .withFile(testFile)
         .withSimulation("TestSim")
@@ -392,7 +392,7 @@ public class RunRemoteContextBuilderTest {
         .setFilePath("data.jshd", "path/to/data.jshd")
         .setReplicates(2)
         .build();
-    
+
     RunRemoteContext context = builder
         .withFile(testFile)
         .withSimulation("TestSim")

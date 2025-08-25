@@ -109,7 +109,7 @@ public class RunRemoteCommandTest {
   @Test
   public void testParseDataFiles() throws Exception {
     String[] dataFiles = {"config.jshc=/path/to/config.jshc", "data.jshd=/path/to/data.jshd"};
-    
+
     JoshJobBuilder builder = new JoshJobBuilder();
     JoshJob job = parser.parseDataFiles(builder, dataFiles).build();
     Map<String, String> result = job.getFilePaths();
@@ -133,7 +133,7 @@ public class RunRemoteCommandTest {
   public void testParseDataFilesWithSpaces() throws Exception {
     String[] dataFiles = {" config.jshc = /path/to/config.jshc ",
         " data.jshd = /path/to/data.jshd "};
-    
+
     JoshJobBuilder builder = new JoshJobBuilder();
     JoshJob job = parser.parseDataFiles(builder, dataFiles).build();
     Map<String, String> result = job.getFilePaths();
@@ -226,7 +226,7 @@ public class RunRemoteCommandTest {
   @Test
   public void testEmptyDataFiles() throws Exception {
     String[] emptyDataFiles = {};
-    
+
     JoshJobBuilder builder = new JoshJobBuilder();
     JoshJob job = parser.parseDataFiles(builder, emptyDataFiles).build();
     Map<String, String> result = job.getFilePaths();

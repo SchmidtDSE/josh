@@ -38,10 +38,10 @@ public class JoshJob {
    */
   JoshJob(Map<String, JoshJobFileInfo> fileInfos, int replicates) {
     if (replicates <= 0) {
-      throw new IllegalArgumentException("Number of replicates must be greater than 0, got: " 
+      throw new IllegalArgumentException("Number of replicates must be greater than 0, got: "
           + replicates);
     }
-    
+
     // Defensive copy to ensure immutability
     this.fileInfos = new HashMap<>(fileInfos);
     this.replicates = replicates;
