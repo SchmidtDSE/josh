@@ -91,7 +91,7 @@ public class TemplateStringRenderer {
    * <p>This method performs job-specific template processing and analyzes export-specific
    * templates for strategy detection. The processing of export-specific templates depends
    * on the file format and the presence of templates:</p>
-   * 
+   *
    * <ul>
    *   <li>GeoTIFF: Always processes all templates (always uses separate files)</li>
    *   <li>CSV/NetCDF: Preserves {replicate} for strategy selection, processes others</li>
@@ -174,18 +174,18 @@ public class TemplateStringRenderer {
     // Report unknown templates with helpful error message
     if (!unknownTemplates.isEmpty()) {
       List<String> availableTemplates = new ArrayList<>();
-      
+
       // Add job-specific templates
       for (String logicalName : fileInfos.keySet()) {
         String baseName = extractBaseName(logicalName);
         availableTemplates.add("{" + baseName + "}");
       }
-      
+
       // Add custom parameter templates
       for (String customParam : customParameters.keySet()) {
         availableTemplates.add("{" + customParam + "}");
       }
-      
+
       // Add export-specific templates
       availableTemplates.add("{replicate}");
       availableTemplates.add("{step}");
@@ -258,7 +258,7 @@ public class TemplateStringRenderer {
    *
    * <p>This method handles export-specific template processing for strategy-aware
    * template rendering. The processing depends on file format and strategy:</p>
-   * 
+   *
    * <ul>
    *   <li>GeoTIFF: Always processes all templates (legacy behavior maintained)</li>
    *   <li>CSV/NetCDF with {replicate}: Preserves {replicate} for parameterized strategy</li>
@@ -271,12 +271,12 @@ public class TemplateStringRenderer {
    * @param hasVariable Whether the original template contained {variable}
    * @return String with appropriate export template processing
    */
-  private String processExportSpecificTemplatesForStrategy(String template, 
+  private String processExportSpecificTemplatesForStrategy(String template,
                                                            boolean hasReplicate,
-                                                           boolean hasStep, 
+                                                           boolean hasStep,
                                                            boolean hasVariable) {
     if (template.contains(".tif") || template.contains(".tiff")) {
-      // For GeoTIFF: preserve export templates for strategy detection  
+      // For GeoTIFF: preserve export templates for strategy detection
       // (legacy behavior is handled separately in renderTemplate method)
       return template;
     } else {
@@ -287,8 +287,8 @@ public class TemplateStringRenderer {
       } else {
         // Consolidated strategy: process all export templates
         String withStep = hasStep ? template.replaceAll("\\{step\\}", "__step__") : template;
-        String withVariable = hasVariable 
-            ? withStep.replaceAll("\\{variable\\}", "__variable__") 
+        String withVariable = hasVariable
+            ? withStep.replaceAll("\\{variable\\}", "__variable__")
             : withStep;
         return withVariable.replaceAll("\\{replicate\\}", "");
       }

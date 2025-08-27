@@ -245,7 +245,6 @@ public class RunRemoteCommandReplicatesTest {
    */
   private RunRemoteContext createTestContextWithOffset(File joshFile, int replicates, int offset)
       throws Exception {
-    // Note: offset parameter is ignored in job-based execution (always 0)
     JoshJob job = new JoshJobBuilder().setReplicates(replicates).build();
     return new RunRemoteContextBuilder()
         .withFile(joshFile)
@@ -261,6 +260,7 @@ public class RunRemoteCommandReplicatesTest {
         .withOutputOptions(mock(OutputOptions.class))
         .withMinioOptions(mock(MinioOptions.class))
         .withMaxConcurrentWorkers(10)
+        .withReplicateNumber(offset)
         .build();
   }
 }

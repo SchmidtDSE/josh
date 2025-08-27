@@ -25,7 +25,7 @@ import java.io.OutputStream;
  * <pre>
  * String template = "file:///tmp/simulation_{replicate}.csv";
  * ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
- * 
+ *
  * StreamReference ref = new StreamReference(1);
  * OutputStream stream = generator.getStream(ref);  // Creates: simulation_1.csv
  * </pre>
@@ -63,7 +63,7 @@ public class ReplicateOutputStreamGenerator implements
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedCsvExportFacade.StreamReference reference) {
-    String path = pathTemplate.replaceAll("\\{replicate\\}", 
+    String path = pathTemplate.replaceAll("\\{replicate\\}",
         Integer.toString(reference.getReplicate()));
     return createFileOutputStream(path);
   }
@@ -78,7 +78,7 @@ public class ReplicateOutputStreamGenerator implements
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade.StreamReference reference) {
-    String path = pathTemplate.replaceAll("\\{replicate\\}", 
+    String path = pathTemplate.replaceAll("\\{replicate\\}",
         Integer.toString(reference.getReplicate()));
     return createFileOutputStream(path);
   }

@@ -11,7 +11,6 @@
 package org.joshsim.pipeline.job.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -157,7 +156,7 @@ public class JobVariationParserGridSearchTest {
     }
 
     for (int i = 0; i < combinationsFound.length; i++) {
-      assertTrue(combinationsFound[i], 
+      assertTrue(combinationsFound[i],
           "Missing combination: " + String.join(",", expectedCombinations[i]));
     }
   }
@@ -213,7 +212,7 @@ public class JobVariationParserGridSearchTest {
     // Use fewer files but still over limit to avoid ANTLR parsing issues
     // 10 files with 3 options each = 3^10 = 59049 combinations (over 1000 limit)
     StringBuilder spec = new StringBuilder();
-    for (int i = 0; i < 10; i++) { 
+    for (int i = 0; i < 10; i++) {
       if (i > 0) {
         spec.append(";");
       }
@@ -228,9 +227,9 @@ public class JobVariationParserGridSearchTest {
     });
 
     // Accept either validation error or ANTLR parsing error
-    assertTrue(exception.getMessage().contains("Too many combinations") 
+    assertTrue(exception.getMessage().contains("Too many combinations")
                || exception.getMessage().contains("Failed to parse job variation"),
-               "Exception message should mention combinations or parsing failure: " 
+               "Exception message should mention combinations or parsing failure: "
                + exception.getMessage());
   }
 
@@ -245,11 +244,11 @@ public class JobVariationParserGridSearchTest {
     });
 
     // Accept either IllegalArgumentException (from validation) or other parsing exceptions
-    assertTrue(exception.getMessage().contains("path") 
+    assertTrue(exception.getMessage().contains("path")
                || exception.getMessage().contains("parsing")
                || exception.getMessage().contains("empty")
                || exception.getMessage().contains("specification"),
-               "Exception message should mention path or parsing issues: " 
+               "Exception message should mention path or parsing issues: "
                + exception.getMessage());
   }
 
@@ -268,7 +267,7 @@ public class JobVariationParserGridSearchTest {
     for (JoshJob job : jobs) {
       String exampleFile = job.getFilePath("example.jshc");
       String otherFile = job.getFilePath("other.jshd");
-      
+
       assertTrue(exampleFile.equals("file1.jshc") || exampleFile.equals("file2.jshc"));
       assertTrue(otherFile.equals("fileA.jshd") || otherFile.equals("fileB.jshd"));
     }

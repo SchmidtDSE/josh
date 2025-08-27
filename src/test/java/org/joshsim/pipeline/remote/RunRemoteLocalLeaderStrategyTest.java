@@ -69,7 +69,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         endpointUri, apiKey, job,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
   }
 
@@ -165,7 +165,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -182,21 +182,21 @@ public class RunRemoteLocalLeaderStrategyTest {
 
   @Test
   public void testCreateWorkerTasksWithDifferentReplicate() throws Exception {
-    // Create job with different replicate count to test different behavior
-    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(8);
+    // Create job with same replicate count but different starting offset
+    JoshJobBuilder jobBuilder = new JoshJobBuilder().setReplicates(4);
     DataFilesStringParser parser = new DataFilesStringParser();
     String[] dataFiles = new String[]{"config.jshc=/path/to/config"};
-    JoshJob jobWith8Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
+    JoshJob jobWith4Replicates = parser.parseDataFiles(jobBuilder, dataFiles).build();
 
-    // Create context with different replicate count
+    // Create context with same replicate count but different starting offset
     RunRemoteContext differentReplicateContext = new RunRemoteContext(
         testContext.getFile(), testContext.getSimulation(), testContext.isUseFloat64(),
         testContext.getEndpointUri(), testContext.getApiKey(),
-        jobWith8Replicates,
+        jobWith4Replicates,
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 3
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -318,7 +318,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -352,7 +352,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(

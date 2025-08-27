@@ -100,7 +100,7 @@ public class ParameterizedNetcdfExportFacade implements ExportFacade {
   /**
    * Interface for strategy which generates output streams based on replicate number.
    *
-   * <p>This interface follows the same pattern as 
+   * <p>This interface follows the same pattern as
    * GeotiffExportFacade.ParameterizedOutputStreamGenerator
    * but is specialized for replicate-based NetCDF file generation.</p>
    */

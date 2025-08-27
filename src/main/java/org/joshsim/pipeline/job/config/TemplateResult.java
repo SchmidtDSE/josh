@@ -24,7 +24,7 @@ package org.joshsim.pipeline.job.config;
  * if (result.requiresParameterizedOutput()) {
  *     // Use multi-file export strategy
  * } else {
- *     // Use consolidated export strategy  
+ *     // Use consolidated export strategy
  * }
  * </pre>
  */

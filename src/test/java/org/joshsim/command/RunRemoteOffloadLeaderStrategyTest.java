@@ -73,7 +73,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         endpointUri, apiKey, job,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
   }
 
@@ -125,7 +125,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -148,7 +148,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         "simulation code with spaces", "external data with spaces",
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -262,7 +262,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -291,7 +291,7 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), 0
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(

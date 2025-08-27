@@ -129,7 +129,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     if (templateRenderer != null) {
       // Use strategy-aware template processing for facade selection
       lastTemplateResult = templateRenderer.renderTemplateWithStrategy(template);
-      
+
       // For TIFF files, return fully processed path for file creation
       // For CSV/NetCDF, return strategy-aware processed template
       if (template.contains(".tif") || template.contains(".tiff")) {
@@ -228,7 +228,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param header Optional header columns for the CSV
    * @return CsvExportFacade for consolidated export
    */
-  private ExportFacade buildConsolidatedCsv(ExportTarget target, 
+  private ExportFacade buildConsolidatedCsv(ExportTarget target,
                                             Optional<Iterable<String>> header) {
     String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
@@ -247,7 +247,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param header Optional header columns for the CSV
    * @return ParameterizedCsvExportFacade for multi-file export
    */
-  private ExportFacade buildParameterizedCsv(ExportTarget target, 
+  private ExportFacade buildParameterizedCsv(ExportTarget target,
                                              Optional<Iterable<String>> header) {
     String path = target.getPath();
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(path);
@@ -297,7 +297,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param header Variable names to include in the NetCDF file
    * @return NetcdfExportFacade for consolidated export
    */
-  private ExportFacade buildConsolidatedNetcdf(ExportTarget target, 
+  private ExportFacade buildConsolidatedNetcdf(ExportTarget target,
                                                Optional<Iterable<String>> header) {
     String path = target.getPath();
     OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
@@ -318,7 +318,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param header Variable names to include in each NetCDF file
    * @return ParameterizedNetcdfExportFacade for multi-file export
    */
-  private ExportFacade buildParameterizedNetcdf(ExportTarget target, 
+  private ExportFacade buildParameterizedNetcdf(ExportTarget target,
                                                 Optional<Iterable<String>> header) {
     String path = target.getPath();
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(path);

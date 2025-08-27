@@ -55,6 +55,7 @@ public class RunRemoteContext {
 
   // Execution parameters for local leader mode
   private final int maxConcurrentWorkers;
+  private final int replicateNumber;
 
   /**
    * Creates a new RunRemoteContext with all necessary parameters.
@@ -72,13 +73,14 @@ public class RunRemoteContext {
    * @param outputOptions The output options for logging
    * @param minioOptions The MinIO options for cloud storage
    * @param maxConcurrentWorkers Maximum concurrent workers for local leader mode
+   * @param replicateNumber Starting replicate number offset
    */
   public RunRemoteContext(File file, String simulation, boolean useFloat64,
       URI endpointUri, String apiKey, JoshJob job,
       String joshCode, String externalDataSerialized,
       SimulationMetadata metadata, ProgressCalculator progressCalculator,
       OutputOptions outputOptions, MinioOptions minioOptions,
-      int maxConcurrentWorkers) {
+      int maxConcurrentWorkers, int replicateNumber) {
     this.file = file;
     this.simulation = simulation;
     this.useFloat64 = useFloat64;
@@ -92,6 +94,7 @@ public class RunRemoteContext {
     this.outputOptions = outputOptions;
     this.minioOptions = minioOptions;
     this.maxConcurrentWorkers = maxConcurrentWorkers;
+    this.replicateNumber = replicateNumber;
   }
 
   /**
@@ -115,10 +118,10 @@ public class RunRemoteContext {
   /**
    * Gets the replicate number for this execution.
    *
-   * @return The replicate number (always 0 for job-based execution)
+   * @return The starting replicate number offset
    */
   public int getReplicateNumber() {
-    return 0;
+    return replicateNumber;
   }
 
   /**

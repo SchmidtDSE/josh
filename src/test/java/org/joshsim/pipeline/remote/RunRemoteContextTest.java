@@ -75,7 +75,7 @@ public class RunRemoteContextTest {
         endpointUri, apiKey, testJob,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
   }
 
@@ -173,7 +173,7 @@ public class RunRemoteContextTest {
         endpointUri, apiKey, testJob,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
 
     assertEquals(true, float64Context.isUseFloat64());
@@ -186,7 +186,7 @@ public class RunRemoteContextTest {
         endpointUri, apiKey, testJob,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, 20 // different worker count
+        outputOptions, minioOptions, 20, 0 // different worker count, default replicate number
     );
 
     assertEquals(20, differentWorkersContext.getMaxConcurrentWorkers());
@@ -201,7 +201,7 @@ public class RunRemoteContextTest {
         endpointUri, apiKey, emptyJob,
         joshCode, "",
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
 
     assertEquals(0, emptyDataContext.getDataFiles().length); // Deprecated method returns empty
@@ -222,7 +222,7 @@ public class RunRemoteContextTest {
         endpointUri, apiKey, tenReplicatesJob,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, 0
     );
 
     assertEquals(10, differentReplicatesContext.getReplicates());

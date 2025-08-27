@@ -12,7 +12,6 @@ package org.joshsim.pipeline.job.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -292,21 +291,21 @@ public class JobVariationParserTest {
     // Path 2: "other.jshd=test_data/other_1.jshd" (equals signs allowed in paths after first token)
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     assertEquals(2, results.size()); // 2 combinations from the two paths
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
-    
+
     // Both jobs should have the example.jshc key, but with different paths
     for (JoshJob job : jobs) {
       assertTrue(job.getFileNames().contains("example.jshc"));
       assertEquals(1, job.getFileNames().size());
     }
-    
+
     // Collect the paths for the example.jshc key
     List<String> paths = jobs.stream()
         .map(job -> job.getFilePath("example.jshc"))
         .sorted()
         .toList();
-    
+
     // Should have both paths (one normal, one with equals in it)
     assertEquals(2, paths.size());
     assertEquals("other.jshd=test_data/other_1.jshd", paths.get(0)); // alphabetically first
@@ -356,7 +355,7 @@ public class JobVariationParserTest {
 
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     assertEquals(1, results.size());
-    
+
     JoshJob job = results.get(0)
         .setReplicates(3)
         .setFilePath("additional.jshd", "path2.jshd")
@@ -526,16 +525,16 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should now create 3 combinations, not just use first path
     assertEquals(3, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
     List<String> paths = jobs.stream()
         .map(job -> job.getFilePath("example.jshc"))
         .sorted()
         .toList();
-    
+
     // Should have all three paths as separate combinations
     assertEquals(List.of("path1.jshc", "path2.jshc", "path3.jshc"), paths);
-    
+
     // Check that all jobs have correct file info
     for (JoshJob job : jobs) {
       assertEquals(1, job.getFileNames().size());
@@ -553,16 +552,16 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create all combinations: 2 × 3 = 6
     assertEquals(6, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
-    
+
     // Verify all jobs have correct structure
     for (JoshJob job : jobs) {
       assertEquals(2, job.getFileNames().size());
       assertTrue(job.getFilePath("first.jshc").matches("path[12]\\.jshc"));
       assertTrue(job.getFilePath("second.jshd").matches("path[ABC]\\.jshd"));
     }
-    
+
     // Verify we have all expected combinations
     boolean foundPath1PathA = jobs.stream().anyMatch(job ->
         "path1.jshc".equals(job.getFilePath("first.jshc"))
@@ -580,15 +579,15 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create all combinations: 2 × 2 = 4
     assertEquals(4, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
-    
+
     // Verify we have all expected combinations with complex paths
     boolean foundConfig1Data1 = jobs.stream().anyMatch(job ->
         "C:\\Users\\test\\config1.jshc".equals(job.getFilePath("config.jshc"))
         && "http://example.com/data1.jshd".equals(job.getFilePath("data.jshd")));
     assertTrue(foundConfig1Data1, "Should find combination with config1 and data1");
-    
+
     boolean foundConfig2Data2 = jobs.stream().anyMatch(job ->
         "C:\\Users\\test\\config2.jshc".equals(job.getFilePath("config.jshc"))
         && "file:///tmp/data2.jshd".equals(job.getFilePath("data.jshd")));
@@ -602,13 +601,13 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create 2 combinations
     assertEquals(2, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
     List<String> paths = jobs.stream()
         .map(job -> job.getFilePath("test.jshc"))
         .sorted()
         .toList();
-    
+
     assertEquals(List.of("path1=value", "path2=other"), paths);
   }
 
@@ -646,13 +645,13 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create 3 combinations with trimmed whitespace
     assertEquals(3, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
     List<String> paths = jobs.stream()
         .map(job -> job.getFilePath("test.jshc"))
         .sorted()
         .toList();
-    
+
     // Should have all three paths with whitespace trimmed
     assertEquals(List.of("path1.jshc", "path2.jshc", "path3.jshc"), paths);
   }
@@ -679,15 +678,15 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create 2 combinations (1 × 2)
     assertEquals(2, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
-    
+
     // All jobs should have the same single.jshc path
     for (JoshJob job : jobs) {
       assertEquals("single_path.jshc", job.getFilePath("single.jshc"));
       assertEquals(2, job.getFileNames().size());
     }
-    
+
     // Should have both list.jshd paths across the combinations
     List<String> listPaths = jobs.stream()
         .map(job -> job.getFilePath("list.jshd"))
@@ -705,17 +704,17 @@ public class JobVariationParserTest {
     List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
     // Component 10: Should create 6 combinations for all paths
     assertEquals(6, results.size());
-    
+
     List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
     List<String> paths = jobs.stream()
         .map(job -> job.getFilePath("long.jshc"))
         .sorted()
         .toList();
-    
+
     // Should have all six paths as separate combinations
-    assertEquals(List.of("path1.jshc", "path2.jshc", "path3.jshc", 
+    assertEquals(List.of("path1.jshc", "path2.jshc", "path3.jshc",
                         "path4.jshc", "path5.jshc", "path6.jshc"), paths);
-    
+
     // Each job should have only one file
     for (JoshJob job : jobs) {
       assertEquals(1, job.getFileNames().size());

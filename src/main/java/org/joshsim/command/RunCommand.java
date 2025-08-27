@@ -85,6 +85,10 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
   private int replicates = 1;
 
+  @Option(names = "--replicate-number", description = "Starting replicate number offset",
+      defaultValue = "0")
+  private int replicateNumber = 0;
+
   @Option(
       names = "--use-float-64",
       description = "Use double instead of BigDecimal, offering speed but lower precision.",
@@ -168,14 +172,14 @@ public class RunCommand implements Callable<Integer> {
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
-    
+
     // Create job configurations using JobVariationParser for grid search
     JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
         .setReplicates(replicates)
         .setCustomParameters(customParameters);
     JobVariationParser parser = new JobVariationParser();
     List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
-    
+
     // Build all job instances
     List<JoshJob> jobs = jobBuilders.stream()
         .map(JoshJobBuilder::build)
@@ -188,7 +192,7 @@ public class RunCommand implements Callable<Integer> {
 
     // Use first job for initialization (all jobs should have compatible structure)
     JoshJob firstJob = jobs.get(0);
-    
+
     // Create appropriate InputGetterStrategy based on first job configuration
     InputGetterStrategy inputStrategy;
     if (firstJob.getFilePaths().isEmpty()) {
@@ -270,27 +274,28 @@ public class RunCommand implements Callable<Integer> {
 
     // Execute simulation for each job combination and replicate
     int totalSimulationCount = 0;
-    
+
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
       output.printInfo("Executing job combination " + (jobIndex + 1) + "/" + jobs.size());
-      
+
       // Update InputGetterStrategy for this job's file mappings
       if (!currentJob.getFilePaths().isEmpty()) {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
-      
-      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates(); 
+
+      for (int currentReplicate = replicateNumber;
+           currentReplicate < replicateNumber + currentJob.getReplicates();
            currentReplicate++) {
         totalSimulationCount++;
-        
+
         // Reset progress tracking for each new simulation (except first)
         if (totalSimulationCount > 1) {
           progressCalculator.resetForNextReplicate(totalSimulationCount);
         }
 
         // Create TemplateStringRenderer for this job and replicate
-        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob, 
+        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
             currentReplicate);
 
         // Create InputOutputLayer with template renderer (similar to JoshSimFacade logic)
@@ -336,8 +341,8 @@ public class RunCommand implements Callable<Integer> {
           output.printInfo(completion.getMessage());
         }
       }
-      
-      // Report job combination completion  
+
+      // Report job combination completion
       if (jobIndex < jobs.size() - 1) {
         output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
       }

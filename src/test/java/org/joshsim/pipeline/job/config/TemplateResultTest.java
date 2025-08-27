@@ -100,7 +100,7 @@ class TemplateResultTest {
 
     // Test inequality
     assertNotEquals(result1, result3); // Different template
-    
+
     TemplateResult result4 = new TemplateResult("template", false, false, true);
     assertNotEquals(result1, result4); // Different flags
     assertNotEquals(result1, null); // Null comparison

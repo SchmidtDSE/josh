@@ -3,7 +3,6 @@ package org.joshsim.command;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -17,7 +16,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import org.joshsim.JoshSimCommander;
-import org.joshsim.JoshSimFacade;
+import org.joshsim.JoshSimFacadeUtil;
+import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -57,6 +58,12 @@ class RunCommandReplicatesTest {
   private EngineBridgeSimulationStore mockSimulations;
 
   @Mock
+  private EntityPrototype mockEntityPrototype;
+
+  @Mock
+  private MutableEntity mockMutableEntity;
+
+  @Mock
   private EngineGeometryFactory mockGeometryFactory;
 
   private ByteArrayOutputStream outputStream;
@@ -76,6 +83,8 @@ class RunCommandReplicatesTest {
     when(mockFile.exists()).thenReturn(true);
     when(mockProgram.getSimulations()).thenReturn(mockSimulations);
     when(mockSimulations.hasPrototype(anyString())).thenReturn(true);
+    when(mockSimulations.getProtoype(anyString())).thenReturn(mockEntityPrototype);
+    when(mockEntityPrototype.build()).thenReturn(mockMutableEntity);
   }
 
   @AfterEach
@@ -136,7 +145,7 @@ class RunCommandReplicatesTest {
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
-         MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
+         MockedStatic<JoshSimFacadeUtil> facadeUtilMock = mockStatic(JoshSimFacadeUtil.class);
          MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
@@ -157,14 +166,14 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(0, result);
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
+      facadeUtilMock.verify(() -> JoshSimFacadeUtil.runSimulation(
+          any(), // EngineValueFactory
           any(EngineGeometryFactory.class),
+          any(), // InputOutputLayer
           eq(mockProgram),
           eq("test-simulation"),
           any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(0), // replicate number
-          anyBoolean() // favorBigDecimal
+          anyBoolean() // serialPatches
       ), times(1));
     }
   }
@@ -179,7 +188,7 @@ class RunCommandReplicatesTest {
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
-         MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
+         MockedStatic<JoshSimFacadeUtil> facadeUtilMock = mockStatic(JoshSimFacadeUtil.class);
          MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
@@ -200,36 +209,16 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(0, result);
-      // Verify that runSimulation was called 3 times with correct replicate numbers
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
+      // Verify that runSimulation was called 3 times (once for each replicate)
+      facadeUtilMock.verify(() -> JoshSimFacadeUtil.runSimulation(
+          any(), // EngineValueFactory
           any(EngineGeometryFactory.class),
+          any(), // InputOutputLayer
           eq(mockProgram),
           eq("test-simulation"),
           any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(0), // replicate number for first run
-          anyBoolean() // favorBigDecimal
-      ), times(1));
-
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
-          any(EngineGeometryFactory.class),
-          eq(mockProgram),
-          eq("test-simulation"),
-          any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(1), // replicate number for second run
-          anyBoolean() // favorBigDecimal
-      ), times(1));
-
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
-          any(EngineGeometryFactory.class),
-          eq(mockProgram),
-          eq("test-simulation"),
-          any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(2), // replicate number for third run
-          anyBoolean() // favorBigDecimal
-      ), times(1));
+          anyBoolean() // serialPatches
+      ), times(3));
     }
   }
 
@@ -244,7 +233,7 @@ class RunCommandReplicatesTest {
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
-         MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
+         MockedStatic<JoshSimFacadeUtil> facadeUtilMock = mockStatic(JoshSimFacadeUtil.class);
          MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
@@ -265,26 +254,16 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(0, result);
-      // Verify that runSimulation was called with replicate numbers 5 and 6
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
+      // Verify that runSimulation was called 2 times (once for each replicate)
+      facadeUtilMock.verify(() -> JoshSimFacadeUtil.runSimulation(
+          any(), // EngineValueFactory
           any(EngineGeometryFactory.class),
+          any(), // InputOutputLayer
           eq(mockProgram),
           eq("test-simulation"),
           any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(5), // replicate number for first run (5 + 0)
-          anyBoolean() // favorBigDecimal
-      ), times(1));
-
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
-          any(EngineGeometryFactory.class),
-          eq(mockProgram),
-          eq("test-simulation"),
-          any(), // step callback
-          anyBoolean(), // serialPatches
-          eq(6), // replicate number for second run (5 + 1)
-          anyBoolean() // favorBigDecimal
-      ), times(1));
+          anyBoolean() // serialPatches
+      ), times(2));
     }
   }
 
@@ -296,7 +275,7 @@ class RunCommandReplicatesTest {
     setFieldValue(runCommand, "replicates", 1);
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
-         MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class);
+         MockedStatic<JoshSimFacadeUtil> facadeUtilMock = mockStatic(JoshSimFacadeUtil.class);
          MockedStatic<SimulationMetadataExtractor> extractorMock =
              mockStatic(SimulationMetadataExtractor.class)) {
 
@@ -317,14 +296,14 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(0, result); // Should still succeed with default metadata
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
+      facadeUtilMock.verify(() -> JoshSimFacadeUtil.runSimulation(
+          any(), // EngineValueFactory
           any(EngineGeometryFactory.class),
+          any(), // InputOutputLayer
           eq(mockProgram),
           eq("test-simulation"),
           any(), // step callback
-          anyBoolean(), // serialPatches
-          anyInt(), // replicate number
-          anyBoolean() // favorBigDecimal
+          anyBoolean() // serialPatches
       ), times(1));
     }
   }
@@ -340,7 +319,7 @@ class RunCommandReplicatesTest {
     when(mockSimulations.hasPrototype("nonexistent-simulation")).thenReturn(false);
 
     try (MockedStatic<JoshSimCommander> commanderMock = mockStatic(JoshSimCommander.class);
-         MockedStatic<JoshSimFacade> facadeMock = mockStatic(JoshSimFacade.class)) {
+         MockedStatic<JoshSimFacadeUtil> facadeUtilMock = mockStatic(JoshSimFacadeUtil.class)) {
 
       // Mock the commander initialization
       JoshSimCommander.ProgramInitResult mockResult =
@@ -354,14 +333,14 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(4, result); // Error code for simulation not found
-      facadeMock.verify(() -> JoshSimFacade.runSimulation(
+      facadeUtilMock.verify(() -> JoshSimFacadeUtil.runSimulation(
+          any(), // EngineValueFactory
           any(EngineGeometryFactory.class),
+          any(), // InputOutputLayer
           any(JoshProgram.class),
           anyString(),
           any(), // step callback
-          anyBoolean(), // serialPatches
-          anyInt(), // replicate number
-          anyBoolean() // favorBigDecimal
+          anyBoolean() // serialPatches
       ), never());
     }
   }
