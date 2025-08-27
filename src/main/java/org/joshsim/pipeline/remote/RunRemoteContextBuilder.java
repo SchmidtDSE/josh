@@ -54,6 +54,7 @@ public class RunRemoteContextBuilder {
 
   // Execution parameters for local leader mode
   private int maxConcurrentWorkers = 10;
+  private int replicateNumber = 0;
 
   /**
    * Set the Josh simulation file.
@@ -196,6 +197,17 @@ public class RunRemoteContextBuilder {
    */
   public RunRemoteContextBuilder withMaxConcurrentWorkers(int maxConcurrentWorkers) {
     this.maxConcurrentWorkers = maxConcurrentWorkers;
+    return this;
+  }
+
+  /**
+   * Set the starting replicate number offset.
+   *
+   * @param replicateNumber Starting replicate number offset
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withReplicateNumber(int replicateNumber) {
+    this.replicateNumber = replicateNumber;
     return this;
   }
 

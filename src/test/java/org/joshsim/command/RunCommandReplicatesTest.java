@@ -239,7 +239,7 @@ class RunCommandReplicatesTest {
     setupBasicFields(runCommand);
     setFieldValue(runCommand, "simulation", "test-simulation");
     setFieldValue(runCommand, "replicates", 2);
-    setFieldValue(runCommand, "replicateNumber", 5); // Start from replicate 5
+    // setFieldValue(runCommand, "replicateNumber", 5); // Field removed in grid search
 
     SimulationMetadata metadata = new SimulationMetadata(0, 10, 11);
 
@@ -265,14 +265,14 @@ class RunCommandReplicatesTest {
 
       // Assert
       assertEquals(0, result);
-      // Verify that runSimulation was called with replicate numbers 5 and 6
+      // Verify that runSimulation was called with replicate numbers 0 and 1 (no offset)
       facadeMock.verify(() -> JoshSimFacade.runSimulation(
           any(EngineGeometryFactory.class),
           eq(mockProgram),
           eq("test-simulation"),
           any(), // step callback
           anyBoolean(), // serialPatches
-          eq(5), // replicate number for first run (5 + 0)
+          eq(0), // replicate number for first run (0-based indexing)
           anyBoolean() // favorBigDecimal
       ), times(1));
 
@@ -282,7 +282,7 @@ class RunCommandReplicatesTest {
           eq("test-simulation"),
           any(), // step callback
           anyBoolean(), // serialPatches
-          eq(6), // replicate number for second run (5 + 1)
+          eq(1), // replicate number for second run (1)
           anyBoolean() // favorBigDecimal
       ), times(1));
     }

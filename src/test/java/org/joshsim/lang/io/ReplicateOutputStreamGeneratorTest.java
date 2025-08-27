@@ -56,15 +56,15 @@ class ReplicateOutputStreamGeneratorTest {
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
 
     // Test CSV stream reference
-    ParameterizedCsvExportFacade.StreamReference ref1 = 
+    ParameterizedCsvExportFacade.StreamReference ref1 =
         new ParameterizedCsvExportFacade.StreamReference(1);
-    ParameterizedCsvExportFacade.StreamReference ref2 = 
+    ParameterizedCsvExportFacade.StreamReference ref2 =
         new ParameterizedCsvExportFacade.StreamReference(2);
 
     // Generate streams for different replicates
     try (OutputStream stream1 = generator.getStream(ref1);
          OutputStream stream2 = generator.getStream(ref2)) {
-      
+
       // Write some test data
       stream1.write("test data 1".getBytes());
       stream2.write("test data 2".getBytes());
@@ -73,10 +73,10 @@ class ReplicateOutputStreamGeneratorTest {
     // Verify files were created with correct names
     File file1 = new File(tempDir.resolve("test_1.csv").toString());
     File file2 = new File(tempDir.resolve("test_2.csv").toString());
-    
+
     assertTrue(file1.exists());
     assertTrue(file2.exists());
-    
+
     // Verify file contents
     assertEquals("test data 1", Files.readString(file1.toPath()));
     assertEquals("test data 2", Files.readString(file2.toPath()));
@@ -88,7 +88,7 @@ class ReplicateOutputStreamGeneratorTest {
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
 
     // Test NetCDF stream reference
-    ParameterizedNetcdfExportFacade.StreamReference ref3 = 
+    ParameterizedNetcdfExportFacade.StreamReference ref3 =
         new ParameterizedNetcdfExportFacade.StreamReference(3);
 
     // Generate stream
@@ -104,15 +104,15 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testHasReplicateTemplate() {
-    ReplicateOutputStreamGenerator withReplicate = 
+    ReplicateOutputStreamGenerator withReplicate =
         new ReplicateOutputStreamGenerator("file:///tmp/data_{replicate}.csv");
     assertTrue(withReplicate.hasReplicateTemplate());
 
-    ReplicateOutputStreamGenerator withoutReplicate = 
+    ReplicateOutputStreamGenerator withoutReplicate =
         new ReplicateOutputStreamGenerator("file:///tmp/static_file.csv");
     assertFalse(withoutReplicate.hasReplicateTemplate());
 
-    ReplicateOutputStreamGenerator multipleTemplates = 
+    ReplicateOutputStreamGenerator multipleTemplates =
         new ReplicateOutputStreamGenerator("file:///tmp/{step}_{replicate}_{variable}.tiff");
     assertTrue(multipleTemplates.hasReplicateTemplate());
   }
@@ -128,7 +128,7 @@ class ReplicateOutputStreamGeneratorTest {
   void testToString() {
     String template = "file:///tmp/test_{replicate}.csv";
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
-    
+
     String toString = generator.toString();
     assertTrue(toString.contains("ReplicateOutputStreamGenerator"));
     assertTrue(toString.contains(template));
@@ -136,11 +136,11 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testEquals() {
-    ReplicateOutputStreamGenerator gen1 = 
+    ReplicateOutputStreamGenerator gen1 =
         new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
-    ReplicateOutputStreamGenerator gen2 = 
+    ReplicateOutputStreamGenerator gen2 =
         new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
-    ReplicateOutputStreamGenerator gen3 = 
+    ReplicateOutputStreamGenerator gen3 =
         new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
 
     // Test equality
@@ -155,11 +155,11 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testHashCode() {
-    ReplicateOutputStreamGenerator gen1 = 
+    ReplicateOutputStreamGenerator gen1 =
         new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
-    ReplicateOutputStreamGenerator gen2 = 
+    ReplicateOutputStreamGenerator gen2 =
         new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
-    ReplicateOutputStreamGenerator gen3 = 
+    ReplicateOutputStreamGenerator gen3 =
         new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
 
     // Equal objects should have equal hash codes
@@ -174,7 +174,7 @@ class ReplicateOutputStreamGeneratorTest {
     String template = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
 
-    ParameterizedCsvExportFacade.StreamReference ref = 
+    ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(5);
 
     try (OutputStream stream = generator.getStream(ref)) {
@@ -192,7 +192,7 @@ class ReplicateOutputStreamGeneratorTest {
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
 
     // Test with large replicate number
-    ParameterizedCsvExportFacade.StreamReference ref = 
+    ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(99999);
 
     try (OutputStream stream = generator.getStream(ref)) {
@@ -210,7 +210,7 @@ class ReplicateOutputStreamGeneratorTest {
     String invalidTemplate = "/dev/null/invalid\0path_{replicate}.csv";
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(invalidTemplate);
 
-    ParameterizedCsvExportFacade.StreamReference ref = 
+    ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(1);
 
     // Should throw RuntimeException when trying to create the file

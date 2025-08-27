@@ -131,7 +131,7 @@ public class JoshJobVariationVisitor extends JoshJobVariationBaseVisitor<List<Jo
    * specifications. For example, if we have:
    * - example.jshc: [file1, file2]
    * - other.jshd: [fileA, fileB]
-   * 
+   *
    * It will generate 4 combinations:
    * - (example.jshc=file1, other.jshd=fileA)
    * - (example.jshc=file1, other.jshd=fileB)
@@ -195,7 +195,7 @@ public class JoshJobVariationVisitor extends JoshJobVariationBaseVisitor<List<Jo
     if (currentIndex == logicalNames.size()) {
       // Create a new JoshJobBuilder with current combination
       // Note: We need to create a fresh builder and copy all properties from templateBuilder
-      // Since JoshJobBuilder doesn't expose getter methods, we'll build a template job to 
+      // Since JoshJobBuilder doesn't expose getter methods, we'll build a template job to
       // access its data
       JoshJob templateJob = templateBuilder.build();
       JoshJobBuilder combinationBuilder = new JoshJobBuilder()
