@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.ExportTarget;
+import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.util.ProgressUpdate;
 import org.joshsim.wire.NamedMap;
 import org.joshsim.wire.WireConverter;
@@ -191,7 +192,7 @@ public class RemoteResponseHandler {
     ProgressUpdate endUpdate = context.getProgressCalculator()
         .updateReplicateCompleted(completedCount);
     context.getOutputOptions().printInfo(endUpdate.getMessage());
-    
+
     // Prepare for next replicate if there are more replicates to process
     if (completedCount < context.getReplicates()) {
       context.getProgressCalculator().resetForNextReplicate(completedCount + 1);

@@ -2,7 +2,7 @@
  * Unit tests for RunRemoteCommand replicates functionality.
  *
  * <p>These tests verify the replicates parameter functionality added to
- * RunRemoteCommand, including CLI parameter handling, validation, and 
+ * RunRemoteCommand, including CLI parameter handling, validation, and
  * integration with the execution context infrastructure.</p>
  *
  * @license BSD-3-Clause
@@ -19,6 +19,10 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.remote.RunRemoteContext;
+import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -82,7 +86,7 @@ public class RunRemoteCommandReplicatesTest {
     Field replicatesField = RunRemoteCommand.class.getDeclaredField("replicates");
     replicatesField.setAccessible(true);
     int replicates = (Integer) replicatesField.get(command);
-    
+
     assertTrue(replicates >= 1, "Valid replicates value should be >= 1");
   }
 
@@ -100,7 +104,7 @@ public class RunRemoteCommandReplicatesTest {
     Field replicatesField = RunRemoteCommand.class.getDeclaredField("replicates");
     replicatesField.setAccessible(true);
     int replicates = (Integer) replicatesField.get(command);
-    
+
     assertEquals(0, replicates, "Should be able to set zero value (validation happens in call())");
   }
 
@@ -117,7 +121,7 @@ public class RunRemoteCommandReplicatesTest {
     Field replicatesField = RunRemoteCommand.class.getDeclaredField("replicates");
     replicatesField.setAccessible(true);
     int replicates = (Integer) replicatesField.get(command);
-    
+
     assertEquals(-1, replicates,
         "Should be able to set negative value (validation happens in call())");
   }
@@ -127,13 +131,14 @@ public class RunRemoteCommandReplicatesTest {
     // Test that replicates parameter flows through context builder correctly
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, "simulation test_sim {}");
-    
-    RunRemoteContextBuilder builder = new RunRemoteContextBuilder();
-    builder.withReplicates(3);
 
-    // Test the builder method
-    assertEquals(3, getReplicatesFromBuilder(builder),
-        "Builder should accept and store replicates value");
+    JoshJob testJob = new JoshJobBuilder().setReplicates(3).build();
+    RunRemoteContextBuilder builder = new RunRemoteContextBuilder();
+    builder.withJob(testJob);
+
+    // Test the builder method - now get replicates from job
+    assertEquals(3, testJob.getReplicates(),
+        "Job should contain the replicates value");
   }
 
   @Test
@@ -143,8 +148,8 @@ public class RunRemoteCommandReplicatesTest {
     Files.writeString(joshFile, "simulation test_sim {}");
 
     RunRemoteContext context = createTestContext(joshFile.toFile(), 4);
-    
-    assertEquals(4, context.getReplicates(), 
+
+    assertEquals(4, context.getReplicates(),
         "Context should contain correct replicates value");
   }
 
@@ -157,9 +162,9 @@ public class RunRemoteCommandReplicatesTest {
     // Create context with specific replicates count
     RunRemoteContext context = createTestContext(joshFile.toFile(), 3);
     ProgressCalculator progressCalculator = context.getProgressCalculator();
-    
+
     assertNotNull(progressCalculator, "ProgressCalculator should be created");
-    // We can't directly test the replicate count in ProgressCalculator without 
+    // We can't directly test the replicate count in ProgressCalculator without
     // exposing it, but we verify it was created with the context
   }
 
@@ -170,19 +175,19 @@ public class RunRemoteCommandReplicatesTest {
     Files.writeString(joshFile, "simulation test_sim {}");
 
     RunRemoteContext context = createTestContextWithOffset(joshFile.toFile(), 3, 5);
-    
+
     assertEquals(3, context.getReplicates(), "Should have 3 replicates");
     assertEquals(5, context.getReplicateNumber(), "Should have offset of 5");
   }
 
-  @Test 
+  @Test
   public void testSingleReplicateBackwardCompatibility(@TempDir Path tempDir) throws Exception {
     // Test that single replicate (default) maintains backward compatibility
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, "simulation test_sim {}");
 
     RunRemoteContext context = createTestContext(joshFile.toFile(), 1);
-    
+
     assertEquals(1, context.getReplicates(), "Default should be single replicate");
     assertEquals(0, context.getReplicateNumber(), "Default replicate number should be 0");
   }
@@ -194,7 +199,7 @@ public class RunRemoteCommandReplicatesTest {
     Files.writeString(joshFile, "simulation test_sim {}");
 
     RunRemoteContext context = createTestContext(joshFile.toFile(), 100);
-    
+
     assertEquals(100, context.getReplicates(), "Should handle large replicate counts");
   }
 
@@ -240,15 +245,14 @@ public class RunRemoteCommandReplicatesTest {
    */
   private RunRemoteContext createTestContextWithOffset(File joshFile, int replicates, int offset)
       throws Exception {
+    JoshJob job = new JoshJobBuilder().setReplicates(replicates).build();
     return new RunRemoteContextBuilder()
         .withFile(joshFile)
         .withSimulation("test_sim")
-        .withReplicateNumber(offset)
-        .withReplicates(replicates)
         .withUseFloat64(false)
         .withEndpointUri(java.net.URI.create("https://example.com/runReplicates"))
         .withApiKey("test-api-key")
-        .withDataFiles(new String[0])
+        .withJob(job)
         .withJoshCode("simulation test_sim {}")
         .withExternalDataSerialized("")
         .withMetadata(new org.joshsim.util.SimulationMetadata(0, 10, 11))
@@ -256,6 +260,7 @@ public class RunRemoteCommandReplicatesTest {
         .withOutputOptions(mock(OutputOptions.class))
         .withMinioOptions(mock(MinioOptions.class))
         .withMaxConcurrentWorkers(10)
+        .withReplicateNumber(offset)
         .build();
   }
 }

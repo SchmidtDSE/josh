@@ -8,6 +8,7 @@ package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 
 
 /**
@@ -19,6 +20,7 @@ public class JvmInputOutputLayerBuilder {
   private PatchBuilderExtents extents = null;
   private BigDecimal width = null;
   private InputGetterStrategy inputStrategy = new JvmWorkingDirInputGetter();
+  private TemplateStringRenderer templateRenderer = null;
 
   /**
    * Set the replicate number to use in filenames.
@@ -56,11 +58,22 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set a custom template string renderer.
+   *
+   * @param templateRenderer The renderer for processing template strings in export paths.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withTemplateRenderer(TemplateStringRenderer templateRenderer) {
+    this.templateRenderer = templateRenderer;
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
-    return new JvmInputOutputLayer(replicate, extents, width, inputStrategy);
+    return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer);
   }
 }

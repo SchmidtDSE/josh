@@ -100,7 +100,7 @@ class StreamToPrecomputedGridUtilTest {
   void testStreamToGridWithDefaultValue() {
     // Given
     double defaultValue = -999.0;
-    
+
     // Empty stream to test that default values are applied
     StreamToPrecomputedGridUtil.StreamGetter streamGetter =
         timestep -> Stream.empty();
@@ -154,7 +154,7 @@ class StreamToPrecomputedGridUtilTest {
     // Given
     double defaultValue = -999.0;
     double nonDefaultValue = 42.0;
-    
+
     PatchKeyConverter.ProjectedValue defaultValueEntry = new PatchKeyConverter.ProjectedValue(
         BigDecimal.ONE,
         BigDecimal.ONE,
@@ -190,12 +190,12 @@ class StreamToPrecomputedGridUtilTest {
 
     // Then
     DoublePrecomputedGrid doubleGrid = (DoublePrecomputedGrid) grid;
-    
+
     // Position (1,1) should contain default value since input was filtered out
     EngineValue valueAtOneOne = doubleGrid.getAt(1, 1, 0);
     // Position (0,0) should contain non-default value since it was not filtered
     EngineValue valueAtZeroZero = doubleGrid.getAt(0, 0, 0);
-    
+
     assertEquals(mockDefaultEngineValue, valueAtOneOne);
     assertEquals(mockNonDefaultEngineValue, valueAtZeroZero);
     assertEquals(true, grid.isCompatible(mockExtents, minTimestep, maxTimestep));
@@ -208,7 +208,7 @@ class StreamToPrecomputedGridUtilTest {
     double tolerance = 0.000001;
     double withinToleranceValue = defaultValue + tolerance * 0.5; // Within tolerance
     double outsideToleranceValue = defaultValue + tolerance * 2; // Outside tolerance
-    
+
     PatchKeyConverter.ProjectedValue withinToleranceEntry = new PatchKeyConverter.ProjectedValue(
         BigDecimal.ONE,
         BigDecimal.ONE,
@@ -244,12 +244,12 @@ class StreamToPrecomputedGridUtilTest {
 
     // Then
     DoublePrecomputedGrid doubleGrid = (DoublePrecomputedGrid) grid;
-    
+
     // Position (1,1) should contain default since within-tolerance value filtered
     EngineValue valueAtOneOne = doubleGrid.getAt(1, 1, 0);
     // Position (0,0) should contain outside-tolerance value since not filtered
     EngineValue valueAtZeroZero = doubleGrid.getAt(0, 0, 0);
-    
+
     assertEquals(mockDefaultEngineValue, valueAtOneOne);
     assertEquals(mockOutsideToleranceEngineValue, valueAtZeroZero);
     assertEquals(true, grid.isCompatible(mockExtents, minTimestep, maxTimestep));
@@ -262,7 +262,7 @@ class StreamToPrecomputedGridUtilTest {
     double tolerance = 0.000001;
     double withinNegativeToleranceValue = defaultValue - tolerance * 0.5;
     double outsideNegativeToleranceValue = defaultValue - tolerance * 2;
-    
+
     PatchKeyConverter.ProjectedValue withinNegativeToleranceEntry =
         new PatchKeyConverter.ProjectedValue(
             BigDecimal.ONE,
@@ -300,12 +300,12 @@ class StreamToPrecomputedGridUtilTest {
 
     // Then
     DoublePrecomputedGrid doubleGrid = (DoublePrecomputedGrid) grid;
-    
+
     // Position (1,1) should contain default since within-tolerance value filtered
     EngineValue valueAtOneOne = doubleGrid.getAt(1, 1, 0);
     // Position (0,0) should contain outside-tolerance value since not filtered
     EngineValue valueAtZeroZero = doubleGrid.getAt(0, 0, 0);
-    
+
     assertEquals(mockDefaultEngineValue, valueAtOneOne);
     assertEquals(mockOutsideToleranceEngineValue, valueAtZeroZero);
     assertEquals(true, grid.isCompatible(mockExtents, minTimestep, maxTimestep));

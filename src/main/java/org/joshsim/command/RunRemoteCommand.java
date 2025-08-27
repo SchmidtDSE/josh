@@ -19,8 +19,17 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.config.JobVariationParser;
+import org.joshsim.pipeline.remote.RunRemoteContext;
+import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
+import org.joshsim.pipeline.remote.RunRemoteLocalLeaderStrategy;
+import org.joshsim.pipeline.remote.RunRemoteOffloadLeaderStrategy;
+import org.joshsim.pipeline.remote.RunRemoteStrategy;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -79,17 +88,17 @@ public class RunRemoteCommand implements Callable<Integer> {
 
   @Option(
       names = "--data",
-      description = "External data files to include (format: filename=path)",
-      split = ","
+      description = "External data files to include (format: filename=path;filename2=path2)"
   )
   private String[] dataFiles = new String[0];
 
   @Option(
-      names = "--replicate",
-      description = "Replicate number",
-      defaultValue = "0"
+      names = "--custom-tag",
+      description = "Custom template parameters (format: name=value). Can be specified "
+                  + "multiple times."
   )
-  private int replicateNumber;
+  private String[] customTags = new String[0];
+
 
   @Option(
       names = "--use-float-64",
@@ -127,6 +136,38 @@ public class RunRemoteCommand implements Callable<Integer> {
       defaultValue = "1"
   )
   private int replicates = 1;
+
+  @Option(names = "--replicate-number", description = "Starting replicate number offset",
+      defaultValue = "0")
+  private int replicateNumber = 0;
+
+  /**
+   * Parses custom parameter command-line options.
+   *
+   * @return Map of custom parameter names to values
+   * @throws IllegalArgumentException if any custom tag is malformed or uses reserved names
+   */
+  private Map<String, String> parseCustomParameters() {
+    Map<String, String> customParameters = new HashMap<>();
+    for (String customTag : customTags) {
+      int equalsIndex = customTag.indexOf('=');
+      if (equalsIndex <= 0 || equalsIndex == customTag.length() - 1) {
+        throw new IllegalArgumentException("Invalid custom-tag format: " + customTag
+            + ". Expected format: name=value");
+      }
+      String name = customTag.substring(0, equalsIndex).trim();
+      String value = customTag.substring(equalsIndex + 1);
+
+      // Validate name doesn't conflict with reserved templates
+      if ("replicate".equals(name) || "step".equals(name) || "variable".equals(name)) {
+        throw new IllegalArgumentException("Custom parameter name '" + name
+            + "' conflicts with reserved template variable");
+      }
+
+      customParameters.put(name, value);
+    }
+    return customParameters;
+  }
 
   @Override
   public Integer call() {
@@ -227,39 +268,71 @@ public class RunRemoteCommand implements Callable<Integer> {
     output.printInfo("Simulation has " + metadata.getTotalSteps() + " steps "
         + "(from step " + metadata.getStepsLow() + " to " + metadata.getStepsHigh() + ")");
 
-    // Initialize progress calculator
+    // Parse custom parameters from command line
+    Map<String, String> customParameters = parseCustomParameters();
+
+    // Create job configurations using JobVariationParser for grid search
+    JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
+        .setReplicates(replicates)
+        .setCustomParameters(customParameters);
+    JobVariationParser parser = new JobVariationParser();
+    List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
+
+    // Build all job instances
+    List<JoshJob> jobs = jobBuilders.stream()
+        .map(JoshJobBuilder::build)
+        .toList();
+
+    // Report grid search information
+    output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+        + "with " + replicates + " replicate(s) each");
+    output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
+
+    // Initialize progress calculator for total simulations
     ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(), replicates
+        metadata.getTotalSteps(), jobs.size() * replicates
     );
 
     // Read Josh simulation code
     String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
 
-    // Serialize external data
-    String externalDataSerialized = serializeExternalData();
-
-    // Create execution context using builder
-    RunRemoteContext context = new RunRemoteContextBuilder()
-        .withFile(file)
-        .withSimulation(simulation)
-        .withReplicateNumber(replicateNumber)
-        .withReplicates(replicates)
-        .withUseFloat64(useFloat64)
-        .withEndpointUri(endpointUri)
-        .withApiKey(apiKey)
-        .withDataFiles(dataFiles)
-        .withJoshCode(joshCode)
-        .withExternalDataSerialized(externalDataSerialized)
-        .withMetadata(metadata)
-        .withProgressCalculator(progressCalculator)
-        .withOutputOptions(output)
-        .withMinioOptions(minioOptions)
-        .withMaxConcurrentWorkers(concurrentWorkers)
-        .build();
-
-    // Select and execute strategy
+    // Select execution strategy (same for all job combinations)
     RunRemoteStrategy strategy = selectExecutionStrategy();
-    strategy.execute(context);
+
+    // Execute remote simulation for each job combination
+    for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
+      JoshJob currentJob = jobs.get(jobIndex);
+      output.printInfo("Executing remote job combination " + (jobIndex + 1) + "/" + jobs.size());
+
+      // Serialize external data for this job combination
+      String externalDataSerialized = serializeExternalDataForJob(currentJob);
+
+      // Create execution context for this job combination
+      RunRemoteContext context = new RunRemoteContextBuilder()
+          .withFile(file)
+          .withSimulation(simulation)
+          .withUseFloat64(useFloat64)
+          .withEndpointUri(endpointUri)
+          .withApiKey(apiKey)
+          .withJob(currentJob)
+          .withJoshCode(joshCode)
+          .withExternalDataSerialized(externalDataSerialized)
+          .withMetadata(metadata)
+          .withProgressCalculator(progressCalculator)
+          .withOutputOptions(output)
+          .withMinioOptions(minioOptions)
+          .withMaxConcurrentWorkers(concurrentWorkers)
+          .withReplicateNumber(replicateNumber)
+          .build();
+
+      // Execute strategy for this job combination
+      strategy.execute(context);
+
+      // Report job combination completion
+      if (jobIndex < jobs.size() - 1) {
+        output.printInfo("Completed remote job combination " + (jobIndex + 1) + "/" + jobs.size());
+      }
+    }
   }
 
   /**
@@ -277,18 +350,19 @@ public class RunRemoteCommand implements Callable<Integer> {
 
 
   /**
-   * Serializes external data files using the wire format.
+   * Serializes external data files for a specific job using the wire format.
    *
-   * <p>Converts files specified via --data option into wire format string
+   * <p>Converts files from the job's file mappings into wire format string
    * compatible with remote JoshSimServer. Text files are included as plain text
    * with tab characters replaced by spaces for safety. Binary files are Base64
    * encoded. Format: filename\tbinary_flag\tcontent\t</p>
    *
+   * @param job The job containing file mappings to serialize
    * @return Serialized external data string in wire format
    * @throws IOException if file reading fails
    */
-  private String serializeExternalData() throws IOException {
-    Map<String, String> fileMapping = parseDataFiles(dataFiles);
+  private String serializeExternalDataForJob(JoshJob job) throws IOException {
+    Map<String, String> fileMapping = job.getFilePaths();
     StringBuilder serialized = new StringBuilder();
 
     for (Map.Entry<String, String> entry : fileMapping.entrySet()) {
@@ -314,6 +388,26 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
 
     return serialized.toString();
+  }
+
+  /**
+   * Serializes external data files using the wire format (legacy method).
+   *
+   * <p>This method is kept for backward compatibility but now delegates to
+   * serializeExternalDataForJob using the first job combination.</p>
+   *
+   * @return Serialized external data string in wire format
+   * @throws IOException if file reading fails
+   * @deprecated Use serializeExternalDataForJob instead
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  private String serializeExternalData() throws IOException {
+    JoshJobBuilder tempBuilder = new JoshJobBuilder();
+    JobVariationParser parser = new JobVariationParser();
+    List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(tempBuilder, dataFiles);
+    JoshJob tempJob = jobBuilders.get(0).build();
+    return serializeExternalDataForJob(tempJob);
   }
 
   /**
@@ -382,23 +476,4 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
   }
 
-  /**
-   * Parses the data files option into a mapping from filename to path.
-   *
-   * @param dataFiles Array of data file specifications in format "filename=path"
-   * @return Map from filename to path
-   * @throws IllegalArgumentException if any data file specification is invalid
-   */
-  private Map<String, String> parseDataFiles(String[] dataFiles) {
-    Map<String, String> mapping = new HashMap<>();
-    for (String dataFile : dataFiles) {
-      String[] parts = dataFile.split("=", 2);
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("Invalid data file format: " + dataFile
-            + ". Expected format: filename=path");
-      }
-      mapping.put(parts[0].trim(), parts[1].trim());
-    }
-    return mapping;
-  }
 }

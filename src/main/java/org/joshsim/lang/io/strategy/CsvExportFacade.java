@@ -8,10 +8,8 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -160,16 +158,16 @@ public class CsvExportFacade implements ExportFacade {
           NamedMap namedMap = task.getNamedMap().get();
           original = new HashMap<>(namedMap.getTarget());
         }
-        
+
         // Create a LinkedHashMap to preserve ordering and ensure replicate is last
         Map<String, String> serialized = new LinkedHashMap<>();
-        
+
         // Add all original data first
         original.entrySet().forEach(entry -> serialized.put(entry.getKey(), entry.getValue()));
-        
+
         // Add step column (before replicate to match web editor behavior)
         serialized.put("step", Long.toString(step));
-        
+
         // Add replicate column as the last column (matches web editor)
         serialized.put("replicate", Integer.toString(replicateNumber));
         writeStrategy.write(serialized, outputStream);

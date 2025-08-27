@@ -67,7 +67,7 @@ public class StreamToPrecomputedGridUtil {
       final long timestepRealized = timestep;
       values.forEach(entry -> {
         double value = entry.getValue().doubleValue();
-        
+
         // Skip values that match the default value (within tolerance)
         if (defaultValue.isPresent()) {
           double defaultVal = defaultValue.get();
@@ -76,7 +76,7 @@ public class StreamToPrecomputedGridUtil {
             return; // Skip this value
           }
         }
-        
+
         grid.setAt(
             entry.getX().longValue(),
             entry.getY().longValue(),

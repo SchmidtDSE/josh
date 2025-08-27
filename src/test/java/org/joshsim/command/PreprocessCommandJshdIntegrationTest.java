@@ -50,19 +50,19 @@ public class PreprocessCommandJshdIntegrationTest {
   public void testJshdReaderCreationThroughFactory() throws Exception {
     // Create a test JSHD file
     Path testJshdFile = createTestJshdFileWithDefaultValues();
-    
+
     // Test that ExternalDataReaderFactory correctly creates JshdExternalDataReader
     ExternalDataReader reader = ExternalDataReaderFactory.createReader(
         valueFactory, testJshdFile.toString());
-    
+
     assertTrue(reader instanceof JshdExternalDataReader);
-    
+
     reader.open(testJshdFile.toString());
-    
+
     // Verify we can read the data
     assertEquals(1, reader.getVariableNames().size());
     assertEquals("data", reader.getVariableNames().get(0));
-    
+
     reader.close();
   }
 
@@ -70,17 +70,17 @@ public class PreprocessCommandJshdIntegrationTest {
   public void testStreamToPrecomputedGridUtilWithJshdDataSimplified() throws Exception {
     // Create a test JSHD file with some default values
     Path testJshdFile = createTestJshdFileWithDefaultValues();
-    
+
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
         valueFactory, testJshdFile.toString())) {
-      
+
       reader.open(testJshdFile.toString());
-      
+
       // Test that we can create a simple projected value stream that would work with
       // the default value filtering
       PatchKeyConverter converter = new PatchKeyConverter(createMockExtents(),
           BigDecimal.valueOf(1000));
-      
+
       // Create a test stream of ProjectedValues that includes default values
       StreamToPrecomputedGridUtil.StreamGetter streamGetter = (timestep) -> {
         return java.util.stream.Stream.of(
@@ -92,7 +92,7 @@ public class PreprocessCommandJshdIntegrationTest {
               BigDecimal.valueOf(5.0))
         );
       };
-      
+
       // Test that StreamToPrecomputedGridUtil works with default value filtering
       DataGridLayer resultGrid = StreamToPrecomputedGridUtil.streamToGrid(
           valueFactory,
@@ -103,17 +103,17 @@ public class PreprocessCommandJshdIntegrationTest {
           Units.of("test_units"),
           Optional.of(-999.0) // Enable default value filtering
       );
-      
+
       // Verify the result
       assertTrue(resultGrid instanceof DoublePrecomputedGrid);
-      
+
       DoublePrecomputedGrid doubleGrid = (DoublePrecomputedGrid) resultGrid;
-      
+
       // Verify that the grid was created successfully - this demonstrates that
       // JSHD readers can be used in the same workflow as other external data readers
       assertNotNull(doubleGrid);
       assertEquals(Units.of("test_units"), doubleGrid.getUnits());
-      
+
       // The important thing is that this workflow succeeds, proving JSHD integration
       assertTrue(doubleGrid.getMinX() >= 0);
       assertTrue(doubleGrid.getMaxX() >= doubleGrid.getMinX());
@@ -126,28 +126,28 @@ public class PreprocessCommandJshdIntegrationTest {
   public void testJshdFileValidationLogic() throws Exception {
     // Create a test JSHD file
     Path testJshdFile = createTestJshdFileWithDefaultValues();
-    
+
     // Create a temporary PreprocessCommand to test the validation method
     // We can't easily test the full command without a complete Josh script,
     // but we can test that JSHD files are detected and can be read
     try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
         valueFactory, testJshdFile.toString())) {
-      
+
       reader.open(testJshdFile.toString());
       reader.setCrsCode("EPSG:4326");
-      
+
       // This simulates what the validation method would do
       assertTrue(reader instanceof JshdExternalDataReader);
-      
+
       JshdExternalDataReader jshdReader = (JshdExternalDataReader) reader;
-      
+
       // Verify bounds are valid
       assertTrue(jshdReader.getMinX().compareTo(jshdReader.getMaxX()) < 0);
       assertTrue(jshdReader.getMinY().compareTo(jshdReader.getMaxY()) < 0);
-      
+
       // Verify we can get variables
       assertTrue(reader.getVariableNames().size() > 0);
-      
+
       // Verify we can get spatial dimensions
       assertNotNull(reader.getSpatialDimensions());
     }
@@ -181,7 +181,7 @@ public class PreprocessCommandJshdIntegrationTest {
         valueFactory,
         extents,
         0, // minTimestep
-        0, // maxTimestep  
+        0, // maxTimestep
         Units.of("test_units"),
         innerValues
     );

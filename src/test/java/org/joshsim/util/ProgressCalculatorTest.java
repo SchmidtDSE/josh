@@ -304,7 +304,7 @@ public class ProgressCalculatorTest {
     assertEquals(50.0, update1.getPercentage(), 0.1);
     assertEquals("Replicate 1/3: Progress: 50.0% (step 5/10)", update1.getMessage());
 
-    // Small step should not report due to filtering (small percentage increase)  
+    // Small step should not report due to filtering (small percentage increase)
     ProgressUpdate update2 = calc.updateStep(5); // Same step again, should not report
     assertFalse(update2.shouldReport());
 

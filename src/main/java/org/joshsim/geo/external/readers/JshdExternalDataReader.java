@@ -24,12 +24,12 @@ public class JshdExternalDataReader implements ExternalDataReader {
   private DoublePrecomputedGrid grid;
   private final EngineValueFactory valueFactory;
   private String sourcePath;
-  
+
   // Dimension names - JSHD files use grid coordinates
   private String dimNameX = "x";
-  private String dimNameY = "y"; 
+  private String dimNameY = "y";
   private String dimNameTime = "time";
-  
+
   // CRS code - JSHD files typically work in grid space
   private String crsCode = "EPSG:4326"; // Default, can be overridden
 
@@ -51,7 +51,7 @@ public class JshdExternalDataReader implements ExternalDataReader {
   @Override
   public void open(String sourcePath) throws IOException {
     this.sourcePath = sourcePath;
-    
+
     try {
       Path path = Paths.get(sourcePath);
       byte[] fileBytes = Files.readAllBytes(path);
@@ -152,9 +152,9 @@ public class JshdExternalDataReader implements ExternalDataReader {
       // Convert coordinates to long values for grid access
       long gridX = x.longValue();
       long gridY = y.longValue();
-      
+
       // Check bounds
-      if (gridX < grid.getMinX() || gridX > grid.getMaxX() 
+      if (gridX < grid.getMinX() || gridX > grid.getMaxX()
           || gridY < grid.getMinY() || gridY > grid.getMaxY()) {
         return Optional.empty();
       }

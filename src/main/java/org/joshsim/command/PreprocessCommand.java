@@ -346,18 +346,18 @@ public class PreprocessCommand implements Callable<Integer> {
         EngineValueFactory valueFactory,
         String jshdFilePath,
         String crsCode) throws IOException {
-    
+
     // Create and open JSHD reader
     try (ExternalDataReader jshdReader = ExternalDataReaderFactory.createReader(
         valueFactory, jshdFilePath)) {
-      
+
       jshdReader.open(jshdFilePath);
       jshdReader.setCrsCode(crsCode);
 
       // Get spatial dimensions
       ExternalSpatialDimensions dimensions = jshdReader.getSpatialDimensions();
       BigDecimal[] bounds = dimensions.getBounds();
-      
+
       // For now, we just verify the file can be read and has valid dimensions
       // More sophisticated validation could be added here to compare with target grid
       if (bounds[0] == null || bounds[1] == null || bounds[2] == null || bounds[3] == null) {
@@ -373,24 +373,24 @@ public class PreprocessCommand implements Callable<Integer> {
       // If we have a JshdExternalDataReader, we can do additional validation
       if (jshdReader instanceof JshdExternalDataReader) {
         JshdExternalDataReader jshdSpecificReader = (JshdExternalDataReader) jshdReader;
-        
+
         // Validate that the grid has reasonable bounds
         BigDecimal minX = jshdSpecificReader.getMinX();
         BigDecimal maxX = jshdSpecificReader.getMaxX();
         BigDecimal minY = jshdSpecificReader.getMinY();
         BigDecimal maxY = jshdSpecificReader.getMaxY();
-        
+
         if (minX == null || maxX == null || minY == null || maxY == null) {
           throw new IOException("JSHD file has invalid grid coordinates");
         }
-        
+
         if (minX.compareTo(maxX) >= 0 || minY.compareTo(maxY) >= 0) {
           throw new IOException("JSHD file has invalid grid bounds: min must be less than max");
         }
       }
 
       output.printInfo("JSHD grid compatibility validation passed");
-      
+
     } catch (Exception e) {
       if (e instanceof IOException) {
         throw (IOException) e;

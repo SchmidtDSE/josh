@@ -51,7 +51,7 @@ public class JshdExternalDataReaderFactoryTest {
   @Test
   public void testCreateReader() {
     ExternalDataReader reader = factory.createReader();
-    
+
     assertNotNull(reader);
     assertTrue(reader instanceof JshdExternalDataReader);
   }
@@ -60,26 +60,26 @@ public class JshdExternalDataReaderFactoryTest {
   public void testCreateAndOpenWithValidFile() throws Exception {
     // Create a test JSHD file
     Path testJshdFile = createTestJshdFile();
-    
+
     ExternalDataReader reader = factory.createAndOpen(testJshdFile.toString());
-    
+
     assertNotNull(reader);
     assertTrue(reader instanceof JshdExternalDataReader);
-    
+
     // Verify the file was opened successfully by checking that we can get variable names
     assertNotNull(reader.getVariableNames());
-    
+
     reader.close();
   }
 
   @Test
   public void testCreateAndOpenWithInvalidFile() {
     Path nonExistentFile = tempDir.resolve("nonexistent.jshd");
-    
-    RuntimeException exception = assertThrows(RuntimeException.class, () -> 
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
         factory.createAndOpen(nonExistentFile.toString())
     );
-    
+
     assertTrue(exception.getMessage().contains("Failed to open JSHD file"));
   }
 

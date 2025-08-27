@@ -189,6 +189,8 @@ jobs:
         run: bash examples/test.sh
       - name: Test external data with --data option
         run: bash examples/test_data_option.sh
+      - name: Test job configuration template functionality
+        run: bash examples/test_job_config.sh
   buildWeb:
     environment: Build
     needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocessing ]
