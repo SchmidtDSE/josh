@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -344,5 +346,164 @@ public class JoshJobBuilderTest {
     assertEquals("test_data/third.jshc", job.getFilePath("third.jshc"));
 
     assertEquals(3, job.getFileNames().size());
+  }
+
+  @Test
+  public void testCustomParameters() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "test");
+    customParams.put("version", "v1.0");
+
+    JoshJob job = builder
+        .setCustomParameters(customParams)
+        .setReplicates(2)
+        .build();
+
+    assertEquals(customParams, job.getCustomParameters());
+    assertEquals(2, job.getCustomParameters().size());
+    assertEquals("test", job.getCustomParameters().get("environment"));
+    assertEquals("v1.0", job.getCustomParameters().get("version"));
+  }
+
+  @Test
+  public void testCustomParametersDefensiveCopy() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("test", "value");
+
+    JoshJob job = builder
+        .setCustomParameters(customParams)
+        .build();
+
+    // Modify original map - should not affect job
+    customParams.put("modified", "new_value");
+
+    assertEquals(1, job.getCustomParameters().size());
+    assertEquals("value", job.getCustomParameters().get("test"));
+  }
+
+  @Test
+  public void testSetCustomParameter() {
+    JoshJobBuilder result = builder.setCustomParameter("environment", "prod");
+    JoshJob job = builder.build();
+
+    // Should return the same builder instance for chaining
+    assertSame(builder, result);
+
+    assertEquals(1, job.getCustomParameters().size());
+    assertEquals("prod", job.getCustomParameters().get("environment"));
+  }
+
+  @Test
+  public void testSetCustomParameterChaining() {
+    JoshJob job = builder
+        .setCustomParameter("env", "dev")
+        .setCustomParameter("version", "v2.1")
+        .setCustomParameter("region", "us-west")
+        .build();
+
+    Map<String, String> customParams = job.getCustomParameters();
+    assertEquals(3, customParams.size());
+    assertEquals("dev", customParams.get("env"));
+    assertEquals("v2.1", customParams.get("version"));
+    assertEquals("us-west", customParams.get("region"));
+  }
+
+  @Test
+  public void testSetCustomParameterNullName() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> builder.setCustomParameter(null, "value")
+    );
+
+    assertTrue(exception.getMessage().contains("Custom parameter name cannot be null or empty"));
+  }
+
+  @Test
+  public void testSetCustomParameterEmptyName() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> builder.setCustomParameter("", "value")
+    );
+
+    assertTrue(exception.getMessage().contains("Custom parameter name cannot be null or empty"));
+  }
+
+  @Test
+  public void testSetCustomParameterWhitespaceName() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> builder.setCustomParameter("   ", "value")
+    );
+
+    assertTrue(exception.getMessage().contains("Custom parameter name cannot be null or empty"));
+  }
+
+  @Test
+  public void testSetCustomParameterNullValue() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> builder.setCustomParameter("name", null)
+    );
+
+    assertTrue(exception.getMessage().contains("Custom parameter value cannot be null"));
+  }
+
+  @Test
+  public void testSetCustomParametersNull() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> builder.setCustomParameters(null)
+    );
+
+    assertTrue(exception.getMessage().contains("Custom parameters map cannot be null"));
+  }
+
+  @Test
+  public void testCustomParameterNameTrimming() {
+    JoshJob job = builder
+        .setCustomParameter("  environment  ", "test")
+        .build();
+
+    assertEquals(1, job.getCustomParameters().size());
+    assertEquals("test", job.getCustomParameters().get("environment"));
+  }
+
+  @Test
+  public void testOverwriteCustomParameter() {
+    JoshJob job = builder
+        .setCustomParameter("env", "dev")
+        .setCustomParameter("env", "prod")  // Overwrite
+        .build();
+
+    assertEquals(1, job.getCustomParameters().size());
+    assertEquals("prod", job.getCustomParameters().get("env"));
+  }
+
+  @Test
+  public void testClearAndSetCustomParameters() {
+    // First set individual parameters
+    builder.setCustomParameter("initial", "value");
+
+    // Then set new parameters map
+    Map<String, String> newParams = new HashMap<>();
+    newParams.put("env", "test");
+    newParams.put("version", "v1.0");
+
+    JoshJob job = builder
+        .setCustomParameters(newParams)
+        .build();
+
+    // Should only have the new parameters
+    assertEquals(2, job.getCustomParameters().size());
+    assertEquals("test", job.getCustomParameters().get("env"));
+    assertEquals("v1.0", job.getCustomParameters().get("version"));
+  }
+
+  @Test
+  public void testEmptyCustomParameters() {
+    JoshJob job = builder.build();
+
+    assertNotNull(job.getCustomParameters());
+    assertTrue(job.getCustomParameters().isEmpty());
   }
 }

@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -62,7 +64,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     assertSame(builder, result);
     JoshJob job = result.build();
@@ -82,7 +86,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     assertSame(builder, result);
     JoshJob job = result.build();
@@ -102,7 +108,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     assertSame(builder, result);
     JoshJob job = result.build();
@@ -120,7 +128,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     JoshJob job = result.build();
     assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
@@ -138,7 +148,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     JoshJob job = result.build();
     assertEquals("C:\\Users\\test\\config.jshc", job.getFilePath("config.jshc"));
@@ -160,7 +172,9 @@ public class JoshJobVariationVisitorTest {
     ParseTree tree = parser.jobVariation();
     JoshJobVariationVisitor visitor = new JoshJobVariationVisitor(builder);
 
-    JoshJobBuilder result = visitor.visit(tree);
+    List<JoshJobBuilder> results = visitor.visit(tree);
+    assertEquals(1, results.size());
+    JoshJobBuilder result = results.get(0);
 
     JoshJob job = result.build();
     assertEquals(5, job.getReplicates());  // Should preserve existing configuration

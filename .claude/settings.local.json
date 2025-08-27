@@ -8,7 +8,10 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(./test_component6_workflow.sh:*)",
-      "Bash(./minimal_template_test.sh:*)"
+      "Bash(./minimal_template_test.sh:*)",
+      "Bash(bash:*)",
+      "Bash(./test_job_config.sh:*)",
+      "Bash(./examples/test_job_config.sh:*)"
     ],
     "deny": [],
     "ask": []

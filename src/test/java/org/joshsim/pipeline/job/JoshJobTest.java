@@ -238,4 +238,82 @@ public class JoshJobTest {
     filePaths.put("malicious.jshc", "malicious_path");
     assertNull(job.getFilePath("malicious.jshc"));
   }
+
+  @Test
+  public void testCustomParametersConstruction() {
+    Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
+    fileInfos.put("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"));
+
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "test");
+    customParams.put("version", "v1.0");
+
+    JoshJob job = new JoshJob(fileInfos, 3, customParams);
+
+    assertNotNull(job.getCustomParameters());
+    assertEquals(2, job.getCustomParameters().size());
+    assertEquals("test", job.getCustomParameters().get("environment"));
+    assertEquals("v1.0", job.getCustomParameters().get("version"));
+  }
+
+  @Test
+  public void testCustomParametersDefensiveCopy() {
+    Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("param1", "value1");
+
+    JoshJob job = new JoshJob(fileInfos, 1, customParams);
+
+    // Modify original map - should not affect job
+    customParams.put("param2", "value2");
+    customParams.put("param1", "modified_value");
+
+    Map<String, String> jobParams = job.getCustomParameters();
+    assertEquals(1, jobParams.size());
+    assertEquals("value1", jobParams.get("param1"));
+  }
+
+  @Test
+  public void testGetCustomParametersDefensiveCopy() {
+    Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("param1", "value1");
+
+    JoshJob job = new JoshJob(fileInfos, 1, customParams);
+    Map<String, String> returnedParams = job.getCustomParameters();
+
+    // Modify returned map - should not affect job
+    returnedParams.put("malicious", "value");
+    returnedParams.put("param1", "modified");
+
+    // Job should be unchanged
+    Map<String, String> freshParams = job.getCustomParameters();
+    assertEquals(1, freshParams.size());
+    assertEquals("value1", freshParams.get("param1"));
+  }
+
+  @Test
+  public void testEmptyCustomParameters() {
+    Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
+    Map<String, String> customParams = new HashMap<>();
+
+    JoshJob job = new JoshJob(fileInfos, 1, customParams);
+
+    assertNotNull(job.getCustomParameters());
+    assertTrue(job.getCustomParameters().isEmpty());
+  }
+
+  @Test
+  public void testBackwardCompatibilityConstructor() {
+    Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
+    fileInfos.put("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"));
+
+    // Use the old constructor (without custom parameters)
+    JoshJob job = new JoshJob(fileInfos, 2);
+
+    assertNotNull(job.getCustomParameters());
+    assertTrue(job.getCustomParameters().isEmpty());
+    assertEquals(2, job.getReplicates());
+    assertEquals("test_data/example_1.jshc", job.getFilePath("example.jshc"));
+  }
 }

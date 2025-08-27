@@ -24,6 +24,7 @@ public class JoshJobBuilder {
 
   private final Map<String, JoshJobFileInfo> fileInfos = new HashMap<>();
   private int replicates = 1;
+  private final Map<String, String> customParameters = new HashMap<>();
 
   /**
    * Sets file information for this job using a JoshJobFileInfo object.
@@ -93,6 +94,43 @@ public class JoshJobBuilder {
   }
 
   /**
+   * Sets a custom parameter for template processing.
+   *
+   * @param name The parameter name (used in templates like {name})
+   * @param value The parameter value
+   * @return This builder instance for method chaining
+   * @throws IllegalArgumentException if name or value is null or empty
+   */
+  public JoshJobBuilder setCustomParameter(String name, String value) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Custom parameter name cannot be null or empty");
+    }
+    if (value == null) {
+      throw new IllegalArgumentException("Custom parameter value cannot be null");
+    }
+
+    customParameters.put(name.trim(), value);
+    return this;
+  }
+
+  /**
+   * Sets custom parameters for template processing.
+   *
+   * @param customParameters Map of parameter names to values
+   * @return This builder instance for method chaining
+   * @throws IllegalArgumentException if customParameters is null
+   */
+  public JoshJobBuilder setCustomParameters(Map<String, String> customParameters) {
+    if (customParameters == null) {
+      throw new IllegalArgumentException("Custom parameters map cannot be null");
+    }
+
+    this.customParameters.clear();
+    this.customParameters.putAll(customParameters);
+    return this;
+  }
+
+  /**
    * Builds and returns the immutable JoshJob instance.
    *
    * @return A new JoshJob instance with the configured parameters
@@ -100,6 +138,6 @@ public class JoshJobBuilder {
    */
   public JoshJob build() {
     // Additional validation could be added here if needed
-    return new JoshJob(fileInfos, replicates);
+    return new JoshJob(fileInfos, replicates, customParameters);
   }
 }

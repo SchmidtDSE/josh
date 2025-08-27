@@ -69,8 +69,8 @@ public class JvmExportFacadeFactoryTemplateTest {
     String template = "file:///tmp/josh_{example}_{other}_{replicate}.nc";
     String result = factory.getPath(template);
 
-    // Should process job-specific templates and remove replicate for NetCDF (consolidated)
-    assertEquals("file:///tmp/josh_example_1_other_1_.nc", result);
+    // Should process job-specific templates and preserve replicate for parameterized strategy
+    assertEquals("file:///tmp/josh_example_1_other_1_{replicate}.nc", result);
   }
 
   @Test
@@ -142,8 +142,8 @@ public class JvmExportFacadeFactoryTemplateTest {
     String template = "file:///tmp/simple_{replicate}.csv";
     String result = factory.getPath(template);
 
-    // Should process export-specific templates but have no job-specific ones
-    assertEquals("file:///tmp/simple_.csv", result);
+    // Should preserve replicate for parameterized strategy even with empty job
+    assertEquals("file:///tmp/simple_{replicate}.csv", result);
   }
 
   @Test

@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -244,5 +246,158 @@ public class TemplateStringRendererTest {
 
     assertEquals("/data/example_1_3.tif", replicateRenderer.renderTemplate(geotiffTemplate));
     assertEquals("/data/example_1_.csv", replicateRenderer.renderTemplate(csvTemplate));
+  }
+
+  @Test
+  public void testCustomParameterTemplateProcessing() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "test");
+    customParams.put("version", "v1.0");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 0);
+
+    String template = "/tmp/{example}_{environment}_{version}.csv";
+    String result = customRenderer.renderTemplate(template);
+
+    assertEquals("/tmp/example_1_test_v1.0.csv", result);
+  }
+
+  @Test
+  public void testCustomParameterPriority() {
+    // Test that job-specific templates take precedence over custom parameters
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("example", "custom_value");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 0);
+
+    String template = "/tmp/{example}.csv";
+    String result = customRenderer.renderTemplate(template);
+
+    // Should use job-specific template (example_1), not custom parameter (custom_value)
+    assertEquals("/tmp/example_1.csv", result);
+  }
+
+  @Test
+  public void testCustomParameterAndJobTemplatesCombined() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "prod");
+    customParams.put("region", "us-west");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setFileInfo("other.jshd", new JoshJobFileInfo("other_1", "test_data/other_1.jshd"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 0);
+
+    String template = "/tmp/{example}_{other}_{environment}_{region}.csv";
+    String result = customRenderer.renderTemplate(template);
+
+    assertEquals("/tmp/example_1_other_1_prod_us-west.csv", result);
+  }
+
+  @Test
+  public void testUnknownTemplateErrorIncludesCustomParameters() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "test");
+    customParams.put("version", "v1.0");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 0);
+
+    String template = "/tmp/{example}_{unknown}.csv";
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+      customRenderer.renderTemplate(template);
+    });
+
+    String message = exception.getMessage();
+    assertTrue(message.contains("Unknown template variables: {unknown}"));
+    assertTrue(message.contains("{example}"));
+    assertTrue(message.contains("{environment}"));
+    assertTrue(message.contains("{version}"));
+    assertTrue(message.contains("{replicate}"));
+    assertTrue(message.contains("{step}"));
+    assertTrue(message.contains("{variable}"));
+  }
+
+  @Test
+  public void testCustomParameterWithExportSpecificTemplates() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("environment", "test");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 2);
+
+    // GeoTIFF format - should process all templates including replicate
+    String geotiffTemplate = "/tmp/{example}_{environment}_{replicate}.tif";
+    String geotiffResult = customRenderer.renderTemplate(geotiffTemplate);
+    assertEquals("/tmp/example_1_test_2.tif", geotiffResult);
+
+    // CSV format - should remove replicate template but keep custom parameter
+    String csvTemplate = "/tmp/{example}_{environment}_{replicate}.csv";
+    String csvResult = customRenderer.renderTemplate(csvTemplate);
+    assertEquals("/tmp/example_1_test_.csv", csvResult);
+  }
+
+  @Test
+  public void testEmptyCustomParameters() {
+    Map<String, String> customParams = new HashMap<>();
+
+    JoshJob jobWithEmptyCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithEmptyCustomParams, 0);
+
+    String template = "/tmp/{example}.csv";
+    String result = customRenderer.renderTemplate(template);
+
+    assertEquals("/tmp/example_1.csv", result);
+  }
+
+  @Test
+  public void testCustomParameterWithSpecialCharacters() {
+    Map<String, String> customParams = new HashMap<>();
+    customParams.put("env", "test-env");
+    customParams.put("version", "v1.0_beta");
+
+    JoshJob jobWithCustomParams = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setCustomParameters(customParams)
+        .setReplicates(1)
+        .build();
+
+    TemplateStringRenderer customRenderer = new TemplateStringRenderer(jobWithCustomParams, 0);
+
+    String template = "/tmp/{example}_{env}_{version}.csv";
+    String result = customRenderer.renderTemplate(template);
+
+    assertEquals("/tmp/example_1_test-env_v1.0_beta.csv", result);
   }
 }

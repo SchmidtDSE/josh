@@ -25,6 +25,7 @@ public class JoshJob {
 
   private final Map<String, JoshJobFileInfo> fileInfos;
   private final int replicates;
+  private final Map<String, String> customParameters;
 
   /**
    * Creates a new JoshJob instance.
@@ -37,6 +38,22 @@ public class JoshJob {
    * @throws IllegalArgumentException if replicates is less than or equal to 0
    */
   JoshJob(Map<String, JoshJobFileInfo> fileInfos, int replicates) {
+    this(fileInfos, replicates, new HashMap<>());
+  }
+
+  /**
+   * Creates a new JoshJob instance with custom parameters.
+   *
+   * <p>This constructor is package-private and should only be called from
+   * JoshJobBuilder to ensure proper validation and construction.</p>
+   *
+   * @param fileInfos Map of logical file names to their JoshJobFileInfo objects
+   * @param replicates Number of replicates to run
+   * @param customParameters Map of custom parameter names to values for template processing
+   * @throws IllegalArgumentException if replicates is less than or equal to 0
+   */
+  JoshJob(Map<String, JoshJobFileInfo> fileInfos, int replicates,
+      Map<String, String> customParameters) {
     if (replicates <= 0) {
       throw new IllegalArgumentException("Number of replicates must be greater than 0, got: "
           + replicates);
@@ -45,6 +62,7 @@ public class JoshJob {
     // Defensive copy to ensure immutability
     this.fileInfos = new HashMap<>(fileInfos);
     this.replicates = replicates;
+    this.customParameters = new HashMap<>(customParameters);
   }
 
   /**
@@ -95,6 +113,15 @@ public class JoshJob {
    */
   public Map<String, JoshJobFileInfo> getFileInfos() {
     return new HashMap<>(fileInfos);
+  }
+
+  /**
+   * Gets all custom parameter mappings.
+   *
+   * @return A defensive copy of the custom parameter mappings
+   */
+  public Map<String, String> getCustomParameters() {
+    return new HashMap<>(customParameters);
   }
 
   /**
