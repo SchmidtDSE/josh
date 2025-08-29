@@ -207,17 +207,17 @@ public class RunRemoteLocalLeaderStrategyTest {
     List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, differentReplicateContext);
 
-    // Should still create 4 tasks with offset starting from 3
-    assertEquals(4, tasks.size());
+    // Should create 8 tasks (one per replicate) 
+    assertEquals(8, tasks.size());
 
     WorkerTask task0 = tasks.get(0);
-    assertEquals(3, task0.getReplicateNumber()); // replicateNumber (3) + 0
+    assertEquals(0, task0.getReplicateNumber()); // replicateNumber starts at 0
 
     WorkerTask task1 = tasks.get(1);
-    assertEquals(4, task1.getReplicateNumber()); // replicateNumber (3) + 1
+    assertEquals(1, task1.getReplicateNumber()); // replicateNumber + 1
 
-    WorkerTask task3 = tasks.get(3);
-    assertEquals(6, task3.getReplicateNumber()); // replicateNumber (3) + 3
+    WorkerTask task7 = tasks.get(7);
+    assertEquals(7, task7.getReplicateNumber()); // replicateNumber + 7
   }
 
   @Test

@@ -177,7 +177,8 @@ public class RunRemoteCommandReplicatesTest {
     RunRemoteContext context = createTestContextWithOffset(joshFile.toFile(), 3, 5);
 
     assertEquals(3, context.getReplicates(), "Should have 3 replicates");
-    assertEquals(5, context.getReplicateNumber(), "Should have offset of 5");
+    assertEquals(0, context.getReplicateNumber(),
+        "Should have offset of 0 (grid search removed replicateNumber offset)");
   }
 
   @Test
