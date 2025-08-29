@@ -14,7 +14,7 @@ start simulation Main
   year.step = prior.year + 1
 
   # Indicate output should go to CSV file
-  exportFiles.patch = "file:///tmp/grass_shrub_fire_josh_{replicate}.csv"
+  exportFiles.patch = "file:///tmp/grass_shrub_fire_josh.csv"
 
   # Fire parameters
   fire.trigger.coverThreshold = 15%

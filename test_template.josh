@@ -1,0 +1,17 @@
+start simulation TestTemplate
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 1 count latitude, 1 count longitude
+  
+  steps.low = 0 count
+  steps.high = 2 count
+  
+  testValue.init = 100.0 count
+  testValue.step = prior.testValue + 1 count
+  
+  exportFiles.patch = "file:///tmp/simple_josh_{example}_{other}.csv"
+end simulation
+
+start patch Default
+  export.testValue.step = current.testValue
+end patch

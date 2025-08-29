@@ -51,7 +51,7 @@ class CsvExportFacadeTest {
     OutputStreamStrategy outputStrategyMock = mock(OutputStreamStrategy.class);
     OutputStream outputStreamMock = mock(OutputStream.class);
     Entity entityMock = mock(Entity.class);
-    CsvExportFacade.Task task = new CsvExportFacade.Task(entityMock, 1L);
+    ExportTask task = new ExportTask(entityMock, 1L);
 
     when(outputStrategyMock.open()).thenReturn(outputStreamMock);
 

@@ -8,6 +8,8 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -15,7 +17,9 @@ import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.ExportTask;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.wire.NamedMap;
 
 
 /**
@@ -68,8 +72,14 @@ public class CsvExportFacade implements ExportFacade {
   }
 
   @Override
-  public void write(Entity entity, long step) {
-    Task task = new Task(entity, step);
+  public void write(Entity entity, long step, int replicateNumber) {
+    ExportTask task = new ExportTask(entity, step, replicateNumber);
+    write(task);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step, int replicateNumber) {
+    ExportTask task = new ExportTask(namedMap, step, replicateNumber);
     write(task);
   }
 
@@ -79,48 +89,10 @@ public class CsvExportFacade implements ExportFacade {
    * @param task The task containing an entity and step value to be queued for export processing.
    * @throws IllegalStateException If the export process is not active when this method is invoked.
    */
-  public void write(Task task) {
+  public void write(ExportTask task) {
     queueService.add(task);
   }
 
-  /**
-   * Represents a task containing an entity and a step value.
-   */
-  public static class Task {
-
-    private final Entity entity;
-
-    private final long step;
-
-    /**
-     * Constructs a new Task with the specified entity and step value.
-     *
-     * @param entity The entity associated with this task.
-     * @param step   The step value representing additional metadata for this task.
-     */
-    public Task(Entity entity, long step) {
-      this.entity = entity;
-      this.step = step;
-    }
-
-    /**
-     * Get the entity associated with this task.
-     *
-     * @return The entity object.
-     */
-    public Entity getEntity() {
-      return entity;
-    }
-
-    /**
-     * Get the step value for this task.
-     *
-     * @return The step value as a long.
-     */
-    public long getStep() {
-      return step;
-    }
-  }
 
   /**
    * Callback to write to a CSV file.
@@ -171,14 +143,33 @@ public class CsvExportFacade implements ExportFacade {
         return;
       }
 
-      Task task = (Task) taskMaybe.get();
-
-      Entity entity = task.getEntity();
+      ExportTask task = (ExportTask) taskMaybe.get();
       long step = task.getStep();
+      int replicateNumber = task.getReplicateNumber();
 
       try {
-        Map<String, String> serialized = serializeStrategy.getRecord(entity);
+        Map<String, String> original;
+        if (task.hasEntity()) {
+          // Traditional path: serialize Entity
+          Entity entity = task.getEntity().get();
+          original = serializeStrategy.getRecord(entity);
+        } else {
+          // Wire format path: use pre-serialized data from NamedMap
+          NamedMap namedMap = task.getNamedMap().get();
+          original = new HashMap<>(namedMap.getTarget());
+        }
+
+        // Create a LinkedHashMap to preserve ordering and ensure replicate is last
+        Map<String, String> serialized = new LinkedHashMap<>();
+
+        // Add all original data first
+        original.entrySet().forEach(entry -> serialized.put(entry.getKey(), entry.getValue()));
+
+        // Add step column (before replicate to match web editor behavior)
         serialized.put("step", Long.toString(step));
+
+        // Add replicate column as the last column (matches web editor)
+        serialized.put("replicate", Integer.toString(replicateNumber));
         writeStrategy.write(serialized, outputStream);
       } catch (IOException e) {
         throw new RuntimeException("Error writing to output stream", e);

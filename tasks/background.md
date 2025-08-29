@@ -191,3 +191,7 @@ For developers and AI assistants working on this project, it is highly recommend
 - **Status**: Work in Progress
 - **Maintained by**: Schmidt Center for Data Science and Environment at UC Berkeley
 - **Open Source**: Contributions welcome following development standards
+
+## Development Assistance
+
+This project actively uses Claude (Anthropic's AI assistant) for development assistance through Claude Code CLI. We transitioned from GitHub Actions integration to the Claude Code CLI interface for improved interactivity and more nuanced development conversations. This enables real-time collaboration, comprehensive code review, and interactive problem-solving during the development process.

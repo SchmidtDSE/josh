@@ -8,7 +8,7 @@ start simulation Main
   steps.low = 0 count
   steps.high = 10 count
 
-  exportFiles.patch = "file:///tmp/hello_josh_{replicate}.csv"
+  exportFiles.patch = "file:///tmp/hello_josh.csv"
 
 end simulation
 

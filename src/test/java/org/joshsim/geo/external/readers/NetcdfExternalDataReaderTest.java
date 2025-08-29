@@ -439,9 +439,9 @@ public class NetcdfExternalDataReaderTest {
    */
   @ParameterizedTest
   @CsvFileSource(resources = "/netcdf/maxtemp_tulare_annual_test_points.csv", numLinesToSkip = 1)
-  public void testMaxtempTulareFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, 
+  public void testMaxtempTulareFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon,
       BigDecimal expectedValue) throws IOException {
-    testKnownPointsFromCsv("maxtemp_tulare_annual_test_points.csv", calendarYear, lat, lon, 
+    testKnownPointsFromCsv("maxtemp_tulare_annual_test_points.csv", calendarYear, lat, lon,
         expectedValue);
   }
 
@@ -450,13 +450,13 @@ public class NetcdfExternalDataReaderTest {
    */
   @ParameterizedTest
   @CsvFileSource(resources = "/netcdf/precip_riverside_annual_test_points.csv", numLinesToSkip = 1)
-  public void testPrecipRiversideFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon, 
+  public void testPrecipRiversideFromCsv(int calendarYear, BigDecimal lat, BigDecimal lon,
       BigDecimal expectedValue) throws IOException {
-    testKnownPointsFromCsv("precip_riverside_annual_test_points.csv", calendarYear, lat, lon, 
+    testKnownPointsFromCsv("precip_riverside_annual_test_points.csv", calendarYear, lat, lon,
         expectedValue);
   }
 
-  private void testKnownPointsFromCsv(String csvFileName, int calendarYear, BigDecimal lat, 
+  private void testKnownPointsFromCsv(String csvFileName, int calendarYear, BigDecimal lat,
       BigDecimal lon, BigDecimal expectedValue) throws IOException {
     reader = new NetcdfExternalDataReader(valueFactory);
 
@@ -475,12 +475,12 @@ public class NetcdfExternalDataReaderTest {
     // Verify coordinate precision matches CSV test points (6 decimal places as per investigation)
     int latScale = lat.scale();
     int lonScale = lon.scale();
-    assertTrue(latScale <= 6, 
+    assertTrue(latScale <= 6,
         String.format("Latitude precision should be 6 decimal places or less, got %d", latScale));
-    assertTrue(lonScale <= 6, 
+    assertTrue(lonScale <= 6,
         String.format("Longitude precision should be 6 decimal places or less, got %d", lonScale));
 
-    // Find the correct time step by searching the time dimension array 
+    // Find the correct time step by searching the time dimension array
     // (like Python's calendar_year=year)
     int timeStep = -1;
     try {
@@ -502,9 +502,9 @@ public class NetcdfExternalDataReaderTest {
 
     if (expectedValue != null) {
       assertTrue(value.isPresent(),
-          String.format("Value should be present at lat=%s, lon=%s, year=%d", 
+          String.format("Value should be present at lat=%s, lon=%s, year=%d",
               lat, lon, calendarYear));
-      assertFloatingPointEquals(expectedValue.doubleValue(), 
+      assertFloatingPointEquals(expectedValue.doubleValue(),
           value.get().getAsDecimal().doubleValue(),
           String.format("Value mismatch at lat=%s, lon=%s, year=%d", lat, lon, calendarYear));
     } else {
@@ -512,7 +512,7 @@ public class NetcdfExternalDataReaderTest {
       if (value.isPresent()) {
         double actualValue = value.get().getAsDecimal().doubleValue();
         assertTrue(Double.isNaN(actualValue),
-            String.format("Expected NaN but got %f at lat=%s, lon=%s, year=%d", 
+            String.format("Expected NaN but got %f at lat=%s, lon=%s, year=%d",
                 actualValue, lat, lon, calendarYear));
       }
       // If value is not present, that's also acceptable for NaN cases
@@ -528,7 +528,7 @@ public class NetcdfExternalDataReaderTest {
     if (Double.isNaN(expected) && Double.isNaN(actual)) {
       return; // Both NaN - this is a match
     } else if (Double.isNaN(expected) || Double.isNaN(actual)) {
-      fail(message + String.format(": Expected NaN=%b, Actual NaN=%b", 
+      fail(message + String.format(": Expected NaN=%b, Actual NaN=%b",
           Double.isNaN(expected), Double.isNaN(actual)));
     }
 
@@ -538,7 +538,7 @@ public class NetcdfExternalDataReaderTest {
 
     // Use absolute tolerance for very small numbers, relative tolerance for larger numbers
     // This matches the Python test tolerances from the investigation
-    boolean withinTolerance = difference <= IEEE_754_TOLERANCE 
+    boolean withinTolerance = difference <= IEEE_754_TOLERANCE
                              || relativeDifference <= RELATIVE_TOLERANCE;
 
     if (!withinTolerance) {

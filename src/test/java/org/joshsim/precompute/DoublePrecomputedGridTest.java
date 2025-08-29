@@ -90,4 +90,25 @@ class DoublePrecomputedGridTest {
     // Then
     assertEquals(true, testGrid.isCompatible(extents, minTimestep, maxTimestep));
   }
+
+  @Test
+  void testFill() {
+    // Given
+    double fillValue = -999.0;
+    when(mockFactory.buildForNumber(fillValue, testUnits)).thenReturn(mockEngineValue);
+
+    // When
+    grid.fill(fillValue);
+
+    // Then - Check that all positions now have the fill value
+    EngineValue result1 = grid.getAt(0, 0, 0);
+    EngineValue result2 = grid.getAt(5, 5, 5);
+    EngineValue result3 = grid.getAt(10, 10, 10);
+    final EngineValue result4 = grid.getAt(1, 2, 3); // Previously had value 45.0
+
+    assertEquals(mockEngineValue, result1);
+    assertEquals(mockEngineValue, result2);
+    assertEquals(mockEngineValue, result3);
+    assertEquals(mockEngineValue, result4);
+  }
 }

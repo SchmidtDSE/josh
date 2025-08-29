@@ -9,7 +9,11 @@ package org.joshsim.lang.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.joshsim.lang.io.strategy.MemoryExportFacade;
 
 /**
@@ -57,6 +61,21 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
 
   @Override
   public String getPath(String path) {
+    // Detect template variables using regex
+    Pattern templatePattern = Pattern.compile("\\{([^}]+)\\}");
+    Matcher matcher = templatePattern.matcher(path);
+    List<String> templateVars = new ArrayList<>();
+
+    while (matcher.find()) {
+      templateVars.add("{" + matcher.group(1) + "}");
+    }
+
+    if (!templateVars.isEmpty()) {
+      String varsString = String.join(", ", templateVars);
+      throw new RuntimeException("Template strings are not supported in sandbox/editor execution. "
+          + "Found template variables: " + varsString);
+    }
+
     return path;
   }
 

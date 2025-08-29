@@ -1,0 +1,51 @@
+start unit mm
+  alias millimeters
+  alias millimeter
+  
+  m = current / 1000
+end unit
+
+start unit kgm2s
+  # kg m-2 s-1 - precipitation rate used in climate data
+  # To convert to mm/year, multiply by seconds per year (31,536,000)
+  # since 1 kg/m² of water = 1 mm of precipitation
+  
+  mm = current * 31536000
+end unit
+
+start simulation Main
+  
+  # Large grid that covers both CHC-CMIP6 and Cal-Adapt datasets
+  # CHC-CMIP6 bounds: 35.5°N to 34.5°N, -120°W to -119°W
+  # Cal-Adapt bounds: 36.52°N to 36.42°N, -118.68°W to -118.45°W
+  # This grid encompasses both datasets with some buffer
+  grid.size = 500 m  # Compromise between 200m and 1000m grid sizes
+  grid.low = 36.6 degrees latitude, -119.2 degrees longitude
+  grid.high = 34.4 degrees latitude, -118.2 degrees longitude
+  
+  # Single timestep for focused spatial combination testing
+  steps.low = 0 count
+  steps.high = 0 count
+  
+  startYear.init = 2008  # Use 2008 data year
+  year.init = startYear
+  year.step = prior.year + 1
+  
+  # Export for validation
+  exportFiles.patch = "memory://editor/patches"
+  
+end simulation
+
+start patch Default
+  
+  # Use combined precipitation data
+  precipValue.step = external data
+  
+  # Assert precipitation values are within expected range including default value
+  assert.precipNotTooLow.step = external data >= -1000 mm
+  assert.precipNotTooHigh.step = external data <= 5000 mm
+  
+  # Export for analysis
+  export.precipValue.step = precipValue
+  
+end patch

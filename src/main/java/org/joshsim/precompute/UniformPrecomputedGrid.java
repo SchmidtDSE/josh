@@ -69,6 +69,13 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
     return getAt(x, y, timestep);
   }
 
+  /**
+   * Fill all grid spaces with the specified value.
+   *
+   * @param value The value to apply across all spaces in the grid.
+   */
+  public abstract void fill(T value);
+
   @Override
   public boolean isCompatible(PatchBuilderExtents other, long timestepA, long timestepB) {
     long leftX = other.getTopLeftX().longValue();
