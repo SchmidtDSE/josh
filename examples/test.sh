@@ -12,9 +12,9 @@ fi
 
 assert_ok() {
   if [ "$verbose" = true ]; then
-    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate-number $3 "$1" "$2"
+    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=$3 "$1" "$2"
   else
-    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicate-number $3 --suppress-info "$1" "$2"
+    java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=$3 --suppress-info "$1" "$2"
   fi
   local status=$?
   if [ $status -eq 0 ]; then
@@ -37,18 +37,18 @@ assert_ok examples/simulations/simple_seki.josh TestSimpleSimulation 2 || exit 4
 [ -s "/tmp/simple_seki_josh.csv" ] || exit 6
 
 echo "Testing netCDF output..."
-rm -f /tmp/simple_josh_3.nc
-assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 3 || exit 7
-[ -f "/tmp/simple_josh_3.nc" ] || exit 8
-[ -s "/tmp/simple_josh_3.nc" ] || exit 9
+rm -f /tmp/simple_josh_2.nc
+assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 2 || exit 7
+[ -f "/tmp/simple_josh_2.nc" ] || exit 8
+[ -s "/tmp/simple_josh_2.nc" ] || exit 9
 
 echo "Testing geotiff output..."
 rm -f /tmp/simple_josh_*.tiff
-assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 4 || exit 10
-[ -f "/tmp/simple_josh_averageAge_0_4.tiff" ] || exit 11
-[ -s "/tmp/simple_josh_averageAge_0_4.tiff" ] || exit 12
-[ -f "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 13
-[ -s "/tmp/simple_josh_averageHeight_1_4.tiff" ] || exit 14
+assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 2 || exit 10
+[ -f "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 11
+[ -s "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 12
+[ -f "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 13
+[ -s "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 14
 
 echo "Testing guide examples..."
 assert_ok examples/guide/hello_cli.josh Main 1 || exit 15
