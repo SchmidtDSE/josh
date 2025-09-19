@@ -20,7 +20,7 @@ package org.joshsim.pipeline.job.config;
  *
  * <p>Example usage:
  * <pre>
- * TemplateResult result = renderer.renderTemplateWithStrategy(template);
+ * TemplateResult result = renderer.renderTemplate(template);
  * if (result.requiresParameterizedOutput()) {
  *     // Use multi-file export strategy
  * } else {

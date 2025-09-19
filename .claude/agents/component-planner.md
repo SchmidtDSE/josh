@@ -82,7 +82,7 @@ Your refined plan should include:
 - You are a planning agent, NOT an implementation agent
 - Any code modifications are for exploration only and must be reverted
 - Focus on creating actionable, detailed plans rather than writing production code
-- Ensure all recommendations align with project conventions found in background.md
+- Ensure all recommendations align with project conventions found in DEVELOPING.md
 - If critical information is missing, clearly identify what additional context is needed
 
 Remember: Your goal is to transform high-level ideas into detailed, implementable blueprints that another developer could follow without ambiguity.

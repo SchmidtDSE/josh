@@ -127,12 +127,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   @Override
   public String getPath(String template) {
     if (templateRenderer != null) {
-      // Use strategy-aware template processing for facade selection
-      lastTemplateResult = templateRenderer.renderTemplateWithStrategy(template);
-
-      // Always return fully processed template for path creation
-      // The strategy detection is stored in lastTemplateResult for facade selection
-      return templateRenderer.renderTemplate(template);
+      // Use new consolidated template processing for both strategy detection and path creation
+      TemplateResult result = templateRenderer.renderTemplate(template);
+      this.lastTemplateResult = result;
+      return result.getProcessedTemplate();
     } else {
       // Fallback to legacy template processing for backward compatibility
       return getPathLegacy(template);

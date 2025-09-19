@@ -83,7 +83,8 @@ class JvmExportFacadeFactoryStrategyTest {
     // getPath processes templates and determines strategy
     String processedPath = factory.getPath(templatePath);
     assertTrue(processedPath.contains("example_1_other_1"));
-    assertTrue(processedPath.contains("{replicate}")); // Should preserve for parameterized strategy
+    // Should be removed for CSV (consolidated files)
+    assertTrue(!processedPath.contains("{replicate}"));
 
     // Use a basic template path for the target that can actually be processed
     String outputPath = tempDir.resolve("output_{replicate}.csv").toString();
@@ -97,11 +98,11 @@ class JvmExportFacadeFactoryStrategyTest {
     // Test template processing without actually building facades that need file creation
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
 
-    // Test template with {replicate} - should preserve it in processed template
+    // Test template with {replicate} - should remove it for CSV (consolidated files)
     String replicateTemplate = "test_{example}_{other}_{replicate}.csv";
     String processedReplicate = factory.getPath(replicateTemplate);
     assertTrue(processedReplicate.contains("example_1_other_1"));
-    assertTrue(processedReplicate.contains("{replicate}"));
+    assertTrue(!processedReplicate.contains("{replicate}")); // {replicate} removed for CSV
 
     // Test template without {replicate} - should process job templates only
     String noReplicateTemplate = "test_{example}_{other}.csv";
@@ -132,12 +133,12 @@ class JvmExportFacadeFactoryStrategyTest {
     String template = "/{example}_{other}_{step}_{variable}_{replicate}.csv";
     String processedPath = factory.getPath(template);
 
-    // Job templates should be processed, export templates should be preserved
+    // Job templates should be processed, export templates should be fully processed
     assertTrue(processedPath.contains("example_1"));
     assertTrue(processedPath.contains("other_1"));
-    assertTrue(processedPath.contains("{step}"));
-    assertTrue(processedPath.contains("{variable}"));
-    assertTrue(processedPath.contains("{replicate}"));
+    assertTrue(processedPath.contains("__step__")); // {step} replaced with placeholder
+    assertTrue(processedPath.contains("__variable__")); // {variable} replaced with placeholder
+    assertTrue(!processedPath.contains("{replicate}")); // {replicate} removed for CSV
   }
 
   @Test

@@ -33,8 +33,9 @@ import org.joshsim.pipeline.job.JoshJobFileInfo;
  * <p>Example usage:
  * <pre>
  * TemplateStringRenderer renderer = new TemplateStringRenderer(job, 1);
- * String result = renderer.renderTemplate("file:///tmp/josh_{example}_{other}.csv");
- * // Result: "file:///tmp/josh_example_1_other_1.csv"
+ * TemplateResult result = renderer.renderTemplate("file:///tmp/josh_{example}_{other}.csv");
+ * // result.getProcessedTemplate(): "file:///tmp/josh_example_1_other_1.csv"
+ * // result.hasReplicateTemplate(): false (no {replicate} in template)
  * </pre>
  */
 public class TemplateStringRenderer {
@@ -60,55 +61,20 @@ public class TemplateStringRenderer {
   }
 
   /**
-   * Renders a template string by replacing all template variables.
+   * Renders a template string with strategy detection and full template processing.
    *
-   * <p>Processing occurs in two phases:
+   * <p>Processing occurs in multiple phases:
    * <ol>
    *   <li>Job-specific templates: {example}, {other} → file names from JoshJobFileInfo</li>
-   *   <li>Export-specific templates: {replicate}, {step}, {variable} → format-specific
-   *   processing</li>
+   *   <li>Export template detection: Analyze {replicate}, {step}, {variable} for strategy</li>
+   *   <li>Export-specific templates: Format-specific processing for fully processed paths</li>
    * </ol>
    *
    * @param template The template string containing variables in {name} format
-   * @return The rendered string with all template variables replaced
+   * @return TemplateResult with fully processed template and strategy indicators
    * @throws RuntimeException if unknown template variables are found
    */
-  public String renderTemplate(String template) {
-    if (template == null || template.isEmpty()) {
-      return template;
-    }
-
-    // Phase 1: Replace job-specific templates
-    String afterJobTemplates = processJobSpecificTemplates(template);
-
-    // Phase 2: Process export-specific templates
-    return processExportSpecificTemplates(afterJobTemplates);
-  }
-
-  /**
-   * Renders a template string with strategy detection for export facade selection.
-   *
-   * <p>This method performs job-specific template processing and analyzes export-specific
-   * templates for strategy detection. The processing of export-specific templates depends
-   * on the file format and the presence of templates:</p>
-   *
-   * <ul>
-   *   <li>GeoTIFF: Always processes all templates (always uses separate files)</li>
-   *   <li>CSV/NetCDF: Preserves {replicate} for strategy selection, processes others</li>
-   * </ul>
-   *
-   * <p>Processing phases:
-   * <ol>
-   *   <li>Job-specific templates: Replace {example}, {other} with file names</li>
-   *   <li>Export template detection: Analyze presence of {replicate}, {step}, {variable}</li>
-   *   <li>Export template processing: Based on format and strategy requirements</li>
-   * </ol>
-   *
-   * @param template The template string containing variables in {name} format
-   * @return TemplateResult containing appropriately processed template and strategy indicators
-   * @throws RuntimeException if unknown template variables are found
-   */
-  public TemplateResult renderTemplateWithStrategy(String template) {
+  public TemplateResult renderTemplate(String template) {
     if (template == null || template.isEmpty()) {
       return new TemplateResult(template, false, false, false);
     }
@@ -121,12 +87,12 @@ public class TemplateStringRenderer {
     boolean hasStep = template.contains("{step}");
     boolean hasVariable = template.contains("{variable}");
 
-    // Phase 3: Process export-specific templates based on format and strategy
-    String processedTemplate = processExportSpecificTemplatesForStrategy(
-        afterJobTemplates, hasReplicate, hasStep, hasVariable);
+    // Phase 3: Fully process export-specific templates (like old renderTemplate behavior)
+    String fullyProcessedTemplate = processExportSpecificTemplates(afterJobTemplates);
 
-    return new TemplateResult(processedTemplate, hasReplicate, hasStep, hasVariable);
+    return new TemplateResult(fullyProcessedTemplate, hasReplicate, hasStep, hasVariable);
   }
+
 
   /**
    * Processes job-specific template variables using file mappings from JoshJob.
@@ -253,47 +219,6 @@ public class TemplateStringRenderer {
   }
 
 
-  /**
-   * Processes export-specific templates based on format and strategy requirements.
-   *
-   * <p>This method handles export-specific template processing for strategy-aware
-   * template rendering. The processing depends on file format and strategy:</p>
-   *
-   * <ul>
-   *   <li>GeoTIFF: Always processes all templates (legacy behavior maintained)</li>
-   *   <li>CSV/NetCDF with {replicate}: Preserves {replicate} for parameterized strategy</li>
-   *   <li>CSV/NetCDF without {replicate}: Processes all templates for consolidated strategy</li>
-   * </ul>
-   *
-   * @param template The template string after job-specific processing
-   * @param hasReplicate Whether the original template contained {replicate}
-   * @param hasStep Whether the original template contained {step}
-   * @param hasVariable Whether the original template contained {variable}
-   * @return String with appropriate export template processing
-   */
-  private String processExportSpecificTemplatesForStrategy(String template,
-                                                           boolean hasReplicate,
-                                                           boolean hasStep,
-                                                           boolean hasVariable) {
-    if (template.contains(".tif") || template.contains(".tiff")) {
-      // For GeoTIFF: preserve export templates for strategy detection
-      // (legacy behavior is handled separately in renderTemplate method)
-      return template;
-    } else {
-      // For CSV/NetCDF: strategy-aware processing
-      if (hasReplicate) {
-        // Parameterized strategy: preserve all export templates
-        return template;
-      } else {
-        // Consolidated strategy: process all export templates
-        String withStep = hasStep ? template.replaceAll("\\{step\\}", "__step__") : template;
-        String withVariable = hasVariable
-            ? withStep.replaceAll("\\{variable\\}", "__variable__")
-            : withStep;
-        return withVariable.replaceAll("\\{replicate\\}", "");
-      }
-    }
-  }
 
   /**
    * Processes export-specific template variables using existing format-specific logic.
