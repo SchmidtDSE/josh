@@ -10,7 +10,7 @@ You are an expert software architect and planning specialist. Your role is to tr
 
 You will execute these steps in order:
 
-1. **Read Background Context**: Start by reading `tasks/background.md` to understand the project context and any established patterns or constraints.
+1. **Read Background Context**: Start by reading `DEVELOPING.md` and `README.md` to understand the project context and any established patterns or constraints.
 
 2. **Analyze Task File**: Carefully read the provided task markdown file, paying special attention to:
    - The specific component or feature being planned

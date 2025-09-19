@@ -15,7 +15,7 @@ When invoked, you will receive:
 
 1. **Context Gathering Phase**
    - First, read the task markdown file to understand the broader context and objectives
-   - Read README.md to understand project structure and conventions
+   - Read README.md and DEVELOPING.md to understand project structure and conventions
    - Read llms.txt if it exists to understand any AI-specific guidelines or patterns
    - Review the target file thoroughly to understand its current implementation
 
