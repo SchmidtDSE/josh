@@ -14,7 +14,8 @@
       "Bash(./examples/test_job_config.sh:*)",
       "Bash(sed:*)",
       "Bash(git checkout:*)",
-      "Bash(echo $?)"
+      "Bash(echo $?)",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []
