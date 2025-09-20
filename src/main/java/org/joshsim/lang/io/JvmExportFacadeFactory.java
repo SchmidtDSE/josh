@@ -129,6 +129,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     if (templateRenderer != null) {
       // Use new consolidated template processing for both strategy detection and path creation
       TemplateResult result = templateRenderer.renderTemplate(template);
+      result.validateForExportType(template); // Validate template for export type
       this.lastTemplateResult = result;
       return result.getProcessedTemplate();
     } else {

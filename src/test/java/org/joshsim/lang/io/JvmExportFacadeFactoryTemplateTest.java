@@ -55,11 +55,11 @@ public class JvmExportFacadeFactoryTemplateTest {
     TemplateStringRenderer geotiffRenderer = new TemplateStringRenderer(job, 3);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, geotiffRenderer);
 
-    String template = "file:///tmp/josh_{example}_{other}_{replicate}.tif";
+    String template = "file:///tmp/josh_{example}_{other}_{step}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should process job-specific templates and substitute replicate for GeoTIFF
-    assertEquals("file:///tmp/josh_example_1_other_1_3.tif", result);
+    assertEquals("file:///tmp/josh_example_1_other_1___step___3.tif", result);
   }
 
   @Test
@@ -175,10 +175,10 @@ public class JvmExportFacadeFactoryTemplateTest {
     TemplateStringRenderer zeroRenderer = new TemplateStringRenderer(job, 0);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, zeroRenderer);
 
-    String template = "output_{example}_{replicate}.tif";
+    String template = "output_{example}_{variable}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should handle zero replicate correctly
-    assertEquals("output_example_1_0.tif", result);
+    assertEquals("output_example_1___variable___0.tif", result);
   }
 }

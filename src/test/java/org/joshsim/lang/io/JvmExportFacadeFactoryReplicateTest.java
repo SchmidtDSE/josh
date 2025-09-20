@@ -6,8 +6,10 @@
 
 package org.joshsim.lang.io;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.joshsim.pipeline.job.JoshJob;
@@ -84,7 +86,7 @@ public class JvmExportFacadeFactoryReplicateTest {
     TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 7);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(7, renderer);
 
-    String template = "file:///tmp/test_{replicate}.tiff";
+    String template = "file:///tmp/test_{step}_{replicate}.tiff";
     String result = factory.getPath(template);
 
     // Should substitute {replicate} with actual replicate number
@@ -92,7 +94,7 @@ public class JvmExportFacadeFactoryReplicateTest {
         "GeoTIFF path should not contain replicate template placeholder");
     assertTrue(result.contains("7"),
         "GeoTIFF path should contain replicate number");
-    assertEquals("file:///tmp/test_7.tiff", result,
+    assertEquals("file:///tmp/test___step___7.tiff", result,
         "GeoTIFF path should substitute replicate template");
   }
 
@@ -104,13 +106,13 @@ public class JvmExportFacadeFactoryReplicateTest {
     TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 2);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(2, renderer);
 
-    String template = "file:///tmp/test_{replicate}.tif";
+    String template = "file:///tmp/test_{variable}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should substitute {replicate} with actual replicate number
     assertTrue(result.contains("2"),
         "TIF path should contain replicate number");
-    assertEquals("file:///tmp/test_2.tif", result,
+    assertEquals("file:///tmp/test___variable___2.tif", result,
         "TIF path should substitute replicate template");
   }
 
@@ -209,5 +211,41 @@ public class JvmExportFacadeFactoryReplicateTest {
         "NetCDF path should replace replicate template with large numbers");
     assertEquals("file:///tmp/test_999999.nc", ncResult,
         "NetCDF path should replace replicate template with actual number");
+  }
+
+  /**
+   * Integration test for GeoTIFF validation with valid template.
+   */
+  @Test
+  public void testGeoTiffValidationWithValidTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 1);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+
+    String template = "file:///tmp/test_{step}_{variable}_{replicate}.tiff";
+
+    assertDoesNotThrow(() -> {
+      factory.getPath(template);
+    }, "Valid GeoTIFF template with step and variable should not throw validation error");
+  }
+
+  /**
+   * Integration test for GeoTIFF validation with invalid template.
+   */
+  @Test
+  public void testGeoTiffValidationWithInvalidTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 1);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+
+    String template = "file:///tmp/test_{replicate}.tiff";
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      factory.getPath(template);
+    }, "Invalid GeoTIFF template without step/variable should throw validation error");
+
+    String expectedMessage = "GeoTIFF export requires {step} and/or {variable} templates";
+    assertTrue(exception.getMessage().contains(expectedMessage),
+        "Error message should explain GeoTIFF validation requirements");
+    assertTrue(exception.getMessage().contains(template),
+        "Error message should contain the problematic template");
   }
 }
