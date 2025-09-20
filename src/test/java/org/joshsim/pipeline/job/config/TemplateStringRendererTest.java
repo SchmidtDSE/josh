@@ -109,16 +109,16 @@ public class TemplateStringRendererTest {
   @Test
   public void testExportSpecificTemplatesCsv() {
     String template = "/tmp/{example}_output_{replicate}_{step}_{variable}.csv";
-    // For CSV, replicate should be removed (consolidated files)
-    String expected = "/tmp/example_1_output____step_____variable__.csv";
+    // For CSV, replicate should be replaced with actual number (template-driven behavior)
+    String expected = "/tmp/example_1_output_0___step_____variable__.csv";
     assertEquals(expected, renderer.renderTemplate(template).getProcessedTemplate());
   }
 
   @Test
   public void testExportSpecificTemplatesNetcdf() {
     String template = "/tmp/{example}_output_{replicate}_{step}_{variable}.nc";
-    // For NetCDF, replicate should be removed (consolidated files)
-    String expected = "/tmp/example_1_output____step_____variable__.nc";
+    // For NetCDF, replicate should be replaced with actual number (template-driven behavior)
+    String expected = "/tmp/example_1_output_0___step_____variable__.nc";
     assertEquals(expected, renderer.renderTemplate(template).getProcessedTemplate());
   }
 
@@ -132,7 +132,7 @@ public class TemplateStringRendererTest {
   @Test
   public void testMixedTemplatesCsv() {
     String template = "file:///data/{example}_{other}_{replicate}_{step}.csv";
-    String expected = "file:///data/example_1_other_1____step__.csv";
+    String expected = "file:///data/example_1_other_1_0___step__.csv";
     assertEquals(expected, renderer.renderTemplate(template).getProcessedTemplate());
   }
 
@@ -146,7 +146,7 @@ public class TemplateStringRendererTest {
   @Test
   public void testOnlyExportSpecificTemplatesCsv() {
     String template = "/output/{replicate}_{step}_{variable}.csv";
-    String expected = "/output/___step_____variable__.csv";
+    String expected = "/output/0___step_____variable__.csv";
     assertEquals(expected, renderer.renderTemplate(template).getProcessedTemplate());
   }
 
@@ -182,7 +182,7 @@ public class TemplateStringRendererTest {
 
     String template = "output_{config.backup}_{weather_data}_{replicate}.csv";
     // The base names extracted from logical file names are "config.backup" and "weather_data"
-    String expected = "output_config.backup.v1_weather_2023_.csv";
+    String expected = "output_config.backup.v1_weather_2023_2.csv";
     assertEquals(expected, complexRenderer.renderTemplate(template).getProcessedTemplate());
   }
 
@@ -247,7 +247,7 @@ public class TemplateStringRendererTest {
 
     assertEquals("/data/example_1_3.tif",
         replicateRenderer.renderTemplate(geotiffTemplate).getProcessedTemplate());
-    assertEquals("/data/example_1_.csv",
+    assertEquals("/data/example_1_3.csv",
         replicateRenderer.renderTemplate(csvTemplate).getProcessedTemplate());
   }
 
@@ -363,7 +363,7 @@ public class TemplateStringRendererTest {
     // CSV format - should remove replicate template but keep custom parameter
     String csvTemplate = "/tmp/{example}_{environment}_{replicate}.csv";
     String csvResult = customRenderer.renderTemplate(csvTemplate).getProcessedTemplate();
-    assertEquals("/tmp/example_1_test_.csv", csvResult);
+    assertEquals("/tmp/example_1_test_2.csv", csvResult);
   }
 
   @Test

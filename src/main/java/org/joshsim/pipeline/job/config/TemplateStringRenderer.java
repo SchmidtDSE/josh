@@ -93,7 +93,6 @@ public class TemplateStringRenderer {
     return new TemplateResult(fullyProcessedTemplate, hasReplicate, hasStep, hasVariable);
   }
 
-
   /**
    * Processes job-specific template variables using file mappings from JoshJob.
    *
@@ -218,31 +217,27 @@ public class TemplateStringRenderer {
            || "variable".equals(templateVar);
   }
 
-
-
   /**
-   * Processes export-specific template variables using existing format-specific logic.
+   * Processes export-specific template variables using unified template-driven logic.
    *
-   * <p>This method replicates the logic from JvmExportFacadeFactory.getPath()
-   * for handling {replicate}, {step}, and {variable} templates based on file format.</p>
+   * <p>This method implements template-driven behavior where presence of {replicate}
+   * determines whether files are separated or consolidated, regardless of file format.</p>
    *
    * @param template The template string after job-specific processing
    * @return String with export-specific templates processed
    */
   private String processExportSpecificTemplates(String template) {
-    // Determine file format for template processing strategy
-    if (template.contains(".tif") || template.contains(".tiff")) {
-      // For GeoTIFF: preserve replicate template behavior for separate files
-      String replicateStr = Integer.toString(replicate);
-      String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
-      String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
-      String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
-      return withVariable;
-    } else {
-      // For tabular and NetCDF formats: remove replicate template (consolidated files)
-      String withStep = template.replaceAll("\\{step\\}", "__step__");
-      String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
-      return withVariable.replaceAll("\\{replicate\\}", "");
-    }
+    String result = template;
+
+    // Unified template-driven processing:
+    // If {replicate} is present, replace with actual number for ALL formats
+    // If {replicate} is absent, no replacement needed (consolidated files)
+    result = result.replaceAll("\\{replicate\\}", Integer.toString(replicate));
+
+    // Step and variable templates always become placeholders for later processing
+    result = result.replaceAll("\\{step\\}", "__step__");
+    result = result.replaceAll("\\{variable\\}", "__variable__");
+
+    return result;
   }
 }

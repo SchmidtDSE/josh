@@ -41,8 +41,8 @@ class TemplateStringRendererStrategyTest {
     String template = "file:///tmp/test_{example}_{other}_{replicate}.csv";
     TemplateResult result = renderer.renderTemplate(template);
 
-    // Check processed template has all templates replaced (CSV removes {replicate})
-    assertEquals("file:///tmp/test_example_1_other_1_.csv",
+    // Check processed template has all templates replaced (CSV replaces {replicate} with number)
+    assertEquals("file:///tmp/test_example_1_other_1_1.csv",
                  result.getProcessedTemplate());
 
     // Check strategy indicators
@@ -57,7 +57,7 @@ class TemplateStringRendererStrategyTest {
     String template = "file:///tmp/data_{example}_{step}_{variable}_{replicate}.nc";
     TemplateResult result = renderer.renderTemplate(template);
 
-    assertEquals("file:///tmp/data_example_1___step_____variable___.nc",
+    assertEquals("file:///tmp/data_example_1___step_____variable___1.nc",
                  result.getProcessedTemplate());
 
     assertTrue(result.hasReplicateTemplate());
@@ -135,8 +135,8 @@ class TemplateStringRendererStrategyTest {
     // New consolidated method produces fully processed template AND strategy indicators
     TemplateResult result = renderer.renderTemplate(template);
 
-    // For CSV, {replicate} should be removed (consolidated files)
-    assertEquals("file:///tmp/test_example_1_other_1_.csv", result.getProcessedTemplate());
+    // For CSV, {replicate} should be replaced with number (template-driven behavior)
+    assertEquals("file:///tmp/test_example_1_other_1_1.csv", result.getProcessedTemplate());
 
     // But strategy detection should still work
     assertTrue(result.hasReplicateTemplate());
@@ -172,7 +172,7 @@ class TemplateStringRendererStrategyTest {
     String template = "file:///tmp/{config.backup}_{weather.data}_{replicate}.nc";
     TemplateResult result = complexRenderer.renderTemplate(template);
 
-    assertEquals("file:///tmp/config_v2_weather_2023_.nc",
+    assertEquals("file:///tmp/config_v2_weather_2023_0.nc",
         result.getProcessedTemplate());
     assertTrue(result.hasReplicateTemplate());
   }
@@ -182,7 +182,7 @@ class TemplateStringRendererStrategyTest {
     String template = "file:///tmp/data_{replicate}.csv";
     TemplateResult result = renderer.renderTemplate(template);
 
-    assertEquals("file:///tmp/data_.csv", result.getProcessedTemplate());
+    assertEquals("file:///tmp/data_1.csv", result.getProcessedTemplate());
     assertTrue(result.hasReplicateTemplate());
     assertTrue(result.requiresParameterizedOutput());
   }

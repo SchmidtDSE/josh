@@ -64,13 +64,14 @@ public class JvmExportFacadeFactoryTemplateTest {
 
   @Test
   public void testFactoryWithTemplateRendererNetcdf() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, templateRenderer);
+    TemplateStringRenderer netcdfRenderer = new TemplateStringRenderer(job, 5);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, netcdfRenderer);
 
     String template = "file:///tmp/josh_{example}_{other}_{replicate}.nc";
     String result = factory.getPath(template);
 
-    // Should process job-specific templates and remove replicate for NetCDF (consolidated files)
-    assertEquals("file:///tmp/josh_example_1_other_1_.nc", result);
+    // Should process job-specific templates and replace replicate with number for NetCDF
+    assertEquals("file:///tmp/josh_example_1_other_1_5.nc", result);
   }
 
   @Test
@@ -142,8 +143,8 @@ public class JvmExportFacadeFactoryTemplateTest {
     String template = "file:///tmp/simple_{replicate}.csv";
     String result = factory.getPath(template);
 
-    // Should remove replicate for CSV (consolidated files) even with empty job
-    assertEquals("file:///tmp/simple_.csv", result);
+    // Should replace replicate with number for CSV even with empty job
+    assertEquals("file:///tmp/simple_0.csv", result);
   }
 
   @Test
