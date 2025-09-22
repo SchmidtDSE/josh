@@ -39,10 +39,10 @@ assert_ok examples/simulations/simple_seki.josh TestSimpleSimulation 2 || exit 4
 echo "Testing netCDF output..."
 rm -f /tmp/simple_josh_*.nc
 assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 2 || exit 7
-[ -f "/tmp/simple_josh_1.nc" ] || exit 8
-[ -f "/tmp/simple_josh_2.nc" ] || exit 9
-[ -s "/tmp/simple_josh_1.nc" ] || exit 10
-[ -s "/tmp/simple_josh_2.nc" ] || exit 11
+[ -f "/tmp/simple_josh_0.nc" ] || exit 8
+[ -f "/tmp/simple_josh_1.nc" ] || exit 9
+[ -s "/tmp/simple_josh_0.nc" ] || exit 10
+[ -s "/tmp/simple_josh_1.nc" ] || exit 11
 
 echo "Testing geotiff output..."
 rm -f /tmp/simple_josh_*.tiff
