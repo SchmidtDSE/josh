@@ -47,9 +47,9 @@ assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 2 || exit
 echo "Testing geotiff output..."
 rm -f /tmp/simple_josh_*.tiff
 assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 2 || exit 12
-[ -f "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 13
-[ -s "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 14
-[ -f "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 15
-[ -s "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 16
+[ -f "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 13
+[ -s "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 14
+[ -f "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 15
+[ -s "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 16
 
 echo "✓ All output format tests passed!"
