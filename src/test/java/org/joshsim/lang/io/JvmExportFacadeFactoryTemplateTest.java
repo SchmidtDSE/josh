@@ -55,22 +55,23 @@ public class JvmExportFacadeFactoryTemplateTest {
     TemplateStringRenderer geotiffRenderer = new TemplateStringRenderer(job, 3);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, geotiffRenderer);
 
-    String template = "file:///tmp/josh_{example}_{other}_{replicate}.tif";
+    String template = "file:///tmp/josh_{example}_{other}_{step}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should process job-specific templates and substitute replicate for GeoTIFF
-    assertEquals("file:///tmp/josh_example_1_other_1_3.tif", result);
+    assertEquals("file:///tmp/josh_example_1_other_1___step___3.tif", result);
   }
 
   @Test
   public void testFactoryWithTemplateRendererNetcdf() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, templateRenderer);
+    TemplateStringRenderer netcdfRenderer = new TemplateStringRenderer(job, 5);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, netcdfRenderer);
 
     String template = "file:///tmp/josh_{example}_{other}_{replicate}.nc";
     String result = factory.getPath(template);
 
-    // Should process job-specific templates and preserve replicate for parameterized strategy
-    assertEquals("file:///tmp/josh_example_1_other_1_{replicate}.nc", result);
+    // Should process job-specific templates and replace replicate with number for NetCDF
+    assertEquals("file:///tmp/josh_example_1_other_1_5.nc", result);
   }
 
   @Test
@@ -142,8 +143,8 @@ public class JvmExportFacadeFactoryTemplateTest {
     String template = "file:///tmp/simple_{replicate}.csv";
     String result = factory.getPath(template);
 
-    // Should preserve replicate for parameterized strategy even with empty job
-    assertEquals("file:///tmp/simple_{replicate}.csv", result);
+    // Should replace replicate with number for CSV even with empty job
+    assertEquals("file:///tmp/simple_0.csv", result);
   }
 
   @Test
@@ -174,10 +175,10 @@ public class JvmExportFacadeFactoryTemplateTest {
     TemplateStringRenderer zeroRenderer = new TemplateStringRenderer(job, 0);
     JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, zeroRenderer);
 
-    String template = "output_{example}_{replicate}.tif";
+    String template = "output_{example}_{variable}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should handle zero replicate correctly
-    assertEquals("output_example_1_0.tif", result);
+    assertEquals("output_example_1___variable___0.tif", result);
   }
 }

@@ -24,34 +24,6 @@ assert_ok() {
   fi
 }
 
-echo "Testing CSV output..."
-rm -f /tmp/simple_josh.csv
-assert_ok examples/simulations/simple.josh TestSimpleSimulation 1 || exit 1
-[ -f "/tmp/simple_josh.csv" ] || exit 2
-[ -s "/tmp/simple_josh.csv" ] || exit 3
-
-echo "Testing CSV with Earth-space output..."
-rm -f /tmp/simple_seki_josh.csv
-assert_ok examples/simulations/simple_seki.josh TestSimpleSimulation 2 || exit 4
-[ -f "/tmp/simple_seki_josh.csv" ] || exit 5
-[ -s "/tmp/simple_seki_josh.csv" ] || exit 6
-
-echo "Testing netCDF output..."
-rm -f /tmp/simple_josh_*.nc
-assert_ok examples/simulations/simple_netcdf.josh TestSimpleSimulation 2 || exit 7
-[ -f "/tmp/simple_josh_0.nc" ] || exit 8
-[ -f "/tmp/simple_josh_1.nc" ] || exit 9
-[ -s "/tmp/simple_josh_0.nc" ] || exit 10
-[ -s "/tmp/simple_josh_1.nc" ] || exit 11
-
-echo "Testing geotiff output..."
-rm -f /tmp/simple_josh_*.tiff
-assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 2 || exit 12
-[ -f "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 13
-[ -s "/tmp/simple_josh_averageAge_0_2.tiff" ] || exit 14
-[ -f "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 15
-[ -s "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 16
-
 echo "Testing guide examples..."
 assert_ok examples/guide/hello_cli.josh Main 1 || exit 17
 
@@ -90,11 +62,4 @@ ls -la *.jshd 2>/dev/null || echo "No .jshd files in working directory"
 assert_ok examples/guide/grass_shrub_fire_cli.josh Main 1 || exit 18
 assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 19
 
-echo "Testing config example with external config file..."
-# Copy the config file to working directory as expected by the config system
-cp examples/features/config_example.jshc example.jshc || exit 21
-rm -f /tmp/config_example_josh.csv
-assert_ok examples/features/config_example.josh ConfigExample 1 || exit 22
-[ -f "/tmp/config_example_josh.csv" ] || exit 23
-[ -s "/tmp/config_example_josh.csv" ] || exit 24
-echo "Config example test passed successfully!"
+echo "✓ All guide example tests passed!"

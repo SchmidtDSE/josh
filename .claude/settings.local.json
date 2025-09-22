@@ -13,7 +13,10 @@
       "Bash(./test_job_config.sh:*)",
       "Bash(./examples/test_job_config.sh:*)",
       "Bash(sed:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(echo $?)",
+      "Read(//tmp/**)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

@@ -6,54 +6,76 @@
 
 package org.joshsim.lang.io;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.JoshJobFileInfo;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * Test suite for JvmExportFacadeFactory replicate template handling.
  *
  * <p>This test verifies that the factory correctly handles replicate templates
- * differently for spatial formats (NetCDF, GeoTIFF) versus tabular formats (CSV).</p>
+ * using unified template-driven behavior for all file formats.</p>
  */
 public class JvmExportFacadeFactoryReplicateTest {
 
+  private JoshJob testJob;
+
+  @BeforeEach
+  void setUp() {
+    // Create a minimal test job for template processing
+    testJob = new JoshJobBuilder()
+        .setFileInfo("example.jshc", new JoshJobFileInfo("example_1", "test_data/example_1.jshc"))
+        .setReplicates(1)
+        .build();
+  }
+
   /**
-   * Test that CSV file paths have replicate template removed.
+   * Test that CSV file paths now replace replicate template with actual number.
    */
   @Test
-  public void testCsvPathRemovesReplicateTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5);
+  public void testCsvPathReplacesReplicateTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 5);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, renderer);
 
     String template = "file:///tmp/test_{replicate}.csv";
     String result = factory.getPath(template);
 
-    // Should remove {replicate} template
+    // Should replace {replicate} with actual number (template-driven behavior)
     assertFalse(result.contains("{replicate}"),
         "CSV path should not contain replicate template: " + result);
-    assertEquals("file:///tmp/test_.csv", result,
-        "CSV path should remove replicate template");
+    assertTrue(result.contains("5"),
+        "CSV path should contain replicate number");
+    assertEquals("file:///tmp/test_5.csv", result,
+        "CSV path should replace replicate template with actual number");
   }
 
   /**
-   * Test that NetCDF file paths now remove replicate template (aligned with CSV behavior).
+   * Test that NetCDF file paths now replace replicate template with actual number.
    */
   @Test
-  public void testNetcdfPathRemovesReplicateTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3);
+  public void testNetcdfPathReplacesReplicateTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 3);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, renderer);
 
     String template = "file:///tmp/test_{replicate}.nc";
     String result = factory.getPath(template);
 
-    // Should remove {replicate} template like CSV (consolidated files with replicate dimension)
+    // Should replace {replicate} with actual number (template-driven behavior)
     assertFalse(result.contains("{replicate}"),
         "NetCDF path should not contain replicate template placeholder");
-    assertFalse(result.contains("3"),
-        "NetCDF path should not contain replicate number");
-    assertEquals("file:///tmp/test_.nc", result,
-        "NetCDF path should remove replicate template");
+    assertTrue(result.contains("3"),
+        "NetCDF path should contain replicate number");
+    assertEquals("file:///tmp/test_3.nc", result,
+        "NetCDF path should replace replicate template with actual number");
   }
 
   /**
@@ -61,9 +83,10 @@ public class JvmExportFacadeFactoryReplicateTest {
    */
   @Test
   public void testGeotiffPathPreservesReplicateTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(7);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 7);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(7, renderer);
 
-    String template = "file:///tmp/test_{replicate}.tiff";
+    String template = "file:///tmp/test_{step}_{replicate}.tiff";
     String result = factory.getPath(template);
 
     // Should substitute {replicate} with actual replicate number
@@ -71,7 +94,7 @@ public class JvmExportFacadeFactoryReplicateTest {
         "GeoTIFF path should not contain replicate template placeholder");
     assertTrue(result.contains("7"),
         "GeoTIFF path should contain replicate number");
-    assertEquals("file:///tmp/test_7.tiff", result,
+    assertEquals("file:///tmp/test___step___7.tiff", result,
         "GeoTIFF path should substitute replicate template");
   }
 
@@ -80,15 +103,16 @@ public class JvmExportFacadeFactoryReplicateTest {
    */
   @Test
   public void testTifExtensionPreservesReplicateTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(2);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 2);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(2, renderer);
 
-    String template = "file:///tmp/test_{replicate}.tif";
+    String template = "file:///tmp/test_{variable}_{replicate}.tif";
     String result = factory.getPath(template);
 
     // Should substitute {replicate} with actual replicate number
     assertTrue(result.contains("2"),
         "TIF path should contain replicate number");
-    assertEquals("file:///tmp/test_2.tif", result,
+    assertEquals("file:///tmp/test___variable___2.tif", result,
         "TIF path should substitute replicate template");
   }
 
@@ -97,7 +121,8 @@ public class JvmExportFacadeFactoryReplicateTest {
    */
   @Test
   public void testPathWithoutReplicateTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 5);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, renderer);
 
     // CSV without replicate template
     String csvTemplate = "file:///tmp/simple.csv";
@@ -117,7 +142,8 @@ public class JvmExportFacadeFactoryReplicateTest {
    */
   @Test
   public void testStepAndVariableTemplatesStillWork() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 1);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
 
     // CSV with step and variable templates (but no replicate)
     String csvTemplate = "file:///tmp/{variable}_{step}.csv";
@@ -125,11 +151,11 @@ public class JvmExportFacadeFactoryReplicateTest {
     assertEquals("file:///tmp/__variable_____step__.csv", csvResult,
         "CSV should process step and variable templates");
 
-    // NetCDF with all templates - replicate should now be removed
+    // NetCDF with all templates - replicate should now be replaced with number
     String ncTemplate = "file:///tmp/{variable}_{step}_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
-    assertEquals("file:///tmp/__variable_____step___.nc", ncResult,
-        "NetCDF should process step/variable templates but remove replicate");
+    assertEquals("file:///tmp/__variable_____step___1.nc", ncResult,
+        "NetCDF should process step/variable templates and replace replicate with number");
   }
 
   /**
@@ -137,50 +163,89 @@ public class JvmExportFacadeFactoryReplicateTest {
    */
   @Test
   public void testComplexTemplates() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(42);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 42);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(42, renderer);
 
-    // Complex CSV template - replicate should be removed
+    // Complex CSV template - replicate should be replaced with number
     String csvTemplate = "file:///tmp/output_{variable}_step{step}_rep{replicate}_final.csv";
     String csvResult = factory.getPath(csvTemplate);
-    assertEquals("file:///tmp/output___variable___step__step___rep_final.csv", csvResult,
-        "Complex CSV template should remove replicate but keep others");
+    assertEquals("file:///tmp/output___variable___step__step___rep42_final.csv", csvResult,
+        "Complex CSV template should replace replicate with number and keep others");
 
-    // Complex NetCDF template - replicate should be removed, others processed
+    // Complex NetCDF template - replicate should be replaced with number, others processed
     String ncTemplate = "file:///tmp/output_{variable}_step{step}_rep{replicate}_final.nc";
     String ncResult = factory.getPath(ncTemplate);
-    assertEquals("file:///tmp/output___variable___step__step___rep_final.nc", ncResult,
-        "Complex NetCDF template should remove replicate but keep others");
+    assertEquals("file:///tmp/output___variable___step__step___rep42_final.nc", ncResult,
+        "Complex NetCDF template should replace replicate with number and keep others");
   }
 
   /**
-   * Test replicate number zero is handled correctly (now removes replicate).
+   * Test replicate number zero is handled correctly (now replaces with actual number).
    */
   @Test
   public void testReplicateZero() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 0);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, renderer);
 
     String ncTemplate = "file:///tmp/test_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
 
-    assertFalse(ncResult.contains("0"),
-        "NetCDF path should remove replicate template, not substitute with zero");
-    assertEquals("file:///tmp/test_.nc", ncResult,
-        "NetCDF path should remove replicate template");
+    assertTrue(ncResult.contains("0"),
+        "NetCDF path should replace replicate template with zero");
+    assertEquals("file:///tmp/test_0.nc", ncResult,
+        "NetCDF path should replace replicate template with actual number");
   }
 
   /**
-   * Test large replicate numbers are handled correctly (now removes replicate).
+   * Test large replicate numbers are handled correctly (now replaces with actual number).
    */
   @Test
   public void testLargeReplicateNumber() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(999999);
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 999999);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(999999, renderer);
 
     String ncTemplate = "file:///tmp/test_{replicate}.nc";
     String ncResult = factory.getPath(ncTemplate);
 
-    assertFalse(ncResult.contains("999999"),
-        "NetCDF path should remove replicate template, not substitute with large numbers");
-    assertEquals("file:///tmp/test_.nc", ncResult,
-        "NetCDF path should remove replicate template");
+    assertTrue(ncResult.contains("999999"),
+        "NetCDF path should replace replicate template with large numbers");
+    assertEquals("file:///tmp/test_999999.nc", ncResult,
+        "NetCDF path should replace replicate template with actual number");
+  }
+
+  /**
+   * Integration test for GeoTIFF validation with valid template.
+   */
+  @Test
+  public void testGeoTiffValidationWithValidTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 1);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+
+    String template = "file:///tmp/test_{step}_{variable}_{replicate}.tiff";
+
+    assertDoesNotThrow(() -> {
+      factory.getPath(template);
+    }, "Valid GeoTIFF template with step and variable should not throw validation error");
+  }
+
+  /**
+   * Integration test for GeoTIFF validation with invalid template.
+   */
+  @Test
+  public void testGeoTiffValidationWithInvalidTemplate() {
+    TemplateStringRenderer renderer = new TemplateStringRenderer(testJob, 1);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+
+    String template = "file:///tmp/test_{replicate}.tiff";
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      factory.getPath(template);
+    }, "Invalid GeoTIFF template without step/variable should throw validation error");
+
+    String expectedMessage = "GeoTIFF export requires {step} and/or {variable} templates";
+    assertTrue(exception.getMessage().contains(expectedMessage),
+        "Error message should explain GeoTIFF validation requirements");
+    assertTrue(exception.getMessage().contains(template),
+        "Error message should contain the problematic template");
   }
 }

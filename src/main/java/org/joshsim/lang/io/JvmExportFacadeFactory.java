@@ -127,16 +127,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   @Override
   public String getPath(String template) {
     if (templateRenderer != null) {
-      // Use strategy-aware template processing for facade selection
-      lastTemplateResult = templateRenderer.renderTemplateWithStrategy(template);
-      
-      // For TIFF files, return fully processed path for file creation
-      // For CSV/NetCDF, return strategy-aware processed template
-      if (template.contains(".tif") || template.contains(".tiff")) {
-        return templateRenderer.renderTemplate(template);
-      } else {
-        return lastTemplateResult.getProcessedTemplate();
-      }
+      // Use new consolidated template processing for both strategy detection and path creation
+      TemplateResult result = templateRenderer.renderTemplate(template);
+      result.validateForExportType(template); // Validate template for export type
+      this.lastTemplateResult = result;
+      return result.getProcessedTemplate();
     } else {
       // Fallback to legacy template processing for backward compatibility
       return getPathLegacy(template);

@@ -161,11 +161,36 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
-  runTests:
+  testOutputFormats:
     needs: [validateExamples, testPreprocessing]
     environment: Build
     runs-on: ubuntu-latest
-    name: Run Josh examples
+    name: Test Output Formats (CSV, NetCDF, GeoTIFF)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Test output formats
+        run: bash examples/test_output_formats.sh
+  testGuideExamples:
+    needs: [validateExamples, testPreprocessing]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Guide Examples
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -189,15 +214,64 @@ jobs:
         with:
           name: preprocessed-tutorial-data
           path: ./landing/preprocessed_data/
-      - name: Run examples
-        run: bash examples/test.sh
+      - name: Test guide examples
+        run: bash examples/test_guide_examples.sh
+  testConfiguration:
+    needs: [validateExamples, testPreprocessing]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Configuration Features
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Test configuration
+        run: bash examples/test_config.sh
+  testAdditionalFeatures:
+    needs: [validateExamples, testPreprocessing]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Additional Features
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Download preprocessed tutorial data
+        uses: actions/download-artifact@v4
+        with:
+          name: preprocessed-tutorial-data
+          path: ./landing/preprocessed_data/
       - name: Test external data with --data option
         run: bash examples/test_data_option.sh
       - name: Test job configuration template functionality
         run: bash examples/test_job_config.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, runTests, testPreprocessing ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, testOutputFormats, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser

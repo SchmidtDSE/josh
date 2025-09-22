@@ -20,7 +20,7 @@ package org.joshsim.pipeline.job.config;
  *
  * <p>Example usage:
  * <pre>
- * TemplateResult result = renderer.renderTemplateWithStrategy(template);
+ * TemplateResult result = renderer.renderTemplate(template);
  * if (result.requiresParameterizedOutput()) {
  *     // Use multi-file export strategy
  * } else {
@@ -126,6 +126,38 @@ public class TemplateResult {
    */
   public boolean requiresVariableParameterization() {
     return hasVariableTemplate;
+  }
+
+  /**
+   * Validates that the template is appropriate for the export type.
+   *
+   * <p>For GeoTIFF exports, validates that required templates are present to enable
+   * proper file separation per timestep and/or variable. GeoTIFF files require
+   * {step} and/or {variable} templates to create meaningful separate output files.</p>
+   *
+   * @param template The original template string to validate
+   * @throws IllegalArgumentException if template is invalid for the detected export type
+   */
+  public void validateForExportType(String template) {
+    if (isGeoTiff(template)) {
+      if (!hasStepTemplate && !hasVariableTemplate) {
+        throw new IllegalArgumentException(
+            "GeoTIFF export requires {step} and/or {variable} templates "
+            + "to create separate files per timestep/variable. "
+            + "Current template: '" + template + "'"
+        );
+      }
+    }
+  }
+
+  /**
+   * Determines if the template is for GeoTIFF export based on file extension.
+   *
+   * @param template The template string to check
+   * @return True if template appears to be for GeoTIFF export
+   */
+  private boolean isGeoTiff(String template) {
+    return template.contains(".tif") || template.contains(".tiff");
   }
 
   @Override

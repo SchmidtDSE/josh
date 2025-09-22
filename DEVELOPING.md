@@ -1,224 +1,197 @@
-# Josh Development Guide
+# Josh Developer Notes
 
-This guide provides common commands used during development of the Josh Simulation Engine, extracted from the CI/CD workflow.
+## Overview
 
-## Prerequisites
+Josh is an ecologist-centered platform for agent-based simulations focused on vegetation modeling. It uses a domain-specific language (DSL) designed for ecological researchers, policy makers, and scientists who may not have extensive programming backgrounds. The platform enables multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
 
+## Key Features
+
+### Multiple Execution Environments
+- **Browser via WebAssembly**: Simulations run directly in web browsers using TeaVM compilation, requiring no installation
+- **Local JVM**: High-performance execution with parallelization on local machines 
+- **Distributed via JoshCloud**: Large-scale distributed processing across multiple machines with API key access
+
+### Josh Language
+A readable domain-specific language with:
+- Stanza-based structure (simulation, patch, organism, disturbance, management)
+- Strong unit system with custom units and conversions
+- Stochastic modeling with distribution sampling
+- Spatial queries and geospatial data support
+- Configuration files (.jshc) for parameterization without code changes
+- Preprocessed data files (.jshd) for optimized geospatial data handling
+
+## Project Structure
+
+### Core Components
+- **Java Backend**: Main simulation engine built with Gradle
+- **Web Editor**: Browser-based IDE at editor.joshsim.org
+- **Command Line Interface**: Local execution via `java -jar joshsim.jar`
+- **Python Interface (joshpy)**: Coming soon but not yet released
+
+### Commands
+- `validate`: Check Josh script syntax
+- `run`: Execute simulations
+- `server`: Start local web interface
+- `preprocess`: Create optimized .jshd files from geospatial data
+- `discoverConfig`: Find configuration variables in scripts
+- `test`: Run Josh script unit tests
+
+## Development Workflow
+
+### Validation Commands
+**IMPORTANT**: All work should ensure these validation commands pass or fail in an expected way:
+- `./gradlew test` - Run Java unit tests
+- `./gradlew checkstyleMain` - Check main code style compliance
+- `./gradlew checkstyleTest` - Check test code style compliance
+
+### Additional Quality Checks
+- `./gradlew generateGrammarSource` - Verify ANTLR grammar generation
+- `bash examples/validate.sh` - Validate example Josh scripts
+- `bash examples/test.sh` - Run example Josh script tests
+
+### Build Commands
+- `./gradlew fatJar` - Build executable JAR with all dependencies
+- `./gradlew war` - Build WebAssembly version for browser
+
+### Notes
+
+Some output is suppressed. If you are adding printf statements for debugging, please be sure to review `build.gradle`. That file should have its prior suppression settings restored when debugging is done. Please also be careful to remove unnecessary printf statements when done.
+
+## Development Standards
+
+### Java Code (Google Java Style Guide)
+- ~80% test coverage target
+- JavaDoc for all non-test public members
+- Use Spotless for automatic formatting
+- Checkstyle enforced via Gradle
+
+### JavaScript Code (Google JavaScript Style Guide)
+- JSDoc for all public members
+- Vanilla JavaScript only (no webpack/bundlers)
+- Must run directly in browser
+- Limited production dependencies via minified JS
+
+### Josh Scripts
+- Follow ecological modeling best practices
+- Use meaningful entity and variable names
+- Include unit tests where applicable
+- Document complex behaviors with comments
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+The project uses comprehensive CI/CD via `.github/workflows/build.yaml`:
+
+1. **Build Phase**:
+   - Build language specification PDF from markdown
+   - Build fat JAR for distribution
+   - Build WebAssembly version for browser
+
+2. **Static Checks**:
+   - Grammar generation verification
+   - Checkstyle for main and test code
+   - Python linting with pyflakes
+
+3. **Testing**:
+   - Java unit tests via Gradle
+   - Josh example validation and execution
+   - Tutorial preprocessing tests
+   - Python package installation and tests
+
+4. **Deployment** (main/dev branches only):
+   - Deploy to SFTP for static hosting
+   - Deploy to Google Cloud Run for distributed execution
+   - Separate production and development environments
+
+## Security Features
+
+### Sandbox Mode
+- Limits file access to code, .jshd, and .jshc files only
+- Blocks network access except for intended operations
+- Enabled by default in server mode and JoshCloud
+
+### API Key Management
+- Optional API key validation via `JOSH_API_KEYS` environment variable
+- Comma-separated list of valid keys
+- All requests allowed if not configured
+
+## Key Technologies
+
+### Core Dependencies
+- **ANTLR4**: DSL parsing and grammar
+- **TeaVM**: WebAssembly compilation for browser execution
+- **Apache SIS**: Coordinate systems and COG support
+- **GeoTools**: Geospatial data processing
+- **UCAR NetCDF**: NetCDF file support
+- **Undertow**: Local web server
+
+### Development Tools
+- **Gradle**: Build system and dependency management
+- **JUnit**: Java unit testing
+- **Mockito**: Test mocking framework
+- **Checkstyle**: Code style enforcement
+- **Spotless**: Automatic code formatting
+
+## Repository Structure
+```
+josh/
+├── src/                    # Java source code
+├── editor/                 # Web-based editor
+├── examples/              # Example Josh scripts
+├── landing/               # Landing page and documentation
+├── cloud-img/             # Docker configurations
+├── joshpy/                # Python interface (future)
+├── tasks/                 # Task documentation
+├── llms.txt              # LLM-specific context
+└── build.gradle          # Build configuration
+```
+
+## Environment Requirements
+
+### Development
 - Java 21 (Temurin recommended)
 - Gradle build system
-- libnetcdf-dev (for netCDF support)
-- Python 3.9+ (for joshpy development)
+- Optional: Docker for containerized development
 
-## Build Commands
+### Production
+- Java 21 runtime for local execution
+- Modern web browser for WebAssembly version
+- API key for JoshCloud access (trusted partners only)
 
-### Core Build
-```bash
-# Build the main fat JAR
-./gradlew fatJar
-# Output: build/libs/joshsim-fat.jar
+## Getting Started
 
-# Build the WAR for web deployment
-./gradlew war
-# Output: build/libs/JoshSim.war
-
-# Generate ANTLR grammar source
-./gradlew generateGrammarSource
-```
-
-## Code Quality & Style Checks
-
-```bash
-# Check main code style (Google Java Style Guide)
-./gradlew checkstyleMain
-
-# Check test code style
-./gradlew checkstyleTest
-
-# Run all style checks
-./gradlew checkstyleMain checkstyleTest
-```
-
-## Testing
-
-### Java Tests
-```bash
-# Run all Java unit tests
-./gradlew test
-
-# Validate Josh script examples
-bash examples/validate.sh
-
-# Run Josh script tests
-bash examples/test.sh
-
-# Test external data with --data option
-bash examples/test_data_option.sh
-
-# Test job configuration template functionality
-bash examples/test_job_config.sh
-```
-
-### Preprocessing Tests
-```bash
-# Test basic preprocessing functionality
-bash examples/test_basic_preprocess.sh
-
-# Test spatial preprocessing functionality
-bash examples/test_spatial_preprocess.sh
-
-# Test temporal preprocessing and create tutorial data
-bash landing/test_preprocess.sh
-```
-
-### Python Tests
-```bash
-# Install joshpy
-cd joshpy && pip install .
-
-# Install development dependencies
-cd joshpy && pip install .[dev]
-
-# Run Python linting
-pyflakes joshpy/joshpy/*.py
-
-# Run Python tests
-cd joshpy && nose2
-```
-
-## Web Interface Development
-
-```bash
-# Install JavaScript dependencies for editor
-cd editor/third_party && bash install_deps.sh
-
-# Install landing page dependencies
-cd landing && bash install_deps.sh
-
-# Extract WASM from JAR for web editor
-bash editor/war/get_from_jar.sh
-
-# Package web editor for deployment
-cd web && bash support/package.sh
-```
-
-## Josh CLI Commands
-
-### Validation & Testing
-```bash
-# Validate Josh script syntax
-java -jar build/libs/joshsim-fat.jar validate script.josh
-
-# Run Josh script tests
-java -jar build/libs/joshsim-fat.jar test script.josh
-
-# Run a simulation
-java -jar build/libs/joshsim-fat.jar run simulation.josh
-```
-
-### Preprocessing
-```bash
-# Create optimized jshd files from netCDF
-java -jar build/libs/joshsim-fat.jar preprocess simulation.josh MySimulation data.nc variable units output.jshd
-```
-
-### Configuration Discovery
-```bash
-# Find configuration variables in scripts
-java -jar build/libs/joshsim-fat.jar discoverConfig simulation.josh
-```
-
-### Local Server
-```bash
-# Start local web server for UI
-java -jar build/libs/joshsim-fat.jar server
-
-# Start server with worker URL for distributed execution
-java -jar build/libs/joshsim-fat.jar server --worker-url your-server-url.com/runReplicate
-```
-
-## Full Build & Test Sequence
-
-To replicate the full CI/CD build locally:
-
-```bash
-# 1. Build core JAR
-./gradlew fatJar
-
-# 2. Run style checks
-./gradlew checkstyleMain checkstyleTest
-
-# 3. Run Java tests
-./gradlew test
-
-# 4. Validate examples
-bash examples/validate.sh
-
-# 5. Run preprocessing tests
-bash examples/test_basic_preprocess.sh
-bash examples/test_spatial_preprocess.sh
-bash landing/test_preprocess.sh
-
-# 6. Run Josh examples
-bash examples/test.sh
-bash examples/test_data_option.sh
-bash examples/test_job_config.sh
-
-# 7. Build web components (if needed)
-./gradlew war
-cd editor/third_party && bash install_deps.sh
-bash editor/war/get_from_jar.sh
-./gradlew fatJar  # Rebuild with embedded web assets
-```
-
-## Troubleshooting Build Issues
-
-If the build is broken, check these common issues:
-
-1. **Java Version**: Ensure Java 21 is installed and active
+1. **Quick Start (Browser)**: Visit [editor.joshsim.org](https://editor.joshsim.org)
+2. **Local Development**: 
    ```bash
-   java -version
-   ```
-
-2. **Grammar Generation**: If ANTLR grammar issues occur
-   ```bash
-   ./gradlew clean generateGrammarSource
-   ```
-
-3. **Style Violations**: Fix code style issues
-   ```bash
-   ./gradlew checkstyleMain
-   # Review reports at: build/reports/checkstyle/main.xml
-   ```
-
-4. **Test Failures**: Run tests with more detail
-   ```bash
-   ./gradlew test --info
-   # Review reports at: build/reports/tests/test/index.html
-   ```
-
-5. **Missing Dependencies**: Ensure netCDF is installed
-   ```bash
-   # Ubuntu/Debian
-   sudo apt-get update && sudo apt-get install -y libnetcdf-dev
-
-   # macOS
-   brew install netcdf
-   ```
-
-6. **Clean Build**: Start fresh if issues persist
-   ```bash
-   ./gradlew clean
    ./gradlew fatJar
+   java -jar build/libs/joshsim-fat.jar server
+   ```
+3. **Run Tests**: 
+   ```bash
+   ./gradlew test
+   ./gradlew checkstyleMain
+   ./gradlew checkstyleTest
    ```
 
-## Environment Variables
+## Support and Documentation
 
-- `JOSH_API_KEYS`: Comma-separated list of valid API keys for server mode (optional)
+- **Guide**: [joshsim.org/guide.html](https://joshsim.org/guide.html)
+- **Language Specification**: Available in `llms.txt` and `LanguageSpecification.md`
+- **Examples**: See `examples/` directory for sample simulations
+- **License**: BSD-3-Clause (see LICENSE file)
 
-## Output Locations
+## Recommended Reading
 
-- Fat JAR: `build/libs/joshsim-fat.jar`
-- WAR file: `build/libs/JoshSim.war`
-- Test reports: `build/reports/tests/test/index.html`
-- Checkstyle reports: `build/reports/checkstyle/`
-- Packaged web editor: `web/build/`
+For developers and AI assistants working on this project, it is highly recommended to review:
+- **README.md**: Complete project overview, usage instructions, and development setup
+- **llms.txt**: Comprehensive Josh language specification and DSL documentation specifically formatted for LLM consumption
+
+## Project Status
+
+- **Status**: Work in Progress
+- **Maintained by**: Schmidt Center for Data Science and Environment at UC Berkeley
+- **Open Source**: Contributions welcome following development standards
+
+## Development Assistance
+
+This project actively uses Claude (Anthropic's AI assistant) for development assistance through Claude Code CLI. We transitioned from GitHub Actions integration to the Claude Code CLI interface for improved interactivity and more nuanced development conversations. This enables real-time collaboration, comprehensive code review, and interactive problem-solving during the development process.
