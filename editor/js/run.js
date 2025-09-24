@@ -29,7 +29,7 @@ class RunPanelPresenter {
     self._onRun = onRun;
 
     self._availablePanel = self._root.querySelector("#available-panel");
-    self._runDialog = self._root.querySelector("#run-local-dialog");
+    self._runDialog = self._root.querySelector("#run-dialog");
 
     self._localPanel = self._runDialog.querySelector("#local-run-instructions");
     self._joshCloudPanel = self._runDialog.querySelector("#josh-run-settings");
@@ -118,6 +118,14 @@ class RunPanelPresenter {
       const precisionStr = self._runDialog.querySelector(".precision-input").value;
       const preferBigDecimal = precisionStr === "high";
 
+      const outputStepsValue = self._runDialog.querySelector(".output-steps-input").value.trim();
+
+      // Add validation
+      if (outputStepsValue && !outputStepsValue.match(/^(\d+,)*\d+$/)) {
+        alert("Output steps must be comma-separated numbers (e.g., 5,7,8,9,20)");
+        return;
+      }
+
       const useServer = self._browserRadio.checked ? false : true;
       const apiKey = self._getApiKey();
       const endpoint = self._determineEndpoint();
@@ -128,7 +136,8 @@ class RunPanelPresenter {
         useServer,
         apiKey,
         endpoint,
-        preferBigDecimal
+        preferBigDecimal,
+        outputStepsValue
       );
       
       self._runDialog.close();
