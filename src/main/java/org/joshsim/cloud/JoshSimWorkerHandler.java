@@ -15,6 +15,7 @@ import io.undertow.util.HttpString;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -27,6 +28,7 @@ import org.joshsim.lang.io.SandboxExportCallback;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.io.VirtualFile;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.util.OutputStepsParser;
 
 
 /**
@@ -156,6 +158,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
     boolean favorBigDecimal = Boolean.parseBoolean(
         formData.getFirst("favorBigDecimal").getValue()
     );
+    String outputStepsStr = formData.contains("outputSteps")
+        ? formData.getFirst("outputSteps").getValue() : "";
+    final Optional<Set<Integer>> outputSteps = parseOutputSteps(outputStepsStr);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -185,7 +190,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     // Execute simulation securely
     boolean simulationSuccess = executeSimulation(
         valueFactory, geometryFactory, externalData, program,
-        simulationName, httpServerExchange, apiKey
+        simulationName, httpServerExchange, apiKey, outputSteps
     );
     if (!simulationSuccess) {
       return Optional.of(apiKey); // Error response already set
@@ -195,16 +200,17 @@ public class JoshSimWorkerHandler implements HttpHandler {
   }
 
   /**
-   * Securely execute interpretation with proper error handling.
+   * Parses the output-steps parameter using the OutputStepsParser utility.
    *
-   * @param valueFactory Factory with which to build simulation engine values.
-   * @param geometryFactory Factory though which to build simulation engine geometries.
-   * @param parsed The result of parsing the Josh source successfully.
-   * @param inputOutputLayer Layer to use to interact with external files and resources.
-   * @param httpServerExchange The exchange for setting error responses.
-   * @param apiKey The API key for secure logging.
-   * @return Optional JoshProgram on success, empty on failure (400 response set).
+   * @param outputSteps Comma-separated string of step numbers to export
+   * @return Optional containing the set of steps to export, or empty if all steps
+   *     should be exported
+   * @throws RuntimeException if the output-steps format is invalid
    */
+  private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
+    return OutputStepsParser.parseForWasmOrRemote(outputSteps);
+  }
+
   private Optional<JoshProgram> executeInterpretation(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, ParseResult parsed,
         InputOutputLayer inputOutputLayer, HttpServerExchange httpServerExchange, String apiKey) {
@@ -232,11 +238,14 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * @param simulationName The name of the simulation to execute.
    * @param httpServerExchange The exchange for streaming responses and setting error status.
    * @param apiKey The API key for secure logging.
+   * @param outputSteps Optional set of step numbers to export, or empty if all steps
+   *     should be exported.
    * @return true on success, false on failure (400 response set).
    */
   private boolean executeSimulation(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, String externalData, JoshProgram program,
-        String simulationName, HttpServerExchange httpServerExchange, String apiKey) {
+        String simulationName, HttpServerExchange httpServerExchange, String apiKey,
+        Optional<Set<Integer>> outputSteps) {
     try {
       InputOutputLayer layer = getLayer(httpServerExchange, externalData);
       JoshSimFacadeUtil.runSimulation(
@@ -255,8 +264,19 @@ public class JoshSimWorkerHandler implements HttpHandler {
               SecurityUtil.logSecureError(apiDataLayer, apiKey, "progress", e, null);
             }
           },
-          useSerial
+          useSerial,
+          outputSteps
       );
+
+      // Add end marker for replicate 0 to standardize wire format
+      try {
+        String endMarker = "[end 0]\n";
+        httpServerExchange.getOutputStream().write(endMarker.getBytes());
+        httpServerExchange.getOutputStream().flush();
+      } catch (IOException e) {
+        SecurityUtil.logSecureError(apiDataLayer, apiKey, "end marker", e, null);
+      }
+
       return true;
     } catch (Exception e) {
       handleSimulationError(e, "simulation", httpServerExchange, apiKey);
@@ -368,7 +388,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     SandboxExportCallback exportCallback = (export) -> {
       try {
-        httpServerExchange.getOutputStream().write((export + "\n").getBytes());
+        // Wrap export data with replicate 0 prefix to standardize wire format
+        String wireOutput = String.format("[0] %s\n", export);
+        httpServerExchange.getOutputStream().write(wireOutput.getBytes());
         httpServerExchange.getOutputStream().flush();
       } catch (IOException e) {
         throw new RuntimeException("Error streaming response", e);

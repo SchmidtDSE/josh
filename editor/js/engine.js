@@ -114,7 +114,8 @@ class WasmEngineBackend {
           simName,
           externalData,
           onStepCallback,
-          runRequest.getPreferBigDecimal()
+          runRequest.getPreferBigDecimal(),
+          runRequest.getOutputSteps()
         ).then(
           (x) => { onSimulationComplete(x); },
           (x) => { onError(x); }
@@ -189,7 +190,8 @@ class RemoteEngineBackend {
       formData.append("replicates", runRequest.getReplicates().toString());
       formData.append("apiKey", self._apiKey);
       formData.append("externalData", externalDataStr);
-      formData.append("favorBigDecimal", runRequest.getPreferBigDecimal() ? "true" : "false")
+      formData.append("favorBigDecimal", runRequest.getPreferBigDecimal() ? "true" : "false");
+      formData.append("outputSteps", runRequest.getOutputSteps());
       
       return formData;
     };
@@ -278,15 +280,18 @@ class RunRequest {
    *     and useServer is true, will use a default.
    * @param {bool} preferBigDecimal - Flag indicating if non-integer numbers should prefer to be in
    *     BigDecimal or double. True for BigDecimal and false for double.
+   * @param {string} outputSteps - Comma-separated string of step numbers to export, or empty string
+   *     to export all steps.
    * @throws {Error} If useServer is true but apiKey is null.
    */
-  constructor(simName, replicates, useServer, apiKey, endpoint, preferBigDecimal) {
+  constructor(simName, replicates, useServer, apiKey, endpoint, preferBigDecimal, outputSteps) {
     const self = this;
     
     self._simName = simName;
     self._replicates = replicates;
     self._useServer = useServer;
     self._preferBigDecimal = preferBigDecimal;
+    self._outputSteps = outputSteps || "";
     
     if (useServer && apiKey === null) {
       throw new Error("API key cannot be null when using server");
@@ -360,6 +365,17 @@ class RunRequest {
   getPreferBigDecimal() {
     const self = this;
     return self._preferBigDecimal;
+  }
+
+  /**
+   * Gets the output steps parameter.
+   *
+   * @returns {string} Comma-separated string of step numbers to export, or empty string to export
+   *     all steps.
+   */
+  getOutputSteps() {
+    const self = this;
+    return self._outputSteps;
   }
 }
 

@@ -8,6 +8,7 @@
  * @license BSD-3-Clause
  */
 
+import {AiAssistantDialogPresenter} from "ai";
 import {ConfigDialogPresenter} from "config";
 import {DataFilesPresenter, LocalFileLayer} from "data";
 import {EditorPresenter} from "editor";
@@ -66,6 +67,11 @@ class MainPresenter {
       "open-config-dialog-button",
       "config-dialog",
       sharedFileLayer
+    );
+
+    self._aiAssistantPresenter = new AiAssistantDialogPresenter(
+      "open-ai-assistant-dialog-button",
+      "ai-assistant-dialog"
     );
 
     self._resultsPresenter = new ResultsPresenter("results");

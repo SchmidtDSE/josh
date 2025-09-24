@@ -8,6 +8,7 @@ package org.joshsim.lang.io.strategy;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,7 +17,9 @@ import org.joshsim.compat.QueueService;
 import org.joshsim.compat.QueueServiceCallback;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
+import org.joshsim.lang.io.ExportTask;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.wire.NamedMap;
 
 /**
  * Strategy implementing ExportFacade which writes entities to NetCDF in a writer thread.
@@ -54,8 +57,14 @@ public class NetcdfExportFacade implements ExportFacade {
   }
 
   @Override
-  public void write(Entity entity, long step) {
-    Task task = new Task(entity, step);
+  public void write(Entity entity, long step, int replicateNumber) {
+    ExportTask task = new ExportTask(entity, step, replicateNumber);
+    write(task);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step, int replicateNumber) {
+    ExportTask task = new ExportTask(namedMap, step, replicateNumber);
     write(task);
   }
 
@@ -64,46 +73,10 @@ public class NetcdfExportFacade implements ExportFacade {
    *
    * @param task The task containing an entity and step value to be queued for export processing.
    */
-  public void write(Task task) {
+  public void write(ExportTask task) {
     queueService.add(task);
   }
 
-  /**
-   * Represents a task containing an entity and a step value.
-   */
-  public static class Task {
-    private final Entity entity;
-    private final long step;
-
-    /**
-     * Create a new task.
-     *
-     * @param entity the Entity to write
-     * @param step the simulation timestep on which the entity is reported
-     */
-    public Task(Entity entity, long step) {
-      this.entity = entity;
-      this.step = step;
-    }
-
-    /**
-     * Retrieves the entity associated with this task.
-     *
-     * @return The entity to be written.
-     */
-    public Entity getEntity() {
-      return entity;
-    }
-
-    /**
-     * Retrieves the simulation step at which the entity is reported.
-     *
-     * @return The simulation timestep value associated with this task.
-     */
-    public long getStep() {
-      return step;
-    }
-  }
 
   /**
    * Callback for writing to a netCDF file.
@@ -146,13 +119,23 @@ public class NetcdfExportFacade implements ExportFacade {
         return;
       }
 
-      Task task = (Task) taskMaybe.get();
-      Entity entity = task.getEntity();
+      ExportTask task = (ExportTask) taskMaybe.get();
       long step = task.getStep();
+      int replicateNumber = task.getReplicateNumber();
 
       try {
-        Map<String, String> serialized = serializeStrategy.getRecord(entity);
+        Map<String, String> serialized;
+        if (task.hasEntity()) {
+          // Traditional path: serialize Entity
+          Entity entity = task.getEntity().get();
+          serialized = serializeStrategy.getRecord(entity);
+        } else {
+          // Wire format path: use pre-serialized data from NamedMap
+          NamedMap namedMap = task.getNamedMap().get();
+          serialized = new HashMap<>(namedMap.getTarget());
+        }
         serialized.put("step", Long.toString(step));
+        serialized.put("replicate", Integer.toString(replicateNumber));
         writeStrategy.write(serialized, outputStream);
       } catch (IOException e) {
         throw new RuntimeException("Error writing to output stream", e);

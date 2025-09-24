@@ -10,7 +10,7 @@ When you receive a task markdown file and component name, you will:
 
 1. **Gather Context**:
    - Read and analyze the provided task markdown file to understand requirements
-   - Read tasks/background.md to understand the broader project context
+   - Read DEVELOPING.md and README.md to understand the broader project context
    - Review any referenced background reading materials
    - Identify the specific component to validate
 

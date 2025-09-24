@@ -1,0 +1,210 @@
+# Grass, Shrub, Fire
+
+In the [previous tutorial](hello.md), we explored some of Josh's features at a high level by simulating more than 30,000 trees over an 11 year period. In this next step, we are going to zoom into one common use of this software: patch-based execution.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Data](#data)
+- [Simulation](#simulation)
+- [Init](#init)
+- [Fire](#fire)
+- [Growth](#growth)
+- [Apply](#apply)
+- [Export](#export)
+- [Wrap](#wrap)
+
+## Overview
+
+Josh can take some of the calculations you are already performing and run them spatially. This could include the use of data which is "external" to the simulation itself like geotiffs or netCDF files. This means that, even if you aren't using agents which model individuals, you can still utilize Josh to perform analysis and scale that spatial computation across many machines like through [Josh Cloud](/community.html).
+
+In this tutorial, we will focus on this "patch-based" modeling where we are running spatial computation but are not using agents to model individual organisms. Specificaly, we will run a simulation with grass and shrubs which can be subject to fire. To aid in this demo, we will use external data from [CHC-CMIP6](https://www.chc.ucsb.edu/data/chc-cmip6) that offers predictions of future precipitation.
+
+Once again, this is not meant to be a real ecological model. It's not simulating specific species or a specific environment. It's just a toy demo.
+
+## Data
+
+The [CHC-CMIP6 data](https://www.chc.ucsb.edu/data/chc-cmip6) are originally provided as geotiffs for annual precipitation. A [later tutorial](data.md) will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
+
+Specifically, precipitation data are provided in millimeters (mm) per year from 2008-2016, covering multiple annual time steps. This comes from the SSP2-4.5 emissions scenario in the 2030 timeframe.
+
+Regardless, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download [our preprocessed version of precipitation estimates from CHC-CMIP6's annual series](/guides/grass_shrub_fire/precipitation.jshd) and upload them into the IDE. To do this, click on data files, add file, select the file, and then click add file to confirm.
+
+### Data Sources
+
+- **CHC-CMIP6:** [Climate Hazards Center CMIP6](https://www.chc.ucsb.edu/data/chc-cmip6) - Licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/deed.en)
+- **Citation:** Williams, E., Funk, C., Peterson, P., & Tuholske, C. (2024). High resolution climate change observations and projections for the evaluation of heat-related extremes. Scientific Data, 11(1), 261. [https://www.nature.com/articles/s41597-024-03074-w](https://www.nature.com/articles/s41597-024-03074-w)
+
+## Simulation
+
+As before in our [ForeverTree example](hello.md), we will define an area we want to simulate.
+
+```joshlang
+start simulation Main
+
+  # Specify location of simulation
+  grid.size = 1000 m
+  grid.low = 35.5 degrees latitude, -120 degrees longitude
+  grid.high = 34.5 degrees latitude, -119 degrees longitude
+
+  # Specify the years for the simulation
+  steps.low = 0 count
+  steps.high = 10 count
+
+  startYear.init = 2025
+  year.init = startYear
+  year.step = prior.year + 1
+
+  # Indicate output should go to the code editor
+  exportFiles.patch = "memory://editor/patches"
+
+  # Fire parameters
+  fire.trigger.coverThreshold = 15%
+  fire.trigger.high = 5%
+  fire.trigger.typical = 1%
+  fire.damage.grass = 70%
+  fire.damage.shrub = 90%
+
+end simulation
+```
+
+This is a little longer than before because we are including some constants This can be helpful if you want to have multiple versions of a simulation that you want to compare. Maybe you have LosPadres as one simulation and SantaCruz as another which might have slightly different parameters.
+
+### About variable naming with periods
+
+You'll notice we use names like `fire.trigger.high` and `fire.damage.grass` in our code. These periods are simply part of the variable names. They help organize our variables but Josh doesn't interpret them as creating any special hierarchy or namespace. To Josh, `destroy.grass` is just a variable name that happens to contain periods, exactly like how `myVariable` or `grass_cover` would be treated. The periods are purely for readability and organization. For those with experience in other systems, they don't create nested objects or namespaces like in some other programming languages.
+
+## Init
+
+Our patch will hold all of our computation this time so it will be a bit more involved. Let's start by setting our grid to random initial cover levels of grasses and shrubs. In practice, this may come from an external data.
+
+```joshlang
+start patch Default
+
+  # Initialize to up to 20% each type
+  grassCover.init = sample uniform from 0% to 20%
+  shrubCover.init = sample uniform from 0% to 20%
+
+end patch
+```
+
+This simply indicates that the patch is covered by up to 20% of grass and or shrubs. Note that our simulation stanza didn't specify the name of the patch to use. That is because Josh will use "Default" if none is specified.
+
+## Fire
+
+Next, we want to determine the probability that the patch is on fire which, for this very simple demo model, will simply look at the amount of grass coverage.
+
+```joshlang
+start patch Default
+
+  # ... existing code here ...
+
+  # Determine if on fire
+  isHighCover.step = prior.grassCover > meta.fire.trigger.coverThreshold
+  fireProbability.step = meta.fire.trigger.high if isHighCover else meta.fire.trigger.typical
+  onFire.step = (sample uniform from 0% to 100%) < fireProbability
+
+  # Determine possible destruction
+  destroy.grass.step = sample normal with mean of 70% std of 10%
+  destroy.shrub.step = sample normal with mean of 90% std of 20%
+
+end patch
+```
+
+First, this snippet checks to see if the grass cover is over the fire trigger threshold we specified in our simulation stanza. Here, we can refer to the simulation through the use of the "meta" keyword. We are also introducing an if statement here which, depending on the cover level, selects between two different fire probabilities. Next, we draw a random number and, if it is below fire probability, we indicate to Josh that the patch is on fire in this timestep. Finally, we have Josh calculate how much shrub and grass cover would be lost if a fire was happening. We will apply that later.
+
+## Growth
+
+Hopefully our grass and shrubs can do more than combust! Let's model new growth as well. For this, we will use a sigmoid that has horizontal asymptotes at 0% and 5% growth for grass while having horizontal asymptotes at 0% and 3% for shrubs. It will reach these asymptotes at different precipitation levels where grass should grow faster in good precipitation but shrubs should be sturdier in drought.
+
+```joshlang
+start patch Default
+
+  # ... existing code here ...
+
+  # Determine possible growth
+  growth.grass.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+  growth.shrub.step = map external precipitation from [0 mm, 400 mm] to [0%, 3%] sigmoid
+
+end patch
+```
+
+Josh can fit these curves for you given a description of the domain and range. Note that it also does this mapping across units. We will come back to defining those units shortly!
+
+## Apply
+
+We are almost done. Let's next tie it all together and apply the change in cover at each year.
+
+```joshlang
+start patch Default
+
+  # ... existing code here ...
+
+  # Apply change based on if on fire
+  grassCover.step = {
+    const afterDestroy = prior.grassCover * (1 - destroy.grass)
+    const afterGrowth = prior.grassCover + growth.grass
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+  shrubCover.step = {
+    const afterDestroy = prior.shrubCover * (1 - destroy.shrub)
+    const afterGrowth = prior.shrubCover + growth.shrub
+    const newValueRaw = afterDestroy if onFire else afterGrowth
+    return limit newValueRaw to [0%, 100%]
+  }
+
+end patch
+```
+
+Here, we ask Josh to calculate how cover would change depending on if the patch was on fire in the given year. Then, we apply based on if it was actually on fire. Note that, in this step, we have a function defintion.
+
+### More about functions
+
+Whereas our previous event handlers were each on a single line, use of the curly braces lets us write multiple lines of code. This is called a function and we can define variables using const that live only within that function. These are like const variables in other programming languages in that they can be written to once and read as many times as you like. Return indicates the value of the function that should be assigned to the specified variable (grassCover or shurbCover) from the event handler.
+
+## Export
+
+Let's go ahead and save the cover variables as exports.
+
+```joshlang
+start patch Default
+
+  # ... existing code here ...
+
+  # Save exports
+  export.grassCover.step = grassCover
+  export.shrubCover.step = shrubCover
+
+end patch
+```
+
+Note that the ordering of handlers does not matter. If you refer to a variable, Josh will go and calculate that variable and then return to the line of code where you referenced it to continue its work. That means that you can organize your event handlers for readibility, letting Josh worry about dependencies between formulas.
+
+### About imperative programming
+
+It might be worth digging into that last statement about ordering more deeply. Josh is like spreadsheet software or programming languages like SQL. It doesn't matter what order you define your functions in your cells (or the order of columns in your select statments for those working in databases). Instead, you just specify the logic you want and the spreadsheet software or query engine is smart enough to figure out what order things need to be done.
+
+Josh works in a similar way. You just write out your calculations and the engine will figure out the order in which those calculations need to happen. So, if you have one formula that references a variable defined by another, it doesn't matter which you tell Josh about first in your code. The system will construct a "directed acyclic graph" which is just a fancy way of saying that it will figure out the dependencies and execute for you!
+
+The only place where this isn't true is functions which work more like programming lanugages similar to R or Python. There, each line is executed one after another in the order you specify. This really only matters for local variables (like `afterDestroy` has to be defined before `newValueRaw` in our example).
+
+## Wrap
+
+We are just about at the end. We used millimeters as a unit so we need to define it for Josh:
+
+```joshlang
+start unit mm
+
+  alias millimeters
+  alias millimeter
+
+  m = current / 1000
+
+end unit
+```
+
+With all that in place, go ahead and give your code a run with a single replicate! When you are ready, let's contiune this exploration by [returning to agents](two_trees.md).
+
+[Download Complete Code](/examples/guide/grass_shrub_fire.josh)
