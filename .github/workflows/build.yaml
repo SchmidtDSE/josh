@@ -413,6 +413,12 @@ jobs:
           cp ./tutorial-data-temp/temperatureTulare.jshd ./landing-build/guides/two_trees/
           cp ./tutorial-data-temp/precipitationTulare.jshd ./landing-build/guides/two_trees/
           cp ./tutorial-data-temp/precipitation_geotiff.jshd ./landing-build/guides/grass_shrub_fire/precipitation.jshd
+      - name: Remove publicsans directory before upload
+        run: |
+          if [ -d "./landing-build/publicsans" ]; then
+            rm -rf ./landing-build/publicsans
+            echo "Removed publicsans directory from landing-build"
+          fi
       - name: Upload landing via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
