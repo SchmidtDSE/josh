@@ -12,16 +12,46 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
-import org.joshsim.JoshSimFacade;
+import org.joshsim.JoshSimFacadeUtil;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.JvmCompatibilityLayer;
+import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.geometry.ExtentsUtil;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
+import org.joshsim.lang.bridge.GridInfoExtractor;
+import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.InputGetterStrategy;
+import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
+import org.joshsim.lang.io.JvmMappedInputGetter;
+import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.config.JobVariationParser;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.OutputStepsParser;
+import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SimulationMetadata;
+import org.joshsim.util.SimulationMetadataExtractor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
 import picocli.CommandLine.Command;
@@ -54,8 +84,9 @@ public class RunCommand implements Callable<Integer> {
   @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
   private String crs;
 
-  @Option(names = "--replicate", description = "Replicate number", defaultValue = "0")
-  private int replicateNumber;
+
+  @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
+  private int replicates = 1;
 
   @Option(
       names = "--use-float-64",
@@ -77,8 +108,75 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean serialPatches;
 
+  @Option(
+      names = "--data",
+      description = "Specify external data files to include (format: filename=path;filename2=path2)"
+  )
+  private String[] dataFiles = new String[0];
+
+  @Option(
+      names = "--custom-tag",
+      description = "Custom template parameters (format: name=value). Can be specified "
+                  + "multiple times."
+  )
+  private String[] customTags = new String[0];
+
+  @Option(
+      names = "--output-steps",
+      description = "Comma-separated list of time steps to export (e.g., 5,7,8,9,20). "
+                  + "If not specified, all steps are exported."
+  )
+  private String outputSteps = "";
+
+  /**
+   * Parses custom parameter command-line options.
+   *
+   * @return Map of custom parameter names to values
+   * @throws IllegalArgumentException if any custom tag is malformed or uses reserved names
+   */
+  private Map<String, String> parseCustomParameters() {
+    Map<String, String> customParameters = new HashMap<>();
+    for (String customTag : customTags) {
+      int equalsIndex = customTag.indexOf('=');
+      if (equalsIndex <= 0 || equalsIndex == customTag.length() - 1) {
+        throw new IllegalArgumentException("Invalid custom-tag format: " + customTag
+            + ". Expected format: name=value");
+      }
+      String name = customTag.substring(0, equalsIndex).trim();
+      String value = customTag.substring(equalsIndex + 1);
+
+      // Validate name doesn't conflict with reserved templates
+      if ("replicate".equals(name) || "step".equals(name) || "variable".equals(name)) {
+        throw new IllegalArgumentException("Custom parameter name '" + name
+            + "' conflicts with reserved template variable");
+      }
+
+      customParameters.put(name, value);
+    }
+    return customParameters;
+  }
+
+  /**
+   * Parses the output-steps command line option using the OutputStepsParser utility.
+   *
+   * @return Optional containing the set of steps to export, or empty if all steps should
+   *     be exported
+   * @throws IllegalArgumentException if the output-steps format is invalid
+   */
+  private Optional<Set<Integer>> parseOutputSteps() {
+    return OutputStepsParser.parseForCli(outputSteps);
+  }
+
   @Override
   public Integer call() {
+    // Validate replicates parameter
+    if (replicates < 1) {
+      output.printError("Number of replicates must be at least 1");
+      return 1;
+    }
+
+    // Parse output steps early for fail-fast validation
+    final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
     EngineGeometryFactory geometryFactory;
     if (crs.isEmpty()) {
       geometryFactory = new GridGeometryFactory();
@@ -92,10 +190,52 @@ public class RunCommand implements Callable<Integer> {
       geometryFactory = new EarthGeometryFactory(crsRealized);
     }
 
+    // Parse custom parameters from command line
+    Map<String, String> customParameters = parseCustomParameters();
+
+    // Create job configurations using JobVariationParser for grid search
+    JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
+        .setReplicates(replicates)
+        .setCustomParameters(customParameters);
+    JobVariationParser parser = new JobVariationParser();
+    List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
+
+    // Build all job instances
+    List<JoshJob> jobs = jobBuilders.stream()
+        .map(JoshJobBuilder::build)
+        .toList();
+
+    // Report grid search information
+    output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+        + "with " + replicates + " replicate(s) each");
+    output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
+
+    // Use first job for initialization (all jobs should have compatible structure)
+    JoshJob firstJob = jobs.get(0);
+
+    // Create appropriate InputGetterStrategy based on first job configuration
+    InputGetterStrategy inputStrategy;
+    if (firstJob.getFilePaths().isEmpty()) {
+      inputStrategy = new JvmWorkingDirInputGetter();
+    } else {
+      inputStrategy = new JvmMappedInputGetter(firstJob.getFilePaths());
+    }
+
+    // Create template renderer for initialization phase (using first job, replicate 0)
+    TemplateStringRenderer initTemplateRenderer = new TemplateStringRenderer(firstJob, 0);
+
+    // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
+    InputOutputLayer initInputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(0)
+        .withInputStrategy(inputStrategy)
+        .withTemplateRenderer(initTemplateRenderer)
+        .build();
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
         geometryFactory,
         file,
-        output
+        output,
+        initInputOutputLayer
     );
 
     if (initResult.getFailureStep().isPresent()) {
@@ -117,15 +257,116 @@ public class RunCommand implements Callable<Integer> {
     }
 
     boolean favorBigDecimal = !useFloat64;
-    JoshSimFacade.runSimulation(
-        geometryFactory,
-        program,
-        simulation,
-        (step) -> output.printInfo(String.format("Completed step %d.", step)),
-        serialPatches,
-        replicateNumber,
-        favorBigDecimal
+
+    // Extract simulation metadata for progress tracking
+    SimulationMetadata metadata;
+    try {
+      metadata = SimulationMetadataExtractor.extractMetadata(file, simulation);
+    } catch (Exception e) {
+      // Use default metadata if extraction fails
+      metadata = new SimulationMetadata(0, 10, 11);
+      output.printInfo("Using default metadata for progress tracking: " + e.getMessage());
+    }
+
+    ProgressCalculator progressCalculator = new ProgressCalculator(
+        metadata.getTotalSteps(),
+        jobs.size() * replicates // Total simulations = jobs × replicates
     );
+
+    // Set up JVM compatibility layer
+    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
+
+    // Set up EngineValueFactory
+    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+
+    // Extract grid information for Earth-space detection (similar to JoshSimFacade)
+    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
+    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
+    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
+    boolean hasDegrees = extractor.getStartStr().contains("degree");
+
+    EngineValue sizeValueRaw = extractor.getSize();
+    Units sizeUnits = sizeValueRaw.getUnits();
+    String sizeStr = sizeUnits.toString();
+    boolean sizeMeterAbbreviated = sizeStr.equals("m");
+    boolean sizeMetersFull = sizeStr.equals("meter") || sizeStr.equals("meters");
+    boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
+
+    // Execute simulation for each job combination and replicate
+    int totalSimulationCount = 0;
+
+    for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
+      JoshJob currentJob = jobs.get(jobIndex);
+      output.printInfo("Executing job combination " + (jobIndex + 1) + "/" + jobs.size());
+
+      // Update InputGetterStrategy for this job's file mappings
+      if (!currentJob.getFilePaths().isEmpty()) {
+        inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
+      }
+
+      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
+           currentReplicate++) {
+        totalSimulationCount++;
+
+        // Reset progress tracking for each new simulation (except first)
+        if (totalSimulationCount > 1) {
+          progressCalculator.resetForNextReplicate(totalSimulationCount);
+        }
+
+        // Create TemplateStringRenderer for this job and replicate
+        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
+            currentReplicate);
+
+        // Create InputOutputLayer with template renderer (similar to JoshSimFacade logic)
+        InputOutputLayer inputOutputLayer;
+        if (hasDegrees && sizeMeters) {
+          PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+          ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
+          ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
+          BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
+          inputOutputLayer = new JvmInputOutputLayerBuilder()
+              .withReplicate(currentReplicate)
+              .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
+              .withInputStrategy(inputStrategy)
+              .withTemplateRenderer(templateRenderer)
+              .build();
+        } else {
+          inputOutputLayer = new JvmInputOutputLayerBuilder()
+              .withReplicate(currentReplicate)
+              .withInputStrategy(inputStrategy)
+              .withTemplateRenderer(templateRenderer)
+              .build();
+        }
+
+        JoshSimFacadeUtil.runSimulation(
+            valueFactory,
+            geometryFactory,
+            inputOutputLayer,
+            program,
+            simulation,
+            (step) -> {
+              ProgressUpdate update = progressCalculator.updateStep(step);
+              if (update.shouldReport()) {
+                output.printInfo(update.getMessage());
+              }
+            },
+            serialPatches,
+            parsedOutputSteps
+        );
+
+        // Report replicate completion (except for the last simulation)
+        if (totalSimulationCount < jobs.size() * replicates) {
+          ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
+              totalSimulationCount);
+          output.printInfo(completion.getMessage());
+        }
+      }
+
+      // Report job combination completion
+      if (jobIndex < jobs.size() - 1) {
+        output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
+      }
+    }
 
     if (minioOptions.isMinioOutput()) {
       return saveToMinio("run", file);
@@ -138,4 +379,5 @@ public class RunCommand implements Callable<Integer> {
     boolean successful = JoshSimCommander.saveToMinio(subDirectories, file, minioOptions, output);
     return successful ? 0 : MINIO_ERROR_CODE;
   }
+
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.geo.external.readers.CsvExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.GeotiffExternalDataReaderFactory;
+import org.joshsim.geo.external.readers.JshdExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.NetcdfExternalDataReaderFactory;
 
 
@@ -38,6 +39,14 @@ public class ExternalDataReaderFactory {
           valueFactory
       );
       ExternalDataReader reader = geotiffReaderFactory.createReader();
+      return reader;
+    }
+
+    if (isJshdFile(filePath)) {
+      JshdExternalDataReaderFactory jshdReaderFactory = new JshdExternalDataReaderFactory(
+          valueFactory
+      );
+      ExternalDataReader reader = jshdReaderFactory.createReader();
       return reader;
     }
 
@@ -92,6 +101,16 @@ public class ExternalDataReaderFactory {
     String lowerPath = filePath.toLowerCase();
     return lowerPath.endsWith(".tif")
            || lowerPath.endsWith(".tiff");
+  }
+
+  /**
+   * Checks if the file is a JSHD format file based on extension.
+   */
+  private static boolean isJshdFile(String filePath) {
+    if (filePath == null || filePath.isEmpty()) {
+      return false;
+    }
+    return filePath.toLowerCase().endsWith(".jshd");
   }
 
   /**

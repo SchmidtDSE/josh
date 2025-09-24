@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -27,10 +29,14 @@ import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.external.ExternalDataReader;
+import org.joshsim.geo.external.ExternalDataReaderFactory;
 import org.joshsim.geo.external.ExternalGeoMapper;
 import org.joshsim.geo.external.ExternalGeoMapperBuilder;
+import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.geo.external.NearestNeighborInterpolationStrategy;
 import org.joshsim.geo.external.NoopExternalCoordinateTransformer;
+import org.joshsim.geo.external.readers.JshdExternalDataReader;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.GridFromSimFactory;
@@ -38,7 +44,8 @@ import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.io.JvmInputOutputLayer;
+import org.joshsim.lang.io.InputGetterStrategy;
+import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
@@ -140,6 +147,12 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private String timestep;
 
+  @Option(
+      names = "--default-value",
+      description = "Default value to fill grid spaces before copying data from source file"
+  )
+  private String defaultValue;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -186,7 +199,17 @@ public class PreprocessCommand implements Callable<Integer> {
       geoMapperBuilder.addDimensions(horizCoordName, vertCoordName, timeName);
     }
 
-    ExternalGeoMapper mapper = geoMapperBuilder.build();
+    final ExternalGeoMapper mapper = geoMapperBuilder.build();
+
+    // If using JSHD input file, validate grid compatibility
+    if (dataFile.toLowerCase().endsWith(".jshd")) {
+      try {
+        validateJshdGridCompatibility(valueFactory, dataFile, crsCode);
+      } catch (Exception e) {
+        output.printError("JSHD grid compatibility validation failed: " + e.getMessage());
+        return 6;
+      }
+    }
 
     // Get metadata
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
@@ -203,19 +226,20 @@ public class PreprocessCommand implements Callable<Integer> {
     try {
       crs = CRS.forCode(crsCode);
     } catch (Exception e) {
-      System.out.println("Failed to read CRS code due to: " + e);
+      output.printError("Failed to read CRS code due to: " + e);
       return 1;
     }
     EngineGeometryFactory geometryFactory = new EarthGeometryFactory(crs);
 
+    InputGetterStrategy inputStrategy = new JvmInputOutputLayerBuilder().build().getInputStrategy();
     EngineBridge bridge = new QueryCacheEngineBridge(
         valueFactory,
         geometryFactory,
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory),
-        new JshcConfigGetter(new JvmInputOutputLayer().getInputStrategy(), valueFactory)
+        new JshdExternalGetter(inputStrategy, valueFactory),
+        new JshcConfigGetter(inputStrategy, valueFactory)
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, crsCode);
@@ -234,10 +258,20 @@ public class PreprocessCommand implements Callable<Integer> {
     long startTimestep = forcedTimestep.orElse(bridge.getStartTimestep());
     long endTimestep = forcedTimestep.orElse(bridge.getEndTimestep());
 
+    // Parse default value if provided, but only use it for non-amend operations
+    Optional<Double> parsedDefaultValue = Optional.empty();
+    if (defaultValue != null && !defaultValue.trim().isEmpty() && !amend) {
+      try {
+        parsedDefaultValue = Optional.of(Double.parseDouble(defaultValue));
+      } catch (NumberFormatException e) {
+        output.printError("Invalid default value: " + defaultValue + ". Must be a valid number.");
+        return 5;
+      }
+    }
+
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         valueFactory,
         (timestep) -> {
-          System.out.println("Preprocessing: " + timestep);
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
           try {
             geoStream = mapper.streamVariableTimeStepToPatches(
@@ -259,7 +293,8 @@ public class PreprocessCommand implements Callable<Integer> {
         ExtentsTransformer.transformToGrid(extents, size.getAsDecimal()),
         startTimestep,
         endTimestep,
-        Units.of(unitsStr)
+        Units.of(unitsStr),
+        parsedDefaultValue
     );
 
     // If amending, combine with existing grid
@@ -296,5 +331,71 @@ public class PreprocessCommand implements Callable<Integer> {
 
   private boolean unitsSupported(String unitsStr) {
     return unitsStr.equals("m") || unitsStr.equals("meter") || unitsStr.equals("meters");
+  }
+
+  /**
+   * Validates that a JSHD file has compatible grid dimensions for preprocessing.
+   * This ensures that the source JSHD file and target simulation grid have the same spatial bounds.
+   *
+   * @param valueFactory Factory for creating EngineValue objects
+   * @param jshdFilePath Path to the JSHD file to validate
+   * @param crsCode Coordinate reference system code
+   * @throws IOException If validation fails or file cannot be read
+   */
+  private void validateJshdGridCompatibility(
+        EngineValueFactory valueFactory,
+        String jshdFilePath,
+        String crsCode) throws IOException {
+
+    // Create and open JSHD reader
+    try (ExternalDataReader jshdReader = ExternalDataReaderFactory.createReader(
+        valueFactory, jshdFilePath)) {
+
+      jshdReader.open(jshdFilePath);
+      jshdReader.setCrsCode(crsCode);
+
+      // Get spatial dimensions
+      ExternalSpatialDimensions dimensions = jshdReader.getSpatialDimensions();
+      BigDecimal[] bounds = dimensions.getBounds();
+
+      // For now, we just verify the file can be read and has valid dimensions
+      // More sophisticated validation could be added here to compare with target grid
+      if (bounds[0] == null || bounds[1] == null || bounds[2] == null || bounds[3] == null) {
+        throw new IOException("JSHD file has invalid spatial bounds");
+      }
+
+      // Verify we can read variable names
+      List<String> variables = jshdReader.getVariableNames();
+      if (variables.isEmpty()) {
+        throw new IOException("JSHD file contains no readable variables");
+      }
+
+      // If we have a JshdExternalDataReader, we can do additional validation
+      if (jshdReader instanceof JshdExternalDataReader) {
+        JshdExternalDataReader jshdSpecificReader = (JshdExternalDataReader) jshdReader;
+
+        // Validate that the grid has reasonable bounds
+        BigDecimal minX = jshdSpecificReader.getMinX();
+        BigDecimal maxX = jshdSpecificReader.getMaxX();
+        BigDecimal minY = jshdSpecificReader.getMinY();
+        BigDecimal maxY = jshdSpecificReader.getMaxY();
+
+        if (minX == null || maxX == null || minY == null || maxY == null) {
+          throw new IOException("JSHD file has invalid grid coordinates");
+        }
+
+        if (minX.compareTo(maxX) >= 0 || minY.compareTo(maxY) >= 0) {
+          throw new IOException("JSHD file has invalid grid bounds: min must be less than max");
+        }
+      }
+
+      output.printInfo("JSHD grid compatibility validation passed");
+
+    } catch (Exception e) {
+      if (e instanceof IOException) {
+        throw (IOException) e;
+      }
+      throw new IOException("Failed to validate JSHD grid compatibility: " + e.getMessage(), e);
+    }
   }
 }

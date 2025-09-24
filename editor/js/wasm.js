@@ -133,10 +133,12 @@ class WasmLayer {
    *     number of steps completed.
    * @param {bool} preferBigDecimal - Flag indicating if BigDecimal should be preferred for numbers
    *     or not. True if BigDecimal and false if double / float64.
+   * @param {string} outputSteps - Comma-separated string of step numbers to export, or empty string
+   *     to export all steps.
    * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
    *     simulation is concluded with data on this single replicate.
    */
-  async runSimulation(code, simulationName, externalData, stepCallback, preferBigDecimal) {
+  async runSimulation(code, simulationName, externalData, stepCallback, preferBigDecimal, outputSteps) {
     const self = this;
     await self._initPromise;
 
@@ -162,14 +164,15 @@ class WasmLayer {
           self._datasetBuilder.add(parsed);
         }
       };
-      self._worker.postMessage({ 
+      self._worker.postMessage({
         type: "runSimulation",
         data: {
           code: code,
           simulationName: simulationName,
           data: externalDataStr,
-          preferBigDecimal: preferBigDecimal
-        } 
+          preferBigDecimal: preferBigDecimal,
+          outputSteps: outputSteps || ""
+        }
       });
     });
   }

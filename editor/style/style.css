@@ -57,6 +57,13 @@ dialog .form-group input.short {
   width: 100px;
 }
 
+dialog .form-group small.help-text {
+  font-size: 11px;
+  color: #666;
+  margin-top: 3px;
+  display: block;
+}
+
 dialog .instructions {
   padding-bottom: 5px;
   margin-bottom: 10px;

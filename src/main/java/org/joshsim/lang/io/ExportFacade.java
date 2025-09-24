@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.wire.NamedMap;
 
 
 /**
@@ -38,7 +39,44 @@ public interface ExportFacade {
    *
    * @param target The entity to be serialized and written to the output.
    * @param step The step number from the simulation from which this entity snapshot was created.
+   * @param replicateNumber The replicate number associated with this entity.
    */
-  void write(Entity target, long step);
+  void write(Entity target, long step, int replicateNumber);
+
+  /**
+   * Adds the specified NamedMap to the queue for processing and writing to the export target.
+   *
+   * <p>This method allows wire format deserializers to bypass Entity serialization by providing
+   * pre-serialized data directly. The NamedMap contains both the name identifier and the
+   * key-value pairs that would normally be produced by serializing an Entity.</p>
+   *
+   * @param namedMap The NamedMap containing name and serialized data to be written to output.
+   * @param step The step number from the simulation from which this data was created.
+   * @param replicateNumber The replicate number associated with this data.
+   */
+  void write(NamedMap namedMap, long step, int replicateNumber);
+
+  /**
+   * Adds the specified entity to the queue with default replicate number for backward
+   * compatibility.
+   *
+   * @param target The entity to be serialized and written to the output.
+   * @param step The step number from the simulation from which this entity snapshot was
+   *        created.
+   */
+  default void write(Entity target, long step) {
+    write(target, step, 0);
+  }
+
+  /**
+   * Adds the specified NamedMap to the queue with default replicate number for backward
+   * compatibility.
+   *
+   * @param namedMap The NamedMap containing name and serialized data to be written to output.
+   * @param step The step number from the simulation from which this data was created.
+   */
+  default void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
 
 }

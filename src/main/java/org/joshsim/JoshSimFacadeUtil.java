@@ -6,6 +6,8 @@
 
 package org.joshsim;
 
+import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -75,11 +77,14 @@ public class JoshSimFacadeUtil {
    *     as blocking.
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
+   * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
+   *     If present, only steps contained in the set will have their output written to export files.
+   *     All steps continue to execute for simulation state continuity regardless of this filter.
    */
   public static void runSimulation(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -103,7 +108,9 @@ public class JoshSimFacadeUtil {
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
-      exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
+      if (outputSteps.isEmpty() || outputSteps.get().contains((int) completedStep)) {
+        exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
+      }
       callback.onStep(completedStep);
 
       if (completedStep > 2) {
@@ -112,6 +119,32 @@ public class JoshSimFacadeUtil {
     }
 
     exportFacade.join();
+  }
+
+  /**
+   * Runs a simulation from the provided program with backward compatibility.
+   *
+   * <p>Creates and executes a simulation using the provided program and simulation name.
+   * The callback is invoked after each simulation step is completed. This method provides
+   * backward compatibility by exporting all steps.</p>
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory with which to build engine geometries.
+   * @param program The Josh program containing the simulation to run. This is the program in which
+   *     the simulation will be initalized.
+   * @param simulationName The name of the simulation to execute from the program. This will be
+   *     initalized from the given program.
+   * @param callback A callback that will be invoked after each simulation step. This is called
+   *     as blocking.
+   * @param serialPatches If true, patches will be processed serially. If false, they will be
+   *     processed in parallel.
+   */
+  public static void runSimulation(EngineValueFactory valueFactory,
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
+        JoshProgram program, String simulationName, SimulationStepCallback callback,
+        boolean serialPatches) {
+    runSimulation(valueFactory, geometryFactory, inputOutputLayer, program,
+        simulationName, callback, serialPatches, Optional.empty());
   }
 
   /**
