@@ -13,14 +13,12 @@ package org.joshsim.command;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacadeUtil;
@@ -49,6 +47,7 @@ import org.joshsim.pipeline.job.config.JobVariationParser;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.OutputStepsParser;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SimulationMetadata;
@@ -158,30 +157,14 @@ public class RunCommand implements Callable<Integer> {
   }
 
   /**
-   * Parses the output-steps command line option.
+   * Parses the output-steps command line option using the OutputStepsParser utility.
    *
    * @return Optional containing the set of steps to export, or empty if all steps should
    *     be exported
    * @throws IllegalArgumentException if the output-steps format is invalid
    */
   private Optional<Set<Integer>> parseOutputSteps() {
-    if (outputSteps == null || outputSteps.trim().isEmpty()) {
-      return Optional.empty();
-    }
-    try {
-      Set<Integer> steps = Arrays.stream(outputSteps.split(","))
-          .map(String::trim)
-          .filter(s -> !s.isEmpty())
-          .map(Integer::parseInt)
-          .collect(Collectors.toSet());
-      if (steps.isEmpty()) {
-        return Optional.empty();
-      }
-      return Optional.of(steps);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Invalid output-steps format: " + outputSteps
-          + ". Expected comma-separated integers (e.g., '5,7,8,9,20')");
-    }
+    return OutputStepsParser.parseForCli(outputSteps);
   }
 
   @Override

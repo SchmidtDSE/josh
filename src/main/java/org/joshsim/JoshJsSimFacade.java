@@ -6,12 +6,10 @@
 
 package org.joshsim;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -38,6 +36,7 @@ import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.util.OutputStepsParser;
 import org.joshsim.wire.NamedMap;
 import org.joshsim.wire.WireConverter;
 import org.teavm.jso.JSBody;
@@ -340,7 +339,7 @@ public class JoshJsSimFacade {
   }
 
   /**
-   * Parses the output-steps parameter for JavaScript/WebAssembly interface.
+   * Parses the output-steps parameter using the OutputStepsParser utility.
    *
    * @param outputSteps Comma-separated string of step numbers to export
    * @return Optional containing the set of steps to export, or empty if all steps should be
@@ -348,23 +347,7 @@ public class JoshJsSimFacade {
    * @throws RuntimeException if the output-steps format is invalid
    */
   private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
-    if (outputSteps == null || outputSteps.trim().isEmpty()) {
-      return Optional.empty();
-    }
-    try {
-      Set<Integer> steps = Arrays.stream(outputSteps.split(","))
-          .map(String::trim)
-          .filter(s -> !s.isEmpty())
-          .map(Integer::parseInt)
-          .collect(Collectors.toSet());
-      if (steps.isEmpty()) {
-        return Optional.empty();
-      }
-      return Optional.of(steps);
-    } catch (NumberFormatException e) {
-      throw new RuntimeException("Invalid output steps format: " + outputSteps
-          + ". Expected comma-separated integers (e.g., '5,7,8,9,20')");
-    }
+    return OutputStepsParser.parseForWasmOrRemote(outputSteps);
   }
 
   /**
