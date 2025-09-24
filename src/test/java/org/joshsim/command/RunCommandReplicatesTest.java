@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
@@ -67,7 +66,7 @@ class RunCommandReplicatesTest {
     // Arrange - create real Josh file
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", -1); // Invalid value
@@ -84,7 +83,7 @@ class RunCommandReplicatesTest {
     // Arrange - create real Josh file
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", 0); // Invalid value
@@ -103,7 +102,7 @@ class RunCommandReplicatesTest {
     Path outputFile = tempDir.resolve("output.csv");
     Files.writeString(joshFile,
         JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", 1);
@@ -114,7 +113,7 @@ class RunCommandReplicatesTest {
     // Assert - verify success and output file creation
     assertEquals(0, result, "Single replicate execution should succeed");
     assertTrue(Files.exists(outputFile), "Output CSV file should be created");
-    
+
     // Verify CSV contains expected data
     String csvContent = Files.readString(outputFile);
     assertTrue(csvContent.contains("treeCount"),
@@ -130,7 +129,7 @@ class RunCommandReplicatesTest {
     Path outputFile = tempDir.resolve("output.csv");
     Files.writeString(joshFile,
         JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", 3);
@@ -141,14 +140,14 @@ class RunCommandReplicatesTest {
     // Assert - verify success and consolidated output
     assertEquals(0, result, "Multiple replicates execution should succeed");
     assertTrue(Files.exists(outputFile), "Output CSV file should be created");
-    
+
     // Verify CSV contains data from all 3 replicates
     String csvContent = Files.readString(outputFile);
     assertTrue(csvContent.contains("treeCount"),
         "CSV should contain treeCount export");
     assertTrue(csvContent.contains("averageAge"),
         "CSV should contain averageAge export");
-    
+
     // Count replicate entries - should have data for replicates 0, 1, 2
     long replicateCount = csvContent.lines()
         .skip(1) // Skip header
@@ -166,7 +165,7 @@ class RunCommandReplicatesTest {
     Path outputFile = tempDir.resolve("output.csv");
     Files.writeString(joshFile,
         JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", 2);
@@ -177,14 +176,14 @@ class RunCommandReplicatesTest {
     // Assert - verify success and that replicates start from 0
     assertEquals(0, result, "Two replicates execution should succeed");
     assertTrue(Files.exists(outputFile), "Output CSV file should be created");
-    
+
     // Verify CSV contains data from both replicates (0 and 1)
     String csvContent = Files.readString(outputFile);
     assertTrue(csvContent.contains("treeCount"),
         "CSV should contain treeCount export");
     assertTrue(csvContent.contains("averageAge"),
         "CSV should contain averageAge export");
-    
+
     // Verify replicate numbering starts from 0
     assertTrue(csvContent.contains(",0,"), "CSV should contain replicate 0 data");
     assertTrue(csvContent.contains(",1,"), "CSV should contain replicate 1 data");
@@ -197,19 +196,19 @@ class RunCommandReplicatesTest {
     Path outputFile = tempDir.resolve("output.csv");
     Files.writeString(joshFile,
         JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
-    
+
     setupBasicFields(runCommand, joshFile);
     setFieldValue(runCommand, "simulation", "TestSim");
     setFieldValue(runCommand, "replicates", 1);
 
-    // Act - run should succeed even if metadata extraction has issues 
+    // Act - run should succeed even if metadata extraction has issues
     // (the real implementation handles this gracefully)
     Integer result = runCommand.call();
 
     // Assert - should succeed with graceful fallback behavior
     assertEquals(0, result, "Execution should succeed even with metadata extraction issues");
     assertTrue(Files.exists(outputFile), "Output CSV file should still be created");
-    
+
     // Verify basic functionality works despite potential metadata issues
     String csvContent = Files.readString(outputFile);
     assertTrue(csvContent.contains("treeCount"),
@@ -223,7 +222,7 @@ class RunCommandReplicatesTest {
     // Arrange - create real Josh file but request nonexistent simulation
     Path joshFile = tempDir.resolve("test.josh");
     Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
-    
+
     setupBasicFields(runCommand, joshFile);
     // This simulation doesn't exist in the Josh file
     setFieldValue(runCommand, "simulation", "NonExistentSimulation");
@@ -235,7 +234,7 @@ class RunCommandReplicatesTest {
     // Assert - should return error code for simulation not found
     assertEquals(4, result,
         "Should return error code 4 for simulation not found");
-    
+
     // Verify error message is printed to console
     String output = outputStream.toString();
     assertTrue(output.contains("NonExistentSimulation")

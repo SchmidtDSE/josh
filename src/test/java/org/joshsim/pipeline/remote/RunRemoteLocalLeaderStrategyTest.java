@@ -207,7 +207,7 @@ public class RunRemoteLocalLeaderStrategyTest {
     List<WorkerTask> tasks =
         (List<WorkerTask>) method.invoke(strategy, differentReplicateContext);
 
-    // Should create 8 tasks (one per replicate) 
+    // Should create 8 tasks (one per replicate)
     assertEquals(8, tasks.size());
 
     WorkerTask task0 = tasks.get(0);
