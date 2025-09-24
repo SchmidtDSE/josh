@@ -13,10 +13,14 @@ package org.joshsim.command;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacadeUtil;
@@ -118,6 +122,13 @@ public class RunCommand implements Callable<Integer> {
   )
   private String[] customTags = new String[0];
 
+  @Option(
+      names = "--output-steps",
+      description = "Comma-separated list of time steps to export (e.g., 5,7,8,9,20). "
+                  + "If not specified, all steps are exported."
+  )
+  private String outputSteps = "";
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -146,6 +157,33 @@ public class RunCommand implements Callable<Integer> {
     return customParameters;
   }
 
+  /**
+   * Parses the output-steps command line option.
+   *
+   * @return Optional containing the set of steps to export, or empty if all steps should
+   *     be exported
+   * @throws IllegalArgumentException if the output-steps format is invalid
+   */
+  private Optional<Set<Integer>> parseOutputSteps() {
+    if (outputSteps == null || outputSteps.trim().isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      Set<Integer> steps = Arrays.stream(outputSteps.split(","))
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .map(Integer::parseInt)
+          .collect(Collectors.toSet());
+      if (steps.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(steps);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Invalid output-steps format: " + outputSteps
+          + ". Expected comma-separated integers (e.g., '5,7,8,9,20')");
+    }
+  }
+
   @Override
   public Integer call() {
     // Validate replicates parameter
@@ -153,6 +191,9 @@ public class RunCommand implements Callable<Integer> {
       output.printError("Number of replicates must be at least 1");
       return 1;
     }
+
+    // Parse output steps early for fail-fast validation
+    final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
     EngineGeometryFactory geometryFactory;
     if (crs.isEmpty()) {
       geometryFactory = new GridGeometryFactory();
@@ -168,14 +209,14 @@ public class RunCommand implements Callable<Integer> {
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
-    
+
     // Create job configurations using JobVariationParser for grid search
     JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
         .setReplicates(replicates)
         .setCustomParameters(customParameters);
     JobVariationParser parser = new JobVariationParser();
     List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
-    
+
     // Build all job instances
     List<JoshJob> jobs = jobBuilders.stream()
         .map(JoshJobBuilder::build)
@@ -188,7 +229,7 @@ public class RunCommand implements Callable<Integer> {
 
     // Use first job for initialization (all jobs should have compatible structure)
     JoshJob firstJob = jobs.get(0);
-    
+
     // Create appropriate InputGetterStrategy based on first job configuration
     InputGetterStrategy inputStrategy;
     if (firstJob.getFilePaths().isEmpty()) {
@@ -270,27 +311,27 @@ public class RunCommand implements Callable<Integer> {
 
     // Execute simulation for each job combination and replicate
     int totalSimulationCount = 0;
-    
+
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
       output.printInfo("Executing job combination " + (jobIndex + 1) + "/" + jobs.size());
-      
+
       // Update InputGetterStrategy for this job's file mappings
       if (!currentJob.getFilePaths().isEmpty()) {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
-      
-      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates(); 
+
+      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
            currentReplicate++) {
         totalSimulationCount++;
-        
+
         // Reset progress tracking for each new simulation (except first)
         if (totalSimulationCount > 1) {
           progressCalculator.resetForNextReplicate(totalSimulationCount);
         }
 
         // Create TemplateStringRenderer for this job and replicate
-        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob, 
+        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
             currentReplicate);
 
         // Create InputOutputLayer with template renderer (similar to JoshSimFacade logic)
@@ -326,7 +367,8 @@ public class RunCommand implements Callable<Integer> {
                 output.printInfo(update.getMessage());
               }
             },
-            serialPatches
+            serialPatches,
+            parsedOutputSteps
         );
 
         // Report replicate completion (except for the last simulation)
@@ -336,8 +378,8 @@ public class RunCommand implements Callable<Integer> {
           output.printInfo(completion.getMessage());
         }
       }
-      
-      // Report job combination completion  
+
+      // Report job combination completion
       if (jobIndex < jobs.size() - 1) {
         output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
       }
