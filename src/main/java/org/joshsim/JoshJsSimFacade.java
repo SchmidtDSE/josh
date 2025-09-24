@@ -6,9 +6,12 @@
 
 package org.joshsim;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -126,15 +129,37 @@ public class JoshJsSimFacade {
    * @param externalData The serialization of the virtual file system to use in this simulation.
    * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
    *     not specified. True if BigDecimal and false otherwise.
+   * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
+   *     If empty or null, all steps are exported.
+   */
+  @JSExport
+  public static void runSimulation(String code, String simulationName, String externalData,
+        boolean favorBigDecimal, String outputSteps) {
+    try {
+      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, outputSteps);
+    } catch (Exception e) {
+      reportError(e.toString());
+    }
+  }
+
+  /**
+   * Interpret and run a Josh simulation.
+   *
+   * <p>Backward compatibility method that delegates to the new method with empty outputSteps.
+   * This maintains compatibility with existing JavaScript callers that don't specify
+   * outputSteps.</p>
+   *
+   * @param code The Josh source code to parse, interpret, and run as a simulation.
+   * @param simulationName The name of the simulation to be executed as defined in the parsed
+   *     program.
+   * @param externalData The serialization of the virtual file system to use in this simulation.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
    */
   @JSExport
   public static void runSimulation(String code, String simulationName, String externalData,
         boolean favorBigDecimal) {
-    try {
-      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal);
-    } catch (Exception e) {
-      reportError(e.toString());
-    }
+    runSimulation(code, simulationName, externalData, favorBigDecimal, "");
   }
 
   /**
@@ -257,10 +282,12 @@ public class JoshJsSimFacade {
    * @param externalData The serialization of the virtual file system to use within this simulation.
    * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
    *     not specified. True if BigDecimal and false otherwise.
+   * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
+   *     If empty or null, all steps are exported.
    * @throws RuntimeException If parsing the code results in errors.
    */
   private static void runSimulationUnsafe(String code, String simulationName, String externalData,
-        boolean favorBigDecimal) {
+        boolean favorBigDecimal, String outputSteps) {
     setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -279,6 +306,8 @@ public class JoshJsSimFacade {
         inputOutputLayer
     );
 
+    Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps(outputSteps);
+
     JoshSimFacadeUtil.runSimulation(
         valueFactory,
         geometryFactory,
@@ -286,8 +315,56 @@ public class JoshJsSimFacade {
         program,
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),
-        true
+        true,
+        parsedOutputSteps
     );
+  }
+
+  /**
+   * Interpret and run a Josh simulation without error handling.
+   *
+   * <p>Backward compatibility method that delegates to the new method with empty outputSteps.
+   * This maintains compatibility with existing internal callers that don't specify outputSteps.</p>
+   *
+   * @param code The Josh source code to parse, interpret, and run as a simulation.
+   * @param simulationName The name of the simulation to be executed as defined in the parsed
+   *     program.
+   * @param externalData The serialization of the virtual file system to use within this simulation.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
+   * @throws RuntimeException If parsing the code results in errors.
+   */
+  private static void runSimulationUnsafe(String code, String simulationName, String externalData,
+        boolean favorBigDecimal) {
+    runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, "");
+  }
+
+  /**
+   * Parses the output-steps parameter for JavaScript/WebAssembly interface.
+   *
+   * @param outputSteps Comma-separated string of step numbers to export
+   * @return Optional containing the set of steps to export, or empty if all steps should be
+   *     exported
+   * @throws RuntimeException if the output-steps format is invalid
+   */
+  private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
+    if (outputSteps == null || outputSteps.trim().isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      Set<Integer> steps = Arrays.stream(outputSteps.split(","))
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .map(Integer::parseInt)
+          .collect(Collectors.toSet());
+      if (steps.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(steps);
+    } catch (NumberFormatException e) {
+      throw new RuntimeException("Invalid output steps format: " + outputSteps
+          + ". Expected comma-separated integers (e.g., '5,7,8,9,20')");
+    }
   }
 
   /**
