@@ -8,7 +8,7 @@
  * @license BSD-3-Clause
  */
 
-import {AiAssistantDialogPresenter} from "ai-assistant";
+import {AiAssistantDialogPresenter} from "ai";
 import {ConfigDialogPresenter} from "config";
 import {DataFilesPresenter, LocalFileLayer} from "data";
 import {EditorPresenter} from "editor";
