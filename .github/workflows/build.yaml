@@ -370,15 +370,21 @@ jobs:
         with:
           name: preprocessed-tutorial-data
           path: ./tutorial-data-temp
-      - name: Upload Jar via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './deploy'
-          remotePath: './joshsim.org/dist/${{ steps.branch.outputs.name }}'
+      - name: Install SSH client and sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+      - name: Setup SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H -p 22 ${{ secrets.SFTPHOST }} >> ~/.ssh/known_hosts
+      - name: Upload Jar via SCP
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
+            ./deploy/* \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:./joshsim.org/dist/${{ steps.branch.outputs.name }}/
       - name: Download editor
         uses: actions/download-artifact@v4
         with:
@@ -388,24 +394,28 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: ./repo
-      - name: Copy llms.txt to editor
-        run: cp ./repo/llms.txt ./editor-build/
-      - name: Upload Editor via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './editor-build'
-          remotePath: ${{ env.EDITOR_DIRECTORY }}
+      - name: Copy documentation files to editor
+        run: |
+          cp ./repo/llms.txt ./editor-build/
+          cp ./repo/llms-full.txt ./editor-build/
+          cp -r ./repo/docs ./editor-build/docs
+      - name: Upload Editor via SCP
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
+            ./editor-build/* \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.EDITOR_DIRECTORY }}/
       - name: Download landing
         uses: actions/download-artifact@v4
         with:
           name: landing
           path: ./landing-build
-      - name: Copy llms.txt to landing
-        run: cp ./repo/llms.txt ./landing-build/
+      - name: Copy documentation files to landing
+        run: |
+          cp ./repo/llms.txt ./landing-build/
+          cp ./repo/llms-full.txt ./landing-build/
+          cp -r ./repo/docs ./landing-build/docs
       - name: Organize tutorial data for guides
         run: |
           mkdir -p ./landing-build/guides/two_trees
@@ -413,15 +423,13 @@ jobs:
           cp ./tutorial-data-temp/temperatureTulare.jshd ./landing-build/guides/two_trees/
           cp ./tutorial-data-temp/precipitationTulare.jshd ./landing-build/guides/two_trees/
           cp ./tutorial-data-temp/precipitation_geotiff.jshd ./landing-build/guides/grass_shrub_fire/precipitation.jshd
-      - name: Upload landing via SFTP
-        uses: Creepios/sftp-action@v1.0.3
-        with:
-          host: ${{ secrets.SFTPHOST }}
-          port: 22
-          username: ${{ secrets.SFTPUSER }}
-          password: ${{ secrets.SFTPPASSWORD }}
-          localPath: './landing-build'
-          remotePath: ${{ env.LANDING_DIRECTORY }}
+      - name: Upload landing via SCP
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
+            ./landing-build/* \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.LANDING_DIRECTORY }}/
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
