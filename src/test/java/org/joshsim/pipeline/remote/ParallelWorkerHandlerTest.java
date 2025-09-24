@@ -34,7 +34,8 @@ public class ParallelWorkerHandlerTest {
         "api-key-123",
         "external-data",
         true,
-        5
+        5,
+        "5,10,15"
     );
 
     assertEquals("simulation code", task.getCode());
@@ -43,6 +44,7 @@ public class ParallelWorkerHandlerTest {
     assertEquals("external-data", task.getExternalData());
     assertTrue(task.isFavorBigDecimal());
     assertEquals(5, task.getReplicateNumber());
+    assertEquals("5,10,15", task.getOutputSteps());
   }
 
   @Test
@@ -53,7 +55,8 @@ public class ParallelWorkerHandlerTest {
         "",
         "",
         false,
-        0
+        0,
+        ""
     );
 
     assertEquals("code", task.getCode());
