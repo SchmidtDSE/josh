@@ -61,7 +61,7 @@
                 <a class="secondary" id="open-ai-assistant-dialog-button" href="#ai-assistant">AI Assistant</a>
               </div>
               
-              <dialog id="run-local-dialog">
+              <dialog id="run-dialog">
                 <h2>Run</h2>
                 <p>This will run your simulation in your browser using your computer.</p>
                 <div class="form-group">
@@ -84,6 +84,14 @@
                       <option value="normal">float64</option>
                     </select>
                   </div>
+                </div>
+                <div class="form-group">
+                  <div><label for="output-steps-input">Output Steps (optional):</label></div>
+                  <div>
+                    <input type="text" id="output-steps-input" class="output-steps-input long"
+                           placeholder="e.g., 5,7,8,9,20" />
+                  </div>
+                  <small class="help-text">Comma-separated list of time steps to export. Leave empty to export all steps.</small>
                 </div>
                 <div class="form-group">
                   <fieldset>

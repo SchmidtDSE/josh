@@ -22,6 +22,7 @@ public class WorkerTask {
   private final String externalData;
   private final boolean favorBigDecimal;
   private final int replicateNumber;
+  private final String outputSteps;
 
   /**
    * Creates a new WorkerTask.
@@ -32,15 +33,17 @@ public class WorkerTask {
    * @param externalData External data for the simulation
    * @param favorBigDecimal Whether to favor BigDecimal precision
    * @param replicateNumber The replicate number for this task
+   * @param outputSteps Comma-separated list of time steps to export
    */
   public WorkerTask(String code, String simulationName, String apiKey,
-      String externalData, boolean favorBigDecimal, int replicateNumber) {
+      String externalData, boolean favorBigDecimal, int replicateNumber, String outputSteps) {
     this.code = code;
     this.simulationName = simulationName;
     this.apiKey = apiKey;
     this.externalData = externalData;
     this.favorBigDecimal = favorBigDecimal;
     this.replicateNumber = replicateNumber;
+    this.outputSteps = outputSteps;
   }
 
   /**
@@ -95,5 +98,14 @@ public class WorkerTask {
    */
   public int getReplicateNumber() {
     return replicateNumber;
+  }
+
+  /**
+   * Gets the output steps filter for this task.
+   *
+   * @return The output steps as a comma-separated string
+   */
+  public String getOutputSteps() {
+    return outputSteps;
   }
 }

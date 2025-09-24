@@ -29,13 +29,13 @@ public class JoshTestFixtures {
         steps.high = 3 count
         exportFiles.patch = "%s"
       end simulation
-      
+
       start patch Default
         Tree.init = create 2 count of Tree
         export.treeCount.step = count(Tree)
         export.averageAge.step = mean(Tree.age)
       end patch
-      
+
       start organism Tree
         age.init = 0 count
         age.step = prior.age + 1 count
@@ -68,13 +68,13 @@ public class JoshTestFixtures {
         steps.low = 0 count
         steps.high = 3 count
       end simulation
-      
+
       start patch Default
         Tree.init = create 2 count of Tree
         export.treeCount.step = count(Tree)
         export.averageAge.step = mean(Tree.age)
       end patch
-      
+
       start organism Tree
         age.init = 0 count
         age.step = prior.age + 1 count
@@ -95,7 +95,7 @@ public class JoshTestFixtures {
         steps.high = 5 count
         exportFiles.patch = "%s"
       end simulation
-      
+
       start patch Forest
         Tree.init = create 3 count of Tree
         Shrub.init = create 5 count of Shrub
@@ -103,14 +103,14 @@ public class JoshTestFixtures {
         export.shrubCount.step = count(Shrub)
         export.totalBiomass.step = mean(Tree.height) + mean(Shrub.height)
       end patch
-      
+
       start organism Tree
         age.init = 0 count
         age.step = prior.age + 1 count
         height.init = 1 count
         height.step = prior.height + sample uniform from 0 count to 2 count
       end organism
-      
+
       start organism Shrub
         age.init = 0 count
         age.step = prior.age + 1 count

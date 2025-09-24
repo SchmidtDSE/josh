@@ -7,6 +7,8 @@
 package org.joshsim;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.Set;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -86,10 +88,14 @@ public class JoshSimFacade {
    * @param replicateNumber The replicate number for the replicate to be run.
    * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
    *     not specified. True if BigDecimal and false otherwise.
+   * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
+   *     If present, only steps contained in the set will have their output written to export files.
+   *     All steps continue to execute for simulation state continuity regardless of this filter.
    */
   public static void runSimulation(EngineGeometryFactory geometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
-        boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
+        boolean serialPatches, int replicateNumber, boolean favorBigDecimal,
+        Optional<Set<Integer>> outputSteps) {
     setupForJvm();
 
     EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
@@ -129,8 +135,36 @@ public class JoshSimFacade {
         program,
         simulationName,
         callback,
-        serialPatches
+        serialPatches,
+        outputSteps
     );
+  }
+
+  /**
+   * Runs a simulation from the provided program.
+   *
+   * <p>Creates and executes a simulation using the provided program and simulation name.
+   * The callback is invoked after each simulation step is completed. This method provides
+   * backward compatibility by exporting all steps.</p>
+   *
+   * @param geometryFactory Factory with which to build engine geometries.
+   * @param program The Josh program containing the simulation to run. This is the program in which
+   *     the simulation will be initalized.
+   * @param simulationName The name of the simulation to execute from the program. This will be
+   *     initalized from the given program.
+   * @param callback A callback that will be invoked after each simulation step. This is called
+   *     as blocking.
+   * @param serialPatches If true, patches will be processed serially. If false, they will be
+   *     processed in parallel.
+   * @param replicateNumber The replicate number for the replicate to be run.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
+   */
+  public static void runSimulation(EngineGeometryFactory geometryFactory, JoshProgram program,
+        String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
+        boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
+    runSimulation(geometryFactory, program, simulationName, callback, serialPatches,
+        replicateNumber, favorBigDecimal, Optional.empty());
   }
 
   /**

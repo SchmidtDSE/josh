@@ -266,19 +266,19 @@ public class RunRemoteCommand implements Callable<Integer> {
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
-    
+
     // Create job configurations using JobVariationParser for grid search
     JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
         .setReplicates(replicates)
         .setCustomParameters(customParameters);
     JobVariationParser parser = new JobVariationParser();
     List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
-    
+
     // Build all job instances
     List<JoshJob> jobs = jobBuilders.stream()
         .map(JoshJobBuilder::build)
         .toList();
-    
+
     // Report grid search information
     output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
         + "with " + replicates + " replicate(s) each");
@@ -294,12 +294,12 @@ public class RunRemoteCommand implements Callable<Integer> {
 
     // Select execution strategy (same for all job combinations)
     RunRemoteStrategy strategy = selectExecutionStrategy();
-    
+
     // Execute remote simulation for each job combination
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
       output.printInfo("Executing remote job combination " + (jobIndex + 1) + "/" + jobs.size());
-      
+
       // Serialize external data for this job combination
       String externalDataSerialized = serializeExternalDataForJob(currentJob);
 
@@ -322,7 +322,7 @@ public class RunRemoteCommand implements Callable<Integer> {
 
       // Execute strategy for this job combination
       strategy.execute(context);
-      
+
       // Report job combination completion
       if (jobIndex < jobs.size() - 1) {
         output.printInfo("Completed remote job combination " + (jobIndex + 1) + "/" + jobs.size());

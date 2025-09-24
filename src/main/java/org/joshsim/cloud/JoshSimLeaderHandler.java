@@ -159,6 +159,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
 
     String externalData = formData.getFirst("externalData").getValue();
     boolean favorBigDecimal = Boolean.parseBoolean(formData.getFirst("favorBigDecimal").getValue());
+    String outputStepsStr = formData.contains("outputSteps")
+        ? formData.getFirst("outputSteps").getValue() : "";
 
     // Prepare tasks for parallel execution
     List<WorkerTask> tasks = new ArrayList<>();
@@ -169,7 +171,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
           apiKey,
           externalData,
           favorBigDecimal,
-          i
+          i,
+          outputStepsStr
       );
       tasks.add(task);
     }
