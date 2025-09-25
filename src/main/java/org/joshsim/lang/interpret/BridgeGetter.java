@@ -21,4 +21,16 @@ public interface BridgeGetter {
    */
   EngineBridge get();
 
+  /**
+   * Sets the bridge to use instead of building one.
+   *
+   * <p>This allows injecting a specific bridge instance so that external data
+   * requests use the same bridge instance that gets updated during simulation steps.</p>
+   *
+   * @param bridge The bridge to use for all operations.
+   */
+  default void setBridge(EngineBridge bridge) {
+    throw new UnsupportedOperationException("setBridge not supported by this implementation");
+  }
+
 }

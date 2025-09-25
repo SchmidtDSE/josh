@@ -99,6 +99,18 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.inputOutputLayer = Optional.of(inputOutputLayer);
   }
 
+  /**
+   * Sets the bridge to use instead of building one.
+   *
+   * <p>This allows injecting the main simulation bridge so that external data
+   * requests use the same bridge instance that gets updated during simulation steps.</p>
+   *
+   * @param bridge The bridge to use for all operations.
+   */
+  public void setBridge(EngineBridge bridge) {
+    this.builtBridge = Optional.of(bridge);
+  }
+
   @Override
   public EngineBridge get() {
     if (builtBridge.isEmpty()) {

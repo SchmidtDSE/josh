@@ -52,6 +52,7 @@ public class JoshInterpreter {
       bridgeGetter.setSimulationName(simulationNames.next());
     }
 
+    program.setBridgeGetter(bridgeGetter);
     return program;
   }
 
@@ -83,6 +84,7 @@ public class JoshInterpreter {
     bridgeGetter.setGeometryFactory(geometryFactory);
     bridgeGetter.setInputOutputLayer(inputOutputLayer);
 
+    program.setBridgeGetter(bridgeGetter);
     return program;
   }
 

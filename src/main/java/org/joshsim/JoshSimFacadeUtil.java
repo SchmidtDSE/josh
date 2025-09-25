@@ -16,6 +16,7 @@ import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.bridge.SimulationStepper;
+import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.CombinedExportFacade;
@@ -97,6 +98,13 @@ public class JoshSimFacadeUtil {
         new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory),
         new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory)
     );
+
+    // Inject the main simulation bridge into the program's bridge getter
+    // so that external data requests use the same bridge instance
+    BridgeGetter bridgeGetter = program.getBridgeGetter();
+    if (bridgeGetter != null) {
+      bridgeGetter.setBridge(bridge);
+    }
 
     CombinedExportFacade exportFacade = new CombinedExportFacade(
         simEntity,
