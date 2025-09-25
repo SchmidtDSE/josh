@@ -62,8 +62,8 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
                                    AtomicInteger cumulativeStepCount) {
     return switch (parsedResponse.getType()) {
       case PROGRESS -> {
-        // Convert per-replicate progress to cumulative
-        WireResponse cumulativeResponse = WireRewriteUtil.rewriteProgressToCumulative(
+        // Convert per-replicate progress to cumulative for worker coordination
+        WireResponse cumulativeResponse = WireRewriteUtil.rewriteProgressForWorkerCoordination(
             parsedResponse,
             cumulativeStepCount
         );

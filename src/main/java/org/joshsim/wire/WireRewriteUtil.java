@@ -89,20 +89,51 @@ public class WireRewriteUtil {
     };
   }
 
+
   /**
-   * Creates a new WireResponse with cumulative progress count.
+   * Creates a new WireResponse with proper cumulative progress across replicates.
+   *
+   * <p>This method correctly calculates cumulative progress by treating the step count
+   * as the current position within the active replicate, not as an increment to add.
+   * The cumulative progress is calculated as:
+   * (completedReplicates * stepsPerReplicate) + currentStep</p>
+   *
+   * @param response The original progress response containing current step within replicate
+   * @param completedReplicates Number of fully completed replicates
+   * @param stepsPerReplicate Total steps per individual replicate
+   * @return A new WireResponse with proper cumulative progress count
+   * @throws IllegalArgumentException if the response is not a PROGRESS type
+   */
+  public static WireResponse rewriteProgressToProperCumulative(WireResponse response,
+                                                              int completedReplicates,
+                                                              long stepsPerReplicate) {
+    if (response == null) {
+      throw new IllegalArgumentException("Response cannot be null");
+    }
+
+    if (response.getType() != WireResponse.ResponseType.PROGRESS) {
+      throw new IllegalArgumentException("Can only rewrite PROGRESS responses to cumulative");
+    }
+
+    long currentStepInReplicate = response.getStepCount();
+    long cumulativeSteps = (completedReplicates * stepsPerReplicate) + currentStepInReplicate;
+    return new WireResponse(cumulativeSteps);
+  }
+
+  /**
+   * Creates a new WireResponse with cumulative progress count for worker coordination.
    *
    * <p>This method creates a PROGRESS response with a cumulative step count calculated
-   * by adding the original step count to the cumulative counter. This is useful for
-   * combining progress from multiple workers into a single cumulative progress stream.</p>
+   * by adding the original step count to the cumulative counter. This is specifically
+   * designed for coordinating progress from multiple parallel workers.</p>
    *
    * @param response The original progress response
    * @param cumulativeCounter The cumulative counter to update and use
    * @return A new WireResponse with cumulative progress count
    * @throws IllegalArgumentException if the response is not a PROGRESS type
    */
-  public static WireResponse rewriteProgressToCumulative(WireResponse response,
-                                                        AtomicInteger cumulativeCounter) {
+  public static WireResponse rewriteProgressForWorkerCoordination(WireResponse response,
+                                                                AtomicInteger cumulativeCounter) {
     if (response == null) {
       throw new IllegalArgumentException("Response cannot be null");
     }
