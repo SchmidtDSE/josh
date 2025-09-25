@@ -17,7 +17,8 @@
       "Bash(echo $?)",
       "Read(//tmp/**)",
       "Bash(chmod:*)",
-      "Read(//home/ubuntu/esiil/**)"
+      "Read(//home/ubuntu/esiil/**)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []
