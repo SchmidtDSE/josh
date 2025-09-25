@@ -22,6 +22,7 @@ import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SimulationMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,7 @@ public class RemoteResponseHandlerTest {
   private ExportFacade exportFacade;
   private ProgressCalculator progressCalculator;
   private OutputOptions outputOptions;
+  private SimulationMetadata metadata;
   private RemoteResponseHandler handler;
   private RemoteResponseHandler cumulativeHandler;
 
@@ -50,9 +52,12 @@ public class RemoteResponseHandlerTest {
     exportFacade = mock(ExportFacade.class);
     progressCalculator = mock(ProgressCalculator.class);
     outputOptions = mock(OutputOptions.class);
+    metadata = mock(SimulationMetadata.class);
 
     when(context.getProgressCalculator()).thenReturn(progressCalculator);
     when(context.getOutputOptions()).thenReturn(outputOptions);
+    when(context.getMetadata()).thenReturn(metadata);
+    when(metadata.getTotalSteps()).thenReturn(100L); // 100 steps per replicate
     when(exportFactory.build(any(ExportTarget.class))).thenReturn(exportFacade);
 
     handler = new RemoteResponseHandler(context, exportFactory, false);
@@ -80,10 +85,11 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testProcessProgressResponseWithCumulative() {
     // Arrange
-    String progressLine = "[progress 10]";
-    AtomicInteger cumulativeCounter = new AtomicInteger(30);
-    ProgressUpdate progressUpdate = new ProgressUpdate(true, 40.0, "Progress: 40%");
-    when(progressCalculator.updateStep(40)).thenReturn(progressUpdate);
+    String progressLine = "[progress 25]"; // Step 25 within current replicate
+    AtomicInteger cumulativeCounter = new AtomicInteger(0); // Not used in new implementation
+    ProgressUpdate progressUpdate = new ProgressUpdate(true, 25.0, "Progress: 25%");
+    // 0 completed replicates * 100 + 25 = 25
+    when(progressCalculator.updateStep(25)).thenReturn(progressUpdate);
 
     // Act
     Optional<org.joshsim.wire.WireResponse> result =
@@ -91,9 +97,39 @@ public class RemoteResponseHandlerTest {
 
     // Assert
     assertTrue(result.isPresent());
-    assertEquals(40, cumulativeCounter.get()); // 30 + 10
-    verify(progressCalculator).updateStep(40);
-    verify(outputOptions).printInfo("Progress: 40%");
+    verify(progressCalculator).updateStep(25); // Should be called with cumulative step count
+    verify(outputOptions).printInfo("Progress: 25%");
+  }
+
+  @Test
+  public void testProcessProgressResponseWithCumulativeAfterCompletedReplicate() {
+    // Arrange - Simulate having 2 completed replicates
+    final String endLine1 = "[end 0]";
+    final String endLine2 = "[end 1]";
+    ProgressUpdate endUpdate1 = new ProgressUpdate(true, 100.0, "Replicate 1 completed");
+    ProgressUpdate endUpdate2 = new ProgressUpdate(true, 100.0, "Replicate 2 completed");
+    when(progressCalculator.updateReplicateCompleted(1)).thenReturn(endUpdate1);
+    when(progressCalculator.updateReplicateCompleted(2)).thenReturn(endUpdate2);
+
+    // Complete 2 replicates first
+    cumulativeHandler.processResponseLine(endLine1, 0, null);
+    cumulativeHandler.processResponseLine(endLine2, 1, null);
+
+    // Now test progress in the 3rd replicate
+    String progressLine = "[progress 30]"; // Step 30 within current replicate
+    AtomicInteger cumulativeCounter = new AtomicInteger(0); // Not used in new implementation
+    ProgressUpdate progressUpdate = new ProgressUpdate(true, 230.0, "Progress: 230 steps");
+    // 2 completed * 100 + 30 = 230
+    when(progressCalculator.updateStep(230)).thenReturn(progressUpdate);
+
+    // Act
+    Optional<org.joshsim.wire.WireResponse> result =
+        cumulativeHandler.processResponseLine(progressLine, 2, cumulativeCounter);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(progressCalculator).updateStep(230); // Should be called with proper cumulative count
+    verify(outputOptions).printInfo("Progress: 230 steps");
   }
 
   @Test

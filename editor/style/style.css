@@ -58,7 +58,7 @@ dialog .form-group input.long {
 }
 
 dialog .form-group textarea.config-textarea {
-  width: 650px;
+  width: 90%;
   font-family: monospace;
 }
 

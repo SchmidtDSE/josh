@@ -105,12 +105,12 @@ public class WireRewriteUtilTest {
   }
 
   @Test
-  public void testRewriteProgressToCumulative() {
+  public void testRewriteProgressForWorkerCoordination() {
     AtomicInteger cumulativeCounter = new AtomicInteger(10);
     WireResponse original = new WireResponse(5);
 
     WireResponse rewritten =
-        WireRewriteUtil.rewriteProgressToCumulative(original, cumulativeCounter);
+        WireRewriteUtil.rewriteProgressForWorkerCoordination(original, cumulativeCounter);
 
     assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
     assertEquals(15, rewritten.getStepCount()); // 10 + 5
@@ -118,38 +118,72 @@ public class WireRewriteUtilTest {
   }
 
   @Test
-  public void testRewriteProgressToCumulativeMultipleTimes() {
+  public void testRewriteProgressForWorkerCoordinationMultipleTimes() {
     AtomicInteger cumulativeCounter = new AtomicInteger(0);
 
     WireResponse first = new WireResponse(10);
     WireResponse rewritten1 =
-        WireRewriteUtil.rewriteProgressToCumulative(first, cumulativeCounter);
+        WireRewriteUtil.rewriteProgressForWorkerCoordination(first, cumulativeCounter);
     assertEquals(10, rewritten1.getStepCount());
     assertEquals(10, cumulativeCounter.get());
 
     WireResponse second = new WireResponse(5);
     WireResponse rewritten2 =
-        WireRewriteUtil.rewriteProgressToCumulative(second, cumulativeCounter);
+        WireRewriteUtil.rewriteProgressForWorkerCoordination(second, cumulativeCounter);
     assertEquals(15, rewritten2.getStepCount());
     assertEquals(15, cumulativeCounter.get());
   }
 
   @Test
-  public void testRewriteProgressToCumulativeNullResponse() {
+  public void testRewriteProgressForWorkerCoordinationNullResponse() {
     AtomicInteger cumulativeCounter = new AtomicInteger(0);
     assertThrows(IllegalArgumentException.class, () -> {
-      WireRewriteUtil.rewriteProgressToCumulative(null, cumulativeCounter);
+      WireRewriteUtil.rewriteProgressForWorkerCoordination(null, cumulativeCounter);
     });
   }
 
   @Test
-  public void testRewriteProgressToCumulativeNonProgressResponse() {
+  public void testRewriteProgressForWorkerCoordinationNonProgressResponse() {
     AtomicInteger cumulativeCounter = new AtomicInteger(0);
     WireResponse datumResponse = new WireResponse(5, "data");
 
     assertThrows(IllegalArgumentException.class, () -> {
-      WireRewriteUtil.rewriteProgressToCumulative(datumResponse, cumulativeCounter);
+      WireRewriteUtil.rewriteProgressForWorkerCoordination(datumResponse, cumulativeCounter);
     });
+  }
+
+  @Test
+  public void testRewriteProgressToProperCumulative() {
+    // Test with 0 completed replicates, step 50 of 100
+    WireResponse response = new WireResponse(50);
+    WireResponse rewritten = WireRewriteUtil.rewriteProgressToProperCumulative(response, 0, 100);
+
+    assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
+    assertEquals(50, rewritten.getStepCount()); // 0 * 100 + 50 = 50
+  }
+
+  @Test
+  public void testRewriteProgressToProperCumulativeMultipleReplicates() {
+    // Test with 2 completed replicates, step 30 of 100 in current replicate
+    WireResponse response = new WireResponse(30);
+    WireResponse rewritten = WireRewriteUtil.rewriteProgressToProperCumulative(response, 2, 100);
+
+    assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
+    assertEquals(230, rewritten.getStepCount()); // 2 * 100 + 30 = 230
+  }
+
+  @Test
+  public void testRewriteProgressToProperCumulativeWithNullResponse() {
+    assertThrows(IllegalArgumentException.class, () ->
+        WireRewriteUtil.rewriteProgressToProperCumulative(null, 1, 100));
+  }
+
+  @Test
+  public void testRewriteProgressToProperCumulativeWithNonProgressResponse() {
+    WireResponse datumResponse = new WireResponse(1, "test data");
+
+    assertThrows(IllegalArgumentException.class, () ->
+        WireRewriteUtil.rewriteProgressToProperCumulative(datumResponse, 1, 100));
   }
 
   @Test
