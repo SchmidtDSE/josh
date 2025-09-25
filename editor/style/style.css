@@ -17,6 +17,10 @@ dialog {
   font-size: 14px;
 }
 
+dialog#config-dialog {
+  max-width: 800px;
+}
+
 dialog h2 {
   margin-top: 0;
   padding-top: 5px;
@@ -51,6 +55,11 @@ dialog .form-group input {
 
 dialog .form-group input.long {
   width: 250px;
+}
+
+dialog .form-group textarea.config-textarea {
+  width: 650px;
+  font-family: monospace;
 }
 
 dialog .form-group input.short {
