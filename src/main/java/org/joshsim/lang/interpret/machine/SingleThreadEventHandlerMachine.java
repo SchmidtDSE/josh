@@ -809,7 +809,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public long getStepCount() {
-    return bridge.getCurrentTimestep();
+    return bridge.getAbsoluteTimestep();
   }
 
   @Override
