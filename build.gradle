@@ -224,7 +224,7 @@ task setupCheckstyle {
     configDir.mkdirs()
     def checksFile = new File(configDir, "google_checks.xml")
     if (!checksFile.exists()) {
-      checksFile << new URL("https://raw.githubusercontent.com/checkstyle/checkstyle/master/src/main/resources/google_checks.xml").text
+      checksFile << new URL("https://raw.githubusercontent.com/checkstyle/checkstyle/checkstyle-10.21.4/src/main/resources/google_checks.xml").text
     }
   }
 }
