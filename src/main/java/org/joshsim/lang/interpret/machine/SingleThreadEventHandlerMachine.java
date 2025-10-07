@@ -470,7 +470,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
         resolved,
-        !resolved.isEmpty() ? EMPTY_UNITS : resolved.get(0).getUnits()
+        !resolved.isEmpty() ? resolved.get(0).getUnits() : EMPTY_UNITS
     );
     memory.push(resolvedDistribution);
 
