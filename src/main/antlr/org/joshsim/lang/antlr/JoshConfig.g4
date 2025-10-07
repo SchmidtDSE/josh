@@ -30,7 +30,9 @@ COMMENT_ : '#' ~[\r\n]* -> channel(HIDDEN) ;
 
 EQUALS_ : '=' ;
 
-IDENTIFIER_ : [A-Za-z/][A-Za-z0-9%/]* ;
+PERCENT_ : '%' ;
+
+IDENTIFIER_ : [A-Za-z/][A-Za-z0-9/]* ;
 
 NEWLINE_ : [\r\n]+ -> skip ;
 
@@ -57,4 +59,4 @@ identifier : IDENTIFIER_ ;
 
 number : NUMBER_ ;
 
-value : number identifier? ;
+value : number (identifier | PERCENT_)? ;
