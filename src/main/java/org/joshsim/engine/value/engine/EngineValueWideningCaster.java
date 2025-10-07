@@ -104,6 +104,13 @@ public class EngineValueWideningCaster implements EngineValueCaster {
       throw new IllegalArgumentException(message);
     }
 
+    // When adding empty to non-empty, the result should be non-empty
+    if (types.getFirst().getRootType().equals("empty")) {
+      return new EngineValueTuple(operands.getFirst(), operands.getSecond());
+    } else if (types.getSecond().getRootType().equals("empty")) {
+      return new EngineValueTuple(operands.getFirst(), operands.getSecond());
+    }
+
     EngineValueTuple.TypesTuple typesReversed = operands.reverse().getTypes();
 
     if (strategies.containsKey(types)) {
