@@ -122,10 +122,16 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
     onlyOnPrior = new HashSet<>(priorAttributes.keySet());
 
+    // Freeze all attribute values to ensure nested entities are also frozen
+    Map<String, EngineValue> frozenAttributes = new HashMap<>();
+    for (Map.Entry<String, EngineValue> entry : priorAttributes.entrySet()) {
+      frozenAttributes.put(entry.getKey(), entry.getValue().freeze());
+    }
+
     return new FrozenEntity(
         getEntityType(),
         name,
-        priorAttributes,
+        frozenAttributes,
         getGeometry()
     );
   }
