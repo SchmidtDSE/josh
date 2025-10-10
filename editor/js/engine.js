@@ -44,10 +44,12 @@ class WasmEngineBackend {
    *     steps completed in the current replicate.
    * @param onReplicateExternal {function} - Callback to invoke when a single replicate is
    *     completed. Will pass the number of replicates completed in the current execution.
+   * @param startStep {number} - The starting step value (steps.low) for normalizing absolute
+   *     timesteps to 0-based progress. Defaults to 0 if not provided.
    * @returns {Promise<Array<SimulationResult>>} Resolves to the per-replicate simulation results or
    *     rejects if it encounters a runtime error.
    */
-  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal) {
+  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal, startStep) {
     const self = this;
 
     const simName = runRequest.getSimName();
@@ -90,21 +92,24 @@ class WasmEngineBackend {
       };
 
       const onStepCallback = (currentStep) => {
+        // Normalize absolute timestep to 0-based step count
+        // If startStep is not provided, default to 0 (backward compatibility)
+        const normalizedStep = currentStep - (startStep || 0);
+
         if (multiReplicate) {
           // Track current replicate step count
-          currentReplicateSteps = currentStep;
-          
+          currentReplicateSteps = normalizedStep;
+
           // For multi-replicate, we need to know the total steps per replicate
           // firstStepsPerReplicate is set after the first replicate completes
-          // It represents the last step index (0-based), so total steps = firstStepsPerReplicate + 1
-          const stepsPerReplicate = firstStepsPerReplicate !== null ? firstStepsPerReplicate + 1 : currentStep + 1;
-          
+          const stepsPerReplicate = firstStepsPerReplicate !== null ? firstStepsPerReplicate : normalizedStep;
+
           // Calculate cumulative steps across all replicates
           const completedReplicates = replicateResults.length;
-          const totalStepsCompleted = (completedReplicates * stepsPerReplicate) + (currentStep + 1);
+          const totalStepsCompleted = (completedReplicates * stepsPerReplicate) + normalizedStep;
           onStepExternal(totalStepsCompleted);
         } else {
-          onStepExternal(currentStep + 1);
+          onStepExternal(normalizedStep);
         }
       };
 
@@ -168,11 +173,13 @@ class RemoteEngineBackend {
    *     will not be invoked when using the remote engine backend.
    * @param onReplicateExternal {function} - Callback to invoke when a single replicate is
    *     completed. Will pass the number of replicates completed in the current execution.
+   * @param startStep {number} - The starting step value (steps.low) for normalizing absolute
+   *     timesteps to 0-based progress. Defaults to 0 if not provided.
    * @returns {Promise<Array<SimulationResult>>} Resolves to the per-replicate simulation results or
    *     rejects if it encounters a runtime error. This is after collecting results by replicate
    *     number as they may not be guaranteed to return in order from all backends.
    */
-  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal) {
+  execute(simCode, runRequest, externalData, onStepExternal, onReplicateExternal, startStep) {
     const self = this;
 
     /**
@@ -216,7 +223,7 @@ class RemoteEngineBackend {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        const responseReader = new ResponseReader(onReplicateExternal, onStepExternal);
+        const responseReader = new ResponseReader(onReplicateExternal, onStepExternal, startStep);
 
         const readStream = () => {
           return reader.read().then((x) => {

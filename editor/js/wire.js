@@ -84,13 +84,16 @@ class ResponseReader {
    *
    * @param {function} onReplicateExternal - Callback to invoke when replicates are ready.
    * @param {function} onStepExternal - Callback to invoke when step progress is reported.
+   * @param {number} startStep - The starting step value (steps.low) for normalizing absolute
+   *     timesteps to 0-based progress. Defaults to 0 if not provided.
    */
-  constructor(onReplicateExternal, onStepExternal) {
+  constructor(onReplicateExternal, onStepExternal, startStep) {
     const self = this;
     self._replicateReducer = new Map();
     self._completeReplicates = [];
     self._onReplicateExternal = onReplicateExternal;
     self._onStepExternal = onStepExternal || (() => {});
+    self._startStep = startStep || 0;
     self._buffer = "";
     self._completedReplicates = 0;
   }
@@ -129,7 +132,10 @@ class ResponseReader {
         }
         self._onReplicateExternal(self._completedReplicates);
       } else if (intermediate["type"] === "progress") {
-        self._onStepExternal(intermediate["steps"]);
+        // Normalize absolute timestep to 0-based step count
+        const absoluteStep = intermediate["steps"];
+        const normalizedStep = absoluteStep - self._startStep;
+        self._onStepExternal(normalizedStep);
       } else if (intermediate["type"] === "error") {
         throw new Error("Server error: " + intermediate["message"]);
       }

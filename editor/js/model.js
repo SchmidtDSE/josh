@@ -280,9 +280,10 @@ class SimulationMetadata {
    * @param {?number} minLatitude - The minimum latitude within this grid. Defaults to null.
    * @param {?number} maxLongitude - The maximum longitude within this grid. Defaults to null.
    * @param {?number} maxLatitude - The maximum latitude within this grid. Defaults to null.
+   * @param {?number} startStep - The starting step of the simulation (steps.low value). Defaults to null.
    */
   constructor(startX, startY, endX, endY, patchSize, totalSteps, minLongitude, minLatitude, maxLongitude,
-        maxLatitude) {
+        maxLatitude, startStep) {
     const self = this;
     self._startX = startX;
     self._startY = startY;
@@ -291,8 +292,9 @@ class SimulationMetadata {
     self._patchSize = patchSize;
 
     const defaultToNull = (x) => x === undefined ? null : x;
-    
+
     self._totalSteps = defaultToNull(totalSteps);
+    self._startStep = defaultToNull(startStep);
     self._minLongitude = defaultToNull(minLongitude);
     self._minLatitude = defaultToNull(minLatitude);
     self._maxLongitude = defaultToNull(maxLongitude);
@@ -399,6 +401,16 @@ class SimulationMetadata {
   getTotalSteps() {
     const self = this;
     return self._totalSteps;
+  }
+
+  /**
+   * Gets the starting step of the simulation (steps.low value).
+   *
+   * @returns {?number} The starting step, or null if not specified.
+   */
+  getStartStep() {
+    const self = this;
+    return self._startStep;
   }
 
   /**

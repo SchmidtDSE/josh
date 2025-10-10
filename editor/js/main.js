@@ -36,6 +36,7 @@ class MainPresenter {
     self._metadata = null;
     self._totalStepsAcrossReplicates = 0;
     self._completedStepsAcrossReplicates = 0;
+    self._startStep = 0;
 
     self._wasmLayer = new WasmLayer();
 
@@ -138,12 +139,15 @@ class MainPresenter {
     Promise.all([futureMetadata, futureExternalData]).then(
       (results) => {
         self._metadata = results[0];
-        
+
         // Calculate total steps across all replicates
         const totalStepsPerReplicate = self._metadata.getTotalSteps() || 0;
         const numReplicates = self._currentRequest.getReplicates();
         self._totalStepsAcrossReplicates = totalStepsPerReplicate * numReplicates;
-        
+
+        // Store startStep for progress normalization (default to 0 if not specified)
+        self._startStep = self._metadata.getStartStep() || 0;
+
         self._executeInBackend(results[1]);
       },
       (x) => {
@@ -167,7 +171,8 @@ class MainPresenter {
       self._currentRequest,
       externalData,
       (x) => self._onStepCompleted(x, "steps"),
-      (x) => self._onStepCompleted(x, "replicates")
+      (x) => self._onStepCompleted(x, "replicates"),
+      self._startStep
     ).then(
       (x) => self._onRunComplete(x),
       (x) => self._onError(x)
