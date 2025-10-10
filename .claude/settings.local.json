@@ -18,7 +18,9 @@
       "Read(//tmp/**)",
       "Bash(chmod:*)",
       "Read(//home/ubuntu/esiil/**)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(//home/ubuntu/chc_cmip6_sample/**)",
+      "Bash(echo \"Exit code: $?\")"
     ],
     "deny": [],
     "ask": []
