@@ -6,10 +6,11 @@
 
 package org.joshsim.engine.func;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -43,11 +44,13 @@ public class DistributionScope implements Scope {
 
     ValueResolver innerResolver = new ValueResolver(valueFactory, name);
 
-    List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
-        .map((x) -> new EntityScope(x.getAsEntity()))
-        .map(innerResolver::get)
-        .map((x) -> x.orElseThrow())
-        .collect(Collectors.toList());
+    // Transform values using direct iteration instead of streams
+    List<EngineValue> transformedValues = new ArrayList<>();
+    for (EngineValue val : values) {
+      EntityScope scope = new EntityScope(val.getAsEntity());
+      Optional<EngineValue> resolved = innerResolver.get(scope);
+      transformedValues.add(resolved.orElseThrow());
+    }
 
     return valueFactory.buildRealizedDistribution(
         transformedValues,
@@ -69,12 +72,14 @@ public class DistributionScope implements Scope {
   /**
    * Extract all attribute names from a sampled entity's event handlers or set attributes.
    *
+   * <p>Returns a copy of the attribute names set to avoid issues if the original set
+   * is immutable or if we need to avoid sharing references.</p>
+   *
    * @param target the Distriubtion to sample for an Entity from which to extract attribute names.
    * @return Set of attribute names found in the entity's event handlers or set attributes.
    */
   private Set<String> getAttributes(Distribution target) {
-    return StreamSupport
-            .stream(target.sample().getAsEntity().getAttributeNames().spliterator(), false)
-            .collect(Collectors.toSet());
+    Set<String> attributeNames = target.sample().getAsEntity().getAttributeNames();
+    return new HashSet<>(attributeNames);
   }
 }

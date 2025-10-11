@@ -1,34 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(java:*)",
-      "Bash(./gradlew:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(./test_component6_workflow.sh:*)",
-      "Bash(./minimal_template_test.sh:*)",
-      "Bash(bash:*)",
-      "Bash(./test_job_config.sh:*)",
-      "Bash(./examples/test_job_config.sh:*)",
-      "Bash(sed:*)",
-      "Bash(git checkout:*)",
-      "Bash(echo $?)",
-      "Read(//tmp/**)",
-      "Bash(chmod:*)",
-      "Read(//home/ubuntu/esiil/**)",
-      "Bash(timeout:*)",
-      "Read(//home/ubuntu/chc_cmip6_sample/**)",
-      "Bash(echo \"Exit code: $?\")",
-      "Bash(jfr print:*)",
-      "Bash(jfr summary:*)",
-      "Read(///**)",
-      "Bash(cat:*)",
-      "Bash(awk:*)",
-      "Bash(pgrep:*)",
-      "Bash(pkill:*)",
-      "Bash(echo:*)"
+      "Bash(javac:*)"
     ],
     "deny": [],
     "ask": []

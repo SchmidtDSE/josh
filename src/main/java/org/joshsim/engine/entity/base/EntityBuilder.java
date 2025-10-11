@@ -8,8 +8,12 @@ package org.joshsim.engine.entity.base;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Agent;
@@ -30,6 +34,8 @@ public class EntityBuilder {
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
+  private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
+  private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
 
   /**
    * Create an empty builder.
@@ -38,16 +44,30 @@ public class EntityBuilder {
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
     attributes = new HashMap<>();
+    attributesWithoutHandlersBySubstep = null; // Computed lazily
+    immutableEventHandlerGroups = null; // Computed lazily
   }
 
   /**
-   * Creates an immutable copy of the event handler groups map.
+   * Gets or creates the immutable event handler groups map.
    *
-   * @return an immutable copy of the event handler groups
+   * <p>This method lazily creates an immutable copy of the event handler groups map
+   * and caches it for reuse across all entity instances built from this builder.
+   * The map is created only once per entity type and shared across all instances,
+   * significantly reducing memory allocation during entity construction.</p>
+   *
+   * <p>The cached map is invalidated (set to null) whenever handlers are added or
+   * the builder is cleared, ensuring correctness when the builder is modified.</p>
+   *
+   * @return An immutable map of event keys to event handler groups, shared across instances
    */
-  private Map<EventKey, EventHandlerGroup> createImmutableEventHandlerGroupsCopy() {
-    Map<EventKey, EventHandlerGroup> copy = new HashMap<>(eventHandlerGroups);
-    return Collections.unmodifiableMap(copy);
+  private Map<EventKey, EventHandlerGroup> getImmutableEventHandlerGroups() {
+    if (immutableEventHandlerGroups == null) {
+      immutableEventHandlerGroups = Collections.unmodifiableMap(
+        new HashMap<>(eventHandlerGroups)
+      );
+    }
+    return immutableEventHandlerGroups;
   }
 
   /**
@@ -87,6 +107,8 @@ public class EntityBuilder {
     name = Optional.empty();
     eventHandlerGroups.clear();
     attributes.clear();
+    immutableEventHandlerGroups = null; // Invalidate cache
+    attributesWithoutHandlersBySubstep = null; // Invalidate cache
   }
 
   /**
@@ -98,6 +120,8 @@ public class EntityBuilder {
    */
   public EntityBuilder addEventHandlerGroup(EventKey eventKey, EventHandlerGroup group) {
     eventHandlerGroups.put(eventKey, group);
+    immutableEventHandlerGroups = null; // Invalidate cache
+    attributesWithoutHandlersBySubstep = null; // Invalidate cache
     return this;
   }
 
@@ -110,7 +134,72 @@ public class EntityBuilder {
    */
   public EntityBuilder addAttribute(String attribute, EngineValue value) {
     attributes.put(attribute, value);
+    attributesWithoutHandlersBySubstep = null; // Invalidate cache
     return this;
+  }
+
+  /**
+   * Compute the set of attributes that lack handlers for each substep.
+   *
+   * <p>This method analyzes event handlers to determine which attributes have no handlers
+   * for specific substeps (init, step, start, end, constant). This enables fast-path
+   * optimization in ShadowingEntity by skipping expensive handler lookups when we know
+   * an attribute has no handlers for the current substep.</p>
+   *
+   * <p>The method is conservative: only marks attribute as "no handlers" if it appears
+   * in the initial attributes map but has no event handler for that specific substep.
+   * This prevents false negatives (incorrectly skipping handler execution).</p>
+   *
+   * <p>This computation is done ONCE per entity type in the builder, rather than once
+   * per entity instance, providing significant performance improvement.</p>
+   *
+   * @return Immutable map from substep name to set of attributes without handlers for that substep
+   */
+  private Map<String, Set<String>> computeAttributesWithoutHandlersBySubstep() {
+    // Use cached value if available
+    if (attributesWithoutHandlersBySubstep != null) {
+      return attributesWithoutHandlersBySubstep;
+    }
+
+    Map<String, Set<String>> result = new HashMap<>();
+
+    // Common substeps in Josh DSL
+    List<String> substeps = List.of("init", "step", "start", "end", "constant");
+
+    for (String substep : substeps) {
+      // Find all attributes WITH handlers for this specific substep
+      Set<String> attrsWithHandlersInSubstep = new HashSet<>();
+
+      for (EventHandlerGroup group : eventHandlerGroups.values()) {
+        if (group == null) {
+          continue;
+        }
+
+        EventKey key = group.getEventKey();
+        if (key == null) {
+          continue;
+        }
+
+        // Check if this event handler group is for the current substep
+        if (key.getEvent().equals(substep)) {
+          // Add all attributes from handlers in this group
+          for (EventHandler handler : group.getEventHandlers()) {
+            attrsWithHandlersInSubstep.add(handler.getAttributeName());
+          }
+        }
+      }
+
+      // Attributes WITHOUT handlers for this substep =
+      // (initial attributes) - (attributes with handlers in this substep)
+      Set<String> attrsWithoutHandlers = new HashSet<>(attributes.keySet());
+      attrsWithoutHandlers.removeAll(attrsWithHandlersInSubstep);
+
+      result.put(substep, Collections.unmodifiableSet(attrsWithoutHandlers));
+    }
+
+    // Cache the result for future calls
+    attributesWithoutHandlersBySubstep = Collections.unmodifiableMap(result);
+    return attributesWithoutHandlersBySubstep;
   }
 
   /**
@@ -123,8 +212,9 @@ public class EntityBuilder {
     Agent agent = new Agent(
         parent,
         getName(),
-        createImmutableEventHandlerGroupsCopy(),
-        createImmutableAttributesCopy());
+        getImmutableEventHandlerGroups(),
+        createImmutableAttributesCopy(),
+        computeAttributesWithoutHandlersBySubstep());
     return agent;
   }
 
@@ -138,8 +228,9 @@ public class EntityBuilder {
     Disturbance disturbance = new Disturbance(
         parent,
         getName(),
-        createImmutableEventHandlerGroupsCopy(),
-        createImmutableAttributesCopy());
+        getImmutableEventHandlerGroups(),
+        createImmutableAttributesCopy(),
+        computeAttributesWithoutHandlersBySubstep());
     return disturbance;
   }
 
@@ -153,8 +244,9 @@ public class EntityBuilder {
     Patch patch = new Patch(
         geometry,
         getName(),
-        createImmutableEventHandlerGroupsCopy(),
-        createImmutableAttributesCopy());
+        getImmutableEventHandlerGroups(),
+        createImmutableAttributesCopy(),
+        computeAttributesWithoutHandlersBySubstep());
     return patch;
   }
 
@@ -166,8 +258,9 @@ public class EntityBuilder {
   public Simulation buildSimulation() {
     Simulation simulation = new Simulation(
         getName(),
-        createImmutableEventHandlerGroupsCopy(),
-        createImmutableAttributesCopy());
+        getImmutableEventHandlerGroups(),
+        createImmutableAttributesCopy(),
+        computeAttributesWithoutHandlersBySubstep());
     return simulation;
   }
 

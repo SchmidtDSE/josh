@@ -6,13 +6,13 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleLock;
 import org.joshsim.engine.entity.handler.EventHandler;
@@ -36,27 +36,37 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   private Optional<String> substep;
   private Set<String> attributeNames;
+  private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
 
   /**
    * Constructor for Entity.
    *
    * @param name Name of the entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
+   * @param eventHandlerGroups An immutable map of event keys to their corresponding
+   *     EventHandlerGroups. This map MUST be immutable (e.g., created via
+   *     Collections.unmodifiableMap) as it will be shared across multiple entity
+   *     instances for performance.
    * @param attributes A map of attribute names to their corresponding EngineValues.
+   * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
+   *     handlers per substep.
    */
   public DirectLockMutableEntity(
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
+      Map<String, EngineValue> attributes,
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep
   ) {
     this.name = name;
 
+    // Use the immutable map directly - no defensive copy needed!
+    // The map is already immutable and shared across all instances of this entity type.
     if (eventHandlerGroups == null) {
-      this.eventHandlerGroups = new HashMap<>();
+      this.eventHandlerGroups = Collections.emptyMap();
     } else {
-      this.eventHandlerGroups = new HashMap<>(eventHandlerGroups);
+      this.eventHandlerGroups = eventHandlerGroups;  // Direct assignment, no copy!
     }
 
+    // Attributes still need defensive copy as they are mutable per instance
     if (attributes == null) {
       this.attributes = new HashMap<>();
     } else {
@@ -69,6 +79,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     onlyOnPrior = new HashSet<>();
 
     attributeNames = computeAttributeNames();
+    this.attributesWithoutHandlersBySubstep = attributesWithoutHandlersBySubstep;
   }
 
   @Override
@@ -182,13 +193,37 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   /**
    * Determine unique attribute names.
    *
+   * <p>Iterates through all event handler groups and their handlers to collect unique
+   * attribute names. Uses direct iteration instead of streams for better performance
+   * in this hot path (called during every entity construction).</p>
+   *
    * @return Set of unique attribute names.
    */
   private Set<String> computeAttributeNames() {
-    return StreamSupport.stream(getEventHandlers().spliterator(), false)
-        .flatMap(group -> StreamSupport.stream(group.getEventHandlers().spliterator(), false))
-        .map(EventHandler::getAttributeName)
-        .collect(Collectors.toSet());
+    Set<String> attributeNames = new HashSet<>();
+    for (EventHandlerGroup group : getEventHandlers()) {
+      for (EventHandler handler : group.getEventHandlers()) {
+        attributeNames.add(handler.getAttributeName());
+      }
+    }
+    return attributeNames;
+  }
+
+
+  /**
+   * Check if an attribute has no handlers for a specific substep.
+   *
+   * <p>This method enables fast-path optimization by identifying when handler lookup
+   * can be skipped. If this returns true, the attribute will always resolve from
+   * prior state for the given substep.</p>
+   *
+   * @param attributeName the attribute to check
+   * @param substep the substep to check (e.g., "init", "step", "start")
+   * @return true if attribute has no handlers for this substep and can use fast-path
+   */
+  public boolean hasNoHandlers(String attributeName, String substep) {
+    Set<String> attrsForSubstep = attributesWithoutHandlersBySubstep.get(substep);
+    return attrsForSubstep != null && attrsForSubstep.contains(attributeName);
   }
 
 }

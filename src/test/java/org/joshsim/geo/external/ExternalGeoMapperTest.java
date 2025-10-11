@@ -718,7 +718,8 @@ public class ExternalGeoMapperTest {
     @Override
     public MutableEntity buildSpatial(EngineGeometry geometry) {
       String patchId = "riverside_patch_" + (++patchCounter);
-      return new Patch(geometry, patchId, new HashMap<>(), new HashMap<>());
+      return new Patch(
+          geometry, patchId, new HashMap<>(), new HashMap<>(), java.util.Collections.emptyMap());
     }
 
     @Override

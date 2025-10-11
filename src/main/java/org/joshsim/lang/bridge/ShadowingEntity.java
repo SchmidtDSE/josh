@@ -369,7 +369,13 @@ public class ShadowingEntity implements MutableEntity {
       return;
     }
 
-    // If no handlers, use prior
+    // FAST PATH: If attribute has no handlers for THIS substep, skip expensive lookup
+    if (inner.hasNoHandlers(name, substep.get())) {
+      resolveAttributeFromPrior(name);
+      return;
+    }
+
+    // EXISTING SLOW PATH: Check for handlers
     Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
     if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPrior(name);
@@ -480,6 +486,11 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public Optional<String> getSubstep() {
     return inner.getSubstep();
+  }
+
+  @Override
+  public boolean hasNoHandlers(String attributeName, String substep) {
+    return inner.hasNoHandlers(attributeName, substep);
   }
 
   /**

@@ -6,7 +6,9 @@
 
 package org.joshsim.engine.entity.type;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Set;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -34,7 +36,8 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
       HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
       HashMap<String, EngineValue> attributes
   ) {
-    super(name, eventHandlerGroups, attributes);
+    // ExternalResource has no handlers, so pass empty map
+    super(name, eventHandlerGroups, attributes, Collections.emptyMap());
   }
 
   /**

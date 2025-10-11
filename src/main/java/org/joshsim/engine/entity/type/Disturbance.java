@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity.type;
 
 import java.util.Map;
+import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MemberSpatialEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -26,16 +27,21 @@ public class Disturbance extends MemberSpatialEntity {
    *
    * @param parent The parent containing this entity.
    * @param name The name of the spatial entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param eventHandlerGroups An immutable map of event keys to their corresponding
+   *     event handler groups. This map is shared across all instances of this entity
+   *     type for performance.
    * @param attributes A map of attribute names to their corresponding engine values.
+   * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
+   *     handlers per substep.
    */
   public Disturbance(
       Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
+      Map<String, EngineValue> attributes,
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep
   ) {
-    super(parent, name, eventHandlerGroups, attributes);
+    super(parent, name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
   }
 
   @Override

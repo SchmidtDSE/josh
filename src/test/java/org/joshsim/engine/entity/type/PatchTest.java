@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -42,7 +43,8 @@ public class PatchTest {
     EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
     eventHandlerGroups.put(stateKey, stateHandlerGroup);
 
-    patch = new Patch(mockGeometry, patchName, eventHandlerGroups, attributes);
+    patch = new Patch(
+        mockGeometry, patchName, eventHandlerGroups, attributes, Collections.emptyMap());
   }
 
   /**
@@ -60,7 +62,7 @@ public class PatchTest {
    */
   @Test
   public void testConstructorWithNullMaps() {
-    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null);
+    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null, Collections.emptyMap());
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());

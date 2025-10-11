@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public class AgentTest {
     attributes.put(ATTR_NAME, mockValue);
 
     // Create agent instance
-    agent = new Agent(mockParent, AGENT_NAME, eventHandlers, attributes);
+    agent = new Agent(mockParent, AGENT_NAME, eventHandlers, attributes, Collections.emptyMap());
   }
 
   /**
@@ -151,7 +152,7 @@ public class AgentTest {
    */
   @Test
   public void testNullMapsInConstructor() {
-    Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null);
+    Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null, Collections.emptyMap());
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
     assertFalse(groups.iterator().hasNext(),

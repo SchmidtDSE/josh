@@ -13,6 +13,7 @@ package org.joshsim.lang.bridge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -72,18 +73,23 @@ public class InnerEntityGetterTest {
 
   @Test
   void testGetInnerEntitiesWithSingleEntity() {
-    List<MutableEntity> innerEntities = InnerEntityGetter
-        .getInnerEntities(mockEntity)
-        .collect(Collectors.toList());
+    Iterable<MutableEntity> innerEntitiesIterable = InnerEntityGetter.getInnerEntities(mockEntity);
+    List<MutableEntity> innerEntities = new ArrayList<>();
+    for (MutableEntity entity : innerEntitiesIterable) {
+      innerEntities.add(entity);
+    }
 
     assertEquals(1, innerEntities.size());
   }
 
   @Test
   void testGetInnerFrozenEntities() {
-    List<Entity> frozenEntities = InnerEntityGetter
-        .getInnerFrozenEntities(mockEntity)
-        .collect(Collectors.toList());
+    Iterable<Entity> frozenEntitiesIterable = InnerEntityGetter
+        .getInnerFrozenEntities(mockEntity);
+    List<Entity> frozenEntities = new ArrayList<>();
+    for (Entity entity : frozenEntitiesIterable) {
+      frozenEntities.add(entity);
+    }
 
     assertEquals(1, frozenEntities.size());
   }

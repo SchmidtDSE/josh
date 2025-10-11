@@ -8,6 +8,7 @@ package org.joshsim.engine.entity.base;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -30,16 +31,20 @@ public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
    *
    * @param parent The parent entity like Patch which houses this entity.
    * @param name The name of the spatial entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding event handler groups.
+   * @param eventHandlerGroups An immutable map of event keys to their corresponding
+   *     event handler groups. This map is shared across all instances of this entity type.
    * @param attributes A map of attribute names to their corresponding engine values.
+   * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
+   *     handlers per substep.
    */
   public MemberSpatialEntity(
       Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
+      Map<String, EngineValue> attributes,
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep
   ) {
-    super(name, eventHandlerGroups, attributes);
+    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
     this.parent = parent;
   }
 

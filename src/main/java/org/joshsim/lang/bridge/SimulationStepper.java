@@ -1,8 +1,7 @@
 package org.joshsim.lang.bridge;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -20,6 +19,9 @@ public class SimulationStepper {
   /**
    * Create a new stepper around a bridge.
    *
+   * <p>Collects all unique event names from patch event handlers using direct iteration
+   * instead of streams for better performance.</p>
+   *
    * @param target EngineBridge in which to perform this operation.
    */
   public SimulationStepper(EngineBridge target) {
@@ -28,11 +30,16 @@ public class SimulationStepper {
     MutableEntity simulation = target.getSimulation();
     Iterable<MutableEntity> patches = target.getCurrentPatches();
 
-    events = StreamSupport.stream(patches.spliterator(), false)
-        .flatMap((x) -> StreamSupport.stream(x.getEventHandlers().spliterator(), false))
-        .map(EventHandlerGroup::getEventKey)
-        .map(EventKey::getEvent)
-        .collect(Collectors.toSet());
+    // Collect unique event names from all patches
+    Set<String> eventSet = new HashSet<>();
+    for (MutableEntity patch : patches) {
+      for (EventHandlerGroup group : patch.getEventHandlers()) {
+        EventKey key = group.getEventKey();
+        String event = key.getEvent();
+        eventSet.add(event);
+      }
+    }
+    events = eventSet;
   }
 
   /**
@@ -78,39 +85,45 @@ public class SimulationStepper {
   }
 
   /**
-   * Performs a series of entity updates on a stream of entities from an iterable.
+   * Performs a series of entity updates on entities from an iterable.
+   *
+   * <p>Uses direct iteration for serial execution instead of streams for better performance.
+   * Parallel execution still uses streams as parallel iteration requires the stream API.</p>
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
    * @param serial Flag indicating if entities should be executed in parallel. If false, will
-   *     execute in parallel. Otherwise, will use a serial stream.
+   *     execute in parallel. Otherwise, will use serial iteration.
    */
   private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
-    boolean parallel = !serial;
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
-    performStream(entityStream, subStep);
+    if (serial) {
+      // Use direct iteration for serial execution (better performance)
+      long numCompleted = 0;
+      for (MutableEntity entity : entities) {
+        MutableEntity result = updateEntity(entity, subStep);
+        if (result != null) {
+          numCompleted++;
+        }
+      }
+      assert numCompleted > 0;
+    } else {
+      // Keep parallel stream for parallel execution
+      StreamSupport.stream(entities.spliterator(), true)
+          .forEach(entity -> updateEntity(entity, subStep));
+    }
   }
 
   /**
    * Performs a series of entity updates on a single entity.
    *
+   * <p>Uses direct method call instead of creating a stream for a single entity.</p>
+   *
    * @param entity the entity to perform updates on.
    * @param subStep the substep to perform
    */
   private void performStream(MutableEntity entity, String subStep) {
-    performStream(Stream.of(entity), subStep);
-  }
-
-  /**
-   * Performs a series of entity updates on a stream of entities.
-   *
-   * @param entityStream the stream of entities to perform updates on
-   * @param subStep the substep to perform
-   */
-  private void performStream(Stream<MutableEntity> entityStream, String subStep) {
-    Stream<MutableEntity> steppedStream = entityStream.map((x) -> updateEntity(x, subStep));
-    long numCompleted = steppedStream.filter((x) -> x != null).count();
-    assert numCompleted > 0;
+    MutableEntity result = updateEntity(entity, subStep);
+    assert result != null;
   }
 
   /**

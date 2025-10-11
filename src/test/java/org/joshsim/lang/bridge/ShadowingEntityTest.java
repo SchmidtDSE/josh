@@ -165,4 +165,60 @@ public class ShadowingEntityTest {
     assertTrue(result.isPresent());
     spatialEntity.endSubstep();
   }
+
+  @Test
+  void testFastPathForAttributeWithNoHandlersInSubstep() {
+    // Setup: Use existing noHandlerAttr which is already in attribute names
+    String attrName = "noHandlerAttr";
+    String substepName = "init";
+
+    // Mock hasNoHandlers to return true for init
+    when(mockSpatialEntity.hasNoHandlers(attrName, substepName)).thenReturn(true);
+
+    // Mock prior value
+    EngineValue priorValue = mock(EngineValue.class);
+    when(priorValue.getLanguageType()).thenReturn(new LanguageType("test", false));
+    when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(priorValue));
+
+    // Start init substep and resolve attribute
+    spatialEntity.startSubstep(substepName);
+    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
+
+    // Verify fast path was taken - should resolve from prior
+    assertTrue(result.isPresent(), "Should resolve from prior");
+
+    spatialEntity.endSubstep();
+  }
+
+  @Test
+  void testSlowPathForAttributeWithHandlersInSubstep() {
+    // Setup: Use existing testAttr which has handlers
+    String attrName = "testAttr";
+    String substepName = "step";
+
+    // Mock hasNoHandlers to return false for step (has handler)
+    when(mockSpatialEntity.hasNoHandlers(attrName, substepName)).thenReturn(false);
+
+    // Mock handler setup
+    EventKey eventKey = EventKey.of(attrName, substepName);
+    EngineValue handlerValue = mock(EngineValue.class);
+    when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
+
+    when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
+        Optional.of(mockEventHandlerGroup)
+    );
+    when(mockEventHandlerGroup.getEventHandlers()).thenReturn(Arrays.asList(mockEventHandler));
+    when(mockEventHandler.getAttributeName()).thenReturn(attrName);
+    when(mockSpatialEntity.getAttributeValue(attrName))
+        .thenReturn(Optional.of(handlerValue));
+
+    // Start step substep and resolve attribute
+    spatialEntity.startSubstep(substepName);
+    Optional<EngineValue> result = spatialEntity.getAttributeValue(attrName);
+
+    // Should take slow path and resolve through handlers
+    assertTrue(result.isPresent());
+
+    spatialEntity.endSubstep();
+  }
 }

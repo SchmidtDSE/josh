@@ -6,7 +6,9 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -60,6 +62,9 @@ public class EntityFastForwarder {
   /**
    * Executes a single simulation step on the entity.
    *
+   * <p>Forces attribute resolution for all attributes using direct iteration.
+   * This ensures all attributes are evaluated during the substep.</p>
+   *
    * @param entity The entity to run the step on
    * @param subStep The substep name to execute
    * @param leaveOpen Whether to leave the substep open after execution
@@ -67,13 +72,11 @@ public class EntityFastForwarder {
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
 
-    entity.getAttributeNames().stream()
-        .map((name) -> {
-          return entity.getAttributeValue(name);
-        })
-        .forEach((x) -> {
-          assert x != null;
-        });
+    // Force attribute resolution for all attributes
+    for (String name : entity.getAttributeNames()) {
+      Optional<EngineValue> value = entity.getAttributeValue(name);
+      assert value != null;
+    }
 
     if (!leaveOpen) {
       entity.endSubstep();

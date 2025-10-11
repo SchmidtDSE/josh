@@ -74,4 +74,17 @@ public interface MutableEntity extends Entity, Lockable {
    */
   Optional<String> getSubstep();
 
+  /**
+   * Check if an attribute has no handlers for a specific substep.
+   *
+   * <p>This method enables fast-path optimization by identifying when handler lookup
+   * can be skipped. If this returns true, the attribute will always resolve from
+   * prior state for the given substep.</p>
+   *
+   * @param attributeName the attribute to check
+   * @param substep the substep to check (e.g., "init", "step", "start")
+   * @return true if attribute has no handlers for this substep and can use fast-path
+   */
+  boolean hasNoHandlers(String attributeName, String substep);
+
 }

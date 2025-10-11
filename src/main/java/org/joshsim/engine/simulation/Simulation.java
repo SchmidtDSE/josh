@@ -8,6 +8,7 @@ package org.joshsim.engine.simulation;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -24,15 +25,20 @@ public class Simulation extends DirectLockMutableEntity {
    * Constructor for a Simulation, which contains 'meta' attributes and event handlers.
    *
    * @param name Name of the entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
+   * @param eventHandlerGroups An immutable map of event keys to their corresponding
+   *     EventHandlerGroups. This map is shared across all instances of this entity type
+   *     for performance.
    * @param attributes A map of attribute names to their corresponding EngineValues.
+   * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
+   *     handlers per substep.
    */
   public Simulation(
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
+      Map<String, EngineValue> attributes,
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep
   ) {
-    super(name, eventHandlerGroups, attributes);
+    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
   }
 
   @Override
