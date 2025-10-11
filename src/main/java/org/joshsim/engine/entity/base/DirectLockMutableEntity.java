@@ -118,12 +118,16 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
 
     priorAttributes = attributes;
-    attributes = new HashMap<>();
+
+    // Pre-size new HashMap based on current size to avoid rehashing
+    int expectedSize = (int) (priorAttributes.size() / 0.75f) + 1;
+    attributes = new HashMap<>(expectedSize);
 
     onlyOnPrior = new HashSet<>(priorAttributes.keySet());
 
     // Freeze all attribute values to ensure nested entities are also frozen
-    Map<String, EngineValue> frozenAttributes = new HashMap<>();
+    // Pre-size HashMap to avoid rehashing during construction
+    Map<String, EngineValue> frozenAttributes = new HashMap<>(expectedSize);
     for (Map.Entry<String, EngineValue> entry : priorAttributes.entrySet()) {
       frozenAttributes.put(entry.getKey(), entry.getValue().freeze());
     }

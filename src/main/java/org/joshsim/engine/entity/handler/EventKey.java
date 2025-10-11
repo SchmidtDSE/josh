@@ -126,22 +126,20 @@ public class EventKey {
    * @return cached or new EventKey instance
    */
   public static EventKey of(String attribute, String event) {
-    // Create temporary key to get string representation for cache lookup
-    EventKey tempKey = new EventKey(attribute, event);
-    String cacheKey = tempKey.toString();
+    // Build cache key directly without creating EventKey object
+    String cacheKey = "," + attribute + "," + event;
 
-    // Try to get from cache, or put if absent
-    EventKey cached = INTERN_CACHE.putIfAbsent(cacheKey, tempKey);
+    // Use computeIfAbsent to avoid creating EventKey unless cache miss
+    EventKey result = INTERN_CACHE.computeIfAbsent(cacheKey,
+        k -> new EventKey(attribute, event));
 
     // Check cache size and evict if needed
     if (INTERN_CACHE.size() > MAX_CACHE_SIZE) {
       INTERN_CACHE.clear();
-      INTERN_CACHE.put(cacheKey, tempKey);
-      return tempKey;
+      INTERN_CACHE.put(cacheKey, result);
     }
 
-    // Return cached instance if it existed, otherwise return the one we just put
-    return cached != null ? cached : tempKey;
+    return result;
   }
 
   /**
@@ -157,21 +155,19 @@ public class EventKey {
    * @return cached or new EventKey instance
    */
   public static EventKey of(String state, String attribute, String event) {
-    // Create temporary key to get string representation for cache lookup
-    EventKey tempKey = new EventKey(state, attribute, event);
-    String cacheKey = tempKey.toString();
+    // Build cache key directly without creating EventKey object
+    String cacheKey = state + "," + attribute + "," + event;
 
-    // Try to get from cache, or put if absent
-    EventKey cached = INTERN_CACHE.putIfAbsent(cacheKey, tempKey);
+    // Use computeIfAbsent to avoid creating EventKey unless cache miss
+    EventKey result = INTERN_CACHE.computeIfAbsent(cacheKey,
+        k -> new EventKey(state, attribute, event));
 
     // Check cache size and evict if needed
     if (INTERN_CACHE.size() > MAX_CACHE_SIZE) {
       INTERN_CACHE.clear();
-      INTERN_CACHE.put(cacheKey, tempKey);
-      return tempKey;
+      INTERN_CACHE.put(cacheKey, result);
     }
 
-    // Return cached instance if it existed, otherwise return the one we just put
-    return cached != null ? cached : tempKey;
+    return result;
   }
 }
