@@ -19,7 +19,7 @@ public class EventKey {
   private static final Map<String, EventKey> INTERN_CACHE = new ConcurrentHashMap<>();
 
   // Maximum cache size before eviction
-  private static final int MAX_CACHE_SIZE = 10000;
+  private static final int MAX_CACHE_SIZE = 100000;
 
   private final String state;
   private final String attribute;

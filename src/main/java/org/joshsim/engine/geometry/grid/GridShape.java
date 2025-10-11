@@ -21,6 +21,7 @@ public abstract class GridShape implements EngineGeometry {
 
   private final BigDecimal centerX;
   private final BigDecimal centerY;
+  private Integer cachedHashCode;
 
   /**
    * Creates a new grid shape with specified center coordinates.
@@ -116,7 +117,10 @@ public abstract class GridShape implements EngineGeometry {
 
   @Override
   public int hashCode() {
-    return toString().hashCode();
+    if (cachedHashCode == null) {
+      cachedHashCode = toString().hashCode();
+    }
+    return cachedHashCode;
   }
 
 }

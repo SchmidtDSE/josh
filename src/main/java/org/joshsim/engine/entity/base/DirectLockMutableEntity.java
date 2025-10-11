@@ -88,11 +88,11 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    if (attributes.containsKey(name)) {
-      return Optional.of(attributes.get(name));
-    } else {
-      return Optional.ofNullable(priorAttributes.get(name));
+    EngineValue value = attributes.get(name);
+    if (value != null) {
+      return Optional.of(value);
     }
+    return Optional.ofNullable(priorAttributes.get(name));
   }
 
   @Override
