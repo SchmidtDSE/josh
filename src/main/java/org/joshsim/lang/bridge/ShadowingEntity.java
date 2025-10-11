@@ -189,10 +189,15 @@ public class ShadowingEntity implements MutableEntity {
 
     if (hasAttribute(name)) {
       resolveAttribute(name);
-      return Optional.ofNullable(resolvedCache.get(name));
+      cached = resolvedCache.get(name);
+      if (cached != null) {
+        return Optional.of(cached);
+      }
     }
 
-    return Optional.empty();
+    // Fallback: retrieve from inner entity's base attributes
+    // This handles attributes without handlers (e.g., steps.high = 10 count)
+    return inner.getAttributeValue(name);
   }
 
   /**
