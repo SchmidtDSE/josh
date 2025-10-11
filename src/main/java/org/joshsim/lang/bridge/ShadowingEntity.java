@@ -12,10 +12,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -53,7 +52,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Set<String> resolvedAttributes;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
-  private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+  private final Map<HandlerCacheKey, Iterable<EventHandlerGroup>> handlersForAttribute;
 
   private boolean checkAssertions;
 
@@ -144,19 +143,15 @@ public class ShadowingEntity implements MutableEntity {
 
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
-    CompatibleStringJoiner keyJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\t");
-    keyJoiner.add(attribute);
-    keyJoiner.add(substep);
-    keyJoiner.add(state);
-    String key = keyJoiner.toString();
+    HandlerCacheKey key = new HandlerCacheKey(attribute, substep, state);
 
     if (!handlersForAttribute.containsKey(key)) {
-      EventKey eventKeyWithoutState = new EventKey(attribute, substep);
+      EventKey eventKeyWithoutState = EventKey.of(attribute, substep);
       Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
 
       Optional<EventHandlerGroup> withState;
       if (!state.isBlank()) {
-        EventKey eventKeyWithState = new EventKey(state, attribute, substep);
+        EventKey eventKeyWithState = EventKey.of(state, attribute, substep);
         withState = inner.getEventHandlers(eventKeyWithState);
       } else {
         withState = Optional.empty();
@@ -483,5 +478,51 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public Optional<String> getSubstep() {
     return inner.getSubstep();
+  }
+
+  /**
+   * Cache key for handler lookups based on attribute, substep, and state.
+   *
+   * <p>This immutable key class is used to cache event handler groups by their lookup criteria.
+   * The hashCode is pre-computed in the constructor for optimal HashMap performance.</p>
+   */
+  private static class HandlerCacheKey {
+    private final String attribute;
+    private final String substep;
+    private final String state;
+    private final int hashCode;
+
+    /**
+     * Create a new cache key for handler lookups.
+     *
+     * @param attribute The attribute name for the handler lookup
+     * @param substep The substep name for the handler lookup
+     * @param state The state string for the handler lookup (empty string if no state)
+     */
+    HandlerCacheKey(String attribute, String substep, String state) {
+      this.attribute = attribute;
+      this.substep = substep;
+      this.state = state;
+      this.hashCode = Objects.hash(attribute, substep, state);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      HandlerCacheKey that = (HandlerCacheKey) o;
+      return Objects.equals(attribute, that.attribute)
+          && Objects.equals(substep, that.substep)
+          && Objects.equals(state, that.state);
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
   }
 }

@@ -147,7 +147,7 @@ public class ShadowingEntityTest {
     EngineValue handlerValue = mock(EngineValue.class);
     when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
-    EventKey eventKey = new EventKey(attrName, substepName);
+    EventKey eventKey = EventKey.of(attrName, substepName);
     CompiledCallable mockCallable = mock(CompiledCallable.class);
     CompiledSelector mockSelector = mock(CompiledSelector.class);
     when(mockEventHandler.getCallable()).thenReturn(mockCallable);

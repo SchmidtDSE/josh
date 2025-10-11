@@ -38,7 +38,7 @@ public class PatchTest {
     EngineValue mockValue = mock(EngineValue.class);
     attributes.put("testAttribute", mockValue);
 
-    EventKey stateKey = new EventKey("testState", "testAttribute", "testEvent");
+    EventKey stateKey = EventKey.of("testState", "testAttribute", "testEvent");
     EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
     eventHandlerGroups.put(stateKey, stateHandlerGroup);
 
@@ -104,18 +104,18 @@ public class PatchTest {
     Iterable<EventHandlerGroup> handlers = patch.getEventHandlers();
     assertTrue(handlers.iterator().hasNext());
     assertTrue(patch.getEventHandlers(
-        new EventKey("testState", "testAttribute", "testEvent")
+        EventKey.of("testState", "testAttribute", "testEvent")
     ).isPresent());
 
     // Test getEventHandlers with specific parameters
     Optional<EventHandlerGroup> retrievedGroup = patch.getEventHandlers(
-        new EventKey("testState", "testAttribute", "testEvent")
+        EventKey.of("testState", "testAttribute", "testEvent")
     );
     assertTrue(retrievedGroup.isPresent());
 
     // Test with non-existent event key
     Optional<EventHandlerGroup> nonExistentGroup = patch.getEventHandlers(
-        new EventKey("nonExistent", "nonExistent", "nonExistent")
+        EventKey.of("nonExistent", "nonExistent", "nonExistent")
     );
     assertEquals(Optional.empty(), nonExistentGroup);
   }

@@ -39,7 +39,7 @@ public class EntityBuilderTest {
     builder = new EntityBuilder();
     mockParent = mock(Entity.class);
     mockGeometry = mock(EngineGeometry.class);
-    mockEventKey = new EventKey("testState", "testAttribute", "testEvent");
+    mockEventKey = EventKey.of("testState", "testAttribute", "testEvent");
     mockHandlerGroup = mock(EventHandlerGroup.class);
     mockValue = mock(EngineValue.class);
   }
@@ -125,7 +125,7 @@ public class EntityBuilderTest {
     Agent agent = builder.buildAgent(mockParent);
 
     // Modify the builder's maps after building
-    EventKey newKey = new EventKey("newState", "newAttribute", "newEvent");
+    EventKey newKey = EventKey.of("newState", "newAttribute", "newEvent");
     EventHandlerGroup newHandler = mock(EventHandlerGroup.class);
     builder.addEventHandlerGroup(newKey, newHandler);
     builder.addAttribute("newAttr", mockValue);

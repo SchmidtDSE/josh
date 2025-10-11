@@ -6,6 +6,8 @@
 
 package org.joshsim.engine.entity.handler;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 
@@ -13,6 +15,12 @@ import org.joshsim.compat.CompatibleStringJoiner;
  * Composite key for mapping state, attribute, and event.
  */
 public class EventKey {
+  // Interning cache for EventKey instances to reduce allocations
+  private static final Map<String, EventKey> INTERN_CACHE = new ConcurrentHashMap<>();
+
+  // Maximum cache size before eviction
+  private static final int MAX_CACHE_SIZE = 10000;
+
   private final String state;
   private final String attribute;
   private final String event;
@@ -25,7 +33,7 @@ public class EventKey {
    * @param attribute attribute string
    * @param event event string
    */
-  public EventKey(String attribute, String event) {
+  EventKey(String attribute, String event) {
     this.state = "";
     this.attribute = attribute;
     this.event = event;
@@ -40,7 +48,7 @@ public class EventKey {
    * @param attribute attribute string
    * @param event event string
    */
-  public EventKey(String state, String attribute, String event) {
+  EventKey(String state, String attribute, String event) {
     this.state = state;
     this.attribute = attribute;
     this.event = event;
@@ -104,5 +112,66 @@ public class EventKey {
     joiner.add(attribute);
     joiner.add(event);
     return joiner.toString();
+  }
+
+  /**
+   * Factory method to get or create an EventKey for attribute x event (default state).
+   *
+   * <p>This method implements an interning pattern where EventKey instances are cached and reused
+   * to reduce object allocations and expensive string representation generation. The cache is
+   * thread-safe via ConcurrentHashMap to support parallel patch processing.</p>
+   *
+   * @param attribute attribute string
+   * @param event event string
+   * @return cached or new EventKey instance
+   */
+  public static EventKey of(String attribute, String event) {
+    // Create temporary key to get string representation for cache lookup
+    EventKey tempKey = new EventKey(attribute, event);
+    String cacheKey = tempKey.toString();
+
+    // Try to get from cache, or put if absent
+    EventKey cached = INTERN_CACHE.putIfAbsent(cacheKey, tempKey);
+
+    // Check cache size and evict if needed
+    if (INTERN_CACHE.size() > MAX_CACHE_SIZE) {
+      INTERN_CACHE.clear();
+      INTERN_CACHE.put(cacheKey, tempKey);
+      return tempKey;
+    }
+
+    // Return cached instance if it existed, otherwise return the one we just put
+    return cached != null ? cached : tempKey;
+  }
+
+  /**
+   * Factory method to get or create an EventKey for state x attribute x event.
+   *
+   * <p>This method implements an interning pattern where EventKey instances are cached and reused
+   * to reduce object allocations and expensive string representation generation. The cache is
+   * thread-safe via ConcurrentHashMap to support parallel patch processing.</p>
+   *
+   * @param state state string or empty if default state
+   * @param attribute attribute string
+   * @param event event string
+   * @return cached or new EventKey instance
+   */
+  public static EventKey of(String state, String attribute, String event) {
+    // Create temporary key to get string representation for cache lookup
+    EventKey tempKey = new EventKey(state, attribute, event);
+    String cacheKey = tempKey.toString();
+
+    // Try to get from cache, or put if absent
+    EventKey cached = INTERN_CACHE.putIfAbsent(cacheKey, tempKey);
+
+    // Check cache size and evict if needed
+    if (INTERN_CACHE.size() > MAX_CACHE_SIZE) {
+      INTERN_CACHE.clear();
+      INTERN_CACHE.put(cacheKey, tempKey);
+      return tempKey;
+    }
+
+    // Return cached instance if it existed, otherwise return the one we just put
+    return cached != null ? cached : tempKey;
   }
 }

@@ -38,7 +38,7 @@ public class AgentTest {
   private Agent agent;
   private static final String AGENT_NAME = "TestAgent";
   private static final String ATTR_NAME = "TestAttribute";
-  private static final EventKey EVENT_KEY = new EventKey("state", "attribute", "event");
+  private static final EventKey EVENT_KEY = EventKey.of("state", "attribute", "event");
 
   /**
    * Sets up the test environment by initializing mocks and creating the Agent instance.
@@ -141,7 +141,7 @@ public class AgentTest {
   @Test
   public void testGetEventHandlers() {
     EventHandlerGroup result = agent.getEventHandlers(
-        new EventKey("state", "attribute", "event")
+        EventKey.of("state", "attribute", "event")
     ).get();
     assertEquals(eventHandlers.get(EVENT_KEY), result);
   }

@@ -20,7 +20,12 @@
       "Read(//home/ubuntu/esiil/**)",
       "Bash(timeout:*)",
       "Read(//home/ubuntu/chc_cmip6_sample/**)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(jfr print:*)",
+      "Bash(jfr summary:*)",
+      "Read(///**)",
+      "Bash(cat:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

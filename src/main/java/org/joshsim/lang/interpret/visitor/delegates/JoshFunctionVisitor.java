@@ -354,7 +354,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
       eventName = "constant";
     }
 
-    return new EventKey(attributeName, eventName);
+    return EventKey.of(attributeName, eventName);
   }
 
   /**
