@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,7 +254,8 @@ public class DirectLockMutableEntityFastPathTest {
         String name,
         Map<EventKey, EventHandlerGroup> handlers,
         Map<String, EngineValue> attributes) {
-      super(name, handlers, attributes, computeOptimizationMap(name, handlers, attributes));
+      super(name, handlers, attributes, computeOptimizationMap(name, handlers, attributes),
+          Collections.emptyMap());
     }
 
     @Override

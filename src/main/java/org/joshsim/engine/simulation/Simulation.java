@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.simulation;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -31,14 +32,18 @@ public class Simulation extends DirectLockMutableEntity {
    * @param attributes A map of attribute names to their corresponding EngineValues.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
+   * @param commonHandlerCache Precomputed map of all handler lookups, shared across
+   *     all instances of this entity type.
    */
   public Simulation(
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes,
-      Map<String, Set<String>> attributesWithoutHandlersBySubstep
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep,
+      Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
-    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
+    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep,
+        commonHandlerCache);
   }
 
   @Override

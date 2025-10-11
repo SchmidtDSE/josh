@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.type;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
@@ -32,15 +33,19 @@ public class Agent extends MemberSpatialEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
+   * @param commonHandlerCache Precomputed map of all handler lookups, shared across
+   *     all instances of this entity type.
    */
   public Agent(
       Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes,
-      Map<String, Set<String>> attributesWithoutHandlersBySubstep
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep,
+      Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
-    super(parent, name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
+    super(parent, name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep,
+        commonHandlerCache);
   }
 
   @Override

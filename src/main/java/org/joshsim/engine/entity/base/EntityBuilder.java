@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ public class EntityBuilder {
   private Map<String, EngineValue> attributes;
   private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
   private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
+  private Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
   /**
    * Create an empty builder.
@@ -46,6 +48,7 @@ public class EntityBuilder {
     attributes = new HashMap<>();
     attributesWithoutHandlersBySubstep = null; // Computed lazily
     immutableEventHandlerGroups = null; // Computed lazily
+    commonHandlerCache = null; // Computed lazily
   }
 
   /**
@@ -109,6 +112,7 @@ public class EntityBuilder {
     attributes.clear();
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
+    commonHandlerCache = null; // Invalidate cache
   }
 
   /**
@@ -122,6 +126,7 @@ public class EntityBuilder {
     eventHandlerGroups.put(eventKey, group);
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
+    commonHandlerCache = null; // Invalidate cache
     return this;
   }
 
@@ -203,6 +208,101 @@ public class EntityBuilder {
   }
 
   /**
+   * Compute the pre-computed handler cache for all attributes, substeps, and states.
+   *
+   * <p>This method pre-computes ALL possible handler lookups by examining all event keys
+   * in the entity's event handler groups and creating a cache keyed by
+   * "attribute:substep" or "attribute:substep:state" strings.</p>
+   *
+   * <p>This eliminates the need for per-instance HandlerCacheKey allocations and
+   * ConcurrentHashMap lookups during entity resolution, providing significant
+   * performance and memory benefits.</p>
+   *
+   * <p>The computation is done ONCE per entity type in the builder and shared
+   * across all entity instances of that type.</p>
+   *
+   * @return Immutable map from cache key string to list of matching EventHandlerGroups
+   */
+  private Map<String, List<EventHandlerGroup>> computeCommonHandlerCache() {
+    // Use cached value if available
+    if (commonHandlerCache != null) {
+      return commonHandlerCache;
+    }
+
+    // Collect all unique attribute names from handlers
+    Set<String> allAttributes = new HashSet<>();
+    for (EventHandlerGroup group : eventHandlerGroups.values()) {
+      if (group == null) {
+        continue;
+      }
+      for (EventHandler handler : group.getEventHandlers()) {
+        allAttributes.add(handler.getAttributeName());
+      }
+    }
+
+    // Collect all unique states from EventKeys
+    Set<String> allStates = new HashSet<>();
+    allStates.add(""); // Empty state for non-state-specific lookups
+
+    for (EventKey key : eventHandlerGroups.keySet()) {
+      if (key == null) {
+        continue;
+      }
+      String state = key.getState();
+      if (state != null && !state.isEmpty()) {
+        allStates.add(state);
+      }
+    }
+
+    // Common substeps in Josh DSL
+    List<String> substeps = List.of("init", "step", "start", "end", "constant");
+
+    // Pre-compute all (attribute × substep × state) combinations
+    Map<String, List<EventHandlerGroup>> result = new HashMap<>();
+    for (String attribute : allAttributes) {
+      for (String substep : substeps) {
+        for (String state : allStates) {
+          // Build cache key
+          String cacheKey;
+          if (state.isEmpty()) {
+            cacheKey = attribute + ":" + substep;
+          } else {
+            cacheKey = attribute + ":" + substep + ":" + state;
+          }
+
+          // Find matching handler groups
+          List<EventHandlerGroup> matching = new ArrayList<>();
+
+          // Check for handler without state
+          EventKey keyWithoutState = EventKey.of(attribute, substep);
+          EventHandlerGroup groupWithoutState = eventHandlerGroups.get(keyWithoutState);
+          if (groupWithoutState != null) {
+            matching.add(groupWithoutState);
+          }
+
+          // Check for handler with state (if state is not empty)
+          if (!state.isEmpty()) {
+            EventKey keyWithState = EventKey.of(state, attribute, substep);
+            EventHandlerGroup groupWithState = eventHandlerGroups.get(keyWithState);
+            if (groupWithState != null) {
+              matching.add(groupWithState);
+            }
+          }
+
+          // Only cache if we found matching handlers
+          if (!matching.isEmpty()) {
+            result.put(cacheKey, Collections.unmodifiableList(matching));
+          }
+        }
+      }
+    }
+
+    // Cache the result for future calls
+    commonHandlerCache = Collections.unmodifiableMap(result);
+    return commonHandlerCache;
+  }
+
+  /**
    * Build an agent entity.
    *
    * @param parent The entity like Patch that this will be part of.
@@ -214,7 +314,8 @@ public class EntityBuilder {
         getName(),
         getImmutableEventHandlerGroups(),
         createImmutableAttributesCopy(),
-        computeAttributesWithoutHandlersBySubstep());
+        computeAttributesWithoutHandlersBySubstep(),
+        computeCommonHandlerCache());
     return agent;
   }
 
@@ -230,7 +331,8 @@ public class EntityBuilder {
         getName(),
         getImmutableEventHandlerGroups(),
         createImmutableAttributesCopy(),
-        computeAttributesWithoutHandlersBySubstep());
+        computeAttributesWithoutHandlersBySubstep(),
+        computeCommonHandlerCache());
     return disturbance;
   }
 
@@ -246,7 +348,8 @@ public class EntityBuilder {
         getName(),
         getImmutableEventHandlerGroups(),
         createImmutableAttributesCopy(),
-        computeAttributesWithoutHandlersBySubstep());
+        computeAttributesWithoutHandlersBySubstep(),
+        computeCommonHandlerCache());
     return patch;
   }
 
@@ -260,7 +363,8 @@ public class EntityBuilder {
         getName(),
         getImmutableEventHandlerGroups(),
         createImmutableAttributesCopy(),
-        computeAttributesWithoutHandlersBySubstep());
+        computeAttributesWithoutHandlersBySubstep(),
+        computeCommonHandlerCache());
     return simulation;
   }
 

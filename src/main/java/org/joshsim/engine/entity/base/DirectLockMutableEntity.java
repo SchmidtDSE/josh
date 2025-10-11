@@ -37,6 +37,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private Optional<String> substep;
   private Set<String> attributeNames;
   private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
+  private Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
   /**
    * Constructor for Entity.
@@ -49,12 +50,15 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    * @param attributes A map of attribute names to their corresponding EngineValues.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
+   * @param commonHandlerCache Precomputed map of all handler lookups, shared across
+   *     all instances of this entity type.
    */
   public DirectLockMutableEntity(
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes,
-      Map<String, Set<String>> attributesWithoutHandlersBySubstep
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep,
+      Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
     this.name = name;
 
@@ -80,6 +84,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
     attributeNames = computeAttributeNames();
     this.attributesWithoutHandlersBySubstep = attributesWithoutHandlersBySubstep;
+    this.commonHandlerCache = commonHandlerCache;
   }
 
   @Override
@@ -224,6 +229,28 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public boolean hasNoHandlers(String attributeName, String substep) {
     Set<String> attrsForSubstep = attributesWithoutHandlersBySubstep.get(substep);
     return attrsForSubstep != null && attrsForSubstep.contains(attributeName);
+  }
+
+  /**
+   * Get the pre-computed handler cache shared across all instances of this entity type.
+   *
+   * <p>This cache maps cache key strings (format: "attribute:substep" or
+   * "attribute:substep:state") to lists of matching EventHandlerGroups. The cache
+   * is computed once during entity type construction and shared across all instances,
+   * eliminating the need for per-instance HandlerCacheKey allocations and expensive
+   * ConcurrentHashMap lookups.</p>
+   *
+   * <p>This is a key optimization that reduces both CPU overhead (from HandlerCacheKey.equals()
+   * and EventKey.of() calls) and memory overhead (from per-instance handler caches).</p>
+   *
+   * @return Immutable map from cache key string to list of matching EventHandlerGroups,
+   *     or empty map if no handlers are defined
+   */
+  public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+    if (commonHandlerCache == null) {
+      return Collections.emptyMap();
+    }
+    return commonHandlerCache;
   }
 
 }

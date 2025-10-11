@@ -16,8 +16,9 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
    * @param geometry The geometry associated with this entity.
    */
   public ReferenceGeometryEntity(EngineGeometry geometry) {
-    // ReferenceGeometryEntity has no handlers, so pass empty map
-    super(geometry, "reference", Collections.emptyMap(), new HashMap<>(), Collections.emptyMap());
+    // ReferenceGeometryEntity has no handlers, so pass empty maps
+    super(geometry, "reference", Collections.emptyMap(), new HashMap<>(),
+        Collections.emptyMap(), Collections.emptyMap());
   }
 
   @Override

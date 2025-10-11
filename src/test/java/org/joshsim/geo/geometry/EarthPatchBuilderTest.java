@@ -285,7 +285,8 @@ class EarthPatchBuilderTest {
     @Override
     public MutableEntity buildSpatial(EngineGeometry parent) {
       return new Patch(
-          parent, "test", new HashMap<>(), new HashMap<>(), java.util.Collections.emptyMap());
+          parent, "test", new HashMap<>(), new HashMap<>(), java.util.Collections.emptyMap(),
+          java.util.Collections.emptyMap());
     }
 
     @Override

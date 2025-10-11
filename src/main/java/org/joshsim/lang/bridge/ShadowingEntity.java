@@ -7,6 +7,7 @@
 package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -52,7 +54,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Map<String, EngineValue> resolvedCache;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
-  private final Map<HandlerCacheKey, Iterable<EventHandlerGroup>> handlersForAttribute;
+  private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
   private boolean checkAssertions;
 
@@ -79,7 +81,13 @@ public class ShadowingEntity implements MutableEntity {
     resolvedCache = new HashMap<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
-    handlersForAttribute = new HashMap<>();
+
+    // Get the shared handler cache from the inner entity
+    if (inner instanceof DirectLockMutableEntity) {
+      this.commonHandlerCache = ((DirectLockMutableEntity) inner).getCommonHandlerCache();
+    } else {
+      this.commonHandlerCache = Collections.emptyMap();
+    }
   }
 
   /**
@@ -99,7 +107,13 @@ public class ShadowingEntity implements MutableEntity {
     resolvedCache = new HashMap<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
-    handlersForAttribute = new HashMap<>();
+
+    // Get the shared handler cache from the inner entity
+    if (inner instanceof DirectLockMutableEntity) {
+      this.commonHandlerCache = ((DirectLockMutableEntity) inner).getCommonHandlerCache();
+    } else {
+      this.commonHandlerCache = Collections.emptyMap();
+    }
   }
 
   /**
@@ -143,33 +157,21 @@ public class ShadowingEntity implements MutableEntity {
 
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
-    HandlerCacheKey key = new HandlerCacheKey(attribute, substep, state);
-
-    if (!handlersForAttribute.containsKey(key)) {
-      EventKey eventKeyWithoutState = EventKey.of(attribute, substep);
-      Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
-
-      Optional<EventHandlerGroup> withState;
-      if (!state.isBlank()) {
-        EventKey eventKeyWithState = EventKey.of(state, attribute, substep);
-        withState = inner.getEventHandlers(eventKeyWithState);
-      } else {
-        withState = Optional.empty();
-      }
-
-      List<EventHandlerGroup> matching = new ArrayList<>(2);
-      if (withoutState.isPresent()) {
-        matching.add(withoutState.get());
-      }
-
-      if (withState.isPresent()) {
-        matching.add(withState.get());
-      }
-
-      handlersForAttribute.put(key, matching);
+    // Build cache key string
+    String cacheKey;
+    if (state.isEmpty()) {
+      cacheKey = attribute + ":" + substep;
+    } else {
+      cacheKey = attribute + ":" + substep + ":" + state;
     }
 
-    return handlersForAttribute.get(key);
+    // Look up in shared cache, return empty list if not found
+    List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
+    if (handlers != null) {
+      return handlers;
+    }
+
+    return Collections.emptyList();
   }
 
   /**
@@ -498,49 +500,4 @@ public class ShadowingEntity implements MutableEntity {
     return inner.hasNoHandlers(attributeName, substep);
   }
 
-  /**
-   * Cache key for handler lookups based on attribute, substep, and state.
-   *
-   * <p>This immutable key class is used to cache event handler groups by their lookup criteria.
-   * The hashCode is pre-computed in the constructor for optimal HashMap performance.</p>
-   */
-  private static class HandlerCacheKey {
-    private final String attribute;
-    private final String substep;
-    private final String state;
-    private final int hashCode;
-
-    /**
-     * Create a new cache key for handler lookups.
-     *
-     * @param attribute The attribute name for the handler lookup
-     * @param substep The substep name for the handler lookup
-     * @param state The state string for the handler lookup (empty string if no state)
-     */
-    HandlerCacheKey(String attribute, String substep, String state) {
-      this.attribute = attribute;
-      this.substep = substep;
-      this.state = state;
-      this.hashCode = Objects.hash(attribute, substep, state);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      HandlerCacheKey that = (HandlerCacheKey) o;
-      return Objects.equals(attribute, that.attribute)
-          && Objects.equals(substep, that.substep)
-          && Objects.equals(state, that.state);
-    }
-
-    @Override
-    public int hashCode() {
-      return hashCode;
-    }
-  }
 }

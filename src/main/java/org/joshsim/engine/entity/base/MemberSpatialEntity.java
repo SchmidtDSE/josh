@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,15 +37,19 @@ public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
    * @param attributes A map of attribute names to their corresponding engine values.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
+   * @param commonHandlerCache Precomputed map of all handler lookups, shared across
+   *     all instances of this entity type.
    */
   public MemberSpatialEntity(
       Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       Map<String, EngineValue> attributes,
-      Map<String, Set<String>> attributesWithoutHandlersBySubstep
+      Map<String, Set<String>> attributesWithoutHandlersBySubstep,
+      Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
-    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep);
+    super(name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep,
+        commonHandlerCache);
     this.parent = parent;
   }
 

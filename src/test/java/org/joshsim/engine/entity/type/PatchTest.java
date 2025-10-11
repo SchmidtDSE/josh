@@ -44,7 +44,8 @@ public class PatchTest {
     eventHandlerGroups.put(stateKey, stateHandlerGroup);
 
     patch = new Patch(
-        mockGeometry, patchName, eventHandlerGroups, attributes, Collections.emptyMap());
+        mockGeometry, patchName, eventHandlerGroups, attributes, Collections.emptyMap(),
+        Collections.emptyMap());
   }
 
   /**
@@ -62,7 +63,8 @@ public class PatchTest {
    */
   @Test
   public void testConstructorWithNullMaps() {
-    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null, Collections.emptyMap());
+    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null, Collections.emptyMap(),
+        Collections.emptyMap());
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());
