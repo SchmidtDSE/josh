@@ -25,7 +25,10 @@
       "Bash(jfr summary:*)",
       "Read(///**)",
       "Bash(cat:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(pgrep:*)",
+      "Bash(pkill:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

@@ -49,7 +49,7 @@ public class ShadowingEntity implements MutableEntity {
   private final MutableEntity inner;
   private final Entity here;
   private final Entity meta;
-  private final Set<String> resolvedAttributes;
+  private final Map<String, EngineValue> resolvedCache;
   private final Set<String> resolvingAttributes;
   private final Scope scope;
   private final Map<HandlerCacheKey, Iterable<EventHandlerGroup>> handlersForAttribute;
@@ -76,7 +76,7 @@ public class ShadowingEntity implements MutableEntity {
       checkAssertions = true;
     }
 
-    resolvedAttributes = new HashSet<>();
+    resolvedCache = new HashMap<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
     handlersForAttribute = new HashMap<>();
@@ -96,7 +96,7 @@ public class ShadowingEntity implements MutableEntity {
     this.here = here;
     this.meta = meta;
 
-    resolvedAttributes = new HashSet<>();
+    resolvedCache = new HashMap<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
     handlersForAttribute = new HashMap<>();
@@ -182,15 +182,17 @@ public class ShadowingEntity implements MutableEntity {
    */
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    if (!resolvedAttributes.contains(name)) {
-      if (hasAttribute(name)) {
-        resolveAttribute(name);
-      } else {
-        return Optional.empty();
-      }
+    EngineValue cached = resolvedCache.get(name);
+    if (cached != null) {
+      return Optional.of(cached);
     }
 
-    return inner.getAttributeValue(name);
+    if (hasAttribute(name)) {
+      resolveAttribute(name);
+      return Optional.ofNullable(resolvedCache.get(name));
+    }
+
+    return Optional.empty();
   }
 
   /**
@@ -203,7 +205,7 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
-    resolvedAttributes.add(name);
+    resolvedCache.put(name, value);
     inner.setAttributeValue(name, value);
   }
 
@@ -286,7 +288,7 @@ public class ShadowingEntity implements MutableEntity {
    * @return State of this entity after current resolution.
    */
   private String getState() {
-    boolean doesNotUseState = !resolvedAttributes.contains("state");
+    boolean doesNotUseState = !resolvedCache.containsKey("state");
     if (doesNotUseState) {
       return DEFAULT_STATE_STR;
     }
@@ -465,7 +467,7 @@ public class ShadowingEntity implements MutableEntity {
   public void startSubstep(String name) {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
-    resolvedAttributes.clear();
+    resolvedCache.clear();
   }
 
   @Override

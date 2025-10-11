@@ -26,6 +26,9 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
  * </p>
  */
 public class RealizedDistribution extends Distribution {
+  // Cached LanguageType for empty distributions to avoid repeated allocations
+  private static final LanguageType EMPTY_TYPE = new LanguageType("empty", false);
+
   private final List<EngineValue> values;
   private Optional<DoubleSummaryStatistics> stats = Optional.empty();
 
@@ -208,7 +211,7 @@ public class RealizedDistribution extends Distribution {
   @Override
   public LanguageType getLanguageType() {
     if (values.isEmpty()) {
-      return new LanguageType("empty", false);
+      return EMPTY_TYPE;
     }
 
     EngineValue exampleValue = values.get(0);

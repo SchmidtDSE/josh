@@ -140,8 +140,8 @@ public class EngineValueWideningCaster implements EngineValueCaster {
    */
   private void addCast(String firstRoot, String secondRoot, Cast strategy) {
     EngineValueTuple.TypesTuple types = new EngineValueTuple.TypesTuple(
-        new LanguageType(firstRoot),
-        new LanguageType(secondRoot)
+        LanguageType.of(firstRoot),
+        LanguageType.of(secondRoot)
     );
     strategies.put(types, strategy);
   }
