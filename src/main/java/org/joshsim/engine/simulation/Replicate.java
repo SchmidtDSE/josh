@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -89,16 +88,20 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().stream()
-        .collect(Collectors.toMap(
-            (x) -> x.getKey().orElseThrow(),
-            (original) -> {
-              original.lock();
-              Entity frozen = original.freeze();
-              original.unlock();
-              return frozen;
-            })
-        );
+    // Pre-size to avoid rehashing
+    Map<GeoKey, Entity> frozenPatches = new HashMap<>(
+        (int) (presentTimeStep.size() / 0.75f) + 1
+    );
+
+    for (MutableEntity original : presentTimeStep.values()) {
+      original.lock();
+      try {
+        Entity frozen = original.freeze();
+        frozenPatches.put(original.getKey().orElseThrow(), frozen);
+      } finally {
+        original.unlock();
+      }
+    }
 
     Entity frozenMeta = meta.freeze();
 

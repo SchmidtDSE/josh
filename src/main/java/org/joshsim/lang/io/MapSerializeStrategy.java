@@ -6,9 +6,9 @@
 
 package org.joshsim.lang.io;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
@@ -21,15 +21,20 @@ public class MapSerializeStrategy implements MapExportSerializeStrategy {
 
   @Override
   public Map<String, String> getRecord(Entity entity) {
-    Map<String, String> result = entity.getAttributeNames().stream()
-        .filter((x) -> x.startsWith("export."))
-        .collect(Collectors.toMap(
-            (x) -> x.replaceFirst("export\\.", ""),
-            (x) -> {
-              Optional<EngineValue> value = entity.getAttributeValue(x);
-              return value.isPresent() ? value.get().getAsString() : "";
-            }
-        ));
+    // Estimate ~20% of attributes are exports (typical case)
+    int estimatedSize = Math.max(4, entity.getAttributeNames().size() / 5);
+    Map<String, String> result = new HashMap<>(
+        (int) (estimatedSize / 0.75f) + 1
+    );
+
+    for (String name : entity.getAttributeNames()) {
+      if (name.startsWith("export.")) {
+        String key = name.replaceFirst("export\\.", "");
+        Optional<EngineValue> value = entity.getAttributeValue(name);
+        String valueStr = value.isPresent() ? value.get().getAsString() : "";
+        result.put(key, valueStr);
+      }
+    }
 
     if (entity.getGeometry().isPresent()) {
       EngineGeometry geometry = entity.getGeometry().get();

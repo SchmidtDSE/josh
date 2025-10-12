@@ -6,9 +6,10 @@
 
 package org.joshsim.engine.simulation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -58,11 +59,17 @@ public class TimeStep {
    * @return an iterable of patches within the geometry
    */
   public Iterable<Entity> getPatches(EngineGeometry geometry) {
-    List<Entity> selectedPatches = patches.values().stream()
-        .filter(patch -> patch.getGeometry()
-              .map(geo -> geo.intersects(geometry))
-              .orElse(false))
-        .collect(Collectors.toList());
+    // Estimate ~50% of patches match (typical spatial query)
+    int estimatedSize = Math.max(10, patches.size() / 2);
+    List<Entity> selectedPatches = new ArrayList<>(estimatedSize);
+
+    for (Entity patch : patches.values()) {
+      Optional<EngineGeometry> patchGeometry = patch.getGeometry();
+      if (patchGeometry.isPresent() && patchGeometry.get().intersects(geometry)) {
+        selectedPatches.add(patch);
+      }
+    }
+
     return selectedPatches;
   }
 
@@ -74,12 +81,19 @@ public class TimeStep {
    * @return an iterable of matching patches
    */
   public Iterable<Entity> getPatches(EngineGeometry geometry, String name) {
-    List<Entity> selectedPatches = patches.values().stream()
-        .filter(patch -> patch.getName().equals(name))
-        .filter(patch -> patch.getGeometry()
-              .map(geo -> geo.intersects(geometry))
-              .orElse(false))
-        .collect(Collectors.toList());
+    // Name filter reduces candidates significantly
+    int estimatedSize = Math.max(10, patches.size() / 10);
+    List<Entity> selectedPatches = new ArrayList<>(estimatedSize);
+
+    for (Entity patch : patches.values()) {
+      if (patch.getName().equals(name)) {
+        Optional<EngineGeometry> patchGeometry = patch.getGeometry();
+        if (patchGeometry.isPresent() && patchGeometry.get().intersects(geometry)) {
+          selectedPatches.add(patch);
+        }
+      }
+    }
+
     return selectedPatches;
   }
 
