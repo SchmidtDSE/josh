@@ -32,6 +32,7 @@ import org.joshsim.wire.NamedMap;
 public class CombinedExportFacade {
 
   private final ExportFacadeFactory exportFactory;
+  private final int replicateNumber;
   private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
   private final Optional<ExportFacade> entityExportFacade;
@@ -46,6 +47,7 @@ public class CombinedExportFacade {
    */
   public CombinedExportFacade(MutableEntity simEntity, ExportFacadeFactory exportFactory) {
     this.exportFactory = exportFactory;
+    this.replicateNumber = exportFactory.getReplicateNumber();
     metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
     entityExportFacade = getEntityExportFacade(simEntity);
@@ -63,7 +65,7 @@ public class CombinedExportFacade {
    */
   public void write(TimeStep stepCompleted) {
     metaExportFacade.ifPresent(exportFacade -> {
-      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep());
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep(), replicateNumber);
     });
 
     patchExportFacade.ifPresent(exportFacade -> {
@@ -75,12 +77,12 @@ public class CombinedExportFacade {
         stepCompleted.getPatches().forEach((patch) -> {
           Map<String, String> serialized = serializeStrategy.getRecord(patch);
           NamedMap namedMap = new NamedMap(patch.getName(), serialized);
-          exportFacade.write(namedMap, stepCompleted.getStep(), 0);
+          exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
         });
       } else {
         // Legacy path: queue Entity for serialization in consumer thread
         stepCompleted.getPatches().forEach(
-            (x) -> exportFacade.write(x, stepCompleted.getStep(), 0)
+            (x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber)
         );
       }
     });
@@ -101,11 +103,11 @@ public class CombinedExportFacade {
         inner.forEach((entity) -> {
           Map<String, String> serialized = serializeStrategy.getRecord(entity);
           NamedMap namedMap = new NamedMap(entity.getName(), serialized);
-          exportFacade.write(namedMap, stepCompleted.getStep(), 0);
+          exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
         });
       } else {
         // Legacy path: queue Entity for serialization in consumer thread
-        inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep(), 0));
+        inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber));
       }
     });
   }

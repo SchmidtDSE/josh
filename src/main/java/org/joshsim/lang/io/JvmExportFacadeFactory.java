@@ -164,6 +164,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     return withVariable.replaceAll("\\{replicate\\}", "");
   }
 
+  @Override
+  public int getReplicateNumber() {
+    return replicate;
+  }
+
   /**
    * Determine if information is avialable to translate to Earth longitude and latitude.
    *
