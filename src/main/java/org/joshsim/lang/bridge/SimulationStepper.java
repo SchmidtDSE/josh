@@ -1,11 +1,15 @@
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -152,7 +156,42 @@ public class SimulationStepper {
    *     recursively updated.
    */
   private void updateEntityUnsafe(MutableEntity target) {
-    InnerEntityGetter.getInnerEntities(target).forEach(this::updateEntityUnsafe);
+    // Resolve all attributes and collect entities discovered during resolution.
+    // This eliminates the need for a separate getInnerEntities() traversal.
+    List<MutableEntity> innerEntities = new ArrayList<>();
+
+    for (String attributeName : target.getAttributeNames()) {
+      Optional<EngineValue> value = target.getAttributeValue(attributeName);
+      if (value.isEmpty()) {
+        continue;
+      }
+
+      EngineValue attributeValue = value.get();
+      if (!attributeValue.getLanguageType().containsAttributes()) {
+        continue;
+      }
+
+      Optional<Integer> size = attributeValue.getSize();
+      if (size.isEmpty()) {
+        continue;
+      }
+
+      int sizeValue = size.get();
+      if (sizeValue == 1) {
+        innerEntities.add(attributeValue.getAsMutableEntity());
+      } else {
+        Iterable<EngineValue> contents = attributeValue.getAsDistribution()
+            .getContents(sizeValue, false);
+        for (EngineValue entityValue : contents) {
+          innerEntities.add(entityValue.getAsMutableEntity());
+        }
+      }
+    }
+
+    // Recurse into discovered entities
+    for (MutableEntity innerEntity : innerEntities) {
+      updateEntityUnsafe(innerEntity);
+    }
   }
 
 }

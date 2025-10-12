@@ -1,19 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(javac:*)",
-      "Bash(./gradlew compileJava:*)",
-      "Bash(./gradlew compileTestJava:*)",
+      "Read(//tmp/**)",
       "Bash(./gradlew test:*)",
       "Bash(./gradlew:*)",
-      "Bash(java:*)",
-      "Bash(git log:*)",
       "Read(//home/ubuntu/chc_cmip6_sample/**)",
-      "Read(//tmp/**)",
-      "Bash(jfr summary:*)",
       "Bash(jfr print:*)",
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nAdd pre-computed handler cache optimization (Component 2)\n\nThis commit adds the final optimization layer by pre-computing ALL handler\nlookups at parse time and sharing them across entity instances.\n\nChanges:\n- EntityBuilder.computeCommonHandlerCache(): Pre-compute all (attribute × substep × state) combinations\n- DirectLockMutableEntity: Add commonHandlerCache field and getter\n- ShadowingEntity: Use shared cache instead of per-instance HandlerCacheKey\n- All entity types: Pass commonHandlerCache through constructors\n- String-based cache keys: \"attribute:substep\" or \"attribute:substep:state\"\n\nBenefits (validated via JFR profiling):\n- Eliminates HandlerCacheKey overhead: 125 samples → 0 (100% reduction)\n- Eliminates EventKey.of() overhead: 592 samples → 0 (100% reduction)\n- Memory reduction: ~200MB → ~20KB per entity type (99.99% reduction)\n- Simulation throughput: 63% more CPU samples (11,143 vs 6,816)\n- Total overhead eliminated: ~717 samples (10.5% of Component 1 baseline)\n\nArchitecture:\n- Handlers are stateless (only contain immutable code/config)\n- Safe to share handler lookup map across all instances of same entity type\n- Per-instance state (resolvedCache, resolvingAttributes) remains per-instance\n- Cache pre-computed once per entity type in EntityBuilder\n- Component 1 attribute resolution fix preserved (committed in 6da08cb6)\n\nValidation:\n- All unit tests pass (BUILD SUCCESSFUL)\n- Code style compliant (0 violations across 333 files)\n- simple.josh runs correctly (11 steps, not 100+)\n- Profiling confirms 100% elimination of both target overhead areas\n- No regressions introduced\n\nComponent 1 (attribute resolution fix) was committed separately in 6da08cb6.\nThis builds on that fix by adding the shared handler cache optimization.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Read(///**)",
+      "Bash(awk:*)",
+      "Bash(jfr summary:*)",
+      "Bash(cut:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
