@@ -93,6 +93,11 @@ public class CsvExportFacade implements ExportFacade {
     queueService.add(task);
   }
 
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(innerWriter.getSerializeStrategy());
+  }
+
 
   /**
    * Callback to write to a CSV file.
@@ -131,6 +136,15 @@ public class CsvExportFacade implements ExportFacade {
       } else {
         writeStrategy = new CsvWriteStrategy();
       }
+    }
+
+    /**
+     * Get the serialize strategy used by this writer.
+     *
+     * @return The MapExportSerializeStrategy instance
+     */
+    public MapExportSerializeStrategy getSerializeStrategy() {
+      return serializeStrategy;
     }
 
     @Override

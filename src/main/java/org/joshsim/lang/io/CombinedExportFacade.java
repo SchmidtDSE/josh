@@ -8,6 +8,7 @@ package org.joshsim.lang.io;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Stream;
@@ -17,6 +18,8 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.InnerEntityGetter;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
+import org.joshsim.wire.NamedMap;
 
 
 /**
@@ -63,11 +66,28 @@ public class CombinedExportFacade {
       exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep());
     });
 
-    patchExportFacade.ifPresent(exportFacade -> stepCompleted.getPatches().forEach(
-        (x) -> exportFacade.write(x, stepCompleted.getStep())
-    ));
+    patchExportFacade.ifPresent(exportFacade -> {
+      Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+
+      if (strategy.isPresent()) {
+        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+        MapExportSerializeStrategy serializeStrategy = strategy.get();
+        stepCompleted.getPatches().forEach((patch) -> {
+          Map<String, String> serialized = serializeStrategy.getRecord(patch);
+          NamedMap namedMap = new NamedMap(patch.getName(), serialized);
+          exportFacade.write(namedMap, stepCompleted.getStep(), 0);
+        });
+      } else {
+        // Legacy path: queue Entity for serialization in consumer thread
+        stepCompleted.getPatches().forEach(
+            (x) -> exportFacade.write(x, stepCompleted.getStep(), 0)
+        );
+      }
+    });
 
     entityExportFacade.ifPresent(exportFacade -> {
+      Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+
       Stream<Entity> patches = StreamSupport.stream(
           stepCompleted.getPatches().spliterator(),
           false
@@ -75,7 +95,18 @@ public class CombinedExportFacade {
 
       Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
 
-      inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep()));
+      if (strategy.isPresent()) {
+        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+        MapExportSerializeStrategy serializeStrategy = strategy.get();
+        inner.forEach((entity) -> {
+          Map<String, String> serialized = serializeStrategy.getRecord(entity);
+          NamedMap namedMap = new NamedMap(entity.getName(), serialized);
+          exportFacade.write(namedMap, stepCompleted.getStep(), 0);
+        });
+      } else {
+        // Legacy path: queue Entity for serialization in consumer thread
+        inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep(), 0));
+      }
     });
   }
 

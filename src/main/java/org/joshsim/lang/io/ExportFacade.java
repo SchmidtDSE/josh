@@ -6,7 +6,9 @@
 
 package org.joshsim.lang.io;
 
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
 
@@ -77,6 +79,22 @@ public interface ExportFacade {
    */
   default void write(NamedMap namedMap, long step) {
     write(namedMap, step, 0);
+  }
+
+  /**
+   * Get the serialization strategy if this facade supports pre-serialization.
+   *
+   * <p>Facades that support pre-serialization in the producer thread can return their
+   * MapExportSerializeStrategy to enable serialization before queueing. This allows the
+   * producer to serialize entities to Map&lt;String, String&gt; and queue lightweight NamedMap
+   * objects instead of heavy Entity references, reducing memory pressure.</p>
+   *
+   * <p>Default implementation returns empty Optional for backward compatibility.</p>
+   *
+   * @return Optional containing the MapExportSerializeStrategy if supported, empty otherwise
+   */
+  default Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.empty();
   }
 
 }

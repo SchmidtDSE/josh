@@ -10,7 +10,11 @@
       "Bash(awk:*)",
       "Bash(jfr summary:*)",
       "Bash(cut:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git stash:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nComponent 1: Producer Serializes to Map\n\nMove entity serialization from consumer thread to producer thread to fix OOM issues.\nProducer thread now serializes entities to Map<String,String> and queues lightweight\nNamedMap objects (200-500 bytes) instead of heavy Entity references (2-5KB).\n\nChanges:\n- Added ExportFacade.getSerializeStrategy() default method for opt-in producer serialization\n- CsvExportFacade exposes serializeStrategy to enable producer path\n- CombinedExportFacade checks for strategy and uses producer serialization when available\n- Backward compatible: facades default to Optional.empty() for legacy consumer serialization\n\nExpected impact: 10-50x memory reduction (4-10 GB → 200-400 MB queue size), OOM eliminated\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
