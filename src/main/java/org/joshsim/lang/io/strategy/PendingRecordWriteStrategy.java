@@ -44,10 +44,6 @@ public abstract class PendingRecordWriteStrategy implements StringMapWriteStrate
       variables = Optional.of(getRequiredVariables());
     }
 
-    for (String varName : variables.get()) {
-      checkPresent(record, varName);
-    }
-
     this.outputStream = outputStream;
     pendingRecords.add(record);
   }
