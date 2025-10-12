@@ -58,3 +58,6 @@ landing/prism-*.css
 .claude
 
 config/checkstyle/google_checks.xml
+
+# Profiling scripts
+run_profiler.sh
