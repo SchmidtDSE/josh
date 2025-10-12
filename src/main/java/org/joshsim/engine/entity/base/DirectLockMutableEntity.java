@@ -139,7 +139,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     int expectedSize = (int) (priorAttributes.size() / 0.75f) + 1;
     attributes = new HashMap<>(expectedSize);
 
-    onlyOnPrior = new HashSet<>(priorAttributes.keySet());
+    // Reuse existing HashSet to avoid allocation overhead
+    onlyOnPrior.clear();
+    onlyOnPrior.addAll(priorAttributes.keySet());
 
     // Freeze all attribute values to ensure nested entities are also frozen
     // Pre-size HashMap to avoid rehashing during construction
@@ -213,7 +215,6 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
     return attributeNames;
   }
-
 
   /**
    * Check if an attribute has no handlers for a specific substep.
