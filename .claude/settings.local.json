@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m \"$(cat <<''EOF''\nComponent 2: Fix Replicate Number Bug\n\nFix hardcoded replicate=0 bug so multi-replicate simulations have correct\nreplicate column values in CSV output.\n\nChanges:\n- Added ExportFacadeFactory.getReplicateNumber() default method (returns 0 for backward compatibility)\n- JvmExportFacadeFactory overrides to return stored replicate field\n- CombinedExportFacade captures replicate number in constructor\n- Updated all 5 write() call sites to use replicateNumber instead of hardcoded 0\n\nExpected impact: Correct replicate numbers in multi-replicate simulation CSV output\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew:*)",
+      "Read(//tmp/**)",
+      "Bash(cat:*)",
+      "Bash(awk:*)",
+      "Bash(java:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nComponent 3: Fix File Overwrite Bug\n\nFixed bug where consolidated CSV exports (without {replicate} in filename template) \noverwrote data from previous replicates instead of appending.\n\nChanges:\n- Added append mode support to LocalOutputStreamStrategy with file locking\n- Created AppendOutputStream marker interface for append state detection\n- Implemented smart CSV header handling (skips header when appending to existing file)\n- Updated JvmExportFacadeFactory to enable append mode for consolidated CSV exports\n- Added 4 comprehensive unit tests for append mode, overwrite mode, and backward compatibility\n\nExpected impact: Correctness fix - multi-replicate simulations now preserve all replicate data\n\nValidation:\n- All 1519 tests pass (100%)\n- Checkstyle passes\n- Integration test confirmed: simple.josh with 3 replicates produces 3301 rows (was 1101)\n- Thread-safe with exclusive file locking\n- Backward compatible\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
