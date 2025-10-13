@@ -7,7 +7,6 @@
 package org.joshsim.lang.bridge;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,6 @@ public class ShadowingEntity implements MutableEntity {
   private final MutableEntity inner;
   private final Entity here;
   private final Entity meta;
-  private final Map<String, EngineValue> resolvedCache;
   private final Scope scope;
   private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
@@ -80,7 +78,6 @@ public class ShadowingEntity implements MutableEntity {
       checkAssertions = true;
     }
 
-    resolvedCache = new HashMap<>();
     scope = new EntityScope(inner);
 
     // Initialize array-based caches for O(1) integer-indexed access
@@ -110,7 +107,6 @@ public class ShadowingEntity implements MutableEntity {
     this.here = here;
     this.meta = meta;
 
-    resolvedCache = new HashMap<>();
     scope = new EntityScope(inner);
 
     // Initialize array-based caches for O(1) integer-indexed access
@@ -194,16 +190,31 @@ public class ShadowingEntity implements MutableEntity {
    */
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    EngineValue cached = resolvedCache.get(name);
-    if (cached != null) {
-      return Optional.of(cached);
+    // Look up index for this attribute
+    Optional<Integer> indexMaybe = inner.getAttributeIndex(name);
+
+    // Check array-based cache if we have a valid index
+    if (indexMaybe.isPresent()) {
+      int index = indexMaybe.get();
+      if (index >= 0 && index < resolvedCacheByIndex.length) {
+        EngineValue cached = resolvedCacheByIndex[index];
+        if (cached != null) {
+          return Optional.of(cached);
+        }
+      }
     }
 
     if (hasAttribute(name)) {
       resolveAttribute(name);
-      cached = resolvedCache.get(name);
-      if (cached != null) {
-        return Optional.of(cached);
+      // Check array-based cache again after resolution if we have a valid index
+      if (indexMaybe.isPresent()) {
+        int index = indexMaybe.get();
+        if (index >= 0 && index < resolvedCacheByIndex.length) {
+          EngineValue cached = resolvedCacheByIndex[index];
+          if (cached != null) {
+            return Optional.of(cached);
+          }
+        }
       }
     }
 
@@ -290,9 +301,8 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
-    resolvedCache.put(name, value);
 
-    // Also update array-based cache for integer-indexed access
+    // Update array-based cache
     Optional<Integer> indexMaybe = inner.getAttributeIndex(name);
     if (indexMaybe.isPresent()) {
       int index = indexMaybe.get();
@@ -452,7 +462,16 @@ public class ShadowingEntity implements MutableEntity {
    * @return State of this entity after current resolution.
    */
   private String getState() {
-    boolean doesNotUseState = !resolvedCache.containsKey("state");
+    // Check if "state" attribute exists and is cached in array
+    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+    if (stateIndexMaybe.isEmpty()) {
+      return DEFAULT_STATE_STR;
+    }
+
+    int stateIndex = stateIndexMaybe.get();
+    boolean doesNotUseState = stateIndex < 0
+        || stateIndex >= resolvedCacheByIndex.length
+        || resolvedCacheByIndex[stateIndex] == null;
     if (doesNotUseState) {
       return DEFAULT_STATE_STR;
     }
@@ -610,13 +629,6 @@ public class ShadowingEntity implements MutableEntity {
    * @param name the attribute name (needed for cache and handlers)
    */
   private void resolveAttributeByIndex(int index, String name) {
-    // DEBUG: Log when resolving year
-    if ("year".equals(name) && here == this) {  // Only log on simulation
-      System.err.println("[DEBUG] Resolving 'year', thread="
-          + Thread.currentThread().getName()
-          + ", entityName=" + inner.getName());
-    }
-
     // PERFORMANCE: Use array-based tracking for O(1) access without allocations
     if (index >= 0 && index < resolvingByIndex.length && resolvingByIndex[index]) {
       System.err.println("Encountered a loop when resolving " + name);
@@ -645,13 +657,6 @@ public class ShadowingEntity implements MutableEntity {
     if (index >= 0 && index < resolvingByIndex.length) {
       resolvingByIndex[index] = false;
     }
-
-    // DEBUG: Check if cache was populated after resolution
-    if ("year".equals(name) && here == this) {
-      boolean cachePopulated = (index >= 0 && index < resolvedCacheByIndex.length
-          && resolvedCacheByIndex[index] != null);
-      System.err.println("[DEBUG] After resolving 'year', cache populated=" + cachePopulated);
-    }
   }
 
   /**
@@ -669,9 +674,6 @@ public class ShadowingEntity implements MutableEntity {
 
     // If outside substep, use prior with integer access
     if (substep.isEmpty()) {
-      if ("year".equals(name) && here == this) {
-        System.err.println("[DEBUG] year resolve: outside substep, using prior");
-      }
       resolveAttributeFromPriorByIndex(index);
       return;
     }
@@ -679,9 +681,6 @@ public class ShadowingEntity implements MutableEntity {
     // FAST PATH: If attribute has no handlers for THIS substep, use integer access
     // PERFORMANCE: Avoids string-based HashMap lookup in inner entity
     if (inner.hasNoHandlers(name, substep.get())) {
-      if ("year".equals(name) && here == this) {
-        System.err.println("[DEBUG] year resolve: no handlers, using prior");
-      }
       resolveAttributeFromPriorByIndex(index);
       return;
     }
@@ -689,9 +688,6 @@ public class ShadowingEntity implements MutableEntity {
     // SLOW PATH: Check for handlers
     Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
     if (!handlersMaybe.hasNext()) {
-      if ("year".equals(name) && here == this) {
-        System.err.println("[DEBUG] year resolve: iterator empty, using prior");
-      }
       resolveAttributeFromPriorByIndex(index);
       return;
     }
@@ -706,9 +702,6 @@ public class ShadowingEntity implements MutableEntity {
 
     // If failed to match, use prior with integer access
     if (executed) {
-      if ("year".equals(name) && here == this) {
-        System.err.println("[DEBUG] year resolve: handler executed");
-      }
       if (checkAssertions && name.startsWith("assert.")) {
         Optional<EngineValue> result = getAttributeValue(name);
         if (result.isPresent()) {
@@ -719,9 +712,6 @@ public class ShadowingEntity implements MutableEntity {
         }
       }
     } else {
-      if ("year".equals(name) && here == this) {
-        System.err.println("[DEBUG] year resolve: handler NOT executed, using prior");
-      }
       resolveAttributeFromPriorByIndex(index);
     }
   }
@@ -781,50 +771,12 @@ public class ShadowingEntity implements MutableEntity {
   private void resolveAttributeFromPriorByIndex(int index) {
     Optional<EngineValue> prior = getPriorAttribute(index);
 
-    // DEBUG: Log for year attribute
-    String[] indexArray = null;
-    if (inner instanceof DirectLockMutableEntity) {
-      indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
-    }
-    if (indexArray != null && index >= 0 && index < indexArray.length) {
-      String attrName = indexArray[index];
-      if ("year".equals(attrName) && here == this) {
-        System.err.println("[DEBUG] resolveAttributeFromPriorByIndex: prior.isPresent()="
-            + prior.isPresent());
-      }
-    }
-
     if (prior.isPresent()) {
       inner.setAttributeValue(index, prior.get());
 
-      // PERFORMANCE: Update array-based cache first (O(1) without HashMap overhead)
+      // PERFORMANCE: Update array-based cache (O(1) without HashMap overhead)
       if (index >= 0 && index < resolvedCacheByIndex.length) {
         resolvedCacheByIndex[index] = prior.get();
-      }
-
-      // Also update string-based resolvedCache for compatibility
-      // (reuse indexArray from above)
-      String attributeName = null;
-
-      // FAST PATH: Use O(1) array lookup if available
-      if (indexArray != null && index >= 0 && index < indexArray.length) {
-        attributeName = indexArray[index];
-      }
-
-      // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
-      if (attributeName == null) {
-        Map<String, Integer> indexMap = inner.getAttributeNameToIndex();
-        for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-          if (entry.getValue() == index) {
-            attributeName = entry.getKey();
-            break;
-          }
-        }
-      }
-
-      // Update string-based cache if attribute name found
-      if (attributeName != null) {
-        resolvedCache.put(attributeName, prior.get());
       }
     }
   }
@@ -853,9 +805,8 @@ public class ShadowingEntity implements MutableEntity {
   public void startSubstep(String name) {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
-    resolvedCache.clear();
 
-    // PERFORMANCE: Clear array-based cache (faster than HashMap.clear() for small-medium arrays)
+    // PERFORMANCE: Clear array-based cache
     java.util.Arrays.fill(resolvedCacheByIndex, null);
   }
 
