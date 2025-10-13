@@ -32,7 +32,12 @@
       "Bash(then echo \"Profile file exists\")",
       "Bash(else echo \"Profile file not found\")",
       "Bash(fi)",
-      "Bash(javac:*)"
+      "Bash(javac:*)",
+      "Bash(git diff:*)",
+      "Bash(then cp /tmp/profile_optimized_5.jfr /tmp/profile_baseline_pre_units_cache.jfr)",
+      "Bash(else echo \"Baseline profile not found at /tmp/profile_optimized_5.jfr\")",
+      "Bash(cut:*)",
+      "Read(///**)"
     ],
     "deny": [],
     "ask": []

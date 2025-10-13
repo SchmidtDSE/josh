@@ -106,19 +106,19 @@ public class EngineValueWideningCaster implements EngineValueCaster {
 
     // When adding empty to non-empty, the result should be non-empty
     if (types.getFirst().getRootType().equals("empty")) {
-      return new EngineValueTuple(operands.getFirst(), operands.getSecond());
+      return EngineValueTuple.of(operands.getFirst(), operands.getSecond());
     } else if (types.getSecond().getRootType().equals("empty")) {
-      return new EngineValueTuple(operands.getFirst(), operands.getSecond());
+      return EngineValueTuple.of(operands.getFirst(), operands.getSecond());
     }
 
     EngineValueTuple.TypesTuple typesReversed = operands.reverse().getTypes();
 
     if (strategies.containsKey(types)) {
       EngineValue newFirst = operands.getFirst().cast(strategies.get(types));
-      return new EngineValueTuple(newFirst, operands.getSecond());
+      return EngineValueTuple.of(newFirst, operands.getSecond());
     } else if (strategies.containsKey(typesReversed)) {
       EngineValue newSecond = operands.getSecond().cast(strategies.get(typesReversed));
-      return new EngineValueTuple(operands.getFirst(), newSecond);
+      return EngineValueTuple.of(operands.getFirst(), newSecond);
     } else {
       String message = String.format(
           "Cannot convert between %s and %s",
