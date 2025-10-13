@@ -16,9 +16,10 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
    * @param geometry The geometry associated with this entity.
    */
   public ReferenceGeometryEntity(EngineGeometry geometry) {
-    // ReferenceGeometryEntity has no handlers, so pass empty maps
-    super(geometry, "reference", Collections.emptyMap(), new HashMap<>(),
-        Collections.emptyMap(), Collections.emptyMap());
+    // ReferenceGeometryEntity has no handlers, so pass empty array and maps
+    super(geometry, "reference", Collections.emptyMap(),
+        new org.joshsim.engine.value.type.EngineValue[0],
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
   }
 
   @Override

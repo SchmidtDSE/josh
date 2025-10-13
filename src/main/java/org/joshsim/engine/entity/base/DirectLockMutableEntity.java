@@ -30,8 +30,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private final CompatibleLock lock;
 
-  private Map<String, EngineValue> attributes;
-  private Map<String, EngineValue> priorAttributes;
+  private EngineValue[] attributes;
+  private EngineValue[] priorAttributes;
+  private final Map<String, Integer> attributeNameToIndex;
   private Set<String> onlyOnPrior;
 
   private Optional<String> substep;
@@ -47,7 +48,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    *     EventHandlerGroups. This map MUST be immutable (e.g., created via
    *     Collections.unmodifiableMap) as it will be shared across multiple entity
    *     instances for performance.
-   * @param attributes A map of attribute names to their corresponding EngineValues.
+   * @param attributes An array of EngineValue objects indexed by attributeNameToIndex.
+   * @param attributeNameToIndex Shared immutable map from attribute name to array index.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
@@ -56,7 +58,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public DirectLockMutableEntity(
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes,
+      EngineValue[] attributes,
+      Map<String, Integer> attributeNameToIndex,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
       Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
@@ -70,16 +73,23 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       this.eventHandlerGroups = eventHandlerGroups;  // Direct assignment, no copy!
     }
 
-    // Attributes still need defensive copy as they are mutable per instance
-    if (attributes == null) {
-      this.attributes = new HashMap<>();
+    // Store reference to shared index map (immutable)
+    if (attributeNameToIndex == null) {
+      this.attributeNameToIndex = Collections.emptyMap();
     } else {
-      this.attributes = new HashMap<>(attributes);
+      this.attributeNameToIndex = attributeNameToIndex;
+    }
+
+    // Attributes array needs defensive copy (mutable per instance)
+    if (attributes == null) {
+      this.attributes = new EngineValue[0];
+    } else {
+      this.attributes = attributes.clone();
     }
 
     lock = CompatibilityLayerKeeper.get().getLock();
     substep = Optional.empty();
-    priorAttributes = new HashMap<>();
+    priorAttributes = new EngineValue[this.attributes.length];
     onlyOnPrior = new HashSet<>();
 
     attributeNames = computeAttributeNames();
@@ -104,17 +114,31 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    EngineValue value = attributes.get(name);
+    int index = getAttributeIndex(name);
+    if (index < 0) {
+      return Optional.empty();
+    }
+
+    EngineValue value = attributes[index];
     if (value != null) {
       return Optional.of(value);
     }
-    return Optional.ofNullable(priorAttributes.get(name));
+
+    value = priorAttributes[index];
+    return Optional.ofNullable(value);
   }
 
   @Override
   public void setAttributeValue(String name, EngineValue value) {
+    int index = getAttributeIndex(name);
+    if (index < 0) {
+      // Unknown attribute - ignore or throw?
+      // For now, silently ignore to maintain backward compatibility
+      return;
+    }
+
     onlyOnPrior.remove(name);
-    attributes.put(name, value);
+    attributes[index] = value;
   }
 
   @Override
@@ -129,25 +153,43 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Entity freeze() {
+    // Copy values from priorAttributes for attributes only in prior
     for (String key : onlyOnPrior) {
-      attributes.put(key, priorAttributes.get(key));
+      int index = getAttributeIndex(key);
+      if (index >= 0) {
+        attributes[index] = priorAttributes[index];
+      }
     }
 
+    // Swap arrays
     priorAttributes = attributes;
 
-    // Pre-size new HashMap based on current size to avoid rehashing
-    int expectedSize = (int) (priorAttributes.size() / 0.75f) + 1;
-    attributes = new HashMap<>(expectedSize);
+    // Create new empty attributes array
+    attributes = new EngineValue[priorAttributes.length];
 
-    // Reuse existing HashSet to avoid allocation overhead
+    // Reset onlyOnPrior tracking
     onlyOnPrior.clear();
-    onlyOnPrior.addAll(priorAttributes.keySet());
+    for (String attrName : attributeNameToIndex.keySet()) {
+      int index = getAttributeIndex(attrName);
+      if (index >= 0 && priorAttributes[index] != null) {
+        onlyOnPrior.add(attrName);
+      }
+    }
 
-    // Freeze all attribute values to ensure nested entities are also frozen
-    // Pre-size HashMap to avoid rehashing during construction
-    Map<String, EngineValue> frozenAttributes = new HashMap<>(expectedSize);
-    for (Map.Entry<String, EngineValue> entry : priorAttributes.entrySet()) {
-      frozenAttributes.put(entry.getKey(), entry.getValue().freeze());
+    // Freeze all attribute values
+    // Build frozen attributes map for FrozenEntity
+    Map<String, EngineValue> frozenAttributes = new HashMap<>(
+        (int) (priorAttributes.length / 0.75f) + 1);
+
+    for (Map.Entry<String, Integer> entry : attributeNameToIndex.entrySet()) {
+      String attrName = entry.getKey();
+      int index = entry.getValue();
+      if (index >= 0 && index < priorAttributes.length) {
+        EngineValue value = priorAttributes[index];
+        if (value != null) {
+          frozenAttributes.put(attrName, value.freeze());
+        }
+      }
     }
 
     return new FrozenEntity(
@@ -252,6 +294,17 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       return Collections.emptyMap();
     }
     return commonHandlerCache;
+  }
+
+  /**
+   * Get the array index for an attribute name.
+   *
+   * @param name the attribute name
+   * @return the array index, or -1 if attribute not found
+   */
+  private int getAttributeIndex(String name) {
+    Integer index = attributeNameToIndex.get(name);
+    return index != null ? index : -1;
   }
 
 }

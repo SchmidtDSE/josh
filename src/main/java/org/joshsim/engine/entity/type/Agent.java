@@ -30,7 +30,8 @@ public class Agent extends MemberSpatialEntity {
    * @param eventHandlerGroups An immutable map of event keys to their corresponding
    *     event handler groups. This map is shared across all instances of this entity
    *     type for performance.
-   * @param attributes A map of attribute names to their corresponding engine values.
+   * @param attributes An array of EngineValue objects indexed by attributeNameToIndex.
+   * @param attributeNameToIndex Shared immutable map from attribute name to array index.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
@@ -40,12 +41,13 @@ public class Agent extends MemberSpatialEntity {
       Entity parent,
       String name,
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes,
+      EngineValue[] attributes,
+      Map<String, Integer> attributeNameToIndex,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
       Map<String, List<EventHandlerGroup>> commonHandlerCache
   ) {
-    super(parent, name, eventHandlerGroups, attributes, attributesWithoutHandlersBySubstep,
-        commonHandlerCache);
+    super(parent, name, eventHandlerGroups, attributes, attributeNameToIndex,
+        attributesWithoutHandlersBySubstep, commonHandlerCache);
   }
 
   @Override

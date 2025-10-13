@@ -38,6 +38,7 @@ public class EntityBuilder {
   private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
   private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
+  private Map<String, Integer> attributeNameToIndex;
 
   /**
    * Create an empty builder.
@@ -113,6 +114,7 @@ public class EntityBuilder {
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
+    attributeNameToIndex = null; // Invalidate cache
   }
 
   /**
@@ -140,6 +142,7 @@ public class EntityBuilder {
   public EntityBuilder addAttribute(String attribute, EngineValue value) {
     attributes.put(attribute, value);
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
+    attributeNameToIndex = null; // Invalidate cache
     return this;
   }
 
@@ -303,6 +306,76 @@ public class EntityBuilder {
   }
 
   /**
+   * Compute the shared attribute name to index map for array-based storage.
+   *
+   * <p>This method creates a sorted mapping from attribute names to array indices,
+   * ensuring deterministic ordering across all entity instances. Attributes are
+   * sorted alphabetically to guarantee consistent indices.</p>
+   *
+   * <p>This map is computed ONCE per entity type in the builder and shared across
+   * all entity instances of that type, eliminating per-instance HashMap overhead.</p>
+   *
+   * @return Immutable map from attribute name to array index
+   */
+  private Map<String, Integer> computeAttributeNameToIndex() {
+    // Use cached value if available
+    if (attributeNameToIndex != null) {
+      return attributeNameToIndex;
+    }
+
+    // Collect all unique attribute names
+    Set<String> allAttributeNames = new HashSet<>(attributes.keySet());
+
+    // Also collect attributes from event handlers
+    for (EventHandlerGroup group : eventHandlerGroups.values()) {
+      if (group == null) {
+        continue;
+      }
+      for (EventHandler handler : group.getEventHandlers()) {
+        allAttributeNames.add(handler.getAttributeName());
+      }
+    }
+
+    // Sort alphabetically for deterministic ordering
+    List<String> sortedNames = new ArrayList<>(allAttributeNames);
+    Collections.sort(sortedNames);
+
+    // Build index map
+    Map<String, Integer> result = new HashMap<>();
+    for (int i = 0; i < sortedNames.size(); i++) {
+      result.put(sortedNames.get(i), i);
+    }
+
+    // Cache immutable map
+    attributeNameToIndex = Collections.unmodifiableMap(result);
+    return attributeNameToIndex;
+  }
+
+  /**
+   * Convert attributes map to array using the computed index map.
+   *
+   * <p>This creates an EngineValue array where each attribute is placed at
+   * the index specified by attributeNameToIndex. Attributes not in the
+   * initial attributes map are left as null in the array.</p>
+   *
+   * @return Array of EngineValue objects indexed by attributeNameToIndex
+   */
+  private EngineValue[] createAttributesArray() {
+    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+    EngineValue[] result = new EngineValue[indexMap.size()];
+
+    // Copy values from map to array
+    for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+      Integer index = indexMap.get(entry.getKey());
+      if (index != null) {
+        result[index] = entry.getValue();
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Build an agent entity.
    *
    * @param parent The entity like Patch that this will be part of.
@@ -313,7 +386,8 @@ public class EntityBuilder {
         parent,
         getName(),
         getImmutableEventHandlerGroups(),
-        createImmutableAttributesCopy(),
+        createAttributesArray(),
+        computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache());
     return agent;
@@ -330,7 +404,8 @@ public class EntityBuilder {
         parent,
         getName(),
         getImmutableEventHandlerGroups(),
-        createImmutableAttributesCopy(),
+        createAttributesArray(),
+        computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache());
     return disturbance;
@@ -347,7 +422,8 @@ public class EntityBuilder {
         geometry,
         getName(),
         getImmutableEventHandlerGroups(),
-        createImmutableAttributesCopy(),
+        createAttributesArray(),
+        computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache());
     return patch;
@@ -362,7 +438,8 @@ public class EntityBuilder {
     Simulation simulation = new Simulation(
         getName(),
         getImmutableEventHandlerGroups(),
-        createImmutableAttributesCopy(),
+        createAttributesArray(),
+        computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache());
     return simulation;

@@ -254,8 +254,50 @@ public class DirectLockMutableEntityFastPathTest {
         String name,
         Map<EventKey, EventHandlerGroup> handlers,
         Map<String, EngineValue> attributes) {
-      super(name, handlers, attributes, computeOptimizationMap(name, handlers, attributes),
+      super(name, handlers,
+          attributesArrayFromMap(handlers, attributes),
+          attributeIndexFromMap(handlers, attributes),
+          computeOptimizationMap(name, handlers, attributes),
           Collections.emptyMap());
+    }
+
+    private static EngineValue[] attributesArrayFromMap(
+        Map<EventKey, EventHandlerGroup> handlers,
+        Map<String, EngineValue> map) {
+      Map<String, Integer> indexMap = attributeIndexFromMap(handlers, map);
+      EngineValue[] result = new EngineValue[indexMap.size()];
+      for (Map.Entry<String, EngineValue> entry : map.entrySet()) {
+        Integer index = indexMap.get(entry.getKey());
+        if (index != null) {
+          result[index] = entry.getValue();
+        }
+      }
+      return result;
+    }
+
+    private static Map<String, Integer> attributeIndexFromMap(
+        Map<EventKey, EventHandlerGroup> handlers,
+        Map<String, EngineValue> map) {
+      // Collect all attribute names from map and handlers
+      java.util.Set<String> allNames = new java.util.HashSet<>(map.keySet());
+      for (EventHandlerGroup group : handlers.values()) {
+        if (group != null) {
+          for (EventHandler handler : group.getEventHandlers()) {
+            allNames.add(handler.getAttributeName());
+          }
+        }
+      }
+
+      // Sort alphabetically
+      java.util.List<String> sortedNames = new java.util.ArrayList<>(allNames);
+      java.util.Collections.sort(sortedNames);
+
+      // Build index map
+      Map<String, Integer> result = new HashMap<>();
+      for (int i = 0; i < sortedNames.size(); i++) {
+        result.put(sortedNames.get(i), i);
+      }
+      return Collections.unmodifiableMap(result);
     }
 
     @Override
