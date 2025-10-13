@@ -114,7 +114,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    int index = getAttributeIndex(name);
+    int index = getAttributeIndexInternal(name);
     if (index < 0) {
       return Optional.empty();
     }
@@ -129,8 +129,26 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   }
 
   @Override
+  public Optional<EngineValue> getAttributeValue(int index) {
+    // Bounds check
+    if (index < 0 || index >= attributes.length) {
+      return Optional.empty();
+    }
+
+    // Check current attributes first
+    EngineValue value = attributes[index];
+    if (value != null) {
+      return Optional.of(value);
+    }
+
+    // Check prior attributes
+    value = priorAttributes[index];
+    return Optional.ofNullable(value);
+  }
+
+  @Override
   public void setAttributeValue(String name, EngineValue value) {
-    int index = getAttributeIndex(name);
+    int index = getAttributeIndexInternal(name);
     if (index < 0) {
       // Unknown attribute - ignore or throw?
       // For now, silently ignore to maintain backward compatibility
@@ -139,6 +157,30 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
     onlyOnPrior.remove(name);
     attributes[index] = value;
+  }
+
+  @Override
+  public void setAttributeValue(int index, EngineValue value) {
+    // Bounds check - throw exception for invalid index
+    if (index < 0 || index >= attributes.length) {
+      String message = String.format(
+          "Attribute index %d out of bounds [0, %d) for entity %s",
+          index, attributes.length, name);
+      throw new IndexOutOfBoundsException(message);
+    }
+
+    // Update attribute at index
+    attributes[index] = value;
+
+    // Remove from onlyOnPrior set if present
+    // We need to look up the name to remove it
+    // This is a bit inefficient but only happens when transitioning from prior to current
+    for (Map.Entry<String, Integer> entry : attributeNameToIndex.entrySet()) {
+      if (entry.getValue() == index) {
+        onlyOnPrior.remove(entry.getKey());
+        break;
+      }
+    }
   }
 
   @Override
@@ -155,7 +197,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public Entity freeze() {
     // Copy values from priorAttributes for attributes only in prior
     for (String key : onlyOnPrior) {
-      int index = getAttributeIndex(key);
+      int index = getAttributeIndexInternal(key);
       if (index >= 0) {
         attributes[index] = priorAttributes[index];
       }
@@ -170,7 +212,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     // Reset onlyOnPrior tracking
     onlyOnPrior.clear();
     for (String attrName : attributeNameToIndex.keySet()) {
-      int index = getAttributeIndex(attrName);
+      int index = getAttributeIndexInternal(attrName);
       if (index >= 0 && priorAttributes[index] != null) {
         onlyOnPrior.add(attrName);
       }
@@ -196,7 +238,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
         getEntityType(),
         name,
         frozenAttributes,
-        getGeometry()
+        getGeometry(),
+        attributeNameToIndex
     );
   }
 
@@ -296,13 +339,32 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     return commonHandlerCache;
   }
 
+  @Override
+  public Optional<Integer> getAttributeIndex(String name) {
+    Integer index = attributeNameToIndex.get(name);
+    if (index != null && index >= 0) {
+      return Optional.of(index);
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    // Return the shared immutable map directly
+    return attributeNameToIndex;
+  }
+
   /**
-   * Get the array index for an attribute name.
+   * Get the array index for an attribute name, returning -1 if not found.
+   *
+   * <p>This is a private helper method for internal use that returns -1 for
+   * missing attributes rather than Optional.empty(). Prefer this for internal
+   * code paths to avoid Optional allocation overhead.</p>
    *
    * @param name the attribute name
    * @return the array index, or -1 if attribute not found
    */
-  private int getAttributeIndex(String name) {
+  private int getAttributeIndexInternal(String name) {
     Integer index = attributeNameToIndex.get(name);
     return index != null ? index : -1;
   }

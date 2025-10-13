@@ -44,6 +44,19 @@ public interface MutableEntity extends Entity, Lockable {
   void setAttributeValue(String name, EngineValue value);
 
   /**
+   * Set the value of an attribute by index.
+   *
+   * <p>This method provides fast array-based attribute updates when the index
+   * is known. This is significantly faster than string-based access as it
+   * eliminates HashMap lookups and string hashing.</p>
+   *
+   * @param index the attribute index (from attributeNameToIndex map)
+   * @param value the value to set
+   * @throws IndexOutOfBoundsException if index is negative or >= array length
+   */
+  void setAttributeValue(int index, EngineValue value);
+
+  /**
    * Indicate that this entity is starting a substep or step phase like step.
    *
    * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,

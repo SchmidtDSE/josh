@@ -202,6 +202,35 @@ public class ShadowingEntity implements MutableEntity {
     return inner.getAttributeValue(name);
   }
 
+  @Override
+  public Optional<EngineValue> getAttributeValue(int index) {
+    // Integer-based access needs to interact with resolvedCache correctly
+    // We need to find the attribute name for this index to check resolvedCache
+
+    // Bounds check
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
+    if (index < 0 || index >= indexMap.size()) {
+      return Optional.empty();
+    }
+
+    // Find the attribute name with this index
+    String attributeName = null;
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      if (entry.getValue() == index) {
+        attributeName = entry.getKey();
+        break;
+      }
+    }
+
+    if (attributeName == null) {
+      return Optional.empty();
+    }
+
+    // Now use the existing string-based logic
+    // This ensures resolvedCache and attribute resolution work correctly
+    return getAttributeValue(attributeName);
+  }
+
   /**
    * Set the current value of an attribute in the current substep.
    *
@@ -214,6 +243,30 @@ public class ShadowingEntity implements MutableEntity {
     assertAttributePresent(name);
     resolvedCache.put(name, value);
     inner.setAttributeValue(name, value);
+  }
+
+  @Override
+  public void setAttributeValue(int index, EngineValue value) {
+    // Find the attribute name for this index
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
+
+    String attributeName = null;
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      if (entry.getValue() == index) {
+        attributeName = entry.getKey();
+        break;
+      }
+    }
+
+    if (attributeName == null) {
+      String message = String.format(
+          "Attribute index %d not found for entity %s",
+          index, inner.getName());
+      throw new IndexOutOfBoundsException(message);
+    }
+
+    // Use existing string-based logic to maintain resolvedCache
+    setAttributeValue(attributeName, value);
   }
 
   /**
@@ -241,6 +294,18 @@ public class ShadowingEntity implements MutableEntity {
    */
   public boolean hasAttribute(String name) {
     return scope.has(name);
+  }
+
+  @Override
+  public Optional<Integer> getAttributeIndex(String name) {
+    // Delegate to inner entity
+    return inner.getAttributeIndex(name);
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    // Delegate to inner entity (returns shared immutable map)
+    return inner.getAttributeNameToIndex();
   }
 
   /**
