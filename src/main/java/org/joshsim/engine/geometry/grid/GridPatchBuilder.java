@@ -73,7 +73,8 @@ public class GridPatchBuilder implements PatchBuilder {
       numCellsY = maxY.subtract(minY).divide(cellWidth, RoundingMode.CEILING).longValue();
     }
 
-    List<MutableEntity> patches = new ArrayList<>();
+    int totalPatches = Math.multiplyExact((int) numCellsX, (int) numCellsY);
+    List<MutableEntity> patches = new ArrayList<>(totalPatches);
     BigDecimal halfWidth = cellWidth.divide(CompatibilityLayerKeeper.get().getTwo());
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
