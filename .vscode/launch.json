@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug joshsim-fat.jar",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "invasive_grass_central_utah_local.josh",
+        "Main",
+        "--replicates=1"
+      ],
+      "cwd": "${workspaceFolder}/test_esiil/code"
+    }
+  ]
+}
