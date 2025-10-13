@@ -181,6 +181,17 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
+    // Construct cache key from operands using deterministic string representation
+    // Use "(*)" as separator to avoid ambiguity with unit syntax
+    String cacheKey = this.toString() + " (*) " + other.toString();
+
+    // Check cache first for O(1) lookup
+    Units cached = UNITS_CACHE.get(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    // Cache miss: perform multiplication as before
     Map<String, Long> newNumeratorUnits = new TreeMap<>(numeratorUnits);
     Map<String, Long> newDenominatorUnits = new TreeMap<>(denominatorUnits);
 
@@ -200,7 +211,12 @@ public class Units {
       newDenominatorUnits.put(units, newCount);
     }
 
-    return Units.of(newNumeratorUnits, newDenominatorUnits);
+    Units result = Units.of(newNumeratorUnits, newDenominatorUnits);
+
+    // Cache the result for future lookups
+    UNITS_CACHE.put(cacheKey, result);
+
+    return result;
   }
 
   /**
@@ -210,7 +226,23 @@ public class Units {
    * @return a new Units instance representing the division of the current and other units.
    */
   public Units divide(Units other) {
-    return multiply(other.invert());
+    // Construct cache key from operands using deterministic string representation
+    // Use "(/)" as separator to avoid ambiguity with unit syntax
+    String cacheKey = this.toString() + " (/) " + other.toString();
+
+    // Check cache first for O(1) lookup
+    Units cached = UNITS_CACHE.get(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    // Cache miss: perform division via multiply(invert()) as before
+    Units result = multiply(other.invert());
+
+    // Cache the result for future lookups
+    UNITS_CACHE.put(cacheKey, result);
+
+    return result;
   }
 
   /**

@@ -329,4 +329,41 @@ class UnitsTest {
     // Should return same instance due to double caching strategy
     assertTrue(units1 == units2, "Cache should work with canonical form");
   }
+
+  @Test
+  void testMultiplyCacheReturnsIdenticalInstance() {
+    // Test that multiply() caches results and returns same instance on repeated calls
+    Units meters = Units.of("meters");
+    Units seconds = Units.of("seconds");
+
+    Units result1 = meters.multiply(seconds);
+    Units result2 = meters.multiply(seconds);
+
+    // Verify reference equality (same object instance)
+    assertTrue(result1 == result2, "Multiply cache should return same instance");
+
+    // Test with same units
+    Units metersSquared1 = meters.multiply(meters);
+    Units metersSquared2 = meters.multiply(meters);
+    assertTrue(metersSquared1 == metersSquared2, "Multiply cache should work for same units");
+  }
+
+  @Test
+  void testDivideCacheReturnsIdenticalInstance() {
+    // Test that divide() caches results and returns same instance on repeated calls
+    Units kg = Units.of("kg");
+    Units hectares = Units.of("hectares");
+
+    Units result1 = kg.divide(hectares);
+    Units result2 = kg.divide(hectares);
+
+    // Verify reference equality (same object instance)
+    assertTrue(result1 == result2, "Divide cache should return same instance");
+
+    // Test correctness is preserved
+    assertEquals(1, result1.getNumeratorUnits().size());
+    assertTrue(result1.getNumeratorUnits().containsKey("kg"));
+    assertEquals(1, result1.getDenominatorUnits().size());
+    assertTrue(result1.getDenominatorUnits().containsKey("hectares"));
+  }
 }
