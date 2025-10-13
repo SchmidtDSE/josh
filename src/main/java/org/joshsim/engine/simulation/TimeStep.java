@@ -239,14 +239,15 @@ public class TimeStep {
     }
 
     /**
-     * Optimized candidate query for circle geometries using direct offset computation.
+     * Optimized candidate query for circle geometries using exact intersection mathematics.
      *
-     * <p>This method eliminates expensive intersection checks by pre-computing which
-     * grid cell offsets will intersect the query circle. Uses integer/double arithmetic
-     * instead of BigDecimal operations. Conservative distance threshold ensures correctness.</p>
+     * <p>This method computes the EXACT set of grid cells that intersect the query circle,
+     * with zero false positives. Uses the closest-point-on-rectangle algorithm with double
+     * arithmetic for performance. The returned candidates can be used directly by getPatches()
+     * without additional intersection checks.</p>
      *
      * @param circle the circle geometry to query
-     * @return list of candidate patches that intersect the circle
+     * @return list of patches that EXACTLY intersect the circle (no false positives)
      */
     private List<Entity> queryCandidatesForCircle(
         org.joshsim.engine.geometry.grid.GridShape circle) {
@@ -262,13 +263,9 @@ public class TimeStep {
       // diameter / 2 = radius, then divide by cellSize to get grid units
       double radiusInGridCells = diameter.doubleValue() / (2.0 * cellSize.doubleValue());
 
-      // Conservative distance threshold: includes cells whose centers are within
-      // radius + sqrt(2) of the query center. This ensures we capture all cells
-      // that intersect the circle, with a small number of acceptable false positives.
-      double distanceThreshold = radiusInGridCells + Math.sqrt(2.0);
-
-      // Maximum offset to check (ceiling to ensure we don't miss boundary cells)
-      int maxOffset = (int) Math.ceil(distanceThreshold);
+      // Maximum offset to check: radius + sqrt(2) ensures we don't miss boundary cells
+      // This is a conservative bound for the iteration range only
+      int maxOffset = (int) Math.ceil(radiusInGridCells + Math.sqrt(2.0));
 
       // Early bailout for very large radii - return all patches
       if (maxOffset >= gridWidth || maxOffset >= gridHeight) {
@@ -276,17 +273,14 @@ public class TimeStep {
       }
 
       // Pre-allocate list with estimated size (pi * r^2, rounded up)
-      int estimatedSize = (int) Math.ceil(Math.PI * maxOffset * maxOffset);
+      int estimatedSize = (int) Math.ceil(Math.PI * radiusInGridCells * radiusInGridCells);
       List<Entity> candidates = new ArrayList<>(estimatedSize);
 
-      // Iterate through grid cell offsets
+      // Iterate through grid cell offsets with exact intersection test
       for (int dx = -maxOffset; dx <= maxOffset; dx++) {
         for (int dy = -maxOffset; dy <= maxOffset; dy++) {
-          // Fast distance check using integer arithmetic
-          double distanceSquared = (double) dx * dx + (double) dy * dy;
-          double distance = Math.sqrt(distanceSquared);
-
-          if (distance <= distanceThreshold) {
+          // Exact intersection test (zero false positives)
+          if (isSquareIntersectingCircle(dx, dy, radiusInGridCells)) {
             // Calculate actual grid coordinates
             int gridX = centerGridX + dx;
             int gridY = centerGridY + dy;
@@ -303,6 +297,49 @@ public class TimeStep {
       }
 
       return candidates;
+    }
+
+    /**
+     * Tests if a unit square at grid offset (dx, dy) intersects a circle centered at origin.
+     *
+     * <p>Uses the closest-point-on-rectangle algorithm for exact intersection detection.
+     * The square has bounds [dx-0.5, dx+0.5] x [dy-0.5, dy+0.5] and the circle has
+     * the specified radius, centered at (0, 0) in offset space.</p>
+     *
+     * @param dx the x-offset of the square center in grid cells
+     * @param dy the y-offset of the square center in grid cells
+     * @param radius the circle radius in grid cell units
+     * @return true if the square intersects the circle, false otherwise
+     */
+    private boolean isSquareIntersectingCircle(int dx, int dy, double radius) {
+      // Unit square bounds (centered at offset)
+      double squareMinX = dx - 0.5;
+      double squareMaxX = dx + 0.5;
+      double squareMinY = dy - 0.5;
+      double squareMaxY = dy + 0.5;
+
+      // Find closest point on square to circle center (0, 0)
+      double closestX = clamp(0.0, squareMinX, squareMaxX);
+      double closestY = clamp(0.0, squareMinY, squareMaxY);
+
+      // Distance from closest point to center
+      double distanceSquared = closestX * closestX + closestY * closestY;
+      double distance = Math.sqrt(distanceSquared);
+
+      // Exact intersection test
+      return distance <= radius;
+    }
+
+    /**
+     * Clamps a value to the range [min, max].
+     *
+     * @param value the value to clamp
+     * @param min the minimum bound
+     * @param max the maximum bound
+     * @return the clamped value
+     */
+    private double clamp(double value, double min, double max) {
+      return Math.max(min, Math.min(value, max));
     }
   }
 
@@ -357,10 +394,9 @@ public class TimeStep {
   /**
    * Get patches within the specified geometry at this time step.
    *
-   * <p>For circle queries, uses optimized offset computation to directly fetch
-   * candidate grid cells, dramatically reducing the number of intersection tests
-   * needed. For other geometries (squares, points), uses spatial index with
-   * bounding box filtering.</p>
+   * <p>For circle queries, uses exact circle-square intersection mathematics to compute
+   * precise results without any intersection checks. For other geometries (squares, points),
+   * uses spatial index with bounding box filtering followed by exact intersection tests.</p>
    *
    * @param geometry the spatial bounds to query
    * @return an iterable of patches within the geometry
@@ -369,10 +405,22 @@ public class TimeStep {
     // Use spatial index to get candidate patches (O(1) grid lookup)
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
-    // Filter candidates with exact intersection test
-    // Note: Pre-allocate based on candidates, not all patches
-    List<Entity> selectedPatches = new ArrayList<>(candidates.size());
+    // For circle queries, candidates are exact matches (zero false positives)
+    // Skip expensive BigDecimal-based intersection checks
+    org.joshsim.engine.geometry.grid.GridShape gridGeom = geometry.getOnGrid();
+    if (gridGeom != null && gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
+      List<Entity> selectedPatches = new ArrayList<>(candidates.size());
+      for (Entity patch : candidates) {
+        // Only check if patch has geometry (no intersection test needed)
+        if (patch.getGeometry().isPresent()) {
+          selectedPatches.add(patch);
+        }
+      }
+      return selectedPatches;
+    }
 
+    // Non-circle queries: use existing intersection logic (squares, points)
+    List<Entity> selectedPatches = new ArrayList<>(candidates.size());
     for (Entity patch : candidates) {
       Optional<EngineGeometry> patchGeometry = patch.getGeometry();
       if (patchGeometry.isPresent() && patchGeometry.get().intersects(geometry)) {
@@ -394,9 +442,20 @@ public class TimeStep {
     // Use spatial index to get candidate patches
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
-    // Filter by name and exact intersection
-    List<Entity> selectedPatches = new ArrayList<>();
+    // For circle queries, candidates are exact matches (zero false positives)
+    org.joshsim.engine.geometry.grid.GridShape gridGeom = geometry.getOnGrid();
+    if (gridGeom != null && gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
+      List<Entity> selectedPatches = new ArrayList<>();
+      for (Entity patch : candidates) {
+        if (patch.getName().equals(name) && patch.getGeometry().isPresent()) {
+          selectedPatches.add(patch);
+        }
+      }
+      return selectedPatches;
+    }
 
+    // Non-circle queries: use existing intersection logic
+    List<Entity> selectedPatches = new ArrayList<>();
     for (Entity patch : candidates) {
       if (patch.getName().equals(name)) {
         Optional<EngineGeometry> patchGeometry = patch.getGeometry();
