@@ -24,7 +24,8 @@
       "Bash(time java:*)",
       "Bash(git stash:*)",
       "Bash(jfr print:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(jfr summary:*)"
     ],
     "deny": [],
     "ask": []
