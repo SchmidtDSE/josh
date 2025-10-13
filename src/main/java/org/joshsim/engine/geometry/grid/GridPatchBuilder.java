@@ -28,6 +28,30 @@ public class GridPatchBuilder implements PatchBuilder {
   // Required for WASM build
   private static final BigDecimal ONE_THRESHOLD = new BigDecimal("0.00001");
 
+  /**
+   * Size of the coordinate cache for reducing BigDecimal allocations.
+   *
+   * <p>This cache covers coordinate values from 0 to COORD_CACHE_SIZE-1, which includes
+   * typical grid dimensions up to 10,000x10,000 cells. Values beyond this range fall back
+   * to on-demand BigDecimal creation.</p>
+   */
+  private static final int COORD_CACHE_SIZE = 10000;
+
+  /**
+   * Static cache of BigDecimal coordinate values.
+   *
+   * <p>Pre-allocated BigDecimal objects for integer coordinates 0 through COORD_CACHE_SIZE-1.
+   * This eliminates millions of BigDecimal allocations during grid building. The cache is
+   * read-only after static initialization, making it thread-safe.</p>
+   */
+  private static final BigDecimal[] COORD_CACHE = new BigDecimal[COORD_CACHE_SIZE];
+
+  static {
+    for (int i = 0; i < COORD_CACHE_SIZE; i++) {
+      COORD_CACHE[i] = new BigDecimal(i);
+    }
+  }
+
   private final GridCrsDefinition gridCrsDefinition;
   private final EntityPrototype prototype;
 
@@ -78,8 +102,10 @@ public class GridPatchBuilder implements PatchBuilder {
     BigDecimal halfWidth = cellWidth.divide(CompatibilityLayerKeeper.get().getTwo());
     for (long x = 0; x < numCellsX; x++) {
       for (long y = 0; y < numCellsY; y++) {
-        BigDecimal offsetX = cellWidth.multiply(new BigDecimal(x));
-        BigDecimal offsetY = cellWidth.multiply(new BigDecimal(y));
+        BigDecimal bdX = (x < COORD_CACHE_SIZE) ? COORD_CACHE[(int) x] : new BigDecimal(x);
+        BigDecimal bdY = (y < COORD_CACHE_SIZE) ? COORD_CACHE[(int) y] : new BigDecimal(y);
+        BigDecimal offsetX = cellWidth.multiply(bdX);
+        BigDecimal offsetY = cellWidth.multiply(bdY);
 
         BigDecimal centerX = minX.add(offsetX).add(halfWidth);
         BigDecimal centerY = minY.add(offsetY).add(halfWidth);
