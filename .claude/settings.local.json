@@ -37,7 +37,10 @@
       "Bash(then cp /tmp/profile_optimized_5.jfr /tmp/profile_baseline_pre_units_cache.jfr)",
       "Bash(else echo \"Baseline profile not found at /tmp/profile_optimized_5.jfr\")",
       "Bash(cut:*)",
-      "Read(///**)"
+      "Read(///**)",
+      "Bash(then cp /tmp/profile_optimized_5.jfr /tmp/profile_baseline_pre_tuple_cache.jfr)",
+      "Read(//home/ubuntu/chc_cmip6_sample/**)",
+      "Bash(run jotr_small.josh JoshuaTreeReference )"
     ],
     "deny": [],
     "ask": []

@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.grid.GridShapeType;
 
 
 /**
@@ -198,6 +199,11 @@ public class TimeStep {
         return new ArrayList<>(allPatches.values());
       }
 
+      // Optimize circle queries with direct offset computation
+      if (gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
+        return queryCandidatesForCircle(gridGeom);
+      }
+
       BigDecimal centerX = gridGeom.getCenterX();
       BigDecimal centerY = gridGeom.getCenterY();
       BigDecimal width = gridGeom.getWidth();
@@ -225,6 +231,73 @@ public class TimeStep {
           Entity patch = grid[x][y];
           if (patch != null) {
             candidates.add(patch);
+          }
+        }
+      }
+
+      return candidates;
+    }
+
+    /**
+     * Optimized candidate query for circle geometries using direct offset computation.
+     *
+     * <p>This method eliminates expensive intersection checks by pre-computing which
+     * grid cell offsets will intersect the query circle. Uses integer/double arithmetic
+     * instead of BigDecimal operations. Conservative distance threshold ensures correctness.</p>
+     *
+     * @param circle the circle geometry to query
+     * @return list of candidate patches that intersect the circle
+     */
+    private List<Entity> queryCandidatesForCircle(
+        org.joshsim.engine.geometry.grid.GridShape circle) {
+      BigDecimal centerX = circle.getCenterX();
+      BigDecimal centerY = circle.getCenterY();
+      BigDecimal diameter = circle.getWidth();
+
+      // Convert to grid coordinates
+      int centerGridX = worldToGridX(centerX);
+      int centerGridY = worldToGridY(centerY);
+
+      // Calculate radius in grid cells (using double for performance)
+      // diameter / 2 = radius, then divide by cellSize to get grid units
+      double radiusInGridCells = diameter.doubleValue() / (2.0 * cellSize.doubleValue());
+
+      // Conservative distance threshold: includes cells whose centers are within
+      // radius + sqrt(2) of the query center. This ensures we capture all cells
+      // that intersect the circle, with a small number of acceptable false positives.
+      double distanceThreshold = radiusInGridCells + Math.sqrt(2.0);
+
+      // Maximum offset to check (ceiling to ensure we don't miss boundary cells)
+      int maxOffset = (int) Math.ceil(distanceThreshold);
+
+      // Early bailout for very large radii - return all patches
+      if (maxOffset >= gridWidth || maxOffset >= gridHeight) {
+        return new ArrayList<>(allPatches.values());
+      }
+
+      // Pre-allocate list with estimated size (pi * r^2, rounded up)
+      int estimatedSize = (int) Math.ceil(Math.PI * maxOffset * maxOffset);
+      List<Entity> candidates = new ArrayList<>(estimatedSize);
+
+      // Iterate through grid cell offsets
+      for (int dx = -maxOffset; dx <= maxOffset; dx++) {
+        for (int dy = -maxOffset; dy <= maxOffset; dy++) {
+          // Fast distance check using integer arithmetic
+          double distanceSquared = (double) dx * dx + (double) dy * dy;
+          double distance = Math.sqrt(distanceSquared);
+
+          if (distance <= distanceThreshold) {
+            // Calculate actual grid coordinates
+            int gridX = centerGridX + dx;
+            int gridY = centerGridY + dy;
+
+            // Bounds check
+            if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+              Entity patch = grid[gridX][gridY];
+              if (patch != null) {
+                candidates.add(patch);
+              }
+            }
           }
         }
       }
@@ -283,6 +356,11 @@ public class TimeStep {
 
   /**
    * Get patches within the specified geometry at this time step.
+   *
+   * <p>For circle queries, uses optimized offset computation to directly fetch
+   * candidate grid cells, dramatically reducing the number of intersection tests
+   * needed. For other geometries (squares, points), uses spatial index with
+   * bounding box filtering.</p>
    *
    * @param geometry the spatial bounds to query
    * @return an iterable of patches within the geometry
