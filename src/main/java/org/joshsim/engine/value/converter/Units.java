@@ -99,8 +99,19 @@ public class Units {
    * @return Units from the given units.
    */
   public static Units of(Map<String, Long> numeratorUnits, Map<String, Long> denominatorUnits) {
+    // Create unsimplified units to get canonical string representation
     Units unsimplified = new Units(numeratorUnits, denominatorUnits);
-    return unsimplified.simplify();
+    Units simplified = unsimplified.simplify();
+
+    // Cache by canonical string form
+    String canonical = simplified.toString();
+
+    // Use putIfAbsent to atomically check and insert
+    // If another thread already cached this, use theirs; otherwise use ours
+    Units cached = UNITS_CACHE.putIfAbsent(canonical, simplified);
+
+    // putIfAbsent returns null if our value was inserted, or the existing value if already present
+    return cached != null ? cached : simplified;
   }
 
   /**
