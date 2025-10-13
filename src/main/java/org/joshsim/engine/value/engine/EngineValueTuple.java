@@ -42,6 +42,28 @@ public class EngineValueTuple {
   }
 
   /**
+   * Private constructor for creating EngineValueTuple with pre-computed tuples.
+   *
+   * <p>Used internally by reverse() to avoid redundant cache lookups when
+   * the reversed TypesTuple and UnitsTuple are already available.</p>
+   *
+   * @param first the first engine value
+   * @param second the second engine value
+   * @param types pre-computed TypesTuple
+   * @param units pre-computed UnitsTuple
+   */
+  private EngineValueTuple(
+      EngineValue first,
+      EngineValue second,
+      TypesTuple types,
+      UnitsTuple units) {
+    this.first = first;
+    this.second = second;
+    this.types = types;
+    this.units = units;
+  }
+
+  /**
    * Factory method to get or create an EngineValueTuple with caching of nested tuples.
    *
    * <p>This method caches TypesTuple and UnitsTuple instances using long-based composite keys
@@ -71,9 +93,27 @@ public class EngineValueTuple {
    * @param secondType LanguageType of second operand
    * @return cached or newly created TypesTuple
    */
-  private static TypesTuple getOrCreateTypesTuple(LanguageType firstType, LanguageType secondType) {
+  private static TypesTuple getOrCreateTypesTuple(
+      LanguageType firstType, LanguageType secondType) {
     long key = computeTypesCacheKey(firstType, secondType);
-    return TYPES_TUPLE_CACHE.computeIfAbsent(key, k -> new TypesTuple(firstType, secondType));
+    TypesTuple tuple = TYPES_TUPLE_CACHE.computeIfAbsent(
+        key, k -> new TypesTuple(firstType, secondType));
+
+    // Establish bidirectional linking for reverse() optimization
+    // Check if reversed tuple needs to be created and linked
+    if (tuple.reversed == null) {
+      long reversedKey = computeTypesCacheKey(secondType, firstType);
+      TypesTuple reversedTuple = TYPES_TUPLE_CACHE.computeIfAbsent(
+          reversedKey,
+          k -> new TypesTuple(secondType, firstType)
+      );
+
+      // Link bidirectionally (benign race: both threads compute same result)
+      tuple.reversed = reversedTuple;
+      reversedTuple.reversed = tuple;
+    }
+
+    return tuple;
   }
 
   /**
@@ -83,9 +123,27 @@ public class EngineValueTuple {
    * @param secondUnits Units of second operand
    * @return cached or newly created UnitsTuple
    */
-  private static UnitsTuple getOrCreateUnitsTuple(Units firstUnits, Units secondUnits) {
+  private static UnitsTuple getOrCreateUnitsTuple(
+      Units firstUnits, Units secondUnits) {
     long key = computUnitsCacheKey(firstUnits, secondUnits);
-    return UNITS_TUPLE_CACHE.computeIfAbsent(key, k -> new UnitsTuple(firstUnits, secondUnits));
+    UnitsTuple tuple = UNITS_TUPLE_CACHE.computeIfAbsent(
+        key, k -> new UnitsTuple(firstUnits, secondUnits));
+
+    // Establish bidirectional linking for reverse() optimization
+    // Check if reversed tuple needs to be created and linked
+    if (tuple.reversed == null) {
+      long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
+      UnitsTuple reversedTuple = UNITS_TUPLE_CACHE.computeIfAbsent(
+          reversedKey,
+          k -> new UnitsTuple(secondUnits, firstUnits)
+      );
+
+      // Link bidirectionally (benign race: both threads compute same result)
+      tuple.reversed = reversedTuple;
+      reversedTuple.reversed = tuple;
+    }
+
+    return tuple;
   }
 
   /**
@@ -124,7 +182,9 @@ public class EngineValueTuple {
    * @returns copy of this tuple with order of operands reversed.
    */
   public EngineValueTuple reverse() {
-    return EngineValueTuple.of(getSecond(), getFirst());
+    // Use pre-linked reversed tuples to avoid cache lookups
+    // The reversed TypesTuple and UnitsTuple are already cached and linked bidirectionally
+    return new EngineValueTuple(getSecond(), getFirst(), types.getReversed(), units.getReversed());
   }
 
   /**
@@ -177,6 +237,8 @@ public class EngineValueTuple {
 
     private final LanguageType first;
     private final LanguageType second;
+    private final boolean areCompatible;
+    private TypesTuple reversed;
 
     /**
      * Create a new types tuple representing a pair of types.
@@ -191,6 +253,9 @@ public class EngineValueTuple {
     public TypesTuple(LanguageType first, LanguageType second) {
       this.first = first;
       this.second = second;
+      // Pre-compute compatibility check (called 100,000+ times per simulation)
+      // Result is deterministic and immutable for this tuple instance
+      this.areCompatible = first.getRootType().equals(second.getRootType());
     }
 
     /**
@@ -217,7 +282,19 @@ public class EngineValueTuple {
      * @return true if compatiable and false otherwise.
      */
     public boolean getAreCompatible() {
-      return first.getRootType().equals(second.getRootType());
+      return areCompatible;
+    }
+
+    /**
+     * Get the reversed version of this types tuple.
+     *
+     * <p>Returns the cached reversed tuple where first and second are swapped.
+     * This is pre-computed during cache insertion to avoid repeated cache lookups.</p>
+     *
+     * @return the reversed types tuple with swapped first and second types
+     */
+    public TypesTuple getReversed() {
+      return reversed;
     }
 
     /**
@@ -261,6 +338,8 @@ public class EngineValueTuple {
 
     private final Units first;
     private final Units second;
+    private final boolean areCompatible;
+    private UnitsTuple reversed;
 
     /**
      * Create a new tuple to represent a pair of identifying names.
@@ -271,6 +350,17 @@ public class EngineValueTuple {
     public UnitsTuple(Units first, Units second) {
       this.first = first;
       this.second = second;
+      // Pre-compute compatibility check (called 100,000+ times per simulation)
+      // Result is deterministic and immutable for this tuple instance
+      if (first.equals(second)) {
+        this.areCompatible = true;
+      } else if (first.toString().isBlank()) {
+        this.areCompatible = true;
+      } else if (second.toString().isBlank()) {
+        this.areCompatible = true;
+      } else {
+        this.areCompatible = false;
+      }
     }
 
     /**
@@ -295,15 +385,19 @@ public class EngineValueTuple {
      * Determine if these two identities are compatible without furter casting.
      */
     public boolean getAreCompatible() {
-      if (getFirst().equals(getSecond())) {
-        return true;
-      } else if (getFirst().toString().isBlank()) {
-        return true;
-      } else if (getSecond().toString().isBlank()) {
-        return true;
-      } else {
-        return false;
-      }
+      return areCompatible;
+    }
+
+    /**
+     * Get the reversed version of this units tuple.
+     *
+     * <p>Returns the cached reversed tuple where first and second are swapped.
+     * This is pre-computed during cache insertion to avoid repeated cache lookups.</p>
+     *
+     * @return the reversed units tuple with swapped first and second units
+     */
+    public UnitsTuple getReversed() {
+      return reversed;
     }
 
     @Override
