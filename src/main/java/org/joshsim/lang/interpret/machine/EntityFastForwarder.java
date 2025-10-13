@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.type.EngineValue;
@@ -72,9 +73,14 @@ public class EntityFastForwarder {
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
 
-    // Force attribute resolution for all attributes
-    for (String name : entity.getAttributeNames()) {
-      Optional<EngineValue> value = entity.getAttributeValue(name);
+    // OPTIMIZATION: Use integer-based iteration instead of string iteration
+    // This avoids repeated HashMap lookups for attribute names
+    Map<String, Integer> indexMap = entity.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    // Force attribute resolution for all attributes using integer indices
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> value = entity.getAttributeValue(i);
       assert value != null;
     }
 

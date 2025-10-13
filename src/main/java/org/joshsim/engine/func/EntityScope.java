@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.func;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
@@ -41,6 +42,29 @@ public class EntityScope implements Scope {
     }
   }
 
+  /**
+   * Get an attribute value by index.
+   *
+   * <p>Fast-path method for attribute access when the index is known.
+   * Avoids string lookup overhead by directly accessing the array.</p>
+   *
+   * @param index the attribute index (from getAttributeNameToIndex())
+   * @return the attribute value
+   * @throws IllegalArgumentException if index is invalid or attribute is uninitialized
+   */
+  public EngineValue get(int index) {
+    Optional<EngineValue> attrValue = value.getAttributeValue(index);
+    if (attrValue.isEmpty()) {
+      String message = String.format(
+          "Cannot find attribute at index %d on %s. May be uninitialized or invalid.",
+          index,
+          value
+      );
+      throw new IllegalArgumentException(message);
+    }
+    return attrValue.get();
+  }
+
   @Override
   public boolean has(String name) {
     return expectedAttrs.contains(name);
@@ -50,6 +74,17 @@ public class EntityScope implements Scope {
   @Override
   public Set<String> getAttributes() {
     return expectedAttrs;
+  }
+
+  /**
+   * Get the attribute name to index mapping for this entity.
+   *
+   * <p>This map can be used to cache index lookups for repeated access.</p>
+   *
+   * @return immutable map from attribute name to array index
+   */
+  public Map<String, Integer> getAttributeNameToIndex() {
+    return value.getAttributeNameToIndex();
   }
 
 }

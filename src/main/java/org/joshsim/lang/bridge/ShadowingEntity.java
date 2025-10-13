@@ -287,6 +287,20 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
+   * Get the value of an attribute from the previous substep by index.
+   *
+   * <p>Fast-path version of getPriorAttribute that uses integer indexing.</p>
+   *
+   * @param index the attribute index
+   * @return the value of the attribute from the previous step
+   * @throws IllegalStateException if the attribute exists but has not been initialized
+   * @throws IndexOutOfBoundsException if index is invalid
+   */
+  public Optional<EngineValue> getPriorAttribute(int index) {
+    return inner.getAttributeValue(index);
+  }
+
+  /**
    * Determine if this entity has an attribute.
    *
    * @param name unique identifier of the attribute.
@@ -518,6 +532,30 @@ public class ShadowingEntity implements MutableEntity {
     Optional<EngineValue> prior = getPriorAttribute(name);
     if (prior.isPresent()) {
       setAttributeValue(name, prior.get());
+    }
+  }
+
+  /**
+   * Set the current attribute to the value from the previous substep using integer index.
+   *
+   * <p>Fast-path version that avoids string lookups.</p>
+   *
+   * @param index the attribute index
+   */
+  private void resolveAttributeFromPriorByIndex(int index) {
+    Optional<EngineValue> prior = getPriorAttribute(index);
+    if (prior.isPresent()) {
+      inner.setAttributeValue(index, prior.get());
+
+      // Also update resolvedCache - need to find the name
+      // This is the tradeoff: we pay a small cost here to keep resolvedCache working
+      Map<String, Integer> indexMap = inner.getAttributeNameToIndex();
+      for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+        if (entry.getValue() == index) {
+          resolvedCache.put(entry.getKey(), prior.get());
+          break;
+        }
+      }
     }
   }
 

@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -220,5 +221,45 @@ public class ShadowingEntityTest {
     assertTrue(result.isPresent());
 
     spatialEntity.endSubstep();
+  }
+
+  @Test
+  void testGetPriorAttributeByIndex() {
+    // Setup
+    Map<String, Integer> indexMap = Map.of("testAttr", 0);
+    when(mockSpatialEntity.getAttributeNameToIndex()).thenReturn(indexMap);
+    when(mockSpatialEntity.getAttributeValue(0)).thenReturn(Optional.of(mockEngineValue));
+
+    // Test integer-based prior attribute access
+    Optional<EngineValue> result = spatialEntity.getPriorAttribute(0);
+
+    assertTrue(result.isPresent());
+    assertEquals(mockEngineValue, result.get());
+  }
+
+  @Test
+  void testResolveFromPriorByIndexMatchesStringVersion() {
+    // This test verifies that integer and string paths produce same results
+    String attrName = "testAttr";
+    Map<String, Integer> indexMap = Map.of(attrName, 0);
+
+    when(mockSpatialEntity.getAttributeNameToIndex()).thenReturn(indexMap);
+    when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
+    when(mockSpatialEntity.getAttributeValue(0)).thenReturn(Optional.of(mockEngineValue));
+    when(mockSpatialEntity.hasNoHandlers(attrName, "test")).thenReturn(true);
+
+    // Resolve via string path
+    spatialEntity.startSubstep("test");
+    final Optional<EngineValue> resultString = spatialEntity.getAttributeValue(attrName);
+    spatialEntity.endSubstep();
+
+    // Clear resolved cache
+    spatialEntity.startSubstep("test");
+
+    // Resolve via integer path (getAttributeValue(int) will use same logic)
+    Optional<EngineValue> resultInt = spatialEntity.getAttributeValue(0);
+    spatialEntity.endSubstep();
+
+    assertEquals(resultString, resultInt);
   }
 }
