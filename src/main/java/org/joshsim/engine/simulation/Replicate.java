@@ -136,9 +136,9 @@ public class Replicate {
    * is _only_ allowed for past patches.
    *
    * @param query the query defining spatial and / or temporal bounds.
-   * @return an iterable of matching patches as immutable entities.
+   * @return a list of matching patches as immutable entities.
    */
-  public Iterable<Entity> query(Query query) {
+  public List<Entity> query(Query query) {
     if (query.getStep() == getStepNumber()) {
       throw new IllegalArgumentException("Querying current state is not allowed.");
     }

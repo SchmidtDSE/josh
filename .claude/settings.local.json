@@ -40,7 +40,18 @@
       "Read(///**)",
       "Bash(then cp /tmp/profile_optimized_5.jfr /tmp/profile_baseline_pre_tuple_cache.jfr)",
       "Read(//home/ubuntu/chc_cmip6_sample/**)",
-      "Bash(run jotr_small.josh JoshuaTreeReference )"
+      "Bash(run jotr_small.josh JoshuaTreeReference )",
+      "Bash(if [ -f /tmp/profile_baseline_pre_radial_optimize.jfr ])",
+      "Bash(then echo \"=== BASELINE (original, before all optimizations) ===\")",
+      "Bash(else echo \"Baseline not found\")",
+      "Bash(printf \"=== Total ExecutionSample Events ===\\n\")",
+      "Bash(printf:*)",
+      "Bash(printf \"AFTER (optimized_6): \")",
+      "Bash(echo:*)",
+      "Bash(/tmp/analyze_hotspots.sh:*)",
+      "Bash(/tmp/analyze_allocations.sh:*)",
+      "Bash(./run_profiler_big.sh:*)",
+      "Bash(./run_profiler.sh:*)"
     ],
     "deny": [],
     "ask": []

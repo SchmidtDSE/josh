@@ -54,6 +54,12 @@ public class ShadowingEntity implements MutableEntity {
   private final Scope scope;
   private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
+  // PERFORMANCE: Array-based caching for integer-indexed attribute access
+  // These arrays provide O(1) access without HashMap overhead (hash calculation + bucket lookup)
+  // and eliminate allocations from HashSet add/remove operations for circular dependency tracking
+  private final EngineValue[] resolvedCacheByIndex;
+  private final boolean[] resolvingByIndex;
+
   private boolean checkAssertions;
 
   /**
@@ -80,6 +86,11 @@ public class ShadowingEntity implements MutableEntity {
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
 
+    // Initialize array-based caches for O(1) integer-indexed access
+    int numAttributes = inner.getAttributeNameToIndex().size();
+    resolvedCacheByIndex = new EngineValue[numAttributes];
+    resolvingByIndex = new boolean[numAttributes];
+
     // Get the shared handler cache from the inner entity
     if (inner instanceof DirectLockMutableEntity) {
       this.commonHandlerCache = ((DirectLockMutableEntity) inner).getCommonHandlerCache();
@@ -105,6 +116,11 @@ public class ShadowingEntity implements MutableEntity {
     resolvedCache = new HashMap<>();
     resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
+
+    // Initialize array-based caches for O(1) integer-indexed access
+    int numAttributes = inner.getAttributeNameToIndex().size();
+    resolvedCacheByIndex = new EngineValue[numAttributes];
+    resolvingByIndex = new boolean[numAttributes];
 
     // Get the shared handler cache from the inner entity
     if (inner instanceof DirectLockMutableEntity) {
@@ -203,11 +219,24 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
     // Integer-based access with resolution support
-    // PERFORMANCE: We need the attribute name for cache operations, but we use integer
-    // indexing when accessing the inner entity to avoid string-based HashMap lookups.
-    // This provides the best of both worlds: correct resolution behavior with efficient access.
+    // PERFORMANCE: Uses array-based cache for O(1) access without HashMap overhead
 
-    // Try O(1) array lookup to get attribute name (needed for resolvedCache key)
+    // Bounds check - if index is negative, return empty
+    if (index < 0) {
+      return Optional.empty();
+    }
+
+    // FAST PATH: Check array-based cache first (O(1) without HashMap overhead)
+    // Note: If index >= array length (can happen in tests with mocks), we skip cache and continue
+    EngineValue cached = null;
+    if (index < resolvedCacheByIndex.length) {
+      cached = resolvedCacheByIndex[index];
+      if (cached != null) {
+        return Optional.of(cached);
+      }
+    }
+
+    // Need attribute name for hasAttribute check and handler execution
     String[] indexArray = null;
     if (inner instanceof DirectLockMutableEntity) {
       indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
@@ -237,19 +266,16 @@ public class ShadowingEntity implements MutableEntity {
       }
     }
 
-    // Check resolvedCache first
-    EngineValue cached = resolvedCache.get(attributeName);
-    if (cached != null) {
-      return Optional.of(cached);
-    }
-
     // Trigger resolution using integer-based path for efficiency
     // IMPORTANT: Must trigger resolution, not bypass it, to ensure handlers execute
     if (hasAttribute(attributeName)) {
       resolveAttributeByIndex(index, attributeName);
-      cached = resolvedCache.get(attributeName);
-      if (cached != null) {
-        return Optional.of(cached);
+      // Check array cache again after resolution (only if index is in bounds)
+      if (index < resolvedCacheByIndex.length) {
+        cached = resolvedCacheByIndex[index];
+        if (cached != null) {
+          return Optional.of(cached);
+        }
       }
     }
 
@@ -304,6 +330,11 @@ public class ShadowingEntity implements MutableEntity {
           "Attribute index %d not found for entity %s",
           index, inner.getName());
       throw new IndexOutOfBoundsException(message);
+    }
+
+    // Update both array-based cache (for fast path) and string-based cache (for compatibility)
+    if (index >= 0 && index < resolvedCacheByIndex.length) {
+      resolvedCacheByIndex[index] = value;
     }
 
     // Use existing string-based logic to maintain resolvedCache
@@ -540,21 +571,36 @@ public class ShadowingEntity implements MutableEntity {
    * the inner entity to avoid string-based HashMap lookups. The attribute name is still
    * required for cache operations and handler execution.</p>
    *
+   * <p>PERFORMANCE: Uses array-based tracking for circular dependency detection to avoid
+   * HashSet allocations from add/remove operations.</p>
+   *
    * @param index the integer index of the attribute
    * @param name the attribute name (needed for cache and handlers)
    */
   private void resolveAttributeByIndex(int index, String name) {
-    if (resolvingAttributes.contains(name)) {
+    // PERFORMANCE: Use array-based tracking instead of HashSet for O(1) access without allocations
+    if (index >= 0 && index < resolvingByIndex.length && resolvingByIndex[index]) {
       System.err.println("Encountered a loop when resolving " + name);
       System.err.println("Resolved:");
+      // For error reporting, still use HashSet to show all resolving attributes
       for (String resolving : resolvingAttributes) {
         System.err.println("\t" + resolving);
       }
       throw new RuntimeException("Encountered a loop when resolving " + name);
     }
 
+    // Mark as resolving in both array (for fast path) and HashSet (for error reporting)
+    if (index >= 0 && index < resolvingByIndex.length) {
+      resolvingByIndex[index] = true;
+    }
     resolvingAttributes.add(name);
+
     resolveAttributeUnsafeByIndex(index, name);
+
+    // Clear resolving flag in both array and HashSet
+    if (index >= 0 && index < resolvingByIndex.length) {
+      resolvingByIndex[index] = false;
+    }
     resolvingAttributes.remove(name);
   }
 
@@ -663,6 +709,8 @@ public class ShadowingEntity implements MutableEntity {
    *
    * <p>Fast-path version that avoids string lookups.</p>
    *
+   * <p>PERFORMANCE: Updates array-based cache directly for O(1) access.</p>
+   *
    * @param index the attribute index
    */
   private void resolveAttributeFromPriorByIndex(int index) {
@@ -670,7 +718,13 @@ public class ShadowingEntity implements MutableEntity {
     if (prior.isPresent()) {
       inner.setAttributeValue(index, prior.get());
 
-      // Also update resolvedCache - try O(1) array lookup to get attribute name
+      // PERFORMANCE: Update array-based cache first (O(1) without HashMap overhead)
+      if (index >= 0 && index < resolvedCacheByIndex.length) {
+        resolvedCacheByIndex[index] = prior.get();
+      }
+
+      // Also update string-based resolvedCache for compatibility
+      // Try O(1) array lookup to get attribute name
       String[] indexArray = null;
       if (inner instanceof DirectLockMutableEntity) {
         indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
@@ -694,7 +748,7 @@ public class ShadowingEntity implements MutableEntity {
         }
       }
 
-      // Update cache if attribute name found
+      // Update string-based cache if attribute name found
       if (attributeName != null) {
         resolvedCache.put(attributeName, prior.get());
       }
@@ -726,12 +780,19 @@ public class ShadowingEntity implements MutableEntity {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
     resolvedCache.clear();
+
+    // PERFORMANCE: Clear array-based cache (faster than HashMap.clear() for small-medium arrays)
+    java.util.Arrays.fill(resolvedCacheByIndex, null);
   }
 
   @Override
   public void endSubstep() {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
     resolvingAttributes.clear();
+
+    // PERFORMANCE: Clear array-based tracking (faster than HashSet.clear())
+    java.util.Arrays.fill(resolvingByIndex, false);
+
     inner.endSubstep();
   }
 

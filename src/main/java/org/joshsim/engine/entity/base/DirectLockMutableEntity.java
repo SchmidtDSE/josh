@@ -230,29 +230,26 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       }
     }
 
-    // Freeze all attribute values
-    // Build frozen attributes map for FrozenEntity
-    Map<String, EngineValue> frozenAttributes = new HashMap<>(
-        (int) (priorAttributes.length / 0.75f) + 1);
+    // Freeze all attribute values into array
+    // Create frozen attribute values array for FrozenEntity
+    EngineValue[] frozenAttributeValues = new EngineValue[priorAttributes.length];
 
-    for (Map.Entry<String, Integer> entry : attributeNameToIndex.entrySet()) {
-      String attrName = entry.getKey();
-      int index = entry.getValue();
-      if (index >= 0 && index < priorAttributes.length) {
-        EngineValue value = priorAttributes[index];
-        if (value != null) {
-          frozenAttributes.put(attrName, value.freeze());
-        }
+    for (int i = 0; i < priorAttributes.length; i++) {
+      EngineValue value = priorAttributes[i];
+      if (value != null) {
+        frozenAttributeValues[i] = value.freeze();
       }
+      // else: leave null in array (uninitialized attribute)
     }
 
     return new FrozenEntity(
         getEntityType(),
         name,
-        frozenAttributes,
+        frozenAttributeValues,
         getGeometry(),
         attributeNameToIndex,
-        indexToAttributeName
+        indexToAttributeName,
+        attributeNames
     );
   }
 

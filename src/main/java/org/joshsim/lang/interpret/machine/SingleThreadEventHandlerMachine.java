@@ -462,11 +462,15 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         centerGeometry.getCenterX(), centerGeometry.getCenterY(), distance.getAsDecimal()
     );
 
-    Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);
-    List<EngineValue> resolved = StreamSupport.stream(patches.spliterator(), false)
-        .map(EntityScope::new)
-        .map(scope -> resolver.get(scope).orElseThrow())
-        .toList();
+    List<Entity> patches = bridge.getPriorPatches(queryGeometry);
+
+    // Pre-size ArrayList with known patch count to eliminate ArrayList.grow() overhead
+    List<EngineValue> resolved = new ArrayList<>(patches.size());
+    for (Entity patch : patches) {
+      EntityScope scope = new EntityScope(patch);
+      EngineValue value = resolver.get(scope).orElseThrow();
+      resolved.add(value);
+    }
 
     EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
         resolved,

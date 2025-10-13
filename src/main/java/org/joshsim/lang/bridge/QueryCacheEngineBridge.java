@@ -91,7 +91,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   }
 
   @Override
-  public Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento) {
+  public List<Entity> getPriorPatches(GeometryMomento geometryMomento) {
     if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
       // Cache hit: retrieve patches by keys using direct iteration
       List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
@@ -104,7 +104,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
       return result;
     } else {
       // Cache miss: query patches and extract keys using direct iteration
-      Iterable<Entity> entities = getPriorPatches(geometryMomento.build());
+      List<Entity> entities = getPriorPatches(geometryMomento.build());
 
       List<GeoKey> geoKeys = new ArrayList<>();
       for (Entity entity : entities) {

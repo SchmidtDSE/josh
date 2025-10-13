@@ -16,10 +16,11 @@ public class FrozenEntity implements Entity {
 
   private final EntityType type;
   private final String name;
-  private final Map<String, EngineValue> attributes;
+  private final EngineValue[] attributeValues;
   private final Optional<EngineGeometry> geometry;
   private final Map<String, Integer> attributeNameToIndex;
   private final String[] indexToAttributeName;
+  private final Set<String> attributeNames;
 
 
   /**
@@ -27,17 +28,18 @@ public class FrozenEntity implements Entity {
    *
    * @param type The type of the entity to be snapshot.
    * @param name The name of the entity to be snapshot.
-   * @param attributes A map of attributes related to the entity to be snapshot.
+   * @param attributeValues Array of attribute values indexed by attributeNameToIndex.
    * @param geometry An optional geometry of the entity to be snapshot.
    * @param attributeNameToIndex The shared index map for this entity type.
    * @param indexToAttributeName The shared index-to-name array for this entity type.
+   * @param sharedAttributeNames The shared set of all defined attribute names for this entity type.
    */
-  public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes,
+  public FrozenEntity(EntityType type, String name, EngineValue[] attributeValues,
       Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex,
-      String[] indexToAttributeName) {
+      String[] indexToAttributeName, Set<String> sharedAttributeNames) {
     this.type = type;
     this.name = name;
-    this.attributes = attributes;
+    this.attributeValues = attributeValues != null ? attributeValues : new EngineValue[0];
     this.geometry = geometry;
     this.attributeNameToIndex = attributeNameToIndex != null
         ? attributeNameToIndex
@@ -45,6 +47,9 @@ public class FrozenEntity implements Entity {
     this.indexToAttributeName = indexToAttributeName != null
         ? indexToAttributeName
         : new String[0];
+    this.attributeNames = sharedAttributeNames != null
+        ? sharedAttributeNames
+        : Collections.emptySet();
   }
 
   @Override
@@ -64,32 +69,29 @@ public class FrozenEntity implements Entity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    return Optional.ofNullable(attributes.get(name));
+    // Look up index for this attribute name
+    Integer index = attributeNameToIndex.get(name);
+    if (index == null || index < 0 || index >= attributeValues.length) {
+      return Optional.empty();
+    }
+
+    // Use index to access array
+    return Optional.ofNullable(attributeValues[index]);
   }
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // FrozenEntity uses Map storage, so we need to find the name for this index
-    // Use O(1) array lookup instead of O(n) HashMap iteration
-
-    // Bounds check
-    if (index < 0 || index >= indexToAttributeName.length) {
+    // Direct O(1) array access using index
+    if (index < 0 || index >= attributeValues.length) {
       return Optional.empty();
     }
 
-    // O(1) array lookup to get attribute name
-    String attributeName = indexToAttributeName[index];
-    if (attributeName == null) {
-      return Optional.empty();
-    }
-
-    // Look up value by name
-    return Optional.ofNullable(attributes.get(attributeName));
+    return Optional.ofNullable(attributeValues[index]);
   }
 
   @Override
   public Set<String> getAttributeNames() {
-    return attributes.keySet();
+    return attributeNames;
   }
 
   @Override

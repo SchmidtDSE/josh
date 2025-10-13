@@ -399,9 +399,9 @@ public class TimeStep {
    * uses spatial index with bounding box filtering followed by exact intersection tests.</p>
    *
    * @param geometry the spatial bounds to query
-   * @return an iterable of patches within the geometry
+   * @return a list of patches within the geometry
    */
-  public Iterable<Entity> getPatches(EngineGeometry geometry) {
+  public List<Entity> getPatches(EngineGeometry geometry) {
     // Use spatial index to get candidate patches (O(1) grid lookup)
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
@@ -436,9 +436,9 @@ public class TimeStep {
    *
    * @param geometry the spatial bounds to query
    * @param name the patch name to filter by
-   * @return an iterable of matching patches
+   * @return a list of matching patches
    */
-  public Iterable<Entity> getPatches(EngineGeometry geometry, String name) {
+  public List<Entity> getPatches(EngineGeometry geometry, String name) {
     // Use spatial index to get candidate patches
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
@@ -471,10 +471,10 @@ public class TimeStep {
   /**
    * Get all patches at this time step.
    *
-   * @return an iterable of all patches
+   * @return a list of all patches
    */
-  public Iterable<Entity> getPatches() {
-    return patches.values();
+  public List<Entity> getPatches() {
+    return new ArrayList<>(patches.values());
   }
 
   /**
