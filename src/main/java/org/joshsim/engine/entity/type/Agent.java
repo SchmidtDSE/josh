@@ -36,6 +36,8 @@ public class Agent extends MemberSpatialEntity {
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
    *     all instances of this entity type.
+   * @param sharedAttributeNames Precomputed immutable set of attribute names, shared
+   *     across all instances of this entity type.
    */
   public Agent(
       Entity parent,
@@ -44,10 +46,11 @@ public class Agent extends MemberSpatialEntity {
       EngineValue[] attributes,
       Map<String, Integer> attributeNameToIndex,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
-      Map<String, List<EventHandlerGroup>> commonHandlerCache
+      Map<String, List<EventHandlerGroup>> commonHandlerCache,
+      Set<String> sharedAttributeNames
   ) {
     super(parent, name, eventHandlerGroups, attributes, attributeNameToIndex,
-        attributesWithoutHandlersBySubstep, commonHandlerCache);
+        attributesWithoutHandlersBySubstep, commonHandlerCache, sharedAttributeNames);
   }
 
   @Override

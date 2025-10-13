@@ -54,7 +54,8 @@ public class PatchTest {
         toAttributesArray(eventHandlerGroups, attributes),
         toAttributeIndex(eventHandlerGroups, attributes),
         Collections.emptyMap(),
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        Collections.emptySet());
   }
 
   /**
@@ -136,7 +137,8 @@ public class PatchTest {
   @Test
   public void testConstructorWithNullMaps() {
     Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null,
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        Collections.emptySet());
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());

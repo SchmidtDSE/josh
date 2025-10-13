@@ -721,7 +721,7 @@ public class ExternalGeoMapperTest {
       return new Patch(
           geometry, patchId, new HashMap<>(), new org.joshsim.engine.value.type.EngineValue[0],
           java.util.Collections.emptyMap(), java.util.Collections.emptyMap(),
-          java.util.Collections.emptyMap());
+          java.util.Collections.emptyMap(), java.util.Collections.emptySet());
     }
 
     @Override

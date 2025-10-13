@@ -39,7 +39,7 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
     super(name, eventHandlerGroups,
         attributesArrayFromMap(attributes),
         attributeIndexFromMap(attributes),
-        Collections.emptyMap(), Collections.emptyMap());
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
   }
 
   /**

@@ -54,6 +54,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
    *     all instances of this entity type.
+   * @param sharedAttributeNames Precomputed immutable set of attribute names, shared
+   *     across all instances of this entity type. Eliminates per-instance HashSet
+   *     allocation and handler iteration.
    */
   public DirectLockMutableEntity(
       String name,
@@ -61,7 +64,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       EngineValue[] attributes,
       Map<String, Integer> attributeNameToIndex,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
-      Map<String, List<EventHandlerGroup>> commonHandlerCache
+      Map<String, List<EventHandlerGroup>> commonHandlerCache,
+      Set<String> sharedAttributeNames
   ) {
     this.name = name;
 
@@ -92,7 +96,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     priorAttributes = new EngineValue[this.attributes.length];
     onlyOnPrior = new HashSet<>();
 
-    attributeNames = computeAttributeNames();
+    attributeNames = sharedAttributeNames;
     this.attributesWithoutHandlersBySubstep = attributesWithoutHandlersBySubstep;
     this.commonHandlerCache = commonHandlerCache;
   }
@@ -280,25 +284,6 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   public Optional<String> getSubstep() {
     return substep;
-  }
-
-  /**
-   * Determine unique attribute names.
-   *
-   * <p>Iterates through all event handler groups and their handlers to collect unique
-   * attribute names. Uses direct iteration instead of streams for better performance
-   * in this hot path (called during every entity construction).</p>
-   *
-   * @return Set of unique attribute names.
-   */
-  private Set<String> computeAttributeNames() {
-    Set<String> attributeNames = new HashSet<>();
-    for (EventHandlerGroup group : getEventHandlers()) {
-      for (EventHandler handler : group.getEventHandlers()) {
-        attributeNames.add(handler.getAttributeName());
-      }
-    }
-    return attributeNames;
   }
 
   /**

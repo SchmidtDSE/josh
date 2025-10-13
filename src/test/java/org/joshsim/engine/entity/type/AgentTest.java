@@ -70,7 +70,8 @@ public class AgentTest {
         toAttributesArray(eventHandlers, attributes),
         toAttributeIndex(eventHandlers, attributes),
         Collections.emptyMap(),
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        Collections.emptySet());
   }
 
   /**
@@ -224,7 +225,8 @@ public class AgentTest {
   @Test
   public void testNullMapsInConstructor() {
     Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null,
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        Collections.emptySet());
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
     assertFalse(groups.iterator().hasNext(),

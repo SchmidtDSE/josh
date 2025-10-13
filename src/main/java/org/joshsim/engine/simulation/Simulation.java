@@ -35,6 +35,8 @@ public class Simulation extends DirectLockMutableEntity {
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
    *     all instances of this entity type.
+   * @param sharedAttributeNames Precomputed immutable set of attribute names, shared
+   *     across all instances of this entity type.
    */
   public Simulation(
       String name,
@@ -42,10 +44,11 @@ public class Simulation extends DirectLockMutableEntity {
       EngineValue[] attributes,
       Map<String, Integer> attributeNameToIndex,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
-      Map<String, List<EventHandlerGroup>> commonHandlerCache
+      Map<String, List<EventHandlerGroup>> commonHandlerCache,
+      Set<String> sharedAttributeNames
   ) {
     super(name, eventHandlerGroups, attributes, attributeNameToIndex,
-        attributesWithoutHandlersBySubstep, commonHandlerCache);
+        attributesWithoutHandlersBySubstep, commonHandlerCache, sharedAttributeNames);
   }
 
   @Override

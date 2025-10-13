@@ -258,7 +258,8 @@ public class DirectLockMutableEntityFastPathTest {
           attributesArrayFromMap(handlers, attributes),
           attributeIndexFromMap(handlers, attributes),
           computeOptimizationMap(name, handlers, attributes),
-          Collections.emptyMap());
+          Collections.emptyMap(),
+          Collections.emptySet());
     }
 
     private static EngineValue[] attributesArrayFromMap(

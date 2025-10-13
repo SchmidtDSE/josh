@@ -39,6 +39,7 @@ public class EntityBuilder {
   private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
   private Map<String, Integer> attributeNameToIndex;
+  private Set<String> sharedAttributeNames;
 
   /**
    * Create an empty builder.
@@ -50,6 +51,7 @@ public class EntityBuilder {
     attributesWithoutHandlersBySubstep = null; // Computed lazily
     immutableEventHandlerGroups = null; // Computed lazily
     commonHandlerCache = null; // Computed lazily
+    sharedAttributeNames = null; // Computed lazily
   }
 
   /**
@@ -115,6 +117,7 @@ public class EntityBuilder {
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
     attributeNameToIndex = null; // Invalidate cache
+    sharedAttributeNames = null; // Invalidate cache
   }
 
   /**
@@ -129,6 +132,7 @@ public class EntityBuilder {
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
+    sharedAttributeNames = null; // Invalidate cache
     return this;
   }
 
@@ -306,6 +310,46 @@ public class EntityBuilder {
   }
 
   /**
+   * Compute the shared set of attribute names for this entity type.
+   *
+   * <p>This method extracts all unique attribute names from event handlers defined
+   * for this entity type. The computation is done ONCE per entity type in the builder
+   * and the resulting immutable set is shared across all entity instances of that type.</p>
+   *
+   * <p>This eliminates the need for per-instance HashSet allocations and handler
+   * iteration during entity construction, which was identified as the #1 CPU and
+   * memory hotspot in profiling. For simulations with 1M entities, this optimization
+   * replaces 1M HashSet allocations with a single shared Set.</p>
+   *
+   * <p>The returned set is immutable and thread-safe for concurrent reads, making
+   * it safe to share across entity instances that may be accessed in parallel
+   * contexts during simulation execution.</p>
+   *
+   * @return Immutable set of attribute names, shared across all instances of this entity type
+   */
+  private Set<String> computeAttributeNames() {
+    // Use cached value if available
+    if (sharedAttributeNames != null) {
+      return sharedAttributeNames;
+    }
+
+    // Collect all unique attribute names from handlers
+    Set<String> attributeNames = new HashSet<>();
+    for (EventHandlerGroup group : eventHandlerGroups.values()) {
+      if (group == null) {
+        continue;
+      }
+      for (EventHandler handler : group.getEventHandlers()) {
+        attributeNames.add(handler.getAttributeName());
+      }
+    }
+
+    // Cache immutable set for reuse
+    sharedAttributeNames = Collections.unmodifiableSet(attributeNames);
+    return sharedAttributeNames;
+  }
+
+  /**
    * Compute the shared attribute name to index map for array-based storage.
    *
    * <p>This method creates a sorted mapping from attribute names to array indices,
@@ -389,7 +433,8 @@ public class EntityBuilder {
         createAttributesArray(),
         computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache());
+        computeCommonHandlerCache(),
+        computeAttributeNames());
     return agent;
   }
 
@@ -407,7 +452,8 @@ public class EntityBuilder {
         createAttributesArray(),
         computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache());
+        computeCommonHandlerCache(),
+        computeAttributeNames());
     return disturbance;
   }
 
@@ -425,7 +471,8 @@ public class EntityBuilder {
         createAttributesArray(),
         computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache());
+        computeCommonHandlerCache(),
+        computeAttributeNames());
     return patch;
   }
 
@@ -441,7 +488,8 @@ public class EntityBuilder {
         createAttributesArray(),
         computeAttributeNameToIndex(),
         computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache());
+        computeCommonHandlerCache(),
+        computeAttributeNames());
     return simulation;
   }
 
