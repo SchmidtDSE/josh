@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 
@@ -20,10 +21,37 @@ import org.joshsim.compat.CompatibleStringJoiner;
  */
 public class Units {
 
-  public static final Units EMPTY = new Units("");
-  public static final Units COUNT = new Units("count");
-  public static final Units METERS = new Units("meters");
-  public static final Units DEGREES = new Units("degrees");
+  // Cache for parsed units to avoid redundant parsing and object creation.
+  // ConcurrentHashMap provides thread-safe access without synchronization overhead.
+  private static final Map<String, Units> UNITS_CACHE = new ConcurrentHashMap<>();
+
+  public static final Units EMPTY;
+  public static final Units COUNT;
+  public static final Units METERS;
+  public static final Units DEGREES;
+
+  // Static initializer to pre-populate cache with commonly used constants.
+  // This ensures zero-allocation lookups for the most frequent cases.
+  static {
+    // Create and cache the constants, ensuring they go through simplify()
+    EMPTY = createAndCacheConstant("");
+    // COUNT simplifies to empty string, so it's the same as EMPTY
+    COUNT = EMPTY;
+    UNITS_CACHE.put("count", EMPTY);
+    METERS = createAndCacheConstant("meters");
+    DEGREES = createAndCacheConstant("degrees");
+  }
+
+  private static Units createAndCacheConstant(String description) {
+    Units units = new Units(description).simplify();
+    UNITS_CACHE.put(description, units);
+    // Also cache under canonical form if different from input
+    String canonical = units.toString();
+    if (!canonical.equals(description)) {
+      UNITS_CACHE.put(canonical, units);
+    }
+    return units;
+  }
 
   private final String description;
   private final Map<String, Long> numeratorUnits;
@@ -38,8 +66,27 @@ public class Units {
    * @throws IllegalArgumentException if more than one denominator is specified.
    */
   public static Units of(String description) {
+    // Check cache first for O(1) lookup
+    Units cached = UNITS_CACHE.get(description);
+    if (cached != null) {
+      return cached;
+    }
+
+    // Cache miss: parse and simplify as before
     Units unsimplified = new Units(description);
-    return unsimplified.simplify();
+    Units simplified = unsimplified.simplify();
+
+    // Cache the simplified result under the input description
+    UNITS_CACHE.put(description, simplified);
+
+    // Also cache under canonical form if different from input
+    // This handles cases like "m * m" vs "m^2" representation
+    String canonical = simplified.toString();
+    if (!canonical.equals(description)) {
+      UNITS_CACHE.put(canonical, simplified);
+    }
+
+    return simplified;
   }
 
   /**

@@ -286,4 +286,47 @@ class UnitsTest {
     assertTrue(result.contains("kilogram"));
     assertTrue(result.contains("*"));
   }
+
+  @Test
+  void testCacheReturnsIdenticalInstance() {
+    // Test that repeated calls to Units.of() with same string return same instance
+    Units units1 = Units.of("meters");
+    Units units2 = Units.of("meters");
+
+    // Verify reference equality (same object instance)
+    assertTrue(units1 == units2, "Cache should return same instance for same string");
+
+    // Test with compound units
+    Units compound1 = Units.of("meters * meters");
+    Units compound2 = Units.of("meters * meters");
+    assertTrue(compound1 == compound2, "Cache should return same instance for compound units");
+
+    // Test caching for empty and count strings
+    Units empty1 = Units.of("");
+    Units empty2 = Units.of("");
+    assertTrue(empty1 == empty2, "Cache should return same instance for empty string");
+
+    Units count1 = Units.of("count");
+    Units count2 = Units.of("count");
+    assertTrue(count1 == count2, "Cache should return same instance for count");
+
+    // COUNT and EMPTY are both semantically empty (count is filtered out), so they're the same
+    assertTrue(Units.COUNT == Units.EMPTY, "COUNT should be same instance as EMPTY");
+  }
+
+  @Test
+  void testCacheWithCanonicalForm() {
+    // Test that canonical form is also cached
+    // First call with non-canonical form
+    Units units1 = Units.of("m * m");
+
+    // Get the canonical string representation
+    String canonical = units1.toString();
+
+    // Call with canonical form
+    Units units2 = Units.of(canonical);
+
+    // Should return same instance due to double caching strategy
+    assertTrue(units1 == units2, "Cache should work with canonical form");
+  }
 }

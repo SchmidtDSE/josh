@@ -27,7 +27,12 @@
       "Bash(tee:*)",
       "Bash(jfr summary:*)",
       "Bash(git log:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(if [ -f /tmp/profile_optimized_5.jfr ])",
+      "Bash(then echo \"Profile file exists\")",
+      "Bash(else echo \"Profile file not found\")",
+      "Bash(fi)",
+      "Bash(javac:*)"
     ],
     "deny": [],
     "ask": []
