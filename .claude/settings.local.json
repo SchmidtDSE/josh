@@ -25,7 +25,9 @@
       "Bash(git stash:*)",
       "Bash(jfr print:*)",
       "Bash(tee:*)",
-      "Bash(jfr summary:*)"
+      "Bash(jfr summary:*)",
+      "Bash(git log:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

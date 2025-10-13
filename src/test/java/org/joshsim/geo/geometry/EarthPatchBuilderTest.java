@@ -287,7 +287,7 @@ class EarthPatchBuilderTest {
       return new Patch(
           parent, "test", new HashMap<>(), new org.joshsim.engine.value.type.EngineValue[0],
           java.util.Collections.emptyMap(), java.util.Collections.emptyMap(),
-          java.util.Collections.emptyMap());
+          java.util.Collections.emptyMap(), java.util.Collections.emptySet());
     }
 
     @Override
