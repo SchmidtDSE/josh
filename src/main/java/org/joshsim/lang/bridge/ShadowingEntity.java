@@ -202,8 +202,10 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Integer-based access needs to interact with resolvedCache correctly
-    // We need to find the attribute name for this index to check resolvedCache
+    // Integer-based access with resolution support
+    // PERFORMANCE: We need the attribute name for cache operations, but we use integer
+    // indexing when accessing the inner entity to avoid string-based HashMap lookups.
+    // This provides the best of both worlds: correct resolution behavior with efficient access.
 
     // Bounds check
     Map<String, Integer> indexMap = getAttributeNameToIndex();
@@ -211,7 +213,7 @@ public class ShadowingEntity implements MutableEntity {
       return Optional.empty();
     }
 
-    // Find the attribute name with this index
+    // Find the attribute name for this index (needed for resolvedCache key)
     String attributeName = null;
     for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
       if (entry.getValue() == index) {
@@ -224,9 +226,25 @@ public class ShadowingEntity implements MutableEntity {
       return Optional.empty();
     }
 
-    // Now use the existing string-based logic
-    // This ensures resolvedCache and attribute resolution work correctly
-    return getAttributeValue(attributeName);
+    // Check resolvedCache first
+    EngineValue cached = resolvedCache.get(attributeName);
+    if (cached != null) {
+      return Optional.of(cached);
+    }
+
+    // Trigger resolution using integer-based path for efficiency
+    // IMPORTANT: Must trigger resolution, not bypass it, to ensure handlers execute
+    if (hasAttribute(attributeName)) {
+      resolveAttributeByIndex(index, attributeName);
+      cached = resolvedCache.get(attributeName);
+      if (cached != null) {
+        return Optional.of(cached);
+      }
+    }
+
+    // Fallback: retrieve from inner entity using integer access (efficient)
+    // PERFORMANCE: Using integer indexing avoids string-based HashMap lookup in inner entity
+    return inner.getAttributeValue(index);
   }
 
   /**
@@ -487,6 +505,88 @@ public class ShadowingEntity implements MutableEntity {
       }
     } else {
       resolveAttributeFromPrior(name);
+    }
+  }
+
+  /**
+   * Attempt to resolve an attribute using integer-based access for efficiency.
+   *
+   * <p>Integer-based variant of resolveAttribute that uses integer indexing when accessing
+   * the inner entity to avoid string-based HashMap lookups. The attribute name is still
+   * required for cache operations and handler execution.</p>
+   *
+   * @param index the integer index of the attribute
+   * @param name the attribute name (needed for cache and handlers)
+   */
+  private void resolveAttributeByIndex(int index, String name) {
+    if (resolvingAttributes.contains(name)) {
+      System.err.println("Encountered a loop when resolving " + name);
+      System.err.println("Resolved:");
+      for (String resolving : resolvingAttributes) {
+        System.err.println("\t" + resolving);
+      }
+      throw new RuntimeException("Encountered a loop when resolving " + name);
+    }
+
+    resolvingAttributes.add(name);
+    resolveAttributeUnsafeByIndex(index, name);
+    resolvingAttributes.remove(name);
+  }
+
+  /**
+   * Attempt to resolve an attribute by index without checking for circular dependency.
+   *
+   * <p>PERFORMANCE: Uses integer-based access to inner entity to avoid string HashMap lookups.
+   * This is critical for hot paths like EntityFastForwarder that iterate over all attributes.
+   * We do NOT fall back to string-based access as that would defeat the optimization.</p>
+   *
+   * @param index the integer index of the attribute
+   * @param name the attribute name (needed for cache and handlers)
+   */
+  private void resolveAttributeUnsafeByIndex(int index, String name) {
+    Optional<String> substep = getSubstep();
+
+    // If outside substep, use prior with integer access
+    if (substep.isEmpty()) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    // FAST PATH: If attribute has no handlers for THIS substep, use integer access
+    // PERFORMANCE: Avoids string-based HashMap lookup in inner entity
+    if (inner.hasNoHandlers(name, substep.get())) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    // SLOW PATH: Check for handlers
+    Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
+    if (!handlersMaybe.hasNext()) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    // Execute handlers (handlers require string-based access, unavoidable)
+    boolean executed = false;
+    while (handlersMaybe.hasNext()) {
+      EventHandlerGroup handlers = handlersMaybe.next();
+      boolean localExecuted = executeHandlers(handlers);
+      executed = executed || localExecuted;
+    }
+
+    // If failed to match, use prior with integer access
+    if (executed) {
+      if (checkAssertions && name.startsWith("assert.")) {
+        Optional<EngineValue> result = getAttributeValue(name);
+        if (result.isPresent()) {
+          boolean value = result.get().getAsBoolean();
+          if (!value) {
+            throw new RuntimeException("Assertion failed for " + name);
+          }
+        }
+      }
+    } else {
+      resolveAttributeFromPriorByIndex(index);
     }
   }
 

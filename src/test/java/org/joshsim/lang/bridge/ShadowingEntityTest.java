@@ -146,7 +146,6 @@ public class ShadowingEntityTest {
     String substepName = "test";
 
     EngineValue handlerValue = mock(EngineValue.class);
-    when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
     EventKey eventKey = EventKey.of(attrName, substepName);
     CompiledCallable mockCallable = mock(CompiledCallable.class);
@@ -178,7 +177,6 @@ public class ShadowingEntityTest {
 
     // Mock prior value
     EngineValue priorValue = mock(EngineValue.class);
-    when(priorValue.getLanguageType()).thenReturn(new LanguageType("test", false));
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(priorValue));
 
     // Start init substep and resolve attribute
@@ -203,7 +201,6 @@ public class ShadowingEntityTest {
     // Mock handler setup
     EventKey eventKey = EventKey.of(attrName, substepName);
     EngineValue handlerValue = mock(EngineValue.class);
-    when(handlerValue.getLanguageType()).thenReturn(new LanguageType("test", false));
 
     when(mockSpatialEntity.getEventHandlers(eventKey)).thenReturn(
         Optional.of(mockEventHandlerGroup)

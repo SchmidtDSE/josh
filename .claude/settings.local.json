@@ -23,7 +23,8 @@
       "Bash(awk:*)",
       "Bash(time java:*)",
       "Bash(git stash:*)",
-      "Bash(jfr print:*)"
+      "Bash(jfr print:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

@@ -6,7 +6,6 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.type.EngineValue;
@@ -63,8 +62,9 @@ public class EntityFastForwarder {
   /**
    * Executes a single simulation step on the entity.
    *
-   * <p>Forces attribute resolution for all attributes using direct iteration.
-   * This ensures all attributes are evaluated during the substep.</p>
+   * <p>Forces attribute resolution for all attributes using integer-based iteration for efficiency.
+   * This ensures all attributes are evaluated during the substep while avoiding string-based
+   * HashMap lookups.</p>
    *
    * @param entity The entity to run the step on
    * @param subStep The substep name to execute
@@ -73,13 +73,11 @@ public class EntityFastForwarder {
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
 
-    // OPTIMIZATION: Use integer-based iteration instead of string iteration
-    // This avoids repeated HashMap lookups for attribute names
-    Map<String, Integer> indexMap = entity.getAttributeNameToIndex();
-    int numAttributes = indexMap.size();
-
-    // Force attribute resolution for all attributes using integer indices
-    for (int i = 0; i < numAttributes; i++) {
+    // Force attribute resolution for all attributes using efficient integer indexing
+    // PERFORMANCE: Integer-based access avoids string HashMap lookups while still
+    // triggering proper resolution (ShadowingEntity now supports integer-based resolution)
+    int attributeCount = entity.getAttributeNameToIndex().size();
+    for (int i = 0; i < attributeCount; i++) {
       Optional<EngineValue> value = entity.getAttributeValue(i);
       assert value != null;
     }
