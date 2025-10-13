@@ -33,6 +33,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private EngineValue[] attributes;
   private EngineValue[] priorAttributes;
   private final Map<String, Integer> attributeNameToIndex;
+  private final String[] indexToAttributeName;
   private Set<String> onlyOnPrior;
 
   private Optional<String> substep;
@@ -50,6 +51,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    *     instances for performance.
    * @param attributes An array of EngineValue objects indexed by attributeNameToIndex.
    * @param attributeNameToIndex Shared immutable map from attribute name to array index.
+   * @param indexToAttributeName Shared immutable array from index to attribute name.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
@@ -63,6 +65,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       EngineValue[] attributes,
       Map<String, Integer> attributeNameToIndex,
+      String[] indexToAttributeName,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
       Map<String, List<EventHandlerGroup>> commonHandlerCache,
       Set<String> sharedAttributeNames
@@ -82,6 +85,13 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       this.attributeNameToIndex = Collections.emptyMap();
     } else {
       this.attributeNameToIndex = attributeNameToIndex;
+    }
+
+    // Store reference to shared index-to-name array (immutable)
+    if (indexToAttributeName == null) {
+      this.indexToAttributeName = new String[0];
+    } else {
+      this.indexToAttributeName = indexToAttributeName;
     }
 
     // Attributes array needs defensive copy (mutable per instance)
@@ -176,13 +186,11 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     // Update attribute at index
     attributes[index] = value;
 
-    // Remove from onlyOnPrior set if present
-    // We need to look up the name to remove it
-    // This is a bit inefficient but only happens when transitioning from prior to current
-    for (Map.Entry<String, Integer> entry : attributeNameToIndex.entrySet()) {
-      if (entry.getValue() == index) {
-        onlyOnPrior.remove(entry.getKey());
-        break;
+    // Remove from onlyOnPrior set if present - O(1) array lookup
+    if (index < indexToAttributeName.length) {
+      String attributeName = indexToAttributeName[index];
+      if (attributeName != null) {
+        onlyOnPrior.remove(attributeName);
       }
     }
   }
@@ -243,7 +251,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
         name,
         frozenAttributes,
         getGeometry(),
-        attributeNameToIndex
+        attributeNameToIndex,
+        indexToAttributeName
     );
   }
 
@@ -337,6 +346,19 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public Map<String, Integer> getAttributeNameToIndex() {
     // Return the shared immutable map directly
     return attributeNameToIndex;
+  }
+
+  /**
+   * Get the index-to-name array for O(1) reverse lookup.
+   *
+   * <p>This array maps attribute indices to their corresponding names,
+   * enabling O(1) reverse lookup without HashMap iteration.</p>
+   *
+   * @return immutable array where array[index] = attribute name
+   */
+  public String[] getIndexToAttributeName() {
+    // Return the shared immutable array directly
+    return indexToAttributeName;
   }
 
   /**

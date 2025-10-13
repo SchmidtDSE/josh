@@ -35,6 +35,7 @@ public class Patch extends RootSpatialEntity {
    *     type for performance.
    * @param attributes An array of EngineValue objects indexed by attributeNameToIndex.
    * @param attributeNameToIndex Shared immutable map from attribute name to array index.
+   * @param indexToAttributeName Shared immutable array from index to attribute name.
    * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
    *     handlers per substep.
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
@@ -48,12 +49,14 @@ public class Patch extends RootSpatialEntity {
       Map<EventKey, EventHandlerGroup> eventHandlerGroups,
       EngineValue[] attributes,
       Map<String, Integer> attributeNameToIndex,
+      String[] indexToAttributeName,
       Map<String, Set<String>> attributesWithoutHandlersBySubstep,
       Map<String, List<EventHandlerGroup>> commonHandlerCache,
       Set<String> sharedAttributeNames
   ) {
     super(geometry, name, eventHandlerGroups, attributes, attributeNameToIndex,
-        attributesWithoutHandlersBySubstep, commonHandlerCache, sharedAttributeNames);
+        indexToAttributeName, attributesWithoutHandlersBySubstep, commonHandlerCache,
+        sharedAttributeNames);
   }
 
   @Override

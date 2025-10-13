@@ -257,6 +257,7 @@ public class DirectLockMutableEntityFastPathTest {
       super(name, handlers,
           attributesArrayFromMap(handlers, attributes),
           attributeIndexFromMap(handlers, attributes),
+          indexToAttributeNameFromMap(handlers, attributes),
           computeOptimizationMap(name, handlers, attributes),
           Collections.emptyMap(),
           Collections.emptySet());
@@ -299,6 +300,17 @@ public class DirectLockMutableEntityFastPathTest {
         result.put(sortedNames.get(i), i);
       }
       return Collections.unmodifiableMap(result);
+    }
+
+    private static String[] indexToAttributeNameFromMap(
+        Map<EventKey, EventHandlerGroup> handlers,
+        Map<String, EngineValue> map) {
+      Map<String, Integer> indexMap = attributeIndexFromMap(handlers, map);
+      String[] result = new String[indexMap.size()];
+      for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+        result[entry.getValue()] = entry.getKey();
+      }
+      return result;
     }
 
     @Override

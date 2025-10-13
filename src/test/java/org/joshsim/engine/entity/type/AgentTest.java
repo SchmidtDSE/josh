@@ -69,6 +69,7 @@ public class AgentTest {
     agent = new Agent(mockParent, AGENT_NAME, eventHandlers,
         toAttributesArray(eventHandlers, attributes),
         toAttributeIndex(eventHandlers, attributes),
+        toIndexToAttributeName(eventHandlers, attributes),
         Collections.emptyMap(),
         Collections.emptyMap(),
         Collections.emptySet());
@@ -135,6 +136,20 @@ public class AgentTest {
       result.put(sortedNames.get(i), i);
     }
     return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Create index-to-name array from attribute names using alphabetical ordering.
+   */
+  private static String[] toIndexToAttributeName(
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
+    String[] result = new String[indexMap.size()];
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      result[entry.getValue()] = entry.getKey();
+    }
+    return result;
   }
 
   /**
@@ -225,8 +240,8 @@ public class AgentTest {
   @Test
   public void testNullMapsInConstructor() {
     Agent nullMapAgent = new Agent(mockParent, AGENT_NAME, null, null,
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-        Collections.emptySet());
+        Collections.emptyMap(), new String[0], Collections.emptyMap(),
+        Collections.emptyMap(), Collections.emptySet());
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
     assertFalse(groups.iterator().hasNext(),

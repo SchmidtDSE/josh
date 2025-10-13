@@ -39,6 +39,7 @@ public class EntityBuilder {
   private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
   private Map<String, Integer> attributeNameToIndex;
+  private String[] indexToAttributeName;
   private Set<String> sharedAttributeNames;
 
   /**
@@ -117,6 +118,7 @@ public class EntityBuilder {
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
     attributeNameToIndex = null; // Invalidate cache
+    indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
   }
 
@@ -147,6 +149,7 @@ public class EntityBuilder {
     attributes.put(attribute, value);
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     attributeNameToIndex = null; // Invalidate cache
+    indexToAttributeName = null; // Invalidate cache
     return this;
   }
 
@@ -396,6 +399,42 @@ public class EntityBuilder {
   }
 
   /**
+   * Compute the shared index-to-name array for O(1) reverse lookup.
+   *
+   * <p>This method creates an array where indexToAttributeName[i] = name for the
+   * attribute at index i. This eliminates O(n) HashMap iteration when converting
+   * from index to name, which is critical for hot paths like ShadowingEntity.</p>
+   *
+   * <p>The array is computed ONCE per entity type in the builder and shared across
+   * all entity instances of that type, following the same pattern as attributeNameToIndex.</p>
+   *
+   * @return Array where array[index] = attribute name for that index
+   */
+  private String[] computeIndexToAttributeName() {
+    // Use cached value if available
+    if (indexToAttributeName != null) {
+      return indexToAttributeName;
+    }
+
+    // Get the index map (creates it if needed)
+    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+
+    // Create array sized to hold all attributes
+    String[] result = new String[indexMap.size()];
+
+    // Populate array: for each (name, index) pair, set result[index] = name
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      String name = entry.getKey();
+      int index = entry.getValue();
+      result[index] = name;
+    }
+
+    // Cache immutable array
+    indexToAttributeName = result;
+    return indexToAttributeName;
+  }
+
+  /**
    * Convert attributes map to array using the computed index map.
    *
    * <p>This creates an EngineValue array where each attribute is placed at
@@ -432,6 +471,7 @@ public class EntityBuilder {
         getImmutableEventHandlerGroups(),
         createAttributesArray(),
         computeAttributeNameToIndex(),
+        computeIndexToAttributeName(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache(),
         computeAttributeNames());
@@ -451,6 +491,7 @@ public class EntityBuilder {
         getImmutableEventHandlerGroups(),
         createAttributesArray(),
         computeAttributeNameToIndex(),
+        computeIndexToAttributeName(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache(),
         computeAttributeNames());
@@ -470,6 +511,7 @@ public class EntityBuilder {
         getImmutableEventHandlerGroups(),
         createAttributesArray(),
         computeAttributeNameToIndex(),
+        computeIndexToAttributeName(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache(),
         computeAttributeNames());
@@ -487,6 +529,7 @@ public class EntityBuilder {
         getImmutableEventHandlerGroups(),
         createAttributesArray(),
         computeAttributeNameToIndex(),
+        computeIndexToAttributeName(),
         computeAttributesWithoutHandlersBySubstep(),
         computeCommonHandlerCache(),
         computeAttributeNames());

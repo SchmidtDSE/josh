@@ -18,8 +18,8 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
     // ReferenceGeometryEntity has no handlers, so pass empty array and maps
     super(geometry, "reference", Collections.emptyMap(),
         new org.joshsim.engine.value.type.EngineValue[0],
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-        Collections.emptySet());
+        Collections.emptyMap(), new String[0], Collections.emptyMap(),
+        Collections.emptyMap(), Collections.emptySet());
   }
 
   @Override

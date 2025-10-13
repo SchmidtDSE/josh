@@ -39,6 +39,7 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
     super(name, eventHandlerGroups,
         attributesArrayFromMap(attributes),
         attributeIndexFromMap(attributes),
+        indexToAttributeNameFromMap(attributes),
         Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
   }
 
@@ -73,6 +74,18 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
       result.put(sortedNames.get(i), i);
     }
     return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Create index-to-name array from attribute names using alphabetical ordering.
+   */
+  private static String[] indexToAttributeNameFromMap(HashMap<String, EngineValue> map) {
+    if (map.isEmpty()) {
+      return new String[0];
+    }
+    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    Collections.sort(sortedNames);
+    return sortedNames.toArray(new String[0]);
   }
 
   /**

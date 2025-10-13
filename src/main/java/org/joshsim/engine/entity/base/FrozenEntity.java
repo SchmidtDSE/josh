@@ -19,6 +19,7 @@ public class FrozenEntity implements Entity {
   private final Map<String, EngineValue> attributes;
   private final Optional<EngineGeometry> geometry;
   private final Map<String, Integer> attributeNameToIndex;
+  private final String[] indexToAttributeName;
 
 
   /**
@@ -29,9 +30,11 @@ public class FrozenEntity implements Entity {
    * @param attributes A map of attributes related to the entity to be snapshot.
    * @param geometry An optional geometry of the entity to be snapshot.
    * @param attributeNameToIndex The shared index map for this entity type.
+   * @param indexToAttributeName The shared index-to-name array for this entity type.
    */
   public FrozenEntity(EntityType type, String name, Map<String, EngineValue> attributes,
-      Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex) {
+      Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex,
+      String[] indexToAttributeName) {
     this.type = type;
     this.name = name;
     this.attributes = attributes;
@@ -39,6 +42,9 @@ public class FrozenEntity implements Entity {
     this.attributeNameToIndex = attributeNameToIndex != null
         ? attributeNameToIndex
         : Collections.emptyMap();
+    this.indexToAttributeName = indexToAttributeName != null
+        ? indexToAttributeName
+        : new String[0];
   }
 
   @Override
@@ -64,21 +70,21 @@ public class FrozenEntity implements Entity {
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
     // FrozenEntity uses Map storage, so we need to find the name for this index
-    // This is less efficient than array access, but FrozenEntity is not in hot path
+    // Use O(1) array lookup instead of O(n) HashMap iteration
 
     // Bounds check
-    if (index < 0 || index >= attributeNameToIndex.size()) {
+    if (index < 0 || index >= indexToAttributeName.length) {
       return Optional.empty();
     }
 
-    // Find the attribute name with this index
-    for (Map.Entry<String, Integer> entry : attributeNameToIndex.entrySet()) {
-      if (entry.getValue() == index) {
-        return Optional.ofNullable(attributes.get(entry.getKey()));
-      }
+    // O(1) array lookup to get attribute name
+    String attributeName = indexToAttributeName[index];
+    if (attributeName == null) {
+      return Optional.empty();
     }
 
-    return Optional.empty();
+    // Look up value by name
+    return Optional.ofNullable(attributes.get(attributeName));
   }
 
   @Override
@@ -98,6 +104,15 @@ public class FrozenEntity implements Entity {
   @Override
   public Map<String, Integer> getAttributeNameToIndex() {
     return attributeNameToIndex;
+  }
+
+  /**
+   * Get the index-to-name array for O(1) reverse lookup.
+   *
+   * @return immutable array where array[index] = attribute name
+   */
+  public String[] getIndexToAttributeName() {
+    return indexToAttributeName;
   }
 
   private void throwForFrozen() {

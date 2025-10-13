@@ -53,6 +53,7 @@ public class PatchTest {
         mockGeometry, patchName, eventHandlerGroups,
         toAttributesArray(eventHandlerGroups, attributes),
         toAttributeIndex(eventHandlerGroups, attributes),
+        toIndexToAttributeName(eventHandlerGroups, attributes),
         Collections.emptyMap(),
         Collections.emptyMap(),
         Collections.emptySet());
@@ -122,6 +123,20 @@ public class PatchTest {
   }
 
   /**
+   * Create index-to-name array from attribute names using alphabetical ordering.
+   */
+  private static String[] toIndexToAttributeName(
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
+    String[] result = new String[indexMap.size()];
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      result[entry.getValue()] = entry.getKey();
+    }
+    return result;
+  }
+
+  /**
    * Test that the constructor correctly initializes the patch.
    */
   @Test
@@ -137,8 +152,8 @@ public class PatchTest {
   @Test
   public void testConstructorWithNullMaps() {
     Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null,
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-        Collections.emptySet());
+        Collections.emptyMap(), new String[0], Collections.emptyMap(),
+        Collections.emptyMap(), Collections.emptySet());
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());

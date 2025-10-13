@@ -207,23 +207,34 @@ public class ShadowingEntity implements MutableEntity {
     // indexing when accessing the inner entity to avoid string-based HashMap lookups.
     // This provides the best of both worlds: correct resolution behavior with efficient access.
 
-    // Bounds check
-    Map<String, Integer> indexMap = getAttributeNameToIndex();
-    if (index < 0 || index >= indexMap.size()) {
-      return Optional.empty();
+    // Try O(1) array lookup to get attribute name (needed for resolvedCache key)
+    String[] indexArray = null;
+    if (inner instanceof DirectLockMutableEntity) {
+      indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
     }
 
-    // Find the attribute name for this index (needed for resolvedCache key)
     String attributeName = null;
-    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-      if (entry.getValue() == index) {
-        attributeName = entry.getKey();
-        break;
-      }
+
+    // FAST PATH: Use O(1) array lookup if available
+    if (indexArray != null && index >= 0 && index < indexArray.length) {
+      attributeName = indexArray[index];
     }
 
+    // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
+    // This ensures compatibility with mock entities in tests
     if (attributeName == null) {
-      return Optional.empty();
+      Map<String, Integer> indexMap = getAttributeNameToIndex();
+      for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+        if (entry.getValue() == index) {
+          attributeName = entry.getKey();
+          break;
+        }
+      }
+
+      // If still not found, return empty
+      if (attributeName == null) {
+        return Optional.empty();
+      }
     }
 
     // Check resolvedCache first
@@ -263,17 +274,31 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void setAttributeValue(int index, EngineValue value) {
-    // Find the attribute name for this index
-    Map<String, Integer> indexMap = getAttributeNameToIndex();
+    // Try O(1) array lookup to get attribute name
+    String[] indexArray = null;
+    if (inner instanceof DirectLockMutableEntity) {
+      indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
+    }
 
     String attributeName = null;
-    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-      if (entry.getValue() == index) {
-        attributeName = entry.getKey();
-        break;
+
+    // FAST PATH: Use O(1) array lookup if available
+    if (indexArray != null && index >= 0 && index < indexArray.length) {
+      attributeName = indexArray[index];
+    }
+
+    // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
+    if (attributeName == null) {
+      Map<String, Integer> indexMap = getAttributeNameToIndex();
+      for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+        if (entry.getValue() == index) {
+          attributeName = entry.getKey();
+          break;
+        }
       }
     }
 
+    // If attribute name not found, throw exception
     if (attributeName == null) {
       String message = String.format(
           "Attribute index %d not found for entity %s",
@@ -645,14 +670,33 @@ public class ShadowingEntity implements MutableEntity {
     if (prior.isPresent()) {
       inner.setAttributeValue(index, prior.get());
 
-      // Also update resolvedCache - need to find the name
-      // This is the tradeoff: we pay a small cost here to keep resolvedCache working
-      Map<String, Integer> indexMap = inner.getAttributeNameToIndex();
-      for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-        if (entry.getValue() == index) {
-          resolvedCache.put(entry.getKey(), prior.get());
-          break;
+      // Also update resolvedCache - try O(1) array lookup to get attribute name
+      String[] indexArray = null;
+      if (inner instanceof DirectLockMutableEntity) {
+        indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
+      }
+
+      String attributeName = null;
+
+      // FAST PATH: Use O(1) array lookup if available
+      if (indexArray != null && index >= 0 && index < indexArray.length) {
+        attributeName = indexArray[index];
+      }
+
+      // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
+      if (attributeName == null) {
+        Map<String, Integer> indexMap = inner.getAttributeNameToIndex();
+        for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+          if (entry.getValue() == index) {
+            attributeName = entry.getKey();
+            break;
+          }
         }
+      }
+
+      // Update cache if attribute name found
+      if (attributeName != null) {
+        resolvedCache.put(attributeName, prior.get());
       }
     }
   }

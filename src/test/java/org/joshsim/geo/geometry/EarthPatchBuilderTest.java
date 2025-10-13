@@ -286,7 +286,7 @@ class EarthPatchBuilderTest {
     public MutableEntity buildSpatial(EngineGeometry parent) {
       return new Patch(
           parent, "test", new HashMap<>(), new org.joshsim.engine.value.type.EngineValue[0],
-          java.util.Collections.emptyMap(), java.util.Collections.emptyMap(),
+          java.util.Collections.emptyMap(), new String[0], java.util.Collections.emptyMap(),
           java.util.Collections.emptyMap(), java.util.Collections.emptySet());
     }
 

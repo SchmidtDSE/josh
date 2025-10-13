@@ -49,22 +49,10 @@ public class PriorShadowingEntityDecorator implements Entity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Find the attribute name for this index
-    Map<String, Integer> indexMap = getAttributeNameToIndex();
-
-    // Bounds check
-    if (index < 0 || index >= indexMap.size()) {
-      return Optional.empty();
-    }
-
-    // Find the attribute name with this index
-    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-      if (entry.getValue() == index) {
-        return inner.getPriorAttribute(entry.getKey());
-      }
-    }
-
-    return Optional.empty();
+    // Delegate to ShadowingEntity's integer-based prior attribute access
+    // This avoids O(n) HashMap iteration and leverages the optimized
+    // integer-based access path in the inner entity
+    return inner.getPriorAttribute(index);
   }
 
   @Override
