@@ -21,7 +21,9 @@
       "Bash(timeout:*)",
       "Bash(wait)",
       "Bash(awk:*)",
-      "Bash(time java:*)"
+      "Bash(time java:*)",
+      "Bash(git stash:*)",
+      "Bash(jfr print:*)"
     ],
     "deny": [],
     "ask": []
