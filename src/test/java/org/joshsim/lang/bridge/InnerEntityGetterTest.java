@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,8 +55,14 @@ public class InnerEntityGetterTest {
    */
   @BeforeEach
   void setUp() {
+    // Mock string-based access
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("inner"));
     when(mockEntity.getAttributeValue("inner")).thenReturn(Optional.of(mockValue));
+
+    // Mock integer-based access (used by optimized implementation)
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("inner", 0));
+    when(mockEntity.getAttributeValue(0)).thenReturn(Optional.of(mockValue));
+
     when(mockValue.getLanguageType()).thenReturn(mockLanguageType);
     when(mockLanguageType.containsAttributes()).thenReturn(true);
     when(mockValue.getSize()).thenReturn(Optional.of(1));
@@ -65,6 +72,11 @@ public class InnerEntityGetterTest {
     // Setup for nested entity testing
     when(mockInnerEntity.getAttributeNames()).thenReturn(Set.of("nested"));
     when(mockInnerEntity.getAttributeValue("nested")).thenReturn(Optional.of(mockNestedValue));
+
+    // Mock integer-based access for nested entity
+    when(mockInnerEntity.getAttributeNameToIndex()).thenReturn(Map.of("nested", 0));
+    when(mockInnerEntity.getAttributeValue(0)).thenReturn(Optional.of(mockNestedValue));
+
     when(mockNestedValue.getLanguageType()).thenReturn(mockLanguageType);
     when(mockNestedValue.getSize()).thenReturn(Optional.of(1));
     when(mockNestedValue.getAsMutableEntity()).thenReturn(mockNestedEntity);

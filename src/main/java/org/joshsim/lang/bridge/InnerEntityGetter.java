@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -38,8 +39,13 @@ public class InnerEntityGetter {
   public static Iterable<MutableEntity> getInnerEntities(MutableEntity target) {
     List<MutableEntity> result = new ArrayList<>();
 
-    for (String name : target.getAttributeNames()) {
-      Optional<EngineValue> valueMaybe = target.getAttributeValue(name);
+    // OPTIMIZATION: Use integer-based iteration instead of string iteration
+    // This avoids repeated HashMap lookups for attribute names
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
       if (valueMaybe.isEmpty()) {
         continue;
       }
@@ -80,8 +86,13 @@ public class InnerEntityGetter {
   public static Iterable<Entity> getInnerFrozenEntities(Entity target) {
     List<Entity> result = new ArrayList<>();
 
-    for (String name : target.getAttributeNames()) {
-      Optional<EngineValue> valueMaybe = target.getAttributeValue(name);
+    // OPTIMIZATION: Use integer-based iteration instead of string iteration
+    // This avoids repeated HashMap lookups for attribute names
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
       if (valueMaybe.isEmpty()) {
         continue;
       }

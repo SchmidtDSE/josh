@@ -8,8 +8,6 @@ package org.joshsim.engine.entity.type;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;

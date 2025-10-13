@@ -1,7 +1,6 @@
 package org.joshsim.engine.entity.base;
 
 import java.util.Collections;
-import java.util.HashMap;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 

@@ -3,6 +3,7 @@ package org.joshsim.lang.bridge;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
@@ -160,8 +161,13 @@ public class SimulationStepper {
     // This eliminates the need for a separate getInnerEntities() traversal.
     List<MutableEntity> innerEntities = new ArrayList<>();
 
-    for (String attributeName : target.getAttributeNames()) {
-      Optional<EngineValue> value = target.getAttributeValue(attributeName);
+    // OPTIMIZATION: Use integer-based iteration instead of string iteration
+    // This avoids repeated HashMap lookups for attribute names
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> value = target.getAttributeValue(i);
       if (value.isEmpty()) {
         continue;
       }
