@@ -54,8 +54,7 @@ public class DistributionScope implements Scope {
         key -> new ValueResolver(valueFactory, key)
     );
 
-    // Transform values using direct iteration instead of streams
-    // Pre-size ArrayList to avoid growth operations
+    // Transform
     List<EngineValue> transformedValues = new ArrayList<>(size);
     for (EngineValue val : values) {
       EntityScope scope = new EntityScope(val.getAsEntity());
