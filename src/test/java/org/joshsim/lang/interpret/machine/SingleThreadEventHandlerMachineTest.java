@@ -964,4 +964,36 @@ public class SingleThreadEventHandlerMachineTest {
     Distribution result = machine.getResult().getAsDistribution();
     assertEquals(1, result.getSize().get());
   }
+
+  @Test
+  void executeSpatialQuery_shouldReturnPatchEntitiesWhenQueryingForPatchType() {
+    // Given - simulating "Default within 30 m radial at prior"
+    when(mockScope.has("current")).thenReturn(true);
+    when(mockScope.get("current")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockEntity.getGeometry()).thenReturn(Optional.of(mockGeometry));
+    when(mockGeometry.getCenterX()).thenReturn(BigDecimal.ZERO);
+    when(mockGeometry.getCenterY()).thenReturn(BigDecimal.ZERO);
+
+    // Mock patch entities with name "Default"
+    Entity patch1 = mockEntity;
+    Entity patch2 = mockEntity;
+    when(patch1.getName()).thenReturn("Default");
+    when(patch2.getName()).thenReturn("Default");
+
+    List<Entity> queryResults = List.of(patch1, patch2);
+    when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
+    when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
+
+    // When - querying for "Default" (the patch type itself, not an attribute)
+    BigDecimal queryDistance = BigDecimal.valueOf(30.0);
+    EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
+    machine.push(distanceValue);
+    machine.executeSpatialQuery(new ValueResolver(new EngineValueFactory(), "Default"));
+
+    // Then - should return the patch entities themselves
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(2, result.getSize().get());
+  }
 }
