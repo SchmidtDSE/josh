@@ -20,7 +20,6 @@ import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
-
 /**
  * Represents a base entity that is mutable with a re-entrant lock.
  */

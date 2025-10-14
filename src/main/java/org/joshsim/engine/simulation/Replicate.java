@@ -17,7 +17,6 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchSet;
 
-
 /**
  * A full simulation replicate.
  *

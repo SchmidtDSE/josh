@@ -18,7 +18,6 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridShapeType;
 
-
 /**
  * Represents a single time step in the simulation, containing mutable or immutable
  * entries depending on whether it is frozen.
