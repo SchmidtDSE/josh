@@ -61,3 +61,4 @@ config/checkstyle/google_checks.xml
 
 # Profiling scripts
 run_profiler.sh
+run_profiler_small.sh

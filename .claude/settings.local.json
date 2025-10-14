@@ -54,7 +54,8 @@
       "Bash(./run_profiler.sh:*)",
       "Bash(if [ -f /home/ubuntu/josh/examples/validate.sh ])",
       "Bash(then bash examples/validate.sh)",
-      "Bash(else echo \"validate.sh not found\")"
+      "Bash(else echo \"validate.sh not found\")",
+      "Bash(./run_profiler_small.sh:*)"
     ],
     "deny": [],
     "ask": []
