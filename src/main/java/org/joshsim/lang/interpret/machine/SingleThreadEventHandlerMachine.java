@@ -469,12 +469,30 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     List<Entity> patches = bridge.getPriorPatches(queryGeometry);
 
+    // Check if querying for patch entities themselves vs attributes on patches
+    // This handles cases like "Default within 30 m" where "Default" is the patch type name
+    boolean queryingForPatchEntities = false;
+    if (!patches.isEmpty()) {
+      String patchName = patches.get(0).getName();
+      // Simple path check - if resolver path matches patch name, return patches directly
+      queryingForPatchEntities = resolver.toString().contains("ValueResolver(" + patchName + ")");
+    }
+
     // Pre-size ArrayList with known patch count to eliminate ArrayList.grow() overhead
     List<EngineValue> resolved = new ArrayList<>(patches.size());
-    for (Entity patch : patches) {
-      EntityScope scope = new EntityScope(patch);
-      EngineValue value = resolver.get(scope).orElseThrow();
-      resolved.add(value);
+
+    if (queryingForPatchEntities) {
+      // Return the patch entities themselves
+      for (Entity patch : patches) {
+        resolved.add(valueFactory.build(patch));
+      }
+    } else {
+      // Return attributes from the patches
+      for (Entity patch : patches) {
+        EntityScope scope = new EntityScope(patch);
+        EngineValue value = resolver.get(scope).orElseThrow();
+        resolved.add(value);
+      }
     }
 
     EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
