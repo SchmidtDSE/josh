@@ -30,6 +30,7 @@ public class ValueResolver {
 
   private final EngineValueFactory valueFactory;
   private final String path;
+  private final boolean hasDot;
 
   private String foundPath;
   private Optional<ValueResolver> memoizedContinuationResolver;
@@ -44,6 +45,7 @@ public class ValueResolver {
   public ValueResolver(EngineValueFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
+    this.hasDot = path.indexOf('.') != -1;
     memoizedContinuationResolver = null;
     foundPath = null;
     indexCache = null; // Initialized lazily
@@ -124,7 +126,7 @@ public class ValueResolver {
    */
   private Optional<EngineValue> tryFastPath(EntityScope entityScope) {
     // Fast path only works for simple attribute names (no nested paths)
-    if (path.contains(".")) {
+    if (hasDot) {
       return null; // Use slow path
     }
 
