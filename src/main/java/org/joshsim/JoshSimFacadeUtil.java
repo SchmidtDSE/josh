@@ -11,6 +11,7 @@ import java.util.Set;
 import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
@@ -110,15 +111,32 @@ public class JoshSimFacadeUtil {
         simEntity,
         inputOutputLayer.getExportFacadeFactory()
     );
-    SimulationStepper stepper = new SimulationStepper(bridge);
+
+    // Create incremental export callback if export configured
+    Optional<org.joshsim.lang.bridge.PatchExportCallback> exportCallback =
+        exportFacade.createIncrementalCallback();
+    boolean useIncrementalExport = exportCallback.isPresent();
+
+    // Pass callback to SimulationStepper
+    SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
     exportFacade.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
+
       if (outputSteps.isEmpty() || outputSteps.get().contains((int) completedStep)) {
-        exportFacade.write(bridge.getReplicate().getTimeStep(completedStep).orElseThrow());
+        TimeStep completedTimeStep = bridge.getReplicate()
+            .getTimeStep(completedStep).orElseThrow();
+        if (useIncrementalExport) {
+          // Incremental mode - patches already exported, only write metadata
+          exportFacade.writeMetaOnly(completedTimeStep);
+        } else {
+          // Bulk mode - export entire timestep at once
+          exportFacade.write(completedTimeStep);
+        }
       }
+
       callback.onStep(completedStep);
 
       if (completedStep > 2) {

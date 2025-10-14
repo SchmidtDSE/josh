@@ -18,6 +18,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.InnerEntityGetter;
+import org.joshsim.lang.bridge.PatchExportCallback;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
@@ -132,6 +133,40 @@ public class CombinedExportFacade {
    */
   public void join() {
     patchExportFacade.ifPresent(ExportFacade::join);
+  }
+
+  /**
+   * Create an incremental patch export callback for per-patch freeze/serialize.
+   *
+   * <p>Returns a callback that can be passed to SimulationStepper to enable
+   * incremental freeze-and-serialize operations, reducing peak memory usage.</p>
+   *
+   * @return Optional containing callback if patch or entity export is configured, empty otherwise
+   */
+  public Optional<PatchExportCallback> createIncrementalCallback() {
+    if (patchExportFacade.isEmpty() && entityExportFacade.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(new IncrementalPatchExportCallback(
+        patchExportFacade,
+        entityExportFacade,
+        replicateNumber
+    ));
+  }
+
+  /**
+   * Write only the simulation metadata for a completed timestep.
+   *
+   * <p>This method is used in incremental export mode where patches are already
+   * exported individually. Only the simulation metadata needs to be written.</p>
+   *
+   * @param stepCompleted The completed timestep containing metadata
+   */
+  public void writeMetaOnly(TimeStep stepCompleted) {
+    metaExportFacade.ifPresent(exportFacade -> {
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep(), replicateNumber);
+    });
   }
 
   /**

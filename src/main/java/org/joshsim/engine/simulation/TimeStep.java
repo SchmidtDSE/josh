@@ -101,7 +101,9 @@ public class TimeStep {
 
     // Compute offsets using existing intersection logic (slow path, runs once per radius)
     int maxOffset = (int) Math.ceil(radiusInGridCells + Math.sqrt(2.0));
-    List<IntPair> offsets = new ArrayList<>();
+    // Pre-size with bounding box size to eliminate growth overhead
+    int estimatedSize = (2 * maxOffset + 1) * (2 * maxOffset + 1);
+    List<IntPair> offsets = new ArrayList<>(estimatedSize);
 
     for (int dx = -maxOffset; dx <= maxOffset; dx++) {
       for (int dy = -maxOffset; dy <= maxOffset; dy++) {
@@ -317,7 +319,9 @@ public class TimeStep {
       int maxGridY = Math.min(gridHeight - 1, worldToGridY(queryMaxY));
 
       // Collect candidate patches from relevant grid cells
-      List<Entity> candidates = new ArrayList<>();
+      // Pre-size with exact grid range size to eliminate growth overhead
+      int estimatedSize = (maxGridX - minGridX + 1) * (maxGridY - minGridY + 1);
+      List<Entity> candidates = new ArrayList<>(estimatedSize);
       for (int x = minGridX; x <= maxGridX; x++) {
         for (int y = minGridY; y <= maxGridY; y++) {
           Entity patch = grid[x][y];
@@ -533,7 +537,8 @@ public class TimeStep {
     // For circle queries, candidates are exact matches (zero false positives)
     org.joshsim.engine.geometry.grid.GridShape gridGeom = geometry.getOnGrid();
     if (gridGeom != null && gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
-      List<Entity> selectedPatches = new ArrayList<>();
+      // Pre-size with candidates.size() as upper bound to eliminate growth
+      List<Entity> selectedPatches = new ArrayList<>(candidates.size());
       for (Entity patch : candidates) {
         if (patch.getName().equals(name) && patch.getGeometry().isPresent()) {
           selectedPatches.add(patch);
@@ -543,7 +548,8 @@ public class TimeStep {
     }
 
     // Non-circle queries: use existing intersection logic
-    List<Entity> selectedPatches = new ArrayList<>();
+    // Pre-size with candidates.size() as upper bound to eliminate growth
+    List<Entity> selectedPatches = new ArrayList<>(candidates.size());
     for (Entity patch : candidates) {
       if (patch.getName().equals(name)) {
         Optional<EngineGeometry> patchGeometry = patch.getGeometry();

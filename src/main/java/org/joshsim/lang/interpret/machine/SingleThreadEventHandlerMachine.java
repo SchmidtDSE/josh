@@ -186,17 +186,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
+    int leftSize = left.getSize().orElseThrow();
+    int rightSize = right.getSize().orElseThrow();
+
     Iterable<EngineValue> leftValues = left.getAsDistribution().getContents(
-        left.getSize().orElseThrow(),
+        leftSize,
         false
     );
 
     Iterable<EngineValue> rightValues = right.getAsDistribution().getContents(
-        right.getSize().orElseThrow(),
+        rightSize,
         false
     );
 
-    List<EngineValue> allValues = new ArrayList<>();
+    // Pre-size ArrayList to avoid growth overhead
+    List<EngineValue> allValues = new ArrayList<>(leftSize + rightSize);
     leftValues.forEach(allValues::add);
     rightValues.forEach(allValues::add);
 
@@ -439,7 +443,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       EntityFastForwarder.fastForward(newEntity, substep);
       result = valueFactory.build(newEntity);
     } else {
-      List<EngineValue> values = new ArrayList<>();
+      // Pre-size ArrayList with known count to avoid growth overhead
+      List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
         MutableEntity newEntity = decoratedPrototype.build();
         EntityFastForwarder.fastForward(newEntity, substep);

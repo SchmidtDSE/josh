@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -31,6 +32,8 @@ public class Replicate {
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private Map<GeoKey, MutableEntity> presentTimeStep;
   private long stepNumber = 0;
+  private Map<GeoKey, Entity> currentStepFrozenPatches = new ConcurrentHashMap<>();
+  private Entity frozenMeta = null;
 
   /**
    * Construct a replicate with the given patches.
@@ -75,6 +78,23 @@ public class Replicate {
   }
 
   /**
+   * Save a single frozen patch for the given step number.
+   *
+   * <p>This method is called incrementally as patches complete their substeps,
+   * allowing for memory-efficient freeze-and-serialize operations. The frozen
+   * patches are accumulated and used to create a TimeStep at endStep().</p>
+   *
+   * <p>Thread-safe: Uses ConcurrentHashMap for parallel patch processing.</p>
+   *
+   * @param frozen The frozen Entity to save
+   * @param stepNumber The step number for this frozen patch
+   */
+  public void saveFrozenPatch(Entity frozen, long stepNumber) {
+    GeoKey key = frozen.getKey().orElseThrow();
+    currentStepFrozenPatches.put(key, frozen);
+  }
+
+  /**
    * Save the current state as the given step number.
    *
    * <p>Save the current state as the given step number, freezing all entities as immutable such
@@ -88,24 +108,41 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    // Pre-size to avoid rehashing
-    Map<GeoKey, Entity> frozenPatches = new HashMap<>(
-        (int) (presentTimeStep.size() / 0.75f) + 1
-    );
+    // Use pre-frozen patches if available (incremental freeze mode)
+    Map<GeoKey, Entity> frozenPatches;
+    Entity frozenMetaEntity;
 
-    for (MutableEntity original : presentTimeStep.values()) {
-      original.lock();
-      try {
-        Entity frozen = original.freeze();
-        frozenPatches.put(original.getKey().orElseThrow(), frozen);
-      } finally {
-        original.unlock();
+    if (!currentStepFrozenPatches.isEmpty()) {
+      // Incremental freeze mode: patches already frozen by SimulationStepper
+      frozenPatches = new HashMap<>(currentStepFrozenPatches);
+      currentStepFrozenPatches.clear();  // Clear for next timestep
+
+      // Freeze meta (only once per timestep, not per patch)
+      if (frozenMeta == null) {
+        frozenMeta = meta.freeze();
       }
+      frozenMetaEntity = frozenMeta;
+      frozenMeta = null;  // Clear for next timestep
+
+    } else {
+      // Bulk freeze mode (backward compatibility): freeze all at once
+      frozenPatches = new HashMap<>(
+          (int) (presentTimeStep.size() / 0.75f) + 1
+      );
+
+      for (MutableEntity original : presentTimeStep.values()) {
+        original.lock();
+        try {
+          Entity frozen = original.freeze();
+          frozenPatches.put(original.getKey().orElseThrow(), frozen);
+        } finally {
+          original.unlock();
+        }
+      }
+      frozenMetaEntity = meta.freeze();
     }
 
-    Entity frozenMeta = meta.freeze();
-
-    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMeta, frozenPatches);
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMetaEntity, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 

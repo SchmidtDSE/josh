@@ -51,7 +51,10 @@
       "Bash(/tmp/analyze_hotspots.sh:*)",
       "Bash(/tmp/analyze_allocations.sh:*)",
       "Bash(./run_profiler_big.sh:*)",
-      "Bash(./run_profiler.sh:*)"
+      "Bash(./run_profiler.sh:*)",
+      "Bash(if [ -f /home/ubuntu/josh/examples/validate.sh ])",
+      "Bash(then bash examples/validate.sh)",
+      "Bash(else echo \"validate.sh not found\")"
     ],
     "deny": [],
     "ask": []
