@@ -14,6 +14,14 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class FrozenEntity implements Entity {
 
+  /**
+   * Cached empty Optional to avoid repeated Optional.empty() allocations.
+   *
+   * <p>This singleton is reused across all FrozenEntity instances for better performance,
+   * eliminating allocation overhead in getAttributeValue methods.</p>
+   */
+  private static final Optional<EngineValue> EMPTY_ATTRIBUTE_VALUE = Optional.empty();
+
   private final EntityType type;
   private final String name;
   private final EngineValue[] attributeValues;
@@ -72,21 +80,24 @@ public class FrozenEntity implements Entity {
     // Look up index for this attribute name
     Integer index = attributeNameToIndex.get(name);
     if (index == null || index < 0 || index >= attributeValues.length) {
-      return Optional.empty();
+      return EMPTY_ATTRIBUTE_VALUE;
     }
 
-    // Use index to access array
-    return Optional.ofNullable(attributeValues[index]);
+    // Use index to access array, avoiding Optional.ofNullable() overhead
+    EngineValue value = attributeValues[index];
+    return value == null ? EMPTY_ATTRIBUTE_VALUE : Optional.of(value);
   }
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
     // Direct O(1) array access using index
     if (index < 0 || index >= attributeValues.length) {
-      return Optional.empty();
+      return EMPTY_ATTRIBUTE_VALUE;
     }
 
-    return Optional.ofNullable(attributeValues[index]);
+    // Avoid Optional.ofNullable() overhead by explicit null check
+    EngineValue value = attributeValues[index];
+    return value == null ? EMPTY_ATTRIBUTE_VALUE : Optional.of(value);
   }
 
   @Override
