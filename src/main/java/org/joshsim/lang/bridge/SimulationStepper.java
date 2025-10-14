@@ -189,15 +189,12 @@ public class SimulationStepper {
    */
   private void updateEntityUnsafe(MutableEntity target) {
     // Resolve all attributes and collect entities discovered during resolution.
-    // This eliminates the need for a separate getInnerEntities() traversal.
 
-    // OPTIMIZATION: Use integer-based iteration instead of string iteration
-    // This avoids repeated HashMap lookups for attribute names
+    // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
 
-    // Pre-size ArrayList with numAttributes as upper bound estimate
-    // This prevents ArrayList.grow() calls during entity collection
+    // Pre-size ArrayList with numAttributes as upper bound
     List<MutableEntity> innerEntities = new ArrayList<>(numAttributes);
 
     for (int i = 0; i < numAttributes; i++) {

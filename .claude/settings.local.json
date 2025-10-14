@@ -55,6 +55,10 @@
       "Bash(if [ -f /home/ubuntu/josh/examples/validate.sh ])",
       "Bash(then bash examples/validate.sh)",
       "Bash(else echo \"validate.sh not found\")",
+      "Bash(if [ -f /home/ubuntu/josh2/tasks/optimization_cleanup.md ])",
+      "Bash(then cat /home/ubuntu/josh2/tasks/optimization_cleanup.md)",
+      "Bash(else echo \"File does not exist yet\")",
+      "Bash(git show:*)",
       "Bash(./run_profiler_small.sh:*)"
     ],
     "deny": [],

@@ -46,9 +46,7 @@ public interface MutableEntity extends Entity, Lockable {
   /**
    * Set the value of an attribute by index.
    *
-   * <p>This method provides fast array-based attribute updates when the index
-   * is known. This is significantly faster than string-based access as it
-   * eliminates HashMap lookups and string hashing.</p>
+   * <p>This method provides array-based attribute updates when the index is known.</p>
    *
    * @param index the attribute index (from attributeNameToIndex map)
    * @param value the value to set
@@ -90,13 +88,13 @@ public interface MutableEntity extends Entity, Lockable {
   /**
    * Check if an attribute has no handlers for a specific substep.
    *
-   * <p>This method enables fast-path optimization by identifying when handler lookup
+   * <p>This method enables fast-path checking by identifying when handler lookup
    * can be skipped. If this returns true, the attribute will always resolve from
    * prior state for the given substep.</p>
    *
    * @param attributeName the attribute to check
    * @param substep the substep to check (e.g., "init", "step", "start")
-   * @return true if attribute has no handlers for this substep and can use fast-path
+   * @return true if attribute has no handlers for this substep
    */
   boolean hasNoHandlers(String attributeName, String substep);
 

@@ -16,10 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for integer-based attribute access methods added in Component 2.
+ * Unit tests for integer-based attribute access methods.
  *
- * <p>These tests verify that the new integer-based access methods work correctly
- * across all entity types and return identical results to string-based access.</p>
+ * <p>These tests verify that the integer-based access methods work correctly
+ * across all entity types and return identical results to string-based access.
+ * Integer-based access provides O(1) array indexing as a performance optimization
+ * over string-based HashMap lookups.</p>
  */
 public class DirectLockMutableEntityIntegerAccessTest {
 

@@ -17,8 +17,7 @@ public class FrozenEntity implements Entity {
   /**
    * Cached empty Optional to avoid repeated Optional.empty() allocations.
    *
-   * <p>This singleton is reused across all FrozenEntity instances for better performance,
-   * eliminating allocation overhead in getAttributeValue methods.</p>
+   * <p>This singleton is reused across all FrozenEntity instances.</p>
    */
   private static final Optional<EngineValue> EMPTY_ATTRIBUTE_VALUE = Optional.empty();
 
@@ -83,19 +82,19 @@ public class FrozenEntity implements Entity {
       return EMPTY_ATTRIBUTE_VALUE;
     }
 
-    // Use index to access array, avoiding Optional.ofNullable() overhead
+    // Use index to access array
     EngineValue value = attributeValues[index];
     return value == null ? EMPTY_ATTRIBUTE_VALUE : Optional.of(value);
   }
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Direct O(1) array access using index
+    // Direct array access using index
     if (index < 0 || index >= attributeValues.length) {
       return EMPTY_ATTRIBUTE_VALUE;
     }
 
-    // Avoid Optional.ofNullable() overhead by explicit null check
+    // Explicit null check to reuse EMPTY_ATTRIBUTE_VALUE
     EngineValue value = attributeValues[index];
     return value == null ? EMPTY_ATTRIBUTE_VALUE : Optional.of(value);
   }
@@ -120,7 +119,7 @@ public class FrozenEntity implements Entity {
   }
 
   /**
-   * Get the index-to-name array for O(1) reverse lookup.
+   * Get the index-to-name array for reverse lookup.
    *
    * @return immutable array where array[index] = attribute name
    */

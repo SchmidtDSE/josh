@@ -20,7 +20,6 @@ import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
-
 /**
  * Represents a base entity that is mutable with a re-entrant lock.
  */
@@ -57,8 +56,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    * @param commonHandlerCache Precomputed map of all handler lookups, shared across
    *     all instances of this entity type.
    * @param sharedAttributeNames Precomputed immutable set of attribute names, shared
-   *     across all instances of this entity type. Eliminates per-instance HashSet
-   *     allocation and handler iteration.
+   *     across all instances of this entity type.
    */
   public DirectLockMutableEntity(
       String name,
@@ -186,7 +184,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     // Update attribute at index
     attributes[index] = value;
 
-    // Remove from onlyOnPrior set if present - O(1) array lookup
+    // Remove from onlyOnPrior set if present
     if (index < indexToAttributeName.length) {
       String attributeName = indexToAttributeName[index];
       if (attributeName != null) {
@@ -295,13 +293,13 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   /**
    * Check if an attribute has no handlers for a specific substep.
    *
-   * <p>This method enables fast-path optimization by identifying when handler lookup
+   * <p>This method enables fast-path checking by identifying when handler lookup
    * can be skipped. If this returns true, the attribute will always resolve from
    * prior state for the given substep.</p>
    *
    * @param attributeName the attribute to check
    * @param substep the substep to check (e.g., "init", "step", "start")
-   * @return true if attribute has no handlers for this substep and can use fast-path
+   * @return true if attribute has no handlers for this substep
    */
   public boolean hasNoHandlers(String attributeName, String substep) {
     Set<String> attrsForSubstep = attributesWithoutHandlersBySubstep.get(substep);
@@ -313,12 +311,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    *
    * <p>This cache maps cache key strings (format: "attribute:substep" or
    * "attribute:substep:state") to lists of matching EventHandlerGroups. The cache
-   * is computed once during entity type construction and shared across all instances,
-   * eliminating the need for per-instance HandlerCacheKey allocations and expensive
-   * ConcurrentHashMap lookups.</p>
-   *
-   * <p>This is a key optimization that reduces both CPU overhead (from HandlerCacheKey.equals()
-   * and EventKey.of() calls) and memory overhead (from per-instance handler caches).</p>
+   * is computed once during entity type construction and shared across all instances.</p>
    *
    * @return Immutable map from cache key string to list of matching EventHandlerGroups,
    *     or empty map if no handlers are defined
@@ -346,10 +339,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   }
 
   /**
-   * Get the index-to-name array for O(1) reverse lookup.
+   * Get the index-to-name array for reverse lookup.
    *
-   * <p>This array maps attribute indices to their corresponding names,
-   * enabling O(1) reverse lookup without HashMap iteration.</p>
+   * <p>This array maps attribute indices to their corresponding names.</p>
    *
    * @return immutable array where array[index] = attribute name
    */
@@ -362,8 +354,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    * Get the array index for an attribute name, returning -1 if not found.
    *
    * <p>This is a private helper method for internal use that returns -1 for
-   * missing attributes rather than Optional.empty(). Prefer this for internal
-   * code paths to avoid Optional allocation overhead.</p>
+   * missing attributes rather than Optional.empty().</p>
    *
    * @param name the attribute name
    * @return the array index, or -1 if attribute not found

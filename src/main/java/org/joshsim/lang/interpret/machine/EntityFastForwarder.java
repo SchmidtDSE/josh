@@ -62,9 +62,8 @@ public class EntityFastForwarder {
   /**
    * Executes a single simulation step on the entity.
    *
-   * <p>Forces attribute resolution for all attributes using integer-based iteration for efficiency.
-   * This ensures all attributes are evaluated during the substep while avoiding string-based
-   * HashMap lookups.</p>
+   * <p>Forces attribute resolution for all attributes using integer-based iteration. This
+   * ensures all attributes are evaluated during the substep.</p>
    *
    * @param entity The entity to run the step on
    * @param subStep The substep name to execute
@@ -73,9 +72,7 @@ public class EntityFastForwarder {
   private static void runStep(MutableEntity entity, String subStep, boolean leaveOpen) {
     entity.startSubstep(subStep);
 
-    // Force attribute resolution for all attributes using efficient integer indexing
-    // PERFORMANCE: Integer-based access avoids string HashMap lookups while still
-    // triggering proper resolution (ShadowingEntity now supports integer-based resolution)
+    // Force attribute resolution for all attributes using integer indexing
     int attributeCount = entity.getAttributeNameToIndex().size();
     for (int i = 0; i < attributeCount; i++) {
       Optional<EngineValue> value = entity.getAttributeValue(i);

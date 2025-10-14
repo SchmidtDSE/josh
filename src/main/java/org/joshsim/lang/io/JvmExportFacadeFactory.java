@@ -23,7 +23,6 @@ import org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade;
 import org.joshsim.pipeline.job.config.TemplateResult;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 
-
 /**
  * Factory implementation for creating ExportFacade instances in a JVM environment.
  */

@@ -18,7 +18,6 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridShapeType;
 
-
 /**
  * Represents a single time step in the simulation, containing mutable or immutable
  * entries depending on whether it is frozen.
@@ -56,12 +55,11 @@ public class TimeStep {
    * Global cache of precomputed grid offsets for circle queries.
    *
    * <p>Maps radius (in grid cells, ceiled to integer) to list of (dx, dy) offsets
-   * that intersect a circle of that radius centered at origin. This eliminates
-   * 43% of wasted loop iterations by precomputing which cells intersect.</p>
+   * that intersect a circle of that radius centered at origin.</p>
    *
    * <p>Thread-safe using ConcurrentHashMap for parallel query processing.
-   * Cache entries are never evicted as typical simulations only use 5-10
-   * distinct radii (total memory < 1 MB).</p>
+   * Cache entries are never evicted as typical simulations use a small number
+   * of distinct radii.</p>
    *
    * <p>Cache key: ceil(radiusInGridCells) ensures conservative correctness
    * by never missing cells that should be included.</p>
@@ -93,7 +91,7 @@ public class TimeStep {
     // This ensures we never miss boundary cells, though may include 1-2 extra
     int radiusKey = (int) Math.ceil(radiusInGridCells);
 
-    // Check cache first (fast path for 99.9% of calls)
+    // Check cache first
     List<IntPair> cached = CIRCLE_OFFSETS_CACHE.get(radiusKey);
     if (cached != null) {
       return cached;
@@ -126,9 +124,8 @@ public class TimeStep {
    * Spatial index for efficient patch lookups by geometry.
    *
    * <p>Thread-safe read-only index built once per TimeStep. Uses a 2D grid structure
-   * to organize patches by their spatial location, enabling O(1) candidate lookup
-   * instead of O(N) linear scan. This eliminates 90-95% of expensive intersection
-   * checks by pre-filtering patches based on grid cell overlap.</p>
+   * to organize patches by their spatial location for efficient candidate lookup.
+   * Pre-filters patches based on grid cell overlap before exact intersection tests.</p>
    */
   private static class PatchSpatialIndex {
     private final Entity[][] grid;
@@ -337,17 +334,15 @@ public class TimeStep {
     /**
      * Optimized candidate query for circle geometries using exact intersection mathematics.
      *
-     * <p>This method computes the EXACT set of grid cells that intersect the query circle,
-     * with zero false positives. Uses precomputed offsets cached globally per radius,
-     * eliminating 43% of wasted loop iterations compared to square bounding box approach.</p>
+     * <p>This method computes the exact set of grid cells that intersect the query circle.
+     * Uses precomputed offsets cached globally per radius for efficient query processing.</p>
      *
-     * <p>Performance: Offsets are computed once per unique radius and cached in
-     * CIRCLE_OFFSETS_CACHE. Subsequent queries with the same radius use O(1) cache lookup
-     * followed by direct iteration over intersecting cells (no nested loops or intersection
-     * tests per query).</p>
+     * <p>Offsets are computed once per unique radius and cached in CIRCLE_OFFSETS_CACHE.
+     * Subsequent queries with the same radius use the cached offsets for direct iteration
+     * over intersecting cells.</p>
      *
      * @param circle the circle geometry to query
-     * @return list of patches that EXACTLY intersect the circle (no false positives)
+     * @return list of patches that intersect the circle
      */
     private List<Entity> queryCandidatesForCircle(
         org.joshsim.engine.geometry.grid.GridShape circle) {
@@ -489,14 +484,14 @@ public class TimeStep {
    * Get patches within the specified geometry at this time step.
    *
    * <p>For circle queries, uses exact circle-square intersection mathematics to compute
-   * precise results without any intersection checks. For other geometries (squares, points),
-   * uses spatial index with bounding box filtering followed by exact intersection tests.</p>
+   * precise results. For other geometries (squares, points), uses spatial index with
+   * bounding box filtering followed by exact intersection tests.</p>
    *
    * @param geometry the spatial bounds to query
    * @return a list of patches within the geometry
    */
   public List<Entity> getPatches(EngineGeometry geometry) {
-    // Use spatial index to get candidate patches (O(1) grid lookup)
+    // Use spatial index to get candidate patches
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
     // For circle queries, candidates are exact matches (zero false positives)
@@ -529,10 +524,9 @@ public class TimeStep {
     // Use spatial index to get candidate patches
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
-    // For circle queries, candidates are exact matches (zero false positives)
+    // For circle queries, candidates are exact matches
     org.joshsim.engine.geometry.grid.GridShape gridGeom = geometry.getOnGrid();
     if (gridGeom != null && gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
-      // Pre-size with candidates.size() as upper bound to eliminate growth
       List<Entity> selectedPatches = new ArrayList<>(candidates.size());
       for (Entity patch : candidates) {
         if (patch.getName().equals(name) && patch.getGeometry().isPresent()) {
@@ -543,7 +537,6 @@ public class TimeStep {
     }
 
     // Non-circle queries: use existing intersection logic
-    // Pre-size with candidates.size() as upper bound to eliminate growth
     List<Entity> selectedPatches = new ArrayList<>(candidates.size());
     for (Entity patch : candidates) {
       if (patch.getName().equals(name)) {
