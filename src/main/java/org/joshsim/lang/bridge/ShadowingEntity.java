@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -807,7 +808,7 @@ public class ShadowingEntity implements MutableEntity {
     inner.startSubstep(name);
 
     // PERFORMANCE: Clear array-based cache
-    java.util.Arrays.fill(resolvedCacheByIndex, null);
+    Arrays.fill(resolvedCacheByIndex, null);
   }
 
   @Override
@@ -815,7 +816,7 @@ public class ShadowingEntity implements MutableEntity {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
 
     // PERFORMANCE: Clear array-based tracking
-    java.util.Arrays.fill(resolvingByIndex, false);
+    Arrays.fill(resolvingByIndex, false);
 
     inner.endSubstep();
   }
