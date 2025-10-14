@@ -30,9 +30,15 @@ public class ValueResolver {
 
   private final EngineValueFactory valueFactory;
   private final String path;
+  private final boolean hasDot;
 
   private String foundPath;
   private Optional<ValueResolver> memoizedContinuationResolver;
+
+  // Cache maps from the shared attributeNameToIndex Map reference to the attribute's index.
+  // The Map object identity serves as a stand-in for entity type name (e.g., "JoshuaTree")
+  // without the overhead of String hashing. All entities of the same type share the same
+  // immutable attributeNameToIndex Map instance, making it perfect for identity-based caching.
   private IdentityHashMap<Map<String, Integer>, Integer> indexCache;
 
   /**
@@ -44,6 +50,7 @@ public class ValueResolver {
   public ValueResolver(EngineValueFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
+    this.hasDot = path != null && path.indexOf('.') != -1;
     memoizedContinuationResolver = null;
     foundPath = null;
     indexCache = null; // Initialized lazily
@@ -124,11 +131,12 @@ public class ValueResolver {
    */
   private Optional<EngineValue> tryFastPath(EntityScope entityScope) {
     // Fast path only works for simple attribute names (no nested paths)
-    if (path.contains(".")) {
+    if (hasDot) {
       return null; // Use slow path
     }
 
     // Get the entity type's index map (shared across all instances of this type)
+    // The Map object identity serves as the cache key for the entity type
     Map<String, Integer> indexMap = entityScope.getAttributeNameToIndex();
 
     // Handle null or empty distributions (no attributes)

@@ -7,8 +7,10 @@
 package org.joshsim.engine.func;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.engine.EngineValueFactory;
@@ -26,6 +28,9 @@ public class DistributionScope implements Scope {
   private final Distribution value;
   private final Set<String> expectedAttrs;
 
+  // Cache for ValueResolver instances to avoid repeated allocation
+  private final Map<String, ValueResolver> resolverCache = new HashMap<>();
+
   /**
    * Create a scope decorator around this distribution.
    *
@@ -40,12 +45,17 @@ public class DistributionScope implements Scope {
 
   @Override
   public EngineValue get(String name) {
-    Iterable<EngineValue> values = value.getContents(value.getSize().orElseThrow(), false);
+    int size = value.getSize().orElseThrow();
+    Iterable<EngineValue> values = value.getContents(size, false);
 
-    ValueResolver innerResolver = new ValueResolver(valueFactory, name);
+    // Cache ValueResolver to avoid repeated allocation for the same attribute name
+    ValueResolver innerResolver = resolverCache.computeIfAbsent(
+        name,
+        key -> new ValueResolver(valueFactory, key)
+    );
 
-    // Transform values using direct iteration instead of streams
-    List<EngineValue> transformedValues = new ArrayList<>();
+    // Transform
+    List<EngineValue> transformedValues = new ArrayList<>(size);
     for (EngineValue val : values) {
       EntityScope scope = new EntityScope(val.getAsEntity());
       Optional<EngineValue> resolved = innerResolver.get(scope);
