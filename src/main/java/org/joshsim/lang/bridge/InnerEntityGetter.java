@@ -39,8 +39,7 @@ public class InnerEntityGetter {
   public static Iterable<MutableEntity> getInnerEntities(MutableEntity target) {
     List<MutableEntity> result = new ArrayList<>();
 
-    // OPTIMIZATION: Use integer-based iteration instead of string iteration
-    // This avoids repeated HashMap lookups for attribute names
+    // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
 
@@ -86,8 +85,7 @@ public class InnerEntityGetter {
   public static Iterable<Entity> getInnerFrozenEntities(Entity target) {
     List<Entity> result = new ArrayList<>();
 
-    // OPTIMIZATION: Use integer-based iteration instead of string iteration
-    // This avoids repeated HashMap lookups for attribute names
+    // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
 

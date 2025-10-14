@@ -158,15 +158,15 @@ public class EntityBuilder {
    *
    * <p>This method analyzes event handlers to determine which attributes have no handlers
    * for specific substeps (init, step, start, end, constant). This enables fast-path
-   * optimization in ShadowingEntity by skipping expensive handler lookups when we know
-   * an attribute has no handlers for the current substep.</p>
+   * checking in ShadowingEntity by skipping handler lookups when we know an attribute
+   * has no handlers for the current substep.</p>
    *
    * <p>The method is conservative: only marks attribute as "no handlers" if it appears
    * in the initial attributes map but has no event handler for that specific substep.
    * This prevents false negatives (incorrectly skipping handler execution).</p>
    *
-   * <p>This computation is done ONCE per entity type in the builder, rather than once
-   * per entity instance, providing significant performance improvement.</p>
+   * <p>This computation is done once per entity type in the builder and shared across
+   * all entity instances of that type.</p>
    *
    * @return Immutable map from substep name to set of attributes without handlers for that substep
    */
@@ -220,15 +220,11 @@ public class EntityBuilder {
   /**
    * Compute the pre-computed handler cache for all attributes, substeps, and states.
    *
-   * <p>This method pre-computes ALL possible handler lookups by examining all event keys
+   * <p>This method pre-computes all possible handler lookups by examining all event keys
    * in the entity's event handler groups and creating a cache keyed by
    * "attribute:substep" or "attribute:substep:state" strings.</p>
    *
-   * <p>This eliminates the need for per-instance HandlerCacheKey allocations and
-   * ConcurrentHashMap lookups during entity resolution, providing significant
-   * performance and memory benefits.</p>
-   *
-   * <p>The computation is done ONCE per entity type in the builder and shared
+   * <p>The computation is done once per entity type in the builder and shared
    * across all entity instances of that type.</p>
    *
    * @return Immutable map from cache key string to list of matching EventHandlerGroups
@@ -316,13 +312,8 @@ public class EntityBuilder {
    * Compute the shared set of attribute names for this entity type.
    *
    * <p>This method extracts all unique attribute names from event handlers defined
-   * for this entity type. The computation is done ONCE per entity type in the builder
+   * for this entity type. The computation is done once per entity type in the builder
    * and the resulting immutable set is shared across all entity instances of that type.</p>
-   *
-   * <p>This eliminates the need for per-instance HashSet allocations and handler
-   * iteration during entity construction, which was identified as the #1 CPU and
-   * memory hotspot in profiling. For simulations with 1M entities, this optimization
-   * replaces 1M HashSet allocations with a single shared Set.</p>
    *
    * <p>The returned set is immutable and thread-safe for concurrent reads, making
    * it safe to share across entity instances that may be accessed in parallel
@@ -359,8 +350,8 @@ public class EntityBuilder {
    * ensuring deterministic ordering across all entity instances. Attributes are
    * sorted alphabetically to guarantee consistent indices.</p>
    *
-   * <p>This map is computed ONCE per entity type in the builder and shared across
-   * all entity instances of that type, eliminating per-instance HashMap overhead.</p>
+   * <p>This map is computed once per entity type in the builder and shared across
+   * all entity instances of that type.</p>
    *
    * @return Immutable map from attribute name to array index
    */
@@ -399,14 +390,13 @@ public class EntityBuilder {
   }
 
   /**
-   * Compute the shared index-to-name array for O(1) reverse lookup.
+   * Compute the shared index-to-name array for reverse lookup.
    *
    * <p>This method creates an array where indexToAttributeName[i] = name for the
-   * attribute at index i. This eliminates O(n) HashMap iteration when converting
-   * from index to name, which is critical for hot paths like ShadowingEntity.</p>
+   * attribute at index i. This enables direct lookup when converting from index to name.</p>
    *
-   * <p>The array is computed ONCE per entity type in the builder and shared across
-   * all entity instances of that type, following the same pattern as attributeNameToIndex.</p>
+   * <p>The array is computed once per entity type in the builder and shared across
+   * all entity instances of that type.</p>
    *
    * @return Array where array[index] = attribute name for that index
    */

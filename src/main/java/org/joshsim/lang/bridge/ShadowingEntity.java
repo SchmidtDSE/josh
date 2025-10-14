@@ -51,9 +51,7 @@ public class ShadowingEntity implements MutableEntity {
   private final Scope scope;
   private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
-  // PERFORMANCE: Array-based caching for integer-indexed attribute access
-  // These arrays provide O(1) access without HashMap overhead (hash calculation + bucket lookup)
-  // and eliminate allocations from HashSet add/remove operations for circular dependency tracking
+  // Array-based caching for resolved values and circular dependency tracking
   private final EngineValue[] resolvedCacheByIndex;
   private final boolean[] resolvingByIndex;
 
@@ -81,7 +79,7 @@ public class ShadowingEntity implements MutableEntity {
 
     scope = new EntityScope(inner);
 
-    // Initialize array-based caches for O(1) integer-indexed access
+    // Initialize array-based caches
     int numAttributes = inner.getAttributeNameToIndex().size();
     resolvedCacheByIndex = new EngineValue[numAttributes];
     resolvingByIndex = new boolean[numAttributes];
@@ -110,7 +108,7 @@ public class ShadowingEntity implements MutableEntity {
 
     scope = new EntityScope(inner);
 
-    // Initialize array-based caches for O(1) integer-indexed access
+    // Initialize array-based caches
     int numAttributes = inner.getAttributeNameToIndex().size();
     resolvedCacheByIndex = new EngineValue[numAttributes];
     resolvingByIndex = new boolean[numAttributes];
@@ -227,14 +225,13 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
     // Integer-based access with resolution support
-    // PERFORMANCE: Uses array-based cache for O(1) access without HashMap overhead
 
     // Bounds check - if index is negative, return empty
     if (index < 0) {
       return Optional.empty();
     }
 
-    // FAST PATH: Check array-based cache first (O(1) without HashMap overhead)
+    // Check array-based cache first
     // Note: If index >= array length (can happen in tests with mocks), we skip cache and continue
     EngineValue cached = null;
     if (index < resolvedCacheByIndex.length) {
@@ -252,12 +249,12 @@ public class ShadowingEntity implements MutableEntity {
 
     String attributeName = null;
 
-    // FAST PATH: Use O(1) array lookup if available
+    // Use array lookup if available
     if (indexArray != null && index >= 0 && index < indexArray.length) {
       attributeName = indexArray[index];
     }
 
-    // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
+    // Fallback: find name via HashMap iteration if not found in array
     // This ensures compatibility with mock entities in tests
     if (attributeName == null) {
       Map<String, Integer> indexMap = getAttributeNameToIndex();
@@ -287,8 +284,7 @@ public class ShadowingEntity implements MutableEntity {
       }
     }
 
-    // Fallback: retrieve from inner entity using integer access (efficient)
-    // PERFORMANCE: Using integer indexing avoids string-based HashMap lookup in inner entity
+    // Fallback: retrieve from inner entity using integer access
     return inner.getAttributeValue(index);
   }
 
@@ -317,7 +313,7 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public void setAttributeValue(int index, EngineValue value) {
-    // Try O(1) array lookup to get attribute name
+    // Try array lookup to get attribute name
     String[] indexArray = null;
     if (inner instanceof DirectLockMutableEntity) {
       indexArray = ((DirectLockMutableEntity) inner).getIndexToAttributeName();
@@ -325,12 +321,12 @@ public class ShadowingEntity implements MutableEntity {
 
     String attributeName = null;
 
-    // FAST PATH: Use O(1) array lookup if available
+    // Use array lookup if available
     if (indexArray != null && index >= 0 && index < indexArray.length) {
       attributeName = indexArray[index];
     }
 
-    // FALLBACK: If no optimization available, find name via O(n) HashMap iteration
+    // Fallback: find name via HashMap iteration if not found in array
     if (attributeName == null) {
       Map<String, Integer> indexMap = getAttributeNameToIndex();
       for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
@@ -349,12 +345,12 @@ public class ShadowingEntity implements MutableEntity {
       throw new IndexOutOfBoundsException(message);
     }
 
-    // Update both array-based cache (for fast path) and string-based cache (for compatibility)
+    // Update array-based cache
     if (index >= 0 && index < resolvedCacheByIndex.length) {
       resolvedCacheByIndex[index] = value;
     }
 
-    // Use existing string-based logic to maintain resolvedCache
+    // Delegate to string-based setter
     setAttributeValue(attributeName, value);
   }
 
@@ -377,8 +373,6 @@ public class ShadowingEntity implements MutableEntity {
 
   /**
    * Get the value of an attribute from the previous substep by index.
-   *
-   * <p>Fast-path version of getPriorAttribute that uses integer indexing.</p>
    *
    * @param index the attribute index
    * @return the value of the attribute from the previous step
@@ -579,13 +573,13 @@ public class ShadowingEntity implements MutableEntity {
       return;
     }
 
-    // FAST PATH: If attribute has no handlers for THIS substep, skip expensive lookup
+    // Fast path: If attribute has no handlers for this substep, skip lookup
     if (inner.hasNoHandlers(name, substep.get())) {
       resolveAttributeFromPrior(name);
       return;
     }
 
-    // EXISTING SLOW PATH: Check for handlers
+    // Check for handlers
     Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
     if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPrior(name);
@@ -617,20 +611,17 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
-   * Attempt to resolve an attribute using integer-based access for efficiency.
+   * Attempt to resolve an attribute using integer-based access.
    *
    * <p>Integer-based variant of resolveAttribute that uses integer indexing when accessing
-   * the inner entity to avoid string-based HashMap lookups. The attribute name is still
-   * required for cache operations and handler execution.</p>
-   *
-   * <p>PERFORMANCE: Uses array-based tracking for circular dependency detection to avoid
-   * HashSet allocations from add/remove operations.</p>
+   * the inner entity. The attribute name is still required for cache operations and handler
+   * execution.</p>
    *
    * @param index the integer index of the attribute
    * @param name the attribute name (needed for cache and handlers)
    */
   private void resolveAttributeByIndex(int index, String name) {
-    // PERFORMANCE: Use array-based tracking for O(1) access without allocations
+    // Check for circular dependency using array-based tracking
     if (index >= 0 && index < resolvingByIndex.length && resolvingByIndex[index]) {
       System.err.println("Encountered a loop when resolving " + name);
       System.err.println("Currently resolving attributes:");
@@ -663,9 +654,8 @@ public class ShadowingEntity implements MutableEntity {
   /**
    * Attempt to resolve an attribute by index without checking for circular dependency.
    *
-   * <p>PERFORMANCE: Uses integer-based access to inner entity to avoid string HashMap lookups.
-   * This is critical for hot paths like EntityFastForwarder that iterate over all attributes.
-   * We do NOT fall back to string-based access as that would defeat the optimization.</p>
+   * <p>Uses integer-based access to inner entity. Critical for hot paths like
+   * EntityFastForwarder that iterate over all attributes.</p>
    *
    * @param index the integer index of the attribute
    * @param name the attribute name (needed for cache and handlers)
@@ -679,14 +669,13 @@ public class ShadowingEntity implements MutableEntity {
       return;
     }
 
-    // FAST PATH: If attribute has no handlers for THIS substep, use integer access
-    // PERFORMANCE: Avoids string-based HashMap lookup in inner entity
+    // Fast path: If attribute has no handlers for this substep, use integer access
     if (inner.hasNoHandlers(name, substep.get())) {
       resolveAttributeFromPriorByIndex(index);
       return;
     }
 
-    // SLOW PATH: Check for handlers
+    // Check for handlers
     Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
     if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPriorByIndex(index);
@@ -763,10 +752,6 @@ public class ShadowingEntity implements MutableEntity {
   /**
    * Set the current attribute to the value from the previous substep using integer index.
    *
-   * <p>Fast-path version that avoids string lookups.</p>
-   *
-   * <p>PERFORMANCE: Updates array-based cache directly for O(1) access.</p>
-   *
    * @param index the attribute index
    */
   private void resolveAttributeFromPriorByIndex(int index) {
@@ -775,7 +760,7 @@ public class ShadowingEntity implements MutableEntity {
     if (prior.isPresent()) {
       inner.setAttributeValue(index, prior.get());
 
-      // PERFORMANCE: Update array-based cache (O(1) without HashMap overhead)
+      // Update array-based cache
       if (index >= 0 && index < resolvedCacheByIndex.length) {
         resolvedCacheByIndex[index] = prior.get();
       }
@@ -807,7 +792,7 @@ public class ShadowingEntity implements MutableEntity {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
 
-    // PERFORMANCE: Clear array-based cache
+    // Clear array-based cache
     Arrays.fill(resolvedCacheByIndex, null);
   }
 
@@ -815,7 +800,7 @@ public class ShadowingEntity implements MutableEntity {
   public void endSubstep() {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
 
-    // PERFORMANCE: Clear array-based tracking
+    // Clear array-based tracking
     Arrays.fill(resolvingByIndex, false);
 
     inner.endSubstep();
