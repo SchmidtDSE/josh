@@ -374,8 +374,10 @@ public class TimeStep {
       // Pre-allocate list with exact size (now precise, not estimated)
       List<Entity> candidates = new ArrayList<>(offsets.size());
 
-      // Iterate only cells that intersect (43% fewer iterations)
-      for (IntPair offset : offsets) {
+      // Iterate only cells that intersect using indexed loop (eliminates iterator overhead)
+      int offsetCount = offsets.size();
+      for (int i = 0; i < offsetCount; i++) {
+        IntPair offset = offsets.get(i);
         int gridX = centerGridX + offset.dx;
         int gridY = centerGridY + offset.dy;
 
@@ -498,17 +500,10 @@ public class TimeStep {
     List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
 
     // For circle queries, candidates are exact matches (zero false positives)
-    // Skip expensive BigDecimal-based intersection checks
+    // queryCandidatesForCircle already filters out nulls, so return directly
     org.joshsim.engine.geometry.grid.GridShape gridGeom = geometry.getOnGrid();
     if (gridGeom != null && gridGeom.getGridShapeType() == GridShapeType.CIRCLE) {
-      List<Entity> selectedPatches = new ArrayList<>(candidates.size());
-      for (Entity patch : candidates) {
-        // Only check if patch has geometry (no intersection test needed)
-        if (patch.getGeometry().isPresent()) {
-          selectedPatches.add(patch);
-        }
-      }
-      return selectedPatches;
+      return candidates;
     }
 
     // Non-circle queries: use existing intersection logic (squares, points)

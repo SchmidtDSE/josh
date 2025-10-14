@@ -58,7 +58,8 @@
       "Bash(if [ -f /home/ubuntu/josh2/tasks/optimization_cleanup.md ])",
       "Bash(then cat /home/ubuntu/josh2/tasks/optimization_cleanup.md)",
       "Bash(else echo \"File does not exist yet\")",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(./run_profiler_small.sh:*)"
     ],
     "deny": [],
     "ask": []
