@@ -11,7 +11,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
-
 /**
  * Strategy to serialize and write entities to persistence in a separate writer thread.
  */

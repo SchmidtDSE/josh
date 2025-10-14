@@ -14,7 +14,6 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-
 /**
  * Strategy which opens an OutputStream to a local file.
  */

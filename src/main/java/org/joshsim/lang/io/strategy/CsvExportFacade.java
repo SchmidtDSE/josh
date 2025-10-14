@@ -21,7 +21,6 @@ import org.joshsim.lang.io.ExportTask;
 import org.joshsim.lang.io.OutputStreamStrategy;
 import org.joshsim.wire.NamedMap;
 
-
 /**
  * Strategy implementing ExportFacade which writes entities to CSV in a writer thread.
  */

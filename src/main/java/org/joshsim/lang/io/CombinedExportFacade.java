@@ -22,7 +22,6 @@ import org.joshsim.lang.bridge.PatchExportCallback;
 import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
-
 /**
  * Convenience facade that manages zero or more exports.
  *
