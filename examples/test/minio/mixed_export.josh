@@ -18,4 +18,6 @@ end patch
 start organism TestIndividual
   counter.init = 0 count
   counter.step = prior.counter + 1 count
+
+  export.counter.step = current.counter
 end organism
