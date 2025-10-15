@@ -41,6 +41,15 @@ public interface CompatibilityLayer {
   QueueService createQueueService(QueueServiceCallback callback);
 
   /**
+   * Creates a platform-specific queue service implementation with capacity limit.
+   *
+   * @param callback The callback to handle queue events
+   * @param capacity Maximum queue capacity (ignored in emulated environments)
+   * @return A new QueueService instance
+   */
+  QueueService createQueueService(QueueServiceCallback callback, int capacity);
+
+  /**
    * Returns a platform-specific lock implementation for thread synchronization.
    *
    * @return A new CompatibleLock instance

@@ -35,6 +35,12 @@ public class EmulatedCompatibilityLayer implements CompatibilityLayer {
   }
 
   @Override
+  public QueueService createQueueService(QueueServiceCallback callback, int capacity) {
+    // Capacity is ignored in emulated environments
+    return new EmulatedQueueService(callback);
+  }
+
+  @Override
   public CompatibleLock getLock() {
     return new EmulatedLock();
   }
