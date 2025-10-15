@@ -48,29 +48,26 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public DirectLockMutableEntity(EntityInitializationInfo initInfo) {
     this.name = initInfo.getName();
 
-    // Use the immutable map directly - no defensive copy needed!
-    // The map is already immutable and shared across all instances of this entity type.
-    Map<EventKey, EventHandlerGroup> eventHandlerGroups = initInfo.getEventHandlerGroups();
-    if (eventHandlerGroups == null) {
+    Map<EventKey, EventHandlerGroup> sharedImmutEventHandlerGroups =
+        initInfo.getEventHandlerGroups();
+    if (sharedImmutEventHandlerGroups == null) {
       this.eventHandlerGroups = Collections.emptyMap();
     } else {
-      this.eventHandlerGroups = eventHandlerGroups;
+      this.eventHandlerGroups = sharedImmutEventHandlerGroups;
     }
 
-    // Store reference to shared index map (immutable)
-    Map<String, Integer> attributeNameToIndex = initInfo.getAttributeNameToIndex();
-    if (attributeNameToIndex == null) {
+    Map<String, Integer> sharedImmutAttributeNameToIndex = initInfo.getAttributeNameToIndex();
+    if (sharedImmutAttributeNameToIndex == null) {
       this.attributeNameToIndex = Collections.emptyMap();
     } else {
-      this.attributeNameToIndex = attributeNameToIndex;
+      this.attributeNameToIndex = sharedImmutAttributeNameToIndex;
     }
 
-    // Store reference to shared index-to-name array (immutable)
-    String[] indexToAttributeName = initInfo.getIndexToAttributeName();
-    if (indexToAttributeName == null) {
+    String[] sharedImmutIndexToAttributeName = initInfo.getIndexToAttributeName();
+    if (sharedImmutIndexToAttributeName == null) {
       this.indexToAttributeName = new String[0];
     } else {
-      this.indexToAttributeName = indexToAttributeName;
+      this.indexToAttributeName = sharedImmutIndexToAttributeName;
     }
 
     // Attributes array needs defensive copy (mutable per instance)
@@ -314,21 +311,42 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
   }
 
+  /**
+   * Get the complete attribute name to index mapping for this entity type.
+   *
+   * <p>This map is shared across all instances of this entity type and maps
+   * attribute names to their array indices. The map is immutable and uses
+   * alphabetical ordering for deterministic indexing.</p>
+   *
+   * <p>This method is useful for caching index lookups across multiple
+   * attribute accesses on entities of the same type.</p>
+   *
+   * <p>Note: This method returns a shared immutable reference that is reused
+   * across all entity instances of this type for memory efficiency.</p>
+   *
+   * @return immutable map from attribute name to array index
+   */
   @Override
   public Map<String, Integer> getAttributeNameToIndex() {
-    // Return the shared immutable map directly
     return attributeNameToIndex;
   }
 
   /**
    * Get the index-to-name array for reverse lookup.
    *
-   * <p>This array maps attribute indices to their corresponding names.</p>
+   * <p>This array maps attribute indices to their corresponding names,
+   * providing efficient reverse lookup from index to attribute name.</p>
    *
-   * @return immutable array where array[index] = attribute name
+   * <p>For entity types that do not support index-based access, this
+   * method returns null to avoid allocation overhead.</p>
+   *
+   * <p>Note: This method returns a shared immutable reference that is reused
+   * across all entity instances of this type for memory efficiency.</p>
+   *
+   * @return immutable array where array[index] = attribute name, or null
+   *     if this entity type does not support index-based reverse lookup
    */
   public String[] getIndexToAttributeName() {
-    // Return the shared immutable array directly
     return indexToAttributeName;
   }
 

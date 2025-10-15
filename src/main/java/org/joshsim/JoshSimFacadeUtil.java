@@ -128,11 +128,11 @@ public class JoshSimFacadeUtil {
         TimeStep completedTimeStep = bridge.getReplicate()
             .getTimeStep(completedStep)
             .orElseThrow();
-        if (exportCallback.isPresent()) {
-          // Incremental mode - patches already exported, only write metadata
+
+        boolean inIncrementalMode = exportCallback.isPresent();
+        if (inIncrementalMode) {
           exportFacade.writeMetaOnly(completedTimeStep);
         } else {
-          // Bulk mode - export entire timestep at once
           exportFacade.write(completedTimeStep);
         }
       }
