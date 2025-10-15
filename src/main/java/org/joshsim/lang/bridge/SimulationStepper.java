@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
+import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -117,6 +118,7 @@ public class SimulationStepper {
    */
   private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
     long currentStep = target.getCurrentTimestep();
+    boolean shouldExport = exportCallback.isPresent() && shouldExportInSubstep(subStep);
 
     if (serial) {
       // Use direct iteration for serial execution (better performance)
@@ -125,9 +127,8 @@ public class SimulationStepper {
         MutableEntity result = updateEntity(entity, subStep);
         if (result != null) {
           // Export patch immediately after completion if callback present
-          if (exportCallback.isPresent() && shouldExportInSubstep(subStep)) {
-            org.joshsim.engine.entity.base.Entity frozen =
-                exportCallback.get().exportPatch(result, currentStep);
+          if (shouldExport) {
+            Entity frozen = exportCallback.get().exportPatch(result, currentStep);
             // Store frozen entity in Replicate for prior state access
             saveFrozenPatchToReplicate(frozen, currentStep);
           }
@@ -140,9 +141,8 @@ public class SimulationStepper {
       StreamSupport.stream(entities.spliterator(), true)
           .forEach(entity -> {
             MutableEntity result = updateEntity(entity, subStep);
-            if (result != null && exportCallback.isPresent() && shouldExportInSubstep(subStep)) {
-              org.joshsim.engine.entity.base.Entity frozen =
-                  exportCallback.get().exportPatch(result, currentStep);
+            if (result != null && shouldExport) {
+              Entity frozen = exportCallback.get().exportPatch(result, currentStep);
               saveFrozenPatchToReplicate(frozen, currentStep);
             }
           });
@@ -180,16 +180,14 @@ public class SimulationStepper {
   /**
    * Resolve all properties inside of a mutable entity, recursing to update on inner entities.
    *
-   * <p>Resolve all attributes of a mutable entity and then look for inner entities found inside the
-   * target. Recurse on those targets afterwards to update. This method assumes that a substep has
-   * already started for target and its internal entities.</p>
+   * <p>Resolves all attributes of a mutable entity, collecting any inner entities discovered during
+   * resolution. Recurses on those inner entities afterwards to update them. This method assumes
+   * that a substep has already started for target and its internal entities.</p>
    *
    * @param target The root MutableEntity to be updated and within which inner entities are
    *     recursively updated.
    */
   private void updateEntityUnsafe(MutableEntity target) {
-    // Resolve all attributes and collect entities discovered during resolution.
-
     // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
@@ -199,17 +197,20 @@ public class SimulationStepper {
 
     for (int i = 0; i < numAttributes; i++) {
       Optional<EngineValue> value = target.getAttributeValue(i);
-      if (value.isEmpty()) {
+      boolean valueResolved = !value.isEmpty();
+      if (!valueResolved) {
         continue;
       }
 
       EngineValue attributeValue = value.get();
-      if (!attributeValue.getLanguageType().containsAttributes()) {
+      boolean innerIsEntity = attributeValue.getLanguageType().containsAttributes();
+      if (!innerIsEntity) {
         continue;
       }
 
       Optional<Integer> size = attributeValue.getSize();
-      if (size.isEmpty()) {
+      boolean innerNoAttributes = size.isEmpty();
+      if (innerNoAttributes) {
         continue;
       }
 
@@ -263,9 +264,7 @@ public class SimulationStepper {
    * @param frozen the frozen Entity to save
    * @param currentStep the current timestep number
    */
-  private void saveFrozenPatchToReplicate(
-      org.joshsim.engine.entity.base.Entity frozen,
-      long currentStep) {
+  private void saveFrozenPatchToReplicate(Entity frozen, long currentStep) {
     target.getReplicate().saveFrozenPatch(frozen, currentStep);
   }
 

@@ -24,6 +24,7 @@ This document catalogs the performance optimizations implemented in Josh Simulat
 - Entity instances store attribute values in `EngineValue[]` arrays indexed by attribute index
 - ShadowingEntity uses array-based caching (`resolvedCacheByIndex`) for resolved values
 - FrozenEntity uses direct array access with explicit null checks to avoid Optional.ofNullable() overhead
+- PriorShadowingEntityDecorator delegates to ShadowingEntity's integer-based prior attribute access, avoiding O(n) HashMap iteration and leveraging the optimized integer-based access path in the inner entity
 
 **Files Modified:**
 - `src/main/java/org/joshsim/engine/entity/base/MutableEntity.java` - Interface supporting integer-based access

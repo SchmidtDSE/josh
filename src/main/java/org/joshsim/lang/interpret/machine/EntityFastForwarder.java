@@ -6,9 +6,7 @@
 
 package org.joshsim.lang.interpret.machine;
 
-import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -75,8 +73,7 @@ public class EntityFastForwarder {
     // Force attribute resolution for all attributes using integer indexing
     int attributeCount = entity.getAttributeNameToIndex().size();
     for (int i = 0; i < attributeCount; i++) {
-      Optional<EngineValue> value = entity.getAttributeValue(i);
-      assert value != null;
+      entity.getAttributeValue(i);
     }
 
     if (!leaveOpen) {

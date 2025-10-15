@@ -21,11 +21,8 @@ public class MapSerializeStrategy implements MapExportSerializeStrategy {
 
   @Override
   public Map<String, String> getRecord(Entity entity) {
-    // Estimate ~20% of attributes are exports (typical case)
-    int estimatedSize = Math.max(4, entity.getAttributeNames().size() / 5);
-    Map<String, String> result = new HashMap<>(
-        (int) (estimatedSize / 0.75f) + 1
-    );
+    int estimatedSize = entity.getAttributeNames().size() / 4 + 1;
+    Map<String, String> result = new HashMap<>(estimatedSize);
 
     for (String name : entity.getAttributeNames()) {
       if (name.startsWith("export.")) {

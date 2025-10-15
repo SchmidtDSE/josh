@@ -224,7 +224,7 @@ public class DirectLockMutableEntityFastPathTest {
   /**
    * Helper method to compute attributes without handlers map.
    */
-  private static Map<String, Set<String>> computeOptimizationMap(
+  private static Map<String, boolean[]> computeOptimizationMap(
       String name,
       Map<EventKey, EventHandlerGroup> handlers,
       Map<String, EngineValue> attributes) {
@@ -240,7 +240,7 @@ public class DirectLockMutableEntityFastPathTest {
       java.lang.reflect.Method method = EntityBuilder.class.getDeclaredMethod(
           "computeAttributesWithoutHandlersBySubstep");
       method.setAccessible(true);
-      return (Map<String, Set<String>>) method.invoke(builder);
+      return (Map<String, boolean[]>) method.invoke(builder);
     } catch (Exception e) {
       throw new RuntimeException("Failed to compute optimization map", e);
     }
@@ -254,13 +254,60 @@ public class DirectLockMutableEntityFastPathTest {
         String name,
         Map<EventKey, EventHandlerGroup> handlers,
         Map<String, EngineValue> attributes) {
-      super(name, handlers,
-          attributesArrayFromMap(handlers, attributes),
-          attributeIndexFromMap(handlers, attributes),
-          indexToAttributeNameFromMap(handlers, attributes),
-          computeOptimizationMap(name, handlers, attributes),
-          Collections.emptyMap(),
-          Collections.emptySet());
+      super(createInitInfo(name, handlers, attributes));
+    }
+
+    private static EntityInitializationInfo createInitInfo(
+        String name,
+        Map<EventKey, EventHandlerGroup> handlers,
+        Map<String, EngineValue> attributes) {
+      final EngineValue[] attributesArray = attributesArrayFromMap(handlers, attributes);
+      final Map<String, Integer> attributeIndex = attributeIndexFromMap(handlers, attributes);
+      final String[] indexToAttributeName = indexToAttributeNameFromMap(handlers, attributes);
+      final Map<String, boolean[]> optimizationMap =
+          computeOptimizationMap(name, handlers, attributes);
+
+      return new EntityInitializationInfo() {
+        @Override
+        public String getName() {
+          return name;
+        }
+
+        @Override
+        public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
+          return handlers;
+        }
+
+        @Override
+        public EngineValue[] createAttributesArray() {
+          return attributesArray;
+        }
+
+        @Override
+        public Map<String, Integer> getAttributeNameToIndex() {
+          return attributeIndex;
+        }
+
+        @Override
+        public String[] getIndexToAttributeName() {
+          return indexToAttributeName;
+        }
+
+        @Override
+        public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+          return optimizationMap;
+        }
+
+        @Override
+        public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public Set<String> getSharedAttributeNames() {
+          return Collections.emptySet();
+        }
+      };
     }
 
     private static EngineValue[] attributesArrayFromMap(
@@ -292,7 +339,7 @@ public class DirectLockMutableEntityFastPathTest {
 
       // Sort alphabetically
       java.util.List<String> sortedNames = new java.util.ArrayList<>(allNames);
-      java.util.Collections.sort(sortedNames);
+      Collections.sort(sortedNames);
 
       // Build index map
       Map<String, Integer> result = new HashMap<>();

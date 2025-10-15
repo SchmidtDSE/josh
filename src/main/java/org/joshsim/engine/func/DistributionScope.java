@@ -28,7 +28,6 @@ public class DistributionScope implements Scope {
   private final Distribution value;
   private final Set<String> expectedAttrs;
 
-  // Cache for ValueResolver instances to avoid repeated allocation
   private final Map<String, ValueResolver> resolverCache = new HashMap<>();
 
   /**
@@ -82,8 +81,7 @@ public class DistributionScope implements Scope {
   /**
    * Extract all attribute names from a sampled entity's event handlers or set attributes.
    *
-   * <p>Returns a copy of the attribute names set to avoid issues if the original set
-   * is immutable or if we need to avoid sharing references.</p>
+   * <p>Returns a deep copy.</p>
    *
    * @param target the Distriubtion to sample for an Entity from which to extract attribute names.
    * @return Set of attribute names found in the entity's event handlers or set attributes.

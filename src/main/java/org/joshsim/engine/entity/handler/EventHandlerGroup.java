@@ -16,6 +16,7 @@ package org.joshsim.engine.entity.handler;
 public class EventHandlerGroup {
   private final Iterable<EventHandler> eventHandlers;
   private final EventKey eventKey;
+  private final boolean isAssertion;
 
   /**
    * Constructor for an EventHandlerGroup.
@@ -26,6 +27,7 @@ public class EventHandlerGroup {
   ) {
     this.eventHandlers = eventHandlers;
     this.eventKey = eventKey;
+    this.isAssertion = eventKey.getAttribute().startsWith("assert.");
   }
 
   /**
@@ -46,5 +48,18 @@ public class EventHandlerGroup {
    */
   public EventKey getEventKey() {
     return this.eventKey;
+  }
+
+  /**
+   * Check if this event handler group is for an assertion attribute.
+   *
+   * <p>Assertion attributes are those whose names start with "assert.".
+   * This check is cached at construction time to avoid repeated string
+   * operations on the hot path.</p>
+   *
+   * @return true if this handler group is for an assertion attribute
+   */
+  public boolean isAssertion() {
+    return isAssertion;
   }
 }

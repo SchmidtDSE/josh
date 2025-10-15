@@ -6,9 +6,14 @@
 
 package org.joshsim.engine.entity.type;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
+import org.joshsim.engine.entity.base.EntityInitializationInfo;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -36,11 +41,62 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
       HashMap<String, EngineValue> attributes
   ) {
     // ExternalResource has no handlers, so convert to array and pass empty maps
-    super(name, eventHandlerGroups,
-        attributesArrayFromMap(attributes),
-        attributeIndexFromMap(attributes),
-        indexToAttributeNameFromMap(attributes),
-        Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
+    super(createInitInfo(name, eventHandlerGroups, attributes));
+  }
+
+  /**
+   * Create initialization info for ExternalResource.
+   */
+  private static EntityInitializationInfo createInitInfo(
+      String name,
+      HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
+      HashMap<String, EngineValue> attributes
+  ) {
+    final EngineValue[] attributesArray = attributesArrayFromMap(attributes);
+    final Map<String, Integer> attributeIndex = attributeIndexFromMap(attributes);
+    final String[] indexToAttributeName = indexToAttributeNameFromMap(attributes);
+
+    return new EntityInitializationInfo() {
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
+        return eventHandlerGroups;
+      }
+
+      @Override
+      public EngineValue[] createAttributesArray() {
+        return attributesArray;
+      }
+
+      @Override
+      public Map<String, Integer> getAttributeNameToIndex() {
+        return attributeIndex;
+      }
+
+      @Override
+      public String[] getIndexToAttributeName() {
+        return indexToAttributeName;
+      }
+
+      @Override
+      public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public Set<String> getSharedAttributeNames() {
+        return Collections.emptySet();
+      }
+    };
   }
 
   /**
@@ -50,7 +106,7 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
     if (map.isEmpty()) {
       return new EngineValue[0];
     }
-    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    List<String> sortedNames = new ArrayList<>(map.keySet());
     Collections.sort(sortedNames);
     EngineValue[] result = new EngineValue[sortedNames.size()];
     for (int i = 0; i < sortedNames.size(); i++) {
@@ -62,14 +118,14 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
   /**
    * Create index map from attribute names using alphabetical ordering.
    */
-  private static java.util.Map<String, Integer> attributeIndexFromMap(
+  private static Map<String, Integer> attributeIndexFromMap(
       HashMap<String, EngineValue> map) {
     if (map.isEmpty()) {
       return Collections.emptyMap();
     }
-    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    List<String> sortedNames = new ArrayList<>(map.keySet());
     Collections.sort(sortedNames);
-    java.util.Map<String, Integer> result = new HashMap<>();
+    Map<String, Integer> result = new HashMap<>();
     for (int i = 0; i < sortedNames.size(); i++) {
       result.put(sortedNames.get(i), i);
     }
@@ -83,7 +139,7 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
     if (map.isEmpty()) {
       return new String[0];
     }
-    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    List<String> sortedNames = new ArrayList<>(map.keySet());
     Collections.sort(sortedNames);
     return sortedNames.toArray(new String[0]);
   }

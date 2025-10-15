@@ -47,47 +47,69 @@ public class IncrementalPatchExportCallback implements PatchExportCallback {
 
   @Override
   public Entity exportPatch(MutableEntity patch, long currentStep) {
-    // Step 1: Lock and freeze the patch
+    Entity frozen = freezePatch(patch);
+    exportPatchData(frozen, currentStep);
+    exportInnerEntities(frozen, currentStep);
+    return frozen;
+  }
+
+  /**
+   * Locks and freezes the patch entity.
+   *
+   * @param patch The mutable patch entity to freeze
+   * @return The frozen entity
+   */
+  private Entity freezePatch(MutableEntity patch) {
     patch.lock();
-    Entity frozen;
     try {
-      frozen = patch.freeze();
+      return patch.freeze();
     } finally {
       patch.unlock();
     }
+  }
 
-    // Step 2: Export patch data if requested
+  /**
+   * Exports patch data if a patch export facade is configured.
+   *
+   * @param frozen The frozen patch entity to export
+   * @param currentStep The current simulation step
+   */
+  private void exportPatchData(Entity frozen, long currentStep) {
     patchExportFacade.ifPresent(facade -> {
       Optional<MapExportSerializeStrategy> strategy = facade.getSerializeStrategy();
-      if (strategy.isPresent()) {
-        // Producer serialization: serialize to Map and queue NamedMap
+      boolean producerSerializing = strategy.isPresent();
+
+      if (producerSerializing) {
         Map<String, String> serialized = strategy.get().getRecord(frozen);
         NamedMap namedMap = new NamedMap(frozen.getName(), serialized);
         facade.write(namedMap, currentStep, replicateNumber);
       } else {
-        // Legacy: queue Entity (serialization in writer thread)
         facade.write(frozen, currentStep, replicateNumber);
       }
     });
+  }
 
-    // Step 3: Export inner entities if requested
+  /**
+   * Exports inner entities if an entity export facade is configured.
+   *
+   * @param frozen The frozen patch entity containing inner entities
+   * @param currentStep The current simulation step
+   */
+  private void exportInnerEntities(Entity frozen, long currentStep) {
     entityExportFacade.ifPresent(facade -> {
       Optional<MapExportSerializeStrategy> strategy = facade.getSerializeStrategy();
-      if (strategy.isPresent()) {
-        // Producer serialization for inner entities
+      boolean producerSerializing = strategy.isPresent();
+
+      if (producerSerializing) {
         InnerEntityGetter.getInnerFrozenEntitiesRecursive(frozen).forEach(entity -> {
           Map<String, String> serialized = strategy.get().getRecord(entity);
           NamedMap namedMap = new NamedMap(entity.getName(), serialized);
           facade.write(namedMap, currentStep, replicateNumber);
         });
       } else {
-        // Legacy: queue entities
         InnerEntityGetter.getInnerFrozenEntitiesRecursive(frozen)
             .forEach(entity -> facade.write(entity, currentStep, replicateNumber));
       }
     });
-
-    // Step 4: Return frozen entity for Replicate.pastTimeSteps
-    return frozen;
   }
 }

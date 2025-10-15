@@ -52,13 +52,13 @@ public class LocalOutputStreamStrategy implements OutputStreamStrategy {
       fileHasContent = file.exists() && file.length() > 0;
     }
 
-    FileOutputStream fos = new FileOutputStream(location, appendMode);
+    FileOutputStream outputStream = new FileOutputStream(location, appendMode);
     if (appendMode) {
-      FileChannel channel = fos.getChannel();
+      FileChannel channel = outputStream.getChannel();
       FileLock lock = channel.lock(); // Exclusive lock, blocks until acquired
-      return new LockingOutputStream(fos, lock, fileHasContent);
+      return new LockingOutputStream(outputStream, lock, fileHasContent);
     }
-    return fos;
+    return outputStream;
   }
 
   /**

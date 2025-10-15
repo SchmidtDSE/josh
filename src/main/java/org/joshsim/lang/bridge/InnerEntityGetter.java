@@ -45,12 +45,16 @@ public class InnerEntityGetter {
 
     for (int i = 0; i < numAttributes; i++) {
       Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
-      if (valueMaybe.isEmpty()) {
+      boolean valueNotSet = valueMaybe.isEmpty();
+      if (valueNotSet) {
+        // Continue for profiling reasons
         continue;
       }
 
       EngineValue value = valueMaybe.get();
-      if (!value.getLanguageType().containsAttributes()) {
+      boolean hasInnerAttrs = value.getLanguageType().containsAttributes();
+      if (!hasInnerAttrs) {
+        // Continue for profiling reasons
         continue;
       }
 
@@ -91,12 +95,16 @@ public class InnerEntityGetter {
 
     for (int i = 0; i < numAttributes; i++) {
       Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
-      if (valueMaybe.isEmpty()) {
+      boolean valueNotSet = valueMaybe.isEmpty();
+      if (valueNotSet) {
+        // Continue for profiling reasons
         continue;
       }
 
       EngineValue value = valueMaybe.get();
-      if (!value.getLanguageType().containsAttributes()) {
+      boolean hasInnerAttrs = value.getLanguageType().containsAttributes();
+      if (!hasInnerAttrs) {
+        // Continue for profiling reasons
         continue;
       }
 

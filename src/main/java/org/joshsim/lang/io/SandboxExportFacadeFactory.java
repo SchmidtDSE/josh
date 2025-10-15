@@ -79,6 +79,11 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     return path;
   }
 
+  @Override
+  public int getReplicateNumber() {
+    return 0;
+  }
+
   /**
    * An OutputStream implementation that redirects output through an in-memory callback.
    */
