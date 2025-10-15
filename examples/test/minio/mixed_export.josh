@@ -6,12 +6,7 @@ start simulation MinioMixedTest
   steps.low = 0 count
   steps.high = 10 count
   exportFiles.patch = "minio://josh-test-bucket/results/mixed_{replicate}.csv"
-  exportFiles.meta = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
-
-  stepCount.init = 0 count
-  stepCount.step = prior.stepCount + 1 count
-
-  export.stepCounter.step = current.stepCount
+  exportFiles.entity = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
 end simulation
 
 start patch Default
