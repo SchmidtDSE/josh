@@ -157,7 +157,7 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Compute boolean arrays indicating attributes that lack handlers for each substep.
+   * Get boolean arrays indicating attributes that lack handlers for each substep.
    *
    * <p>This method analyzes event handlers to determine which attributes have no handlers
    * for specific substeps (init, step, start, end, constant). This enables fast-path
@@ -168,20 +168,21 @@ public class EntityBuilder implements EntityInitializationInfo {
    * in the initial attributes map but has no event handler for that specific substep.
    * This prevents false negatives (incorrectly skipping handler execution).</p>
    *
-   * <p>This computation is done once per entity type in the builder and shared across
+   * <p>The result is computed once per entity type in the builder and shared across
    * all entity instances of that type. Uses boolean arrays indexed by attribute index
    * for faster lookup compared to HashSet operations.</p>
    *
    * @return Immutable map from substep name to boolean array where true indicates no handlers
    */
-  private Map<String, boolean[]> computeAttributesWithoutHandlersBySubstep() {
+  @Override
+  public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
     // Use cached value if available
     if (attributesWithoutHandlersBySubstep != null) {
       return attributesWithoutHandlersBySubstep;
     }
 
     // Get the index map to know array size
-    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
     int arraySize = indexMap.size();
 
     Map<String, boolean[]> result = new HashMap<>();
@@ -226,18 +227,19 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Compute the pre-computed handler cache for all attributes, substeps, and states.
+   * Get the pre-computed handler cache for all attributes, substeps, and states.
    *
    * <p>This method pre-computes all possible handler lookups by examining all event keys
    * in the entity's event handler groups and creating a cache keyed by
    * "attribute:substep" or "attribute:substep:state" strings.</p>
    *
-   * <p>The computation is done once per entity type in the builder and shared
+   * <p>The result is computed once per entity type in the builder and shared
    * across all entity instances of that type.</p>
    *
    * @return Immutable map from cache key string to list of matching EventHandlerGroups
    */
-  private Map<String, List<EventHandlerGroup>> computeCommonHandlerCache() {
+  @Override
+  public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
     // Use cached value if available
     if (commonHandlerCache != null) {
       return commonHandlerCache;
@@ -308,10 +310,10 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Compute the shared set of attribute names for this entity type.
+   * Get the shared set of attribute names for this entity type.
    *
    * <p>This method extracts all unique attribute names from event handlers defined
-   * for this entity type. The computation is done once per entity type in the builder
+   * for this entity type. The result is computed once per entity type in the builder
    * and the resulting immutable set is shared across all entity instances of that type.</p>
    *
    * <p>The returned set is immutable and thread-safe for concurrent reads, making
@@ -320,7 +322,8 @@ public class EntityBuilder implements EntityInitializationInfo {
    *
    * @return Immutable set of attribute names, shared across all instances of this entity type
    */
-  private Set<String> computeAttributeNames() {
+  @Override
+  public Set<String> getSharedAttributeNames() {
     // Use cached value if available
     if (sharedAttributeNames != null) {
       return sharedAttributeNames;
@@ -340,18 +343,19 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Compute the shared attribute name to index map for array-based storage.
+   * Get the shared attribute name to index map for array-based storage.
    *
    * <p>This method creates a sorted mapping from attribute names to array indices,
    * ensuring deterministic ordering across all entity instances. Attributes are
    * sorted alphabetically to guarantee consistent indices.</p>
    *
-   * <p>This map is computed once per entity type in the builder and shared across
+   * <p>The result is computed once per entity type in the builder and shared across
    * all entity instances of that type.</p>
    *
    * @return Immutable map from attribute name to array index
    */
-  private Map<String, Integer> computeAttributeNameToIndex() {
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
     // Use cached value if available
     if (attributeNameToIndex != null) {
       return attributeNameToIndex;
@@ -383,24 +387,25 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Compute the shared index-to-name array for reverse lookup.
+   * Get the shared index-to-name array for reverse lookup.
    *
    * <p>This method creates an array where indexToAttributeName[i] = name for the
    * attribute at index i. This enables direct lookup when converting from index to name.</p>
    *
-   * <p>The array is computed once per entity type in the builder and shared across
+   * <p>The result is computed once per entity type in the builder and shared across
    * all entity instances of that type.</p>
    *
    * @return Array where array[index] = attribute name for that index
    */
-  private String[] computeIndexToAttributeName() {
+  @Override
+  public String[] getIndexToAttributeName() {
     // Use cached value if available
     if (indexToAttributeName != null) {
       return indexToAttributeName;
     }
 
     // Get the index map (creates it if needed)
-    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
 
     // Create array sized to hold all attributes
     String[] result = new String[indexMap.size()];
@@ -428,7 +433,7 @@ public class EntityBuilder implements EntityInitializationInfo {
    */
   @Override
   public EngineValue[] createAttributesArray() {
-    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
     EngineValue[] result = new EngineValue[indexMap.size()];
 
     // Copy values from map to array
@@ -445,31 +450,6 @@ public class EntityBuilder implements EntityInitializationInfo {
   @Override
   public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
     return getImmutableEventHandlerGroups();
-  }
-
-  @Override
-  public Map<String, Integer> getAttributeNameToIndex() {
-    return computeAttributeNameToIndex();
-  }
-
-  @Override
-  public String[] getIndexToAttributeName() {
-    return computeIndexToAttributeName();
-  }
-
-  @Override
-  public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
-    return computeAttributesWithoutHandlersBySubstep();
-  }
-
-  @Override
-  public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
-    return computeCommonHandlerCache();
-  }
-
-  @Override
-  public Set<String> getSharedAttributeNames() {
-    return computeAttributeNames();
   }
 
   /**
