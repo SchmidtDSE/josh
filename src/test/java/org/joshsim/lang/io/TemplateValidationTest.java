@@ -37,7 +37,7 @@ public class TemplateValidationTest {
         .setReplicates(1)
         .build();
     renderer = new TemplateStringRenderer(testJob, 1);
-    factory = new JvmExportFacadeFactory(1, renderer);
+    factory = new JvmExportFacadeFactory(1, renderer, null);
   }
 
   @Test
