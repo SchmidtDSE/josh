@@ -49,7 +49,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     this.name = initInfo.getName();
 
     Map<EventKey, EventHandlerGroup> sharedImmutHandlerGroups = initInfo.getEventHandlerGroups();
-    if (sharedImmutEventHandlerGroups == null) {
+    if (sharedImmutHandlerGroups == null) {
       this.eventHandlerGroups = Collections.emptyMap();
     } else {
       this.eventHandlerGroups = sharedImmutHandlerGroups;
