@@ -30,30 +30,48 @@ class ReplicateOutputStreamGeneratorTest {
   @TempDir
   Path tempDir;
 
+  /**
+   * Helper method to create a local file OutputStreamStrategy for testing.
+   *
+   * @param path The file path
+   * @return OutputStreamStrategy for local files
+   */
+  private OutputStreamStrategy createLocalStrategy(String path) {
+    // Strip file:// prefix if present for local files
+    String filePath = path.replace("file://", "");
+    return new LocalOutputStreamStrategy(filePath, false);
+  }
+
   @Test
   void testConstructorValidation() {
     // Valid template should work
     String validTemplate = "file:///tmp/data_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(validTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        validTemplate,
+        this::createLocalStrategy
+    );
     assertEquals(validTemplate, generator.getPathTemplate());
 
     // Null template should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator(null));
+        new ReplicateOutputStreamGenerator(null, this::createLocalStrategy));
 
     // Empty template should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator(""));
+        new ReplicateOutputStreamGenerator("", this::createLocalStrategy));
 
     // Whitespace only template should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator("   "));
+        new ReplicateOutputStreamGenerator("   ", this::createLocalStrategy));
   }
 
   @Test
   void testCsvStreamGeneration() throws IOException {
     String template = tempDir.resolve("test_{replicate}.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
 
     // Test CSV stream reference
     ParameterizedCsvExportFacade.StreamReference ref1 =
@@ -85,7 +103,10 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testNetcdfStreamGeneration() throws IOException {
     String template = tempDir.resolve("simulation_{replicate}.nc").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
 
     // Test NetCDF stream reference
     ParameterizedNetcdfExportFacade.StreamReference ref3 =
@@ -105,29 +126,35 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testHasReplicateTemplate() {
     ReplicateOutputStreamGenerator withReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/data_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/data_{replicate}.csv", this::createLocalStrategy);
     assertTrue(withReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator withoutReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/static_file.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/static_file.csv", this::createLocalStrategy);
     assertFalse(withoutReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator multipleTemplates =
-        new ReplicateOutputStreamGenerator("file:///tmp/{step}_{replicate}_{variable}.tiff");
+        new ReplicateOutputStreamGenerator("file:///tmp/{step}_{replicate}_{variable}.tiff", this::createLocalStrategy);
     assertTrue(multipleTemplates.hasReplicateTemplate());
   }
 
   @Test
   void testGetPathTemplate() {
     String template = "file:///tmp/complex_{replicate}_data.nc";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
     assertEquals(template, generator.getPathTemplate());
   }
 
   @Test
   void testToString() {
     String template = "file:///tmp/test_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
 
     String toString = generator.toString();
     assertTrue(toString.contains("ReplicateOutputStreamGenerator"));
@@ -137,11 +164,11 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testEquals() {
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv", this::createLocalStrategy);
 
     // Test equality
     assertEquals(gen1, gen2);
@@ -156,11 +183,11 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testHashCode() {
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
+        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv", this::createLocalStrategy);
 
     // Equal objects should have equal hash codes
     assertEquals(gen1.hashCode(), gen2.hashCode());
@@ -172,7 +199,10 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testMultipleReplicateSubstitution() throws IOException {
     String template = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
 
     ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(5);
@@ -189,7 +219,10 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testLargeReplicateNumbers() throws IOException {
     String template = tempDir.resolve("replicate_{replicate}.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        this::createLocalStrategy
+    );
 
     // Test with large replicate number
     ParameterizedCsvExportFacade.StreamReference ref =
@@ -208,7 +241,10 @@ class ReplicateOutputStreamGeneratorTest {
   void testInvalidPath() {
     // Use an invalid path that cannot be created (e.g., with null characters)
     String invalidTemplate = "/dev/null/invalid\0path_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(invalidTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        invalidTemplate,
+        this::createLocalStrategy
+    );
 
     ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(1);

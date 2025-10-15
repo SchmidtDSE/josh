@@ -10,9 +10,8 @@
 
 package org.joshsim.lang.io;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.function.Function;
 
 /**
  * Output stream generator that creates separate files per replicate number.
@@ -24,7 +23,7 @@ import java.io.OutputStream;
  * <p>Example usage:
  * <pre>
  * String template = "file:///tmp/simulation_{replicate}.csv";
- * ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+ * ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template, ...);
  *
  * StreamReference ref = new StreamReference(1);
  * OutputStream stream = generator.getStream(ref);  // Creates: simulation_1.csv
@@ -36,6 +35,7 @@ public class ReplicateOutputStreamGenerator implements
         .ParameterizedOutputStreamGenerator {
 
   private final String pathTemplate;
+  private final Function<String, OutputStreamStrategy> strategyFactory;
 
   /**
    * Creates a new ReplicateOutputStreamGenerator with the specified path template.
@@ -44,57 +44,61 @@ public class ReplicateOutputStreamGenerator implements
    * with the actual replicate number when generating streams.</p>
    *
    * @param pathTemplate The file path template containing {replicate} placeholder
+   * @param strategyFactory Function to create OutputStreamStrategy for a given path
    * @throws IllegalArgumentException if pathTemplate is null or empty
    */
-  public ReplicateOutputStreamGenerator(String pathTemplate) {
+  public ReplicateOutputStreamGenerator(String pathTemplate,
+                                        Function<String, OutputStreamStrategy> strategyFactory) {
     if (pathTemplate == null || pathTemplate.trim().isEmpty()) {
       throw new IllegalArgumentException("Path template cannot be null or empty");
     }
     this.pathTemplate = pathTemplate;
+    this.strategyFactory = strategyFactory;
   }
 
   /**
    * Generates an output stream for CSV export based on the replicate number.
    *
    * @param reference The StreamReference containing the replicate number
-   * @return New FileOutputStream for the replicate-specific file path
-   * @throws RuntimeException if the file cannot be created
+   * @return New OutputStream for the replicate-specific file path
+   * @throws RuntimeException if the stream cannot be created
    */
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedCsvExportFacade.StreamReference reference) {
     String path = pathTemplate.replaceAll("\\{replicate\\}",
         Integer.toString(reference.getReplicate()));
-    return createFileOutputStream(path);
+    return createOutputStream(path);
   }
 
   /**
    * Generates an output stream for NetCDF export based on the replicate number.
    *
    * @param reference The StreamReference containing the replicate number
-   * @return New FileOutputStream for the replicate-specific file path
-   * @throws RuntimeException if the file cannot be created
+   * @return New OutputStream for the replicate-specific file path
+   * @throws RuntimeException if the stream cannot be created
    */
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade.StreamReference reference) {
     String path = pathTemplate.replaceAll("\\{replicate\\}",
         Integer.toString(reference.getReplicate()));
-    return createFileOutputStream(path);
+    return createOutputStream(path);
   }
 
   /**
-   * Creates a FileOutputStream for the specified path with error handling.
+   * Creates an OutputStream for the specified path using the strategy factory.
    *
    * @param path The file path to create stream for
-   * @return New FileOutputStream for the specified path
-   * @throws RuntimeException if the file cannot be created
+   * @return New OutputStream for the specified path
+   * @throws RuntimeException if the stream cannot be created
    */
-  private OutputStream createFileOutputStream(String path) {
+  private OutputStream createOutputStream(String path) {
     try {
-      return new FileOutputStream(path);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException("Could not create file for path: " + path, e);
+      OutputStreamStrategy strategy = strategyFactory.apply(path);
+      return strategy.open();
+    } catch (Exception e) {
+      throw new RuntimeException("Could not create output stream for path: " + path, e);
     }
   }
 
