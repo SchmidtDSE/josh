@@ -1,5 +1,5 @@
 start simulation MinioCSVTest
-  // Test CSV export to MinIO
+  # Test CSV export to MinIO
   exportFiles.csv = "minio://josh-test-bucket/results/test_{replicate}.csv"
 
   start init
