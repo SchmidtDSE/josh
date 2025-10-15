@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.joshsim.lang.io.AppendOutputStream;
 
 /**
  * Implementation of the ExportWriteStrategy interface for writing CSV files.
@@ -73,10 +74,20 @@ public class CsvWriteStrategy implements StringMapWriteStrategy {
 
       this.writer = new OutputStreamWriter(output);
 
-      this.printer = new CSVPrinter(writer, CSVFormat.DEFAULT
-          .builder()
-          .setHeader(headerValsArray)
-          .build());
+      // Check if we're appending to an existing file
+      boolean skipHeader = output instanceof AppendOutputStream
+          && ((AppendOutputStream) output).isAppendingToExistingFile();
+
+      if (skipHeader) {
+        // Skip header when appending to existing file
+        this.printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
+      } else {
+        // Write header for new files or when not appending
+        this.printer = new CSVPrinter(writer, CSVFormat.DEFAULT
+            .builder()
+            .setHeader(headerValsArray)
+            .build());
+      }
 
       onFirstRecord = false;
     }

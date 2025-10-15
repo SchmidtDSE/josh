@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
 /**
  * Strategy method which gathers records and writes all records at the same time.
  */
@@ -42,10 +41,6 @@ public abstract class PendingRecordWriteStrategy implements StringMapWriteStrate
   public void write(Map<String, String> record, OutputStream outputStream) throws IOException {
     if (variables.isEmpty()) {
       variables = Optional.of(getRequiredVariables());
-    }
-
-    for (String varName : variables.get()) {
-      checkPresent(record, varName);
     }
 
     this.outputStream = outputStream;

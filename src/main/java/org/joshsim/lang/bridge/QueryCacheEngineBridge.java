@@ -6,12 +6,11 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -92,23 +91,28 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   }
 
   @Override
-  public Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento) {
+  public List<Entity> getPriorPatches(GeometryMomento geometryMomento) {
     if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
+      // Cache hit: retrieve patches by keys using direct iteration
       List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
-
       long priorTimestep = getPriorTimestep();
 
-      return keys.stream()
-          .map((key) -> getReplicate().getPatchByKey(key, priorTimestep))
-          .collect(Collectors.toList());
+      List<Entity> result = new ArrayList<>(keys.size());
+      for (GeoKey key : keys) {
+        result.add(getReplicate().getPatchByKey(key, priorTimestep));
+      }
+      return result;
     } else {
-      Iterable<Entity> entities = getPriorPatches(geometryMomento.build());
+      // Cache miss: query patches and extract keys using direct iteration
+      List<Entity> entities = getPriorPatches(geometryMomento.build());
 
-      List<GeoKey> geoKeys = StreamSupport.stream(entities.spliterator(), false)
-          .map(Entity::getKey)
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .collect(Collectors.toList());
+      List<GeoKey> geoKeys = new ArrayList<>();
+      for (Entity entity : entities) {
+        Optional<GeoKey> keyMaybe = entity.getKey();
+        if (keyMaybe.isPresent()) {
+          geoKeys.add(keyMaybe.get());
+        }
+      }
 
       cachedPatchesByGeometry.put(geometryMomento, geoKeys);
       return entities;

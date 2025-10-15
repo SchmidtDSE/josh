@@ -77,6 +77,16 @@ public class GeotiffExportFacade implements ExportFacade {
     writeFromSerializedData(namedMap.getTarget(), step);
   }
 
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
   /**
    * Adds a task to the queue for processing.
    *
@@ -84,6 +94,11 @@ public class GeotiffExportFacade implements ExportFacade {
    */
   public void write(Task task) {
     queueService.add(task);
+  }
+
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(serializeStrategy);
   }
 
   /**

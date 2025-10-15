@@ -58,7 +58,7 @@ class SimulationStepperTest {
     when(mockSimulation.getAttributeNames()).thenReturn(attributes);
     when(mockPatch.getAttributeNames()).thenReturn(attributes);
 
-    EventKey eventKey = new EventKey("testAttribute", "init");
+    EventKey eventKey = EventKey.of("testAttribute", "init");
     when(mockSimulation.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
     when(mockPatch.getEventHandlers(eventKey)).thenReturn(Optional.of(mockHandlerGroup));
 

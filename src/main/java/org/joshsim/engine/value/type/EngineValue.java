@@ -232,7 +232,7 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue add(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -253,7 +253,7 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue subtract(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -275,7 +275,7 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if the values are incompatible and cannot be cast
    */
   public EngineValue multiply(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -297,7 +297,7 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if the values are incompatible and cannot be cast.
    */
   public EngineValue divide(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -319,7 +319,7 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if the exponent has units or values are incompatible
    */
   public EngineValue raiseToPower(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (!other.canBePower()) {
@@ -342,7 +342,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue greaterThan(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -360,7 +360,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue greaterThanOrEqualTo(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -378,7 +378,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue lessThan(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -396,7 +396,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue lessThanOrEqualTo(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -414,7 +414,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue equalTo(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {
@@ -432,7 +432,7 @@ public abstract class EngineValue {
    *     values otherwise.
    */
   public EngineValue notEqualTo(EngineValue other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, false);
 
     if (safeTuple.getSecond().getLanguageType().isDistribution()) {

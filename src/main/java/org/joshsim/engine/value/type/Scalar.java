@@ -88,7 +88,7 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
    */
   @Override
   public int compareTo(Scalar other) {
-    EngineValueTuple unsafeTuple = new EngineValueTuple(this, other);
+    EngineValueTuple unsafeTuple = EngineValueTuple.of(this, other);
     EngineValueTuple safeTuple = caster.makeCompatible(unsafeTuple, true);
     Scalar firstScalar = (Scalar) safeTuple.getFirst();
     Scalar secondScalar = (Scalar) safeTuple.getSecond();

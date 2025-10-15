@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
 
@@ -90,5 +92,20 @@ public class MemoryExportFacade implements ExportFacade {
     } catch (IOException e) {
       throw new RuntimeException("Error writing to output stream", e);
     }
+  }
+
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.empty();
   }
 }

@@ -62,7 +62,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType("string");
+    return LanguageType.of("string");
   }
 
   @Override

@@ -81,7 +81,7 @@ public class QueryCacheEngineBridgeTest {
     when(mockReplicate.getPatchByKey(eq(mockGeoKey), eq(-1L))).thenReturn(mockPatch);
 
     // First call - should query and cache
-    Iterable<Entity> result = bridge.getPriorPatches(mockGeometryMomento);
+    List<Entity> result = bridge.getPriorPatches(mockGeometryMomento);
 
     // Verify
     verify(mockReplicate, times(1)).query(any(Query.class));

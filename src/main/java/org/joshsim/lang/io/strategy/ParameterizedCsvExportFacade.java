@@ -103,6 +103,16 @@ public class ParameterizedCsvExportFacade implements ExportFacade {
     write(task);
   }
 
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
   /**
    * Adds a task to the queue for processing.
    *
@@ -110,6 +120,11 @@ public class ParameterizedCsvExportFacade implements ExportFacade {
    */
   public void write(ExportTask task) {
     queueService.add(task);
+  }
+
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(serializeStrategy);
   }
 
   /**

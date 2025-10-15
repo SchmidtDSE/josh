@@ -13,8 +13,12 @@ package org.joshsim.lang.interpret.machine;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,6 +35,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EntityFastForwarderTest {
 
   @Mock(lenient = true) private MutableEntity mockEntity;
+
+  @BeforeEach
+  void setUp() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Collections.emptyMap());
+    when(mockEntity.getAttributeValue(org.mockito.ArgumentMatchers.anyInt()))
+        .thenReturn(Optional.empty());
+  }
 
   @Test
   void testFastForwardToConstant() {

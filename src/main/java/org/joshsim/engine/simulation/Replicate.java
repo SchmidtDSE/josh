@@ -10,13 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchSet;
-
 
 /**
  * A full simulation replicate.
@@ -28,10 +27,22 @@ import org.joshsim.engine.geometry.PatchSet;
  */
 public class Replicate {
 
+  /**
+   * Defines how entities are frozen when saving timesteps.
+   */
+  private enum FreezeMode {
+    /** Patches frozen incrementally, only once per timestep. */
+    INCREMENTAL,
+    /** All patches frozen at once, once per replicate. */
+    BULK
+  }
+
   private MutableEntity meta;
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private Map<GeoKey, MutableEntity> presentTimeStep;
   private long stepNumber = 0;
+  private Map<GeoKey, Entity> currentStepFrozenPatches = new ConcurrentHashMap<>();
+  private Entity frozenMeta = null;
 
   /**
    * Construct a replicate with the given patches.
@@ -76,6 +87,23 @@ public class Replicate {
   }
 
   /**
+   * Save a single frozen patch for the given step number.
+   *
+   * <p>This method is called incrementally as patches complete their substeps,
+   * allowing for memory-efficient freeze-and-serialize operations. The frozen
+   * patches are accumulated and used to create a TimeStep at endStep().</p>
+   *
+   * <p>Thread-safe: Uses ConcurrentHashMap for parallel patch processing.</p>
+   *
+   * @param frozen The frozen Entity to save
+   * @param stepNumber The step number for this frozen patch
+   */
+  public void saveFrozenPatch(Entity frozen, long stepNumber) {
+    GeoKey key = frozen.getKey().orElseThrow();
+    currentStepFrozenPatches.put(key, frozen);
+  }
+
+  /**
    * Save the current state as the given step number.
    *
    * <p>Save the current state as the given step number, freezing all entities as immutable such
@@ -89,20 +117,40 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    Map<GeoKey, Entity> frozenPatches = presentTimeStep.values().stream()
-        .collect(Collectors.toMap(
-            (x) -> x.getKey().orElseThrow(),
-            (original) -> {
-              original.lock();
-              Entity frozen = original.freeze();
-              original.unlock();
-              return frozen;
-            })
-        );
+    FreezeMode freezeMode = currentStepFrozenPatches.isEmpty()
+        ? FreezeMode.BULK
+        : FreezeMode.INCREMENTAL;
+    Map<GeoKey, Entity> frozenPatches;
+    Entity frozenMetaEntity;
 
-    Entity frozenMeta = meta.freeze();
+    if (freezeMode == FreezeMode.INCREMENTAL) {
+      frozenPatches = new HashMap<>(currentStepFrozenPatches);
+      currentStepFrozenPatches.clear();
 
-    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMeta, frozenPatches);
+      if (frozenMeta == null) {
+        frozenMeta = meta.freeze();
+      }
+      frozenMetaEntity = frozenMeta;
+      frozenMeta = null;
+
+    } else {
+      frozenPatches = new HashMap<>(
+          (int) (presentTimeStep.size() / 0.75f) + 1
+      );
+
+      for (MutableEntity original : presentTimeStep.values()) {
+        original.lock();
+        try {
+          Entity frozen = original.freeze();
+          frozenPatches.put(original.getKey().orElseThrow(), frozen);
+        } finally {
+          original.unlock();
+        }
+      }
+      frozenMetaEntity = meta.freeze();
+    }
+
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMetaEntity, frozenPatches);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 
@@ -133,9 +181,9 @@ public class Replicate {
    * is _only_ allowed for past patches.
    *
    * @param query the query defining spatial and / or temporal bounds.
-   * @return an iterable of matching patches as immutable entities.
+   * @return a list of matching patches as immutable entities.
    */
-  public Iterable<Entity> query(Query query) {
+  public List<Entity> query(Query query) {
     if (query.getStep() == getStepNumber()) {
       throw new IllegalArgumentException("Querying current state is not allowed.");
     }
