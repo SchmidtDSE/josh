@@ -6,6 +6,7 @@ start simulation MinioNetCDFTest
   steps.low = 0 count
   steps.high = 10 count
   exportFiles.patch = "minio://josh-test-bucket/results/test_{replicate}.nc"
+  exportFiles.patch.columns = "avgAge,avgValue"
 end simulation
 
 start patch Default
