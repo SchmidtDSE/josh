@@ -66,17 +66,16 @@ public class ValueResolver {
    * @return Optional containing the resolved value if found, empty otherwise.
    */
   public Optional<EngineValue> get(Scope target) {
-    // FAST PATH: Try integer-based access for EntityScope
+    // Try integer-based access for EntityScope
     if (target instanceof EntityScope) {
       EntityScope entityScope = (EntityScope) target;
-      Optional<EngineValue> fastResult = tryFastPath(entityScope);
+      Optional<EngineValue> fastResult = tryIntegerLookup(entityScope);
       if (fastResult != null) {
         return fastResult;
       }
-      // Fall through to slow path if fast path fails
     }
 
-    // SLOW PATH: Original string-based resolution
+    // Original string-based resolution
     Optional<ValueResolver> continuationResolverMaybe = getInnerResolver(target);
     if (continuationResolverMaybe == null) {
       return Optional.empty();
@@ -129,7 +128,7 @@ public class ValueResolver {
    * @return Optional containing the resolved value if fast path succeeded,
    *         null if fast path cannot be used (caller should use slow path)
    */
-  private Optional<EngineValue> tryFastPath(EntityScope entityScope) {
+  private Optional<EngineValue> tryIntegerLookup(EntityScope entityScope) {
     // Fast path only works for simple attribute names (no nested paths)
     if (hasDot) {
       return null; // Use slow path
@@ -153,17 +152,11 @@ public class ValueResolver {
     Integer cachedIndex = indexCache.get(indexMap);
 
     if (cachedIndex != null) {
-      // CACHE HIT: Use cached index for fast array access
-      try {
-        return Optional.of(entityScope.get(cachedIndex));
-      } catch (IllegalArgumentException e) {
-        // Index is out of bounds or attribute is uninitialized
-        // This shouldn't happen if cache is correct, but handle gracefully
-        return Optional.empty();
-      }
+      // Use cached index for fast array access
+      return entityScope.getOptional(cachedIndex);
     }
 
-    // CACHE MISS: Look up the index and cache it
+    // Look up the index and cache it
     Integer index = indexMap.get(path);
     if (index == null) {
       // Attribute doesn't exist on this entity type
@@ -174,12 +167,7 @@ public class ValueResolver {
     indexCache.put(indexMap, index);
 
     // Use the newly cached index
-    try {
-      return Optional.of(entityScope.get(index));
-    } catch (IllegalArgumentException e) {
-      // Attribute exists in the index map but is uninitialized
-      return Optional.empty();
-    }
+    return entityScope.getOptional(index);
   }
 
   @Override

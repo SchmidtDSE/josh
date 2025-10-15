@@ -471,12 +471,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     // Check if querying for patch entities themselves vs attributes on patches
     // This handles cases like "Default within 30 m" where "Default" is the patch type name
-    boolean queryingForPatchEntities = false;
-    if (!patches.isEmpty()) {
-      String patchName = patches.get(0).getName();
-      // Simple path check - if resolver path matches patch name, return patches directly
-      queryingForPatchEntities = resolver.toString().contains("ValueResolver(" + patchName + ")");
-    }
+    boolean queryingForPatchEntities = !patches.isEmpty()
+        && isQueryForPatch(resolver, patches.get(0).getName());
 
     // Pre-size ArrayList with known patch count to eliminate ArrayList.grow() overhead
     List<EngineValue> resolved = new ArrayList<>(patches.size());
@@ -954,6 +950,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     } else {
       memory.push(convert(subject, newUnits));
     }
+  }
+
+  /**
+   * Checks if the resolver is querying for patch entities directly.
+   *
+   * @param resolver The ValueResolver being used for the query.
+   * @param patchName The name of the patch to check against.
+   * @return true if the resolver path matches the patch name, indicating a query for patches.
+   */
+  private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
+    return resolver.toString().contains("ValueResolver(" + patchName + ")");
   }
 
 }

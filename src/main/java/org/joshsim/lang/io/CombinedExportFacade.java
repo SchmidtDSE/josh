@@ -70,9 +70,9 @@ public class CombinedExportFacade {
 
     patchExportFacade.ifPresent(exportFacade -> {
       Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+      boolean producerIsSerializing = strategy.isPresent();
 
-      if (strategy.isPresent()) {
-        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+      if (producerIsSerializing) {
         MapExportSerializeStrategy serializeStrategy = strategy.get();
         stepCompleted.getPatches().forEach((patch) -> {
           Map<String, String> serialized = serializeStrategy.getRecord(patch);
@@ -80,7 +80,6 @@ public class CombinedExportFacade {
           exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
         });
       } else {
-        // Legacy path: queue Entity for serialization in consumer thread
         stepCompleted.getPatches().forEach(
             (x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber)
         );
@@ -89,6 +88,7 @@ public class CombinedExportFacade {
 
     entityExportFacade.ifPresent(exportFacade -> {
       Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+      boolean producerIsSerializing = strategy.isPresent();
 
       Stream<Entity> patches = StreamSupport.stream(
           stepCompleted.getPatches().spliterator(),
@@ -97,8 +97,7 @@ public class CombinedExportFacade {
 
       Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
 
-      if (strategy.isPresent()) {
-        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+      if (producerIsSerializing) {
         MapExportSerializeStrategy serializeStrategy = strategy.get();
         inner.forEach((entity) -> {
           Map<String, String> serialized = serializeStrategy.getRecord(entity);
@@ -106,7 +105,6 @@ public class CombinedExportFacade {
           exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
         });
       } else {
-        // Legacy path: queue Entity for serialization in consumer thread
         inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber));
       }
     });

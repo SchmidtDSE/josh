@@ -1,9 +1,11 @@
 package org.joshsim.engine.entity.base;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
@@ -20,6 +22,13 @@ public class FrozenEntity implements Entity {
    * <p>This singleton is reused across all FrozenEntity instances.</p>
    */
   private static final Optional<EngineValue> EMPTY_ATTRIBUTE_VALUE = Optional.empty();
+
+  /**
+   * Cached empty map to avoid repeated Collections.emptyMap() allocations.
+   *
+   * <p>FrozenEntity instances have no handlers, so we reuse this singleton.</p>
+   */
+  private static final Map<String, List<EventHandlerGroup>> EMPTY_HANDLERS = Collections.emptyMap();
 
   private final EntityType type;
   private final String name;
@@ -46,17 +55,11 @@ public class FrozenEntity implements Entity {
       String[] indexToAttributeName, Set<String> sharedAttributeNames) {
     this.type = type;
     this.name = name;
-    this.attributeValues = attributeValues != null ? attributeValues : new EngineValue[0];
+    this.attributeValues = attributeValues;
     this.geometry = geometry;
-    this.attributeNameToIndex = attributeNameToIndex != null
-        ? attributeNameToIndex
-        : Collections.emptyMap();
-    this.indexToAttributeName = indexToAttributeName != null
-        ? indexToAttributeName
-        : new String[0];
-    this.attributeNames = sharedAttributeNames != null
-        ? sharedAttributeNames
-        : Collections.emptySet();
+    this.attributeNameToIndex = attributeNameToIndex;
+    this.indexToAttributeName = indexToAttributeName;
+    this.attributeNames = sharedAttributeNames;
   }
 
   @Override
@@ -118,11 +121,7 @@ public class FrozenEntity implements Entity {
     return attributeNameToIndex;
   }
 
-  /**
-   * Get the index-to-name array for reverse lookup.
-   *
-   * @return immutable array where array[index] = attribute name
-   */
+  @Override
   public String[] getIndexToAttributeName() {
     return indexToAttributeName;
   }
@@ -143,5 +142,10 @@ public class FrozenEntity implements Entity {
     } else {
       return Optional.of(new GeoKey(this));
     }
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
+    return EMPTY_HANDLERS;
   }
 }

@@ -70,6 +70,16 @@ public class NetcdfExportFacade implements ExportFacade {
     write(task);
   }
 
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
   /**
    * Adds a task to the queue for processing.
    *

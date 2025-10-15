@@ -87,4 +87,18 @@ public class EntityScope implements Scope {
     return value.getAttributeNameToIndex();
   }
 
+  /**
+   * Get an attribute value by index, returning Optional.
+   *
+   * <p>Unlike get(int), this method returns Optional.empty() rather than throwing
+   * an exception when the attribute is uninitialized or the index is invalid.
+   * This avoids exception-based control flow for better performance.</p>
+   *
+   * @param index the attribute index (from getAttributeNameToIndex())
+   * @return Optional containing the attribute value, or empty if invalid/uninitialized
+   */
+  public Optional<EngineValue> getOptional(int index) {
+    return value.getAttributeValue(index);
+  }
+
 }

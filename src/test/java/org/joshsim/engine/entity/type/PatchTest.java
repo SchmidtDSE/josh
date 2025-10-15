@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.base.EntityInitializationInfo;
 import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -49,14 +50,7 @@ public class PatchTest {
     EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
     eventHandlerGroups.put(stateKey, stateHandlerGroup);
 
-    patch = new Patch(
-        mockGeometry, patchName, eventHandlerGroups,
-        toAttributesArray(eventHandlerGroups, attributes),
-        toAttributeIndex(eventHandlerGroups, attributes),
-        toIndexToAttributeName(eventHandlerGroups, attributes),
-        Collections.emptyMap(),
-        Collections.emptyMap(),
-        Collections.emptySet());
+    patch = new Patch(mockGeometry, createInitInfo(patchName, eventHandlerGroups, attributes));
   }
 
   /**
@@ -67,10 +61,12 @@ public class PatchTest {
       Map<String, EngineValue> attributes) {
     Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
     EngineValue[] result = new EngineValue[indexMap.size()];
-    for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
-      Integer index = indexMap.get(entry.getKey());
-      if (index != null) {
-        result[index] = entry.getValue();
+    if (attributes != null) {
+      for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+        Integer index = indexMap.get(entry.getKey());
+        if (index != null) {
+          result[index] = entry.getValue();
+        }
       }
     }
     return result;
@@ -137,6 +133,60 @@ public class PatchTest {
   }
 
   /**
+   * Create EntityInitializationInfo from test parameters.
+   */
+  private static EntityInitializationInfo createInitInfo(
+      String name,
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    final EngineValue[] attributesArray = toAttributesArray(handlers, attributes);
+    final Map<String, Integer> attributeIndex = toAttributeIndex(handlers, attributes);
+    final String[] indexToAttributeName = toIndexToAttributeName(handlers, attributes);
+
+    return new EntityInitializationInfo() {
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
+        return handlers != null ? handlers : Collections.emptyMap();
+      }
+
+      @Override
+      public EngineValue[] createAttributesArray() {
+        return attributesArray;
+      }
+
+      @Override
+      public Map<String, Integer> getAttributeNameToIndex() {
+        return attributeIndex;
+      }
+
+      @Override
+      public String[] getIndexToAttributeName() {
+        return indexToAttributeName;
+      }
+
+      @Override
+      public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public Set<String> getSharedAttributeNames() {
+        return Collections.emptySet();
+      }
+    };
+  }
+
+  /**
    * Test that the constructor correctly initializes the patch.
    */
   @Test
@@ -151,9 +201,7 @@ public class PatchTest {
    */
   @Test
   public void testConstructorWithNullMaps() {
-    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null,
-        Collections.emptyMap(), new String[0], Collections.emptyMap(),
-        Collections.emptyMap(), Collections.emptySet());
+    Patch nullMapPatch = new Patch(mockGeometry, createInitInfo(patchName, null, null));
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());

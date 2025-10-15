@@ -28,14 +28,16 @@ import org.joshsim.engine.value.type.EngineValue;
  * Builder to assist in constructing entities.
  *
  * <p>Builder for creating Entity instances, providing methods to add event handlers and build the
- * final entity.
- * </p>
+ * final entity. This class also implements {@link EntityInitializationInfo} to provide a clean
+ * way to pass initialization parameters to entity constructors.</p>
  */
-public class EntityBuilder {
+public class EntityBuilder implements EntityInitializationInfo {
+  private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
+
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
-  private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
+  private Map<String, boolean[]> attributesWithoutHandlersBySubstep;
   private Map<EventKey, EventHandlerGroup> immutableEventHandlerGroups;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
   private Map<String, Integer> attributeNameToIndex;
@@ -103,7 +105,8 @@ public class EntityBuilder {
    *
    * @return the name of the entity
    */
-  private String getName() {
+  @Override
+  public String getName() {
     return name.orElseThrow(() -> new IllegalStateException("Name not set"));
   }
 
@@ -154,7 +157,7 @@ public class EntityBuilder {
   }
 
   /**
-   * Compute the set of attributes that lack handlers for each substep.
+   * Compute boolean arrays indicating attributes that lack handlers for each substep.
    *
    * <p>This method analyzes event handlers to determine which attributes have no handlers
    * for specific substeps (init, step, start, end, constant). This enables fast-path
@@ -166,30 +169,37 @@ public class EntityBuilder {
    * This prevents false negatives (incorrectly skipping handler execution).</p>
    *
    * <p>This computation is done once per entity type in the builder and shared across
-   * all entity instances of that type.</p>
+   * all entity instances of that type. Uses boolean arrays indexed by attribute index
+   * for faster lookup compared to HashSet operations.</p>
    *
-   * @return Immutable map from substep name to set of attributes without handlers for that substep
+   * @return Immutable map from substep name to boolean array where true indicates no handlers
    */
-  private Map<String, Set<String>> computeAttributesWithoutHandlersBySubstep() {
+  private Map<String, boolean[]> computeAttributesWithoutHandlersBySubstep() {
     // Use cached value if available
     if (attributesWithoutHandlersBySubstep != null) {
       return attributesWithoutHandlersBySubstep;
     }
 
-    Map<String, Set<String>> result = new HashMap<>();
+    // Get the index map to know array size
+    Map<String, Integer> indexMap = computeAttributeNameToIndex();
+    int arraySize = indexMap.size();
 
-    // Common substeps in Josh DSL
-    List<String> substeps = List.of("init", "step", "start", "end", "constant");
+    Map<String, boolean[]> result = new HashMap<>();
 
-    for (String substep : substeps) {
-      // Find all attributes WITH handlers for this specific substep
-      Set<String> attrsWithHandlersInSubstep = new HashSet<>();
+    for (String substep : SUBSTEPS) {
+      // Create boolean array for this substep
+      boolean[] attrsWithoutHandlers = new boolean[arraySize];
 
-      for (EventHandlerGroup group : eventHandlerGroups.values()) {
-        if (group == null) {
-          continue;
+      // First, mark all initial attributes as having no handlers
+      for (String attrName : attributes.keySet()) {
+        Integer index = indexMap.get(attrName);
+        if (index != null) {
+          attrsWithoutHandlers[index] = true;
         }
+      }
 
+      // Then, unmark attributes that have handlers for this substep
+      for (EventHandlerGroup group : eventHandlerGroups.values()) {
         EventKey key = group.getEventKey();
         if (key == null) {
           continue;
@@ -197,19 +207,17 @@ public class EntityBuilder {
 
         // Check if this event handler group is for the current substep
         if (key.getEvent().equals(substep)) {
-          // Add all attributes from handlers in this group
+          // Unmark all attributes from handlers in this group
           for (EventHandler handler : group.getEventHandlers()) {
-            attrsWithHandlersInSubstep.add(handler.getAttributeName());
+            Integer index = indexMap.get(handler.getAttributeName());
+            if (index != null) {
+              attrsWithoutHandlers[index] = false;
+            }
           }
         }
       }
 
-      // Attributes WITHOUT handlers for this substep =
-      // (initial attributes) - (attributes with handlers in this substep)
-      Set<String> attrsWithoutHandlers = new HashSet<>(attributes.keySet());
-      attrsWithoutHandlers.removeAll(attrsWithHandlersInSubstep);
-
-      result.put(substep, Collections.unmodifiableSet(attrsWithoutHandlers));
+      result.put(substep, attrsWithoutHandlers);
     }
 
     // Cache the result for future calls
@@ -238,9 +246,6 @@ public class EntityBuilder {
     // Collect all unique attribute names from handlers
     Set<String> allAttributes = new HashSet<>();
     for (EventHandlerGroup group : eventHandlerGroups.values()) {
-      if (group == null) {
-        continue;
-      }
       for (EventHandler handler : group.getEventHandlers()) {
         allAttributes.add(handler.getAttributeName());
       }
@@ -251,22 +256,16 @@ public class EntityBuilder {
     allStates.add(""); // Empty state for non-state-specific lookups
 
     for (EventKey key : eventHandlerGroups.keySet()) {
-      if (key == null) {
-        continue;
-      }
       String state = key.getState();
       if (state != null && !state.isEmpty()) {
         allStates.add(state);
       }
     }
 
-    // Common substeps in Josh DSL
-    List<String> substeps = List.of("init", "step", "start", "end", "constant");
-
     // Pre-compute all (attribute × substep × state) combinations
     Map<String, List<EventHandlerGroup>> result = new HashMap<>();
     for (String attribute : allAttributes) {
-      for (String substep : substeps) {
+      for (String substep : SUBSTEPS) {
         for (String state : allStates) {
           // Build cache key
           String cacheKey;
@@ -330,9 +329,6 @@ public class EntityBuilder {
     // Collect all unique attribute names from handlers
     Set<String> attributeNames = new HashSet<>();
     for (EventHandlerGroup group : eventHandlerGroups.values()) {
-      if (group == null) {
-        continue;
-      }
       for (EventHandler handler : group.getEventHandlers()) {
         attributeNames.add(handler.getAttributeName());
       }
@@ -366,9 +362,6 @@ public class EntityBuilder {
 
     // Also collect attributes from event handlers
     for (EventHandlerGroup group : eventHandlerGroups.values()) {
-      if (group == null) {
-        continue;
-      }
       for (EventHandler handler : group.getEventHandlers()) {
         allAttributeNames.add(handler.getAttributeName());
       }
@@ -433,7 +426,8 @@ public class EntityBuilder {
    *
    * @return Array of EngineValue objects indexed by attributeNameToIndex
    */
-  private EngineValue[] createAttributesArray() {
+  @Override
+  public EngineValue[] createAttributesArray() {
     Map<String, Integer> indexMap = computeAttributeNameToIndex();
     EngineValue[] result = new EngineValue[indexMap.size()];
 
@@ -448,6 +442,36 @@ public class EntityBuilder {
     return result;
   }
 
+  @Override
+  public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
+    return getImmutableEventHandlerGroups();
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    return computeAttributeNameToIndex();
+  }
+
+  @Override
+  public String[] getIndexToAttributeName() {
+    return computeIndexToAttributeName();
+  }
+
+  @Override
+  public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+    return computeAttributesWithoutHandlersBySubstep();
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+    return computeCommonHandlerCache();
+  }
+
+  @Override
+  public Set<String> getSharedAttributeNames() {
+    return computeAttributeNames();
+  }
+
   /**
    * Build an agent entity.
    *
@@ -455,17 +479,7 @@ public class EntityBuilder {
    * @return A constructed agent entity
    */
   public Agent buildAgent(Entity parent) {
-    Agent agent = new Agent(
-        parent,
-        getName(),
-        getImmutableEventHandlerGroups(),
-        createAttributesArray(),
-        computeAttributeNameToIndex(),
-        computeIndexToAttributeName(),
-        computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache(),
-        computeAttributeNames());
-    return agent;
+    return new Agent(parent, this);
   }
 
   /**
@@ -475,17 +489,7 @@ public class EntityBuilder {
    * @return A constructed disturbance entity
    */
   public Disturbance buildDisturbance(Entity parent) {
-    Disturbance disturbance = new Disturbance(
-        parent,
-        getName(),
-        getImmutableEventHandlerGroups(),
-        createAttributesArray(),
-        computeAttributeNameToIndex(),
-        computeIndexToAttributeName(),
-        computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache(),
-        computeAttributeNames());
-    return disturbance;
+    return new Disturbance(parent, this);
   }
 
   /**
@@ -495,17 +499,7 @@ public class EntityBuilder {
    * @return A constructed patch entity
    */
   public Patch buildPatch(EngineGeometry geometry) {
-    Patch patch = new Patch(
-        geometry,
-        getName(),
-        getImmutableEventHandlerGroups(),
-        createAttributesArray(),
-        computeAttributeNameToIndex(),
-        computeIndexToAttributeName(),
-        computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache(),
-        computeAttributeNames());
-    return patch;
+    return new Patch(geometry, this);
   }
 
   /**
@@ -514,16 +508,7 @@ public class EntityBuilder {
    * @return A constructed simulation instance
    */
   public Simulation buildSimulation() {
-    Simulation simulation = new Simulation(
-        getName(),
-        getImmutableEventHandlerGroups(),
-        createAttributesArray(),
-        computeAttributeNameToIndex(),
-        computeIndexToAttributeName(),
-        computeAttributesWithoutHandlersBySubstep(),
-        computeCommonHandlerCache(),
-        computeAttributeNames());
-    return simulation;
+    return new Simulation(this);
   }
 
 }

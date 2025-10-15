@@ -239,8 +239,10 @@ public class ShadowingEntityTest {
     // This test verifies that integer and string paths produce same results
     String attrName = "testAttr";
     Map<String, Integer> indexMap = Map.of(attrName, 0);
+    String[] indexToNameArray = new String[] {attrName};
 
     when(mockSpatialEntity.getAttributeNameToIndex()).thenReturn(indexMap);
+    when(mockSpatialEntity.getIndexToAttributeName()).thenReturn(indexToNameArray);
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
     when(mockSpatialEntity.getAttributeValue(0)).thenReturn(Optional.of(mockEngineValue));
     when(mockSpatialEntity.hasNoHandlers(attrName, "test")).thenReturn(true);
