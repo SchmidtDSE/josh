@@ -124,18 +124,15 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Bounds check
     if (index < 0 || index >= attributes.length) {
       return Optional.empty();
     }
 
-    // Check current attributes first
     EngineValue value = attributes[index];
     if (value != null) {
       return Optional.of(value);
     }
 
-    // Check prior attributes
     value = priorAttributes[index];
     return Optional.ofNullable(value);
   }
@@ -158,7 +155,6 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public void setAttributeValue(int index, EngineValue value) {
-    // Bounds check - throw exception for invalid index
     if (index < 0 || index >= attributes.length) {
       String message = String.format(
           "Attribute index %d out of bounds [0, %d) for entity %s",
@@ -169,10 +165,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       throw new IndexOutOfBoundsException(message);
     }
 
-    // Update attribute at index
     attributes[index] = value;
-
-    // Mark as not only on prior
     onlyOnPrior[index] = false;
   }
 
