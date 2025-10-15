@@ -5,14 +5,19 @@ start simulation MinioMixedTest
   grid.high = 0.001 degrees latitude, 0.001 degrees longitude
   steps.low = 0 count
   steps.high = 10 count
-  exportFiles.minio = "minio://josh-test-bucket/results/mixed_{replicate}.csv"
-  exportFiles.local = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
+  exportFiles.patch = "minio://josh-test-bucket/results/mixed_{replicate}.csv"
+  exportFiles.meta = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
 
-  export.avgCounter.end = mean(TestIndividual.counter)
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  export.stepCounter.step = current.stepCount
 end simulation
 
 start patch Default
   TestIndividual.init = create 25 count of TestIndividual
+
+  export.avgCounter.step = mean(TestIndividual.counter)
 end patch
 
 start organism TestIndividual

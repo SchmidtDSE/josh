@@ -5,14 +5,14 @@ start simulation MinioNetCDFTest
   grid.high = 0.001 degrees latitude, 0.001 degrees longitude
   steps.low = 0 count
   steps.high = 10 count
-  exportFiles.netcdf = "minio://josh-test-bucket/results/test_{replicate}.nc"
-
-  export.avgAge.end = mean(TestIndividual.age)
-  export.avgValue.end = mean(TestIndividual.value)
+  exportFiles.patch = "minio://josh-test-bucket/results/test_{replicate}.nc"
 end simulation
 
 start patch Default
   TestIndividual.init = create 50 count of TestIndividual
+
+  export.avgAge.step = mean(TestIndividual.age)
+  export.avgValue.step = mean(TestIndividual.value)
 end patch
 
 start organism TestIndividual

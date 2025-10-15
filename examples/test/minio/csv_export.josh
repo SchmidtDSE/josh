@@ -5,14 +5,14 @@ start simulation MinioCSVTest
   grid.high = 0.001 degrees latitude, 0.001 degrees longitude
   steps.low = 0 count
   steps.high = 10 count
-  exportFiles.csv = "minio://josh-test-bucket/results/test_{replicate}.csv"
-
-  export.avgAge.end = mean(TestIndividual.age)
-  export.avgHeight.end = mean(TestIndividual.height)
+  exportFiles.patch = "minio://josh-test-bucket/results/test_{replicate}.csv"
 end simulation
 
 start patch Default
   TestIndividual.init = create 100 count of TestIndividual
+
+  export.avgAge.step = mean(TestIndividual.age)
+  export.avgHeight.step = mean(TestIndividual.height)
 end patch
 
 start organism TestIndividual
