@@ -446,9 +446,15 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private String reconstructFullPath(ExportTarget target) {
     String protocol = target.getProtocol();
-    if (protocol.isEmpty() || protocol.equals("file")) {
+    if (protocol.isEmpty()) {
+      // No protocol specified, return bare path for local file
       return target.getPath();
+    } else if (protocol.equals("file")) {
+      // Explicit file:// protocol - reconstruct full URI
+      // Note: host should be empty for file:// URIs (file:///path)
+      return "file://" + target.getHost() + target.getPath();
     } else {
+      // Other protocols (minio, etc.)
       return protocol + "://" + target.getHost() + target.getPath();
     }
   }
