@@ -78,8 +78,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
 
     // Assert that array lengths match for consistency
-    assert this.attributes.length == this.indexToAttributeName.length
-        : "attributes and indexToAttributeName must have equal length";
+    boolean lengthsAligned = this.attributes.length == this.indexToAttributeName.length;
+    assert lengthsAligned : "attributes and indexToAttributeName must have equal length";
 
     lock = CompatibilityLayerKeeper.get().getLock();
     substep = Optional.empty();
