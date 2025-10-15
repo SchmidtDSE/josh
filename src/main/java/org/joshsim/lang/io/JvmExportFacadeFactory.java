@@ -22,6 +22,8 @@ import org.joshsim.lang.io.strategy.ParameterizedCsvExportFacade;
 import org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade;
 import org.joshsim.pipeline.job.config.TemplateResult;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
+import org.joshsim.util.MinioClientSingleton;
+import org.joshsim.util.MinioOptions;
 
 /**
  * Factory implementation for creating ExportFacade instances in a JVM environment.
@@ -33,6 +35,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
   private final TemplateStringRenderer templateRenderer;
+  private final MinioOptions minioOptions;
   private TemplateResult lastTemplateResult;
 
   /**
@@ -43,10 +46,13 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    *
    * @param replicate The replicate number to use in filenames.
    * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
    */
-  public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer) {
+  public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
+    this.minioOptions = minioOptions;
     serializeStrategy = new MapSerializeStrategy();
     extents = Optional.empty();
     width = Optional.empty();
@@ -63,7 +69,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   @Deprecated
   public JvmExportFacadeFactory(int replicate) {
-    this(replicate, (TemplateStringRenderer) null);
+    this(replicate, (TemplateStringRenderer) null, (MinioOptions) null);
   }
 
   /**
@@ -76,11 +82,14 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param extents The extents of the grid in the simulation in Earth-space.
    * @param width The width and height of each patch in meters.
    * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
    */
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
-                                TemplateStringRenderer templateRenderer) {
+                                TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
+    this.minioOptions = minioOptions;
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
@@ -100,7 +109,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   @Deprecated
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width) {
-    this(replicate, extents, width, null);
+    this(replicate, extents, width, null, null);
   }
 
   @Override
@@ -197,22 +206,67 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   }
 
   /**
+   * Creates the appropriate OutputStreamStrategy based on the target protocol.
+   *
+   * @param target The export target containing protocol and path information
+   * @param appendMode If true, append to existing file (only applies to local files)
+   * @return OutputStreamStrategy for the specified protocol
+   * @throws IllegalArgumentException if protocol is unsupported or MinIO is not configured
+   */
+  private OutputStreamStrategy createOutputStreamStrategy(ExportTarget target,
+                                                           boolean appendMode) {
+    String protocol = target.getProtocol();
+
+    if (protocol.isEmpty() || protocol.equals("file")) {
+      // Local file system
+      return new LocalOutputStreamStrategy(target.getPath(), appendMode);
+
+    } else if (protocol.equals("minio")) {
+      // MinIO direct streaming
+      if (minioOptions == null || !minioOptions.isMinioOutput()) {
+        throw new IllegalArgumentException(
+          "MinIO protocol 'minio://" + target.getHost() + target.getPath() + "' "
+          + "requires MinIO configuration (--minio-endpoint, --minio-access-key, etc.)"
+        );
+      }
+
+      String bucketName = target.getHost();
+      String objectPath = target.getPath();
+
+      return new MinioOutputStreamStrategy(
+        MinioClientSingleton.getInstance(minioOptions),
+        bucketName,
+        objectPath
+      );
+
+    } else {
+      throw new IllegalArgumentException("Unsupported protocol: " + protocol);
+    }
+  }
+
+  /**
+   * Creates the appropriate OutputStreamStrategy based on the target protocol.
+   *
+   * <p>Convenience overload that defaults to non-append mode.</p>
+   *
+   * @param target The export target containing protocol and path information
+   * @return OutputStreamStrategy for the specified protocol
+   * @throws IllegalArgumentException if protocol is unsupported or MinIO is not configured
+   */
+  private OutputStreamStrategy createOutputStreamStrategy(ExportTarget target) {
+    return createOutputStreamStrategy(target, false);
+  }
+
+  /**
    * Build an ExportFacade that writes to a CSV file.
    *
    * @param target Record describing where the export should be written and format details.
-   *     The protocol must be empty, as only the local file system is supported for CSV exports.
    * @param header An optional list of column headers to include in the CSV. If empty, headers are
    *     not included.
    * @return CsvExportFacade configured to write to the file path specified in the target.
-   * @throws IllegalArgumentException if the target's protocol is not empty or the target is
-   *     invalid.
+   * @throws IllegalArgumentException if the target is invalid.
    */
   private ExportFacade buildForCsv(ExportTarget target, Optional<Iterable<String>> header) {
-    if (!target.getProtocol().isEmpty()) {
-      String message = "Only local file system is supported for CSV at this time.";
-      throw new IllegalArgumentException(message);
-    }
-
     if (requiresParameterizedOutput(target)) {
       return buildParameterizedCsv(target, header);
     } else {
@@ -229,8 +283,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildConsolidatedCsv(ExportTarget target,
                                             Optional<Iterable<String>> header) {
-    String path = target.getPath();
-    OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path, true);
+    OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target, true);
 
     if (header.isPresent()) {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());
@@ -262,18 +315,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * Build an ExportFacade that writes to a netCDF file.
    *
    * @param target Record describing where the export should be written and format details.
-   *     The protocol must be empty, as only the local file system is supported at this time.
    * @param header List of variables to be included. This is currently required for netCDF.
    * @return ExportFacade configured to write to the file path specified in the target.
-   * @throws IllegalArgumentException if the target's protocol is not empty or the target is
-   *     invalid.
+   * @throws IllegalArgumentException if the target is invalid.
    */
   private ExportFacade buildForNetcdf(ExportTarget target, Optional<Iterable<String>> header) {
-    if (!target.getProtocol().isEmpty()) {
-      String message = "Only local file system is supported for netcdf at this time.";
-      throw new IllegalArgumentException(message);
-    }
-
     if (!hasGeo()) {
       throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
@@ -298,8 +344,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildConsolidatedNetcdf(ExportTarget target,
                                                Optional<Iterable<String>> header) {
-    String path = target.getPath();
-    OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
+    OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target);
 
     List<String> variablesList = new ArrayList<>();
     header.get().forEach(variablesList::add);
@@ -328,11 +373,6 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   }
 
   private ExportFacade buildForGeotiff(ExportTarget target, Optional<Iterable<String>> header) {
-    if (!target.getProtocol().isEmpty()) {
-      String message = "Only local file system is supported for netcdf at this time.";
-      throw new IllegalArgumentException(message);
-    }
-
     if (!hasGeo()) {
       throw new IllegalArgumentException("Writing netCDF requires Earth coordinates.");
     }
