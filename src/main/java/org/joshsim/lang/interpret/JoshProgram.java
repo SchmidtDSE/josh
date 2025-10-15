@@ -25,6 +25,7 @@ public class JoshProgram {
   private final Converter converter;
   private final EngineBridgeSimulationStore simulations;
   private final EntityPrototypeStore prototypes;
+  private BridgeGetter bridgeGetter;
 
   /**
    * Creates a new Josh program instance.
@@ -65,6 +66,27 @@ public class JoshProgram {
    */
   public EntityPrototypeStore getPrototypes() {
     return prototypes;
+  }
+
+  /**
+   * Gets the bridge getter used during program interpretation.
+   *
+   * @return The bridge getter instance, or null if not set.
+   */
+  public BridgeGetter getBridgeGetter() {
+    return bridgeGetter;
+  }
+
+  /**
+   * Sets the bridge getter used during program interpretation.
+   *
+   * <p>This is used internally to allow access to the bridge getter after
+   * program interpretation is complete.</p>
+   *
+   * @param bridgeGetter The bridge getter instance to store.
+   */
+  public void setBridgeGetter(BridgeGetter bridgeGetter) {
+    this.bridgeGetter = bridgeGetter;
   }
 
 }

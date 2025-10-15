@@ -7,7 +7,7 @@ start simulation Main
 
   # Specify the years for the simulation
   steps.low = 0 count
-  steps.high = 10 count
+  steps.high = 8 count
 
   startYear.init = 2025
   year.init = startYear

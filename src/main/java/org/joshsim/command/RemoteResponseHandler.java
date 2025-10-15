@@ -169,10 +169,14 @@ public class RemoteResponseHandler {
     long stepCountToReport = response.getStepCount();
 
     if (useCumulativeProgress && cumulativeStepCount != null) {
-      // Use cumulative progress for coordinated reporting
-      WireResponse cumulativeProgress = WireRewriteUtil.rewriteProgressToCumulative(
+      // Use proper cumulative progress calculation
+      long stepsPerReplicate = context.getMetadata().getTotalSteps();
+      int completedReplicatesCount = completedReplicates.get();
+
+      WireResponse cumulativeProgress = WireRewriteUtil.rewriteProgressToProperCumulative(
           response,
-          cumulativeStepCount
+          completedReplicatesCount,
+          stepsPerReplicate
       );
       stepCountToReport = cumulativeProgress.getStepCount();
     }

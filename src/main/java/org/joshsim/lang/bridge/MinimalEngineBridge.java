@@ -177,7 +177,9 @@ public class MinimalEngineBridge implements EngineBridge {
 
     getReplicate().saveTimeStep(currentStep.getAsInt());
 
+    // Increment both the bridge's current step and the replicate's step number
     currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, Units.of("count"));
+    getReplicate().incrementStepNumber();
     absoluteStep++;
     inStep = false;
   }

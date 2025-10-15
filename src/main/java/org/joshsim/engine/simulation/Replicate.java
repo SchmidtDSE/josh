@@ -7,6 +7,7 @@
 package org.joshsim.engine.simulation;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -65,6 +66,13 @@ public class Replicate {
    */
   public long getStepNumber() {
     return stepNumber;
+  }
+
+  /**
+   * Increment the current step number by 1.
+   */
+  public void incrementStepNumber() {
+    this.stepNumber++;
   }
 
   /**
@@ -134,7 +142,8 @@ public class Replicate {
 
     TimeStep timeStep = pastTimeSteps.get(query.getStep());
     if (timeStep == null) {
-      throw new IllegalArgumentException("No TimeStep found for step number " + query.getStep());
+      // Return empty collection when timestep doesn't exist (e.g., querying prior at step 0)
+      return List.of();
     }
     assert timeStep.getStep() == query.getStep();
 
