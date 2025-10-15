@@ -112,6 +112,11 @@ public class ParameterizedCsvExportFacade implements ExportFacade {
     queueService.add(task);
   }
 
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(serializeStrategy);
+  }
+
   /**
    * Interface for strategy which generates output streams based on replicate number.
    *

@@ -3,7 +3,6 @@
 gradle/
 build/
 bin/
-config/checkstyle/google_checks.xml
 
 # IDE
 .idea/
@@ -57,3 +56,11 @@ landing/prism-*.js
 landing/prism-*.css
 
 .claude
+
+config/checkstyle/google_checks.xml
+
+# Profiling scripts
+run_profiler.sh
+run_profiler_small.sh
+
+.claude/settings.local.json

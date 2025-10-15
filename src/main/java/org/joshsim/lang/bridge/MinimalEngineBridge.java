@@ -8,6 +8,7 @@ package org.joshsim.lang.bridge;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.config.Config;
@@ -177,7 +178,9 @@ public class MinimalEngineBridge implements EngineBridge {
 
     getReplicate().saveTimeStep(currentStep.getAsInt());
 
+    // Increment both the bridge's current step and the replicate's step number
     currentStep = engineValueFactory.build(currentStep.getAsInt() + 1, Units.of("count"));
+    getReplicate().incrementStepNumber();
     absoluteStep++;
     inStep = false;
   }
@@ -254,14 +257,14 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Iterable<Entity> getPriorPatches(EngineGeometry geometry) {
+  public List<Entity> getPriorPatches(EngineGeometry geometry) {
     Query query = new Query(getPriorTimestep(), geometry);
-    Iterable<Entity> patches = getReplicate().query(query);
+    List<Entity> patches = getReplicate().query(query);
     return patches;
   }
 
   @Override
-  public Iterable<Entity> getPriorPatches(GeometryMomento geometryMomento) {
+  public List<Entity> getPriorPatches(GeometryMomento geometryMomento) {
     return getPriorPatches(geometryMomento.build());
   }
 

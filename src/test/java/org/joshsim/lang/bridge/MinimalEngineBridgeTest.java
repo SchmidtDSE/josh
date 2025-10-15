@@ -139,7 +139,7 @@ public class MinimalEngineBridgeTest {
 
     bridge.startStep();
     bridge.endStep();
-    Iterable<Entity> results = bridge.getPriorPatches(mockGeometry);
+    List<Entity> results = bridge.getPriorPatches(mockGeometry);
     assertTrue(results.iterator().hasNext(), "Should return prior patches");
   }
 

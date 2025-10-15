@@ -6,8 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -38,11 +45,95 @@ public class PatchTest {
     EngineValue mockValue = mock(EngineValue.class);
     attributes.put("testAttribute", mockValue);
 
-    EventKey stateKey = new EventKey("testState", "testAttribute", "testEvent");
+    EventKey stateKey = EventKey.of("testState", "testAttribute", "testEvent");
     EventHandlerGroup stateHandlerGroup = mock(EventHandlerGroup.class);
     eventHandlerGroups.put(stateKey, stateHandlerGroup);
 
-    patch = new Patch(mockGeometry, patchName, eventHandlerGroups, attributes);
+    patch = new Patch(
+        mockGeometry, patchName, eventHandlerGroups,
+        toAttributesArray(eventHandlerGroups, attributes),
+        toAttributeIndex(eventHandlerGroups, attributes),
+        toIndexToAttributeName(eventHandlerGroups, attributes),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptySet());
+  }
+
+  /**
+   * Convert attributes map to array using alphabetical ordering.
+   */
+  private static EngineValue[] toAttributesArray(
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
+    EngineValue[] result = new EngineValue[indexMap.size()];
+    for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+      Integer index = indexMap.get(entry.getKey());
+      if (index != null) {
+        result[index] = entry.getValue();
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Create index map from attribute names using alphabetical ordering.
+   */
+  private static Map<String, Integer> toAttributeIndex(
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    if (attributes == null || attributes.isEmpty()) {
+      if (handlers == null || handlers.isEmpty()) {
+        return Collections.emptyMap();
+      }
+    }
+
+    // Collect all attribute names
+    Set<String> allNames = new HashSet<>();
+    if (attributes != null) {
+      allNames.addAll(attributes.keySet());
+    }
+    if (handlers != null) {
+      for (EventHandlerGroup group : handlers.values()) {
+        if (group != null) {
+          for (EventHandler handler : group.getEventHandlers()) {
+            allNames.add(handler.getAttributeName());
+          }
+        }
+      }
+    }
+
+    // For test purposes, also include "newAttribute" which tests try to set dynamically
+    allNames.add("newAttribute");
+
+    if (allNames.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    // Sort alphabetically
+    List<String> sortedNames = new ArrayList<>(allNames);
+    Collections.sort(sortedNames);
+
+    // Build index map
+    Map<String, Integer> result = new HashMap<>();
+    for (int i = 0; i < sortedNames.size(); i++) {
+      result.put(sortedNames.get(i), i);
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Create index-to-name array from attribute names using alphabetical ordering.
+   */
+  private static String[] toIndexToAttributeName(
+      Map<EventKey, EventHandlerGroup> handlers,
+      Map<String, EngineValue> attributes) {
+    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
+    String[] result = new String[indexMap.size()];
+    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+      result[entry.getValue()] = entry.getKey();
+    }
+    return result;
   }
 
   /**
@@ -60,7 +151,9 @@ public class PatchTest {
    */
   @Test
   public void testConstructorWithNullMaps() {
-    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null);
+    Patch nullMapPatch = new Patch(mockGeometry, patchName, null, null,
+        Collections.emptyMap(), new String[0], Collections.emptyMap(),
+        Collections.emptyMap(), Collections.emptySet());
 
     assertNotNull(nullMapPatch.getEventHandlers());
     assertFalse(nullMapPatch.getEventHandlers().iterator().hasNext());
@@ -104,18 +197,18 @@ public class PatchTest {
     Iterable<EventHandlerGroup> handlers = patch.getEventHandlers();
     assertTrue(handlers.iterator().hasNext());
     assertTrue(patch.getEventHandlers(
-        new EventKey("testState", "testAttribute", "testEvent")
+        EventKey.of("testState", "testAttribute", "testEvent")
     ).isPresent());
 
     // Test getEventHandlers with specific parameters
     Optional<EventHandlerGroup> retrievedGroup = patch.getEventHandlers(
-        new EventKey("testState", "testAttribute", "testEvent")
+        EventKey.of("testState", "testAttribute", "testEvent")
     );
     assertTrue(retrievedGroup.isPresent());
 
     // Test with non-existent event key
     Optional<EventHandlerGroup> nonExistentGroup = patch.getEventHandlers(
-        new EventKey("nonExistent", "nonExistent", "nonExistent")
+        EventKey.of("nonExistent", "nonExistent", "nonExistent")
     );
     assertEquals(Optional.empty(), nonExistentGroup);
   }

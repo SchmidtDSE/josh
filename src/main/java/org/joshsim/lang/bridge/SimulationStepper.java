@@ -1,12 +1,16 @@
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.value.type.EngineValue;
 
 
 /**
@@ -16,23 +20,46 @@ public class SimulationStepper {
 
   private final EngineBridge target;
   private final Set<String> events;
+  private final Optional<PatchExportCallback> exportCallback;
 
   /**
-   * Create a new stepper around a bridge.
+   * Create a new stepper around a bridge without export callback.
+   *
+   * <p>Creates a stepper with no export callback, falling back to bulk freeze mode.
+   * This constructor provides backward compatibility.</p>
    *
    * @param target EngineBridge in which to perform this operation.
    */
   public SimulationStepper(EngineBridge target) {
+    this(target, Optional.empty());
+  }
+
+  /**
+   * Create a new stepper around a bridge with optional export callback.
+   *
+   * <p>Collects all unique event names from patch event handlers using direct iteration
+   * instead of streams for better performance.</p>
+   *
+   * @param target EngineBridge in which to perform this operation.
+   * @param exportCallback Optional callback for incremental patch export
+   */
+  public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback) {
     this.target = target;
+    this.exportCallback = exportCallback;
 
     MutableEntity simulation = target.getSimulation();
     Iterable<MutableEntity> patches = target.getCurrentPatches();
 
-    events = StreamSupport.stream(patches.spliterator(), false)
-        .flatMap((x) -> StreamSupport.stream(x.getEventHandlers().spliterator(), false))
-        .map(EventHandlerGroup::getEventKey)
-        .map(EventKey::getEvent)
-        .collect(Collectors.toSet());
+    // Collect unique event names from all patches
+    Set<String> eventSet = new HashSet<>();
+    for (MutableEntity patch : patches) {
+      for (EventHandlerGroup group : patch.getEventHandlers()) {
+        EventKey key = group.getEventKey();
+        String event = key.getEvent();
+        eventSet.add(event);
+      }
+    }
+    events = eventSet;
   }
 
   /**
@@ -78,39 +105,61 @@ public class SimulationStepper {
   }
 
   /**
-   * Performs a series of entity updates on a stream of entities from an iterable.
+   * Performs a series of entity updates on entities from an iterable.
+   *
+   * <p>Uses direct iteration for serial execution instead of streams for better performance.
+   * Parallel execution still uses streams as parallel iteration requires the stream API.</p>
    *
    * @param entities the iterable of entities to perform updates on
    * @param subStep the substep to perform
    * @param serial Flag indicating if entities should be executed in parallel. If false, will
-   *     execute in parallel. Otherwise, will use a serial stream.
+   *     execute in parallel. Otherwise, will use serial iteration.
    */
   private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
-    boolean parallel = !serial;
-    Stream<MutableEntity> entityStream = StreamSupport.stream(entities.spliterator(), parallel);
-    performStream(entityStream, subStep);
+    long currentStep = target.getCurrentTimestep();
+
+    if (serial) {
+      // Use direct iteration for serial execution (better performance)
+      long numCompleted = 0;
+      for (MutableEntity entity : entities) {
+        MutableEntity result = updateEntity(entity, subStep);
+        if (result != null) {
+          // Export patch immediately after completion if callback present
+          if (exportCallback.isPresent() && shouldExportInSubstep(subStep)) {
+            org.joshsim.engine.entity.base.Entity frozen =
+                exportCallback.get().exportPatch(result, currentStep);
+            // Store frozen entity in Replicate for prior state access
+            saveFrozenPatchToReplicate(frozen, currentStep);
+          }
+          numCompleted++;
+        }
+      }
+      assert numCompleted > 0;
+    } else {
+      // Keep parallel stream for parallel execution
+      StreamSupport.stream(entities.spliterator(), true)
+          .forEach(entity -> {
+            MutableEntity result = updateEntity(entity, subStep);
+            if (result != null && exportCallback.isPresent() && shouldExportInSubstep(subStep)) {
+              org.joshsim.engine.entity.base.Entity frozen =
+                  exportCallback.get().exportPatch(result, currentStep);
+              saveFrozenPatchToReplicate(frozen, currentStep);
+            }
+          });
+    }
   }
 
   /**
    * Performs a series of entity updates on a single entity.
    *
+   * <p>Uses direct method call instead of creating a stream for a single entity.</p>
+   *
    * @param entity the entity to perform updates on.
    * @param subStep the substep to perform
    */
   private void performStream(MutableEntity entity, String subStep) {
-    performStream(Stream.of(entity), subStep);
-  }
-
-  /**
-   * Performs a series of entity updates on a stream of entities.
-   *
-   * @param entityStream the stream of entities to perform updates on
-   * @param subStep the substep to perform
-   */
-  private void performStream(Stream<MutableEntity> entityStream, String subStep) {
-    Stream<MutableEntity> steppedStream = entityStream.map((x) -> updateEntity(x, subStep));
-    long numCompleted = steppedStream.filter((x) -> x != null).count();
-    assert numCompleted > 0;
+    MutableEntity result = updateEntity(entity, subStep);
+    assert result != null;
   }
 
   /**
@@ -139,7 +188,85 @@ public class SimulationStepper {
    *     recursively updated.
    */
   private void updateEntityUnsafe(MutableEntity target) {
-    InnerEntityGetter.getInnerEntities(target).forEach(this::updateEntityUnsafe);
+    // Resolve all attributes and collect entities discovered during resolution.
+
+    // Use integer-based iteration
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    // Pre-size ArrayList with numAttributes as upper bound
+    List<MutableEntity> innerEntities = new ArrayList<>(numAttributes);
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> value = target.getAttributeValue(i);
+      if (value.isEmpty()) {
+        continue;
+      }
+
+      EngineValue attributeValue = value.get();
+      if (!attributeValue.getLanguageType().containsAttributes()) {
+        continue;
+      }
+
+      Optional<Integer> size = attributeValue.getSize();
+      if (size.isEmpty()) {
+        continue;
+      }
+
+      int sizeValue = size.get();
+      if (sizeValue == 1) {
+        innerEntities.add(attributeValue.getAsMutableEntity());
+      } else {
+        Iterable<EngineValue> contents = attributeValue.getAsDistribution()
+            .getContents(sizeValue, false);
+        for (EngineValue entityValue : contents) {
+          innerEntities.add(entityValue.getAsMutableEntity());
+        }
+      }
+    }
+
+    // Recurse into discovered entities
+    for (MutableEntity innerEntity : innerEntities) {
+      updateEntityUnsafe(innerEntity);
+    }
+  }
+
+  /**
+   * Determine if patches should be exported in the given substep.
+   *
+   * <p>Only export after the final substep to ensure the patch is fully resolved.
+   * The final substep is determined by checking which events are defined, with
+   * priority: end > step > start > init.</p>
+   *
+   * @param subStep the substep to check
+   * @return true if patches should be exported after this substep
+   */
+  private boolean shouldExportInSubstep(String subStep) {
+    // Only export after final substep (usually "step", but could be "end")
+    if (events.contains("end")) {
+      return subStep.equals("end");
+    } else if (events.contains("step")) {
+      return subStep.equals("step");
+    } else if (events.contains("start")) {
+      return subStep.equals("start");
+    } else {
+      return subStep.equals("init");
+    }
+  }
+
+  /**
+   * Save a frozen patch to the Replicate for prior state access.
+   *
+   * <p>Stores the frozen entity in Replicate so it can be accessed via prior
+   * state queries in the next timestep.</p>
+   *
+   * @param frozen the frozen Entity to save
+   * @param currentStep the current timestep number
+   */
+  private void saveFrozenPatchToReplicate(
+      org.joshsim.engine.entity.base.Entity frozen,
+      long currentStep) {
+    target.getReplicate().saveFrozenPatch(frozen, currentStep);
   }
 
 }

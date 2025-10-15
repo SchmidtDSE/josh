@@ -3,6 +3,8 @@ package org.joshsim.precompute;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
@@ -92,6 +94,21 @@ class PatchKeyConverterTest {
       @Override
       public Optional<EngineValue> getAttributeValue(String name) {
         return Optional.empty();
+      }
+
+      @Override
+      public Optional<EngineValue> getAttributeValue(int index) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Integer> getAttributeIndex(String name) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Map<String, Integer> getAttributeNameToIndex() {
+        return Collections.emptyMap();
       }
 
       @Override

@@ -1,6 +1,6 @@
 package org.joshsim.engine.entity.base;
 
-import java.util.HashMap;
+import java.util.Collections;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 
@@ -15,7 +15,11 @@ public class ReferenceGeometryEntity extends RootSpatialEntity {
    * @param geometry The geometry associated with this entity.
    */
   public ReferenceGeometryEntity(EngineGeometry geometry) {
-    super(geometry, "reference", new HashMap<>(), new HashMap<>());
+    // ReferenceGeometryEntity has no handlers, so pass empty array and maps
+    super(geometry, "reference", Collections.emptyMap(),
+        new org.joshsim.engine.value.type.EngineValue[0],
+        Collections.emptyMap(), new String[0], Collections.emptyMap(),
+        Collections.emptyMap(), Collections.emptySet());
   }
 
   @Override

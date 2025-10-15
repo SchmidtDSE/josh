@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
@@ -44,6 +45,26 @@ public class PriorShadowingEntityDecorator implements Entity {
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
     return inner.getPriorAttribute(name);
+  }
+
+  @Override
+  public Optional<EngineValue> getAttributeValue(int index) {
+    // Delegate to ShadowingEntity's integer-based prior attribute access
+    // This avoids O(n) HashMap iteration and leverages the optimized
+    // integer-based access path in the inner entity
+    return inner.getPriorAttribute(index);
+  }
+
+  @Override
+  public Optional<Integer> getAttributeIndex(String name) {
+    // Delegate to inner entity
+    return inner.getAttributeIndex(name);
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    // Delegate to inner entity
+    return inner.getAttributeNameToIndex();
   }
 
   @Override

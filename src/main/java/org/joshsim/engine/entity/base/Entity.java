@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.type.EntityType;
@@ -41,6 +42,44 @@ public interface Entity {
    * @return an Optional containing the attribute value, or empty if not found
    */
   Optional<EngineValue> getAttributeValue(String name);
+
+  /**
+   * Get the value of an attribute by index.
+   *
+   * <p>This method provides fast array-based access to attributes when the index
+   * is known. The index corresponds to the position in the attributeNameToIndex
+   * map, which uses alphabetical ordering.</p>
+   *
+   * @param index the attribute index (from attributeNameToIndex map)
+   * @return an Optional containing the attribute value, or empty if index is invalid
+   */
+  Optional<EngineValue> getAttributeValue(int index);
+
+  /**
+   * Get the array index for an attribute name.
+   *
+   * <p>This method allows callers to look up an attribute's index once and then
+   * use integer-based access for subsequent calls. Returns empty if the attribute
+   * does not exist on this entity type.</p>
+   *
+   * @param name the attribute name
+   * @return an Optional containing the attribute index, or empty if not found
+   */
+  Optional<Integer> getAttributeIndex(String name);
+
+  /**
+   * Get the complete attribute name to index mapping for this entity type.
+   *
+   * <p>This map is shared across all instances of this entity type and maps
+   * attribute names to their array indices. The map is immutable and uses
+   * alphabetical ordering for deterministic indexing.</p>
+   *
+   * <p>This method is useful for caching index lookups across multiple
+   * attribute accesses on entities of the same type.</p>
+   *
+   * @return immutable map from attribute name to array index
+   */
+  Map<String, Integer> getAttributeNameToIndex();
 
   /**
    * Get the names of all attributes associated with this entity.

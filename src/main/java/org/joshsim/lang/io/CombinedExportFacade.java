@@ -8,6 +8,7 @@ package org.joshsim.lang.io;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Stream;
@@ -17,7 +18,9 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.InnerEntityGetter;
-
+import org.joshsim.lang.bridge.PatchExportCallback;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
+import org.joshsim.wire.NamedMap;
 
 /**
  * Convenience facade that manages zero or more exports.
@@ -29,6 +32,7 @@ import org.joshsim.lang.bridge.InnerEntityGetter;
 public class CombinedExportFacade {
 
   private final ExportFacadeFactory exportFactory;
+  private final int replicateNumber;
   private final Optional<ExportFacade> metaExportFacade;
   private final Optional<ExportFacade> patchExportFacade;
   private final Optional<ExportFacade> entityExportFacade;
@@ -43,6 +47,7 @@ public class CombinedExportFacade {
    */
   public CombinedExportFacade(MutableEntity simEntity, ExportFacadeFactory exportFactory) {
     this.exportFactory = exportFactory;
+    this.replicateNumber = exportFactory.getReplicateNumber();
     metaExportFacade = getMetaExportFacade(simEntity);
     patchExportFacade = getPatchExportFacade(simEntity);
     entityExportFacade = getEntityExportFacade(simEntity);
@@ -60,14 +65,31 @@ public class CombinedExportFacade {
    */
   public void write(TimeStep stepCompleted) {
     metaExportFacade.ifPresent(exportFacade -> {
-      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep());
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep(), replicateNumber);
     });
 
-    patchExportFacade.ifPresent(exportFacade -> stepCompleted.getPatches().forEach(
-        (x) -> exportFacade.write(x, stepCompleted.getStep())
-    ));
+    patchExportFacade.ifPresent(exportFacade -> {
+      Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+
+      if (strategy.isPresent()) {
+        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+        MapExportSerializeStrategy serializeStrategy = strategy.get();
+        stepCompleted.getPatches().forEach((patch) -> {
+          Map<String, String> serialized = serializeStrategy.getRecord(patch);
+          NamedMap namedMap = new NamedMap(patch.getName(), serialized);
+          exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
+        });
+      } else {
+        // Legacy path: queue Entity for serialization in consumer thread
+        stepCompleted.getPatches().forEach(
+            (x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber)
+        );
+      }
+    });
 
     entityExportFacade.ifPresent(exportFacade -> {
+      Optional<MapExportSerializeStrategy> strategy = exportFacade.getSerializeStrategy();
+
       Stream<Entity> patches = StreamSupport.stream(
           stepCompleted.getPatches().spliterator(),
           false
@@ -75,7 +97,18 @@ public class CombinedExportFacade {
 
       Stream<Entity> inner = patches.flatMap(InnerEntityGetter::getInnerFrozenEntitiesRecursive);
 
-      inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep()));
+      if (strategy.isPresent()) {
+        // Producer serialization path: serialize Entity to Map, then queue NamedMap
+        MapExportSerializeStrategy serializeStrategy = strategy.get();
+        inner.forEach((entity) -> {
+          Map<String, String> serialized = serializeStrategy.getRecord(entity);
+          NamedMap namedMap = new NamedMap(entity.getName(), serialized);
+          exportFacade.write(namedMap, stepCompleted.getStep(), replicateNumber);
+        });
+      } else {
+        // Legacy path: queue Entity for serialization in consumer thread
+        inner.forEach((x) -> exportFacade.write(x, stepCompleted.getStep(), replicateNumber));
+      }
     });
   }
 
@@ -99,6 +132,40 @@ public class CombinedExportFacade {
    */
   public void join() {
     patchExportFacade.ifPresent(ExportFacade::join);
+  }
+
+  /**
+   * Create an incremental patch export callback for per-patch freeze/serialize.
+   *
+   * <p>Returns a callback that can be passed to SimulationStepper to enable
+   * incremental freeze-and-serialize operations, reducing peak memory usage.</p>
+   *
+   * @return Optional containing callback if patch or entity export is configured, empty otherwise
+   */
+  public Optional<PatchExportCallback> createIncrementalCallback() {
+    if (patchExportFacade.isEmpty() && entityExportFacade.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(new IncrementalPatchExportCallback(
+        patchExportFacade,
+        entityExportFacade,
+        replicateNumber
+    ));
+  }
+
+  /**
+   * Write only the simulation metadata for a completed timestep.
+   *
+   * <p>This method is used in incremental export mode where patches are already
+   * exported individually. Only the simulation metadata needs to be written.</p>
+   *
+   * @param stepCompleted The completed timestep containing metadata
+   */
+  public void writeMetaOnly(TimeStep stepCompleted) {
+    metaExportFacade.ifPresent(exportFacade -> {
+      exportFacade.write(stepCompleted.getMeta(), stepCompleted.getStep(), replicateNumber);
+    });
   }
 
   /**

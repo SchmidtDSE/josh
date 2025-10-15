@@ -6,10 +6,13 @@
 
 package org.joshsim.engine.func;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -25,6 +28,9 @@ public class DistributionScope implements Scope {
   private final Distribution value;
   private final Set<String> expectedAttrs;
 
+  // Cache for ValueResolver instances to avoid repeated allocation
+  private final Map<String, ValueResolver> resolverCache = new HashMap<>();
+
   /**
    * Create a scope decorator around this distribution.
    *
@@ -39,15 +45,22 @@ public class DistributionScope implements Scope {
 
   @Override
   public EngineValue get(String name) {
-    Iterable<EngineValue> values = value.getContents(value.getSize().orElseThrow(), false);
+    int size = value.getSize().orElseThrow();
+    Iterable<EngineValue> values = value.getContents(size, false);
 
-    ValueResolver innerResolver = new ValueResolver(valueFactory, name);
+    // Cache ValueResolver to avoid repeated allocation for the same attribute name
+    ValueResolver innerResolver = resolverCache.computeIfAbsent(
+        name,
+        key -> new ValueResolver(valueFactory, key)
+    );
 
-    List<EngineValue> transformedValues = StreamSupport.stream(values.spliterator(), false)
-        .map((x) -> new EntityScope(x.getAsEntity()))
-        .map(innerResolver::get)
-        .map((x) -> x.orElseThrow())
-        .collect(Collectors.toList());
+    // Transform
+    List<EngineValue> transformedValues = new ArrayList<>(size);
+    for (EngineValue val : values) {
+      EntityScope scope = new EntityScope(val.getAsEntity());
+      Optional<EngineValue> resolved = innerResolver.get(scope);
+      transformedValues.add(resolved.orElseThrow());
+    }
 
     return valueFactory.buildRealizedDistribution(
         transformedValues,
@@ -69,12 +82,14 @@ public class DistributionScope implements Scope {
   /**
    * Extract all attribute names from a sampled entity's event handlers or set attributes.
    *
+   * <p>Returns a copy of the attribute names set to avoid issues if the original set
+   * is immutable or if we need to avoid sharing references.</p>
+   *
    * @param target the Distriubtion to sample for an Entity from which to extract attribute names.
    * @return Set of attribute names found in the entity's event handlers or set attributes.
    */
   private Set<String> getAttributes(Distribution target) {
-    return StreamSupport
-            .stream(target.sample().getAsEntity().getAttributeNames().spliterator(), false)
-            .collect(Collectors.toSet());
+    Set<String> attributeNames = target.sample().getAsEntity().getAttributeNames();
+    return new HashSet<>(attributeNames);
   }
 }

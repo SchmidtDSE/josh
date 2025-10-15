@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.type;
 
+import java.util.Collections;
 import java.util.HashMap;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
@@ -34,7 +35,57 @@ public abstract class ExternalResource extends DirectLockMutableEntity {
       HashMap<EventKey, EventHandlerGroup> eventHandlerGroups,
       HashMap<String, EngineValue> attributes
   ) {
-    super(name, eventHandlerGroups, attributes);
+    // ExternalResource has no handlers, so convert to array and pass empty maps
+    super(name, eventHandlerGroups,
+        attributesArrayFromMap(attributes),
+        attributeIndexFromMap(attributes),
+        indexToAttributeNameFromMap(attributes),
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
+  }
+
+  /**
+   * Convert attributes map to array using alphabetical ordering.
+   */
+  private static EngineValue[] attributesArrayFromMap(HashMap<String, EngineValue> map) {
+    if (map.isEmpty()) {
+      return new EngineValue[0];
+    }
+    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    Collections.sort(sortedNames);
+    EngineValue[] result = new EngineValue[sortedNames.size()];
+    for (int i = 0; i < sortedNames.size(); i++) {
+      result[i] = map.get(sortedNames.get(i));
+    }
+    return result;
+  }
+
+  /**
+   * Create index map from attribute names using alphabetical ordering.
+   */
+  private static java.util.Map<String, Integer> attributeIndexFromMap(
+      HashMap<String, EngineValue> map) {
+    if (map.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    Collections.sort(sortedNames);
+    java.util.Map<String, Integer> result = new HashMap<>();
+    for (int i = 0; i < sortedNames.size(); i++) {
+      result.put(sortedNames.get(i), i);
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Create index-to-name array from attribute names using alphabetical ordering.
+   */
+  private static String[] indexToAttributeNameFromMap(HashMap<String, EngineValue> map) {
+    if (map.isEmpty()) {
+      return new String[0];
+    }
+    java.util.List<String> sortedNames = new java.util.ArrayList<>(map.keySet());
+    Collections.sort(sortedNames);
+    return sortedNames.toArray(new String[0]);
   }
 
   /**

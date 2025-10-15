@@ -161,11 +161,43 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
-  testOutputFormats:
+  testOutputFormatCSV:
     needs: [validateExamples, testPreprocessing]
     environment: Build
     runs-on: ubuntu-latest
-    name: Test Output Formats (CSV, NetCDF, GeoTIFF)
+    name: Test CSV Output Format
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Test CSV output
+        run: |
+          echo "Testing CSV output..."
+          rm -f /tmp/simple_josh.csv
+          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=1 examples/simulations/simple.josh TestSimpleSimulation || exit 1
+          [ -f "/tmp/simple_josh.csv" ] || exit 2
+          [ -s "/tmp/simple_josh.csv" ] || exit 3
+          echo "Testing CSV with Earth-space output..."
+          rm -f /tmp/simple_seki_josh.csv
+          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_seki.josh TestSimpleSimulation || exit 4
+          [ -f "/tmp/simple_seki_josh.csv" ] || exit 5
+          [ -s "/tmp/simple_seki_josh.csv" ] || exit 6
+          echo "✓ CSV output format tests passed!"
+  testOutputFormatNetCDF:
+    needs: [validateExamples, testPreprocessing]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test NetCDF Output Format
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -184,8 +216,45 @@ jobs:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
-      - name: Test output formats
-        run: bash examples/test_output_formats.sh
+      - name: Test netCDF output
+        run: |
+          echo "Testing netCDF output..."
+          rm -f /tmp/simple_josh_*.nc
+          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 7
+          [ -f "/tmp/simple_josh_0.nc" ] || exit 8
+          [ -f "/tmp/simple_josh_1.nc" ] || exit 9
+          [ -s "/tmp/simple_josh_0.nc" ] || exit 10
+          [ -s "/tmp/simple_josh_1.nc" ] || exit 11
+          echo "✓ NetCDF output format tests passed!"
+  testOutputFormatGeoTIFF:
+    needs: [validateExamples, testPreprocessing]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test GeoTIFF Output Format
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download farJar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Test geotiff output
+        run: |
+          echo "Testing geotiff output..."
+          rm -f /tmp/simple_josh_*.tiff
+          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_geotiff.josh TestSimpleSimulation || exit 12
+          [ -f "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 13
+          [ -s "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 14
+          [ -f "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 15
+          [ -s "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 16
+          echo "✓ GeoTIFF output format tests passed!"
   testGuideExamples:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -271,7 +340,7 @@ jobs:
         run: bash examples/test_job_config.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, testOutputFormats, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
@@ -295,7 +364,17 @@ jobs:
         run: cd landing; bash install_deps.sh
       - name: Optimize publicsans deployment
         run: |
+          # Optimize landing fonts
           cd landing
+          if [ -d "publicsans/fonts/otf" ]; then
+            mkdir -p publicsans-minimal/fonts/otf
+            cp publicsans/fonts/otf/PublicSans-Regular.otf publicsans-minimal/fonts/otf/
+            rm -rf publicsans
+            mv publicsans-minimal publicsans
+          fi
+          cd ..
+          # Optimize editor fonts
+          cd editor/third_party
           if [ -d "publicsans/fonts/otf" ]; then
             mkdir -p publicsans-minimal/fonts/otf
             cp publicsans/fonts/otf/PublicSans-Regular.otf publicsans-minimal/fonts/otf/
@@ -360,7 +439,7 @@ jobs:
         with:
           name: fullJar
           path: ./deploy
-      - name: Download WASM artifact
+      - name: Download WAR artifact
         uses: actions/download-artifact@v4
         with:
           name: war

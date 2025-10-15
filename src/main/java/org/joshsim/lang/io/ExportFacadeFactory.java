@@ -53,4 +53,17 @@ public interface ExportFacadeFactory {
    * @returns The path with supported template tags replaced.
    */
   String getPath(String template);
+
+  /**
+   * Get the replicate number for this export factory.
+   *
+   * <p>Returns the replicate number that should be used when writing entities to exports.
+   * The default implementation returns 0 for backward compatibility with implementations
+   * that don't support multi-replicate exports (e.g., SandboxExportFacadeFactory).</p>
+   *
+   * @return The replicate number to use for exports, defaulting to 0.
+   */
+  default int getReplicateNumber() {
+    return 0;
+  }
 }

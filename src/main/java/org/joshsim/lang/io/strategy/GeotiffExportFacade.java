@@ -86,6 +86,11 @@ public class GeotiffExportFacade implements ExportFacade {
     queueService.add(task);
   }
 
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(serializeStrategy);
+  }
+
   /**
    * Common method to write from serialized data regardless of source (Entity or NamedMap).
    *

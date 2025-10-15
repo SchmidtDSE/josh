@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 public class GridSquare extends GridShape {
 
   private final BigDecimal width;
+  private String cachedToString;
 
   /**
    * Create a new square in grid space.
@@ -45,11 +46,14 @@ public class GridSquare extends GridShape {
 
   @Override
   public String toString() {
-    return String.format(
-        "GridSquare at (%s, %s) of width %s.",
-        getCenterX().toString(),
-        getCenterY().toString(),
-        getWidth().toString()
-    );
+    if (cachedToString == null) {
+      cachedToString = String.format(
+          "GridSquare at (%s, %s) of width %s.",
+          getCenterX().toString(),
+          getCenterY().toString(),
+          getWidth().toString()
+      );
+    }
+    return cachedToString;
   }
 }

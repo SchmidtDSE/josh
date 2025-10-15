@@ -109,7 +109,9 @@ public class ReplicateTest {
   @Test
   void testQueryNonExistentStep() {
     when(mockQuery.getStep()).thenReturn(999L); // Non-existent step
-    assertThrows(IllegalArgumentException.class, () -> replicate.query(mockQuery));
+    Iterable<Entity> result = replicate.query(mockQuery);
+    assertNotNull(result);
+    assertFalse(result.iterator().hasNext(), "Expected empty collection for non-existent timestep");
   }
 
   @Test
