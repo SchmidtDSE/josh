@@ -1,21 +1,20 @@
 start simulation BackpressureTest
-  // Test queue backpressure with large dataset and small queue
+  # Test queue backpressure with large dataset and small queue
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
   exportFiles.csv = "minio://josh-test-bucket/results/backpressure.csv"
 
-  start init
-    create 1000 individuals
-  end init
-
-  start structure
-    start pool AllIndividuals
-      select all individuals
-      for each selected as subject
-        subject.value = 0
-      end for
-    end pool
-  end structure
-
-  start step
-    increment self.value by 1
-  end step
+  export.avgValue.end = mean(TestIndividual.value)
 end simulation
+
+start patch Default
+  TestIndividual.init = create 1000 count of TestIndividual
+end patch
+
+start organism TestIndividual
+  value.init = 0 count
+  value.step = prior.value + 1 count
+end organism

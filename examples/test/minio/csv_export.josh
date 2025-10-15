@@ -1,24 +1,28 @@
 start simulation MinioCSVTest
   # Test CSV export to MinIO
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
   exportFiles.csv = "minio://josh-test-bucket/results/test_{replicate}.csv"
 
-  start init
-    create 100 individuals
-  end init
-
-  start structure
-    start pool AllIndividuals
-      select all individuals
-
-      for each selected as subject
-        subject.age = 0
-        subject.height = 1.0
-      end for
-    end pool
-  end structure
-
-  start step
-    increment self.age by 1
-    increment self.height by 0.1
-  end step
+  export.avgAge.end = mean(TestIndividual.age)
+  export.avgHeight.end = mean(TestIndividual.height)
 end simulation
+
+start patch Default
+  TestIndividual.init = create 100 count of TestIndividual
+end patch
+
+start organism TestIndividual
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1.0 m
+  height.step = prior.height + 0.1 m
+end organism
+
+start unit year
+  alias years
+end unit
