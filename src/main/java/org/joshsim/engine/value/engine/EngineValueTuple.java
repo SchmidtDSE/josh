@@ -23,8 +23,6 @@ public class EngineValueTuple {
   private final EngineValue second;
   private final TypesTuple types;
   private final UnitsTuple units;
-  // Static cache for nested tuple instances using long-based composite keys
-  // ConcurrentHashMap provides thread-safe access for parallel processing
   private static final Map<Long, TypesTuple> TYPES_TUPLE_CACHE = new ConcurrentHashMap<>();
   private static final Map<Long, UnitsTuple> UNITS_TUPLE_CACHE = new ConcurrentHashMap<>();
 
@@ -97,11 +95,13 @@ public class EngineValueTuple {
       LanguageType firstType, LanguageType secondType) {
     long key = computeTypesCacheKey(firstType, secondType);
     TypesTuple tuple = TYPES_TUPLE_CACHE.computeIfAbsent(
-        key, k -> new TypesTuple(firstType, secondType));
+        key,
+        k -> new TypesTuple(firstType, secondType)
+    );
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
-    if (tuple.reversed == null) {
+    if (tuple.getReversed() == null) {
       long reversedKey = computeTypesCacheKey(secondType, firstType);
       TypesTuple reversedTuple = TYPES_TUPLE_CACHE.computeIfAbsent(
           reversedKey,
@@ -109,8 +109,8 @@ public class EngineValueTuple {
       );
 
       // Link bidirectionally (benign race: both threads compute same result)
-      tuple.reversed = reversedTuple;
-      reversedTuple.reversed = tuple;
+      tuple.setReversed(reversedTuple);
+      reversedTuple.setReversed(tuple);
     }
 
     return tuple;
@@ -127,11 +127,13 @@ public class EngineValueTuple {
       Units firstUnits, Units secondUnits) {
     long key = computUnitsCacheKey(firstUnits, secondUnits);
     UnitsTuple tuple = UNITS_TUPLE_CACHE.computeIfAbsent(
-        key, k -> new UnitsTuple(firstUnits, secondUnits));
+        key,
+        k -> new UnitsTuple(firstUnits, secondUnits)
+    );
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
-    if (tuple.reversed == null) {
+    if (tuple.getReversed() == null) {
       long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
       UnitsTuple reversedTuple = UNITS_TUPLE_CACHE.computeIfAbsent(
           reversedKey,
@@ -139,8 +141,8 @@ public class EngineValueTuple {
       );
 
       // Link bidirectionally (benign race: both threads compute same result)
-      tuple.reversed = reversedTuple;
-      reversedTuple.reversed = tuple;
+      tuple.setReversed(reversedTuple);
+      reversedTuple.setReversed(tuple);
     }
 
     return tuple;
@@ -238,6 +240,7 @@ public class EngineValueTuple {
     private final LanguageType first;
     private final LanguageType second;
     private final boolean areCompatible;
+    // Not final for performance - allows bidirectional linking without allocation overhead
     private TypesTuple reversed;
 
     /**
@@ -298,6 +301,17 @@ public class EngineValueTuple {
     }
 
     /**
+     * Set the reversed version of this types tuple.
+     *
+     * <p>Used internally for bidirectional linking during cache initialization.</p>
+     *
+     * @param reversed the reversed types tuple with swapped first and second types
+     */
+    void setReversed(TypesTuple reversed) {
+      this.reversed = reversed;
+    }
+
+    /**
      * Convert to a string representation using the roots of both types.
      *
      * @returns string representation using root types.
@@ -339,6 +353,7 @@ public class EngineValueTuple {
     private final Units first;
     private final Units second;
     private final boolean areCompatible;
+    // Not final for performance - allows bidirectional linking without allocation overhead
     private UnitsTuple reversed;
 
     /**
@@ -398,6 +413,17 @@ public class EngineValueTuple {
      */
     public UnitsTuple getReversed() {
       return reversed;
+    }
+
+    /**
+     * Set the reversed version of this units tuple.
+     *
+     * <p>Used internally for bidirectional linking during cache initialization.</p>
+     *
+     * @param reversed the reversed units tuple with swapped first and second units
+     */
+    void setReversed(UnitsTuple reversed) {
+      this.reversed = reversed;
     }
 
     @Override

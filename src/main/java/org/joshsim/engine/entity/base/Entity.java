@@ -6,9 +6,11 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
@@ -82,6 +84,20 @@ public interface Entity {
   Map<String, Integer> getAttributeNameToIndex();
 
   /**
+   * Get the index-to-name array for reverse lookup.
+   *
+   * <p>This array maps attribute indices to their corresponding names,
+   * providing efficient reverse lookup from index to attribute name.</p>
+   *
+   * <p>For entity types that do not support index-based access, this
+   * method returns null to avoid allocation overhead.</p>
+   *
+   * @return immutable array where array[index] = attribute name, or null
+   *     if this entity type does not support index-based reverse lookup
+   */
+  String[] getIndexToAttributeName();
+
+  /**
    * Get the names of all attributes associated with this entity.
    *
    * @return All attribute names available on this entity as strings. This may include non-
@@ -110,4 +126,18 @@ public interface Entity {
    *     if there is no location associated with this entity.
    */
   Optional<GeoKey> getKey();
+
+  /**
+   * Get the pre-computed handler cache for this entity type.
+   *
+   * <p>This cache maps cache key strings (format: "attribute:substep" or
+   * "attribute:substep:state") to lists of matching EventHandlerGroups. The cache
+   * is computed once during entity type construction and shared across all instances.</p>
+   *
+   * <p>For entity types without handlers, this returns an empty map.</p>
+   *
+   * @return Immutable map from cache key string to list of matching EventHandlerGroups,
+   *     or empty map if no handlers are defined
+   */
+  Map<String, List<EventHandlerGroup>> getResolvedHandlers();
 }

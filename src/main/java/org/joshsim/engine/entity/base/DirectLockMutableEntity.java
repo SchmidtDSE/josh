@@ -33,52 +33,32 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private EngineValue[] priorAttributes;
   private final Map<String, Integer> attributeNameToIndex;
   private final String[] indexToAttributeName;
-  private Set<String> onlyOnPrior;
+  private boolean[] onlyOnPrior;
 
   private Optional<String> substep;
   private Set<String> attributeNames;
-  private Map<String, Set<String>> attributesWithoutHandlersBySubstep;
+  private Map<String, boolean[]> attributesWithoutHandlersBySubstep;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
 
   /**
    * Constructor for Entity.
    *
-   * @param name Name of the entity.
-   * @param eventHandlerGroups An immutable map of event keys to their corresponding
-   *     EventHandlerGroups. This map MUST be immutable (e.g., created via
-   *     Collections.unmodifiableMap) as it will be shared across multiple entity
-   *     instances for performance.
-   * @param attributes An array of EngineValue objects indexed by attributeNameToIndex.
-   * @param attributeNameToIndex Shared immutable map from attribute name to array index.
-   * @param indexToAttributeName Shared immutable array from index to attribute name.
-   * @param attributesWithoutHandlersBySubstep Precomputed map of attributes without
-   *     handlers per substep.
-   * @param commonHandlerCache Precomputed map of all handler lookups, shared across
-   *     all instances of this entity type.
-   * @param sharedAttributeNames Precomputed immutable set of attribute names, shared
-   *     across all instances of this entity type.
+   * @param initInfo The initialization information containing all shared entity configuration.
    */
-  public DirectLockMutableEntity(
-      String name,
-      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      EngineValue[] attributes,
-      Map<String, Integer> attributeNameToIndex,
-      String[] indexToAttributeName,
-      Map<String, Set<String>> attributesWithoutHandlersBySubstep,
-      Map<String, List<EventHandlerGroup>> commonHandlerCache,
-      Set<String> sharedAttributeNames
-  ) {
-    this.name = name;
+  public DirectLockMutableEntity(EntityInitializationInfo initInfo) {
+    this.name = initInfo.getName();
 
     // Use the immutable map directly - no defensive copy needed!
     // The map is already immutable and shared across all instances of this entity type.
+    Map<EventKey, EventHandlerGroup> eventHandlerGroups = initInfo.getEventHandlerGroups();
     if (eventHandlerGroups == null) {
       this.eventHandlerGroups = Collections.emptyMap();
     } else {
-      this.eventHandlerGroups = eventHandlerGroups;  // Direct assignment, no copy!
+      this.eventHandlerGroups = eventHandlerGroups;
     }
 
     // Store reference to shared index map (immutable)
+    Map<String, Integer> attributeNameToIndex = initInfo.getAttributeNameToIndex();
     if (attributeNameToIndex == null) {
       this.attributeNameToIndex = Collections.emptyMap();
     } else {
@@ -86,6 +66,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
 
     // Store reference to shared index-to-name array (immutable)
+    String[] indexToAttributeName = initInfo.getIndexToAttributeName();
     if (indexToAttributeName == null) {
       this.indexToAttributeName = new String[0];
     } else {
@@ -93,20 +74,25 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     }
 
     // Attributes array needs defensive copy (mutable per instance)
+    EngineValue[] attributes = initInfo.createAttributesArray();
     if (attributes == null) {
       this.attributes = new EngineValue[0];
     } else {
       this.attributes = attributes.clone();
     }
 
+    // Assert that array lengths match for consistency
+    assert this.attributes.length == this.indexToAttributeName.length
+        : "attributes and indexToAttributeName must have equal length";
+
     lock = CompatibilityLayerKeeper.get().getLock();
     substep = Optional.empty();
     priorAttributes = new EngineValue[this.attributes.length];
-    onlyOnPrior = new HashSet<>();
+    onlyOnPrior = new boolean[this.attributes.length];
 
-    attributeNames = sharedAttributeNames;
-    this.attributesWithoutHandlersBySubstep = attributesWithoutHandlersBySubstep;
-    this.commonHandlerCache = commonHandlerCache;
+    attributeNames = initInfo.getSharedAttributeNames();
+    this.attributesWithoutHandlersBySubstep = initInfo.getAttributesWithoutHandlersBySubstep();
+    this.commonHandlerCache = initInfo.getCommonHandlerCache();
   }
 
   @Override
@@ -162,12 +148,15 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public void setAttributeValue(String name, EngineValue value) {
     int index = getAttributeIndexInternal(name);
     if (index < 0) {
-      // Unknown attribute - ignore or throw?
-      // For now, silently ignore to maintain backward compatibility
-      return;
+      String message = String.format(
+          "Unknown attribute '%s' for entity %s",
+          name,
+          this.name
+      );
+      throw new IllegalArgumentException(message);
     }
 
-    onlyOnPrior.remove(name);
+    onlyOnPrior[index] = false;
     attributes[index] = value;
   }
 
@@ -177,20 +166,18 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     if (index < 0 || index >= attributes.length) {
       String message = String.format(
           "Attribute index %d out of bounds [0, %d) for entity %s",
-          index, attributes.length, name);
+          index,
+          attributes.length,
+          name
+      );
       throw new IndexOutOfBoundsException(message);
     }
 
     // Update attribute at index
     attributes[index] = value;
 
-    // Remove from onlyOnPrior set if present
-    if (index < indexToAttributeName.length) {
-      String attributeName = indexToAttributeName[index];
-      if (attributeName != null) {
-        onlyOnPrior.remove(attributeName);
-      }
-    }
+    // Mark as not only on prior
+    onlyOnPrior[index] = false;
   }
 
   @Override
@@ -206,10 +193,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   @Override
   public Entity freeze() {
     // Copy values from priorAttributes for attributes only in prior
-    for (String key : onlyOnPrior) {
-      int index = getAttributeIndexInternal(key);
-      if (index >= 0) {
-        attributes[index] = priorAttributes[index];
+    for (int i = 0; i < onlyOnPrior.length; i++) {
+      if (onlyOnPrior[i]) {
+        attributes[i] = priorAttributes[i];
       }
     }
 
@@ -220,12 +206,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     attributes = new EngineValue[priorAttributes.length];
 
     // Reset onlyOnPrior tracking
-    onlyOnPrior.clear();
-    for (String attrName : attributeNameToIndex.keySet()) {
-      int index = getAttributeIndexInternal(attrName);
-      if (index >= 0 && priorAttributes[index] != null) {
-        onlyOnPrior.add(attrName);
-      }
+    for (int i = 0; i < onlyOnPrior.length; i++) {
+      onlyOnPrior[i] = priorAttributes[i] != null;
     }
 
     // Freeze all attribute values into array
@@ -297,30 +279,29 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    * can be skipped. If this returns true, the attribute will always resolve from
    * prior state for the given substep.</p>
    *
+   * <p>This method is public to allow external callers (like ShadowingEntity) to
+   * perform fast-path checks.</p>
+   *
    * @param attributeName the attribute to check
    * @param substep the substep to check (e.g., "init", "step", "start")
    * @return true if attribute has no handlers for this substep
    */
   public boolean hasNoHandlers(String attributeName, String substep) {
-    Set<String> attrsForSubstep = attributesWithoutHandlersBySubstep.get(substep);
-    return attrsForSubstep != null && attrsForSubstep.contains(attributeName);
+    int index = getAttributeIndexInternal(attributeName);
+    if (index < 0) {
+      return false;
+    }
+    boolean[] attrsForSubstep = attributesWithoutHandlersBySubstep.get(substep);
+    return attrsForSubstep != null && attrsForSubstep[index];
   }
 
-  /**
-   * Get the pre-computed handler cache shared across all instances of this entity type.
-   *
-   * <p>This cache maps cache key strings (format: "attribute:substep" or
-   * "attribute:substep:state") to lists of matching EventHandlerGroups. The cache
-   * is computed once during entity type construction and shared across all instances.</p>
-   *
-   * @return Immutable map from cache key string to list of matching EventHandlerGroups,
-   *     or empty map if no handlers are defined
-   */
-  public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
+  @Override
+  public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
     if (commonHandlerCache == null) {
       return Collections.emptyMap();
+    } else {
+      return commonHandlerCache;
     }
-    return commonHandlerCache;
   }
 
   @Override
@@ -328,8 +309,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     Integer index = attributeNameToIndex.get(name);
     if (index != null && index >= 0) {
       return Optional.of(index);
+    } else {
+      return Optional.empty();
     }
-    return Optional.empty();
   }
 
   @Override

@@ -27,6 +27,16 @@ import org.joshsim.engine.geometry.PatchSet;
  */
 public class Replicate {
 
+  /**
+   * Defines how entities are frozen when saving timesteps.
+   */
+  private enum FreezeMode {
+    /** Patches frozen incrementally, only once per timestep. */
+    INCREMENTAL,
+    /** All patches frozen at once, once per replicate. */
+    BULK
+  }
+
   private MutableEntity meta;
   private Map<Long, TimeStep> pastTimeSteps = new HashMap<>();
   private Map<GeoKey, MutableEntity> presentTimeStep;
@@ -107,24 +117,23 @@ public class Replicate {
       throw new IllegalArgumentException("TimeStep already exists for step number " + stepNumber);
     }
 
-    // Use pre-frozen patches if available (incremental freeze mode)
+    FreezeMode freezeMode = currentStepFrozenPatches.isEmpty()
+        ? FreezeMode.BULK
+        : FreezeMode.INCREMENTAL;
     Map<GeoKey, Entity> frozenPatches;
     Entity frozenMetaEntity;
 
-    if (!currentStepFrozenPatches.isEmpty()) {
-      // Incremental freeze mode: patches already frozen by SimulationStepper
+    if (freezeMode == FreezeMode.INCREMENTAL) {
       frozenPatches = new HashMap<>(currentStepFrozenPatches);
-      currentStepFrozenPatches.clear();  // Clear for next timestep
+      currentStepFrozenPatches.clear();
 
-      // Freeze meta (only once per timestep, not per patch)
       if (frozenMeta == null) {
         frozenMeta = meta.freeze();
       }
       frozenMetaEntity = frozenMeta;
-      frozenMeta = null;  // Clear for next timestep
+      frozenMeta = null;
 
     } else {
-      // Bulk freeze mode (backward compatibility): freeze all at once
       frozenPatches = new HashMap<>(
           (int) (presentTimeStep.size() / 0.75f) + 1
       );

@@ -106,8 +106,6 @@ public class Units {
     // Cache by canonical string form
     String canonical = simplified.toString();
 
-    // Use putIfAbsent to atomically check and insert
-    // If another thread already cached this, use theirs; otherwise use ours
     Units cached = UNITS_CACHE.putIfAbsent(canonical, simplified);
 
     // putIfAbsent returns null if our value was inserted, or the existing value if already present
@@ -192,17 +190,13 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
-    // Construct cache key from operands using deterministic string representation
-    // Use "(*)" as separator to avoid ambiguity with unit syntax
-    String cacheKey = this.toString() + " (*) " + other.toString();
+    String cacheKey = this.toString() + "\t*\t" + other.toString();
 
-    // Check cache first for O(1) lookup
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {
       return cached;
     }
 
-    // Cache miss: perform multiplication as before
     Map<String, Long> newNumeratorUnits = new TreeMap<>(numeratorUnits);
     Map<String, Long> newDenominatorUnits = new TreeMap<>(denominatorUnits);
 
@@ -237,17 +231,13 @@ public class Units {
    * @return a new Units instance representing the division of the current and other units.
    */
   public Units divide(Units other) {
-    // Construct cache key from operands using deterministic string representation
-    // Use "(/)" as separator to avoid ambiguity with unit syntax
-    String cacheKey = this.toString() + " (/) " + other.toString();
+    String cacheKey = this.toString() + "\t/\t" + other.toString();
 
-    // Check cache first for O(1) lookup
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {
       return cached;
     }
 
-    // Cache miss: perform division via multiply(invert()) as before
     Units result = multiply(other.invert());
 
     // Cache the result for future lookups

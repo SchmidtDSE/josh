@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import org.joshsim.engine.entity.base.Entity;
@@ -284,10 +285,50 @@ class EarthPatchBuilderTest {
 
     @Override
     public MutableEntity buildSpatial(EngineGeometry parent) {
-      return new Patch(
-          parent, "test", new HashMap<>(), new org.joshsim.engine.value.type.EngineValue[0],
-          java.util.Collections.emptyMap(), new String[0], java.util.Collections.emptyMap(),
-          java.util.Collections.emptyMap(), java.util.Collections.emptySet());
+      return new Patch(parent, new org.joshsim.engine.entity.base.EntityInitializationInfo() {
+        @Override
+        public String getName() {
+          return "test";
+        }
+
+        @Override
+        public java.util.Map<org.joshsim.engine.entity.handler.EventKey,
+            org.joshsim.engine.entity.handler.EventHandlerGroup> getEventHandlerGroups() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public org.joshsim.engine.value.type.EngineValue[] createAttributesArray() {
+          return new org.joshsim.engine.value.type.EngineValue[0];
+        }
+
+        @Override
+        public java.util.Map<String, Integer> getAttributeNameToIndex() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public String[] getIndexToAttributeName() {
+          return new String[0];
+        }
+
+        @Override
+        public java.util.Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public java.util.Map<String,
+            java.util.List<org.joshsim.engine.entity.handler.EventHandlerGroup>>
+                getCommonHandlerCache() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public java.util.Set<String> getSharedAttributeNames() {
+          return Collections.emptySet();
+        }
+      });
     }
 
     @Override
