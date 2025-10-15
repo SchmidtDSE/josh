@@ -1,0 +1,24 @@
+start simulation MinioNetCDFTest
+  // Test NetCDF export to MinIO
+  exportFiles.netcdf = "minio://josh-test-bucket/results/test_{replicate}.nc"
+
+  start init
+    create 50 individuals
+  end init
+
+  start structure
+    start pool AllIndividuals
+      select all individuals
+
+      for each selected as subject
+        subject.age = 0
+        subject.value = 1.0
+      end for
+    end pool
+  end structure
+
+  start step
+    increment self.age by 1
+    increment self.value by 0.5
+  end step
+end simulation

@@ -1,0 +1,23 @@
+start simulation MinioMixedTest
+  // Test mixing MinIO and local file outputs
+  exportFiles.minio = "minio://josh-test-bucket/results/mixed_{replicate}.csv"
+  exportFiles.local = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
+
+  start init
+    create 25 individuals
+  end init
+
+  start structure
+    start pool AllIndividuals
+      select all individuals
+
+      for each selected as subject
+        subject.counter = 0
+      end for
+    end pool
+  end structure
+
+  start step
+    increment self.counter by 1
+  end step
+end simulation

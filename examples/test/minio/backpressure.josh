@@ -1,0 +1,21 @@
+start simulation BackpressureTest
+  // Test queue backpressure with large dataset and small queue
+  exportFiles.csv = "minio://josh-test-bucket/results/backpressure.csv"
+
+  start init
+    create 1000 individuals
+  end init
+
+  start structure
+    start pool AllIndividuals
+      select all individuals
+      for each selected as subject
+        subject.value = 0
+      end for
+    end pool
+  end structure
+
+  start step
+    increment self.value by 1
+  end step
+end simulation

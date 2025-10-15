@@ -1,0 +1,24 @@
+start simulation MinioCSVTest
+  // Test CSV export to MinIO
+  exportFiles.csv = "minio://josh-test-bucket/results/test_{replicate}.csv"
+
+  start init
+    create 100 individuals
+  end init
+
+  start structure
+    start pool AllIndividuals
+      select all individuals
+
+      for each selected as subject
+        subject.age = 0
+        subject.height = 1.0
+      end for
+    end pool
+  end structure
+
+  start step
+    increment self.age by 1
+    increment self.height by 0.1
+  end step
+end simulation
