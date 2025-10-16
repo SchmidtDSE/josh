@@ -54,16 +54,12 @@ public class JvmQueueService implements QueueService {
         callback.onStart();
 
         while (active.get() || !taskQueue.isEmpty()) {
-          try {
-            Object task = taskQueue.poll(100, TimeUnit.MILLISECONDS);
-            if (task == null) {
-              callback.onTask(Optional.empty());
-            } else {
-              callback.onTask(Optional.of(task));
-            }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Interrupted while polling queue", e);
+          Object task = taskQueue.poll();
+          if (task == null) {
+            callback.onTask(Optional.empty());
+            trySleep();
+          } else {
+            callback.onTask(Optional.of(task));
           }
         }
 

@@ -10,6 +10,9 @@ COPY . .
 # Install the required dependencies (gradle)
 RUN .devcontainer/scripts/on_build/install_gradle.sh
 
+# Install VisualVM for profiling
+RUN .devcontainer/scripts/on_build/install_visualvm.sh
+
 # Add josh_validator and other interactive scripts to PATH, to be able to run them from anywhere
 ENV PATH="/workspaces/josh/.devcontainer/scripts/interactive:${PATH}"
 
