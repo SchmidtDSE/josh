@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -717,8 +718,51 @@ public class ExternalGeoMapperTest {
 
     @Override
     public MutableEntity buildSpatial(EngineGeometry geometry) {
-      String patchId = "riverside_patch_" + (++patchCounter);
-      return new Patch(geometry, patchId, new HashMap<>(), new HashMap<>());
+      final String patchId = "riverside_patch_" + (++patchCounter);
+      return new Patch(geometry, new org.joshsim.engine.entity.base.EntityInitializationInfo() {
+        @Override
+        public String getName() {
+          return patchId;
+        }
+
+        @Override
+        public java.util.Map<org.joshsim.engine.entity.handler.EventKey,
+            org.joshsim.engine.entity.handler.EventHandlerGroup> getEventHandlerGroups() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public org.joshsim.engine.value.type.EngineValue[] createAttributesArray() {
+          return new org.joshsim.engine.value.type.EngineValue[0];
+        }
+
+        @Override
+        public java.util.Map<String, Integer> getAttributeNameToIndex() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public String[] getIndexToAttributeName() {
+          return new String[0];
+        }
+
+        @Override
+        public java.util.Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public java.util.Map<String,
+            java.util.List<org.joshsim.engine.entity.handler.EventHandlerGroup>>
+                getCommonHandlerCache() {
+          return Collections.emptyMap();
+        }
+
+        @Override
+        public java.util.Set<String> getSharedAttributeNames() {
+          return Collections.emptySet();
+        }
+      });
     }
 
     @Override

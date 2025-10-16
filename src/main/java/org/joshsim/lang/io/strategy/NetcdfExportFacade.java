@@ -28,6 +28,7 @@ public class NetcdfExportFacade implements ExportFacade {
 
   private final OutputStreamStrategy outputStrategy;
   private final List<String> variables;
+  private final MapExportSerializeStrategy serializeStrategy;
   private final InnerWriter innerWriter;
   private final QueueService queueService;
 
@@ -41,6 +42,7 @@ public class NetcdfExportFacade implements ExportFacade {
   public NetcdfExportFacade(OutputStreamStrategy outputStrategy,
       MapExportSerializeStrategy serializeStrategy, List<String> variables) {
     this.outputStrategy = outputStrategy;
+    this.serializeStrategy = serializeStrategy;
     this.variables = variables;
     innerWriter = new InnerWriter(variables, outputStrategy, serializeStrategy);
     queueService = CompatibilityLayerKeeper.get().createQueueService(innerWriter);
@@ -68,6 +70,16 @@ public class NetcdfExportFacade implements ExportFacade {
     write(task);
   }
 
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
   /**
    * Adds a task to the queue for processing.
    *
@@ -75,6 +87,11 @@ public class NetcdfExportFacade implements ExportFacade {
    */
   public void write(ExportTask task) {
     queueService.add(task);
+  }
+
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(serializeStrategy);
   }
 
 

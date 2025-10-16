@@ -186,17 +186,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
+    int leftSize = left.getSize().orElseThrow();
+    int rightSize = right.getSize().orElseThrow();
+
     Iterable<EngineValue> leftValues = left.getAsDistribution().getContents(
-        left.getSize().orElseThrow(),
+        leftSize,
         false
     );
 
     Iterable<EngineValue> rightValues = right.getAsDistribution().getContents(
-        right.getSize().orElseThrow(),
+        rightSize,
         false
     );
 
-    List<EngineValue> allValues = new ArrayList<>();
+    // Pre-size ArrayList to avoid growth overhead
+    List<EngineValue> allValues = new ArrayList<>(leftSize + rightSize);
     leftValues.forEach(allValues::add);
     rightValues.forEach(allValues::add);
 
@@ -439,7 +443,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       EntityFastForwarder.fastForward(newEntity, substep);
       result = valueFactory.build(newEntity);
     } else {
-      List<EngineValue> values = new ArrayList<>();
+      // Pre-size ArrayList with known count to avoid growth overhead
+      List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
         MutableEntity newEntity = decoratedPrototype.build();
         EntityFastForwarder.fastForward(newEntity, substep);
@@ -462,11 +467,29 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         centerGeometry.getCenterX(), centerGeometry.getCenterY(), distance.getAsDecimal()
     );
 
-    Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);
-    List<EngineValue> resolved = StreamSupport.stream(patches.spliterator(), false)
-        .map(EntityScope::new)
-        .map(scope -> resolver.get(scope).orElseThrow())
-        .toList();
+    List<Entity> patches = bridge.getPriorPatches(queryGeometry);
+
+    // Check if querying for patch entities themselves vs attributes on patches
+    // This handles cases like "Default within 30 m" where "Default" is the patch type name
+    boolean queryingForPatchEntities = !patches.isEmpty()
+        && isQueryForPatch(resolver, patches.get(0).getName());
+
+    // Pre-size ArrayList with known patch count to eliminate ArrayList.grow() overhead
+    List<EngineValue> resolved = new ArrayList<>(patches.size());
+
+    if (queryingForPatchEntities) {
+      // Return the patch entities themselves
+      for (Entity patch : patches) {
+        resolved.add(valueFactory.build(patch));
+      }
+    } else {
+      // Return attributes from the patches
+      for (Entity patch : patches) {
+        EntityScope scope = new EntityScope(patch);
+        EngineValue value = resolver.get(scope).orElseThrow();
+        resolved.add(value);
+      }
+    }
 
     EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
         resolved,
@@ -927,6 +950,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     } else {
       memory.push(convert(subject, newUnits));
     }
+  }
+
+  /**
+   * Checks if the resolver is querying for patch entities directly.
+   *
+   * @param resolver The ValueResolver being used for the query.
+   * @param patchName The name of the patch to check against.
+   * @return true if the resolver path matches the patch name, indicating a query for patches.
+   */
+  private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
+    return resolver.toString().contains("ValueResolver(" + patchName + ")");
   }
 
 }

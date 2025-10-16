@@ -44,6 +44,17 @@ public interface MutableEntity extends Entity, Lockable {
   void setAttributeValue(String name, EngineValue value);
 
   /**
+   * Set the value of an attribute by index.
+   *
+   * <p>This method provides array-based attribute updates when the index is known.</p>
+   *
+   * @param index the attribute index (from attributeNameToIndex map)
+   * @param value the value to set
+   * @throws IndexOutOfBoundsException if index is negative or >= array length
+   */
+  void setAttributeValue(int index, EngineValue value);
+
+  /**
    * Indicate that this entity is starting a substep or step phase like step.
    *
    * <p>Indicate that this entity is starting a substep or step phase in which it may be mutated,
@@ -73,5 +84,18 @@ public interface MutableEntity extends Entity, Lockable {
    * @return the name of the current substep, or an empty Optional if no substep currently active.
    */
   Optional<String> getSubstep();
+
+  /**
+   * Check if an attribute has no handlers for a specific substep.
+   *
+   * <p>This method enables fast-path checking by identifying when handler lookup
+   * can be skipped. If this returns true, the attribute will always resolve from
+   * prior state for the given substep.</p>
+   *
+   * @param attributeName the attribute to check
+   * @param substep the substep to check (e.g., "init", "step", "start")
+   * @return true if attribute has no handlers for this substep
+   */
+  boolean hasNoHandlers(String attributeName, String substep);
 
 }

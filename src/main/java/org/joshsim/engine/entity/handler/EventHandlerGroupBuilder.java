@@ -43,7 +43,7 @@ public class EventHandlerGroupBuilder {
    * @throws IllegalStateException if any of state, attribute, or event have not been set.
    */
   public EventKey buildKey() {
-    return new EventKey(getState(), getAttribute(), getEvent());
+    return EventKey.of(getState(), getAttribute(), getEvent());
   }
 
   /**

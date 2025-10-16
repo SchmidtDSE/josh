@@ -53,4 +53,13 @@ public interface ExportFacadeFactory {
    * @returns The path with supported template tags replaced.
    */
   String getPath(String template);
+
+  /**
+   * Get the replicate number for this export factory.
+   *
+   * <p>Returns the replicate number that should be used when writing entities to exports.</p>
+   *
+   * @return The replicate number to use for exports.
+   */
+  int getReplicateNumber();
 }

@@ -3,10 +3,14 @@ package org.joshsim.precompute;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
@@ -95,6 +99,26 @@ class PatchKeyConverterTest {
       }
 
       @Override
+      public Optional<EngineValue> getAttributeValue(int index) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<Integer> getAttributeIndex(String name) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Map<String, Integer> getAttributeNameToIndex() {
+        return Collections.emptyMap();
+      }
+
+      @Override
+      public String[] getIndexToAttributeName() {
+        return null;
+      }
+
+      @Override
       public Set<String> getAttributeNames() {
         return Set.of();
       }
@@ -112,6 +136,11 @@ class PatchKeyConverterTest {
       @Override
       public Optional<GeoKey> getKey() {
         return Optional.empty();
+      }
+
+      @Override
+      public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
+        return Collections.emptyMap();
       }
     });
 

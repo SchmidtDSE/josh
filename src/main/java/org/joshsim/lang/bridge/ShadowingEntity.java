@@ -6,16 +6,13 @@
 
 package org.joshsim.lang.bridge;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -50,10 +47,12 @@ public class ShadowingEntity implements MutableEntity {
   private final MutableEntity inner;
   private final Entity here;
   private final Entity meta;
-  private final Set<String> resolvedAttributes;
-  private final Set<String> resolvingAttributes;
   private final Scope scope;
-  private final Map<String, Iterable<EventHandlerGroup>> handlersForAttribute;
+  private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
+
+  // Array-based caching for resolved values and circular dependency tracking
+  private final EngineValue[] resolvedCacheByIndex;
+  private final boolean[] resolvingByIndex;
 
   private boolean checkAssertions;
 
@@ -77,10 +76,14 @@ public class ShadowingEntity implements MutableEntity {
       checkAssertions = true;
     }
 
-    resolvedAttributes = new HashSet<>();
-    resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
-    handlersForAttribute = new HashMap<>();
+
+    // Initialize array-based caches
+    int numAttributes = inner.getAttributeNameToIndex().size();
+    resolvedCacheByIndex = new EngineValue[numAttributes];
+    resolvingByIndex = new boolean[numAttributes];
+
+    this.commonHandlerCache = inner.getResolvedHandlers();
   }
 
   /**
@@ -97,10 +100,14 @@ public class ShadowingEntity implements MutableEntity {
     this.here = here;
     this.meta = meta;
 
-    resolvedAttributes = new HashSet<>();
-    resolvingAttributes = new HashSet<>();
     scope = new EntityScope(inner);
-    handlersForAttribute = new HashMap<>();
+
+    // Initialize array-based caches
+    int numAttributes = inner.getAttributeNameToIndex().size();
+    resolvedCacheByIndex = new EngineValue[numAttributes];
+    resolvingByIndex = new boolean[numAttributes];
+
+    this.commonHandlerCache = inner.getResolvedHandlers();
   }
 
   /**
@@ -144,37 +151,21 @@ public class ShadowingEntity implements MutableEntity {
 
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
-    CompatibleStringJoiner keyJoiner = CompatibilityLayerKeeper.get().createStringJoiner("\t");
-    keyJoiner.add(attribute);
-    keyJoiner.add(substep);
-    keyJoiner.add(state);
-    String key = keyJoiner.toString();
-
-    if (!handlersForAttribute.containsKey(key)) {
-      EventKey eventKeyWithoutState = new EventKey(attribute, substep);
-      Optional<EventHandlerGroup> withoutState = inner.getEventHandlers(eventKeyWithoutState);
-
-      Optional<EventHandlerGroup> withState;
-      if (!state.isBlank()) {
-        EventKey eventKeyWithState = new EventKey(state, attribute, substep);
-        withState = inner.getEventHandlers(eventKeyWithState);
-      } else {
-        withState = Optional.empty();
-      }
-
-      List<EventHandlerGroup> matching = new ArrayList<>(2);
-      if (withoutState.isPresent()) {
-        matching.add(withoutState.get());
-      }
-
-      if (withState.isPresent()) {
-        matching.add(withState.get());
-      }
-
-      handlersForAttribute.put(key, matching);
+    // Build cache key string
+    String cacheKey;
+    if (state.isEmpty()) {
+      cacheKey = attribute + ":" + substep;
+    } else {
+      cacheKey = attribute + ":" + substep + ":" + state;
     }
 
-    return handlersForAttribute.get(key);
+    // Look up in shared cache, return empty list if not found
+    List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
+    if (handlers != null) {
+      return handlers;
+    }
+
+    return Collections.emptyList();
   }
 
   /**
@@ -187,15 +178,82 @@ public class ShadowingEntity implements MutableEntity {
    */
   @Override
   public Optional<EngineValue> getAttributeValue(String name) {
-    if (!resolvedAttributes.contains(name)) {
-      if (hasAttribute(name)) {
-        resolveAttribute(name);
-      } else {
-        return Optional.empty();
+    Optional<Integer> indexMaybe = inner.getAttributeIndex(name);
+
+    if (indexMaybe.isPresent()) {
+      int index = indexMaybe.get();
+      boolean cacheIndexInBounds = index >= 0 && index < resolvedCacheByIndex.length;
+      if (cacheIndexInBounds) {
+        EngineValue cached = resolvedCacheByIndex[index];
+        if (cached != null) {
+          return Optional.of(cached);
+        }
+      }
+    }
+
+    if (hasAttribute(name)) {
+      resolveAttribute(name);
+      if (indexMaybe.isPresent()) {
+        int index = indexMaybe.get();
+        boolean postResolveIndexInBounds = index >= 0 && index < resolvedCacheByIndex.length;
+        if (postResolveIndexInBounds) {
+          EngineValue cached = resolvedCacheByIndex[index];
+          if (cached != null) {
+            return Optional.of(cached);
+          }
+        }
       }
     }
 
     return inner.getAttributeValue(name);
+  }
+
+  @Override
+  public Optional<EngineValue> getAttributeValue(int index) {
+    // Integer-based access with resolution support
+
+    // Bounds check - if index is negative, return empty
+    if (index < 0) {
+      return Optional.empty();
+    }
+
+    // Check array-based cache first
+    // Note: If index >= array length (can happen in tests with mocks), we skip cache and continue
+    EngineValue cached = null;
+    if (index < resolvedCacheByIndex.length) {
+      cached = resolvedCacheByIndex[index];
+      if (cached != null) {
+        return Optional.of(cached);
+      }
+    }
+
+    String[] indexArray = inner.getIndexToAttributeName();
+    String attributeName = null;
+
+    boolean indexInRange = index >= 0 && indexArray != null && index < indexArray.length;
+    if (indexInRange) {
+      attributeName = indexArray[index];
+    }
+
+    if (attributeName == null) {
+      return Optional.empty();
+    }
+
+    // Trigger resolution using integer-based path for efficiency
+    // IMPORTANT: Must trigger resolution, not bypass it, to ensure handlers execute
+    if (hasAttribute(attributeName)) {
+      resolveAttributeByIndex(index, attributeName);
+      // Check array cache again after resolution (only if index is in bounds)
+      if (index < resolvedCacheByIndex.length) {
+        cached = resolvedCacheByIndex[index];
+        if (cached != null) {
+          return Optional.of(cached);
+        }
+      }
+    }
+
+    // Fallback: retrieve from inner entity using integer access
+    return inner.getAttributeValue(index);
   }
 
   /**
@@ -208,8 +266,42 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public void setAttributeValue(String name, EngineValue value) {
     assertAttributePresent(name);
-    resolvedAttributes.add(name);
+
+    Optional<Integer> indexMaybe = inner.getAttributeIndex(name);
+    if (indexMaybe.isPresent()) {
+      int index = indexMaybe.get();
+      boolean cacheIndexInBounds = index >= 0 && index < resolvedCacheByIndex.length;
+      if (cacheIndexInBounds) {
+        resolvedCacheByIndex[index] = value;
+      }
+    }
+
     inner.setAttributeValue(name, value);
+  }
+
+  @Override
+  public void setAttributeValue(int index, EngineValue value) {
+    String[] indexArray = inner.getIndexToAttributeName();
+    String attributeName = null;
+
+    boolean indexInRange = index >= 0 && indexArray != null && index < indexArray.length;
+    if (indexInRange) {
+      attributeName = indexArray[index];
+    }
+
+    if (attributeName == null) {
+      String message = String.format(
+          "Attribute index %d not found for entity %s",
+          index, inner.getName());
+      throw new IndexOutOfBoundsException(message);
+    }
+
+    boolean cacheIndexInBounds = index >= 0 && index < resolvedCacheByIndex.length;
+    if (cacheIndexInBounds) {
+      resolvedCacheByIndex[index] = value;
+    }
+
+    setAttributeValue(attributeName, value);
   }
 
   /**
@@ -230,6 +322,18 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
+   * Get the value of an attribute from the previous substep by index.
+   *
+   * @param index the attribute index
+   * @return the value of the attribute from the previous step
+   * @throws IllegalStateException if the attribute exists but has not been initialized
+   * @throws IndexOutOfBoundsException if index is invalid
+   */
+  public Optional<EngineValue> getPriorAttribute(int index) {
+    return inner.getAttributeValue(index);
+  }
+
+  /**
    * Determine if this entity has an attribute.
    *
    * @param name unique identifier of the attribute.
@@ -237,6 +341,26 @@ public class ShadowingEntity implements MutableEntity {
    */
   public boolean hasAttribute(String name) {
     return scope.has(name);
+  }
+
+  @Override
+  public Optional<Integer> getAttributeIndex(String name) {
+    return inner.getAttributeIndex(name);
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    return inner.getAttributeNameToIndex();
+  }
+
+  @Override
+  public String[] getIndexToAttributeName() {
+    return inner.getIndexToAttributeName();
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
+    return commonHandlerCache;
   }
 
   /**
@@ -291,7 +415,16 @@ public class ShadowingEntity implements MutableEntity {
    * @return State of this entity after current resolution.
    */
   private String getState() {
-    boolean doesNotUseState = !resolvedAttributes.contains("state");
+    // Check if "state" attribute exists and is cached in array
+    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+    if (stateIndexMaybe.isEmpty()) {
+      return DEFAULT_STATE_STR;
+    }
+
+    int stateIndex = stateIndexMaybe.get();
+    boolean doesNotUseState = stateIndex < 0
+        || stateIndex >= resolvedCacheByIndex.length
+        || resolvedCacheByIndex[stateIndex] == null;
     if (doesNotUseState) {
       return DEFAULT_STATE_STR;
     }
@@ -344,18 +477,37 @@ public class ShadowingEntity implements MutableEntity {
    * @param name unique identifier of the attribute to resolve.
    */
   private void resolveAttribute(String name) {
-    if (resolvingAttributes.contains(name)) {
-      System.err.println("Encountered a loop when resolving " + name);
-      System.err.println("Resolved:");
-      for (String resolving : resolvingAttributes) {
-        System.err.println("\t" + resolving);
-      }
-      throw new RuntimeException("Encountered a loop when resolving " + name);
-    }
+    Optional<Integer> indexMaybe = inner.getAttributeIndex(name);
+    if (indexMaybe.isPresent()) {
+      int index = indexMaybe.get();
 
-    resolvingAttributes.add(name);
-    resolveAttributeUnsafe(name);
-    resolvingAttributes.remove(name);
+      boolean indexInBounds = index >= 0 && index < resolvingByIndex.length;
+      if (indexInBounds && resolvingByIndex[index]) {
+        System.err.println("Encountered a loop when resolving " + name);
+        System.err.println("Currently resolving attributes:");
+        Map<String, Integer> nameToIndex = inner.getAttributeNameToIndex();
+        for (Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
+          int attrIndex = entry.getValue();
+          boolean attrIndexInBounds = attrIndex >= 0 && attrIndex < resolvingByIndex.length;
+          if (attrIndexInBounds && resolvingByIndex[attrIndex]) {
+            System.err.println("\t" + entry.getKey());
+          }
+        }
+        throw new RuntimeException("Encountered a loop when resolving " + name);
+      }
+
+      if (indexInBounds) {
+        resolvingByIndex[index] = true;
+      }
+
+      resolveAttributeUnsafe(name);
+
+      if (indexInBounds) {
+        resolvingByIndex[index] = false;
+      }
+    } else {
+      resolveAttributeUnsafe(name);
+    }
   }
 
   /**
@@ -372,24 +524,32 @@ public class ShadowingEntity implements MutableEntity {
       return;
     }
 
-    // If no handlers, use prior
+    if (inner.hasNoHandlers(name, substep.get())) {
+      resolveAttributeFromPrior(name);
+      return;
+    }
+
+    // Check for handlers
     Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
     if (!handlersMaybe.hasNext()) {
       resolveAttributeFromPrior(name);
       return;
     }
 
-    // Attempt to match a handler for updated value
     boolean executed = false;
+    boolean isAssertion = false;
     while (handlersMaybe.hasNext()) {
       EventHandlerGroup handlers = handlersMaybe.next();
       boolean localExecuted = executeHandlers(handlers);
-      executed = executed || localExecuted;
+      if (localExecuted) {
+        executed = true;
+        isAssertion = handlers.isAssertion();
+        break;
+      }
     }
 
-    // If failed to match, use prior
     if (executed) {
-      if (checkAssertions && name.startsWith("assert.")) {
+      if (checkAssertions && isAssertion) {
         Optional<EngineValue> result = getAttributeValue(name);
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();
@@ -400,6 +560,100 @@ public class ShadowingEntity implements MutableEntity {
       }
     } else {
       resolveAttributeFromPrior(name);
+    }
+  }
+
+  /**
+   * Attempt to resolve an attribute using integer-based access.
+   *
+   * <p>Integer-based variant of resolveAttribute that uses integer indexing when accessing
+   * the inner entity. The attribute name is still required for cache operations and handler
+   * execution.</p>
+   *
+   * @param index the integer index of the attribute
+   * @param name the attribute name (needed for cache and handlers)
+   */
+  private void resolveAttributeByIndex(int index, String name) {
+    boolean indexInBounds = index >= 0 && index < resolvingByIndex.length;
+    if (indexInBounds && resolvingByIndex[index]) {
+      System.err.println("Encountered a loop when resolving " + name);
+      System.err.println("Currently resolving attributes:");
+      Map<String, Integer> nameToIndex = inner.getAttributeNameToIndex();
+      for (Map.Entry<String, Integer> entry : nameToIndex.entrySet()) {
+        int attrIndex = entry.getValue();
+        boolean attrIndexInBounds = attrIndex >= 0 && attrIndex < resolvingByIndex.length;
+        if (attrIndexInBounds && resolvingByIndex[attrIndex]) {
+          System.err.println("\t" + entry.getKey());
+        }
+      }
+      throw new RuntimeException("Encountered a loop when resolving " + name);
+    }
+
+    if (indexInBounds) {
+      resolvingByIndex[index] = true;
+    }
+
+    resolveAttributeUnsafeByIndex(index, name);
+
+    if (indexInBounds) {
+      resolvingByIndex[index] = false;
+    }
+  }
+
+  /**
+   * Attempt to resolve an attribute by index without checking for circular dependency.
+   *
+   * <p>Uses integer-based access to inner entity. Critical for hot paths like
+   * EntityFastForwarder that iterate over all attributes.</p>
+   *
+   * @param index the integer index of the attribute
+   * @param name the attribute name (needed for cache and handlers)
+   */
+  private void resolveAttributeUnsafeByIndex(int index, String name) {
+    Optional<String> substep = getSubstep();
+
+    // If outside substep, use prior with integer access
+    if (substep.isEmpty()) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    if (inner.hasNoHandlers(name, substep.get())) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    // Check for handlers
+    Iterator<EventHandlerGroup> handlersMaybe = getHandlersForAttribute(name).iterator();
+    if (!handlersMaybe.hasNext()) {
+      resolveAttributeFromPriorByIndex(index);
+      return;
+    }
+
+    boolean executed = false;
+    boolean isAssertion = false;
+    while (handlersMaybe.hasNext()) {
+      EventHandlerGroup handlers = handlersMaybe.next();
+      boolean localExecuted = executeHandlers(handlers);
+      if (localExecuted) {
+        executed = true;
+        isAssertion = handlers.isAssertion();
+        break;
+      }
+    }
+
+    if (executed) {
+      if (checkAssertions && isAssertion) {
+        Optional<EngineValue> result = getAttributeValue(name);
+        if (result.isPresent()) {
+          boolean value = result.get().getAsBoolean();
+          if (!value) {
+            throw new RuntimeException("Assertion failed for " + name);
+          }
+        }
+      }
+    } else {
+      resolveAttributeFromPriorByIndex(index);
     }
   }
 
@@ -446,6 +700,24 @@ public class ShadowingEntity implements MutableEntity {
     }
   }
 
+  /**
+   * Set the current attribute to the value from the previous substep using integer index.
+   *
+   * @param index the attribute index
+   */
+  private void resolveAttributeFromPriorByIndex(int index) {
+    Optional<EngineValue> prior = getPriorAttribute(index);
+
+    if (prior.isPresent()) {
+      inner.setAttributeValue(index, prior.get());
+
+      boolean cacheIndexInBounds = index >= 0 && index < resolvedCacheByIndex.length;
+      if (cacheIndexInBounds) {
+        resolvedCacheByIndex[index] = prior.get();
+      }
+    }
+  }
+
   @Override
   public void lock() {
     inner.lock();
@@ -470,13 +742,18 @@ public class ShadowingEntity implements MutableEntity {
   public void startSubstep(String name) {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
     inner.startSubstep(name);
-    resolvedAttributes.clear();
+
+    // Clear array-based cache
+    Arrays.fill(resolvedCacheByIndex, null);
   }
 
   @Override
   public void endSubstep() {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
-    resolvingAttributes.clear();
+
+    // Clear array-based tracking
+    Arrays.fill(resolvingByIndex, false);
+
     inner.endSubstep();
   }
 
@@ -484,4 +761,10 @@ public class ShadowingEntity implements MutableEntity {
   public Optional<String> getSubstep() {
     return inner.getSubstep();
   }
+
+  @Override
+  public boolean hasNoHandlers(String attributeName, String substep) {
+    return inner.hasNoHandlers(attributeName, substep);
+  }
+
 }

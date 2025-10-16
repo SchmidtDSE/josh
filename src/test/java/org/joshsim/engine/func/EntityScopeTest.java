@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -76,5 +77,46 @@ class EntityScopeTest {
     Iterable<String> attributes = scope.getAttributes();
     assertTrue(attributes.iterator().hasNext());
     assertEquals("testAttr", attributes.iterator().next());
+  }
+
+  @Test
+  void testGetByIndexExistingAttribute() {
+    // Setup: testAttr is at some index
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+    when(mockEntity.getAttributeValue(0)).thenReturn(Optional.of(mockValue));
+
+    EngineValue result = scope.get(0);
+
+    assertEquals(mockValue, result);
+  }
+
+  @Test
+  void testGetByIndexNonExistentAttribute() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+    when(mockEntity.getAttributeValue(5)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> scope.get(5));
+  }
+
+  @Test
+  void testGetByIndexAndNameReturnSame() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+    when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
+    when(mockEntity.getAttributeValue(0)).thenReturn(Optional.of(mockValue));
+
+    EngineValue byName = scope.get("testAttr");
+    EngineValue byIndex = scope.get(0);
+
+    assertEquals(byName, byIndex);
+  }
+
+  @Test
+  void testGetAttributeNameToIndex() {
+    Map<String, Integer> expectedMap = Map.of("testAttr", 0);
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(expectedMap);
+
+    Map<String, Integer> result = scope.getAttributeNameToIndex();
+
+    assertEquals(expectedMap, result);
   }
 }

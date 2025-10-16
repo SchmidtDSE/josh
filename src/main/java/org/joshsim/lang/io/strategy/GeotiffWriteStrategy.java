@@ -84,9 +84,18 @@ public class GeotiffWriteStrategy extends PendingRecordWriteStrategy {
 
       // Fill the grid with our data
       for (Map<String, String> record : records) {
-        BigDecimal lon = new BigDecimal(record.get("position.longitude"));
-        BigDecimal lat = new BigDecimal(record.get("position.latitude"));
-        double value = Double.parseDouble(record.get(variable));
+        String lonStr = record.get("position.longitude");
+        String latStr = record.get("position.latitude");
+        String valStr = record.get(variable);
+
+        // Skip records with missing coordinates or values
+        if (lonStr == null || latStr == null || valStr == null) {
+          continue;
+        }
+
+        BigDecimal lon = new BigDecimal(lonStr);
+        BigDecimal lat = new BigDecimal(latStr);
+        double value = Double.parseDouble(valStr);
 
         // Calculate position using Haversine distances
         HaversineUtil.HaversinePoint currentPoint = new HaversineUtil.HaversinePoint(

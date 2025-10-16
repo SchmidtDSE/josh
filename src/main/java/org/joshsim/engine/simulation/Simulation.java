@@ -6,14 +6,11 @@
 
 package org.joshsim.engine.simulation;
 
-import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.DirectLockMutableEntity;
-import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.entity.base.EntityInitializationInfo;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.value.type.EngineValue;
 
 /**
  * Simulation entity with cross-timestep attributes.
@@ -23,16 +20,10 @@ public class Simulation extends DirectLockMutableEntity {
   /**
    * Constructor for a Simulation, which contains 'meta' attributes and event handlers.
    *
-   * @param name Name of the entity.
-   * @param eventHandlerGroups A map of event keys to their corresponding EventHandlerGroups.
-   * @param attributes A map of attribute names to their corresponding EngineValues.
+   * @param initInfo The initialization information containing all shared entity configuration.
    */
-  public Simulation(
-      String name,
-      Map<EventKey, EventHandlerGroup> eventHandlerGroups,
-      Map<String, EngineValue> attributes
-  ) {
-    super(name, eventHandlerGroups, attributes);
+  public Simulation(EntityInitializationInfo initInfo) {
+    super(initInfo);
   }
 
   @Override

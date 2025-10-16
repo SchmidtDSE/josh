@@ -30,7 +30,7 @@ public class EventHandlerGroupTest {
   public void setUp() {
     eventHandlers = new ArrayList<>();
     eventHandlers.add(mock(EventHandler.class));
-    eventKey = new EventKey(TEST_STATE, TEST_ATTRIBUTE, TEST_EVENT);
+    eventKey = EventKey.of(TEST_STATE, TEST_ATTRIBUTE, TEST_EVENT);
     group = new EventHandlerGroup(eventHandlers, eventKey);
   }
 
