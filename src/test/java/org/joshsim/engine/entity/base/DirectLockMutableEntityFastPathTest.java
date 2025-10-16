@@ -234,16 +234,9 @@ public class DirectLockMutableEntityFastPathTest {
     handlers.forEach(builder::addEventHandlerGroup);
     attributes.forEach(builder::addAttribute);
 
-    // Invoke private method via reflection to get the precomputed map
+    // Get the precomputed map using the public getter
     // In real code, EntityBuilder.build methods do this automatically
-    try {
-      java.lang.reflect.Method method = EntityBuilder.class.getDeclaredMethod(
-          "computeAttributesWithoutHandlersBySubstep");
-      method.setAccessible(true);
-      return (Map<String, boolean[]>) method.invoke(builder);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to compute optimization map", e);
-    }
+    return builder.getAttributesWithoutHandlersBySubstep();
   }
 
   /**

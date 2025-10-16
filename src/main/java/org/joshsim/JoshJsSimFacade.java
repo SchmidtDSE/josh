@@ -216,6 +216,10 @@ public class JoshJsSimFacade {
 
     outputRecord.put("totalSteps", String.valueOf(extractor.getTotalSteps()));
 
+    // Add stepsLow for frontend progress normalization
+    EngineValue stepsLow = extractor.getStepsLow();
+    outputRecord.put("stepsLow", String.valueOf(Math.round(stepsLow.getAsDouble())));
+
     NamedMap namedMap = new NamedMap("simulationMetadata", outputRecord);
     return WireConverter.serializeToString(namedMap);
   }

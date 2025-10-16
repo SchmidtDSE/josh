@@ -284,7 +284,8 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildConsolidatedCsv(ExportTarget target,
                                             Optional<Iterable<String>> header) {
-    OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target, true);
+    String path = target.getPath();
+    OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path, true);
 
     if (header.isPresent()) {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());

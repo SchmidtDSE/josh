@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
