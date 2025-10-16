@@ -56,7 +56,7 @@ public class JshcConfigGetterTest {
     when(mockInputStrategy.open("test.jshc")).thenReturn(inputStream);
 
     // Execute
-    Optional<Config> configOpt = getter.getConfig("test");
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
 
     // Verify
     assertTrue(configOpt.isPresent());
@@ -105,8 +105,8 @@ public class JshcConfigGetterTest {
     when(mockInputStrategy.open("test.jshc")).thenReturn(inputStream);
 
     // Execute - get config twice
-    Optional<Config> config1 = getter.getConfig("test");
-    Optional<Config> config2 = getter.getConfig("test");
+    Optional<Config> config1 = getter.getConfig("test.jshc");
+    Optional<Config> config2 = getter.getConfig("test.jshc");
 
     // Verify - should be the same cached instance
     assertTrue(config1.isPresent());
@@ -123,7 +123,7 @@ public class JshcConfigGetterTest {
     when(mockInputStrategy.exists("test.jshc")).thenReturn(false);
 
     // Execute
-    Optional<Config> configOpt = getter.getConfig("test");
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
 
     // Verify - should return empty Optional when file doesn't exist
     assertFalse(configOpt.isPresent());
@@ -140,7 +140,7 @@ public class JshcConfigGetterTest {
     when(mockInputStrategy.open("test.jshc")).thenReturn(failingStream);
 
     // Execute
-    Optional<Config> configOpt = getter.getConfig("test");
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
 
     // Verify - should return empty Optional on IO error
     assertFalse(configOpt.isPresent());
@@ -158,11 +158,25 @@ public class JshcConfigGetterTest {
     when(mockInputStrategy.open("test.jshc")).thenReturn(inputStream);
 
     // Execute
-    Optional<Config> configOpt = getter.getConfig("test");
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
 
     // Verify - should return empty Optional on parse error
     assertFalse(configOpt.isPresent());
     verify(mockInputStrategy).exists("test.jshc");
     verify(mockInputStrategy).open("test.jshc");
+  }
+
+  @Test
+  public void testWithoutExtensionReturnsEmpty() throws IOException {
+    // Setup - file exists but we don't append extension
+    when(mockInputStrategy.exists("test")).thenReturn(false);
+
+    // Execute
+    Optional<Config> configOpt = getter.getConfig("test");
+
+    // Verify - should return empty because extension is required
+    assertFalse(configOpt.isPresent());
+    verify(mockInputStrategy).exists("test");
+    verify(mockInputStrategy, times(0)).open("test");
   }
 }
