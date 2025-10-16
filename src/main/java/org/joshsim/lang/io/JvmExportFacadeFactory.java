@@ -253,24 +253,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @return OutputStreamStrategy for the specified protocol
    * @throws IllegalArgumentException if protocol is unsupported or MinIO is not configured
    */
-  private OutputStreamStrategy createOutputStreamStrategy(ExportTarget target) {
+  OutputStreamStrategy createOutputStreamStrategy(ExportTarget target) {
     return createOutputStreamStrategy(target, false);
   }
 
-  /**
-   * Creates an OutputStreamStrategy from a path string by parsing it into an ExportTarget.
-   *
-   * <p>This method is used by ReplicateOutputStreamGenerator to create strategies for
-   * replicate-specific file paths.</p>
-   *
-   * @param path The full path string (may include protocol like "minio://")
-   * @return OutputStreamStrategy for the specified path
-   * @throws IllegalArgumentException if path is invalid or protocol is unsupported
-   */
-  private OutputStreamStrategy createOutputStreamStrategyForPath(String path) {
-    ExportTarget target = ExportTargetParser.parse(path);
-    return createOutputStreamStrategy(target, false);
-  }
 
   /**
    * Build an ExportFacade that writes to a CSV file.
@@ -316,11 +302,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildParameterizedCsv(ExportTarget target,
                                              Optional<Iterable<String>> header) {
-    // Reconstruct the full path with protocol for the template
-    String fullPath = reconstructFullPath(target);
+    // Pass factory instance directly
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(
-        fullPath,
-        this::createOutputStreamStrategyForPath
+        target,
+        this
     );
 
     if (header.isPresent()) {
@@ -383,11 +368,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildParameterizedNetcdf(ExportTarget target,
                                                 Optional<Iterable<String>> header) {
-    // Reconstruct the full path with protocol for the template
-    String fullPath = reconstructFullPath(target);
+    // Pass factory instance directly
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(
-        fullPath,
-        this::createOutputStreamStrategyForPath
+        target,
+        this
     );
 
     List<String> variablesList = new ArrayList<>();
@@ -433,29 +417,6 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       return new FileOutputStream(path);
     } catch (FileNotFoundException e) {
       throw new RuntimeException("Could not open file for geotiff: " + e);
-    }
-  }
-
-  /**
-   * Reconstructs the full path including protocol from an ExportTarget.
-   *
-   * <p>This is needed for ReplicateOutputStreamGenerator to properly handle MinIO URLs.</p>
-   *
-   * @param target The export target to reconstruct the path from
-   * @return The full path string including protocol
-   */
-  private String reconstructFullPath(ExportTarget target) {
-    String protocol = target.getProtocol();
-    if (protocol.isEmpty()) {
-      // No protocol specified, return bare path for local file
-      return target.getPath();
-    } else if (protocol.equals("file")) {
-      // Explicit file:// protocol - reconstruct full URI
-      // Note: host should be empty for file:// URIs (file:///path)
-      return "file://" + target.getHost() + target.getPath();
-    } else {
-      // Other protocols (minio, etc.)
-      return protocol + "://" + target.getHost() + target.getPath();
     }
   }
 

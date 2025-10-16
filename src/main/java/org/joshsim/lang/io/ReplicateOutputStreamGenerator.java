@@ -11,7 +11,6 @@
 package org.joshsim.lang.io;
 
 import java.io.OutputStream;
-import java.util.function.Function;
 
 /**
  * Output stream generator that creates separate files per replicate number.
@@ -34,26 +33,29 @@ public class ReplicateOutputStreamGenerator implements
     org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade
         .ParameterizedOutputStreamGenerator {
 
-  private final String pathTemplate;
-  private final Function<String, OutputStreamStrategy> strategyFactory;
+  private final ExportTarget targetTemplate;
+  private final JvmExportFacadeFactory factory;
 
   /**
-   * Creates a new ReplicateOutputStreamGenerator with the specified path template.
+   * Creates a new ReplicateOutputStreamGenerator with the specified target template.
    *
-   * <p>The template should contain a {replicate} placeholder that will be replaced
+   * <p>The template's path should contain a {replicate} placeholder that will be replaced
    * with the actual replicate number when generating streams.</p>
    *
-   * @param pathTemplate The file path template containing {replicate} placeholder
-   * @param strategyFactory Function to create OutputStreamStrategy for a given path
-   * @throws IllegalArgumentException if pathTemplate is null or empty
+   * @param targetTemplate The export target template containing {replicate} placeholder in path
+   * @param factory Factory to create OutputStreamStrategy for a given target
+   * @throws IllegalArgumentException if targetTemplate is null or has null/empty path
    */
-  public ReplicateOutputStreamGenerator(String pathTemplate,
-                                        Function<String, OutputStreamStrategy> strategyFactory) {
-    if (pathTemplate == null || pathTemplate.trim().isEmpty()) {
-      throw new IllegalArgumentException("Path template cannot be null or empty");
+  public ReplicateOutputStreamGenerator(ExportTarget targetTemplate,
+                                        JvmExportFacadeFactory factory) {
+    if (targetTemplate == null) {
+      throw new IllegalArgumentException("Target template cannot be null");
     }
-    this.pathTemplate = pathTemplate;
-    this.strategyFactory = strategyFactory;
+    if (targetTemplate.getPath() == null || targetTemplate.getPath().trim().isEmpty()) {
+      throw new IllegalArgumentException("Target template path cannot be null or empty");
+    }
+    this.targetTemplate = targetTemplate;
+    this.factory = factory;
   }
 
   /**
@@ -66,9 +68,8 @@ public class ReplicateOutputStreamGenerator implements
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedCsvExportFacade.StreamReference reference) {
-    String path = pathTemplate.replaceAll("\\{replicate\\}",
-        Integer.toString(reference.getReplicate()));
-    return createOutputStream(path);
+    ExportTarget target = substituteReplicate(reference.getReplicate());
+    return createOutputStream(target);
   }
 
   /**
@@ -81,34 +82,68 @@ public class ReplicateOutputStreamGenerator implements
   @Override
   public OutputStream getStream(
       org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade.StreamReference reference) {
-    String path = pathTemplate.replaceAll("\\{replicate\\}",
-        Integer.toString(reference.getReplicate()));
-    return createOutputStream(path);
+    ExportTarget target = substituteReplicate(reference.getReplicate());
+    return createOutputStream(target);
   }
 
   /**
-   * Creates an OutputStream for the specified path using the strategy factory.
+   * Substitutes the {replicate} placeholder in the target template.
    *
-   * @param path The file path to create stream for
-   * @return New OutputStream for the specified path
+   * @param replicate The replicate number to substitute
+   * @return New ExportTarget with replicate substituted in path
+   */
+  private ExportTarget substituteReplicate(int replicate) {
+    String originalPath = targetTemplate.getPath();
+    String substitutedPath = originalPath.replaceAll(
+        "\\{replicate\\}",
+        Integer.toString(replicate)
+    );
+
+    return new ExportTarget(
+        targetTemplate.getProtocol(),
+        targetTemplate.getHost(),
+        substitutedPath
+    );
+  }
+
+  /**
+   * Creates an OutputStream for the specified target using the factory.
+   *
+   * @param target The export target to create stream for
+   * @return New OutputStream for the specified target
    * @throws RuntimeException if the stream cannot be created
    */
-  private OutputStream createOutputStream(String path) {
+  private OutputStream createOutputStream(ExportTarget target) {
     try {
-      OutputStreamStrategy strategy = strategyFactory.apply(path);
+      OutputStreamStrategy strategy = factory.createOutputStreamStrategy(target);
       return strategy.open();
     } catch (Exception e) {
-      throw new RuntimeException("Could not create output stream for path: " + path, e);
+      throw new RuntimeException(
+          "Could not create output stream for target: "
+              + target.getProtocol() + "://" + target.getHost() + target.getPath(),
+          e
+      );
     }
   }
 
   /**
-   * Gets the path template used by this generator.
+   * Gets the target template used by this generator.
    *
-   * @return The path template string containing {replicate} placeholder
+   * @return The ExportTarget template containing {replicate} placeholder in path
    */
+  public ExportTarget getTargetTemplate() {
+    return targetTemplate;
+  }
+
+  /**
+   * Gets the path template for backward compatibility.
+   *
+   * @return The path from the target template
+   * @deprecated Use getTargetTemplate() instead
+   */
+  @Deprecated
   public String getPathTemplate() {
-    return pathTemplate;
+    return reconstructPath(targetTemplate);
   }
 
   /**
@@ -117,12 +152,30 @@ public class ReplicateOutputStreamGenerator implements
    * @return True if the template contains {replicate}, false otherwise
    */
   public boolean hasReplicateTemplate() {
-    return pathTemplate.contains("{replicate}");
+    return targetTemplate.getPath().contains("{replicate}");
   }
 
   @Override
   public String toString() {
-    return "ReplicateOutputStreamGenerator{pathTemplate='" + pathTemplate + "'}";
+    return "ReplicateOutputStreamGenerator{targetTemplate='"
+        + reconstructPath(targetTemplate) + "'}";
+  }
+
+  /**
+   * Reconstructs full path string from ExportTarget for display purposes.
+   *
+   * @param target The export target
+   * @return Full path string with protocol
+   */
+  private String reconstructPath(ExportTarget target) {
+    String protocol = target.getProtocol();
+    if (protocol.isEmpty()) {
+      return target.getPath();
+    } else if (protocol.equals("file")) {
+      return "file://" + target.getHost() + target.getPath();
+    } else {
+      return protocol + "://" + target.getHost() + target.getPath();
+    }
   }
 
   @Override
@@ -134,11 +187,16 @@ public class ReplicateOutputStreamGenerator implements
       return false;
     }
     ReplicateOutputStreamGenerator that = (ReplicateOutputStreamGenerator) obj;
-    return pathTemplate.equals(that.pathTemplate);
+    return targetTemplate.getProtocol().equals(that.targetTemplate.getProtocol())
+        && targetTemplate.getHost().equals(that.targetTemplate.getHost())
+        && targetTemplate.getPath().equals(that.targetTemplate.getPath());
   }
 
   @Override
   public int hashCode() {
-    return pathTemplate.hashCode();
+    int result = targetTemplate.getProtocol().hashCode();
+    result = 31 * result + targetTemplate.getHost().hashCode();
+    result = 31 * result + targetTemplate.getPath().hashCode();
+    return result;
   }
 }
