@@ -31,46 +31,54 @@ class ReplicateOutputStreamGeneratorTest {
   Path tempDir;
 
   /**
-   * Helper method to create a local file OutputStreamStrategy for testing.
+   * Creates a minimal mock factory for testing that only handles local file protocol.
    *
-   * @param path The file path
-   * @return OutputStreamStrategy for local files
+   * @return JvmExportFacadeFactory configured for testing
    */
-  private OutputStreamStrategy createLocalStrategy(String path) {
-    // Strip file:// prefix if present for local files
-    String filePath = path.replace("file://", "");
-    return new LocalOutputStreamStrategy(filePath, false);
+  private JvmExportFacadeFactory createMockFactory() {
+    return new JvmExportFacadeFactory(1, (org.joshsim.pipeline.job.config.TemplateStringRenderer) null, (org.joshsim.util.MinioOptions) null);
   }
 
   @Test
   void testConstructorValidation() {
     // Valid template should work
-    String validTemplate = "file:///tmp/data_{replicate}.csv";
+    ExportTarget validTemplate = new ExportTarget("file", "", "/tmp/data_{replicate}.csv");
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
         validTemplate,
-        this::createLocalStrategy
+        createMockFactory()
     );
-    assertEquals(validTemplate, generator.getPathTemplate());
+    assertEquals(validTemplate, generator.getTargetTemplate());
 
     // Null template should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator(null, this::createLocalStrategy));
+        new ReplicateOutputStreamGenerator(null, createMockFactory()));
 
-    // Empty template should throw exception
+    // Template with null path should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator("", this::createLocalStrategy));
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", null),
+            createMockFactory()));
 
-    // Whitespace only template should throw exception
+    // Template with empty path should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator("   ", this::createLocalStrategy));
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", ""),
+            createMockFactory()));
+
+    // Template with whitespace-only path should throw exception
+    assertThrows(IllegalArgumentException.class, () ->
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "   "),
+            createMockFactory()));
   }
 
   @Test
   void testCsvStreamGeneration() throws IOException {
-    String template = tempDir.resolve("test_{replicate}.csv").toString();
+    String pathTemplate = tempDir.resolve("test_{replicate}.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
-        template,
-        this::createLocalStrategy
+        targetTemplate,
+        createMockFactory()
     );
 
     // Test CSV stream reference
@@ -102,10 +110,11 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testNetcdfStreamGeneration() throws IOException {
-    String template = tempDir.resolve("simulation_{replicate}.nc").toString();
+    String pathTemplate = tempDir.resolve("simulation_{replicate}.nc").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
-        template,
-        this::createLocalStrategy
+        targetTemplate,
+        createMockFactory()
     );
 
     // Test NetCDF stream reference
@@ -126,49 +135,63 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testHasReplicateTemplate() {
     ReplicateOutputStreamGenerator withReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/data_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/data_{replicate}.csv"),
+            createMockFactory());
     assertTrue(withReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator withoutReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/static_file.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/static_file.csv"),
+            createMockFactory());
     assertFalse(withoutReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator multipleTemplates =
-        new ReplicateOutputStreamGenerator("file:///tmp/{step}_{replicate}_{variable}.tiff", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/{step}_{replicate}_{variable}.tiff"),
+            createMockFactory());
     assertTrue(multipleTemplates.hasReplicateTemplate());
   }
 
   @Test
   void testGetPathTemplate() {
-    String template = "file:///tmp/complex_{replicate}_data.nc";
+    ExportTarget template = new ExportTarget("file", "", "/tmp/complex_{replicate}_data.nc");
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
         template,
-        this::createLocalStrategy
+        createMockFactory()
     );
-    assertEquals(template, generator.getPathTemplate());
+    // Test the new method
+    assertEquals(template, generator.getTargetTemplate());
+
+    // Test deprecated method still works
+    assertEquals("file:///tmp/complex_{replicate}_data.nc", generator.getPathTemplate());
   }
 
   @Test
   void testToString() {
-    String template = "file:///tmp/test_{replicate}.csv";
+    ExportTarget template = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
         template,
-        this::createLocalStrategy
+        createMockFactory()
     );
 
     String toString = generator.toString();
     assertTrue(toString.contains("ReplicateOutputStreamGenerator"));
-    assertTrue(toString.contains(template));
+    assertTrue(toString.contains("file:///tmp/test_{replicate}.csv"));
   }
 
   @Test
   void testEquals() {
+    ExportTarget target1 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target2 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target3 = new ExportTarget("file", "", "/tmp/different_{replicate}.csv");
+
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target1, createMockFactory());
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target2, createMockFactory());
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target3, createMockFactory());
 
     // Test equality
     assertEquals(gen1, gen2);
@@ -182,12 +205,16 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testHashCode() {
+    ExportTarget target1 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target2 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target3 = new ExportTarget("file", "", "/tmp/different_{replicate}.csv");
+
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target1, createMockFactory());
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target2, createMockFactory());
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv", this::createLocalStrategy);
+        new ReplicateOutputStreamGenerator(target3, createMockFactory());
 
     // Equal objects should have equal hash codes
     assertEquals(gen1.hashCode(), gen2.hashCode());
@@ -198,10 +225,11 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testMultipleReplicateSubstitution() throws IOException {
-    String template = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
+    String pathTemplate = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
-        template,
-        this::createLocalStrategy
+        targetTemplate,
+        createMockFactory()
     );
 
     ParameterizedCsvExportFacade.StreamReference ref =
@@ -218,10 +246,11 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testLargeReplicateNumbers() throws IOException {
-    String template = tempDir.resolve("replicate_{replicate}.csv").toString();
+    String pathTemplate = tempDir.resolve("replicate_{replicate}.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
-        template,
-        this::createLocalStrategy
+        targetTemplate,
+        createMockFactory()
     );
 
     // Test with large replicate number
@@ -240,10 +269,11 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testInvalidPath() {
     // Use an invalid path that cannot be created (e.g., with null characters)
-    String invalidTemplate = "/dev/null/invalid\0path_{replicate}.csv";
+    ExportTarget invalidTarget = new ExportTarget(
+        "file", "", "/dev/null/invalid\0path_{replicate}.csv");
     ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
-        invalidTemplate,
-        this::createLocalStrategy
+        invalidTarget,
+        createMockFactory()
     );
 
     ParameterizedCsvExportFacade.StreamReference ref =
