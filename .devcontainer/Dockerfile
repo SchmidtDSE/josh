@@ -7,6 +7,15 @@ WORKDIR /workspaces/josh
 # Copy the repo contents
 COPY . .
 
+# Install X11 libraries for GeoTIFF/AWT support and NetCDF C library
+RUN apt-get update && apt-get install -y \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libnetcdf-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install the required dependencies (gradle)
 RUN .devcontainer/scripts/on_build/install_gradle.sh
 
