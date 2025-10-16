@@ -6,13 +6,15 @@
 
 package org.joshsim.engine.simulation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
-
+import org.joshsim.engine.geometry.grid.GridShape;
+import org.joshsim.engine.geometry.grid.GridShapeType;
 
 /**
  * Represents a single time step in the simulation, containing mutable or immutable
@@ -23,6 +25,7 @@ public class TimeStep {
   protected long stepNumber;
   protected Entity meta;
   protected Map<GeoKey, Entity> patches;
+  private volatile PatchSpatialIndex spatialIndex;
 
   /**
    * Create a new TimeStep, which contains entities that are frozen / immutable.
@@ -31,6 +34,25 @@ public class TimeStep {
     this.stepNumber = stepNumber;
     this.meta = meta;
     this.patches = patches;
+  }
+
+  /**
+   * Gets or builds the spatial index for this timestep.
+   *
+   * <p>Uses double-checked locking for thread-safe lazy initialization.
+   * The index is built once on first query and reused for all subsequent queries.</p>
+   *
+   * @return the spatial index for this timestep
+   */
+  private PatchSpatialIndex getSpatialIndex() {
+    if (spatialIndex == null) {
+      synchronized (this) {
+        if (spatialIndex == null) {
+          spatialIndex = new PatchSpatialIndex(patches);
+        }
+      }
+    }
+    return spatialIndex;
   }
 
   /**
@@ -54,15 +76,36 @@ public class TimeStep {
   /**
    * Get patches within the specified geometry at this time step.
    *
+   * <p>For circle queries, uses exact circle-square intersection mathematics to compute
+   * precise results. For other geometries (squares, points), uses spatial index with
+   * bounding box filtering followed by exact intersection tests.</p>
+   *
    * @param geometry the spatial bounds to query
-   * @return an iterable of patches within the geometry
+   * @return a list of patches within the geometry
    */
-  public Iterable<Entity> getPatches(EngineGeometry geometry) {
-    List<Entity> selectedPatches = patches.values().stream()
-        .filter(patch -> patch.getGeometry()
-              .map(geo -> geo.intersects(geometry))
-              .orElse(false))
-        .collect(Collectors.toList());
+  public List<Entity> getPatches(EngineGeometry geometry) {
+    List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
+
+    GridShape gridGeom = geometry.getOnGrid();
+    boolean isCircleQuery = gridGeom != null
+        && gridGeom.getGridShapeType() == GridShapeType.CIRCLE;
+    if (isCircleQuery) {
+      return candidates;
+    }
+
+    List<Entity> selectedPatches = new ArrayList<>(candidates.size());
+    for (Entity patch : candidates) {
+      Optional<EngineGeometry> patchGeometry = patch.getGeometry();
+      boolean geometryPresent = patchGeometry.isPresent();
+      if (!geometryPresent) {
+        continue;
+      }
+      boolean geometryIntersects = patchGeometry.get().intersects(geometry);
+      if (geometryIntersects) {
+        selectedPatches.add(patch);
+      }
+    }
+
     return selectedPatches;
   }
 
@@ -71,25 +114,54 @@ public class TimeStep {
    *
    * @param geometry the spatial bounds to query
    * @param name the patch name to filter by
-   * @return an iterable of matching patches
+   * @return a list of matching patches
    */
-  public Iterable<Entity> getPatches(EngineGeometry geometry, String name) {
-    List<Entity> selectedPatches = patches.values().stream()
-        .filter(patch -> patch.getName().equals(name))
-        .filter(patch -> patch.getGeometry()
-              .map(geo -> geo.intersects(geometry))
-              .orElse(false))
-        .collect(Collectors.toList());
+  public List<Entity> getPatches(EngineGeometry geometry, String name) {
+    List<Entity> candidates = getSpatialIndex().queryCandidates(geometry);
+
+    GridShape gridGeom = geometry.getOnGrid();
+    boolean isCircleQuery = gridGeom != null
+        && gridGeom.getGridShapeType() == GridShapeType.CIRCLE;
+
+    if (isCircleQuery) {
+      List<Entity> selectedPatches = new ArrayList<>(candidates.size());
+      for (Entity patch : candidates) {
+        boolean nameMatches = patch.getName().equals(name);
+        boolean hasGeometry = patch.getGeometry().isPresent();
+        if (nameMatches && hasGeometry) {
+          selectedPatches.add(patch);
+        }
+      }
+      return selectedPatches;
+    }
+
+    List<Entity> selectedPatches = new ArrayList<>(candidates.size());
+    for (Entity patch : candidates) {
+      boolean nameMatches = patch.getName().equals(name);
+      if (!nameMatches) {
+        continue;
+      }
+      Optional<EngineGeometry> patchGeometry = patch.getGeometry();
+      boolean geometryPresent = patchGeometry.isPresent();
+      if (!geometryPresent) {
+        continue;
+      }
+      boolean geometryIntersects = patchGeometry.get().intersects(geometry);
+      if (geometryIntersects) {
+        selectedPatches.add(patch);
+      }
+    }
+
     return selectedPatches;
   }
 
   /**
    * Get all patches at this time step.
    *
-   * @return an iterable of all patches
+   * @return a list of all patches
    */
-  public Iterable<Entity> getPatches() {
-    return patches.values();
+  public List<Entity> getPatches() {
+    return new ArrayList<>(patches.values());
   }
 
   /**

@@ -6,6 +6,9 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -24,61 +27,104 @@ import org.joshsim.engine.value.type.EngineValue;
 public class InnerEntityGetter {
 
   /**
-   * Get a stream of inner MutableEntity instances from attribute values.
+   * Get inner MutableEntity instances from attribute values.
+   *
+   * <p>Iterates through all attribute names and collects MutableEntity instances from attributes
+   * that contain entities. Uses direct iteration instead of streams for better performance
+   * in this hot path (called in every substep for every entity).</p>
    *
    * @param target in which to find the inner entites
-   * @return Stream of MutableEntity instances found in attributes that contain entities
+   * @return Iterable of MutableEntity instances found in attributes that contain entities
    */
-  public static Stream<MutableEntity> getInnerEntities(MutableEntity target) {
-    return target.getAttributeNames().stream()
-      .map(target::getAttributeValue)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter((x) -> x.getLanguageType().containsAttributes())
-      .flatMap((x) -> {
-        Optional<Integer> sizeMaybe = x.getSize();
-        if (sizeMaybe.isEmpty()) {
-          return Stream.empty();
-        }
+  public static Iterable<MutableEntity> getInnerEntities(MutableEntity target) {
+    List<MutableEntity> result = new ArrayList<>();
 
-        int size = sizeMaybe.get();
-        if (size == 1) {
-          return Stream.of(x.getAsMutableEntity());
-        } else {
-          Iterable<EngineValue> innerValues = x.getAsDistribution().getContents(size, false);
-          Stream<EngineValue> innerStream = StreamSupport.stream(innerValues.spliterator(), false);
-          return innerStream.map(EngineValue::getAsMutableEntity);
+    // Use integer-based iteration
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
+      boolean valueNotSet = valueMaybe.isEmpty();
+      if (valueNotSet) {
+        // Continue for profiling reasons
+        continue;
+      }
+
+      EngineValue value = valueMaybe.get();
+      boolean hasInnerAttrs = value.getLanguageType().containsAttributes();
+      if (!hasInnerAttrs) {
+        // Continue for profiling reasons
+        continue;
+      }
+
+      Optional<Integer> sizeMaybe = value.getSize();
+      if (sizeMaybe.isEmpty()) {
+        continue;
+      }
+
+      int size = sizeMaybe.get();
+      if (size == 1) {
+        result.add(value.getAsMutableEntity());
+      } else {
+        Iterable<EngineValue> innerValues = value.getAsDistribution().getContents(size, false);
+        for (EngineValue innerValue : innerValues) {
+          result.add(innerValue.getAsMutableEntity());
         }
-      });
+      }
+    }
+
+    return result;
   }
 
   /**
-   * Get a stream of inner MutableEntity instances from attribute values.
+   * Get inner Entity instances from attribute values.
+   *
+   * <p>Iterates through all attribute names and collects Entity instances from attributes
+   * that contain entities. Uses direct iteration instead of streams for better performance.</p>
    *
    * @param target in which to find the inner entites
-   * @return Stream of MutableEntity instances found in attributes that contain entities
+   * @return Iterable of Entity instances found in attributes that contain entities
    */
-  public static Stream<Entity> getInnerFrozenEntities(Entity target) {
-    return target.getAttributeNames().stream()
-      .map(target::getAttributeValue)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter((x) -> x.getLanguageType().containsAttributes())
-      .flatMap((x) -> {
-        Optional<Integer> sizeMaybe = x.getSize();
-        if (sizeMaybe.isEmpty()) {
-          return Stream.empty();
-        }
+  public static Iterable<Entity> getInnerFrozenEntities(Entity target) {
+    List<Entity> result = new ArrayList<>();
 
-        int size = sizeMaybe.get();
-        if (size == 1) {
-          return Stream.of(x.getAsEntity());
-        } else {
-          Iterable<EngineValue> innerValues = x.getAsDistribution().getContents(size, false);
-          Stream<EngineValue> innerStream = StreamSupport.stream(innerValues.spliterator(), false);
-          return innerStream.map(EngineValue::getAsEntity);
+    // Use integer-based iteration
+    Map<String, Integer> indexMap = target.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+
+    for (int i = 0; i < numAttributes; i++) {
+      Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
+      boolean valueNotSet = valueMaybe.isEmpty();
+      if (valueNotSet) {
+        // Continue for profiling reasons
+        continue;
+      }
+
+      EngineValue value = valueMaybe.get();
+      boolean hasInnerAttrs = value.getLanguageType().containsAttributes();
+      if (!hasInnerAttrs) {
+        // Continue for profiling reasons
+        continue;
+      }
+
+      Optional<Integer> sizeMaybe = value.getSize();
+      if (sizeMaybe.isEmpty()) {
+        continue;
+      }
+
+      int size = sizeMaybe.get();
+      if (size == 1) {
+        result.add(value.getAsEntity());
+      } else {
+        Iterable<EngineValue> innerValues = value.getAsDistribution().getContents(size, false);
+        for (EngineValue innerValue : innerValues) {
+          result.add(innerValue.getAsEntity());
         }
-      });
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -92,27 +138,29 @@ public class InnerEntityGetter {
    *     recursion
    */
   public static Stream<MutableEntity> getInnerEntitiesRecursive(MutableEntity target) {
-    return getInnerEntities(target).flatMap((x) -> Stream.concat(
-        Stream.of(x),
-        getInnerEntitiesRecursive(x)
-    ));
+    return StreamSupport.stream(getInnerEntities(target).spliterator(), false)
+        .flatMap((x) -> Stream.concat(
+            Stream.of(x),
+            getInnerEntitiesRecursive(x)
+        ));
   }
 
   /**
-   * Get a stream of all descendent MutableEntity instances from attribute values.
+   * Get a stream of all descendent Entity instances from attribute values.
    *
-   * <p>Get a stream of all descendent MutableEntity instances from attribute values by recursing
+   * <p>Get a stream of all descendent Entity instances from attribute values by recursing
    * through all children into their children.</p>
    *
    * @param target in which to find the inner entites
-   * @return Stream of MutableEntity instances found in attributes that contain entities after
+   * @return Stream of Entity instances found in attributes that contain entities after
    *     recursion
    */
   public static Stream<Entity> getInnerFrozenEntitiesRecursive(Entity target) {
-    return getInnerFrozenEntities(target).flatMap((x) -> Stream.concat(
-        Stream.of(x),
-        getInnerFrozenEntitiesRecursive(x)
-    ));
+    return StreamSupport.stream(getInnerFrozenEntities(target).spliterator(), false)
+        .flatMap((x) -> Stream.concat(
+            Stream.of(x),
+            getInnerFrozenEntitiesRecursive(x)
+        ));
   }
 
 }

@@ -58,7 +58,7 @@ public class BooleanScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType("boolean");
+    return LanguageType.of("boolean");
   }
 
   @Override

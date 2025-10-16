@@ -7,6 +7,8 @@
 package org.joshsim.lang.interpret;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
@@ -28,9 +30,16 @@ public class ValueResolver {
 
   private final EngineValueFactory valueFactory;
   private final String path;
+  private final boolean hasDot;
 
   private String foundPath;
   private Optional<ValueResolver> memoizedContinuationResolver;
+
+  // Cache maps from the shared attributeNameToIndex Map reference to the attribute's index.
+  // The Map object identity serves as a stand-in for entity type name (e.g., "JoshuaTree")
+  // without the overhead of String hashing. All entities of the same type share the same
+  // immutable attributeNameToIndex Map instance, making it perfect for identity-based caching.
+  private IdentityHashMap<Map<String, Integer>, Integer> indexCache;
 
   /**
    * Creates a new ValueResolver for resolving dot-separated paths.
@@ -41,8 +50,10 @@ public class ValueResolver {
   public ValueResolver(EngineValueFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
+    this.hasDot = path != null && path.indexOf('.') != -1;
     memoizedContinuationResolver = null;
     foundPath = null;
+    indexCache = null; // Initialized lazily
   }
 
   /**
@@ -55,6 +66,16 @@ public class ValueResolver {
    * @return Optional containing the resolved value if found, empty otherwise.
    */
   public Optional<EngineValue> get(Scope target) {
+    // Try integer-based access for EntityScope
+    if (target instanceof EntityScope) {
+      EntityScope entityScope = (EntityScope) target;
+      Optional<EngineValue> fastResult = tryIntegerLookup(entityScope);
+      if (fastResult != null) {
+        return fastResult;
+      }
+    }
+
+    // Original string-based resolution
     Optional<ValueResolver> continuationResolverMaybe = getInnerResolver(target);
     if (continuationResolverMaybe == null) {
       return Optional.empty();
@@ -90,6 +111,63 @@ public class ValueResolver {
 
       return continuationResolver.get(newScope);
     }
+  }
+
+  /**
+   * Attempts to resolve the attribute using cached integer index.
+   *
+   * <p>This method implements the fast path for attribute resolution by caching
+   * the integer index for each entity type (identified by its attributeNameToIndex map).
+   * The cache uses IdentityHashMap to distinguish between different entity types,
+   * allowing the same ValueResolver to efficiently handle multiple entity types.</p>
+   *
+   * <p>Fast path only works for simple attribute names (no dots). Dotted paths like
+   * "entity.attribute" fall back to the slow path.</p>
+   *
+   * @param entityScope The EntityScope to resolve from
+   * @return Optional containing the resolved value if fast path succeeded,
+   *         null if fast path cannot be used (caller should use slow path)
+   */
+  private Optional<EngineValue> tryIntegerLookup(EntityScope entityScope) {
+    // Fast path only works for simple attribute names (no nested paths)
+    if (hasDot) {
+      return null; // Use slow path
+    }
+
+    // Get the entity type's index map (shared across all instances of this type)
+    // The Map object identity serves as the cache key for the entity type
+    Map<String, Integer> indexMap = entityScope.getAttributeNameToIndex();
+
+    // Handle null or empty distributions (no attributes)
+    if (indexMap == null || indexMap.isEmpty()) {
+      return null; // Use slow path for safety
+    }
+
+    // Initialize cache on first use
+    if (indexCache == null) {
+      indexCache = new IdentityHashMap<>();
+    }
+
+    // Check cache (identity-based, so different entity types are separate)
+    Integer cachedIndex = indexCache.get(indexMap);
+
+    if (cachedIndex != null) {
+      // Use cached index for fast array access
+      return entityScope.getOptional(cachedIndex);
+    }
+
+    // Look up the index and cache it
+    Integer index = indexMap.get(path);
+    if (index == null) {
+      // Attribute doesn't exist on this entity type
+      return null; // Use slow path (will properly handle error)
+    }
+
+    // Cache the index for future lookups
+    indexCache.put(indexMap, index);
+
+    // Use the newly cached index
+    return entityScope.getOptional(index);
   }
 
   @Override

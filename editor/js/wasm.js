@@ -210,10 +210,13 @@ class WasmLayer {
     const gridLowParts = input.getValue("startStr").split(", ");
     const pointUnits = gridLowParts[0].split(" ")[1];
     const gridHighParts = input.getValue("endStr").split(", ");
-    
+
     // Extract totalSteps from metadata
     const totalSteps = input.hasValue("totalSteps") ? parseInt(input.getValue("totalSteps"), 10) : null;
-    
+
+    // Extract startStep (stepsLow) from metadata for progress normalization
+    const startStep = input.hasValue("stepsLow") ? parseInt(input.getValue("stepsLow"), 10) : null;
+
     let startX = 0, startY = 0, endX = 0, endY = 0;
 
     const usesDegrees = self._isDegrees(pointUnits);
@@ -248,17 +251,18 @@ class WasmLayer {
           Math.min(lowLon, highLon),
           Math.min(lowLat, highLat),
           Math.max(lowLon, highLon),
-          Math.max(lowLat, highLat)
+          Math.max(lowLat, highLat),
+          startStep
         );
       } else {
-        return new SimulationMetadata(startX, startY, endX, endY, gridSize, totalSteps);
+        return new SimulationMetadata(startX, startY, endX, endY, gridSize, totalSteps, null, null, null, null, startStep);
       }
     } else if (gridUnits === pointUnits) {
       startX = parseFloat(gridLowParts[0].split(" ")[0]);
       startY = parseFloat(gridLowParts[1].split(" ")[0]);
       endX = parseFloat(gridHighParts[0].split(" ")[0]);
       endY = parseFloat(gridHighParts[1].split(" ")[0]);
-      return new SimulationMetadata(startX, startY, endX, endY, gridSize, totalSteps);
+      return new SimulationMetadata(startX, startY, endX, endY, gridSize, totalSteps, null, null, null, null, startStep);
     } else {
       throw `Cannot use web editor for grid with unequal units ${gridUnits} and ${pointUnits}.`;
     }

@@ -36,6 +36,7 @@ class MainPresenter {
     self._metadata = null;
     self._totalStepsAcrossReplicates = 0;
     self._completedStepsAcrossReplicates = 0;
+    self._startStep = 0;
 
     self._wasmLayer = new WasmLayer();
 
@@ -138,12 +139,15 @@ class MainPresenter {
     Promise.all([futureMetadata, futureExternalData]).then(
       (results) => {
         self._metadata = results[0];
-        
+
         // Calculate total steps across all replicates
         const totalStepsPerReplicate = self._metadata.getTotalSteps() || 0;
         const numReplicates = self._currentRequest.getReplicates();
         self._totalStepsAcrossReplicates = totalStepsPerReplicate * numReplicates;
-        
+
+        // Store startStep for progress normalization (default to 0 if not specified)
+        self._startStep = self._metadata.getStartStep() || 0;
+
         self._executeInBackend(results[1]);
       },
       (x) => {
@@ -167,7 +171,8 @@ class MainPresenter {
       self._currentRequest,
       externalData,
       (x) => self._onStepCompleted(x, "steps"),
-      (x) => self._onStepCompleted(x, "replicates")
+      (x) => self._onStepCompleted(x, "replicates"),
+      self._startStep
     ).then(
       (x) => self._onRunComplete(x),
       (x) => self._onError(x)
@@ -214,26 +219,32 @@ class MainPresenter {
    */
   _onStepCompleted(numCompleted, typeCompleted) {
     const self = this;
-    
+    const hasMultipleReplicates = self._currentRequest && self._currentRequest.getReplicates() > 1;
+
     if (typeCompleted === "steps") {
-      // For step-level progress, numCompleted is the cumulative steps across replicates
+      // For step-level progress, numCompleted is the cumulative steps across replicates (0-indexed)
       self._completedStepsAcrossReplicates = numCompleted;
-      
-      // Update progress bar only for step events
+
+      // Update progress bar: add +1 to convert 0-indexed step to "steps completed"
+      // e.g., step 0 means 1 step completed, step 4 means 5 steps completed
       self._resultsPresenter._statusPresenter.updateProgressBar(
-        self._completedStepsAcrossReplicates, 
+        self._completedStepsAcrossReplicates + 1,
         self._totalStepsAcrossReplicates
       );
     } else if (typeCompleted === "replicates") {
       // For replicate-level progress, calculate cumulative steps
       const totalStepsPerReplicate = self._metadata ? self._metadata.getTotalSteps() || 0 : 0;
       self._completedStepsAcrossReplicates = numCompleted * totalStepsPerReplicate;
-      // Don't update progress bar here to avoid wiggling
+
+      // Don't update progress bar for replicate events - rely on step-level progress instead
+      // This avoids the progress bar reaching 100% before all replicates complete
     }
-    
+
     // Conditionally update status text
     if (self._shouldUpdateStatusText(typeCompleted)) {
-      self._resultsPresenter.onStep(numCompleted, typeCompleted);
+      // Add +1 to convert 0-indexed step to "steps completed" for display
+      const displayValue = typeCompleted === "steps" ? numCompleted + 1 : numCompleted;
+      self._resultsPresenter.onStep(displayValue, typeCompleted);
     }
   }
 

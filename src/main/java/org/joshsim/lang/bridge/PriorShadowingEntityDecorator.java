@@ -6,10 +6,14 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
+import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
@@ -19,6 +23,10 @@ import org.joshsim.engine.value.type.EngineValue;
  * Decorator allowing a shadowing entity to provide prior attribute values.
  */
 public class PriorShadowingEntityDecorator implements Entity {
+
+  private static final String[] EMPTY_INDEX_TO_NAME = null;
+  private static final Map<String, List<EventHandlerGroup>> EMPTY_HANDLERS =
+      Collections.emptyMap();
 
   private final ShadowingEntity inner;
 
@@ -47,6 +55,26 @@ public class PriorShadowingEntityDecorator implements Entity {
   }
 
   @Override
+  public Optional<EngineValue> getAttributeValue(int index) {
+    return inner.getPriorAttribute(index);
+  }
+
+  @Override
+  public Optional<Integer> getAttributeIndex(String name) {
+    return inner.getAttributeIndex(name);
+  }
+
+  @Override
+  public Map<String, Integer> getAttributeNameToIndex() {
+    return inner.getAttributeNameToIndex();
+  }
+
+  @Override
+  public String[] getIndexToAttributeName() {
+    return EMPTY_INDEX_TO_NAME;
+  }
+
+  @Override
   public Set<String> getAttributeNames() {
     return inner.getAttributeNames();
   }
@@ -64,5 +92,10 @@ public class PriorShadowingEntityDecorator implements Entity {
   @Override
   public Optional<GeoKey> getKey() {
     return inner.getKey();
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
+    return EMPTY_HANDLERS;
   }
 }

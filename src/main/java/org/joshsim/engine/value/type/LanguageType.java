@@ -9,6 +9,8 @@ package org.joshsim.engine.value.type;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
 
@@ -21,6 +23,10 @@ public class LanguageType {
   private final Collection<String> distributionTypes;
   private final String rootType;
   private final boolean containsAttributes;
+
+  // Interning cache for simple single-argument LanguageType instances
+  // Only caches types created with LanguageType(String) constructor for primitive types
+  private static final Map<String, LanguageType> SIMPLE_TYPE_CACHE = new ConcurrentHashMap<>();
 
   /**
    * Creates a new LanguageType for a value not in a distribution without inner attributes.
@@ -71,6 +77,23 @@ public class LanguageType {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
     this.containsAttributes = containsAttributes;
+  }
+
+  /**
+   * Factory method to get or create a simple LanguageType without distributions or attributes.
+   *
+   * <p>This method implements an interning pattern where LanguageType instances for simple
+   * types (int, decimal, string, boolean) are cached and reused. This significantly reduces
+   * allocations for frequently-used scalar types.</p>
+   *
+   * <p>Only use this for simple primitive types. For entity types or distributions, use the
+   * appropriate constructor directly.</p>
+   *
+   * @param rootType The base type (e.g., "int", "decimal", "string", "boolean").
+   * @return cached or new LanguageType instance
+   */
+  public static LanguageType of(String rootType) {
+    return SIMPLE_TYPE_CACHE.computeIfAbsent(rootType, LanguageType::new);
   }
 
   /**

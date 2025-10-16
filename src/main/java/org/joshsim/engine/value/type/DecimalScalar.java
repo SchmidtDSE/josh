@@ -58,7 +58,7 @@ public class DecimalScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType("decimal");
+    return LanguageType.of("decimal");
   }
 
   @Override

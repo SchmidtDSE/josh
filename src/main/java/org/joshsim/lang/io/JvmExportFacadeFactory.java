@@ -23,7 +23,6 @@ import org.joshsim.lang.io.strategy.ParameterizedNetcdfExportFacade;
 import org.joshsim.pipeline.job.config.TemplateResult;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 
-
 /**
  * Factory implementation for creating ExportFacade instances in a JVM environment.
  */
@@ -164,6 +163,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     return withVariable.replaceAll("\\{replicate\\}", "");
   }
 
+  @Override
+  public int getReplicateNumber() {
+    return replicate;
+  }
+
   /**
    * Determine if information is avialable to translate to Earth longitude and latitude.
    *
@@ -226,7 +230,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private ExportFacade buildConsolidatedCsv(ExportTarget target,
                                             Optional<Iterable<String>> header) {
     String path = target.getPath();
-    OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path);
+    OutputStreamStrategy outputStreamStrategy = new LocalOutputStreamStrategy(path, true);
 
     if (header.isPresent()) {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());

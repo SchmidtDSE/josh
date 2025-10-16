@@ -21,7 +21,6 @@ import org.joshsim.lang.io.ExportTask;
 import org.joshsim.lang.io.OutputStreamStrategy;
 import org.joshsim.wire.NamedMap;
 
-
 /**
  * Strategy implementing ExportFacade which writes entities to CSV in a writer thread.
  */
@@ -83,6 +82,16 @@ public class CsvExportFacade implements ExportFacade {
     write(task);
   }
 
+  @Override
+  public void write(Entity entity, long step) {
+    write(entity, step, 0);
+  }
+
+  @Override
+  public void write(NamedMap namedMap, long step) {
+    write(namedMap, step, 0);
+  }
+
   /**
    * Adds a task to the queue for processing while ensuring the export process is active.
    *
@@ -91,6 +100,11 @@ public class CsvExportFacade implements ExportFacade {
    */
   public void write(ExportTask task) {
     queueService.add(task);
+  }
+
+  @Override
+  public Optional<MapExportSerializeStrategy> getSerializeStrategy() {
+    return Optional.of(innerWriter.getSerializeStrategy());
   }
 
 
@@ -131,6 +145,15 @@ public class CsvExportFacade implements ExportFacade {
       } else {
         writeStrategy = new CsvWriteStrategy();
       }
+    }
+
+    /**
+     * Get the serialize strategy used by this writer.
+     *
+     * @return The MapExportSerializeStrategy instance
+     */
+    public MapExportSerializeStrategy getSerializeStrategy() {
+      return serializeStrategy;
     }
 
     @Override

@@ -6,9 +6,10 @@
 
 package org.joshsim.lang.io;
 
+import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
-
 
 /**
  * Strategy to serialize and write entities to persistence in a separate writer thread.
@@ -57,26 +58,32 @@ public interface ExportFacade {
   void write(NamedMap namedMap, long step, int replicateNumber);
 
   /**
-   * Adds the specified entity to the queue with default replicate number for backward
-   * compatibility.
+   * Adds the specified entity to the queue with default replicate number.
    *
    * @param target The entity to be serialized and written to the output.
    * @param step The step number from the simulation from which this entity snapshot was
    *        created.
    */
-  default void write(Entity target, long step) {
-    write(target, step, 0);
-  }
+  void write(Entity target, long step);
 
   /**
-   * Adds the specified NamedMap to the queue with default replicate number for backward
-   * compatibility.
+   * Adds the specified NamedMap to the queue with default replicate number.
    *
    * @param namedMap The NamedMap containing name and serialized data to be written to output.
    * @param step The step number from the simulation from which this data was created.
    */
-  default void write(NamedMap namedMap, long step) {
-    write(namedMap, step, 0);
-  }
+  void write(NamedMap namedMap, long step);
+
+  /**
+   * Get the serialization strategy if this facade supports pre-serialization.
+   *
+   * <p>Facades that support pre-serialization in the producer thread can return their
+   * MapExportSerializeStrategy to enable serialization before queueing. This allows the
+   * producer to serialize entities to Map&lt;String, String&gt; and queue lightweight NamedMap
+   * objects instead of heavy Entity references, reducing memory pressure.</p>
+   *
+   * @return Optional containing the MapExportSerializeStrategy if supported, empty otherwise.
+   */
+  Optional<MapExportSerializeStrategy> getSerializeStrategy();
 
 }

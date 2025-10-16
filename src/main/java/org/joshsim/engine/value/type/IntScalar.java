@@ -62,7 +62,7 @@ public class IntScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType("int");
+    return LanguageType.of("int");
   }
 
   @Override
