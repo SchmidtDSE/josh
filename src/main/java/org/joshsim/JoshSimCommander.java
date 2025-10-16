@@ -219,6 +219,13 @@ public class JoshSimCommander {
     try {
       MinioClient minioClient = minioOptions.getMinioClient();
       String bucketName = minioOptions.getBucketName();
+
+      // If bucket name is not configured, skip the upload silently
+      // (bucket may only be specified in export URLs, not in MinioOptions)
+      if (bucketName == null || bucketName.isEmpty()) {
+        return true;
+      }
+
       String objectName = minioOptions.getObjectName(subDirectories, file.getName());
 
       boolean bucketExists = minioClient.bucketExists(
