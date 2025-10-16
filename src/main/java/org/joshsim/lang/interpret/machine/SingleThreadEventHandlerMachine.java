@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -407,6 +406,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue target = pop();
     endConversionGroup();
 
+    // Validate that bounds are not inverted
+    if (hasLower && hasUpper && lowerBound.greaterThan(upperBound).getAsBoolean()) {
+      throw new IllegalArgumentException(
+          "Invalid bounds: lower bound (" + lowerBound.getAsString()
+          + ") cannot be greater than upper bound (" + upperBound.getAsString() + ")"
+      );
+    }
+
     if (hasLower && target.lessThan(lowerBound).getAsBoolean()) {
       memory.push(lowerBound);
     } else if (hasUpper && target.greaterThan(upperBound).getAsBoolean()) {
@@ -434,6 +441,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);
     long count = countValue.getAsInt();
+
+    if (count < 0) {
+      throw new IllegalArgumentException(
+          "Cannot create negative number of entities. Got count: " + count
+          + ". Entity creation requires a non-negative count."
+      );
+    }
 
     String substep = parent.getSubstep().orElseThrow();
 

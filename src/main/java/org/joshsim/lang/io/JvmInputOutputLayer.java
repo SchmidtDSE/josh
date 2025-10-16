@@ -9,6 +9,7 @@ package org.joshsim.lang.io;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
+import org.joshsim.util.MinioOptions;
 
 
 /**
@@ -27,14 +28,18 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    * @param width The width and height of each patch in meters (null for grid-only).
    * @param inputStrategy The strategy for input file access.
    * @param templateRenderer The renderer for processing template strings (null for legacy mode).
+   * @param minioOptions The MinIO configuration options (null if not using MinIO).
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy,
-                             TemplateStringRenderer templateRenderer) {
+                             TemplateStringRenderer templateRenderer,
+                             MinioOptions minioOptions) {
     if (extents != null && width != null) {
-      this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width, templateRenderer);
+      this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width,
+                                                       templateRenderer, minioOptions);
     } else {
-      this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer);
+      this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer,
+                                                       minioOptions);
     }
     this.inputStrategy = inputStrategy;
   }
@@ -52,7 +57,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   @Deprecated
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy) {
-    this(replicate, extents, width, inputStrategy, null);
+    this(replicate, extents, width, inputStrategy, null, null);
   }
 
   @Override

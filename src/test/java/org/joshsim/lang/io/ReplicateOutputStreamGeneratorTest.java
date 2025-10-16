@@ -30,30 +30,60 @@ class ReplicateOutputStreamGeneratorTest {
   @TempDir
   Path tempDir;
 
+  /**
+   * Creates a minimal mock factory for testing that only handles local file protocol.
+   *
+   * @return JvmExportFacadeFactory configured for testing
+   */
+  private JvmExportFacadeFactory createMockFactory() {
+    return new JvmExportFacadeFactory(
+        1,
+        (org.joshsim.pipeline.job.config.TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null
+    );
+  }
+
   @Test
   void testConstructorValidation() {
     // Valid template should work
-    String validTemplate = "file:///tmp/data_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(validTemplate);
-    assertEquals(validTemplate, generator.getPathTemplate());
+    ExportTarget validTemplate = new ExportTarget("file", "", "/tmp/data_{replicate}.csv");
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        validTemplate,
+        createMockFactory()
+    );
+    assertEquals(validTemplate, generator.getTargetTemplate());
 
     // Null template should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator(null));
+        new ReplicateOutputStreamGenerator(null, createMockFactory()));
 
-    // Empty template should throw exception
+    // Template with null path should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator(""));
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", null),
+            createMockFactory()));
 
-    // Whitespace only template should throw exception
+    // Template with empty path should throw exception
     assertThrows(IllegalArgumentException.class, () ->
-        new ReplicateOutputStreamGenerator("   "));
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", ""),
+            createMockFactory()));
+
+    // Template with whitespace-only path should throw exception
+    assertThrows(IllegalArgumentException.class, () ->
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "   "),
+            createMockFactory()));
   }
 
   @Test
   void testCsvStreamGeneration() throws IOException {
-    String template = tempDir.resolve("test_{replicate}.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    String pathTemplate = tempDir.resolve("test_{replicate}.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        targetTemplate,
+        createMockFactory()
+    );
 
     // Test CSV stream reference
     ParameterizedCsvExportFacade.StreamReference ref1 =
@@ -84,8 +114,12 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testNetcdfStreamGeneration() throws IOException {
-    String template = tempDir.resolve("simulation_{replicate}.nc").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    String pathTemplate = tempDir.resolve("simulation_{replicate}.nc").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        targetTemplate,
+        createMockFactory()
+    );
 
     // Test NetCDF stream reference
     ParameterizedNetcdfExportFacade.StreamReference ref3 =
@@ -105,43 +139,63 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testHasReplicateTemplate() {
     ReplicateOutputStreamGenerator withReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/data_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/data_{replicate}.csv"),
+            createMockFactory());
     assertTrue(withReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator withoutReplicate =
-        new ReplicateOutputStreamGenerator("file:///tmp/static_file.csv");
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/static_file.csv"),
+            createMockFactory());
     assertFalse(withoutReplicate.hasReplicateTemplate());
 
     ReplicateOutputStreamGenerator multipleTemplates =
-        new ReplicateOutputStreamGenerator("file:///tmp/{step}_{replicate}_{variable}.tiff");
+        new ReplicateOutputStreamGenerator(
+            new ExportTarget("file", "", "/tmp/{step}_{replicate}_{variable}.tiff"),
+            createMockFactory());
     assertTrue(multipleTemplates.hasReplicateTemplate());
   }
 
   @Test
   void testGetPathTemplate() {
-    String template = "file:///tmp/complex_{replicate}_data.nc";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
-    assertEquals(template, generator.getPathTemplate());
+    ExportTarget template = new ExportTarget("file", "", "/tmp/complex_{replicate}_data.nc");
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        createMockFactory()
+    );
+    // Test the new method
+    assertEquals(template, generator.getTargetTemplate());
+
+    // Test deprecated method still works
+    assertEquals("file:///tmp/complex_{replicate}_data.nc", generator.getPathTemplate());
   }
 
   @Test
   void testToString() {
-    String template = "file:///tmp/test_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    ExportTarget template = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        template,
+        createMockFactory()
+    );
 
     String toString = generator.toString();
     assertTrue(toString.contains("ReplicateOutputStreamGenerator"));
-    assertTrue(toString.contains(template));
+    assertTrue(toString.contains("file:///tmp/test_{replicate}.csv"));
   }
 
   @Test
   void testEquals() {
+    ExportTarget target1 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target2 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target3 = new ExportTarget("file", "", "/tmp/different_{replicate}.csv");
+
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target1, createMockFactory());
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target2, createMockFactory());
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target3, createMockFactory());
 
     // Test equality
     assertEquals(gen1, gen2);
@@ -155,12 +209,16 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testHashCode() {
+    ExportTarget target1 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target2 = new ExportTarget("file", "", "/tmp/test_{replicate}.csv");
+    ExportTarget target3 = new ExportTarget("file", "", "/tmp/different_{replicate}.csv");
+
     ReplicateOutputStreamGenerator gen1 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target1, createMockFactory());
     ReplicateOutputStreamGenerator gen2 =
-        new ReplicateOutputStreamGenerator("file:///tmp/test_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target2, createMockFactory());
     ReplicateOutputStreamGenerator gen3 =
-        new ReplicateOutputStreamGenerator("file:///tmp/different_{replicate}.csv");
+        new ReplicateOutputStreamGenerator(target3, createMockFactory());
 
     // Equal objects should have equal hash codes
     assertEquals(gen1.hashCode(), gen2.hashCode());
@@ -171,8 +229,12 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testMultipleReplicateSubstitution() throws IOException {
-    String template = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    String pathTemplate = tempDir.resolve("data_{replicate}_{replicate}_file.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        targetTemplate,
+        createMockFactory()
+    );
 
     ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(5);
@@ -188,8 +250,12 @@ class ReplicateOutputStreamGeneratorTest {
 
   @Test
   void testLargeReplicateNumbers() throws IOException {
-    String template = tempDir.resolve("replicate_{replicate}.csv").toString();
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(template);
+    String pathTemplate = tempDir.resolve("replicate_{replicate}.csv").toString();
+    ExportTarget targetTemplate = new ExportTarget("file", "", pathTemplate);
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        targetTemplate,
+        createMockFactory()
+    );
 
     // Test with large replicate number
     ParameterizedCsvExportFacade.StreamReference ref =
@@ -207,8 +273,12 @@ class ReplicateOutputStreamGeneratorTest {
   @Test
   void testInvalidPath() {
     // Use an invalid path that cannot be created (e.g., with null characters)
-    String invalidTemplate = "/dev/null/invalid\0path_{replicate}.csv";
-    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(invalidTemplate);
+    ExportTarget invalidTarget = new ExportTarget(
+        "file", "", "/dev/null/invalid\0path_{replicate}.csv");
+    ReplicateOutputStreamGenerator generator = new ReplicateOutputStreamGenerator(
+        invalidTarget,
+        createMockFactory()
+    );
 
     ParameterizedCsvExportFacade.StreamReference ref =
         new ParameterizedCsvExportFacade.StreamReference(1);

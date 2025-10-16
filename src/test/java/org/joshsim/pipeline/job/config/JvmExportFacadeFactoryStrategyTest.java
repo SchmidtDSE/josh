@@ -62,7 +62,7 @@ class JvmExportFacadeFactoryStrategyTest {
   @Test
   void testCsvConsolidatedStrategy() {
     // Template without {replicate} should use consolidated CSV
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer, null);
     String testPath = tempDir.resolve("test_example_1_other_1.csv").toString();
     ExportTarget target = new ExportTarget("", testPath);
 
@@ -77,7 +77,7 @@ class JvmExportFacadeFactoryStrategyTest {
   @Test
   void testCsvParameterizedStrategy() {
     // Test template processing that triggers parameterized strategy
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer, null);
     String templatePath = tempDir.resolve("test_{example}_{other}_{replicate}.csv").toString();
 
     // getPath processes templates and determines strategy
@@ -96,7 +96,7 @@ class JvmExportFacadeFactoryStrategyTest {
   @Test
   void testTemplateProcessingOnly() {
     // Test template processing without actually building facades that need file creation
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer, null);
 
     // Test template with {replicate} - should replace with actual number for all formats
     String replicateTemplate = "test_{example}_{other}_{replicate}.csv";
@@ -114,7 +114,10 @@ class JvmExportFacadeFactoryStrategyTest {
   @Test
   void testLegacyFallbackBehavior() {
     // Factory without TemplateStringRenderer should use legacy behavior
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, (TemplateStringRenderer) null);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(
+        1,
+        (TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null);
 
     // Test template processing with legacy path
     String replicateTemplate = "test_{replicate}.csv";
@@ -128,7 +131,7 @@ class JvmExportFacadeFactoryStrategyTest {
 
   @Test
   void testComplexTemplateProcessing() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer, null);
 
     String template = "/{example}_{other}_{step}_{variable}_{replicate}.csv";
     String processedPath = factory.getPath(template);
@@ -143,7 +146,7 @@ class JvmExportFacadeFactoryStrategyTest {
 
   @Test
   void testStaticTemplateNoSubstitution() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, renderer, null);
 
     String template = "static_file.csv";
     String processedPath = factory.getPath(template);

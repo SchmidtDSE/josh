@@ -22,7 +22,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridCircle;
-import org.joshsim.engine.geometry.grid.GridShape;
 import org.joshsim.engine.geometry.grid.GridSquare;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

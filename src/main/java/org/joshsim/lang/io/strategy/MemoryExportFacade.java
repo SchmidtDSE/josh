@@ -15,7 +15,6 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.lang.io.OutputStreamStrategy;
-import org.joshsim.lang.io.strategy.MapExportSerializeStrategy;
 import org.joshsim.wire.NamedMap;
 
 

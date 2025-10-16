@@ -30,7 +30,7 @@ public class ExportTargetParserTest {
 
     ExportTarget result = ExportTargetParser.parse(target);
 
-    assertEquals("", result.getProtocol());
+    assertEquals("file", result.getProtocol());
     assertEquals("", result.getHost());
     assertEquals("/path/to/file", result.getPath());
   }
@@ -41,7 +41,7 @@ public class ExportTargetParserTest {
 
     ExportTarget result = ExportTargetParser.parse(target);
 
-    assertEquals("", result.getProtocol());
+    assertEquals("file", result.getProtocol());
     assertEquals("", result.getHost());
     assertEquals("/path/to/file", result.getPath());
   }

@@ -41,7 +41,7 @@ public class JvmExportFacadeFactoryTemplateTest {
 
   @Test
   public void testFactoryWithTemplateRenderer() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(2, templateRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(2, templateRenderer, null);
 
     String template = "file:///tmp/josh_{example}_{other}.csv";
     String result = factory.getPath(template);
@@ -53,7 +53,7 @@ public class JvmExportFacadeFactoryTemplateTest {
   @Test
   public void testFactoryWithTemplateRendererGeotiff() {
     TemplateStringRenderer geotiffRenderer = new TemplateStringRenderer(job, 3);
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, geotiffRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, geotiffRenderer, null);
 
     String template = "file:///tmp/josh_{example}_{other}_{step}_{replicate}.tif";
     String result = factory.getPath(template);
@@ -65,7 +65,7 @@ public class JvmExportFacadeFactoryTemplateTest {
   @Test
   public void testFactoryWithTemplateRendererNetcdf() {
     TemplateStringRenderer netcdfRenderer = new TemplateStringRenderer(job, 5);
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, netcdfRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(5, netcdfRenderer, null);
 
     String template = "file:///tmp/josh_{example}_{other}_{replicate}.nc";
     String result = factory.getPath(template);
@@ -76,7 +76,7 @@ public class JvmExportFacadeFactoryTemplateTest {
 
   @Test
   public void testFactoryWithTemplateRendererComplexTemplate() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, templateRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, templateRenderer, null);
 
     String template = "/data/{example}_step{step}_var{variable}_{other}.csv";
     String result = factory.getPath(template);
@@ -109,7 +109,10 @@ public class JvmExportFacadeFactoryTemplateTest {
 
   @Test
   public void testFactoryNullTemplateRenderer() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(6, null);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(
+        6,
+        (TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null);
 
     String template = "file:///tmp/test_{replicate}_{step}.nc";
     String result = factory.getPath(template);
@@ -122,7 +125,7 @@ public class JvmExportFacadeFactoryTemplateTest {
   public void testEarthSpaceFactoryWithTemplateRenderer() {
     // Test the basic constructor with template renderer
     TemplateStringRenderer testRenderer = new TemplateStringRenderer(job, 1);
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, testRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(1, testRenderer, null);
 
     String template = "output_{example}_{other}.csv";
     String result = factory.getPath(template);
@@ -138,7 +141,7 @@ public class JvmExportFacadeFactoryTemplateTest {
         .build();
     TemplateStringRenderer emptyRenderer = new TemplateStringRenderer(emptyJob, 0);
 
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, emptyRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, emptyRenderer, null);
 
     String template = "file:///tmp/simple_{replicate}.csv";
     String result = factory.getPath(template);
@@ -150,7 +153,7 @@ public class JvmExportFacadeFactoryTemplateTest {
   @Test
   public void testTemplateRendererWithOnlyExportTemplates() {
     TemplateStringRenderer testRenderer = new TemplateStringRenderer(job, 8);
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(8, testRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(8, testRenderer, null);
 
     String template = "/tmp/output_{replicate}_{step}_{variable}.tiff";
     String result = factory.getPath(template);
@@ -161,7 +164,7 @@ public class JvmExportFacadeFactoryTemplateTest {
 
   @Test
   public void testTemplateRendererPreservesNonTemplateContent() {
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, templateRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(3, templateRenderer, null);
 
     String template = "/complex-path/with_underscores/{example}_more-dashes_{other}.file.csv";
     String result = factory.getPath(template);
@@ -173,7 +176,7 @@ public class JvmExportFacadeFactoryTemplateTest {
   @Test
   public void testTemplateRendererZeroReplicate() {
     TemplateStringRenderer zeroRenderer = new TemplateStringRenderer(job, 0);
-    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, zeroRenderer);
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(0, zeroRenderer, null);
 
     String template = "output_{example}_{variable}_{replicate}.tif";
     String result = factory.getPath(template);
