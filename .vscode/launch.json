@@ -54,7 +54,8 @@
         "-Xmx2g",
         "-XX:+UnlockDiagnosticVMOptions",
         "-XX:+DebugNonSafepoints"
-      ]
+      ],
+      "envFile": "${workspaceFolder}/.devcontainer/.env"
     }
   ]
 }
