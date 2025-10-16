@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -407,6 +406,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue target = pop();
     endConversionGroup();
 
+    // Validate that bounds are not inverted
+    if (hasLower && hasUpper && lowerBound.greaterThan(upperBound).getAsBoolean()) {
+      throw new IllegalArgumentException(
+          "Invalid bounds: lower bound (" + lowerBound.getAsString()
+          + ") cannot be greater than upper bound (" + upperBound.getAsString() + ")"
+      );
+    }
+
     if (hasLower && target.lessThan(lowerBound).getAsBoolean()) {
       memory.push(lowerBound);
     } else if (hasUpper && target.greaterThan(upperBound).getAsBoolean()) {
@@ -434,6 +441,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);
     long count = countValue.getAsInt();
+
+    if (count < 0) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot create entities with negative or undefined count. "
+              + "Received count value: %d. The count value must be a concrete positive integer.",
+              count
+          )
+      );
+    }
 
     String substep = parent.getSubstep().orElseThrow();
 
@@ -483,10 +500,20 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         resolved.add(valueFactory.build(patch));
       }
     } else {
-      // Return attributes from the patches
+      // Return attributes from the patches with improved error message
       for (Entity patch : patches) {
-        EntityScope scope = new EntityScope(patch);
-        EngineValue value = resolver.get(scope).orElseThrow();
+        EntityScope patchScope = new EntityScope(patch);
+        EngineValue value = resolver.get(patchScope).orElseThrow(
+            () -> new IllegalStateException(
+                String.format(
+                    "Cannot resolve '%s' in spatial query. The attribute may not be available "
+                    + "in the 'prior' context at this substep. Check that the attribute is "
+                    + "set in a substep that runs before the current one (e.g., 'init', 'start', "
+                    + "or 'step' run before 'end').",
+                    resolver
+                )
+            )
+        );
         resolved.add(value);
       }
     }

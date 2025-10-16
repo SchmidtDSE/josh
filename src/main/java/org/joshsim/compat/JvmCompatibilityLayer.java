@@ -16,6 +16,17 @@ import java.math.BigDecimal;
  */
 public class JvmCompatibilityLayer implements CompatibilityLayer {
 
+  private int exportQueueCapacity = 1000000;
+
+  /**
+   * Sets the export queue capacity for queue service instances.
+   *
+   * @param capacity The maximum capacity for export queues
+   */
+  public void setExportQueueCapacity(int capacity) {
+    this.exportQueueCapacity = capacity;
+  }
+
   @Override
   public CompatibleStringJoiner createStringJoiner(String delimiter) {
     return new JvmStringJoiner(delimiter);
@@ -28,7 +39,12 @@ public class JvmCompatibilityLayer implements CompatibilityLayer {
 
   @Override
   public QueueService createQueueService(QueueServiceCallback callback) {
-    return new JvmQueueService(callback);
+    return createQueueService(callback, exportQueueCapacity);
+  }
+
+  @Override
+  public QueueService createQueueService(QueueServiceCallback callback, int capacity) {
+    return new JvmQueueService(callback, capacity);
   }
 
   @Override

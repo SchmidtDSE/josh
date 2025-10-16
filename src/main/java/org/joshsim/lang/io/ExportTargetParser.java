@@ -62,7 +62,8 @@ public class ExportTargetParser {
       URI uri = new URI(target);
       String scheme = uri.getScheme();
       if ("file".equalsIgnoreCase(scheme)) {
-        return new ExportTarget(uri.getPath());
+        String host = uri.getHost() != null ? uri.getHost() : "";
+        return new ExportTarget("file", host, uri.getPath());
       } else if ("minio".equalsIgnoreCase(scheme)) {
         return new ExportTarget("minio", uri.getHost(), uri.getPath());
       } else {

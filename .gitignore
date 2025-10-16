@@ -64,3 +64,6 @@ run_profiler.sh
 run_profiler_small.sh
 
 .claude/settings.local.json
+
+# Jotr test files
+jotr

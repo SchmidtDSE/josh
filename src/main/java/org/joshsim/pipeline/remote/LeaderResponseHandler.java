@@ -23,6 +23,10 @@ import org.joshsim.wire.WireRewriteUtil;
  */
 public class LeaderResponseHandler implements WorkerResponseHandler {
 
+  private final AtomicInteger completedReplicates = new AtomicInteger(0);
+  private volatile long stepsPerReplicate = -1;
+  private volatile long maxStepSeen = -1;
+
   @Override
   public void handleResponseLine(String line, int replicateNumber,
                                 HttpServerExchange clientExchange,
@@ -62,11 +66,25 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
                                    AtomicInteger cumulativeStepCount) {
     return switch (parsedResponse.getType()) {
       case PROGRESS -> {
-        // Convert per-replicate progress to cumulative for worker coordination
-        WireResponse cumulativeResponse = WireRewriteUtil.rewriteProgressForWorkerCoordination(
-            parsedResponse,
-            cumulativeStepCount
-        );
+        long currentStepInReplicate = parsedResponse.getStepCount();
+
+        // Track the maximum step seen to learn steps per replicate
+        if (currentStepInReplicate > maxStepSeen) {
+          maxStepSeen = currentStepInReplicate;
+        }
+
+        // Calculate cumulative progress:
+        // (completed replicates * steps per replicate) + current step
+        long cumulativeSteps;
+        if (stepsPerReplicate > 0) {
+          long completedSteps = completedReplicates.get() * stepsPerReplicate;
+          cumulativeSteps = completedSteps + currentStepInReplicate;
+        } else {
+          // Before we know stepsPerReplicate, just pass through current step
+          cumulativeSteps = currentStepInReplicate;
+        }
+
+        WireResponse cumulativeResponse = new WireResponse(cumulativeSteps);
         yield WireRewriteUtil.formatWireResponse(cumulativeResponse);
       }
       case DATUM -> {
@@ -78,6 +96,18 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
         yield WireRewriteUtil.formatWireResponse(rewrittenDatum);
       }
       case END -> {
+        // When a replicate completes, learn steps per replicate from max step seen
+        if (stepsPerReplicate == -1 && maxStepSeen >= 0) {
+          // maxStepSeen is the last step index (0-indexed), so total steps = maxStepSeen + 1
+          stepsPerReplicate = maxStepSeen + 1;
+        }
+
+        // Increment completed count AFTER we've learned stepsPerReplicate
+        completedReplicates.incrementAndGet();
+
+        // Reset maxStepSeen for next replicate
+        maxStepSeen = -1;
+
         // Rewrite end marker with correct replicate number
         WireResponse rewrittenEnd = WireRewriteUtil.rewriteReplicateNumber(
             parsedResponse,

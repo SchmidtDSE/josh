@@ -1,0 +1,23 @@
+start simulation MinioMixedTest
+  # Test mixing MinIO and local file outputs
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
+  exportFiles.patch = "minio://josh-test-bucket/results/mixed_{replicate}.csv"
+  exportFiles.entity = "file:///tmp/josh-minio-tests/local_{replicate}.csv"
+end simulation
+
+start patch Default
+  TestIndividual.init = create 25 count of TestIndividual
+
+  export.avgCounter.step = mean(TestIndividual.counter)
+end patch
+
+start organism TestIndividual
+  counter.init = 0 count
+  counter.step = prior.counter + 1 count
+
+  export.counter.step = current.counter
+end organism
