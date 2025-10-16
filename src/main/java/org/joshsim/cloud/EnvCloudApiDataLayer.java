@@ -94,6 +94,10 @@ public class EnvCloudApiDataLayer implements CloudApiDataLayer {
     }
 
     System.err.println("[josh cloud error] " + logJoiner.toString());
+
+    // Print stack trace for debugging
+    System.err.println("[josh cloud error] Stack trace:");
+    exception.printStackTrace(System.err);
   }
 
   /**

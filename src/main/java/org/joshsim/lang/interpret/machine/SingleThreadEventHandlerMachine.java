@@ -465,7 +465,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     Iterable<Entity> patches = bridge.getPriorPatches(queryGeometry);
     List<EngineValue> resolved = StreamSupport.stream(patches.spliterator(), false)
         .map(EntityScope::new)
-        .map(scope -> resolver.get(scope).orElseThrow())
+        .map(scope -> resolver.get(scope).orElseThrow(
+            () -> new IllegalStateException(
+                String.format(
+                    "Cannot resolve '%s' in spatial query. The attribute may not be available "
+                    + "in the 'prior' context at this substep. Check that the attribute is "
+                    + "set in a substep that runs before the current one (e.g., 'init', 'start', "
+                    + "or 'step' run before 'end').",
+                    resolver
+                )
+            )
+        ))
         .toList();
 
     EngineValue resolvedDistribution = valueFactory.buildRealizedDistribution(
