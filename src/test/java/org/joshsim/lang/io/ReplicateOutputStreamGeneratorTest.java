@@ -36,7 +36,11 @@ class ReplicateOutputStreamGeneratorTest {
    * @return JvmExportFacadeFactory configured for testing
    */
   private JvmExportFacadeFactory createMockFactory() {
-    return new JvmExportFacadeFactory(1, (org.joshsim.pipeline.job.config.TemplateStringRenderer) null, (org.joshsim.util.MinioOptions) null);
+    return new JvmExportFacadeFactory(
+        1,
+        (org.joshsim.pipeline.job.config.TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null
+    );
   }
 
   @Test
