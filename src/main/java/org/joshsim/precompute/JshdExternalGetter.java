@@ -34,14 +34,12 @@ public class JshdExternalGetter implements ExternalResourceGetter {
 
   @Override
   public DataGridLayer getResource(String name) {
-    if (name.contains(".") && !name.endsWith(".jshd")) {
-      throw new IllegalArgumentException("Can only open jshd files with this getter. Got " + name);
-    }
-
+    // Validate that the name is a jshd file
     if (!name.endsWith(".jshd")) {
-      name += ".jshd";
+      throw new IllegalArgumentException("Expected a .jshd file name. Got: " + name);
     }
 
+    // Use the name directly - caller is responsible for providing full filename
     try (InputStream binaryInputStream = inputStrategy.open(name)) {
       byte[] fileBytes = binaryInputStream.readAllBytes();
       return JshdUtil.loadFromBytes(valueFactory, fileBytes);

@@ -193,7 +193,9 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
     if (!externalData.containsKey(name)) {
-      externalData.put(name, externalResourceGetter.getResource(name));
+      // Append .jshd extension to external resource name before loading
+      String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
+      externalData.put(name, externalResourceGetter.getResource(fileName));
     }
     return externalData.get(name).getAt(key, step);
   }
@@ -208,8 +210,11 @@ public class MinimalEngineBridge implements EngineBridge {
     String configName = parts[0];
     String variableName = parts[1];
 
+    // Append .jshc extension to config name before looking it up
+    String configFileName = configName.endsWith(".jshc") ? configName : configName + ".jshc";
+
     if (!configData.containsKey(configName)) {
-      Optional<Config> configOptional = configGetter.getConfig(configName);
+      Optional<Config> configOptional = configGetter.getConfig(configFileName);
       if (configOptional.isEmpty()) {
         // Config file not found
         return Optional.empty();
