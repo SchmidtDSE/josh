@@ -35,6 +35,26 @@
         "-XX:+DebugNonSafepoints",
         "-XX:StartFlightRecording=duration=60s,filename=/workspaces/josh/recording.jfr"
       ]
+    },
+    {
+      "type": "java",
+      "name": "JOTR Josh Simulation",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "projectName": "josh",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "--replicates=2",
+        "jotr_small.josh",
+        "JoshuaTreeReference",
+      ],
+      "cwd": "${workspaceFolder}/jotr",
+      "vmArgs": [
+        "-Xmx2g",
+        "-XX:+UnlockDiagnosticVMOptions",
+        "-XX:+DebugNonSafepoints"
+      ]
     }
   ]
 }
