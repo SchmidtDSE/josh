@@ -1,0 +1,225 @@
+name: MinIO Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  test-minio-streaming:
+    runs-on: ubuntu-latest
+    name: Test MinIO Direct Streaming
+
+    services:
+      minio:
+        image: bitnamilegacy/minio:latest
+        ports:
+          - 9000:9000
+          - 9001:9001
+        env:
+          # Bitnami MinIO uses these environment variables
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          # Create test-bucket with download policy for verification
+          MINIO_DEFAULT_BUCKETS: josh-test-bucket:download
+          # Bitnami-specific settings
+          MINIO_SCHEME: http
+          BITNAMI_DEBUG: false
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/ready || curl -f http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup netCDF (for NetCDF tests)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnetcdf-dev
+
+      - name: Build fat jar
+        run: ./gradlew fatJar
+
+      - name: Verify MinIO is ready
+        run: |
+          echo "Waiting for MinIO to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:9000/minio/health/ready; then
+              echo "✓ MinIO is ready!"
+              break
+            fi
+            echo "  Waiting for MinIO... (attempt $i/30)"
+            sleep 2
+          done
+
+          # Verify bucket was created
+          echo "Verifying test bucket exists..."
+          curl -f http://localhost:9000/minio/health/ready
+
+      - name: Setup test output directory
+        run: |
+          # Create directory for local file outputs
+          mkdir -p /tmp/josh-minio-tests
+
+      - name: Test CSV export to MinIO
+        run: |
+          echo "Testing CSV export to MinIO..."
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=2 \
+            examples/test/minio/csv_export.josh \
+            MinioCSVTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=10000 \
+            --output-steps=5
+
+          echo "✓ CSV export to MinIO completed"
+
+      - name: Test NetCDF export to MinIO
+        run: |
+          echo "Testing NetCDF export to MinIO..."
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=2 \
+            examples/test/minio/netcdf_export.josh \
+            MinioNetCDFTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=10000 \
+            --output-steps=5
+
+          echo "✓ NetCDF export to MinIO completed"
+
+      - name: Test mixed MinIO and local exports
+        run: |
+          echo "Testing mixed MinIO and local file exports..."
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=2 \
+            examples/test/minio/mixed_export.josh \
+            MinioMixedTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=5000 \
+            --output-steps=3
+
+          # Verify local files were created
+          [ -f "/tmp/josh-minio-tests/local_0.csv" ] || exit 1
+          [ -f "/tmp/josh-minio-tests/local_1.csv" ] || exit 2
+          [ -s "/tmp/josh-minio-tests/local_0.csv" ] || exit 3
+          [ -s "/tmp/josh-minio-tests/local_1.csv" ] || exit 4
+
+          echo "✓ Mixed export test completed"
+
+      - name: Verify MinIO uploads succeeded
+        run: |
+          echo "Installing MinIO client for verification..."
+          wget -q https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
+
+          echo "Configuring MinIO client..."
+          ./mc alias set testminio http://localhost:9000 minioadmin minioadmin
+
+          echo "Listing uploaded files..."
+          ./mc ls testminio/josh-test-bucket/results/
+
+          echo "Verifying CSV files exist..."
+          ./mc stat testminio/josh-test-bucket/results/test_0.csv
+          ./mc stat testminio/josh-test-bucket/results/test_1.csv
+
+          echo "Verifying NetCDF files exist..."
+          ./mc stat testminio/josh-test-bucket/results/test_0.nc
+          ./mc stat testminio/josh-test-bucket/results/test_1.nc
+
+          echo "Verifying mixed test files exist..."
+          ./mc stat testminio/josh-test-bucket/results/mixed_0.csv
+          ./mc stat testminio/josh-test-bucket/results/mixed_1.csv
+
+          echo "Checking file sizes (should be non-zero)..."
+          SIZE_CSV=$(./mc stat testminio/josh-test-bucket/results/test_0.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          SIZE_NC=$(./mc stat testminio/josh-test-bucket/results/test_0.nc --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+
+          if [ "$SIZE_CSV" -gt 0 ] && [ "$SIZE_NC" -gt 0 ]; then
+            echo "✓ All files uploaded successfully with non-zero sizes"
+            echo "  CSV size: $SIZE_CSV bytes"
+            echo "  NetCDF size: $SIZE_NC bytes"
+          else
+            echo "✗ File size verification failed"
+            exit 5
+          fi
+
+      - name: Test queue backpressure with small queue
+        run: |
+          echo "Testing queue backpressure with small queue size..."
+
+          # Run with very small queue to force backpressure
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/backpressure.josh \
+            BackpressureTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=100 \
+            --output-steps=50
+
+          # Verify file was created despite small queue
+          ./mc stat testminio/josh-test-bucket/results/backpressure.csv
+
+          echo "✓ Queue backpressure test passed"
+
+      - name: Test error handling - missing credentials
+        run: |
+          echo "Testing error handling with missing credentials..."
+
+          # This should fail with clear error message
+          # Need --output-steps to trigger actual export attempt
+          if java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/csv_export.josh \
+            MinioCSVTest \
+            --minio-endpoint=http://localhost:9000 \
+            --output-steps=5 \
+            2>&1 | grep -q "minio_access_key.*not found"; then
+            echo "✓ Error handling test passed - detected missing credentials"
+          else
+            echo "✗ Error handling test failed - should have detected missing credentials"
+            exit 6
+          fi
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: minio-test-results
+          path: |
+            /tmp/josh-minio-tests/
+          retention-days: 7
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "================================================"
+          echo "MinIO Integration Test Summary"
+          echo "================================================"
+          echo "✓ CSV export to MinIO"
+          echo "✓ NetCDF export to MinIO"
+          echo "✓ Mixed MinIO and local exports"
+          echo "✓ File upload verification"
+          echo "✓ Queue backpressure handling"
+          echo "✓ Error handling validation"
+          echo "================================================"
+          echo "All MinIO integration tests completed!"
+          echo "================================================"

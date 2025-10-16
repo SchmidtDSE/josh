@@ -14,14 +14,16 @@
             "extensions": [
                 "vscjava.vscode-java-pack",
                 "redhat.java",
-                "shengchen.vscode-checkstyle"
+                "shengchen.vscode-checkstyle",
+                "oracle-labs-graalvm.visualvm-vscode"
             ],
             "settings": {
                 "java.project.sourcePaths": [
                     "src/main/java",
                     "src/test/java",
                     "src-generated/main/java"
-                ]
+                ],
+                "visualvm.installation.visualvmPath": "/opt/visualvm"
             }
         }
     }

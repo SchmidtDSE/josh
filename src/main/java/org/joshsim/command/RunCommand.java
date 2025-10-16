@@ -128,6 +128,14 @@ public class RunCommand implements Callable<Integer> {
   )
   private String outputSteps = "";
 
+  @Option(
+      names = "--export-queue-size",
+      description = "Maximum number of records to buffer before applying backpressure "
+                  + "(default: 1000000)",
+      defaultValue = "1000000"
+  )
+  private int exportQueueSize = 1000000;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -229,6 +237,7 @@ public class RunCommand implements Callable<Integer> {
         .withReplicate(0)
         .withInputStrategy(inputStrategy)
         .withTemplateRenderer(initTemplateRenderer)
+        .withMinioOptions(minioOptions)
         .build();
 
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
@@ -256,8 +265,6 @@ public class RunCommand implements Callable<Integer> {
       return 4;
     }
 
-    boolean favorBigDecimal = !useFloat64;
-
     // Extract simulation metadata for progress tracking
     SimulationMetadata metadata;
     try {
@@ -274,9 +281,12 @@ public class RunCommand implements Callable<Integer> {
     );
 
     // Set up JVM compatibility layer
-    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
+    JvmCompatibilityLayer compatLayer = new JvmCompatibilityLayer();
+    compatLayer.setExportQueueCapacity(exportQueueSize);
+    CompatibilityLayerKeeper.set(compatLayer);
 
     // Set up EngineValueFactory
+    boolean favorBigDecimal = !useFloat64;
     EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
@@ -329,12 +339,14 @@ public class RunCommand implements Callable<Integer> {
               .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
+              .withMinioOptions(minioOptions)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
               .withReplicate(currentReplicate)
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
+              .withMinioOptions(minioOptions)
               .build();
         }
 
@@ -354,12 +366,10 @@ public class RunCommand implements Callable<Integer> {
             parsedOutputSteps
         );
 
-        // Report replicate completion (except for the last simulation)
-        if (totalSimulationCount < jobs.size() * replicates) {
-          ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
-              totalSimulationCount);
-          output.printInfo(completion.getMessage());
-        }
+        // Report replicate completion
+        ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
+            totalSimulationCount);
+        output.printInfo(completion.getMessage());
       }
 
       // Report job combination completion
@@ -367,6 +377,13 @@ public class RunCommand implements Callable<Integer> {
         output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
       }
     }
+
+    // Report overall success
+    output.printInfo("");
+    output.printInfo("✓ All simulations completed successfully!");
+    output.printInfo("  Total simulations run: " + totalSimulationCount);
+    output.printInfo("  Job combinations: " + jobs.size());
+    output.printInfo("  Replicates per job: " + replicates);
 
     if (minioOptions.isMinioOutput()) {
       return saveToMinio("run", file);

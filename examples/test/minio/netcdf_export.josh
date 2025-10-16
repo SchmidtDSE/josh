@@ -1,0 +1,29 @@
+start simulation MinioNetCDFTest
+  # Test NetCDF export to MinIO
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
+  exportFiles.patch = "minio://josh-test-bucket/results/test_{replicate}.nc"
+  exportFiles.patch.columns = "avgAge,avgValue"
+end simulation
+
+start patch Default
+  TestIndividual.init = create 50 count of TestIndividual
+
+  export.avgAge.step = mean(TestIndividual.age)
+  export.avgValue.step = mean(TestIndividual.value)
+end patch
+
+start organism TestIndividual
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  value.init = 1.0 count
+  value.step = prior.value + 0.5 count
+end organism
+
+start unit year
+  alias years
+end unit

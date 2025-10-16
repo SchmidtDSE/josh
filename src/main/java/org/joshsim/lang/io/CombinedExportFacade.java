@@ -118,7 +118,9 @@ public class CombinedExportFacade {
    * threads to begin processing and serializing entities for export.</p>
    */
   public void start() {
+    metaExportFacade.ifPresent(ExportFacade::start);
     patchExportFacade.ifPresent(ExportFacade::start);
+    entityExportFacade.ifPresent(ExportFacade::start);
   }
 
   /**
@@ -129,7 +131,9 @@ public class CombinedExportFacade {
    * dedicated writer threads terminate.</p>
    */
   public void join() {
+    metaExportFacade.ifPresent(ExportFacade::join);
     patchExportFacade.ifPresent(ExportFacade::join);
+    entityExportFacade.ifPresent(ExportFacade::join);
   }
 
   /**

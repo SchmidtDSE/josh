@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
-import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -406,6 +405,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue lowerBound = hasLower ? pop() : null;
     EngineValue target = pop();
     endConversionGroup();
+
+    // Validate that bounds are not inverted
+    if (hasLower && hasUpper && lowerBound.greaterThan(upperBound).getAsBoolean()) {
+      throw new IllegalArgumentException(
+          "Invalid bounds: lower bound (" + lowerBound.getAsString()
+          + ") cannot be greater than upper bound (" + upperBound.getAsString() + ")"
+      );
+    }
 
     if (hasLower && target.lessThan(lowerBound).getAsBoolean()) {
       memory.push(lowerBound);

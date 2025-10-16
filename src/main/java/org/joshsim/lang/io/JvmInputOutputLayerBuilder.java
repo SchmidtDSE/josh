@@ -9,6 +9,7 @@ package org.joshsim.lang.io;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
+import org.joshsim.util.MinioOptions;
 
 
 /**
@@ -21,6 +22,7 @@ public class JvmInputOutputLayerBuilder {
   private BigDecimal width = null;
   private InputGetterStrategy inputStrategy = new JvmWorkingDirInputGetter();
   private TemplateStringRenderer templateRenderer = null;
+  private MinioOptions minioOptions = null;
 
   /**
    * Set the replicate number to use in filenames.
@@ -69,11 +71,23 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set MinIO configuration options.
+   *
+   * @param minioOptions The MinIO configuration options.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withMinioOptions(MinioOptions minioOptions) {
+    this.minioOptions = minioOptions;
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
-    return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer);
+    return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer,
+                                    minioOptions);
   }
 }

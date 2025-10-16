@@ -1,0 +1,60 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug joshsim-fat.jar",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "invasive_grass_central_utah_local.josh",
+        "Main",
+        "--replicates=1"
+      ],
+      "cwd": "${workspaceFolder}/test_esiil/code"
+    },
+    {
+      "type": "java",
+      "name": "Profile NetCDF Export (simple_netcdf.josh)",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "projectName": "josh",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "--replicates=2",
+        "examples/simulations/simple_netcdf.josh",
+        "TestSimpleSimulation"
+      ],
+      "cwd": "${workspaceFolder}",
+      "vmArgs": [
+        "-Xmx2g",
+        "-XX:+UnlockDiagnosticVMOptions",
+        "-XX:+DebugNonSafepoints",
+        "-XX:StartFlightRecording=duration=60s,filename=/workspaces/josh/recording.jfr"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "JOTR Josh Simulation",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "projectName": "josh",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "--replicates=2",
+        "jotr_small.josh",
+        "JoshuaTreeReference",
+      ],
+      "cwd": "${workspaceFolder}/jotr",
+      "vmArgs": [
+        "-Xmx2g",
+        "-XX:+UnlockDiagnosticVMOptions",
+        "-XX:+DebugNonSafepoints"
+      ]
+    }
+  ]
+}
