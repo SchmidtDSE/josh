@@ -73,10 +73,12 @@ public class LeaderResponseHandler implements WorkerResponseHandler {
           maxStepSeen = currentStepInReplicate;
         }
 
-        // Calculate cumulative progress: (completed replicates * steps per replicate) + current step
+        // Calculate cumulative progress:
+        // (completed replicates * steps per replicate) + current step
         long cumulativeSteps;
         if (stepsPerReplicate > 0) {
-          cumulativeSteps = (completedReplicates.get() * stepsPerReplicate) + currentStepInReplicate;
+          long completedSteps = completedReplicates.get() * stepsPerReplicate;
+          cumulativeSteps = completedSteps + currentStepInReplicate;
         } else {
           // Before we know stepsPerReplicate, just pass through current step
           cumulativeSteps = currentStepInReplicate;
