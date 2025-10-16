@@ -366,12 +366,10 @@ public class RunCommand implements Callable<Integer> {
             parsedOutputSteps
         );
 
-        // Report replicate completion (except for the last simulation)
-        if (totalSimulationCount < jobs.size() * replicates) {
-          ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
-              totalSimulationCount);
-          output.printInfo(completion.getMessage());
-        }
+        // Report replicate completion
+        ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
+            totalSimulationCount);
+        output.printInfo(completion.getMessage());
       }
 
       // Report job combination completion
@@ -379,6 +377,13 @@ public class RunCommand implements Callable<Integer> {
         output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
       }
     }
+
+    // Report overall success
+    output.printInfo("");
+    output.printInfo("✓ All simulations completed successfully!");
+    output.printInfo("  Total simulations run: " + totalSimulationCount);
+    output.printInfo("  Job combinations: " + jobs.size());
+    output.printInfo("  Replicates per job: " + replicates);
 
     if (minioOptions.isMinioOutput()) {
       return saveToMinio("run", file);
