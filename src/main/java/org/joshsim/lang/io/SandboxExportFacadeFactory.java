@@ -86,6 +86,9 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
 
   /**
    * An OutputStream implementation that redirects output through an in-memory callback.
+   *
+   * <p>This class is thread-safe and can be used concurrently by multiple threads when
+   * parallel patch processing is enabled.</p>
    */
   public class RedirectOutputStream extends OutputStream {
 
@@ -103,7 +106,7 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public synchronized void write(int b) throws IOException {
       buffer.append((char) b);
       if (b == '\n') {
         flush();
@@ -116,7 +119,7 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public synchronized void write(byte[] b, int off, int len) throws IOException {
       buffer.append(new String(b, off, len));
       boolean containsNewline = buffer.indexOf("\n") != -1;
       if (containsNewline) {
@@ -125,7 +128,7 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     }
 
     @Override
-    public void flush() throws IOException {
+    public synchronized void flush() throws IOException {
       if (buffer.length() == 0) {
         return;
       }
@@ -135,7 +138,7 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
       flush();
     }
   }

@@ -263,8 +263,14 @@ function getGridKey(record) {
   }
 
   const timestep = Math.round(record.getValue("step"));
-  const x = record.getValue("position.x").toFixed(2);
-  const y = record.getValue("position.y").toFixed(2);
+
+  // Handle both numeric values and string values (like "34.0292 degrees latitude")
+  const xRaw = record.getValue("position.x");
+  const yRaw = record.getValue("position.y");
+
+  const x = (typeof xRaw === 'number' ? xRaw : parseFloat(xRaw)).toFixed(2);
+  const y = (typeof yRaw === 'number' ? yRaw : parseFloat(yRaw)).toFixed(2);
+
   return `${timestep},${x},${y}`;
 }
 
