@@ -138,7 +138,6 @@ public class RunCommand implements Callable<Integer> {
   )
   private int exportQueueSize = 1000000;
 
-<<<<<<< HEAD
   @Option(
       names = "--upload-source",
       description = "Upload source .josh file to MinIO after simulation completes",
@@ -160,8 +159,6 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean uploadData = false;
 
-=======
->>>>>>> dev
   /**
    * Parses custom parameter command-line options.
    *
