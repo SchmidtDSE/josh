@@ -310,8 +310,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
     if (isExternalDataError(exception)) {
       // Use our informative error messages for external data issues
       userMessage = buildInformativeErrorMessage(exception);
-      // Use 500 status for external data errors (server-side issue)
-      httpServerExchange.setStatusCode(500);
     } else {
       // Create sanitized error for other types of errors
       final SimulationExecutionException safeException = SecurityUtil.createSafeException(
@@ -319,12 +317,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
           exception
       );
       userMessage = safeException.getUserMessage();
-      // Use 400 status for user input errors
-      httpServerExchange.setStatusCode(400);
     }
 
     httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
-    httpServerExchange.getResponseSender().send(userMessage);
+    // Format error message in wire protocol format so frontend can parse it
+    String wireFormattedError = String.format("[error] %s\n", userMessage);
+    httpServerExchange.getResponseSender().send(wireFormattedError);
   }
 
   /**
@@ -386,12 +384,20 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private InputOutputLayer getLayer(HttpServerExchange httpServerExchange, String externalData) {
     Map<String, VirtualFile> virtualFiles = VirtualFileSystemWireDeserializer.load(externalData);
 
+    // Create a lock object for synchronizing writes when parallel processing is enabled
+    final Object outputLock = new Object();
+
     SandboxExportCallback exportCallback = (export) -> {
       try {
         // Wrap export data with replicate 0 prefix to standardize wire format
         String wireOutput = String.format("[0] %s\n", export);
-        httpServerExchange.getOutputStream().write(wireOutput.getBytes());
-        httpServerExchange.getOutputStream().flush();
+
+        // Synchronize writes to prevent concurrent access to the output stream
+        // when patches are processed in parallel
+        synchronized (outputLock) {
+          httpServerExchange.getOutputStream().write(wireOutput.getBytes());
+          httpServerExchange.getOutputStream().flush();
+        }
       } catch (IOException e) {
         throw new RuntimeException("Error streaming response", e);
       }

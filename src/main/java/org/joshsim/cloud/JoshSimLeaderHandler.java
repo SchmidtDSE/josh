@@ -198,7 +198,6 @@ public class JoshSimLeaderHandler implements HttpHandler {
       } catch (IOException ioException) {
         throw new RuntimeException("Error streaming error message to client", ioException);
       }
-      httpServerExchange.setStatusCode(500);
       throw new RuntimeException("Critical error in leader execution: " + e.getMessage(), e);
     }
 

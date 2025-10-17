@@ -142,9 +142,10 @@ public class WireRewriteUtil {
       throw new IllegalArgumentException("Can only rewrite PROGRESS responses to cumulative");
     }
 
+    // Worker sends absolute step numbers (0, 1, 2, 3...), not increments
+    // Just return the original step count without accumulation for single replicate
     long originalStepCount = response.getStepCount();
-    int cumulative = cumulativeCounter.addAndGet((int) originalStepCount);
-    return new WireResponse(cumulative);
+    return new WireResponse(originalStepCount);
   }
 
   /**

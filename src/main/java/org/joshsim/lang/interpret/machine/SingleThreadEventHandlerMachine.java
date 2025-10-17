@@ -444,8 +444,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     if (count < 0) {
       throw new IllegalArgumentException(
-          "Cannot create negative number of entities. Got count: " + count
-          + ". Entity creation requires a non-negative count."
+          String.format(
+              "Cannot create entities with negative or undefined count. "
+              + "Received count value: %d. The count value must be a concrete positive integer.",
+              count
+          )
       );
     }
 
@@ -497,10 +500,20 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         resolved.add(valueFactory.build(patch));
       }
     } else {
-      // Return attributes from the patches
+      // Return attributes from the patches with improved error message
       for (Entity patch : patches) {
-        EntityScope scope = new EntityScope(patch);
-        EngineValue value = resolver.get(scope).orElseThrow();
+        EntityScope patchScope = new EntityScope(patch);
+        EngineValue value = resolver.get(patchScope).orElseThrow(
+            () -> new IllegalStateException(
+                String.format(
+                    "Cannot resolve '%s' in spatial query. The attribute may not be available "
+                    + "in the 'prior' context at this substep. Check that the attribute is "
+                    + "set in a substep that runs before the current one (e.g., 'init', 'start', "
+                    + "or 'step' run before 'end').",
+                    resolver
+                )
+            )
+        );
         resolved.add(value);
       }
     }

@@ -113,8 +113,10 @@ public class WireRewriteUtilTest {
         WireRewriteUtil.rewriteProgressForWorkerCoordination(original, cumulativeCounter);
 
     assertEquals(WireResponse.ResponseType.PROGRESS, rewritten.getType());
-    assertEquals(15, rewritten.getStepCount()); // 10 + 5
-    assertEquals(15, cumulativeCounter.get()); // Counter should be updated
+    // Worker sends absolute step numbers, not increments - returns original step count
+    assertEquals(5, rewritten.getStepCount());
+    // Counter is not updated in the new implementation
+    assertEquals(10, cumulativeCounter.get());
   }
 
   @Test
@@ -124,14 +126,18 @@ public class WireRewriteUtilTest {
     WireResponse first = new WireResponse(10);
     WireResponse rewritten1 =
         WireRewriteUtil.rewriteProgressForWorkerCoordination(first, cumulativeCounter);
+    // Worker sends absolute step numbers - returns original step count
     assertEquals(10, rewritten1.getStepCount());
-    assertEquals(10, cumulativeCounter.get());
+    // Counter is not updated in the new implementation
+    assertEquals(0, cumulativeCounter.get());
 
     WireResponse second = new WireResponse(5);
     WireResponse rewritten2 =
         WireRewriteUtil.rewriteProgressForWorkerCoordination(second, cumulativeCounter);
-    assertEquals(15, rewritten2.getStepCount());
-    assertEquals(15, cumulativeCounter.get());
+    // Worker sends absolute step numbers - returns original step count
+    assertEquals(5, rewritten2.getStepCount());
+    // Counter is still not updated
+    assertEquals(0, cumulativeCounter.get());
   }
 
   @Test

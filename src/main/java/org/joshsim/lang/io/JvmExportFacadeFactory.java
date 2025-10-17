@@ -230,6 +230,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
         );
       }
 
+<<<<<<< HEAD
       // Use bucket name from URL if specified, otherwise from MinioOptions
       String bucketName = target.getHost();
       if (bucketName == null || bucketName.isEmpty()) {
@@ -247,6 +248,10 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
       if (objectPath.startsWith("/")) {
         objectPath = objectPath.substring(1);
       }
+=======
+      String bucketName = target.getHost();
+      String objectPath = target.getPath();
+>>>>>>> dev
 
       return new MinioOutputStreamStrategy(
         MinioClientSingleton.getInstance(minioOptions),

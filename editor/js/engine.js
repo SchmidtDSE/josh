@@ -93,7 +93,6 @@ class WasmEngineBackend {
 
       const onStepCallback = (currentStep) => {
         // Normalize absolute timestep to 0-based step count
-        // If startStep is not provided, default to 0 (backward compatibility)
         const normalizedStep = currentStep - (startStep || 0);
 
         if (multiReplicate) {
