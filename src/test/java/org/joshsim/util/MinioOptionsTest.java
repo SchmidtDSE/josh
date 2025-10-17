@@ -127,7 +127,7 @@ public class MinioOptionsTest {
   void getBucketName_withDefaultValue() {
     // No values set explicitly - should return default
     String bucketName = options.getBucketName();
-    assertEquals("default", bucketName);
+    assertEquals(null, bucketName);
   }
 
   @Test

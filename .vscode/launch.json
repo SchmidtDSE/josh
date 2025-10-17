@@ -48,13 +48,47 @@
         "--replicates=2",
         "jotr_small.josh",
         "JoshuaTreeReference",
+        "--minio-bucket=josh-storage",
+        "--minio-path=jotr/dev_test",
+        "--upload-source",
+        "--upload-config",
+        "--upload-data"
       ],
       "cwd": "${workspaceFolder}/jotr",
       "vmArgs": [
         "-Xmx2g",
         "-XX:+UnlockDiagnosticVMOptions",
         "-XX:+DebugNonSafepoints"
-      ]
+      ],
+      "envFile": "${workspaceFolder}/.devcontainer/.env"
+    },
+    {
+      "type": "java",
+      "name": "JOTR Grid Search (2 configs x 2 replicates)",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "projectName": "josh",
+      "classPaths": ["/workspaces/josh/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "--replicates=2",
+        "jotr_small.josh",
+        "JoshuaTreeReference",
+        // Grid search: vary editor config only (2 configs x 2 replicates = 4 total jobs)
+        // Template {editor} will be "editor" or "editor_optimistic"
+        // Note: Must include ALL data files (even if not varying them) for file mapping
+        "--data=editor.jshc=editor.jshc,editor_optimistic.jshc;Precipitation.jshd=Precipitation.jshd;MaxTemperature.jshd=MaxTemperature.jshd;MeanTemperature.jshd=MeanTemperature.jshd;Presence.jshd=Presence.jshd",
+        "--minio-bucket=josh-storage",
+        "--minio-path=jotr/dev_test_parameterized",
+        "--upload-source",
+        "--upload-config",
+        "--upload-data"
+      ],
+      "cwd": "${workspaceFolder}/jotr",
+      "vmArgs": [
+        "-Xmx2g"
+      ],
+      "envFile": "${workspaceFolder}/.devcontainer/.env"
     }
   ]
 }

@@ -71,4 +71,11 @@ class JshdExternalGetterTest {
       getter.getResource("test.txt");
     });
   }
+
+  @Test
+  void testGetResourceWithoutExtension() {
+    assertThrows(IllegalArgumentException.class, () -> {
+      getter.getResource("test");
+    });
+  }
 }

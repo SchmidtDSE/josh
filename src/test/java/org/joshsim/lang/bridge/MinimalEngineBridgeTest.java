@@ -11,13 +11,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.config.Config;
 import org.joshsim.engine.config.NoOpConfigGetter;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.entity.type.Patch;
@@ -33,6 +37,7 @@ import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.precompute.DataGridLayer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -154,6 +159,68 @@ public class MinimalEngineBridgeTest {
 
     EngineValue result = bridge.convert(mockEngineValue, newUnits);
     assertEquals(mockEngineValueConverted, result, "Should return converted value");
+  }
+
+  @Test
+  void testGetConfigWithExtensionHandling() {
+    // Setup
+    ConfigGetter mockConfigGetter = mock(ConfigGetter.class);
+    Config mockConfig = mock(Config.class);
+    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    EngineValue mockValue = engineValueFactory.build(5.0, Units.of("meters"));
+
+    when(mockConfig.getValue("testVar")).thenReturn(mockValue);
+    when(mockConfigGetter.getConfig("test.jshc")).thenReturn(Optional.of(mockConfig));
+
+    EngineBridge bridgeWithConfig = new MinimalEngineBridge(
+        new EngineValueFactory(),
+        new GridGeometryFactory(),
+        mockSimulation,
+        mockConverter,
+        mockPrototypeStore,
+        mockExternalResourceGetter,
+        mockConfigGetter,
+        mockReplicate
+    );
+
+    // Execute - note: Josh code uses "config test.testVar" without extension
+    Optional<EngineValue> result = bridgeWithConfig.getConfigOptional("test.testVar");
+
+    // Verify - bridge should append .jshc before calling getter
+    assertTrue(result.isPresent());
+    assertEquals(5.0, result.get().getAsDouble(), 0.001);
+    verify(mockConfigGetter).getConfig("test.jshc");
+  }
+
+  @Test
+  void testGetExternalWithExtensionHandling() {
+    // Setup
+    ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
+    DataGridLayer mockLayer = mock(DataGridLayer.class);
+    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    EngineValue mockValue = engineValueFactory.build(10.0, Units.of("mm"));
+    GeoKey mockKey = mock(GeoKey.class);
+
+    when(mockLayer.getAt(mockKey, 0L)).thenReturn(mockValue);
+    when(mockExternalGetter.getResource("Precipitation.jshd")).thenReturn(mockLayer);
+
+    EngineBridge bridgeWithExternal = new MinimalEngineBridge(
+        new EngineValueFactory(),
+        new GridGeometryFactory(),
+        mockSimulation,
+        mockConverter,
+        mockPrototypeStore,
+        mockExternalGetter,
+        new NoOpConfigGetter(),
+        mockReplicate
+    );
+
+    // Execute - note: Josh code uses "external Precipitation" without extension
+    EngineValue result = bridgeWithExternal.getExternal(mockKey, "Precipitation", 0L);
+
+    // Verify - bridge should append .jshd before calling getter
+    assertEquals(10.0, result.getAsDouble(), 0.001);
+    verify(mockExternalGetter).getResource("Precipitation.jshd");
   }
 
   private void expectQuery(Query query, List<Patch> result) {
