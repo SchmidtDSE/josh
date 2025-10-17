@@ -112,14 +112,17 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getObjectName(String filename) {
     String basePath = getObjectPath();
+    if (basePath.isEmpty()) {
+      return filename;
+    }
     basePath = basePath.endsWith("/") ? basePath : basePath + "/";
-    return basePath + "/" + filename;
+    return basePath + filename;
   }
 
   /**
    * Gets the complete object name by combining base path and filename,
    * including extra subdirectories.
-   * Follows the pattern: [minio-path]/[subDirectories]/[filename]
+   * Follows the pattern: [subDirectories]/[minio-path]/[filename]
    *
    * @param subDirectories The subdirectories to include in the object name
    * @param filename The name of the file being processed
@@ -127,9 +130,16 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getObjectName(String subDirectories, String filename) {
     String basePath = getObjectPath();
-    basePath = basePath.endsWith("/") ? basePath : basePath + "/";
-    String completePath = basePath + subDirectories;
+
+    // Build path as: subDirectories/basePath/filename
+    String completePath = subDirectories;
     completePath = completePath.endsWith("/") ? completePath : completePath + "/";
+
+    if (!basePath.isEmpty()) {
+      basePath = basePath.endsWith("/") ? basePath : basePath + "/";
+      completePath = completePath + basePath;
+    }
+
     return completePath + filename;
   }
 

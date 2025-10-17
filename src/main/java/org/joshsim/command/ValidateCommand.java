@@ -18,6 +18,7 @@ import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 
@@ -45,6 +46,13 @@ public class ValidateCommand implements Callable<Integer> {
   @Mixin
   private MinioOptions minioOptions = new MinioOptions();
 
+  @Option(
+      names = "--upload-source",
+      description = "Upload source .josh file to MinIO after validation completes",
+      defaultValue = "false"
+  )
+  private boolean uploadSource = false;
+
   @Override
   public Integer call() {
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
@@ -66,7 +74,9 @@ public class ValidateCommand implements Callable<Integer> {
     output.printInfo("Validated Josh code at " + file);
 
     if (minioOptions.isMinioOutput()) {
-      return saveToMinio("validate", file);
+      if (uploadSource) {
+        return saveToMinio("validate", file);
+      }
     }
 
     return 0;

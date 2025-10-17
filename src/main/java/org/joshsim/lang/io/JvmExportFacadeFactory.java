@@ -242,7 +242,11 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
         }
       }
 
+      // Strip leading slash from object path (URI.getPath() returns paths like "/run/file.csv")
       String objectPath = target.getPath();
+      if (objectPath.startsWith("/")) {
+        objectPath = objectPath.substring(1);
+      }
 
       return new MinioOutputStreamStrategy(
         MinioClientSingleton.getInstance(minioOptions),

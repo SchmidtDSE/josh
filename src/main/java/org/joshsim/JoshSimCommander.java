@@ -237,8 +237,6 @@ public class JoshSimCommander {
         output.printInfo("Created bucket: " + bucketName);
       }
 
-      output.printInfo(minioOptions.toString());
-
       minioClient.uploadObject(
           UploadObjectArgs.builder()
             .bucket(bucketName)
