@@ -230,8 +230,23 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
         );
       }
 
+      // Use bucket name from URL if specified, otherwise from MinioOptions
       String bucketName = target.getHost();
+      if (bucketName == null || bucketName.isEmpty()) {
+        bucketName = minioOptions.getBucketName();
+        if (bucketName == null || bucketName.isEmpty()) {
+          throw new IllegalArgumentException(
+            "MinIO bucket name must be specified either in the URL (minio://bucket-name/path) "
+            + "or via --minio-bucket option or MINIO_BUCKET environment variable"
+          );
+        }
+      }
+
+      // Strip leading slash from object path (URI.getPath() returns paths like "/run/file.csv")
       String objectPath = target.getPath();
+      if (objectPath.startsWith("/")) {
+        objectPath = objectPath.substring(1);
+      }
 
       return new MinioOutputStreamStrategy(
         MinioClientSingleton.getInstance(minioOptions),

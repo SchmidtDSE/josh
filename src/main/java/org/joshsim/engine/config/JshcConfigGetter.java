@@ -47,11 +47,9 @@ public class JshcConfigGetter implements ConfigGetter {
       return configCache.get(name);
     }
 
-    // Ensure the name ends with .jshc
+    // Use the name directly without appending extension
+    // The caller (MinimalEngineBridge) is responsible for providing the full filename
     String fileName = name;
-    if (!fileName.endsWith(".jshc")) {
-      fileName += ".jshc";
-    }
 
     // Check if the file exists before trying to open it
     if (!inputStrategy.exists(fileName)) {

@@ -13,6 +13,7 @@ public class MinioOptions extends HierarchyConfig {
   private static final String MINIO_ENDPOINT = "minio_endpoint";
   private static final String MINIO_ACCESS_KEY = "minio_access_key";
   private static final String MINIO_SECRET_KEY = "minio_secret_key";
+  private static final String MINIO_BUCKET_NAME = "minio_bucket";
 
   // Direct command line options (Maybe suffix indicates they might be null/empty)
   @Option(names = "--minio-endpoint", description = "Minio server endpoint URL")
@@ -92,7 +93,7 @@ public class MinioOptions extends HierarchyConfig {
    * Gets the bucket name.
    */
   public String getBucketName() {
-    return getValue("minio_bucket", bucketNameMaybe, true, "default");
+    return getValue(MINIO_BUCKET_NAME, bucketNameMaybe, false, null);
   }
 
   /**
@@ -111,14 +112,17 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getObjectName(String filename) {
     String basePath = getObjectPath();
+    if (basePath.isEmpty()) {
+      return filename;
+    }
     basePath = basePath.endsWith("/") ? basePath : basePath + "/";
-    return basePath + "/" + filename;
+    return basePath + filename;
   }
 
   /**
    * Gets the complete object name by combining base path and filename,
    * including extra subdirectories.
-   * Follows the pattern: [minio-path]/[subDirectories]/[filename]
+   * Follows the pattern: [subDirectories]/[minio-path]/[filename]
    *
    * @param subDirectories The subdirectories to include in the object name
    * @param filename The name of the file being processed
@@ -126,9 +130,16 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getObjectName(String subDirectories, String filename) {
     String basePath = getObjectPath();
-    basePath = basePath.endsWith("/") ? basePath : basePath + "/";
-    String completePath = basePath + subDirectories;
+
+    // Build path as: subDirectories/basePath/filename
+    String completePath = subDirectories;
     completePath = completePath.endsWith("/") ? completePath : completePath + "/";
+
+    if (!basePath.isEmpty()) {
+      basePath = basePath.endsWith("/") ? basePath : basePath + "/";
+      completePath += basePath;
+    }
+
     return completePath + filename;
   }
 
@@ -145,15 +156,19 @@ public class MinioOptions extends HierarchyConfig {
   @Override
   public String toString() {
     // Force retrieval of all values to populate the sources
-    String endpoint = getMinioEndpoint();
     getMinioAccessKey();  // Values not used but sources recorded
     getMinioSecretKey();  // Values not used but sources recorded
+    getBucketName();      // Values not used but sources recorded
+    String endpoint = getMinioEndpoint();
 
     Map<String, ValueSource> sources = getSources();
 
     StringBuilder sb = new StringBuilder("MinioOptions:\n");
     sb.append("  Minio Endpoint: ").append(endpoint)
       .append(" (from ").append(sources.get(MINIO_ENDPOINT)).append(")\n");
+
+    sb.append("  Minio Bucket").append(endpoint)
+      .append(" (from ").append(sources.get(MINIO_BUCKET_NAME)).append(")\n");
 
     // Redact sensitive information
     sb.append("  Minio Access Key: [REDACTED]")
@@ -162,8 +177,7 @@ public class MinioOptions extends HierarchyConfig {
     sb.append("  Minio Secret Key: [REDACTED]")
       .append(" (from ").append(sources.get(MINIO_SECRET_KEY)).append(")\n");
 
-    // Add bucket and object name
-    sb.append("  Bucket Name: ").append(getBucketName()).append("\n");
+    // Add object name
     sb.append("  Object Path: ").append(getObjectPath());
 
     return sb.toString();

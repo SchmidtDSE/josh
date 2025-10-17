@@ -50,6 +50,9 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `-o, --output <path>`: Output file path
 - `--parallel`: Enable parallel patch processing
 - `--verbose`: Enable verbose output
+- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
+- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
+- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
 
 **Examples:**
 ```bash
@@ -107,6 +110,7 @@ java -jar joshsim-fat.jar validate <script.josh>
 
 **Options:**
 - `--verbose`: Enable verbose validation output
+- `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
 #### `discoverConfig` - Configuration Discovery
 Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.
