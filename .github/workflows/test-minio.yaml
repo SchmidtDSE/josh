@@ -185,12 +185,13 @@ jobs:
           echo "Testing error handling with missing credentials..."
 
           # This should fail with clear error message
-          # Need --output-steps to trigger actual export attempt
+          # Use --upload-source to trigger MinIO client initialization
           if java -Xmx2g -jar build/libs/joshsim-fat.jar run \
             --replicates=1 \
             examples/test/minio/csv_export.josh \
             MinioCSVTest \
             --minio-endpoint=http://localhost:9000 \
+            --upload-source \
             --output-steps=5 \
             2>&1 | grep -q "minio_access_key.*not found"; then
             echo "✓ Error handling test passed - detected missing credentials"
