@@ -137,7 +137,7 @@ public class MinioOptions extends HierarchyConfig {
 
     if (!basePath.isEmpty()) {
       basePath = basePath.endsWith("/") ? basePath : basePath + "/";
-      completePath = completePath + basePath;
+      completePath += basePath;
     }
 
     return completePath + filename;
