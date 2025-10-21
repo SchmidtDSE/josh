@@ -94,6 +94,6 @@ public class ExportTargetParserTest {
 
     assertEquals("memory", result.getProtocol());
     assertEquals("editor", result.getHost());
-    assertEquals("test", result.getPath());
+    assertEquals("/test", result.getPath());
   }
 }

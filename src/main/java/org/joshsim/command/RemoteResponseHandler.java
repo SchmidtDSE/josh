@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.ExportTarget;
+import org.joshsim.lang.io.ExportTargetParser;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.util.ProgressUpdate;
 import org.joshsim.wire.NamedMap;
@@ -146,8 +147,17 @@ public class RemoteResponseHandler {
     String entityName = namedMap.getName();
     ExportFacade exportFacade = exportFacades.get(entityName);
     if (exportFacade == null) {
-      // Create export target for CSV output
-      ExportTarget target = new ExportTarget("file", entityName + ".csv");
+      // Create export target
+      // If entity name is a full URI (contains ://), parse it
+      // Otherwise, treat as simple filename for backward compatibility
+      ExportTarget target;
+      if (entityName.contains("://")) {
+        target = ExportTargetParser.parse(entityName);
+      } else {
+        // Legacy/test behavior: simple name gets .csv extension
+        target = new ExportTarget("file", entityName + ".csv");
+      }
+
       exportFacade = exportFactory.build(target);
       exportFacade.start();
       exportFacades.put(entityName, exportFacade);

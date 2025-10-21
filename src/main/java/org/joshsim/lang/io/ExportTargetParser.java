@@ -44,8 +44,15 @@ public class ExportTargetParser {
    * @return An ExportTarget configured for memory-based export.
    */
   private static ExportTarget parseMemory(String target) {
-    String path = target.substring(16, target.length());
-    return new ExportTarget("memory", "editor", path);
+    // Use standard URI parsing for consistency with file:// and minio://
+    // This ensures path always has leading slash, simplifying toUri() logic
+    try {
+      URI uri = new URI(target);
+      String host = uri.getHost() != null ? uri.getHost() : "";
+      return new ExportTarget("memory", host, uri.getPath());
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("Invalid memory target format: " + target, e);
+    }
   }
 
   /**
