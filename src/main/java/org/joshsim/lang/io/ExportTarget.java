@@ -100,4 +100,30 @@ public class ExportTarget {
     return path.substring(lastDotIndex + 1);
   }
 
+  /**
+   * Reconstructs the full URI string from this ExportTarget's components.
+   *
+   * <p>This method is the inverse of ExportTargetParser.parse(), reconstructing
+   * a parseable URI string from the protocol, host, and path components.</p>
+   *
+   * <p>All paths parsed via URI (file://, minio://, memory://) have leading slashes,
+   * ensuring consistent URI reconstruction without conditional logic.</p>
+   *
+   * @return the full URI string (e.g., "file:///tmp/output.csv", "minio://bucket/path.csv")
+   */
+  public String toUri() {
+    // Handle special case: local path only (no protocol)
+    if (protocol.isEmpty()) {
+      return path;
+    }
+
+    // Build URI: protocol://host/path (or protocol://path if host is empty)
+    // All paths from URI parsing include leading slash, so no separator needed
+    if (host == null || host.isEmpty()) {
+      return protocol + "://" + path;
+    } else {
+      return protocol + "://" + host + path;
+    }
+  }
+
 }

@@ -402,7 +402,11 @@ public class JoshSimWorkerHandler implements HttpHandler {
         throw new RuntimeException("Error streaming response", e);
       }
     };
-    return new SandboxInputOutputLayer(virtualFiles, exportCallback);
+
+    // Allow template variables in export paths for remote workers
+    // Workers stream all export data back via HTTP, so the path templates
+    // are never actually used for file operations (only for organization)
+    return new SandboxInputOutputLayer(virtualFiles, exportCallback, true);
   }
 
   /**

@@ -95,4 +95,91 @@ class ExportTargetTest {
     // Assert
     assertEquals("", fileType);
   }
+
+  @Test
+  void testToUriWithFileProtocolEmptyHost() {
+    // Arrange
+    ExportTarget exportTarget = new ExportTarget("file", "", "/tmp/output.csv");
+
+    // Act
+    String uri = exportTarget.toUri();
+
+    // Assert
+    assertEquals("file:///tmp/output.csv", uri);
+  }
+
+  @Test
+  void testToUriWithMinioProtocolAndHost() {
+    // Arrange
+    ExportTarget exportTarget = new ExportTarget("minio", "bucket", "/path/to/file.csv");
+
+    // Act
+    String uri = exportTarget.toUri();
+
+    // Assert
+    assertEquals("minio://bucket/path/to/file.csv", uri);
+  }
+
+  @Test
+  void testToUriWithMemoryProtocol() {
+    // Arrange
+    ExportTarget exportTarget = new ExportTarget("memory", "editor", "/output.csv");
+
+    // Act
+    String uri = exportTarget.toUri();
+
+    // Assert
+    assertEquals("memory://editor/output.csv", uri);
+  }
+
+  @Test
+  void testToUriWithLocalPathOnly() {
+    // Arrange - no protocol
+    ExportTarget exportTarget = new ExportTarget("/local/path/file.txt");
+
+    // Act
+    String uri = exportTarget.toUri();
+
+    // Assert
+    assertEquals("/local/path/file.txt", uri);
+  }
+
+  @Test
+  void testToUriRoundTripWithFileProtocol() {
+    // Arrange - Test that parse -> toUri -> parse works
+    String originalUri = "file:///tmp/test.csv";
+    ExportTarget parsed = ExportTargetParser.parse(originalUri);
+
+    // Act
+    String reconstructed = parsed.toUri();
+
+    // Assert
+    assertEquals(originalUri, reconstructed);
+  }
+
+  @Test
+  void testToUriRoundTripWithMinioProtocol() {
+    // Arrange
+    String originalUri = "minio://my-bucket/path/data.csv";
+    ExportTarget parsed = ExportTargetParser.parse(originalUri);
+
+    // Act
+    String reconstructed = parsed.toUri();
+
+    // Assert
+    assertEquals(originalUri, reconstructed);
+  }
+
+  @Test
+  void testToUriRoundTripWithMemoryProtocol() {
+    // Arrange
+    String originalUri = "memory://editor/output.csv";
+    ExportTarget parsed = ExportTargetParser.parse(originalUri);
+
+    // Act
+    String reconstructed = parsed.toUri();
+
+    // Assert
+    assertEquals(originalUri, reconstructed);
+  }
 }

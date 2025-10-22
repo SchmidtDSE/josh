@@ -10,6 +10,9 @@
 
 package org.joshsim.wire;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +35,9 @@ public class WireConverter {
    * Serializes a NamedMap to wire format string.
    *
    * <p>Converts the provided NamedMap into a tab-delimited string of key-value pairs,
-   * prefixed with the name from the NamedMap. The format is: name:key1=value1\tkey2=value2...
+   * prefixed with the URL-encoded name from the NamedMap. The format is:
+   * urlEncodedName:key1=value1\tkey2=value2...
+   * The name is URL-encoded to safely handle special characters including colons from URIs.
    * Special characters in values (tabs and newlines) are replaced with spaces to ensure
    * safe parsing.</p>
    *
@@ -45,6 +50,9 @@ public class WireConverter {
       throw new IllegalArgumentException("NamedMap cannot be null");
     }
 
+    // URL-encode the name to handle special characters like colons in URIs
+    String encodedName = URLEncoder.encode(namedMap.getName(), StandardCharsets.UTF_8);
+
     CompatibilityLayer compatibilityLayer = CompatibilityLayerKeeper.get();
     CompatibleStringJoiner joiner = compatibilityLayer.createStringJoiner("\t");
 
@@ -55,15 +63,16 @@ public class WireConverter {
       joiner.add(assignment);
     }
 
-    return String.format("%s:%s", namedMap.getName(), joiner.toString());
+    return String.format("%s:%s", encodedName, joiner.toString());
   }
 
   /**
    * Deserializes a wire format string to a NamedMap.
    *
    * <p>Parses a wire format string back into a NamedMap object. The expected format
-   * is: name:key1=value1\tkey2=value2... This method performs the inverse operation
-   * of serializeToString.</p>
+   * is: urlEncodedName:key1=value1\tkey2=value2... The name is URL-decoded to handle
+   * special characters including colons from URIs. This method performs the inverse
+   * operation of serializeToString.</p>
    *
    * @param wireFormat The wire format string to deserialize
    * @return A NamedMap object containing the parsed name and key-value pairs
@@ -77,7 +86,7 @@ public class WireConverter {
       throw new IllegalArgumentException("Wire format string cannot be empty");
     }
 
-    // Find the first colon to separate name from data
+    // Find the first colon to separate encoded name from data
     int colonIndex = wireFormat.indexOf(':');
     if (colonIndex == -1) {
       throw new IllegalArgumentException("Wire format must contain a colon separator");
@@ -86,7 +95,9 @@ public class WireConverter {
       throw new IllegalArgumentException("Wire format must have a non-empty name before colon");
     }
 
-    String name = wireFormat.substring(0, colonIndex);
+    String encodedName = wireFormat.substring(0, colonIndex);
+    // URL-decode the name to handle special characters like colons in URIs
+    String name = URLDecoder.decode(encodedName, StandardCharsets.UTF_8);
     String dataSection = wireFormat.substring(colonIndex + 1);
 
     Map<String, String> target = new HashMap<>();

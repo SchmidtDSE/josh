@@ -25,6 +25,7 @@ import org.joshsim.lang.io.strategy.MemoryExportFacade;
 public class SandboxExportFacadeFactory implements ExportFacadeFactory {
 
   private final SandboxExportCallback callback;
+  private final boolean allowTemplates;
 
   /**
    * Constructs a new SandboxExportFacadeFactory with the specified callback.
@@ -32,21 +33,40 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
    * @param callback The WebAssembly callback interface used to handle output operations
    */
   public SandboxExportFacadeFactory(SandboxExportCallback callback) {
+    this(callback, false); // Default: reject templates for WebAssembly security
+  }
+
+  /**
+   * Constructs a new SandboxExportFacadeFactory with the specified callback and template control.
+   *
+   * @param callback The sandbox callback interface used to handle output operations
+   * @param allowTemplates If true, template variables in paths are allowed (for remote workers).
+   *     If false, template variables will cause an exception (for WebAssembly security).
+   */
+  public SandboxExportFacadeFactory(SandboxExportCallback callback, boolean allowTemplates) {
     this.callback = callback;
+    this.allowTemplates = allowTemplates;
   }
 
   @Override
   public ExportFacade build(ExportTarget target) {
-    if (!target.getProtocol().equals("memory")) {
-      throw new IllegalArgumentException("Only in-memory targets supported on WASM.");
+    // Only validate target protocol/host if NOT allowing templates (WebAssembly mode)
+    // Remote workers stream all output via callback, so target protocol doesn't matter
+    if (!allowTemplates) {
+      if (!target.getProtocol().equals("memory")) {
+        throw new IllegalArgumentException("Only in-memory targets supported on WASM.");
+      }
+
+      if (!target.getHost().equals("editor")) {
+        throw new IllegalArgumentException("Only editor targets supported on WASM.");
+      }
     }
 
-    if (!target.getHost().equals("editor")) {
-      throw new IllegalArgumentException("Only editor targets supported on WASM.");
-    }
+    // For remote workers, use full URI so client can parse it back
+    // For WebAssembly, use just the path for backwards compatibility
+    String name = allowTemplates ? target.toUri() : target.getPath();
 
-    String path = target.getPath();
-    return new MemoryExportFacade(() -> new RedirectOutputStream(callback), path);
+    return new MemoryExportFacade(() -> new RedirectOutputStream(callback), name);
   }
 
   @Override
@@ -61,19 +81,23 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
 
   @Override
   public String getPath(String path) {
-    // Detect template variables using regex
-    Pattern templatePattern = Pattern.compile("\\{([^}]+)\\}");
-    Matcher matcher = templatePattern.matcher(path);
-    List<String> templateVars = new ArrayList<>();
+    // Only validate templates if configured to reject them (WebAssembly mode)
+    if (!allowTemplates) {
+      // Detect template variables using regex
+      Pattern templatePattern = Pattern.compile("\\{([^}]+)\\}");
+      Matcher matcher = templatePattern.matcher(path);
+      List<String> templateVars = new ArrayList<>();
 
-    while (matcher.find()) {
-      templateVars.add("{" + matcher.group(1) + "}");
-    }
+      while (matcher.find()) {
+        templateVars.add("{" + matcher.group(1) + "}");
+      }
 
-    if (!templateVars.isEmpty()) {
-      String varsString = String.join(", ", templateVars);
-      throw new RuntimeException("Template strings are not supported in sandbox/editor execution. "
-          + "Found template variables: " + varsString);
+      if (!templateVars.isEmpty()) {
+        String varsString = String.join(", ", templateVars);
+        throw new RuntimeException(
+            "Template strings are not supported in sandbox/editor execution. "
+                + "Found template variables: " + varsString);
+      }
     }
 
     return path;
