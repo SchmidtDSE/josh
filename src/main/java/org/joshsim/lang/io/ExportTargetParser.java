@@ -66,19 +66,54 @@ public class ExportTargetParser {
    */
   private static ExportTarget parseUri(String target) {
     try {
-      URI uri = new URI(target);
+      // URL-encode template variables (e.g., {editor}, {replicate}) before parsing
+      // since Java's URI class doesn't allow curly braces as literal characters
+      String encodedTarget = encodeTemplateVariables(target);
+
+      URI uri = new URI(encodedTarget);
       String scheme = uri.getScheme();
+
+      // Decode the path back to preserve template variables in the ExportTarget
+      String decodedPath = decodeTemplateVariables(uri.getPath());
+
       if ("file".equalsIgnoreCase(scheme)) {
         String host = uri.getHost() != null ? uri.getHost() : "";
-        return new ExportTarget("file", host, uri.getPath());
+        return new ExportTarget("file", host, decodedPath);
       } else if ("minio".equalsIgnoreCase(scheme)) {
-        return new ExportTarget("minio", uri.getHost(), uri.getPath());
+        return new ExportTarget("minio", uri.getHost(), decodedPath);
       } else {
         throw new IllegalArgumentException("Unsupported target scheme: " + scheme);
       }
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException("Invalid target format: " + target, e);
     }
+  }
+
+  /**
+   * URL-encodes curly braces in a URI string to make it parseable.
+   *
+   * <p>Java's URI class doesn't allow curly braces as literal characters, so we need
+   * to encode template variables like {editor} and {replicate} before parsing.
+   * We use simple replacement: { becomes %7B, } becomes %7D.</p>
+   *
+   * @param uri The URI string potentially containing template variables with curly braces
+   * @return The URI string with curly braces URL-encoded
+   */
+  private static String encodeTemplateVariables(String uri) {
+    return uri.replace("{", "%7B").replace("}", "%7D");
+  }
+
+  /**
+   * URL-decodes curly braces in a URI path to restore template variables.
+   *
+   * <p>This is the inverse of encodeTemplateVariables(), restoring {editor} and
+   * {replicate} from their URL-encoded forms.</p>
+   *
+   * @param path The URI path with URL-encoded curly braces
+   * @return The path with curly braces decoded
+   */
+  private static String decodeTemplateVariables(String path) {
+    return path.replace("%7B", "{").replace("%7D", "}");
   }
 
 }
