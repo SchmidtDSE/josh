@@ -20,6 +20,8 @@ import org.joshsim.lang.io.ExportFacade;
 import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.ExportTarget;
 import org.joshsim.lang.io.ExportTargetParser;
+import org.joshsim.pipeline.job.config.TemplateResult;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.pipeline.remote.RunRemoteContext;
 import org.joshsim.util.ProgressUpdate;
 import org.joshsim.wire.NamedMap;
@@ -43,6 +45,7 @@ public class RemoteResponseHandler {
   private final AtomicLong currentStep;
   private final AtomicInteger completedReplicates;
   private final boolean useCumulativeProgress;
+  private final boolean reportStepProgress;
   private int lastProcessedReplicate = -1;
 
   /**
@@ -51,16 +54,32 @@ public class RemoteResponseHandler {
    * @param context The execution context containing progress calculator and output options
    * @param exportFactory Factory for creating export facades
    * @param useCumulativeProgress Whether to use cumulative progress tracking for coordination
+   * @param reportStepProgress Whether to report step-by-step progress (false for parallel workers)
    */
   public RemoteResponseHandler(RunRemoteContext context,
       ExportFacadeFactory exportFactory,
-      boolean useCumulativeProgress) {
+      boolean useCumulativeProgress,
+      boolean reportStepProgress) {
     this.context = context;
     this.exportFactory = exportFactory;
     this.exportFacades = new HashMap<>();
     this.currentStep = new AtomicLong(0);
     this.completedReplicates = new AtomicInteger(0);
     this.useCumulativeProgress = useCumulativeProgress;
+    this.reportStepProgress = reportStepProgress;
+  }
+
+  /**
+   * Creates a new RemoteResponseHandler with step progress reporting enabled.
+   *
+   * @param context The execution context containing progress calculator and output options
+   * @param exportFactory Factory for creating export facades
+   * @param useCumulativeProgress Whether to use cumulative progress tracking for coordination
+   */
+  public RemoteResponseHandler(RunRemoteContext context,
+      ExportFacadeFactory exportFactory,
+      boolean useCumulativeProgress) {
+    this(context, exportFactory, useCumulativeProgress, true);
   }
 
   /**
@@ -110,7 +129,7 @@ public class RemoteResponseHandler {
 
     switch (parsed.getType()) {
       case DATUM -> {
-        handleDatumResponse(parsed);
+        handleDatumResponse(parsed, replicateNumber);
       }
 
       case PROGRESS -> {
@@ -138,29 +157,45 @@ public class RemoteResponseHandler {
    * Handles DATUM response by deserializing to NamedMap and persisting via export facade.
    *
    * @param response The DATUM response to process
+   * @param replicateNumber The replicate number for template resolution
    */
-  private void handleDatumResponse(WireResponse response) {
+  private void handleDatumResponse(WireResponse response, int replicateNumber) {
     // Deserialize wire format to NamedMap using Component 1
     NamedMap namedMap = WireConverter.deserializeFromString(response.getDataLine());
 
     // Get or create export facade for this entity type
     String entityName = namedMap.getName();
-    ExportFacade exportFacade = exportFacades.get(entityName);
-    if (exportFacade == null) {
-      // Create export target
-      // If entity name is a full URI (contains ://), parse it
-      // Otherwise, treat as simple filename for backward compatibility
-      ExportTarget target;
-      if (entityName.contains("://")) {
-        target = ExportTargetParser.parse(entityName);
-      } else {
-        // Legacy/test behavior: simple name gets .csv extension
-        target = new ExportTarget("file", entityName + ".csv");
-      }
 
-      exportFacade = exportFactory.build(target);
-      exportFacade.start();
-      exportFacades.put(entityName, exportFacade);
+    // Resolve template variables in the entity name using job context
+    String resolvedEntityName = entityName;
+    if (entityName.contains("{")) {
+      TemplateStringRenderer templateRenderer = new TemplateStringRenderer(
+          context.getJob(), replicateNumber);
+      TemplateResult templateResult = templateRenderer.renderTemplate(entityName);
+      resolvedEntityName = templateResult.getProcessedTemplate();
+    }
+
+    // Synchronize facade creation to prevent race conditions when multiple
+    // worker threads process responses concurrently for the same export target
+    ExportFacade exportFacade;
+    synchronized (exportFacades) {
+      exportFacade = exportFacades.get(resolvedEntityName);
+      if (exportFacade == null) {
+        // Create export target
+        // If entity name is a full URI (contains ://), parse it
+        // Otherwise, treat as simple filename for backward compatibility
+        ExportTarget target;
+        if (resolvedEntityName.contains("://")) {
+          target = ExportTargetParser.parse(resolvedEntityName);
+        } else {
+          // Legacy/test behavior: simple name gets .csv extension
+          target = new ExportTarget("file", resolvedEntityName + ".csv");
+        }
+
+        exportFacade = exportFactory.build(target);
+        exportFacade.start();
+        exportFacades.put(resolvedEntityName, exportFacade);
+      }
     }
 
     // Persist using Component 2 NamedMap write capability
@@ -175,6 +210,12 @@ public class RemoteResponseHandler {
    */
   private void handleProgressResponse(WireResponse response, AtomicInteger cumulativeStepCount) {
     currentStep.set(response.getStepCount());
+
+    // Skip progress reporting if disabled (e.g., for parallel workers where
+    // step-by-step progress from multiple replicates would be confusing)
+    if (!reportStepProgress) {
+      return;
+    }
 
     long stepCountToReport = response.getStepCount();
 

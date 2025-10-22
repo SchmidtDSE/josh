@@ -62,15 +62,18 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
         cumulativeStepCount
     );
 
-    // Initialize export system
+    // Initialize export system with MinIO options for remote export targets
     InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(context.getReplicateNumber())
+        .withMinioOptions(context.getMinioOptions())
         .build();
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
 
     // Create shared response handler for processing worker responses
+    // Disable step-by-step progress for parallel workers to avoid confusion
+    // (only show replicate completion messages)
     RemoteResponseHandler responseHandler = new RemoteResponseHandler(
-        context, exportFactory, true); // useCumulativeProgress = true for local coordination
+        context, exportFactory, false, false);
 
     // Create wire response handler that delegates to shared handler
     LocalLeaderWireResponseHandler wireResponseHandler =
