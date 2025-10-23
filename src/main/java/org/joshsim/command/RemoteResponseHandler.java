@@ -98,6 +98,21 @@ public class RemoteResponseHandler {
       AtomicInteger cumulativeStepCount) {
     try {
       return parseResponseLineUnsafe(line, replicateNumber, cumulativeStepCount);
+    } catch (IllegalArgumentException e) {
+      // Check if this is a MinIO configuration error
+      if (e.getMessage() != null && e.getMessage().contains("MinIO protocol")
+          && e.getMessage().contains("requires MinIO configuration")) {
+        throw new RuntimeException(
+          "MinIO configuration required but not provided.\n"
+          + "Your simulation outputs to MinIO storage but credentials are missing.\n"
+          + "Please add the following arguments:\n"
+          + "  --minio-endpoint <endpoint>  (e.g., http://localhost:9000)\n"
+          + "  --minio-access-key <key>\n"
+          + "  --minio-secret-key <secret>\n"
+          + "\nOriginal error: " + e.getMessage(), e);
+      }
+      throw new RuntimeException("Failed to process response for replicate "
+          + replicateNumber + ": " + e.getMessage(), e);
     } catch (Exception e) {
       throw new RuntimeException("Failed to process response for replicate "
           + replicateNumber + ": " + e.getMessage(), e);
