@@ -720,4 +720,96 @@ public class JobVariationParserTest {
       assertEquals(1, job.getFileNames().size());
     }
   }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  public void testMultipleDataFlagsAreJoined() {
+    // Test that multiple --data flags (as separate array elements) are joined with semicolons
+    String[] dataFiles = {
+        "MaxTemperature.jshd=MaxTemperature.jshd",
+        "MeanTemperature.jshd=MeanTemperature.jshd",
+        "Precipitation.jshd=Precipitation.jshd",
+        "editor.jshc=editor.jshc,editor_optimistic.jshc"
+    };
+
+    List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
+    // Should create 2 combinations due to editor.jshc having 2 paths
+    assertEquals(2, results.size());
+
+    List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
+
+    // Both jobs should have all 4 file mappings
+    for (JoshJob job : jobs) {
+      assertEquals(4, job.getFileNames().size());
+      assertEquals("MaxTemperature.jshd", job.getFilePath("MaxTemperature.jshd"));
+      assertEquals("MeanTemperature.jshd", job.getFilePath("MeanTemperature.jshd"));
+      assertEquals("Precipitation.jshd", job.getFilePath("Precipitation.jshd"));
+      assertTrue(job.getFilePath("editor.jshc").matches("editor(_optimistic)?\\.jshc"));
+    }
+
+    // Verify we have both editor variations
+    List<String> editorPaths = jobs.stream()
+        .map(job -> job.getFilePath("editor.jshc"))
+        .sorted()
+        .toList();
+    assertEquals(List.of("editor.jshc", "editor_optimistic.jshc"), editorPaths);
+  }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  public void testMultipleDataFlagsWithIterable() {
+    // Test using Iterable interface with multiple separate specifications
+    Iterable<String> dataFiles = Arrays.asList(
+        "config.jshc=config1.jshc",
+        "data.jshd=data1.jshd",
+        "other.jshc=other1.jshc"
+    );
+
+    List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
+    assertEquals(1, results.size());
+
+    JoshJob job = results.get(0).build();
+
+    // All three files should be present
+    assertEquals(3, job.getFileNames().size());
+    assertEquals("config1.jshc", job.getFilePath("config.jshc"));
+    assertEquals("data1.jshd", job.getFilePath("data.jshd"));
+    assertEquals("other1.jshc", job.getFilePath("other.jshc"));
+  }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  public void testMultipleDataFlagsWithGridSearch() {
+    // Test multiple flags where some have comma-separated lists (grid search)
+    String[] dataFiles = {
+        "temp.jshd=hot.jshd,cold.jshd",
+        "config.jshc=config1.jshc,config2.jshc",
+        "static.jshd=static.jshd"
+    };
+
+    List<JoshJobBuilder> results = parser.parseDataFiles(builder, dataFiles);
+    // Should create 2 × 2 = 4 combinations
+    assertEquals(4, results.size());
+
+    List<JoshJob> jobs = results.stream().map(JoshJobBuilder::build).toList();
+
+    // All jobs should have all three file types
+    for (JoshJob job : jobs) {
+      assertEquals(3, job.getFileNames().size());
+      assertEquals("static.jshd", job.getFilePath("static.jshd"));
+      assertTrue(job.getFilePath("temp.jshd").matches("(hot|cold)\\.jshd"));
+      assertTrue(job.getFilePath("config.jshc").matches("config[12]\\.jshc"));
+    }
+
+    // Verify we have all 4 combinations
+    boolean foundHotConfig1 = jobs.stream().anyMatch(job ->
+        "hot.jshd".equals(job.getFilePath("temp.jshd"))
+        && "config1.jshc".equals(job.getFilePath("config.jshc")));
+    assertTrue(foundHotConfig1, "Should find combination (hot, config1)");
+
+    boolean foundColdConfig2 = jobs.stream().anyMatch(job ->
+        "cold.jshd".equals(job.getFilePath("temp.jshd"))
+        && "config2.jshc".equals(job.getFilePath("config.jshc")));
+    assertTrue(foundColdConfig2, "Should find combination (cold, config2)");
+  }
 }
