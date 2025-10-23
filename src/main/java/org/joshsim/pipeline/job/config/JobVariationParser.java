@@ -51,8 +51,9 @@ public class JobVariationParser {
       return Arrays.asList(builder);
     }
 
-    // Process only first element for grid search expansion
-    String specification = dataFiles.iterator().next();
+    // Concatenate all data file specifications with semicolons
+    // This allows users to specify multiple --data flags which will be joined together
+    String specification = String.join(";", dataFiles);
     return parseSpecification(builder, specification);
   }
 

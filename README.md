@@ -70,41 +70,56 @@ Available commands include:
 
 Run the jar without any command specified to get further help documentation.
 
-#### Artifact Upload to MinIO
+#### Artifact Upload Options
 
 When using MinIO or S3-compatible storage for simulation outputs, you can optionally upload source artifacts after simulation completion. This is useful for reproducibility and sharing complete simulation setups.
 
+**Available Options:**
 - `--upload-source` - Upload the source `.josh` file
 - `--upload-config` - Upload configuration files (`.jshc`) used in the simulation
 - `--upload-data` - Upload data files (`.jshd`) used in the simulation
 
 These files are uploaded to the same MinIO bucket under the `run/` directory alongside simulation results.
 
-Upload only the source file:
-```
-$ java -jar joshsim.jar run simulation.josh MySimulation \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source
-```
+**BREAKING CHANGE:** Previous versions automatically uploaded the `.josh` file when MinIO was configured. You must now explicitly use `--upload-source` to upload the source file.
 
-Upload source and configuration files:
-```
-$ java -jar joshsim.jar run simulation.josh MySimulation \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source \
-  --upload-config
-```
+**Examples:**
 
-Upload all artifacts (source, config, and data):
-```
+Upload all artifacts with local execution:
+```bash
 $ java -jar joshsim.jar run simulation.josh MySimulation \
   --minio-endpoint=https://s3.amazonaws.com \
   --minio-bucket=my-bucket \
   --upload-source \
   --upload-config \
   --upload-data
+```
+
+Upload all artifacts with remote execution:
+```bash
+$ java -jar joshsim.jar runRemote simulation.josh MySimulation \
+  --api-key=YOUR_API_KEY \
+  --minio-endpoint=https://s3.amazonaws.com \
+  --minio-bucket=my-bucket \
+  --upload-source \
+  --upload-config \
+  --upload-data
+```
+
+Upload only specific artifacts:
+```bash
+# Upload only the source file
+$ java -jar joshsim.jar run simulation.josh MySimulation \
+  --minio-endpoint=https://s3.amazonaws.com \
+  --minio-bucket=my-bucket \
+  --upload-source
+
+# Upload source and config files
+$ java -jar joshsim.jar run simulation.josh MySimulation \
+  --minio-endpoint=https://s3.amazonaws.com \
+  --minio-bucket=my-bucket \
+  --upload-source \
+  --upload-config
 ```
 ### Local UI
 You can run the local UI through [joshsim](https://language.joshsim.org/download.html). Execute:
