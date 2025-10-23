@@ -248,6 +248,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
         Optional<Set<Integer>> outputSteps) {
     try {
       InputOutputLayer layer = getLayer(httpServerExchange, externalData);
+
+      final Object outputLock = new Object();
+
       JoshSimFacadeUtil.runSimulation(
           valueFactory,
           geometryFactory,
@@ -255,13 +258,14 @@ public class JoshSimWorkerHandler implements HttpHandler {
           program,
           simulationName,
           (step) -> {
-            // Send progress message without replicate number
-            String progressMessage = String.format("[progress %d]", step);
-            try {
-              httpServerExchange.getOutputStream().write((progressMessage + "\n").getBytes());
-              httpServerExchange.getOutputStream().flush();
-            } catch (IOException e) {
-              SecurityUtil.logSecureError(apiDataLayer, apiKey, "progress", e, null);
+            String progressMessage = String.format("[progress %d]\n", step);
+            synchronized (outputLock) {
+              try {
+                httpServerExchange.getOutputStream().write(progressMessage.getBytes());
+                httpServerExchange.getOutputStream().flush();
+              } catch (IOException e) {
+                SecurityUtil.logSecureError(apiDataLayer, apiKey, "progress", e, null);
+              }
             }
           },
           useSerial,
@@ -384,29 +388,22 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private InputOutputLayer getLayer(HttpServerExchange httpServerExchange, String externalData) {
     Map<String, VirtualFile> virtualFiles = VirtualFileSystemWireDeserializer.load(externalData);
 
-    // Create a lock object for synchronizing writes when parallel processing is enabled
     final Object outputLock = new Object();
 
     SandboxExportCallback exportCallback = (export) -> {
       try {
-        // Split by newlines in case multiple records were batched together
-        // This ensures each record gets its own [0] prefix for wire format
         String[] lines = export.split("\n");
 
-        // Synchronize writes to prevent concurrent access to the output stream
-        // when patches are processed in parallel
-        synchronized (outputLock) {
-          for (String line : lines) {
-            // Skip empty lines from split
-            if (line.trim().isEmpty()) {
-              continue;
-            }
-
-            // Wrap each export line with replicate 0 prefix to standardize wire format
-            String wireOutput = String.format("[0] %s\n", line);
-            httpServerExchange.getOutputStream().write(wireOutput.getBytes());
+        for (String line : lines) {
+          if (line.trim().isEmpty()) {
+            continue;
           }
-          httpServerExchange.getOutputStream().flush();
+
+          String wireOutput = String.format("[0] %s\n", line);
+          synchronized (outputLock) {
+            httpServerExchange.getOutputStream().write(wireOutput.getBytes());
+            httpServerExchange.getOutputStream().flush();
+          }
         }
       } catch (IOException e) {
         throw new RuntimeException("Error streaming response", e);
