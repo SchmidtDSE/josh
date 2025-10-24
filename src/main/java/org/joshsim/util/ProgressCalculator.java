@@ -93,9 +93,9 @@ public class ProgressCalculator {
     // Per-replicate completion is always 100%
     double currentPercentage = 100.0;
 
-    // Generate completion message
+    // Generate completion message with leading spaces for better formatting
     String message = String.format(
-        "Replicate %d/%d completed",
+        "    Replicate %d/%d completed",
         completedReplicateNumber,
         totalReplicates);
 

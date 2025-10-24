@@ -215,8 +215,8 @@ public class ParallelWorkerHandler {
     HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
+      int replicateNum = task.getReplicateNumber();
       try {
-        int replicateNum = task.getReplicateNumber();
         response.body().forEach(line -> {
           Optional<WireResponse> parsedResponse =
               WireResponseParser.parseEngineResponse(line.trim());
