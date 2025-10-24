@@ -307,8 +307,11 @@ public class RemoteResponseHandler {
       try {
         facade.join();
       } catch (Exception e) {
+        // Extract root cause for better error messaging
+        Throwable cause = e.getCause();
+        String errorDetail = cause != null ? cause.getMessage() : e.getMessage();
         context.getOutputOptions().printError("Failed to close export facade: "
-            + e.getMessage());
+            + errorDetail);
       }
     }
   }
