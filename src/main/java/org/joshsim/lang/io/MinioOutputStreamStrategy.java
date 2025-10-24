@@ -12,26 +12,49 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * OutputStreamStrategy implementation for direct streaming to MinIO.
  *
- * <p>This strategy uses PipedInputStream/PipedOutputStream to work around minio-java's lack
- * of direct OutputStream support (see minio-java issue #956). It implements exponential backoff
- * retry logic to handle transient network failures, and auto-creates buckets if they don't exist.
+ * <p>This strategy uses BlockingQueueInputStream/BlockingQueueOutputStream to work around
+ * minio-java's lack of direct OutputStream support (see minio-java issue #956). This approach
+ * replaces the previous PipedInputStream/PipedOutputStream implementation which suffered from
+ * race conditions when the upload thread started reading before data was written.
  * </p>
  *
- * <p>The upload happens asynchronously in a background thread, but the close() method blocks
- * until completion to ensure data is fully written before the stream is closed.</p>
+ * <p>The BlockingQueue approach provides proper async coordination: the writer thread enqueues
+ * data chunks as they're written, and the upload thread consumes them. This eliminates timing
+ * issues and supports retry logic since the queue can be read multiple times if needed.
+ * </p>
+ *
+ * <p>The upload happens asynchronously in a dedicated thread pool to prevent thread exhaustion
+ * when MinIO's internal async operations compete for ForkJoinPool threads. The close() method
+ * blocks until completion to ensure data is fully written before the stream is closed.</p>
  */
 public class MinioOutputStreamStrategy implements OutputStreamStrategy {
 
   private static final int[] RETRY_DELAYS_MS = {1000, 2000, 4000, 8000, 16000};
-  private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB buffer
+  private static final int CHUNK_SIZE = 256 * 1024; // 256KB chunks
+  private static final int QUEUE_CAPACITY = 8; // 8 chunks = 2MB buffer
+
+  /**
+   * Dedicated thread pool for MinIO uploads.
+   *
+   * <p>Using a separate ExecutorService prevents thread starvation issues when MinIO's
+   * internal async operations (which also use ForkJoinPool) compete with upload threads.
+   * A cached thread pool grows as needed to handle concurrent uploads without blocking.</p>
+   */
+  private static final ExecutorService UPLOAD_EXECUTOR =
+      Executors.newCachedThreadPool(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("minio-upload-" + thread.threadId());
+        thread.setDaemon(true); // Allow JVM to exit even if uploads are pending
+        return thread;
+      });
 
   private final MinioClient minioClient;
   private final String bucketName;
@@ -56,18 +79,20 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
     // Ensure bucket exists before attempting upload
     ensureBucketExists();
 
-    // Create piped streams for async upload
-    PipedInputStream pipedInput = new PipedInputStream(PIPE_BUFFER_SIZE);
-    PipedOutputStream pipedOutput = new PipedOutputStream(pipedInput);
+    // Create BlockingQueue streams for async upload
+    // The input stream uses an ArrayBlockingQueue with 8-chunk capacity (2MB total)
+    BlockingQueueInputStream inputStream = new BlockingQueueInputStream(CHUNK_SIZE, QUEUE_CAPACITY);
+    BlockingQueueOutputStream outputStream = new BlockingQueueOutputStream(inputStream, CHUNK_SIZE);
 
-    // Start async upload task
+    // Start async upload task on dedicated thread pool
+    // This prevents thread starvation when MinIO's internal async operations
+    // compete for ForkJoinPool.commonPool threads
     CompletableFuture<Void> uploadFuture = CompletableFuture.runAsync(() -> {
-      uploadWithRetry(pipedInput);
-    });
+      uploadWithRetry(inputStream);
+    }, UPLOAD_EXECUTOR);
 
-    // Return a wrapper that blocks on close()
-    // Pass input stream so it can be closed AFTER output stream (prevents "Pipe closed" errors)
-    return new MinioOutputStream(pipedOutput, uploadFuture, pipedInput);
+    // Return a wrapper that blocks on close() to ensure upload completes
+    return new MinioOutputStream(outputStream, uploadFuture);
   }
 
   /**
@@ -96,23 +121,21 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
   }
 
   /**
-   * Uploads data from the piped input stream with exponential backoff retry logic.
+   * Uploads data from the BlockingQueue input stream with exponential backoff retry logic.
    *
-   * <p>IMPORTANT: Retry logic has limitations with piped streams. Once the stream has been
-   * partially read, it cannot be rewound for retry attempts. This means retries will only
-   * work for errors that occur before any data is read (e.g., connection failures). Errors
-   * during data transfer will fail immediately without successful retry.</p>
+   * <p>The BlockingQueue approach supports proper retry logic since the stream can be
+   * consumed multiple times if needed. The writer thread enqueues data chunks, and the
+   * upload thread reads them asynchronously without timing dependencies.</p>
    *
-   * <p>NOTE: The input stream is NOT closed in this method. It must be closed by the caller
-   * (MinioOutputStream.close()) AFTER the output stream is closed to prevent "Pipe closed"
-   * errors. Java pipes require closing the output side first, then the input side.</p>
+   * <p>NOTE: The input stream is NOT closed in this method. The BlockingQueueOutputStream
+   * manages stream lifecycle by signaling EOF when closed, which allows the upload to
+   * complete naturally.</p>
    *
-   * @param inputStream The input stream containing data to upload
+   * @param inputStream The BlockingQueue input stream containing data to upload
    * @throws RuntimeException if all retry attempts fail
    */
-  private void uploadWithRetry(PipedInputStream inputStream) {
+  private void uploadWithRetry(BlockingQueueInputStream inputStream) {
     Exception lastException = null;
-
     for (int attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
       try {
         // Attempt upload
@@ -151,44 +174,38 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
   }
 
   /**
-   * Wrapper OutputStream that delegates to PipedOutputStream and blocks on close().
+   * Wrapper OutputStream that delegates to BlockingQueueOutputStream and blocks on close().
    *
    * <p>This ensures the async upload completes before the stream is considered closed,
    * preventing data loss or incomplete uploads.</p>
    *
-   * <p><b>Pipe lifecycle and close ordering:</b></p>
+   * <p><b>BlockingQueue lifecycle:</b></p>
    * <ol>
    *   <li>Writer calls close() → triggers flush() and delegate.close()</li>
-   *   <li>delegate.close() signals EOF to the PipedInputStream reader</li>
-   *   <li>Reader thread detects EOF and finishes upload</li>
-   *   <li>Writer thread waits via uploadFuture.get() for reader to complete</li>
-   *   <li>Writer closes input stream AFTER output stream (prevents "Pipe closed" errors)</li>
+   *   <li>delegate.close() flushes remaining data and signals EOF to the input stream</li>
+   *   <li>Upload thread detects EOF and finishes upload</li>
+   *   <li>Writer thread waits via uploadFuture.get() for upload to complete</li>
    *   <li>Upload completes successfully or propagates error</li>
    * </ol>
    *
-   * <p><b>IMPORTANT:</b> Java pipes require closing the output stream (PipedOutputStream)
-   * before closing the input stream (PipedInputStream). Closing them in the wrong order
-   * causes "Pipe closed" errors. This class ensures proper ordering by holding a reference
-   * to the input stream and closing it last.</p>
+   * <p><b>Note:</b> Unlike PipedOutputStream, BlockingQueueOutputStream doesn't require
+   * special close ordering. The output stream manages EOF signaling automatically.</p>
    */
   private static class MinioOutputStream extends OutputStream {
-    private final PipedOutputStream delegate;
+    private final BlockingQueueOutputStream delegate;
     private final CompletableFuture<Void> uploadFuture;
-    private final PipedInputStream inputStream;
     private boolean closed = false;
 
     /**
      * Constructs a MinioOutputStream.
      *
-     * @param delegate The underlying PipedOutputStream to write to
+     * @param delegate The underlying BlockingQueueOutputStream to write to
      * @param uploadFuture The future representing the async upload task
-     * @param inputStream The PipedInputStream connected to delegate (closed last to prevent errors)
      */
-    public MinioOutputStream(PipedOutputStream delegate, CompletableFuture<Void> uploadFuture,
-                             PipedInputStream inputStream) {
+    public MinioOutputStream(BlockingQueueOutputStream delegate,
+                             CompletableFuture<Void> uploadFuture) {
       this.delegate = delegate;
       this.uploadFuture = uploadFuture;
-      this.inputStream = inputStream;
     }
 
     @Override
@@ -218,17 +235,13 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
       }
 
       try {
-        // Flush any buffered data to ensure all writes are in the pipe
+        // Flush and close the output stream
+        // BlockingQueueOutputStream handles EOF signaling automatically
         delegate.flush();
-
-        // Close the output stream to signal EOF to the reader
-        // This must happen BEFORE waiting so reader can detect end of stream
         delegate.close();
 
         // Wait for upload to complete
-        // The upload thread will see EOF and finish reading
         uploadFuture.get();
-
         closed = true;
 
       } catch (InterruptedException e) {
@@ -238,18 +251,6 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
       } catch (ExecutionException e) {
         Throwable cause = e.getCause();
         throw new IOException("Upload failed: " + cause.getMessage(), cause);
-
-      } finally {
-        // ALWAYS close input stream in finally block to ensure cleanup on success AND failure
-        // This must be in finally to handle cases where uploadFuture.get() throws an exception
-        // Java pipes must close output side first, then input side
-        // Since delegate.close() happens before this finally block, order is correct
-        try {
-          inputStream.close();
-        } catch (IOException e) {
-          // Input stream may already be closed, which is acceptable
-          // Suppress this exception to avoid masking the real error from uploadFuture.get()
-        }
       }
     }
   }

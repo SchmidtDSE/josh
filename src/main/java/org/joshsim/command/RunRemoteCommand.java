@@ -338,11 +338,7 @@ public class RunRemoteCommand implements Callable<Integer> {
     output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
         + "with " + replicates + " replicate(s) each");
     output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
-
-    // Initialize progress calculator for total simulations
-    ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(), jobs.size() * replicates
-    );
+    output.printInfo("");
 
     // Read Josh simulation code
     String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
@@ -353,10 +349,19 @@ public class RunRemoteCommand implements Callable<Integer> {
     // Execute remote simulation for each job combination
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
-      output.printInfo("Executing remote job combination " + (jobIndex + 1) + "/" + jobs.size());
+
+      if (jobs.size() > 1) {
+        output.printInfo("Simulation " + (jobIndex + 1) + "/" + jobs.size());
+      }
 
       // Serialize external data for this job combination
       String externalDataSerialized = serializeExternalDataForJob(currentJob);
+
+      // Create a new progress calculator for THIS job combination
+      // This ensures replicate numbers are 1/N for each simulation, not cumulative
+      ProgressCalculator progressCalculator = new ProgressCalculator(
+          metadata.getTotalSteps(), replicates
+      );
 
       // Create execution context for this job combination
       RunRemoteContext context = new RunRemoteContextBuilder()
@@ -377,11 +382,6 @@ public class RunRemoteCommand implements Callable<Integer> {
 
       // Execute strategy for this job combination
       strategy.execute(context);
-
-      // Report job combination completion
-      if (jobIndex < jobs.size() - 1) {
-        output.printInfo("Completed remote job combination " + (jobIndex + 1) + "/" + jobs.size());
-      }
     }
 
     return jobs;
