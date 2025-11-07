@@ -80,7 +80,7 @@ public class ProgressCalculatorTest {
     ProgressUpdate endUpdate1 = calc.updateReplicateCompleted(1);
     assertTrue(endUpdate1.shouldReport());
     assertEquals(100.0, endUpdate1.getPercentage(), 0.1);
-    assertEquals("Replicate 1/5 completed", endUpdate1.getMessage());
+    assertEquals("    Replicate 1/5 completed", endUpdate1.getMessage());
 
     // Test progress in second replicate (should now be replicate 2)
     // First reset for replicate 2
@@ -127,7 +127,7 @@ public class ProgressCalculatorTest {
     ProgressUpdate endUpdate = calc.updateReplicateCompleted(1);
     assertTrue(endUpdate.shouldReport());
     assertEquals(100.0, endUpdate.getPercentage(), 0.1);
-    assertEquals("Replicate 1/1 completed", endUpdate.getMessage());
+    assertEquals("    Replicate 1/1 completed", endUpdate.getMessage());
   }
 
   /**
@@ -255,7 +255,7 @@ public class ProgressCalculatorTest {
 
     // Completion formatting
     ProgressUpdate end2 = calc2.updateReplicateCompleted(1);
-    assertEquals("Replicate 1/3 completed", end2.getMessage());
+    assertEquals("    Replicate 1/3 completed", end2.getMessage());
   }
 
   /**

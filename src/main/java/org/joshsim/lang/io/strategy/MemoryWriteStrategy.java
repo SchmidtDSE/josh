@@ -36,7 +36,9 @@ public class MemoryWriteStrategy implements StringMapWriteStrategy {
   public void write(Map<String, String> record, OutputStream output) throws IOException {
     NamedMap namedMap = new NamedMap(name, record);
     String completeStr = WireConverter.serializeToString(namedMap);
-    output.write(completeStr.getBytes(StandardCharsets.UTF_8));
+    // Write the wire format string with a newline to ensure proper flushing
+    // in RedirectOutputStream which only flushes on newline characters
+    output.write((completeStr + "\n").getBytes(StandardCharsets.UTF_8));
     output.flush();
   }
 

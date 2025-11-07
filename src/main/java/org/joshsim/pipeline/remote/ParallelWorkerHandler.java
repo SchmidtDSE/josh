@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,7 @@ public class ParallelWorkerHandler {
   private final String workerUrl;
   private final int maxParallelRequests;
   private final AtomicInteger cumulativeStepCount;
+  private final HttpClient httpClient;
 
   /**
    * Creates a new ParallelWorkerHandler.
@@ -56,6 +58,13 @@ public class ParallelWorkerHandler {
     this.workerUrl = workerUrl;
     this.maxParallelRequests = maxParallelRequests;
     this.cumulativeStepCount = cumulativeStepCount;
+
+    // Create shared HttpClient with proper configuration for connection pooling
+    // This prevents resource exhaustion when running many concurrent workers
+    this.httpClient = HttpClient.newBuilder()
+        .version(HttpClient.Version.HTTP_2)
+        .connectTimeout(Duration.ofSeconds(30))
+        .build();
   }
 
   /**
@@ -206,8 +215,8 @@ public class ParallelWorkerHandler {
     HttpResponse<Stream<String>> response = sendWorkerRequest(task);
 
     if (response.statusCode() == 200) {
+      int replicateNum = task.getReplicateNumber();
       try {
-        int replicateNum = task.getReplicateNumber();
         response.body().forEach(line -> {
           Optional<WireResponse> parsedResponse =
               WireResponseParser.parseEngineResponse(line.trim());
@@ -221,6 +230,20 @@ public class ParallelWorkerHandler {
           }
         });
       } catch (Exception e) {
+        // Provide helpful error for common MinIO configuration issue
+        if (e.getMessage() != null && e.getMessage().contains("MinIO protocol")
+            && e.getMessage().contains("requires MinIO configuration")) {
+          System.err.println("\n=== CONFIGURATION ERROR ===");
+          System.err.println("MinIO storage credentials are required but not provided.");
+          System.err.println("\nYour simulation is configured to write to MinIO storage,");
+          System.err.println("but the local leader needs credentials to write the results.");
+          System.err.println("\nPlease add these arguments to your command:");
+          System.err.println("  --minio-endpoint http://localhost:9000");
+          System.err.println("  --minio-access-key YOUR_ACCESS_KEY");
+          System.err.println("  --minio-secret-key YOUR_SECRET_KEY");
+          System.err.println("\nSee https://joshsim.org/docs/minio for more information.");
+          System.err.println("===========================\n");
+        }
         throw new RuntimeException("Error processing wire response stream", e);
       }
     } else {
@@ -245,15 +268,16 @@ public class ParallelWorkerHandler {
     );
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
 
-    HttpClient client = HttpClient.newBuilder().build();
+    // Use shared httpClient instance for connection pooling and resource management
     HttpRequest request = HttpRequest.newBuilder()
         .uri(URI.create(workerUrl))
         .header("Content-Type", "application/x-www-form-urlencoded")
+        .timeout(Duration.ofMinutes(5))  // Add request timeout for long-running simulations
         .POST(body)
         .build();
 
     try {
-      return client.send(request, HttpResponse.BodyHandlers.ofLines());
+      return httpClient.send(request, HttpResponse.BodyHandlers.ofLines());
     } catch (IOException | InterruptedException e) {
       System.err.println("Worker connection failed for replicate " + task.getReplicateNumber()
           + " to " + workerUrl + ": " + e.getMessage());

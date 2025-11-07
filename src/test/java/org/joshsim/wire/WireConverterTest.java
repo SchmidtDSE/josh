@@ -235,4 +235,32 @@ class WireConverterTest {
     assertEquals("value", deserialized.getTarget().get("test"));
   }
 
+  @Test
+  void testRoundTripWithUriNames() {
+    // Test file URI
+    Map<String, String> target1 = Map.of("key1", "value1", "key2", "value2");
+    NamedMap fileUri = new NamedMap("file:///tmp/output.csv", target1);
+    String serialized1 = WireConverter.serializeToString(fileUri);
+    NamedMap deserialized1 = WireConverter.deserializeFromString(serialized1);
+    assertEquals("file:///tmp/output.csv", deserialized1.getName());
+    assertEquals("value1", deserialized1.getTarget().get("key1"));
+    assertEquals("value2", deserialized1.getTarget().get("key2"));
+
+    // Test minio URI
+    Map<String, String> target2 = Map.of("data", "test");
+    NamedMap minioUri = new NamedMap("minio://bucket/path/file.csv", target2);
+    String serialized2 = WireConverter.serializeToString(minioUri);
+    NamedMap deserialized2 = WireConverter.deserializeFromString(serialized2);
+    assertEquals("minio://bucket/path/file.csv", deserialized2.getName());
+    assertEquals("test", deserialized2.getTarget().get("data"));
+
+    // Test memory URI
+    Map<String, String> target3 = Map.of("x", "y");
+    NamedMap memoryUri = new NamedMap("memory://editor/result.csv", target3);
+    String serialized3 = WireConverter.serializeToString(memoryUri);
+    NamedMap deserialized3 = WireConverter.deserializeFromString(serialized3);
+    assertEquals("memory://editor/result.csv", deserialized3.getName());
+    assertEquals("y", deserialized3.getTarget().get("x"));
+  }
+
 }

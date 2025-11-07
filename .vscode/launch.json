@@ -48,6 +48,7 @@
         "--replicates=2",
         "jotr_small.josh",
         "JoshuaTreeReference",
+        "--data=editor.jshc=editor.jshc,editor_optimistic.jshc;Precipitation.jshd=Precipitation.jshd;MaxTemperature.jshd=MaxTemperature.jshd;MeanTemperature.jshd=MeanTemperature.jshd;Presence.jshd=Presence.jshd",
         "--minio-bucket=josh-storage",
         "--minio-path=jotr/dev_test",
         "--upload-source",

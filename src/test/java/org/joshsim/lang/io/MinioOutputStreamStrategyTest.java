@@ -174,6 +174,23 @@ class MinioOutputStreamStrategyTest {
   void testMultipleWrites_beforeClose() throws Exception {
     // Arrange
     when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
+
+    // Mock putObject to actually consume the stream (simulating real behavior)
+    when(minioClient.putObject(any(PutObjectArgs.class))).thenAnswer(invocation -> {
+      PutObjectArgs args = invocation.getArgument(0);
+      // In real MinIO, putObject blocks reading the entire stream until EOF
+      // Simulate this by reading all available data from the stream
+      try {
+        byte[] buffer = new byte[8192];
+        while (args.stream().read(buffer) >= 0) {
+          // Read until EOF to simulate real putObject behavior
+        }
+      } catch (IOException e) {
+        // Expected when stream is closed
+      }
+      return null;
+    });
+
     MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
         minioClient, TEST_BUCKET, TEST_OBJECT
     );

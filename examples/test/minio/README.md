@@ -23,3 +23,17 @@ Example manual test:
   --export-queue-size=10000 \
   --output-steps=5"
 ```
+
+Example with artifact upload:
+```bash
+./gradlew run --args "run examples/test/minio/csv_export.josh MinioCSVTest \
+  --replicates=2 \
+  --minio-endpoint=http://localhost:9000 \
+  --minio-access-key=minioadmin \
+  --minio-secret-key=minioadmin \
+  --export-queue-size=10000 \
+  --output-steps=5 \
+  --upload-source \
+  --upload-config \
+  --upload-data"
+```
