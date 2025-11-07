@@ -261,6 +261,7 @@ public class RunCommand implements Callable<Integer> {
         .withInputStrategy(inputStrategy)
         .withTemplateRenderer(initTemplateRenderer)
         .withMinioOptions(minioOptions)
+        .withCustomTags(firstJob.getCustomParameters())
         .build();
 
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
@@ -363,6 +364,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withCustomTags(currentJob.getCustomParameters())
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -370,6 +372,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withCustomTags(currentJob.getCustomParameters())
               .build();
         }
 
