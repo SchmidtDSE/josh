@@ -67,7 +67,7 @@ public class AgentTest {
     attributes.put(ATTR_NAME, mockValue);
 
     // Create agent instance
-    agent = new Agent(mockParent, createInitInfo(AGENT_NAME, eventHandlers, attributes));
+    agent = new Agent(mockParent, createInitInfo(AGENT_NAME, eventHandlers, attributes), 0L);
   }
 
   /**
@@ -290,7 +290,7 @@ public class AgentTest {
    */
   @Test
   public void testNullMapsInConstructor() {
-    Agent nullMapAgent = new Agent(mockParent, createInitInfo(AGENT_NAME, null, null));
+    Agent nullMapAgent = new Agent(mockParent, createInitInfo(AGENT_NAME, null, null), 0L);
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
     assertFalse(groups.iterator().hasNext(),

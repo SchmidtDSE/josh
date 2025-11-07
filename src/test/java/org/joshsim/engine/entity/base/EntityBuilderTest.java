@@ -54,7 +54,7 @@ public class EntityBuilderTest {
         .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
         .addAttribute("agentAttr", mockValue);
 
-    Agent agent = builder.buildAgent(mockParent);
+    Agent agent = builder.buildAgent(mockParent, 0L);
 
     assertNotNull(agent);
     assertEquals(agentName, agent.getName());
@@ -71,7 +71,7 @@ public class EntityBuilderTest {
     String disturbanceName = "TestDisturbance";
     builder.setName(disturbanceName);
 
-    Disturbance disturbance = builder.buildDisturbance(mockParent);
+    Disturbance disturbance = builder.buildDisturbance(mockParent, 0L);
 
     assertNotNull(disturbance);
     assertEquals(disturbanceName, disturbance.getName());
@@ -122,7 +122,7 @@ public class EntityBuilderTest {
         .addEventHandlerGroup(mockEventKey, mockHandlerGroup)
         .addAttribute("attr", mockValue);
 
-    Agent agent = builder.buildAgent(mockParent);
+    Agent agent = builder.buildAgent(mockParent, 0L);
 
     // Modify the builder's maps after building
     EventKey newKey = EventKey.of("newState", "newAttribute", "newEvent");

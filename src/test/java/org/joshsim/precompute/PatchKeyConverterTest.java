@@ -142,6 +142,11 @@ class PatchKeyConverterTest {
       public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
         return Collections.emptyMap();
       }
+
+      @Override
+      public long getSequenceId() {
+        return 0L;
+      }
     });
 
     PatchKeyConverter.ProjectedValue result = converter.convert(laKey, BigDecimal.ONE);

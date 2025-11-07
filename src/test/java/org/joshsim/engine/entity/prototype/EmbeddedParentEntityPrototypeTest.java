@@ -29,12 +29,12 @@ class EmbeddedParentEntityPrototypeTest {
     MutableEntity expectedEntity = mock(MutableEntity.class);
 
     when(innerPrototype.requiresParent()).thenReturn(true);
-    when(innerPrototype.buildSpatial(parentEntity)).thenReturn(expectedEntity);
+    when(innerPrototype.buildSpatial(parentEntity, 0L)).thenReturn(expectedEntity);
 
     Entity result = prototype.build();
 
     assertEquals(expectedEntity, result);
-    verify(innerPrototype).buildSpatial(parentEntity);
+    verify(innerPrototype).buildSpatial(parentEntity, 0L);
     verify(innerPrototype, never()).build();
     verify(innerPrototype, never()).buildSpatial(any(EngineGeometry.class));
   }

@@ -19,13 +19,14 @@ import org.joshsim.engine.entity.base.MemberSpatialEntity;
 public class Disturbance extends MemberSpatialEntity {
 
   /**
-   * Constructs a disturbance entity with the given geometry.
+   * Constructs a disturbance entity with the given parent and sequence.
    *
    * @param parent The parent containing this entity.
    * @param initInfo The initialization information containing all shared entity configuration.
+   * @param sequenceId The sequence ID for this disturbance at this location.
    */
-  public Disturbance(Entity parent, EntityInitializationInfo initInfo) {
-    super(parent, initInfo);
+  public Disturbance(Entity parent, EntityInitializationInfo initInfo, long sequenceId) {
+    super(parent, initInfo, sequenceId);
   }
 
   @Override

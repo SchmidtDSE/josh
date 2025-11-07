@@ -897,9 +897,12 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
     when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
-    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockPrototype.build()).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
-    when(mockPrototype.requiresParent()).thenReturn(true);
+    when(mockCreatedEntity.getAttributeNames()).thenReturn(Set.of());
+    when(mockCreatedEntity.getKey()).thenReturn(Optional.empty());
+    when(mockPrototype.requiresParent()).thenReturn(false);
+    when(mockPrototype.requiresGeometry()).thenReturn(false);
 
     // When
     machine.push(factory.build(1, Units.COUNT));
@@ -918,9 +921,12 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockValue.getAsEntity()).thenReturn(mockEntity);
     when(mockValue.getUnits()).thenReturn(Units.of("Test"));
     when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
-    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockPrototype.build()).thenReturn(mockCreatedEntity);
     when(mockCreatedEntity.getName()).thenReturn("Test");
-    when(mockPrototype.requiresParent()).thenReturn(true);
+    when(mockCreatedEntity.getAttributeNames()).thenReturn(Set.of());
+    when(mockCreatedEntity.getKey()).thenReturn(Optional.empty());
+    when(mockPrototype.requiresParent()).thenReturn(false);
+    when(mockPrototype.requiresGeometry()).thenReturn(false);
 
     // When
     machine.push(factory.build(3, Units.COUNT));
