@@ -69,6 +69,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
     InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(context.getReplicateNumber())
         .withMinioOptions(context.getMinioOptions())
+        .withCustomTags(context.getJob().getCustomParameters())
         .build();
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
 
