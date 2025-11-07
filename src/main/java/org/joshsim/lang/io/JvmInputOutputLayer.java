@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioOptions;
@@ -30,11 +31,13 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    * @param inputStrategy The strategy for input file access.
    * @param templateRenderer The renderer for processing template strings (null for legacy mode).
    * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @param customTags Custom tags for debug path template resolution (nullable).
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy,
                              TemplateStringRenderer templateRenderer,
-                             MinioOptions minioOptions) {
+                             MinioOptions minioOptions,
+                             Map<String, String> customTags) {
     if (extents != null && width != null) {
       this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width,
                                                        templateRenderer, minioOptions);
@@ -42,9 +45,35 @@ public class JvmInputOutputLayer implements InputOutputLayer {
       this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer,
                                                        minioOptions);
     }
-    this.debugFactory = new org.joshsim.lang.io.debug.JvmDebugFacadeFactory(replicate,
-                                                                             minioOptions);
+
+    // Create PathTemplateResolver for debug facade with custom tags
+    PathTemplateResolver debugTemplateResolver = new PathTemplateResolver(customTags);
+
+    this.debugFactory = new org.joshsim.lang.io.debug.JvmDebugFacadeFactory(
+        replicate,
+        minioOptions,
+        debugTemplateResolver
+    );
     this.inputStrategy = inputStrategy;
+  }
+
+  /**
+   * Create a new input / output layer without custom tags (legacy constructor).
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space (null for grid-only).
+   * @param width The width and height of each patch in meters (null for grid-only).
+   * @param inputStrategy The strategy for input file access.
+   * @param templateRenderer The renderer for processing template strings (null for legacy mode).
+   * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @deprecated Use constructor with customTags parameter instead
+   */
+  @Deprecated
+  public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                             InputGetterStrategy inputStrategy,
+                             TemplateStringRenderer templateRenderer,
+                             MinioOptions minioOptions) {
+    this(replicate, extents, width, inputStrategy, templateRenderer, minioOptions, null);
   }
 
   /**
@@ -60,7 +89,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   @Deprecated
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy) {
-    this(replicate, extents, width, inputStrategy, null, null);
+    this(replicate, extents, width, inputStrategy, null, null, null);
   }
 
   @Override
