@@ -41,8 +41,18 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
 
   @Override
   public MutableEntity build() {
+    return build(0L); // Default sequence for backward compatibility
+  }
+
+  /**
+   * Build entity with explicit sequence ID.
+   *
+   * @param sequenceId The sequence ID for this entity.
+   * @return A new entity instance.
+   */
+  public MutableEntity build(long sequenceId) {
     if (inner.requiresParent()) {
-      return inner.buildSpatial(parent);
+      return inner.buildSpatial(parent, sequenceId);
     } else if (inner.requiresGeometry()) {
       return inner.buildSpatial(parent.getGeometry().orElseThrow());
     } else {
@@ -53,6 +63,11 @@ public class EmbeddedParentEntityPrototype implements EntityPrototype {
   @Override
   public MutableEntity buildSpatial(Entity parent) {
     return inner.buildSpatial(parent);
+  }
+
+  @Override
+  public MutableEntity buildSpatial(Entity parent, long sequenceId) {
+    return inner.buildSpatial(parent, sequenceId);
   }
 
   @Override

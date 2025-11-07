@@ -61,9 +61,14 @@ public class ParentlessEntityPrototype implements EntityPrototype {
 
   @Override
   public MutableEntity buildSpatial(Entity parent) {
+    return buildSpatial(parent, 0L); // Backward compatible with sequence 0
+  }
+
+  @Override
+  public MutableEntity buildSpatial(Entity parent, long sequenceId) {
     return switch (entityType) {
-      case AGENT -> entityBuilder.buildAgent(parent);
-      case DISTURBANCE -> entityBuilder.buildDisturbance(parent);
+      case AGENT -> entityBuilder.buildAgent(parent, sequenceId);
+      case DISTURBANCE -> entityBuilder.buildDisturbance(parent, sequenceId);
       default -> throw new RuntimeException("Cannot instantiate with a parent: " + entityType);
     };
   }

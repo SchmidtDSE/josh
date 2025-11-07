@@ -33,4 +33,9 @@ public abstract class RootSpatialEntity extends DirectLockMutableEntity {
   public Optional<EngineGeometry> getGeometry() {
     return Optional.of(geometry);
   }
+
+  @Override
+  public long getSequenceId() {
+    return 0L; // Patches don't have sequences, only their child agents do
+  }
 }

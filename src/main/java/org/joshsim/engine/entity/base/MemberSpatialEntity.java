@@ -20,16 +20,19 @@ import org.joshsim.engine.geometry.EngineGeometry;
 public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
 
   private final Entity parent;
+  private final long sequenceId;
 
   /**
-   * Create a new spatial entity with the given location.
+   * Create a new spatial entity with the given location and sequence.
    *
    * @param parent The parent entity like Patch which houses this entity.
    * @param initInfo The initialization information containing all shared entity configuration.
+   * @param sequenceId The sequence ID for this entity at this location.
    */
-  public MemberSpatialEntity(Entity parent, EntityInitializationInfo initInfo) {
+  public MemberSpatialEntity(Entity parent, EntityInitializationInfo initInfo, long sequenceId) {
     super(initInfo);
     this.parent = parent;
+    this.sequenceId = sequenceId;
   }
 
   /**
@@ -50,5 +53,15 @@ public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
    */
   public Entity getParent() {
     return parent;
+  }
+
+  /**
+   * Get the sequence ID for this entity.
+   *
+   * @return The sequence ID distinguishing this entity from others at the same location.
+   */
+  @Override
+  public long getSequenceId() {
+    return sequenceId;
   }
 }
