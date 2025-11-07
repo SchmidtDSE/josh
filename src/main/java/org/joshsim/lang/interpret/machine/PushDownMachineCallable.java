@@ -34,7 +34,11 @@ public class PushDownMachineCallable implements CompiledCallable {
 
   @Override
   public EngineValue evaluate(Scope scope) {
-    EventHandlerMachine machine = new SingleThreadEventHandlerMachine(bridgeGetter.get(), scope);
+    EventHandlerMachine machine = new SingleThreadEventHandlerMachine(
+        bridgeGetter.get(),
+        scope,
+        bridgeGetter.getDebugFacade()
+    );
     handlerAction.apply(machine);
     return machine.getResult();
   }
