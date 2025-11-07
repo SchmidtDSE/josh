@@ -1,0 +1,38 @@
+start simulation TestParent
+  grid.size = 1000 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 1 degrees latitude, 1 degrees longitude
+  grid.patch = "TestPatch"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  exportFiles.patch = "file:///tmp/test_parent_synthetic_patches.csv"
+end simulation
+
+start patch TestPatch
+  # Create parent trees
+  Tree.init = create 2 count of ParentTree
+
+  # Simple export to verify patch executes
+  export.testValue.step = 1 count
+end patch
+
+start organism ParentTree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  # Create child seeds at step 1
+  Seed.step:if(current.age == 1 years) = create 3 count of ChildSeed
+end organism
+
+start organism ChildSeed
+  # Access parent information - verify parent synthetic attribute works
+  parentAge.init = parent.age
+
+  # No export needed - test just verifies parent.age is accessible
+end organism
+
+start unit year
+  alias years
+end unit

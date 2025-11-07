@@ -108,6 +108,22 @@ public class JoshSimFacadeUtil {
       bridgeGetter.setBridge(bridge);
     }
 
+    // Create debug facade
+    org.joshsim.lang.io.debug.CombinedDebugFacade debugFacade =
+        new org.joshsim.lang.io.debug.CombinedDebugFacade(
+            simEntity,
+            inputOutputLayer.getDebugFacadeFactory()
+        );
+
+    // Store debug facade only if configured (for zero overhead when not used)
+    Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacadeOpt =
+        debugFacade.isConfigured() ? Optional.of(debugFacade) : Optional.empty();
+
+    // Inject debug facade into bridge getter so machines can access it
+    if (bridgeGetter != null) {
+      bridgeGetter.setDebugFacade(debugFacadeOpt);
+    }
+
     CombinedExportFacade exportFacade = new CombinedExportFacade(
         simEntity,
         inputOutputLayer.getExportFacadeFactory()
@@ -120,6 +136,7 @@ public class JoshSimFacadeUtil {
     SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
     exportFacade.start();
+    debugFacade.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
@@ -145,6 +162,7 @@ public class JoshSimFacadeUtil {
     }
 
     exportFacade.join();
+    debugFacade.join();
   }
 
   /**

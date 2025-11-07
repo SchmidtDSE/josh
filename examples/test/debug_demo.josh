@@ -1,0 +1,98 @@
+// Comprehensive Debug Demo - Shows GeoKey sequences, parent tracking, and debug output
+//
+// This demo creates trees that produce seeds, demonstrating:
+// 1. Unique GeoKeys with sequence IDs
+// 2. Parent provenance tracking via parent.geoKey
+// 3. Debug output showing entity lifecycle
+//
+// To run:
+//   josh run examples/test/debug_demo.josh DebugDemo
+//
+// Debug output will be written to: /tmp/josh_debug_demo.txt
+// (Configure different targets by editing debugFiles.organism in the simulation block)
+
+start simulation DebugDemo
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.5 degrees longitude
+  grid.high = 34.5 degrees latitude, -116.0 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  exportFiles.agent = "memory://editor/organisms"
+
+  // Configure debug output to file
+  debugFiles.organism = "file:///tmp/josh_debug_demo.txt"
+end simulation
+
+start patch Default
+  Tree.init = create 3 count of Tree
+
+  vegetation.init = 50 %
+end patch
+
+start organism Tree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  height.init = 1.0 meters
+  height.step = prior.height + 0.5 meters
+
+  seedCount.init = 0 count
+  seedCount.step = prior.seedCount + createCount
+
+  parentGeoKey.init = ""
+  generation.init = 1 count
+
+  // Debug at creation
+  debugInit.init = debug("INIT", "Created tree", geoKey, "at", here.x, here.y)
+
+  // Produce seeds after first year
+  canReproduce.step = age >= 1 years
+  createCount.step = if(canReproduce, 1 count, 0 count)
+
+  // Debug before reproduction
+  debugRepro.step = if(canReproduce, debug("REPRODUCE", "Tree", geoKey, "gen", generation, "age", age, "creating seed"), 0 count)
+
+  Seed.step = if(canReproduce, create 1 count of Seed at nearby 100 meters, create 0 count of Seed)
+
+  export.geoKey.step = geoKey
+  export.age.step = age
+  export.height.step = height
+  export.seedCount.step = seedCount
+  export.parentGeoKey.step = parentGeoKey
+  export.generation.step = generation
+end organism
+
+start organism Seed
+  parentTreeGeoKey.init = parent.geoKey
+  parentGeneration.init = parent.generation
+  germinationTimer.init = 0 count
+  germinationTimer.step = prior.germinationTimer + 1 count
+
+  // Debug seed creation with provenance
+  debugCreate.init = debug("SEED_CREATE", "Seed", geoKey, "from parent", parentTreeGeoKey, "gen", parentGeneration)
+
+  // Germinate after 2 ticks
+  shouldGerminate.step = germinationTimer >= 2 count
+
+  // Debug germination
+  debugGerm.step = if(shouldGerminate, debug("GERMINATE", "Seed", geoKey, "from", parentTreeGeoKey, "->Tree"), 0 count)
+
+  // Create new tree with provenance
+  Tree.step = if(shouldGerminate, create 1 count of Tree, create 0 count of Tree)
+  Tree.step.parentGeoKey = parentTreeGeoKey
+  Tree.step.generation = parentGeneration + 1 count
+
+  // Die after germinating
+  shouldDie.step = shouldGerminate
+
+  export.geoKey.step = geoKey
+  export.parentTreeGeoKey.step = parentTreeGeoKey
+  export.parentGeneration.step = parentGeneration
+  export.germinationTimer.step = germinationTimer
+end organism
+
+start unit year
+  alias years
+end unit

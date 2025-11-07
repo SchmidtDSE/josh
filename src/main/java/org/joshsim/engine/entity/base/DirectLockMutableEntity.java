@@ -26,6 +26,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private final Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private final CompatibleLock lock;
 
+  // Cache GeoKey to avoid repeated allocation
+  private GeoKey cachedKey = null;
+
   private EngineValue[] attributes;
   private EngineValue[] priorAttributes;
   private final Map<String, Integer> attributeNameToIndex;
@@ -215,7 +218,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
         getGeometry(),
         attributeNameToIndex,
         indexToAttributeName,
-        attributeNames
+        attributeNames,
+        getSequenceId()
     );
   }
 
@@ -226,11 +230,11 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
 
   @Override
   public Optional<GeoKey> getKey() {
-    if (getGeometry().isEmpty()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
+    // Lazy initialization: compute once, cache for reuse
+    if (cachedKey == null && getGeometry().isPresent()) {
+      cachedKey = new GeoKey(this);
     }
+    return Optional.ofNullable(cachedKey);
   }
 
   @Override
@@ -337,6 +341,11 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    */
   public String[] getIndexToAttributeName() {
     return indexToAttributeName;
+  }
+
+  @Override
+  public long getSequenceId() {
+    return 0L; // Default for non-spatial entities (Simulation, etc.)
   }
 
   /**

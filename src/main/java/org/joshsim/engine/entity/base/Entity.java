@@ -128,6 +128,17 @@ public interface Entity {
   Optional<GeoKey> getKey();
 
   /**
+   * Get the sequence ID for this entity at its location.
+   *
+   * <p>The sequence ID is a deterministic counter that distinguishes multiple entities
+   * at the same location. It is used for debugging and display purposes only, not for
+   * simulation identity (GeoKey equality is location-based only).</p>
+   *
+   * @return The sequence ID for this entity, or 0 if the entity doesn't have a sequence.
+   */
+  long getSequenceId();
+
+  /**
    * Get the pre-computed handler cache for this entity type.
    *
    * <p>This cache maps cache key strings (format: "attribute:substep" or

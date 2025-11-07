@@ -2,6 +2,7 @@ package org.joshsim.lang.bridge;
 
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
+import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.Scope;
@@ -44,12 +45,32 @@ public class ShadowingEntityPrototype implements EntityPrototype {
 
   @Override
   public MutableEntity build() {
-    return wrap(inner.build());
+    return build(0L);
+  }
+
+  /**
+   * Build entity with explicit sequence ID.
+   *
+   * @param sequenceId The sequence ID for this entity.
+   * @return A wrapped entity with shadowing behavior.
+   */
+  public MutableEntity build(long sequenceId) {
+    // Check if inner is EmbeddedParentEntityPrototype to call build(sequenceId)
+    if (inner instanceof EmbeddedParentEntityPrototype) {
+      return wrap(((EmbeddedParentEntityPrototype) inner).build(sequenceId));
+    } else {
+      return wrap(inner.build());
+    }
   }
 
   @Override
   public MutableEntity buildSpatial(Entity parent) {
     return wrap(inner.buildSpatial(parent));
+  }
+
+  @Override
+  public MutableEntity buildSpatial(Entity parent, long sequenceId) {
+    return wrap(inner.buildSpatial(parent, sequenceId));
   }
 
   @Override

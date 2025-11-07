@@ -467,6 +467,11 @@ public class ShadowingEntity implements MutableEntity {
     return inner.getKey();
   }
 
+  @Override
+  public long getSequenceId() {
+    return inner.getSequenceId();
+  }
+
   /**
    * Attempt to resolve this attribute.
    *

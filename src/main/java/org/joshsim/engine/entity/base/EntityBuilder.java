@@ -153,6 +153,7 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
+    sharedAttributeNames = null; // Invalidate cache
     return this;
   }
 
@@ -329,8 +330,8 @@ public class EntityBuilder implements EntityInitializationInfo {
       return sharedAttributeNames;
     }
 
-    // Collect all unique attribute names from handlers
-    Set<String> attributeNames = new HashSet<>();
+    // Collect all unique attribute names from handlers AND from attributes map
+    Set<String> attributeNames = new HashSet<>(attributes.keySet());
     for (EventHandlerGroup group : eventHandlerGroups.values()) {
       for (EventHandler handler : group.getEventHandlers()) {
         attributeNames.add(handler.getAttributeName());
@@ -453,23 +454,25 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Build an agent entity.
+   * Build an agent entity with a sequence ID.
    *
    * @param parent The entity like Patch that this will be part of.
+   * @param sequenceId The sequence ID for this agent at this location.
    * @return A constructed agent entity
    */
-  public Agent buildAgent(Entity parent) {
-    return new Agent(parent, this);
+  public Agent buildAgent(Entity parent, long sequenceId) {
+    return new Agent(parent, this, sequenceId);
   }
 
   /**
-   * Build a disturbance entity.
+   * Build a disturbance entity with a sequence ID.
    *
    * @param parent The entity like Patch that this will be part of.
+   * @param sequenceId The sequence ID for this disturbance at this location.
    * @return A constructed disturbance entity
    */
-  public Disturbance buildDisturbance(Entity parent) {
-    return new Disturbance(parent, this);
+  public Disturbance buildDisturbance(Entity parent, long sequenceId) {
+    return new Disturbance(parent, this, sequenceId);
   }
 
   /**

@@ -1,0 +1,32 @@
+start simulation FileDebug
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.5 degrees longitude
+  grid.high = 34.5 degrees latitude, -116.0 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  exportFiles.agent = "memory://editor/organisms"
+  debugFiles.organism = "file:///tmp/josh_debug_file.txt"
+end simulation
+
+start patch Default
+  TestTree.init = create 2 count of TestTree
+end patch
+
+start organism TestTree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  # Debug during init with single arg
+  debugInit.init = debug("Tree created")
+
+  # Debug during step with multiple args
+  debugStep.step = debug("Step", meta.stepCount, "age:", age)
+
+  export.age.step = age
+end organism
+
+start unit year
+  alias years
+end unit

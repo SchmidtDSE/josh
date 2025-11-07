@@ -1,0 +1,28 @@
+start simulation InitDebug
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.5 degrees longitude
+  grid.high = 34.5 degrees latitude, -116.0 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  exportFiles.agent = "memory://editor/organisms"
+  debugFiles.organism = "stdout"
+end simulation
+
+start patch Default
+  TestTree.init = create 2 count of TestTree
+end patch
+
+start organism TestTree
+  age.init = 0 years
+
+  # Debug during init
+  debugInit.init = debug("INIT CALLED for tree")
+
+  export.age.step = age
+end organism
+
+start unit year
+  alias years
+end unit

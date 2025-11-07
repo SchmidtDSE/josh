@@ -37,10 +37,11 @@ public class FrozenEntity implements Entity {
   private final Map<String, Integer> attributeNameToIndex;
   private final String[] indexToAttributeName;
   private final Set<String> attributeNames;
+  private final long sequenceId;
 
 
   /**
-   * Constructs a FrozenEntity with the specified type, name, attributes, and geometry.
+   * Constructs a FrozenEntity with the specified type, name, attributes, geometry, and sequence.
    *
    * @param type The type of the entity to be snapshot.
    * @param name The name of the entity to be snapshot.
@@ -49,10 +50,11 @@ public class FrozenEntity implements Entity {
    * @param attributeNameToIndex The shared index map for this entity type.
    * @param indexToAttributeName The shared index-to-name array for this entity type.
    * @param sharedAttributeNames The shared set of all defined attribute names for this entity type.
+   * @param sequenceId The sequence ID for this entity at its location.
    */
   public FrozenEntity(EntityType type, String name, EngineValue[] attributeValues,
       Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex,
-      String[] indexToAttributeName, Set<String> sharedAttributeNames) {
+      String[] indexToAttributeName, Set<String> sharedAttributeNames, long sequenceId) {
     this.type = type;
     this.name = name;
     this.attributeValues = attributeValues;
@@ -60,6 +62,7 @@ public class FrozenEntity implements Entity {
     this.attributeNameToIndex = attributeNameToIndex;
     this.indexToAttributeName = indexToAttributeName;
     this.attributeNames = sharedAttributeNames;
+    this.sequenceId = sequenceId;
   }
 
   @Override
@@ -147,5 +150,10 @@ public class FrozenEntity implements Entity {
   @Override
   public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
     return EMPTY_HANDLERS;
+  }
+
+  @Override
+  public long getSequenceId() {
+    return sequenceId;
   }
 }

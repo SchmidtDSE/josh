@@ -1,0 +1,31 @@
+start simulation TestDebug
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.5 degrees longitude
+  grid.high = 34.5 degrees latitude, -116.0 degrees longitude
+  grid.patch = "TestPatch"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  exportFiles.agent = "memory://editor/organisms"
+end simulation
+
+start patch TestPatch
+  Tree.init = create 2 count of TestTree
+end patch
+
+start organism TestTree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+  height.init = 0 meters
+  height.step = prior.height + 0.5 meters
+
+  # Test debug function call with simple string
+  testDebug.step = debug("Tree age:", age)
+
+  export.age.step = age
+end organism
+
+start unit year
+  alias years
+end unit

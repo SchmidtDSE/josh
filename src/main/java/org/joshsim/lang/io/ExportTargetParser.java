@@ -31,6 +31,9 @@ public class ExportTargetParser {
 
     if (targetClean.startsWith("memory://editor/")) {
       return parseMemory(targetClean);
+    } else if (targetClean.equalsIgnoreCase("stdout")) {
+      // Handle "stdout" as a simple string
+      return new ExportTarget("stdout", "", "");
     } else {
       return parseUri(targetClean);
     }
@@ -81,6 +84,8 @@ public class ExportTargetParser {
         return new ExportTarget("file", host, decodedPath);
       } else if ("minio".equalsIgnoreCase(scheme)) {
         return new ExportTarget("minio", uri.getHost(), decodedPath);
+      } else if ("stdout".equalsIgnoreCase(scheme)) {
+        return new ExportTarget("stdout", "", "");
       } else {
         throw new IllegalArgumentException("Unsupported target scheme: " + scheme);
       }

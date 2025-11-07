@@ -1,0 +1,52 @@
+start simulation TestGeoKey
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.5 degrees longitude
+  grid.high = 34.5 degrees latitude, -116.0 degrees longitude
+  grid.patch = "TestPatch"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  exportFiles.patch = "file:///tmp/test_geokey_patches.csv"
+  exportFiles.agent = "file:///tmp/test_geokey_agents.csv"
+end simulation
+
+start patch TestPatch
+  # Create trees to test geoKey
+  Tree.init = create 2 count of TestTree
+
+  # Export patch geoKey to verify it works for patches too
+  export.patchGeoKey.step = geoKey
+end patch
+
+start organism TestTree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  # Test: Access geoKey attribute directly
+  # This tests that geoKey is available as a real attribute on Agents
+  myKey.init = geoKey
+
+  # Create children to test parent.geoKey access
+  Child.step:if(current.age == 1 years) = create 1 count of ChildTree
+
+  # Export geoKey for verification - should show format "Entity of type X at (Y, Z) #seq"
+  export.geoKey.step = geoKey
+  export.age.step = current.age
+  export.myKey.step = myKey
+end organism
+
+start organism ChildTree
+  age.init = 0 years
+
+  # Access parent.geoKey for provenance tracking
+  parentKey.init = parent.geoKey
+
+  # Export for verification
+  export.parentGeoKey.step = parent.geoKey
+  export.myGeoKey.step = geoKey
+end organism
+
+start unit year
+  alias years
+end unit

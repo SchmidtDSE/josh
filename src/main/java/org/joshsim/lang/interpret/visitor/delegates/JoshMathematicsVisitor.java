@@ -299,6 +299,12 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       case "abs" -> (machine) -> machine.abs();
       case "ceil" -> (machine) -> machine.ceil();
       case "count" -> (machine) -> machine.count();
+      case "debug" -> (machine) -> {
+        // Call debugVariadic(1) and push result value
+        machine.debugVariadic(1);
+        machine.push(engineValueFactory.build(true, Units.EMPTY));
+        return machine;
+      };
       case "floor" -> (machine) -> machine.floor();
       case "log10" -> (machine) -> machine.log10();
       case "ln" -> (machine) -> machine.ln();
@@ -318,6 +324,48 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     };
 
     return new ActionFragment(action);
+  }
+
+  /**
+   * Handle variadic function calls (e.g., debug()).
+   *
+   * <p>Processes function calls that accept a variable number of arguments.
+   * Currently supports the debug() function for outputting debug messages
+   * during simulation execution.</p>
+   *
+   * @param ctx The ANTLR context containing the variadic function call.
+   * @return JoshFragment containing the action to execute the variadic function.
+   */
+  public JoshFragment visitVariadicFunctionCall(
+      JoshLangParser.VariadicFunctionCallContext ctx) {
+    String funcName = ctx.name.getText();
+
+    if ("debug".equals(funcName)) {
+      // Parse all arguments
+      java.util.List<EventHandlerAction> argActions = new java.util.ArrayList<>();
+      for (JoshLangParser.ExpressionContext expr : ctx.args.expression()) {
+        argActions.add(expr.accept(parent).getCurrentAction());
+      }
+
+      EventHandlerAction action = (machine) -> {
+        // Evaluate all arguments - they are pushed onto the stack in order
+        for (EventHandlerAction argAction : argActions) {
+          argAction.apply(machine);
+        }
+
+        // Now call a machine method to handle debug output
+        // The machine will pop all values, format them, and write to debug
+        machine.debugVariadic(argActions.size());
+
+        // Push empty value as result
+        machine.push(engineValueFactory.build(true, Units.EMPTY));
+        return machine;
+      };
+
+      return new ActionFragment(action);
+    } else {
+      throw new IllegalArgumentException("Unknown variadic function: " + funcName);
+    }
   }
 
 }
