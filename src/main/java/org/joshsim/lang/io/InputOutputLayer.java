@@ -20,6 +20,13 @@ public interface InputOutputLayer {
   ExportFacadeFactory getExportFacadeFactory();
 
   /**
+   * Get the factory providing access to debug functionality on the current platform.
+   *
+   * @return Factory which provides access to debug options available on this platform.
+   */
+  org.joshsim.lang.io.debug.DebugFacadeFactory getDebugFacadeFactory();
+
+  /**
    * Get the strategy for requesting external inputs available in this layer.
    *
    * @return Strategy for data inputs available in the current environment.

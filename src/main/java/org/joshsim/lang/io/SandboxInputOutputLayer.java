@@ -55,6 +55,11 @@ public class SandboxInputOutputLayer implements InputOutputLayer {
   }
 
   @Override
+  public org.joshsim.lang.io.debug.DebugFacadeFactory getDebugFacadeFactory() {
+    return new org.joshsim.lang.io.debug.SandboxDebugFacadeFactory();
+  }
+
+  @Override
   public InputGetterStrategy getInputStrategy() {
     return inputGetter;
   }

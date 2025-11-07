@@ -18,6 +18,7 @@ import org.joshsim.util.MinioOptions;
 public class JvmInputOutputLayer implements InputOutputLayer {
 
   private final JvmExportFacadeFactory exportFactory;
+  private final org.joshsim.lang.io.debug.JvmDebugFacadeFactory debugFactory;
   private final InputGetterStrategy inputStrategy;
 
   /**
@@ -41,6 +42,8 @@ public class JvmInputOutputLayer implements InputOutputLayer {
       this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer,
                                                        minioOptions);
     }
+    this.debugFactory = new org.joshsim.lang.io.debug.JvmDebugFacadeFactory(replicate,
+                                                                             minioOptions);
     this.inputStrategy = inputStrategy;
   }
 
@@ -63,6 +66,11 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   @Override
   public ExportFacadeFactory getExportFacadeFactory() {
     return exportFactory;
+  }
+
+  @Override
+  public org.joshsim.lang.io.debug.DebugFacadeFactory getDebugFacadeFactory() {
+    return debugFactory;
   }
 
   @Override
