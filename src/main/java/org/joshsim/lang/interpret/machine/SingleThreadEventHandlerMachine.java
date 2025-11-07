@@ -14,9 +14,11 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
@@ -56,6 +58,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final EngineValueFactory valueFactory;
   private final Random random;
   private final boolean favorBigDecimal;
+  private final Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -66,10 +69,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    *
    * @param bridge The EngineBridge through which to interact with the engine.
    * @param scope The scope in which to have this automaton perform its operations.
+   * @param debugFacade Optional debug facade for writing debug messages.
    */
-  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
+      Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
+    this.debugFacade = debugFacade;
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -79,6 +85,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
     random = new Random();
     isEnded = false;
+  }
+
+  /**
+   * Create a new push-down automaton which operates on the given scope (legacy constructor).
+   *
+   * @param bridge The EngineBridge through which to interact with the engine.
+   * @param scope The scope in which to have this automaton perform its operations.
+   */
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+    this(bridge, scope, Optional.empty());
   }
 
   @Override
@@ -429,6 +445,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine createEntity(String entityType) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
     MutableEntity parent = scope.get("current").getAsMutableEntity();
+
+    // Get next sequence ID from parent patch
+    long sequence = 0L;
+    if (parent instanceof org.joshsim.engine.entity.type.Patch) {
+      sequence = ((org.joshsim.engine.entity.type.Patch) parent).getNextSequence();
+    }
+
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
         prototype,
         parent
@@ -456,14 +479,45 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue result;
     if (count == 1) {
-      MutableEntity newEntity = decoratedPrototype.build();
+      MutableEntity newEntity;
+      if (decoratedPrototype instanceof ShadowingEntityPrototype) {
+        newEntity = ((ShadowingEntityPrototype) decoratedPrototype).build(sequence);
+      } else {
+        newEntity = decoratedPrototype.build();
+      }
+
+      // Add geoKey as real attribute BEFORE fast-forward (uses cached GeoKey from entity)
+      // This ensures geoKey is available during init phase
+      Optional<GeoKey> geoKeyOpt = newEntity.getKey();
+      if (geoKeyOpt.isPresent()) {
+        String geoKeyString = geoKeyOpt.get().toString();
+        EngineValue geoKeyValue = valueFactory.build(geoKeyString, Units.EMPTY);
+        newEntity.setAttributeValue("geoKey", geoKeyValue);
+      }
+
       EntityFastForwarder.fastForward(newEntity, substep);
       result = valueFactory.build(newEntity);
     } else {
       // Pre-size ArrayList with known count to avoid growth overhead
       List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
-        MutableEntity newEntity = decoratedPrototype.build();
+        MutableEntity newEntity;
+        if (decoratedPrototype instanceof ShadowingEntityPrototype) {
+          newEntity = ((ShadowingEntityPrototype) decoratedPrototype).build(sequence);
+          sequence++; // Increment for next entity in batch
+        } else {
+          newEntity = decoratedPrototype.build();
+        }
+
+        // Add geoKey as real attribute BEFORE fast-forward (uses cached GeoKey from entity)
+        // This ensures geoKey is available during init phase
+        Optional<GeoKey> geoKeyOpt = newEntity.getKey();
+        if (geoKeyOpt.isPresent()) {
+          String geoKeyString = geoKeyOpt.get().toString();
+          EngineValue geoKeyValue = valueFactory.build(geoKeyString, Units.EMPTY);
+          newEntity.setAttributeValue("geoKey", geoKeyValue);
+        }
+
         EntityFastForwarder.fastForward(newEntity, substep);
         values.add(valueFactory.build(newEntity));
       }
@@ -988,6 +1042,63 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    */
   private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
     return resolver.toString().contains("ValueResolver(" + patchName + ")");
+  }
+
+  @Override
+  public EventHandlerMachine writeDebug(String message) {
+    if (debugFacade.isEmpty()) {
+      return this; // Zero overhead when not configured
+    }
+
+    // Get current entity type category (not name)
+    String entityCategory = "unknown";
+    try {
+      MutableEntity current = scope.get("current").getAsMutableEntity();
+      EntityType type = current.getEntityType();
+      // Map EntityType to debug facade key
+      entityCategory = switch (type) {
+        case AGENT -> "organism";  // organisms map to AGENT type
+        case PATCH -> "patch";
+        case SIMULATION -> "simulation";
+        default -> "unknown";
+      };
+    } catch (Exception e) {
+      // Fallback if current not available
+    }
+
+    // Get current step
+    long step = bridge.getCurrentTimestep();
+
+    // Write to debug facade with entity category
+    debugFacade.get().write(message, step, entityCategory);
+
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine debugVariadic(int count) {
+    if (debugFacade.isEmpty()) {
+      // Pop values from stack even if not using them (maintain stack state)
+      for (int i = 0; i < count; i++) {
+        pop();
+      }
+      return this; // Zero overhead when not configured
+    }
+
+    // Pop all values and collect as strings (in reverse order)
+    List<String> values = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      values.add(pop().getAsString());
+    }
+
+    // Reverse to get original order
+    java.util.Collections.reverse(values);
+
+    // Concatenate all values with spaces
+    String message = String.join(" ", values);
+
+    // Write using the single-argument writeDebug
+    return writeDebug(message);
   }
 
 }

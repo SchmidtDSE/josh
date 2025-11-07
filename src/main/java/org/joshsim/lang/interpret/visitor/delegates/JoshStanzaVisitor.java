@@ -105,9 +105,24 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       }
     }
 
+    // Add geoKey as a built-in attribute for organisms/agents and patches
+    // This allows parent.geoKey to work by making geoKey a real attribute
+    EntityType type = getEntityType(entityType);
+    if (type == EntityType.AGENT || type == EntityType.PATCH) {
+      entityBuilder.addAttribute("geoKey", null);
+    }
+
+    // Add debugFiles as built-in attributes for simulation entities
+    // This allows debug output to be configured via debugFiles.patch, etc.
+    if (type == EntityType.SIMULATION) {
+      entityBuilder.addAttribute("debugFiles.patch", null);
+      entityBuilder.addAttribute("debugFiles.organism", null);
+      entityBuilder.addAttribute("debugFiles.agent", null);
+    }
+
     EntityPrototype prototype = new ParentlessEntityPrototype(
         identifier,
-        getEntityType(entityType),
+        type,
         entityBuilder
     );
 
