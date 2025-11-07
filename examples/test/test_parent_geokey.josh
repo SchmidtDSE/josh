@@ -1,0 +1,40 @@
+start simulation TestParentGeoKey
+  grid.size = 1000 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 1 degrees latitude, 1 degrees longitude
+  grid.patch = "TestPatch"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  exportFiles.agent = "file:///tmp/test_parent_geokey.csv"
+end simulation
+
+start patch TestPatch
+  Tree.init = create 2 count of ParentTree
+end patch
+
+start organism ParentTree
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  # Create children at age 1
+  Child.step:if(current.age == 1 years) = create 2 count of ChildTree
+end organism
+
+start organism ChildTree
+  age.init = 0 years
+
+  # THIS IS THE KEY TEST: Access parent.geoKey
+  parentKey.init = parent.geoKey
+  myKey.init = geoKey
+
+  # Export for verification
+  export.parentGeoKey.step = parent.geoKey
+  export.myGeoKey.step = geoKey
+  export.age.step = age
+end organism
+
+start unit year
+  alias years
+end unit
