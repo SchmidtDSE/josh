@@ -10,6 +10,7 @@ import org.joshsim.lang.io.ExportTarget;
 import org.joshsim.lang.io.LocalOutputStreamStrategy;
 import org.joshsim.lang.io.MinioOutputStreamStrategy;
 import org.joshsim.lang.io.OutputStreamStrategy;
+import org.joshsim.lang.io.PathTemplateResolver;
 import org.joshsim.util.MinioClientSingleton;
 import org.joshsim.util.MinioOptions;
 
@@ -28,25 +29,45 @@ public class JvmDebugFacadeFactory implements DebugFacadeFactory {
 
   private final int replicate;
   private final MinioOptions minioOptions;
+  private final PathTemplateResolver templateResolver;
 
   /**
    * Create a new JvmDebugFacadeFactory.
    *
    * @param replicate The replicate number to use in filenames.
    * @param minioOptions The MinIO configuration options (nullable).
+   * @param templateResolver The template resolver for processing path templates (nullable).
    */
-  public JvmDebugFacadeFactory(int replicate, MinioOptions minioOptions) {
+  public JvmDebugFacadeFactory(int replicate, MinioOptions minioOptions,
+                                PathTemplateResolver templateResolver) {
     this.replicate = replicate;
     this.minioOptions = minioOptions;
+    this.templateResolver = templateResolver != null
+        ? templateResolver
+        : new PathTemplateResolver();
   }
 
   /**
-   * Create a new JvmDebugFacadeFactory without MinIO support.
+   * Create a new JvmDebugFacadeFactory without MinIO support (legacy constructor).
    *
    * @param replicate The replicate number to use in filenames.
+   * @deprecated Use constructor with PathTemplateResolver parameter instead
    */
+  @Deprecated
   public JvmDebugFacadeFactory(int replicate) {
-    this(replicate, null);
+    this(replicate, null, null);
+  }
+
+  /**
+   * Create a new JvmDebugFacadeFactory without template resolver (legacy constructor).
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param minioOptions The MinIO configuration options (nullable).
+   * @deprecated Use constructor with PathTemplateResolver parameter instead
+   */
+  @Deprecated
+  public JvmDebugFacadeFactory(int replicate, MinioOptions minioOptions) {
+    this(replicate, minioOptions, null);
   }
 
   @Override
@@ -70,8 +91,8 @@ public class JvmDebugFacadeFactory implements DebugFacadeFactory {
 
   @Override
   public String getPath(String template) {
-    // Simple template - just replace replicate
-    return template.replace("{replicate}", String.valueOf(replicate));
+    // Use full template resolution like exports
+    return templateResolver.resolve(template, replicate);
   }
 
   @Override
