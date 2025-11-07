@@ -562,4 +562,27 @@ public interface EventHandlerMachine {
    * @param name The name of the config value to push.
    */
   void pushConfigWithDefault(String name);
+
+  /**
+   * Write a debug message if debugging is configured.
+   *
+   * <p>Outputs a debug message to the configured debug output targets (file, MinIO, stdout, etc.).
+   * If no debug output is configured, this is a no-op with zero overhead. The message is formatted
+   * with the current step number and entity type information.</p>
+   *
+   * @param message The debug message to write.
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine writeDebug(String message);
+
+  /**
+   * Pop multiple values from stack, format as debug message, and write to debug output.
+   *
+   * <p>Pops the specified number of values from the stack, converts them to strings,
+   * concatenates them with spaces, and writes the result to the debug output.</p>
+   *
+   * @param count The number of values to pop from the stack.
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine debugVariadic(int count);
 }
