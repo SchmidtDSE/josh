@@ -35,7 +35,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineBridge> builtBridge;
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
-  private Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade;
+  private Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -49,7 +49,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.builtBridge = Optional.empty();
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
-    this.debugFacade = Optional.empty();
+    this.debugWriter = Optional.empty();
   }
 
   /**
@@ -114,27 +114,27 @@ public class FutureBridgeGetter implements BridgeGetter {
   }
 
   /**
-   * Sets the debug facade to use for debug output.
+   * Sets the debug writer to use for debug output.
    *
-   * <p>This allows injecting the debug facade so that debug() function calls can produce
+   * <p>This allows injecting the debug writer so that debug() function calls can produce
    * output. If not set, debug() calls will be no-ops.</p>
    *
-   * @param debugFacade The debug facade to use for debug output.
+   * @param debugWriter The debug writer to use for debug output.
    */
   @Override
-  public void setDebugFacade(Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade) {
-    this.debugFacade = debugFacade;
+  public void setDebugWriter(Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter) {
+    this.debugWriter = debugWriter;
   }
 
   /**
-   * Get the debug facade for this bridge.
+   * Get the debug writer for this bridge.
    *
-   * @return Optional debug facade for writing debug messages. Empty if debug output is not
+   * @return Optional debug writer for writing debug messages. Empty if debug output is not
    *     configured.
    */
   @Override
-  public Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> getDebugFacade() {
-    return debugFacade;
+  public Optional<org.joshsim.lang.io.CombinedTextWriter> getDebugWriter() {
+    return debugWriter;
   }
 
   @Override
