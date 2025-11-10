@@ -1,0 +1,81 @@
+// Comprehensive debug feature demonstration
+// This file demonstrates all debug capabilities including conditional debug
+
+start simulation DebugFeaturesDemo
+
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  grid.size = 1 m
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  // Configure debug output files - supports file://, minio://, stdout://
+  debugFiles.patch = "file:///tmp/debug_demo_patch.txt"
+  debugFiles.organism = "file:///tmp/debug_demo_organism.txt"
+
+end simulation
+
+start patch Default
+
+  counter.init = 0 count
+
+  // FEATURE: Unconditional debug at patch init
+  log.init = debug("PATCH_INIT", "counter=", counter)
+
+  counter.step = prior.counter + 1 count
+
+  // FEATURE: Unconditional debug at patch step
+  log.step = debug("PATCH_STEP", "counter=", counter)
+
+  TestOrgs.init = create 3 of TestOrg
+
+end patch
+
+start organism TestOrg
+
+  age.init = 0 count
+
+  // FEATURE: Unconditional debug at organism init
+  log.init = debug("ORG_INIT", "created with age=", age)
+
+  age.step = prior.age + 1 count
+
+  // FEATURE: Unconditional debug at organism step (fires every step)
+  logAge.step = debug("ORG_AGE", "age=", age)
+
+  // FEATURE: Conditional debug (only fires when condition is met)
+  // This demonstrates debugging specific events without flooding output
+  logMilestone.step = {
+    if (current.age == 2 count) {
+      return debug("ORG_MILESTONE", "reached age 2 milestone!")
+    } else {
+      return 0 count  // Return dummy value when not logging
+    }
+  }
+
+  state.init = "young"
+
+  start state "young"
+    // FEATURE: State-specific debug (only logs while in this state)
+    logState.step = debug("STATE_YOUNG", "in young state, age=", current.age)
+
+    state.step = {
+      if (current.age >= 2 count) {
+        return "old"
+      } else {
+        return "young"
+      }
+    }
+  end state
+
+  start state "old"
+    // FEATURE: Different debug per state
+    logState.step = debug("STATE_OLD", "in old state, age=", current.age)
+  end state
+
+end organism
+
+start unit meters
+  alias m
+end unit

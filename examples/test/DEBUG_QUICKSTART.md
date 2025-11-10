@@ -2,6 +2,10 @@
 
 This guide shows you how to use the new debugging and provenance tracking features in Josh simulations.
 
+## Architecture Note
+
+Josh uses a unified OutputWriter system for both debug and export output. Debug messages are written using TextOutputWriter, which provides consistent behavior across file, MinIO, stdout, and memory destinations. For architectural details, see OUTPUT_SYSTEM_ARCHITECTURE.md.
+
 ## Features Overview
 
 ### 1. **GeoKey with Sequence IDs**
