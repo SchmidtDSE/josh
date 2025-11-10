@@ -108,20 +108,22 @@ public class JoshSimFacadeUtil {
       bridgeGetter.setBridge(bridge);
     }
 
-    // Create debug facade
-    org.joshsim.lang.io.debug.CombinedDebugFacade debugFacade =
-        new org.joshsim.lang.io.debug.CombinedDebugFacade(
+    // Create debug output writer using the new unified system
+    org.joshsim.lang.io.debug.CombinedDebugOutputWriter debugWriter =
+        new org.joshsim.lang.io.debug.CombinedDebugOutputWriter(
             simEntity,
-            inputOutputLayer.getDebugFacadeFactory()
+            inputOutputLayer.getOutputWriterFactory()
         );
 
-    // Store debug facade only if configured (for zero overhead when not used)
-    Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacadeOpt =
-        debugFacade.isConfigured() ? Optional.of(debugFacade) : Optional.empty();
+    // Store debug writer only if configured (for zero overhead when not used)
+    Optional<org.joshsim.lang.io.debug.CombinedDebugOutputWriter> debugWriterOpt =
+        debugWriter.isConfigured() ? Optional.of(debugWriter) : Optional.empty();
 
-    // Inject debug facade into bridge getter so machines can access it
-    if (bridgeGetter != null) {
-      bridgeGetter.setDebugFacade(debugFacadeOpt);
+    // Inject debug writer into bridge getter so machines can access it
+    if (bridgeGetter != null && debugWriterOpt.isPresent()) {
+      bridgeGetter.setDebugWriter(
+          Optional.of(debugWriterOpt.get().getCombinedWriter())
+      );
     }
 
     CombinedExportFacade exportFacade = new CombinedExportFacade(
@@ -136,7 +138,7 @@ public class JoshSimFacadeUtil {
     SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
     exportFacade.start();
-    debugFacade.start();
+    debugWriter.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
@@ -162,7 +164,7 @@ public class JoshSimFacadeUtil {
     }
 
     exportFacade.join();
-    debugFacade.join();
+    debugWriter.join();
   }
 
   /**
