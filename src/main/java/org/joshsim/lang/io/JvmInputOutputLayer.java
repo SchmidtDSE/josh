@@ -19,7 +19,7 @@ import org.joshsim.util.MinioOptions;
 public class JvmInputOutputLayer implements InputOutputLayer {
 
   private final JvmExportFacadeFactory exportFactory;
-  private final org.joshsim.lang.io.debug.JvmDebugFacadeFactory debugFactory;
+  private final OutputWriterFactory outputWriterFactory;
   private final InputGetterStrategy inputStrategy;
 
   /**
@@ -46,13 +46,15 @@ public class JvmInputOutputLayer implements InputOutputLayer {
                                                        minioOptions);
     }
 
-    // Create PathTemplateResolver for debug facade with custom tags
+    // Create PathTemplateResolver with custom tags for debug output
     PathTemplateResolver debugTemplateResolver = new PathTemplateResolver(customTags);
 
-    this.debugFactory = new org.joshsim.lang.io.debug.JvmDebugFacadeFactory(
+    // Create OutputWriterFactory for debug output with job template renderer
+    this.outputWriterFactory = new OutputWriterFactory(
         replicate,
-        minioOptions,
-        debugTemplateResolver
+        debugTemplateResolver,
+        templateRenderer,
+        minioOptions
     );
     this.inputStrategy = inputStrategy;
   }
@@ -98,8 +100,8 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   }
 
   @Override
-  public org.joshsim.lang.io.debug.DebugFacadeFactory getDebugFacadeFactory() {
-    return debugFactory;
+  public OutputWriterFactory getOutputWriterFactory() {
+    return outputWriterFactory;
   }
 
   @Override
