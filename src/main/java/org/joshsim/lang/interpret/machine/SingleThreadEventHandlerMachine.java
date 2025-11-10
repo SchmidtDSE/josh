@@ -58,7 +58,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final EngineValueFactory valueFactory;
   private final Random random;
   private final boolean favorBigDecimal;
-  private final Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade;
+  private final Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -69,13 +69,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    *
    * @param bridge The EngineBridge through which to interact with the engine.
    * @param scope The scope in which to have this automaton perform its operations.
-   * @param debugFacade Optional debug facade for writing debug messages.
+   * @param debugWriter Optional debug writer for writing debug messages.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
-      Optional<org.joshsim.lang.io.debug.CombinedDebugFacade> debugFacade) {
+      Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
-    this.debugFacade = debugFacade;
+    this.debugWriter = debugWriter;
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -1046,7 +1046,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine writeDebug(String message) {
-    if (debugFacade.isEmpty()) {
+    if (debugWriter.isEmpty()) {
       return this; // Zero overhead when not configured
     }
 
@@ -1055,7 +1055,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     try {
       MutableEntity current = scope.get("current").getAsMutableEntity();
       EntityType type = current.getEntityType();
-      // Map EntityType to debug facade key
+      // Map EntityType to debug writer key
       entityCategory = switch (type) {
         case AGENT -> "organism";  // organisms map to AGENT type
         case PATCH -> "patch";
@@ -1069,15 +1069,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     // Get current step
     long step = bridge.getCurrentTimestep();
 
-    // Write to debug facade with entity category
-    debugFacade.get().write(message, step, entityCategory);
+    // Write to debug writer with entity category
+    org.joshsim.lang.io.CombinedTextWriter writer = debugWriter.get();
+    writer.setCurrentEntityType(entityCategory);
+    writer.write(message, step);
 
     return this;
   }
 
   @Override
   public EventHandlerMachine debugVariadic(int count) {
-    if (debugFacade.isEmpty()) {
+    if (debugWriter.isEmpty()) {
       // Pop values from stack even if not using them (maintain stack state)
       for (int i = 0; i < count; i++) {
         pop();
