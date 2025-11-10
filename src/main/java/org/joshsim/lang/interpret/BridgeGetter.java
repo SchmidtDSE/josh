@@ -8,7 +8,7 @@ package org.joshsim.lang.interpret;
 
 import java.util.Optional;
 import org.joshsim.lang.bridge.EngineBridge;
-import org.joshsim.lang.io.debug.CombinedDebugFacade;
+import org.joshsim.lang.io.CombinedTextWriter;
 
 
 /**
@@ -36,25 +36,25 @@ public interface BridgeGetter {
   }
 
   /**
-   * Get the debug facade for this bridge.
+   * Get the debug writer for this bridge.
    *
-   * @return Optional debug facade for writing debug messages. Empty if debug output is not
+   * @return Optional debug writer for writing debug messages. Empty if debug output is not
    *     configured.
    */
-  default Optional<CombinedDebugFacade> getDebugFacade() {
+  default Optional<CombinedTextWriter> getDebugWriter() {
     return Optional.empty();
   }
 
   /**
-   * Sets the debug facade to use for debug output.
+   * Sets the debug writer to use for debug output.
    *
-   * <p>This allows injecting the debug facade so that debug() function calls can produce
+   * <p>This allows injecting the debug writer so that debug() function calls can produce
    * output. If not set, debug() calls will be no-ops.</p>
    *
-   * @param debugFacade The debug facade to use for debug output.
+   * @param debugWriter The debug writer to use for debug output.
    */
-  default void setDebugFacade(Optional<CombinedDebugFacade> debugFacade) {
-    throw new UnsupportedOperationException("setDebugFacade not supported by this implementation");
+  default void setDebugWriter(Optional<CombinedTextWriter> debugWriter) {
+    throw new UnsupportedOperationException("setDebugWriter not supported by this implementation");
   }
 
 }

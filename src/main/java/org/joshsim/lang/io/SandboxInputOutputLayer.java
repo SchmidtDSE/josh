@@ -55,8 +55,10 @@ public class SandboxInputOutputLayer implements InputOutputLayer {
   }
 
   @Override
-  public org.joshsim.lang.io.debug.DebugFacadeFactory getDebugFacadeFactory() {
-    return new org.joshsim.lang.io.debug.SandboxDebugFacadeFactory();
+  public OutputWriterFactory getOutputWriterFactory() {
+    // In sandbox mode, use OutputWriterFactory with no MinIO support and no job template renderer
+    // Replicate 0 since sandbox typically runs single replicate
+    return new OutputWriterFactory(0, new PathTemplateResolver(), null, null);
   }
 
   @Override

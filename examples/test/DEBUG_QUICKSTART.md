@@ -2,6 +2,10 @@
 
 This guide shows you how to use the new debugging and provenance tracking features in Josh simulations.
 
+## Architecture Note
+
+Josh uses a unified OutputWriter system for both debug and export output. Debug messages are written using TextOutputWriter, which provides consistent behavior across file, MinIO, stdout, and memory destinations. For architectural details, see OUTPUT_SYSTEM_ARCHITECTURE.md.
+
 ## Features Overview
 
 ### 1. **GeoKey with Sequence IDs**
@@ -207,6 +211,32 @@ debugFiles.organism = "minio://my-bucket/simulations/debug_{replicate}.txt"
 - Writes to cloud storage
 - Requires MinIO configuration via command-line args
 - Good for remote simulations
+
+#### Template Variables in Paths
+Debug file paths support template variables for organizing output:
+
+```josh
+debugFiles.organism = "file:///tmp/{user}/{editor}/debug_{replicate}.txt"
+```
+
+Available template variables:
+- `{replicate}` - Replicate number (0, 1, 2, ...)
+- `{user}` - Custom tag for user identification
+- `{editor}` - Custom tag for editor/configuration name
+- Any custom tags passed via `--custom-tag` argument
+
+Example with custom tags:
+```bash
+josh run simulation.josh MyConfig \
+  --custom-tag user=alice \
+  --custom-tag editor=optimistic \
+  --replicates 3
+```
+
+This creates files:
+- `/tmp/alice/optimistic/debug_0.txt`
+- `/tmp/alice/optimistic/debug_1.txt`
+- `/tmp/alice/optimistic/debug_2.txt`
 
 ### Memory Output (Web Editor)
 ```josh

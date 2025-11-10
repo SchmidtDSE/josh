@@ -7,6 +7,8 @@
 package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Map;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioOptions;
@@ -23,6 +25,7 @@ public class JvmInputOutputLayerBuilder {
   private InputGetterStrategy inputStrategy = new JvmWorkingDirInputGetter();
   private TemplateStringRenderer templateRenderer = null;
   private MinioOptions minioOptions = null;
+  private Map<String, String> customTags = Collections.emptyMap();
 
   /**
    * Set the replicate number to use in filenames.
@@ -82,12 +85,23 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set custom tags for template resolution.
+   *
+   * @param customTags Map of custom tag names to their values for debug path templates.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withCustomTags(Map<String, String> customTags) {
+    this.customTags = customTags != null ? customTags : Collections.emptyMap();
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
     return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer,
-                                    minioOptions);
+                                    minioOptions, customTags);
   }
 }
