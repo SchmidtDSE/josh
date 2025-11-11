@@ -8,8 +8,8 @@ start simulation SimpleDebugTest
   steps.low = 0 count
   steps.high = 1 count
 
-  debugFiles.patch = "file:///tmp/simple_debug_patch.txt"
-  debugFiles.organism = "file:///tmp/simple_debug_organism.txt"
+  debugFiles.patch = "file:///tmp/simple_debug_patch_{timestamp}.txt"
+  debugFiles.organism = "file:///tmp/simple_debug_organism_{timestamp}.txt"
 
 end simulation
 

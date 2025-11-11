@@ -1,0 +1,29 @@
+// Test to verify timestamps are consistent across parameterized runs
+// Run with: ./build/install/JoshSim/bin/JoshSim run examples/test/timestamp_test.josh TimestampTest --replicates 1 --data config.jshc=examples/test/config_vscode.jshc,examples/test/config_emacs.jshc --custom-tag editor=test
+
+start simulation TimestampTest
+
+  grid.low = 0 m, 0 m
+  grid.high = 1 m, 1 m  // Small 2x2 grid
+  grid.size = 1 m
+
+  steps.low = 0 count
+  steps.high = 1 count  // Just 1 step
+
+  // Use timestamp template - should be same across all editor values
+  debugFiles.patch = "file:///tmp/debug_{editor}_{timestamp}.txt"
+
+end simulation
+
+start patch TestPatch
+
+  testValue.init = {
+    debug("Test output for editor ", geoKey)
+    return 0 count
+  }
+
+end patch
+
+start unit meters
+  alias m
+end unit
