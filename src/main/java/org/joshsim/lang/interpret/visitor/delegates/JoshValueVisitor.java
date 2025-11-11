@@ -122,6 +122,24 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a "pass" expression.
+   *
+   * <p>Parse a pass expression that represents a no-op return value (0 count). This is used
+   * when a function must return a value but the value is semantically meaningless, such as
+   * in side-effect-only attributes like debug logging.</p>
+   *
+   * <p>Example: <code>return pass</code> is equivalent to <code>return 0 count</code></p>
+   *
+   * @param ctx The context from which to parse the "pass" expression.
+   * @return JoshFragment containing the pass expression parsed as 0 count.
+   */
+  public JoshFragment visitPassExpression(JoshLangParser.PassExpressionContext ctx) {
+    EngineValue passValue = engineValueFactory.build(0, Units.of("count"));
+    EventHandlerAction action = (machine) -> machine.push(passValue);
+    return new ActionFragment(action);
+  }
+
 
 
   /**

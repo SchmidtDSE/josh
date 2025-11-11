@@ -74,6 +74,7 @@ NORMAL_: 'normal';
 OF_: 'of';
 OR_: 'or';
 ORGANISM_: 'organism';
+PASS_: 'pass';
 PATCH_: 'patch';
 PRIOR_: 'prior';
 RADIAL_: 'radial';
@@ -116,6 +117,7 @@ expression: unitsValue # simpleExpression
   | number # simpleNumber
   | string # simpleString
   | bool # simpleBoolExpression
+  | PASS_ # passExpression
   | ALL_ # allExpression
   | distributionDescription # distributionExpression
   | identifier # identifierExpression
