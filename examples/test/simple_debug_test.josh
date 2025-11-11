@@ -1,0 +1,34 @@
+// Ultra-simple debug test
+start simulation SimpleDebugTest
+
+  grid.low = 0 m, 0 m
+  grid.high = 1 m, 1 m
+  grid.size = 1 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  debugFiles.patch = "file:///tmp/simple_debug_patch.txt"
+  debugFiles.organism = "file:///tmp/simple_debug_organism.txt"
+
+end simulation
+
+start patch TestPatch
+
+  value.init = 5 count
+  value.step = prior.value + 1 count
+
+  TestOrgs.init = create 1 of TestOrg
+
+end patch
+
+start organism TestOrg
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+end organism
+
+start unit meters
+  alias m
+end unit
