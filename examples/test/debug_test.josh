@@ -1,0 +1,106 @@
+// Simple debug test simulation to verify debug output works correctly
+// Tests debug calls in various phases and entity types
+
+start simulation DebugTest
+
+  grid.low = 0 m, 0 m
+  grid.high = 2 m, 2 m  // 3x3 grid
+  grid.size = 1 m
+
+  steps.low = 0 count
+  steps.high = 2 count  // Just 2 steps
+
+  // Configure debug output files
+  debugFiles.patch = "file:///tmp/debug_test_patch.txt"
+  debugFiles.organism = "file:///tmp/debug_test_organism.txt"
+  debugFiles.meta = "file:///tmp/debug_test_meta.txt"
+
+  // Meta-level variable to track simulation state
+  simulationStep.init = 0 count
+  simulationStep.step = prior.simulationStep + 1 count
+
+end simulation
+
+start patch TestPatch
+
+  // Test debug in init phase
+  patchId.init = {
+    const id = here.x + (here.y * 3 m)
+    debug("PATCH_INIT", "Patch initialized at x=", here.x, " y=", here.y, " id=", id)
+    return id
+  }
+
+  // Test debug in step phase
+  patchValue.init = 0 count
+  patchValue.step = {
+    const newValue = prior.patchValue + 1 count
+    debug("PATCH_STEP", "Step update: patchId=", current.patchId, " oldValue=", prior.patchValue, " newValue=", newValue)
+    return newValue
+  }
+
+  // Create some test organisms
+  TestOrganisms.init = {
+    debug("PATCH_CREATING_ORGANISMS", "Creating organisms for patch ", current.patchId)
+    return create 2 of TestOrganism
+  }
+
+  // Test debug in start phase
+  TestOrganisms.start = {
+    debug("PATCH_START", "Patch ", current.patchId, " has ", count(prior.TestOrganisms), " organisms at start of step")
+    return prior.TestOrganisms
+  }
+
+  // Count organisms for export
+  export.organismCount.step = count(TestOrganisms)
+
+end patch
+
+start organism TestOrganism
+
+  // Test debug in init
+  age.init = {
+    debug("ORGANISM_INIT", "New organism created")
+    return 0 count
+  }
+
+  // Test debug in step
+  age.step = {
+    const newAge = prior.age + 1 count
+    debug("ORGANISM_STEP", "Organism aging: oldAge=", prior.age, " newAge=", newAge)
+    return newAge
+  }
+
+  // State management with debug
+  state.init = {
+    debug("ORGANISM_STATE_INIT", "Initial state set to 'young'")
+    return "young"
+  }
+
+  start state "young"
+
+    state.step = {
+      if (current.age > 1 count) {
+        debug("ORGANISM_STATE_TRANSITION", "Transitioning from young to old at age ", current.age)
+        return "old"
+      } else {
+        debug("ORGANISM_STATE_STAY", "Staying young at age ", current.age)
+        return "young"
+      }
+    }
+
+  end state
+
+  start state "old"
+
+    state.step = {
+      debug("ORGANISM_STATE_OLD", "Already old at age ", current.age)
+      return "old"
+    }
+
+  end state
+
+end organism
+
+start unit meters
+  alias m
+end unit

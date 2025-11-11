@@ -50,6 +50,7 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `-o, --output <path>`: Output file path
 - `--parallel`: Enable parallel patch processing
 - `--verbose`: Enable verbose output
+- `--custom-tag <key>=<value>`: Define custom template variable for path templating (can be used multiple times)
 - `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
 - `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
 - `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
@@ -64,6 +65,15 @@ java -jar joshsim-fat.jar run simulation.josh Main --replicates 10 -o results.cs
 
 # Run with external data
 java -jar joshsim-fat.jar run simulation.josh Main --data ./data -o results.netcdf
+
+# Run with custom tags for debug path templating
+java -jar joshsim-fat.jar run simulation.josh Main \
+  --replicates 3 \
+  --custom-tag user=alice \
+  --custom-tag experiment=drought \
+  -o results.csv
+# With debugFiles.organism = "file:///data/{user}/{experiment}/debug_{replicate}.txt"
+# Creates: /data/alice/drought/debug_0.txt, debug_1.txt, debug_2.txt
 ```
 
 #### `preprocess` - Data Preprocessing
@@ -288,6 +298,13 @@ true
 false
 ```
 
+#### Pass Keyword
+The `pass` keyword represents a no-op return value (equivalent to `0 count`) used when a function must return a value but the value is semantically meaningless:
+```
+return pass
+```
+This is particularly useful in side-effect-only attributes like debug logging, where the return value doesn't matter but JOSH's type system requires all functions to return a value.
+
 #### Distributions
 Statistical distributions for stochastic modeling:
 ```
@@ -346,6 +363,13 @@ current.height
 - **here**: Current grid cell context
 - **within**: Spatial query for nearby entities
 
+#### Debug Keywords
+- **geoKey**: Entity identifier for debug output, formatted as `[hash - Name @ (x, y)]`
+  - Only available in patch and organism contexts
+  - Provides unique 6-character hex hash for grep-friendly identification
+  - Includes entity type name and spatial coordinates
+  - Example: `[b2a744 - ForeverTree @ (12.500000, 45.300000)]`
+
 ### Operators
 
 #### Arithmetic Operators
@@ -386,6 +410,12 @@ sample(uniform from 0 to 10)
 - **std()**: Calculate standard deviation
 - **count()**: Count elements in collection
 - **sample()**: Sample from distribution or collection
+- **debug()**: Write debug messages to configured output destinations
+  ```
+  debug("MESSAGE", "value=", someValue)           # Variadic arguments
+  debug(geoKey, "INIT", "x=", here.x, "y=", here.y)  # Include entity identifier
+  ```
+  The debug function accepts variadic arguments (any number of values) which are concatenated with spaces and written to the debug output stream. Returns `0 count` (equivalent to `pass`), making it suitable for use in conditional expressions and side-effect-only attributes.
 - **create**: Create new entities
   ```
   create ForeverTree                    # Create single entity
@@ -523,6 +553,207 @@ export.variable.event = expression
 exportFiles.type = "output_path"
 ```
 
+### Debug Output
+
+Josh provides a comprehensive debug output system for logging runtime information during simulation execution. Debug messages can be routed to different destinations based on entity type (patch, organism, agent) and support flexible output protocols and path templating.
+
+#### Debug Configuration
+
+Debug output is configured in the simulation stanza using `debugFiles.*` attributes:
+
+```josh
+start simulation MySimulation
+  # Configure debug output destinations by entity type
+  debugFiles.patch = "file:///tmp/debug_patch.txt"
+  debugFiles.organism = "file:///tmp/debug_organism_{replicate}.txt"
+  debugFiles.agent = "minio://bucket/project/debug_agent.txt"
+
+  # Other simulation configuration...
+end simulation
+```
+
+**Supported Entity Types:**
+- `debugFiles.patch`: Debug output from patch-level code
+- `debugFiles.organism`: Debug output from organism-level code
+- `debugFiles.agent`: Debug output from agent-level code (future use)
+
+#### Debug Function
+
+The `debug()` function writes messages to the configured debug output stream:
+
+```josh
+# Basic debug output
+debug("MESSAGE", "value=", someValue)
+
+# Include entity identifier (geoKey)
+debug(geoKey, "INIT", "created at x=", here.x)
+
+# Variadic arguments (any number of values)
+debug("STEP", "age=", age, "height=", height, "status=", status)
+```
+
+**Special Variable - `geoKey`:**
+The `geoKey` variable provides a unique identifier for the current entity, formatted as `[hash - Name @ (x, y)]`:
+- **hash**: 6-character hex hash for unique identification (grep-friendly)
+- **Name**: Entity type name
+- **coordinates**: Spatial location
+
+Example output: `[b2a744 - ForeverTree @ (12.500000, 45.300000)]`
+
+#### Output Protocols
+
+Debug output supports multiple destination protocols:
+
+**1. Local File System (`file://`)**
+```josh
+debugFiles.organism = "file:///tmp/debug.txt"
+debugFiles.organism = "file:///absolute/path/to/debug_{replicate}.txt"
+```
+- Absolute paths recommended
+- Parent directories created automatically
+- Supports path templating
+
+**2. Cloud Storage (`minio://`)**
+```josh
+debugFiles.organism = "minio://bucket-name/path/to/debug.txt"
+debugFiles.organism = "minio://bucket/project/{user}/debug_{replicate}.txt"
+```
+- Requires MinIO configuration via CLI arguments
+- Automatic bucket creation
+- Supports path templating
+
+**3. Standard Output (`stdout://`)**
+```josh
+debugFiles.organism = "stdout"
+```
+- Writes directly to console
+- Useful for quick debugging
+- No path templating needed
+
+**4. Memory Protocol (`memory://` - WebAssembly only)**
+```josh
+debugFiles.organism = "memory://editor/debug"
+```
+- Used in browser-based WebAssembly execution
+- Captured by browser JavaScript for display
+- Automatic protocol in WebAssembly environments
+
+#### Path Templating
+
+Debug file paths support template variables for organizing output:
+
+**Built-in Template Variables:**
+- `{replicate}`: Replicate number (0, 1, 2, ...)
+- `{timestamp}`: Auto-generated timestamp (yyyyMMdd_HHmmss)
+- `{step}`: Simulation step number (for per-step output files)
+- `{variable}`: Variable name (for per-variable output files)
+
+**Custom Template Variables:**
+Custom tags can be provided via CLI arguments using `--custom-tag`:
+```bash
+joshsim run simulation.josh Main \
+  --custom-tag user=alice \
+  --custom-tag experiment=drought \
+  --replicates 3
+```
+
+```josh
+debugFiles.organism = "file:///data/{user}/{experiment}/debug_{replicate}.txt"
+# Resolves to: /data/alice/drought/debug_0.txt
+#               /data/alice/drought/debug_1.txt
+#               /data/alice/drought/debug_2.txt
+```
+
+#### Output Format
+
+Debug messages are formatted with metadata for easy parsing and filtering:
+```
+[Step {step}, {entityType}] {message}
+```
+
+**Example Output:**
+```
+[Step 0, patch] [b2a744 - Default @ (0.500000, 0.500000)] PATCH_INIT counter= 0
+[Step 0, organism] INIT organism created with age 0
+[Step 1, organism] AGE current age is 1
+[Step 1, organism] MILESTONE reached age milestone!
+```
+
+#### Usage Patterns
+
+**1. Unconditional Debug (Lambda)**
+```josh
+# Direct assignment - always logs
+logAge.step = debug("AGE", "current age is", age)
+```
+
+**2. Conditional Debug with Pass**
+```josh
+# Full body with conditional logic
+logMilestone.step = {
+  if (current.age == 2 count) {
+    return debug("MILESTONE", "reached age 2!")
+  }
+  return pass  # Clear intent: return value doesn't matter
+}
+```
+
+**3. Ternary Expression with Pass**
+```josh
+# Inline conditional
+logStatus.step = debug("STATUS", "matured") if (age >= 5 count) else pass
+```
+
+**4. Multi-Level Debug**
+```josh
+start simulation MultiLevelDebug
+  debugFiles.patch = "file:///tmp/patch_debug.txt"
+  debugFiles.organism = "file:///tmp/organism_debug_{replicate}.txt"
+end simulation
+
+start patch Default
+  # Patch-level debug
+  log.init = debug(geoKey, "PATCH_INIT", "initializing patch")
+  log.step = debug("PATCH_STEP", "step=", meta.stepCount)
+end patch
+
+start organism Tree
+  # Organism-level debug (goes to separate file)
+  log.init = debug(geoKey, "ORG_INIT", "tree created")
+  log.step = debug("ORG_AGE", "age=", age)
+end organism
+```
+
+**5. State-Specific Debug**
+```josh
+start organism Tree
+  state.init = "young"
+
+  start state "young"
+    logYoung.step = debug("STATE", "in young state, age=", current.age)
+  end state
+
+  start state "mature"
+    logMature.step = debug("STATE", "in mature state, age=", current.age)
+  end state
+end organism
+```
+
+#### Best Practices
+
+1. **Use entity identifiers**: Include `geoKey` for patches and organisms to track specific individuals
+2. **Descriptive tags**: Use clear message tags like "INIT", "STEP", "MILESTONE" for easy filtering
+3. **Template paths**: Use `{replicate}` in paths to separate output across replicates
+4. **Conditional logging**: Use `return pass` for clean conditional debug logic
+5. **Entity-level routing**: Configure separate files for patch vs organism debug for easier analysis
+
+#### Zero-Overhead Design
+
+Debug output is designed for zero overhead when not configured:
+- If no `debugFiles.*` attributes are set, debug calls are no-ops
+- No threads or resources allocated when debug output is disabled
+- Minimal performance impact even with debug enabled (asynchronous writes)
+
 ### State Management
 
 Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
@@ -536,7 +767,7 @@ end state
 ### Reserved Words
 
 The following keywords are reserved and should not be used for user-defined entities or variables:
-`as`, `const`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`
+`as`, `const`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `pass`, `return`, `start`, `state`, `step`, `within`
 
 ### Program Structure
 

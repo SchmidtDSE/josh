@@ -42,4 +42,6 @@ Josh is a domain-specific language (DSL) designed for ecological modeling, with 
 
 **Josh Lang:** Human-readable domain-specific language with stanza-based entity definitions and event-driven behavioral modeling
 
+**Debug Output:** Runtime debug logging with entity-level routing, flexible output destinations (file, cloud storage, stdout), and template-based path organization
+
 **Data Export:** Multiple output formats including CSV, NetCDF, and GeoTIFF for analysis and visualization workflows
