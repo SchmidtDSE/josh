@@ -26,6 +26,7 @@ public class JvmInputOutputLayerBuilder {
   private TemplateStringRenderer templateRenderer = null;
   private MinioOptions minioOptions = null;
   private Map<String, String> customTags = Collections.emptyMap();
+  private PathTemplateResolver pathTemplateResolver = null;
 
   /**
    * Set the replicate number to use in filenames.
@@ -96,12 +97,24 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set a shared PathTemplateResolver for consistent timestamps across jobs.
+   *
+   * @param pathTemplateResolver The shared path template resolver instance.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withPathTemplateResolver(
+      PathTemplateResolver pathTemplateResolver) {
+    this.pathTemplateResolver = pathTemplateResolver;
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
     return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer,
-                                    minioOptions, customTags);
+                                    minioOptions, customTags, pathTemplateResolver);
   }
 }
