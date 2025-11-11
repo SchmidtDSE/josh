@@ -36,9 +36,9 @@ import org.joshsim.engine.geometry.EngineGeometry;
  *   <li>External data mapping semantics preserved (location-based lookups)</li>
  * </ul>
  *
- * <p><strong>toString() includes sequence:</strong> The string representation includes
- * the sequence ID for debugging and logging purposes, displayed as "Entity of type X at
- * (Y, Z) #seq".</p>
+ * <p><strong>toString() includes hash:</strong> The string representation includes
+ * a 6-character hash derived from the sequence ID, entity name, and location for debugging
+ * and logging purposes, displayed as "[hash - Name @ (x, y)]".</p>
  *
  * <p>This design choice was made after careful consideration of the codebase's specific needs
  * where location-based identity is essential for simulation correctness, while sequence IDs
@@ -154,12 +154,24 @@ public class GeoKey {
   @Override
   public String toString() {
     EngineGeometry geometry = getGeometry().orElseThrow();
-    return String.format(
-        "Entity of type %s at (%.6f, %.6f) #%d",
+
+    // Generate a short hash for unique identification
+    // Combine sequenceId, entity name, and location for uniqueness
+    String hashInput = String.format("%d-%s-%.6f-%.6f",
+        sequenceId,
         getEntityName(),
         geometry.getCenterX(),
-        geometry.getCenterY(),
-        sequenceId
+        geometry.getCenterY()
+    );
+    int hashCode = hashInput.hashCode();
+    String shortHash = String.format("%06x", hashCode & 0xFFFFFF).substring(0, 6);
+
+    return String.format(
+        "[%s - %s @ (%.6f, %.6f)]",
+        shortHash,
+        getEntityName(),
+        geometry.getCenterX(),
+        geometry.getCenterY()
     );
   }
 }

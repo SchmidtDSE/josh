@@ -12,7 +12,10 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +45,9 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.lang.io.OutputWriter;
+import org.joshsim.lang.io.OutputWriterFactory;
+import org.joshsim.lang.io.PathTemplateResolver;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -158,6 +164,30 @@ public class RunCommand implements Callable<Integer> {
       defaultValue = "false"
   )
   private boolean uploadData = false;
+
+  @Option(
+      names = "--upload-source-path",
+      description = "Templated path for uploading source .josh file. Supports template variables "
+                  + "like {user}, {editor}, {replicate}, and custom tags. "
+                  + "Example: 'minio://bucket/{user}/run/{editor}/source.josh'"
+  )
+  private String uploadSourcePath = "";
+
+  @Option(
+      names = "--upload-config-path",
+      description = "Templated path for uploading config files (.jshc). Supports template "
+                  + "variables. Can end with '/' for directory upload. "
+                  + "Example: 'minio://bucket/{user}/run/{editor}/configs/'"
+  )
+  private String uploadConfigPath = "";
+
+  @Option(
+      names = "--upload-data-path",
+      description = "Templated path for uploading data files (.jshd). Supports template "
+                  + "variables. Can end with '/' for directory upload. "
+                  + "Example: 'minio://bucket/{user}/run/{editor}/data/'"
+  )
+  private String uploadDataPath = "";
 
   /**
    * Parses custom parameter command-line options.
@@ -411,28 +441,67 @@ public class RunCommand implements Callable<Integer> {
     output.printInfo("  Job combinations: " + jobs.size());
     output.printInfo("  Replicates per job: " + replicates);
 
-    if (minioOptions.isMinioOutput()) {
-      // Upload the josh file if requested
-      if (uploadSource) {
-        Integer joshResult = saveToMinio("run", file);
-        if (joshResult != 0) {
-          return joshResult;
+    // Handle uploads - use templated paths if provided, otherwise fall back to legacy boolean flags
+    boolean hasTemplatedUploads = !uploadSourcePath.isEmpty()
+        || !uploadConfigPath.isEmpty()
+        || !uploadDataPath.isEmpty();
+    boolean hasLegacyUploads = uploadSource || uploadConfig || uploadData;
+
+    if (hasTemplatedUploads || (hasLegacyUploads && minioOptions.isMinioOutput())) {
+      // Handle templated source upload (upload once per job for self-contained folders)
+      if (!uploadSourcePath.isEmpty()) {
+        for (JoshJob job : jobs) {
+          // Create OutputWriterFactory with this job's template context (replicate 0)
+          TemplateStringRenderer jobRenderer = new TemplateStringRenderer(job, 0);
+          OutputWriterFactory jobFactory = new OutputWriterFactory(
+              0,  // replicate 0 for file uploads
+              new PathTemplateResolver(),
+              jobRenderer,
+              minioOptions
+          );
+
+          Integer result = uploadFileWithTemplate(uploadSourcePath, file, jobFactory);
+          if (result != 0) {
+            return result;
+          }
         }
       }
 
-      // Upload config files if requested
-      if (uploadConfig) {
-        Integer configResult = uploadArtifacts(jobs, ".jshc", "run");
-        if (configResult != 0) {
-          return configResult;
+      if (!uploadConfigPath.isEmpty()) {
+        Integer result = uploadArtifactsWithTemplate(uploadConfigPath, jobs, ".jshc");
+        if (result != 0) {
+          return result;
         }
       }
 
-      // Upload data files if requested
-      if (uploadData) {
-        Integer dataResult = uploadArtifacts(jobs, ".jshd", "run");
-        if (dataResult != 0) {
-          return dataResult;
+      if (!uploadDataPath.isEmpty()) {
+        Integer result = uploadArtifactsWithTemplate(uploadDataPath, jobs, ".jshd");
+        if (result != 0) {
+          return result;
+        }
+      }
+
+      // Handle legacy boolean flag uploads (old approach) - only if MinIO is configured
+      if (minioOptions.isMinioOutput()) {
+        if (uploadSource && uploadSourcePath.isEmpty()) {
+          Integer joshResult = saveToMinio("run", file);
+          if (joshResult != 0) {
+            return joshResult;
+          }
+        }
+
+        if (uploadConfig && uploadConfigPath.isEmpty()) {
+          Integer configResult = uploadArtifacts(jobs, ".jshc", "run");
+          if (configResult != 0) {
+            return configResult;
+          }
+        }
+
+        if (uploadData && uploadDataPath.isEmpty()) {
+          Integer dataResult = uploadArtifacts(jobs, ".jshd", "run");
+          if (dataResult != 0) {
+            return dataResult;
+          }
         }
       }
     }
@@ -490,6 +559,168 @@ public class RunCommand implements Callable<Integer> {
         }
       } else {
         output.printError("Artifact file not found: " + filePath);
+      }
+    }
+
+    return 0;
+  }
+
+  /**
+   * Validates that upload path template doesn't contain {replicate}.
+   *
+   * @param templatePath The template path to validate
+   * @throws IllegalArgumentException if template contains {replicate}
+   */
+  private void validateUploadTemplate(String templatePath) {
+    if (templatePath.contains("{replicate}")) {
+      throw new IllegalArgumentException(
+          "Upload path templates cannot contain {replicate} since source/config/data files "
+          + "do not vary by replicate. Template: " + templatePath + "\n"
+          + "Use job-level template variables instead: {user}, {editor}, or custom tags.");
+    }
+  }
+
+  /**
+   * Uploads a single file using templated path resolution from OutputWriterFactory.
+   *
+   * <p>This method leverages the unified output system to resolve template variables
+   * like {user}, {editor}, and custom tags in the upload path, then uploads the file
+   * content using the same infrastructure as debug/export output.</p>
+   *
+   * <p>Note: {replicate} is not supported for uploads since source files don't vary
+   * by replicate.</p>
+   *
+   * @param templatePath Template path (e.g., "minio://bucket/{user}/run/{editor}/source.josh")
+   * @param fileToUpload File to upload
+   * @param factory OutputWriterFactory with template resolution capabilities
+   * @return 0 if successful, error code otherwise
+   */
+  private Integer uploadFileWithTemplate(String templatePath, File fileToUpload,
+                                         OutputWriterFactory factory) {
+    validateUploadTemplate(templatePath);
+
+    // Build full path: if template ends with '/', append filename
+    String fullTemplatePath = templatePath;
+    if (templatePath.endsWith("/")) {
+      fullTemplatePath = templatePath + fileToUpload.getName();
+    }
+
+    try {
+      // Read file content as bytes (handles both text and binary files)
+      byte[] fileBytes = Files.readAllBytes(fileToUpload.toPath());
+      String content = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+      // Resolve template variables using the same system as debug/export
+      String resolvedPath = factory.resolvePath(fullTemplatePath);
+
+      output.printInfo("Uploading " + fileToUpload.getName() + " to " + resolvedPath);
+
+      // Create writer and upload
+      OutputWriter<String> uploader = factory.createTextWriter(resolvedPath);
+      uploader.start();
+      uploader.write(content, 0); // Use step 0 for static file uploads
+      uploader.join();
+
+      output.printInfo("✓ Successfully uploaded " + fileToUpload.getName());
+      return 0;
+    } catch (IOException e) {
+      output.printError("Failed to read file " + fileToUpload.getName() + ": " + e.getMessage());
+      return MINIO_ERROR_CODE;
+    } catch (Exception e) {
+      output.printError("Failed to upload " + fileToUpload.getName() + ": " + e.getMessage());
+      return MINIO_ERROR_CODE;
+    }
+  }
+
+  /**
+   * Uploads artifact files with templated path resolution.
+   *
+   * <p>Tracks which files came from which jobs to resolve template variables
+   * correctly per-file. Shared files (used by multiple jobs) are uploaded once
+   * per job, creating self-contained output directories.</p>
+   *
+   * <p>Example: If Precipitation.jshd is shared by job1 ({editor}=vscode) and
+   * job2 ({editor}=emacs), it uploads to both:
+   * <ul>
+   *   <li>minio://bucket/vscode/data/Precipitation.jshd</li>
+   *   <li>minio://bucket/emacs/data/Precipitation.jshd</li>
+   * </ul>
+   * This ensures each job's output folder contains everything needed to reproduce
+   * that specific run.</p>
+   *
+   * @param templatePath Template path, can end with '/' for directory-style upload
+   * @param jobs List of jobs to extract files from
+   * @param extension File extension to match (e.g., ".jshc", ".jshd")
+   * @return 0 if successful, error code otherwise
+   */
+  private Integer uploadArtifactsWithTemplate(String templatePath, List<JoshJob> jobs,
+                                              String extension) {
+    validateUploadTemplate(templatePath);
+
+    // Map file paths to ALL jobs that use them (for shared files)
+    Map<String, List<JoshJob>> fileToJobs = new HashMap<>();
+    for (JoshJob job : jobs) {
+      for (JoshJobFileInfo fileInfo : job.getFileInfos().values()) {
+        if (fileInfo.getPath().endsWith(extension)) {
+          fileToJobs.computeIfAbsent(fileInfo.getPath(), k -> new ArrayList<>()).add(job);
+        }
+      }
+    }
+
+    // If no files found in jobs (no --data flag used), scan working directory
+    if (fileToJobs.isEmpty()) {
+      File workingDir = file.getParentFile();
+      if (workingDir == null) {
+        workingDir = new File(".");
+      }
+
+      File[] filesInDir = workingDir.listFiles((dir, name) -> name.endsWith(extension));
+      if (filesInDir != null && filesInDir.length > 0) {
+        // For files not associated with a job, use first job's context
+        JoshJob defaultJob = jobs.isEmpty() ? null : jobs.get(0);
+        if (defaultJob == null) {
+          output.printError("No job context available for uploading files from working directory");
+          return MINIO_ERROR_CODE;
+        }
+        for (File f : filesInDir) {
+          fileToJobs.computeIfAbsent(f.getPath(), k -> new ArrayList<>()).add(defaultJob);
+        }
+      }
+    }
+
+    // If still no files found, skip silently
+    if (fileToJobs.isEmpty()) {
+      output.printInfo("No " + extension + " files found to upload");
+      return 0;
+    }
+
+    // Upload each file once per job that uses it
+    for (Map.Entry<String, List<JoshJob>> entry : fileToJobs.entrySet()) {
+      String filePath = entry.getKey();
+      List<JoshJob> jobsUsingFile = entry.getValue();
+      File artifactFile = new File(filePath);
+
+      if (!artifactFile.exists()) {
+        output.printError("Artifact file not found: " + filePath);
+        return MINIO_ERROR_CODE;
+      }
+
+      // Upload this file with each job's template context
+      for (JoshJob job : jobsUsingFile) {
+        // Create OutputWriterFactory with this job's template context (replicate 0)
+        TemplateStringRenderer jobRenderer = new TemplateStringRenderer(job, 0);
+        OutputWriterFactory jobFactory = new OutputWriterFactory(
+            0,  // replicate 0 for file uploads
+            new PathTemplateResolver(),
+            jobRenderer,
+            minioOptions
+        );
+
+        // uploadFileWithTemplate now handles appending filename if path ends with '/'
+        Integer result = uploadFileWithTemplate(templatePath, artifactFile, jobFactory);
+        if (result != 0) {
+          return result;
+        }
       }
     }
 

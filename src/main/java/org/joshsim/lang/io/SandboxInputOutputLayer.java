@@ -56,9 +56,12 @@ public class SandboxInputOutputLayer implements InputOutputLayer {
 
   @Override
   public OutputWriterFactory getOutputWriterFactory() {
-    // In sandbox mode, use OutputWriterFactory with no MinIO support and no job template renderer
+    // In sandbox mode, use SandboxOutputWriterFactory which only creates WebAssembly-compatible
+    // strategies. This avoids TeaVM trying to compile JVM-only LocalOutputStreamStrategy
+    // - allowTemplates=true (remote workers): redirect ALL protocols through callback
+    // - allowTemplates=false (pure WebAssembly): only memory:// and stdout:// allowed
     // Replicate 0 since sandbox typically runs single replicate
-    return new OutputWriterFactory(0, new PathTemplateResolver(), null, null);
+    return new SandboxOutputWriterFactory(0, new PathTemplateResolver(), callback, allowTemplates);
   }
 
   @Override

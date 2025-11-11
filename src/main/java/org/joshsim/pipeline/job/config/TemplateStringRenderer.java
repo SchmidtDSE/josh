@@ -214,7 +214,8 @@ public class TemplateStringRenderer {
   private boolean isExportSpecificTemplate(String templateVar) {
     return "replicate".equals(templateVar)
            || "step".equals(templateVar)
-           || "variable".equals(templateVar);
+           || "variable".equals(templateVar)
+           || "timestamp".equals(templateVar);
   }
 
   /**

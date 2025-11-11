@@ -8,14 +8,17 @@ package org.joshsim.lang.io;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 
 /**
  * Strategy which opens an OutputStream to a local file.
+ *
+ * <p>Note: File locking has been removed to maintain WebAssembly compatibility.
+ * File locking was only needed for concurrent multi-replicate writes to the same file,
+ * which is not a concern in WebAssembly environments (single replicate, no file:// access).
+ * For JVM deployments with multiple concurrent replicates writing to the same file,
+ * use separate output files per replicate using {replicate} template variable.</p>
  */
 public class LocalOutputStreamStrategy implements OutputStreamStrategy {
 
@@ -45,63 +48,80 @@ public class LocalOutputStreamStrategy implements OutputStreamStrategy {
 
   @Override
   public OutputStream open() throws IOException {
+    File file = new File(location);
+
+    // Create parent directories if they don't exist
+    File parentDir = file.getParentFile();
+    if (parentDir != null && !parentDir.exists()) {
+      if (!parentDir.mkdirs()) {
+        throw new IOException("Failed to create parent directories for: " + location);
+      }
+    }
+
     // Check if file exists and has content BEFORE opening for append
     boolean fileHasContent = false;
     if (appendMode) {
-      File file = new File(location);
       fileHasContent = file.exists() && file.length() > 0;
     }
 
     FileOutputStream outputStream = new FileOutputStream(location, appendMode);
-    if (appendMode) {
-      FileChannel channel = outputStream.getChannel();
-      FileLock lock = channel.lock(); // Exclusive lock, blocks until acquired
-      return new LockingOutputStream(outputStream, lock, fileHasContent);
+    if (appendMode && fileHasContent) {
+      return new SimpleAppendOutputStream(outputStream);
     }
     return outputStream;
   }
 
   /**
-   * OutputStream wrapper that releases a file lock on close and tracks append state.
+   * Simple OutputStream wrapper that tracks append state.
    *
-   * <p>This class wraps a FileOutputStream with a FileLock, ensuring that the lock is properly
-   * released when the stream is closed. This is essential for thread-safe append operations where
-   * multiple replicates may attempt to write to the same file concurrently.</p>
+   * <p>This class wraps a FileOutputStream and implements AppendOutputStream to indicate
+   * that data is being appended to an existing non-empty file, allowing downstream writers
+   * (like CsvWriteStrategy) to skip writing headers when appropriate.</p>
    *
-   * <p>Additionally, this class implements AppendOutputStream to indicate whether data is being
-   * appended to an existing non-empty file, allowing downstream writers (like CsvWriteStrategy)
-   * to skip writing headers when appropriate.</p>
+   * <p>Note: This implementation does NOT provide file locking. For concurrent multi-replicate
+   * writes, use separate files per replicate with the {replicate} template variable.</p>
    */
-  private static class LockingOutputStream extends FilterOutputStream
+  private static class SimpleAppendOutputStream extends OutputStream
       implements AppendOutputStream {
-    private final FileLock lock;
-    private final boolean appendingToExistingFile;
+    private final OutputStream delegate;
 
     /**
-     * Constructs a LockingOutputStream with the specified stream, lock, and append state.
+     * Constructs a SimpleAppendOutputStream wrapping the given stream.
      *
-     * @param out The underlying output stream.
-     * @param lock The file lock to be released on close.
-     * @param appendingToExistingFile True if appending to a non-empty existing file.
+     * @param delegate The underlying output stream.
      */
-    public LockingOutputStream(OutputStream out, FileLock lock, boolean appendingToExistingFile) {
-      super(out);
-      this.lock = lock;
-      this.appendingToExistingFile = appendingToExistingFile;
+    public SimpleAppendOutputStream(OutputStream delegate) {
+      this.delegate = delegate;
     }
 
     @Override
     public boolean isAppendingToExistingFile() {
-      return appendingToExistingFile;
+      return true; // Always true for this wrapper
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+      delegate.write(b);
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+      delegate.write(b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      delegate.write(b, off, len);
+    }
+
+    @Override
+    public void flush() throws IOException {
+      delegate.flush();
     }
 
     @Override
     public void close() throws IOException {
-      try {
-        lock.release();
-      } finally {
-        super.close();
-      }
+      delegate.close();
     }
   }
 

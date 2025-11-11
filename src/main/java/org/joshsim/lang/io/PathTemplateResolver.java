@@ -10,6 +10,9 @@
 
 package org.joshsim.lang.io;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -21,6 +24,7 @@ import java.util.regex.Pattern;
  * <p>Template variables are specified in {name} format and include:
  * <ul>
  *   <li>{replicate} - The replicate number</li>
+ *   <li>{timestamp} - Auto-generated timestamp (yyyyMMdd_HHmmss format)</li>
  *   <li>{user} - Custom tag for user identification</li>
  *   <li>{editor} - Custom tag for editor/configuration name</li>
  *   <li>Any other custom tags provided via --custom-tag arguments</li>
@@ -37,8 +41,11 @@ import java.util.regex.Pattern;
 public class PathTemplateResolver {
 
   private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
+  private static final DateTimeFormatter TIMESTAMP_FORMAT =
+      DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").withZone(ZoneId.systemDefault());
 
   private final Map<String, String> customTags;
+  private final String timestamp;
 
   /**
    * Creates a new PathTemplateResolver with custom tags.
@@ -47,6 +54,8 @@ public class PathTemplateResolver {
    */
   public PathTemplateResolver(Map<String, String> customTags) {
     this.customTags = customTags != null ? customTags : Collections.emptyMap();
+    // Generate timestamp once per resolver instance to ensure consistency across all paths
+    this.timestamp = TIMESTAMP_FORMAT.format(Instant.now());
   }
 
   /**
@@ -73,6 +82,9 @@ public class PathTemplateResolver {
 
     // Replace {replicate} with the actual replicate number
     result = result.replace("{replicate}", String.valueOf(replicate));
+
+    // Replace {timestamp} with the auto-generated timestamp
+    result = result.replace("{timestamp}", timestamp);
 
     // Replace custom tags
     for (Map.Entry<String, String> entry : customTags.entrySet()) {

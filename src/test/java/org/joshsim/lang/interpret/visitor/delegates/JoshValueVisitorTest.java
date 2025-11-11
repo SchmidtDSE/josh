@@ -130,7 +130,8 @@ class JoshValueVisitorTest {
     // Mock
     StringContext context = mock(StringContext.class);
     when(context.getText()).thenReturn("\"test string\"");
-    when(valueFactory.build("\"test string\"", Units.of(""))).thenReturn(mockValue);
+    // visitString strips the surrounding quotes before calling build()
+    when(valueFactory.build("test string", Units.of(""))).thenReturn(mockValue);
 
     // Test
     JoshFragment result = visitor.visitString(context);

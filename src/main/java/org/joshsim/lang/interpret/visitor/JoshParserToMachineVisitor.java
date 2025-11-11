@@ -91,6 +91,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return valueVisitor.visitAllExpression(ctx);
   }
 
+  public JoshFragment visitPassExpression(JoshLangParser.PassExpressionContext ctx) {
+    return valueVisitor.visitPassExpression(ctx);
+  }
+
   public JoshFragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
     return externalVisitor.visitExternalValue(ctx);
   }

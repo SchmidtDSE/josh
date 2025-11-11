@@ -357,8 +357,9 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
         // The machine will pop all values, format them, and write to debug
         machine.debugVariadic(argActions.size());
 
-        // Push empty value as result
-        machine.push(engineValueFactory.build(true, Units.EMPTY));
+        // Push 0 count as result - same as 'pass' keyword
+        // This allows debug to be used in conditionals without awkward returns
+        machine.push(engineValueFactory.build(0, Units.of("count")));
         return machine;
       };
 
