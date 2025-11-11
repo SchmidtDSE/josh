@@ -362,8 +362,8 @@ public class OutputWriterFactory {
     String protocol = target.getProtocol().toLowerCase();
 
     if (protocol.isEmpty() || protocol.equals("file")) {
-      // Local file system - use append mode for debug output
-      return new LocalOutputStreamStrategy(target.getPath(), true);
+      // Local file system - default to overwrite mode
+      return new LocalOutputStreamStrategy(target.getPath(), false);
 
     } else if (protocol.equals("minio")) {
       // MinIO direct streaming
@@ -429,8 +429,8 @@ public class OutputWriterFactory {
     String protocol = target.getProtocol().toLowerCase();
 
     if (protocol.isEmpty() || protocol.equals("file")) {
-      // Local file system - use append mode for consolidated multi-replicate files
-      return new LocalOutputStreamStrategy(target.getPath(), true);
+      // Local file system - default to overwrite mode
+      return new LocalOutputStreamStrategy(target.getPath(), false);
 
     } else if (protocol.equals("minio")) {
       // MinIO direct streaming

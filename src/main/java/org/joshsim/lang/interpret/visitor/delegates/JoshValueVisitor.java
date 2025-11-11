@@ -85,7 +85,10 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the string literal parsed.
    */
   public JoshFragment visitString(JoshLangParser.StringContext ctx) {
-    String string = ctx.getText();
+    String rawText = ctx.getText();
+    // Strip surrounding quotes from string literals
+    // Input: "PATCH_INIT" -> Output: PATCH_INIT
+    String string = rawText.length() >= 2 ? rawText.substring(1, rawText.length() - 1) : rawText;
     EngineValue value = engineValueFactory.build(string, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
