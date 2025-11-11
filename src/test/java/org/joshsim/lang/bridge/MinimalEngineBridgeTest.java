@@ -202,6 +202,8 @@ public class MinimalEngineBridgeTest {
     GeoKey mockKey = mock(GeoKey.class);
 
     when(mockLayer.getAt(mockKey, 0L)).thenReturn(mockValue);
+    when(mockLayer.getMinTimestep()).thenReturn(0L);
+    when(mockLayer.getMaxTimestep()).thenReturn(100L);
     when(mockExternalGetter.getResource("Precipitation.jshd")).thenReturn(mockLayer);
 
     EngineBridge bridgeWithExternal = new MinimalEngineBridge(
@@ -221,6 +223,51 @@ public class MinimalEngineBridgeTest {
     // Verify - bridge should append .jshd before calling getter
     assertEquals(10.0, result.getAsDouble(), 0.001);
     verify(mockExternalGetter).getResource("Precipitation.jshd");
+  }
+
+  @Test
+  void testGetExternalValidatesTimestepRange() {
+    // Setup
+    ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
+    DataGridLayer mockLayer = mock(DataGridLayer.class);
+    MutableEntity mockSimWithSteps = mock(MutableEntity.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    GeoKey mockKey = mock(GeoKey.class);
+
+    // Simulation requires steps 0-50 but external data only has 0-4
+    EngineValue stepsLow = engineValueFactory.build(0, Units.of("count"));
+    EngineValue stepsHigh = engineValueFactory.build(50, Units.of("count"));
+    when(mockSimWithSteps.getAttributeValue("steps.low")).thenReturn(Optional.of(stepsLow));
+    when(mockSimWithSteps.getAttributeValue("steps.high")).thenReturn(Optional.of(stepsHigh));
+
+    when(mockLayer.getMinTimestep()).thenReturn(0L);
+    when(mockLayer.getMaxTimestep()).thenReturn(4L);  // Only 5 timesteps available
+    when(mockExternalGetter.getResource("Temperature.jshd")).thenReturn(mockLayer);
+
+    EngineBridge bridgeWithExternal = new MinimalEngineBridge(
+        new EngineValueFactory(),
+        new GridGeometryFactory(),
+        mockSimWithSteps,
+        mockConverter,
+        mockPrototypeStore,
+        mockExternalGetter,
+        new NoOpConfigGetter(),
+        mockReplicate
+    );
+
+    // Execute and verify - should throw with descriptive error
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> bridgeWithExternal.getExternal(mockKey, "Temperature", 0L),
+        "Should throw when external data has insufficient timesteps"
+    );
+
+    // Verify error message contains helpful information
+    assertTrue(exception.getMessage().contains("Temperature.jshd"));
+    assertTrue(exception.getMessage().contains("Simulation requires steps [0, 50]"));
+    assertTrue(exception.getMessage().contains("external data only covers steps [0, 4]"));
+    assertTrue(exception.getMessage().contains("51 total steps"));
+    assertTrue(exception.getMessage().contains("5 total steps"));
   }
 
   private void expectQuery(Query query, List<Patch> result) {
