@@ -64,6 +64,8 @@ public class OutputWriterFactory {
   private final PathTemplateResolver templateResolver;
   private final TemplateStringRenderer jobTemplateRenderer;
   private final MinioOptions minioOptions;
+  private final SandboxExportCallback sandboxCallback;
+  private final boolean allowAllProtocols;
 
   /**
    * Creates a new OutputWriterFactory.
@@ -78,16 +80,66 @@ public class OutputWriterFactory {
    *                           like {editor} from data file mappings (nullable)
    * @param minioOptions The MinIO configuration options for remote storage (nullable, MinIO
    *                    destinations will not be available if null)
+   * @param sandboxCallback The callback for sandbox/WebAssembly environments (nullable)
+   * @param allowAllProtocols If true and sandboxCallback is set, all (file://, minio://, etc.)
+   *                         are redirected through the callback (for remote workers). If false,
+   *                         only memory:// and stdout:// are allowed (for pure WebAssembly).
    */
   public OutputWriterFactory(int replicate, PathTemplateResolver templateResolver,
                             TemplateStringRenderer jobTemplateRenderer,
-                            MinioOptions minioOptions) {
+                            MinioOptions minioOptions,
+                            SandboxExportCallback sandboxCallback,
+                            boolean allowAllProtocols) {
     this.replicate = replicate;
     this.templateResolver = templateResolver != null
         ? templateResolver
         : new PathTemplateResolver();
     this.jobTemplateRenderer = jobTemplateRenderer;
     this.minioOptions = minioOptions;
+    this.sandboxCallback = sandboxCallback;
+    this.allowAllProtocols = allowAllProtocols;
+  }
+
+  /**
+   * Creates a new OutputWriterFactory for sandbox/WebAssembly (backwards-compatible overload).
+   *
+   * <p>Defaults to allowAllProtocols=false for pure WebAssembly mode.</p>
+   *
+   * @param replicate The replicate number to use in path template resolution
+   * @param templateResolver The template resolver for processing {replicate}, {user},
+   *                        and other custom tags in paths (nullable, defaults to basic resolver)
+   * @param jobTemplateRenderer The job template renderer for processing job-specific templates
+   *                           like {editor} from data file mappings (nullable)
+   * @param minioOptions The MinIO configuration options for remote storage (nullable, MinIO
+   *                    destinations will not be available if null)
+   * @param sandboxCallback The callback for memory:// protocol in WebAssembly environments
+   *                       (nullable, memory:// destinations will not be available if null)
+   */
+  public OutputWriterFactory(int replicate, PathTemplateResolver templateResolver,
+                            TemplateStringRenderer jobTemplateRenderer,
+                            MinioOptions minioOptions,
+                            SandboxExportCallback sandboxCallback) {
+    this(replicate, templateResolver, jobTemplateRenderer, minioOptions, sandboxCallback, false);
+  }
+
+  /**
+   * Creates a new OutputWriterFactory (backwards-compatible overload).
+   *
+   * <p>This constructor maintains backwards compatibility for existing code that doesn't
+   * need memory:// protocol support.</p>
+   *
+   * @param replicate The replicate number to use in path template resolution
+   * @param templateResolver The template resolver for processing {replicate}, {user},
+   *                        and other custom tags in paths (nullable, defaults to basic resolver)
+   * @param jobTemplateRenderer The job template renderer for processing job-specific templates
+   *                           like {editor} from data file mappings (nullable)
+   * @param minioOptions The MinIO configuration options for remote storage (nullable, MinIO
+   *                    destinations will not be available if null)
+   */
+  public OutputWriterFactory(int replicate, PathTemplateResolver templateResolver,
+                            TemplateStringRenderer jobTemplateRenderer,
+                            MinioOptions minioOptions) {
+    this(replicate, templateResolver, jobTemplateRenderer, minioOptions, null);
   }
 
   /**
@@ -359,6 +411,61 @@ public class OutputWriterFactory {
    * @throws IllegalArgumentException if protocol is unsupported or MinIO is not configured
    */
   private OutputStreamStrategy createOutputStreamStrategy(OutputTarget target) {
+    // Sandbox mode: delegate to sandbox-specific method
+    // This separation helps TeaVM understand that JVM-only classes are never used in WebAssembly
+    if (sandboxCallback != null) {
+      return createSandboxOutputStreamStrategy(target, sandboxCallback, allowAllProtocols);
+    }
+
+    // JVM mode: delegate to JVM-specific method
+    return createJvmOutputStreamStrategy(target);
+  }
+
+  /**
+   * Creates output stream strategy for sandbox environments (WebAssembly or remote workers).
+   *
+   * <p>This method creates WebAssembly-compatible strategies to avoid TeaVM compilation issues.</p>
+   *
+   * @param target The output target
+   * @param callback The sandbox callback for memory output
+   * @param allowAllProtocols If true, accept any protocol and redirect through callback
+   * @return WebAssembly-compatible OutputStreamStrategy
+   */
+  private OutputStreamStrategy createSandboxOutputStreamStrategy(
+      OutputTarget target,
+      SandboxExportCallback callback,
+      boolean allowAllProtocols) {
+    String protocol = target.getProtocol().toLowerCase();
+
+    if (allowAllProtocols) {
+      // Remote workers: accept ANY protocol but redirect through callback
+      // The protocol is just metadata - server handles actual file/MinIO operations
+      return new MemoryOutputStreamStrategy(callback);
+    }
+
+    // Pure WebAssembly: only memory:// and stdout:// allowed
+    if (protocol.equals("memory")) {
+      return new MemoryOutputStreamStrategy(callback);
+    } else if (protocol.equals("stdout")) {
+      return new StdoutOutputStreamStrategy();
+    } else {
+      throw new IllegalArgumentException(
+        "Only memory:// and stdout:// protocols are supported in WebAssembly mode. "
+        + "Found: " + protocol + "://"
+      );
+    }
+  }
+
+  /**
+   * Creates output stream strategy for JVM environments.
+   *
+   * <p>This method creates strategies that use JVM-specific features like file I/O,
+   * threading, and MinIO client.</p>
+   *
+   * @param target The output target
+   * @return JVM-specific OutputStreamStrategy
+   */
+  private OutputStreamStrategy createJvmOutputStreamStrategy(OutputTarget target) {
     String protocol = target.getProtocol().toLowerCase();
 
     if (protocol.isEmpty() || protocol.equals("file")) {
@@ -404,11 +511,14 @@ public class OutputWriterFactory {
       return new StdoutOutputStreamStrategy();
 
     } else if (protocol.equals("memory")) {
-      // Memory output - throw exception for now, needs special handling
-      throw new IllegalArgumentException(
-        "Memory protocol requires special OutputStreamStrategy implementation. "
-        + "This will be supported in a future phase."
-      );
+      // Memory output - for WebAssembly environments
+      if (sandboxCallback == null) {
+        throw new IllegalArgumentException(
+          "Memory protocol requires a SandboxExportCallback. "
+          + "This is only available in WebAssembly/sandbox environments."
+        );
+      }
+      return new MemoryOutputStreamStrategy(sandboxCallback);
 
     } else {
       throw new IllegalArgumentException("Unsupported protocol: " + protocol);

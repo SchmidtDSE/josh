@@ -12,10 +12,6 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * OutputStreamStrategy implementation for direct streaming to MinIO.
@@ -31,30 +27,19 @@ import java.util.concurrent.Executors;
  * issues and supports retry logic since the queue can be read multiple times if needed.
  * </p>
  *
- * <p>The upload happens asynchronously in a dedicated thread pool to prevent thread exhaustion
- * when MinIO's internal async operations compete for ForkJoinPool threads. The close() method
- * blocks until completion to ensure data is fully written before the stream is closed.</p>
+ * <p>The upload happens asynchronously using Thread-based concurrency to maintain WebAssembly
+ * compatibility. The close() method blocks until completion to ensure data is fully written
+ * before the stream is closed.</p>
+ *
+ * <p><b>WebAssembly Note:</b> This class is not used in WebAssembly environments (where MinIO
+ * client is not available). It uses simple Thread-based async patterns instead of ExecutorService
+ * to avoid TeaVM compilation issues with java.util.concurrent classes.</p>
  */
 public class MinioOutputStreamStrategy implements OutputStreamStrategy {
 
   private static final int[] RETRY_DELAYS_MS = {1000, 2000, 4000, 8000, 16000};
   private static final int CHUNK_SIZE = 256 * 1024; // 256KB chunks
   private static final int QUEUE_CAPACITY = 8; // 8 chunks = 2MB buffer
-
-  /**
-   * Dedicated thread pool for MinIO uploads.
-   *
-   * <p>Using a separate ExecutorService prevents thread starvation issues when MinIO's
-   * internal async operations (which also use ForkJoinPool) compete with upload threads.
-   * A cached thread pool grows as needed to handle concurrent uploads without blocking.</p>
-   */
-  private static final ExecutorService UPLOAD_EXECUTOR =
-      Executors.newCachedThreadPool(runnable -> {
-        Thread thread = new Thread(runnable);
-        thread.setName("minio-upload-" + thread.threadId());
-        thread.setDaemon(true); // Allow JVM to exit even if uploads are pending
-        return thread;
-      });
 
   private final MinioClient minioClient;
   private final String bucketName;
@@ -80,19 +65,20 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
     ensureBucketExists();
 
     // Create BlockingQueue streams for async upload
-    // The input stream uses an ArrayBlockingQueue with 8-chunk capacity (2MB total)
     BlockingQueueInputStream inputStream = new BlockingQueueInputStream(CHUNK_SIZE, QUEUE_CAPACITY);
-    BlockingQueueOutputStream outputStream = new BlockingQueueOutputStream(inputStream, CHUNK_SIZE);
 
-    // Start async upload task on dedicated thread pool
-    // This prevents thread starvation when MinIO's internal async operations
-    // compete for ForkJoinPool.commonPool threads
-    CompletableFuture<Void> uploadFuture = CompletableFuture.runAsync(() -> {
-      uploadWithRetry(inputStream);
-    }, UPLOAD_EXECUTOR);
+    // Start async upload task on a dedicated daemon thread
+    // Using Thread instead of ExecutorService for WebAssembly compatibility
+    UploadTask uploadTask = new UploadTask(inputStream);
+    Thread uploadThread = new Thread(uploadTask);
+    uploadThread.setName("minio-upload-" + System.currentTimeMillis());
+    uploadThread.setDaemon(true);
+    uploadThread.start();
 
     // Return a wrapper that blocks on close() to ensure upload completes
-    return new MinioOutputStream(outputStream, uploadFuture);
+    // The input stream uses an ArrayBlockingQueue with 8-chunk capacity (2MB total)
+    BlockingQueueOutputStream outputStream = new BlockingQueueOutputStream(inputStream, CHUNK_SIZE);
+    return new MinioOutputStream(outputStream, uploadTask, uploadThread);
   }
 
   /**
@@ -117,6 +103,42 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
       }
     } catch (Exception e) {
       throw new IOException("Failed to ensure bucket exists: " + bucketName, e);
+    }
+  }
+
+  /**
+   * Runnable task that uploads data from a BlockingQueue input stream.
+   *
+   * <p>This task runs asynchronously on a dedicated thread and signals completion
+   * or failure via volatile fields. Using Runnable + Thread instead of ExecutorService
+   * and CompletableFuture for WebAssembly compatibility.</p>
+   */
+  private class UploadTask implements Runnable {
+    private final BlockingQueueInputStream inputStream;
+    private volatile boolean completed = false;
+    private volatile Exception exception = null;
+
+    public UploadTask(BlockingQueueInputStream inputStream) {
+      this.inputStream = inputStream;
+    }
+
+    public boolean isCompleted() {
+      return completed;
+    }
+
+    public Exception getException() {
+      return exception;
+    }
+
+    @Override
+    public void run() {
+      try {
+        uploadWithRetry(inputStream);
+        completed = true;
+      } catch (Exception e) {
+        exception = e;
+        completed = true;
+      }
     }
   }
 
@@ -184,28 +206,35 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
    *   <li>Writer calls close() → triggers flush() and delegate.close()</li>
    *   <li>delegate.close() flushes remaining data and signals EOF to the input stream</li>
    *   <li>Upload thread detects EOF and finishes upload</li>
-   *   <li>Writer thread waits via uploadFuture.get() for upload to complete</li>
+   *   <li>Writer thread waits via thread.join() for upload to complete</li>
    *   <li>Upload completes successfully or propagates error</li>
    * </ol>
    *
    * <p><b>Note:</b> Unlike PipedOutputStream, BlockingQueueOutputStream doesn't require
    * special close ordering. The output stream manages EOF signaling automatically.</p>
+   *
+   * <p><b>WebAssembly Note:</b> Uses Thread.join() instead of CompletableFuture for
+   * WebAssembly compatibility.</p>
    */
   private static class MinioOutputStream extends OutputStream {
     private final BlockingQueueOutputStream delegate;
-    private final CompletableFuture<Void> uploadFuture;
+    private final UploadTask uploadTask;
+    private final Thread uploadThread;
     private boolean closed = false;
 
     /**
      * Constructs a MinioOutputStream.
      *
      * @param delegate The underlying BlockingQueueOutputStream to write to
-     * @param uploadFuture The future representing the async upload task
+     * @param uploadTask The task performing the async upload
+     * @param uploadThread The thread running the upload task
      */
     public MinioOutputStream(BlockingQueueOutputStream delegate,
-                             CompletableFuture<Void> uploadFuture) {
+                             UploadTask uploadTask,
+                             Thread uploadThread) {
       this.delegate = delegate;
-      this.uploadFuture = uploadFuture;
+      this.uploadTask = uploadTask;
+      this.uploadThread = uploadThread;
     }
 
     @Override
@@ -240,17 +269,20 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
         delegate.flush();
         delegate.close();
 
-        // Wait for upload to complete
-        uploadFuture.get();
+        // Wait for upload thread to complete
+        uploadThread.join();
+
+        // Check for upload errors
+        if (uploadTask.exception != null) {
+          throw new IOException("Upload failed: " + uploadTask.exception.getMessage(),
+                                uploadTask.exception);
+        }
+
         closed = true;
 
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Upload interrupted while waiting for completion", e);
-
-      } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        throw new IOException("Upload failed: " + cause.getMessage(), cause);
       }
     }
   }
