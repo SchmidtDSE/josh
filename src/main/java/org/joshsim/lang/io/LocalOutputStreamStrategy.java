@@ -45,10 +45,19 @@ public class LocalOutputStreamStrategy implements OutputStreamStrategy {
 
   @Override
   public OutputStream open() throws IOException {
+    File file = new File(location);
+
+    // Create parent directories if they don't exist
+    File parentDir = file.getParentFile();
+    if (parentDir != null && !parentDir.exists()) {
+      if (!parentDir.mkdirs()) {
+        throw new IOException("Failed to create parent directories for: " + location);
+      }
+    }
+
     // Check if file exists and has content BEFORE opening for append
     boolean fileHasContent = false;
     if (appendMode) {
-      File file = new File(location);
       fileHasContent = file.exists() && file.length() > 0;
     }
 

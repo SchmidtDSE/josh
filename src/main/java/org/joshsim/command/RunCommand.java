@@ -449,14 +449,22 @@ public class RunCommand implements Callable<Integer> {
     boolean hasLegacyUploads = uploadSource || uploadConfig || uploadData;
 
     if (hasTemplatedUploads || (hasLegacyUploads && minioOptions.isMinioOutput())) {
-      // Create OutputWriterFactory for upload template resolution (using first job, replicate 0)
-      OutputWriterFactory uploadFactory = initInputOutputLayer.getOutputWriterFactory();
-
-      // Handle templated uploads (new approach)
+      // Handle templated source upload (upload once per job for self-contained folders)
       if (!uploadSourcePath.isEmpty()) {
-        Integer result = uploadFileWithTemplate(uploadSourcePath, file, uploadFactory);
-        if (result != 0) {
-          return result;
+        for (JoshJob job : jobs) {
+          // Create OutputWriterFactory with this job's template context (replicate 0)
+          TemplateStringRenderer jobRenderer = new TemplateStringRenderer(job, 0);
+          OutputWriterFactory jobFactory = new OutputWriterFactory(
+              0,  // replicate 0 for file uploads
+              new PathTemplateResolver(),
+              jobRenderer,
+              minioOptions
+          );
+
+          Integer result = uploadFileWithTemplate(uploadSourcePath, file, jobFactory);
+          if (result != 0) {
+            return result;
+          }
         }
       }
 
@@ -591,12 +599,20 @@ public class RunCommand implements Callable<Integer> {
   private Integer uploadFileWithTemplate(String templatePath, File fileToUpload,
                                          OutputWriterFactory factory) {
     validateUploadTemplate(templatePath);
+
+    // Build full path: if template ends with '/', append filename
+    String fullTemplatePath = templatePath;
+    if (templatePath.endsWith("/")) {
+      fullTemplatePath = templatePath + fileToUpload.getName();
+    }
+
     try {
-      // Read file content
-      String content = Files.readString(Paths.get(fileToUpload.getAbsolutePath()));
+      // Read file content as bytes (handles both text and binary files)
+      byte[] fileBytes = Files.readAllBytes(fileToUpload.toPath());
+      String content = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
 
       // Resolve template variables using the same system as debug/export
-      String resolvedPath = factory.resolvePath(templatePath);
+      String resolvedPath = factory.resolvePath(fullTemplatePath);
 
       output.printInfo("Uploading " + fileToUpload.getName() + " to " + resolvedPath);
 
@@ -701,13 +717,8 @@ public class RunCommand implements Callable<Integer> {
             minioOptions
         );
 
-        // Build full path: if template ends with '/', append filename
-        String fullTemplatePath = templatePath;
-        if (templatePath.endsWith("/")) {
-          fullTemplatePath = templatePath + artifactFile.getName();
-        }
-
-        Integer result = uploadFileWithTemplate(fullTemplatePath, artifactFile, jobFactory);
+        // uploadFileWithTemplate now handles appending filename if path ends with '/'
+        Integer result = uploadFileWithTemplate(templatePath, artifactFile, jobFactory);
         if (result != 0) {
           return result;
         }
