@@ -97,15 +97,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     this(bridge, scope, Optional.empty());
   }
 
-  @Override
-  public EventHandlerMachine push(ValueResolver valueResolver) {
-    Optional<EngineValue> value = valueResolver.get(scope);
-    memory.push(value.orElseThrow(
-        () -> createValueResolverError(valueResolver)
-    ));
-    return this;
-  }
-
   /**
    * Creates a descriptive error message when a value cannot be resolved.
    *
@@ -124,7 +115,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
       String message = String.format(
           "Unable to access '%s'. The attribute '%s' is not defined in your simulation block. "
-              + "To access '%s' via the 'meta' namespace, you need to define it in your simulation. "
+              + "To access '%s' via the 'meta' namespace, define it in your simulation. "
               + "For example, add:\n\n"
               + "  %s.init = <initial value>\n"
               + "  %s.step = <step logic>\n\n"
@@ -150,6 +141,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         String.format("Unable to get value for %s.%s", valueResolver, attributeList)
     );
   }
+
+  @Override
+  public EventHandlerMachine push(ValueResolver valueResolver) {
+    Optional<EngineValue> value = valueResolver.get(scope);
+    memory.push(value.orElseThrow(
+        () -> createValueResolverError(valueResolver)
+    ));
+    return this;
+  }
+
 
   @Override
   public EventHandlerMachine push(EngineValue value) {

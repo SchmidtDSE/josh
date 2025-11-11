@@ -230,7 +230,9 @@ public class MinimalEngineBridgeTest {
     // Setup
     ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
     DataGridLayer mockLayer = mock(DataGridLayer.class);
-    MutableEntity mockSimWithSteps = mock(MutableEntity.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+    MutableEntity mockSimWithSteps = mock(MutableEntity.class,
+        org.mockito.Mockito.RETURNS_DEEP_STUBS
+    );
     EngineValueFactory engineValueFactory = new EngineValueFactory();
     GeoKey mockKey = mock(GeoKey.class);
 
