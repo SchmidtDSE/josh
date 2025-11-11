@@ -195,7 +195,32 @@ public class MinimalEngineBridge implements EngineBridge {
     if (!externalData.containsKey(name)) {
       // Append .jshd extension to external resource name before loading
       String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
-      externalData.put(name, externalResourceGetter.getResource(fileName));
+      DataGridLayer gridLayer = externalResourceGetter.getResource(fileName);
+
+      // Validate that the external data has sufficient timesteps for the simulation
+      long simStartStep = Math.round(startStep.getAsDouble());
+      long simEndStep = Math.round(endStep.getAsDouble());
+      long dataMinTimestep = gridLayer.getMinTimestep();
+      long dataMaxTimestep = gridLayer.getMaxTimestep();
+
+      if (simStartStep < dataMinTimestep || simEndStep > dataMaxTimestep) {
+        throw new IllegalArgumentException(String.format(
+            "External data file '%s' does not have sufficient timesteps for the simulation. "
+                + "Simulation requires steps [%d, %d] (%d total steps), "
+                + "but external data only covers steps [%d, %d] (%d total steps). "
+                + "Please ensure your external data files (*.jshd) cover the full simulation range "
+                + "by updating steps.high in your Josh script or regenerating the external data.",
+            fileName,
+            simStartStep,
+            simEndStep,
+            simEndStep - simStartStep + 1,
+            dataMinTimestep,
+            dataMaxTimestep,
+            dataMaxTimestep - dataMinTimestep + 1
+        ));
+      }
+
+      externalData.put(name, gridLayer);
     }
     return externalData.get(name).getAt(key, step);
   }

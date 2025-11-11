@@ -126,6 +126,45 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int horizCut = (int) (x - getMinX());
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
+
+    // Validate bounds before accessing array
+    boolean horizOutBounds = horizCut < 0 || horizCut >= getWidth();
+    if (horizOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Horizontal position out of bounds: x=%d is outside grid range [%d, %d]",
+          x,
+          getMinX(),
+          getMaxX()
+      ));
+    }
+
+    boolean vertOutBounds = vertCut < 0 || vertCut >= getHeight();
+    if (vertOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Vertical position out of bounds: y=%d is outside grid range [%d, %d]",
+          y,
+          getMinY(),
+          getMaxY()
+      ));
+    }
+
+    boolean timeOutBounds = timestepCut < 0 || timestepCut >= innerValues.length;
+    if (timeOutBounds) {
+      throw new IllegalArgumentException(String.format(
+          "Timestep out of bounds: timestep=%d is outside available range [%d, %d]. "
+              + "External data file has %d timesteps but simulation requires timestep %d. "
+              + "Ensure your external data files (*.jshd) cover the full simulation range "
+              + "(steps.low=%d to steps.high=%d).",
+          timestep,
+          getMinTimestep(),
+          getMaxTimestep(),
+          innerValues.length,
+          timestep,
+          getMinTimestep(),
+          getMaxTimestep()
+      ));
+    }
+
     double value = innerValues[timestepCut][vertCut][horizCut];
     return factory.buildForNumber(value, units);
   }
