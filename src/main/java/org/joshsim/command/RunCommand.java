@@ -285,6 +285,10 @@ public class RunCommand implements Callable<Integer> {
     // Create template renderer for initialization phase (using first job, replicate 0)
     TemplateStringRenderer initTemplateRenderer = new TemplateStringRenderer(firstJob, 0);
 
+    // Create single shared PathTemplateResolver for all jobs in this run
+    // This ensures consistent timestamp across all job combinations
+    PathTemplateResolver sharedPathResolver = new PathTemplateResolver(customParameters);
+
     // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
     InputOutputLayer initInputOutputLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(0)
@@ -292,6 +296,7 @@ public class RunCommand implements Callable<Integer> {
         .withTemplateRenderer(initTemplateRenderer)
         .withMinioOptions(minioOptions)
         .withCustomTags(firstJob.getCustomParameters())
+        .withPathTemplateResolver(sharedPathResolver)
         .build();
 
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
@@ -395,6 +400,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withCustomTags(currentJob.getCustomParameters())
+              .withPathTemplateResolver(sharedPathResolver)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -403,6 +409,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withCustomTags(currentJob.getCustomParameters())
+              .withPathTemplateResolver(sharedPathResolver)
               .build();
         }
 
@@ -455,7 +462,7 @@ public class RunCommand implements Callable<Integer> {
           TemplateStringRenderer jobRenderer = new TemplateStringRenderer(job, 0);
           OutputWriterFactory jobFactory = new OutputWriterFactory(
               0,  // replicate 0 for file uploads
-              new PathTemplateResolver(),
+              sharedPathResolver,  // Use shared resolver for consistent timestamps
               jobRenderer,
               minioOptions
           );
@@ -468,14 +475,16 @@ public class RunCommand implements Callable<Integer> {
       }
 
       if (!uploadConfigPath.isEmpty()) {
-        Integer result = uploadArtifactsWithTemplate(uploadConfigPath, jobs, ".jshc");
+        Integer result = uploadArtifactsWithTemplate(uploadConfigPath, jobs, ".jshc",
+            sharedPathResolver);
         if (result != 0) {
           return result;
         }
       }
 
       if (!uploadDataPath.isEmpty()) {
-        Integer result = uploadArtifactsWithTemplate(uploadDataPath, jobs, ".jshd");
+        Integer result = uploadArtifactsWithTemplate(uploadDataPath, jobs, ".jshd",
+            sharedPathResolver);
         if (result != 0) {
           return result;
         }
@@ -651,10 +660,12 @@ public class RunCommand implements Callable<Integer> {
    * @param templatePath Template path, can end with '/' for directory-style upload
    * @param jobs List of jobs to extract files from
    * @param extension File extension to match (e.g., ".jshc", ".jshd")
+   * @param sharedPathResolver Shared path template resolver for consistent timestamps
    * @return 0 if successful, error code otherwise
    */
   private Integer uploadArtifactsWithTemplate(String templatePath, List<JoshJob> jobs,
-                                              String extension) {
+                                              String extension,
+                                              PathTemplateResolver sharedPathResolver) {
     validateUploadTemplate(templatePath);
 
     // Map file paths to ALL jobs that use them (for shared files)
@@ -711,7 +722,7 @@ public class RunCommand implements Callable<Integer> {
         TemplateStringRenderer jobRenderer = new TemplateStringRenderer(job, 0);
         OutputWriterFactory jobFactory = new OutputWriterFactory(
             0,  // replicate 0 for file uploads
-            new PathTemplateResolver(),
+            sharedPathResolver,  // Use shared resolver for consistent timestamps
             jobRenderer,
             minioOptions
         );

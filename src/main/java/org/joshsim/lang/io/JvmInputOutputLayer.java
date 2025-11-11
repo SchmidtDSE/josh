@@ -32,12 +32,14 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    * @param templateRenderer The renderer for processing template strings (null for legacy mode).
    * @param minioOptions The MinIO configuration options (null if not using MinIO).
    * @param customTags Custom tags for debug path template resolution (nullable).
+   * @param sharedPathResolver Shared PathTemplateResolver for consistent timestamps (nullable).
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy,
                              TemplateStringRenderer templateRenderer,
                              MinioOptions minioOptions,
-                             Map<String, String> customTags) {
+                             Map<String, String> customTags,
+                             PathTemplateResolver sharedPathResolver) {
     if (extents != null && width != null) {
       this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width,
                                                        templateRenderer, minioOptions);
@@ -46,8 +48,10 @@ public class JvmInputOutputLayer implements InputOutputLayer {
                                                        minioOptions);
     }
 
-    // Create PathTemplateResolver with custom tags for debug output
-    PathTemplateResolver debugTemplateResolver = new PathTemplateResolver(customTags);
+    // Use shared PathTemplateResolver if provided, otherwise create new one
+    PathTemplateResolver debugTemplateResolver = sharedPathResolver != null
+        ? sharedPathResolver
+        : new PathTemplateResolver(customTags);
 
     // Create OutputWriterFactory for debug output with job template renderer
     this.outputWriterFactory = new OutputWriterFactory(
@@ -57,6 +61,26 @@ public class JvmInputOutputLayer implements InputOutputLayer {
         minioOptions
     );
     this.inputStrategy = inputStrategy;
+  }
+
+  /**
+   * Create a new input / output layer without shared resolver (legacy constructor).
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space (null for grid-only).
+   * @param width The width and height of each patch in meters (null for grid-only).
+   * @param inputStrategy The strategy for input file access.
+   * @param templateRenderer The renderer for processing template strings (null for legacy mode).
+   * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @param customTags Custom tags for debug path template resolution (nullable).
+   */
+  public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                             InputGetterStrategy inputStrategy,
+                             TemplateStringRenderer templateRenderer,
+                             MinioOptions minioOptions,
+                             Map<String, String> customTags) {
+    this(replicate, extents, width, inputStrategy, templateRenderer,
+          minioOptions, customTags, null);
   }
 
   /**
