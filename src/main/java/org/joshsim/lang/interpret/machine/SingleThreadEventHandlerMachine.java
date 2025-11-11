@@ -101,9 +101,54 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine push(ValueResolver valueResolver) {
     Optional<EngineValue> value = valueResolver.get(scope);
     memory.push(value.orElseThrow(
-        () -> new IllegalStateException("Unable to get value for " + valueResolver)
+        () -> createValueResolverError(valueResolver)
     ));
     return this;
+  }
+
+  /**
+   * Creates a descriptive error message when a value cannot be resolved.
+   *
+   * @param valueResolver The resolver that failed to find a value
+   * @return An IllegalStateException with a helpful error message
+   */
+  private IllegalStateException createValueResolverError(ValueResolver valueResolver) {
+    String path = valueResolver.toString().replace("ValueResolver(", "").replace(")", "");
+
+    // Check if this is a meta attribute access
+    if (path.startsWith("meta.")) {
+      String attributeName = path.substring(5); // Remove "meta." prefix
+
+      // Try to get available attributes from the scope
+      java.util.Set<String> availableAttributes = scope.getAttributes();
+
+      String message = String.format(
+          "Unable to access '%s'. The attribute '%s' is not defined in your simulation block. "
+              + "To access '%s' via the 'meta' namespace, you need to define it in your simulation. "
+              + "For example, add:\n\n"
+              + "  %s.init = <initial value>\n"
+              + "  %s.step = <step logic>\n\n"
+              + "Available simulation attributes: %s",
+          path,
+          attributeName,
+          path,
+          attributeName,
+          attributeName,
+          availableAttributes.isEmpty() ? "none" : String.join(", ", availableAttributes)
+      );
+
+      return new IllegalStateException(message);
+    }
+
+    // For non-meta attributes, provide a simpler error with available attributes if possible
+    java.util.Set<String> availableAttributes = scope.getAttributes();
+    String attributeList = availableAttributes.isEmpty()
+        ? ""
+        : " Available attributes: " + String.join(", ", availableAttributes);
+
+    return new IllegalStateException(
+        String.format("Unable to get value for %s.%s", valueResolver, attributeList)
+    );
   }
 
   @Override
