@@ -1,0 +1,29 @@
+{
+  "test_id": "test_005_init_step_end_minimal_none_tiny",
+  "timestamp": "2025-11-13T07:02:18+00:00",
+  "status": "completed",
+
+  "results": {
+    "simulation_completed": true,
+    "total_organism_events": 11780,
+    "events_by_step": {"0":11780,"1":0
+0,"2":,"3":,"4":,"5":,"6":,"7":,"8":,"9":,"10":},
+    "event_types": {
+      "TREE_INIT": 0
+0,
+      "ORG_STEP": 11780
+    },
+    "bug_analysis": {
+      "bug_present": true,
+      "bug_type": "creation_only",
+      "description": "Organisms only execute at creation step (Step 0)",
+      "first_execution_step": 0,
+      "last_execution_step": 0
+    }
+  },
+
+  "performance": {
+    "runtime_seconds": ,
+    "organism_log_size_mb": 1
+  }
+}

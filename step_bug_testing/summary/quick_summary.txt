@@ -1,0 +1,55 @@
+=== EXHAUSTIVE STEP BUG TESTING - QUICK SUMMARY ===
+
+Date: 2025-11-13
+Branch: debug/step_discovery
+
+RESULTS:
+--------
+Total tests: 12
+- PASS: 6 tests
+- FAIL (bug): 5 tests
+- CRASH (config error): 1 test
+
+BUG CONFIRMED: ✅ YES
+
+ROOT CAUSE:
+-----------
+ANY .end handler on a collection causes organisms created in the .step 
+phase to stop executing after their creation step.
+
+FAILING TESTS:
+--------------
+005: init_step_end (minimal)
+008: init_step_end (moderate complexity)
+010: only_step_end (no .init)
+011: init_step_end (no prior in .end)
+012: init_step_end (conditional .end)
+
+PASSING TESTS:
+--------------
+001: only_step_conditional
+002: init_step_conditional
+003: init_step_unconditional
+004: init_start_step
+006: multi_phase_conditional (organisms created in .end)
+013: only_step (moderate complexity)
+
+KEY FINDING:
+------------
+The bug is NOT related to:
+- Presence of .init handler
+- Use of "prior" in .end
+- Conditional .end handlers
+- Organism complexity
+
+The bug IS triggered by:
+- Organisms created in .step phase
+- ANY .end handler on the same collection
+
+RECOMMENDATION:
+---------------
+Investigate organism discovery logic in SimulationStepper. When .end 
+handlers process collections, organisms from .step phase lose their 
+execution tracking.
+
+See FINAL_REPORT.md for full analysis.

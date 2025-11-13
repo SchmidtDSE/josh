@@ -1,0 +1,30 @@
+{
+  "test_id": "test_007_multi_phase_unconditional_minimal_none_tiny",
+  "timestamp": "2025-11-13T07:02:18+00:00",
+  "status": "completed",
+
+  "results": {
+    "simulation_completed": true,
+    "total_organism_events": 0,
+    "events_by_step": {"0":0
+0,"1":,"2":,"3":,"4":,"5":,"6":,"7":,"8":,"9":,"10":},
+    "event_types": {
+      "TREE_INIT": 0
+0,
+      "ORG_STEP": 0
+0
+    },
+    "bug_analysis": {
+      "bug_present": true,
+      "bug_type": "never_executes",
+      "description": "Organisms created but never execute .step logic",
+      "first_execution_step": -1,
+      "last_execution_step": -1
+    }
+  },
+
+  "performance": {
+    "runtime_seconds": ,
+    "organism_log_size_mb": 0
+  }
+}

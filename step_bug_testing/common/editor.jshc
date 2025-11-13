@@ -1,0 +1,6 @@
+# Minimal config values for testing
+survivalProbSeedling = 80 %
+survivalProbAdult = 95 %
+seedGerminationRate = 1 %
+optimalTemp = 300 K
+maxTemp = 350 K
