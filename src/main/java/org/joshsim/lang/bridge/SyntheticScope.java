@@ -59,7 +59,10 @@ public class SyntheticScope implements Scope {
   public EngineValue get(String name) {
     // Special handling for geoKey: check real attribute first, then fallback to synthetic
     if ("geoKey".equals(name)) {
-      Optional<EngineValue> realValue = inner.getAttributeValue(name);
+      // CRITICAL: Bypass ShadowingEntity resolution to prevent circular dependencies
+      // Use getInner() to read directly from storage without triggering handler execution
+      MutableEntity innerEntity = inner.getInner();
+      Optional<EngineValue> realValue = innerEntity.getAttributeValue(name);
       if (realValue.isPresent()) {
         return realValue.get();
       }
@@ -76,7 +79,25 @@ public class SyntheticScope implements Scope {
       return syntheticValue.get();
     }
 
-    Optional<EngineValue> currentValue = inner.getAttributeValue(name);
+    // CRITICAL FIX: When evaluating handler RHS (e.g., "Trees" in
+    // "Trees.end = prior.Trees | Trees"), bypass ShadowingEntity resolution to prevent
+    // circular dependencies.
+    //
+    // WHY: ShadowingEntity.getAttributeValue() would trigger resolveAttribute(), which
+    // would execute the handler AGAIN, creating infinite recursion.
+    //
+    // SOLUTION: Call getInner() to get the DirectLockMutableEntity, then read from
+    // its attributes[] array directly. This returns the stored value without triggering
+    // handler execution.
+    MutableEntity innerEntity = inner.getInner();
+    if (innerEntity == null) {
+      // Fallback for tests or edge cases where inner is not wrapped
+      Optional<EngineValue> currentValue = inner.getAttributeValue(name);
+      return currentValue.orElseThrow(
+          () -> new RuntimeException("Could not find value for " + name)
+      );
+    }
+    Optional<EngineValue> currentValue = innerEntity.getAttributeValue(name);
     return currentValue.orElseThrow(
         () -> new RuntimeException("Could not find value for " + name)
     );

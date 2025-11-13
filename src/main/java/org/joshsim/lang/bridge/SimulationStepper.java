@@ -186,73 +186,142 @@ public class SimulationStepper {
   }
 
   /**
-   * Updates the target shadowing entity based on the specified sub-step.
+   * Updates the target entity for the given sub-step, managing organism lifecycle.
    *
-   * @param target the shadowing entity to update
-   * @param subStep the sub-step name, which can be "start", "step", or "end"
-   * @return the updated shadowing entity
+   * <p>This method ensures organisms are discovered AFTER all attributes are resolved,
+   * preventing cache coherency violations and instance identity mismatches.</p>
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: Previously, organism lifecycle was managed by
+   * ShadowingEntity during startSubstep/endSubstep. This created cache coherency issues
+   * where organisms discovered from cached values differed from those in final resolved values.
+   * Now, organism discovery occurs after updateEntityUnsafe() completes, ensuring consistent
+   * instance identity throughout the lifecycle.</p>
+   *
+   * @param target the entity to update (typically a patch)
+   * @param subStep the sub-step name
+   * @return the updated entity
    */
   private MutableEntity updateEntity(MutableEntity target, String subStep) {
+    // Start substep on patch (clears cache, does NOT discover organisms)
     target.startSubstep(subStep);
+
+    // Resolve ALL patch attributes first
     updateEntityUnsafe(target);
+
+    // NOW discover organisms from final attribute values and manage their lifecycle
+    discoverAndProcessOrganisms(target, subStep);
+
+    // End substep on patch
     target.endSubstep();
 
     return target;
   }
 
   /**
-   * Resolve all properties inside of a mutable entity, recursing to update on inner entities.
+   * Discovers organisms from final attribute values and manages their lifecycle.
    *
-   * <p>Resolves all attributes of a mutable entity, collecting any inner entities discovered during
-   * resolution. Recurses on those inner entities afterwards to update them. This method assumes
-   * that a substep has already started for target and its internal entities.</p>
+   * <p>This method ensures consistent organism instance identity by discovering
+   * organisms AFTER all patch attributes have been resolved. Each organism goes
+   * through its complete lifecycle (startSubstep → updateEntityUnsafe → endSubstep)
+   * before the next organism is processed.</p>
    *
-   * @param target The root MutableEntity to be updated and within which inner entities are
-   *     recursively updated.
+   * <p><b>CRITICAL - Deduplication</b>: Organisms are deduplicated based on sequenceId
+   * to prevent processing the same organism multiple times if it appears in multiple
+   * attributes (e.g., via union operations like "prior.Trees | Trees").</p>
+   *
+   * <p><b>CRITICAL - Recursion</b>: This method is recursive to support nested organisms.
+   * Organisms can contain other organisms as attributes (e.g., Trees containing Seeds).
+   * The recursion ensures that nested organisms also get their lifecycle managed properly.</p>
+   *
+   * <p><b>CRITICAL - Substep Check</b>: When organisms are created during a handler
+   * (e.g., via "create X of OrganismType"), they may inherit the parent patch's substep
+   * context. This method checks if an organism already has a substep set before calling
+   * startSubstep/endSubstep. This prevents IllegalStateException when trying to start
+   * a substep that's already active. Organisms created this way still need their attributes
+   * resolved (via updateEntityUnsafe) even if they already have a substep set.</p>
+   *
+   * <p>Examples of nested organisms in codebase:
+   * <ul>
+   *   <li>test_parent_geokey.josh - Parent/child with geographic relationships</li>
+   *   <li>test_parent_lineage.josh - Multi-level parent-child lineage</li>
+   *   <li>test_parent_synthetic.josh - Nested organisms with synthetic attributes</li>
+   * </ul>
+   * </p>
+   *
+   * @param target the patch entity containing organisms
+   * @param subStep the current substep name
+   */
+  private void discoverAndProcessOrganisms(MutableEntity target, String subStep) {
+    // Discover organisms from FINAL attribute values (after all handlers executed)
+    List<MutableEntity> organisms = new ArrayList<>();
+    for (MutableEntity organism : InnerEntityGetter.getInnerEntities(target)) {
+      organisms.add(organism);
+    }
+
+    // Track organisms we've processed to avoid duplicates
+    // Union operations (e.g., "prior.Trees | Trees") may create duplicate instances
+    // of the same organism. We use sequenceId for deduplication:
+    // - Patches/Simulation have sequenceId = 0L (never deduplicated)
+    // - Organisms (MemberSpatialEntity) have unique sequenceId values
+    Set<Long> processedIds = new HashSet<>();
+
+    for (MutableEntity organism : organisms) {
+      // Skip duplicates based on sequence ID
+      long organismId = organism.getSequenceId();
+      if (processedIds.contains(organismId)) {
+        continue;
+      }
+      processedIds.add(organismId);
+
+      // Check if organism already has substep set (happens when organism created during handler)
+      Optional<String> currentSubstep = organism.getSubstep();
+      boolean needsStartSubstep = currentSubstep.isEmpty();
+
+      // Complete lifecycle for this organism
+      if (needsStartSubstep) {
+        organism.startSubstep(subStep);
+      }
+      updateEntityUnsafe(organism);
+
+      // CRITICAL: Recursively discover and process nested organisms
+      // (e.g., Trees containing Seeds, ParentTree containing ChildTree)
+      // This ensures organisms at ALL levels of nesting get their lifecycle managed
+      discoverAndProcessOrganisms(organism, subStep);
+
+      // ALWAYS call endSubstep to clear substep state for next timestep
+      // Even newly created organisms need this to clear their substep
+      organism.endSubstep();
+    }
+  }
+
+  /**
+   * Resolve all properties inside of a mutable entity.
+   *
+   * <p>This method ONLY resolves attributes. Organism lifecycle management
+   * is handled by discoverAndProcessOrganisms() for patches, or by the
+   * recursive call in discoverAndProcessOrganisms() for nested organisms.</p>
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: Previously, this method discovered and processed
+   * organisms inline during attribute resolution. This caused cache coherency violations.
+   * Now, organisms are processed separately after ALL attributes are resolved.</p>
+   *
+   * @param target The MutableEntity to resolve attributes for
    */
   private void updateEntityUnsafe(MutableEntity target) {
     // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
 
-    // Pre-size ArrayList with numAttributes as upper bound
-    List<MutableEntity> innerEntities = new ArrayList<>(numAttributes);
-
+    // Resolve all attributes (no organism discovery here)
     for (int i = 0; i < numAttributes; i++) {
-      Optional<EngineValue> value = target.getAttributeValue(i);
-      boolean valueResolved = !value.isEmpty();
-      if (!valueResolved) {
-        continue;
-      }
-
-      EngineValue attributeValue = value.get();
-      boolean innerIsEntity = attributeValue.getLanguageType().containsAttributes();
-      if (!innerIsEntity) {
-        continue;
-      }
-
-      Optional<Integer> size = attributeValue.getSize();
-      boolean innerNoAttributes = size.isEmpty();
-      if (innerNoAttributes) {
-        continue;
-      }
-
-      int sizeValue = size.get();
-      if (sizeValue == 1) {
-        innerEntities.add(attributeValue.getAsMutableEntity());
-      } else {
-        Iterable<EngineValue> contents = attributeValue.getAsDistribution()
-            .getContents(sizeValue, false);
-        for (EngineValue entityValue : contents) {
-          innerEntities.add(entityValue.getAsMutableEntity());
-        }
-      }
+      target.getAttributeValue(i);
+      // Attribute resolution triggers handlers but NOT organism lifecycle
     }
 
-    // Recurse into discovered entities
-    for (MutableEntity innerEntity : innerEntities) {
-      updateEntityUnsafe(innerEntity);
-    }
+    // NOTE: No organism discovery or lifecycle management here
+    // That is handled by discoverAndProcessOrganisms() called from updateEntity()
+    // For organisms themselves, this method is called AFTER their startSubstep()
+    // and BEFORE their endSubstep() by discoverAndProcessOrganisms()
   }
 
   /**

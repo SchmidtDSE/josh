@@ -824,20 +824,87 @@ public class ShadowingEntity implements MutableEntity {
     return inner.getEventHandlers(eventKey);
   }
 
+  /**
+   * Starts a new substep for attribute resolution.
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: This method NO LONGER discovers or manages organism lifecycle.
+   * Organisms are now discovered and initialized by {@code SimulationStepper} AFTER all patch
+   * attributes have been resolved. This prevents cache coherency violations where organisms
+   * discovered from cached values differ from those in final resolved values.</p>
+   *
+   * <p><b>Why this change?</b> Previously, organism discovery happened here using values from
+   * {@code resolvedCacheByIndex[]} before the cache was cleared. This meant organisms were
+   * discovered based on stale cached values from the previous phase. Then, during attribute
+   * resolution, handlers could create NEW organism instances (e.g., via union operations like
+   * {@code Trees.end = prior.Trees | Trees}). These new instances would differ from the ones
+   * that had {@code startSubstep()} called, leading to lock/unlock mismatches and organisms
+   * only executing once.</p>
+   *
+   * <p><b>The Solution</b>: By moving organism discovery to {@code SimulationStepper} AFTER
+   * attribute resolution completes, we ensure that organisms are discovered from final,
+   * fully-resolved attribute values. This guarantees consistent organism instance identity
+   * throughout the lifecycle (startSubstep → updateEntity → endSubstep).</p>
+   *
+   * <p><b>Separation of Concerns</b>:</p>
+   * <ul>
+   *   <li>{@code ShadowingEntity}: Manages attribute resolution and caching</li>
+   *   <li>{@code SimulationStepper}: Manages organism lifecycle</li>
+   *   <li>Clear ownership boundaries prevent cache coherency issues</li>
+   * </ul>
+   *
+   * <p>See {@code ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md} for complete design rationale
+   * and architecture diagrams.</p>
+   *
+   * @param name the name of the substep to start
+   */
   @Override
   public void startSubstep(String name) {
-    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
+    // ARCHITECTURAL CHANGE: Organisms are now discovered and initialized by SimulationStepper
+    // after all patch attributes are resolved. This prevents cache coherency violations
+    // where organisms discovered from cached values differ from those in final resolved values.
+    // See ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md for full design rationale.
     inner.startSubstep(name);
 
-    // Clear array-based cache
+    // Clear cache immediately - no organisms discovered yet
     Arrays.fill(resolvedCacheByIndex, null);
   }
 
+  /**
+   * Ends the current substep after attribute resolution completes.
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: This method NO LONGER discovers or manages organism lifecycle.
+   * Organisms are now managed by {@code SimulationStepper}, which handles their complete
+   * lifecycle (startSubstep → updateEntity → endSubstep) AFTER patch attribute resolution
+   * completes. This ensures consistent organism instance identity throughout the lifecycle.</p>
+   *
+   * <p><b>Why this change?</b> Previously, this method would discover organisms again and call
+   * {@code endSubstep()} on them. However, these organisms might be different instances from
+   * those that had {@code startSubstep()} called (due to handlers creating new instances during
+   * resolution). This caused {@code IllegalMonitorStateException} errors because we were trying
+   * to unlock organisms that were never locked.</p>
+   *
+   * <p><b>The Solution</b>: {@code SimulationStepper} now manages the complete organism lifecycle
+   * using organisms discovered from final attribute values. It maintains references to the same
+   * organism instances throughout startSubstep/update/endSubstep, preventing identity
+   * mismatches.</p>
+   *
+   * <p><b>What this method does now</b>:</p>
+   * <ul>
+   *   <li>Resets circular dependency tracking ({@code resolvingByIndex})</li>
+   *   <li>Ends the substep on the inner entity</li>
+   *   <li>NO organism discovery or lifecycle management</li>
+   * </ul>
+   *
+   * <p>See {@code ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md} for complete design rationale
+   * and architecture diagrams.</p>
+   */
   @Override
   public void endSubstep() {
-    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
+    // ARCHITECTURAL CHANGE: Organisms are now managed by SimulationStepper, which handles
+    // their complete lifecycle (start/update/end) after patch attribute resolution completes.
+    // This ensures consistent organism instance identity throughout the lifecycle.
 
-    // Clear array-based tracking
+    // Clear circular dependency tracking
     Arrays.fill(resolvingByIndex, false);
 
     inner.endSubstep();
