@@ -1,0 +1,84 @@
+# Minimal Reproduction: BROKEN Version
+# Demonstrates bug where conditional handlers prevent organism discovery after first execution
+#
+# Expected Behavior:
+#   Step 0: 0 ORG_STEP events (no trees yet, year=0)
+#   Step 1: 10 ORG_STEP events (trees created via conditional, year=1)
+#   Step 2-4: 0 ORG_STEP events (BUG - trees persist but don't execute)
+#
+# Total Expected: 10 ORG_STEP events (should be 50)
+
+start simulation MinimalReproBroken
+
+  # Minimal grid (single patch)
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  # 5 timesteps (0-4)
+  steps.low = 0 count
+  steps.high = 4 count
+
+  # Year counter (starts at 0)
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  # Debug output
+  debugFiles.organism = "file:////workspaces/josh/test-cases/minimal-repro/debug_organism_broken_0.txt"
+  debugFiles.patch = "file:////workspaces/josh/test-cases/minimal-repro/debug_patch_broken_0.txt"
+
+end simulation
+
+start patch Default
+
+  # CONDITIONAL HANDLER: Creates trees at Step 1 only (when year == 1)
+  # BUG: This marks Trees.step as "has handler" in static cache
+  # At Step 2+: conditional is false, handler doesn't execute, attribute becomes UNSET
+  # Result: Discovery can't find organisms in unset attribute
+  Trees.step:if(meta.year == 1) = create 10 of SimpleTree
+
+  # Debug: Track tree creation and persistence
+  log1.step = debug(geoKey, "PATCH_STEP", "year:", meta.year)
+
+  log2.step = {
+    const count = count(Trees)
+    return debug(geoKey, "TREE_COUNT", "count:", count)
+  }
+
+  # Additional marker at Step 1 when trees are created
+  log3.step:if(meta.year == 1) = debug(geoKey, "TREES_CREATED", "created 10 trees")
+
+end patch
+
+start organism SimpleTree
+
+  # Track age (should increment every step if organisms execute)
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  # Debug: Track organism execution
+  # EXPECTED: This should fire at Step 1 only (BUG)
+  # SHOULD BE: This should fire at Steps 1-4 (all steps after creation)
+  log.step = debug(geoKey, "ORG_STEP", "age:", age, "year:", meta.year)
+
+end organism
+
+# Unit definitions
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meters
+  alias meter
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+  alias degree
+end unit

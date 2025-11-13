@@ -19,6 +19,20 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class SimulationStepper {
 
+  private static final ThreadLocal<Integer> currentTimestep = ThreadLocal.withInitial(() -> -1);
+
+  /**
+   * Get the current simulation timestep number.
+   *
+   * <p>Returns the current timestep during simulation execution or -1 if called
+   * outside of simulation context (e.g., during cache building).</p>
+   *
+   * @return Current timestep number, or -1 if not in simulation context
+   */
+  public static int getCurrentTimestep() {
+    return currentTimestep.get();
+  }
+
   private final EngineBridge target;
   private final Set<String> events;
   private final Optional<PatchExportCallback> exportCallback;
@@ -73,36 +87,45 @@ public class SimulationStepper {
   public long perform(boolean serialPatches) {
     target.startStep();
 
-    boolean isFirstStep = target.getAbsoluteTimestep() == 0;
-    MutableEntity simulation = target.getSimulation();
-    Iterable<MutableEntity> patches = target.getCurrentPatches();
+    // Set current timestep for debug logging
+    long absoluteTimestep = target.getAbsoluteTimestep();
+    currentTimestep.set((int) absoluteTimestep);
 
-    if (isFirstStep) {
-      performStream(simulation, "init");
-      performStream(patches, "init", serialPatches);
+    try {
+      boolean isFirstStep = absoluteTimestep == 0;
+      MutableEntity simulation = target.getSimulation();
+      Iterable<MutableEntity> patches = target.getCurrentPatches();
+
+      if (isFirstStep) {
+        performStream(simulation, "init");
+        performStream(patches, "init", serialPatches);
+      }
+
+      if (events.contains("start")) {
+        performStream(simulation, "start");
+        performStream(patches, "start", serialPatches);
+      }
+
+      if (events.contains("step")) {
+        performStream(simulation, "step");
+        performStream(patches, "step", serialPatches);
+      }
+
+      if (events.contains("end")) {
+        performStream(simulation, "end");
+        performStream(patches, "end", serialPatches);
+      }
+
+      long timestepCompleted = target.getCurrentTimestep();
+      target.endStep();
+
+      System.gc();
+
+      return timestepCompleted;
+    } finally {
+      // Clean up thread-local after step completes
+      currentTimestep.remove();
     }
-
-    if (events.contains("start")) {
-      performStream(simulation, "start");
-      performStream(patches, "start", serialPatches);
-    }
-
-    if (events.contains("step")) {
-      performStream(simulation, "step");
-      performStream(patches, "step", serialPatches);
-    }
-
-    if (events.contains("end")) {
-      performStream(simulation, "end");
-      performStream(patches, "end", serialPatches);
-    }
-
-    long timestepCompleted = target.getCurrentTimestep();
-    target.endStep();
-
-    System.gc();
-
-    return timestepCompleted;
   }
 
   /**

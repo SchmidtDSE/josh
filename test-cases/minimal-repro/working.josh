@@ -1,0 +1,83 @@
+# Minimal Reproduction: WORKING Version
+# Demonstrates correct behavior with unconditional handlers
+#
+# Expected Behavior:
+#   Step 0: 10 ORG_STEP events (trees created in init, execute first step)
+#   Step 1: 10 ORG_STEP events (trees execute)
+#   Step 2: 10 ORG_STEP events (trees execute)
+#   Step 3: 10 ORG_STEP events (trees execute)
+#   Step 4: 10 ORG_STEP events (trees execute)
+#
+# Total Expected: 50 ORG_STEP events (10 trees × 5 steps)
+
+start simulation MinimalReproWorking
+
+  # Minimal grid (single patch)
+  grid.size = 1000 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  # 5 timesteps (0-4)
+  steps.low = 0 count
+  steps.high = 4 count
+
+  # Year counter (starts at 0)
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  # Debug output
+  debugFiles.organism = "file:////workspaces/josh/test-cases/minimal-repro/debug_organism_working_0.txt"
+  debugFiles.patch = "file:////workspaces/josh/test-cases/minimal-repro/debug_patch_working_0.txt"
+
+end simulation
+
+start patch Default
+
+  # UNCONDITIONAL HANDLER: Creates trees at init
+  # CORRECT: This doesn't use conditional syntax, so attribute is always populated
+  # Handler executes once at init, creates 10 trees
+  # At Step 0+: No handler for .step phase on Trees attribute
+  # Result: Fast-path copies prior value, discovery always finds organisms
+  Trees.init = create 10 of SimpleTree
+
+  # Debug: Track tree persistence
+  log1.step = debug(geoKey, "PATCH_STEP", "year:", meta.year)
+
+  log2.step = {
+    const count = count(Trees)
+    return debug(geoKey, "TREE_COUNT", "count:", count)
+  }
+
+end patch
+
+start organism SimpleTree
+
+  # Track age (should increment every step)
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  # Debug: Track organism execution
+  # EXPECTED: This should fire at ALL steps (0-4)
+  log.step = debug(geoKey, "ORG_STEP", "age:", age, "year:", meta.year)
+
+end organism
+
+# Unit definitions
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meters
+  alias meter
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+  alias degree
+end unit

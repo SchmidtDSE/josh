@@ -43,6 +43,16 @@ public class ShadowingEntity implements MutableEntity {
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
+  private static final boolean DEBUG_ORGANISM =
+      Boolean.getBoolean("josh.debug.organism");
+
+  private void debugLog(String message) {
+    if (DEBUG_ORGANISM) {
+      int timestep = SimulationStepper.getCurrentTimestep();
+      System.err.println("[ORGANISM-DEBUG] timestep=" + timestep + " ShadowingEntity " + message);
+    }
+  }
+
   private final EngineValueFactory valueFactory;
   private final MutableEntity inner;
   private final Entity here;
@@ -525,11 +535,21 @@ public class ShadowingEntity implements MutableEntity {
 
     // If outside substep, use prior
     if (substep.isEmpty()) {
+      debugLog("resolveAttribute entity=" + inner.getName()
+          + " attribute=" + name + " reason=noSubstep");
       resolveAttributeFromPrior(name);
       return;
     }
 
-    if (inner.hasNoHandlers(name, substep.get())) {
+    boolean hasNoHandlers = inner.hasNoHandlers(name, substep.get());
+    debugLog("hasNoHandlers entity=" + inner.getName()
+        + " attribute=" + name
+        + " substep=" + substep.get()
+        + " result=" + hasNoHandlers);
+
+    if (hasNoHandlers) {
+      debugLog("fastPath entity=" + inner.getName()
+          + " attribute=" + name + " reason=noHandlers");
       resolveAttributeFromPrior(name);
       return;
     }
@@ -619,11 +639,23 @@ public class ShadowingEntity implements MutableEntity {
 
     // If outside substep, use prior with integer access
     if (substep.isEmpty()) {
+      debugLog("resolveAttributeByIndex entity=" + inner.getName()
+          + " index=" + index + " attribute=" + name + " reason=noSubstep");
       resolveAttributeFromPriorByIndex(index);
       return;
     }
 
-    if (inner.hasNoHandlers(name, substep.get())) {
+    boolean hasNoHandlers = inner.hasNoHandlers(name, substep.get());
+    debugLog("hasNoHandlers entity=" + inner.getName()
+        + " index=" + index
+        + " attribute=" + name
+        + " substep=" + substep.get()
+        + " result=" + hasNoHandlers);
+
+    if (hasNoHandlers) {
+      debugLog("fastPath entity=" + inner.getName()
+          + " index=" + index
+          + " attribute=" + name + " reason=noHandlers");
       resolveAttributeFromPriorByIndex(index);
       return;
     }
@@ -672,24 +704,56 @@ public class ShadowingEntity implements MutableEntity {
    */
   private boolean executeHandlers(EventHandlerGroup handlers) {
     Scope decoratedScope = new SyntheticScope(this);
+    String entityName = inner.getName();
+
     for (EventHandler handler : handlers.getEventHandlers()) {
+      String attrName = handler.getAttributeName();
       Optional<CompiledSelector> conditionalMaybe = handler.getConditional();
+
+      boolean hasCondition = conditionalMaybe.isPresent();
+      debugLog("checkHandler entity=" + entityName
+          + " attribute=" + attrName
+          + " hasCondition=" + hasCondition);
 
       boolean matches;
       if (conditionalMaybe.isPresent()) {
         CompiledSelector conditional = conditionalMaybe.get();
         matches = conditional.evaluate(decoratedScope);
+        debugLog("evalCondition entity=" + entityName
+            + " attribute=" + attrName
+            + " result=" + matches);
       } else {
         matches = true;
+        debugLog("unconditional entity=" + entityName
+            + " attribute=" + attrName);
       }
 
       if (matches) {
+        debugLog("executeHandler entity=" + entityName
+            + " attribute=" + attrName);
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
+
+        // Log value type and size if it's a collection
+        String valueInfo = value.getLanguageType().toString();
+        Optional<Integer> sizeMaybe = value.getSize();
+        if (sizeMaybe.isPresent()) {
+          valueInfo += " size=" + sizeMaybe.get();
+        }
+
+        debugLog("handlerResult entity=" + entityName
+            + " attribute=" + attrName
+            + " value=" + valueInfo);
+
         setAttributeValue(handler.getAttributeName(), value);
         return true;
+      } else {
+        debugLog("handlerSkipped entity=" + entityName
+            + " attribute=" + attrName
+            + " reason=conditionFalse");
       }
     }
 
+    debugLog("noMatchingHandler entity=" + entityName);
     return false;
   }
 
@@ -699,9 +763,14 @@ public class ShadowingEntity implements MutableEntity {
    * @param name the unique identifier of the attribute to resolve from prior.
    */
   private void resolveAttributeFromPrior(String name) {
+    debugLog("resolveFromPrior entity=" + inner.getName()
+        + " attribute=" + name);
     Optional<EngineValue> prior = getPriorAttribute(name);
     if (prior.isPresent()) {
       setAttributeValue(name, prior.get());
+    } else {
+      debugLog("noPriorValue entity=" + inner.getName()
+          + " attribute=" + name);
     }
   }
 
@@ -711,6 +780,15 @@ public class ShadowingEntity implements MutableEntity {
    * @param index the attribute index
    */
   private void resolveAttributeFromPriorByIndex(int index) {
+    String[] indexArray = inner.getIndexToAttributeName();
+    String name = "unknown";
+    if (index >= 0 && indexArray != null && index < indexArray.length) {
+      name = indexArray[index];
+    }
+
+    debugLog("resolveFromPriorByIndex entity=" + inner.getName()
+        + " index=" + index + " attribute=" + name);
+
     Optional<EngineValue> prior = getPriorAttribute(index);
 
     if (prior.isPresent()) {
@@ -720,6 +798,9 @@ public class ShadowingEntity implements MutableEntity {
       if (cacheIndexInBounds) {
         resolvedCacheByIndex[index] = prior.get();
       }
+    } else {
+      debugLog("noPriorValue entity=" + inner.getName()
+          + " index=" + index + " attribute=" + name);
     }
   }
 
