@@ -8,10 +8,11 @@ Through 12 systematic tests, we **definitively identified** the root cause:
 
 ## 📖 Quick Navigation
 
-1. **For Executive Summary**: Read `summary/quick_summary.txt`
-2. **For Full Analysis**: Read `summary/FINAL_REPORT.md`
-3. **For Quick Reproduction**: See section below
-4. **For All Results**: See `summary/all_results.jsonl`
+1. **For Complete Summary**: Read `TESTING_SUMMARY.md` ⭐ **START HERE**
+2. **For Extended Findings**: Read `summary/UPDATED_FINDINGS.md` (9 new tests + workarounds)
+3. **For Original Analysis**: Read `summary/FINAL_REPORT.md` (overnight run results)
+4. **For Quick Reproduction**: See section below
+5. **For Test Design**: Read `NEW_TEST_DESIGN.md`
 
 ## 🔬 Reproduce the Bug (30 seconds)
 
@@ -64,15 +65,18 @@ Trees.step:if(meta.year == 1) = create 10 of Tree
 # No .end handler = organisms execute correctly
 ```
 
-## 📊 Test Results at a Glance
+## 📊 Test Results at a Glance (21 Total Tests)
 
-| Has .end? | Organisms in .step? | Result | Count |
-|-----------|---------------------|--------|-------|
-| ❌ No | ✅ Yes | ✅ PASS | 6 tests |
-| ✅ Yes | ✅ Yes | ❌ FAIL | 5 tests |
-| ✅ Yes | ❌ No (in .end) | ✅ PASS | 1 test |
+| Has .end? | Pattern | Result | Count |
+|-----------|---------|--------|-------|
+| ❌ No | Any | ✅ PASS | 5 tests |
+| ✅ Yes | Current ref (`Trees`) | ❌ FAIL | 11 tests |
+| ✅ Yes | Different attr | ✅ PASS | 1 test |
+| ✅ Yes | Prior-only ref | ✅ PASS | 1 test |
+| ✅ Yes | Create IN .end | ✅ PASS | 1 test |
+| ⚠️ Various | Crashes | ⚠️ ERROR | 2 tests |
 
-**Conclusion**: The `.end` handler is the trigger. It breaks organism discovery for organisms created in `.step`.
+**Updated Conclusion**: Having `.end` handler that references **current** collection value breaks organism discovery **GLOBALLY for the patch** (affects ALL collections, not just the one with .end).
 
 ## 💡 Technical Details
 
@@ -97,14 +101,37 @@ Trees.step:if(meta.year == 1) = create 10 of Tree
 
 ## 🚀 Next Steps
 
-1. Review `summary/FINAL_REPORT.md` for full technical analysis
-2. Investigate organism discovery code in SimulationStepper
-3. Implement fix based on recommended approaches
-4. Re-run test suite: `./common/test_runner.sh`
-5. Add these as regression tests
+1. **Review findings**: Read `TESTING_SUMMARY.md` for complete analysis
+2. **Apply workarounds**: See `summary/UPDATED_FINDINGS.md` for 3 working patterns
+3. **Investigate code**: Check `SimulationStepper.java` and `ShadowingEntity.java`
+4. **Implement fix**: Separate organism discovery from phase execution
+5. **Verify fix**: Re-run test suite with `./run_new_tests.sh`
+6. **Add regression tests**: All 21 tests ready to add to test suite
+
+## ✅ TESTED WORKAROUNDS (Use Immediately!)
+
+### Option A: Prior-Only Reference ⭐ RECOMMENDED
+```josh
+Trees.step = create 10 of Tree
+Trees.end = prior.Trees  # ✅ TESTED - organisms execute at all steps
+```
+
+### Option B: Read-Only .end on Different Attribute
+```josh
+Trees.step = create 10 of Tree
+treeCount.end = count(Trees)  # ✅ TESTED - works fine
+```
+
+### Option C: Create in `.end` Phase
+```josh
+Trees.end = create 10 of Tree  # ✅ TESTED - confirmed working
+```
+
+**See WORKAROUNDS.md for complete guide with examples and migration instructions!**
 
 ---
 
 **All test data preserved in**: `/workspaces/josh/step_bug_testing/`
 **Git branch**: `debug/step_discovery`
 **Date**: 2025-11-13
+**Tests**: 21 total (12 original + 9 new)
