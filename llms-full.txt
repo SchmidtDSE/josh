@@ -553,6 +553,8 @@ export.variable.event = expression
 exportFiles.type = "output_path"
 ```
 
+Export and debug output share the same protocol infrastructure. Exports support `file://` and `minio://` protocols (see Output Protocols under Debug Output for details).
+
 ### Debug Output
 
 Josh provides a comprehensive debug output system for logging runtime information during simulation execution. Debug messages can be routed to different destinations based on entity type (patch, organism, agent) and support flexible output protocols and path templating.
@@ -602,41 +604,43 @@ Example output: `[b2a744 - ForeverTree @ (12.500000, 45.300000)]`
 
 #### Output Protocols
 
-Debug output supports multiple destination protocols:
+Debug and export output share the same protocol infrastructure. Debug output supports all four protocols, while exports support `file://` and `minio://` only.
 
-**1. Local File System (`file://`)**
+**1. Local File System (`file://`)** - Available for both debug and export
 ```josh
 debugFiles.organism = "file:///tmp/debug.txt"
-debugFiles.organism = "file:///absolute/path/to/debug_{replicate}.txt"
+exportFiles.patch = "file:///tmp/results_{replicate}.csv"
 ```
 - Absolute paths recommended
 - Parent directories created automatically
 - Supports path templating
 
-**2. Cloud Storage (`minio://`)**
+**2. Cloud Storage (`minio://`)** - Available for both debug and export
 ```josh
 debugFiles.organism = "minio://bucket-name/path/to/debug.txt"
-debugFiles.organism = "minio://bucket/project/{user}/debug_{replicate}.txt"
+exportFiles.patch = "minio://bucket/project/results_{replicate}.csv"
 ```
 - Requires MinIO configuration via CLI arguments
 - Automatic bucket creation
 - Supports path templating
 
-**3. Standard Output (`stdout://`)**
+**3. Standard Output (`stdout://`)** - Debug only
 ```josh
-debugFiles.organism = "stdout"
+debugFiles.organism = "stdout://"
 ```
 - Writes directly to console
 - Useful for quick debugging
 - No path templating needed
+- Not available for exports (structured data not suitable for stdout)
 
-**4. Memory Protocol (`memory://` - WebAssembly only)**
+**4. Memory Protocol (`memory://`)** - Debug only (WebAssembly)
 ```josh
 debugFiles.organism = "memory://editor/debug"
 ```
 - Used in browser-based WebAssembly execution
 - Captured by browser JavaScript for display
 - Automatic protocol in WebAssembly environments
+- Not yet available for exports (planned for future)
 
 #### Path Templating
 
