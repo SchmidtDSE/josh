@@ -121,6 +121,46 @@ sourceSets {
     }
 }
 
+// Optional: Dedicated task for Josh conformance tests only
+task joshConformanceTest(type: Test) {
+    description = 'Run Josh language conformance tests'
+    group = 'verification'
+
+    dependsOn 'fatJar'
+
+    // Run only conformance tests
+    filter {
+        includeTestsMatching "org.joshsim.conformance.*"
+    }
+
+    useJUnitPlatform()
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat = "full"
+    }
+}
+
+// Optional: Quick mode (critical tests only)
+task joshQuickTest(type: Test) {
+    description = 'Run critical Josh conformance tests'
+    group = 'verification'
+
+    dependsOn 'fatJar'
+
+    filter {
+        includeTestsMatching "org.joshsim.conformance.*"
+    }
+
+    useJUnitPlatform {
+        includeTags 'critical'
+    }
+
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat = "full"
+    }
+}
+
 // Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
