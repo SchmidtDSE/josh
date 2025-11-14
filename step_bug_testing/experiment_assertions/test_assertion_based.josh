@@ -1,0 +1,52 @@
+start simulation TestSimulation
+  steps.low = 0
+  steps.high = 4
+
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+end simulation
+
+start patch Default
+  # PATTERN: init_step_end - create in .step, combine in .end
+  Trees.init = create 0 of Tree
+  Trees.step:if(meta.year == 1) = create 10 of Tree
+  Trees.end = prior.Trees | Trees
+
+  # ASSERTIONS: Verify organisms execute at multiple timesteps
+  assert.treesExistStep1.step:if(meta.year == 1) = count(Trees) == 10 count
+  assert.treesExistStep2.step:if(meta.year == 2) = count(Trees) == 10 count
+  assert.treesExistStep3.step:if(meta.year == 3) = count(Trees) == 10 count
+  assert.treesExistStep4.step:if(meta.year == 4) = count(Trees) == 10 count
+end patch
+
+start organism Tree
+  # COMPLEXITY: minimal
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  # ASSERTIONS: Verify age increases correctly
+  # Note: Using mean() to aggregate across all organisms/patches
+  assert.ageAtStep2.step:if(meta.year == 2) = mean(current.age) == 1 years
+  assert.ageAtStep3.step:if(meta.year == 3) = mean(current.age) == 2 years
+  assert.ageAtStep4.step:if(meta.year == 4) = mean(current.age) == 3 years
+end organism
+
+# Units
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
