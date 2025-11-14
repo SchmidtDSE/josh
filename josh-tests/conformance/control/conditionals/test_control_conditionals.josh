@@ -1,0 +1,65 @@
+# @category: control
+# @subcategory: conditionals
+# @priority: critical
+# @description: Test :if modifiers on attributes and conditional execution
+
+start simulation ControlConditionals
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Conditional growth - grow by 1m normally, but 2m on even steps
+  height.init = 1 m
+  height.step = prior.height + 1 m
+  height.step:if(meta.stepCount == 2 count) = prior.height + 2 m
+  height.step:if(meta.stepCount == 4 count) = prior.height + 2 m
+
+  # Status flag that changes based on age (using numeric value)
+  status.init = 0 count
+  status.step:if(current.age >= 3 years) = 1 count
+
+  # Assert height increases correctly with conditional extra growth
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 2 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 4 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 5 m
+  assert.heightStep4.step:if(meta.stepCount == 4 count) = current.height == 7 m
+  assert.heightStep5.step:if(meta.stepCount == 5 count) = current.height == 8 m
+
+  # Assert status changes based on age
+  assert.statusYoung.step:if(meta.stepCount == 2 count) = current.status == 0 count
+  assert.statusMature.step:if(meta.stepCount == 3 count) = current.status == 1 count
+  assert.statusMature2.step:if(meta.stepCount == 5 count) = current.status == 1 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

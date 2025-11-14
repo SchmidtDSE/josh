@@ -1,0 +1,39 @@
+# @category: lifecycle
+# @subcategory: basic
+# @priority: critical
+# @description: Basic test to verify organism lifecycle and assertions work
+
+start simulation SimpleOrganism
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  assert.ageAtStep3.step:if(meta.stepCount == 3 count) = current.age == 3 years
+  assert.ageAtStep5.step:if(meta.stepCount == 5 count) = current.age == 5 years
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

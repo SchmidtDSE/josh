@@ -1,0 +1,81 @@
+# @category: types
+# @subcategory: conversions
+# @priority: high
+# @description: Test unit conversions (meters to kilometers)
+
+start simulation TypesUnitConversion
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test meter to kilometer conversion
+  distanceM.init = 1000 m
+  distanceKm.init = distanceM as km
+  assert.mToKm.init = distanceKm == 1 km
+
+  # Test kilometer to meter conversion
+  distance2Km.init = 2.5 km
+  distance2M.init = distance2Km as m
+  assert.kmToM.init = distance2M == 2500 m
+
+  # Test custom unit conversion (inches to feet)
+  height.init = 12 in
+  heightFt.init = height as ft
+  assert.inToFt.init = heightFt == 1 ft
+
+  # Test reverse conversion (feet to inches)
+  heightBack.init = heightFt as in
+  assert.ftToIn.init = heightBack == 12 in
+
+  # Test chained conversions
+  length.init = 36 in
+  lengthFt.init = length as ft
+  lengthYd.init = lengthFt as yd
+  assert.inToYd.init = lengthYd == 1 yd
+
+end patch
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+  yd = current / 36
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+  yd = current / 3
+end unit
+
+start unit yard
+  alias yd
+  alias yards
+  ft = current * 3
+  in = current * 36
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit
