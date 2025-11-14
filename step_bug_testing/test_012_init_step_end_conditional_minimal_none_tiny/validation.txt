@@ -1,1 +1,0 @@
-  ❌ BUG STILL PRESENT: Organisms only execute at step 0
