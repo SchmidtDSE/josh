@@ -277,6 +277,16 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
    * @return true if attribute has no handlers for this substep
    */
   public boolean hasNoHandlers(String attributeName, String substep) {
+    // Special case: "state" attribute may have state-specific handlers
+    // that aren't captured in the substep-only cache. The attributesWithoutHandlersBySubstep
+    // cache is indexed by (substep, attributeIndex) and doesn't account for the state dimension.
+    // State-specific handlers are registered in commonHandlerCache with keys like
+    // "state:step:\"seedling\"", but this cache only checks "state:step".
+    // Always use full handler lookup path for "state" to check state-specific handlers.
+    if ("state".equals(attributeName)) {
+      return false;
+    }
+
     int index = getAttributeIndexInternal(attributeName);
     if (index < 0) {
       return false;

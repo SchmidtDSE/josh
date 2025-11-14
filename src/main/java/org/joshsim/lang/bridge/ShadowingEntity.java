@@ -154,7 +154,32 @@ public class ShadowingEntity implements MutableEntity {
       throw new IllegalStateException(message);
     }
 
-    String state = getState();
+    String state;
+    if ("state".equals(attribute)) {
+      // For "state" attribute, try to use already-resolved state value from current substep.
+      // This handles the case where state was set in "init" substep and we're now in
+      // "step" substep. If state hasn't been resolved yet in current substep, fall back
+      // to prior state. This avoids circular dependency while ensuring we have the
+      // correct state for cache lookup.
+      Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+      if (stateIndexMaybe.isPresent()) {
+        int stateIndex = stateIndexMaybe.get();
+        boolean indexInBounds = stateIndex >= 0 && stateIndex < resolvedCacheByIndex.length;
+        if (indexInBounds && resolvedCacheByIndex[stateIndex] != null) {
+          // State was already resolved in current substep - use it for cache lookup
+          state = resolvedCacheByIndex[stateIndex].getAsString();
+        } else {
+          // State not yet resolved - use prior state (avoids circular dependency)
+          state = getPriorState();
+        }
+      } else {
+        // No state attribute exists
+        state = "";
+      }
+    } else {
+      // For non-state attributes, use current state (may trigger resolution)
+      state = getState();
+    }
 
     return getHandlersForAttribute(attribute, substep.get(), state);
   }
@@ -162,15 +187,19 @@ public class ShadowingEntity implements MutableEntity {
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
     // Build cache key string
+    // Note: State values in the handler cache are stored with quotes (e.g., "seedling")
+    // but the state value we get from the entity doesn't have quotes, so we need to add them
     String cacheKey;
     if (state.isEmpty()) {
       cacheKey = attribute + ":" + substep;
     } else {
-      cacheKey = attribute + ":" + substep + ":" + state;
+      cacheKey = attribute + ":" + substep + ":\"" + state + "\"";
     }
 
     // Look up in shared cache, return empty list if not found
     List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
+
+
     if (handlers != null) {
       return handlers;
     }
@@ -443,6 +472,48 @@ public class ShadowingEntity implements MutableEntity {
     if (stateValueMaybe.isPresent()) {
       return stateValueMaybe.get().getAsString();
     } else {
+      return DEFAULT_STATE_STR;
+    }
+  }
+
+  /**
+   * Get the state of this entity from the prior timestep or substep.
+   *
+   * <p>This method is used for handler lookup to avoid circular dependencies. When resolving
+   * the "state" attribute itself, we cannot call {@link #getState()} because it would trigger
+   * attribute resolution while we're already in the middle of resolving "state".</p>
+   *
+   * <p><b>State Machine Semantics</b>: When an organism is in a particular state, the handlers
+   * for that state should execute to determine what the NEXT state will be. Therefore, handler
+   * lookup must use the PRIOR state value, not the state being computed.</p>
+   *
+   * <p>Example: An organism in state "seedling" with age 2 years should have its "seedling"
+   * state handlers execute, which may transition it to "juvenile". If we used the NEW state
+   * value for handler lookup, we'd look for "juvenile" handlers instead, creating incorrect
+   * semantics.</p>
+   *
+   * <p><b>Implementation</b>: This method directly accesses the prior state from the inner
+   * entity without triggering resolution, avoiding circular dependencies.</p>
+   *
+   * @return The state string from the prior step, or empty string if state attribute doesn't
+   *     exist or has no value. Never null.
+   */
+  private String getPriorState() {
+    // Check if "state" attribute exists
+    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+    if (stateIndexMaybe.isEmpty()) {
+      debugLog("getPriorState entity=" + inner.getName() + " noStateAttribute");
+      return DEFAULT_STATE_STR;
+    }
+
+    // Get prior state value directly from inner entity (no resolution)
+    Optional<EngineValue> priorStateMaybe = inner.getAttributeValue("state");
+    if (priorStateMaybe.isPresent()) {
+      String stateValue = priorStateMaybe.get().getAsString();
+      debugLog("getPriorState entity=" + inner.getName() + " state=" + stateValue);
+      return stateValue;
+    } else {
+      debugLog("getPriorState entity=" + inner.getName() + " emptyState");
       return DEFAULT_STATE_STR;
     }
   }
