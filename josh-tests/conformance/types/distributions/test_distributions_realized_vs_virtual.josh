@@ -1,0 +1,56 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Compare realized (organism creation) vs virtual (expression evaluation) distributions
+
+start simulation DistributionsRealizedVsVirtual
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # REALIZED: Create organisms with realized distribution (each organism samples independently)
+  Trees.init = create 100 count of Tree
+
+  # Realized distributions should show substantial variation
+  assert.realizedHasVariation.init = (max(Trees.height) - min(Trees.height)) > 50 m
+
+  # VIRTUAL: Use distribution in expression (same sample throughout expression)
+  virtualDist.init = sample uniform from 0 m to 100 m
+
+  # Virtual distribution: adding to itself gives exactly 2x the value
+  assert.virtualDoubling.init = (virtualDist + virtualDist) == (virtualDist * 2)
+
+  # Range tests
+  assert.virtualRange.init = (virtualDist + virtualDist) >= 0 m
+  assert.virtualRange2.init = (virtualDist + virtualDist) <= 200 m
+
+  # COMPARISON: Realized creates variation, virtual maintains consistency within expression
+  # We can verify that realized gives us a range of values
+  assert.realizedMeanReasonable.init = mean(Trees.height) > 30 m
+  assert.realizedMeanReasonable2.init = mean(Trees.height) < 70 m
+
+end patch
+
+start organism Tree
+
+  # Realized distribution: each organism gets its own unique sample
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

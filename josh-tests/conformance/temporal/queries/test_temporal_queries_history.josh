@@ -1,0 +1,127 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: medium
+# @description: Test accessing historical timestep data and comparing current vs prior state
+
+start simulation TemporalQueriesHistory
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+  # Track historical state at patch level
+  currentMeanAge.init = 0 year
+  currentMeanAge.step = mean(Tree.age)
+
+  priorMeanAge.init = 0 year
+  priorMeanAge.step = prior.currentMeanAge
+
+  currentMeanHeight.init = 0 m
+  currentMeanHeight.step = mean(Tree.height)
+
+  priorMeanHeight.init = 0 m
+  priorMeanHeight.step = prior.currentMeanHeight
+
+  # Calculate state transitions (change over time)
+  ageIncrease.init = 0 year
+  ageIncrease.step = current.currentMeanAge - current.priorMeanAge
+
+  heightIncrease.init = 0 m
+  heightIncrease.step = current.currentMeanHeight - current.priorMeanHeight
+
+  # Assert current mean age matches expected values
+  assert.currentMeanAgeStep1.step:if(meta.stepCount == 1 count) = current.currentMeanAge == 1 year
+  assert.currentMeanAgeStep2.step:if(meta.stepCount == 2 count) = current.currentMeanAge == 2 years
+  assert.currentMeanAgeStep3.step:if(meta.stepCount == 3 count) = current.currentMeanAge == 3 years
+  assert.currentMeanAgeStep4.step:if(meta.stepCount == 4 count) = current.currentMeanAge == 4 years
+  assert.currentMeanAgeStep5.step:if(meta.stepCount == 5 count) = current.currentMeanAge == 5 years
+
+  # Assert prior mean age matches previous timestep
+  assert.priorMeanAgeStep1.step:if(meta.stepCount == 1 count) = current.priorMeanAge == 0 years
+  assert.priorMeanAgeStep2.step:if(meta.stepCount == 2 count) = current.priorMeanAge == 1 year
+  assert.priorMeanAgeStep3.step:if(meta.stepCount == 3 count) = current.priorMeanAge == 2 years
+  assert.priorMeanAgeStep4.step:if(meta.stepCount == 4 count) = current.priorMeanAge == 3 years
+  assert.priorMeanAgeStep5.step:if(meta.stepCount == 5 count) = current.priorMeanAge == 4 years
+
+  # Assert age increase is consistently 1 year per step
+  assert.ageIncreaseStep1.step:if(meta.stepCount == 1 count) = current.ageIncrease == 1 year
+  assert.ageIncreaseStep2.step:if(meta.stepCount == 2 count) = current.ageIncrease == 1 year
+  assert.ageIncreaseStep3.step:if(meta.stepCount == 3 count) = current.ageIncrease == 1 year
+  assert.ageIncreaseStep4.step:if(meta.stepCount == 4 count) = current.ageIncrease == 1 year
+  assert.ageIncreaseStep5.step:if(meta.stepCount == 5 count) = current.ageIncrease == 1 year
+
+  # Assert current mean height matches expected values
+  assert.currentMeanHeightStep1.step:if(meta.stepCount == 1 count) = current.currentMeanHeight == 1.5 m
+  assert.currentMeanHeightStep2.step:if(meta.stepCount == 2 count) = current.currentMeanHeight == 2.0 m
+  assert.currentMeanHeightStep3.step:if(meta.stepCount == 3 count) = current.currentMeanHeight == 2.5 m
+  assert.currentMeanHeightStep4.step:if(meta.stepCount == 4 count) = current.currentMeanHeight == 3.0 m
+  assert.currentMeanHeightStep5.step:if(meta.stepCount == 5 count) = current.currentMeanHeight == 3.5 m
+
+  # Assert prior mean height matches previous timestep
+  assert.priorMeanHeightStep1.step:if(meta.stepCount == 1 count) = current.priorMeanHeight == 0 m
+  assert.priorMeanHeightStep2.step:if(meta.stepCount == 2 count) = current.priorMeanHeight == 1.5 m
+  assert.priorMeanHeightStep3.step:if(meta.stepCount == 3 count) = current.priorMeanHeight == 2.0 m
+  assert.priorMeanHeightStep4.step:if(meta.stepCount == 4 count) = current.priorMeanHeight == 2.5 m
+  assert.priorMeanHeightStep5.step:if(meta.stepCount == 5 count) = current.priorMeanHeight == 3.0 m
+
+  # Assert height increase is consistently 0.5 m per step (after first step)
+  assert.heightIncreaseStep1.step:if(meta.stepCount == 1 count) = current.heightIncrease == 1.5 m
+  assert.heightIncreaseStep2.step:if(meta.stepCount == 2 count) = current.heightIncrease == 0.5 m
+  assert.heightIncreaseStep3.step:if(meta.stepCount == 3 count) = current.heightIncrease == 0.5 m
+  assert.heightIncreaseStep4.step:if(meta.stepCount == 4 count) = current.heightIncrease == 0.5 m
+  assert.heightIncreaseStep5.step:if(meta.stepCount == 5 count) = current.heightIncrease == 0.5 m
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Height grows based on prior height
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Store historical height values
+  heightHistory1.init = 0 m
+  heightHistory1.step = prior.height
+
+  heightHistory2.init = 0 m
+  heightHistory2.step = prior.heightHistory1
+
+  # Verify organism-level history tracking
+  assert.historyStep1.step:if(meta.stepCount == 1 count) = current.heightHistory1 == 1 m
+  assert.historyStep2.step:if(meta.stepCount == 2 count) = current.heightHistory1 == 1.5 m
+  assert.historyStep3.step:if(meta.stepCount == 3 count) = current.heightHistory1 == 2.0 m
+
+  # Verify 2-step history
+  assert.history2Step2.step:if(meta.stepCount == 2 count) = current.heightHistory2 == 1 m
+  assert.history2Step3.step:if(meta.stepCount == 3 count) = current.heightHistory2 == 1.5 m
+  assert.history2Step4.step:if(meta.stepCount == 4 count) = current.heightHistory2 == 2.0 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

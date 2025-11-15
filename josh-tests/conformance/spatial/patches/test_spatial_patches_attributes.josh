@@ -1,0 +1,96 @@
+# @category: spatial
+# @subcategory: patches
+# @priority: high
+# @description: Test patch-level attributes and collections - temperature, organism counts
+
+start simulation SpatialPatchesAttributes
+
+  # Create a 3x3 grid
+  grid.size = 10 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.0003 degrees latitude, 0.0003 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Patch-level attribute: temperature varies by location
+  temperature.init = sample uniform from 15 celsius to 25 celsius
+  temperature.step = prior.temperature + 0.5 celsius
+
+  # Patch-level attribute: soil moisture
+  soilMoisture.init = sample uniform from 10 percent to 90 percent
+  soilMoisture.step = prior.soilMoisture - 1 percent
+
+  # Create organisms on each patch
+  Tree.init = create 3 count of Tree
+
+  # Patch can track count of organisms
+  treeCount.step = count(current.Tree)
+
+  # Assert tree count matches initialization
+  assert.initialTreeCount.step:if(meta.stepCount == 0 count) = current.treeCount == 3 count
+
+  # Export patch attributes for testing
+  export.temperature.step = current.temperature
+  export.treeCount.step = current.treeCount
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Organisms can access patch attributes using 'here' keyword
+  localTemperature.step = here.temperature
+  localMoisture.step = here.soilMoisture
+
+  # Growth affected by temperature
+  biomass.init = 10 kg
+  biomass.step = prior.biomass + (current.localTemperature / 1 celsius) * 0.1 kg
+
+  # Assert organisms can read patch attributes
+  assert.temperatureInRange.step:if(meta.stepCount == 1 count) = current.localTemperature >= 15 celsius
+  assert.temperatureReasonable.step:if(meta.stepCount == 1 count) = current.localTemperature <= 30 celsius
+
+  # Assert moisture is reasonable
+  assert.moistureInRange.step:if(meta.stepCount == 1 count) = current.localMoisture >= 0 percent
+  assert.moistureMax.step:if(meta.stepCount == 1 count) = current.localMoisture <= 100 percent
+
+  # Test that patch attributes change over time
+  assert.temperatureIncreases.step:if(meta.stepCount == 2 count) = current.localTemperature > 15 celsius
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit celsius
+  alias c
+  alias degC
+end unit
+
+start unit percent
+  alias pct
+end unit

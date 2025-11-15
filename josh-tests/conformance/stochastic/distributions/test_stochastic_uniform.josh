@@ -1,0 +1,65 @@
+# @category: stochastic
+# @subcategory: distributions
+# @priority: critical
+# @description: Test uniform distribution sampling - verifies all values within range and mean approximates midpoint
+
+start simulation StochasticUniform
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 500 organisms for statistical reliability
+  TestOrg.init = create 500 count of TestOrg
+
+  # Calculate statistics from sampled values
+  avgValue.step = mean(TestOrg.value)
+  minValue.step = min(TestOrg.value)
+  maxValue.step = max(TestOrg.value)
+
+  # Test 1: All values should be within the specified range [0, 100]
+  assert.allInRange.step = (minValue >= 0 m) and (maxValue <= 100 m)
+
+  # Test 2: Mean should approximate midpoint (50) with tolerance
+  # With 500 samples, expect mean within ±5% of 50
+  expectedMean.step = 50 m
+  tolerance.step = 5 m
+  lowerBound.step = expectedMean - tolerance
+  upperBound.step = expectedMean + tolerance
+  assert.meanApproxMidpoint.step = (avgValue >= lowerBound) and (avgValue <= upperBound)
+
+end patch
+
+start organism TestOrg
+
+  # Sample from uniform distribution [0, 100]
+  value.init = sample uniform from 0 m to 100 m
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

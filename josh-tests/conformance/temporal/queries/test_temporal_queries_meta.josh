@@ -1,0 +1,133 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: critical
+# @description: Test temporal metadata (meta.year, meta.step, meta.stepCount)
+
+start simulation TemporalQueriesMeta
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  # Start at year 2020, run for 5 steps
+  steps.low = 2020 year
+  steps.high = 2024 year
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+  # Track metadata at patch level
+  recordedYear.init = 0 year
+  recordedYear.step = meta.year
+
+  recordedStep.init = 0 year
+  recordedStep.step = meta.step
+
+  recordedStepCount.init = 0 count
+  recordedStepCount.step = meta.stepCount
+
+  # Assert meta.year matches expected values
+  assert.yearStep0.step:if(meta.stepCount == 0 count) = meta.year == 2020 years
+  assert.yearStep1.step:if(meta.stepCount == 1 count) = meta.year == 2021 years
+  assert.yearStep2.step:if(meta.stepCount == 2 count) = meta.year == 2022 years
+  assert.yearStep3.step:if(meta.stepCount == 3 count) = meta.year == 2023 years
+  assert.yearStep4.step:if(meta.stepCount == 4 count) = meta.year == 2024 years
+
+  # Assert meta.step matches meta.year (they should be the same)
+  assert.stepEqualsYearStep0.step:if(meta.stepCount == 0 count) = meta.step == 2020 years
+  assert.stepEqualsYearStep1.step:if(meta.stepCount == 1 count) = meta.step == 2021 years
+  assert.stepEqualsYearStep2.step:if(meta.stepCount == 2 count) = meta.step == 2022 years
+  assert.stepEqualsYearStep3.step:if(meta.stepCount == 3 count) = meta.step == 2023 years
+  assert.stepEqualsYearStep4.step:if(meta.stepCount == 4 count) = meta.step == 2024 years
+
+  # Assert meta.stepCount increases from 0
+  assert.stepCountStep0.step:if(meta.year == 2020 years) = meta.stepCount == 0 count
+  assert.stepCountStep1.step:if(meta.year == 2021 years) = meta.stepCount == 1 count
+  assert.stepCountStep2.step:if(meta.year == 2022 years) = meta.stepCount == 2 count
+  assert.stepCountStep3.step:if(meta.year == 2023 years) = meta.stepCount == 3 count
+  assert.stepCountStep4.step:if(meta.year == 2024 years) = meta.stepCount == 4 count
+
+  # Assert recorded values match metadata
+  assert.recordedYearStep1.step:if(meta.stepCount == 1 count) = current.recordedYear == 2021 years
+  assert.recordedYearStep2.step:if(meta.stepCount == 2 count) = current.recordedYear == 2022 years
+  assert.recordedYearStep3.step:if(meta.stepCount == 3 count) = current.recordedYear == 2023 years
+  assert.recordedYearStep4.step:if(meta.stepCount == 4 count) = current.recordedYear == 2024 years
+
+  assert.recordedStepStep1.step:if(meta.stepCount == 1 count) = current.recordedStep == 2021 years
+  assert.recordedStepStep2.step:if(meta.stepCount == 2 count) = current.recordedStep == 2022 years
+  assert.recordedStepStep3.step:if(meta.stepCount == 3 count) = current.recordedStep == 2023 years
+  assert.recordedStepStep4.step:if(meta.stepCount == 4 count) = current.recordedStep == 2024 years
+
+  assert.recordedStepCountStep1.step:if(meta.stepCount == 1 count) = current.recordedStepCount == 1 count
+  assert.recordedStepCountStep2.step:if(meta.stepCount == 2 count) = current.recordedStepCount == 2 count
+  assert.recordedStepCountStep3.step:if(meta.stepCount == 3 count) = current.recordedStepCount == 3 count
+  assert.recordedStepCountStep4.step:if(meta.stepCount == 4 count) = current.recordedStepCount == 4 count
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Height grows based on prior height
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Store metadata at organism level
+  birthYear.init = meta.year
+  birthYear.step = prior.birthYear
+
+  currentYear.init = meta.year
+  currentYear.step = meta.year
+
+  yearsAlive.init = 0 year
+  yearsAlive.step = meta.year - current.birthYear
+
+  # Assert birthYear is recorded correctly and persists
+  assert.birthYearStep0.step:if(meta.stepCount == 0 count) = current.birthYear == 2020 years
+  assert.birthYearStep1.step:if(meta.stepCount == 1 count) = current.birthYear == 2020 years
+  assert.birthYearStep2.step:if(meta.stepCount == 2 count) = current.birthYear == 2020 years
+  assert.birthYearStep3.step:if(meta.stepCount == 3 count) = current.birthYear == 2020 years
+  assert.birthYearStep4.step:if(meta.stepCount == 4 count) = current.birthYear == 2020 years
+
+  # Assert currentYear tracks meta.year
+  assert.currentYearStep0.step:if(meta.stepCount == 0 count) = current.currentYear == 2020 years
+  assert.currentYearStep1.step:if(meta.stepCount == 1 count) = current.currentYear == 2021 years
+  assert.currentYearStep2.step:if(meta.stepCount == 2 count) = current.currentYear == 2022 years
+  assert.currentYearStep3.step:if(meta.stepCount == 3 count) = current.currentYear == 2023 years
+  assert.currentYearStep4.step:if(meta.stepCount == 4 count) = current.currentYear == 2024 years
+
+  # Assert yearsAlive matches age (and stepCount)
+  assert.yearsAliveStep0.step:if(meta.stepCount == 0 count) = current.yearsAlive == 0 years
+  assert.yearsAliveStep1.step:if(meta.stepCount == 1 count) = current.yearsAlive == 1 year
+  assert.yearsAliveStep2.step:if(meta.stepCount == 2 count) = current.yearsAlive == 2 years
+  assert.yearsAliveStep3.step:if(meta.stepCount == 3 count) = current.yearsAlive == 3 years
+  assert.yearsAliveStep4.step:if(meta.stepCount == 4 count) = current.yearsAlive == 4 years
+
+  # Assert age equals yearsAlive
+  assert.ageEqualsYearsAliveStep1.step:if(meta.stepCount == 1 count) = current.age == current.yearsAlive
+  assert.ageEqualsYearsAliveStep2.step:if(meta.stepCount == 2 count) = current.age == current.yearsAlive
+  assert.ageEqualsYearsAliveStep3.step:if(meta.stepCount == 3 count) = current.age == current.yearsAlive
+  assert.ageEqualsYearsAliveStep4.step:if(meta.stepCount == 4 count) = current.age == current.yearsAlive
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

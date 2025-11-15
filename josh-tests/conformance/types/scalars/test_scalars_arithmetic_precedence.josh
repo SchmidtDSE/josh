@@ -1,0 +1,68 @@
+# @category: types
+# @subcategory: scalars
+# @priority: medium
+# @description: Test order of operations with scalar arithmetic
+
+start simulation ScalarsArithmeticPrecedence
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test precedence: multiplication before addition
+  # 2 m + 3 m * 4 m = 2 m + 12 squaremeters = should use standard precedence
+  value1.init = 2 m
+  value2.init = 3 m
+  value3.init = 4 m
+  result1.init = value1 + value2 * value3
+  assert.multiplicationFirst.init = result1 == 14 squaremeters
+
+  # Test with parentheses: addition before multiplication
+  # (2 m + 3 m) * 4 m = 5 m * 4 m = 20 squaremeters
+  sum.init = value1 + value2
+  result2.init = sum * value3
+  assert.parenthesesForce.init = result2 == 20 squaremeters
+
+  # Test division before subtraction
+  # 20 m - 10 m / 2 count = 20 m - 5 m = 15 m
+  base.init = 20 m
+  divisor1.init = 10 m
+  divisor2.init = 2 count
+  result3.init = base - divisor1 / divisor2
+  assert.divisionFirst.init = result3 == 15 m
+
+  # Test with parentheses: subtraction before division
+  # (20 m - 10 m) / 2 count = 10 m / 2 count = 5 m
+  diff.init = base - divisor1
+  result4.init = diff / divisor2
+  assert.parenthesesSubtract.init = result4 == 5 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit squaremeters
+  alias squaremeter
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

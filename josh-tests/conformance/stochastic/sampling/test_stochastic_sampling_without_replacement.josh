@@ -1,0 +1,82 @@
+# @category: stochastic
+# @subcategory: sampling
+# @priority: medium
+# @description: Test sampling uniqueness behavior - verifies independent random sampling produces diverse values
+
+start simulation StochasticSamplingWithoutReplacement
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms sampling from a continuous distribution
+  # With continuous uniform distribution, duplicates are extremely unlikely
+  TestOrg.init = create 100 count of TestOrg
+
+  # Test 1: Verify values are in expected range
+  minValue.step = min(TestOrg.value)
+  maxValue.step = max(TestOrg.value)
+  assert.inRange.step = (minValue >= 0 m) and (maxValue <= 1000 m)
+
+  # Test 2: Verify good coverage across the range
+  # Check that values appear in different quartiles
+  q1Count.step = count(TestOrg.value < 250 m)
+  q2Count.step = count(TestOrg.value >= 250 m and TestOrg.value < 500 m)
+  q3Count.step = count(TestOrg.value >= 500 m and TestOrg.value < 750 m)
+  q4Count.step = count(TestOrg.value >= 750 m)
+
+  # Each quartile should have at least some samples (at least 10 out of 100)
+  assert.q1HasSamples.step = q1Count >= 10 count
+  assert.q2HasSamples.step = q2Count >= 10 count
+  assert.q3HasSamples.step = q3Count >= 10 count
+  assert.q4HasSamples.step = q4Count >= 10 count
+
+  # Test 3: Verify spread/diversity - standard deviation proxy
+  # Range should be substantial (at least 60% of total range)
+  range.step = maxValue - minValue
+  expectedMinRange.step = 600 m
+  assert.goodSpread.step = range >= expectedMinRange
+
+  # Test 4: Mean should be roughly in the middle
+  avgValue.step = mean(TestOrg.value)
+  expectedMean.step = 500 m
+  tolerance.step = 100 m
+  lowerBound.step = expectedMean - tolerance
+  upperBound.step = expectedMean + tolerance
+  assert.meanCentered.step = (avgValue >= lowerBound) and (avgValue <= upperBound)
+
+end patch
+
+start organism TestOrg
+
+  # Sample from continuous uniform distribution - nearly impossible to get duplicates
+  value.init = sample uniform from 0 m to 1000 m
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

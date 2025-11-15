@@ -1,0 +1,68 @@
+# @category: stochastic
+# @subcategory: distributions
+# @priority: critical
+# @description: Test normal distribution sampling - verifies mean and standard deviation approximate expected values
+
+start simulation StochasticNormal
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 1000 organisms for statistical reliability
+  TestOrg.init = create 1000 count of TestOrg
+
+  # Calculate statistics from sampled values
+  avgValue.step = mean(TestOrg.value)
+
+  # Test 1: Mean should approximate expected mean (100) with tolerance
+  # With 1000 samples from N(100, 15), expect mean within ±10% of 100
+  expectedMean.step = 100 m
+  meanTolerance.step = 10 m
+  meanLowerBound.step = expectedMean - meanTolerance
+  meanUpperBound.step = expectedMean + meanTolerance
+  assert.meanApprox.step = (avgValue >= meanLowerBound) and (avgValue <= meanUpperBound)
+
+  # Test 2: Verify approximately 68% of values within 1 std dev of mean
+  # For N(100, 15), roughly 68% should be in [85, 115]
+  countInRange.step = count(TestOrg.value >= 85 m and TestOrg.value <= 115 m)
+  percentInRange.step = (countInRange / 1000 count) * 100 count
+
+  # Expect roughly 68% ± 10% = [58%, 78%]
+  assert.stdDevCheck.step = (percentInRange >= 58 count) and (percentInRange <= 78 count)
+
+end patch
+
+start organism TestOrg
+
+  # Sample from normal distribution with mean=100, std=15
+  value.init = sample normal with mean of 100 m std of 15 m
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

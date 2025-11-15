@@ -1,0 +1,61 @@
+# @category: types
+# @subcategory: conversions
+# @priority: critical
+# @description: Test distribution reduces to scalar in scalar context
+
+start simulation ConversionsDistributionToScalar
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create single organism to test distribution to scalar context
+  Tree.init = create Tree
+
+  # Test that distribution value reduces to scalar for single organism
+  # Mean of single value should equal that value
+  export.treeHeight.step = mean(Tree.height)
+
+  # Test patch-level scalar context
+  patchHeight.init = 10 m
+  assert.patchScalar.init = patchHeight == 10 m
+
+end patch
+
+start organism Tree
+
+  # Initialize with scalar which becomes distribution
+  height.init = 15 m
+
+  # Test that scalar context works within organism
+  heightCheck.init = current.height
+  assert.heightValue.init = heightCheck == 15 m
+
+  # Test arithmetic in scalar context
+  halfHeight.init = current.height / 2 count
+  assert.halfHeight.init = current.halfHeight == 7.5 m
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

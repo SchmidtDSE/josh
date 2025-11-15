@@ -1,0 +1,117 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Test distribution arithmetic with multiplication operations
+
+start simulation DistributionsArithmeticMultiplication
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Test multiplying distribution by scalar
+  dist1.init = sample uniform from 0 m to 100 m
+  multScalar.init = dist1 * 2
+
+  # Result should be in range [0, 200]
+  assert.multScalarMin.init = multScalar >= 0 m
+  assert.multScalarMax.init = multScalar <= 200 m
+
+  # Test scalar * distribution (commutative)
+  multScalar2.init = 3 * dist1
+
+  # Result should be in range [0, 300]
+  assert.multScalar2Min.init = multScalar2 >= 0 m
+  assert.multScalar2Max.init = multScalar2 <= 300 m
+
+  # Test distribution * distribution (virtual - same sample used)
+  dist2.init = sample uniform from 0 m to 10 m
+  multDist.init = dist2 * dist2
+
+  # Result should be dist2^2 (virtual distribution)
+  # For uniform(0, 10), dist2 * dist2 gives range [0, 100]
+  assert.multDistMin.init = multDist >= 0 m
+  assert.multDistMax.init = multDist <= 100 m
+
+  # Test with organisms (realized distributions)
+  Trees.init = create 100 count of Tree
+
+  # Test multiplying reduction result by scalar
+  treeMeanHeight.init = mean(Trees.height)
+  treeMeanDoubled.init = treeMeanHeight * 2
+
+  # Mean of heights from uniform(0, 100) is ~50, times 2 = ~100
+  assert.treeMeanDoubled.init = treeMeanDoubled > 95 m
+  assert.treeMeanDoubled2.init = treeMeanDoubled < 105 m
+
+  # Test sum multiplied by scalar
+  treeSum.init = sum(Trees.height)
+  treeSumTripled.init = treeSum * 3
+
+  # Sum of 100 heights (mean ~50) is ~5000, times 3 = ~15000
+  assert.treeSumTripled.init = treeSumTripled > 14000 m
+  assert.treeSumTripled2.init = treeSumTripled < 16000 m
+
+  # Test organisms with multiplication in init
+  Plants.init = create 100 count of Plant
+
+  # Plants have baseHeight * scaleFactor where both are sampled
+  # baseHeight: uniform(10, 20), scaleFactor: uniform(1, 3)
+  # Scaled height range: [10, 60] with complex distribution
+  plantMean.init = mean(Plants.scaledHeight)
+  plantMin.init = min(Plants.scaledHeight)
+  plantMax.init = max(Plants.scaledHeight)
+
+  # Mean of uniform(10,20) * uniform(1,3): E[X*Y] = E[X]*E[Y] = 15 * 2 = 30
+  assert.plantMeanReasonable.init = plantMean > 25 m
+  assert.plantMeanReasonable2.init = plantMean < 35 m
+  assert.plantMinReasonable.init = plantMin >= 10 m
+  assert.plantMaxReasonable.init = plantMax <= 60 m
+
+  # Test multiple multiplications
+  multiMult.init = dist1 * 2 * 0.5
+
+  # Result should equal dist1 (2 * 0.5 = 1)
+  assert.multiMultEqual.init = multiMult == dist1
+
+  # Test fractional multiplication (division-like)
+  halfDist.init = dist1 * 0.5
+
+  # Result should be in range [0, 50]
+  assert.halfDistMin.init = halfDist >= 0 m
+  assert.halfDistMax.init = halfDist <= 50 m
+
+end patch
+
+start organism Tree
+
+  # Simple uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Test multiplication of two distributions (realized - each organism samples independently)
+  baseHeight.init = sample uniform from 10 m to 20 m
+  scaleFactor.init = sample uniform from 1 count to 3 count
+  scaledHeight.init = baseHeight * scaleFactor
+  scaledHeight.step = prior.scaledHeight
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

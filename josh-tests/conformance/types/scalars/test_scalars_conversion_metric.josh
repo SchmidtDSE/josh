@@ -1,0 +1,93 @@
+# @category: types
+# @subcategory: scalars
+# @priority: critical
+# @description: Test metric conversions (m ↔ km ↔ cm ↔ mm)
+
+start simulation ScalarsConversionMetric
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test meters to kilometers (1000 m = 1 km)
+  distanceM.init = 1000 m
+  distanceKm.init = distanceM as km
+  assert.mToKm.init = distanceKm == 1 km
+
+  # Test meters to centimeters (1 m = 100 cm)
+  lengthM.init = 1 m
+  lengthCm.init = lengthM as cm
+  assert.mToCm.init = lengthCm == 100 cm
+
+  # Test kilometers to centimeters (1 km = 100000 cm)
+  dist2Km.init = 1 km
+  dist2Cm.init = dist2Km as cm
+  assert.kmToCm.init = dist2Cm == 100000 cm
+
+  # Test centimeters to meters
+  heightCm.init = 250 cm
+  heightM.init = heightCm as m
+  assert.cmToM.init = heightM == 2.5 m
+
+  # Test millimeters to meters (1000 mm = 1 m)
+  widthMm.init = 1000 mm
+  widthM.init = widthMm as m
+  assert.mmToM.init = widthM == 1 m
+
+  # Test meters to millimeters (1 m = 1000 mm)
+  length2M.init = 2 m
+  length2Mm.init = length2M as mm
+  assert.mToMm.init = length2Mm == 2000 mm
+
+  # Test kilometers to millimeters (1 km = 1000000 mm)
+  dist3Km.init = 0.001 km
+  dist3Mm.init = dist3Km as mm
+  assert.kmToMm.init = dist3Mm == 1000 mm
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+  cm = current * 100
+  mm = current * 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+  cm = current * 100000
+  mm = current * 1000000
+end unit
+
+start unit cm
+  alias centimeter
+  alias centimeters
+  m = current / 100
+  km = current / 100000
+  mm = current * 10
+end unit
+
+start unit mm
+  alias millimeter
+  alias millimeters
+  m = current / 1000
+  km = current / 1000000
+  cm = current / 10
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

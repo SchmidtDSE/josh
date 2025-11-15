@@ -1,0 +1,117 @@
+# @category: stochastic
+# @subcategory: arithmetic
+# @priority: high
+# @description: Test distribution arithmetic with scalars - verifies mean transforms correctly with scalar operations
+
+start simulation StochasticArithmeticScalar
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with base distribution
+  BaseOrg.init = create 500 count of BaseOrg
+
+  # Create organisms with distribution + scalar
+  AddOrg.init = create 500 count of AddOrg
+
+  # Create organisms with distribution * scalar
+  MultOrg.init = create 500 count of MultOrg
+
+  # Calculate means
+  meanBase.step = mean(BaseOrg.value)
+  meanAdd.step = mean(AddOrg.value)
+  meanMult.step = mean(MultOrg.value)
+
+  # Test 1: Base distribution mean should be around 50
+  expectedBase.step = 50 m
+  toleranceBase.step = 5 m
+  lowerBase.step = expectedBase - toleranceBase
+  upperBase.step = expectedBase + toleranceBase
+  assert.baseMean.step = (meanBase >= lowerBase) and (meanBase <= upperBase)
+
+  # Test 2: Adding scalar should shift mean by that amount
+  # mean(dist + 10) = mean(dist) + 10
+  expectedAdd.step = meanBase + 10 m
+  toleranceAdd.step = 5 m
+  lowerAdd.step = expectedAdd - toleranceAdd
+  upperAdd.step = expectedAdd + toleranceAdd
+  assert.addMean.step = (meanAdd >= lowerAdd) and (meanAdd <= upperAdd)
+
+  # Test 3: Multiplying by scalar should scale mean by that amount
+  # mean(dist * 2) = mean(dist) * 2
+  expectedMult.step = meanBase * 2 count
+  toleranceMult.step = 10 m
+  lowerMult.step = expectedMult - toleranceMult
+  upperMult.step = expectedMult + toleranceMult
+  assert.multMean.step = (meanMult >= lowerMult) and (meanMult <= upperMult)
+
+  # Test 4: Verify ranges are also transformed correctly
+  minBase.step = min(BaseOrg.value)
+  maxBase.step = max(BaseOrg.value)
+  minAdd.step = min(AddOrg.value)
+  maxAdd.step = max(AddOrg.value)
+  minMult.step = min(MultOrg.value)
+  maxMult.step = max(MultOrg.value)
+
+  # Addition should shift range
+  assert.addRangeShifted.step = minAdd > minBase
+
+  # Multiplication should expand range
+  rangeBase.step = maxBase - minBase
+  rangeMult.step = maxMult - minMult
+  assert.multRangeExpanded.step = rangeMult > rangeBase
+
+end patch
+
+start organism BaseOrg
+
+  # Base distribution: uniform(0, 100)
+  value.init = sample uniform from 0 m to 100 m
+  value.step = prior.value
+
+end organism
+
+start organism AddOrg
+
+  # Distribution + 10
+  baseValue.init = sample uniform from 0 m to 100 m
+  value.init = baseValue + 10 m
+  value.step = prior.value
+
+end organism
+
+start organism MultOrg
+
+  # Distribution * 2
+  baseValue.init = sample uniform from 0 m to 100 m
+  value.init = baseValue * 2 count
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

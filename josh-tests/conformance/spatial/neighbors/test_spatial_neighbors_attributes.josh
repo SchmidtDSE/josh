@@ -1,0 +1,81 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: high
+# @description: Access neighbor attributes - test mean age and sum biomass of neighbors
+
+start simulation SpatialNeighborsAttributes
+
+  # Create a 3x3 grid
+  grid.size = 10 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.0003 degrees latitude, 0.0003 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 9 organisms
+  Tree.init = create 9 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = sample uniform from 0 year to 10 years
+  age.step = prior.age + 1 year
+
+  biomass.init = sample uniform from 10 kg to 100 kg
+  biomass.step = prior.biomass + 1 kg
+
+  # Calculate mean age of neighbors within 50m
+  meanNeighborAge.step = mean(Tree within 50 m radial at prior.age)
+
+  # Calculate sum of neighbor biomass within 50m
+  totalNeighborBiomass.step = sum(Tree within 50 m radial at prior.biomass)
+
+  # Assert mean age is within reasonable range
+  assert.meanAgeValid.step:if(meta.stepCount == 1 count) = current.meanNeighborAge >= 0 years
+  assert.meanAgeNotTooHigh.step:if(meta.stepCount == 1 count) = current.meanNeighborAge <= 20 years
+
+  # Assert total biomass is positive and reasonable
+  assert.biomassPositive.step:if(meta.stepCount == 1 count) = current.totalNeighborBiomass > 0 kg
+  assert.biomassReasonable.step:if(meta.stepCount == 1 count) = current.totalNeighborBiomass <= 1000 kg
+
+  # Test that attributes change over time
+  meanAgeStep2.init = 0 years
+  meanAgeStep2.step:if(meta.stepCount == 2 count) = current.meanNeighborAge
+
+  # At step 3, mean age should be higher than at step 2
+  assert.ageIncreases.step:if(meta.stepCount == 3 count) = current.meanNeighborAge > current.meanAgeStep2
+
+  # Test accessing specific attributes with max/min
+  maxNeighborAge.step = max(Tree within 50 m radial at prior.age)
+  minNeighborAge.step = min(Tree within 50 m radial at prior.age)
+
+  # Max should be >= min
+  assert.maxGteMin.step:if(meta.stepCount == 1 count) = current.maxNeighborAge >= current.minNeighborAge
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

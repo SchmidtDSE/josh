@@ -1,0 +1,78 @@
+# @category: types
+# @subcategory: conversions
+# @priority: medium
+# @description: Test conversions involving dimensionless values (count, percentage, ratio)
+
+start simulation ConversionsDimensionless
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test count (dimensionless)
+  items.init = 100 count
+  assert.countValue.init = items == 100 count
+
+  # Test arithmetic with count
+  doubledItems.init = items * 2 count
+  assert.countArithmetic.init = doubledItems == 200 count
+
+  # Test percentage (dimensionless)
+  success.init = 75 percent
+  assert.percentageValue.init = success == 75 percent
+
+  # Test percentage arithmetic
+  halfSuccess.init = success / 2 count
+  assert.percentageArithmetic.init = halfSuccess == 37.5 percent
+
+  # Test ratio calculations (percentage to decimal ratio)
+  probability.init = 50 percent
+  # 50% as a ratio would be 0.5
+  ratioValue.init = probability / 100 percent
+  assert.percentToRatio.init = ratioValue == 0.5 count
+
+  # Test count to percentage conversion concept
+  totalItems.init = 200 count
+  selectedItems.init = 50 count
+  # Calculate percentage: (50/200) * 100
+  percentSelected.init = (selectedItems / totalItems) * 100 percent
+  assert.countToPercent.init = percentSelected == 25 percent
+
+  # Test ratio to percentage
+  ratioVal.init = 0.25 count
+  percentVal.init = ratioVal * 100 percent
+  assert.ratioToPercent.init = percentVal == 25 percent
+
+  # Test percentage comparisons
+  threshold.init = 80 percent
+  testVal.init = 90 percent
+  assert.percentCompare.init = testVal > threshold
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit percent
+  alias percentage
+end unit
+
+start unit degrees
+end unit

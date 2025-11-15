@@ -1,0 +1,67 @@
+# @category: types
+# @subcategory: conversions
+# @priority: high
+# @description: Test mixed scalar/distribution expressions with autoboxing
+
+start simulation ConversionsAutoboxingMixed
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create multiple organisms to test mixed expressions
+  Tree.init = create 5 count of Tree
+
+  # Patch-level scalar for mixing
+  baseHeight.init = 10 m
+  growthFactor.init = 2 count
+
+end patch
+
+start organism Tree
+
+  # Test scalar + distribution (scalar should autobox)
+  height.init = 5 m
+  adjustedHeight.init = current.height + 3 m
+  assert.scalarAdd.init = current.adjustedHeight == 8 m
+
+  # Test distribution * scalar
+  scaledHeight.init = current.height * 2 count
+  assert.scalarMultiply.init = current.scaledHeight == 10 m
+
+  # Test scalar - distribution
+  reducedHeight.init = 20 m - current.height
+  assert.scalarSubtract.init = current.reducedHeight == 15 m
+
+  # Test distribution / scalar
+  dividedHeight.init = current.height / 5 count
+  assert.scalarDivide.init = current.dividedHeight == 1 m
+
+  # Test complex mixed expression
+  complexHeight.init = (current.height + 5 m) * 2 count - 10 m
+  assert.complexMixed.init = current.complexHeight == 10 m
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

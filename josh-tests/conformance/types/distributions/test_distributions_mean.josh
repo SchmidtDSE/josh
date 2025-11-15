@@ -1,0 +1,76 @@
+# @category: types
+# @subcategory: distributions
+# @priority: critical
+# @description: Test mean() reduction operation on collection attributes
+
+start simulation DistributionsMean
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with stochastic values that average to about 30
+  Trees.init = create 100 count of Tree
+
+  # Test mean with stochastic values from uniform(10, 50)
+  # Mean should be approximately 30 years (with tolerance)
+  meanAge.init = mean(Trees.age)
+  assert.meanAgeLower.init = meanAge > 26 years
+  assert.meanAgeUpper.init = meanAge < 34 years
+
+  # Test mean with uniform values
+  # All trees have height 100 m
+  meanHeight.init = mean(Trees.height)
+  assert.meanHeight.init = meanHeight == 100 m
+
+  # Create more organisms with stochastic values
+  Plants.init = create 100 count of Plant
+
+  # Test mean of stochastic values (should be near 50 with large sample)
+  meanPlantHeight.init = mean(Plants.height)
+  assert.meanPlantReasonable.init = meanPlantHeight > 45 m
+  assert.meanPlantReasonable2.init = meanPlantHeight < 55 m
+
+end patch
+
+start organism Tree
+
+  # Use sample to get varied values that average to about 30
+  # Sample uniform from 10 to 50, mean = 30
+  age.init = sample uniform from 10 years to 50 years
+  age.step = prior.age
+
+  # All trees have same height
+  height.init = 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Stochastic height from uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit

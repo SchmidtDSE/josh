@@ -1,0 +1,55 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: medium
+# @description: Test empty result when no organisms in radius
+
+start simulation SpatialWithinEmpty
+
+  # Create a large sparse grid
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create only 1 organism in a large grid
+  Tree.init = create 1 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Count neighbors within very small radius (excluding self)
+  # Since grid is large and sparse, should find none or just self
+  neighbors.step = count(Tree within 5 m radial at prior)
+
+  # With only one organism and large spacing, should find at most 1 (itself)
+  assert.fewOrNoNeighbors.step:if(meta.stepCount == 1 count) = current.neighbors <= 1 count
+
+  # Test that the query executes without error even when result might be empty
+  assert.queryWorks.step:if(meta.stepCount == 1 count) = current.neighbors >= 0 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

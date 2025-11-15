@@ -1,0 +1,52 @@
+# @category: types
+# @subcategory: distributions
+# @priority: critical
+# @description: Test virtual distributions where same sample used across expression
+
+start simulation DistributionsVirtual
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Virtual distribution: same sample used within a single expression evaluation
+  # Create organisms that test virtual distribution behavior
+  Trees.init = create 100 count of Tree
+
+  # Test that organisms have values in expected range
+  # Each organism samples once, uses value twice (doubleValue = value + value)
+  # If value is uniform(0, 50), then doubleValue should be uniform(0, 100)
+  assert.minRange.init = min(Trees.doubleValue) >= 0 m
+  assert.maxRange.init = max(Trees.doubleValue) <= 100 m
+
+  # Test mean - if value has mean ~25, doubleValue should have mean ~50
+  assert.meanReasonable.init = mean(Trees.doubleValue) > 45 m
+  assert.meanReasonable2.init = mean(Trees.doubleValue) < 55 m
+
+end patch
+
+start organism Tree
+
+  # Sample once and use the value multiple times in an expression (virtual)
+  value.init = sample uniform from 0 m to 50 m
+
+  # Use the sampled value twice - virtual distribution means same sample is used
+  doubleValue.init = value + value
+  doubleValue.step = prior.doubleValue
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

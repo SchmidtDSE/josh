@@ -1,0 +1,61 @@
+# @category: types
+# @subcategory: scalars
+# @priority: critical
+# @description: Test basic arithmetic operations (+, -, *, /) with same units
+
+start simulation ScalarsArithmeticBasic
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test addition with same units
+  length1.init = 10 m
+  length2.init = 5 m
+  sumLength.init = length1 + length2
+  assert.addition.init = sumLength == 15 m
+
+  # Test subtraction with same units
+  distance1.init = 20 m
+  distance2.init = 8 m
+  diffDistance.init = distance1 - distance2
+  assert.subtraction.init = diffDistance == 12 m
+
+  # Test multiplication by scalar
+  baseLength.init = 3 m
+  multiplier.init = 4 count
+  productLength.init = baseLength * multiplier
+  assert.multiplication.init = productLength == 12 m
+
+  # Test division by scalar
+  totalLength.init = 10 m
+  divisor.init = 2 count
+  quotientLength.init = totalLength / divisor
+  assert.division.init = quotientLength == 5 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

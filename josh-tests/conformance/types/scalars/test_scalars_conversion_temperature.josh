@@ -1,0 +1,87 @@
+# @category: types
+# @subcategory: scalars
+# @priority: medium
+# @description: Test temperature conversions (°C ↔ °F ↔ K)
+
+start simulation ScalarsConversionTemperature
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test freezing point: 0 C = 32 F
+  freezingC.init = 0 celsius
+  freezingF.init = freezingC as fahrenheit
+  assert.freezingPoint.init = freezingF == 32 fahrenheit
+
+  # Test boiling point: 100 C = 212 F
+  boilingC.init = 100 celsius
+  boilingF.init = boilingC as fahrenheit
+  assert.boilingPoint.init = boilingF == 212 fahrenheit
+
+  # Test room temperature: ~20 C = 68 F
+  roomC.init = 20 celsius
+  roomF.init = roomC as fahrenheit
+  assert.roomTemp.init = roomF == 68 fahrenheit
+
+  # Test Fahrenheit to Celsius: 32 F = 0 C
+  temp1F.init = 32 fahrenheit
+  temp1C.init = temp1F as celsius
+  assert.fToCFreezing.init = temp1C == 0 celsius
+
+  # Test Fahrenheit to Celsius: 212 F = 100 C
+  temp2F.init = 212 fahrenheit
+  temp2C.init = temp2F as celsius
+  assert.fToCBoiling.init = temp2C == 100 celsius
+
+  # Test Celsius to Kelvin: 0 C = 273.15 K
+  temp3C.init = 0 celsius
+  temp3K.init = temp3C as kelvin
+  assert.cToKFreezing.init = temp3K == 273.15 kelvin
+
+  # Test Kelvin to Celsius: 273.15 K = 0 C
+  temp4K.init = 273.15 kelvin
+  temp4C.init = temp4K as celsius
+  assert.kToCFreezing.init = temp4C == 0 celsius
+
+end patch
+
+start unit celsius
+  alias Celsius
+  alias C
+  fahrenheit = current * 9 / 5 + 32
+  kelvin = current + 273.15
+end unit
+
+start unit fahrenheit
+  alias Fahrenheit
+  alias F
+  celsius = (current - 32) * 5 / 9
+  kelvin = (current - 32) * 5 / 9 + 273.15
+end unit
+
+start unit kelvin
+  alias Kelvin
+  alias K
+  celsius = current - 273.15
+  fahrenheit = (current - 273.15) * 9 / 5 + 32
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

@@ -1,0 +1,77 @@
+# @category: types
+# @subcategory: scalars
+# @priority: high
+# @description: Test scalar multiplication and division to create derived units (area, density)
+
+start simulation ScalarsArithmeticMultiplication
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test area calculation (length * width)
+  length.init = 4 m
+  width.init = 3 m
+  area.init = length * width
+  assert.areaCalculation.init = area == 12 squaremeters
+
+  # Test volume calculation (area * height)
+  baseArea.init = 10 squaremeters
+  height.init = 2 m
+  volume.init = baseArea * height
+  assert.volumeCalculation.init = volume == 20 cubicmeters
+
+  # Test density calculation (mass / volume)
+  mass.init = 100 kg
+  containerVolume.init = 10 cubicmeters
+  density.init = mass / containerVolume
+  assert.densityCalculation.init = density == 10 kgpercubicmeter
+
+  # Test dividing area by length to get width
+  totalArea.init = 20 squaremeters
+  sideLength.init = 4 m
+  calculatedWidth.init = totalArea / sideLength
+  assert.widthCalculation.init = calculatedWidth == 5 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit squaremeters
+  alias squaremeter
+end unit
+
+start unit cubicmeters
+  alias cubicmeter
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit kgpercubicmeter
+  alias kilogramspercubicmeter
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

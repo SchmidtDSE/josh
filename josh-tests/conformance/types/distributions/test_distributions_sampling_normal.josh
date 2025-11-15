@@ -1,0 +1,116 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Test sampling from normal distribution with statistical validation
+
+start simulation DistributionsSamplingNormal
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create large sample for statistical tests
+  Trees.init = create 500 count of Tree
+
+  # Test normal distribution properties
+  # Heights from normal(mean=50, std=10)
+  # Theoretical mean = 50
+  # Theoretical std = 10
+  meanHeight.init = mean(Trees.height)
+  stdHeight.init = std(Trees.height)
+  minHeight.init = min(Trees.height)
+  maxHeight.init = max(Trees.height)
+
+  # Test mean is approximately 50 (within 5% tolerance)
+  assert.meanLower.init = meanHeight > 47.5 m
+  assert.meanUpper.init = meanHeight < 52.5 m
+
+  # Test std is approximately 10 (within 10% tolerance)
+  assert.stdLower.init = stdHeight > 9 m
+  assert.stdUpper.init = stdHeight < 11 m
+
+  # Test that std is positive (non-zero variation)
+  assert.stdPositive.init = stdHeight > 0 m
+
+  # For normal distribution, ~99.7% of values within 3 std deviations
+  # So min should be > mean - 3*std ≈ 20, max should be < mean + 3*std ≈ 80 (usually)
+  # But with 500 samples, we might see values outside this, so use wider bounds
+  assert.minReasonable.init = minHeight > 15 m
+  assert.maxReasonable.init = maxHeight < 85 m
+
+  # Test normal distribution with different parameters
+  Plants.init = create 500 count of Plant
+
+  # Heights from normal(mean=100, std=20)
+  plantMean.init = mean(Plants.height)
+  plantStd.init = std(Plants.height)
+  plantMin.init = min(Plants.height)
+  plantMax.init = max(Plants.height)
+
+  # Test mean is approximately 100 (within 5% tolerance)
+  assert.plantMeanLower.init = plantMean > 95 m
+  assert.plantMeanUpper.init = plantMean < 105 m
+
+  # Test std is approximately 20 (within 10% tolerance)
+  assert.plantStdLower.init = plantStd > 18 m
+  assert.plantStdUpper.init = plantStd < 22 m
+
+  # Test reasonable range for normal(100, 20)
+  # About 99.7% within [40, 160]
+  assert.plantMinReasonable.init = plantMin > 30 m
+  assert.plantMaxReasonable.init = plantMax < 170 m
+
+  # Test small sample normal distribution
+  Shrubs.init = create 100 count of Shrub
+
+  # Heights from normal(mean=25, std=5)
+  shrubMean.init = mean(Shrubs.height)
+  shrubStd.init = std(Shrubs.height)
+
+  # With smaller sample, use wider tolerance (10%)
+  assert.shrubMeanLower.init = shrubMean > 22.5 m
+  assert.shrubMeanUpper.init = shrubMean < 27.5 m
+
+  assert.shrubStdLower.init = shrubStd > 4 m
+  assert.shrubStdUpper.init = shrubStd < 6 m
+
+end patch
+
+start organism Tree
+
+  # Sample from normal(mean=50, std=10)
+  height.init = sample normal with mean of 50 m std of 10 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Sample from normal(mean=100, std=20)
+  height.init = sample normal with mean of 100 m std of 20 m
+  height.step = prior.height
+
+end organism
+
+start organism Shrub
+
+  # Sample from normal(mean=25, std=5)
+  height.init = sample normal with mean of 25 m std of 5 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

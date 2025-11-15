@@ -1,0 +1,91 @@
+# @category: stochastic
+# @subcategory: distributions
+# @priority: high
+# @description: Test uniform distribution with different ranges - verifies distribution parameters affect results
+
+start simulation StochasticUniformRange
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 500 organisms for each distribution
+  TestOrg1.init = create 500 count of TestOrg1
+  TestOrg2.init = create 500 count of TestOrg2
+
+  # Calculate statistics for distribution 1: uniform(0, 10)
+  avgValue1.step = mean(TestOrg1.value)
+  minValue1.step = min(TestOrg1.value)
+  maxValue1.step = max(TestOrg1.value)
+
+  # Calculate statistics for distribution 2: uniform(100, 200)
+  avgValue2.step = mean(TestOrg2.value)
+  minValue2.step = min(TestOrg2.value)
+  maxValue2.step = max(TestOrg2.value)
+
+  # Test 1: Distribution 1 values should be in [0, 10]
+  assert.range1.step = (minValue1 >= 0 m) and (maxValue1 <= 10 m)
+
+  # Test 2: Distribution 1 mean should approximate 5 with ±10% tolerance
+  expectedMean1.step = 5 m
+  tolerance1.step = 0.5 m
+  lowerBound1.step = expectedMean1 - tolerance1
+  upperBound1.step = expectedMean1 + tolerance1
+  assert.mean1.step = (avgValue1 >= lowerBound1) and (avgValue1 <= upperBound1)
+
+  # Test 3: Distribution 2 values should be in [100, 200]
+  assert.range2.step = (minValue2 >= 100 m) and (maxValue2 <= 200 m)
+
+  # Test 4: Distribution 2 mean should approximate 150 with ±10% tolerance
+  expectedMean2.step = 150 m
+  tolerance2.step = 15 m
+  lowerBound2.step = expectedMean2 - tolerance2
+  upperBound2.step = expectedMean2 + tolerance2
+  assert.mean2.step = (avgValue2 >= lowerBound2) and (avgValue2 <= upperBound2)
+
+  # Test 5: The two distributions should have different means
+  assert.differentMeans.step = avgValue1 < avgValue2
+
+end patch
+
+start organism TestOrg1
+
+  # Sample from uniform distribution [0, 10]
+  value.init = sample uniform from 0 m to 10 m
+  value.step = prior.value
+
+end organism
+
+start organism TestOrg2
+
+  # Sample from uniform distribution [100, 200]
+  value.init = sample uniform from 100 m to 200 m
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

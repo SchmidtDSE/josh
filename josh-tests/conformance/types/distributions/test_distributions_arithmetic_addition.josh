@@ -1,0 +1,101 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Test distribution arithmetic with addition operations
+
+start simulation DistributionsArithmeticAddition
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Test adding scalar to distribution
+  dist1.init = sample uniform from 0 m to 100 m
+  addScalar.init = dist1 + 50 m
+
+  # Result should be in range [50, 150]
+  assert.addScalarMin.init = addScalar >= 50 m
+  assert.addScalarMax.init = addScalar <= 150 m
+
+  # Test distribution + distribution (virtual - same sample used)
+  dist2.init = sample uniform from 0 m to 100 m
+  addDist.init = dist2 + dist2
+
+  # Result should be exactly 2 * dist2 (virtual distribution)
+  assert.addDistEqual.init = addDist == (dist2 * 2)
+
+  # Test with organisms (realized distributions)
+  Trees.init = create 100 count of Tree
+
+  # Test adding scalar to organism attribute
+  treeMeanHeight.init = mean(Trees.height)
+  treeMeanHeightPlus50.init = treeMeanHeight + 50 m
+
+  # Mean of heights from uniform(0, 100) is ~50, plus 50 = ~100
+  assert.treeMeanPlus50.init = treeMeanHeightPlus50 > 95 m
+  assert.treeMeanPlus50b.init = treeMeanHeightPlus50 < 105 m
+
+  # Test adding to reduction result
+  treeSum.init = sum(Trees.height)
+  treeSumPlus1000.init = treeSum + 1000 m
+
+  # Sum of 100 heights (mean ~50) is ~5000, plus 1000 = ~6000
+  assert.treeSumPlus.init = treeSumPlus1000 > 5500 m
+  assert.treeSumPlus2.init = treeSumPlus1000 < 6500 m
+
+  # Test organisms with addition in init
+  Plants.init = create 100 count of Plant
+
+  # Plants have baseHeight + offset where both are sampled
+  # baseHeight: uniform(0, 50), offset: uniform(0, 10)
+  # Total height should be in range [0, 60] with mean ~30
+  plantMean.init = mean(Plants.totalHeight)
+  plantMin.init = min(Plants.totalHeight)
+  plantMax.init = max(Plants.totalHeight)
+
+  assert.plantMeanReasonable.init = plantMean > 25 m
+  assert.plantMeanReasonable2.init = plantMean < 35 m
+  assert.plantMinReasonable.init = plantMin >= 0 m
+  assert.plantMaxReasonable.init = plantMax <= 60 m
+
+  # Test multiple additions
+  multiAdd.init = dist1 + 10 m + 20 m + 30 m
+
+  # Result should be dist1 + 60
+  assert.multiAddMin.init = multiAdd >= 60 m
+  assert.multiAddMax.init = multiAdd <= 160 m
+
+end patch
+
+start organism Tree
+
+  # Simple uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Test addition of two distributions (realized - each organism samples independently)
+  baseHeight.init = sample uniform from 0 m to 50 m
+  offset.init = sample uniform from 0 m to 10 m
+  totalHeight.init = baseHeight + offset
+  totalHeight.step = prior.totalHeight
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

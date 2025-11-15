@@ -1,0 +1,103 @@
+# @category: stochastic
+# @subcategory: distributions
+# @priority: high
+# @description: Test normal distribution with different parameters - verifies mean and std parameters affect results
+
+start simulation StochasticNormalParameters
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 800 organisms for each distribution
+  TestOrg1.init = create 800 count of TestOrg1
+  TestOrg2.init = create 800 count of TestOrg2
+
+  # Calculate statistics for distribution 1: N(50, 5)
+  avgValue1.step = mean(TestOrg1.value)
+  minValue1.step = min(TestOrg1.value)
+  maxValue1.step = max(TestOrg1.value)
+
+  # Calculate statistics for distribution 2: N(200, 30)
+  avgValue2.step = mean(TestOrg2.value)
+  minValue2.step = min(TestOrg2.value)
+  maxValue2.step = max(TestOrg2.value)
+
+  # Test 1: Distribution 1 mean should approximate 50 with ±10% tolerance
+  expectedMean1.step = 50 m
+  tolerance1.step = 5 m
+  lowerBound1.step = expectedMean1 - tolerance1
+  upperBound1.step = expectedMean1 + tolerance1
+  assert.mean1.step = (avgValue1 >= lowerBound1) and (avgValue1 <= upperBound1)
+
+  # Test 2: Distribution 2 mean should approximate 200 with ±10% tolerance
+  expectedMean2.step = 200 m
+  tolerance2.step = 20 m
+  lowerBound2.step = expectedMean2 - tolerance2
+  upperBound2.step = expectedMean2 + tolerance2
+  assert.mean2.step = (avgValue2 >= lowerBound2) and (avgValue2 <= upperBound2)
+
+  # Test 3: Distribution 2 should have higher mean than Distribution 1
+  assert.differentMeans.step = avgValue2 > avgValue1
+
+  # Test 4: Distribution 2 should have wider range than Distribution 1
+  # Range is a rough proxy for standard deviation
+  range1.step = maxValue1 - minValue1
+  range2.step = maxValue2 - minValue2
+  assert.widerRange.step = range2 > range1
+
+  # Test 5: Verify roughly 68% of values within 1 std dev for distribution 1
+  # For N(50, 5), roughly 68% should be in [45, 55]
+  countInRange1.step = count(TestOrg1.value >= 45 m and TestOrg1.value <= 55 m)
+  percentInRange1.step = (countInRange1 / 800 count) * 100 count
+  assert.stdDev1.step = (percentInRange1 >= 58 count) and (percentInRange1 <= 78 count)
+
+  # Test 6: Verify roughly 68% of values within 1 std dev for distribution 2
+  # For N(200, 30), roughly 68% should be in [170, 230]
+  countInRange2.step = count(TestOrg2.value >= 170 m and TestOrg2.value <= 230 m)
+  percentInRange2.step = (countInRange2 / 800 count) * 100 count
+  assert.stdDev2.step = (percentInRange2 >= 58 count) and (percentInRange2 <= 78 count)
+
+end patch
+
+start organism TestOrg1
+
+  # Sample from normal distribution N(50, 5)
+  value.init = sample normal with mean of 50 m std of 5 m
+  value.step = prior.value
+
+end organism
+
+start organism TestOrg2
+
+  # Sample from normal distribution N(200, 30)
+  value.init = sample normal with mean of 200 m std of 30 m
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

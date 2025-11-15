@@ -1,0 +1,50 @@
+# @category: types
+# @subcategory: distributions
+# @priority: critical
+# @description: Test realized distributions where each organism gets unique sampled value
+
+start simulation DistributionsRealized
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 10 count latitude, 10 count longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with realized distribution - each gets unique value
+  Trees.init = create 100 count of Tree
+
+  # Test that values are different across organisms (not all the same)
+  # With 100 samples from uniform 0-100, min and max should be substantially different
+  assert.hasVariation.init = (max(Trees.height) - min(Trees.height)) > 50 m
+
+  # Assert all values are within expected range [0, 100]
+  assert.minInRange.init = min(Trees.height) >= 0 m
+  assert.maxInRange.init = max(Trees.height) <= 100 m
+
+  # Test mean is roughly in the middle (within tolerance for stochastic test)
+  assert.meanReasonable.init = mean(Trees.height) > 40 m
+  assert.meanReasonable2.init = mean(Trees.height) < 60 m
+
+end patch
+
+start organism Tree
+
+  # Each organism gets a unique sampled value at creation (realized distribution)
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

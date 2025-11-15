@@ -1,0 +1,86 @@
+# @category: types
+# @subcategory: conversions
+# @priority: high
+# @description: Test explicit unit conversion with "as" keyword
+
+start simulation ConversionsExplicitCast
+
+  grid.size = 1 km
+  grid.low = 34 degrees latitude, -117 degrees longitude
+  grid.high = 34.01 degrees latitude, -116 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test meter to kilometer conversion
+  distance1M.init = 1000 m
+  distance1Km.init = distance1M as km
+  assert.mToKm.init = distance1Km == 1 km
+
+  # Test kilometer to meter conversion
+  distance5Km.init = 5 km
+  distance5M.init = distance5Km as m
+  assert.kmToM.init = distance5M == 5000 m
+
+  # Test custom unit conversion (inches to feet)
+  height12In.init = 12 in
+  height1Ft.init = height12In as ft
+  assert.inToFt.init = height1Ft == 1 ft
+
+  # Test reverse conversion (feet to inches)
+  height3Ft.init = 3 ft
+  height36In.init = height3Ft as in
+  assert.ftToIn.init = height36In == 36 in
+
+  # Test with fractional values
+  distanceFracM.init = 2500 m
+  distanceFracKm.init = distanceFracM as km
+  assert.fracMToKm.init = distanceFracKm == 2.5 km
+
+  # Test yards conversion
+  length9Ft.init = 9 ft
+  length3Yd.init = length9Ft as yd
+  assert.ftToYd.init = length3Yd == 3 yd
+
+end patch
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+  yd = current / 36
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+  yd = current / 3
+end unit
+
+start unit yard
+  alias yd
+  alias yards
+  ft = current * 3
+  in = current * 36
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit
