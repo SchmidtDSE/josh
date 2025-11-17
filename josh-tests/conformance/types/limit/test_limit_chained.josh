@@ -1,0 +1,100 @@
+# @category: types
+# @subcategory: limit
+# @priority: medium
+# @description: Test chained limit operations applied sequentially
+
+start simulation LimitChained
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test chaining min then max
+  value1.init = 5 m
+  step1.init = limit value1 to [10 m,]
+  step2.init = limit step1 to [,50 m]
+  assert.minThenMax.init = step2 == 10 m
+
+  # Test chaining max then min
+  value2.init = 75 m
+  step3.init = limit value2 to [,50 m]
+  step4.init = limit step3 to [10 m,]
+  assert.maxThenMin.init = step4 == 50 m
+
+  # Test multiple min limits - most restrictive wins
+  value3.init = 5 m
+  step5.init = limit value3 to [10 m,]
+  step6.init = limit step5 to [20 m,]
+  assert.multipleMin.init = step6 == 20 m
+
+  # Test multiple max limits - most restrictive wins
+  value4.init = 100 m
+  step7.init = limit value4 to [,50 m]
+  step8.init = limit step7 to [,30 m]
+  assert.multipleMax.init = step8 == 30 m
+
+  # Test chaining range limits
+  value5.init = 5 m
+  step9.init = limit value5 to [10 m, 100 m]
+  step10.init = limit step9 to [15 m, 50 m]
+  assert.rangeChain.init = step10 == 15 m
+
+  # Test chaining narrows range from both sides
+  value6.init = 50 m
+  step11.init = limit value6 to [0 m, 100 m]
+  step12.init = limit step11 to [40 m, 60 m]
+  assert.rangeNarrow.init = step12 == 50 m
+
+  # Test three-step chain
+  value7.init = 150 m
+  step13.init = limit value7 to [,100 m]
+  step14.init = limit step13 to [50 m,]
+  step15.init = limit step14 to [,75 m]
+  assert.threeStepChain.init = step15 == 75 m
+
+  # Test chain with percentages
+  pctValue.init = 150 %
+  pctStep1.init = limit pctValue to [,100 %]
+  pctStep2.init = limit pctStep1 to [10 %,]
+  pctStep3.init = limit pctStep2 to [,90 %]
+  assert.percentageChain.init = pctStep3 == 90 %
+
+  # Test chain preserves value when within all ranges
+  validValue.init = 50 m
+  validStep1.init = limit validValue to [0 m, 100 m]
+  validStep2.init = limit validStep1 to [25 m, 75 m]
+  validStep3.init = limit validStep2 to [40 m, 60 m]
+  assert.preserveValid.init = validStep3 == 50 m
+
+  # Test conflicting limits (min > max from different operations)
+  conflictValue.init = 50 m
+  conflictStep1.init = limit conflictValue to [60 m,]
+  conflictStep2.init = limit conflictStep1 to [,55 m]
+  # Result should be 55 m (last max limit wins after first min bumped to 60)
+  assert.conflictResolution.init = conflictStep2 == 55 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit %
+  alias percent
+  alias percentage
+end unit

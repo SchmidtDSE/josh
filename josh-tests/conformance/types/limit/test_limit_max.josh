@@ -1,0 +1,88 @@
+# @category: types
+# @subcategory: limit
+# @priority: high
+# @description: Test maximum value limiting with limit to [,max] syntax
+
+start simulation LimitMax
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test maximum limit with values above threshold
+  value1.init = 25 m
+  limited1.init = limit value1 to [,10 m]
+  assert.aboveMax.init = limited1 == 10 m
+
+  value2.init = 5 m
+  limited2.init = limit value2 to [,10 m]
+  assert.belowMax.init = limited2 == 5 m
+
+  # Test maximum limit at exact boundary
+  value3.init = 10 m
+  limited3.init = limit value3 to [,10 m]
+  assert.exactBoundary.init = limited3 == 10 m
+
+  # Test maximum limit with large values
+  largeValue.init = 1000 m
+  largeLimited.init = limit largeValue to [,50 m]
+  assert.largeCapped.init = largeLimited == 50 m
+
+  # Test maximum limit preserves small values
+  smallValue.init = 1 m
+  smallLimited.init = limit smallValue to [,50 m]
+  assert.preserveSmall.init = smallLimited == 1 m
+
+  # Test maximum limit with negative values
+  negValue1.init = -5 m
+  negLimited1.init = limit negValue1 to [,0 m]
+  assert.negativePreserved.init = negLimited1 == -5 m
+
+  negValue2.init = 5 m
+  negLimited2.init = limit negValue2 to [,0 m]
+  assert.positiveCappedToZero.init = negLimited2 == 0 m
+
+  # Test maximum limit with percentage units
+  pctValue1.init = 75 %
+  pctLimited1.init = limit pctValue1 to [,50 %]
+  assert.percentageMax.init = pctLimited1 == 50 %
+
+  pctValue2.init = 25 %
+  pctLimited2.init = limit pctValue2 to [,50 %]
+  assert.percentageBelowMax.init = pctLimited2 == 25 %
+
+  # Test maximum limit with 100% cap
+  pctValue3.init = 150 %
+  pctLimited3.init = limit pctValue3 to [,100 %]
+  assert.hundredPercentCap.init = pctLimited3 == 100 %
+
+  # Test maximum limit with zero
+  zeroTest.init = 10 m
+  zeroLimited.init = limit zeroTest to [,0 m]
+  assert.cappedToZero.init = zeroLimited == 0 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit %
+  alias percent
+  alias percentage
+end unit
