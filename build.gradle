@@ -161,6 +161,24 @@ task joshQuickTest(type: Test) {
     }
 }
 
+// Generate synthetic test data files for Phase 4 conformance testing
+task generateTestData(type: JavaExec) {
+    description = 'Generate synthetic test data files for Phase 4 conformance testing'
+    group = 'verification'
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.joshsim.conformance.TestDataGenerator'
+
+    doFirst {
+        println "Generating test data files..."
+    }
+
+    doLast {
+        println "Test data generation complete!"
+        println "Files created in josh-tests/test-data/"
+    }
+}
+
 // Jar containing all dependencies required for production
 task fatJar(type: Jar) {
   manifest {
