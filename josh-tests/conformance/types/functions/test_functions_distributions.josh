@@ -1,0 +1,134 @@
+# @category: types
+# @subcategory: functions
+# @priority: high
+# @description: Test functions applied to distributions and collection attributes with reduction operations
+
+start simulation FunctionsDistributions
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with varying attributes
+  Trees.init = create 50 count of Tree
+
+  # Test mean(abs(Collection.attr)) - apply abs to distribution, then take mean
+  # Trees have ages from -10 to 10, abs makes all positive (0 to 10)
+  meanAbsAge.init = mean(abs(Trees.age))
+
+  # Mean of abs should be in reasonable range (0 to 10)
+  assert.meanAbsAgePositive.init = meanAbsAge >= 0 years
+  assert.meanAbsAgeReasonable.init = meanAbsAge <= 10 years
+
+  # Test max(abs(Collection.attr))
+  maxAbsAge.init = max(abs(Trees.age))
+
+  # Max abs should be around 10 (the extremes of the range)
+  assert.maxAbsAge.init = maxAbsAge <= 10 years
+  assert.maxAbsAge2.init = maxAbsAge >= 0 years
+
+  # Test min(abs(Collection.attr))
+  minAbsAge.init = min(abs(Trees.age))
+
+  # Min abs should be >= 0 (abs makes everything non-negative)
+  assert.minAbsAge.init = minAbsAge >= 0 years
+
+  # Test sum(abs(Collection.attr))
+  sumAbsAge.init = sum(abs(Trees.age))
+
+  # Sum should be positive
+  assert.sumAbsAgePositive.init = sumAbsAge >= 0 years
+
+  # Test mean(round(Collection.attr))
+  # Trees have heights as fractional values
+  meanRoundedHeight.init = mean(round(Trees.height))
+
+  # Mean of rounded heights should be reasonable
+  assert.meanRoundedHeight.init = meanRoundedHeight >= 0 m
+  assert.meanRoundedHeight2.init = meanRoundedHeight <= 100 m
+
+  # Test count is preserved through transformations
+  treeCount.init = count(Trees)
+  absAgeCount.init = count(abs(Trees.age))
+  assert.countPreserved.init = treeCount == absAgeCount
+
+  # Test std(abs(Collection.attr))
+  stdAbsAge.init = std(abs(Trees.age))
+
+  # Standard deviation should be non-negative
+  assert.stdAbsAge.init = stdAbsAge >= 0 years
+
+  # Test chained functions on distributions: mean(abs(log10(Collection.attr)))
+  # Create plants with positive attributes suitable for log
+  Plants.init = create 30 count of Plant
+
+  # Apply log10, then abs, then mean
+  meanAbsLogBiomass.init = mean(abs(log10(Plants.biomass)))
+
+  # Result should be reasonable
+  assert.meanAbsLogBiomass.init = meanAbsLogBiomass >= 0 count
+
+  # Test min and max with transformed distributions
+  minRoundedHeight.init = min(round(Trees.height))
+  maxRoundedHeight.init = max(round(Trees.height))
+
+  # Min should be less than or equal to max
+  assert.minLessThanMax.init = minRoundedHeight <= maxRoundedHeight
+
+  # Test ceil and floor on distributions
+  meanCeilHeight.init = mean(ceil(Trees.height))
+  meanFloorHeight.init = mean(floor(Trees.height))
+
+  # Ceil should be >= floor for each element, so means follow same pattern
+  assert.ceilGeFloor.init = meanCeilHeight >= meanFloorHeight
+
+  # Test sum with function transformations
+  sumRoundedHeight.init = sum(round(Trees.height))
+  assert.sumRounded.init = sumRoundedHeight >= 0 m
+
+end patch
+
+start organism Tree
+
+  # Use sample to get varied values including negative for age
+  age.init = sample uniform from -10 years to 10 years
+  age.step = prior.age
+
+  # Heights are positive fractional values
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Biomass values suitable for logarithm (positive values)
+  biomass.init = sample uniform from 1 count to 100 count
+  biomass.step = prior.biomass
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

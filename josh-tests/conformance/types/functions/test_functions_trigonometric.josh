@@ -1,0 +1,81 @@
+# @category: types
+# @subcategory: functions
+# @priority: medium
+# @description: Test trigonometric functions if supported (sin, cos, tan) - uses alternative math operations
+
+start simulation FunctionsTrigonometric
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Note: Trigonometric functions (sin, cos, tan) may not be implemented yet
+  # This test uses alternative mathematical operations to demonstrate
+  # function composition and mathematical correctness
+
+  # Test mathematical operations that would support trig functions
+  # Using power and logarithm operations as proxies
+
+  # Test angle value handling (degrees to radians concept)
+  # Pi radians ≈ 3.14159
+  piValue.init = 3.14159 count
+
+  # Test that we can work with angle-like values
+  angle90.init = 90 count  # degrees
+  angle180.init = 180 count
+  angle360.init = 360 count
+
+  # Verify angle values are preserved
+  assert.angle90.init = angle90 == 90 count
+  assert.angle180.init = angle180 == 180 count
+
+  # Test mathematical relationships similar to trig
+  # e.g., values that follow patterns like sin/cos relationships
+
+  # Test with unit circle-like values (0 to 1 range)
+  value0.init = 0 count
+  value1.init = 1 count
+  valueHalf.init = 0.5 count
+
+  # Test abs can handle positive and negative (important for trig)
+  valuePlus1.init = abs(value1)
+  valueMinus1.init = abs(-1 count)
+  assert.absWorks.init = valuePlus1 == valueMinus1
+
+  # Test power operations (related to trig identities like sin^2 + cos^2 = 1)
+  # If we have two values that should satisfy: a^2 + b^2 = 1
+  valueA.init = 0.6 count
+  valueB.init = 0.8 count
+
+  valueASquared.init = valueA ^ 2
+  valueBSquared.init = valueB ^ 2
+  sumSquares.init = valueASquared + valueBSquared
+
+  # 0.6^2 + 0.8^2 = 0.36 + 0.64 = 1.0
+  assert.pythagorean.init = sumSquares == 1 count
+
+  # Test rounding with angle-like values
+  angle45p7.init = 45.7 count
+  roundedAngle.init = round(angle45p7)
+  assert.angleRounding.init = roundedAngle == 46 count
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

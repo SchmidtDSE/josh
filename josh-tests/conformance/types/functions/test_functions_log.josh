@@ -1,0 +1,81 @@
+# @category: types
+# @subcategory: functions
+# @priority: high
+# @description: Test logarithm functions (log10, ln) with various input values and validate mathematical correctness
+
+start simulation FunctionsLog
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test log10 with base 10 values
+  value10.init = 10 count
+  log10Value10.init = log10(value10)
+  assert.log10Value10.init = log10Value10 == 1 count
+
+  value100.init = 100 count
+  log10Value100.init = log10(value100)
+  assert.log10Value100.init = log10Value100 == 2 count
+
+  value1000.init = 1000 count
+  log10Value1000.init = log10(value1000)
+  assert.log10Value1000.init = log10Value1000 == 3 count
+
+  # Test log10 with value 1 (log10(1) = 0)
+  value1.init = 1 count
+  log10Value1.init = log10(value1)
+  assert.log10Value1.init = log10Value1 == 0 count
+
+  # Test ln (natural log) - ln(e) = 1
+  # e ≈ 2.71828
+  valueE.init = 2.71828 count
+  lnValueE.init = ln(valueE)
+  # ln(e) should be approximately 1, test with tolerance
+  assert.lnValueE.init = lnValueE > 0.999 count
+  assert.lnValueE2.init = lnValueE < 1.001 count
+
+  # Test ln with e^2 ≈ 7.389
+  valueE2.init = 7.389 count
+  lnValueE2.init = ln(valueE2)
+  # ln(e^2) should be approximately 2
+  assert.lnValueE2.init = lnValueE2 > 1.99 count
+  assert.lnValueE2b.init = lnValueE2 < 2.01 count
+
+  # Test ln with value 1 (ln(1) = 0)
+  lnValue1.init = ln(value1)
+  assert.lnValue1.init = lnValue1 == 0 count
+
+  # Test log10 with fractional result
+  # log10(50) ≈ 1.699
+  value50.init = 50 count
+  log10Value50.init = log10(value50)
+  assert.log10Value50Lower.init = log10Value50 > 1.69 count
+  assert.log10Value50Upper.init = log10Value50 < 1.71 count
+
+  # Test log preserves units
+  distanceValue.init = 100 m
+  log10Distance.init = log10(distanceValue)
+  # Result should be 2 m (preserving units)
+  assert.log10Distance.init = log10Distance == 2 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
