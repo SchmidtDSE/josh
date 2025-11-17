@@ -5,9 +5,9 @@
 
 start simulation TemporalQueriesMeta
 
-  grid.size = 1 count
-  grid.low = 0 count latitude, 0 count longitude
-  grid.high = 10 count latitude, 10 count longitude
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
 
   # Start at year 2020, run for 5 steps
   steps.low = 2020 year
