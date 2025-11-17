@@ -1,0 +1,103 @@
+# @category: types
+# @subcategory: map
+# @priority: high
+# @description: Test linear mapping/scaling from one range to another
+
+start simulation MapLinear
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test basic linear map from [0, 100] to [0, 1]
+  input1.init = 0 m
+  mapped1.init = map input1 from [0 m, 100 m] to [0 count, 1 count]
+  assert.mapAtMin.init = mapped1 == 0 count
+
+  input2.init = 100 m
+  mapped2.init = map input2 from [0 m, 100 m] to [0 count, 1 count]
+  assert.mapAtMax.init = mapped2 == 1 count
+
+  input3.init = 50 m
+  mapped3.init = map input3 from [0 m, 100 m] to [0 count, 1 count]
+  assert.mapAtMid.init = mapped3 == 0.5 count
+
+  # Test linear map with different units
+  input4.init = 25 m
+  mapped4.init = map input4 from [0 m, 100 m] to [0 count, 1 count]
+  assert.mapQuarter.init = mapped4 == 0.25 count
+
+  input5.init = 75 m
+  mapped5.init = map input5 from [0 m, 100 m] to [0 count, 1 count]
+  assert.mapThreeQuarters.init = mapped5 == 0.75 count
+
+  # Test linear map with percentage output
+  input6.init = 0 m
+  mapped6.init = map input6 from [0 m, 100 m] to [0 %, 100 %]
+  assert.percentageAtMin.init = mapped6 == 0 %
+
+  input7.init = 50 m
+  mapped7.init = map input7 from [0 m, 100 m] to [0 %, 100 %]
+  assert.percentageAtMid.init = mapped7 == 50 %
+
+  input8.init = 100 m
+  mapped8.init = map input8 from [0 m, 100 m] to [0 %, 100 %]
+  assert.percentageAtMax.init = mapped8 == 100 %
+
+  # Test linear map with negative ranges
+  negInput1.init = -50 m
+  negMapped1.init = map negInput1 from [-100 m, 0 m] to [0 count, 100 count]
+  assert.negativeRange.init = negMapped1 == 50 count
+
+  negInput2.init = 0 m
+  negMapped2.init = map negInput2 from [-100 m, 100 m] to [0 count, 100 count]
+  assert.centeredAtZero.init = negMapped2 == 50 count
+
+  # Test linear map with inverted output range
+  invertInput1.init = 0 m
+  invertMapped1.init = map invertInput1 from [0 m, 100 m] to [100 count, 0 count]
+  assert.invertedAtMin.init = invertMapped1 == 100 count
+
+  invertInput2.init = 100 m
+  invertMapped2.init = map invertInput2 from [0 m, 100 m] to [100 count, 0 count]
+  assert.invertedAtMax.init = invertMapped2 == 0 count
+
+  invertInput3.init = 50 m
+  invertMapped3.init = map invertInput3 from [0 m, 100 m] to [100 count, 0 count]
+  assert.invertedAtMid.init = invertMapped3 == 50 count
+
+  # Test explicit linearly keyword
+  explicitInput.init = 50 m
+  explicitMapped.init = map explicitInput from [0 m, 100 m] to [0 %, 100 %] linearly
+  assert.explicitLinear.init = explicitMapped == 50 %
+
+  # Test scaling factor
+  scaleInput.init = 10 m
+  scaleMapped.init = map scaleInput from [0 m, 10 m] to [0 m, 100 m]
+  assert.scaleFactor.init = scaleMapped == 100 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit %
+  alias percent
+  alias percentage
+end unit

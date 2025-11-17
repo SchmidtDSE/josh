@@ -1,0 +1,108 @@
+# @category: types
+# @subcategory: map
+# @priority: medium
+# @description: Test chained map operations with composition of mappings
+
+start simulation MapChained
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test chaining two linear maps
+  input1.init = 50 m
+  step1.init = map input1 from [0 m, 100 m] to [0 count, 10 count] linearly
+  step2.init = map step1 from [0 count, 10 count] to [0 %, 100 %] linearly
+  assert.linearChain.init = step2 == 50 %
+
+  # Test chaining linear then quadratic
+  input2.init = 50 m
+  linearStep.init = map input2 from [0 m, 100 m] to [0 count, 100 count] linearly
+  quadStep.init = map linearStep from [0 count, 100 count] to [0 %, 100 %] quadratically
+  # After linear (50 m -> 50 count), then quadratic (50 count -> 25%)
+  assert.linearThenQuadratic.init = quadStep < 30 %
+  assert.linearThenQuadraticPositive.init = quadStep > 20 %
+
+  # Test chaining quadratic then linear
+  input3.init = 50 m
+  quadFirstStep.init = map input3 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  linearSecondStep.init = map quadFirstStep from [0 count, 100 count] to [0 %, 100 %] linearly
+  # After quadratic (50 m -> ~25 count), then linear (25 count -> 25%)
+  assert.quadraticThenLinear.init = linearSecondStep < 30 %
+  assert.quadraticThenLinearPositive.init = linearSecondStep > 20 %
+
+  # Test three-step chain: linear -> quadratic -> sigmoid
+  input4.init = 50 m
+  chain1.init = map input4 from [0 m, 100 m] to [0 count, 100 count] linearly
+  chain2.init = map chain1 from [0 count, 100 count] to [0 count, 100 count] quadratically
+  chain3.init = map chain2 from [0 count, 100 count] to [0 %, 100 %] sigmoidally
+  # Complex composition, result should be within valid range
+  assert.threeStepChainValid.init = chain3 >= 0 %
+  assert.threeStepChainBounded.init = chain3 <= 100 %
+
+  # Test chaining with range scaling
+  input5.init = 25 m
+  scale1.init = map input5 from [0 m, 100 m] to [0 m, 10 m] linearly
+  scale2.init = map scale1 from [0 m, 10 m] to [0 m, 1 m] linearly
+  assert.scalingChain.init = scale2 == 0.25 m
+
+  # Test chaining with different mappings produces different results
+  input6.init = 50 m
+  allLinear1.init = map input6 from [0 m, 100 m] to [0 count, 100 count] linearly
+  allLinear2.init = map allLinear1 from [0 count, 100 count] to [0 %, 100 %] linearly
+
+  mixedMap1.init = map input6 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  mixedMap2.init = map mixedMap1 from [0 count, 100 count] to [0 %, 100 %] linearly
+
+  assert.chainsDiffer.init = allLinear2 != mixedMap2
+
+  # Test chaining preserves boundaries
+  minInput.init = 0 m
+  minChain1.init = map minInput from [0 m, 100 m] to [0 count, 50 count] linearly
+  minChain2.init = map minChain1 from [0 count, 50 count] to [0 %, 100 %] linearly
+  assert.chainedMinBoundary.init = minChain2 == 0 %
+
+  maxInput.init = 100 m
+  maxChain1.init = map maxInput from [0 m, 100 m] to [0 count, 50 count] linearly
+  maxChain2.init = map maxChain1 from [0 count, 50 count] to [0 %, 100 %] linearly
+  assert.chainedMaxBoundary.init = maxChain2 == 100 %
+
+  # Test chaining sigmoid then linear
+  input7.init = 50 m
+  sigmoidStep.init = map input7 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  linearFinalStep.init = map sigmoidStep from [0 count, 100 count] to [0 %, 100 %] linearly
+  # Sigmoid at midpoint gives ~50, linear preserves it
+  assert.sigmoidThenLinear.init = linearFinalStep > 45 %
+  assert.sigmoidThenLinearHigh.init = linearFinalStep < 55 %
+
+  # Test reverse chaining (expanding then contracting range)
+  input8.init = 5 m
+  expand.init = map input8 from [0 m, 10 m] to [0 m, 100 m] linearly
+  contract.init = map expand from [0 m, 100 m] to [0 m, 10 m] linearly
+  assert.reverseChain.init = contract == 5 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit %
+  alias percent
+  alias percentage
+end unit
