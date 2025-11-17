@@ -86,7 +86,7 @@ public class SyntheticScope implements Scope {
       return currentValue.orElseThrow(
           () -> new RuntimeException("Could not find value for " + name)
       );
-    } catch (IllegalStateException e) {
+    } catch (RuntimeException e) {
       // CIRCULAR DEPENDENCY: When evaluating handler RHS (e.g., "Trees" in
       // "Trees.end = prior.Trees | Trees"), bypass ShadowingEntity resolution to prevent
       // infinite recursion.
@@ -97,7 +97,11 @@ public class SyntheticScope implements Scope {
       // SOLUTION: Call getInner() to get the DirectLockMutableEntity, then read from
       // its attributes[] array directly. This returns the stored (prior) value without
       // triggering handler execution.
-      if (e.getMessage() != null && e.getMessage().contains("Circular dependency")) {
+      //
+      // NOTE: ShadowingEntity throws RuntimeException with message
+      // "Encountered a loop when resolving"
+      if (e.getMessage() != null
+          && e.getMessage().contains("Encountered a loop when resolving")) {
         MutableEntity innerEntity = inner.getInner();
         if (innerEntity == null) {
           throw e; // Re-throw if we can't bypass
