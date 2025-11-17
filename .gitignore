@@ -73,3 +73,6 @@ jotr
 
 # Step bug testing - ignore .txt files (debug outputs)
 step_bug_testing/**/*.txt
+
+# OpenCode
+.opencode
