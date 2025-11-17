@@ -79,28 +79,41 @@ public class SyntheticScope implements Scope {
       return syntheticValue.get();
     }
 
-    // CRITICAL FIX: When evaluating handler RHS (e.g., "Trees" in
-    // "Trees.end = prior.Trees | Trees"), bypass ShadowingEntity resolution to prevent
-    // circular dependencies.
-    //
-    // WHY: ShadowingEntity.getAttributeValue() would trigger resolveAttribute(), which
-    // would execute the handler AGAIN, creating infinite recursion.
-    //
-    // SOLUTION: Call getInner() to get the DirectLockMutableEntity, then read from
-    // its attributes[] array directly. This returns the stored value without triggering
-    // handler execution.
-    MutableEntity innerEntity = inner.getInner();
-    if (innerEntity == null) {
-      // Fallback for tests or edge cases where inner is not wrapped
+    // Try normal resolution path first (checks cache, resolves if needed)
+    // This handles cross-attribute references (e.g., "fireProbability" accessing "isHighCover")
+    try {
       Optional<EngineValue> currentValue = inner.getAttributeValue(name);
       return currentValue.orElseThrow(
           () -> new RuntimeException("Could not find value for " + name)
       );
+    } catch (RuntimeException e) {
+      // CIRCULAR DEPENDENCY: When evaluating handler RHS (e.g., "Trees" in
+      // "Trees.end = prior.Trees | Trees"), bypass ShadowingEntity resolution to prevent
+      // infinite recursion.
+      //
+      // WHY: ShadowingEntity.getAttributeValue() triggered resolveAttribute() for an attribute
+      // that's already being resolved, causing circular dependency.
+      //
+      // SOLUTION: Call getInner() to get the DirectLockMutableEntity, then read from
+      // its attributes[] array directly. This returns the stored (prior) value without
+      // triggering handler execution.
+      //
+      // NOTE: ShadowingEntity throws RuntimeException with message
+      // "Encountered a loop when resolving"
+      if (e.getMessage() != null
+          && e.getMessage().contains("Encountered a loop when resolving")) {
+        MutableEntity innerEntity = inner.getInner();
+        if (innerEntity == null) {
+          throw e; // Re-throw if we can't bypass
+        }
+        Optional<EngineValue> storedValue = innerEntity.getAttributeValue(name);
+        return storedValue.orElseThrow(
+            () -> new RuntimeException("Could not find value for " + name)
+        );
+      }
+      // Not a circular dependency - re-throw
+      throw e;
     }
-    Optional<EngineValue> currentValue = innerEntity.getAttributeValue(name);
-    return currentValue.orElseThrow(
-        () -> new RuntimeException("Could not find value for " + name)
-    );
   }
 
   @Override
