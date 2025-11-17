@@ -1,0 +1,80 @@
+# @category: entities
+# @subcategory: disturbance
+# @priority: critical
+# @description: Test basic disturbance entity definition, spatial extent, timing, and lifecycle
+
+start simulation DisturbanceBasic
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create disturbance at init
+  Fire.init = create Fire
+
+end patch
+
+start disturbance Fire
+
+  # Spatial extent attributes
+  centerX.init = 50 m
+  centerY.init = 50 m
+  radius.init = 20 m
+
+  # Timing attribute - disturbance occurs at step 3
+  occurTime.init = 3 count
+
+  # Active status based on timing
+  active.init = false
+  active.step:if(meta.stepCount == current.occurTime) = true
+  active.step:if(meta.stepCount > current.occurTime) = false
+
+  # Intensity that increases when active
+  intensity.init = 0 count
+  intensity.step:if(current.active == true) = prior.intensity + 10 count
+  intensity.step:if(current.active == false) = prior.intensity
+
+  # Lifecycle assertions - init phase
+  assert.centerXInit.init = current.centerX == 50 m
+  assert.centerYInit.init = current.centerY == 50 m
+  assert.radiusInit.init = current.radius == 20 m
+  assert.occurTimeInit.init = current.occurTime == 3 count
+  assert.activeInit.init = current.active == false
+  assert.intensityInit.init = current.intensity == 0 count
+
+  # Lifecycle assertions - before occurrence
+  assert.activeBeforeStep1.step:if(meta.stepCount == 1 count) = current.active == false
+  assert.activeBeforeStep2.step:if(meta.stepCount == 2 count) = current.active == false
+  assert.intensityBeforeStep2.step:if(meta.stepCount == 2 count) = current.intensity == 0 count
+
+  # Lifecycle assertions - at occurrence
+  assert.activeAtOccurrence.step:if(meta.stepCount == 3 count) = current.active == true
+  assert.intensityAtOccurrence.step:if(meta.stepCount == 3 count) = current.intensity == 10 count
+
+  # Lifecycle assertions - after occurrence
+  assert.activeAfterStep4.step:if(meta.stepCount == 4 count) = current.active == false
+  assert.intensityAfterStep4.step:if(meta.stepCount == 4 count) = current.intensity == 10 count
+  assert.activeAfterStep5.step:if(meta.stepCount == 5 count) = current.active == false
+
+  # Spatial extent assertions
+  assert.centerXPersists.step:if(meta.stepCount == 3 count) = current.centerX == 50 m
+  assert.centerYPersists.step:if(meta.stepCount == 3 count) = current.centerY == 50 m
+  assert.radiusPersists.step:if(meta.stepCount == 3 count) = current.radius == 20 m
+
+end disturbance
+
+start unit m
+  alias meter
+  alias meters
+end unit

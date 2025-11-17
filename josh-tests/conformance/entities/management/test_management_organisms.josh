@@ -1,0 +1,136 @@
+# @category: entities
+# @subcategory: management
+# @priority: high
+# @description: Test management interactions with organisms including selective management and organism modification
+
+start simulation ManagementOrganisms
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init - spread across the grid
+  Tree.init = create 30 count of Tree
+
+  # Create management entity at init
+  Thinning.init = create Thinning
+
+  # Count trees at different times
+  treeCountInit.init = count(Tree)
+  treeCountStep2.step:if(meta.stepCount == 2 count) = count(Tree)
+  treeCountStep4.step:if(meta.stepCount == 4 count) = count(Tree)
+
+  # Assert we created trees
+  assert.treesCreated.init = current.treeCountInit == 30 count
+
+end patch
+
+start management Thinning
+
+  # Spatial extent - rectangular area in center
+  centerX.init = 50 m
+  centerY.init = 50 m
+  width.init = 60 m
+  height.init = 60 m
+
+  # Timing - management occurs at step 3
+  scheduledTime.init = 3 count
+
+  # Active status
+  active.init = false
+  active.step:if(meta.stepCount == current.scheduledTime) = true
+  active.step:if(meta.stepCount != current.scheduledTime) = false
+
+  # Selection criteria - target small trees
+  diameterThreshold.init = 15 cm
+
+  # Find trees within management area
+  treesInArea.step:if(current.active == true) =
+    Tree within 50 m radial at prior
+
+  # Count trees in management area
+  treesInAreaCount.init = 0 count
+  treesInAreaCount.step:if(current.active == true) = count(current.treesInArea)
+
+  # Assert we found some trees in the management area
+  assert.foundTreesInArea.step:if(meta.stepCount == 3 count) =
+    current.treesInAreaCount > 0 count
+
+  # Lifecycle assertions
+  assert.notActiveBeforeStep2.step:if(meta.stepCount == 2 count) = current.active == false
+  assert.activeAtStep3.step:if(meta.stepCount == 3 count) = current.active == true
+  assert.notActiveAfterStep4.step:if(meta.stepCount == 4 count) = current.active == false
+
+end management
+
+start organism Tree
+
+  # Random position within grid
+  x.init = sample uniform from 10 m to 90 m
+  y.init = sample uniform from 10 m to 90 m
+
+  # Age and size attributes
+  age.init = sample uniform from 1 year to 20 years
+  age.step = prior.age + 1 year
+
+  # Diameter varies by tree
+  diameter.init = sample uniform from 5 cm to 25 cm
+  diameter.step = prior.diameter + current.growthRate
+
+  # Management status
+  thinned.init = false
+  thinned.step = prior.thinned
+
+  # Count management nearby
+  managementNearby.init = 0 count
+  managementNearby.step = count(Thinning within 60 m radial at prior)
+
+  # Mark as thinned if management is nearby and diameter is small
+  thinned.step:if(current.managementNearby > 0 count and current.diameter < 15 cm) = true
+
+  # Growth rate increases after thinning (less competition)
+  growthRate.init = 0.5 cm
+  growthRate.step:if(current.thinned == true) = 1.0 cm
+  growthRate.step:if(current.thinned == false) = 0.5 cm
+
+  # Assertions
+  assert.notThinnedInitially.init = current.thinned == false
+  assert.diameterPositive.init = current.diameter > 0 cm
+  assert.agePositive.init = current.age > 0 years
+
+  # After management, growth rate should change for thinned trees
+  assert.higherGrowthIfThinned.step:if(meta.stepCount == 4 count and current.thinned == true) =
+    current.growthRate == 1.0 cm
+
+  # Unthinned trees keep normal growth rate
+  assert.normalGrowthIfNotThinned.step:if(meta.stepCount == 4 count and current.thinned == false) =
+    current.growthRate == 0.5 cm
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit cm
+  alias centimeter
+  alias centimeters
+end unit
