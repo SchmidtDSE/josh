@@ -1,0 +1,127 @@
+# @category: core
+# @subcategory: collections
+# @priority: critical
+# @description: Test removing organisms from collections and validating lifecycle
+
+start simulation CollectionsRemove
+
+  grid.size = 10 m
+  grid.low = 36.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 36.01 degrees latitude, -117.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 8 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create initial tree population
+  Trees.init = create 20 count of Tree
+
+  # Track tree count before and after removal
+  treeCountBeforeRemoval.step:if(meta.stepCount == 2 count) = count(Trees)
+
+  # Filter trees to remove (young trees at step 3)
+  treesToRemove.step:if(meta.stepCount == 3 count) = Trees[Tree.age < 3 years]
+
+  # Perform removal at step 3
+  remove.step:if(meta.stepCount == 3 count) = treesToRemove
+
+  # Track tree count after removal
+  treeCountAfterRemoval.step:if(meta.stepCount == 4 count) = count(Trees)
+
+  # Remove trees by specific age at step 5
+  oldTrees.step:if(meta.stepCount == 5 count) = Trees[Tree.age > 15 years]
+  removeOld.step:if(meta.stepCount == 5 count) = oldTrees
+
+  # Remove individual organisms (create one and remove it)
+  singleTree.step:if(meta.stepCount == 6 count) = create Tree
+  removeSingle.step:if(meta.stepCount == 6 count) = singleTree
+
+  # Edge case: remove from empty collection
+  emptyCollection.step:if(meta.stepCount == 7 count) = Trees[Tree.age > 1000 years]
+  removeEmpty.step:if(meta.stepCount == 7 count) = emptyCollection
+
+  # Assert initial population size
+  assert.initialCount.step:if(meta.stepCount == 1 count) = count(Trees) == 20 count
+  assert.beforeRemovalCount.step:if(meta.stepCount == 2 count) = count(Trees) == 20 count
+
+  # Assert removal reduces collection size
+  # Trees with age < 3 at step 3 (indices 0, 1, 2 started at age 0, 1, 2) = 3 trees removed
+  assert.afterFirstRemoval.step:if(meta.stepCount == 4 count) = count(Trees) == 17 count
+
+  # Verify count decreased
+  assert.countDecreased.step:if(meta.stepCount == 4 count) = current.treeCountAfterRemoval < current.treeCountBeforeRemoval
+
+  # Assert collection size remains stable between removals
+  assert.stableBetweenRemovals.step:if(meta.stepCount == 5 count) = count(Trees) == 17 count
+
+  # Assert second removal (old trees at step 5)
+  # After step 5, remaining trees have aged: original indices 3-19 are now ages 8-24
+  # Trees with age > 15 at step 5: indices 13-19 (7 trees) are age 18-24
+  assert.afterSecondRemoval.step:if(meta.stepCount == 6 count) = count(Trees) == 10 count
+
+  # Assert single tree removal doesn't affect main collection at step 7
+  # (singleTree was created and removed in step 6, shouldn't affect Trees count)
+  assert.afterSingleRemoval.step:if(meta.stepCount == 7 count) = count(Trees) == 10 count
+
+  # Assert removing empty collection doesn't change anything
+  assert.afterEmptyRemoval.step:if(meta.stepCount == 8 count) = count(Trees) == 10 count
+
+  # Test that removed organisms don't execute
+  # Track biomass to verify removed trees don't contribute
+  totalBiomass.init = 0 kg
+  totalBiomass.step = sum(Trees.biomass)
+
+  # Biomass should decrease after removal (fewer trees contributing)
+  biomassBefore.step:if(meta.stepCount == 2 count) = current.totalBiomass
+  biomassAfter.step:if(meta.stepCount == 4 count) = current.totalBiomass
+  assert.biomassDecreased.step:if(meta.stepCount == 4 count) = current.biomassAfter < current.biomassBefore
+
+end patch
+
+start organism Tree
+
+  # Each tree starts with incrementing age
+  age.init = index
+  age.step = prior.age + 1 year
+
+  # Height grows over time
+  height.init = 1 m + (index * 0.2 m)
+  height.step = prior.height + 0.3 m
+
+  # Biomass accumulates based on height
+  biomass.init = 1 kg
+  biomass.step = prior.biomass + (current.height * 0.1 kg/m)
+
+  # Track execution count to verify removal
+  executionCounter.init = 0 count
+  executionCounter.step = prior.executionCounter + 1 count
+
+  # Assert individual trees continue executing after others are removed
+  assert.stillExecuting.step:if(meta.stepCount == 5 count and index == 10) = current.executionCounter == 5 count
+
+  # Verify age progression for surviving trees
+  assert.ageProgression.step:if(meta.stepCount == 5 count and index == 10) = current.age == 15 years
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
