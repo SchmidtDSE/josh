@@ -7,8 +7,8 @@ start simulation SpatialNeighborsInteractions
 
   # Create a 3x3 grid
   grid.size = 10 m
-  grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.0003 degrees latitude, 0.0003 degrees longitude
+  grid.low = 0 m, 0 m
+  grid.high = 30 m, 30 m  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count

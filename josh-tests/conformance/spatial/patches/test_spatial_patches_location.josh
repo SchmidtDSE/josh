@@ -7,8 +7,8 @@ start simulation SpatialPatchesLocation
 
   # Create a 3x3 grid with known bounds
   grid.size = 10 m
-  grid.low = 35.0 degrees latitude, -120.0 degrees longitude
-  grid.high = 35.0003 degrees latitude, -119.9997 degrees longitude
+  grid.low = 0 m, 0 m
+  grid.high = 30 m, 30 m  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count

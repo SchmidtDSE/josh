@@ -7,8 +7,8 @@ start simulation SpatialWithinEmpty
 
   # Create a large sparse grid
   grid.size = 100 m
-  grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 1x1 grid
   grid.patch = "Default"
 
   steps.low = 0 count

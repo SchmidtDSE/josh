@@ -7,8 +7,8 @@ start simulation SpatialWithinSelf
 
   # Create a small grid
   grid.size = 10 m
-  grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.0002 degrees latitude, 0.0002 degrees longitude
+  grid.low = 0 m, 0 m
+  grid.high = 20 m, 20 m  # 2x2 grid
   grid.patch = "Default"
 
   steps.low = 0 count

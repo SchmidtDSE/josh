@@ -5,10 +5,10 @@
 
 start simulation SpatialWithinRadius
 
-  # Create a 5x5 grid (4 patches per side = 20m x 20m total)
+  # Create a 5x5 grid
   grid.size = 5 m
-  grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.0002 degrees latitude, 0.0002 degrees longitude
+  grid.low = 0 m, 0 m
+  grid.high = 25 m, 25 m  # 5x5 grid
   grid.patch = "Default"
 
   steps.low = 0 count
