@@ -1,0 +1,82 @@
+# @category: io
+# @subcategory: exports
+# @priority: medium
+# @description: Test memory:// protocol with aggregated summary statistics
+
+start simulation ExportMemoryAggregation
+
+  grid.size = 150 m
+  grid.low = 35.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 35.05 degrees latitude, -117.95 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 8 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Use memory:// protocol for aggregated statistics (falls back to file:// for CLI testing)
+  # Note: memory:// is primarily for web/editor usage; CLI tests verify export logic works
+  exportFiles.patch = "file:///tmp/test_export_memory_aggregation.csv"
+
+end simulation
+
+start patch Default
+
+  # Create varied population
+  Plant.init = create 40 count of Plant
+
+  # Export aggregated statistics to memory
+  export.meanBiomass.step = mean(Plant.biomass)
+  export.minBiomass.step = min(Plant.biomass)
+  export.maxBiomass.step = max(Plant.biomass)
+  export.totalBiomass.step = sum(Plant.biomass)
+  export.stdBiomass.step = std(Plant.biomass)
+  export.meanHeight.step = mean(Plant.height)
+  export.totalCount.step = count(Plant)
+  export.biomassRange.step = max(Plant.biomass) - min(Plant.biomass)
+  export.timestep.step = meta.stepCount
+
+  # Assertions for aggregation correctness
+  assert.meanAboveMin.step = mean(Plant.biomass) >= min(Plant.biomass)
+  assert.meanBelowMax.step = mean(Plant.biomass) <= max(Plant.biomass)
+  assert.totalPositive.step = sum(Plant.biomass) >= 0 kg
+  assert.stdNonNegative.step = std(Plant.biomass) >= 0 kg
+  assert.rangePositive.step = (max(Plant.biomass) - min(Plant.biomass)) >= 0 kg
+  assert.countCorrect.step = count(Plant) == 40 count
+
+end patch
+
+start organism Plant
+
+  biomass.init = sample uniform from 5 kg to 25 kg
+  biomass.step = prior.biomass + (sample uniform from 0.5 kg to 2 kg)
+
+  height.init = sample uniform from 0.5 m to 2.5 m
+  height.step = prior.height + (sample uniform from 0.05 m to 0.2 m)
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Assert individual growth
+  assert.biomassGrows.step = current.biomass >= prior.biomass
+  assert.heightGrows.step = current.height >= prior.height
+  assert.ageIncreases.step = current.age == prior.age + 1 year
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

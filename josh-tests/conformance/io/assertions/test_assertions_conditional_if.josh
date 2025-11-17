@@ -1,0 +1,92 @@
+// @category: io
+// @subcategory: assertions
+// @priority: high
+// @description: Test conditional assertions with :if modifier - assertions checked only at specific timesteps
+
+start simulation AssertionsConditionalIf
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  // 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 10 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  year.init = 0 year
+  year.step = prior.year + 1 year
+
+end simulation
+
+start patch Default
+
+  // Create organisms at init
+  Tree.init = create 10 count of Tree
+
+  treeCount.step = count(Tree)
+
+  // Test 1: Conditional assertion based on meta.stepCount
+  assert.atStep0.step:if(meta.stepCount == 0 count) = treeCount == 10 count
+
+  // Test 2: Conditional assertion at specific step
+  assert.atStep5.step:if(meta.stepCount == 5 count) = treeCount == 10 count
+
+  // Test 3: Conditional assertion at final step
+  assert.atStep10.step:if(meta.stepCount == 10 count) = treeCount == 10 count
+
+  // Test 4: Conditional assertion based on meta.year
+  assert.atYear3.step:if(meta.year == 3 years) = treeCount > 0 count
+
+  // Test 5: Conditional with greater than comparison
+  assert.afterStep3.step:if(meta.stepCount > 3 count) = treeCount >= 10 count
+
+  // Test 6: Conditional with less than comparison
+  assert.beforeStep8.step:if(meta.stepCount < 8 count) = treeCount <= 10 count
+
+  // Test 7: Multiple conditions on same assertion at different steps
+  avgAge.step = mean(Tree.age)
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = avgAge == 2 years
+  assert.ageStep5.step:if(meta.stepCount == 5 count) = avgAge == 5 years
+  assert.ageStep10.step:if(meta.stepCount == 10 count) = avgAge == 10 years
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 0 m
+  height.step = prior.height + 1 m
+
+  // Test 8: Organism-level conditional assertion based on current age
+  assert.youngTree.step:if(current.age < 3 years) = current.height < 10 m
+
+  // Test 9: Organism-level conditional based on height
+  assert.tallTree.step:if(current.height >= 5 m) = current.age >= 5 years
+
+  // Test 10: Conditional assertion on meta.stepCount at organism level
+  assert.heightAtStep3.step:if(meta.stepCount == 3 count) = current.height == 3 m
+  assert.heightAtStep7.step:if(meta.stepCount == 7 count) = current.height == 7 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

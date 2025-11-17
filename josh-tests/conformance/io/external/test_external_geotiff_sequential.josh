@@ -1,0 +1,37 @@
+# @category: io
+# @subcategory: external
+# @priority: critical
+# @description: Test reading sequential GeoTIFF data with values 0-99
+
+start external SequentialData
+
+  source.location = "file://test-data/spatial/grid_10x10_sequential.tiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 0
+
+end external
+
+start simulation ExternalGeoTiffSequential
+
+  grid.size = 10 m
+  grid.low = -117.4 degrees longitude, 34.0 degrees latitude
+  grid.high = -117.3 degrees longitude, 33.9 degrees latitude  # Small grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test that external data can be accessed
+  # Sequential data has values from 0 to 99
+  elevation.init = sample external SequentialData
+
+  # Verify data loaded successfully and is in expected range
+  assert.inRange.init = (current.elevation >= 0 count) and (current.elevation <= 99 count)
+
+  export.elevation.step = current.elevation
+
+end patch

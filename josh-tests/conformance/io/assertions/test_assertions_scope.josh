@@ -1,0 +1,138 @@
+// @category: io
+// @subcategory: assertions
+// @priority: high
+// @description: Test assertions in different scopes - patch-level (collections) vs organism-level (individuals)
+
+start simulation AssertionsScope
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  // 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 10 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  // Create different types of organisms
+  Pine.init = create 5 count of Pine
+  Oak.init = create 3 count of Oak
+
+  // PATCH-LEVEL ASSERTIONS (on collections)
+
+  // Test 1: Assertions on collection counts
+  pineCount.step = count(Pine)
+  oakCount.step = count(Oak)
+  totalCount.step = count(Pine) + count(Oak)
+
+  assert.pineCountPatch.step = pineCount == 5 count
+  assert.oakCountPatch.step = oakCount == 3 count
+  assert.totalCountPatch.step = totalCount == 8 count
+
+  // Test 2: Assertions on collection aggregations
+  avgPineAge.step = mean(Pine.age)
+  avgOakAge.step = mean(Oak.age)
+
+  assert.avgPineAgePatch.step = avgPineAge >= 0 years
+  assert.avgOakAgePatch.step = avgOakAge >= 0 years
+
+  // Test 3: Assertions comparing collections
+  maxPineHeight.step = max(Pine.height)
+  minPineHeight.step = min(Pine.height)
+
+  assert.pineHeightRangePatch.step = maxPineHeight >= minPineHeight
+
+  // Test 4: Assertions on collection-level calculations
+  totalPineHeight.step = sum(Pine.height)
+  totalOakHeight.step = sum(Oak.height)
+
+  assert.totalHeightPositivePatch.step = (totalPineHeight >= 0 m) and (totalOakHeight >= 0 m)
+
+  // Test 5: Conditional patch-level assertion
+  assert.patchConditional.step:if(meta.stepCount >= 5 count) = avgPineAge >= 5 years
+
+  // Test 6: Assertions on filtered collections
+  maturePineCount.step = count(Pine.age >= 7 years)
+  assert.maturePinesPatch.step:if(meta.stepCount >= 7 count) = maturePineCount >= 0 count
+
+end patch
+
+start organism Pine
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  // ORGANISM-LEVEL ASSERTIONS (on individual instances)
+
+  // Test 7: Assertions on individual organism attributes
+  assert.ageNonNegativePine.step = current.age >= 0 years
+
+  // Test 8: Assertions on individual growth
+  assert.heightPositivePine.step = current.height > 0 m
+
+  // Test 9: Assertions comparing current and prior for individual
+  assert.ageIncreasesPine.step:if(meta.stepCount > 0 count) = current.age > prior.age
+
+  // Test 10: Assertions on individual state transitions
+  assert.heightIncreasesPine.step:if(meta.stepCount > 0 count) = current.height > prior.height
+
+  // Test 11: Conditional organism-level assertion based on age
+  assert.maturePineHeight.step:if(current.age >= 5 years) = current.height >= 3.5 m
+
+end organism
+
+start organism Oak
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 2 m
+  height.step = prior.height + 0.3 m
+
+  // ORGANISM-LEVEL ASSERTIONS (on individual instances)
+
+  // Test 12: Assertions on individual organism attributes
+  assert.ageNonNegativeOak.step = current.age >= 0 years
+
+  // Test 13: Assertions on individual growth patterns
+  assert.heightPositiveOak.step = current.height > 0 m
+
+  // Test 14: Assertions comparing current and prior for individual
+  assert.ageIncreasesOak.step:if(meta.stepCount > 0 count) = current.age > prior.age
+
+  // Test 15: Different growth pattern assertion for Oak
+  assert.heightIncreasesOak.step:if(meta.stepCount > 0 count) = current.height > prior.height
+
+  // Test 16: Conditional organism-level assertion based on age
+  assert.matureOakHeight.step:if(current.age >= 8 years) = current.height >= 4.4 m
+
+  // Test 17: Assertion on initial state
+  assert.oakInitialHeight.step:if(meta.stepCount == 0 count) = current.height == 2 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
