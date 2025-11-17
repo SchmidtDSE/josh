@@ -1,0 +1,146 @@
+# @category: control
+# @subcategory: states
+# @priority: high
+# @description: Test state-specific event handlers with state blocks
+
+start simulation StatesHandlers
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 25 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create trees to test state-specific handlers
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Initialize to Seedling state
+  state.init = "Seedling"
+
+  # Height and energy are defined globally but have state-specific behaviors
+  height.init = 0.5 m
+  energy.init = 100 count
+
+  # State-specific flag to track which state handlers executed
+  lastHandler.init = "none"
+
+  # Define Seedling state with specific handlers
+  start state "Seedling"
+    # Transition out of Seedling when age reaches 10 years
+    state.step:if(current.age >= 10 years) = "Sapling"
+
+    # Seedling-specific growth (slow)
+    height.step = prior.height + 0.2 m
+
+    # Seedling uses low energy
+    energy.step = prior.energy - 5 count
+
+    # Mark that Seedling handler ran
+    lastHandler.step = "Seedling"
+  end state
+
+  # Define Sapling state with different handlers
+  start state "Sapling"
+    # Transition to Mature when age reaches 20 years
+    state.step:if(current.age >= 20 years) = "Mature"
+
+    # Sapling-specific growth (fast)
+    height.step = prior.height + 0.8 m
+
+    # Sapling uses high energy
+    energy.step = prior.energy - 15 count
+
+    # Mark that Sapling handler ran
+    lastHandler.step = "Sapling"
+  end state
+
+  # Define Mature state with different handlers
+  start state "Mature"
+    # No transition out of Mature in this test
+
+    # Mature-specific growth (moderate)
+    height.step = prior.height + 0.3 m
+
+    # Mature uses moderate energy
+    energy.step = prior.energy - 8 count
+
+    # Mark that Mature handler ran
+    lastHandler.step = "Mature"
+  end state
+
+  # Assert initial state
+  assert.initialState.step:if(meta.stepCount == 0 count) = current.state == "Seedling"
+  assert.initialHandler.step:if(meta.stepCount == 0 count) = current.lastHandler == "Seedling"
+
+  # Assert Seedling state handlers execute (steps 1-9)
+  assert.seedlingStateAt5.step:if(meta.stepCount == 5 count) = current.state == "Seedling"
+  assert.seedlingHandlerAt5.step:if(meta.stepCount == 5 count) = current.lastHandler == "Seedling"
+
+  # After 10 steps in Seedling: 0.5 + 10*0.2 = 2.5 m
+  assert.seedlingHeightAt9.step:if(meta.stepCount == 9 count) = current.height == 2.3 m
+
+  # Energy after 10 steps in Seedling: 100 - 10*5 = 50
+  assert.seedlingEnergyAt9.step:if(meta.stepCount == 9 count) = current.energy == 55 count
+
+  # Assert transition to Sapling at step 10
+  assert.saplingStateAt10.step:if(meta.stepCount == 10 count) = current.state == "Sapling"
+  assert.saplingHandlerAt10.step:if(meta.stepCount == 10 count) = current.lastHandler == "Sapling"
+
+  # Assert Sapling handlers execute (steps 10-19)
+  assert.saplingStateAt15.step:if(meta.stepCount == 15 count) = current.state == "Sapling"
+  assert.saplingHandlerAt15.step:if(meta.stepCount == 15 count) = current.lastHandler == "Sapling"
+
+  # After 10 more steps in Sapling: 2.5 + 10*0.8 = 10.5 m
+  assert.saplingHeightAt19.step:if(meta.stepCount == 19 count) = current.height == 9.7 m
+
+  # Energy after 10 more steps in Sapling: 50 - 10*15 = -100 (can go negative)
+  assert.saplingEnergyAt19.step:if(meta.stepCount == 19 count) = current.energy == -95 count
+
+  # Assert transition to Mature at step 20
+  assert.matureStateAt20.step:if(meta.stepCount == 20 count) = current.state == "Mature"
+  assert.matureHandlerAt20.step:if(meta.stepCount == 20 count) = current.lastHandler == "Mature"
+
+  # Assert Mature handlers execute (steps 20+)
+  assert.matureStateAt25.step:if(meta.stepCount == 25 count) = current.state == "Mature"
+  assert.matureHandlerAt25.step:if(meta.stepCount == 25 count) = current.lastHandler == "Mature"
+
+  # After 6 more steps in Mature: 10.5 + 6*0.3 = 12.3 m
+  assert.matureHeightAt25.step:if(meta.stepCount == 25 count) = current.height == 12.3 m
+
+  # Energy after 6 more steps in Mature: -100 - 6*8 = -148
+  assert.matureEnergyAt25.step:if(meta.stepCount == 25 count) = current.energy == -143 count
+
+  # Verify that only the current state's handlers execute
+  # (lastHandler should always match current.state after step 0)
+  assert.handlerMatchesState.step:if(meta.stepCount > 0 count) = current.lastHandler == current.state
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

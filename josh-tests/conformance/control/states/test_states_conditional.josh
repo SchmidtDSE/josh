@@ -1,0 +1,99 @@
+# @category: control
+# @subcategory: states
+# @priority: critical
+# @description: Test conditional state transitions based on multiple criteria
+
+start simulation StatesConditional
+
+  grid.size = 10 m
+  grid.low = 0 m, 0 m
+  grid.high = 100 m, 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 30 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create multiple trees with different initial heights
+  Tree.init = create 3 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Trees start at different heights (0.5, 1.0, or 1.5 meters)
+  height.init = sample uniform from 0.5 m to 1.5 m
+  height.step = prior.height + 0.5 m
+
+  # Initialize to Growing state
+  state.init = "Growing"
+
+  # Transition to Stressed if height exceeds 10m (stress from being too tall)
+  state.step:if(current.height > 10 m and current.state == "Growing") = "Stressed"
+
+  # Transition to Mature if age exceeds 15 years and still growing
+  state.step:if(current.age > 15 years and current.state == "Growing") = "Mature"
+
+  # Transition from Stressed to Dead if age exceeds 25 years
+  state.step:if(current.age > 25 years and current.state == "Stressed") = "Dead"
+
+  # Transition from Mature to Declining if both age > 20 and height > 12m
+  state.step:if(current.age > 20 years and current.height > 12 m and current.state == "Mature") = "Declining"
+
+  # Mark different growth rates per state
+  growthRate.init = 0 m
+  growthRate.step:if(current.state == "Growing") = 0.5 m
+  growthRate.step:if(current.state == "Stressed") = 0.1 m
+  growthRate.step:if(current.state == "Mature") = 0.3 m
+  growthRate.step:if(current.state == "Declining") = 0.05 m
+  growthRate.step:if(current.state == "Dead") = 0 m
+
+  # Assert all trees start in Growing state
+  assert.allGrowingInit.step:if(meta.stepCount == 0 count) = current.state == "Growing"
+
+  # At step 10, some trees should still be Growing (if height <= 10m)
+  assert.growingOrStressed10.step:if(meta.stepCount == 10 count and current.height <= 10 m) = current.state == "Growing"
+  assert.stressedIfTall10.step:if(meta.stepCount == 10 count and current.height > 10 m) = current.state == "Stressed"
+
+  # At step 16, trees that were Growing and didn't exceed 10m should become Mature
+  assert.matureIfOld16.step:if(meta.stepCount == 16 count and current.height <= 10 m) = current.state == "Mature"
+
+  # Test multiple transition paths exist
+  # Path 1: Growing -> Mature (age based)
+  # Path 2: Growing -> Stressed (height based)
+  # Path 3: Stressed -> Dead (age based)
+  # Path 4: Mature -> Declining (age and height based)
+
+  # At step 26, stressed trees should be Dead
+  assert.deadIfStressedAndOld26.step:if(meta.stepCount == 26 count and prior.state == "Stressed") = current.state == "Dead"
+
+  # Verify growth rates match state
+  assert.growthRateGrowing.step:if(current.state == "Growing") = current.growthRate == 0.5 m
+  assert.growthRateStressed.step:if(current.state == "Stressed") = current.growthRate == 0.1 m
+  assert.growthRateMature.step:if(current.state == "Mature") = current.growthRate == 0.3 m
+  assert.growthRateDeclining.step:if(current.state == "Declining") = current.growthRate == 0.05 m
+  assert.growthRateDead.step:if(current.state == "Dead") = current.growthRate == 0 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
