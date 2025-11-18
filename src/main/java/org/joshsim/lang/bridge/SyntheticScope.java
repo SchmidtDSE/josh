@@ -29,7 +29,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SyntheticScope implements Scope {
 
   public static final Set<String> SYNTHETIC_ATTRS =
-      Set.of("current", "prior", "here", "meta", "parent");
+      Set.of("current", "prior", "here", "meta", "parent", "stepCount", "year");
 
   private final ShadowingEntity inner;
   private final EngineValueFactory valueFactory;
@@ -137,7 +137,13 @@ public class SyntheticScope implements Scope {
       case "current" -> Optional.of(valueFactory.build(inner));
       case "prior" -> Optional.of(valueFactory.build(new PriorShadowingEntityDecorator(inner)));
       case "here" -> Optional.of(valueFactory.build(inner.getHere()));
-      case "meta" -> Optional.of(valueFactory.build(inner.getMeta()));
+      case "meta" -> {
+        // Wrap meta entity in CircularSafeEntity to propagate circular dependency protection
+        // to nested attribute access (e.g., meta.fire.trigger.coverThreshold)
+        Entity metaEntity = inner.getMeta();
+        Entity safeEntity = new CircularSafeEntity(metaEntity);
+        yield Optional.of(valueFactory.build(safeEntity));
+      }
       case "parent" -> {
         // Get the wrapped inner entity from ShadowingEntity
         MutableEntity innerEntity = inner.getInner();
@@ -155,6 +161,8 @@ public class SyntheticScope implements Scope {
         // No parent available for this entity type (Patch, Simulation, etc.)
         yield Optional.empty();
       }
+      case "stepCount" -> computeStepCount();
+      case "year" -> computeYear();
       default -> Optional.empty();
     };
   }
@@ -183,6 +191,39 @@ public class SyntheticScope implements Scope {
 
     // No geometry available for this entity (e.g., Simulation)
     return Optional.empty();
+  }
+
+  /**
+   * Compute meta.stepCount - current timestep (0-based).
+   *
+   * <p>This method returns the stepCount attribute from the meta (simulation) entity
+   * if it's defined. Many tests explicitly define stepCount on the simulation, so this
+   * allows access via the synthetic attribute.</p>
+   *
+   * @return Optional containing the stepCount value, or empty if not defined
+   */
+  private Optional<EngineValue> computeStepCount() {
+    // Get stepCount from meta entity (simulation)
+    Entity metaEntity = inner.getMeta();
+    Optional<EngineValue> stepCountMaybe = metaEntity.getAttributeValue("stepCount");
+    return stepCountMaybe;
+  }
+
+  /**
+   * Compute meta.year - current simulation year.
+   *
+   * <p>This method returns the year attribute from the meta (simulation) entity
+   * if it's defined. The year is typically derived from steps.low + stepCount,
+   * but many simulations define it explicitly.</p>
+   *
+   * @return Optional containing the year value, or empty if not defined
+   */
+  private Optional<EngineValue> computeYear() {
+    Entity metaEntity = inner.getMeta();
+
+    // Try to get year directly from simulation if defined
+    Optional<EngineValue> yearMaybe = metaEntity.getAttributeValue("year");
+    return yearMaybe;
   }
 
 }
