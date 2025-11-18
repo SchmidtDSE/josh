@@ -6,8 +6,10 @@
 start simulation TemporalQueriesMeta
 
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
 
   # Start at year 2020, run for 5 steps
   steps.low = 2020 year

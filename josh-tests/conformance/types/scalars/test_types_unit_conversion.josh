@@ -6,8 +6,10 @@
 start simulation TypesUnitConversion
 
   grid.size = 1 km
-  grid.low = 0 m, 0 m
-  grid.high = 1 km, 1 km  # 1x1 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
   grid.patch = "Default"
 
   steps.low = 0 count

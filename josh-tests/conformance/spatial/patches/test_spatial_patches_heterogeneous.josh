@@ -7,8 +7,10 @@ start simulation SpatialPatchesHeterogeneous
 
   # Create a 4x4 grid with multiple patch types
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 40 m, 40 m  # 4x4 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 40 m
+  grid.high.y = 40 m  # 4x4 grid
 
   # Create a checkerboard pattern of patch types
   grid.patch = "Wet"

@@ -7,8 +7,10 @@ start simulation SpatialMultipleRadii
 
   # Create a 5x5 grid (each patch is 10m)
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 50 m, 50 m  # 5x5 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 50 m
+  grid.high.y = 50 m  # 5x5 grid
   grid.patch = "Default"
 
   steps.low = 0 count

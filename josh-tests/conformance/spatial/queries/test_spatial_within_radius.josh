@@ -7,8 +7,10 @@ start simulation SpatialWithinRadius
 
   # Create a 5x5 grid
   grid.size = 5 m
-  grid.low = 0 m, 0 m
-  grid.high = 25 m, 25 m  # 5x5 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 25 m
+  grid.high.y = 25 m  # 5x5 grid
   grid.patch = "Default"
 
   steps.low = 0 count

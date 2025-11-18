@@ -7,8 +7,10 @@ start simulation SpatialWithinEmpty
 
   # Create a large sparse grid
   grid.size = 100 m
-  grid.low = 0 m, 0 m
-  grid.high = 100 m, 100 m  # 1x1 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 1x1 grid
   grid.patch = "Default"
 
   steps.low = 0 count

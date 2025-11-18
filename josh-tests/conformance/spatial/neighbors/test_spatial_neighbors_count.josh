@@ -7,8 +7,10 @@ start simulation SpatialNeighborsCount
 
   # Create a 3x3 grid with 10m patches
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 30 m, 30 m  # 3x3 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count

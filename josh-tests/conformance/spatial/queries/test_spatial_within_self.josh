@@ -7,8 +7,10 @@ start simulation SpatialWithinSelf
 
   # Create a small grid
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 20 m, 20 m  # 2x2 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m  # 2x2 grid
   grid.patch = "Default"
 
   steps.low = 0 count

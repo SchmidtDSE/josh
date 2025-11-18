@@ -6,8 +6,10 @@
 start simulation DistributionsRealized
 
   grid.size = 10 m
-  grid.low = 0 m, 0 m
-  grid.high = 100 m, 100 m  # 10x10 grid
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
 
   steps.low = 0 count
   steps.high = 1 count
