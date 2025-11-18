@@ -1,7 +1,7 @@
-// @category: io
-// @subcategory: assertions
-// @priority: critical
-// @description: Test multiple passing assertions - equality, inequality, ranges, scalars, and distributions
+# @category: io
+# @subcategory: assertions
+# @priority: critical
+# @description: Test multiple passing assertions - equality, inequality, ranges, scalars, and distributions
 
 start simulation AssertionsPass
 
@@ -9,7 +9,7 @@ start simulation AssertionsPass
   grid.low.x = 0 m
   grid.low.y = 0 m
   grid.high.x = 100 m
-  grid.high.y = 100 m  // 10x10 grid
+  grid.high.y = 100 m  # 10x10 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -22,35 +22,35 @@ end simulation
 
 start patch Default
 
-  // Create organisms at init
+  # Create organisms at init
   Tree.init = create 10 count of Tree
 
-  // Test 1: Equality assertions on counts
+  # Test 1: Equality assertions on counts
   treeCount.step = count(Tree)
   assert.treeCountEquals.step = treeCount == 10 count
 
-  // Test 2: Inequality assertions
+  # Test 2: Inequality assertions
   assert.treeCountNotZero.step = treeCount != 0 count
 
-  // Test 3: Range assertions (greater than)
+  # Test 3: Range assertions (greater than)
   assert.treeCountGreaterThan.step = treeCount > 5 count
 
-  // Test 4: Range assertions (less than)
+  # Test 4: Range assertions (less than)
   assert.treeCountLessThan.step = treeCount < 20 count
 
-  // Test 5: Combined range assertions (within bounds)
+  # Test 5: Combined range assertions (within bounds)
   assert.treeCountInRange.step = (treeCount >= 10 count) and (treeCount <= 10 count)
 
-  // Test 6: Aggregation assertions on collections
+  # Test 6: Aggregation assertions on collections
   avgAge.step = mean(Tree.age)
   assert.avgAgePositive.step = avgAge >= 0 years
 
-  // Test 7: Collection aggregations with ranges
+  # Test 7: Collection aggregations with ranges
   maxHeight.step = max(Tree.height)
   minHeight.step = min(Tree.height)
   assert.heightsInRange.step = (minHeight >= 0 m) and (maxHeight <= 100 m)
 
-  // Test 8: Assertions on simulation metadata
+  # Test 8: Assertions on simulation metadata
   assert.stepCountValid.step = meta.stepCount >= 0 count
   assert.stepCountIncreases.step:if(meta.stepCount > 0 count) = meta.stepCount > 0 count
 
@@ -64,13 +64,13 @@ start organism Tree
   height.init = 1 m
   height.step = prior.height + sample uniform from 0 m to 2 m
 
-  // Test 9: Organism-level equality assertions
+  # Test 9: Organism-level equality assertions
   assert.ageNonNegative.step = current.age >= 0 years
 
-  // Test 10: Organism-level assertions on growth
+  # Test 10: Organism-level assertions on growth
   assert.heightPositive.step = current.height > 0 m
 
-  // Test 11: Assertions on prior values
+  # Test 11: Assertions on prior values
   assert.heightIncreases.step:if(meta.stepCount > 0 count) = current.height >= prior.height
 
 end organism

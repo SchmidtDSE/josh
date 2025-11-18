@@ -1,8 +1,8 @@
-// @category: io
-// @subcategory: assertions
-// @priority: critical
-// @expected: fail
-// @description: Test intentional assertion failure - verifies that the test framework correctly detects assertion failures
+# @category: io
+# @subcategory: assertions
+# @priority: critical
+# @expected: fail
+# @description: Test intentional assertion failure - verifies that the test framework correctly detects assertion failures
 
 start simulation AssertionsFail
 
@@ -10,7 +10,7 @@ start simulation AssertionsFail
   grid.low.x = 0 m
   grid.low.y = 0 m
   grid.high.x = 100 m
-  grid.high.y = 100 m  // 10x10 grid
+  grid.high.y = 100 m  # 10x10 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -23,18 +23,18 @@ end simulation
 
 start patch Default
 
-  // Create organisms at init
+  # Create organisms at init
   Tree.init = create 5 count of Tree
 
-  // Passing assertion: correct count
+  # Passing assertion: correct count
   treeCount.step = count(Tree)
   assert.treeCountCorrect.step = treeCount == 5 count
 
-  // INTENTIONAL FAILURE: This assertion should fail
-  // Asserting that count is 10 when it's actually 5
+  # INTENTIONAL FAILURE: This assertion should fail
+  # Asserting that count is 10 when it's actually 5
   assert.treeCountWrong.step = treeCount == 10 count
 
-  // This assertion would pass but won't be reached if framework stops on first failure
+  # This assertion would pass but won't be reached if framework stops on first failure
   assert.treeCountPositive.step = treeCount > 0 count
 
 end patch
@@ -44,7 +44,7 @@ start organism Tree
   age.init = 0 year
   age.step = prior.age + 1 year
 
-  // Passing assertion
+  # Passing assertion
   assert.ageValid.step = current.age >= 0 years
 
 end organism
