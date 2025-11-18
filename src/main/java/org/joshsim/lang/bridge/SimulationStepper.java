@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -103,22 +104,26 @@ public class SimulationStepper {
         resolveConstantAttributes(simulation);
 
         performStream(simulation, "init");
-        performStream(patches, "init", serialPatches);
+        // Create fresh organism ownership map for each substep
+        performStream(patches, "init", serialPatches, new ConcurrentHashMap<>());
       }
 
       if (events.contains("start")) {
         performStream(simulation, "start");
-        performStream(patches, "start", serialPatches);
+        // Create fresh organism ownership map for each substep
+        performStream(patches, "start", serialPatches, new ConcurrentHashMap<>());
       }
 
       if (events.contains("step")) {
         performStream(simulation, "step");
-        performStream(patches, "step", serialPatches);
+        // Create fresh organism ownership map for each substep
+        performStream(patches, "step", serialPatches, new ConcurrentHashMap<>());
       }
 
       if (events.contains("end")) {
         performStream(simulation, "end");
-        performStream(patches, "end", serialPatches);
+        // Create fresh organism ownership map for each substep
+        performStream(patches, "end", serialPatches, new ConcurrentHashMap<>());
       }
 
       long timestepCompleted = target.getCurrentTimestep();
@@ -143,8 +148,10 @@ public class SimulationStepper {
    * @param subStep the substep to perform
    * @param serial Flag indicating if entities should be executed in parallel. If false, will
    *     execute in parallel. Otherwise, will use serial iteration.
+   * @param organismOwnership Map coordinating organism processing across threads
    */
-  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
+  private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial,
+      ConcurrentHashMap<Long, Thread> organismOwnership) {
     long currentStep = target.getCurrentTimestep();
     boolean shouldExport = exportCallback.isPresent() && shouldExportInSubstep(subStep);
 
@@ -152,7 +159,7 @@ public class SimulationStepper {
       // Use direct iteration for serial execution (better performance)
       long numCompleted = 0;
       for (MutableEntity entity : entities) {
-        MutableEntity result = updateEntity(entity, subStep);
+        MutableEntity result = updateEntity(entity, subStep, organismOwnership);
         if (result != null) {
           // Export patch immediately after completion if callback present
           if (shouldExport) {
@@ -168,7 +175,7 @@ public class SimulationStepper {
       // Keep parallel stream for parallel execution
       StreamSupport.stream(entities.spliterator(), true)
           .forEach(entity -> {
-            MutableEntity result = updateEntity(entity, subStep);
+            MutableEntity result = updateEntity(entity, subStep, organismOwnership);
             if (result != null && shouldExport) {
               Entity frozen = exportCallback.get().exportPatch(result, currentStep);
               saveFrozenPatchToReplicate(frozen, currentStep);
@@ -186,7 +193,9 @@ public class SimulationStepper {
    * @param subStep the substep to perform
    */
   private void performStream(MutableEntity entity, String subStep) {
-    MutableEntity result = updateEntity(entity, subStep);
+    // Simulation-level processing doesn't need organism coordination
+    ConcurrentHashMap<Long, Thread> emptyMap = new ConcurrentHashMap<>();
+    MutableEntity result = updateEntity(entity, subStep, emptyMap);
     assert result != null;
   }
 
@@ -204,9 +213,11 @@ public class SimulationStepper {
    *
    * @param target the entity to update (typically a patch)
    * @param subStep the sub-step name
+   * @param organismOwnership Map coordinating organism processing across threads
    * @return the updated entity
    */
-  private MutableEntity updateEntity(MutableEntity target, String subStep) {
+  private MutableEntity updateEntity(MutableEntity target, String subStep,
+      ConcurrentHashMap<Long, Thread> organismOwnership) {
     // Start substep on patch (clears cache, does NOT discover organisms)
     target.startSubstep(subStep);
 
@@ -214,7 +225,7 @@ public class SimulationStepper {
     updateEntityUnsafe(target);
 
     // NOW discover organisms from final attribute values and manage their lifecycle
-    discoverAndProcessOrganisms(target, subStep);
+    discoverAndProcessOrganisms(target, subStep, organismOwnership);
 
     // End substep on patch
     target.endSubstep();
@@ -255,8 +266,10 @@ public class SimulationStepper {
    *
    * @param target the patch entity containing organisms
    * @param subStep the current substep name
+   * @param organismOwnership Map coordinating organism processing across threads
    */
-  private void discoverAndProcessOrganisms(MutableEntity target, String subStep) {
+  private void discoverAndProcessOrganisms(MutableEntity target, String subStep,
+      ConcurrentHashMap<Long, Thread> organismOwnership) {
     // Discover organisms from FINAL attribute values (after all handlers executed)
     List<MutableEntity> organisms = new ArrayList<>();
     for (MutableEntity organism : InnerEntityGetter.getInnerEntities(target)) {
@@ -271,13 +284,24 @@ public class SimulationStepper {
     Set<Long> processedIds = new HashSet<>();
 
     for (MutableEntity organism : organisms) {
-      // Skip duplicates based on sequence ID
+      // Skip duplicates based on sequence ID (local deduplication within same patch)
       long organismId = organism.getSequenceId();
       if (processedIds.contains(organismId)) {
         continue;
       }
       processedIds.add(organismId);
 
+      // Try to claim organism for this thread (prevents concurrent processing across patches)
+      Thread currentThread = Thread.currentThread();
+      Thread owner = organismOwnership.putIfAbsent(organismId, currentThread);
+
+      // If organism was already claimed (by any thread, including this one), skip it
+      // The first thread/call to claim the organism handles its complete lifecycle
+      if (owner != null) {
+        continue;  // Organism already claimed (prevents double-processing and recursive loops)
+      }
+
+      // This thread successfully claimed the organism - complete the full lifecycle
       // Check if organism already has substep set (happens when organism created during handler)
       Optional<String> currentSubstep = organism.getSubstep();
       boolean needsStartSubstep = currentSubstep.isEmpty();
@@ -291,11 +315,13 @@ public class SimulationStepper {
       // CRITICAL: Recursively discover and process nested organisms
       // (e.g., Trees containing Seeds, ParentTree containing ChildTree)
       // This ensures organisms at ALL levels of nesting get their lifecycle managed
-      discoverAndProcessOrganisms(organism, subStep);
+      discoverAndProcessOrganisms(organism, subStep, organismOwnership);
 
-      // ALWAYS call endSubstep to clear substep state for next timestep
-      // Even newly created organisms need this to clear their substep
-      organism.endSubstep();
+      // Only call endSubstep if we called startSubstep (to avoid unlock without lock)
+      // Organisms created during handlers already have substep set and will be cleaned up elsewhere
+      if (needsStartSubstep) {
+        organism.endSubstep();
+      }
     }
   }
 
