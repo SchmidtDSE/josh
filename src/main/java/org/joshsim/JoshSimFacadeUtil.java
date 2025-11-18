@@ -84,7 +84,7 @@ public class JoshSimFacadeUtil {
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
    * @param seed Optional seed for random number generation. If present, provides deterministic
-   *     random behavior for reproducible testing. If empty, uses system time for truly random behavior.
+   *     random behavior for reproducible testing. If empty, uses sys time for random behavior.
    */
   public static void runSimulation(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
