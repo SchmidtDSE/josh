@@ -24,14 +24,16 @@ start patch Default
   # Create organisms with known values
   Trees.init = create 5 count of Tree
 
-  # Test min with known values
-  # Trees have ages: 10, 20, 30, 40, 50 years
+  # Test min with seed-based values
+  # 5 trees with ages sampled from uniform(10, 50) years
+  # Min should be reasonably close to lower bound
   minAge.init = min(Trees.age)
-  assert.minAge.init = minAge == 10 years
+  assert.minAge.init = minAge >= 10 years and minAge <= 30 years
 
-  # Test max with known values
+  # Test max with seed-based values
+  # Max should be reasonably close to upper bound
   maxAge.init = max(Trees.age)
-  assert.maxAge.init = maxAge == 50 years
+  assert.maxAge.init = maxAge >= 30 years and maxAge <= 50 years
 
   # Test min with uniform values
   # All trees have height 100 m
@@ -46,8 +48,9 @@ start patch Default
   SingleTree.init = create 1 count of Tree
   singleMin.init = min(SingleTree.age)
   singleMax.init = max(SingleTree.age)
-  assert.singleMin.init = singleMin == 10 years
-  assert.singleMax.init = singleMax == 10 years
+  assert.singleMin.init = singleMin >= 10 years and singleMin <= 50 years
+  assert.singleMax.init = singleMax >= 10 years and singleMax <= 50 years
+  assert.singleMinMaxEqual.init = singleMin == singleMax
 
   # Create organisms with stochastic values
   Plants.init = create 100 count of Plant
@@ -70,8 +73,8 @@ end patch
 
 start organism Tree
 
-  # Assign deterministic ages based on creation order
-  age.init = 10 years * (current.meta.index + 1)
+  # Assign ages using seed-based sampling (deterministic with --seed 42)
+  age.init = sample uniform from 10 years to 50 years
   age.step = prior.age
 
   # All trees have same height

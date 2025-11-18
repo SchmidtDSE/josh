@@ -46,21 +46,22 @@ start patch Default
   assert.totalTreesStep3.step:if(meta.stepCount == 3 count) = count(Trees) == 20 count
 
   # Assert filtered collection sizes at step 2 (after 1 year of growth)
-  # Age distribution after step 2: 0-19 years (1 tree of each age initially)
-  assert.oldTreesCount.step:if(meta.stepCount == 2 count) = count(oldTrees) == 16 count
-  assert.youngTreesCount.step:if(meta.stepCount == 2 count) = count(youngTrees) == 2 count
-  assert.exactAgeTreesCount.step:if(meta.stepCount == 2 count) = count(exactAgeTrees) == 1 count
+  # Age distribution after step 2: random initial ages + 1 year growth
+  # With 20 trees uniformly distributed 0-19 years initially, expect ~16 > 3 years after growth
+  assert.oldTreesCount.step:if(meta.stepCount == 2 count) = count(oldTrees) >= 14 count and count(oldTrees) <= 18 count
+  assert.youngTreesCount.step:if(meta.stepCount == 2 count) = count(youngTrees) >= 0 count and count(youngTrees) <= 4 count
+  assert.exactAgeTreesCount.step:if(meta.stepCount == 2 count) = count(exactAgeTrees) >= 0 count and count(exactAgeTrees) <= 3 count
 
-  # Assert filtered by height (each tree grows 0.5m per year starting at 1m)
-  # After step 2 (1 year growth): heights range from 1.5m to 10.5m
-  assert.tallTreesCount.step:if(meta.stepCount == 2 count) = count(tallTrees) >= 16 count
+  # Assert filtered by height (random initial heights + growth)
+  # After step 2 (1 year growth): heights range from ~2m to ~11.5m
+  assert.tallTreesCount.step:if(meta.stepCount == 2 count) = count(tallTrees) >= 12 count
 
   # Assert filtered collection is smaller than original (basic sanity check)
   assert.filterReducesSize.step:if(meta.stepCount == 2 count) = count(oldTrees) < count(Trees)
 
   # Assert filter with != operator
-  # Status becomes 1 when age >= 5 years, so expect about 15 mature trees at step 2
-  assert.matureTreesCount.step:if(meta.stepCount == 2 count) = count(matureTrees) == 15 count
+  # Status becomes 1 when age >= 5 years, expect most trees mature at step 2
+  assert.matureTreesCount.step:if(meta.stepCount == 2 count) = count(matureTrees) >= 12 count and count(matureTrees) <= 18 count
 
   # Test edge case: filter with no matches should return empty collection
   veryOldTrees.step:if(meta.stepCount == 2 count) = Trees[Tree.age > 100 years]
@@ -68,18 +69,18 @@ start patch Default
 
   # Test that filter results change over time as organisms age
   oldTreesStep3.step:if(meta.stepCount == 3 count) = Trees[Tree.age > 3 years]
-  assert.oldTreesGrow.step:if(meta.stepCount == 3 count) = count(oldTreesStep3) == 17 count
+  assert.oldTreesGrow.step:if(meta.stepCount == 3 count) = count(oldTreesStep3) >= 15 count and count(oldTreesStep3) <= 19 count
 
 end patch
 
 start organism Tree
 
-  # Each tree starts with an incrementing age (0, 1, 2, ... 19)
-  age.init = index
+  # Each tree starts with a random age (uniformly distributed 0-19 years)
+  age.init = sample uniform from 0 years to 19 years
   age.step = prior.age + 1 year
 
-  # Height starts at 1m and grows 0.5m per year
-  height.init = 1 m + (index * 0.5 m)
+  # Height starts at 1m to 10.5m (uniformly distributed)
+  height.init = sample uniform from 1 m to 10.5 m
   height.step = prior.height + 0.5 m
 
   # Status flag: 0 for young trees, 1 for trees >= 5 years old

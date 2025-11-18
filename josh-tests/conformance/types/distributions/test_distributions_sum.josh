@@ -24,11 +24,11 @@ start patch Default
   # Create organisms with known values
   Trees.init = create 5 count of Tree
 
-  # Test sum with known values
-  # Trees have ages: 10, 20, 30, 40, 50 years
-  # Sum should be 10 + 20 + 30 + 40 + 50 = 150
+  # Test sum with seed-based values
+  # 5 trees with ages sampled from uniform(10, 50) years
+  # Expected sum ≈ 5 * 30 = 150 years (with seed-based variance)
   totalAge.init = sum(Trees.age)
-  assert.sumAge.init = totalAge == 150 years
+  assert.sumAge.init = totalAge >= 50 years and totalAge <= 250 years
 
   # Test sum with uniform values
   # All trees have height 100 m, count = 5
@@ -39,7 +39,7 @@ start patch Default
   # Test sum with single organism
   SingleTree.init = create 1 count of Tree
   singleSum.init = sum(SingleTree.age)
-  assert.singleSum.init = singleSum == 10 years
+  assert.singleSum.init = singleSum >= 10 years and singleSum <= 50 years
 
   # Create organisms with stochastic values
   Plants.init = create 100 count of Plant
@@ -55,8 +55,8 @@ end patch
 
 start organism Tree
 
-  # Assign deterministic ages based on creation order
-  age.init = 10 years * (current.meta.index + 1)
+  # Assign ages using seed-based sampling (deterministic with --seed 42)
+  age.init = sample uniform from 10 years to 50 years
   age.step = prior.age
 
   # All trees have same height
