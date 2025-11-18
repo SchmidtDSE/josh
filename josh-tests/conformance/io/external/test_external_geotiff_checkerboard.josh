@@ -1,0 +1,37 @@
+# @category: io
+# @subcategory: external
+# @priority: high
+# @description: Test reading checkerboard GeoTIFF data with alternating 0/1 values
+
+start external CheckerboardData
+
+  source.location = "file://test-data/spatial/grid_10x10_checkerboard.tiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 0
+
+end external
+
+start simulation ExternalGeoTiffCheckerboard
+
+  grid.size = 10 m
+  grid.low = -117.4 degrees longitude, 34.0 degrees latitude
+  grid.high = -117.3 degrees longitude, 33.9 degrees latitude  # Small grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test that external checkerboard data can be accessed
+  # Checkerboard data has alternating 0 and 1 values
+  value.init = sample external CheckerboardData
+
+  # Verify data is either 0 or 1
+  assert.isZeroOrOne.init = (current.value == 0 count) or (current.value == 1 count)
+
+  export.value.step = current.value
+
+end patch

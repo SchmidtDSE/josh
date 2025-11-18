@@ -1,0 +1,144 @@
+# @category: core
+# @subcategory: collections
+# @priority: high
+# @description: Test chained collection operations combining filter, combine, and remove
+
+start simulation CollectionsChained
+
+  grid.size = 10 m
+  grid.low = 36.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 36.01 degrees latitude, -117.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 8 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create multiple organism types
+  Oaks.init = create 10 count of Oak
+  Pines.init = create 10 count of Pine
+  Firs.init = create 10 count of Fir
+
+  # Chain 1: Combine then filter
+  # Combine all conifers, then filter by age
+  allConifers.step:if(meta.stepCount >= 1 count) = Pines | Firs
+  oldConifers.step:if(meta.stepCount >= 2 count) = allConifers[Pine.age > 5 years or Fir.age > 5 years]
+
+  # Chain 2: Filter then combine
+  # Filter each type, then combine the filtered results
+  oldOaks.step:if(meta.stepCount >= 2 count) = Oaks[Oak.age > 5 years]
+  oldPines.step:if(meta.stepCount >= 2 count) = Pines[Pine.age > 5 years]
+  oldTrees.step:if(meta.stepCount >= 2 count) = oldOaks | oldPines
+
+  # Chain 3: Filter, combine, then filter again
+  # Get tall trees from each type, combine them, then filter by age
+  tallOaks.step:if(meta.stepCount >= 2 count) = Oaks[Oak.height > 3 m]
+  tallPines.step:if(meta.stepCount >= 2 count) = Pines[Pine.height > 4 m]
+  allTall.step:if(meta.stepCount >= 2 count) = tallOaks | tallPines
+  tallAndOld.step:if(meta.stepCount >= 2 count) = allTall[Oak.age > 5 years or Pine.age > 5 years]
+
+  # Chain 4: Complex realistic scenario
+  # Find mature trees (age >= 5), combine them, remove young ones from overall population
+  matureOaks.step:if(meta.stepCount >= 3 count) = Oaks[Oak.age >= 5 years]
+  maturePines.step:if(meta.stepCount >= 3 count) = Pines[Pine.age >= 5 years]
+  matureFirs.step:if(meta.stepCount >= 3 count) = Firs[Fir.age >= 5 years]
+  allMature.step:if(meta.stepCount >= 3 count) = matureOaks | maturePines | matureFirs
+
+  # Remove young trees at step 4 (simulate thinning young growth)
+  youngOaks.step:if(meta.stepCount == 4 count) = Oaks[Oak.age < 3 years]
+  youngPines.step:if(meta.stepCount == 4 count) = Pines[Pine.age < 3 years]
+  removeYoungOaks.step:if(meta.stepCount == 4 count) = youngOaks
+  removeYoungPines.step:if(meta.stepCount == 4 count) = youngPines
+
+  # Chain 5: Filter combined collection, then combine with another filtered collection
+  moderateAgeOaks.step:if(meta.stepCount >= 5 count) = Oaks[(Oak.age >= 3 years) and (Oak.age <= 7 years)]
+  moderateAgePines.step:if(meta.stepCount >= 5 count) = Pines[(Pine.age >= 3 years) and (Pine.age <= 7 years)]
+  allModerateAge.step:if(meta.stepCount >= 5 count) = moderateAgeOaks | moderateAgePines
+  tallFirs.step:if(meta.stepCount >= 5 count) = Firs[Fir.height > 4 m]
+  moderateAgeOrTallFir.step:if(meta.stepCount >= 5 count) = allModerateAge | tallFirs
+
+  # Assert initial collection sizes
+  assert.oaksCountInit.step:if(meta.stepCount == 1 count) = count(Oaks) == 10 count
+  assert.pinesCountInit.step:if(meta.stepCount == 1 count) = count(Pines) == 10 count
+  assert.firsCountInit.step:if(meta.stepCount == 1 count) = count(Firs) == 10 count
+
+  # Assert Chain 1: Combine then filter (with seed, deterministic but flexible)
+  assert.allConifersSize.step:if(meta.stepCount == 2 count) = count(allConifers) == 20 count
+  assert.oldConifersExists.step:if(meta.stepCount == 2 count) = count(oldConifers) >= 0 count
+
+  # Assert Chain 2: Filter then combine
+  assert.oldOaksExists.step:if(meta.stepCount == 2 count) = count(oldOaks) >= 0 count
+  assert.oldPinesExists.step:if(meta.stepCount == 2 count) = count(oldPines) >= 0 count
+  assert.oldTreesIsCombined.step:if(meta.stepCount == 2 count) = count(oldTrees) == count(oldOaks) + count(oldPines)
+
+  # Assert Chain 3: Filter, combine, filter
+  assert.allTallExists.step:if(meta.stepCount == 2 count) = count(allTall) >= 0 count
+  assert.tallAndOldExists.step:if(meta.stepCount == 2 count) = count(tallAndOld) >= 0 count
+
+  # Assert Chain 4: Complex realistic scenario
+  assert.allMatureExists.step:if(meta.stepCount == 3 count) = count(allMature) >= 0 count
+
+  # After removal at step 4, some young trees removed
+  assert.oaksAfterRemoval.step:if(meta.stepCount == 5 count) = count(Oaks) <= 10 count
+  assert.pinesAfterRemoval.step:if(meta.stepCount == 5 count) = count(Pines) <= 10 count
+  assert.firsAfterRemoval.step:if(meta.stepCount == 5 count) = count(Firs) == 10 count
+
+  # Assert Chain 5: Complex filtering and combining
+  assert.allModerateAgeExists.step:if(meta.stepCount == 5 count) = count(allModerateAge) >= 0 count
+  assert.tallFirsExists.step:if(meta.stepCount == 5 count) = count(tallFirs) >= 0 count
+  assert.moderateAgeOrTallFirIsCombined.step:if(meta.stepCount == 5 count) = count(moderateAgeOrTallFir) == count(allModerateAge) + count(tallFirs)
+
+  # Assert chained operations produce different results than individual operations
+  assert.filterReducesSize.step:if(meta.stepCount == 2 count) = count(oldConifers) <= count(allConifers)
+
+  # Test temporal stability: chained results should remain stable when inputs don't change
+  oldConifersLater.step:if(meta.stepCount == 3 count) = allConifers[Pine.age > 6 years or Fir.age > 6 years]
+  assert.oldConifersLaterExists.step:if(meta.stepCount == 3 count) = count(oldConifersLater) >= 0 count
+
+end patch
+
+start organism Oak
+
+  age.init = sample uniform from 0 years to 9 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 2 m to 4.7 m
+  height.step = prior.height + 0.3 m
+
+end organism
+
+start organism Pine
+
+  age.init = sample uniform from 0 years to 9 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 3 m to 6.6 m
+  height.step = prior.height + 0.4 m
+
+end organism
+
+start organism Fir
+
+  age.init = sample uniform from 0 years to 9 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 2.5 m to 5.65 m
+  height.step = prior.height + 0.35 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

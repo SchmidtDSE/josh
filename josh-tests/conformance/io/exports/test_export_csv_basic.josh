@@ -1,0 +1,74 @@
+# @category: io
+# @subcategory: exports
+# @priority: critical
+# @description: Test basic CSV export with organism attributes over multiple timesteps
+
+start simulation ExportCSVBasic
+
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to file:///tmp/ for temporary CSV file
+  exportFiles.patch = "file:///tmp/test_export_csv_basic.csv"
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init
+  Tree.init = create 10 count of Tree
+
+  # Export organism attribute aggregations
+  export.avgAge.step = mean(Tree.age)
+  export.avgHeight.step = mean(Tree.height)
+  export.avgBiomass.step = mean(Tree.biomass)
+  export.treeCount.step = count(Tree)
+
+  # Assertions to verify data integrity before export
+  assert.avgAgePositive.step = mean(Tree.age) >= 0 years
+  assert.avgHeightPositive.step = mean(Tree.height) >= 0 m
+  assert.avgBiomassPositive.step = mean(Tree.biomass) >= 0 kg
+  assert.treeCountCorrect.step = count(Tree) == 10 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  biomass.init = 10 kg
+  biomass.step = prior.biomass + 2 kg
+
+  # Assertions for individual tree growth
+  assert.ageIncreases.step = current.age >= prior.age
+  assert.heightIncreases.step = current.height >= prior.height
+  assert.biomassIncreases.step = current.biomass >= prior.biomass
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

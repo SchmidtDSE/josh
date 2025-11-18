@@ -1020,7 +1020,7 @@ Export attributes are defined using the `export.` prefix and are evaluated at ea
 start patch Default
 
   JoshuaTrees.init = create 10 count of JoshuaTree
-  
+
   export.treeCount.step = count(current.JoshuaTrees)
   export.averageAge.step = mean(current.JoshuaTrees.age)
 
@@ -1042,15 +1042,67 @@ end simulation
 
 The `{replicate}` placeholder will be replaced with the replicate number when running multiple simulation replicates.
 
-Export values can also be provided to memory to be shown in the IDE by using the `memory://` protocol:
+### Output Protocols
+
+Export and debug output share the same protocol infrastructure. Exports support:
+
+- **file://**: Local file system (e.g., `file:///tmp/results.csv`)
+- **minio://**: MinIO/S3 cloud storage (e.g., `minio://bucket/path/results.csv`)
+
+Note: Debug output additionally supports `stdout://` and `memory://` protocols which are not available for exports.
+
+## Debug Output
+
+Josh provides debug output capabilities for logging runtime information during simulation execution. Debug output is configured through `debugFiles` attributes on the simulation entity and written using the `debug()` function.
+
+### Debug Configuration
+
+Debug output destinations are specified in simulation stanzas using `debugFiles.*` attributes:
 
 ```
 start simulation Example
-  exportFiles.patch = "memory://editor/patches"
+
+  debugFiles.patch = "file:///tmp/debug_patch.txt"
+  debugFiles.organism = "file:///tmp/debug_organism_{replicate}.txt"
+  debugFiles.agent = "stdout"
+
 end simulation
 ```
 
-This sends patch exports to the IDE for visualization and interactive exploration without saving to disk.
+The `debugFiles` attribute accepts routing by entity type (`patch`, `organism`, `agent`) with each type writing to its configured destination.
+
+### Debug Function
+
+The `debug()` variadic function accepts any number of arguments, concatenates them with spaces, and writes the result to the debug stream:
+
+```
+start organism Tree
+
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  log.init = debug(geoKey, "INIT", "created")
+  log.step = debug("AGE", "age=", current.age)
+
+end organism
+```
+
+The function returns `0 count` (equivalent to `pass`), making it suitable for use in conditional expressions. The special variable `geoKey` provides a unique identifier formatted as `[hash - Name @ (x, y)]` for entity identification in debug output.
+
+### Output Protocols
+
+Debug and export output share the same protocol infrastructure. Debug output supports:
+
+- **file://**: Local file system (e.g., `file:///tmp/debug.txt`)
+- **minio://**: MinIO/S3 cloud storage (e.g., `minio://bucket/path/debug.txt`)
+- **stdout://**: Standard output (e.g., `stdout://`)
+- **memory://**: In-memory for browser environments (e.g., `memory://editor/debug`)
+
+The first two protocols (`file://` and `minio://`) are also available for exports, while `stdout://` and `memory://` are debug-only.
+
+### Path Templating
+
+Debug paths support template variables including `{replicate}`, `{timestamp}`, and custom tags provided via `--custom-tag` CLI arguments. Messages are formatted as `[Step N, entityType] message` with step number and entity type for filtering and analysis.
 
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.

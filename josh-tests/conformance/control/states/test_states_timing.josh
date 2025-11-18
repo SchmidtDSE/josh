@@ -1,0 +1,113 @@
+# @category: control
+# @subcategory: states
+# @priority: high
+# @description: Test transition timing (init vs step vs end) and state persistence across timesteps
+
+start simulation StatesTiming
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 20 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create trees to test timing
+  Tree.init = create 5 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Initial state set at init
+  state.init = "Juvenile"
+
+  # State transitions happen at step
+  state.step:if(current.age >= 5 years and current.state == "Juvenile") = "Adolescent"
+  state.step:if(current.age >= 10 years and current.state == "Adolescent") = "Adult"
+  state.step:if(current.age >= 15 years and current.state == "Adult") = "Elder"
+
+  # Track when state changes occurred (use a counter that increments on transition)
+  transitionCount.init = 0 count
+  transitionCount.step:if(current.state != prior.state) = prior.transitionCount + 1 count
+  transitionCount.step:if(current.state == prior.state) = prior.transitionCount
+
+  # Track height at init, step, and end phases
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Test that state persists across timesteps
+  # At step 0, state should be Juvenile (set at init)
+  assert.juvenileAtInit.step:if(meta.stepCount == 0 count) = current.state == "Juvenile"
+
+  # At steps 1-4, state should still be Juvenile
+  assert.juvenileAt1.step:if(meta.stepCount == 1 count) = current.state == "Juvenile"
+  assert.juvenileAt4.step:if(meta.stepCount == 4 count) = current.state == "Juvenile"
+
+  # At step 5, transition to Adolescent occurs
+  assert.adolescentAt5.step:if(meta.stepCount == 5 count) = current.state == "Adolescent"
+
+  # Verify state persists at step 6-9
+  assert.adolescentAt6.step:if(meta.stepCount == 6 count) = current.state == "Adolescent"
+  assert.adolescentAt9.step:if(meta.stepCount == 9 count) = current.state == "Adolescent"
+
+  # At step 10, transition to Adult
+  assert.adultAt10.step:if(meta.stepCount == 10 count) = current.state == "Adult"
+
+  # Verify state persists at step 11-14
+  assert.adultAt11.step:if(meta.stepCount == 11 count) = current.state == "Adult"
+  assert.adultAt14.step:if(meta.stepCount == 14 count) = current.state == "Adult"
+
+  # At step 15, transition to Elder
+  assert.elderAt15.step:if(meta.stepCount == 15 count) = current.state == "Elder"
+
+  # Verify state persists afterward
+  assert.elderAt16.step:if(meta.stepCount == 16 count) = current.state == "Elder"
+  assert.elderAt20.step:if(meta.stepCount == 20 count) = current.state == "Elder"
+
+  # Test transition count to verify transitions happen at expected times
+  assert.noTransitionsAt4.step:if(meta.stepCount == 4 count) = current.transitionCount == 0 count
+  assert.oneTransitionAt5.step:if(meta.stepCount == 5 count) = current.transitionCount == 1 count
+  assert.oneTransitionAt9.step:if(meta.stepCount == 9 count) = current.transitionCount == 1 count
+  assert.twoTransitionsAt10.step:if(meta.stepCount == 10 count) = current.transitionCount == 2 count
+  assert.twoTransitionsAt14.step:if(meta.stepCount == 14 count) = current.transitionCount == 2 count
+  assert.threeTransitionsAt15.step:if(meta.stepCount == 15 count) = current.transitionCount == 3 count
+  assert.threeTransitionsAt20.step:if(meta.stepCount == 20 count) = current.transitionCount == 3 count
+
+  # Verify prior.state reflects the state from previous timestep
+  assert.priorStateJuvenileAt5.step:if(meta.stepCount == 5 count) = prior.state == "Juvenile"
+  assert.priorStateAdolescentAt10.step:if(meta.stepCount == 10 count) = prior.state == "Adolescent"
+  assert.priorStateAdultAt15.step:if(meta.stepCount == 15 count) = prior.state == "Adult"
+
+  # Verify that height continues to grow regardless of state transitions
+  assert.heightAt5.step:if(meta.stepCount == 5 count) = current.height == 3.5 m
+  assert.heightAt10.step:if(meta.stepCount == 10 count) = current.height == 6 m
+  assert.heightAt15.step:if(meta.stepCount == 15 count) = current.height == 8.5 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

@@ -1,0 +1,54 @@
+start simulation TestSimulation
+  steps.low = 0
+  steps.high = 4
+
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  debugFiles.organism = "file://///workspaces/josh/step_bug_testing/test_032_export_current_collection/debug_organism_0.txt"
+  debugFiles.patch = "file://///workspaces/josh/step_bug_testing/test_032_export_current_collection/debug_patch_0.txt"
+end simulation
+
+start patch Default
+  # PATTERN: export_current_collection
+  # Test if referencing CURRENT collection in .step exports breaks execution
+  # Even when using the "working" workaround: Trees.end = prior.Trees
+
+  Trees.init = create 0 of Tree
+  Trees.step:if(meta.year == 1) = create 10 of Tree
+  Trees.end = prior.Trees  # Our "working" workaround from test_026
+
+  # CRITICAL: Export that references CURRENT Trees (not prior)
+  # This is the JOTR pattern that may be breaking organism execution
+  export.treeCount.step = count(Trees)  # References CURRENT, not prior!
+  export.meanAge.step = mean(Trees.age)  # References CURRENT
+
+  log.step = debug(geoKey, "PATCH_STEP", "year:", meta.year, "treeCount:", count(Trees))
+end patch
+
+start organism Tree
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  log.step = debug(geoKey, "ORG_STEP", "age:", age, "year:", meta.year)
+end organism
+
+# Units
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

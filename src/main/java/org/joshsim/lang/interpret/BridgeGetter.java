@@ -57,4 +57,25 @@ public interface BridgeGetter {
     throw new UnsupportedOperationException("setDebugWriter not supported by this implementation");
   }
 
+  /**
+   * Sets the seed for random number generation.
+   *
+   * <p>This allows injecting a seed value for deterministic random number generation
+   * in testing scenarios. If not set, random number generators will use system time.</p>
+   *
+   * @param seed Optional seed value. If present, all Random instances should use this seed.
+   */
+  default void setSeed(Optional<Long> seed) {
+    throw new UnsupportedOperationException("setSeed not supported by this implementation");
+  }
+
+  /**
+   * Gets the seed for random number generation.
+   *
+   * @return Optional seed value. Empty if no seed has been set (truly random behavior).
+   */
+  default Optional<Long> getSeed() {
+    return Optional.empty();
+  }
+
 }

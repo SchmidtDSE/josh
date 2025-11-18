@@ -1,0 +1,79 @@
+# @category: types
+# @subcategory: limit
+# @priority: high
+# @description: Test minimum value limiting with limit to [min,] syntax
+
+start simulation LimitMin
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test minimum limit with positive threshold
+  value1.init = 5 m
+  limited1.init = limit value1 to [10 m,]
+  assert.positiveAboveMin.init = limited1 == 10 m
+
+  value2.init = 15 m
+  limited2.init = limit value2 to [10 m,]
+  assert.positiveBelowMin.init = limited2 == 15 m
+
+  # Test minimum limit at exact boundary
+  value3.init = 10 m
+  limited3.init = limit value3 to [10 m,]
+  assert.exactBoundary.init = limited3 == 10 m
+
+  # Test minimum limit with negative values
+  negValue1.init = -5 m
+  negLimited1.init = limit negValue1 to [0 m,]
+  assert.negativeToZero.init = negLimited1 == 0 m
+
+  negValue2.init = -10 m
+  negLimited2.init = limit negValue2 to [-5 m,]
+  assert.negativeToNegative.init = negLimited2 == -5 m
+
+  # Test minimum limit preserves values above threshold
+  largeValue.init = 100 m
+  largeLimited.init = limit largeValue to [10 m,]
+  assert.preserveLarge.init = largeLimited == 100 m
+
+  # Test minimum limit with percentage units
+  pctValue1.init = 5 %
+  pctLimited1.init = limit pctValue1 to [10 %,]
+  assert.percentageMin.init = pctLimited1 == 10 %
+
+  pctValue2.init = 25 %
+  pctLimited2.init = limit pctValue2 to [10 %,]
+  assert.percentageAboveMin.init = pctLimited2 == 25 %
+
+  # Test minimum limit with zero threshold
+  zeroValue.init = -5 m
+  zeroLimited.init = limit zeroValue to [0 m,]
+  assert.zeroThreshold.init = zeroLimited == 0 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

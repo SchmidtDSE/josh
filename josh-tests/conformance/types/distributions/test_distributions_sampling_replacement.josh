@@ -1,0 +1,88 @@
+# @category: types
+# @subcategory: distributions
+# @priority: medium
+# @description: Test sampling behavior - verify samples are independent and can repeat
+
+start simulation DistributionsSamplingReplacement
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms that sample from a distribution
+  # Each organism samples independently - samples can repeat (with replacement)
+  Trees.init = create 100 count of Tree
+
+  # Test that we get variation in sampled values (not all the same)
+  minValue.init = min(Trees.value)
+  maxValue.init = max(Trees.value)
+  meanValue.init = mean(Trees.value)
+
+  # Verify we have variation (samples are independent)
+  range.init = maxValue - minValue
+  assert.hasVariation.init = range > 50 count
+
+  # Test sampling from small discrete range
+  # Sample from uniform(1, 10) - only 10 possible integer values
+  # With 100 organisms, we expect many repeated values (sampling with replacement)
+  Plants.init = create 100 count of Plant
+
+  plantMin.init = min(Plants.discreteValue)
+  plantMax.init = max(Plants.discreteValue)
+  plantMean.init = mean(Plants.discreteValue)
+
+  # Values should be in range [1, 10]
+  assert.plantMinInRange.init = plantMin >= 1 count
+  assert.plantMaxInRange.init = plantMax <= 10 count
+
+  # With 100 samples from 10 values, we should see most of the range
+  plantRange.init = plantMax - plantMin
+  assert.plantRangeLarge.init = plantRange >= 7 count
+
+  # Mean should be approximately 5.5
+  assert.plantMeanReasonable.init = plantMean > 4.5 count
+  assert.plantMeanReasonable2.init = plantMean < 6.5 count
+
+  # Test repeated sampling in same patch - each time should be independent
+  sample1.init = sample uniform from 0 count to 100 count
+  sample2.init = sample uniform from 0 count to 100 count
+  sample3.init = sample uniform from 0 count to 100 count
+
+  # Samples should be in valid range
+  assert.sample1Range.init = sample1 >= 0 count
+  assert.sample1Range2.init = sample1 <= 100 count
+  assert.sample2Range.init = sample2 >= 0 count
+  assert.sample2Range2.init = sample2 <= 100 count
+  assert.sample3Range.init = sample3 >= 0 count
+  assert.sample3Range2.init = sample3 <= 100 count
+
+end patch
+
+start organism Tree
+
+  # Each organism samples independently from the distribution
+  # Samples can repeat (with replacement behavior)
+  value.init = sample uniform from 0 count to 100 count
+  value.step = prior.value
+
+end organism
+
+start organism Plant
+
+  # Sample from smaller discrete range
+  discreteValue.init = sample uniform from 1 count to 10 count
+  discreteValue.step = prior.discreteValue
+
+end organism

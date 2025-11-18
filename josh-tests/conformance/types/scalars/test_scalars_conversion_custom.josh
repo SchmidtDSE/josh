@@ -1,0 +1,90 @@
+# @category: types
+# @subcategory: scalars
+# @priority: high
+# @description: Test custom unit conversions (inches ↔ feet ↔ yards)
+
+start simulation ScalarsConversionCustom
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test inches to feet (12 in = 1 ft)
+  length1.init = 12 in
+  length1Ft.init = length1 as ft
+  assert.inToFt.init = length1Ft == 1 ft
+
+  # Test feet to inches (1 ft = 12 in)
+  length2.init = 2 ft
+  length2In.init = length2 as in
+  assert.ftToIn.init = length2In == 24 in
+
+  # Test feet to yards (3 ft = 1 yd)
+  length3.init = 3 ft
+  length3Yd.init = length3 as yd
+  assert.ftToYd.init = length3Yd == 1 yd
+
+  # Test yards to feet (1 yd = 3 ft)
+  length4.init = 2 yd
+  length4Ft.init = length4 as ft
+  assert.ydToFt.init = length4Ft == 6 ft
+
+  # Test inches to yards (36 in = 1 yd)
+  length5.init = 36 in
+  length5Yd.init = length5 as yd
+  assert.inToYd.init = length5Yd == 1 yd
+
+  # Test yards to inches (1 yd = 36 in)
+  length6.init = 2 yd
+  length6In.init = length6 as in
+  assert.ydToIn.init = length6In == 72 in
+
+  # Test chained conversion (inches -> feet -> yards)
+  chainLength.init = 72 in
+  chainFt.init = chainLength as ft
+  chainYd.init = chainFt as yd
+  assert.chainedConversion.init = chainYd == 2 yd
+
+end patch
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+  yd = current / 36
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+  yd = current / 3
+end unit
+
+start unit yard
+  alias yd
+  alias yards
+  ft = current * 3
+  in = current * 36
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

@@ -70,9 +70,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param bridge The EngineBridge through which to interact with the engine.
    * @param scope The scope in which to have this automaton perform its operations.
    * @param debugWriter Optional debug writer for writing debug messages.
+   * @param seed Optional seed for random number generation. If present, provides deterministic
+   *     behavior for testing. If empty, uses system time for truly random behavior.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
-      Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter) {
+      Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter, Optional<Long> seed) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
     this.debugWriter = debugWriter;
@@ -83,7 +85,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     valueFactory = bridge.getEngineValueFactory();
     currentValueResolver = new ValueResolver(valueFactory, "current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
-    random = new Random();
+    random = seed.isPresent() ? new Random(seed.get()) : new Random();
     isEnded = false;
   }
 
@@ -94,7 +96,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param scope The scope in which to have this automaton perform its operations.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
-    this(bridge, scope, Optional.empty());
+    this(bridge, scope, Optional.empty(), Optional.empty());
   }
 
   /**

@@ -1,0 +1,65 @@
+start simulation StateTransitionTest
+  steps.low = 0
+  steps.high = 6
+
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  debugFiles.organism = "file:////workspaces/josh/step_bug_testing/test_037_state_transition_bug/debug_organism_0.txt"
+  debugFiles.patch = "file:////workspaces/josh/step_bug_testing/test_037_state_transition_bug/debug_patch_0.txt"
+end simulation
+
+start patch Default
+  # Create 3 trees at year 1
+  Trees.init = create 0 of JoshuaTree
+  Trees.step:if(meta.year == 1) = create 3 of JoshuaTree
+  Trees.end = prior.Trees | Trees
+
+  log.step = debug(geoKey, "PATCH", "year:", meta.year, "treeCount:", count(Trees))
+end patch
+
+start organism JoshuaTree
+  # Age increments correctly (this works)
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  # State initialization
+  state.init = "seedling"
+
+  # STATE TRANSITION BUG: These transitions never execute
+  start state "seedling"
+    state.step
+      :if(prior.age >= 2 years) = "juvenile"
+  end state
+
+  start state "juvenile"
+    state.step
+      :if(prior.age >= 5 years) = "adult"
+  end state
+
+  start state "adult"
+    # No transitions - terminal state
+  end state
+
+  log.step = debug(geoKey, "TREE", "year:", meta.year, "age:", age)
+end organism
+
+# Units
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

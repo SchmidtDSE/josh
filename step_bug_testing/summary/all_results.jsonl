@@ -1,0 +1,12 @@
+{"test_id": "001", "pattern": "only_step_conditional", "has_end": false, "result": "PASS", "bug": false, "steps": "0-4"}
+{"test_id": "002", "pattern": "init_step_conditional", "has_end": false, "result": "PASS", "bug": false, "steps": "0-4"}
+{"test_id": "003", "pattern": "init_step_unconditional", "has_end": false, "result": "PASS", "bug": false, "steps": "0-4"}
+{"test_id": "004", "pattern": "init_start_step", "has_end": false, "result": "PASS", "bug": false, "steps": "0-4"}
+{"test_id": "005", "pattern": "init_step_end", "has_end": true, "result": "FAIL", "bug": true, "steps": "0-0", "bug_type": "creation_only"}
+{"test_id": "006", "pattern": "multi_phase_conditional", "has_end": true, "result": "PASS", "bug": false, "steps": "0-4", "note": "organisms created in .end"}
+{"test_id": "007", "pattern": "multi_phase_unconditional", "has_end": true, "result": "CRASH", "bug": false, "error": "circular_dependency"}
+{"test_id": "008", "pattern": "init_step_end_moderate", "has_end": true, "result": "FAIL", "bug": true, "steps": "0-0", "bug_type": "creation_only"}
+{"test_id": "010", "pattern": "only_step_end", "has_end": true, "result": "FAIL", "bug": true, "steps": "0-0", "bug_type": "creation_only"}
+{"test_id": "011", "pattern": "init_step_end_no_prior", "has_end": true, "result": "FAIL", "bug": true, "steps": "0-0", "bug_type": "creation_only"}
+{"test_id": "012", "pattern": "init_step_end_conditional", "has_end": true, "result": "FAIL", "bug": true, "steps": "0-0", "bug_type": "creation_only"}
+{"test_id": "013", "pattern": "only_step_moderate", "has_end": false, "result": "PASS", "bug": false, "steps": "0-4"}

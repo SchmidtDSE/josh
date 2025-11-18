@@ -1,0 +1,184 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: medium
+# @description: Test deep nesting (3+ levels) of meta attribute access - EXPECTED TO FAIL: 3+ level nesting not currently supported
+
+start simulation TemporalQueriesMetaDeepNesting
+
+  # NOTE: Spec requires 'degrees latitude/longitude' but using meters for compatibility
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # 2-level nesting - baseline (constants don't need .init/.step)
+  parameters.threshold = 50 percent
+
+  # 3-level nesting
+  parameters.growth.rate = 2.5 m/yr
+  parameters.growth.maxHeight = 30 m
+
+  # 4-level nesting
+  fire.trigger.probability.high = 15 percent
+  fire.trigger.probability.low = 3 percent
+  fire.trigger.condition.threshold = 60 percent
+
+  # 5-level nesting (edge case)
+  params.model.vegetation.grass.growthRate = 1.2 m/yr
+  params.model.vegetation.shrub.growthRate = 0.8 m/yr
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Plant.init = create Plant
+
+  # Test 2-level nesting access
+  baseThreshold.init = 0 percent
+  baseThreshold.step = meta.parameters.threshold
+
+  # Test 3-level nesting access
+  growthRate.init = 0 m/yr
+  growthRate.step = meta.parameters.growth.rate
+
+  maxHeight.init = 0 m
+  maxHeight.step = meta.parameters.growth.maxHeight
+
+  # Test 4-level nesting access
+  fireHighProb.init = 0 percent
+  fireHighProb.step = meta.fire.trigger.probability.high
+
+  fireLowProb.init = 0 percent
+  fireLowProb.step = meta.fire.trigger.probability.low
+
+  fireThreshold.init = 0 percent
+  fireThreshold.step = meta.fire.trigger.condition.threshold
+
+  # Test 5-level nesting access
+  grassGrowth.init = 0 m/yr
+  grassGrowth.step = meta.params.model.vegetation.grass.growthRate
+
+  shrubGrowth.init = 0 m/yr
+  shrubGrowth.step = meta.params.model.vegetation.shrub.growthRate
+
+  # Test using nested meta in expressions
+  coverage.init = 40 percent
+  coverage.step = prior.coverage + 5 percent
+
+  isHighCoverage.init = false
+  isHighCoverage.step = current.coverage > meta.fire.trigger.condition.threshold
+
+  selectedProbability.init = 0 percent
+  selectedProbability.step = meta.fire.trigger.probability.high if current.isHighCoverage else meta.fire.trigger.probability.low
+
+  # Assertions for 2-level nesting
+  assert.baseThresholdStep1.step:if(meta.stepCount == 1 count) = current.baseThreshold == 50 percent
+  assert.baseThresholdStep2.step:if(meta.stepCount == 2 count) = current.baseThreshold == 50 percent
+
+  # Assertions for 3-level nesting
+  assert.growthRateStep1.step:if(meta.stepCount == 1 count) = current.growthRate == 2.5 m/yr
+  assert.maxHeightStep1.step:if(meta.stepCount == 1 count) = current.maxHeight == 30 m
+
+  # Assertions for 4-level nesting
+  assert.fireHighProbStep1.step:if(meta.stepCount == 1 count) = current.fireHighProb == 15 percent
+  assert.fireLowProbStep1.step:if(meta.stepCount == 1 count) = current.fireLowProb == 3 percent
+  assert.fireThresholdStep1.step:if(meta.stepCount == 1 count) = current.fireThreshold == 60 percent
+
+  # Assertions for 5-level nesting
+  assert.grassGrowthStep1.step:if(meta.stepCount == 1 count) = current.grassGrowth == 1.2 m/yr
+  assert.shrubGrowthStep1.step:if(meta.stepCount == 1 count) = current.shrubGrowth == 0.8 m/yr
+
+  # Assertions for complex expressions with deep nesting
+  assert.coverageStep1.step:if(meta.stepCount == 1 count) = current.coverage == 45 percent
+  assert.coverageStep2.step:if(meta.stepCount == 2 count) = current.coverage == 50 percent
+  assert.coverageStep3.step:if(meta.stepCount == 3 count) = current.coverage == 55 percent
+
+  assert.isHighCoverageStep1.step:if(meta.stepCount == 1 count) = current.isHighCoverage == false
+  assert.isHighCoverageStep2.step:if(meta.stepCount == 2 count) = current.isHighCoverage == false
+  assert.isHighCoverageStep3.step:if(meta.stepCount == 3 count) = current.isHighCoverage == false
+
+  assert.selectedProbabilityStep1.step:if(meta.stepCount == 1 count) = current.selectedProbability == 3 percent
+  assert.selectedProbabilityStep2.step:if(meta.stepCount == 2 count) = current.selectedProbability == 3 percent
+
+  # Test cross-attribute references with deep nesting
+  computedHeight.init = 0 m
+  computedHeight.step = prior.computedHeight + meta.parameters.growth.rate
+
+  assert.computedHeightStep1.step:if(meta.stepCount == 1 count) = current.computedHeight == 2.5 m
+  assert.computedHeightStep2.step:if(meta.stepCount == 2 count) = current.computedHeight == 5 m
+  assert.computedHeightStep3.step:if(meta.stepCount == 3 count) = current.computedHeight == 7.5 m
+
+end patch
+
+start organism Plant
+
+  # Test meta access from organism with 3-level nesting
+  growthRate.init = meta.parameters.growth.rate
+  growthRate.step = prior.growthRate
+
+  # Test meta access from organism with 4-level nesting
+  fireProb.init = meta.fire.trigger.probability.low
+  fireProb.step = prior.fireProb
+
+  # Test meta access from organism with 5-level nesting
+  speciesGrowth.init = meta.params.model.vegetation.grass.growthRate
+  speciesGrowth.step = prior.speciesGrowth
+
+  # Use nested meta in organism computations
+  height.init = 1 m
+  height.step = prior.height + meta.parameters.growth.rate
+
+  maxReached.init = false
+  maxReached.step = current.height >= meta.parameters.growth.maxHeight
+
+  # Organism assertions - init phase with nested meta
+  assert.growthRateInit.init = current.growthRate == 2.5 m/yr
+  assert.fireProbInit.init = current.fireProb == 3 percent
+  assert.speciesGrowthInit.init = current.speciesGrowth == 1.2 m/yr
+  assert.heightInit.init = current.height == 1 m
+  assert.maxReachedInit.init = current.maxReached == false
+
+  # Organism assertions - step phase
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 3.5 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 6 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 8.5 m
+
+  assert.maxReachedStep1.step:if(meta.stepCount == 1 count) = current.maxReached == false
+  assert.maxReachedStep2.step:if(meta.stepCount == 2 count) = current.maxReached == false
+  assert.maxReachedStep3.step:if(meta.stepCount == 3 count) = current.maxReached == false
+
+  # Verify persistent values from init
+  assert.growthRatePersistsStep2.step:if(meta.stepCount == 2 count) = current.growthRate == 2.5 m/yr
+  assert.fireProbPersistsStep2.step:if(meta.stepCount == 2 count) = current.fireProb == 3 percent
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit yr
+  alias year
+  alias years
+end unit
+
+start unit percent
+  alias pct
+end unit
+
+start unit degrees
+  alias degree
+  alias deg
+end unit
+
+start unit count
+end unit

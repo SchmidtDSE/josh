@@ -1,0 +1,85 @@
+# @category: types
+# @subcategory: scalars
+# @priority: medium
+# @description: Test angle/degree operations and conversions
+
+start simulation ScalarsUnitsDegrees
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test addition of degrees
+  angle1.init = 90 degrees
+  angle2.init = 90 degrees
+  sumAngle.init = angle1 + angle2
+  assert.angleAddition.init = sumAngle == 180 degrees
+
+  # Test subtraction of degrees
+  angle3.init = 270 degrees
+  angle4.init = 90 degrees
+  diffAngle.init = angle3 - angle4
+  assert.angleSubtraction.init = diffAngle == 180 degrees
+
+  # Test full rotation (360 degrees)
+  quarterTurn.init = 90 degrees
+  fullRotation.init = quarterTurn * 4 count
+  assert.fullRotation.init = fullRotation == 360 degrees
+
+  # Test right angle
+  rightAngle.init = 90 degrees
+  assert.rightAngle.init = rightAngle == 90 degrees
+
+  # Test straight angle
+  straightAngle.init = 180 degrees
+  assert.straightAngle.init = straightAngle == 180 degrees
+
+  # Test degrees to radians conversion (90 degrees = π/2 radians ≈ 1.5708 radians)
+  deg90.init = 90 degrees
+  rad90.init = deg90 as radians
+  assert.degToRad90.init = rad90 > 1.57 radians
+  assert.degToRad90Upper.init = rad90 < 1.58 radians
+
+  # Test radians to degrees conversion (π radians ≈ 3.14159 radians = 180 degrees)
+  radPi.init = 3.14159 radians
+  degPi.init = radPi as degrees
+  assert.radToDeg180.init = degPi > 179 degrees
+  assert.radToDeg180Upper.init = degPi < 181 degrees
+
+  # Test full circle in radians (2π ≈ 6.28318 radians = 360 degrees)
+  rad2Pi.init = 6.28318 radians
+  deg2Pi.init = rad2Pi as degrees
+  assert.radToDeg360.init = deg2Pi > 359 degrees
+  assert.radToDeg360Upper.init = deg2Pi < 361 degrees
+
+end patch
+
+start unit degrees
+  alias degree
+  alias deg
+  radians = current * 3.14159265359 / 180
+end unit
+
+start unit radians
+  alias radian
+  alias rad
+  degrees = current * 180 / 3.14159265359
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit count
+end unit

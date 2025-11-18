@@ -1,0 +1,76 @@
+# @category: types
+# @subcategory: conversions
+# @priority: medium
+# @description: Test implicit conversion in compatible contexts
+
+start simulation ConversionsImplicit
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test implicit conversion in arithmetic operations
+  # When compatible units are used together
+  distance1.init = 1000 m
+  distance2.init = 2 km
+
+  # Addition with implicit conversion
+  totalDistanceM.init = (distance1 + (distance2 as m))
+  assert.implicitAdd.init = totalDistanceM == 3000 m
+
+  # Test with custom units - implicit conversion in expressions
+  length1.init = 24 in
+  length2.init = 2 ft
+
+  # Subtraction with implicit conversion
+  diffInches.init = (length1 - (length2 as in))
+  assert.implicitSubtract.init = diffInches == 0 in
+
+  # Test comparison with implicit conversion
+  dist1.init = 5000 m
+  dist2.init = 5 km
+  assert.implicitCompare.init = (dist1 as km) == dist2
+
+  # Test multiplication context
+  baseLength.init = 3 ft
+  multipliedLength.init = baseLength * 4 count
+  assert.implicitMultiply.init = multipliedLength == 12 ft
+
+end patch
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

@@ -1,0 +1,125 @@
+# @category: temporal
+# @subcategory: prior
+# @priority: high
+# @description: Test prior keyword with collection operations (mean, count, sum)
+
+start simulation TemporalPriorCollections
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create multiple organisms at init
+  Trees.init = create 5 count of Tree
+
+  # Track collection statistics
+  avgAge.init = 0 year
+  avgAge.step = mean(Trees.age)
+
+  avgHeight.init = 0 m
+  avgHeight.step = mean(Trees.height)
+
+  totalBiomass.init = 0 kg
+  totalBiomass.step = sum(Trees.biomass)
+
+  treeCount.init = 0 count
+  treeCount.step = count(Trees)
+
+  # Calculate change in average height from prior timestep
+  avgHeightChange.init = 0 m
+  avgHeightChange.step = current.avgHeight - prior.avgHeight
+
+  # Assert tree count remains constant
+  assert.countStep1.step:if(meta.stepCount == 1 count) = current.treeCount == 5 count
+  assert.countStep2.step:if(meta.stepCount == 2 count) = current.treeCount == 5 count
+  assert.countStep3.step:if(meta.stepCount == 3 count) = current.treeCount == 5 count
+  assert.countStep4.step:if(meta.stepCount == 4 count) = current.treeCount == 5 count
+  assert.countStep5.step:if(meta.stepCount == 5 count) = current.treeCount == 5 count
+
+  # Assert average age increases by 1 year each step
+  assert.avgAgeStep1.step:if(meta.stepCount == 1 count) = current.avgAge == 1 year
+  assert.avgAgeStep2.step:if(meta.stepCount == 2 count) = current.avgAge == 2 years
+  assert.avgAgeStep3.step:if(meta.stepCount == 3 count) = current.avgAge == 3 years
+  assert.avgAgeStep4.step:if(meta.stepCount == 4 count) = current.avgAge == 4 years
+  assert.avgAgeStep5.step:if(meta.stepCount == 5 count) = current.avgAge == 5 years
+
+  # Assert average height increases by 0.5 m each step
+  assert.avgHeightStep1.step:if(meta.stepCount == 1 count) = current.avgHeight == 1.5 m
+  assert.avgHeightStep2.step:if(meta.stepCount == 2 count) = current.avgHeight == 2.0 m
+  assert.avgHeightStep3.step:if(meta.stepCount == 3 count) = current.avgHeight == 2.5 m
+  assert.avgHeightStep4.step:if(meta.stepCount == 4 count) = current.avgHeight == 3.0 m
+  assert.avgHeightStep5.step:if(meta.stepCount == 5 count) = current.avgHeight == 3.5 m
+
+  # Assert average height change is constant at 0.5 m per step
+  assert.avgHeightChangeStep1.step:if(meta.stepCount == 1 count) = current.avgHeightChange == 0.5 m
+  assert.avgHeightChangeStep2.step:if(meta.stepCount == 2 count) = current.avgHeightChange == 0.5 m
+  assert.avgHeightChangeStep3.step:if(meta.stepCount == 3 count) = current.avgHeightChange == 0.5 m
+  assert.avgHeightChangeStep4.step:if(meta.stepCount == 4 count) = current.avgHeightChange == 0.5 m
+  assert.avgHeightChangeStep5.step:if(meta.stepCount == 5 count) = current.avgHeightChange == 0.5 m
+
+  # Assert total biomass increases over time (approximate ranges)
+  assert.totalBiomassStep1.step:if(meta.stepCount == 1 count) = current.totalBiomass >= 0.7 kg and current.totalBiomass <= 0.8 kg
+  assert.totalBiomassStep2.step:if(meta.stepCount == 2 count) = current.totalBiomass >= 1.7 kg and current.totalBiomass <= 1.8 kg
+  assert.totalBiomassStep3.step:if(meta.stepCount == 3 count) = current.totalBiomass >= 2.95 kg and current.totalBiomass <= 3.05 kg
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Height grows based on prior height
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Biomass depends on height
+  biomass.init = 0 kg
+  biomass.step = prior.biomass + (current.height * 0.1 kg/m)
+
+  # Each tree tracks its previous height
+  priorHeight.init = 0 m
+  priorHeight.step = prior.height
+
+  # Assert individual prior height references work in collections
+  assert.individualPriorStep1.step:if(meta.stepCount == 1 count) = current.priorHeight == 1 m
+  assert.individualPriorStep2.step:if(meta.stepCount == 2 count) = current.priorHeight == 1.5 m
+  assert.individualPriorStep3.step:if(meta.stepCount == 3 count) = current.priorHeight == 2.0 m
+
+  # Assert height increases correctly for each individual tree
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 1.5 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 2.0 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 2.5 m
+  assert.heightStep4.step:if(meta.stepCount == 4 count) = current.height == 3.0 m
+  assert.heightStep5.step:if(meta.stepCount == 5 count) = current.height == 3.5 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

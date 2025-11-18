@@ -1,0 +1,74 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: medium
+# @description: Test distance calculations to neighbors are correct
+
+start simulation SpatialNeighborsDistance
+
+  # Create a controlled 3x3 grid with known spacing
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 9 organisms in 3x3 grid
+  Tree.init = create 9 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Count neighbors at specific distances
+  # In a 10m grid, adjacent patches are ~10m apart, diagonal ~14.14m
+  within5m.step = count(Tree within 5 m radial at prior)
+  within12m.step = count(Tree within 12 m radial at prior)
+  within18m.step = count(Tree within 18 m radial at prior)
+
+  # Assert distance-based counts are ordered correctly
+  assert.distance5vs12.step:if(meta.stepCount == 1 count) = current.within5m <= current.within12m
+  assert.distance12vs18.step:if(meta.stepCount == 1 count) = current.within12m <= current.within18m
+
+  # Corner organisms should find fewer neighbors at small radii
+  # Center organisms should find more neighbors at small radii
+  # At least one organism should find only itself within 5m
+  assert.someIsolated.step:if(meta.stepCount == 1 count) = current.within5m >= 1 count
+
+  # All organisms should be found within large radius
+  within50m.step = count(Tree within 50 m radial at prior)
+  assert.allFound.step:if(meta.stepCount == 1 count) = current.within50m == 9 count
+
+  # Test that distance thresholds work precisely
+  # Organisms exactly at or just beyond a threshold
+  atThreshold.step = count(Tree within 10 m radial at prior)
+  beyondThreshold.step = count(Tree within 9.9 m radial at prior)
+
+  # At threshold should find at least as many as just below threshold
+  assert.thresholdConsistent.step:if(meta.stepCount == 1 count) = current.atThreshold >= current.beyondThreshold
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

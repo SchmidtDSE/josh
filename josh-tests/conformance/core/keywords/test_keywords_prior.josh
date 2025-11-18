@@ -1,0 +1,61 @@
+# @category: keywords
+# @subcategory: temporal
+# @priority: high
+# @description: Test prior keyword for accessing previous timestep values
+
+start simulation KeywordsPrior
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 4 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Growth accumulates using prior
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Assert age progression
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = current.age == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = current.age == 2 years
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = current.age == 3 years
+
+  # Assert height accumulation
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 1.5 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 2.0 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 2.5 m
+  assert.heightStep4.step:if(meta.stepCount == 4 count) = current.height == 3.0 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

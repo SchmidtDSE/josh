@@ -1,0 +1,135 @@
+# @category: stochastic
+# @subcategory: arithmetic
+# @priority: medium
+# @description: Test complex arithmetic expressions with distributions - verifies composite operations maintain statistical properties
+
+start simulation StochasticArithmeticComplex
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with complex expression: (dist1 + dist2) * scalar / constant
+  ComplexOrg.init = create 800 count of ComplexOrg
+
+  # Calculate statistics
+  meanComplex.step = mean(ComplexOrg.value)
+  minComplex.step = min(ComplexOrg.value)
+  maxComplex.step = max(ComplexOrg.value)
+
+  # Expected calculation:
+  # dist1: uniform(10, 30) with mean 20
+  # dist2: uniform(40, 60) with mean 50
+  # sum: mean = 70
+  # * 3: mean = 210
+  # / 2: mean = 105
+
+  # Test 1: Mean of complex expression should approximate expected value
+  # E[(dist1 + dist2) * 3 / 2] = (E[dist1] + E[dist2]) * 3 / 2
+  # = (20 + 50) * 3 / 2 = 70 * 3 / 2 = 105
+  expectedMean.step = 105 m
+  tolerance.step = 10 m
+  lowerBound.step = expectedMean - tolerance
+  upperBound.step = expectedMean + tolerance
+  assert.complexMean.step = (meanComplex >= lowerBound) and (meanComplex <= upperBound)
+
+  # Test 2: Verify range is transformed correctly
+  # Min: (10 + 40) * 3 / 2 = 75
+  # Max: (30 + 60) * 3 / 2 = 135
+  assert.complexMin.step = (minComplex >= 65 m) and (minComplex <= 85 m)
+  assert.complexMax.step = (maxComplex >= 125 m) and (maxComplex <= 145 m)
+
+  # Test 3: Test nested operations with addition and subtraction
+  NestedOrg.init = create 800 count of NestedOrg
+  meanNested.step = mean(NestedOrg.value)
+
+  # Expected: (dist1 * 2) + (dist2 / 2) - 10
+  # = (20 * 2) + (50 / 2) - 10
+  # = 40 + 25 - 10 = 55
+  expectedNested.step = 55 m
+  toleranceNested.step = 8 m
+  lowerNested.step = expectedNested - toleranceNested
+  upperNested.step = expectedNested + toleranceNested
+  assert.nestedMean.step = (meanNested >= lowerNested) and (meanNested <= upperNested)
+
+  # Test 4: Test with normal distributions in complex expressions
+  NormalComplexOrg.init = create 800 count of NormalComplexOrg
+  meanNormalComplex.step = mean(NormalComplexOrg.value)
+
+  # Expected: (normal(100, 10) + 50) / 2
+  # = (100 + 50) / 2 = 75
+  expectedNormalComplex.step = 75 m
+  toleranceNormalComplex.step = 8 m
+  lowerNormalComplex.step = expectedNormalComplex - toleranceNormalComplex
+  upperNormalComplex.step = expectedNormalComplex + toleranceNormalComplex
+  assert.normalComplexMean.step = (meanNormalComplex >= lowerNormalComplex) and (meanNormalComplex <= upperNormalComplex)
+
+  # Test 5: Verify all complex operations produce valid numeric results
+  assert.noInvalid.step = (count(ComplexOrg.value > 0 m) == 800 count) and
+                          (count(NestedOrg.value > 0 m) == 800 count) and
+                          (count(NormalComplexOrg.value > 0 m) == 800 count)
+
+end patch
+
+start organism ComplexOrg
+
+  # Complex expression: (dist1 + dist2) * 3 / 2
+  dist1.init = sample uniform from 10 m to 30 m
+  dist2.init = sample uniform from 40 m to 60 m
+  sum.init = dist1 + dist2
+  scaled.init = sum * 3 count
+  value.init = scaled / 2 count
+  value.step = prior.value
+
+end organism
+
+start organism NestedOrg
+
+  # Nested operations: (dist1 * 2) + (dist2 / 2) - 10
+  dist1.init = sample uniform from 10 m to 30 m
+  dist2.init = sample uniform from 40 m to 60 m
+  term1.init = dist1 * 2 count
+  term2.init = dist2 / 2 count
+  sum.init = term1 + term2
+  value.init = sum - 10 m
+  value.step = prior.value
+
+end organism
+
+start organism NormalComplexOrg
+
+  # Complex with normal distribution: (normal(100, 10) + 50) / 2
+  normalVal.init = sample normal with mean of 100 m std of 10 m
+  added.init = normalVal + 50 m
+  value.init = added / 2 count
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

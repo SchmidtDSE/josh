@@ -29,7 +29,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SyntheticScope implements Scope {
 
   public static final Set<String> SYNTHETIC_ATTRS =
-      Set.of("current", "prior", "here", "meta", "parent");
+      Set.of("current", "prior", "here", "meta", "parent", "stepCount", "year");
 
   private final ShadowingEntity inner;
   private final EngineValueFactory valueFactory;
@@ -59,7 +59,10 @@ public class SyntheticScope implements Scope {
   public EngineValue get(String name) {
     // Special handling for geoKey: check real attribute first, then fallback to synthetic
     if ("geoKey".equals(name)) {
-      Optional<EngineValue> realValue = inner.getAttributeValue(name);
+      // CRITICAL: Bypass ShadowingEntity resolution to prevent circular dependencies
+      // Use getInner() to read directly from storage without triggering handler execution
+      MutableEntity innerEntity = inner.getInner();
+      Optional<EngineValue> realValue = innerEntity.getAttributeValue(name);
       if (realValue.isPresent()) {
         return realValue.get();
       }
@@ -76,10 +79,41 @@ public class SyntheticScope implements Scope {
       return syntheticValue.get();
     }
 
-    Optional<EngineValue> currentValue = inner.getAttributeValue(name);
-    return currentValue.orElseThrow(
-        () -> new RuntimeException("Could not find value for " + name)
-    );
+    // Try normal resolution path first (checks cache, resolves if needed)
+    // This handles cross-attribute references (e.g., "fireProbability" accessing "isHighCover")
+    try {
+      Optional<EngineValue> currentValue = inner.getAttributeValue(name);
+      return currentValue.orElseThrow(
+          () -> new RuntimeException("Could not find value for " + name)
+      );
+    } catch (RuntimeException e) {
+      // CIRCULAR DEPENDENCY: When evaluating handler RHS (e.g., "Trees" in
+      // "Trees.end = prior.Trees | Trees"), bypass ShadowingEntity resolution to prevent
+      // infinite recursion.
+      //
+      // WHY: ShadowingEntity.getAttributeValue() triggered resolveAttribute() for an attribute
+      // that's already being resolved, causing circular dependency.
+      //
+      // SOLUTION: Call getInner() to get the DirectLockMutableEntity, then read from
+      // its attributes[] array directly. This returns the stored (prior) value without
+      // triggering handler execution.
+      //
+      // NOTE: ShadowingEntity throws RuntimeException with message
+      // "Encountered a loop when resolving"
+      if (e.getMessage() != null
+          && e.getMessage().contains("Encountered a loop when resolving")) {
+        MutableEntity innerEntity = inner.getInner();
+        if (innerEntity == null) {
+          throw e; // Re-throw if we can't bypass
+        }
+        Optional<EngineValue> storedValue = innerEntity.getAttributeValue(name);
+        return storedValue.orElseThrow(
+            () -> new RuntimeException("Could not find value for " + name)
+        );
+      }
+      // Not a circular dependency - re-throw
+      throw e;
+    }
   }
 
   @Override
@@ -103,7 +137,13 @@ public class SyntheticScope implements Scope {
       case "current" -> Optional.of(valueFactory.build(inner));
       case "prior" -> Optional.of(valueFactory.build(new PriorShadowingEntityDecorator(inner)));
       case "here" -> Optional.of(valueFactory.build(inner.getHere()));
-      case "meta" -> Optional.of(valueFactory.build(inner.getMeta()));
+      case "meta" -> {
+        // Wrap meta entity in CircularSafeEntity to propagate circular dependency protection
+        // to nested attribute access (e.g., meta.fire.trigger.coverThreshold)
+        Entity metaEntity = inner.getMeta();
+        Entity safeEntity = new CircularSafeEntity(metaEntity);
+        yield Optional.of(valueFactory.build(safeEntity));
+      }
       case "parent" -> {
         // Get the wrapped inner entity from ShadowingEntity
         MutableEntity innerEntity = inner.getInner();
@@ -121,6 +161,8 @@ public class SyntheticScope implements Scope {
         // No parent available for this entity type (Patch, Simulation, etc.)
         yield Optional.empty();
       }
+      case "stepCount" -> computeStepCount();
+      case "year" -> computeYear();
       default -> Optional.empty();
     };
   }
@@ -149,6 +191,39 @@ public class SyntheticScope implements Scope {
 
     // No geometry available for this entity (e.g., Simulation)
     return Optional.empty();
+  }
+
+  /**
+   * Compute meta.stepCount - current timestep (0-based).
+   *
+   * <p>This method returns the stepCount attribute from the meta (simulation) entity
+   * if it's defined. Many tests explicitly define stepCount on the simulation, so this
+   * allows access via the synthetic attribute.</p>
+   *
+   * @return Optional containing the stepCount value, or empty if not defined
+   */
+  private Optional<EngineValue> computeStepCount() {
+    // Get stepCount from meta entity (simulation)
+    Entity metaEntity = inner.getMeta();
+    Optional<EngineValue> stepCountMaybe = metaEntity.getAttributeValue("stepCount");
+    return stepCountMaybe;
+  }
+
+  /**
+   * Compute meta.year - current simulation year.
+   *
+   * <p>This method returns the year attribute from the meta (simulation) entity
+   * if it's defined. The year is typically derived from steps.low + stepCount,
+   * but many simulations define it explicitly.</p>
+   *
+   * @return Optional containing the year value, or empty if not defined
+   */
+  private Optional<EngineValue> computeYear() {
+    Entity metaEntity = inner.getMeta();
+
+    // Try to get year directly from simulation if defined
+    Optional<EngineValue> yearMaybe = metaEntity.getAttributeValue("year");
+    return yearMaybe;
   }
 
 }

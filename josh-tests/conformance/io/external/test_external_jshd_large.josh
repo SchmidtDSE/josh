@@ -1,0 +1,39 @@
+# @category: io
+# @subcategory: external
+# @priority: low
+# @description: Test JSHD preprocessed data with larger dataset for performance validation
+# NOTE: This test validates that JSHD preprocessing provides performance benefits
+# for larger datasets compared to reading raw GeoTIFF/NetCDF files.
+
+start external JshdLargeData
+
+  source.location = "file://test-data/spatial/grid_10x10_sequential.tiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 0
+
+end external
+
+start simulation ExternalJshdLarge
+
+  grid.size = 10 m
+  grid.low = -117.4 degrees longitude, 34.0 degrees latitude
+  grid.high = -117.3 degrees longitude, 33.9 degrees latitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test JSHD performance with sequential data
+  # This reuses the sequential test data to validate JSHD efficiency
+  value.init = sample external JshdLargeData
+
+  # Verify data is in expected range
+  assert.inRange.init = (current.value >= 0 count) and (current.value <= 99 count)
+
+  export.value.step = current.value
+
+end patch

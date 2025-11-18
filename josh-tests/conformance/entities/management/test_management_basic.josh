@@ -1,0 +1,91 @@
+# @category: entities
+# @subcategory: management
+# @priority: high
+# @description: Test basic management entity definition, spatial extent, timing, and lifecycle
+
+start simulation ManagementBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create management entity at init
+  Thinning.init = create Thinning
+
+end patch
+
+start management Thinning
+
+  # Spatial extent - rectangular area
+  centerX.init = 30 m
+  centerY.init = 30 m
+  width.init = 40 m
+  height.init = 40 m
+
+  # Timing - management occurs at step 3
+  scheduledTime.init = 3 count
+
+  # Active status based on timing
+  active.init = false
+  active.step:if(meta.stepCount == current.scheduledTime) = true
+  active.step:if(meta.stepCount != current.scheduledTime) = false
+
+  # Management intensity
+  intensity.init = 50 count
+  intensity.step = prior.intensity
+
+  # Operation counter - increments when active
+  operationCount.init = 0 count
+  operationCount.step:if(current.active == true) = prior.operationCount + 1 count
+  operationCount.step:if(current.active == false) = prior.operationCount
+
+  # Lifecycle assertions - init phase
+  assert.centerXInit.init = current.centerX == 30 m
+  assert.centerYInit.init = current.centerY == 30 m
+  assert.widthInit.init = current.width == 40 m
+  assert.heightInit.init = current.height == 40 m
+  assert.scheduledTimeInit.init = current.scheduledTime == 3 count
+  assert.activeInit.init = current.active == false
+  assert.intensityInit.init = current.intensity == 50 count
+  assert.operationCountInit.init = current.operationCount == 0 count
+
+  # Lifecycle assertions - before scheduled time
+  assert.notActiveBeforeStep1.step:if(meta.stepCount == 1 count) = current.active == false
+  assert.notActiveBeforeStep2.step:if(meta.stepCount == 2 count) = current.active == false
+  assert.operationCountBeforeStep2.step:if(meta.stepCount == 2 count) = current.operationCount == 0 count
+
+  # Lifecycle assertions - at scheduled time
+  assert.activeAtScheduled.step:if(meta.stepCount == 3 count) = current.active == true
+  assert.operationCountAtScheduled.step:if(meta.stepCount == 3 count) = current.operationCount == 1 count
+  assert.intensityPersists.step:if(meta.stepCount == 3 count) = current.intensity == 50 count
+
+  # Lifecycle assertions - after scheduled time
+  assert.notActiveAfterStep4.step:if(meta.stepCount == 4 count) = current.active == false
+  assert.operationCountAfterStep4.step:if(meta.stepCount == 4 count) = current.operationCount == 1 count
+  assert.notActiveAfterStep5.step:if(meta.stepCount == 5 count) = current.active == false
+  assert.operationCountAfterStep5.step:if(meta.stepCount == 5 count) = current.operationCount == 1 count
+
+  # Spatial extent assertions
+  assert.centerXPersistsStep3.step:if(meta.stepCount == 3 count) = current.centerX == 30 m
+  assert.widthPersistsStep3.step:if(meta.stepCount == 3 count) = current.width == 40 m
+  assert.centerXPersistsStep5.step:if(meta.stepCount == 5 count) = current.centerX == 30 m
+
+end management
+
+start unit m
+  alias meter
+  alias meters
+end unit

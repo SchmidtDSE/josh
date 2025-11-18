@@ -1,0 +1,102 @@
+# @category: spatial
+# @subcategory: patches
+# @priority: medium
+# @description: Test heterogeneous grid with multiple patch types and different behaviors
+
+start simulation SpatialPatchesHeterogeneous
+
+  # Create a 4x4 grid with multiple patch types
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 40 m
+  grid.high.y = 40 m  # 4x4 grid
+
+  # Create a checkerboard pattern of patch types
+  grid.patch = "Wet"
+  grid.patch:if((meta.x + meta.y) == 2 count) = "Dry"
+  grid.patch:if((meta.x + meta.y) == 4 count) = "Dry"
+  grid.patch:if((meta.x + meta.y) == 6 count) = "Dry"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Wet
+
+  moisture.init = 80 percent
+  moisture.step = prior.moisture - 2 percent
+
+  # Wet patches support more plants
+  Plant.init = create 5 count of Plant
+
+  patchType.init = "wet"
+
+end patch
+
+start patch Dry
+
+  moisture.init = 20 percent
+  moisture.step = prior.moisture - 1 percent
+
+  # Dry patches support fewer plants
+  Plant.init = create 2 count of Plant
+
+  patchType.init = "dry"
+
+end patch
+
+start organism Plant
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Growth depends on patch moisture
+  biomass.init = 5 kg
+  biomass.step = prior.biomass + (here.moisture / 10 percent) * 0.5 kg
+
+  # Plants on wet patches should grow faster
+  # Count neighbors to see patch density
+  localDensity.step = count(Plant within 15 m radial at prior)
+
+  # Assert growth is affected by moisture
+  assert.biomassGrows.step:if(meta.stepCount == 2 count) = current.biomass > 5 kg
+
+  # Query neighbors across patch types
+  allNeighbors.step = count(Plant within 50 m radial at prior)
+  closeNeighbors.step = count(Plant within 12 m radial at prior)
+
+  # Should find more neighbors at large radius (across patch types)
+  assert.findNeighbors.step:if(meta.stepCount == 1 count) = current.allNeighbors >= current.closeNeighbors
+
+  # Test that moisture affects growth
+  growthRate.step = current.biomass - 5 kg
+
+  # Higher moisture should lead to higher growth
+  assert.moistureEffect.step:if(meta.stepCount == 2 count) = current.growthRate >= 0 kg
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit percent
+  alias pct
+end unit

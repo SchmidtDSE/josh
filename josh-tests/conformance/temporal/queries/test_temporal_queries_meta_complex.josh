@@ -1,0 +1,215 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: high
+# @description: Test complex expressions using meta keyword - conditionals, arithmetic, and boolean operations with nested meta attributes
+
+start simulation TemporalQueriesMetaComplex
+
+  # NOTE: Spec requires 'degrees latitude/longitude' but using meters for compatibility
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  # Start at year 2020, run for 10 steps
+  steps.low = 2020 year
+  steps.high = 2029 year
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Simulation-level parameters with nested structure (constants don't need .init/.step)
+  fire.trigger.coverThreshold = 15%
+  fire.trigger.high = 5%
+  fire.trigger.typical = 1%
+  fire.damage.grass = 70%
+  fire.damage.shrub = 90%
+
+  growth.threshold.low = 10 m
+  growth.threshold.high = 20 m
+  growth.increment.small = 0.5 m
+  growth.increment.large = 2.0 m
+  growth.increment.bonus = 1.0 m
+
+  temperature.threshold.cold = 5 celsius
+  temperature.threshold.warm = 20 celsius
+  temperature.threshold.hot = 30 celsius
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Plant.init = create Plant
+
+  # Test 1: Conditional expressions using nested meta attributes
+  # Pattern: meta.x if condition else meta.y
+  currentTemp.init = 15 celsius
+  currentTemp.step = prior.currentTemp + 2 celsius
+
+  isWarm.step = current.currentTemp > meta.temperature.threshold.warm
+  tempThreshold.step = meta.temperature.threshold.hot if isWarm else meta.temperature.threshold.cold
+
+  # Verify conditional selection works
+  assert.tempThresholdCold.step:if(meta.stepCount == 1 count) = current.tempThreshold == 5 celsius
+  assert.tempThresholdCold2.step:if(meta.stepCount == 2 count) = current.tempThreshold == 5 celsius
+  assert.tempThresholdHot.step:if(meta.stepCount == 4 count) = current.tempThreshold == 30 celsius
+  assert.tempThresholdHot2.step:if(meta.stepCount == 5 count) = current.tempThreshold == 30 celsius
+
+  # Test 2: Arithmetic operations with nested meta attributes
+  # Pattern: prior.value + meta.increment
+  grassCover.init = 10%
+  shrubCover.init = 12%
+
+  # Fire probability based on nested meta attributes
+  isHighCover.step = prior.grassCover > meta.fire.trigger.coverThreshold
+  fireProbability.step = meta.fire.trigger.high if isHighCover else meta.fire.trigger.typical
+
+  # Verify fire probability calculation
+  assert.fireProbLowCover.step:if(meta.stepCount == 1 count) = current.fireProbability == 1%
+  assert.fireProbLowCover2.step:if(meta.stepCount == 2 count) = current.fireProbability == 1%
+
+  # Test 3: Complex arithmetic with multiple meta attributes
+  baseValue.init = 100 m
+  baseValue.step = prior.baseValue + (meta.growth.increment.small + meta.growth.increment.bonus)
+
+  # Verify arithmetic combination
+  assert.baseValueStep1.step:if(meta.stepCount == 1 count) = current.baseValue == 101.5 m
+  assert.baseValueStep2.step:if(meta.stepCount == 2 count) = current.baseValue == 103.0 m
+  assert.baseValueStep3.step:if(meta.stepCount == 3 count) = current.baseValue == 104.5 m
+
+  # Test 4: Complex boolean expressions with nested meta
+  totalCover.step = current.grassCover + current.shrubCover
+  isHighRisk.step = (current.totalCover > meta.fire.trigger.coverThreshold) and (current.currentTemp > meta.temperature.threshold.warm)
+  isLowRisk.step = (current.totalCover < meta.fire.trigger.coverThreshold) or (current.currentTemp < meta.temperature.threshold.cold)
+
+  # Verify complex boolean operations
+  assert.highRiskFalse.step:if(meta.stepCount == 1 count) = current.isHighRisk == false
+  assert.lowRiskTrue.step:if(meta.stepCount == 1 count) = current.isLowRisk == true
+
+  # Test 5: Nested conditionals with meta in arithmetic context
+  multiplier.step = 2 count if (current.currentTemp > meta.temperature.threshold.warm) else 1 count
+  adjustedIncrement.step = meta.growth.increment.large * multiplier
+
+  assert.adjustedIncrementLow.step:if(meta.stepCount == 1 count) = current.adjustedIncrement == 2.0 m
+  assert.adjustedIncrementHigh.step:if(meta.stepCount == 4 count) = current.adjustedIncrement == 4.0 m
+
+  # Test 6: Meta in subtraction and division
+  damageReduction.step = meta.fire.damage.grass - 20%
+  halfDamage.step = meta.fire.damage.shrub / 2 count
+
+  assert.damageReduction.step:if(meta.stepCount == 1 count) = current.damageReduction == 50%
+  assert.halfDamage.step:if(meta.stepCount == 1 count) = current.halfDamage == 45%
+
+  # Test 7: Meta in multiplication
+  doubleTrigger.step = meta.fire.trigger.high * 2 count
+  scaledThreshold.step = meta.growth.threshold.high * 3 count
+
+  assert.doubleTrigger.step:if(meta.stepCount == 1 count) = current.doubleTrigger == 10%
+  assert.scaledThreshold.step:if(meta.stepCount == 1 count) = current.scaledThreshold == 60 m
+
+end patch
+
+start organism Plant
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 5 m
+  height.step = prior.height + 1 m
+
+  # Test 8: Organism-level complex expressions with meta
+  # Conditional growth based on meta thresholds
+  growthRate.init = meta.growth.increment.small
+  growthRate.step = meta.growth.increment.large if (current.height > meta.growth.threshold.low) else meta.growth.increment.small
+
+  # Verify organism growth rate selection
+  assert.growthRateLarge.step:if(meta.stepCount == 6 count) = current.growthRate == 2.0 m
+  assert.growthRateLarge2.step:if(meta.stepCount == 7 count) = current.growthRate == 2.0 m
+
+  # Test 9: Multiple nested meta in single expression
+  # Pattern: (meta.x.y + meta.a.b) if condition else (meta.c.d - meta.e.f)
+  biomass.init = 10 kg
+  biomassIncrement.step = (meta.growth.increment.large + meta.growth.increment.bonus) if (current.height > meta.growth.threshold.low) else (meta.growth.increment.small + meta.growth.increment.bonus)
+
+  assert.biomassIncrementSmall.step:if(meta.stepCount == 5 count) = current.biomassIncrement == 1.5 m
+  assert.biomassIncrementLarge.step:if(meta.stepCount == 6 count) = current.biomassIncrement == 3.0 m
+
+  # Test 10: Complex conditional chain with meta
+  healthStatus.init = 100%
+  healthStatus.step = {
+    const ageYears = current.age
+    const youngBonus = meta.growth.increment.bonus if (ageYears < 3 years) else 0 m
+    const matureBonus = meta.growth.increment.large if (ageYears >= 3 years) else 0 m
+    const totalBonus = youngBonus + matureBonus
+    return prior.healthStatus
+  }
+
+  # Test 11: Meta in comparison chains
+  isSmall.step = current.height < meta.growth.threshold.low
+  isMedium.step = (current.height >= meta.growth.threshold.low) and (current.height < meta.growth.threshold.high)
+  isLarge.step = current.height >= meta.growth.threshold.high
+
+  assert.isSmallTrue.step:if(meta.stepCount == 1 count) = current.isSmall == true
+  assert.isMediumTrue.step:if(meta.stepCount == 6 count) = current.isMedium == true
+  assert.isLargeTrue.step:if(meta.stepCount == 16 count) = current.isLarge == true
+
+  # Test 12: Meta with year-based conditionals
+  yearBased.step = meta.growth.increment.large if (meta.year >= 2025 years) else meta.growth.increment.small
+
+  assert.yearBasedSmall.step:if(meta.year == 2020 years) = current.yearBased == 0.5 m
+  assert.yearBasedSmall2.step:if(meta.year == 2024 years) = current.yearBased == 0.5 m
+  assert.yearBasedLarge.step:if(meta.year == 2025 years) = current.yearBased == 2.0 m
+  assert.yearBasedLarge2.step:if(meta.year == 2029 years) = current.yearBased == 2.0 m
+
+  # Test 13: Complex arithmetic chains with meta
+  complexCalc.step = ((meta.growth.increment.large * 2 count) + meta.growth.increment.bonus) - meta.growth.increment.small
+
+  assert.complexCalc.step:if(meta.stepCount == 1 count) = current.complexCalc == 4.5 m
+
+  # Test 14: Meta in nested boolean expressions
+  allConditionsMet.step = (current.height > meta.growth.threshold.low) and
+                          (current.age >= 3 years) and
+                          (meta.year >= 2023 years)
+
+  someConditionsMet.step = (current.height < meta.growth.threshold.low) or
+                           (current.age < 2 years) or
+                           (meta.year < 2025 years)
+
+  assert.allConditionsMetFalse.step:if(meta.stepCount == 1 count) = current.allConditionsMet == false
+  assert.allConditionsMetTrue.step:if(meta.stepCount == 9 count) = current.allConditionsMet == true
+  assert.someConditionsMetTrue.step:if(meta.stepCount == 1 count) = current.someConditionsMet == true
+
+  # Test 15: Meta attribute persistence across steps
+  savedThreshold.init = meta.growth.threshold.low
+  savedThreshold.step = prior.savedThreshold
+
+  assert.savedThresholdPersists.step:if(meta.stepCount == 5 count) = current.savedThreshold == 10 m
+  assert.savedThresholdPersists2.step:if(meta.stepCount == 9 count) = current.savedThreshold == 10 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit celsius
+  alias degC
+  alias degreesCelsius
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit count
+end unit

@@ -269,7 +269,8 @@ public class JoshSimWorkerHandler implements HttpHandler {
             }
           },
           useSerial,
-          outputSteps
+          outputSteps,
+          Optional.empty()
       );
 
       // Add end marker for replicate 0 to standardize wire format

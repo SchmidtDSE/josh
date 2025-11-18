@@ -1,0 +1,58 @@
+# @category: types
+# @subcategory: scalars
+# @priority: high
+# @description: Test arithmetic operations with different compatible units (m and km)
+
+start simulation ScalarsArithmeticMixed
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test addition with mixed units (m and km)
+  distance1.init = 1000 m
+  distance2.init = 1 km
+  sumDistance.init = distance1 + distance2
+  assert.mixedAddition.init = (sumDistance as km) == 2 km
+
+  # Test subtraction with mixed units (km and m)
+  length1.init = 5 km
+  length2.init = 500 m
+  diffLength.init = length1 - length2
+  assert.mixedSubtraction.init = (diffLength as km) == 4.5 km
+
+  # Additional test: verify result in meters
+  distance3.init = 2 km
+  distance4.init = 500 m
+  sumMeters.init = distance3 + distance4
+  assert.mixedAdditionMeters.init = (sumMeters as m) == 2500 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

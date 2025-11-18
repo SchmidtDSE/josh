@@ -1,0 +1,89 @@
+# @category: temporal
+# @subcategory: prior
+# @priority: critical
+# @description: Test basic prior keyword usage with multiple attributes and complex scenarios
+
+start simulation TemporalPriorBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Height grows based on prior height
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Biomass depends on both height and age
+  biomass.init = 0 kg
+  biomass.step = prior.biomass + (current.height * 0.1 kg/m)
+
+  # Growth rate calculated from height change
+  growthRate.init = 0 m
+  growthRate.step = current.height - prior.height
+
+  # Assert age progression over 5 steps
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = current.age == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = current.age == 2 years
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = current.age == 3 years
+  assert.ageStep4.step:if(meta.stepCount == 4 count) = current.age == 4 years
+  assert.ageStep5.step:if(meta.stepCount == 5 count) = current.age == 5 years
+
+  # Assert height accumulation
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 1.5 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 2.0 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 2.5 m
+  assert.heightStep4.step:if(meta.stepCount == 4 count) = current.height == 3.0 m
+  assert.heightStep5.step:if(meta.stepCount == 5 count) = current.height == 3.5 m
+
+  # Assert biomass increases (approximately)
+  assert.biomassStep1.step:if(meta.stepCount == 1 count) = current.biomass >= 0.14 kg and current.biomass <= 0.16 kg
+  assert.biomassStep2.step:if(meta.stepCount == 2 count) = current.biomass >= 0.34 kg and current.biomass <= 0.36 kg
+  assert.biomassStep3.step:if(meta.stepCount == 3 count) = current.biomass >= 0.59 kg and current.biomass <= 0.61 kg
+
+  # Assert growth rate is constant
+  assert.growthRateStep1.step:if(meta.stepCount == 1 count) = current.growthRate == 0.5 m
+  assert.growthRateStep2.step:if(meta.stepCount == 2 count) = current.growthRate == 0.5 m
+  assert.growthRateStep3.step:if(meta.stepCount == 3 count) = current.growthRate == 0.5 m
+  assert.growthRateStep4.step:if(meta.stepCount == 4 count) = current.growthRate == 0.5 m
+  assert.growthRateStep5.step:if(meta.stepCount == 5 count) = current.growthRate == 0.5 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

@@ -1,0 +1,85 @@
+# @category: types
+# @subcategory: distributions
+# @priority: critical
+# @description: Test sum() reduction operation on collection attributes
+
+start simulation DistributionsSum
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with known values
+  Trees.init = create 5 count of Tree
+
+  # Test sum with seed-based values
+  # 5 trees with ages sampled from uniform(10, 50) years
+  # Expected sum ≈ 5 * 30 = 150 years (with seed-based variance)
+  totalAge.init = sum(Trees.age)
+  assert.sumAge.init = totalAge >= 50 years and totalAge <= 250 years
+
+  # Test sum with uniform values
+  # All trees have height 100 m, count = 5
+  # Sum should be 5 * 100 = 500
+  totalHeight.init = sum(Trees.height)
+  assert.sumHeight.init = totalHeight == 500 m
+
+  # Test sum with single organism
+  SingleTree.init = create 1 count of Tree
+  singleSum.init = sum(SingleTree.age)
+  assert.singleSum.init = singleSum >= 10 years and singleSum <= 50 years
+
+  # Create organisms with stochastic values
+  Plants.init = create 100 count of Plant
+
+  # Test sum of stochastic values
+  # 100 organisms with heights from uniform(0, 100)
+  # Expected sum ≈ 100 * 50 = 5000 m (with tolerance for randomness)
+  totalPlantHeight.init = sum(Plants.height)
+  assert.sumPlantReasonable.init = totalPlantHeight > 4500 m
+  assert.sumPlantReasonable2.init = totalPlantHeight < 5500 m
+
+end patch
+
+start organism Tree
+
+  # Assign ages using seed-based sampling (deterministic with --seed 42)
+  age.init = sample uniform from 10 years to 50 years
+  age.step = prior.age
+
+  # All trees have same height
+  height.init = 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Stochastic height from uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit

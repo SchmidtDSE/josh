@@ -70,3 +70,9 @@ run_profiler_small.sh
 
 # Jotr test files
 jotr
+
+# Step bug testing - ignore .txt files (debug outputs)
+step_bug_testing/**/*.txt
+
+# OpenCode
+.opencode

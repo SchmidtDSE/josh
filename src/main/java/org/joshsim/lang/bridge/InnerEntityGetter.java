@@ -26,6 +26,24 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class InnerEntityGetter {
 
+  private static final boolean DEBUG_ORGANISM =
+      Boolean.getBoolean("josh.debug.organism");
+
+  private static void debugLog(String message) {
+    if (DEBUG_ORGANISM) {
+      int timestep = SimulationStepper.getCurrentTimestep();
+      System.err.println("[ORGANISM-DEBUG] timestep=" + timestep + " InnerEntityGetter " + message);
+    }
+  }
+
+  private static String getAttributeNameByIndex(MutableEntity target, int index) {
+    String[] indexArray = target.getIndexToAttributeName();
+    if (index >= 0 && indexArray != null && index < indexArray.length) {
+      return indexArray[index];
+    }
+    return "unknown_" + index;
+  }
+
   /**
    * Get inner MutableEntity instances from attribute values.
    *
@@ -37,6 +55,10 @@ public class InnerEntityGetter {
    * @return Iterable of MutableEntity instances found in attributes that contain entities
    */
   public static Iterable<MutableEntity> getInnerEntities(MutableEntity target) {
+    Optional<String> substepMaybe = target.getSubstep();
+    String substep = substepMaybe.orElse("unknown");
+    debugLog("getInnerEntities entity=" + target.getName() + " substep=" + substep);
+
     List<MutableEntity> result = new ArrayList<>();
 
     // Use integer-based iteration
@@ -44,8 +66,15 @@ public class InnerEntityGetter {
     int numAttributes = indexMap.size();
 
     for (int i = 0; i < numAttributes; i++) {
+      String attrName = getAttributeNameByIndex(target, i);
+
       Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
       boolean valueNotSet = valueMaybe.isEmpty();
+
+      debugLog("inspectAttribute index=" + i
+          + " name=" + attrName
+          + " valuePresent=" + !valueNotSet);
+
       if (valueNotSet) {
         // Continue for profiling reasons
         continue;
@@ -64,6 +93,8 @@ public class InnerEntityGetter {
       }
 
       int size = sizeMaybe.get();
+      int countBefore = result.size();
+
       if (size == 1) {
         result.add(value.getAsMutableEntity());
       } else {
@@ -72,7 +103,15 @@ public class InnerEntityGetter {
           result.add(innerValue.getAsMutableEntity());
         }
       }
+
+      int discovered = result.size() - countBefore;
+      debugLog("discovered index=" + i
+          + " name=" + attrName
+          + " organisms=" + discovered);
     }
+
+    debugLog("totalDiscovered entity=" + target.getName()
+        + " total=" + result.size());
 
     return result;
   }

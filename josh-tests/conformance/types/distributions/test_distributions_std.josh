@@ -1,0 +1,93 @@
+# @category: types
+# @subcategory: distributions
+# @priority: medium
+# @description: Test std() standard deviation calculation on collection attributes
+
+start simulation DistributionsStd
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with uniform values
+  Trees.init = create 5 count of Tree
+
+  # Test std with uniform values (all same)
+  # All trees have height 100 m
+  # Standard deviation should be 0
+  stdHeight.init = std(Trees.height)
+  assert.stdUniform.init = stdHeight == 0 m
+
+  # Create organisms with varied seed-based values
+  # 5 trees with ages sampled from uniform(10, 50) years
+  # Theoretical std dev of uniform(a,b) = (b-a)/sqrt(12) = 40/sqrt(12) ≈ 11.55 years
+  # With only 5 samples, expect reasonable variance around this
+  stdAge.init = std(Trees.age)
+
+  # Test std is greater than zero for varied values
+  assert.stdNonZero.init = stdAge > 0 years
+
+  # Test std is in reasonable range (expect around 11.55 years with variance)
+  assert.stdReasonable.init = stdAge >= 0 years
+  assert.stdReasonable2.init = stdAge < 25 years
+
+  # Create organisms with stochastic values
+  Plants.init = create 100 count of Plant
+
+  # Test std of stochastic values
+  # Heights from uniform(0, 100)
+  # Theoretical std dev of uniform(a,b) = (b-a)/sqrt(12) = 100/sqrt(12) ≈ 28.87 m
+  stdPlantHeight.init = std(Plants.height)
+
+  # Test std is positive for random values
+  assert.stdStochastic.init = stdPlantHeight > 0 m
+
+  # Test std is in reasonable range (within 20% of theoretical value)
+  # Expected ≈ 28.87, so range: 23 to 35 m
+  assert.stdStochasticReasonable.init = stdPlantHeight > 23 m
+  assert.stdStochasticReasonable2.init = stdPlantHeight < 35 m
+
+end patch
+
+start organism Tree
+
+  # Assign ages using seed-based sampling (deterministic with --seed 42)
+  age.init = sample uniform from 10 years to 50 years
+  age.step = prior.age
+
+  # All trees have same height (std should be 0)
+  height.init = 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Stochastic height from uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit

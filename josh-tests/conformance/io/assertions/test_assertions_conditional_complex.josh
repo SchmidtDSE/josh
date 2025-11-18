@@ -1,0 +1,104 @@
+# @category: io
+# @subcategory: assertions
+# @priority: medium
+# @description: Test complex conditional assertions - nested conditions, boolean operators (AND, OR), and range checks
+
+start simulation AssertionsConditionalComplex
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 15 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  year.init = 0 year
+  year.step = prior.year + 1 year
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init
+  Tree.init = create 20 count of Tree
+
+  treeCount.step = count(Tree)
+  avgAge.step = mean(Tree.age)
+  avgHeight.step = mean(Tree.height)
+
+  # Test 1: AND condition - both conditions must be true
+  assert.andCondition.step:if((meta.stepCount >= 5 count) and (meta.stepCount <= 10 count)) = treeCount == 20 count
+
+  # Test 2: OR condition - either condition must be true
+  assert.orCondition.step:if((meta.stepCount == 3 count) or (meta.stepCount == 7 count)) = avgAge >= 0 years
+
+  # Test 3: Complex nested condition with multiple AND operators
+  assert.nestedAnd.step:if((meta.stepCount > 2 count) and (meta.stepCount < 12 count) and (meta.year > 2 years)) = treeCount > 0 count
+
+  # Test 4: Complex nested condition with AND and OR
+  assert.nestedMixed.step:if(((meta.stepCount == 5 count) or (meta.stepCount == 10 count)) and (avgAge > 0 years)) = treeCount >= 20 count
+
+  # Test 5: Range check in condition
+  assert.rangeCondition.step:if((meta.stepCount >= 8 count) and (meta.stepCount <= 12 count)) = avgHeight > 0 m
+
+  # Test 6: Condition based on multiple attribute comparisons
+  assert.multiAttribute.step:if((avgAge >= 5 years) and (avgHeight >= 5 m)) = treeCount > 0 count
+
+  # Test 7: Complex condition with negation (using !=)
+  assert.notEqual.step:if((meta.stepCount != 0 count) and (meta.stepCount != 15 count)) = avgAge > 0 years
+
+  # Test 8: Condition with min/max aggregations
+  minHeight.step = min(Tree.height)
+  maxHeight.step = max(Tree.height)
+  assert.heightSpread.step:if((meta.stepCount >= 10 count) and (maxHeight > minHeight)) = treeCount > 0 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 0 m
+  height.step = prior.height + 1 m
+
+  status.init = 0 count
+  status.step:if(current.age >= 10 years) = 1 count
+  status.step:if(current.age < 10 years) = 0 count
+
+  # Test 9: Organism-level complex AND condition
+  assert.matureTree.step:if((current.age >= 10 years) and (current.height >= 10 m)) = current.status == 1 count
+
+  # Test 10: Organism-level complex OR condition
+  assert.youngOrShort.step:if((current.age < 5 years) or (current.height < 5 m)) = current.age >= 0 years
+
+  # Test 11: Organism-level nested condition with range
+  assert.midRange.step:if((current.age >= 5 years) and (current.age <= 10 years) and (current.height > 0 m)) = current.height <= 15 m
+
+  # Test 12: Condition combining current, prior, and meta
+  assert.complexCombo.step:if((meta.stepCount > 0 count) and (current.age > prior.age)) = current.height >= prior.height
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

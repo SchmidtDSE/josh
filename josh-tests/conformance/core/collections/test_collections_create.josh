@@ -1,0 +1,55 @@
+# @category: collections
+# @subcategory: creation
+# @priority: critical
+# @description: Test creating organisms and counting collections
+
+start simulation CollectionsCreate
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms at step 1
+  Trees.step:if(meta.stepCount == 1 count) = create 10 count of Tree
+
+  # Assert no organisms exist at step 0
+  assert.noTreesAtInit.step:if(meta.stepCount == 0 count) = count(Trees) == 0 count
+
+  # Assert correct count after creation
+  assert.treesCreated.step:if(meta.stepCount == 1 count) = count(Trees) == 10 count
+
+  # Assert organisms persist across timesteps
+  assert.treesPersistStep2.step:if(meta.stepCount == 2 count) = count(Trees) == 10 count
+  assert.treesPersistStep3.step:if(meta.stepCount == 3 count) = count(Trees) == 10 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Assert age increases correctly
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = mean(current.age) == 0 years
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = mean(current.age) == 1 year
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = mean(current.age) == 2 years
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

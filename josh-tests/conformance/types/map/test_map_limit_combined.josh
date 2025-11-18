@@ -1,0 +1,136 @@
+# @category: types
+# @subcategory: map
+# @priority: high
+# @description: Test combined map and limit operations with order of operations
+
+start simulation MapLimitCombined
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test map then limit - clamping mapped values
+  input1.init = 75 m
+  mapped1.init = map input1 from [0 m, 100 m] to [0 count, 100 count] linearly
+  limited1.init = limit mapped1 to [0 count, 50 count]
+  assert.mapThenLimit.init = limited1 == 50 count
+
+  # Test limit then map - mapping limited values
+  input2.init = 75 m
+  limited2.init = limit input2 to [0 m, 50 m]
+  mapped2.init = map limited2 from [0 m, 100 m] to [0 count, 100 count] linearly
+  assert.limitThenMap.init = mapped2 == 50 count
+
+  # Test map with extrapolation then limit
+  input3.init = 150 m
+  mapped3.init = map input3 from [0 m, 100 m] to [0 count, 100 count] linearly
+  limited3.init = limit mapped3 to [0 count, 100 count]
+  assert.extrapolationLimited.init = limited3 == 100 count
+
+  # Test limit prevents extrapolation
+  input4.init = -50 m
+  limited4.init = limit input4 to [0 m, 100 m]
+  mapped4.init = map limited4 from [0 m, 100 m] to [0 count, 100 count] linearly
+  assert.limitPreventsExtrapolation.init = mapped4 == 0 count
+
+  # Test realistic use case: temperature mapping with safety limits
+  temperature.init = 45 C
+  tempLimited.init = limit temperature to [-10 C, 40 C]
+  tempNormalized.init = map tempLimited from [-10 C, 40 C] to [0 %, 100 %] linearly
+  # 45 C limited to 40 C, then mapped to 100%
+  assert.temperatureUseCase.init = tempNormalized == 100 %
+
+  # Test realistic use case: growth rate with cap
+  rawGrowth.init = 15 m
+  growthMapped.init = map rawGrowth from [0 m, 10 m] to [0 m, 50 m] linearly
+  growthCapped.init = limit growthMapped to [,30 m]
+  # 15 m maps to 75 m, then capped to 30 m
+  assert.growthCapUseCase.init = growthCapped == 30 m
+
+  # Test order of operations matters
+  input5.init = 80 m
+
+  # Order 1: limit then map
+  order1Limited.init = limit input5 to [,50 m]
+  order1Mapped.init = map order1Limited from [0 m, 100 m] to [0 count, 100 count] linearly
+
+  # Order 2: map then limit
+  order2Mapped.init = map input5 from [0 m, 100 m] to [0 count, 100 count] linearly
+  order2Limited.init = limit order2Mapped to [,50 count]
+
+  # Both should give same result (50) but demonstrate order matters conceptually
+  assert.order1Result.init = order1Mapped == 50 count
+  assert.order2Result.init = order2Limited == 50 count
+
+  # Test percentage normalization with limits
+  rawPercent.init = 150 %
+  pctLimited.init = limit rawPercent to [0 %, 100 %]
+  pctMapped.init = map pctLimited from [0 %, 100 %] to [0 count, 1 count] linearly
+  assert.percentageNormalization.init = pctMapped == 1 count
+
+  # Test chaining: map, limit, map again
+  input6.init = 50 m
+  chain1.init = map input6 from [0 m, 100 m] to [0 count, 200 count] linearly
+  chain2.init = limit chain1 to [,75 count]
+  chain3.init = map chain2 from [0 count, 100 count] to [0 %, 100 %] linearly
+  # 50 m -> 100 count -> 75 count (limited) -> 75%
+  assert.mapLimitMapChain.init = chain3 == 75 %
+
+  # Test multiple limits after mapping
+  input7.init = 50 m
+  mapFirst.init = map input7 from [0 m, 100 m] to [0 count, 100 count] linearly
+  limitMin.init = limit mapFirst to [25 count,]
+  limitMax.init = limit limitMin to [,75 count]
+  assert.multiLimitAfterMap.init = limitMax == 50 count
+
+  # Test quadratic map with limit
+  input8.init = 75 m
+  quadMap.init = map input8 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  quadLimited.init = limit quadMap to [,50 count]
+  # Quadratic at 75% gives ~56%, limited to 50
+  assert.quadraticWithLimit.init = quadLimited == 50 count
+
+  # Test sigmoid map with range limit
+  input9.init = 90 m
+  sigmoidMap.init = map input9 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  sigmoidLimited.init = limit sigmoidMap to [10 count, 80 count]
+  # Sigmoid at 90% should be high, capped at 80
+  assert.sigmoidWithRangeLimit.init = sigmoidLimited == 80 count
+
+  # Test practical scenario: cover calculation
+  biomass.init = 120 count
+  coverRaw.init = map biomass from [0 count, 100 count] to [0 %, 100 %] linearly
+  coverFinal.init = limit coverRaw to [0 %, 100 %]
+  assert.coverCalculation.init = coverFinal == 100 %
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit C
+  alias celsius
+  alias degC
+end unit
+
+start unit percent
+  alias percentage
+end unit

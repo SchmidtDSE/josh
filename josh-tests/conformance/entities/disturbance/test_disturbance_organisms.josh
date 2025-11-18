@@ -1,0 +1,127 @@
+# @category: entities
+# @subcategory: disturbance
+# @priority: critical
+# @description: Test disturbance interactions with organisms including spatial filtering and state changes
+
+start simulation DisturbanceOrganisms
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init - spread across the grid
+  Tree.init = create 20 count of Tree
+
+  # Create disturbance at init
+  Fire.init = create Fire
+
+  # Count trees at different times
+  treeCountInit.init = count(Tree)
+  treeCountStep2.step:if(meta.stepCount == 2 count) = count(Tree)
+  treeCountStep4.step:if(meta.stepCount == 4 count) = count(Tree)
+
+  # Assert we created some trees
+  assert.treesCreated.init = current.treeCountInit == 20 count
+
+end patch
+
+start disturbance Fire
+
+  # Spatial extent - centered in grid
+  centerX.init = 50 m
+  centerY.init = 50 m
+  radius.init = 25 m
+
+  # Timing - disturbance occurs at step 3
+  occurTime.init = 3 count
+
+  # Active status
+  active.init = false
+  active.step:if(meta.stepCount == current.occurTime) = true
+  active.step:if(meta.stepCount != current.occurTime) = false
+
+  # Find affected trees within disturbance radius
+  affectedTrees.step:if(current.active == true) =
+    Tree within current.radius radial at prior
+
+  # Count affected trees
+  affectedCount.init = 0 count
+  affectedCount.step:if(current.active == true) = count(current.affectedTrees)
+
+  # Assert we found some affected trees when active
+  assert.hasAffectedTrees.step:if(meta.stepCount == 3 count) =
+    current.affectedCount > 0 count
+
+  # Assert affected trees count is reasonable
+  assert.affectedCountReasonable.step:if(meta.stepCount == 3 count) =
+    current.affectedCount <= 20 count
+
+  # Lifecycle assertions
+  assert.activeBeforeOccur.step:if(meta.stepCount == 2 count) = current.active == false
+  assert.activeAtOccur.step:if(meta.stepCount == 3 count) = current.active == true
+  assert.activeAfterOccur.step:if(meta.stepCount == 4 count) = current.active == false
+
+end disturbance
+
+start organism Tree
+
+  # Random position within grid (simplified - use patch center)
+  x.init = sample uniform from 20 m to 80 m
+  y.init = sample uniform from 20 m to 80 m
+
+  # Age increases over time
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Health attribute
+  health.init = 100 count
+  health.step = prior.health
+
+  # State changes based on fire
+  burned.init = false
+  burned.step = prior.burned
+
+  # Count fires nearby (simple proximity check)
+  firesNearby.init = 0 count
+  firesNearby.step = count(Fire within 30 m radial at prior)
+
+  # Mark as burned if fire is active and nearby
+  burned.step:if(current.firesNearby > 0 count) = true
+
+  # Health reduces if burned
+  health.step:if(current.burned == true) = 0 count
+
+  # Assertions about organism state
+  assert.healthInitial.init = current.health == 100 count
+  assert.notBurnedInitially.init = current.burned == false
+  assert.agePositive.step:if(meta.stepCount == 1 count) = current.age > 0 years
+
+  # After fire, if burned, health should be 0
+  assert.healthZeroIfBurned.step:if(meta.stepCount == 4 count and current.burned == true) =
+    current.health == 0 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

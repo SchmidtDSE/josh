@@ -1,0 +1,29 @@
+start simulation Test
+  steps.low = 0
+  steps.high = 2
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+end simulation
+
+start patch Default
+  Trees.init = create 1 of TestOrg
+  Trees.end = prior.Trees | Trees
+end patch
+
+start organism TestOrg
+  age.init = 0 years
+  age.step = prior.age + 1 year
+  log.step = debug("TEST", age)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+end unit
+
+start unit degrees
+end unit

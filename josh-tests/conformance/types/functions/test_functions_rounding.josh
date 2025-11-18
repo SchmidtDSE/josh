@@ -1,0 +1,101 @@
+# @category: types
+# @subcategory: functions
+# @priority: high
+# @description: Test rounding functions (round, ceil, floor) with positive and negative decimal values
+
+start simulation FunctionsRounding
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test round() with values that round up
+  value3p7.init = 3.7 m
+  rounded3p7.init = round(value3p7)
+  assert.round3p7.init = rounded3p7 == 4 m
+
+  value5p5.init = 5.5 m
+  rounded5p5.init = round(value5p5)
+  assert.round5p5.init = rounded5p5 == 6 m
+
+  # Test round() with values that round down
+  value2p3.init = 2.3 m
+  rounded2p3.init = round(value2p3)
+  assert.round2p3.init = rounded2p3 == 2 m
+
+  value4p4.init = 4.4 m
+  rounded4p4.init = round(value4p4)
+  assert.round4p4.init = rounded4p4 == 4 m
+
+  # Test round() with negative values
+  valueNeg2p7.init = -2.7 m
+  roundedNeg2p7.init = round(valueNeg2p7)
+  assert.roundNeg2p7.init = roundedNeg2p7 == -3 m
+
+  valueNeg3p3.init = -3.3 m
+  roundedNeg3p3.init = round(valueNeg3p3)
+  assert.roundNeg3p3.init = roundedNeg3p3 == -3 m
+
+  # Test ceil() - always round up
+  ceilValue2p1.init = ceil(value2p3)
+  assert.ceil2p3.init = ceilValue2p1 == 3 m
+
+  ceilValue3p7.init = ceil(value3p7)
+  assert.ceil3p7.init = ceilValue3p7 == 4 m
+
+  # Test ceil() with whole number
+  value7.init = 7 m
+  ceilValue7.init = ceil(value7)
+  assert.ceil7.init = ceilValue7 == 7 m
+
+  # Test ceil() with negative
+  ceilNeg2p3.init = ceil(valueNeg3p3)
+  assert.ceilNeg3p3.init = ceilNeg2p3 == -3 m
+
+  # Test floor() - always round down
+  floorValue3p7.init = floor(value3p7)
+  assert.floor3p7.init = floorValue3p7 == 3 m
+
+  floorValue2p3.init = floor(value2p3)
+  assert.floor2p3.init = floorValue2p3 == 2 m
+
+  # Test floor() with whole number
+  floorValue7.init = floor(value7)
+  assert.floor7.init = floorValue7 == 7 m
+
+  # Test floor() with negative
+  floorNeg2p7.init = floor(valueNeg2p7)
+  assert.floorNeg2p7.init = floorNeg2p7 == -3 m
+
+  # Test that rounding preserves units
+  distance10p8.init = 10.8 m
+  roundedDistance.init = round(distance10p8)
+  ceilDistance.init = ceil(distance10p8)
+  floorDistance.init = floor(distance10p8)
+
+  assert.roundPreservesUnits.init = roundedDistance == 11 m
+  assert.ceilPreservesUnits.init = ceilDistance == 11 m
+  assert.floorPreservesUnits.init = floorDistance == 10 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

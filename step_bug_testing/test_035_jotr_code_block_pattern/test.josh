@@ -1,0 +1,70 @@
+start simulation TestSimulation
+  steps.low = 0
+  steps.high = 4
+
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  year.init = 2023 count
+  year.step = prior.year + 1 count
+
+  debugFiles.organism = "file://///workspaces/josh/step_bug_testing/test_035_jotr_code_block_pattern/debug_organism_0.txt"
+  debugFiles.patch = "file://///workspaces/josh/step_bug_testing/test_035_jotr_code_block_pattern/debug_patch_0.txt"
+end simulation
+
+start patch Default
+  # PATTERN: JOTR code block pattern
+  # Mimics the exact pattern from stochastic_flowering.josh
+
+  Trees.init = create 0 of Tree
+
+  # JOTR-style .step handler with code block
+  Trees.step = {
+    # At year 2024, create initial population
+    if (meta.year == 2024) {
+      return create 10 of Tree
+    }
+
+    # For all other years: remove dead trees and add new ones
+    const aliveTrees = prior.Trees[prior.Trees.state != "dead"]
+    const newCount = 2 count
+    const newTrees = create newCount of Tree
+    return aliveTrees | newTrees
+  }
+
+  # Add the workaround .end handler
+  Trees.end = prior.Trees
+
+  # Export current collection (JOTR pattern)
+  export.treeCount.step = count(Trees)
+  export.meanAge.step = mean(Trees.age)
+
+  log.step = debug(geoKey, "PATCH_STEP", "year:", meta.year, "treeCount:", count(Trees))
+end patch
+
+start organism Tree
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  state.init = "alive"
+  state.step = prior.state  # Simplified - always alive
+
+  log.step = debug(geoKey, "ORG_STEP", "age:", age, "state:", state, "year:", meta.year)
+end organism
+
+# Units
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

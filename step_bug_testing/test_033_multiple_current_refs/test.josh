@@ -1,0 +1,64 @@
+start simulation TestSimulation
+  steps.low = 0
+  steps.high = 4
+
+  grid.size = 30 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.01 degrees latitude, -116.01 degrees longitude
+  grid.patch = "Default"
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  debugFiles.organism = "file://///workspaces/josh/step_bug_testing/test_033_multiple_current_refs/debug_organism_0.txt"
+  debugFiles.patch = "file://///workspaces/josh/step_bug_testing/test_033_multiple_current_refs/debug_patch_0.txt"
+end simulation
+
+start patch Default
+  # PATTERN: multiple_current_refs
+  # Test if MANY references to CURRENT collection amplify the bug
+
+  Trees.init = create 0 of Tree
+  Trees.step:if(meta.year == 1) = create 10 of Tree
+  Trees.end = prior.Trees  # "Working" workaround
+
+  # MANY references to CURRENT Trees in .step phase (JOTR pattern)
+  export.treeCount.step = count(Trees)
+  export.meanAge.step = mean(Trees.age)
+  export.maxAge.step = max(Trees.age)
+  export.minAge.step = min(Trees.age)
+
+  # Conditional exports also referencing CURRENT
+  export.oldTrees.step
+    :if(export.treeCount > 0 count) = count(Trees[Trees.age > 2 years])
+    :else = 0 count
+
+  export.youngTrees.step
+    :if(export.treeCount > 0 count) = count(Trees[Trees.age <= 2 years])
+    :else = 0 count
+
+  # Debug log also references CURRENT
+  log.step = debug(geoKey, "PATCH_STEP", "year:", meta.year, "count:", count(Trees), "meanAge:", mean(Trees.age))
+end patch
+
+start organism Tree
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  log.step = debug(geoKey, "ORG_STEP", "age:", age, "year:", meta.year)
+end organism
+
+# Units
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

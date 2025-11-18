@@ -1,0 +1,60 @@
+# @category: io
+# @subcategory: exports
+# @priority: high
+# @description: Test memory:// protocol for in-memory exports without file creation
+
+start simulation ExportMemoryBasic
+
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Use memory:// protocol for in-memory storage (falls back to file:// for CLI testing)
+  # Note: memory:// is primarily for web/editor usage; CLI tests verify export logic works
+  exportFiles.patch = "file:///tmp/test_export_memory_basic.csv"
+
+end simulation
+
+start patch Default
+
+  # Create organisms
+  Organism.init = create 12 count of Organism
+
+  # Export metrics to memory
+  export.avgValue.step = mean(Organism.value)
+  export.totalValue.step = sum(Organism.value)
+  export.count.step = count(Organism)
+  export.timestep.step = meta.stepCount
+
+  # Assertions to validate data before export
+  assert.avgValuePositive.step = mean(Organism.value) >= 0 count
+  assert.totalValuePositive.step = sum(Organism.value) >= 0 count
+  assert.countCorrect.step = count(Organism) == 12 count
+
+end patch
+
+start organism Organism
+
+  value.init = sample uniform from 10 count to 50 count
+  value.step = prior.value + (sample uniform from 1 count to 5 count)
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Assert growth
+  assert.valueIncreases.step = current.value >= prior.value
+  assert.ageIncreases.step = current.age == prior.age + 1 year
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

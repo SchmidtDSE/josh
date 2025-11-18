@@ -1,0 +1,90 @@
+# @category: temporal
+# @subcategory: prior
+# @priority: high
+# @description: Test chained prior references and document limitations (prior.prior not supported)
+
+start simulation TemporalPriorChained
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  # Age uses prior to reference previous timestep
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Height grows based on prior height
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+  # Store prior height manually to simulate looking back 2 steps
+  # This is the workaround since prior.prior is not supported
+  priorHeight.init = 0 m
+  priorHeight.step = prior.height
+
+  # Calculate 2-step height change using the stored prior value
+  # At step N, priorHeight contains height from step N-1
+  # prior.priorHeight contains height from step N-2
+  twoStepChange.init = 0 m
+  twoStepChange.step:if(meta.stepCount >= 2 count) = current.height - prior.priorHeight
+
+  # Assert age progression
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = current.age == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = current.age == 2 years
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = current.age == 3 years
+  assert.ageStep4.step:if(meta.stepCount == 4 count) = current.age == 4 years
+  assert.ageStep5.step:if(meta.stepCount == 5 count) = current.age == 5 years
+
+  # Assert priorHeight stores the previous timestep's height correctly
+  assert.priorHeightStep1.step:if(meta.stepCount == 1 count) = current.priorHeight == 1 m
+  assert.priorHeightStep2.step:if(meta.stepCount == 2 count) = current.priorHeight == 1.5 m
+  assert.priorHeightStep3.step:if(meta.stepCount == 3 count) = current.priorHeight == 2.0 m
+  assert.priorHeightStep4.step:if(meta.stepCount == 4 count) = current.priorHeight == 2.5 m
+  assert.priorHeightStep5.step:if(meta.stepCount == 5 count) = current.priorHeight == 3.0 m
+
+  # Assert twoStepChange correctly captures 2-step height difference
+  # At step 2: height is 2.0, prior.priorHeight (height at step 0) is 1.0, so change is 1.0
+  assert.twoStepChangeStep2.step:if(meta.stepCount == 2 count) = current.twoStepChange == 1.0 m
+  # At step 3: height is 2.5, prior.priorHeight (height at step 1) is 1.5, so change is 1.0
+  assert.twoStepChangeStep3.step:if(meta.stepCount == 3 count) = current.twoStepChange == 1.0 m
+  # At step 4: height is 3.0, prior.priorHeight (height at step 2) is 2.0, so change is 1.0
+  assert.twoStepChangeStep4.step:if(meta.stepCount == 4 count) = current.twoStepChange == 1.0 m
+  # At step 5: height is 3.5, prior.priorHeight (height at step 3) is 2.5, so change is 1.0
+  assert.twoStepChangeStep5.step:if(meta.stepCount == 5 count) = current.twoStepChange == 1.0 m
+
+  # Verify that single-step change is consistently 0.5 m
+  assert.heightChangeStep1.step:if(meta.stepCount == 1 count) = current.height - prior.height == 0.5 m
+  assert.heightChangeStep2.step:if(meta.stepCount == 2 count) = current.height - prior.height == 0.5 m
+  assert.heightChangeStep3.step:if(meta.stepCount == 3 count) = current.height - prior.height == 0.5 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

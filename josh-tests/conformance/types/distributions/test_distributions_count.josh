@@ -1,0 +1,83 @@
+# @category: types
+# @subcategory: distributions
+# @priority: critical
+# @description: Test count() reduction operation on collections
+
+start simulation DistributionsCount
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms and test count
+  Trees.init = create 10 count of Tree
+
+  # Test basic count
+  treeCount.init = count(Trees)
+  assert.basicCount.init = treeCount == 10 count
+
+  # Create more organisms
+  Plants.init = create 50 count of Plant
+
+  # Test count on larger collection
+  plantCount.init = count(Plants)
+  assert.largerCount.init = plantCount == 50 count
+
+  # Test count with no organisms
+  Shrubs.init = create 0 count of Shrub
+  shrubCount.init = count(Shrubs)
+  assert.zeroCount.init = shrubCount == 0 count
+
+  # Test count with single organism
+  SingleTree.init = create 1 count of Tree
+  singleCount.init = count(SingleTree)
+  assert.singleCount.init = singleCount == 1 count
+
+  # Test count persists across timesteps
+  assert.countStep1.step:if(meta.stepCount == 1 count) = count(Trees) == 10 count
+  assert.countStep2.step:if(meta.stepCount == 2 count) = count(Trees) == 10 count
+
+  # Test count after additional creation
+  Trees.step:if(meta.stepCount == 1 count) = create 5 count of Tree
+  assert.countAfterAddition.step:if(meta.stepCount == 1 count) = count(Trees) == 15 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+end organism
+
+start organism Plant
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+end organism
+
+start organism Shrub
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

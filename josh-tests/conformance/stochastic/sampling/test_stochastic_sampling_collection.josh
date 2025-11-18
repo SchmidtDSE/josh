@@ -1,0 +1,97 @@
+# @category: stochastic
+# @subcategory: sampling
+# @priority: high
+# @description: Test sampling from organism collections - verifies stochastic selection from existing populations
+
+start simulation StochasticSamplingCollection
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  # Create a source population with known characteristics
+  SourceOrg.init = create 100 count of SourceOrg
+
+  # Step 1: Sample from the population by creating organisms that reference source values
+  # Each sampled organism gets a randomly sampled value
+  SampledOrg.step = create 50 count of SampledOrg
+
+  # Test 1: Verify sampled values are from the source population range
+  minSource.step = min(SourceOrg.id)
+  maxSource.step = max(SourceOrg.id)
+  minSampled.step = min(SampledOrg.sampledId)
+  maxSampled.step = max(SampledOrg.sampledId)
+
+  # Sampled IDs should be within the source range
+  assert.sampledInRange.step = (minSampled >= 1 count) and (maxSampled <= 100 count)
+
+  # Test 2: Verify sampled collection is subset of original
+  # Count should be correct
+  sourceCount.step = count(SourceOrg)
+  sampledCount.step = count(SampledOrg)
+  assert.countsCorrect.step = (sourceCount == 100 count) and (sampledCount == 50 count)
+
+  # Test 3: Verify stochastic distribution in sampling
+  # Check that sampled values appear in different ranges
+  lowCount.step = count(SampledOrg.sampledId <= 33 count)
+  midCount.step = count(SampledOrg.sampledId > 33 count and SampledOrg.sampledId <= 66 count)
+  highCount.step = count(SampledOrg.sampledId > 66 count)
+
+  # Each range should have at least some samples
+  assert.lowRangeHasSamples.step = lowCount >= 5 count
+  assert.midRangeHasSamples.step = midCount >= 5 count
+  assert.highRangeHasSamples.step = highCount >= 5 count
+
+  # Test 4: Mean of sampled IDs should be roughly centered
+  avgSampled.step = mean(SampledOrg.sampledId)
+  expectedMean.step = 50 count
+  tolerance.step = 15 count
+  lowerBound.step = expectedMean - tolerance
+  upperBound.step = expectedMean + tolerance
+  assert.meanCentered.step = (avgSampled >= lowerBound) and (avgSampled <= upperBound)
+
+end patch
+
+start organism SourceOrg
+
+  # Assign sequential IDs to track which organisms are sampled
+  id.init = 1 count + count(SourceOrg)
+  id.step = prior.id
+
+end organism
+
+start organism SampledOrg
+
+  # Sample a random ID from the source population range [1, 100]
+  sampledId.init = sample uniform from 1 count to 100 count
+  sampledId.step = prior.sampledId
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

@@ -1,0 +1,87 @@
+# @category: types
+# @subcategory: scalars
+# @priority: high
+# @description: Test percentage calculations with different unit types
+
+start simulation ScalarsUnitsPercentage
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test 50 percent of 100 count = 50 count
+  total1.init = 100 count
+  percent1.init = 0.50 ratio
+  result1.init = percent1 * total1
+  assert.fiftyPercentCount.init = result1 == 50 count
+
+  # Test 25 percent * 200 m = 50 m
+  total2.init = 200 m
+  percent2.init = 0.25 ratio
+  result2.init = percent2 * total2
+  assert.twentyFivePercentMeters.init = result2 == 50 m
+
+  # Test 100 percent of value equals value
+  total3.init = 75 count
+  percent3.init = 1.0 ratio
+  result3.init = percent3 * total3
+  assert.hundredPercent.init = result3 == 75 count
+
+  # Test 10 percent of 1 km = 100 m
+  total4.init = 1 km
+  percent4.init = 0.10 ratio
+  result4.init = percent4 * total4
+  result4M.init = result4 as m
+  assert.tenPercentKm.init = result4M == 100 m
+
+  # Test ratio to percentage: 0.20 ratio = 20 percent
+  part.init = 20 count
+  whole.init = 100 count
+  ratioCalc.init = part / whole
+  percentCalc.init = ratioCalc as percent
+  assert.calculatePercent.init = percentCalc == 20 percent
+
+  # Test 0 percent of value = 0
+  total5.init = 500 count
+  percent5.init = 0.0 ratio
+  result5.init = percent5 * total5
+  assert.zeroPercent.init = result5 == 0 count
+
+end patch
+
+start unit percent
+  alias percentage
+  ratio = current / 100
+end unit
+
+start unit ratio
+  percent = current * 100
+end unit
+
+start unit count
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

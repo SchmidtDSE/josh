@@ -43,6 +43,16 @@ public class ShadowingEntity implements MutableEntity {
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
+  private static final boolean DEBUG_ORGANISM =
+      Boolean.getBoolean("josh.debug.organism");
+
+  private void debugLog(String message) {
+    if (DEBUG_ORGANISM) {
+      int timestep = SimulationStepper.getCurrentTimestep();
+      System.err.println("[ORGANISM-DEBUG] timestep=" + timestep + " ShadowingEntity " + message);
+    }
+  }
+
   private final EngineValueFactory valueFactory;
   private final MutableEntity inner;
   private final Entity here;
@@ -144,7 +154,32 @@ public class ShadowingEntity implements MutableEntity {
       throw new IllegalStateException(message);
     }
 
-    String state = getState();
+    String state;
+    if ("state".equals(attribute)) {
+      // For "state" attribute, try to use already-resolved state value from current substep.
+      // This handles the case where state was set in "init" substep and we're now in
+      // "step" substep. If state hasn't been resolved yet in current substep, fall back
+      // to prior state. This avoids circular dependency while ensuring we have the
+      // correct state for cache lookup.
+      Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+      if (stateIndexMaybe.isPresent()) {
+        int stateIndex = stateIndexMaybe.get();
+        boolean indexInBounds = stateIndex >= 0 && stateIndex < resolvedCacheByIndex.length;
+        if (indexInBounds && resolvedCacheByIndex[stateIndex] != null) {
+          // State was already resolved in current substep - use it for cache lookup
+          state = resolvedCacheByIndex[stateIndex].getAsString();
+        } else {
+          // State not yet resolved - use prior state (avoids circular dependency)
+          state = getPriorState();
+        }
+      } else {
+        // No state attribute exists
+        state = "";
+      }
+    } else {
+      // For non-state attributes, use current state (may trigger resolution)
+      state = getState();
+    }
 
     return getHandlersForAttribute(attribute, substep.get(), state);
   }
@@ -152,15 +187,19 @@ public class ShadowingEntity implements MutableEntity {
   private Iterable<EventHandlerGroup> getHandlersForAttribute(String attribute, String substep,
       String state) {
     // Build cache key string
+    // Note: State values in the handler cache are stored with quotes (e.g., "seedling")
+    // but the state value we get from the entity doesn't have quotes, so we need to add them
     String cacheKey;
     if (state.isEmpty()) {
       cacheKey = attribute + ":" + substep;
     } else {
-      cacheKey = attribute + ":" + substep + ":" + state;
+      cacheKey = attribute + ":" + substep + ":\"" + state + "\"";
     }
 
     // Look up in shared cache, return empty list if not found
     List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
+
+
     if (handlers != null) {
       return handlers;
     }
@@ -438,6 +477,48 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
+   * Get the state of this entity from the prior timestep or substep.
+   *
+   * <p>This method is used for handler lookup to avoid circular dependencies. When resolving
+   * the "state" attribute itself, we cannot call {@link #getState()} because it would trigger
+   * attribute resolution while we're already in the middle of resolving "state".</p>
+   *
+   * <p><b>State Machine Semantics</b>: When an organism is in a particular state, the handlers
+   * for that state should execute to determine what the NEXT state will be. Therefore, handler
+   * lookup must use the PRIOR state value, not the state being computed.</p>
+   *
+   * <p>Example: An organism in state "seedling" with age 2 years should have its "seedling"
+   * state handlers execute, which may transition it to "juvenile". If we used the NEW state
+   * value for handler lookup, we'd look for "juvenile" handlers instead, creating incorrect
+   * semantics.</p>
+   *
+   * <p><b>Implementation</b>: This method directly accesses the prior state from the inner
+   * entity without triggering resolution, avoiding circular dependencies.</p>
+   *
+   * @return The state string from the prior step, or empty string if state attribute doesn't
+   *     exist or has no value. Never null.
+   */
+  private String getPriorState() {
+    // Check if "state" attribute exists
+    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
+    if (stateIndexMaybe.isEmpty()) {
+      debugLog("getPriorState entity=" + inner.getName() + " noStateAttribute");
+      return DEFAULT_STATE_STR;
+    }
+
+    // Get prior state value directly from inner entity (no resolution)
+    Optional<EngineValue> priorStateMaybe = inner.getAttributeValue("state");
+    if (priorStateMaybe.isPresent()) {
+      String stateValue = priorStateMaybe.get().getAsString();
+      debugLog("getPriorState entity=" + inner.getName() + " state=" + stateValue);
+      return stateValue;
+    } else {
+      debugLog("getPriorState entity=" + inner.getName() + " emptyState");
+      return DEFAULT_STATE_STR;
+    }
+  }
+
+  /**
    * Get an immutable copy of the decorated entity for record keeping.
    *
    * @return Entity that is an immutable snapshot such that further edits to this entity are not
@@ -525,11 +606,21 @@ public class ShadowingEntity implements MutableEntity {
 
     // If outside substep, use prior
     if (substep.isEmpty()) {
+      debugLog("resolveAttribute entity=" + inner.getName()
+          + " attribute=" + name + " reason=noSubstep");
       resolveAttributeFromPrior(name);
       return;
     }
 
-    if (inner.hasNoHandlers(name, substep.get())) {
+    boolean hasNoHandlers = inner.hasNoHandlers(name, substep.get());
+    debugLog("hasNoHandlers entity=" + inner.getName()
+        + " attribute=" + name
+        + " substep=" + substep.get()
+        + " result=" + hasNoHandlers);
+
+    if (hasNoHandlers) {
+      debugLog("fastPath entity=" + inner.getName()
+          + " attribute=" + name + " reason=noHandlers");
       resolveAttributeFromPrior(name);
       return;
     }
@@ -619,11 +710,23 @@ public class ShadowingEntity implements MutableEntity {
 
     // If outside substep, use prior with integer access
     if (substep.isEmpty()) {
+      debugLog("resolveAttributeByIndex entity=" + inner.getName()
+          + " index=" + index + " attribute=" + name + " reason=noSubstep");
       resolveAttributeFromPriorByIndex(index);
       return;
     }
 
-    if (inner.hasNoHandlers(name, substep.get())) {
+    boolean hasNoHandlers = inner.hasNoHandlers(name, substep.get());
+    debugLog("hasNoHandlers entity=" + inner.getName()
+        + " index=" + index
+        + " attribute=" + name
+        + " substep=" + substep.get()
+        + " result=" + hasNoHandlers);
+
+    if (hasNoHandlers) {
+      debugLog("fastPath entity=" + inner.getName()
+          + " index=" + index
+          + " attribute=" + name + " reason=noHandlers");
       resolveAttributeFromPriorByIndex(index);
       return;
     }
@@ -672,24 +775,56 @@ public class ShadowingEntity implements MutableEntity {
    */
   private boolean executeHandlers(EventHandlerGroup handlers) {
     Scope decoratedScope = new SyntheticScope(this);
+    String entityName = inner.getName();
+
     for (EventHandler handler : handlers.getEventHandlers()) {
+      String attrName = handler.getAttributeName();
       Optional<CompiledSelector> conditionalMaybe = handler.getConditional();
+
+      boolean hasCondition = conditionalMaybe.isPresent();
+      debugLog("checkHandler entity=" + entityName
+          + " attribute=" + attrName
+          + " hasCondition=" + hasCondition);
 
       boolean matches;
       if (conditionalMaybe.isPresent()) {
         CompiledSelector conditional = conditionalMaybe.get();
         matches = conditional.evaluate(decoratedScope);
+        debugLog("evalCondition entity=" + entityName
+            + " attribute=" + attrName
+            + " result=" + matches);
       } else {
         matches = true;
+        debugLog("unconditional entity=" + entityName
+            + " attribute=" + attrName);
       }
 
       if (matches) {
+        debugLog("executeHandler entity=" + entityName
+            + " attribute=" + attrName);
         EngineValue value = handler.getCallable().evaluate(decoratedScope);
+
+        // Log value type and size if it's a collection
+        String valueInfo = value.getLanguageType().toString();
+        Optional<Integer> sizeMaybe = value.getSize();
+        if (sizeMaybe.isPresent()) {
+          valueInfo += " size=" + sizeMaybe.get();
+        }
+
+        debugLog("handlerResult entity=" + entityName
+            + " attribute=" + attrName
+            + " value=" + valueInfo);
+
         setAttributeValue(handler.getAttributeName(), value);
         return true;
+      } else {
+        debugLog("handlerSkipped entity=" + entityName
+            + " attribute=" + attrName
+            + " reason=conditionFalse");
       }
     }
 
+    debugLog("noMatchingHandler entity=" + entityName);
     return false;
   }
 
@@ -699,9 +834,14 @@ public class ShadowingEntity implements MutableEntity {
    * @param name the unique identifier of the attribute to resolve from prior.
    */
   private void resolveAttributeFromPrior(String name) {
+    debugLog("resolveFromPrior entity=" + inner.getName()
+        + " attribute=" + name);
     Optional<EngineValue> prior = getPriorAttribute(name);
     if (prior.isPresent()) {
       setAttributeValue(name, prior.get());
+    } else {
+      debugLog("noPriorValue entity=" + inner.getName()
+          + " attribute=" + name);
     }
   }
 
@@ -711,6 +851,15 @@ public class ShadowingEntity implements MutableEntity {
    * @param index the attribute index
    */
   private void resolveAttributeFromPriorByIndex(int index) {
+    String[] indexArray = inner.getIndexToAttributeName();
+    String name = "unknown";
+    if (index >= 0 && indexArray != null && index < indexArray.length) {
+      name = indexArray[index];
+    }
+
+    debugLog("resolveFromPriorByIndex entity=" + inner.getName()
+        + " index=" + index + " attribute=" + name);
+
     Optional<EngineValue> prior = getPriorAttribute(index);
 
     if (prior.isPresent()) {
@@ -720,6 +869,9 @@ public class ShadowingEntity implements MutableEntity {
       if (cacheIndexInBounds) {
         resolvedCacheByIndex[index] = prior.get();
       }
+    } else {
+      debugLog("noPriorValue entity=" + inner.getName()
+          + " index=" + index + " attribute=" + name);
     }
   }
 
@@ -743,20 +895,87 @@ public class ShadowingEntity implements MutableEntity {
     return inner.getEventHandlers(eventKey);
   }
 
+  /**
+   * Starts a new substep for attribute resolution.
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: This method NO LONGER discovers or manages organism lifecycle.
+   * Organisms are now discovered and initialized by {@code SimulationStepper} AFTER all patch
+   * attributes have been resolved. This prevents cache coherency violations where organisms
+   * discovered from cached values differ from those in final resolved values.</p>
+   *
+   * <p><b>Why this change?</b> Previously, organism discovery happened here using values from
+   * {@code resolvedCacheByIndex[]} before the cache was cleared. This meant organisms were
+   * discovered based on stale cached values from the previous phase. Then, during attribute
+   * resolution, handlers could create NEW organism instances (e.g., via union operations like
+   * {@code Trees.end = prior.Trees | Trees}). These new instances would differ from the ones
+   * that had {@code startSubstep()} called, leading to lock/unlock mismatches and organisms
+   * only executing once.</p>
+   *
+   * <p><b>The Solution</b>: By moving organism discovery to {@code SimulationStepper} AFTER
+   * attribute resolution completes, we ensure that organisms are discovered from final,
+   * fully-resolved attribute values. This guarantees consistent organism instance identity
+   * throughout the lifecycle (startSubstep → updateEntity → endSubstep).</p>
+   *
+   * <p><b>Separation of Concerns</b>:</p>
+   * <ul>
+   *   <li>{@code ShadowingEntity}: Manages attribute resolution and caching</li>
+   *   <li>{@code SimulationStepper}: Manages organism lifecycle</li>
+   *   <li>Clear ownership boundaries prevent cache coherency issues</li>
+   * </ul>
+   *
+   * <p>See {@code ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md} for complete design rationale
+   * and architecture diagrams.</p>
+   *
+   * @param name the name of the substep to start
+   */
   @Override
   public void startSubstep(String name) {
-    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.startSubstep(name));
+    // ARCHITECTURAL CHANGE: Organisms are now discovered and initialized by SimulationStepper
+    // after all patch attributes are resolved. This prevents cache coherency violations
+    // where organisms discovered from cached values differ from those in final resolved values.
+    // See ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md for full design rationale.
     inner.startSubstep(name);
 
-    // Clear array-based cache
+    // Clear cache immediately - no organisms discovered yet
     Arrays.fill(resolvedCacheByIndex, null);
   }
 
+  /**
+   * Ends the current substep after attribute resolution completes.
+   *
+   * <p><b>ARCHITECTURAL CHANGE</b>: This method NO LONGER discovers or manages organism lifecycle.
+   * Organisms are now managed by {@code SimulationStepper}, which handles their complete
+   * lifecycle (startSubstep → updateEntity → endSubstep) AFTER patch attribute resolution
+   * completes. This ensures consistent organism instance identity throughout the lifecycle.</p>
+   *
+   * <p><b>Why this change?</b> Previously, this method would discover organisms again and call
+   * {@code endSubstep()} on them. However, these organisms might be different instances from
+   * those that had {@code startSubstep()} called (due to handlers creating new instances during
+   * resolution). This caused {@code IllegalMonitorStateException} errors because we were trying
+   * to unlock organisms that were never locked.</p>
+   *
+   * <p><b>The Solution</b>: {@code SimulationStepper} now manages the complete organism lifecycle
+   * using organisms discovered from final attribute values. It maintains references to the same
+   * organism instances throughout startSubstep/update/endSubstep, preventing identity
+   * mismatches.</p>
+   *
+   * <p><b>What this method does now</b>:</p>
+   * <ul>
+   *   <li>Resets circular dependency tracking ({@code resolvingByIndex})</li>
+   *   <li>Ends the substep on the inner entity</li>
+   *   <li>NO organism discovery or lifecycle management</li>
+   * </ul>
+   *
+   * <p>See {@code ORGANISM_LIFECYCLE_ARCHITECTURE_FIX.md} for complete design rationale
+   * and architecture diagrams.</p>
+   */
   @Override
   public void endSubstep() {
-    InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
+    // ARCHITECTURAL CHANGE: Organisms are now managed by SimulationStepper, which handles
+    // their complete lifecycle (start/update/end) after patch attribute resolution completes.
+    // This ensures consistent organism instance identity throughout the lifecycle.
 
-    // Clear array-based tracking
+    // Clear circular dependency tracking
     Arrays.fill(resolvingByIndex, false);
 
     inner.endSubstep();

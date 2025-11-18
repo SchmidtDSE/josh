@@ -34,6 +34,16 @@ import org.joshsim.engine.value.type.EngineValue;
 public class EntityBuilder implements EntityInitializationInfo {
   private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
 
+  private static final boolean DEBUG_ORGANISM =
+      Boolean.getBoolean("josh.debug.organism");
+
+  private static void debugLog(String message) {
+    if (DEBUG_ORGANISM) {
+      int timestep = org.joshsim.lang.bridge.SimulationStepper.getCurrentTimestep();
+      System.err.println("[ORGANISM-DEBUG] timestep=" + timestep + " EntityBuilder " + message);
+    }
+  }
+
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -182,6 +192,9 @@ public class EntityBuilder implements EntityInitializationInfo {
       return attributesWithoutHandlersBySubstep;
     }
 
+    String entityName = name.orElse("unknown");
+    debugLog("buildCache entity=" + entityName);
+
     // Get the index map to know array size
     Map<String, Integer> indexMap = getAttributeNameToIndex();
     int arraySize = indexMap.size();
@@ -189,6 +202,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     Map<String, boolean[]> result = new HashMap<>();
 
     for (String substep : SUBSTEPS) {
+      debugLog("buildCacheForSubstep entity=" + entityName + " substep=" + substep);
+
       // Create boolean array for this substep
       boolean[] attrsWithoutHandlers = new boolean[arraySize];
 
@@ -197,6 +212,8 @@ public class EntityBuilder implements EntityInitializationInfo {
         Integer index = indexMap.get(attrName);
         if (index != null) {
           attrsWithoutHandlers[index] = true;
+          debugLog("initialMark attribute=" + attrName
+              + " substep=" + substep + " hasHandlers=false");
         }
       }
 
@@ -211,13 +228,34 @@ public class EntityBuilder implements EntityInitializationInfo {
         if (key.getEvent().equals(substep)) {
           // Unmark all attributes from handlers in this group
           for (EventHandler handler : group.getEventHandlers()) {
-            Integer index = indexMap.get(handler.getAttributeName());
-            if (index != null) {
+            String attrName = handler.getAttributeName();
+            Integer index = indexMap.get(attrName);
+            if (index != null && attrsWithoutHandlers[index]) {
               attrsWithoutHandlers[index] = false;
+              boolean hasCondition = handler.getConditional().isPresent();
+              debugLog("foundHandler attribute=" + attrName
+                  + " substep=" + substep
+                  + " hasCondition=" + hasCondition);
             }
           }
         }
       }
+
+      // Count and log statistics
+      int withHandlers = 0;
+      int withoutHandlers = 0;
+      for (boolean noHandler : attrsWithoutHandlers) {
+        if (noHandler) {
+          withoutHandlers++;
+        } else {
+          withHandlers++;
+        }
+      }
+
+      debugLog("cacheComplete entity=" + entityName
+          + " substep=" + substep
+          + " attrsWithHandlers=" + withHandlers
+          + " attrsWithoutHandlers=" + withoutHandlers);
 
       result.put(substep, attrsWithoutHandlers);
     }

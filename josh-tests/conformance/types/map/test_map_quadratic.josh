@@ -1,0 +1,98 @@
+# @category: types
+# @subcategory: map
+# @priority: medium
+# @description: Test quadratic mapping with curve transformations
+
+start simulation MapQuadratic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test quadratic map at range boundaries
+  input1.init = 0 m
+  mapped1.init = map input1 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAtMin.init = mapped1 == 0 count
+
+  input2.init = 100 m
+  mapped2.init = map input2 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAtMax.init = mapped2 == 100 count
+
+  # Test quadratic map at midpoint
+  # Quadratic curve should be non-linear, so midpoint input != midpoint output
+  input3.init = 50 m
+  mapped3.init = map input3 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  # For quadratic, middle should be less than linear (25 for 50%)
+  assert.quadraticAtMid.init = mapped3 < 50 count
+  assert.quadraticAtMidPositive.init = mapped3 > 0 count
+
+  # Test quadratic produces different result than linear
+  input4.init = 50 m
+  linearMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] linearly
+  quadraticMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticDiffersFromLinear.init = quadraticMap != linearMap
+
+  # Test quadratic curve progression
+  # Quadratic should accelerate, so 25% < 6.25%, 75% < 56.25%
+  input5.init = 25 m
+  mapped5.init = map input5 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  # At 25%, quadratic should give 6.25 (0.25^2 = 0.0625)
+  assert.quadraticEarlySmall.init = mapped5 < 10 count
+
+  input6.init = 75 m
+  mapped6.init = map input6 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  # At 75%, quadratic should give 56.25 (0.75^2 = 0.5625)
+  assert.quadraticLateLarge.init = mapped6 > 50 count
+  assert.quadraticLateRange.init = mapped6 < 65 count
+
+  # Test quadratic with percentage output
+  pctInput1.init = 0 m
+  pctMapped1.init = map pctInput1 from [0 m, 100 m] to [0 %, 100 %] quadratically
+  assert.quadraticPctMin.init = pctMapped1 == 0 %
+
+  pctInput2.init = 100 m
+  pctMapped2.init = map pctInput2 from [0 m, 100 m] to [0 %, 100 %] quadratically
+  assert.quadraticPctMax.init = pctMapped2 == 100 %
+
+  # Test quadratic is monotonically increasing
+  # Smaller input should give smaller output
+  smallInput.init = 30 m
+  smallMapped.init = map smallInput from [0 m, 100 m] to [0 count, 100 count] quadratically
+
+  largeInput.init = 70 m
+  largeMapped.init = map largeInput from [0 m, 100 m] to [0 count, 100 count] quadratically
+
+  assert.quadraticMonotonic.init = smallMapped < largeMapped
+
+  # Test quadratic with inverted range
+  invertInput.init = 50 m
+  invertMapped.init = map invertInput from [0 m, 100 m] to [100 count, 0 count] quadratically
+  # Should still show quadratic behavior
+  assert.invertedQuadratic.init = invertMapped > 50 count
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

@@ -1,0 +1,85 @@
+# @category: types
+# @subcategory: functions
+# @priority: high
+# @description: Test absolute value function with positive, negative, and zero values on scalars and distributions
+
+start simulation FunctionsAbs
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test abs with positive scalar
+  positiveValue.init = 5 m
+  absPositive.init = abs(positiveValue)
+  assert.absPositive.init = absPositive == 5 m
+
+  # Test abs with negative scalar
+  negativeValue.init = -10 m
+  absNegative.init = abs(negativeValue)
+  assert.absNegative.init = absNegative == 10 m
+
+  # Test abs with zero
+  zeroValue.init = 0 m
+  absZero.init = abs(zeroValue)
+  assert.absZero.init = absZero == 0 m
+
+  # Test abs with negative fractional value
+  negativeFraction.init = -3.7 m
+  absFraction.init = abs(negativeFraction)
+  assert.absFraction.init = absFraction == 3.7 m
+
+  # Test abs with distributions - create organisms with negative and positive values
+  Trees.init = create 20 count of Tree
+
+  # Apply abs to distribution of ages (some negative)
+  # Trees have ages from -10 to 10, abs should make all positive
+  absAges.init = abs(Trees.age)
+  meanAbsAge.init = mean(absAges)
+
+  # Mean of abs should be positive (all values are 0 to 10 after abs)
+  assert.absAgesAllPositive.init = meanAbsAge >= 0 years
+  assert.absAgesReasonable.init = meanAbsAge <= 10 years
+
+  # Test abs preserves units
+  distanceValue.init = -25 m
+  absDistance.init = abs(distanceValue)
+  assert.absDistance.init = absDistance == 25 m
+
+end patch
+
+start organism Tree
+
+  # Use sample to get varied values including negative
+  # Sample from -10 to 10 years
+  age.init = sample uniform from -10 years to 10 years
+  age.step = prior.age
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

@@ -1,0 +1,103 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Test min() and max() reduction operations on collection attributes
+
+start simulation DistributionsMinMax
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with known values
+  Trees.init = create 5 count of Tree
+
+  # Test min with seed-based values
+  # 5 trees with ages sampled from uniform(10, 50) years
+  # Min should be reasonably close to lower bound
+  minAge.init = min(Trees.age)
+  assert.minAge.init = minAge >= 10 years and minAge <= 30 years
+
+  # Test max with seed-based values
+  # Max should be reasonably close to upper bound
+  maxAge.init = max(Trees.age)
+  assert.maxAge.init = maxAge >= 30 years and maxAge <= 50 years
+
+  # Test min with uniform values
+  # All trees have height 100 m
+  minHeight.init = min(Trees.height)
+  assert.minHeight.init = minHeight == 100 m
+
+  # Test max with uniform values
+  maxHeight.init = max(Trees.height)
+  assert.maxHeight.init = maxHeight == 100 m
+
+  # Test min and max with single organism
+  SingleTree.init = create 1 count of Tree
+  singleMin.init = min(SingleTree.age)
+  singleMax.init = max(SingleTree.age)
+  assert.singleMin.init = singleMin >= 10 years and singleMin <= 50 years
+  assert.singleMax.init = singleMax >= 10 years and singleMax <= 50 years
+  assert.singleMinMaxEqual.init = singleMin == singleMax
+
+  # Create organisms with stochastic values
+  Plants.init = create 100 count of Plant
+
+  # Test min and max of stochastic values
+  # Heights from uniform(0, 100), with 100 samples
+  # Min should be close to 0, max close to 100
+  minPlantHeight.init = min(Plants.height)
+  maxPlantHeight.init = max(Plants.height)
+
+  # With 100 samples, min should be < 5 and max should be > 95 (high probability)
+  assert.minPlantReasonable.init = minPlantHeight < 5 m
+  assert.maxPlantReasonable.init = maxPlantHeight > 95 m
+
+  # Range should be substantial
+  plantRange.init = maxPlantHeight - minPlantHeight
+  assert.plantRange.init = plantRange > 90 m
+
+end patch
+
+start organism Tree
+
+  # Assign ages using seed-based sampling (deterministic with --seed 42)
+  age.init = sample uniform from 10 years to 50 years
+  age.step = prior.age
+
+  # All trees have same height
+  height.init = 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Stochastic height from uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit

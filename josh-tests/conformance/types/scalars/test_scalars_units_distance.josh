@@ -1,0 +1,96 @@
+# @category: types
+# @subcategory: scalars
+# @priority: high
+# @description: Test distance units (m, km, cm, mm) conversions work correctly
+
+start simulation ScalarsUnitsDistance
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test all distance conversions from meters
+  baseM.init = 1 m
+  baseKm.init = baseM as km
+  baseCm.init = baseM as cm
+  baseMm.init = baseM as mm
+  assert.mToKm.init = baseKm == 0.001 km
+  assert.mToCm.init = baseCm == 100 cm
+  assert.mToMm.init = baseMm == 1000 mm
+
+  # Test all distance conversions from kilometers
+  baseKm2.init = 1 km
+  baseM2.init = baseKm2 as m
+  baseCm2.init = baseKm2 as cm
+  baseMm2.init = baseKm2 as mm
+  assert.kmToM.init = baseM2 == 1000 m
+  assert.kmToCm.init = baseCm2 == 100000 cm
+  assert.kmToMm.init = baseMm2 == 1000000 mm
+
+  # Test all distance conversions from centimeters
+  baseCm3.init = 1 cm
+  baseM3.init = baseCm3 as m
+  baseKm3.init = baseCm3 as km
+  baseMm3.init = baseCm3 as mm
+  assert.cmToM.init = baseM3 == 0.01 m
+  assert.cmToKm.init = baseKm3 == 0.00001 km
+  assert.cmToMm.init = baseMm3 == 10 mm
+
+  # Test all distance conversions from millimeters
+  baseMm4.init = 1 mm
+  baseM4.init = baseMm4 as m
+  baseKm4.init = baseMm4 as km
+  baseCm4.init = baseMm4 as cm
+  assert.mmToM.init = baseM4 == 0.001 m
+  assert.mmToKm.init = baseKm4 == 0.000001 km
+  assert.mmToCm.init = baseCm4 == 0.1 cm
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+  cm = current * 100
+  mm = current * 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+  cm = current * 100000
+  mm = current * 1000000
+end unit
+
+start unit cm
+  alias centimeter
+  alias centimeters
+  m = current / 100
+  km = current / 100000
+  mm = current * 10
+end unit
+
+start unit mm
+  alias millimeter
+  alias millimeters
+  m = current / 1000
+  km = current / 1000000
+  cm = current / 10
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

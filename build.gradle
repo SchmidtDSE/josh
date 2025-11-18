@@ -110,6 +110,12 @@ test {
     events "skipped", "failed"
     exceptionFormat = "full"
   }
+
+  // Exclude conformance tests from main test task
+  // Conformance tests run separately in their own workflow
+  filter {
+    excludeTestsMatching "org.joshsim.conformance.*"
+  }
 }
 
 // JUnit resource assets for tests.
@@ -118,6 +124,64 @@ sourceSets {
         resources {
             srcDirs = ['src/test/resources']
         }
+    }
+}
+
+// Optional: Dedicated task for Josh conformance tests only
+task joshConformanceTest(type: Test) {
+    description = 'Run Josh language conformance tests'
+    group = 'verification'
+
+    dependsOn 'fatJar'
+
+    // Run only conformance tests
+    filter {
+        includeTestsMatching "org.joshsim.conformance.*"
+    }
+
+    useJUnitPlatform()
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat = "full"
+    }
+}
+
+// Optional: Quick mode (critical tests only)
+task joshQuickTest(type: Test) {
+    description = 'Run critical Josh conformance tests'
+    group = 'verification'
+
+    dependsOn 'fatJar'
+
+    filter {
+        includeTestsMatching "org.joshsim.conformance.*"
+    }
+
+    useJUnitPlatform {
+        includeTags 'critical'
+    }
+
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat = "full"
+    }
+}
+
+// Generate synthetic test data files for Phase 4 conformance testing
+task generateTestData(type: JavaExec) {
+    description = 'Generate synthetic test data files for Phase 4 conformance testing'
+    group = 'verification'
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.joshsim.conformance.TestDataGenerator'
+
+    doFirst {
+        println "Generating test data files..."
+    }
+
+    doLast {
+        println "Test data generation complete!"
+        println "Files created in josh-tests/test-data/"
     }
 }
 
