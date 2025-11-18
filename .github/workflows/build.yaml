@@ -101,6 +101,105 @@ jobs:
           java-version: '21'
       - name: Run tests
         run: ./gradlew test
+  testConformance:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Conformance Tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
+      - name: Download fat jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fatJar
+      - name: Setup fat jar
+        run: |
+          mkdir -p build/libs
+          mv joshsim-fat.jar build/libs/
+      - name: Generate external test data
+        run: ./gradlew generateTestData
+      - name: Run conformance tests
+        id: conformance_tests
+        continue-on-error: true
+        run: |
+          ./gradlew joshConformanceTest --no-daemon 2>&1 | tee conformance_test_output.txt
+      - name: Parse test results
+        id: parse_results
+        if: always()
+        run: |
+          TOTAL=$(find build/test-results/test -name "*.xml" -exec grep -o 'tests="[0-9]*"' {} \; | grep -o '[0-9]*' | awk '{s+=$1} END {print s}')
+          FAILED=$(find build/test-results/test -name "*.xml" -exec grep -o 'failures="[0-9]*"' {} \; | grep -o '[0-9]*' | awk '{s+=$1} END {print s}')
+          ERRORS=$(find build/test-results/test -name "*.xml" -exec grep -o 'errors="[0-9]*"' {} \; | grep -o '[0-9]*' | awk '{s+=$1} END {print s}')
+          PASSED=$((TOTAL - FAILED - ERRORS))
+          PERCENT=$((PASSED * 100 / TOTAL))
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$((FAILED + ERRORS))" >> $GITHUB_OUTPUT
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🧪 Conformance Test Results
+          | Metric | Value |
+          |--------|-------|
+          | **Total Tests** | $TOTAL |
+          | **✅ Passed** | $PASSED ($PERCENT%) |
+          | **❌ Failed** | $((FAILED + ERRORS)) |
+          EOF
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-test-results
+          path: |
+            build/test-results/test/*.xml
+            build/reports/tests/test/
+            conformance_test_output.txt
+            TEST_SUITE_STATUS.md
+            .claude/tasks/*.md
+          retention-days: 30
+      - name: Publish Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Conformance Test Report
+          path: 'build/test-results/test/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const passed = ${{ steps.parse_results.outputs.passed }};
+            const failed = ${{ steps.parse_results.outputs.failed }};
+            const total = ${{ steps.parse_results.outputs.total }};
+            const percent = ${{ steps.parse_results.outputs.percent }};
+            const emoji = percent >= 90 ? '🎉' : percent >= 75 ? '✅' : percent >= 50 ? '⚠️' : '❌';
+            const body = `## ${emoji} Conformance Test Results\n\n| Metric | Value |\n|--------|-------|\n| **Total Tests** | ${total} |\n| **Passed** | ${passed} (${percent}%) |\n| **Failed** | ${failed} |\n\n${failed > 0 ? '### ⚠️ Some tests are failing\n\nSee the [detailed test report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more information.' : '### 🎉 All conformance tests passing!'}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      - name: Set job status
+        if: always()
+        run: |
+          FAILED=${{ steps.parse_results.outputs.failed }}
+          if [ "$FAILED" -gt 0 ]; then
+            echo "::warning::$FAILED conformance tests failed"
+          else
+            echo "::notice::All conformance tests passed!"
+          fi
   testPreprocessing:
     needs: buildJava
     environment: Build

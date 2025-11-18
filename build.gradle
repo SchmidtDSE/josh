@@ -110,6 +110,12 @@ test {
     events "skipped", "failed"
     exceptionFormat = "full"
   }
+
+  // Exclude conformance tests from main test task
+  // Conformance tests run separately in their own workflow
+  filter {
+    excludeTestsMatching "org.joshsim.conformance.*"
+  }
 }
 
 // JUnit resource assets for tests.
