@@ -19,19 +19,21 @@ end simulation
 
 start patch Default
 
-  # Test precedence: multiplication before addition
-  # 2 m + 3 m * 4 m = 2 m + 12 squaremeters = should use standard precedence
+  # Test precedence: multiplication before addition (with dimensionless)
+  # 2 m + 3 count * 4 m = 2 m + 12 m = 14 m
   value1.init = 2 m
-  value2.init = 3 m
+  value2.init = 3 count
   value3.init = 4 m
   result1.init = value1 + value2 * value3
-  assert.multiplicationFirst.init = result1 == 14 squaremeters
+  assert.multiplicationFirst.init = result1 == 14 m
 
   # Test with parentheses: addition before multiplication
-  # (2 m + 3 m) * 4 m = 5 m * 4 m = 20 squaremeters
-  sum.init = value1 + value2
+  # (2 count + 3 count) * 4 m = 5 count * 4 m = 20 m
+  dimValue1.init = 2 count
+  dimValue2.init = 3 count
+  sum.init = dimValue1 + dimValue2
   result2.init = sum * value3
-  assert.parenthesesForce.init = result2 == 20 squaremeters
+  assert.parenthesesForce.init = result2 == 20 m
 
   # Test division before subtraction
   # 20 m - 10 m / 2 count = 20 m - 5 m = 15 m
@@ -47,15 +49,32 @@ start patch Default
   result4.init = diff / divisor2
   assert.parenthesesSubtract.init = result4 == 5 m
 
+  # Test multiplication creating compound units
+  # 2 m * 3 m = 6 m * m (compound units)
+  length.init = 2 m
+  width.init = 3 m
+  area.init = length * width
+  expectedArea.init = 6 m * 1 m
+  assert.compoundUnits.init = area == expectedArea
+
+  # Test division simplifying compound units
+  # (2 m * 3 m) / 2 m = 6 m*m / 2 m = 3 m
+  simplifiedWidth.init = area / length
+  assert.simplification.init = simplifiedWidth == 3 m
+
+  # Test precedence with compound units
+  # 2 m * 3 m + 4 m * 5 m = 6 m*m + 20 m*m = 26 m*m
+  area1.init = 2 m * 3 m
+  area2.init = 4 m * 5 m
+  totalArea.init = area1 + area2
+  expectedTotalArea.init = 26 m * 1 m
+  assert.compoundAddition.init = totalArea == expectedTotalArea
+
 end patch
 
 start unit m
   alias meter
   alias meters
-end unit
-
-start unit squaremeters
-  alias squaremeter
 end unit
 
 start unit km
