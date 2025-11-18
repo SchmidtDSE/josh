@@ -341,6 +341,23 @@ start unit inch
 end unit
 ```
 
+#### Dimensional Analysis and Compound Units
+
+**IMPORTANT**: Josh fully supports dimensional analysis but does NOT have pre-defined compound units.
+
+**What IS Supported:**
+- Arithmetic operations automatically create compound units
+- `4 m * 3 m` produces `12` with units `"m * m"` (NOT `"squaremeters"`)
+- `100 m / 10 s` produces `10` with units `"m / s"`
+- `side ^ 2` where side is `5 m` produces `25` with units `"m * m"`
+- Compound units are automatically simplified (e.g., `(m * m) / m` becomes `m`)
+
+**What IS NOT Supported:**
+- Pre-defined compound unit names like `squaremeters`, `cubicmeters`, `metersPerSecond`, etc.
+- Automatic recognition that `m * m` equals `squaremeters`
+- Conversions from compound units to named units
+- Any standard library of compound units
+
 ### Identifiers and Attributes
 
 Identifiers follow the pattern `[A-Za-z][A-Za-z0-9]*` and can be chained with dot notation:

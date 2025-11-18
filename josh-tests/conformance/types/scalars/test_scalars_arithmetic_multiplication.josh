@@ -1,7 +1,7 @@
 # @category: types
 # @subcategory: scalars
 # @priority: high
-# @description: Test scalar multiplication and division to create derived units (area, density)
+# @description: Test scalar multiplication and division to create derived compound units (area, volume, density)
 
 start simulation ScalarsArithmeticMultiplication
 
@@ -20,27 +20,53 @@ end simulation
 start patch Default
 
   # Test area calculation (length * width)
+  # Result has compound units "m * m"
   length.init = 4 m
   width.init = 3 m
   area.init = length * width
-  assert.areaCalculation.init = area == 12 squaremeters
+
+  # Compare using compound notation
+  expectedArea.init = 12 m * 1 m
+  assert.areaCalculation.init = area == expectedArea
 
   # Test volume calculation (area * height)
-  baseArea.init = 10 squaremeters
+  # Create base area using compound notation
+  baseAreaLength.init = 10 m
+  baseAreaWidth.init = 1 m
+  baseArea.init = baseAreaLength * baseAreaWidth  # units: "m * m"
+
   height.init = 2 m
-  volume.init = baseArea * height
-  assert.volumeCalculation.init = volume == 20 cubicmeters
+  volume.init = baseArea * height  # units: "m * m * m"
+
+  # Create expected value with matching compound units
+  expectedVolume.init = 20 m * 1 m * 1 m
+  assert.volumeCalculation.init = volume == expectedVolume
 
   # Test density calculation (mass / volume)
   mass.init = 100 kg
-  containerVolume.init = 10 cubicmeters
-  density.init = mass / containerVolume
-  assert.densityCalculation.init = density == 10 kgpercubicmeter
+
+  # Create container volume using compound notation
+  containerLength.init = 10 m
+  containerWidth.init = 1 m
+  containerHeight.init = 1 m
+  containerVolume.init = containerLength * containerWidth * containerHeight  # units: "m * m * m"
+
+  density.init = mass / containerVolume  # units: "kg / (m * m * m)"
+
+  # Create expected density with matching compound units
+  expectedDensityNumerator.init = 10 kg
+  expectedDensityDenominator.init = 1 m * 1 m * 1 m
+  expectedDensity.init = expectedDensityNumerator / expectedDensityDenominator
+  assert.densityCalculation.init = density == expectedDensity
 
   # Test dividing area by length to get width
-  totalArea.init = 20 squaremeters
+  # Create total area using compound notation
+  totalAreaLength.init = 20 m
+  totalAreaWidth.init = 1 m
+  totalArea.init = totalAreaLength * totalAreaWidth  # units: "m * m"
+
   sideLength.init = 4 m
-  calculatedWidth.init = totalArea / sideLength
+  calculatedWidth.init = totalArea / sideLength  # units: "m * m / m" -> simplifies to "m"
   assert.widthCalculation.init = calculatedWidth == 5 m
 
 end patch
@@ -50,21 +76,9 @@ start unit m
   alias meters
 end unit
 
-start unit squaremeters
-  alias squaremeter
-end unit
-
-start unit cubicmeters
-  alias cubicmeter
-end unit
-
 start unit kg
   alias kilogram
   alias kilograms
-end unit
-
-start unit kgpercubicmeter
-  alias kilogramspercubicmeter
 end unit
 
 start unit km

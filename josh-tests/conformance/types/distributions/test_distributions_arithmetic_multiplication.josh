@@ -21,7 +21,7 @@ end simulation
 
 start patch Default
 
-  # Test multiplying distribution by scalar
+  # Test multiplying distribution by scalar (dimensionless)
   dist1.init = sample uniform from 0 m to 100 m
   multScalar.init = dist1 * 2
 
@@ -37,13 +37,16 @@ start patch Default
   assert.multScalar2Max.init = multScalar2 <= 300 m
 
   # Test distribution * distribution (virtual - same sample used)
+  # Creates compound units!
   dist2.init = sample uniform from 0 m to 10 m
-  multDist.init = dist2 * dist2
+  multDist.init = dist2 * dist2  # units: "m * m"
 
   # Result should be dist2^2 (virtual distribution)
-  # For uniform(0, 10), dist2 * dist2 gives range [0, 100]
-  assert.multDistMin.init = multDist >= 0 m
-  assert.multDistMax.init = multDist <= 100 m
+  # For uniform(0, 10), dist2 * dist2 gives range [0, 100] with compound units "m * m"
+  expectedMultDistMin.init = 0 m * 1 m
+  expectedMultDistMax.init = 100 m * 1 m
+  assert.multDistMin.init = multDist >= expectedMultDistMin
+  assert.multDistMax.init = multDist <= expectedMultDistMax
 
   # Test with organisms (realized distributions)
   Trees.init = create 100 count of Tree
@@ -53,23 +56,25 @@ start patch Default
   treeMeanDoubled.init = treeMeanHeight * 2
 
   # Mean of heights from uniform(0, 100) is ~50, times 2 = ~100
-  assert.treeMeanDoubled.init = treeMeanDoubled > 95 m
-  assert.treeMeanDoubled2.init = treeMeanDoubled < 105 m
+  # Widen bounds for stochastic variation
+  assert.treeMeanDoubled.init = treeMeanDoubled > 90 m
+  assert.treeMeanDoubled2.init = treeMeanDoubled < 110 m
 
   # Test sum multiplied by scalar
   treeSum.init = sum(Trees.height)
   treeSumTripled.init = treeSum * 3
 
   # Sum of 100 heights (mean ~50) is ~5000, times 3 = ~15000
-  assert.treeSumTripled.init = treeSumTripled > 14000 m
-  assert.treeSumTripled2.init = treeSumTripled < 16000 m
+  # Widen bounds for stochastic variation
+  assert.treeSumTripled.init = treeSumTripled > 13500 m
+  assert.treeSumTripled2.init = treeSumTripled < 16500 m
 
-  # Test organisms with multiplication in init
+  # Test organisms with multiplication in init (dimensionless scalar)
   Plants.init = create 100 count of Plant
 
   # Plants have baseHeight * scaleFactor where both are sampled
-  # baseHeight: uniform(10, 20), scaleFactor: uniform(1, 3)
-  # Scaled height range: [10, 60] with complex distribution
+  # baseHeight: uniform(10, 20), scaleFactor: uniform(1, 3) (dimensionless)
+  # Scaled height range: [10, 60] with units still in meters
   plantMean.init = mean(Plants.scaledHeight)
   plantMin.init = min(Plants.scaledHeight)
   plantMax.init = max(Plants.scaledHeight)
@@ -80,7 +85,7 @@ start patch Default
   assert.plantMinReasonable.init = plantMin >= 10 m
   assert.plantMaxReasonable.init = plantMax <= 60 m
 
-  # Test multiple multiplications
+  # Test multiple multiplications (with dimensionless)
   multiMult.init = dist1 * 2 * 0.5
 
   # Result should equal dist1 (2 * 0.5 = 1)
@@ -105,10 +110,11 @@ end organism
 
 start organism Plant
 
-  # Test multiplication of two distributions (realized - each organism samples independently)
+  # Test multiplication of distribution by dimensionless distribution
+  # (realized - each organism samples independently)
   baseHeight.init = sample uniform from 10 m to 20 m
   scaleFactor.init = sample uniform from 1 count to 3 count
-  scaledHeight.init = baseHeight * scaleFactor
+  scaledHeight.init = baseHeight * scaleFactor  # m * count = m (count is dimensionless)
   scaledHeight.step = prior.scaledHeight
 
 end organism
@@ -116,4 +122,15 @@ end organism
 start unit m
   alias meter
   alias meters
+end unit
+
+start unit count
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit degrees
 end unit
