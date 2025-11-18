@@ -136,7 +136,8 @@ public class JoshSimFacade {
         simulationName,
         callback,
         serialPatches,
-        outputSteps
+        outputSteps,
+        Optional.empty()
     );
   }
 

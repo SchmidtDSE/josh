@@ -95,7 +95,8 @@ class JoshConformanceTest {
   private void runJoshTest(TestInfo test) throws Exception {
     ProcessBuilder pb = new ProcessBuilder(
         "java", "-jar", JOSH_JAR,
-        "run", test.path.toString(), test.simulationName
+        "run", test.path.toString(), test.simulationName,
+        "--seed", "42"
     );
 
     pb.redirectErrorStream(true);

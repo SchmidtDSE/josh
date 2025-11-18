@@ -319,7 +319,8 @@ public class JoshJsSimFacade {
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),
         true,
-        parsedOutputSteps
+        parsedOutputSteps,
+        Optional.empty()
     );
   }
 

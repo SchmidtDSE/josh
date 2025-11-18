@@ -83,11 +83,13 @@ public class JoshSimFacadeUtil {
    * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
+   * @param seed Optional seed for random number generation. If present, provides deterministic
+   *     random behavior for reproducible testing. If empty, uses system time for truly random behavior.
    */
   public static void runSimulation(EngineValueFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps, Optional<Long> seed) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -106,6 +108,10 @@ public class JoshSimFacadeUtil {
     BridgeGetter bridgeGetter = program.getBridgeGetter();
     if (bridgeGetter != null) {
       bridgeGetter.setBridge(bridge);
+      // Set seed for deterministic random number generation if provided
+      if (seed.isPresent()) {
+        bridgeGetter.setSeed(seed);
+      }
     }
 
     // Create debug output writer using the new unified system
@@ -190,7 +196,7 @@ public class JoshSimFacadeUtil {
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches) {
     runSimulation(valueFactory, geometryFactory, inputOutputLayer, program,
-        simulationName, callback, serialPatches, Optional.empty());
+        simulationName, callback, serialPatches, Optional.empty(), Optional.empty());
   }
 
   /**

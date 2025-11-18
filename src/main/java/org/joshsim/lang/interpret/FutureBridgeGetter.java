@@ -36,6 +36,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
   private Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter;
+  private Optional<Long> seed;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -50,6 +51,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
     this.debugWriter = Optional.empty();
+    this.seed = Optional.empty();
   }
 
   /**
@@ -135,6 +137,26 @@ public class FutureBridgeGetter implements BridgeGetter {
   @Override
   public Optional<org.joshsim.lang.io.CombinedTextWriter> getDebugWriter() {
     return debugWriter;
+  }
+
+  /**
+   * Sets the seed for random number generation.
+   *
+   * @param seed Optional seed value for deterministic random number generation.
+   */
+  @Override
+  public void setSeed(Optional<Long> seed) {
+    this.seed = seed;
+  }
+
+  /**
+   * Gets the seed for random number generation.
+   *
+   * @return Optional seed value. Empty if no seed has been set.
+   */
+  @Override
+  public Optional<Long> getSeed() {
+    return seed;
   }
 
   @Override

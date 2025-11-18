@@ -189,6 +189,13 @@ public class RunCommand implements Callable<Integer> {
   )
   private String uploadDataPath = "";
 
+  @Option(
+      names = {"--seed"},
+      description = "Seed for random number generation (for reproducible testing)",
+      required = false
+  )
+  private Long seed;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -426,7 +433,8 @@ public class RunCommand implements Callable<Integer> {
               }
             },
             serialPatches,
-            parsedOutputSteps
+            parsedOutputSteps,
+            Optional.ofNullable(seed)
         );
 
         // Report replicate completion

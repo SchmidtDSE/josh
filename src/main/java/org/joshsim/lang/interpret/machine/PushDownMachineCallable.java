@@ -37,7 +37,8 @@ public class PushDownMachineCallable implements CompiledCallable {
     EventHandlerMachine machine = new SingleThreadEventHandlerMachine(
         bridgeGetter.get(),
         scope,
-        bridgeGetter.getDebugWriter()
+        bridgeGetter.getDebugWriter(),
+        bridgeGetter.getSeed()
     );
     handlerAction.apply(machine);
     return machine.getResult();
