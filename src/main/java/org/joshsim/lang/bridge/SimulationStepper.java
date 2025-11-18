@@ -96,6 +96,12 @@ public class SimulationStepper {
       Iterable<MutableEntity> patches = target.getCurrentPatches();
 
       if (isFirstStep) {
+        // Run constant substep on simulation to resolve attributes without event suffixes
+        // These are typically constant values like "fire.trigger.coverThreshold = 15%"
+        // This must run BEFORE init since constant values may be referenced during init
+        // We only resolve simulation attributes, not organisms
+        resolveConstantAttributes(simulation);
+
         performStream(simulation, "init");
         performStream(patches, "init", serialPatches);
       }
@@ -357,6 +363,33 @@ public class SimulationStepper {
    */
   private void saveFrozenPatchToReplicate(Entity frozen, long currentStep) {
     target.getReplicate().saveFrozenPatch(frozen, currentStep);
+  }
+
+  /**
+   * Resolve constant attributes on simulation entity.
+   *
+   * <p>This method resolves attributes with "constant" event handlers (attributes
+   * without .init/.start/.step/.end suffixes) on the simulation entity. These are
+   * typically constant values that need to be available before init runs.</p>
+   *
+   * <p>Unlike performStream(), this method does NOT discover or process organisms,
+   * avoiding potential lock/unlock issues with parallel processing.</p>
+   *
+   * @param simulation the simulation entity to resolve constant attributes on
+   */
+  private void resolveConstantAttributes(MutableEntity simulation) {
+    // Start constant substep
+    simulation.startSubstep("constant");
+
+    // Resolve all attributes - this will trigger handlers for constant events
+    Map<String, Integer> indexMap = simulation.getAttributeNameToIndex();
+    int numAttributes = indexMap.size();
+    for (int i = 0; i < numAttributes; i++) {
+      simulation.getAttributeValue(i);
+    }
+
+    // End constant substep (no organism discovery needed)
+    simulation.endSubstep();
   }
 
 }
