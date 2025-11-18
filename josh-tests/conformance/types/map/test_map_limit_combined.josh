@@ -131,7 +131,6 @@ start unit C
   alias degC
 end unit
 
-start unit %
-  alias percent
+start unit percent
   alias percentage
 end unit

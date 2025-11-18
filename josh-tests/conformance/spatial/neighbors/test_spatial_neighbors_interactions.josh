@@ -63,7 +63,7 @@ start organism Tree
   # Test density-dependent behavior
   neighborDensity.step = count(Tree within 15 m radial at prior)
   crowded.step:if(current.neighborDensity > 4 count) = 1 count
-  crowded.step:else = 0 count
+  crowded.step:if(current.neighborDensity <= 4 count) = 0 count
 
   # Assert crowding is detected
   assert.crowdingDetected.step:if(meta.stepCount == 2 count) = (current.crowded == 1 count) or (current.crowded == 0 count)
