@@ -1002,4 +1002,108 @@ public class SingleThreadEventHandlerMachineTest {
     Distribution result = machine.getResult().getAsDistribution();
     assertEquals(2, result.getSize().get());
   }
+
+  @Test
+  void withLocalBinding_shouldMakeBindingAccessibleWithinAction() {
+    // Given
+    EngineValue bindingValue = makeIntScalar(42L);
+    String bindingName = "testBinding";
+
+    // When
+    machine.withLocalBinding(bindingName, bindingValue, () -> {
+      machine.push(new ValueResolver(new EngineValueFactory(), bindingName));
+    });
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(42L), machine.getResult());
+  }
+
+  @Test
+  void withLocalBinding_shouldRemoveBindingAfterActionCompletes() {
+    // Given
+    EngineValue bindingValue = makeIntScalar(42L);
+    String bindingName = "tempBinding";
+
+    // When
+    machine.withLocalBinding(bindingName, bindingValue, () -> {
+      // Binding exists here
+      machine.push(new ValueResolver(new EngineValueFactory(), bindingName));
+    });
+
+    // After the action completes, the binding should not be accessible
+    try {
+      machine.push(new ValueResolver(new EngineValueFactory(), bindingName));
+      assertTrue(false, "Should have thrown exception for missing binding");
+    } catch (IllegalStateException e) {
+      // Expected - binding is gone after withLocalBinding completes
+      assertTrue(e.getMessage().contains("Unable to get value"));
+    }
+  }
+
+  @Test
+  void withLocalBinding_shouldRestoreScopeEvenIfActionThrows() {
+    // Given
+    EngineValue bindingValue = makeIntScalar(42L);
+    String bindingName = "testBinding";
+    EngineValue outerValue = makeIntScalar(100L);
+
+    // Set up an outer variable
+    machine.push(outerValue);
+    machine.saveLocalVariable("outerVar");
+
+    // When - action throws an exception
+    try {
+      machine.withLocalBinding(bindingName, bindingValue, () -> {
+        throw new RuntimeException("Test exception");
+      });
+      assertTrue(false, "Should have thrown RuntimeException");
+    } catch (RuntimeException e) {
+      // Expected
+      assertEquals("Test exception", e.getMessage());
+    }
+
+    // Then - outer scope should still be accessible
+    machine.push(new ValueResolver(new EngineValueFactory(), "outerVar"));
+    machine.end();
+    assertEquals(makeIntScalar(100L), machine.getResult());
+  }
+
+  @Test
+  void withLocalBinding_shouldAllowNestedBindings() {
+    // Given
+    EngineValue outer = makeIntScalar(10L);
+    EngineValue inner = makeIntScalar(20L);
+
+    // When
+    machine.withLocalBinding("outer", outer, () -> {
+      machine.withLocalBinding("inner", inner, () -> {
+        // Both bindings should be accessible
+        machine.push(new ValueResolver(new EngineValueFactory(), "outer"));
+        machine.push(new ValueResolver(new EngineValueFactory(), "inner"));
+        machine.add();
+      });
+    });
+
+    // Then
+    machine.end();
+    assertEquals(makeIntScalar(30L), machine.getResult());
+  }
+
+  @Test
+  void peek_shouldReturnTopValueWithoutPopping() {
+    // Given
+    EngineValue value = makeIntScalar(42L);
+    machine.push(value);
+
+    // When
+    EngineValue peeked = machine.peek();
+
+    // Then
+    assertEquals(value, peeked);
+
+    // Verify the value is still on the stack
+    machine.end();
+    assertEquals(value, machine.getResult());
+  }
 }

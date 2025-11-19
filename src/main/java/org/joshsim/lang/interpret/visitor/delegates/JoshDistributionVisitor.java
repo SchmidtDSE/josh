@@ -51,7 +51,16 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
 
     EventHandlerAction action = (machine) -> {
       subjectAction.apply(machine);
-      selectionAction.apply(machine);
+
+      // Extract type name and bind to local scope for filter expressions
+      EngineValue subject = machine.peek();
+      String typeName = subject.getLanguageType().getRootType();
+
+      // Evaluate selection with type name bound to subject distribution
+      machine.withLocalBinding(typeName, subject, () -> {
+        selectionAction.apply(machine);
+      });
+
       return machine.slice();
     };
 

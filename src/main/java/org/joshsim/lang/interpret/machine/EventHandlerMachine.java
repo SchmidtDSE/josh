@@ -585,4 +585,26 @@ public interface EventHandlerMachine {
    * @return Reference to this machine for chaining.
    */
   EventHandlerMachine debugVariadic(int count);
+
+  /**
+   * Execute an action with a temporary local binding.
+   *
+   * <p>Creates a nested local scope with the specified name-value binding, executes the action
+   * within that scope, and then restores the original scope. This is useful for filter
+   * expressions where the organism type name needs to be temporarily bound to the collection
+   * being filtered.</p>
+   *
+   * @param name The variable name to bind
+   * @param value The value to bind
+   * @param action The action to execute with the binding in scope
+   */
+  void withLocalBinding(String name, EngineValue value, Runnable action);
+
+  /**
+   * Peek at the top value on the stack without removing it.
+   *
+   * @return The value at the top of the stack.
+   * @throws IllegalStateException if the stack is empty.
+   */
+  EngineValue peek();
 }

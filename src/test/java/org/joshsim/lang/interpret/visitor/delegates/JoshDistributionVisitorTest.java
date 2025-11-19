@@ -74,12 +74,21 @@ class JoshDistributionVisitorTest {
     assertNotNull(action);
 
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
+    EngineValue mockSubject = mock(EngineValue.class);
+    org.joshsim.engine.value.type.LanguageType mockType =
+        mock(org.joshsim.engine.value.type.LanguageType.class);
+
+    when(mockMachine.peek()).thenReturn(mockSubject);
+    when(mockSubject.getLanguageType()).thenReturn(mockType);
+    when(mockType.getRootType()).thenReturn("Tree");
     when(mockMachine.slice()).thenReturn(mockMachine);
 
     action.apply(mockMachine);
 
     verify(subjectAction).apply(mockMachine);
-    verify(selectionAction).apply(mockMachine);
+    verify(mockMachine).peek();
+    verify(mockMachine).withLocalBinding(org.mockito.ArgumentMatchers.eq("Tree"),
+        org.mockito.ArgumentMatchers.eq(mockSubject), org.mockito.ArgumentMatchers.any());
     verify(mockMachine).slice();
   }
 
