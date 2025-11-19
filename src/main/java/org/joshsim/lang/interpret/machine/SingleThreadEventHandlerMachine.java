@@ -54,7 +54,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
-  private final LocalScope scope;
+  private LocalScope scope;
   private final EngineValueFactory valueFactory;
   private final Random random;
   private final boolean favorBigDecimal;
@@ -1147,6 +1147,44 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     // Write using the single-argument writeDebug
     return writeDebug(message);
+  }
+
+  /**
+   * Execute an action with a temporary local binding.
+   *
+   * <p>Creates a nested local scope with the specified name-value binding, executes the action
+   * within that scope, and then restores the original scope. This is useful for filter
+   * expressions where the organism type name needs to be temporarily bound to the collection
+   * being filtered.</p>
+   *
+   * @param name The variable name to bind
+   * @param value The value to bind
+   * @param action The action to execute with the binding in scope
+   */
+  public void withLocalBinding(String name, EngineValue value, Runnable action) {
+    // Create nested local scope (allow shadowing parent scope variables)
+    LocalScope nestedScope = new LocalScope(scope);
+    nestedScope.defineConstantAllowShadowing(name, value);
+
+    // Temporarily switch to nested scope
+    LocalScope originalScope = this.scope;
+    this.scope = nestedScope;
+
+    try {
+      action.run();
+    } finally {
+      // Restore original scope
+      this.scope = originalScope;
+    }
+  }
+
+  /**
+   * Peek at the top value on the stack without popping it.
+   *
+   * @return The value at the top of the stack.
+   */
+  public EngineValue peek() {
+    return memory.peek();
   }
 
 }
