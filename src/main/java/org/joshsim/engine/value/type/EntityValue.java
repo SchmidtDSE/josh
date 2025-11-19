@@ -175,6 +175,21 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical AND is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical OR is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical XOR is not defined.");
+  }
+
+  @Override
   protected boolean canBePower() {
     return false;
   }

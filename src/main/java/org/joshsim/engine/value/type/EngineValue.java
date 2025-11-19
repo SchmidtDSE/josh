@@ -443,6 +443,57 @@ public abstract class EngineValue {
   }
 
   /**
+   * Perform logical AND with another value.
+   *
+   * <p>Performs logical AND after type compatibility. If either value is a Distribution, the result
+   * will be a Distribution of boolean values with element-wise AND operation.</p>
+   *
+   * @param other the value to AND with this value.
+   * @return the result of the logical AND operation.
+   */
+  public EngineValue and(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      return other.unsafeAnd(this);
+    } else {
+      return this.unsafeAnd(other);
+    }
+  }
+
+  /**
+   * Perform logical OR with another value.
+   *
+   * <p>Performs logical OR after type compatibility. If either value is a Distribution, the result
+   * will be a Distribution of boolean values with element-wise OR operation.</p>
+   *
+   * @param other the value to OR with this value.
+   * @return the result of the logical OR operation.
+   */
+  public EngineValue or(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      return other.unsafeOr(this);
+    } else {
+      return this.unsafeOr(other);
+    }
+  }
+
+  /**
+   * Perform logical XOR with another value.
+   *
+   * <p>Performs logical XOR after type compatibility. If either value is a Distribution, the result
+   * will be a Distribution of boolean values with element-wise XOR operation.</p>
+   *
+   * @param other the value to XOR with this value.
+   * @return the result of the logical XOR operation.
+   */
+  public EngineValue xor(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      return other.unsafeXor(this);
+    } else {
+      return this.unsafeXor(other);
+    }
+  }
+
+  /**
    * Add this value to another value assuming that the units and type are compatible.
    *
    * @param other the other value.
@@ -587,6 +638,33 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeNotEqualTo(EngineValue other);
+
+  /**
+   * Perform logical AND with another value assuming type compatibility.
+   *
+   * @param other the other value.
+   * @return the result of the logical AND.
+   * @throws RuntimeException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeAnd(EngineValue other);
+
+  /**
+   * Perform logical OR with another value assuming type compatibility.
+   *
+   * @param other the other value.
+   * @return the result of the logical OR.
+   * @throws RuntimeException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeOr(EngineValue other);
+
+  /**
+   * Perform logical XOR with another value assuming type compatibility.
+   *
+   * @param other the other value.
+   * @return the result of the logical XOR.
+   * @throws RuntimeException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeXor(EngineValue other);
 
   /**
    * Determine if this value can be used to raise another value to a power.
