@@ -67,7 +67,7 @@ class JoshConformanceTest {
     if (!Files.exists(TEST_ROOT)) {
       return Stream.empty();
     }
-    
+
     return Files.walk(TEST_ROOT)
         .filter(p -> p.getFileName().toString().startsWith("test_"))
         .filter(p -> p.toString().endsWith(".josh"))

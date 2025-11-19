@@ -37,7 +37,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import ucar.ma2.ArrayFloat;
 import ucar.ma2.DataType;
-import ucar.ma2.Index;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
