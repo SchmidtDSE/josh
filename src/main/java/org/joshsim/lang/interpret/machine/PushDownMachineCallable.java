@@ -38,7 +38,7 @@ public class PushDownMachineCallable implements CompiledCallable {
         bridgeGetter.get(),
         scope,
         bridgeGetter.getDebugWriter(),
-        bridgeGetter.getSeed()
+        bridgeGetter.getSharedRandom()
     );
     handlerAction.apply(machine);
     return machine.getResult();
