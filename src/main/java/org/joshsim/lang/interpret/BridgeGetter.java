@@ -73,9 +73,35 @@ public interface BridgeGetter {
    * Gets the seed for random number generation.
    *
    * @return Optional seed value. Empty if no seed has been set (truly random behavior).
+   * @deprecated Use getSharedRandom() instead to ensure proper random state sharing across
+   *     organisms. This method is deprecated because passing seeds leads to each organism
+   *     creating its own Random instance, causing all organisms to generate identical values.
    */
+  @Deprecated
   default Optional<Long> getSeed() {
     return Optional.empty();
+  }
+
+  /**
+   * Gets the shared Random instance for random number generation.
+   *
+   * <p>This method provides access to a shared Random instance that is used consistently
+   * across all organisms and event handlers in the simulation. This ensures that random
+   * values are drawn from a sequential stream rather than each organism creating its own
+   * Random instance and drawing the same first value.</p>
+   *
+   * <p>For seeded simulations (via --seed flag), this returns a Random instance initialized
+   * with the provided seed, ensuring deterministic behavior. For unseeded simulations, this
+   * returns a Random instance initialized with system time.</p>
+   *
+   * <p>Thread safety: The returned Random instance may be wrapped in a synchronized wrapper
+   * if thread-safe access is required.</p>
+   *
+   * @return The shared Random instance for this simulation.
+   * @throws UnsupportedOperationException if this implementation does not support shared Random.
+   */
+  default java.util.Random getSharedRandom() {
+    throw new UnsupportedOperationException("getSharedRandom not supported by this implementation");
   }
 
 }
