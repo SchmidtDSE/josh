@@ -155,7 +155,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.greaterThan(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -163,7 +164,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.greaterThanOrEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -171,7 +173,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.lessThan(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -179,7 +182,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.lessThanOrEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -187,7 +191,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.equalTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -195,7 +200,8 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.notEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    // Comparison operators return boolean values with no units per language spec
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override

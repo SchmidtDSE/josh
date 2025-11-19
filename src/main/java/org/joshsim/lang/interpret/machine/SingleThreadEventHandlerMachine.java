@@ -274,10 +274,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine and() {
-    startConversionGroup();
-    EngineValue right = pop();
-    EngineValue left = pop();
-    endConversionGroup();
+    // Logical operators expect boolean operands - no conversion needed
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
 
     boolean result = right.getAsBoolean() && left.getAsBoolean();
     EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
@@ -288,10 +287,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine or() {
-    startConversionGroup();
-    EngineValue right = pop();
-    EngineValue left = pop();
-    endConversionGroup();
+    // Logical operators expect boolean operands - no conversion needed
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
 
     boolean result = right.getAsBoolean() || left.getAsBoolean();
     EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
@@ -302,10 +300,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine xor() {
-    startConversionGroup();
-    EngineValue right = pop();
-    EngineValue left = pop();
-    endConversionGroup();
+    // Logical operators expect boolean operands - no conversion needed
+    EngineValue right = memory.pop();
+    EngineValue left = memory.pop();
 
     boolean result = right.getAsBoolean() ^ left.getAsBoolean();
     EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
@@ -1046,6 +1043,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     inConversionGroup = false;
+    conversionTarget = Optional.empty();  // Clear stale conversion target
   }
 
   /**
