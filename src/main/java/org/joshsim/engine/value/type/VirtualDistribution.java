@@ -278,4 +278,22 @@ public abstract class VirtualDistribution extends Distribution {
     return realized.unsafeNotEqualTo(other);
   }
 
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeAnd(other);
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeOr(other);
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeXor(other);
+  }
+
 }

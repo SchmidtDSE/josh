@@ -231,6 +231,24 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return new BooleanScalar(caster, result, Units.EMPTY);
   }
 
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    boolean result = this.getAsBoolean() && other.getAsBoolean();
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    boolean result = this.getAsBoolean() || other.getAsBoolean();
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    boolean result = this.getAsBoolean() ^ other.getAsBoolean();
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
   /**
    * Check if provided EngineValue is compatible with the current Scalar for arithmetic operations.
    *

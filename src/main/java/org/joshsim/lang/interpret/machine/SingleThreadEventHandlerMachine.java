@@ -274,39 +274,36 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine and() {
-    // Logical operators expect boolean operands - no conversion needed
+    // Logical AND - delegates to value type for proper distribution handling
     EngineValue right = memory.pop();
     EngineValue left = memory.pop();
 
-    boolean result = right.getAsBoolean() && left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.and(right);
+    memory.push(result);
 
     return this;
   }
 
   @Override
   public EventHandlerMachine or() {
-    // Logical operators expect boolean operands - no conversion needed
+    // Logical OR - delegates to value type for proper distribution handling
     EngineValue right = memory.pop();
     EngineValue left = memory.pop();
 
-    boolean result = right.getAsBoolean() || left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.or(right);
+    memory.push(result);
 
     return this;
   }
 
   @Override
   public EventHandlerMachine xor() {
-    // Logical operators expect boolean operands - no conversion needed
+    // Logical XOR - delegates to value type for proper distribution handling
     EngineValue right = memory.pop();
     EngineValue left = memory.pop();
 
-    boolean result = right.getAsBoolean() ^ left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.xor(right);
+    memory.push(result);
 
     return this;
   }
