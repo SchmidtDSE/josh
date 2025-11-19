@@ -135,6 +135,7 @@ expression: unitsValue # simpleExpression
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
+  | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | left=expression op=(AND_ | OR_ | XOR_) right=expression # logicalExpression
   | left=expression CONCAT_ right=expression # concatExpression
   | LPAREN_ expression RPAREN_ # parenExpression
@@ -150,7 +151,6 @@ expression: unitsValue # simpleExpression
   | CREATE_ target=identifier # createSingleExpression
   | CREATE_ count=expression OF_ target=identifier # createVariableExpression
   | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
-  | left=expression op=(NEQ_ | GT_ | LT_ | EQEQ_ | LTEQ_ | GTEQ_) right=expression # condition
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;
 

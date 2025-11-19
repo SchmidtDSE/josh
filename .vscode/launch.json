@@ -90,6 +90,22 @@
         "-Xmx2g"
       ],
       "envFile": "${workspaceFolder}/.devcontainer/.env"
+    },
+    {
+      "type": "java",
+      "name": "Debug test_distributions_sum",
+      "request": "launch",
+      "projectName": "josh",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "args": [
+          "run",
+          "josh-tests/conformance/types/distributions/test_distributions_sum.josh",
+          "DistributionsSum",
+          "--seed",
+          "42"
+      ],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.devcontainer/.env"
     }
   ]
 }
