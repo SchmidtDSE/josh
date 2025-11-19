@@ -8,6 +8,7 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Optional;
+import java.util.Random;
 import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
@@ -19,6 +20,7 @@ import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.precompute.JshdExternalGetter;
+import org.joshsim.util.SynchronizedRandom;
 
 /**
  * BridgeGetter implementation that builds and caches using future simulation details.
@@ -37,6 +39,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<InputOutputLayer> inputOutputLayer;
   private Optional<org.joshsim.lang.io.CombinedTextWriter> debugWriter;
   private Optional<Long> seed;
+  private Random sharedRandom;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -52,6 +55,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.inputOutputLayer = Optional.empty();
     this.debugWriter = Optional.empty();
     this.seed = Optional.empty();
+    this.sharedRandom = null;
   }
 
   /**
@@ -142,21 +146,55 @@ public class FutureBridgeGetter implements BridgeGetter {
   /**
    * Sets the seed for random number generation.
    *
+   * <p>This method creates a shared Random instance (SynchronizedRandom for thread safety)
+   * that will be used by all organisms and event handlers in the simulation. This ensures
+   * that random values are drawn from a sequential stream rather than each organism creating
+   * its own Random instance.</p>
+   *
    * @param seed Optional seed value for deterministic random number generation.
    */
   @Override
   public void setSeed(Optional<Long> seed) {
     this.seed = seed;
+    if (seed.isPresent()) {
+      this.sharedRandom = new SynchronizedRandom(seed.get());
+    } else {
+      this.sharedRandom = new SynchronizedRandom();
+    }
   }
 
   /**
    * Gets the seed for random number generation.
    *
    * @return Optional seed value. Empty if no seed has been set.
+   * @deprecated Use getSharedRandom() instead to ensure proper random state sharing.
    */
   @Override
+  @Deprecated
   public Optional<Long> getSeed() {
     return seed;
+  }
+
+  /**
+   * Gets the shared Random instance for random number generation.
+   *
+   * <p>This method provides access to a shared Random instance that is used consistently
+   * across all organisms and event handlers in the simulation. The instance is lazily
+   * initialized if setSeed() was not called.</p>
+   *
+   * <p>For seeded simulations, this returns a SynchronizedRandom instance initialized
+   * with the provided seed. For unseeded simulations, this returns a SynchronizedRandom
+   * instance initialized with system time.</p>
+   *
+   * @return The shared Random instance for this simulation.
+   */
+  @Override
+  public Random getSharedRandom() {
+    if (sharedRandom == null) {
+      // Lazy initialization for cases where setSeed was not called
+      sharedRandom = new SynchronizedRandom();
+    }
+    return sharedRandom;
   }
 
   @Override
