@@ -1162,9 +1162,9 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param action The action to execute with the binding in scope
    */
   public void withLocalBinding(String name, EngineValue value, Runnable action) {
-    // Create nested local scope
+    // Create nested local scope (allow shadowing parent scope variables)
     LocalScope nestedScope = new LocalScope(scope);
-    nestedScope.defineConstant(name, value);
+    nestedScope.defineConstantAllowShadowing(name, value);
 
     // Temporarily switch to nested scope
     LocalScope originalScope = this.scope;

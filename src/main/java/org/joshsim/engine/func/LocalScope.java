@@ -84,6 +84,30 @@ public class LocalScope implements Scope {
   }
 
   /**
+   * Defines a constant value in the local scope, allowing shadowing of parent scope variables.
+   *
+   * <p>This method permits binding a name that exists in a parent scope, creating a local binding
+   * that shadows the parent. This is useful for filter expressions where a collection name (e.g.,
+   * "Trees") needs to be temporarily bound to the collection being filtered, even though it already
+   * exists in the parent scope.</p>
+   *
+   * @param name The name of the constant to define within this LocalScope.
+   * @param value The value to associate with the constant within this LocalScope which will be lost
+   *     after the conclusion of this LocalScope.
+   * @throws RuntimeException if a variable with the given name already exists in THIS local scope
+   *     (prevents duplicate definitions in the same scope).
+   */
+  public void defineConstantAllowShadowing(String name, EngineValue value) {
+    if (localValues.containsKey(name)) {
+      String message =
+          String.format("The variable %s already exists in this local scope.", name);
+      throw new RuntimeException(message);
+    }
+
+    localValues.put(name, value);
+  }
+
+  /**
    * Determine what values are on this scope.
    *
    * @return all attributes within this scope.
