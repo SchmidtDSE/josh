@@ -23,6 +23,7 @@ public class EventHandlerGroupBuilder {
   private Optional<String> state = Optional.empty();
   private Optional<String> attribute = Optional.empty();
   private Optional<String> event = Optional.empty();
+  private Optional<String> sourceText = Optional.empty();
 
   /**
    * Builds and returns an EventHandlerGroup with the current configuration.
@@ -133,6 +134,26 @@ public class EventHandlerGroupBuilder {
   }
 
   /**
+   * Sets the source text for event handlers in this group.
+   *
+   * @param text the source expression text
+   * @return this builder for method chaining
+   */
+  public EventHandlerGroupBuilder withSourceText(String text) {
+    this.sourceText = Optional.of(text);
+    return this;
+  }
+
+  /**
+   * Gets the source text if set.
+   *
+   * @return Optional containing the source text if set, empty otherwise
+   */
+  public Optional<String> getSourceText() {
+    return sourceText;
+  }
+
+  /**
    * Clears all data from this builder, resetting it to its initial state.
    */
   public void clear() {
@@ -140,5 +161,6 @@ public class EventHandlerGroupBuilder {
     state = Optional.empty();
     attribute = Optional.empty();
     event = Optional.empty();
+    sourceText = Optional.empty();
   }
 }

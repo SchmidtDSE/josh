@@ -40,6 +40,30 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class ShadowingEntity implements MutableEntity {
 
+  /**
+   * Record to hold the result of handler execution.
+   *
+   * @param executed Whether a handler was executed.
+   * @param sourceText The source text from the executed handler, if available.
+   */
+  private record ExecutionResult(boolean executed, Optional<String> sourceText) {
+    /**
+     * Create an ExecutionResult indicating no handler was executed.
+     */
+    static ExecutionResult notExecuted() {
+      return new ExecutionResult(false, Optional.empty());
+    }
+
+    /**
+     * Create an ExecutionResult indicating a handler was executed.
+     *
+     * @param sourceText The source text from the executed handler.
+     */
+    static ExecutionResult executed(Optional<String> sourceText) {
+      return new ExecutionResult(true, sourceText);
+    }
+  }
+
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
 
@@ -634,12 +658,14 @@ public class ShadowingEntity implements MutableEntity {
 
     boolean executed = false;
     boolean isAssertion = false;
+    Optional<String> sourceText = Optional.empty();
     while (handlersMaybe.hasNext()) {
       EventHandlerGroup handlers = handlersMaybe.next();
-      boolean localExecuted = executeHandlers(handlers);
-      if (localExecuted) {
+      ExecutionResult execResult = executeHandlers(handlers);
+      if (execResult.executed()) {
         executed = true;
         isAssertion = handlers.isAssertion();
+        sourceText = execResult.sourceText();
         break;
       }
     }
@@ -650,7 +676,11 @@ public class ShadowingEntity implements MutableEntity {
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();
           if (!value) {
-            throw new RuntimeException("Assertion failed for " + name);
+            String errorMessage = "Assertion failed for " + name;
+            if (sourceText.isPresent()) {
+              errorMessage += "\nExpression: " + sourceText.get();
+            }
+            throw new RuntimeException(errorMessage);
           }
         }
       }
@@ -740,12 +770,14 @@ public class ShadowingEntity implements MutableEntity {
 
     boolean executed = false;
     boolean isAssertion = false;
+    Optional<String> sourceText = Optional.empty();
     while (handlersMaybe.hasNext()) {
       EventHandlerGroup handlers = handlersMaybe.next();
-      boolean localExecuted = executeHandlers(handlers);
-      if (localExecuted) {
+      ExecutionResult execResult = executeHandlers(handlers);
+      if (execResult.executed()) {
         executed = true;
         isAssertion = handlers.isAssertion();
+        sourceText = execResult.sourceText();
         break;
       }
     }
@@ -756,7 +788,11 @@ public class ShadowingEntity implements MutableEntity {
         if (result.isPresent()) {
           boolean value = result.get().getAsBoolean();
           if (!value) {
-            throw new RuntimeException("Assertion failed for " + name);
+            String errorMessage = "Assertion failed for " + name;
+            if (sourceText.isPresent()) {
+              errorMessage += "\nExpression: " + sourceText.get();
+            }
+            throw new RuntimeException(errorMessage);
           }
         }
       }
@@ -771,9 +807,9 @@ public class ShadowingEntity implements MutableEntity {
    *
    * @param handlers The set of handlers to attempt to execute, trying each conditional in order and
    *     stopping execution upon encountering one that matches.
-   * @return True if a handler was found to match and was executed. False if no handlers executed.
+   * @return ExecutionResult indicating if a handler was executed and its source text if available.
    */
-  private boolean executeHandlers(EventHandlerGroup handlers) {
+  private ExecutionResult executeHandlers(EventHandlerGroup handlers) {
     Scope decoratedScope = new SyntheticScope(this);
     String entityName = inner.getName();
 
@@ -816,7 +852,7 @@ public class ShadowingEntity implements MutableEntity {
             + " value=" + valueInfo);
 
         setAttributeValue(handler.getAttributeName(), value);
-        return true;
+        return ExecutionResult.executed(handler.getSourceText());
       } else {
         debugLog("handlerSkipped entity=" + entityName
             + " attribute=" + attrName
@@ -825,7 +861,7 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     debugLog("noMatchingHandler entity=" + entityName);
-    return false;
+    return ExecutionResult.notExecuted();
   }
 
   /**
