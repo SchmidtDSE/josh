@@ -20,7 +20,7 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
 public class StandardVirtualDistribution extends VirtualDistribution {
   private final BigDecimal mu;
   private final BigDecimal sigma;
-  private final Random random = new Random();
+  private final Random random;
 
 
   /**
@@ -28,12 +28,17 @@ public class StandardVirtualDistribution extends VirtualDistribution {
    *
    * @param caster The value caster to use.
    * @param units The units of the distribution.
+   * @param mu The mean of the distribution.
+   * @param sigma The standard deviation of the distribution.
+   * @param random The Random instance to use for sampling. This should be a shared instance
+   *     to ensure proper random value distribution across organisms.
    */
   public StandardVirtualDistribution(EngineValueCaster caster, Units units, BigDecimal mu,
-      BigDecimal sigma) {
+      BigDecimal sigma, Random random) {
     super(caster, units);
     this.mu = mu;
     this.sigma = sigma;
+    this.random = random;
   }
 
   /**
