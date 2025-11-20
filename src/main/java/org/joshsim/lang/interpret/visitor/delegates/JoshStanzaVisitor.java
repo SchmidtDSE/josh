@@ -195,16 +195,39 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    *
    * <p>Process a complete program consisting of multiple stanzas and statements.</p>
    *
+   * <p>Uses a two-pass parsing approach to ensure unit aliases are registered before
+   * they are used in constants or other expressions:</p>
+   * <ul>
+   *   <li>Pass 1: Parse all unit stanzas to register units and their aliases</li>
+   *   <li>Pass 2: Parse all other elements (entities, constants, etc.) which may reference
+   *       those aliases</li>
+   * </ul>
+   *
    * @param ctx The program context to visit.
    * @return A fragment representing the complete program.
    */
   public JoshFragment visitProgram(JoshLangParser.ProgramContext ctx) {
     ProgramBuilder builder = new ProgramBuilder();
     int numChildren = ctx.getChildCount();
+
+    // PASS 1: Register all units and aliases first
+    // This ensures that unit aliases like 'yr' are available before constants that use them
     for (int i = 0; i < numChildren; i++) {
-      JoshFragment childFragment = ctx.getChild(i).accept(parent);
-      builder.add(childFragment);
+      if (ctx.getChild(i) instanceof JoshLangParser.UnitStanzaContext) {
+        JoshFragment childFragment = ctx.getChild(i).accept(parent);
+        builder.add(childFragment);
+      }
     }
+
+    // PASS 2: Parse all other program elements (entities, constants, etc.)
+    // These can now safely reference unit aliases that were registered in pass 1
+    for (int i = 0; i < numChildren; i++) {
+      if (!(ctx.getChild(i) instanceof JoshLangParser.UnitStanzaContext)) {
+        JoshFragment childFragment = ctx.getChild(i).accept(parent);
+        builder.add(childFragment);
+      }
+    }
+
     return new ProgramFragment(builder);
   }
 

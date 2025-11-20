@@ -626,10 +626,46 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine pushAttribute(ValueResolver resolver) {
-    Entity entity = pop().getAsEntity();
-    Scope scope = new EntityScope(entity);
-    EngineValue attributeValue = resolver.get(scope).orElseThrow();
-    memory.push(attributeValue);
+    EngineValue value = pop();
+
+    // Check if value is a distribution - if so, map attribute access across all elements
+    if (value.getLanguageType().isDistribution()) {
+      Distribution distribution = value.getAsDistribution();
+      Optional<Integer> sizeOpt = distribution.getSize();
+
+      if (sizeOpt.isEmpty()) {
+        throw new IllegalArgumentException(
+            "Cannot access attributes on a virtualized distribution."
+        );
+      }
+
+      int size = sizeOpt.get();
+      Iterable<EngineValue> elements = distribution.getContents(size, false);
+
+      // Map attribute resolver across all elements
+      List<EngineValue> attributeValues = new ArrayList<>();
+      for (EngineValue element : elements) {
+        Entity entity = element.getAsEntity();
+        Scope entityScope = new EntityScope(entity);
+        EngineValue attributeValue = resolver.get(entityScope).orElseThrow();
+        attributeValues.add(attributeValue);
+      }
+
+      // Create distribution of attribute values
+      // Use units from first attribute value if available
+      Units resultUnits = attributeValues.isEmpty()
+          ? Units.EMPTY
+          : attributeValues.get(0).getUnits();
+      EngineValue result = valueFactory.buildRealizedDistribution(attributeValues, resultUnits);
+      memory.push(result);
+    } else {
+      // Single entity - use existing logic
+      Entity entity = value.getAsEntity();
+      Scope entityScope = new EntityScope(entity);
+      EngineValue attributeValue = resolver.get(entityScope).orElseThrow();
+      memory.push(attributeValue);
+    }
+
     return this;
   }
 

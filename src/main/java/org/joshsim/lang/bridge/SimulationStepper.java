@@ -202,14 +202,20 @@ public class SimulationStepper {
   /**
    * Updates the target entity for the given sub-step, managing organism lifecycle.
    *
-   * <p>This method ensures organisms are discovered AFTER all attributes are resolved,
-   * preventing cache coherency violations and instance identity mismatches.</p>
+   * <p>This method ensures organisms have substep context BEFORE patch attributes that
+   * reference them are resolved. This fixes the timing issue where filters like
+   * Trees[Tree.status != 0] would access organisms without substep context, causing
+   * them to fall back to prior/init values.</p>
    *
-   * <p><b>ARCHITECTURAL CHANGE</b>: Previously, organism lifecycle was managed by
-   * ShadowingEntity during startSubstep/endSubstep. This created cache coherency issues
-   * where organisms discovered from cached values differed from those in final resolved values.
-   * Now, organism discovery occurs after updateEntityUnsafe() completes, ensuring consistent
-   * instance identity throughout the lifecycle.</p>
+   * <p><b>EXECUTION ORDER</b>:</p>
+   * <ol>
+   *   <li>Start substep on patch (clears cache)</li>
+   *   <li>Discover organisms from PRIOR state (before patch attributes change them)</li>
+   *   <li>Start substep on ALL organisms (gives them substep context)</li>
+   *   <li>Resolve patch attributes (can now correctly access organism attributes)</li>
+   *   <li>Update organism attributes (resolves their handlers)</li>
+   *   <li>End substep on organisms and patch</li>
+   * </ol>
    *
    * @param target the entity to update (typically a patch)
    * @param subStep the sub-step name
@@ -221,11 +227,27 @@ public class SimulationStepper {
     // Start substep on patch (clears cache, does NOT discover organisms)
     target.startSubstep(subStep);
 
-    // Resolve ALL patch attributes first
+    // CRITICAL FIX: Discover organisms from PRIOR state, start their substeps,
+    // AND resolve their attributes BEFORE resolving patch attributes.
+    // This ensures organisms have substep context AND correct attribute values
+    // when accessed from filters/distributions during patch attribute resolution.
+    List<OrganismLifecycleInfo> organismInfos = discoverAndStartOrganismSubsteps(target, subStep,
+        organismOwnership);
+
+    // Update organism attributes FIRST (resolve their handlers)
+    // This must happen BEFORE patch attributes are resolved so that filters like
+    // Trees[Tree.status != 0] can access the updated organism attributes
+    updateOrganismAttributes(organismInfos, subStep, organismOwnership);
+
+    // NOW resolve ALL patch attributes (can access organism attributes with correct values)
     updateEntityUnsafe(target);
 
-    // NOW discover organisms from final attribute values and manage their lifecycle
+    // Discover and process any NEW organisms created during patch attribute resolution
+    // (e.g., via "create X of OrganismType" in handlers)
     discoverAndProcessOrganisms(target, subStep, organismOwnership);
+
+    // End substep on all organisms that we started
+    endOrganismSubsteps(organismInfos);
 
     // End substep on patch
     target.endSubstep();
@@ -234,12 +256,140 @@ public class SimulationStepper {
   }
 
   /**
+   * Discovers organisms from PRIOR state and starts their substeps.
+   *
+   * <p>This method discovers organisms from the patch's PRIOR state (before any
+   * patch attributes are resolved in the current substep) and calls startSubstep()
+   * on each one. This ensures organisms have substep context when patch attributes
+   * that reference them are resolved.</p>
+   *
+   * <p><b>CRITICAL</b>: This must be called BEFORE updateEntityUnsafe(patch) to fix
+   * the timing issue where filters access organisms without substep context.</p>
+   *
+   * <p><b>IMPORTANT</b>: To get organisms from PRIOR state without triggering
+   * resolution, we access the inner entity directly rather than going through
+   * ShadowingEntity.getAttributeValue() which would trigger handler execution.</p>
+   *
+   * @param target the patch entity containing organisms
+   * @param subStep the current substep name
+   * @param organismOwnership Map coordinating organism processing across threads
+   * @return List of organisms that were discovered and had startSubstep called
+   */
+  private List<OrganismLifecycleInfo> discoverAndStartOrganismSubsteps(MutableEntity target,
+      String subStep, ConcurrentHashMap<Long, Thread> organismOwnership) {
+    List<OrganismLifecycleInfo> organisms = new ArrayList<>();
+    Set<Long> processedIds = new HashSet<>();
+
+    // Get inner entity to access PRIOR values without triggering resolution
+    MutableEntity innerEntity = target;
+    if (target instanceof ShadowingEntity) {
+      ShadowingEntity shadowingEntity = (ShadowingEntity) target;
+      innerEntity = shadowingEntity.getInner();
+    }
+
+    // Discover organisms from PRIOR state (before patch attributes change)
+    // Use InnerEntityGetter on the INNER entity to avoid triggering resolution
+    for (MutableEntity organism : InnerEntityGetter.getInnerEntities(innerEntity)) {
+      long organismId = organism.getSequenceId();
+
+      // Skip duplicates
+      if (processedIds.contains(organismId)) {
+        continue;
+      }
+      processedIds.add(organismId);
+
+      // Try to claim organism for this thread
+      Thread currentThread = Thread.currentThread();
+      Thread owner = organismOwnership.putIfAbsent(organismId, currentThread);
+
+      // If organism was already claimed, skip it
+      if (owner != null) {
+        continue;
+      }
+
+      // Start substep on organism (gives it substep context)
+      // Check if organism already has a substep set (can happen if organism was created
+      // during a handler in a previous step)
+      Optional<String> currentSubstep = organism.getSubstep();
+      boolean needsEndSubstep;
+      if (currentSubstep.isEmpty()) {
+        organism.startSubstep(subStep);
+        needsEndSubstep = true;
+      } else {
+        // Organism already has substep set - don't call startSubstep again
+        needsEndSubstep = false;
+      }
+      organisms.add(new OrganismLifecycleInfo(organism, needsEndSubstep));
+    }
+
+    return organisms;
+  }
+
+  /**
+   * Wrapper to track organisms and whether they need endSubstep called.
+   */
+  private static class OrganismLifecycleInfo {
+    final MutableEntity organism;
+    final boolean needsEndSubstep;
+
+    OrganismLifecycleInfo(MutableEntity organism, boolean needsEndSubstep) {
+      this.organism = organism;
+      this.needsEndSubstep = needsEndSubstep;
+    }
+  }
+
+  /**
+   * Updates attributes on all organisms in the list.
+   *
+   * <p>This method resolves all attributes on each organism, triggering their
+   * event handlers. It recursively handles nested organisms to ensure they
+   * also have substep context and get updated properly.</p>
+   *
+   * @param organismInfos List of organism lifecycle info to update
+   * @param subStep the current substep name
+   * @param organismOwnership Map coordinating organism processing across threads
+   */
+  private void updateOrganismAttributes(List<OrganismLifecycleInfo> organismInfos, String subStep,
+      ConcurrentHashMap<Long, Thread> organismOwnership) {
+    for (OrganismLifecycleInfo info : organismInfos) {
+      updateEntityUnsafe(info.organism);
+
+      // Recursively handle nested organisms (e.g., Trees containing Seeds)
+      // Discover nested organisms and start their substeps
+      List<OrganismLifecycleInfo> nestedOrganisms = discoverAndStartOrganismSubsteps(info.organism,
+          subStep, organismOwnership);
+
+      // Update nested organisms recursively
+      if (!nestedOrganisms.isEmpty()) {
+        updateOrganismAttributes(nestedOrganisms, subStep, organismOwnership);
+        // End substep on nested organisms
+        endOrganismSubsteps(nestedOrganisms);
+      }
+    }
+  }
+
+  /**
+   * Ends substep on all organisms in the list.
+   *
+   * <p>This method should be called on the same organisms that had startSubstep
+   * called in discoverAndStartOrganismSubsteps to ensure proper lock cleanup.</p>
+   *
+   * @param organismInfos List of organism lifecycle info
+   */
+  private void endOrganismSubsteps(List<OrganismLifecycleInfo> organismInfos) {
+    for (OrganismLifecycleInfo info : organismInfos) {
+      if (info.needsEndSubstep) {
+        info.organism.endSubstep();
+      }
+    }
+  }
+
+  /**
    * Discovers organisms from final attribute values and manages their lifecycle.
    *
-   * <p>This method ensures consistent organism instance identity by discovering
-   * organisms AFTER all patch attributes have been resolved. Each organism goes
-   * through its complete lifecycle (startSubstep → updateEntityUnsafe → endSubstep)
-   * before the next organism is processed.</p>
+   * <p>This method discovers NEW organisms that were created during patch attribute
+   * resolution (e.g., via "create X of OrganismType" handlers). It ensures these
+   * newly created organisms also get their lifecycle managed.</p>
    *
    * <p><b>CRITICAL - Deduplication</b>: Organisms are deduplicated based on sequenceId
    * to prevent processing the same organism multiple times if it appears in multiple

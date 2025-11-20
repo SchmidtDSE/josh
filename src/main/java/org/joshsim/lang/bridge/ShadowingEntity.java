@@ -427,9 +427,12 @@ public class ShadowingEntity implements MutableEntity {
   /**
    * Get the underlying entity.
    *
+   * <p>Package-private to allow SimulationStepper to access prior state without
+   * triggering attribute resolution.</p>
+   *
    * @return entity that is decorated by this object.
    */
-  protected MutableEntity getInner() {
+  MutableEntity getInner() {
     return inner;
   }
 

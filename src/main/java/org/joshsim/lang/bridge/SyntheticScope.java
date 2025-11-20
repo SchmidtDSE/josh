@@ -138,10 +138,12 @@ public class SyntheticScope implements Scope {
       case "prior" -> Optional.of(valueFactory.build(new PriorShadowingEntityDecorator(inner)));
       case "here" -> Optional.of(valueFactory.build(inner.getHere()));
       case "meta" -> {
-        // Wrap meta entity in CircularSafeEntity to propagate circular dependency protection
+        // Wrap meta entity in MetaScopeEntity to enable synthetic attribute access (meta.year)
+        // Then wrap in CircularSafeEntity to propagate circular dependency protection
         // to nested attribute access (e.g., meta.fire.trigger.coverThreshold)
         Entity metaEntity = inner.getMeta();
-        Entity safeEntity = new CircularSafeEntity(metaEntity);
+        Entity wrappedMeta = new MetaScopeEntity(metaEntity, this);
+        Entity safeEntity = new CircularSafeEntity(wrappedMeta);
         yield Optional.of(valueFactory.build(safeEntity));
       }
       case "parent" -> {
@@ -224,6 +226,61 @@ public class SyntheticScope implements Scope {
     // Try to get year directly from simulation if defined
     Optional<EngineValue> yearMaybe = metaEntity.getAttributeValue("year");
     return yearMaybe;
+  }
+
+  /**
+   * Get a synthetic attribute value for the meta entity wrapper.
+   *
+   * <p>This method is used by MetaScopeEntity to provide synthetic attributes like
+   * {@code year} and {@code stepCount} when accessed as attributes of the meta entity
+   * (e.g., {@code meta.year}).</p>
+   *
+   * <p>For {@code year}: First tries to get it from the meta entity. If not defined,
+   * computes it as steps.low + stepCount.</p>
+   *
+   * <p>For {@code stepCount}: Gets it from the meta entity (should be defined on simulation).</p>
+   *
+   * <p>We pass the unwrapped meta entity to avoid infinite recursion (MetaScopeEntity
+   * wraps the meta entity, so we need to access the underlying entity directly).</p>
+   *
+   * @param name The name of the synthetic attribute to retrieve ("year" or "stepCount").
+   * @param unwrappedMetaEntity The actual meta entity (not wrapped in MetaScopeEntity).
+   * @return Optional containing the synthetic value, or empty if not a recognized synthetic.
+   */
+  public Optional<EngineValue> getSyntheticForMeta(String name, Entity unwrappedMetaEntity) {
+    // If the meta entity is a ShadowingEntity, get the underlying MutableEntity
+    // to avoid resolution logic that might fail for synthetic attributes
+    Entity metaEntity = unwrappedMetaEntity;
+    if (unwrappedMetaEntity instanceof ShadowingEntity shadowingMeta) {
+      metaEntity = shadowingMeta.getInner();
+    }
+
+    return switch (name) {
+      case "year", "step" -> {
+        // Try to get year/step from meta entity first
+        Optional<EngineValue> valueMaybe = metaEntity.getAttributeValue(name);
+        if (valueMaybe.isPresent()) {
+          yield valueMaybe;
+        }
+
+        // If not defined, compute as steps.low + stepCount
+        // (both year and step represent the current simulation time)
+        Optional<EngineValue> stepsLowMaybe = metaEntity.getAttributeValue("steps.low");
+        Optional<EngineValue> stepCountMaybe = metaEntity.getAttributeValue("stepCount");
+
+        if (stepsLowMaybe.isPresent() && stepCountMaybe.isPresent()) {
+          EngineValue stepsLow = stepsLowMaybe.get();
+          EngineValue stepCount = stepCountMaybe.get();
+          EngineValue computed = stepsLow.add(stepCount);
+          yield Optional.of(computed);
+        }
+
+        // Cannot compute year/step
+        yield Optional.empty();
+      }
+      case "stepCount" -> metaEntity.getAttributeValue("stepCount");
+      default -> Optional.empty();
+    };
   }
 
 }
