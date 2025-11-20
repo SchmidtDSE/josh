@@ -19,6 +19,7 @@ public class EventHandler {
   String attributeName;
   String eventName;
   Optional<CompiledSelector> conditional;
+  Optional<String> sourceText;
 
   /**
    * Create a new event handler without a conditional.
@@ -36,6 +37,7 @@ public class EventHandler {
     this.attributeName = attributeName;
     this.eventName = eventName;
     this.conditional = Optional.empty();
+    this.sourceText = Optional.empty();
   }
 
   /**
@@ -56,6 +58,51 @@ public class EventHandler {
     this.attributeName = attributeName;
     this.eventName = eventName;
     this.conditional = Optional.of(conditional);
+    this.sourceText = Optional.empty();
+  }
+
+  /**
+   * Create a new event handler without a conditional but with source text.
+   *
+   * @param callable The callable to execute on this event.
+   * @param attributeName The name of the attribute associated with this event handler.
+   * @param eventName The name of the event that this handler responds to.
+   * @param sourceText The source expression text for this event handler.
+   */
+  public EventHandler(
+      CompiledCallable callable,
+      String attributeName,
+      String eventName,
+      String sourceText
+  ) {
+    this.callable = callable;
+    this.attributeName = attributeName;
+    this.eventName = eventName;
+    this.conditional = Optional.empty();
+    this.sourceText = Optional.of(sourceText);
+  }
+
+  /**
+   * Create a new event handler with a conditional and source text.
+   *
+   * @param callable The callable to execute on this event.
+   * @param attributeName The name of the attribute associated with this event handler.
+   * @param eventName The name of the event this handler responds to.
+   * @param conditional The conditional selector associated with this event handler.
+   * @param sourceText The source expression text for this event handler.
+   */
+  public EventHandler(
+      CompiledCallable callable,
+      String attributeName,
+      String eventName,
+      CompiledSelector conditional,
+      String sourceText
+  ) {
+    this.callable = callable;
+    this.attributeName = attributeName;
+    this.eventName = eventName;
+    this.conditional = Optional.of(conditional);
+    this.sourceText = Optional.of(sourceText);
   }
 
   /**
@@ -92,5 +139,14 @@ public class EventHandler {
    */
   public Optional<CompiledSelector> getConditional() {
     return conditional;
+  }
+
+  /**
+   * Get the source expression text for this event handler.
+   *
+   * @return an Optional containing the source text if one exists, empty otherwise
+   */
+  public Optional<String> getSourceText() {
+    return sourceText;
   }
 }

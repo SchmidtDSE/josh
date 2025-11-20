@@ -235,11 +235,31 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
     EventKey eventKey = buildEventKey(fullName);
-    EventHandler eventHandler = new EventHandler(
-        innerCallable,
-        eventKey.getAttribute(),
-        eventKey.getEvent()
-    );
+
+    // Capture source text for assertions
+    EventHandler eventHandler;
+    if (eventKey.getAttribute().startsWith("assert.")) {
+      // Get the callable (expression) from the eventHandlerGroupMemberInner
+      // ctx structure: name=identifier eventHandlerGroupMemberInner
+      // eventHandlerGroupMemberInner structure: EQ_ target=callable
+      // We want the text of the callable (target), which is accessible via ctx
+      JoshLangParser.EventHandlerGroupMemberInnerContext innerCtx =
+          (JoshLangParser.EventHandlerGroupMemberInnerContext) ctx.getChild(1);
+      String sourceText = innerCtx.target.getText();
+
+      eventHandler = new EventHandler(
+          innerCallable,
+          eventKey.getAttribute(),
+          eventKey.getEvent(),
+          sourceText
+      );
+    } else {
+      eventHandler = new EventHandler(
+          innerCallable,
+          eventKey.getAttribute(),
+          eventKey.getEvent()
+      );
+    }
 
     EventHandlerGroupBuilder eventHandlerGroupBuilder = new EventHandlerGroupBuilder();
     eventHandlerGroupBuilder.addEventHandler(eventHandler);
@@ -265,24 +285,51 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
     groupBuilder.setEventKey(eventKey);
 
+    // Capture source text for assertions
+    boolean isAssertion = eventKey.getAttribute().startsWith("assert.");
+    String sourceText = null;
+    if (isAssertion) {
+      // For multi-branch handlers, capture the entire handler group text
+      sourceText = ctx.getText();
+    }
+
     int numBranches = ctx.getChildCount() - 1;
     for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
       int childIndex = branchIndex + 1;
       JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
 
       if (childFragment.getCompiledSelector().isPresent()) {
-        groupBuilder.addEventHandler(new EventHandler(
-            childFragment.getCompiledCallable(),
-            eventKey.getAttribute(),
-            eventKey.getEvent(),
-            childFragment.getCompiledSelector().get()
-        ));
+        if (isAssertion) {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent(),
+              childFragment.getCompiledSelector().get(),
+              sourceText
+          ));
+        } else {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent(),
+              childFragment.getCompiledSelector().get()
+          ));
+        }
       } else {
-        groupBuilder.addEventHandler(new EventHandler(
-            childFragment.getCompiledCallable(),
-            eventKey.getAttribute(),
-            eventKey.getEvent()
-        ));
+        if (isAssertion) {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent(),
+              sourceText
+          ));
+        } else {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent()
+          ));
+        }
       }
     }
 
