@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import org.joshsim.command.DiscoverConfigCommand;
+import org.joshsim.command.ExportDepsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
@@ -62,7 +63,8 @@ import picocli.CommandLine;
         ServerCommand.class,
         PreprocessCommand.class,
         DiscoverConfigCommand.class,
-        InspectJshdCommand.class
+        InspectJshdCommand.class,
+        ExportDepsCommand.class
     }
 )
 public class JoshSimCommander {
