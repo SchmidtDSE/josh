@@ -13,9 +13,12 @@ package org.joshsim.lang.analyze;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a directed dependency graph for a Josh program.
@@ -90,22 +93,55 @@ public class DependencyGraph {
       List<SourceLocation> newSources) {
     Node existingNode = nodes.get(id);
     if (existingNode != null) {
-      // Merge source locations
-      List<SourceLocation> mergedSources = new ArrayList<>(existingNode.allSources);
-      mergedSources.addAll(newSources);
+      // Merge source locations with deduplication
+      List<SourceLocation> mergedSources = deduplicateSources(existingNode.allSources, newSources);
 
       // Keep the primary source from the first occurrence
       nodes.put(id, new Node(id, entityType, attribute, event,
           existingNode.sourceLine, existingNode.sourceText, mergedSources));
     } else if (!newSources.isEmpty()) {
-      // New node with source locations
-      SourceLocation primarySource = newSources.get(0);
+      // New node with source locations (deduplicated)
+      List<SourceLocation> dedupedSources = deduplicateSources(new ArrayList<>(), newSources);
+      SourceLocation primarySource = dedupedSources.isEmpty() ? newSources.get(0) : dedupedSources.get(0);
       nodes.put(id, new Node(id, entityType, attribute, event,
-          primarySource.line, primarySource.text, newSources));
+          primarySource.line, primarySource.text, dedupedSources));
     } else {
       // New node without source locations
       nodes.put(id, new Node(id, entityType, attribute, event, null, null));
     }
+  }
+
+  /**
+   * Deduplicates source locations by (line, condition) tuple.
+   *
+   * @param existing The existing sources (already deduplicated)
+   * @param newSources The new sources to merge
+   * @return A deduplicated list combining both
+   */
+  private List<SourceLocation> deduplicateSources(List<SourceLocation> existing,
+      List<SourceLocation> newSources) {
+    Set<String> seen = new HashSet<>();
+    List<SourceLocation> result = new ArrayList<>();
+
+    // Add existing sources first (they're already in the result)
+    for (SourceLocation loc : existing) {
+      String key = Objects.toString(loc.line, "null") + "|" + Objects.toString(loc.condition, "null");
+      if (!seen.contains(key)) {
+        seen.add(key);
+        result.add(loc);
+      }
+    }
+
+    // Add new sources if not duplicates
+    for (SourceLocation loc : newSources) {
+      String key = Objects.toString(loc.line, "null") + "|" + Objects.toString(loc.condition, "null");
+      if (!seen.contains(key)) {
+        seen.add(key);
+        result.add(loc);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -158,15 +194,41 @@ public class DependencyGraph {
     /** The actual Josh source code text. */
     public final String text;
 
+    /** The condition expression (can be null). */
+    public final String condition;
+
+    /** The value being assigned (can be null). */
+    public final String assignedValue;
+
+    /** True if this is an else branch (can be null). */
+    public final Boolean isElseBranch;
+
     /**
-     * Creates a new source location.
+     * Creates a new source location without conditional context.
      *
      * @param line The line number in the source file
      * @param text The source code text
      */
     public SourceLocation(Integer line, String text) {
+      this(line, text, null, null, null);
+    }
+
+    /**
+     * Creates a new source location with conditional context.
+     *
+     * @param line The line number in the source file
+     * @param text The source code text
+     * @param condition The condition expression (can be null)
+     * @param assignedValue The value being assigned (can be null)
+     * @param isElseBranch True if this is an else branch (can be null)
+     */
+    public SourceLocation(Integer line, String text, String condition,
+        String assignedValue, Boolean isElseBranch) {
       this.line = line;
       this.text = text;
+      this.condition = condition;
+      this.assignedValue = assignedValue;
+      this.isElseBranch = isElseBranch;
     }
   }
 

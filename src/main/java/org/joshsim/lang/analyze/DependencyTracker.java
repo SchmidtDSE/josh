@@ -59,15 +59,41 @@ public class DependencyTracker {
     /** The source code text. */
     public final String sourceText;
 
+    /** The condition expression text (can be null). */
+    public final String condition;
+
+    /** The value being assigned (can be null). */
+    public final String assignedValue;
+
+    /** True if this is an else branch (can be null). */
+    public final Boolean isElseBranch;
+
     /**
-     * Creates a new NodeSourceInfo.
+     * Creates a new NodeSourceInfo without conditional context.
      *
      * @param sourceLine The line number in the source file
      * @param sourceText The source code text
      */
     public NodeSourceInfo(Integer sourceLine, String sourceText) {
+      this(sourceLine, sourceText, null, null, null);
+    }
+
+    /**
+     * Creates a new NodeSourceInfo with conditional context.
+     *
+     * @param sourceLine The line number in the source file
+     * @param sourceText The source code text
+     * @param condition The condition expression text (can be null)
+     * @param assignedValue The value being assigned (can be null)
+     * @param isElseBranch True if this is an else branch (can be null)
+     */
+    public NodeSourceInfo(Integer sourceLine, String sourceText, String condition,
+        String assignedValue, Boolean isElseBranch) {
       this.sourceLine = sourceLine;
       this.sourceText = sourceText;
+      this.condition = condition;
+      this.assignedValue = assignedValue;
+      this.isElseBranch = isElseBranch;
     }
   }
 
@@ -165,6 +191,34 @@ public class DependencyTracker {
     if (sourceLine != null || sourceText != null) {
       tracker.nodeSources.computeIfAbsent(nodeId, k -> new ArrayList<>())
           .add(new NodeSourceInfo(sourceLine, sourceText));
+    }
+  }
+
+  /**
+   * Records source location information for a node with conditional context.
+   *
+   * <p>If tracking is not enabled, this method does nothing. Otherwise, it appends
+   * the source location with conditional information to the list for the specified node ID.
+   * This allows tracking conditional handlers with their conditions and assigned values.</p>
+   *
+   * @param nodeId The node ID (e.g., "JoshuaTree.state.step")
+   * @param sourceLine The line number in the source file (can be null)
+   * @param sourceText The source code text (can be null)
+   * @param condition The condition expression text (can be null)
+   * @param assignedValue The value being assigned (can be null)
+   * @param isElseBranch True if this is an else branch (can be null)
+   */
+  public static void recordConditionalSource(String nodeId, Integer sourceLine,
+      String sourceText, String condition, String assignedValue, Boolean isElseBranch) {
+    if (!isEnabled()) {
+      return;
+    }
+
+    DependencyTracker tracker = INSTANCE.get();
+    if (sourceLine != null || sourceText != null || condition != null
+        || assignedValue != null || isElseBranch != null) {
+      tracker.nodeSources.computeIfAbsent(nodeId, k -> new ArrayList<>())
+          .add(new NodeSourceInfo(sourceLine, sourceText, condition, assignedValue, isElseBranch));
     }
   }
 

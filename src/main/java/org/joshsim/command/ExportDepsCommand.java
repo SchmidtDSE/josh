@@ -13,7 +13,6 @@ package org.joshsim.command;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.concurrent.Callable;
-import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacade;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.analyze.DependencyGraph;

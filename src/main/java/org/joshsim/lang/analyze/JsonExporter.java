@@ -104,6 +104,15 @@ public class JsonExporter {
           if (sourceLoc.text != null) {
             sourceObj.put("text", sourceLoc.text);
           }
+          if (sourceLoc.condition != null) {
+            sourceObj.put("condition", sourceLoc.condition);
+          }
+          if (sourceLoc.assignedValue != null) {
+            sourceObj.put("assignedValue", sourceLoc.assignedValue);
+          }
+          if (sourceLoc.isElseBranch != null && sourceLoc.isElseBranch) {
+            sourceObj.put("isElseBranch", sourceLoc.isElseBranch);
+          }
           allSourcesArray.add(sourceObj);
         }
         nodeObj.set("allSources", allSourcesArray);

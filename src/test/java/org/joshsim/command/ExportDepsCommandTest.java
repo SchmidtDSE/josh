@@ -1,13 +1,13 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
@@ -264,6 +264,58 @@ public class ExportDepsCommandTest {
 
     Integer result = command.call();
     assertEquals(5, result); // Simulation not found error
+  }
+
+  @Test
+  public void testExportDepsWithConditionalExpressions(@TempDir Path tempDir) throws Exception {
+    // Use test_states_conditional.josh which has conditional state transitions
+    String testFile = "josh-tests/conformance/control/states/test_states_conditional.josh";
+    Path outputPath = tempDir.resolve("states_deps.json");
+
+    ExportDepsCommand command = new ExportDepsCommand();
+    setField(command, "scriptFile", new File(testFile));
+    setField(command, "simulationName", "StatesConditional");
+    setField(command, "output", outputPath.toFile());
+
+    int result = command.call();
+    assertEquals(0, result, "Command should succeed");
+
+    // Read and parse the JSON output
+    String json = Files.readString(outputPath);
+    JsonNode root = objectMapper.readTree(json);
+
+    // Find the Tree.state.step node
+    JsonNode nodes = root.get("nodes");
+    JsonNode stateStepNode = null;
+    for (JsonNode node : nodes) {
+      if (node.get("id").asText().equals("Tree.state.step")) {
+        stateStepNode = node;
+        break;
+      }
+    }
+
+    assertNotNull(stateStepNode, "Should have Tree.state.step node");
+
+    // Verify allSources contains condition information
+    JsonNode allSources = stateStepNode.get("allSources");
+    assertNotNull(allSources, "Should have allSources array");
+    assertTrue(allSources.size() >= 3, "Should have at least 3 conditional branches");
+
+    // Check that at least one source has condition field
+    boolean hasCondition = false;
+    for (JsonNode source : allSources) {
+      if (source.has("condition")) {
+        hasCondition = true;
+        // Verify the condition looks like a state transition condition
+        String condition = source.get("condition").asText();
+        assertTrue(
+            condition.contains("age") || condition.contains("state"),
+            "Condition should reference age or state"
+        );
+        break;
+      }
+    }
+    assertTrue(hasCondition, "At least one source should have a condition field");
   }
 
   /**

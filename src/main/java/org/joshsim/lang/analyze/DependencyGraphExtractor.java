@@ -11,8 +11,10 @@
 package org.joshsim.lang.analyze;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.joshsim.lang.analyze.DependencyTracker.NodeSourceInfo;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -75,15 +77,10 @@ public class DependencyGraphExtractor {
       String fromAttr = fromParts[1];
       String fromEvent = fromParts[2];
 
-      // Get source info list for the from node
+      // Get source info list for the from node (deduplicated)
       List<NodeSourceInfo> fromSourceInfoList = nodeSources.get(fromNode);
-      List<DependencyGraph.SourceLocation> fromSourceLocations = new ArrayList<>();
-      if (fromSourceInfoList != null) {
-        for (NodeSourceInfo sourceInfo : fromSourceInfoList) {
-          fromSourceLocations.add(new DependencyGraph.SourceLocation(
-              sourceInfo.sourceLine, sourceInfo.sourceText));
-        }
-      }
+      List<DependencyGraph.SourceLocation> fromSourceLocations =
+          deduplicateSources(fromSourceInfoList);
 
       // Add the source node with all source location info
       graph.addNode(fromNode, fromEntity, fromAttr, fromEvent, fromSourceLocations);
@@ -94,16 +91,11 @@ public class DependencyGraphExtractor {
         DependencyPathParser.DependencyInfo depInfo =
             DependencyPathParser.parse(path, fromEntity, fromEvent);
 
-        // Get source info list for the target node
+        // Get source info list for the target node (deduplicated)
         List<NodeSourceInfo> targetSourceInfoList =
             nodeSources.get(depInfo.targetNodeId);
-        List<DependencyGraph.SourceLocation> targetSourceLocations = new ArrayList<>();
-        if (targetSourceInfoList != null) {
-          for (NodeSourceInfo sourceInfo : targetSourceInfoList) {
-            targetSourceLocations.add(new DependencyGraph.SourceLocation(
-                sourceInfo.sourceLine, sourceInfo.sourceText));
-          }
-        }
+        List<DependencyGraph.SourceLocation> targetSourceLocations =
+            deduplicateSources(targetSourceInfoList);
 
         // Add the target node with all source location info
         graph.addNode(
@@ -120,6 +112,65 @@ public class DependencyGraphExtractor {
       }
     }
 
+    // Also add nodes that have source info but no dependencies (e.g., init handlers with literals)
+    // These nodes won't appear in trackedDeps but are still important for visualization
+    for (Map.Entry<String, List<NodeSourceInfo>> entry : nodeSources.entrySet()) {
+      String nodeId = entry.getKey();
+
+      // Parse nodeId to get entity/attribute/event
+      String[] nodeParts = nodeId.split("\\.");
+      if (nodeParts.length < 3) {
+        continue;
+      }
+
+      String entity = nodeParts[0];
+      String attr = nodeParts[1];
+      String event = nodeParts[2];
+
+      // Get deduplicated source locations
+      List<DependencyGraph.SourceLocation> sourceLocations =
+          deduplicateSources(entry.getValue());
+
+      // addNode will merge with existing node or create new one
+      graph.addNode(nodeId, entity, attr, event, sourceLocations);
+    }
+
     return graph;
+  }
+
+  /**
+   * Deduplicates source info entries based on line number and condition.
+   *
+   * <p>During interpretation, the same source location may be recorded multiple times
+   * (e.g., once per entity instance). This method removes duplicates by comparing
+   * line number and condition expression.</p>
+   *
+   * @param sourceInfoList The list of source info entries (may contain duplicates)
+   * @return A deduplicated list of SourceLocation objects
+   */
+  private List<DependencyGraph.SourceLocation> deduplicateSources(
+      List<NodeSourceInfo> sourceInfoList) {
+    List<DependencyGraph.SourceLocation> result = new ArrayList<>();
+    if (sourceInfoList == null) {
+      return result;
+    }
+
+    // Use a set to track unique sources by (line, condition) tuple
+    Set<String> seen = new HashSet<>();
+
+    for (NodeSourceInfo sourceInfo : sourceInfoList) {
+      // Create a unique key based on line number and condition
+      String key = Objects.toString(sourceInfo.sourceLine, "null")
+          + "|" + Objects.toString(sourceInfo.condition, "null");
+
+      if (!seen.contains(key)) {
+        seen.add(key);
+        result.add(new DependencyGraph.SourceLocation(
+            sourceInfo.sourceLine, sourceInfo.sourceText, sourceInfo.condition,
+            sourceInfo.assignedValue, sourceInfo.isElseBranch));
+      }
+    }
+
+    return result;
   }
 }
