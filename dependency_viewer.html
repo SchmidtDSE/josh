@@ -63,23 +63,45 @@
             font-size: 14px;
         }
 
-        #network {
-            width: 100%;
+        .main-content {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
             height: calc(100vh - 280px);
+        }
+
+        #network {
+            flex: 1;
+            min-width: 0;
             background: white;
-            margin: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .info-panel {
+            width: 40%;
+            min-width: 350px;
+            flex-shrink: 0;
             background: white;
-            margin: 0 20px 20px 20px;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-height: 200px;
             overflow-y: auto;
+            max-height: 100%;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            #network {
+                height: 500px;
+            }
+            .info-panel {
+                width: 100%;
+                max-height: 400px;
+            }
         }
 
         .info-panel h3 {
@@ -276,6 +298,328 @@
             padding-top: 5px;
             border-top: 1px solid rgba(255,255,255,0.3);
         }
+
+        /* State Machine Diagram Styles */
+        .state-diagram {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .state-diagram h4 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .state-flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .state-flow-vertical {
+            flex-direction: column;
+        }
+
+        .state-box {
+            background: white;
+            border: 2px solid #6c757d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #212529;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .state-box.initial {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .state-box.terminal {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .state-transition {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 8px;
+        }
+
+        .transition-arrow {
+            color: #007bff;
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .transition-label {
+            font-size: 11px;
+            color: #6c757d;
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-bottom: 2px;
+            max-width: 120px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .state-diagram-fallback {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .transition-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 6px 0;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+            gap: 4px;
+        }
+
+        .transition-from, .transition-to {
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .transition-from {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .transition-to {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .transition-trigger {
+            flex: 1;
+            min-width: 100%;
+            font-size: 11px;
+            color: #666;
+            padding: 4px 0 0 0;
+        }
+
+        .transition-trigger code {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .arrow-symbol {
+            font-size: 16px;
+            color: #007bff;
+            padding: 0 4px;
+        }
+
+        /* Conditional Behaviors Table */
+        .behavior-table {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .behavior-header {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .behavior-header .behavior-when {
+            flex: 1;
+        }
+
+        .behavior-header .behavior-then {
+            flex: 1;
+            margin-left: 30px;
+        }
+
+        .behavior-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #17a2b8;
+            margin-bottom: 4px;
+        }
+
+        .behavior-row.unconditional {
+            border-left-color: #28a745;
+        }
+
+        .behavior-row.unconditional .behavior-condition code {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .behavior-row.init-row {
+            border-left-color: #6f42c1;
+            background: #f8f5ff;
+        }
+
+        .behavior-row.init-row .behavior-condition code {
+            background: #e2d9f3;
+            color: #6f42c1;
+        }
+
+        .behavior-condition {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .behavior-condition code {
+            background: #fff3cd;
+            padding: 3px 6px;
+            border-radius: 3px;
+            color: #856404;
+        }
+
+        .behavior-arrow {
+            font-size: 18px;
+            color: #17a2b8;
+            padding: 0 10px;
+            font-weight: bold;
+        }
+
+        .behavior-value {
+            flex: 1;
+        }
+
+        .behavior-value code {
+            background: #d4edda;
+            padding: 3px 6px;
+            border-radius: 3px;
+            color: #155724;
+            font-size: 12px;
+        }
+
+        /* Unconditional Update Styles */
+        .unconditional-update {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .update-label {
+            font-weight: 600;
+            color: #28a745;
+            font-size: 12px;
+        }
+
+        .update-value {
+            background: #d4edda;
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: #155724;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .update-line {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* Limitations Panel */
+        .limitations-toggle {
+            color: #6c757d;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+        }
+
+        .limitations-toggle:hover {
+            color: #495057;
+        }
+
+        .limitations-panel {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .limitations-panel ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .limitations-panel li {
+            margin: 4px 0;
+        }
+
+        .limitations-panel code {
+            background: rgba(0,0,0,0.08);
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .limitations-panel small {
+            color: #856404;
+            display: block;
+            margin-top: 8px;
+        }
+
+        /* Warning badge for nodes with potential issues */
+        .warning-badge {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        /* State block warning styling */
+        .behavior-row.state-block-warning {
+            border-left-color: #ffc107;
+            background: #fffbeb;
+        }
+
+        .behavior-row.state-block-warning .behavior-condition code {
+            background: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -283,7 +627,20 @@
         <h1>Josh Dependency Graph Viewer</h1>
         <p style="margin: 5px 0; color: #666;">
             Visualize attribute dependencies and ecological state transitions
+            <span class="limitations-toggle" onclick="toggleLimitations()" title="Click to see known limitations">
+                (known limitations)
+            </span>
         </p>
+        <div id="limitationsPanel" class="limitations-panel" style="display: none;">
+            <strong>Known Limitations:</strong>
+            <ul>
+                <li><strong>State blocks</strong> (<code>start state "X"</code>): Handlers inside state blocks show as "Always" instead of showing the implicit state condition</li>
+                <li><strong>Stochastic values</strong>: <code>sample uniform</code>, <code>sample normal</code> are tracked but may show confusing dependency patterns</li>
+                <li><strong>Entity lifecycle</strong>: <code>create</code> and <code>remove</code> operations are tracked but not specially visualized</li>
+                <li><strong>Spatial context</strong>: Neighbor/patch references shown without spatial relationship context</li>
+            </ul>
+            <small>Dependencies are extracted via static analysis during a single simulation step.</small>
+        </div>
 
         <div class="controls">
             <div class="control-group">
@@ -400,18 +757,30 @@
                 <div class="legend-box" style="background: #e57373;"></div>
                 <span>Disturbance</span>
             </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: white; border: 3px solid #1976d2;"></div>
+                <span>🔀 State Machine</span>
+            </div>
         </div>
 
-    <div id="network"></div>
+    <div class="main-content">
+        <div id="network"></div>
 
-    <div class="info-panel" id="infoPanel">
-        <p>Load a dependency graph JSON file to begin.</p>
+        <div class="info-panel" id="infoPanel">
+            <p>Load a dependency graph JSON file to begin.</p>
+        </div>
     </div>
 
     <script>
         let network = null;
         let allData = null;
         let hierarchicalLayout = false;
+
+        // Toggle limitations panel
+        function toggleLimitations() {
+            const panel = document.getElementById('limitationsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
 
         // File input
         document.getElementById('fileInput').addEventListener('change', async (e) => {
@@ -575,10 +944,30 @@
                 // Build enhanced tooltip with source code info
                 let tooltip = `${n.entityType}.${n.attribute}.${n.event}`;
 
-                // Check if multiple conditional handlers exist
-                if (n.allSources && n.allSources.length > 1) {
-                    const lines = n.allSources.map(s => s.line).join(', ');
-                    tooltip += `\nLines ${lines}: ${n.allSources.length} conditional handlers`;
+                // Check if conditional handlers exist with conditions
+                if (n.allSources && n.allSources.length > 0) {
+                    const hasConditions = n.allSources.some(s => s.condition);
+                    if (hasConditions) {
+                        tooltip += `\n\n🔀 STATE TRANSITIONS (${n.allSources.length} branches):`;
+                        n.allSources.forEach((s, i) => {
+                            if (s.condition) {
+                                tooltip += `\n${i+1}. if: ${s.condition}`;
+                                if (s.assignedValue) {
+                                    tooltip += `\n   → ${s.assignedValue}`;
+                                }
+                            } else if (s.isElseBranch) {
+                                tooltip += `\n${i+1}. else:`;
+                                if (s.assignedValue) {
+                                    tooltip += ` → ${s.assignedValue}`;
+                                }
+                            }
+                        });
+                    } else if (n.allSources.length > 1) {
+                        const lines = n.allSources.map(s => s.line).join(', ');
+                        tooltip += `\nLines ${lines}: ${n.allSources.length} handlers`;
+                    } else if (n.sourceLine !== undefined) {
+                        tooltip += `\nLine ${n.sourceLine}`;
+                    }
                 } else if (n.sourceLine !== undefined) {
                     tooltip += `\nLine ${n.sourceLine}`;
                 }
@@ -587,13 +976,23 @@
                     tooltip += `\n${n.sourceText}`;
                 }
 
+                // Check if this is a state machine node (has conditional handlers)
+                const hasConditions = n.allSources && n.allSources.some(s => s.condition);
+                const borderColor = hasConditions ? '#1976d2' : undefined;
+                const borderWidth = hasConditions ? 3 : 2;
+
                 return {
                     id: n.id,
-                    label: n.attribute,
+                    label: hasConditions ? `🔀 ${n.attribute}` : n.attribute,
                     title: tooltip,
                     group: n.entityType,
-                    color: color,
+                    color: {
+                        background: color,
+                        border: borderColor || color,
+                        highlight: { background: color, border: '#333' }
+                    },
                     shape: shape,
+                    borderWidth: borderWidth,
                     font: { size: 14 }
                 };
             });
@@ -733,6 +1132,431 @@
             showStats();
         }
 
+        /**
+         * Parse a condition to extract state transition information.
+         * Handles compound conditions like: current.age>=30yearsandcurrent.state=="Sapling"
+         * Returns both the parsed state machine info AND the formatted full condition
+         */
+        function parseStateTransition(condition, assignedValue) {
+            if (!condition && !assignedValue) return null;
+
+            let fromState = null;
+            let toState = null;
+            let trigger = null;
+            let fullCondition = formatCondition(condition);
+
+            // Extract "from" state from condition: current.state=="X" or prior.state=="X"
+            const statePattern = /(?:current|prior)\.state\s*==\s*"([^"]+)"/i;
+            const stateMatch = condition ? condition.match(statePattern) : null;
+            if (stateMatch) {
+                fromState = stateMatch[1];
+
+                // Extract the OTHER condition(s) as the trigger
+                let otherCondition = condition
+                    .replace(statePattern, '')
+                    .replace(/^and/i, '')
+                    .replace(/and$/i, '')
+                    .trim();
+
+                if (otherCondition) {
+                    trigger = formatCondition(otherCondition);
+                }
+            }
+
+            // Extract "to" state from assigned value: ="Y" or "Y"
+            if (assignedValue) {
+                const valuePattern = /=?\s*"([^"]+)"/;
+                const valueMatch = assignedValue.match(valuePattern);
+                if (valueMatch) {
+                    toState = valueMatch[1];
+                }
+            }
+
+            return {
+                fromState,
+                toState,
+                trigger,           // The non-state part of the condition
+                fullCondition      // The complete formatted condition
+            };
+        }
+
+        /**
+         * Format a condition string for display (add spaces, clean up)
+         */
+        function formatCondition(condition) {
+            if (!condition) return null;
+            return condition
+                // Add spaces around 'and' keyword
+                .replace(/([a-z])and([a-z])/gi, '$1 AND $2')
+                // Add spaces around 'or' keyword
+                .replace(/([a-z])or([a-z])/gi, '$1 OR $2')
+                // Add spaces around comparison operators
+                .replace(/([<>=!]+)/g, ' $1 ')
+                // Add space before unit words
+                .replace(/(\d)(years?|months?|days?|hours?|minutes?|seconds?|m|km|cm|mm|count|counts)/gi, '$1 $2')
+                // Clean up current./prior. for display
+                .replace(/current\./g, '')
+                .replace(/prior\./g, '')
+                // Collapse multiple spaces
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        /**
+         * Build a state machine diagram from multiple transitions
+         */
+        function buildStateMachineDiagram(sources, initValue) {
+            const transitions = [];
+            let initialState = null;
+            let initFromGraph = false;
+
+            // Check for init value to determine initial state
+            if (initValue) {
+                const match = initValue.match(/"([^"]+)"/);
+                if (match) {
+                    initialState = match[1];
+                    initFromGraph = true;
+                }
+            }
+
+            // Parse each conditional source
+            for (const source of sources) {
+                if (source.condition || source.assignedValue) {
+                    const parsed = parseStateTransition(source.condition, source.assignedValue);
+                    if (parsed && (parsed.fromState || parsed.toState)) {
+                        transitions.push(parsed);
+                    }
+                }
+            }
+
+            // Build the state machine structure
+            const states = new Set();
+            const fromStates = new Set();
+            const toStates = new Set();
+            const transitionMap = new Map(); // fromState -> [{toState, trigger}]
+
+            if (initialState) {
+                states.add(initialState);
+            }
+
+            for (const t of transitions) {
+                if (t.fromState) {
+                    states.add(t.fromState);
+                    fromStates.add(t.fromState);
+                }
+                if (t.toState) {
+                    states.add(t.toState);
+                    toStates.add(t.toState);
+                }
+
+                if (t.fromState && t.toState) {
+                    if (!transitionMap.has(t.fromState)) {
+                        transitionMap.set(t.fromState, []);
+                    }
+                    transitionMap.get(t.fromState).push({
+                        toState: t.toState,
+                        trigger: t.trigger,
+                        fullCondition: t.fullCondition
+                    });
+                }
+            }
+
+            // If no init value from graph, infer initial state
+            // (a "from" state that is never a "to" state is likely the initial state)
+            if (!initialState) {
+                for (const from of fromStates) {
+                    if (!toStates.has(from)) {
+                        initialState = from;
+                        break;
+                    }
+                }
+            }
+
+            return {
+                initialState,
+                initFromGraph,
+                states: Array.from(states),
+                transitions,
+                transitionMap
+            };
+        }
+
+        /**
+         * Render a state machine diagram as HTML
+         * @param stateMachine The state machine object
+         * @param attributeName The name of the attribute (e.g., "state", "phase")
+         */
+        function renderStateMachineDiagram(stateMachine, attributeName = 'state') {
+            if (stateMachine.transitions.length === 0) {
+                return null;
+            }
+
+            let html = '<div class="state-diagram">';
+            html += `<h4>🔀 ${escapeHtml(attributeName)} Transitions</h4>`;
+
+            // Try to render as a linear flow if possible
+            const { initialState, initFromGraph, transitionMap, transitions } = stateMachine;
+
+            // Check if we can build a linear sequence
+            const visited = new Set();
+            const sequence = [];
+            let current = initialState;
+
+            // Build sequence starting from initial state
+            if (current && transitionMap.has(current)) {
+                while (current && !visited.has(current)) {
+                    visited.add(current);
+                    const outgoing = transitionMap.get(current);
+                    if (outgoing && outgoing.length === 1) {
+                        sequence.push({
+                            from: current,
+                            to: outgoing[0].toState,
+                            trigger: outgoing[0].trigger,
+                            fullCondition: outgoing[0].fullCondition
+                        });
+                        current = outgoing[0].toState;
+                    } else if (outgoing && outgoing.length > 1) {
+                        // Multiple outgoing - show all but stop linear sequence
+                        for (const t of outgoing) {
+                            sequence.push({
+                                from: current,
+                                to: t.toState,
+                                trigger: t.trigger,
+                                fullCondition: t.fullCondition
+                            });
+                        }
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            // If we have a good sequence, render as flow
+            if (sequence.length > 0) {
+                html += '<div class="state-flow">';
+
+                // Initial state
+                if (initialState) {
+                    const initLabel = initFromGraph ? 'init' : 'inferred';
+                    html += `<div class="state-box initial" title="${attributeName}.init = &quot;${escapeHtml(initialState)}&quot; (${initLabel})">`;
+                    html += `${escapeHtml(initialState)}`;
+                    html += `<div style="font-size: 9px; color: #666; margin-top: 2px;">${initLabel}</div>`;
+                    html += `</div>`;
+                }
+
+                // Transitions
+                const shownStates = new Set([initialState]);
+                for (const t of sequence) {
+                    html += '<div class="state-transition">';
+                    if (t.trigger || t.fullCondition) {
+                        // Show abbreviated trigger in label, full condition in tooltip
+                        const displayText = t.trigger || t.fullCondition;
+                        const tooltipText = t.fullCondition || t.trigger;
+                        html += `<div class="transition-label" title="${escapeHtml(tooltipText)}">${escapeHtml(displayText)}</div>`;
+                    }
+                    html += '<div class="transition-arrow">→</div>';
+                    html += '</div>';
+
+                    if (!shownStates.has(t.to)) {
+                        const isTerminal = !transitionMap.has(t.to);
+                        html += `<div class="state-box${isTerminal ? ' terminal' : ''}">${escapeHtml(t.to)}</div>`;
+                        shownStates.add(t.to);
+                    }
+                }
+
+                html += '</div>';
+            }
+
+            // Always show transition table for clarity
+            html += '<div class="state-diagram-fallback" style="margin-top: 15px;">';
+            html += '<strong style="font-size: 12px; color: #666;">Transitions:</strong>';
+
+            for (const t of transitions) {
+                if (t.fromState && t.toState) {
+                    html += '<div class="transition-row">';
+                    html += `<span class="transition-from">${escapeHtml(t.fromState)}</span>`;
+                    html += '<span class="arrow-symbol">→</span>';
+                    html += `<span class="transition-to">${escapeHtml(t.toState)}</span>`;
+                    // Show the full condition (both state check AND trigger)
+                    if (t.fullCondition) {
+                        html += `<span class="transition-trigger">when <code>${escapeHtml(t.fullCondition)}</code></span>`;
+                    } else if (t.trigger) {
+                        html += `<span class="transition-trigger">when <code>${escapeHtml(t.trigger)}</code></span>`;
+                    }
+                    html += '</div>';
+                }
+            }
+
+            // Add note about init source
+            if (initialState) {
+                html += '<div style="margin-top: 10px; font-size: 11px; color: #666; font-style: italic;">';
+                if (initFromGraph) {
+                    html += `📝 <code>${escapeHtml(attributeName)}.init = "${escapeHtml(initialState)}"</code> (from source)`;
+                } else {
+                    html += `💡 Initial state "${escapeHtml(initialState)}" inferred from transitions`;
+                    html += `<br><span style="color: #999;">Note: ${escapeHtml(attributeName)}.init not tracked in dependency graph (no dependencies)</span>`;
+                }
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        /**
+         * Render a unified update rules table for any attribute
+         * Handles conditional behaviors, state transitions, and unconditional updates
+         * with a consistent WHEN → THEN structure
+         */
+        function renderUnifiedUpdateTable(sources, attributeName, initValue) {
+            const rules = [];
+
+            // Add init as the first rule if available
+            if (initValue) {
+                const initMatch = initValue.match(/"([^"]+)"/);
+                let initDisplayValue;
+                if (initMatch) {
+                    // String literal init value
+                    initDisplayValue = `"${initMatch[1]}"`;
+                } else {
+                    // Numeric or other init value - format it
+                    initDisplayValue = formatAssignedValue(initValue);
+                }
+                rules.push({
+                    condition: 'on init',
+                    thenValue: `${attributeName} = ${initDisplayValue}`,
+                    line: null,
+                    isInit: true
+                });
+            }
+
+            for (const source of sources) {
+                if (source.assignedValue) {
+                    const condition = source.condition ? formatCondition(source.condition) : 'Always';
+                    const value = formatAssignedValue(source.assignedValue);
+
+                    // Check if this is a state transition (string literal assignment with state check in condition)
+                    const isStateTransition = source.assignedValue.includes('"') &&
+                        source.condition && source.condition.toLowerCase().includes('state');
+
+                    let thenValue;
+                    if (isStateTransition) {
+                        // Extract from/to states for state transitions
+                        const parsed = parseStateTransition(source.condition, source.assignedValue);
+                        if (parsed && parsed.fromState && parsed.toState) {
+                            thenValue = `${attributeName} = "${parsed.fromState}" → "${parsed.toState}"`;
+                        } else {
+                            thenValue = `${attributeName} = ${value}`;
+                        }
+                    } else {
+                        thenValue = `${attributeName} = ${value}`;
+                    }
+
+                    rules.push({
+                        condition,
+                        thenValue,
+                        line: source.line,
+                        isUnconditional: !source.condition
+                    });
+                }
+            }
+
+            if (rules.length === 0) {
+                return null;
+            }
+
+            // Detect potential state block handlers: multiple "Always" rules with different values
+            const alwaysRules = rules.filter(r => r.condition === 'Always');
+            const hasStateBlockWarning = alwaysRules.length > 1;
+
+            let html = '<div class="state-diagram">';
+            html += `<h4>📋 ${escapeHtml(attributeName)} Rules`;
+            if (hasStateBlockWarning) {
+                html += `<span class="warning-badge" title="Multiple 'Always' rules detected - these may be from state blocks where conditions aren't captured">state blocks?</span>`;
+            }
+            html += '</h4>';
+
+            html += '<div class="behavior-table">';
+            html += '<div class="behavior-header">';
+            html += '<span class="behavior-when">When</span>';
+            html += '<span class="behavior-then">Then</span>';
+            html += '</div>';
+
+            for (const rule of rules) {
+                let rowClass = 'behavior-row';
+                if (rule.isInit) {
+                    rowClass += ' init-row';
+                } else if (rule.isUnconditional) {
+                    rowClass += ' unconditional';
+                    // Add extra warning for multiple Always rules
+                    if (hasStateBlockWarning) {
+                        rowClass += ' state-block-warning';
+                    }
+                }
+                html += `<div class="${rowClass}">`;
+                html += `<span class="behavior-condition"><code>${escapeHtml(rule.condition)}</code></span>`;
+                html += '<span class="behavior-arrow">→</span>';
+                html += `<span class="behavior-value"><code>${escapeHtml(rule.thenValue)}</code></span>`;
+                html += '</div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        /**
+         * Format an assigned value for display
+         */
+        function formatAssignedValue(value) {
+            if (!value) return '';
+            return value
+                .replace(/^=\s*/, '')  // Remove leading =
+                .replace(/prior\./g, 'prior.')  // Keep prior. prefix
+                .replace(/current\./g, '')  // Remove current. prefix
+                .replace(/(\d)(m|km|cm|mm|year|years|count|counts)(\s|$)/gi, '$1 $2$3')  // Add space before units
+                .trim();
+        }
+
+        /**
+         * Render unconditional update (simple assignment without conditions)
+         */
+        function renderUnconditionalUpdate(sources, attributeName) {
+            // Find sources without conditions but with assigned values
+            const unconditionalSources = sources.filter(s => !s.condition && s.assignedValue);
+
+            if (unconditionalSources.length === 0) {
+                return null;
+            }
+
+            let html = '<div class="state-diagram" style="border-left: 4px solid #28a745;">';
+            html += `<h4>⚡ ${escapeHtml(attributeName)} Update</h4>`;
+
+            for (const source of unconditionalSources) {
+                const value = formatAssignedValue(source.assignedValue);
+                html += '<div class="unconditional-update">';
+                html += `<span class="update-label">Always:</span>`;
+                html += `<code class="update-value">${escapeHtml(value)}</code>`;
+                if (source.line) {
+                    html += `<span class="update-line">(line ${source.line})</span>`;
+                }
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function showNodeInfo(nodeId) {
             const node = allData.nodes.find(n => n.id === nodeId);
             if (!node) return;
@@ -745,30 +1569,75 @@
             html += `<strong>Event:</strong> ${node.event}</p>`;
 
             // Add source code section if available
-            if (node.allSources && node.allSources.length > 1) {
-                // Display multiple conditional handlers
+            if (node.allSources && node.allSources.length > 0) {
+                // Use unified update table for all types (conditional, unconditional, state transitions)
+                const hasAssignedValue = node.allSources.some(s => s.assignedValue);
+                if (hasAssignedValue) {
+                    // Get init value if available
+                    const initNodeId = `${node.entityType}.${node.attribute}.init`;
+                    const initNode = allData.nodes.find(n => n.id === initNodeId);
+                    let initValue = null;
+                    if (initNode) {
+                        if (initNode.allSources && initNode.allSources.length > 0 && initNode.allSources[0].assignedValue) {
+                            initValue = initNode.allSources[0].assignedValue;
+                        } else if (initNode.sourceText) {
+                            initValue = initNode.sourceText;
+                        }
+                    }
+
+                    const rulesHtml = renderUnifiedUpdateTable(node.allSources, node.attribute, initValue);
+                    if (rulesHtml) {
+                        html += rulesHtml;
+                    }
+                }
+
+                // Show collapsible source code section (collapsed by default)
                 html += '<div class="source-code-section">';
-                html += `<h4>Source Code (${node.allSources.length} conditional handlers)</h4>`;
+                html += `<h4 class="collapsible collapsed" onclick="this.classList.toggle('collapsed'); this.nextElementSibling.classList.toggle('collapsed');">`;
+                const hasConditions = node.allSources.some(s => s.condition);
+                if (hasConditions) {
+                    html += `Source Code (${node.allSources.length} conditional handlers)`;
+                } else if (node.allSources.length > 1) {
+                    html += `Source Code (${node.allSources.length} handlers)`;
+                } else {
+                    html += 'Source Code';
+                }
+                html += '</h4>';
+                html += '<div class="collapsible-content collapsed">';
 
                 node.allSources.forEach((source, index) => {
-                    html += `<div class="source-line-number">Line ${source.line}</div>`;
+                    html += `<div class="source-line-number">Line ${source.line}`;
+                    if (source.isElseBranch) {
+                        html += ' <span class="badge" style="background: #ffecb3; color: #ff6f00;">else</span>';
+                    }
+                    html += '</div>';
 
-                    // Escape HTML to prevent injection
-                    const escapedText = source.text
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
-                    html += `<div class="source-code">${escapedText}</div>`;
+                    // Show condition if present
+                    if (source.condition) {
+                        html += `<div style="margin: 4px 0; padding: 4px 8px; background: #e3f2fd; border-radius: 3px; font-size: 12px;">`;
+                        html += `<strong>if:</strong> <code>${escapeHtml(source.condition)}</code>`;
+                        html += `</div>`;
+                    }
+
+                    // Show assigned value if present
+                    if (source.assignedValue) {
+                        html += `<div style="margin: 4px 0; padding: 4px 8px; background: #e8f5e9; border-radius: 3px; font-size: 12px;">`;
+                        html += `<strong>→</strong> <code>${escapeHtml(source.assignedValue)}</code>`;
+                        html += `</div>`;
+                    }
+
+                    // Show full source text
+                    if (source.text) {
+                        html += `<div class="source-code">${escapeHtml(source.text)}</div>`;
+                    }
 
                     // Add spacing between entries except for the last one
                     if (index < node.allSources.length - 1) {
-                        html += '<div style="margin: 8px 0;"></div>';
+                        html += '<div style="margin: 12px 0; border-top: 1px dashed #ccc;"></div>';
                     }
                 });
 
-                html += '</div>';
+                html += '</div></div>';
             } else if (node.sourceLine !== undefined || node.sourceText) {
                 // Single source (backward compatibility)
                 html += '<div class="source-code-section">';
@@ -779,21 +1648,14 @@
                 }
 
                 if (node.sourceText) {
-                    // Escape HTML to prevent injection
-                    const escapedText = node.sourceText
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#039;');
-                    html += `<div class="source-code">${escapedText}</div>`;
+                    html += `<div class="source-code">${escapeHtml(node.sourceText)}</div>`;
                 }
 
                 html += '</div>';
             }
 
             if (incomingEdges.length > 0) {
-                html += `<p><strong>Incoming Dependencies (${incomingEdges.length}):</strong></p>`;
+                html += `<p><strong>Used By (${incomingEdges.length}):</strong></p>`;
                 html += '<ul class="dep-list">';
                 incomingEdges.forEach(e => {
                     const fromNode = allData.nodes.find(n => n.id === e.from);
@@ -815,19 +1677,17 @@
                         'direct': 'Direct'
                     };
 
-                    html += `<li>${fromNode.attribute} `;
+                    // Show "fromNode reads this via e.label"
+                    html += `<li><strong>${fromNode.label}</strong> `;
                     html += `<span class="badge ${resolutionType}">${typeLabels[resolutionType] || resolutionType}</span>`;
-                    html += `<br><small style="color: #666;">${e.label}</small>`;
-                    if (e.description) {
-                        html += `<br><small style="color: #888; font-style: italic;">${e.description}</small>`;
-                    }
+                    html += `<br><small style="color: #666;">reads <code>${e.label}</code></small>`;
                     html += `</li>`;
                 });
                 html += '</ul>';
             }
 
             if (outgoingEdges.length > 0) {
-                html += `<p><strong>Outgoing Dependencies (${outgoingEdges.length}):</strong></p>`;
+                html += `<p><strong>Depends On (${outgoingEdges.length}):</strong></p>`;
                 html += '<ul class="dep-list">';
                 outgoingEdges.forEach(e => {
                     const toNode = allData.nodes.find(n => n.id === e.to);
@@ -849,9 +1709,10 @@
                         'direct': 'Direct'
                     };
 
-                    html += `<li>${toNode.attribute} `;
+                    // Show "reads toNode via e.label"
+                    html += `<li><strong>${toNode.label}</strong> `;
                     html += `<span class="badge ${resolutionType}">${typeLabels[resolutionType] || resolutionType}</span>`;
-                    html += `<br><small style="color: #666;">${e.label}</small>`;
+                    html += `<br><small style="color: #666;">via <code>${e.label}</code></small>`;
                     if (e.description) {
                         html += `<br><small style="color: #888; font-style: italic;">${e.description}</small>`;
                     }
@@ -874,10 +1735,18 @@
                 depTypes[type] = (depTypes[type] || 0) + 1;
             });
 
+            // Count nodes with state transitions
+            const stateNodes = filtered.nodes.filter(n =>
+                n.allSources && n.allSources.some(s => s.condition)
+            ).length;
+
             let html = '<h3>Graph Statistics</h3>';
             html += '<div class="stats">';
             html += `<span><strong>Nodes:</strong> ${filtered.nodes.length}</span>`;
             html += `<span><strong>Edges:</strong> ${filtered.edges.length}</span>`;
+            if (stateNodes > 0) {
+                html += `<span><strong>🔀 State Machines:</strong> ${stateNodes}</span>`;
+            }
             html += '</div>';
 
             if (Object.keys(depTypes).length > 0) {
