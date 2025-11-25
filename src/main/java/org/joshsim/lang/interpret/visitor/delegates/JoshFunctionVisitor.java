@@ -230,11 +230,19 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   public JoshFragment visitEventHandlerGroupSingle(
       JoshLangParser.EventHandlerGroupSingleContext ctx) {
     String fullName = ctx.name.getText();
+    EventKey eventKey = buildEventKey(fullName);
+
+    // Record source location for dependency tracking
+    recordEventHandlerSource(
+        ctx.name != null ? ctx.name.getStart() : null,
+        ctx.getText(),
+        eventKey
+    );
+
     JoshFragment innerFragment = ctx.getChild(1).accept(parent);
 
     CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
-    EventKey eventKey = buildEventKey(fullName);
     EventHandler eventHandler = new EventHandler(
         innerCallable,
         eventKey.getAttribute(),
@@ -265,11 +273,90 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
     groupBuilder.setEventKey(eventKey);
 
-    int numBranches = ctx.getChildCount() - 1;
-    for (int branchIndex = 0; branchIndex < numBranches; branchIndex++) {
-      int childIndex = branchIndex + 1;
-      JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
+    // Get the full context text (includes attribute name and all branches)
+    String fullContextText = ctx.getText();
 
+    // Process the 'if' branch
+    JoshLangParser.ConditionalIfEventHandlerGroupMemberContext ifCtx =
+        ctx.conditionalIfEventHandlerGroupMember();
+    if (ifCtx != null) {
+      String conditionExpression = ifCtx.target != null ? ifCtx.target.getText() : null;
+      String assignedValue = ifCtx.inner != null ? ifCtx.inner.getText() : null;
+      recordConditionalEventHandlerSource(
+          ctx.name != null ? ctx.name.getStart() : null,
+          fullContextText,
+          eventKey,
+          conditionExpression,
+          assignedValue,
+          false
+      );
+
+      JoshFragment childFragment = ifCtx.accept(parent);
+      if (childFragment.getCompiledSelector().isPresent()) {
+        groupBuilder.addEventHandler(new EventHandler(
+            childFragment.getCompiledCallable(),
+            eventKey.getAttribute(),
+            eventKey.getEvent(),
+            childFragment.getCompiledSelector().get()
+        ));
+      } else {
+        groupBuilder.addEventHandler(new EventHandler(
+            childFragment.getCompiledCallable(),
+            eventKey.getAttribute(),
+            eventKey.getEvent()
+        ));
+      }
+    }
+
+    // Process 'elif' branches
+    List<JoshLangParser.ConditionalElifEventHandlerGroupMemberContext> elifCtxList =
+        ctx.conditionalElifEventHandlerGroupMember();
+    if (elifCtxList != null) {
+      for (JoshLangParser.ConditionalElifEventHandlerGroupMemberContext elifCtx : elifCtxList) {
+        String conditionExpression = elifCtx.target != null ? elifCtx.target.getText() : null;
+        String assignedValue = elifCtx.inner != null ? elifCtx.inner.getText() : null;
+        recordConditionalEventHandlerSource(
+            ctx.name != null ? ctx.name.getStart() : null,
+            fullContextText,
+            eventKey,
+            conditionExpression,
+            assignedValue,
+            false
+        );
+
+        JoshFragment childFragment = elifCtx.accept(parent);
+        if (childFragment.getCompiledSelector().isPresent()) {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent(),
+              childFragment.getCompiledSelector().get()
+          ));
+        } else {
+          groupBuilder.addEventHandler(new EventHandler(
+              childFragment.getCompiledCallable(),
+              eventKey.getAttribute(),
+              eventKey.getEvent()
+          ));
+        }
+      }
+    }
+
+    // Process 'else' branch
+    JoshLangParser.ConditionalElseEventHandlerGroupMemberContext elseCtx =
+        ctx.conditionalElseEventHandlerGroupMember();
+    if (elseCtx != null) {
+      String assignedValue = elseCtx.inner != null ? elseCtx.inner.getText() : null;
+      recordConditionalEventHandlerSource(
+          ctx.name != null ? ctx.name.getStart() : null,
+          fullContextText,
+          eventKey,
+          null,  // No condition for else branch
+          assignedValue,
+          true   // This is an else branch
+      );
+
+      JoshFragment childFragment = elseCtx.accept(parent);
       if (childFragment.getCompiledSelector().isPresent()) {
         groupBuilder.addEventHandler(new EventHandler(
             childFragment.getCompiledCallable(),
@@ -304,6 +391,91 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     String attributeName = fragment.getEventHandlerGroup().getAttribute();
     ReservedWordChecker.checkVariableDeclaration(attributeName);
     return fragment;
+  }
+
+  /**
+   * Records dependency tracking information for an event handler if tracking is enabled.
+   *
+   * <p>This method has minimal performance overhead when tracking is disabled - only a
+   * ThreadLocal.get() check. When tracking is enabled, it captures source location information
+   * from the ANTLR parse tree and records it in the DependencyTracker.</p>
+   *
+   * @param nameToken The ANTLR token containing the event handler name
+   * @param contextText The full text of the parse tree context
+   * @param eventKey The event key containing attribute and event names
+   */
+  private void recordEventHandlerSource(
+      org.antlr.v4.runtime.Token nameToken,
+      String contextText,
+      EventKey eventKey) {
+    // Set context for dependency tracking
+    parent.setCurrentAttributeName(eventKey.getAttribute());
+    parent.setCurrentEventName(eventKey.getEvent());
+
+    // Capture source location information (with null checks for test contexts)
+    if (nameToken != null) {
+      Integer sourceLine = nameToken.getLine();
+      String sourceText = contextText;
+      parent.setCurrentSourceLine(sourceLine);
+      parent.setCurrentSourceText(sourceText);
+
+      // Extract assigned value from context text (everything after first '=')
+      String assignedValue = null;
+      if (contextText != null && contextText.contains("=")) {
+        int eqIndex = contextText.indexOf('=');
+        if (eqIndex >= 0 && eqIndex < contextText.length() - 1) {
+          assignedValue = contextText.substring(eqIndex);
+        }
+      }
+
+      // Record source location in DependencyTracker with assigned value
+      String nodeId = parent.getCurrentNodeId();
+      if (nodeId != null) {
+        org.joshsim.lang.analyze.DependencyTracker.recordConditionalSource(
+            nodeId, sourceLine, sourceText, null, assignedValue, null);
+      }
+    }
+  }
+
+  /**
+   * Records conditional event handler source with condition information.
+   *
+   * <p>Similar to recordEventHandlerSource but calls DependencyTracker.recordConditionalSource()
+   * to capture conditional branch information including the condition expression, assigned value,
+   * and whether this is an else branch.</p>
+   *
+   * @param nameToken The ANTLR token containing the event handler name
+   * @param contextText The full text of the parse tree context
+   * @param eventKey The event key containing attribute and event names
+   * @param conditionExpression The condition expression text (null for else branches)
+   * @param assignedValue The value being assigned
+   * @param isElseBranch True if this is an else branch, false otherwise
+   */
+  private void recordConditionalEventHandlerSource(
+      org.antlr.v4.runtime.Token nameToken,
+      String contextText,
+      EventKey eventKey,
+      String conditionExpression,
+      String assignedValue,
+      Boolean isElseBranch) {
+    // Set context for dependency tracking
+    parent.setCurrentAttributeName(eventKey.getAttribute());
+    parent.setCurrentEventName(eventKey.getEvent());
+
+    // Capture source location information (with null checks for test contexts)
+    if (nameToken != null) {
+      Integer sourceLine = nameToken.getLine();
+      String sourceText = contextText;
+      parent.setCurrentSourceLine(sourceLine);
+      parent.setCurrentSourceText(sourceText);
+
+      // Record conditional source location in DependencyTracker
+      String nodeId = parent.getCurrentNodeId();
+      if (nodeId != null) {
+        org.joshsim.lang.analyze.DependencyTracker.recordConditionalSource(
+            nodeId, sourceLine, sourceText, conditionExpression, assignedValue, isElseBranch);
+      }
+    }
   }
 
   /**

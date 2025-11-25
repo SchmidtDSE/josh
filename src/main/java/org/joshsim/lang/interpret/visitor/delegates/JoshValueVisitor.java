@@ -9,11 +9,13 @@ package org.joshsim.lang.interpret.visitor.delegates;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.analyze.DependencyTracker;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
 import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
+import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
 /**
@@ -23,6 +25,7 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
 
   private final EngineValueFactory engineValueFactory;
   private final EngineValue allString;
+  private final JoshParserToMachineVisitor parent;
 
   /**
    * Constructs a new instance of the JoshValueVisitor class.
@@ -32,6 +35,7 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
   public JoshValueVisitor(DelegateToolbox toolbox) {
     engineValueFactory = toolbox.getValueFactory();
     allString = engineValueFactory.build("all", Units.of(""));
+    parent = toolbox.getParent();
   }
 
   /**
@@ -45,6 +49,15 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
   public JoshFragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
     ValueResolver resolver = new ValueResolver(engineValueFactory, identifierName);
+
+    // Track dependency if tracking is enabled
+    if (DependencyTracker.isEnabled()) {
+      String currentNodeId = parent.getCurrentNodeId();
+      if (currentNodeId != null) {
+        DependencyTracker.recordDependency(currentNodeId, identifierName, identifierName);
+      }
+    }
+
     EventHandlerAction action = (machine) -> machine.push(resolver);
     return new ActionFragment(action);
   }
