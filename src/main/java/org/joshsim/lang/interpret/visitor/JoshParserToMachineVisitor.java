@@ -45,6 +45,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
   private final JoshFunctionVisitor functionVisitor;
   private final JoshStanzaVisitor stanzaVisitor;
 
+  // Dependency tracking context
+  private String currentEntityName;
+  private String currentAttributeName;
+  private String currentEventName;
+  private Integer currentSourceLine;
+  private String currentSourceText;
+
   /**
    * Create a new visitor which has some commonly used values cached.
    *
@@ -325,6 +332,85 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
 
   public JoshFragment visitProgram(JoshLangParser.ProgramContext ctx) {
     return stanzaVisitor.visitProgram(ctx);
+  }
+
+  /**
+   * Get the current node ID for dependency tracking.
+   *
+   * <p>Returns a composite identifier of the form "entityName.attributeName.eventName" that
+   * uniquely identifies the current context during interpretation. This is used by the
+   * DependencyTracker to record dependencies between nodes.</p>
+   *
+   * @return The current node ID, or null if context is not set.
+   */
+  public String getCurrentNodeId() {
+    if (currentEntityName == null || currentAttributeName == null || currentEventName == null) {
+      return null;
+    }
+    return String.format("%s.%s.%s", currentEntityName, currentAttributeName, currentEventName);
+  }
+
+  /**
+   * Set the current entity name for dependency tracking context.
+   *
+   * @param entityName The name of the entity being processed.
+   */
+  public void setCurrentEntityName(String entityName) {
+    this.currentEntityName = entityName;
+  }
+
+  /**
+   * Set the current attribute name for dependency tracking context.
+   *
+   * @param attributeName The name of the attribute being processed.
+   */
+  public void setCurrentAttributeName(String attributeName) {
+    this.currentAttributeName = attributeName;
+  }
+
+  /**
+   * Set the current event name for dependency tracking context.
+   *
+   * @param eventName The name of the event being processed.
+   */
+  public void setCurrentEventName(String eventName) {
+    this.currentEventName = eventName;
+  }
+
+  /**
+   * Set the current source line for dependency tracking context.
+   *
+   * @param sourceLine The line number in the source file.
+   */
+  public void setCurrentSourceLine(Integer sourceLine) {
+    this.currentSourceLine = sourceLine;
+  }
+
+  /**
+   * Set the current source text for dependency tracking context.
+   *
+   * @param sourceText The source code text.
+   */
+  public void setCurrentSourceText(String sourceText) {
+    this.currentSourceText = sourceText;
+  }
+
+  /**
+   * Get the current source line for dependency tracking.
+   *
+   * @return The current source line, or null if not set.
+   */
+  public Integer getCurrentSourceLine() {
+    return currentSourceLine;
+  }
+
+  /**
+   * Get the current source text for dependency tracking.
+   *
+   * @return The current source text, or null if not set.
+   */
+  public String getCurrentSourceText() {
+    return currentSourceText;
   }
 
 }
