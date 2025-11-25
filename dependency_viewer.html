@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Josh Dependency Graph Viewer</title>
+    <script src="https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body {
+            font-family: 'Public Sans', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #f0f0f0;
+        }
+
+        .btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        select, input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        #network {
+            width: 100%;
+            height: calc(100vh - 280px);
+            background: white;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .info-panel {
+            background: white;
+            margin: 0 20px 20px 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .dep-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .dep-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dep-list li:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .badge.temporal { background: #e3f2fd; color: #1976d2; }
+        .badge.spatial { background: #f3e5f5; color: #7b1fa2; }
+        .badge.cross-entity { background: #fff3e0; color: #f57c00; }
+        .badge.collection { background: #e8f5e9; color: #388e3c; }
+        .badge.temporal-prior { background: #e3f2fd; color: #2196F3; }
+        .badge.temporal-current { background: #e8f5e9; color: #4CAF50; }
+        .badge.spatial-patch { background: #fff3e0; color: #FF9800; }
+        .badge.spatial-collection { background: #f3e5f5; color: #9C27B0; }
+        .badge.simulation { background: #ffebee; color: #F44336; }
+        .badge.explicit-entity { background: #f5f5f5; color: #757575; }
+        .badge.simple { background: #f1f8e9; color: #8BC34A; }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #666;
+            border-radius: 3px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .filter-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .filter-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-checkboxes {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+
+        .edge-legend {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .edge-legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .edge-legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .edge-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .edge-legend-line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .collapsible::before {
+            content: '▼ ';
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .collapsible.collapsed::before {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+
+        .source-code-section {
+            background: #f5f5f5;
+            border-left: 3px solid #007bff;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .source-code-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .source-line-number {
+            color: #666;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .source-code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 13px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            user-select: text;
+            color: #333;
+        }
+
+        .tooltip-source {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 11px;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Josh Dependency Graph Viewer</h1>
+        <p style="margin: 5px 0; color: #666;">
+            Visualize attribute dependencies and ecological state transitions
+        </p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Load graph:</label>
+                <input type="file" id="fileInput" accept=".json" />
+            </div>
+
+
+            <div class="control-group" id="customFilters" style="display: none;">
+                <label>Entity Type:</label>
+                <select id="entityFilter">
+                    <option value="">All</option>
+                </select>
+
+                <label>Event:</label>
+                <select id="eventFilter">
+                    <option value="">All</option>
+                    <option value="init">init</option>
+                    <option value="step">step</option>
+                    <option value="start">start</option>
+                    <option value="end">end</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="showSynthetic" checked />
+                    Show synthetic attributes
+                </label>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="showCollections" checked />
+                    Show collection operations
+                </label>
+            </div>
+
+            <div class="control-group">
+                <button class="btn" id="fitBtn">Fit to Screen</button>
+                <button class="btn" id="hierarchicalBtn">Toggle Layout</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <h4>Attribute Filters</h4>
+            <div class="filter-checkboxes">
+                <label>
+                    <input type="checkbox" id="hideLog" checked />
+                    Hide log attributes
+                </label>
+                <label>
+                    <input type="checkbox" id="hideExport" checked />
+                    Hide export attributes
+                </label>
+                <label>
+                    <input type="checkbox" id="hideAssert" checked />
+                    Hide assert attributes
+                </label>
+            </div>
+        </div>
+
+        <div class="edge-legend">
+            <h4 class="collapsible" id="legendToggle">Edge Resolution Types</h4>
+            <div class="collapsible-content" id="legendContent">
+                <div class="edge-legend-items">
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #2196F3;"></div>
+                        <span><strong>Temporal (Prior)</strong> - Previous timestep</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #4CAF50;"></div>
+                        <span><strong>Temporal (Current)</strong> - Same timestep</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #FF9800;"></div>
+                        <span><strong>Spatial (Patch)</strong> - Patch level</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #9C27B0;"></div>
+                        <span><strong>Spatial (Collection)</strong> - Organism collection</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #F44336;"></div>
+                        <span><strong>Simulation</strong> - Simulation level</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #757575;"></div>
+                        <span><strong>Explicit Entity</strong> - Direct entity reference</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background: #8BC34A;"></div>
+                        <span><strong>Simple</strong> - Simple attribute reference</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #81c784;"></div>
+                <span>Simulation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #64b5f6;"></div>
+                <span>Patch</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #ffb74d;"></div>
+                <span>Organism</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #e57373;"></div>
+                <span>Disturbance</span>
+            </div>
+        </div>
+
+    <div id="network"></div>
+
+    <div class="info-panel" id="infoPanel">
+        <p>Load a dependency graph JSON file to begin.</p>
+    </div>
+
+    <script>
+        let network = null;
+        let allData = null;
+        let hierarchicalLayout = false;
+
+        // File input
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            const text = await file.text();
+            allData = JSON.parse(text);
+
+            populateFilters(allData);
+            renderGraph();
+        });
+
+        // Control buttons
+        document.getElementById('fitBtn').addEventListener('click', () => {
+            if (network) network.fit({ animation: true });
+        });
+
+        document.getElementById('hierarchicalBtn').addEventListener('click', () => {
+            hierarchicalLayout = !hierarchicalLayout;
+            renderGraph();
+        });
+
+        // Filter controls
+        ['showSynthetic', 'showCollections', 'entityFilter', 'eventFilter', 'hideLog', 'hideExport', 'hideAssert'].forEach(id => {
+            document.getElementById(id).addEventListener('change', renderGraph);
+        });
+
+        // Legend toggle
+        document.getElementById('legendToggle').addEventListener('click', () => {
+            const toggle = document.getElementById('legendToggle');
+            const content = document.getElementById('legendContent');
+            toggle.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        });
+
+        function populateFilters(data) {
+            // Get unique entity types
+            const entityTypes = [...new Set(data.nodes.map(n => n.entityType))];
+            const entityFilter = document.getElementById('entityFilter');
+
+            entityFilter.innerHTML = '<option value="">All</option>';
+            entityTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                entityFilter.appendChild(option);
+            });
+        }
+
+        function isSynthetic(attrName) {
+            return ['current', 'prior', 'here', 'meta', 'geoKey'].includes(attrName);
+        }
+
+        function isCollectionOp(nodeId) {
+            // Heuristic: nodes that involve filtering or aggregation
+            return nodeId.includes('[') ||
+                   nodeId.includes('count(') ||
+                   nodeId.includes('mean(') ||
+                   nodeId.includes('sum(');
+        }
+
+        function classifyDependency(edge) {
+            const label = edge.label || '';
+
+            if (label.startsWith('prior.')) return 'temporal';
+            if (label.startsWith('here.')) return 'spatial';
+            if (label.startsWith('meta.')) return 'cross-entity';
+            if (label.includes('[')) return 'collection';
+
+            // Check if crossing entity boundaries
+            const fromParts = edge.from.split('.');
+            const toParts = edge.to.split('.');
+            if (fromParts[0] !== toParts[0]) return 'cross-entity';
+
+            return 'direct';
+        }
+
+        function filterData(data) {
+            const showSynthetic = document.getElementById('showSynthetic').checked;
+            const showCollections = document.getElementById('showCollections').checked;
+            const entityFilter = document.getElementById('entityFilter').value;
+            const eventFilter = document.getElementById('eventFilter').value;
+            const hideLog = document.getElementById('hideLog').checked;
+            const hideExport = document.getElementById('hideExport').checked;
+            const hideAssert = document.getElementById('hideAssert').checked;
+
+            // Filter nodes based on direct criteria
+            let nodes = data.nodes.filter(node => {
+                if (!showSynthetic && isSynthetic(node.attribute)) return false;
+                if (!showCollections && isCollectionOp(node.id)) return false;
+                if (entityFilter && node.entityType !== entityFilter) return false;
+                if (eventFilter && node.event !== eventFilter) return false;
+
+                // Apply attribute prefix filters
+                const attr = node.attribute.toLowerCase();
+                if (hideLog && attr.startsWith('log')) return false;
+                if (hideExport && attr.startsWith('export')) return false;
+                if (hideAssert && attr.startsWith('assert')) return false;
+
+                return true;
+            });
+
+            let nodeIds = new Set(nodes.map(n => n.id));
+
+            // Filter edges to only include nodes we're showing
+            let edges = data.edges.filter(edge => {
+                return nodeIds.has(edge.from) && nodeIds.has(edge.to);
+            });
+
+            // Recursively remove orphaned nodes
+            // A node is orphaned if all its edges connect to filtered nodes
+            let changed = true;
+            while (changed) {
+                changed = false;
+                const connectedNodes = new Set();
+
+                // Find all nodes that have at least one edge
+                edges.forEach(edge => {
+                    connectedNodes.add(edge.from);
+                    connectedNodes.add(edge.to);
+                });
+
+                // Remove nodes that have no edges (completely disconnected)
+                const newNodes = nodes.filter(node => connectedNodes.has(node.id));
+
+                if (newNodes.length < nodes.length) {
+                    changed = true;
+                    nodes = newNodes;
+                    nodeIds = new Set(nodes.map(n => n.id));
+
+                    // Update edges to only include remaining nodes
+                    edges = edges.filter(edge => {
+                        return nodeIds.has(edge.from) && nodeIds.has(edge.to);
+                    });
+                }
+            }
+
+            return { nodes, edges };
+        }
+
+        function renderGraph() {
+            if (!allData) return;
+
+            const filtered = filterData(allData);
+            const container = document.getElementById('network');
+
+            // Color by entity type
+            const entityColors = {
+                'JoshuaTreeReference': '#81c784',  // Simulation - green
+                'Default': '#64b5f6',               // Patch - blue
+                'JoshuaTree': '#ffb74d',            // Organism - orange
+                'Fire': '#e57373'                   // Disturbance - red
+            };
+
+            // Convert to Vis.js format
+            const nodes = filtered.nodes.map(n => {
+                const color = entityColors[n.entityType] || '#bdbdbd';
+                const shape = n.event === 'init' ? 'box' :
+                             n.event === 'step' ? 'ellipse' :
+                             n.event === 'end' ? 'diamond' : 'box';
+
+                // Build enhanced tooltip with source code info
+                let tooltip = `${n.entityType}.${n.attribute}.${n.event}`;
+
+                // Check if multiple conditional handlers exist
+                if (n.allSources && n.allSources.length > 1) {
+                    const lines = n.allSources.map(s => s.line).join(', ');
+                    tooltip += `\nLines ${lines}: ${n.allSources.length} conditional handlers`;
+                } else if (n.sourceLine !== undefined) {
+                    tooltip += `\nLine ${n.sourceLine}`;
+                }
+
+                if (n.sourceText && (!n.allSources || n.allSources.length <= 1)) {
+                    tooltip += `\n${n.sourceText}`;
+                }
+
+                return {
+                    id: n.id,
+                    label: n.attribute,
+                    title: tooltip,
+                    group: n.entityType,
+                    color: color,
+                    shape: shape,
+                    font: { size: 14 }
+                };
+            });
+
+            const edges = filtered.edges.map(e => {
+                // Use new resolutionType if available, otherwise fall back to old classification
+                const resolutionType = e.resolutionType || classifyDependency(e);
+
+                // Enhanced color mapping for 7 resolution types
+                const edgeColors = {
+                    'temporal-prior': '#2196F3',
+                    'temporal-current': '#4CAF50',
+                    'spatial-patch': '#FF9800',
+                    'spatial-collection': '#9C27B0',
+                    'simulation': '#F44336',
+                    'explicit-entity': '#757575',
+                    'simple': '#8BC34A',
+                    // Fallback to old types
+                    'temporal': '#1976d2',
+                    'spatial': '#7b1fa2',
+                    'cross-entity': '#f57c00',
+                    'collection': '#388e3c',
+                    'direct': '#666'
+                };
+
+                const edgeStyles = {
+                    'temporal-prior': [5, 5],    // Dashed
+                    'temporal-current': [],      // Solid
+                    'spatial-patch': [10, 5],    // Long dash
+                    'spatial-collection': [2, 2], // Dotted
+                    'simulation': [],            // Solid
+                    'explicit-entity': [3, 3],   // Medium dash
+                    'simple': [],                // Solid
+                    // Fallback to old types
+                    'temporal': [5, 5],
+                    'spatial': [10, 5],
+                    'cross-entity': [],
+                    'collection': [2, 2],
+                    'direct': []
+                };
+
+                // Build enhanced tooltip
+                let tooltip = e.label || '';
+
+                // Use the JSON-provided resolutionType if available
+                if (e.resolutionType) {
+                    const typeLabels = {
+                        'temporal-prior': 'Temporal (Prior)',
+                        'temporal-current': 'Temporal (Current)',
+                        'spatial-patch': 'Spatial (Patch)',
+                        'spatial-collection': 'Spatial (Collection)',
+                        'simulation': 'Simulation',
+                        'explicit-entity': 'Explicit Entity',
+                        'simple': 'Simple',
+                        'temporal': 'Temporal',
+                        'spatial': 'Spatial',
+                        'cross-entity': 'Cross-Entity',
+                        'collection': 'Collection',
+                        'direct': 'Direct'
+                    };
+                    tooltip += `\nType: ${typeLabels[e.resolutionType] || e.resolutionType}`;
+                }
+
+                // Add description if available
+                if (e.description) {
+                    tooltip += `\n\n${e.description}`;
+                }
+
+                return {
+                    from: e.from,
+                    to: e.to,
+                    label: e.label || '',
+                    arrows: 'to',
+                    color: edgeColors[resolutionType] || '#666',
+                    dashes: edgeStyles[resolutionType] || [],
+                    font: { size: 10, align: 'middle' },
+                    title: tooltip,
+                    resolutionType: resolutionType  // Store for later use
+                };
+            });
+
+            const graphData = { nodes, edges };
+
+            const layoutOptions = hierarchicalLayout ? {
+                hierarchical: {
+                    enabled: true,
+                    direction: 'LR',
+                    sortMethod: 'directed',
+                    levelSeparation: 200,
+                    nodeSpacing: 150
+                }
+            } : {
+                hierarchical: { enabled: false }
+            };
+
+            const options = {
+                nodes: {
+                    margin: 10,
+                    borderWidth: 2,
+                    borderWidthSelected: 3
+                },
+                edges: {
+                    smooth: {
+                        type: 'cubicBezier',
+                        roundness: 0.5
+                    },
+                    width: 2
+                },
+                physics: {
+                    enabled: !hierarchicalLayout,
+                    stabilization: { iterations: 300 },
+                    barnesHut: {
+                        gravitationalConstant: -10000,
+                        springConstant: 0.04,
+                        springLength: 150
+                    }
+                },
+                layout: layoutOptions,
+                interaction: {
+                    hover: true,
+                    navigationButtons: true,
+                    keyboard: true
+                }
+            };
+
+            network = new vis.Network(container, graphData, options);
+
+            // Click handler for info panel
+            network.on('click', (params) => {
+                if (params.nodes.length > 0) {
+                    showNodeInfo(params.nodes[0]);
+                } else {
+                    showStats();
+                }
+            });
+
+            showStats();
+        }
+
+        function showNodeInfo(nodeId) {
+            const node = allData.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            const incomingEdges = allData.edges.filter(e => e.to === nodeId);
+            const outgoingEdges = allData.edges.filter(e => e.from === nodeId);
+
+            let html = `<h3>${node.attribute}</h3>`;
+            html += `<p><strong>Entity:</strong> ${node.entityType} | `;
+            html += `<strong>Event:</strong> ${node.event}</p>`;
+
+            // Add source code section if available
+            if (node.allSources && node.allSources.length > 1) {
+                // Display multiple conditional handlers
+                html += '<div class="source-code-section">';
+                html += `<h4>Source Code (${node.allSources.length} conditional handlers)</h4>`;
+
+                node.allSources.forEach((source, index) => {
+                    html += `<div class="source-line-number">Line ${source.line}</div>`;
+
+                    // Escape HTML to prevent injection
+                    const escapedText = source.text
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                    html += `<div class="source-code">${escapedText}</div>`;
+
+                    // Add spacing between entries except for the last one
+                    if (index < node.allSources.length - 1) {
+                        html += '<div style="margin: 8px 0;"></div>';
+                    }
+                });
+
+                html += '</div>';
+            } else if (node.sourceLine !== undefined || node.sourceText) {
+                // Single source (backward compatibility)
+                html += '<div class="source-code-section">';
+                html += '<h4>Source Code</h4>';
+
+                if (node.sourceLine !== undefined) {
+                    html += `<div class="source-line-number">Line ${node.sourceLine}</div>`;
+                }
+
+                if (node.sourceText) {
+                    // Escape HTML to prevent injection
+                    const escapedText = node.sourceText
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                    html += `<div class="source-code">${escapedText}</div>`;
+                }
+
+                html += '</div>';
+            }
+
+            if (incomingEdges.length > 0) {
+                html += `<p><strong>Incoming Dependencies (${incomingEdges.length}):</strong></p>`;
+                html += '<ul class="dep-list">';
+                incomingEdges.forEach(e => {
+                    const fromNode = allData.nodes.find(n => n.id === e.from);
+                    const resolutionType = e.resolutionType || classifyDependency(e);
+
+                    // Format resolution type for display
+                    const typeLabels = {
+                        'temporal-prior': 'Temporal (Prior)',
+                        'temporal-current': 'Temporal (Current)',
+                        'spatial-patch': 'Spatial (Patch)',
+                        'spatial-collection': 'Spatial (Collection)',
+                        'simulation': 'Simulation',
+                        'explicit-entity': 'Explicit Entity',
+                        'simple': 'Simple',
+                        'temporal': 'Temporal',
+                        'spatial': 'Spatial',
+                        'cross-entity': 'Cross-Entity',
+                        'collection': 'Collection',
+                        'direct': 'Direct'
+                    };
+
+                    html += `<li>${fromNode.attribute} `;
+                    html += `<span class="badge ${resolutionType}">${typeLabels[resolutionType] || resolutionType}</span>`;
+                    html += `<br><small style="color: #666;">${e.label}</small>`;
+                    if (e.description) {
+                        html += `<br><small style="color: #888; font-style: italic;">${e.description}</small>`;
+                    }
+                    html += `</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (outgoingEdges.length > 0) {
+                html += `<p><strong>Outgoing Dependencies (${outgoingEdges.length}):</strong></p>`;
+                html += '<ul class="dep-list">';
+                outgoingEdges.forEach(e => {
+                    const toNode = allData.nodes.find(n => n.id === e.to);
+                    const resolutionType = e.resolutionType || classifyDependency(e);
+
+                    // Format resolution type for display
+                    const typeLabels = {
+                        'temporal-prior': 'Temporal (Prior)',
+                        'temporal-current': 'Temporal (Current)',
+                        'spatial-patch': 'Spatial (Patch)',
+                        'spatial-collection': 'Spatial (Collection)',
+                        'simulation': 'Simulation',
+                        'explicit-entity': 'Explicit Entity',
+                        'simple': 'Simple',
+                        'temporal': 'Temporal',
+                        'spatial': 'Spatial',
+                        'cross-entity': 'Cross-Entity',
+                        'collection': 'Collection',
+                        'direct': 'Direct'
+                    };
+
+                    html += `<li>${toNode.attribute} `;
+                    html += `<span class="badge ${resolutionType}">${typeLabels[resolutionType] || resolutionType}</span>`;
+                    html += `<br><small style="color: #666;">${e.label}</small>`;
+                    if (e.description) {
+                        html += `<br><small style="color: #888; font-style: italic;">${e.description}</small>`;
+                    }
+                    html += `</li>`;
+                });
+                html += '</ul>';
+            }
+
+            document.getElementById('infoPanel').innerHTML = html;
+        }
+
+        function showStats() {
+            if (!allData) return;
+
+            const filtered = filterData(allData);
+            const depTypes = {};
+
+            filtered.edges.forEach(e => {
+                const type = e.resolutionType || classifyDependency(e);
+                depTypes[type] = (depTypes[type] || 0) + 1;
+            });
+
+            let html = '<h3>Graph Statistics</h3>';
+            html += '<div class="stats">';
+            html += `<span><strong>Nodes:</strong> ${filtered.nodes.length}</span>`;
+            html += `<span><strong>Edges:</strong> ${filtered.edges.length}</span>`;
+            html += '</div>';
+
+            if (Object.keys(depTypes).length > 0) {
+                html += '<p><strong>Dependencies by resolution type:</strong></p>';
+                html += '<div class="stats" style="flex-wrap: wrap;">';
+
+                // Sort types by count (descending)
+                const sortedTypes = Object.entries(depTypes).sort((a, b) => b[1] - a[1]);
+
+                // Format type labels nicely
+                const typeLabels = {
+                    'temporal-prior': 'Temporal (Prior)',
+                    'temporal-current': 'Temporal (Current)',
+                    'spatial-patch': 'Spatial (Patch)',
+                    'spatial-collection': 'Spatial (Collection)',
+                    'simulation': 'Simulation',
+                    'explicit-entity': 'Explicit Entity',
+                    'simple': 'Simple',
+                    'temporal': 'Temporal',
+                    'spatial': 'Spatial',
+                    'cross-entity': 'Cross-Entity',
+                    'collection': 'Collection',
+                    'direct': 'Direct'
+                };
+
+                for (const [type, count] of sortedTypes) {
+                    const label = typeLabels[type] || type;
+                    html += `<span class="badge ${type}">${label}: ${count}</span>`;
+                }
+                html += '</div>';
+            }
+
+            html += '<p style="margin-top: 15px; color: #666; font-size: 13px;">';
+            html += 'Click on nodes to see their dependencies. Hover over edges to see resolution details. Toggle view modes and filters above.';
+            html += '</p>';
+
+            document.getElementById('infoPanel').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
