@@ -230,11 +230,19 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   public JoshFragment visitEventHandlerGroupSingle(
       JoshLangParser.EventHandlerGroupSingleContext ctx) {
     String fullName = ctx.name.getText();
+    EventKey eventKey = buildEventKey(fullName);
+
+    // Record source location for dependency tracking
+    recordEventHandlerSource(
+        ctx.name != null ? ctx.name.getStart() : null,
+        ctx.getText(),
+        eventKey
+    );
+
     JoshFragment innerFragment = ctx.getChild(1).accept(parent);
 
     CompiledCallable innerCallable = makeCallableMachine(innerFragment.getCurrentAction());
 
-    EventKey eventKey = buildEventKey(fullName);
     EventHandler eventHandler = new EventHandler(
         innerCallable,
         eventKey.getAttribute(),
@@ -261,6 +269,13 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
       JoshLangParser.EventHandlerGroupMultipleContext ctx) {
     String fullName = ctx.name.getText();
     EventKey eventKey = buildEventKey(fullName);
+
+    // Record source location for dependency tracking
+    recordEventHandlerSource(
+        ctx.name != null ? ctx.name.getStart() : null,
+        ctx.getText(),
+        eventKey
+    );
 
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
     groupBuilder.setEventKey(eventKey);
@@ -304,6 +319,41 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     String attributeName = fragment.getEventHandlerGroup().getAttribute();
     ReservedWordChecker.checkVariableDeclaration(attributeName);
     return fragment;
+  }
+
+  /**
+   * Records dependency tracking information for an event handler if tracking is enabled.
+   *
+   * <p>This method has minimal performance overhead when tracking is disabled - only a
+   * ThreadLocal.get() check. When tracking is enabled, it captures source location information
+   * from the ANTLR parse tree and records it in the DependencyTracker.</p>
+   *
+   * @param nameToken The ANTLR token containing the event handler name
+   * @param contextText The full text of the parse tree context
+   * @param eventKey The event key containing attribute and event names
+   */
+  private void recordEventHandlerSource(
+      org.antlr.v4.runtime.Token nameToken,
+      String contextText,
+      EventKey eventKey) {
+    // Set context for dependency tracking
+    parent.setCurrentAttributeName(eventKey.getAttribute());
+    parent.setCurrentEventName(eventKey.getEvent());
+
+    // Capture source location information (with null checks for test contexts)
+    if (nameToken != null) {
+      Integer sourceLine = nameToken.getLine();
+      String sourceText = contextText;
+      parent.setCurrentSourceLine(sourceLine);
+      parent.setCurrentSourceText(sourceText);
+
+      // Record source location in DependencyTracker
+      String nodeId = parent.getCurrentNodeId();
+      if (nodeId != null) {
+        org.joshsim.lang.analyze.DependencyTracker.recordNodeSource(
+            nodeId, sourceLine, sourceText);
+      }
+    }
   }
 
   /**
