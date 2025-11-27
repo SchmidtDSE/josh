@@ -373,7 +373,15 @@ public class EntityBuilder implements EntityInitializationInfo {
 
     // Sort alphabetically for deterministic ordering
     List<String> sortedNames = new ArrayList<>(allAttributeNames);
-    Collections.sort(sortedNames);
+    Collections.sort(sortedNames, (a, b) -> {
+      if (a.equals("state")) {
+        return -1;
+      } else if (b.equals("state")) {
+        return 1;
+      } else {
+        return a.compareTo(b);
+      }
+    });
 
     // Build index map
     Map<String, Integer> result = new HashMap<>();

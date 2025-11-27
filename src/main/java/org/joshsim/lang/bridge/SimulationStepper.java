@@ -185,6 +185,7 @@ public class SimulationStepper {
    * @param subStep The step to be executed.
    */
   private void updateEntityUnsafe(MutableEntity target) {
+
     // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
     int numAttributes = indexMap.size();
