@@ -126,8 +126,8 @@ public class SimulationStepper {
       for (MutableEntity entity : entities) {
         MutableEntity result = updateEntity(entity, subStep);
         if (shouldExport) {
-            Entity frozen = exportCallback.get().exportPatch(result, currentStep);
-            saveFrozenPatchToReplicate(frozen, currentStep);
+          Entity frozen = exportCallback.get().exportPatch(result, currentStep);
+          saveFrozenPatchToReplicate(frozen, currentStep);
         }
         numCompleted++;
       }
