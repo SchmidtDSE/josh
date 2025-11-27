@@ -1,0 +1,72 @@
+start simulation Main
+
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  startYear.init = 0 count
+  year.init = startYear
+  year.step = prior.year + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create initial occupants
+  PopA.init = create 1 of Tree
+  PopB.init = create 2 of Tree
+
+  # Ensure increment works on fast forward
+  PopC.init = create 1 of Tree
+  PopC.step:if(meta.year == 2) = prior.PopC | (create 1 of Tree)
+
+  # Check age increases
+  assert.popAGrows.step
+    :if(meta.year == 1 count) = (mean(PopA.age) > 0.9 count) and (mean(PopA.age) < 1.1 count)
+    :elif(meta.year == 2 count) = (mean(PopA.age) > 1.9 count) and (mean(PopA.age) < 2.1 count)
+
+  assert.popBGrows.step
+    :if(meta.year == 1 count) = (mean(PopB.age) > 0.9 count) and (mean(PopB.age) < 1.1 count)
+    :elif(meta.year == 2 count) = (mean(PopB.age) > 1.9 count) and (mean(PopB.age) < 2.1 count)
+
+  assert.popCSize.step
+    :if(meta.year == 1 count) = count(PopC) == 1 count
+    :if(meta.year == 2 count) = count(PopC) == 2 count
+
+  assert.popCGrows.step
+    :if(meta.year == 1 count) = (mean(PopC.age) > 0.9 count) and (mean(PopC.age) < 1.1 count)
+    :elif(meta.year == 2 count) = (mean(PopC.age) > 1.4 count) and (mean(PopC.age) < 1.6 count)
+
+  assert.popCSliceAbove.step
+    :if(meta.year == 2 count) = count(PopC[PopC.age > 1.5 count]) == 1
+
+  assert.popCSliceBelow.step
+    :if(meta.year == 2 count) = count(PopC[PopC.age < 1.5 count]) == 1
+
+  assert.numElderlyExpected.step
+    :if(meta.year == 1) = count(PopC[PopC.elderly > 0.9 count]) == 0 count
+    :elif(meta.year == 3) = count(PopC[PopC.elderly > 0.9 count]) > 0 count
+
+  export.popAAvg.step = mean(PopA.age)
+  export.popBAvg.step = mean(PopB.age)
+  export.popCAvg.step = mean(PopC.age)
+
+end patch
+
+start organism Tree
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  elderly.init = 0 count
+
+  state.step = "Adult"
+
+  start state "Adult"
+    elderly.step = 1 count
+  end state
+
+end organism

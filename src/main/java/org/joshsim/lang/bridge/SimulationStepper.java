@@ -125,15 +125,11 @@ public class SimulationStepper {
       long numCompleted = 0;
       for (MutableEntity entity : entities) {
         MutableEntity result = updateEntity(entity, subStep);
-        if (result != null) {
-          // Export patch immediately after completion if callback present
-          if (shouldExport) {
+        if (shouldExport) {
             Entity frozen = exportCallback.get().exportPatch(result, currentStep);
-            // Store frozen entity in Replicate for prior state access
             saveFrozenPatchToReplicate(frozen, currentStep);
-          }
-          numCompleted++;
         }
+        numCompleted++;
       }
       assert numCompleted > 0;
     } else {
@@ -141,7 +137,7 @@ public class SimulationStepper {
       StreamSupport.stream(entities.spliterator(), true)
           .forEach(entity -> {
             MutableEntity result = updateEntity(entity, subStep);
-            if (result != null && shouldExport) {
+            if (shouldExport) {
               Entity frozen = exportCallback.get().exportPatch(result, currentStep);
               saveFrozenPatchToReplicate(frozen, currentStep);
             }
@@ -186,6 +182,7 @@ public class SimulationStepper {
    *
    * @param target The root MutableEntity to be updated and within which inner entities are
    *     recursively updated.
+   * @param subStep The step to be executed.
    */
   private void updateEntityUnsafe(MutableEntity target) {
     // Use integer-based iteration

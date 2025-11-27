@@ -210,7 +210,6 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Integer-based access with resolution support
 
     // Bounds check - if index is negative, return empty
     if (index < 0) {
