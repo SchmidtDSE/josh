@@ -32,9 +32,54 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/assert_changing_entities.josh"
   );
 
+  private static final Path STATE_BLOCK_SCRIPT_PATH = Path.of(
+      "examples/test/assert_changing_entities_within_state_block.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that entities update correctly when attribute handlers are defined within state blocks.
+   *
+   * <p>This test verifies that when an attribute (like maturity) only has handlers defined
+   * inside state blocks, the state transition based on that attribute works correctly.</p>
+   */
+  @Test
+  public void testInnerEntitiesUpdateWithinStateBlock() throws IOException {
+    String joshCode = Files.readString(STATE_BLOCK_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),
