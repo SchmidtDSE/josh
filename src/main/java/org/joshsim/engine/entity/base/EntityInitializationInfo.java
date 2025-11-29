@@ -98,4 +98,26 @@ public interface EntityInitializationInfo {
    * @return immutable set of attribute names
    */
   Set<String> getSharedAttributeNames();
+
+  /**
+   * Indicates whether this entity type uses the "state" attribute.
+   *
+   * <p>This cached boolean avoids repeated hashmap lookups when checking for state usage.
+   * The value is computed once during entity type construction and shared across all instances.</p>
+   *
+   * @return true if this entity type has a "state" attribute, false otherwise
+   */
+  boolean getUsesState();
+
+  /**
+   * Gets the pre-computed array index of the "state" attribute.
+   *
+   * <p>Since "state" is always sorted first when present (index 0), this constant provides
+   * O(1) access to the state index without hashmap lookup. Returns -1 if state is not used.</p>
+   *
+   * <p>This value is computed once during entity type construction and shared across all instances.</p>
+   *
+   * @return the array index of "state" (0 if used, -1 if not used)
+   */
+  int getStateIndex();
 }

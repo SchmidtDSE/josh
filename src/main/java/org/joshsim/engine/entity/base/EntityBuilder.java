@@ -43,6 +43,8 @@ public class EntityBuilder implements EntityInitializationInfo {
   private Map<String, Integer> attributeNameToIndex;
   private String[] indexToAttributeName;
   private Set<String> sharedAttributeNames;
+  private Boolean usesState;
+  private Integer stateIndex;
 
   /**
    * Create an empty builder.
@@ -123,6 +125,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
+    usesState = null; // Invalidate cache
+    stateIndex = null; // Invalidate cache
   }
 
   /**
@@ -138,6 +142,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
+    usesState = null; // Invalidate cache
+    stateIndex = null; // Invalidate cache
     return this;
   }
 
@@ -153,6 +159,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
+    usesState = null; // Invalidate cache
+    stateIndex = null; // Invalidate cache
     return this;
   }
 
@@ -458,6 +466,52 @@ public class EntityBuilder implements EntityInitializationInfo {
   @Override
   public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
     return getImmutableEventHandlerGroups();
+  }
+
+  /**
+   * Get whether this entity type uses the "state" attribute.
+   *
+   * <p>This method checks if "state" exists in the attribute index map and caches
+   * the result for reuse across all entity instances of this type.</p>
+   *
+   * @return true if this entity type has a "state" attribute, false otherwise
+   */
+  @Override
+  public boolean getUsesState() {
+    // Use cached value if available
+    if (usesState != null) {
+      return usesState;
+    }
+
+    // Compute and cache
+    Map<String, Integer> indexMap = getAttributeNameToIndex();
+    usesState = indexMap.containsKey("state");
+    return usesState;
+  }
+
+  /**
+   * Get the pre-computed array index of the "state" attribute.
+   *
+   * <p>Since "state" is always sorted first when present, this returns 0 if state is used,
+   * or -1 if state is not used by this entity type. The result is cached for reuse.</p>
+   *
+   * @return the array index of "state" (0 if used, -1 if not used)
+   */
+  @Override
+  public int getStateIndex() {
+    // Use cached value if available
+    if (stateIndex != null) {
+      return stateIndex;
+    }
+
+    // Compute and cache
+    if (getUsesState()) {
+      // State is always index 0 due to custom sorting in getAttributeNameToIndex()
+      stateIndex = 0;
+    } else {
+      stateIndex = -1;
+    }
+    return stateIndex;
   }
 
   /**
