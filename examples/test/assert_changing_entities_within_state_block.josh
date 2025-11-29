@@ -1,0 +1,73 @@
+# Implicit State Circular Dependency Test
+#
+# This test demonstrates an implicit circular dependency that should throw an error.
+#
+# The problem:
+# - state.step depends on current.maturity (to decide when to become "adult")
+# - maturity only has handlers in state blocks (juvenile and adult)
+# - When state is being resolved, it needs maturity's value
+# - But maturity's handler lookup needs to know the current state
+# - Since state isn't resolved yet, maturity falls back to prior value
+# - This causes state to never transition correctly
+#
+# Expected behavior: Should throw an implicit circular dependency error
+# Current behavior: Silently fails, state never becomes "adult"
+
+start simulation Main
+
+  grid.size = 200 m
+  grid.low = 36.52 degrees latitude, -118.68 degrees longitude
+  grid.high = 36.42 degrees latitude, -118.45 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 10 count
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 1 of Tree
+
+  # This assertion will fail because state never transitions to "adult"
+  # due to the implicit circular dependency
+  assert.treeShouldBecomeAdult.step
+    :if(meta.year == 10 count) = mean(Trees.isAdult) > 0.5 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  # maturity ONLY has handlers in state blocks - this is the problem!
+  # When state.step evaluates current.maturity, maturity tries to find its handler
+  # but can't because state isn't resolved yet.
+  maturity.init = 0 count
+
+  # state depends on current.maturity - creates implicit cycle
+  state.init = "juvenile"
+  state.step:if(current.maturity > 0.5 count) = "adult"
+
+  # isAdult tracks whether state transitioned (for assertion)
+  isAdult.init = 0 count
+  isAdult.step
+    :if(current.state == "adult") = 1 count
+    :else = 0 count
+
+  start state "juvenile"
+    # maturity grows as a fraction of age
+    # By age 6, maturity should be 0.6, which is > 0.5
+    # So state SHOULD transition to "adult" at age 6
+    # But it never does because of the implicit circular dependency
+    maturity.step = current.age / 10 count
+  end state
+
+  start state "adult"
+    maturity.step = 1 count
+  end state
+
+end organism
