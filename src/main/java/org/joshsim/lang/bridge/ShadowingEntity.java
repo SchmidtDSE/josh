@@ -421,19 +421,24 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     int stateIndex = stateIndexMaybe.get();
-    boolean doesNotUseState = stateIndex < 0
-        || stateIndex >= resolvedCacheByIndex.length
-        || resolvedCacheByIndex[stateIndex] == null;
-    if (doesNotUseState) {
+    boolean stateIndexInvalid = stateIndex < 0 || stateIndex >= resolvedCacheByIndex.length;
+    if (stateIndexInvalid) {
       return DEFAULT_STATE_STR;
     }
 
-    Optional<EngineValue> stateValueMaybe = getAttributeValue("state");
-    if (stateValueMaybe.isPresent()) {
-      return stateValueMaybe.get().getAsString();
-    } else {
-      return DEFAULT_STATE_STR;
+    // If state is resolved, use it. Otherwise use prior state for handler lookup.
+    EngineValue stateValue = resolvedCacheByIndex[stateIndex];
+    if (stateValue == null) {
+      Optional<EngineValue> priorState = inner.getAttributeValue(stateIndex);
+      if (priorState.isPresent()) {
+        stateValue = priorState.get();
+      }
     }
+
+    if (stateValue != null) {
+      return stateValue.getAsString();
+    }
+    return DEFAULT_STATE_STR;
   }
 
   /**
