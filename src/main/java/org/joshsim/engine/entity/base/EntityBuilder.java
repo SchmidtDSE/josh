@@ -43,6 +43,8 @@ public class EntityBuilder implements EntityInitializationInfo {
   private Map<String, Integer> attributeNameToIndex;
   private String[] indexToAttributeName;
   private Set<String> sharedAttributeNames;
+  private boolean usesState;
+  private int stateIndex;
 
   /**
    * Create an empty builder.
@@ -55,6 +57,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     immutableEventHandlerGroups = null; // Computed lazily
     commonHandlerCache = null; // Computed lazily
     sharedAttributeNames = null; // Computed lazily
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -123,6 +127,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -389,6 +395,16 @@ public class EntityBuilder implements EntityInitializationInfo {
       result.put(sortedNames.get(i), i);
     }
 
+    // Compute usesState and stateIndex
+    Integer stateIdx = result.get("state");
+    if (stateIdx != null) {
+      usesState = true;
+      stateIndex = stateIdx;
+    } else {
+      usesState = false;
+      stateIndex = -1;
+    }
+
     // Cache immutable map
     attributeNameToIndex = Collections.unmodifiableMap(result);
     return attributeNameToIndex;
@@ -458,6 +474,20 @@ public class EntityBuilder implements EntityInitializationInfo {
   @Override
   public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
     return getImmutableEventHandlerGroups();
+  }
+
+  @Override
+  public boolean getUsesState() {
+    // Ensure index map is computed (which sets usesState)
+    getAttributeNameToIndex();
+    return usesState;
+  }
+
+  @Override
+  public int getStateIndex() {
+    // Ensure index map is computed (which sets stateIndex)
+    getAttributeNameToIndex();
+    return stateIndex;
   }
 
   /**

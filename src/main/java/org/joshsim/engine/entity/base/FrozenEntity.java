@@ -37,6 +37,8 @@ public class FrozenEntity implements Entity {
   private final Map<String, Integer> attributeNameToIndex;
   private final String[] indexToAttributeName;
   private final Set<String> attributeNames;
+  private final boolean usesState;
+  private final int stateIndex;
 
 
   /**
@@ -49,10 +51,13 @@ public class FrozenEntity implements Entity {
    * @param attributeNameToIndex The shared index map for this entity type.
    * @param indexToAttributeName The shared index-to-name array for this entity type.
    * @param sharedAttributeNames The shared set of all defined attribute names for this entity type.
+   * @param usesState Whether this entity type has a state attribute.
+   * @param stateIndex The index of the state attribute, or -1 if not used.
    */
   public FrozenEntity(EntityType type, String name, EngineValue[] attributeValues,
       Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex,
-      String[] indexToAttributeName, Set<String> sharedAttributeNames) {
+      String[] indexToAttributeName, Set<String> sharedAttributeNames,
+      boolean usesState, int stateIndex) {
     this.type = type;
     this.name = name;
     this.attributeValues = attributeValues;
@@ -60,6 +65,8 @@ public class FrozenEntity implements Entity {
     this.attributeNameToIndex = attributeNameToIndex;
     this.indexToAttributeName = indexToAttributeName;
     this.attributeNames = sharedAttributeNames;
+    this.usesState = usesState;
+    this.stateIndex = stateIndex;
   }
 
   @Override
@@ -147,5 +154,15 @@ public class FrozenEntity implements Entity {
   @Override
   public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
     return EMPTY_HANDLERS;
+  }
+
+  @Override
+  public boolean usesState() {
+    return usesState;
+  }
+
+  @Override
+  public int getStateIndex() {
+    return stateIndex;
   }
 }

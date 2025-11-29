@@ -183,6 +183,16 @@ public class PatchTest {
       public Set<String> getSharedAttributeNames() {
         return Collections.emptySet();
       }
+
+      @Override
+      public boolean getUsesState() {
+        return false;
+      }
+
+      @Override
+      public int getStateIndex() {
+        return -1;
+      }
     };
   }
 

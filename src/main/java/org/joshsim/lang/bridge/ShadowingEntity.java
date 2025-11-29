@@ -414,13 +414,12 @@ public class ShadowingEntity implements MutableEntity {
    * @return State of this entity after current resolution.
    */
   private String getState() {
-    // Check if "state" attribute exists and is cached in array
-    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
-    if (stateIndexMaybe.isEmpty()) {
+    // Use precomputed usesState to avoid hashmap lookup
+    if (!inner.usesState()) {
       return DEFAULT_STATE_STR;
     }
 
-    int stateIndex = stateIndexMaybe.get();
+    int stateIndex = inner.getStateIndex();
     boolean stateIndexInvalid = stateIndex < 0 || stateIndex >= resolvedCacheByIndex.length;
     if (stateIndexInvalid) {
       return DEFAULT_STATE_STR;
@@ -769,6 +768,16 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public boolean hasNoHandlers(String attributeName, String substep) {
     return inner.hasNoHandlers(attributeName, substep);
+  }
+
+  @Override
+  public boolean usesState() {
+    return inner.usesState();
+  }
+
+  @Override
+  public int getStateIndex() {
+    return inner.getStateIndex();
   }
 
 }
