@@ -210,9 +210,8 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-
-    // Bounds check - if index is negative, return empty
-    if (index < 0) {
+    // Bounds check
+    if (index < 0 || index >= resolvedCacheByIndex.length) {
       return Optional.empty();
     }
 
@@ -227,28 +226,18 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     String[] indexArray = inner.getIndexToAttributeName();
-    String attributeName = null;
 
     boolean indexInRange = index >= 0 && indexArray != null && index < indexArray.length;
-    if (indexInRange) {
-      attributeName = indexArray[index];
-    }
-
-    if (attributeName == null) {
+    if (!indexInRange) {
       return Optional.empty();
     }
 
     // Trigger resolution using integer-based path for efficiency
-    // IMPORTANT: Must trigger resolution, not bypass it, to ensure handlers execute
-    if (hasAttribute(attributeName)) {
-      resolveAttributeByIndex(index, attributeName);
-      // Check array cache again after resolution (only if index is in bounds)
-      if (index < resolvedCacheByIndex.length) {
-        cached = resolvedCacheByIndex[index];
-        if (cached != null) {
-          return Optional.of(cached);
-        }
-      }
+    String attributeName = indexArray[index];
+    resolveAttributeByIndex(index, attributeName);
+    cached = resolvedCacheByIndex[index];
+    if (cached != null) {
+      return Optional.of(cached);
     }
 
     // Fallback: retrieve from inner entity using integer access

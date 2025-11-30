@@ -50,6 +50,7 @@ public class ShadowingEntityTest {
 
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
+  private EngineValueFactory valueFactory;
 
   @BeforeEach
   void setUp() {
@@ -62,7 +63,7 @@ public class ShadowingEntityTest {
     );
     when(mockEngineValue.getLanguageType()).thenAnswer(x -> new LanguageType("test", false));
 
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    valueFactory = new EngineValueFactory();
     patchEntity = new ShadowingEntity(valueFactory, mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(
         valueFactory,
@@ -246,6 +247,14 @@ public class ShadowingEntityTest {
     when(mockSpatialEntity.getAttributeValue(attrName)).thenReturn(Optional.of(mockEngineValue));
     when(mockSpatialEntity.getAttributeValue(0)).thenReturn(Optional.of(mockEngineValue));
     when(mockSpatialEntity.hasNoHandlers(attrName, "test")).thenReturn(true);
+
+    // Remake with mocks updated
+    spatialEntity = new ShadowingEntity(
+        valueFactory,
+        mockSpatialEntity,
+        patchEntity,
+        mockSimulation
+    );
 
     // Resolve via string path
     spatialEntity.startSubstep("test");
