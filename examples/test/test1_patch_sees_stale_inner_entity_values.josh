@@ -1,0 +1,78 @@
+# Test 1: Patch Sees Stale Inner Entity Values
+#
+# This test demonstrates that patches see stale/prior values when reading
+# inner entity attributes that were computed via state-block handlers.
+#
+# The bug:
+# - Organism computes maturity correctly inside state block (e.g., 0.3 at age 3)
+# - But when patch queries Trees.maturity, it sees 0 (stale/prior value)
+#
+# Expected behavior: Patch should see current computed values from inner entities
+# Actual behavior: Patch sees stale values; organism's self-assertion passes but patch fails
+
+start simulation Main
+
+  # Minimal 3x3 grid for fast testing
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  exportFiles.patch = "file:///workspaces/josh/tmp/test1_patch_sees_stale.csv"
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 1 of Tree
+
+  # Patch reads Trees.maturity - should see current computed value
+  # At y3: age=3, maturity should be 3/10 = 0.3
+  # BUG: This assertion FAILS because patch sees stale value (0)
+  # assert.patchSeesMaturity.step
+  #  :if(meta.year == 3 count) = mean(Trees.maturity) > 0.2 count
+
+  # Exports for debugging - compare patch perspective vs expected values
+  export.year.step = meta.year
+  export.patchSeesMaturity.step = mean(Trees.maturity)
+  export.patchSeesAge.step = mean(Trees.age)
+  export.patchSeesIsAdult.step = mean(Trees.isAdult)
+
+end patch
+
+start organism Tree
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  maturity.init = 0 count
+
+  state.init = "juvenile"
+  state.step:if(current.maturity > 0.5 count) = "adult"
+
+  # Organism-level assertion - checks own maturity
+  # This PASSES because organism correctly computes maturity internally
+  assert.selfMaturity.step
+    :if(current.age == 3 count) = current.maturity > 0.2 count
+
+  isAdult.init = 0 count
+  isAdult.step
+    :if(current.state == "adult") = 1 count
+    :else = 0 count
+
+  start state "juvenile"
+    maturity.step = current.age / 10 count
+  end state
+
+  start state "adult"
+    maturity.step = 1 count
+  end state
+
+end organism
