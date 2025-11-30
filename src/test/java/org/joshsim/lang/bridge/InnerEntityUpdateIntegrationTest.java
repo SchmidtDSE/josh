@@ -36,6 +36,10 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/assert_changing_entities_within_state_block.josh"
   );
 
+  private static final Path STALE_VALUES_SCRIPT_PATH = Path.of(
+      "examples/test/test1_patch_sees_stale_inner_entity_values.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -80,6 +84,48 @@ public class InnerEntityUpdateIntegrationTest {
   @Test
   public void testInnerEntitiesUpdateWithinStateBlock() throws IOException {
     String joshCode = Files.readString(STATE_BLOCK_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that patches see current values from inner entities with state-block handlers.
+   *
+   * <p>This test verifies that when a patch queries an inner entity attribute (like maturity)
+   * that is computed in a state block, the patch sees the current computed value rather than
+   * a stale prior value. The state must be resolved before other attributes that depend on it.</p>
+   */
+  @Test
+  public void testPatchSeesCurrentInnerEntityValuesFromStateBlock() throws IOException {
+    String joshCode = Files.readString(STALE_VALUES_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),

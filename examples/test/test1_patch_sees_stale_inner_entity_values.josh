@@ -25,7 +25,7 @@ start simulation Main
   year.init = 0 count
   year.step = prior.year + 1 count
 
-  exportFiles.patch = "file:///workspaces/josh/tmp/test1_patch_sees_stale.csv"
+  # exportFiles.patch = "file:///workspaces/josh/tmp/test1_patch_sees_stale.csv"
 
 end simulation
 
@@ -36,8 +36,8 @@ start patch Default
   # Patch reads Trees.maturity - should see current computed value
   # At y3: age=3, maturity should be 3/10 = 0.3
   # BUG: This assertion FAILS because patch sees stale value (0)
-  # assert.patchSeesMaturity.step
-  #  :if(meta.year == 3 count) = mean(Trees.maturity) > 0.2 count
+  assert.patchSeesMaturity.step
+    :if(meta.year == 3 count) = mean(Trees.maturity) > 0.2 count
 
   # Exports for debugging - compare patch perspective vs expected values
   export.year.step = meta.year
