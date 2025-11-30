@@ -140,4 +140,24 @@ public interface Entity {
    *     or empty map if no handlers are defined
    */
   Map<String, List<EventHandlerGroup>> getResolvedHandlers();
+
+  /**
+   * Returns whether this entity type uses state.
+   *
+   * <p>This is precomputed during entity type construction to avoid hashmap lookups
+   * when checking for state during attribute resolution.</p>
+   *
+   * @return true if this entity type has a "state" attribute, false otherwise
+   */
+  boolean usesState();
+
+  /**
+   * Gets the array index for the "state" attribute.
+   *
+   * <p>Since state is always sorted to index 0 when present, this will return 0
+   * if the entity uses state. The value is only meaningful if usesState() returns true.</p>
+   *
+   * @return the state attribute index (0 if state exists), or -1 if state is not used
+   */
+  int getStateIndex();
 }

@@ -200,6 +200,16 @@ public class AgentTest {
       public Set<String> getSharedAttributeNames() {
         return Collections.emptySet();
       }
+
+      @Override
+      public boolean getUsesState() {
+        return false;
+      }
+
+      @Override
+      public int getStateIndex() {
+        return -1;
+      }
     };
   }
 

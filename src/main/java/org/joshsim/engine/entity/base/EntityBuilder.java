@@ -43,6 +43,8 @@ public class EntityBuilder implements EntityInitializationInfo {
   private Map<String, Integer> attributeNameToIndex;
   private String[] indexToAttributeName;
   private Set<String> sharedAttributeNames;
+  private boolean usesState;
+  private int stateIndex;
 
   /**
    * Create an empty builder.
@@ -55,6 +57,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     immutableEventHandlerGroups = null; // Computed lazily
     commonHandlerCache = null; // Computed lazily
     sharedAttributeNames = null; // Computed lazily
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -123,6 +127,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -389,6 +395,16 @@ public class EntityBuilder implements EntityInitializationInfo {
       result.put(sortedNames.get(i), i);
     }
 
+    // Compute usesState and stateIndex
+    Integer candidateStateIndex = result.get("state");
+    if (candidateStateIndex != null) {
+      usesState = true;
+      stateIndex = candidateStateIndex;
+    } else {
+      usesState = false;
+      stateIndex = -1;
+    }
+
     // Cache immutable map
     attributeNameToIndex = Collections.unmodifiableMap(result);
     return attributeNameToIndex;
@@ -458,6 +474,36 @@ public class EntityBuilder implements EntityInitializationInfo {
   @Override
   public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
     return getImmutableEventHandlerGroups();
+  }
+
+  /**
+   * Returns whether this entity type uses state.
+   *
+   * <p>This value is computed lazily when {@link #getAttributeNameToIndex()} is first called.
+   * The computation checks if "state" exists in the attribute name to index map. This method
+   * ensures the index map is computed before returning the cached value.</p>
+   *
+   * @return true if this entity type has a "state" attribute, false otherwise
+   */
+  @Override
+  public boolean getUsesState() {
+    getAttributeNameToIndex();
+    return usesState;
+  }
+
+  /**
+   * Gets the array index for the "state" attribute.
+   *
+   * <p>This value is computed lazily when {@link #getAttributeNameToIndex()} is first called.
+   * Since "state" is sorted to index 0 when present, this will return 0 if the entity uses
+   * state. This method ensures the index map is computed before returning the cached value.</p>
+   *
+   * @return the state attribute index (0 if state exists), or -1 if state is not used
+   */
+  @Override
+  public int getStateIndex() {
+    getAttributeNameToIndex();
+    return stateIndex;
   }
 
   /**
