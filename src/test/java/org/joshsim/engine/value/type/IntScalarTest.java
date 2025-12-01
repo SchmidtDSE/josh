@@ -108,7 +108,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 10L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
-    IntScalar result = (IntScalar) scalar1.divide(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.divide(scalar2);
     assertEquals(5L, result.getAsInt());
     assertEquals(Units.of("m / s"), result.getUnits());
   }
@@ -126,7 +126,7 @@ class IntScalarTest {
     IntScalar scalar1 = new IntScalar(caster, 7L, Units.of("m"));
     IntScalar scalar2 = new IntScalar(caster, 2L, Units.of("s"));
 
-    IntScalar result = (IntScalar) scalar1.divide(scalar2);
+    DecimalScalar result = (DecimalScalar) scalar1.divide(scalar2);
     assertEquals(3L, result.getAsInt()); // Integer division should truncate
     assertEquals(Units.of("m / s"), result.getUnits());
   }

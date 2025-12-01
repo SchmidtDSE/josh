@@ -35,8 +35,8 @@ public class EngineValueFactory {
    * Create a new EnigneValueFactory using a default casting strategy and favoring BigDecimal.
    */
   public EngineValueFactory() {
-    caster = new EngineValueWideningCaster(this);
     favorBigDecimal = true;
+    caster = new EngineValueWideningCaster(this);
   }
 
 
@@ -47,8 +47,8 @@ public class EngineValueFactory {
    *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
    */
   public EngineValueFactory(boolean favorBigDecimal) {
-    caster = new EngineValueWideningCaster(this);
     this.favorBigDecimal = favorBigDecimal;
+    caster = new EngineValueWideningCaster(this);
   }
 
   /**

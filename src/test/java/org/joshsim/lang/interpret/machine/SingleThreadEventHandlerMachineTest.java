@@ -218,7 +218,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     // Then
     machine.end();
-    assertEquals(makeIntScalar(5), machine.getResult());
+    assertEquals(5L, machine.getResult().getAsInt());
   }
 
   @Test
