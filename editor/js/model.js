@@ -599,19 +599,27 @@ class SimulationResultBuilder {
    */
   add(result) {
     const self = this;
-    const targetName = result.getTarget();
+    // Normalize target name by removing leading slash if present
+    const rawTargetName = result.getTarget();
+    const targetName = rawTargetName.startsWith("/") ? rawTargetName.substring(1) : rawTargetName;
 
     const targetCollection = {
       "simulation": self._simResults,
       "patches": self._patchResults,
-      "entites": self._entityResults
+      "entities": self._entityResults
     }[targetName];
+
+    if (targetCollection === undefined) {
+      console.warn(`Unknown target type: ${targetName} (raw: ${rawTargetName})`);
+      return;
+    }
+
     targetCollection.push(result);
 
     const targetAttributes = {
       "simulation": self._simAttributes,
       "patches": self._patchAttributes,
-      "entites": self._entityAttributes
+      "entities": self._entityAttributes
     }[targetName];
     result.getAttributeNames().forEach((x) => targetAttributes.add(x));
 
