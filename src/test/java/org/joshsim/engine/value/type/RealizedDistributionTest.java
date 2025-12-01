@@ -199,8 +199,8 @@ class RealizedDistributionTest {
     // Check each value has been divided by 2
     for (int i = 0; i < 5; i++) {
       Object value = resultValues.get(i);
-      assertTrue(value instanceof IntScalar);
-      IntScalar scalar = (IntScalar) value;
+      assertTrue(value instanceof DecimalScalar);
+      DecimalScalar scalar = (DecimalScalar) value;
       assertEquals((i + 1) / 2, scalar.getAsInt());
     }
 
@@ -220,8 +220,8 @@ class RealizedDistributionTest {
     // Check each value has been divided by 2
     for (int i = 0; i < 5; i++) {
       Object value = resultValues.get(i);
-      assertTrue(value instanceof IntScalar);
-      IntScalar scalar = (IntScalar) value;
+      assertTrue(value instanceof DecimalScalar);
+      DecimalScalar scalar = (DecimalScalar) value;
       assertEquals((int) (2 / (i + 1)), scalar.getAsInt());
     }
 

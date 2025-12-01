@@ -21,4 +21,10 @@ public interface EngineValueCaster {
    */
   EngineValueTuple makeCompatible(EngineValueTuple operands, boolean requireSameUnits);
 
+  /**
+   * Determine if this caster prefers BigDecimal.
+   *
+   * @return True if prefers BigDecimal otherwise prefers double.
+   */
+  boolean getFavoringBigDecimal();
 }
