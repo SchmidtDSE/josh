@@ -98,4 +98,14 @@ public class PriorShadowingEntityDecorator implements Entity {
   public Map<String, List<EventHandlerGroup>> getResolvedHandlers() {
     return EMPTY_HANDLERS;
   }
+
+  @Override
+  public boolean usesState() {
+    return inner.usesState();
+  }
+
+  @Override
+  public int getStateIndex() {
+    return inner.getStateIndex();
+  }
 }

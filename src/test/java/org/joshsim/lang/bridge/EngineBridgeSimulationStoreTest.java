@@ -16,6 +16,7 @@ import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,10 +32,13 @@ public class EngineBridgeSimulationStoreTest {
   @BeforeEach
   void setUp() {
     simulationPrototypes = new HashMap<>();
-    simulationPrototypes.put("testSimulation", new ParentlessEntityPrototype(
-        "testSimluation",
-        EntityType.SIMULATION,
-        new EntityBuilder())
+    simulationPrototypes.put(
+        "testSimulation",
+        new ParentlessEntityPrototype(
+            "testSimluation",
+            EntityType.SIMULATION,
+            new EntityBuilder(new EngineValueFactory())
+        )
     );
 
     store = new EngineBridgeSimulationStore(simulationPrototypes);

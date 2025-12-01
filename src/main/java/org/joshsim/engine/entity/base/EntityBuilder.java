@@ -20,9 +20,13 @@ import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Agent;
 import org.joshsim.engine.entity.type.Disturbance;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Simulation;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.StringScalar;
 
 /**
  * Builder to assist in constructing entities.
@@ -34,6 +38,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class EntityBuilder implements EntityInitializationInfo {
   private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
 
+  private final EngineValueFactory valueFactory;
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -43,11 +48,15 @@ public class EntityBuilder implements EntityInitializationInfo {
   private Map<String, Integer> attributeNameToIndex;
   private String[] indexToAttributeName;
   private Set<String> sharedAttributeNames;
+  private boolean usesState;
+  private int stateIndex;
 
   /**
    * Create an empty builder.
    */
-  public EntityBuilder() {
+  public EntityBuilder(EngineValueFactory valueFactory) {
+    this.valueFactory = valueFactory;
+
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
     attributes = new HashMap<>();
@@ -55,6 +64,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     immutableEventHandlerGroups = null; // Computed lazily
     commonHandlerCache = null; // Computed lazily
     sharedAttributeNames = null; // Computed lazily
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -123,6 +134,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     attributeNameToIndex = null; // Invalidate cache
     indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
+    usesState = false;
+    stateIndex = -1;
   }
 
   /**
@@ -373,12 +386,30 @@ public class EntityBuilder implements EntityInitializationInfo {
 
     // Sort alphabetically for deterministic ordering
     List<String> sortedNames = new ArrayList<>(allAttributeNames);
-    Collections.sort(sortedNames);
+    Collections.sort(sortedNames, (a, b) -> {
+      if (a.equals("state")) {
+        return -1;
+      } else if (b.equals("state")) {
+        return 1;
+      } else {
+        return a.compareTo(b);
+      }
+    });
 
     // Build index map
     Map<String, Integer> result = new HashMap<>();
     for (int i = 0; i < sortedNames.size(); i++) {
       result.put(sortedNames.get(i), i);
+    }
+
+    // Compute usesState and stateIndex
+    Integer candidateStateIndex = result.get("state");
+    if (candidateStateIndex != null) {
+      usesState = true;
+      stateIndex = candidateStateIndex;
+    } else {
+      usesState = false;
+      stateIndex = -1;
     }
 
     // Cache immutable map
@@ -453,6 +484,36 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
+   * Returns whether this entity type uses state.
+   *
+   * <p>This value is computed lazily when {@link #getAttributeNameToIndex()} is first called.
+   * The computation checks if "state" exists in the attribute name to index map. This method
+   * ensures the index map is computed before returning the cached value.</p>
+   *
+   * @return true if this entity type has a "state" attribute, false otherwise
+   */
+  @Override
+  public boolean getUsesState() {
+    getAttributeNameToIndex();
+    return usesState;
+  }
+
+  /**
+   * Gets the array index for the "state" attribute.
+   *
+   * <p>This value is computed lazily when {@link #getAttributeNameToIndex()} is first called.
+   * Since "state" is sorted to index 0 when present, this will return 0 if the entity uses
+   * state. This method ensures the index map is computed before returning the cached value.</p>
+   *
+   * @return the state attribute index (0 if state exists), or -1 if state is not used
+   */
+  @Override
+  public int getStateIndex() {
+    getAttributeNameToIndex();
+    return stateIndex;
+  }
+
+  /**
    * Build an agent entity.
    *
    * @param parent The entity like Patch that this will be part of.
@@ -489,6 +550,32 @@ public class EntityBuilder implements EntityInitializationInfo {
    */
   public Simulation buildSimulation() {
     return new Simulation(this);
+  }
+
+  /**
+   * Ensure a default state handler exists for entities that use state blocks.
+   *
+   * <p>Creates a default state.init handler that returns an empty string if no state.init handler
+   * has been defined. This allows entities with state blocks to fall back to base handlers when
+   * no state-specific handler matches. Has no effect if base state state.init defined.</p>
+   */
+  public void ensureStateDefaultHandler() {
+    EventKey key = new EventKey("state", "init");
+    if (eventHandlerGroups.containsKey(key)) {
+      return;
+    }
+
+    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
+    CompiledCallable callable = (scope) -> defaultStateValue;
+    EventHandler handler = new EventHandler(callable, "state", "init");
+
+    List<EventHandler> handlers = new ArrayList<>(1);
+    handlers.add(handler);
+    EventHandlerGroup group = new EventHandlerGroup(handlers, key);
+
+    addAttribute("state", defaultStateValue);
+    addEventHandlerGroup(key, group);
+    usesState = true;
   }
 
 }

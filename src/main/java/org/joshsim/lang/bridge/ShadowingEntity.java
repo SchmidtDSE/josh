@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.collections4.iterators.IteratorChain;
+import org.jetbrains.annotations.NotNull;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -42,6 +44,7 @@ public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
+  private static final List<EventHandlerGroup> EMPTY_HANDLERS = Collections.emptyList();
 
   private final EngineValueFactory valueFactory;
   private final MutableEntity inner;
@@ -161,11 +164,24 @@ public class ShadowingEntity implements MutableEntity {
 
     // Look up in shared cache, return empty list if not found
     List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
-    if (handlers != null) {
-      return handlers;
-    }
+    boolean notFound = handlers == null;
+    List<EventHandlerGroup> immediate = notFound ? EMPTY_HANDLERS : handlers;
 
-    return Collections.emptyList();
+    // Get base
+    boolean onBase = state.isEmpty();
+    if (onBase) {
+      return immediate;
+    }
+    Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
+
+    // Combine
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<EventHandlerGroup> iterator() {
+        return new IteratorChain<>(inherited.iterator(), immediate.iterator());
+      }
+    };
   }
 
   /**
@@ -210,10 +226,8 @@ public class ShadowingEntity implements MutableEntity {
 
   @Override
   public Optional<EngineValue> getAttributeValue(int index) {
-    // Integer-based access with resolution support
-
-    // Bounds check - if index is negative, return empty
-    if (index < 0) {
+    // Bounds check
+    if (index < 0 || index >= resolvedCacheByIndex.length) {
       return Optional.empty();
     }
 
@@ -228,28 +242,18 @@ public class ShadowingEntity implements MutableEntity {
     }
 
     String[] indexArray = inner.getIndexToAttributeName();
-    String attributeName = null;
 
     boolean indexInRange = index >= 0 && indexArray != null && index < indexArray.length;
-    if (indexInRange) {
-      attributeName = indexArray[index];
-    }
-
-    if (attributeName == null) {
+    if (!indexInRange) {
       return Optional.empty();
     }
 
     // Trigger resolution using integer-based path for efficiency
-    // IMPORTANT: Must trigger resolution, not bypass it, to ensure handlers execute
-    if (hasAttribute(attributeName)) {
-      resolveAttributeByIndex(index, attributeName);
-      // Check array cache again after resolution (only if index is in bounds)
-      if (index < resolvedCacheByIndex.length) {
-        cached = resolvedCacheByIndex[index];
-        if (cached != null) {
-          return Optional.of(cached);
-        }
-      }
+    String attributeName = indexArray[index];
+    resolveAttributeByIndex(index, attributeName);
+    cached = resolvedCacheByIndex[index];
+    if (cached != null) {
+      return Optional.of(cached);
     }
 
     // Fallback: retrieve from inner entity using integer access
@@ -415,26 +419,30 @@ public class ShadowingEntity implements MutableEntity {
    * @return State of this entity after current resolution.
    */
   private String getState() {
-    // Check if "state" attribute exists and is cached in array
-    Optional<Integer> stateIndexMaybe = inner.getAttributeIndex("state");
-    if (stateIndexMaybe.isEmpty()) {
+    // Use precomputed usesState to avoid hashmap lookup
+    if (!inner.usesState()) {
       return DEFAULT_STATE_STR;
     }
 
-    int stateIndex = stateIndexMaybe.get();
-    boolean doesNotUseState = stateIndex < 0
-        || stateIndex >= resolvedCacheByIndex.length
-        || resolvedCacheByIndex[stateIndex] == null;
-    if (doesNotUseState) {
+    int stateIndex = inner.getStateIndex();
+    boolean stateIndexInvalid = stateIndex < 0 || stateIndex >= resolvedCacheByIndex.length;
+    if (stateIndexInvalid) {
       return DEFAULT_STATE_STR;
     }
 
-    Optional<EngineValue> stateValueMaybe = getAttributeValue("state");
-    if (stateValueMaybe.isPresent()) {
-      return stateValueMaybe.get().getAsString();
-    } else {
-      return DEFAULT_STATE_STR;
+    // If state is resolved, use it. Otherwise use prior state for handler lookup.
+    EngineValue stateValue = resolvedCacheByIndex[stateIndex];
+    if (stateValue == null) {
+      Optional<EngineValue> priorState = inner.getAttributeValue(stateIndex);
+      if (priorState.isPresent()) {
+        stateValue = priorState.get();
+      }
     }
+
+    if (stateValue != null) {
+      return stateValue.getAsString();
+    }
+    return DEFAULT_STATE_STR;
   }
 
   /**
@@ -765,6 +773,16 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public boolean hasNoHandlers(String attributeName, String substep) {
     return inner.hasNoHandlers(attributeName, substep);
+  }
+
+  @Override
+  public boolean usesState() {
+    return inner.usesState();
+  }
+
+  @Override
+  public int getStateIndex() {
+    return inner.getStateIndex();
   }
 
 }

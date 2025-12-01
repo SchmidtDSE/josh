@@ -17,6 +17,7 @@ import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.Test;
 
@@ -229,7 +230,7 @@ public class DirectLockMutableEntityFastPathTest {
       Map<EventKey, EventHandlerGroup> handlers,
       Map<String, EngineValue> attributes) {
     // Use EntityBuilder to compute the optimization map
-    EntityBuilder builder = new EntityBuilder();
+    EntityBuilder builder = new EntityBuilder(new EngineValueFactory());
     builder.setName(name);
     handlers.forEach(builder::addEventHandlerGroup);
     attributes.forEach(builder::addAttribute);
@@ -299,6 +300,16 @@ public class DirectLockMutableEntityFastPathTest {
         @Override
         public Set<String> getSharedAttributeNames() {
           return Collections.emptySet();
+        }
+
+        @Override
+        public boolean getUsesState() {
+          return false;
+        }
+
+        @Override
+        public int getStateIndex() {
+          return -1;
         }
       };
     }

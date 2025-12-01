@@ -7,6 +7,7 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
@@ -102,11 +103,23 @@ public class IntScalar extends Scalar {
   @Override
   protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
-    return new IntScalar(
-        getCaster(),
-        getAsInt() / other.getAsInt(),
-        determineDividedUnits(getUnits(), other.getUnits())
-    );
+
+    if (caster.getFavoringBigDecimal()) {
+      return new DecimalScalar(
+          getCaster(),
+          BigDecimal.valueOf(getAsInt()).divide(
+              BigDecimal.valueOf(other.getAsInt()),
+              MathContext.DECIMAL128
+          ),
+          determineDividedUnits(getUnits(), other.getUnits())
+      );
+    } else {
+      return new DoubleScalar(
+          getCaster(),
+          (getAsInt() + 0.0) / other.getAsInt(),
+          determineDividedUnits(getUnits(), other.getUnits())
+      );
+    }
   }
 
   @Override
@@ -117,10 +130,18 @@ public class IntScalar extends Scalar {
       throw new IllegalArgumentException("Cannot raise an int to a power with non-count units.");
     }
 
-    return new DecimalScalar(
-        getCaster(),
-        new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
-        determineRaisedUnits(getUnits(), other.getAsInt())
-    );
+    if (getCaster().getFavoringBigDecimal()) {
+      return new DecimalScalar(
+          getCaster(),
+          new BigDecimal(Math.pow(getAsInt(), other.getAsInt())),
+          determineRaisedUnits(getUnits(), other.getAsInt())
+      );
+    } else {
+      return new DoubleScalar(
+          getCaster(),
+          Math.pow(getAsInt(), other.getAsInt()),
+          determineRaisedUnits(getUnits(), other.getAsInt())
+      );
+    }
   }
 }

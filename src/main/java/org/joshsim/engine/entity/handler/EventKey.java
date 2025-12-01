@@ -33,7 +33,7 @@ public class EventKey {
    * @param attribute attribute string
    * @param event event string
    */
-  EventKey(String attribute, String event) {
+  public EventKey(String attribute, String event) {
     this.state = "";
     this.attribute = attribute;
     this.event = event;
@@ -48,7 +48,7 @@ public class EventKey {
    * @param attribute attribute string
    * @param event event string
    */
-  EventKey(String state, String attribute, String event) {
+  public EventKey(String state, String attribute, String event) {
     this.state = state;
     this.attribute = attribute;
     this.event = event;
