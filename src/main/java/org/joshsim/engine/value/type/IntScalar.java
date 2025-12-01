@@ -7,6 +7,8 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
 
@@ -102,9 +104,12 @@ public class IntScalar extends Scalar {
   @Override
   protected EngineValue unsafeDivide(EngineValue other) {
     assertScalarCompatible(other);
-    return new IntScalar(
+    return new DecimalScalar(
         getCaster(),
-        getAsInt() / other.getAsInt(),
+        BigDecimal.valueOf(getAsInt()).divide(
+            BigDecimal.valueOf(other.getAsInt()),
+            MathContext.DECIMAL128
+        ),
         determineDividedUnits(getUnits(), other.getUnits())
     );
   }
