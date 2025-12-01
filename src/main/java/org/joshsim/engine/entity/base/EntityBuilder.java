@@ -20,9 +20,13 @@ import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.type.Agent;
 import org.joshsim.engine.entity.type.Disturbance;
 import org.joshsim.engine.entity.type.Patch;
+import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Simulation;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.StringScalar;
 
 /**
  * Builder to assist in constructing entities.
@@ -34,6 +38,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class EntityBuilder implements EntityInitializationInfo {
   private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
 
+  private final EngineValueFactory valueFactory;
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -49,7 +54,9 @@ public class EntityBuilder implements EntityInitializationInfo {
   /**
    * Create an empty builder.
    */
-  public EntityBuilder() {
+  public EntityBuilder(EngineValueFactory valueFactory) {
+    this.valueFactory = valueFactory;
+
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
     attributes = new HashMap<>();
@@ -59,6 +66,8 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Computed lazily
     usesState = false;
     stateIndex = -1;
+
+    buildStateDefaultHandler();
   }
 
   /**
@@ -543,6 +552,18 @@ public class EntityBuilder implements EntityInitializationInfo {
    */
   public Simulation buildSimulation() {
     return new Simulation(this);
+  }
+
+  private void buildStateDefaultHandler() {
+    EventKey key = new EventKey("state", "init");
+    CompiledCallable callable = (scope) -> valueFactory.build("", Units.EMPTY);
+    EventHandler handler = new EventHandler(callable, "state", "init");
+
+    List<EventHandler> handlers = new ArrayList<>(1);
+    handlers.add(handler);
+
+    EventHandlerGroup group = new EventHandlerGroup(handlers, key);
+    addEventHandlerGroup(key, group);
   }
 
 }
