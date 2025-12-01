@@ -27,7 +27,7 @@ start simulation Main
   year.init = 0 count
   year.step = prior.year + 1 count
 
-  exportFiles.patch = "file:///workspaces/josh/tmp/test3_no_handler_for_state.csv"
+  # exportFiles.patch = "file:///workspaces/josh/tmp/test3_no_handler_for_state.csv"
 
 end simulation
 
