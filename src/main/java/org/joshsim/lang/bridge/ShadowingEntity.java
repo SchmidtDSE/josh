@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.collections4.iterators.IteratorChain;
+import org.jetbrains.annotations.NotNull;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -42,6 +44,7 @@ public class ShadowingEntity implements MutableEntity {
 
   private static final String DEFAULT_STATE_STR = "";
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
+  private static final List<EventHandlerGroup> EMPTY_HANDLERS = Collections.emptyList();
 
   private final EngineValueFactory valueFactory;
   private final MutableEntity inner;
@@ -161,11 +164,24 @@ public class ShadowingEntity implements MutableEntity {
 
     // Look up in shared cache, return empty list if not found
     List<EventHandlerGroup> handlers = commonHandlerCache.get(cacheKey);
-    if (handlers != null) {
-      return handlers;
-    }
+    boolean notFound = handlers == null;
+    List<EventHandlerGroup> immediate = notFound ? EMPTY_HANDLERS : handlers;
 
-    return Collections.emptyList();
+    // Get base
+    boolean onBase = state.isEmpty();
+    if (onBase) {
+      return immediate;
+    }
+    Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
+
+    // Combine
+    return new Iterable<>() {
+      @NotNull
+      @Override
+      public Iterator<EventHandlerGroup> iterator() {
+        return new IteratorChain<>(inherited.iterator(), immediate.iterator());
+      }
+    };
   }
 
   /**

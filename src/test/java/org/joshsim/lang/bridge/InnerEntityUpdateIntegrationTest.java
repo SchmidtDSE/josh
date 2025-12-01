@@ -40,6 +40,14 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test1_patch_sees_stale_inner_entity_values.josh"
   );
 
+  private static final Path MISSING_STATE_INIT_SCRIPT_PATH = Path.of(
+      "examples/test/test2_missing_state_init.josh"
+  );
+
+  private static final Path NO_HANDLER_FOR_STATE_SCRIPT_PATH = Path.of(
+      "examples/test/test3_no_handler_for_current_state.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -126,6 +134,90 @@ public class InnerEntityUpdateIntegrationTest {
   @Test
   public void testPatchSeesCurrentInnerEntityValuesFromStateBlock() throws IOException {
     String joshCode = Files.readString(STALE_VALUES_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that entities without state.init fall back to base handlers correctly.
+   *
+   * <p>This test verifies that when an entity has state blocks defined but no state.init,
+   * the system falls back to base (non-state-specific) handlers for attribute resolution
+   * rather than crashing.</p>
+   */
+  @Test
+  public void testMissingStateInitFallsBackToBaseHandlers() throws IOException {
+    String joshCode = Files.readString(MISSING_STATE_INIT_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that entities fall back to base handlers when current state has no handler.
+   *
+   * <p>This test verifies that when an entity is in a state that has no handler defined
+   * for a particular attribute (e.g., maturity has handlers for "juvenile" and "adult"
+   * but not "seedling"), the system falls back to base handlers rather than crashing.</p>
+   */
+  @Test
+  public void testNoHandlerForCurrentStateFallsBackToBase() throws IOException {
+    String joshCode = Files.readString(NO_HANDLER_FOR_STATE_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),
