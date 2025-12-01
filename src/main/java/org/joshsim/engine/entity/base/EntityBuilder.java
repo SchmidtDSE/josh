@@ -552,10 +552,20 @@ public class EntityBuilder implements EntityInitializationInfo {
     return new Simulation(this);
   }
 
+  /**
+   * Ensure a default state handler exists for entities that use state blocks.
+   *
+   * <p>Creates a default state.init handler that returns an empty string if no state.init handler
+   * has been defined. This allows entities with state blocks to fall back to base handlers when
+   * no state-specific handler matches. Has no effect if base state state.init defined.</p>
+   */
   public void ensureStateDefaultHandler() {
-    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
-
     EventKey key = new EventKey("state", "init");
+    if (eventHandlerGroups.containsKey(key)) {
+      return;
+    }
+
+    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
     CompiledCallable callable = (scope) -> defaultStateValue;
     EventHandler handler = new EventHandler(callable, "state", "init");
 

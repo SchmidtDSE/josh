@@ -81,8 +81,8 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @throws IllegalArgumentException if the stanza start and end types don't match.
    */
   public JoshFragment visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
-    int numChildren = ctx.getChildCount();
-    int numInner = numChildren - 5;
+    final int numChildren = ctx.getChildCount();
+    final int numInner = numChildren - 5;
 
     String entityType = ctx.getChild(1).getText();
     String identifier = ctx.getChild(2).getText();

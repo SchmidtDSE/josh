@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import org.apache.commons.collections4.iterators.IteratorChain;
 import org.jetbrains.annotations.NotNull;
 import org.joshsim.engine.entity.base.Entity;
@@ -180,7 +179,7 @@ public class ShadowingEntity implements MutableEntity {
       @NotNull
       @Override
       public Iterator<EventHandlerGroup> iterator() {
-        return new IteratorChain<>(immediate.iterator(), inherited.iterator());
+        return new IteratorChain<>(inherited.iterator(), immediate.iterator());
       }
     };
   }
