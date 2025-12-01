@@ -97,6 +97,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     }
 
     EntityBuilder entityBuilder = new EntityBuilder(valueFactory);
+    entityBuilder.ensureStateDefaultHandler();
     entityBuilder.setName(identifier);
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {

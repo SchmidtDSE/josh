@@ -66,8 +66,6 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Computed lazily
     usesState = false;
     stateIndex = -1;
-
-    buildStateDefaultHandler();
   }
 
   /**
@@ -554,16 +552,20 @@ public class EntityBuilder implements EntityInitializationInfo {
     return new Simulation(this);
   }
 
-  private void buildStateDefaultHandler() {
+  public void ensureStateDefaultHandler() {
+    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
+
     EventKey key = new EventKey("state", "init");
-    CompiledCallable callable = (scope) -> valueFactory.build("", Units.EMPTY);
+    CompiledCallable callable = (scope) -> defaultStateValue;
     EventHandler handler = new EventHandler(callable, "state", "init");
 
     List<EventHandler> handlers = new ArrayList<>(1);
     handlers.add(handler);
-
     EventHandlerGroup group = new EventHandlerGroup(handlers, key);
+
+    addAttribute("state", defaultStateValue);
     addEventHandlerGroup(key, group);
+    usesState = true;
   }
 
 }
