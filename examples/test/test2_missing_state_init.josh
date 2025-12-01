@@ -25,7 +25,7 @@ start simulation Main
   year.init = 0 count
   year.step = prior.year + 1 count
 
-  exportFiles.patch = "file:///workspaces/josh/tmp/test2_missing_state_init.csv"
+  # exportFiles.patch = "file:///workspaces/josh/tmp/test2_missing_state_init.csv"
 
 end simulation
 
