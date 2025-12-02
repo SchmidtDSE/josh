@@ -599,9 +599,11 @@ class SimulationResultBuilder {
    */
   add(result) {
     const self = this;
-    // Normalize target name by removing leading slash if present
+    // Normalize target name: URL-decode and remove leading slash if present
+    // The backend now uses standard URI parsing which URL-encodes the path
     const rawTargetName = result.getTarget();
-    const targetName = rawTargetName.startsWith("/") ? rawTargetName.substring(1) : rawTargetName;
+    const decodedTargetName = decodeURIComponent(rawTargetName);
+    const targetName = decodedTargetName.startsWith("/") ? decodedTargetName.substring(1) : decodedTargetName;
 
     const targetCollection = {
       "simulation": self._simResults,
