@@ -81,8 +81,6 @@ When using MinIO or S3-compatible storage for simulation outputs, you can option
 
 These files are uploaded to the same MinIO bucket under the `run/` directory alongside simulation results.
 
-**BREAKING CHANGE:** Previous versions automatically uploaded the `.josh` file when MinIO was configured. You must now explicitly use `--upload-source` to upload the source file.
-
 **Examples:**
 
 Upload all artifacts with local execution:
