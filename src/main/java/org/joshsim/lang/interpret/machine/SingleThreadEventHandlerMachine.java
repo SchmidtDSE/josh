@@ -446,12 +446,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EntityPrototype prototype = bridge.getPrototype(entityType);
     MutableEntity parent = scope.get("current").getAsMutableEntity();
 
-    // Get next sequence ID from parent patch
-    long sequence = 0L;
-    if (parent instanceof org.joshsim.engine.entity.type.Patch) {
-      sequence = ((org.joshsim.engine.entity.type.Patch) parent).getNextSequence();
-    }
-
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
         prototype,
         parent
@@ -479,12 +473,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue result;
     if (count == 1) {
-      MutableEntity newEntity;
-      if (decoratedPrototype instanceof ShadowingEntityPrototype) {
-        newEntity = ((ShadowingEntityPrototype) decoratedPrototype).build(sequence);
-      } else {
-        newEntity = decoratedPrototype.build();
-      }
+      MutableEntity newEntity = decoratedPrototype.build();
 
       // Add geoKey as real attribute BEFORE fast-forward (uses cached GeoKey from entity)
       // This ensures geoKey is available during init phase
@@ -501,13 +490,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       // Pre-size ArrayList with known count to avoid growth overhead
       List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
-        MutableEntity newEntity;
-        if (decoratedPrototype instanceof ShadowingEntityPrototype) {
-          newEntity = ((ShadowingEntityPrototype) decoratedPrototype).build(sequence);
-          sequence++; // Increment for next entity in batch
-        } else {
-          newEntity = decoratedPrototype.build();
-        }
+        MutableEntity newEntity = decoratedPrototype.build();
 
         // Add geoKey as real attribute BEFORE fast-forward (uses cached GeoKey from entity)
         // This ensures geoKey is available during init phase

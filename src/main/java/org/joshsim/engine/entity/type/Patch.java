@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.entity.type;
 
-import java.util.concurrent.atomic.AtomicLong;
 import org.joshsim.engine.entity.base.EntityInitializationInfo;
 import org.joshsim.engine.entity.base.RootSpatialEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -21,8 +20,6 @@ import org.joshsim.engine.geometry.EngineGeometry;
  */
 public class Patch extends RootSpatialEntity {
 
-  private final AtomicLong nextSequenceAtLocation = new AtomicLong(0);
-
   /**
    * Create a new patch.
    *
@@ -36,17 +33,5 @@ public class Patch extends RootSpatialEntity {
   @Override
   public EntityType getEntityType() {
     return EntityType.PATCH;
-  }
-
-  /**
-   * Get the next sequence ID for an entity being created at this location.
-   *
-   * <p>This method is thread-safe and returns monotonically increasing sequence IDs
-   * starting from 0. Each call increments the counter.</p>
-   *
-   * @return The next sequence ID for this location.
-   */
-  public long getNextSequence() {
-    return nextSequenceAtLocation.getAndIncrement();
   }
 }
