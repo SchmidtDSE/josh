@@ -54,16 +54,6 @@ public interface EntityPrototype {
    */
   MutableEntity buildSpatial(Entity parent);
 
-  /**
-   * Builds a spatial entity instance from this prototype with a parent entity and sequence.
-   * Valid for AGENT and DISTURBANCE type entities.
-   *
-   * @param parent The parent Entity that houses this entity.
-   * @param sequenceId The sequence ID for this entity at this location.
-   * @return A new Entity instance created from this prototype.
-   * @throws RuntimeException if the entity type cannot be built with a parent entity.
-   */
-  MutableEntity buildSpatial(Entity parent, long sequenceId);
 
   /**
    * Builds a spatial entity instance from this prototype with a geometry parent.
