@@ -454,25 +454,23 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Build an agent entity with a sequence ID.
+   * Build an agent entity.
    *
    * @param parent The entity like Patch that this will be part of.
-   * @param sequenceId The sequence ID for this agent at this location.
    * @return A constructed agent entity
    */
-  public Agent buildAgent(Entity parent, long sequenceId) {
-    return new Agent(parent, this, sequenceId);
+  public Agent buildAgent(Entity parent) {
+    return new Agent(parent, this);
   }
 
   /**
-   * Build a disturbance entity with a sequence ID.
+   * Build a disturbance entity.
    *
    * @param parent The entity like Patch that this will be part of.
-   * @param sequenceId The sequence ID for this disturbance at this location.
    * @return A constructed disturbance entity
    */
-  public Disturbance buildDisturbance(Entity parent, long sequenceId) {
-    return new Disturbance(parent, this, sequenceId);
+  public Disturbance buildDisturbance(Entity parent) {
+    return new Disturbance(parent, this);
   }
 
   /**

@@ -7,7 +7,7 @@
 package org.joshsim.engine.entity.type;
 
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityInitializationInfo;
+import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.base.MemberSpatialEntity;
 
 /**
@@ -18,14 +18,13 @@ import org.joshsim.engine.entity.base.MemberSpatialEntity;
  */
 public class Agent extends MemberSpatialEntity {
   /**
-   * Create a new agent with the given parent and sequence.
+   * Create a new agent with the given parent.
    *
    * @param parent The parent containing this entity.
-   * @param initInfo The initialization information containing all shared entity configuration.
-   * @param sequenceId The sequence ID for this agent at this location.
+   * @param builder The entity builder containing configuration for this agent.
    */
-  public Agent(Entity parent, EntityInitializationInfo initInfo, long sequenceId) {
-    super(parent, initInfo, sequenceId);
+  public Agent(Entity parent, EntityBuilder builder) {
+    super(parent, builder);
   }
 
   @Override

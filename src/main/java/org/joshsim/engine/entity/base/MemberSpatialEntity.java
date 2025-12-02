@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity.base;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 
@@ -19,20 +20,20 @@ import org.joshsim.engine.geometry.EngineGeometry;
  */
 public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
 
+  private static final AtomicLong GLOBAL_SEQUENCE = new AtomicLong(0);
+
   private final Entity parent;
-  private final long sequenceId;
+  private long sequenceId = -1;
 
   /**
-   * Create a new spatial entity with the given location and sequence.
+   * Create a new spatial entity with the given location.
    *
    * @param parent The parent entity like Patch which houses this entity.
    * @param initInfo The initialization information containing all shared entity configuration.
-   * @param sequenceId The sequence ID for this entity at this location.
    */
-  public MemberSpatialEntity(Entity parent, EntityInitializationInfo initInfo, long sequenceId) {
+  public MemberSpatialEntity(Entity parent, EntityInitializationInfo initInfo) {
     super(initInfo);
     this.parent = parent;
-    this.sequenceId = sequenceId;
   }
 
   /**
@@ -62,6 +63,9 @@ public abstract class MemberSpatialEntity extends DirectLockMutableEntity {
    */
   @Override
   public long getSequenceId() {
+    if (sequenceId < 0) {
+      sequenceId = GLOBAL_SEQUENCE.getAndIncrement();
+    }
     return sequenceId;
   }
 }
