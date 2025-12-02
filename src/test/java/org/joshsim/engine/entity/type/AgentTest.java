@@ -13,16 +13,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
-import org.joshsim.engine.entity.base.EntityInitializationInfo;
-import org.joshsim.engine.entity.handler.EventHandler;
+import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -65,142 +61,36 @@ public class AgentTest {
 
     attributes = new HashMap<>();
     attributes.put(ATTR_NAME, mockValue);
+    // Add for testSetAttributeValue and testLockUnlockCycle tests
+    attributes.put("newAttr", mock(EngineValue.class));
 
-    // Create agent instance
-    agent = new Agent(mockParent, createInitInfo(AGENT_NAME, eventHandlers, attributes), 0L);
+    // Create agent instance using EntityBuilder
+    agent = createAgent(AGENT_NAME, eventHandlers, attributes);
   }
 
   /**
-   * Convert attributes map to array using alphabetical ordering.
+   * Create an Agent using EntityBuilder from test parameters.
    */
-  private static EngineValue[] toAttributesArray(
-      Map<EventKey, EventHandlerGroup> handlers,
-      Map<String, EngineValue> attributes) {
-    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
-    EngineValue[] result = new EngineValue[indexMap.size()];
-    if (attributes != null) {
-      for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
-        Integer index = indexMap.get(entry.getKey());
-        if (index != null) {
-          result[index] = entry.getValue();
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Create index map from attribute names using alphabetical ordering.
-   */
-  private static Map<String, Integer> toAttributeIndex(
-      Map<EventKey, EventHandlerGroup> handlers,
-      Map<String, EngineValue> attributes) {
-    if (attributes == null || attributes.isEmpty()) {
-      if (handlers == null || handlers.isEmpty()) {
-        return Collections.emptyMap();
-      }
-    }
-
-    // Collect all attribute names
-    Set<String> allNames = new HashSet<>();
-    if (attributes != null) {
-      allNames.addAll(attributes.keySet());
-    }
-    if (handlers != null) {
-      for (EventHandlerGroup group : handlers.values()) {
-        if (group != null) {
-          for (EventHandler handler : group.getEventHandlers()) {
-            allNames.add(handler.getAttributeName());
-          }
-        }
-      }
-    }
-
-    // For test purposes, also include "newAttr" which tests try to set dynamically
-    allNames.add("newAttr");
-
-    if (allNames.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    // Sort alphabetically
-    List<String> sortedNames = new ArrayList<>(allNames);
-    Collections.sort(sortedNames);
-
-    // Build index map
-    Map<String, Integer> result = new HashMap<>();
-    for (int i = 0; i < sortedNames.size(); i++) {
-      result.put(sortedNames.get(i), i);
-    }
-    return Collections.unmodifiableMap(result);
-  }
-
-  /**
-   * Create index-to-name array from attribute names using alphabetical ordering.
-   */
-  private static String[] toIndexToAttributeName(
-      Map<EventKey, EventHandlerGroup> handlers,
-      Map<String, EngineValue> attributes) {
-    Map<String, Integer> indexMap = toAttributeIndex(handlers, attributes);
-    String[] result = new String[indexMap.size()];
-    for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-      result[entry.getValue()] = entry.getKey();
-    }
-    return result;
-  }
-
-  /**
-   * Create EntityInitializationInfo from test parameters.
-   */
-  private static EntityInitializationInfo createInitInfo(
+  private Agent createAgent(
       String name,
       Map<EventKey, EventHandlerGroup> handlers,
       Map<String, EngineValue> attributes) {
-    final EngineValue[] attributesArray = toAttributesArray(handlers, attributes);
-    final Map<String, Integer> attributeIndex = toAttributeIndex(handlers, attributes);
-    final String[] indexToAttributeName = toIndexToAttributeName(handlers, attributes);
+    EntityBuilder builder = new EntityBuilder();
+    builder.setName(name);
 
-    return new EntityInitializationInfo() {
-      @Override
-      public String getName() {
-        return name;
+    if (handlers != null) {
+      for (Map.Entry<EventKey, EventHandlerGroup> entry : handlers.entrySet()) {
+        builder.addEventHandlerGroup(entry.getKey(), entry.getValue());
       }
+    }
 
-      @Override
-      public Map<EventKey, EventHandlerGroup> getEventHandlerGroups() {
-        return handlers != null ? handlers : Collections.emptyMap();
+    if (attributes != null) {
+      for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+        builder.addAttribute(entry.getKey(), entry.getValue());
       }
+    }
 
-      @Override
-      public EngineValue[] createAttributesArray() {
-        return attributesArray;
-      }
-
-      @Override
-      public Map<String, Integer> getAttributeNameToIndex() {
-        return attributeIndex;
-      }
-
-      @Override
-      public String[] getIndexToAttributeName() {
-        return indexToAttributeName;
-      }
-
-      @Override
-      public Map<String, boolean[]> getAttributesWithoutHandlersBySubstep() {
-        return Collections.emptyMap();
-      }
-
-      @Override
-      public Map<String, List<EventHandlerGroup>> getCommonHandlerCache() {
-        return Collections.emptyMap();
-      }
-
-      @Override
-      public Set<String> getSharedAttributeNames() {
-        return Collections.emptySet();
-      }
-    };
+    return builder.buildAgent(mockParent);
   }
 
   /**
@@ -290,7 +180,7 @@ public class AgentTest {
    */
   @Test
   public void testNullMapsInConstructor() {
-    Agent nullMapAgent = new Agent(mockParent, createInitInfo(AGENT_NAME, null, null), 0L);
+    Agent nullMapAgent = createAgent(AGENT_NAME, null, null);
 
     Iterable<EventHandlerGroup> groups = nullMapAgent.getEventHandlers();
     assertFalse(groups.iterator().hasNext(),

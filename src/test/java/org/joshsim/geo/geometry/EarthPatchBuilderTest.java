@@ -283,11 +283,6 @@ class EarthPatchBuilderTest {
     }
 
     @Override
-    public MutableEntity buildSpatial(Entity parent, long sequenceId) {
-      throw new RuntimeException("Requires use of spatial.");
-    }
-
-    @Override
     public MutableEntity buildSpatial(EngineGeometry parent) {
       return new Patch(parent, new org.joshsim.engine.entity.base.EntityInitializationInfo() {
         @Override

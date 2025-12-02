@@ -716,11 +716,6 @@ public class ExternalGeoMapperTest {
     }
 
     @Override
-    public MutableEntity buildSpatial(Entity parent, long sequenceId) {
-      throw new UnsupportedOperationException("Use buildSpatial with geometry");
-    }
-
-    @Override
     public MutableEntity buildSpatial(EngineGeometry geometry) {
       final String patchId = "riverside_patch_" + (++patchCounter);
       return new Patch(geometry, new org.joshsim.engine.entity.base.EntityInitializationInfo() {

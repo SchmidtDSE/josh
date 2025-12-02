@@ -58,7 +58,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.addAttribute("banana", mockValue2);
     builder.addAttribute("cherry", mockValue3);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Get index map to find indices
     Map<String, Integer> indexMap = agent.getAttributeNameToIndex();
@@ -74,7 +74,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("value", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Start substep to allow mutation
     agent.startSubstep("step");
@@ -99,7 +99,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.addAttribute("first", mockValue1);
     builder.addAttribute("second", mockValue2);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Alphabetically sorted: first=0, second=1
     assertEquals(Optional.of(0), agent.getAttributeIndex("first"));
@@ -116,7 +116,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.addAttribute("apple", mockValue1);
     builder.addAttribute("middle", mockValue2);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     Map<String, Integer> indexMap = agent.getAttributeNameToIndex();
 
@@ -136,7 +136,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("value", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Get via string
     Optional<EngineValue> viaString = agent.getAttributeValue("value");
@@ -156,7 +156,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("age", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
     int index = agent.getAttributeIndex("age").get();
 
     // First step
@@ -180,7 +180,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("value", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Test negative index
     assertEquals(Optional.empty(), agent.getAttributeValue(-1));
@@ -204,7 +204,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("value", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
     agent.startSubstep("step");
     agent.setAttributeValue("value", mockValue2);
     agent.endSubstep();
@@ -225,7 +225,7 @@ public class DirectLockMutableEntityIntegerAccessTest {
     builder.setName("TestEntity");
     builder.addAttribute("value", mockValue1);
 
-    Agent agent = builder.buildAgent(mockParent, 0L);
+    Agent agent = builder.buildAgent(mockParent);
 
     // Wrap in ShadowingEntity
     ShadowingEntity shadowing = new ShadowingEntity(
