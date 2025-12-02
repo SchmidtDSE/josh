@@ -599,17 +599,11 @@ class SimulationResultBuilder {
    */
   add(result) {
     const self = this;
-<<<<<<< HEAD
-    // Normalize target name by removing leading slash if present
-    const rawTargetName = result.getTarget();
-    const targetName = rawTargetName.startsWith("/") ? rawTargetName.substring(1) : rawTargetName;
-=======
     // Normalize target name: URL-decode and remove leading slash if present
     // The backend now uses standard URI parsing which URL-encodes the path
     const rawTargetName = result.getTarget();
     const decodedTargetName = decodeURIComponent(rawTargetName);
     const targetName = decodedTargetName.startsWith("/") ? decodedTargetName.substring(1) : decodedTargetName;
->>>>>>> da382db5 (Update model.js for new unified standard URI parsing (which is part of debug logic prep-work but made it to main with #302))
 
     const targetCollection = {
       "simulation": self._simResults,
