@@ -6,6 +6,8 @@
 
 package org.joshsim.lang.interpret.visitor.delegates;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -316,6 +318,51 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       functionAction.apply(machine);
       return machine;
     };
+
+    return new ActionFragment(action);
+  }
+
+  /**
+   * Parse a variadic function call.
+   *
+   * <p>Parse a function call that accepts multiple arguments, such as debug().
+   * The function behavior is determined by the function name.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the function call.
+   * @return JoshFragment containing the function call operation parsed.
+   * @throws IllegalArgumentException if the function name is unknown.
+   */
+  public JoshFragment visitVariadicFunctionCall(
+      JoshLangParser.VariadicFunctionCallContext ctx) {
+    String funcName = ctx.name.getText();
+
+    // Parse all argument expressions
+    List<EventHandlerAction> argActions = new ArrayList<>();
+    JoshLangParser.ExpressionListContext argsCtx = ctx.args;
+
+    int numArgs = (argsCtx.getChildCount() + 1) / 2;  // expression (COMMA expression)*
+    for (int i = 0; i < numArgs; i++) {
+      int childIndex = i * 2;  // Skip commas
+      EventHandlerAction argAction = argsCtx.getChild(childIndex).accept(parent).getCurrentAction();
+      argActions.add(argAction);
+    }
+
+    EventHandlerAction action;
+
+    if ("debug".equals(funcName)) {
+      // Handle debug function
+      action = (machine) -> {
+        // Evaluate all arguments (pushes them onto stack)
+        for (EventHandlerAction argAction : argActions) {
+          argAction.apply(machine);
+        }
+        // Call writeDebug with argument count
+        machine.writeDebug(argActions.size());
+        return machine;
+      };
+    } else {
+      throw new IllegalArgumentException("Unknown variadic function: " + funcName);
+    }
 
     return new ActionFragment(action);
   }
