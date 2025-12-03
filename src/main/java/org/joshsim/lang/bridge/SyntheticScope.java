@@ -9,7 +9,10 @@ package org.joshsim.lang.bridge;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -23,7 +26,9 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class SyntheticScope implements Scope {
 
-  public static final Set<String> SYNTHETIC_ATTRS = Set.of("current", "prior", "here", "meta");
+  public static final Set<String> SYNTHETIC_ATTRS = Set.of(
+      "current", "prior", "here", "meta", "geoKey", "positionX", "positionY"
+  );
 
   private final ShadowingEntity inner;
   private final EngineValueFactory valueFactory;
@@ -84,6 +89,31 @@ public class SyntheticScope implements Scope {
       case "prior" -> Optional.of(valueFactory.build(new PriorShadowingEntityDecorator(inner)));
       case "here" -> Optional.of(valueFactory.build(inner.getHere()));
       case "meta" -> Optional.of(valueFactory.build(inner.getMeta()));
+      case "geoKey" -> {
+        Optional<GeoKey> keyMaybe = inner.getKey();
+        if (keyMaybe.isPresent()) {
+          String keyStr = keyMaybe.get().toString();
+          yield Optional.of(valueFactory.build(keyStr, Units.EMPTY));
+        } else {
+          yield Optional.of(valueFactory.build("", Units.EMPTY));
+        }
+      }
+      case "positionX" -> {
+        Optional<EngineGeometry> geomMaybe = inner.getGeometry();
+        if (geomMaybe.isPresent()) {
+          yield Optional.of(valueFactory.build(geomMaybe.get().getCenterX(), Units.of("degrees")));
+        } else {
+          yield Optional.of(valueFactory.build(0.0, Units.of("degrees")));
+        }
+      }
+      case "positionY" -> {
+        Optional<EngineGeometry> geomMaybe = inner.getGeometry();
+        if (geomMaybe.isPresent()) {
+          yield Optional.of(valueFactory.build(geomMaybe.get().getCenterY(), Units.of("degrees")));
+        } else {
+          yield Optional.of(valueFactory.build(0.0, Units.of("degrees")));
+        }
+      }
       default -> Optional.empty();
     };
   }
