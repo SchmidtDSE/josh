@@ -37,12 +37,12 @@ public class DirectLockMutableEntityIntegerAccessTest {
    */
   @BeforeEach
   public void setUp() {
-    builder = new EntityBuilder();
+    valueFactory = new EngineValueFactory();
+    builder = new EntityBuilder(valueFactory);
     mockParent = mock(Entity.class);
     mockValue1 = mock(EngineValue.class);
     mockValue2 = mock(EngineValue.class);
     mockValue3 = mock(EngineValue.class);
-    valueFactory = new EngineValueFactory();
 
     // Configure mocks to return themselves when freeze() is called
     when(mockValue1.freeze()).thenReturn(mockValue1);

@@ -21,6 +21,7 @@ import org.joshsim.engine.value.type.LanguageType;
  */
 public class EngineValueWideningCaster implements EngineValueCaster {
 
+  private final boolean favoringBigDecimal;
   private final Map<EngineValueTuple.TypesTuple, Cast> strategies;
 
   /**
@@ -29,6 +30,7 @@ public class EngineValueWideningCaster implements EngineValueCaster {
    * @param valueFactory The factory to use in constructing values returned by this caster.
    */
   public EngineValueWideningCaster(EngineValueFactory valueFactory) {
+    favoringBigDecimal = valueFactory.isFavoringBigDecimal();
     strategies = new HashMap<>();
 
     // Options for boolean
@@ -127,6 +129,11 @@ public class EngineValueWideningCaster implements EngineValueCaster {
       );
       throw new IllegalArgumentException(message);
     }
+  }
+
+  @Override
+  public boolean getFavoringBigDecimal() {
+    return favoringBigDecimal;
   }
 
   /**

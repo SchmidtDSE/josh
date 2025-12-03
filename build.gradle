@@ -42,7 +42,7 @@ dependencies {
   implementation("org.antlr:antlr4-runtime:4.13.2") // ANTLR runtime for generated code
 
   // Apache Commons Collections for LRUMap
-  implementation("org.apache.commons:commons-collections4:4.5.0-M3")
+  implementation("org.apache.commons:commons-collections4:4.5.0")
 
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")

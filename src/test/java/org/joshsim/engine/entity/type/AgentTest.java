@@ -22,6 +22,7 @@ import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,7 +76,7 @@ public class AgentTest {
       String name,
       Map<EventKey, EventHandlerGroup> handlers,
       Map<String, EngineValue> attributes) {
-    EntityBuilder builder = new EntityBuilder();
+    EntityBuilder builder = new EntityBuilder(new EngineValueFactory());
     builder.setName(name);
 
     if (handlers != null) {

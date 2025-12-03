@@ -144,6 +144,16 @@ class PatchKeyConverterTest {
       }
 
       @Override
+      public boolean usesState() {
+        return false;
+      }
+
+      @Override
+      public int getStateIndex() {
+        return -1;
+      }
+
+      @Override
       public long getSequenceId() {
         return 0L;
       }

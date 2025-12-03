@@ -1,0 +1,76 @@
+# Test 3: No Handler for Current State
+#
+# This test demonstrates what happens when an entity is in a state
+# that has no handler defined for an attribute.
+#
+# The bug:
+# - Tree starts in "seedling" state
+# - maturity only has handlers in "juvenile" and "adult" states
+# - No maturity handler exists for "seedling" state
+# - When patch tries to read Trees.age, it crashes
+#
+# Expected behavior: Should fall back to prior value or provide clear error
+# Actual behavior: IllegalStateException: Unable to get value for ValueResolver(Trees.age)
+
+start simulation Main
+
+  # Minimal 3x3 grid for fast testing
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  # exportFiles.patch = "file:///workspaces/josh/tmp/test3_no_handler_for_state.csv"
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 1 of Tree
+
+  export.year.step = meta.year
+  export.maturity.step = mean(Trees.maturity)
+  export.age.step = mean(Trees.age)
+  export.state.step = mean(Trees.inSeedling)
+
+  # Assert that maturity stays at init value (0) because no handler matches
+  assert.maturityStaysZero.step
+    :if(meta.year == 3 count) = mean(Trees.maturity) < 0.01 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  maturity.init = 0 count
+  # NO default maturity.step handler!
+
+  # Start in "seedling" - but maturity has no handler for seedling!
+  state.init = "seedling"
+  # Stay in seedling forever (no transition)
+  state.step = "seedling"
+
+  inSeedling.init = 1 count
+  inSeedling.step
+    :if(current.state == "seedling") = 1 count
+    :else = 0 count
+
+  # Handlers only exist for juvenile and adult - NOT seedling
+  start state "juvenile"
+    maturity.step = current.age / 10 count
+  end state
+
+  start state "adult"
+    maturity.step = 1 count
+  end state
+
+end organism

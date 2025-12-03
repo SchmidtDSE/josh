@@ -1,0 +1,101 @@
+# Test 2: Missing state.init Causes Crash
+#
+# This test demonstrates that entities without state.init crash when
+# accessing current.state, even if they have state.step defined.
+#
+# The bug:
+# - TreeNoStateInit has state.step but no state.init
+# - When isInState.step tries to access current.state, it crashes
+#
+# Expected behavior: Should either use empty/default state or provide clear error
+# Actual behavior: IllegalStateException: Unable to get value for ValueResolver(current.state)
+
+start simulation Main
+
+  # Minimal 3x3 grid for fast testing
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  year.init = 0 count
+  year.step = prior.year + 1 count
+
+  # exportFiles.patch = "file:///workspaces/josh/tmp/test2_missing_state_init.csv"
+
+end simulation
+
+start patch Default
+
+  # Entity A has state.init defined - should work
+  TreesWithInit.init = create 1 of TreeWithStateInit
+
+  # Entity B does NOT have state.init defined - crashes
+  TreesNoInit.init = create 1 of TreeNoStateInit
+
+  # Exports for debugging
+  export.year.step = meta.year
+  export.withInitMaturity.step = mean(TreesWithInit.maturity)
+  export.withInitAge.step = mean(TreesWithInit.age)
+  export.withInitState.step = mean(TreesWithInit.isJuvenile)
+  export.noInitMaturity.step = mean(TreesNoInit.maturity)
+  export.noInitAge.step = mean(TreesNoInit.age)
+  export.noInitState.step = mean(TreesNoInit.isInState)
+
+end patch
+
+# Entity with state.init defined - works correctly
+start organism TreeWithStateInit
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  maturity.init = 0 count
+
+  state.init = "juvenile"
+  state.step:if(current.maturity > 0.5 count) = "adult"
+
+  isJuvenile.init = 1 count
+  isJuvenile.step
+    :if(current.state == "juvenile") = 1 count
+    :else = 0 count
+
+  start state "juvenile"
+    maturity.step = current.age / 10 count
+  end state
+
+  start state "adult"
+    maturity.step = 1 count
+  end state
+
+end organism
+
+# Entity WITHOUT state.init - crashes when accessing current.state
+start organism TreeNoStateInit
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  maturity.init = 0 count
+
+  # NO state.init! Only state.step
+  state.step:if(current.maturity > 0.5 count) = "adult"
+
+  isInState.init = 0 count
+  isInState.step
+    :if(current.state == "adult") = 1 count
+    :else = 0 count
+
+  start state "juvenile"
+    maturity.step = current.age / 10 count
+  end state
+
+  start state "adult"
+    maturity.step = 1 count
+  end state
+
+end organism

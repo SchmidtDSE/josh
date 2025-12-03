@@ -599,19 +599,29 @@ class SimulationResultBuilder {
    */
   add(result) {
     const self = this;
-    const targetName = result.getTarget();
+    // Normalize target name: URL-decode and remove leading slash if present
+    // The backend now uses standard URI parsing which URL-encodes the path
+    const rawTargetName = result.getTarget();
+    const decodedTargetName = decodeURIComponent(rawTargetName);
+    const targetName = decodedTargetName.startsWith("/") ? decodedTargetName.substring(1) : decodedTargetName;
 
     const targetCollection = {
       "simulation": self._simResults,
       "patches": self._patchResults,
-      "entites": self._entityResults
+      "entities": self._entityResults
     }[targetName];
+
+    if (targetCollection === undefined) {
+      console.warn(`Unknown target type: ${targetName} (raw: ${rawTargetName})`);
+      return;
+    }
+
     targetCollection.push(result);
 
     const targetAttributes = {
       "simulation": self._simAttributes,
       "patches": self._patchAttributes,
-      "entites": self._entityAttributes
+      "entities": self._entityAttributes
     }[targetName];
     result.getAttributeNames().forEach((x) => targetAttributes.add(x));
 

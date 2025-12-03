@@ -260,6 +260,16 @@ public class ExternalGeoMapperIntegrationTest {
         public java.util.Set<String> getSharedAttributeNames() {
           return Collections.emptySet();
         }
+
+        @Override
+        public boolean getUsesState() {
+          return false;
+        }
+
+        @Override
+        public int getStateIndex() {
+          return -1;
+        }
       });
     }
 
