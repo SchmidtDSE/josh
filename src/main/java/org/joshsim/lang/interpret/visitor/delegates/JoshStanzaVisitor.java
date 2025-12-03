@@ -82,7 +82,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    */
   public JoshFragment visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
     final int numChildren = ctx.getChildCount();
-    final int numInner = numChildren - 5;
 
     String entityType = ctx.getChild(1).getText();
     String identifier = ctx.getChild(2).getText();
@@ -100,6 +99,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     entityBuilder.ensureStateDefaultHandler();
     entityBuilder.setName(identifier);
 
+    final int numInner = numChildren - 5;
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
