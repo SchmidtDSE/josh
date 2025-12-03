@@ -128,6 +128,7 @@ expression: unitsValue # simpleExpression
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
   | name=funcName LPAREN_ operand=expression RPAREN_ # singleParamFunctionCall
+  | name=funcName LPAREN_ args=expressionList RPAREN_ # variadicFunctionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
@@ -149,6 +150,8 @@ expression: unitsValue # simpleExpression
   | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;
+
+expressionList: expression (COMMA_ expression)*;
 
 funcName: (MEAN_ | STD_) # reservedFuncName
   | identifier # identifierFuncName
