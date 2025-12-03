@@ -26,5 +26,12 @@
                 "visualvm.installation.visualvmPath": "/opt/visualvm"
             }
         }
+    },
+    "forwardPorts": [8085],
+    "portsAttributes": {
+        "8085": {
+            "label": "JoshSim Server",
+            "onAutoForward": "notify"
+        }
     }
 }
