@@ -9,6 +9,7 @@ package org.joshsim.lang.interpret.machine;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -17,6 +18,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
@@ -34,6 +36,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
+import org.joshsim.lang.io.DebugOutputManager;
 
 
 /**
@@ -823,6 +826,67 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue value = pop();
     scope.defineConstant(identifierName, value);
     return this;
+  }
+
+  @Override
+  public EventHandlerMachine writeDebug(int count) {
+    DebugOutputManager debugManager = bridge.getDebugOutputManager();
+
+    if (debugManager == null) {
+      // No debug manager configured, pop values and discard
+      for (int i = 0; i < count; i++) {
+        if (!memory.isEmpty()) {
+          memory.pop();
+        }
+      }
+      return this;
+    }
+
+    // Pop and concatenate all arguments
+    List<String> parts = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      if (!memory.isEmpty()) {
+        EngineValue value = memory.pop();
+        String str = value.getAsString();
+        // Remove surrounding quotes if present (string literals include quotes)
+        if (str.startsWith("\"") && str.endsWith("\"") && str.length() >= 2) {
+          str = str.substring(1, str.length() - 1);
+        }
+        parts.add(str);
+      }
+    }
+
+    // Reverse because we popped in reverse order
+    Collections.reverse(parts);
+    String message = String.join("", parts);
+
+    // Determine entity type from scope
+    EntityType entityType = getEntityTypeFromScope();
+
+    // Write debug message
+    debugManager.writeDebug(entityType, message, getStepCount());
+
+    // Push empty string result
+    memory.push(valueFactory.build("", Units.EMPTY));
+
+    return this;
+  }
+
+  /**
+   * Determine the entity type from the current scope.
+   *
+   * @return EntityType of the entity in scope
+   */
+  private EntityType getEntityTypeFromScope() {
+    // Try to get entity type from scope by checking "current"
+    if (scope.has("current")) {
+      EngineValue current = scope.get("current");
+      // Check if the value wraps an entity
+      Entity entity = current.getAsEntity();
+      return entity.getEntityType();
+    }
+    // Default to AGENT if we can't determine the type
+    return EntityType.AGENT;
   }
 
   @Override
