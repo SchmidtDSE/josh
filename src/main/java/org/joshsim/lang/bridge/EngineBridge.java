@@ -184,4 +184,11 @@ public interface EngineBridge {
    */
   EngineValueFactory getEngineValueFactory();
 
+  /**
+   * Get the debug output manager for this simulation.
+   *
+   * @return DebugOutputManager or null if debug output not configured
+   */
+  org.joshsim.lang.io.DebugOutputManager getDebugOutputManager();
+
 }

@@ -30,6 +30,7 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.io.DebugOutputManager;
 import org.joshsim.precompute.DataGridLayer;
 
 
@@ -52,6 +53,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final ExternalResourceGetter externalResourceGetter;
   private final Map<String, Config> configData;
   private final ConfigGetter configGetter;
+  private final DebugOutputManager debugOutputManager;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -90,6 +92,9 @@ public class MinimalEngineBridge implements EngineBridge {
     replicate = Optional.empty();
 
     simulation.startSubstep("constant");
+
+    // Initialize debug output manager from simulation configuration
+    this.debugOutputManager = new DebugOutputManager(simulation);
 
     startStep = simulation
       .getAttributeValue("steps.low")
@@ -133,6 +138,9 @@ public class MinimalEngineBridge implements EngineBridge {
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
+
+    // Initialize debug output manager from simulation configuration
+    this.debugOutputManager = new DebugOutputManager(simulation);
 
     startStep = simulation
       .getAttributeValue("steps.low")
@@ -234,6 +242,11 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public DebugOutputManager getDebugOutputManager() {
+    return debugOutputManager;
+  }
+
+  @Override
   public Optional<Entity> getPatch(EnginePoint enginePoint) {
     Query query = new Query(currentStep.getAsInt(), enginePoint);
     Iterable<Entity> patches = getReplicate().query(query);
@@ -255,7 +268,6 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public Iterable<MutableEntity> getCurrentPatches() {
-    Query query = new Query(getCurrentTimestep());
     Iterable<MutableEntity> patches = getReplicate().getCurrentPatches();
     Iterable<MutableEntity> decorated = () -> new DecoratingShadowIterator(patches.iterator());
     return decorated;
