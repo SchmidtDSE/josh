@@ -506,6 +506,18 @@ public interface EventHandlerMachine {
   EventHandlerMachine saveLocalVariable(String identifierName);
 
   /**
+   * Write a debug message using the debug output manager.
+   *
+   * <p>Pop one or more values from the stack, concatenate them into a debug message,
+   * and write to the appropriate debug output stream based on the current entity type.
+   * The number of values to pop is specified by the count parameter.</p>
+   *
+   * @param count The number of values to pop from the stack and concatenate
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine writeDebug(int count);
+
+  /**
    * Indicate that no additional actions should be taken on this machine.
    *
    * <p>Indicate that no additional actions should be taken on this machine though this is only
