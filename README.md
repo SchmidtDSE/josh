@@ -133,6 +133,8 @@ This will start a local web server which makes the UI available via your browser
 ### Containerized usage
 Containerization through [Docker](https://www.docker.com) and [Development Containers](https://containers.dev) can help you move your work from one computer to the next with ease. Please see our `Dockerfile` and `devcontainer.json`.
 
+In order to serve the local UI from inside the dev container, simply run `./gradlew war` and `./gradlew fatJar` prior to running the local server with the command above. 
+
 ### Distributed usage
 Distributing workloads is easy. Simply deploy either our jar file or container to a serverless solution like [Lambda](https://aws.amazon.com/lambda/) / [CloudRun](https://cloud.google.com/run) or submit on your own cluster via [Kubernetes](https://kubernetes.io). 
 
