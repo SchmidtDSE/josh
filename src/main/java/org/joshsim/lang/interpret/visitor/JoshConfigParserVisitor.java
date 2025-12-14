@@ -87,18 +87,35 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
   public JshcFragment visitValue(JoshConfigParser.ValueContext ctx) {
     JshcFragment numberFragment = ctx.number().accept(this);
     String numberText = numberFragment.getNumber().toString();
-    // The identifier (units) may be omitted if the value has no units
-    String unitsText = ctx.identifier() != null ? ctx.identifier().accept(this).getUnits() : "";
+
+    // Check for percent: either PERCENT_ token (%) or identifier "percent"
+    boolean isPercent = ctx.PERCENT_() != null;
+    String unitsText = "";
+    if (ctx.identifier() != null) {
+      unitsText = ctx.identifier().accept(this).getUnits();
+      if (unitsText.equals("percent")) {
+        isPercent = true;
+      }
+    } else if (isPercent) {
+      unitsText = "%";
+    }
 
     try {
       // Parse the number
       BigDecimal number = numberFragment.getNumber();
 
-      // Create units object
-      Units units = unitsText.isEmpty() ? Units.EMPTY : Units.of(unitsText);
-
-      // Create EngineValue
-      EngineValue engineValue = valueFactory.parseNumber(numberText, units);
+      EngineValue engineValue;
+      if (isPercent) {
+        // Convert percent to decimal (8 percent -> 0.08) and use count units
+        // This matches the behavior in JoshValueVisitor.parseUnitsValue()
+        double converted = number.doubleValue() / 100.0;
+        engineValue = valueFactory.buildForNumber(converted, Units.of("count"));
+      } else {
+        // Create units object
+        Units units = unitsText.isEmpty() ? Units.EMPTY : Units.of(unitsText);
+        // Create EngineValue
+        engineValue = valueFactory.parseNumber(numberText, units);
+      }
 
       return new JshcValueFragment(number, unitsText, engineValue);
     } catch (NumberFormatException e) {
