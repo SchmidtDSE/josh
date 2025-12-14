@@ -26,7 +26,6 @@ import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.StringScalar;
 
 /**
  * Builder to assist in constructing entities.

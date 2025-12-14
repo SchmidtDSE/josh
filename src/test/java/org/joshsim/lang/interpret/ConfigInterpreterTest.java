@@ -261,4 +261,68 @@ class ConfigInterpreterTest {
     assertEquals(-42.5, config.getValue("negative").getAsDouble(), 0.0001);
     assertEquals(Units.METERS, config.getValue("negative").getUnits());
   }
+
+  @Test
+  void testParsePercentWithSymbol() {
+    // Arrange - percent symbol should convert 8% to 0.08
+    String input = "rate = 8 %";
+
+    // Act
+    Config config = interpreter.interpret(input, factory);
+
+    // Assert
+    assertTrue(config.hasValue("rate"));
+    assertEquals(0.08, config.getValue("rate").getAsDouble(), 0.0001);
+    assertEquals(Units.COUNT, config.getValue("rate").getUnits());
+  }
+
+  @Test
+  void testParsePercentWithWord() {
+    // Arrange - "percent" word should convert 8 percent to 0.08
+    String input = "rate = 8 percent";
+
+    // Act
+    Config config = interpreter.interpret(input, factory);
+
+    // Assert
+    assertTrue(config.hasValue("rate"));
+    assertEquals(0.08, config.getValue("rate").getAsDouble(), 0.0001);
+    assertEquals(Units.COUNT, config.getValue("rate").getUnits());
+  }
+
+  @Test
+  void testParsePercentDecimalValue() {
+    // Arrange - decimal percentages should also work: 12.5% -> 0.125
+    String input = "rate = 12.5 %";
+
+    // Act
+    Config config = interpreter.interpret(input, factory);
+
+    // Assert
+    assertTrue(config.hasValue("rate"));
+    assertEquals(0.125, config.getValue("rate").getAsDouble(), 0.0001);
+    assertEquals(Units.COUNT, config.getValue("rate").getUnits());
+  }
+
+  @Test
+  void testParseMultiplePercentValues() {
+    // Arrange - multiple percent values in same config
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add("growthRate = 8 percent");
+    joiner.add("threshold = 25 %");
+    joiner.add("coverage = 48.5 percent");
+    String input = joiner.toString();
+
+    // Act
+    Config config = interpreter.interpret(input, factory);
+
+    // Assert
+    assertTrue(config.hasValue("growthRate"));
+    assertTrue(config.hasValue("threshold"));
+    assertTrue(config.hasValue("coverage"));
+
+    assertEquals(0.08, config.getValue("growthRate").getAsDouble(), 0.0001);
+    assertEquals(0.25, config.getValue("threshold").getAsDouble(), 0.0001);
+    assertEquals(0.485, config.getValue("coverage").getAsDouble(), 0.0001);
+  }
 }
