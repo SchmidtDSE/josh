@@ -1,8 +1,8 @@
 /**
  * Integration tests for external ratio data comparison with literal numbers.
  *
- * This test investigates the reported bug where external data with "ratio" units
- * compared against literal numbers always evaluates to the same result for all patches.
+ * <p>This test investigates the reported bug where external data with "ratio" units
+ * compared against literal numbers always evaluates to the same result for all patches.</p>
  *
  * @license BSD-3-Clause
  */
@@ -56,7 +56,7 @@ class ExternalRatioComparisonIntegrationTest {
    * This mimics the bug report scenario: "testValue > 0.5" where testValue has ratio units.
    */
   @Test
-  void testRatioExternalVsLiteralComparison_ValueAboveThreshold() {
+  void testRatioExternalVsLiteralComparisonValueAboveThreshold() {
     // Setup: External data returns 0.7 ratio (above threshold)
     EngineValue externalValue = factory.buildForNumber(0.7, Units.of("ratio"));
 
@@ -81,7 +81,7 @@ class ExternalRatioComparisonIntegrationTest {
   }
 
   @Test
-  void testRatioExternalVsLiteralComparison_ValueBelowThreshold() {
+  void testRatioExternalVsLiteralComparisonValueBelowThreshold() {
     // Setup: External data returns 0.3 ratio (below threshold)
     EngineValue externalValue = factory.buildForNumber(0.3, Units.of("ratio"));
 
@@ -158,15 +158,11 @@ class ExternalRatioComparisonIntegrationTest {
 
     for (int i = 0; i < externalValues.length; i++) {
       double value = externalValues[i];
-      String expected = expectedResults[i];
 
       // External data with ratio units
       EngineValue externalValue = factory.buildForNumber(value, Units.of("ratio"));
       // Literal threshold with count/empty units
       EngineValue literalValue = factory.buildForNumber(0.5, Units.of("count"));
-      // String results
-      EngineValue highValue = factory.build("high", Units.EMPTY);
-      EngineValue lowValue = factory.build("low", Units.EMPTY);
 
       // Create machine for condition evaluation
       SingleThreadEventHandlerMachine condMachine = new SingleThreadEventHandlerMachine(
@@ -188,6 +184,9 @@ class ExternalRatioComparisonIntegrationTest {
           mockBridge, mockScope
       );
 
+      // Declare string values close to their usage
+      EngineValue highValue = factory.build("high", Units.EMPTY);
+      EngineValue lowValue = factory.build("low", Units.EMPTY);
       if (conditionResult.getAsBoolean()) {
         resultMachine.push(highValue);
       } else {
@@ -197,6 +196,8 @@ class ExternalRatioComparisonIntegrationTest {
       resultMachine.end();
       EngineValue result = resultMachine.getResult();
 
+      // Get expected value close to assertion
+      final String expected = expectedResults[i];
       assertEquals(expected, result.getAsString(),
           String.format("For value %f, expected '%s' but got '%s'", value, expected,
               result.getAsString()));
@@ -228,7 +229,7 @@ class ExternalRatioComparisonIntegrationTest {
   }
 
   @Test
-  void testCountVsCountComparison_ShouldAlwaysWork() {
+  void testCountVsCountComparisonShouldAlwaysWork() {
     // The bug report says count comparisons work - verify this
     EngineValue value1 = factory.buildForNumber(2.0, Units.of("count"));
     EngineValue value2 = factory.buildForNumber(1.0, Units.of("count"));

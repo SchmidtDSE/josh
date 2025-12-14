@@ -1,9 +1,9 @@
 /**
  * Tests for ratio unit comparison with literal numbers.
  *
- * This test is designed to investigate a bug where external data with
+ * <p>This test is designed to investigate a bug where external data with
  * "ratio" units compared against literal numbers always evaluates to
- * the same result regardless of the actual data values.
+ * the same result regardless of the actual data values.</p>
  *
  * @license BSD-3-Clause
  */
@@ -45,7 +45,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsCountComparison_GreaterThan() {
+  void testRatioVsCountComparisonGreaterThan() {
     // Simulate external data with ratio units
     EngineValue ratioValue = new DoubleScalar(caster, 0.6, Units.of("ratio"));
 
@@ -58,7 +58,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsCountComparison_GreaterThan_False() {
+  void testRatioVsCountComparisonGreaterThanFalse() {
     // Simulate external data with ratio units
     EngineValue ratioValue = new DoubleScalar(caster, 0.3, Units.of("ratio"));
 
@@ -71,7 +71,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsEmptyComparison_GreaterThan() {
+  void testRatioVsEmptyComparisonGreaterThan() {
     // Simulate external data with ratio units
     EngineValue ratioValue = new DoubleScalar(caster, 0.6, Units.of("ratio"));
 
@@ -84,7 +84,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsEmptyComparison_GreaterThan_False() {
+  void testRatioVsEmptyComparisonGreaterThanFalse() {
     // Simulate external data with ratio units
     EngineValue ratioValue = new DoubleScalar(caster, 0.3, Units.of("ratio"));
 
@@ -97,7 +97,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testCountVsCountComparison_GreaterThan() {
+  void testCountVsCountComparisonGreaterThan() {
     // Both with count units (should work as per bug report)
     EngineValue count1 = new DoubleScalar(caster, 2.0, Units.of("count"));
     EngineValue count2 = new DoubleScalar(caster, 1.0, Units.of("count"));
@@ -108,7 +108,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsRatioComparison_GreaterThan() {
+  void testRatioVsRatioComparisonGreaterThan() {
     // Both with ratio units
     EngineValue ratio1 = new DoubleScalar(caster, 0.6, Units.of("ratio"));
     EngineValue ratio2 = new DoubleScalar(caster, 0.5, Units.of("ratio"));
@@ -119,7 +119,7 @@ class RatioComparisonTest {
   }
 
   @Test
-  void testRatioVsRatioComparison_GreaterThan_False() {
+  void testRatioVsRatioComparisonGreaterThanFalse() {
     // Both with ratio units
     EngineValue ratio1 = new DoubleScalar(caster, 0.3, Units.of("ratio"));
     EngineValue ratio2 = new DoubleScalar(caster, 0.5, Units.of("ratio"));
