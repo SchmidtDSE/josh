@@ -16,31 +16,31 @@ if [ ! -e publicsans/fonts/otf/PublicSans-Regular.otf ]; then
 fi
 
 if [ ! -e ace.min.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.min.js -O ace.min.js
+  wget https://editor.joshsim.org/third_party/ace.min.js -O ace.min.js
 fi
 
 if [ ! -e theme-textmate.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/theme-textmate.min.js -O theme-textmate.js
+  wget https://editor.joshsim.org/third_party/theme-textmate.min.js -O theme-textmate.js
 fi
 
 if [ ! -e theme-textmate-css.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/theme-textmate-css.min.js -O theme-textmate-css.js
+  wget https://editor.joshsim.org/third_party/theme-textmate-css.min.js -O theme-textmate-css.js
 fi
 
 if [ ! -e ext-searchbox.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ext-searchbox.js -O ext-searchbox.js
+  wget https://editor.joshsim.org/third_party/ext-searchbox.js -O ext-searchbox.js
 fi
 
 if [ ! -e ext-options.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ext-options.js -O ext-options.js
+  wget https://editor.joshsim.org/third_party/ext-options.js -O ext-options.js
 fi
 
 if [ ! -e ext-prompt.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ext-prompt.js -O ext-prompt.js
+  wget https://editor.joshsim.org/third_party/ext-prompt.js -O ext-prompt.js
 fi
 
 if [ ! -e ext-language_tools.js ]; then
-  wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ext-language_tools.js -O ext-language_tools.js
+  wget https://editor.joshsim.org/third_party/ext-language_tools.js -O ext-language_tools.js
 fi
 
 if [ ! -e tabby-ui.min.css ]; then
