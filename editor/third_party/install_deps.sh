@@ -20,11 +20,11 @@ if [ ! -e ace.min.js ]; then
 fi
 
 if [ ! -e theme-textmate.js ]; then
-  wget https://editor.joshsim.org/third_party/theme-textmate.min.js -O theme-textmate.js
+  wget https://editor.joshsim.org/third_party/theme-textmate.js -O theme-textmate.js
 fi
 
 if [ ! -e theme-textmate-css.js ]; then
-  wget https://editor.joshsim.org/third_party/theme-textmate-css.min.js -O theme-textmate-css.js
+  wget https://editor.joshsim.org/third_party/theme-textmate-css.js -O theme-textmate-css.js
 fi
 
 if [ ! -e ext-searchbox.js ]; then
