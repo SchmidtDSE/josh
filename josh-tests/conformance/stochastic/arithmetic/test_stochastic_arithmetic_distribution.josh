@@ -1,0 +1,115 @@
+# @category: stochastic
+# @subcategory: arithmetic
+# @priority: high
+# @description: Test distribution arithmetic with distributions - verifies mean(dist1 + dist2) approximates mean(dist1) + mean(dist2)
+
+start simulation StochasticArithmeticDistribution
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms for first distribution
+  Dist1Org.init = create 600 count of Dist1Org
+
+  # Create organisms for second distribution
+  Dist2Org.init = create 600 count of Dist2Org
+
+  # Create organisms for sum of distributions
+  SumOrg.init = create 600 count of SumOrg
+
+  # Calculate means
+  meanDist1.step = mean(Dist1Org.value)
+  meanDist2.step = mean(Dist2Org.value)
+  meanSum.step = mean(SumOrg.value)
+
+  # Test 1: First distribution mean should be around 30
+  expectedDist1.step = 30 m
+  tolerance1.step = 3 m
+  lowerDist1.step = expectedDist1 - tolerance1
+  upperDist1.step = expectedDist1 + tolerance1
+  assert.dist1Mean.step = (meanDist1 >= lowerDist1) and (meanDist1 <= upperDist1)
+
+  # Test 2: Second distribution mean should be around 70
+  expectedDist2.step = 70 m
+  tolerance2.step = 7 m
+  lowerDist2.step = expectedDist2 - tolerance2
+  upperDist2.step = expectedDist2 + tolerance2
+  assert.dist2Mean.step = (meanDist2 >= lowerDist2) and (meanDist2 <= upperDist2)
+
+  # Test 3: Sum distribution mean should approximate sum of individual means
+  # mean(dist1 + dist2) ≈ mean(dist1) + mean(dist2)
+  expectedSumMean.step = meanDist1 + meanDist2
+  sumTolerance.step = 10 m
+  lowerSum.step = expectedSumMean - sumTolerance
+  upperSum.step = expectedSumMean + sumTolerance
+  assert.sumMean.step = (meanSum >= lowerSum) and (meanSum <= upperSum)
+
+  # Test 4: Verify sum distribution has expected range
+  # For uniform(20,40) + uniform(50,90), expect range roughly [70, 130]
+  minSum.step = min(SumOrg.value)
+  maxSum.step = max(SumOrg.value)
+  assert.sumMinInRange.step = (minSum >= 60 m) and (minSum <= 80 m)
+  assert.sumMaxInRange.step = (maxSum >= 120 m) and (maxSum <= 140 m)
+
+  # Test 5: Sum should have greater variability than individual distributions
+  rangeDist1.step = max(Dist1Org.value) - min(Dist1Org.value)
+  rangeDist2.step = max(Dist2Org.value) - min(Dist2Org.value)
+  rangeSum.step = maxSum - minSum
+  assert.sumHasGreaterRange.step = (rangeSum > rangeDist1) and (rangeSum > rangeDist2)
+
+end patch
+
+start organism Dist1Org
+
+  # First distribution: uniform(20, 40) with mean 30
+  value.init = sample uniform from 20 m to 40 m
+  value.step = prior.value
+
+end organism
+
+start organism Dist2Org
+
+  # Second distribution: uniform(50, 90) with mean 70
+  value.init = sample uniform from 50 m to 90 m
+  value.step = prior.value
+
+end organism
+
+start organism SumOrg
+
+  # Sum of two distributions
+  value1.init = sample uniform from 20 m to 40 m
+  value2.init = sample uniform from 50 m to 90 m
+  value.init = value1 + value2
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

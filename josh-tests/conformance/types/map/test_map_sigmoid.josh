@@ -1,0 +1,116 @@
+# @category: types
+# @subcategory: map
+# @priority: medium
+# @description: Test sigmoid/logistic mapping with S-curve transformations
+
+start simulation MapSigmoid
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test sigmoid map at range boundaries
+  input1.init = 0 m
+  mapped1.init = map input1 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  # At minimum, sigmoid should approach 0 but not be exactly 0
+  assert.sigmoidAtMin.init = mapped1 < 10 count
+  assert.sigmoidAtMinPositive.init = mapped1 >= 0 count
+
+  input2.init = 100 m
+  mapped2.init = map input2 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  # At maximum, sigmoid should approach 100 but not be exactly 100
+  assert.sigmoidAtMax.init = mapped2 > 90 count
+  assert.sigmoidAtMaxBounded.init = mapped2 <= 100 count
+
+  # Test sigmoid at midpoint - should be centered
+  input3.init = 50 m
+  mapped3.init = map input3 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  # At midpoint, sigmoid should be very close to 50
+  assert.sigmoidAtMidLow.init = mapped3 > 45 count
+  assert.sigmoidAtMidHigh.init = mapped3 < 55 count
+
+  # Test sigmoid produces different result than linear
+  input4.init = 25 m
+  linearMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] linearly
+  sigmoidMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  assert.sigmoidDiffersFromLinear.init = sigmoidMap != linearMap
+
+  # Test sigmoid S-curve characteristics
+  # Early values should be larger than quadratic (slow start)
+  earlyInput.init = 25 m
+  earlyMapped.init = map earlyInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  # Sigmoid at 25% should be > 15 (slower than linear quadratic)
+  assert.sigmoidEarlyAboveQuadratic.init = earlyMapped > 15 count
+
+  # Late values should be smaller than linear (slow end)
+  lateInput.init = 75 m
+  lateMapped.init = map lateInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  # Sigmoid at 75% should be < 85 (slower than linear)
+  assert.sigmoidLateBelowLinear.init = lateMapped < 85 count
+
+  # Test sigmoid with percentage output
+  pctInput1.init = 50 m
+  pctMapped1.init = map pctInput1 from [0 m, 100 m] to [0 %, 100 %] sigmoidally
+  # At midpoint, should be around 50%
+  assert.sigmoidPctMid.init = pctMapped1 > 45 %
+  assert.sigmoidPctMidHigh.init = pctMapped1 < 55 %
+
+  # Test sigmoid is monotonically increasing
+  # Smaller input should give smaller output
+  smallInput.init = 30 m
+  smallMapped.init = map smallInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+
+  largeInput.init = 70 m
+  largeMapped.init = map largeInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+
+  assert.sigmoidMonotonic.init = smallMapped < largeMapped
+
+  # Test sigmoid asymptotic behavior
+  # Very close to min should be very small
+  verySmallInput.init = 1 m
+  verySmallMapped.init = map verySmallInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  assert.sigmoidAsymptoticLow.init = verySmallMapped < 5 count
+
+  # Very close to max should be very large
+  veryLargeInput.init = 99 m
+  veryLargeMapped.init = map veryLargeInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+  assert.sigmoidAsymptoticHigh.init = veryLargeMapped > 95 count
+
+  # Test sigmoid smooth transitions
+  # Values around midpoint should show steepest change
+  beforeMid.init = 40 m
+  beforeMidMapped.init = map beforeMid from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+
+  afterMid.init = 60 m
+  afterMidMapped.init = map afterMid from [0 m, 100 m] to [0 count, 100 count] sigmoidally
+
+  midDifference.init = afterMidMapped - beforeMidMapped
+  # Difference around midpoint should be substantial (steep transition)
+  assert.sigmoidSteepMid.init = midDifference > 10 count
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

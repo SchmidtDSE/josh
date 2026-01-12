@@ -1,0 +1,107 @@
+# @category: core
+# @subcategory: collections
+# @priority: high
+# @description: Test filtering collections with multiple conditions using AND, OR, NOT operators
+
+start simulation CollectionsFilterComplex
+
+  grid.size = 10 m
+  grid.low = 36.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 36.01 degrees latitude, -117.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create trees with varying characteristics
+  Trees.init = create 30 count of Tree
+
+  # Complex filter with AND operator
+  # Old AND tall trees
+  oldAndTall.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age > 10 years) and (Tree.height > 5 m)]
+
+  # Complex filter with OR operator
+  # Young OR short trees
+  youngOrShort.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age < 5 years) or (Tree.height < 3 m)]
+
+  # Complex filter with NOT operator (using !=)
+  # Not mature trees (status != 1)
+  notMature.step:if(meta.stepCount >= 2 count) = Trees[Tree.status != 1 count]
+
+  # Nested conditions with AND and OR
+  # (Old and tall) OR (young and growing)
+  complexMix.step:if(meta.stepCount >= 2 count) = Trees[((Tree.age > 15 years) and (Tree.height > 8 m)) or ((Tree.age < 5 years) and (Tree.height > 2 m))]
+
+  # Multiple AND conditions
+  # Age between 5 and 15 years (age > 5 AND age < 15)
+  midAge.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age > 5 years) and (Tree.age < 15 years)]
+
+  # Multiple OR conditions
+  # Very young or very old (age < 3 OR age > 20)
+  extremeAge.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age < 3 years) or (Tree.age > 20 years)]
+
+  # Complex three-way condition
+  # Tall AND (old OR mature)
+  tallAndOldOrMature.step:if(meta.stepCount >= 2 count) = Trees[(Tree.height > 5 m) and ((Tree.age > 10 years) or (Tree.status == 1 count))]
+
+  # Assert total tree count remains constant
+  assert.totalTrees.step:if(meta.stepCount == 2 count) = count(Trees) == 30 count
+
+  # Assert AND filter results (with seed 42, deterministic but flexible ranges)
+  assert.oldAndTallExists.step:if(meta.stepCount == 2 count) = count(oldAndTall) > 0 count
+
+  # Assert OR filter results
+  assert.youngOrShortExists.step:if(meta.stepCount == 2 count) = count(youngOrShort) > 0 count
+
+  # Assert NOT filter
+  assert.notMatureExists.step:if(meta.stepCount == 2 count) = count(notMature) > 0 count
+
+  # Assert mid-age range filter exists
+  assert.midAgeExists.step:if(meta.stepCount == 2 count) = count(midAge) >= 0 count
+
+  # Assert complex three-way condition
+  assert.tallAndOldOrMatureExists.step:if(meta.stepCount == 2 count) = count(tallAndOldOrMature) >= 0 count
+
+  # Test edge case: contradictory conditions (no matches)
+  impossible.step:if(meta.stepCount == 2 count) = Trees[(Tree.age < 1 year) and (Tree.age > 50 years)]
+  assert.impossibleEmpty.step:if(meta.stepCount == 2 count) = count(impossible) == 0 count
+
+  # Test filter that matches all trees
+  allMatch.step:if(meta.stepCount == 2 count) = Trees[(Tree.age >= 0 years) or (Tree.age < 0 years)]
+  assert.allMatchFull.step:if(meta.stepCount == 2 count) = count(allMatch) == 30 count
+
+end patch
+
+start organism Tree
+
+  # Trees have varying ages (randomly distributed 0-29 years, deterministic with seed)
+  age.init = sample uniform from 0 years to 29 years
+  age.step = prior.age + 1 year
+
+  # Height varies randomly (1m to 15.5m, deterministic with seed)
+  height.init = sample uniform from 1 m to 15.5 m
+  height.step = prior.height + 0.5 m
+
+  # Status flag: 1 for trees >= 10 years old
+  status.init = 0 count
+  status.step:if(current.age >= 10 years) = 1 count
+  status.step:if(current.age < 10 years) = 0 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

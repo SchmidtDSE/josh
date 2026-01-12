@@ -1,0 +1,71 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: critical
+# @description: Test "within X m" radial query to find organisms within radius
+
+start simulation SpatialWithinRadius
+
+  # Create a 5x5 grid
+  grid.size = 5 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 25 m
+  grid.high.y = 25 m  # 5x5 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init - place them at specific locations
+  Tree.init = create 9 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Assign different biomass to each tree for identification
+  biomass.init = sample uniform from 1 kg to 100 kg
+
+  # Count neighbors within 10m radius
+  neighborsWithin10m.step = count(Tree within 10 m radial at prior)
+
+  # Count neighbors within 20m radius
+  neighborsWithin20m.step = count(Tree within 20 m radial at prior)
+
+  # Test that within 10m finds some organisms (including self in most cases)
+  assert.hasNeighbors10m.step:if(meta.stepCount == 1 count) = current.neighborsWithin10m >= 1 count
+
+  # Test that within 20m finds more or equal organisms than within 10m
+  assert.moreNeighbors20m.step:if(meta.stepCount == 1 count) = current.neighborsWithin20m >= current.neighborsWithin10m
+
+  # Test that not all organisms are within 10m (assuming spread across grid)
+  # At least one organism should have fewer than total count within 10m
+  assert.notAllClose.step:if(meta.stepCount == 1 count) = current.neighborsWithin10m <= 9 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

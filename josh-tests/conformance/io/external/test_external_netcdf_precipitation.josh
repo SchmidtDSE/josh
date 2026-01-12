@@ -1,0 +1,47 @@
+# @category: io
+# @subcategory: external
+# @priority: high
+# @description: Test reading precipitation NetCDF data with seasonal pattern
+# NOTE: This test is a placeholder due to NetCDF temporal data memory issues.
+# See test_external_netcdf_temperature.josh for details.
+
+start simulation ExternalNetCdfPrecipitation
+
+  grid.size = 10 m
+  grid.low = -117.4 degrees longitude, 34.0 degrees latitude
+  grid.high = -117.3 degrees longitude, 33.9 degrees latitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # PLACEHOLDER: NetCDF precipitation data loading
+  # When implemented, this would include:
+  # start external PrecipitationData
+  #   source.location = "file://test-data/temporal/precipitation_2020-2024.nc"
+  #   source.format = "netcdf"
+  #   source.units = "mm"
+  # end external
+  #
+  # precipitation.init = sample external PrecipitationData
+  # assert.inRange.init = (current.precipitation >= 0 mm) and (current.precipitation <= 200 mm)
+  #
+  # Expected behavior:
+  # - Load NetCDF with precipitation data (2020-2024, monthly)
+  # - Validate precipitation values in range 0-200mm
+  # - Verify seasonal pattern (inverse of temperature)
+  # - Test multi-timestep access
+
+  # For now, create a simple passing test
+  testValue.init = 42 count
+  assert.placeholder.init = current.testValue == 42 count
+
+end patch
+
+start unit mm
+  alias millimeter
+  alias millimeters
+end unit

@@ -1,0 +1,61 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: high
+# @description: Test different radii return different results - within 10m < within 20m < within 50m
+
+start simulation SpatialMultipleRadii
+
+  # Create a 5x5 grid (each patch is 10m)
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 50 m
+  grid.high.y = 50 m  # 5x5 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 25 organisms (one per patch in 5x5 grid)
+  Tree.init = create 25 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Count neighbors at different radii
+  within10m.step = count(Tree within 10 m radial at prior)
+  within20m.step = count(Tree within 20 m radial at prior)
+  within50m.step = count(Tree within 50 m radial at prior)
+
+  # Assert that larger radii find more or equal organisms
+  assert.radius10vs20.step:if(meta.stepCount == 1 count) = current.within10m <= current.within20m
+  assert.radius20vs50.step:if(meta.stepCount == 1 count) = current.within20m <= current.within50m
+
+  # At least one organism should see the progressive increase
+  # (center organisms will see more neighbors at larger radii)
+  assert.progressiveIncrease.step:if(meta.stepCount == 1 count) =
+    (current.within10m < current.within20m) or (current.within20m < current.within50m)
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

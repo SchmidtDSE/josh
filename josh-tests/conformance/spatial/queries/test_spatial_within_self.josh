@@ -1,0 +1,74 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: high
+# @description: Test organism finding itself in spatial query - verify self-inclusion behavior
+
+start simulation SpatialWithinSelf
+
+  # Create a small grid
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m  # 2x2 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create exactly 4 organisms in corners
+  Tree.init = create 4 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Unique identifier for each tree
+  treeId.init = sample uniform from 1 count to 1000 count
+
+  # Count neighbors within small radius - should include self
+  neighborsSmall.step = count(Tree within 5 m radial at prior)
+
+  # Count neighbors within large radius - should include all
+  neighborsLarge.step = count(Tree within 100 m radial at prior)
+
+  # With small radius, should find at least 1 (self)
+  assert.findsSelf.step:if(meta.stepCount == 1 count) = current.neighborsSmall >= 1 count
+
+  # With large radius, should find all 4 trees
+  assert.findsAll.step:if(meta.stepCount == 1 count) = current.neighborsLarge == 4 count
+
+  # Verify that biomass sum includes self
+  biomassSelf.init = 10 kg
+  totalBiomassNearby.step = sum(Tree within 5 m radial at prior.biomassSelf)
+
+  # Should find at least own biomass
+  assert.biomassIncludesSelf.step:if(meta.stepCount == 1 count) = current.totalBiomassNearby >= 10 kg
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

@@ -1,0 +1,68 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: critical
+# @description: Count neighbors within radius and verify expected neighbor count
+
+start simulation SpatialNeighborsCount
+
+  # Create a 3x3 grid with 10m patches
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 9 organisms (one per patch in 3x3 grid)
+  Tree.init = create 9 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Count all neighbors within 50m (should capture all in 3x3 grid)
+  allNeighbors.step = count(Tree within 50 m radial at prior)
+
+  # Count close neighbors within 15m
+  closeNeighbors.step = count(Tree within 15 m radial at prior)
+
+  # Assert that we find all 9 organisms with large radius
+  assert.findAll.step:if(meta.stepCount == 1 count) = current.allNeighbors == 9 count
+
+  # Assert that close neighbors is less than or equal to all neighbors
+  assert.closeVsAll.step:if(meta.stepCount == 1 count) = current.closeNeighbors <= current.allNeighbors
+
+  # Assert that we find at least 1 (self) with any radius
+  assert.findSelf.step:if(meta.stepCount == 1 count) = current.closeNeighbors >= 1 count
+
+  # Test neighbor count remains stable across steps
+  neighborsPrevious.init = 0 count
+  neighborsPrevious.step = prior.allNeighbors
+
+  assert.stableCount.step:if(meta.stepCount == 2 count) = current.allNeighbors == current.neighborsPrevious
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

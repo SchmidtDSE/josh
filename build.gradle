@@ -110,6 +110,8 @@ test {
     events "skipped", "failed"
     exceptionFormat = "full"
   }
+  // Exclude conformance tests from default test run - they require --seed flag (Feature 4)
+  exclude 'org/joshsim/conformance/**'
 }
 
 // JUnit resource assets for tests.

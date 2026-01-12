@@ -1,0 +1,96 @@
+# @category: types
+# @subcategory: functions
+# @priority: high
+# @description: Test difference calculations between values using temporal differences (current - prior)
+
+start simulation FunctionsDifference
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+end simulation
+
+start patch Default
+
+  # Test temporal differences - tracking change over time
+  # Calculate differences using current - prior pattern
+
+  # Create organisms that change over time
+  Trees.init = create 5 count of Tree
+
+  # At init, no prior exists, so just record initial values
+  initialAge.init = mean(Trees.age)
+  assert.initialAge.init = initialAge == 0 years
+
+  # At step, calculate differences from prior timestep
+  currentAge.step = mean(Trees.age)
+  priorAge.step = mean(Trees.agePrior)
+  ageDifference.step = currentAge - priorAge
+
+  # Age increases by 1 year per step
+  assert.ageDifferencePositive.step:if(meta.stepCount > 0 count) = ageDifference == 1 years
+
+  # Test absolute difference using abs
+  value1.init = 10 m
+  value2.init = 7 m
+  diff1.init = value1 - value2
+  absDiff1.init = abs(diff1)
+  assert.absDiff1.init = absDiff1 == 3 m
+
+  # Test absolute difference with negative result
+  diff2.init = value2 - value1
+  absDiff2.init = abs(diff2)
+  assert.absDiff2.init = absDiff2 == 3 m
+
+  # Test difference is symmetric when using abs
+  assert.symmetricDiff.init = absDiff1 == absDiff2
+
+  # Test difference with same values (should be zero)
+  value3.init = 5 m
+  diff3.init = value3 - value3
+  assert.zeroDiff.init = diff3 == 0 m
+
+  # Test cumulative change over multiple steps
+  stepsSoFar.step = meta.stepCount
+  expectedAge.step:if(meta.stepCount > 0 count) = stepsSoFar * 1 years
+  assert.cumulativeAge.step:if(meta.stepCount > 0 count) = currentAge == expectedAge
+
+end patch
+
+start organism Tree
+
+  age.init = 0 years
+  age.step = prior.age + 1 years
+
+  # Store prior value for difference calculation
+  agePrior.init = 0 years
+  agePrior.step = prior.age
+
+  height.init = 1 m
+  height.step = prior.height + 0.5 m
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit years
+  alias year
+  alias yr
+  alias yrs
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

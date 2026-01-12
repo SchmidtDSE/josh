@@ -1,0 +1,97 @@
+# @category: control
+# @subcategory: states
+# @priority: critical
+# @description: Test basic state definitions and transitions
+
+start simulation StatesBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 60 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create a single tree to test state transitions
+  Tree.init = create Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Initialize state to Seedling
+  state.init = "Seedling"
+
+  # State transition from Seedling to Sapling at age 10
+  state.step:if(current.age >= 10 years and current.state == "Seedling") = "Sapling"
+
+  # State transition from Sapling to Mature at age 30
+  state.step:if(current.age >= 30 years and current.state == "Sapling") = "Mature"
+
+  # State transition from Mature to Dead at age 60
+  state.step:if(current.age >= 60 years and current.state == "Mature") = "Dead"
+
+  # Height grows differently based on state
+  height.init = 0.1 m
+  height.step:if(current.state == "Seedling") = prior.height + 0.1 m
+  height.step:if(current.state == "Sapling") = prior.height + 0.5 m
+  height.step:if(current.state == "Mature") = prior.height + 0.2 m
+  height.step:if(current.state == "Dead") = prior.height  # No growth when dead
+
+  # Assert initial state
+  assert.initialState.step:if(meta.stepCount == 0 count) = current.state == "Seedling"
+
+  # Assert state at various points
+  assert.stateSeedlingAt5.step:if(meta.stepCount == 5 count) = current.state == "Seedling"
+  assert.stateSeedlingAt9.step:if(meta.stepCount == 9 count) = current.state == "Seedling"
+
+  # Assert transition to Sapling happens at age 10
+  assert.stateSaplingAt10.step:if(meta.stepCount == 10 count) = current.state == "Sapling"
+  assert.stateSaplingAt20.step:if(meta.stepCount == 20 count) = current.state == "Sapling"
+  assert.stateSaplingAt29.step:if(meta.stepCount == 29 count) = current.state == "Sapling"
+
+  # Assert transition to Mature happens at age 30
+  assert.stateMatureAt30.step:if(meta.stepCount == 30 count) = current.state == "Mature"
+  assert.stateMatureAt40.step:if(meta.stepCount == 40 count) = current.state == "Mature"
+  assert.stateMatureAt59.step:if(meta.stepCount == 59 count) = current.state == "Mature"
+
+  # Assert transition to Dead happens at age 60
+  assert.stateDeadAt60.step:if(meta.stepCount == 60 count) = current.state == "Dead"
+
+  # Assert height values match state-specific growth rates
+  # After 10 steps as Seedling: 0.1 + 10*0.1 = 1.1 m
+  assert.heightSeedling.step:if(meta.stepCount == 10 count) = current.height == 1.1 m
+
+  # After 20 more steps as Sapling (total 30): 1.1 + 20*0.5 = 11.1 m
+  assert.heightSapling.step:if(meta.stepCount == 30 count) = current.height == 11.1 m
+
+  # After 30 more steps as Mature (total 60): 11.1 + 30*0.2 = 17.1 m
+  assert.heightMature.step:if(meta.stepCount == 60 count) = current.height == 17.1 m
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
