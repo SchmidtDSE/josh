@@ -1,0 +1,83 @@
+# @category: io
+# @subcategory: exports
+# @priority: high
+# @description: Test NetCDF export with time series data and time dimension
+
+start simulation ExportNetCDFTemporal
+
+  grid.size = 200 m
+  grid.low = 36.0 degrees latitude, -120.0 degrees longitude
+  grid.high = 36.05 degrees latitude, -119.95 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 12 count
+
+  # Track year and timestep for temporal validation
+  startYear.init = 2020
+  year.init = startYear
+  year.step = prior.year + 1
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to NetCDF with time series
+  exportFiles.patch = "file:///tmp/test_export_netcdf_temporal.nc"
+  exportFiles.patch.columns = "carbonStock,ndvi"
+
+end simulation
+
+start patch Default
+
+  # Create ecosystem components
+  Grass.init = create 30 count of Grass
+
+  # Calculate temporal metrics
+  carbonStock.init = 100 kg
+  carbonStock.step = prior.carbonStock + sum(Grass.biomass) * 0.45
+
+  ndvi.init = 0.3 count
+  ndvi.step = limit (prior.ndvi + (sample uniform from -0.05 count to 0.1 count)) to [0 count, 1 count]
+
+  # Export temporal data with time information
+  export.carbonStock.step = carbonStock
+  export.ndvi.step = ndvi
+  export.year.step = meta.year
+  export.timestep.step = meta.stepCount
+
+  # Assertions for temporal validity
+  assert.carbonStockGrows.step = carbonStock >= prior.carbonStock
+  assert.ndviLow.step = ndvi >= 0 count
+  assert.ndviHigh.step = ndvi <= 1 count
+  assert.yearIncreases.step = meta.year == (meta.startYear + meta.stepCount)
+
+end patch
+
+start organism Grass
+
+  biomass.init = sample uniform from 0.5 kg to 1.5 kg
+  biomass.step = prior.biomass + (sample uniform from 0.05 kg to 0.15 kg)
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Assert temporal properties
+  assert.biomassGrows.step = current.biomass >= prior.biomass
+  assert.ageIncreases.step = current.age == prior.age + 1 year
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

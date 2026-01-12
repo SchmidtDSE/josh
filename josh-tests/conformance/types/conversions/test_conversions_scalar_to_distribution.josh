@@ -1,0 +1,62 @@
+# @category: types
+# @subcategory: conversions
+# @priority: critical
+# @description: Test scalar automatically converts to distribution when needed
+
+start simulation ConversionsScalarToDistribution
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create multiple organisms to test distribution context
+  Tree.init = create 10 count of Tree
+
+  # Test that scalar value (5 m) works in distribution context
+  # When used with organisms, scalars should autobox to distributions
+  heightScalar.init = 5 m
+
+  # Export mean to verify scalar autoboxing
+  export.meanHeight.step = mean(Tree.height)
+  export.scalarValue.step = heightScalar
+
+end patch
+
+start organism Tree
+
+  # Each tree gets the scalar value which should autobox to distribution
+  height.init = 5 m
+
+  # Verify each organism has the expected value
+  assert.scalarHeight.init = current.height == 5 m
+
+  # Test arithmetic with autoboxed scalar
+  doubleHeight.init = current.height * 2 count
+  assert.doubleHeight.init = current.doubleHeight == 10 m
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

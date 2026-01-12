@@ -1,0 +1,106 @@
+# @category: stochastic
+# @subcategory: sampling
+# @priority: medium
+# @description: Test sampling behavior with replacement - verifies that repeated sampling can produce duplicates
+
+start simulation StochasticSamplingWithReplacement
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms that sample from a small discrete set
+  # Sample 200 times from a small range [1, 10] - expect duplicates
+  TestOrg.init = create 200 count of TestOrg
+
+  # Count occurrences of each value to verify duplicates exist
+  # If sampling with replacement, we should see repeated values
+  count1.step = count(TestOrg.discreteValue == 1 count)
+  count2.step = count(TestOrg.discreteValue == 2 count)
+  count3.step = count(TestOrg.discreteValue == 3 count)
+  count4.step = count(TestOrg.discreteValue == 4 count)
+  count5.step = count(TestOrg.discreteValue == 5 count)
+  count6.step = count(TestOrg.discreteValue == 6 count)
+  count7.step = count(TestOrg.discreteValue == 7 count)
+  count8.step = count(TestOrg.discreteValue == 8 count)
+  count9.step = count(TestOrg.discreteValue == 9 count)
+  count10.step = count(TestOrg.discreteValue == 10 count)
+
+  # Test 1: All values should be in [1, 10]
+  minValue.step = min(TestOrg.discreteValue)
+  maxValue.step = max(TestOrg.discreteValue)
+  assert.inRange.step = (minValue >= 1 count) and (maxValue <= 10 count)
+
+  # Test 2: Total counts should sum to sample size (200)
+  totalCount.step = count1 + count2 + count3 + count4 + count5 + count6 + count7 + count8 + count9 + count10
+  assert.totalCount.step = totalCount == 200 count
+
+  # Test 3: With replacement, expect multiple occurrences of most values
+  # Check that at least 5 values have more than 10 occurrences
+  hasMultiple1.step = count1 > 10 count
+  hasMultiple2.step = count2 > 10 count
+  hasMultiple3.step = count3 > 10 count
+  hasMultiple4.step = count4 > 10 count
+  hasMultiple5.step = count5 > 10 count
+  hasMultiple6.step = count6 > 10 count
+  hasMultiple7.step = count7 > 10 count
+  hasMultiple8.step = count8 > 10 count
+  hasMultiple9.step = count9 > 10 count
+  hasMultiple10.step = count10 > 10 count
+
+  # Sum the boolean checks (true counts as 1, false as 0 in aggregation)
+  numWithMultiples.step = (
+    (count1 > 10 count and 1 count or 0 count) +
+    (count2 > 10 count and 1 count or 0 count) +
+    (count3 > 10 count and 1 count or 0 count) +
+    (count4 > 10 count and 1 count or 0 count) +
+    (count5 > 10 count and 1 count or 0 count) +
+    (count6 > 10 count and 1 count or 0 count) +
+    (count7 > 10 count and 1 count or 0 count) +
+    (count8 > 10 count and 1 count or 0 count) +
+    (count9 > 10 count and 1 count or 0 count) +
+    (count10 > 10 count and 1 count or 0 count)
+  )
+
+  # With 200 samples from 10 values, expect roughly uniform distribution
+  # So most values should have around 20 occurrences (well above 10)
+  assert.duplicatesExist.step = numWithMultiples >= 5 count
+
+end patch
+
+start organism TestOrg
+
+  # Sample uniformly from [0.5, 10.5] then round to get discrete values [1, 10]
+  continuousValue.init = sample uniform from 0.5 count to 10.5 count
+  discreteValue.init = continuousValue
+  discreteValue.step = prior.discreteValue
+
+end organism
+
+start unit degrees
+end unit
+
+start unit count
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit

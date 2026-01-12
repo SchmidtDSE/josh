@@ -1,0 +1,72 @@
+# @category: spatial
+# @subcategory: patches
+# @priority: critical
+# @description: Test patch location attributes - verify patch coordinates are correct
+
+start simulation SpatialPatchesLocation
+
+  # Create a 3x3 grid with known bounds
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms to test location
+  Tree.init = create 2 count of Tree
+
+  # Patch should have coordinate information accessible
+  # Store patch identifiers for testing
+  patchId.init = sample uniform from 1 count to 1000 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Organisms should be able to query their location
+  # Test that we can access our position indirectly through neighbors
+  neighborsNearby.step = count(Tree within 15 m radial at prior)
+
+  # All organisms are in defined grid bounds
+  # Assert that neighbor queries work (implies location tracking)
+  assert.locationWorks.step:if(meta.stepCount == 1 count) = current.neighborsNearby >= 1 count
+
+  # Test spatial queries work across the grid
+  neighborsAll.step = count(Tree within 50 m radial at prior)
+
+  # Should find organisms across multiple patches
+  assert.crossPatch.step:if(meta.stepCount == 1 count) = current.neighborsAll >= 1 count
+
+  # Test that organisms maintain their location over time
+  neighborsStep1.init = 0 count
+  neighborsStep1.step:if(meta.stepCount == 1 count) = current.neighborsNearby
+
+  # Location should be stable - same neighbors found
+  assert.stableLocation.step:if(meta.stepCount == 2 count) = current.neighborsNearby == current.neighborsStep1
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

@@ -1,0 +1,236 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: high
+# @description: Test accessing simulation step attributes via meta keyword (meta.year.step, meta.stepCount)
+
+start simulation TemporalQueriesMetaTemporal
+
+  # NOTE: Spec requires 'degrees latitude/longitude' but using meters for compatibility
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  # Start at year 2020, run for 4 steps
+  steps.low = 2020 year
+  steps.high = 2023 year
+
+  # Define temporal attributes at simulation level
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  year.init = 2020 year
+  year.step = prior.year + 1 year
+
+  # Simulation-level accumulator that changes over time
+  totalYears.init = 0 year
+  totalYears.step = prior.totalYears + 1 year
+
+  # Custom temporal attribute
+  doubleYear.init = 4040 year
+  doubleYear.step = 2 year * meta.year
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tracker.init = create Tracker
+
+  # Track meta attributes at patch level
+  recordedStepCount.init = 0 count
+  recordedStepCount.step = meta.stepCount
+
+  recordedYear.init = 0 year
+  recordedYear.step = meta.year
+
+  # Access nested simulation temporal attributes via meta
+  recordedYearStep.init = 0 year
+  recordedYearStep.step = meta.year.step
+
+  recordedStepCountStep.init = 0 count
+  recordedStepCountStep.step = meta.stepCount.step
+
+  recordedTotalYears.init = 0 year
+  recordedTotalYears.step = meta.totalYears
+
+  recordedTotalYearsStep.init = 0 year
+  recordedTotalYearsStep.step = meta.totalYears.step
+
+  recordedDoubleYear.init = 0 year
+  recordedDoubleYear.step = meta.doubleYear
+
+  # Verify meta.stepCount progresses correctly
+  assert.stepCountStep0.step:if(meta.stepCount == 0 count) = meta.stepCount == 0 count
+  assert.stepCountStep1.step:if(meta.stepCount == 1 count) = meta.stepCount == 1 count
+  assert.stepCountStep2.step:if(meta.stepCount == 2 count) = meta.stepCount == 2 count
+  assert.stepCountStep3.step:if(meta.stepCount == 3 count) = meta.stepCount == 3 count
+
+  # Verify meta.year progresses correctly
+  assert.yearStep0.step:if(meta.stepCount == 0 count) = meta.year == 2020 years
+  assert.yearStep1.step:if(meta.stepCount == 1 count) = meta.year == 2021 years
+  assert.yearStep2.step:if(meta.stepCount == 2 count) = meta.year == 2022 years
+  assert.yearStep3.step:if(meta.stepCount == 3 count) = meta.year == 2023 years
+
+  # Verify meta.year.step (nested temporal access) matches meta.year
+  assert.yearStepNestedStep0.step:if(meta.stepCount == 0 count) = meta.year.step == 2020 years
+  assert.yearStepNestedStep1.step:if(meta.stepCount == 1 count) = meta.year.step == 2021 years
+  assert.yearStepNestedStep2.step:if(meta.stepCount == 2 count) = meta.year.step == 2022 years
+  assert.yearStepNestedStep3.step:if(meta.stepCount == 3 count) = meta.year.step == 2023 years
+
+  # Verify meta.stepCount.step (nested temporal access) matches meta.stepCount
+  assert.stepCountNestedStep0.step:if(meta.stepCount == 0 count) = meta.stepCount.step == 0 count
+  assert.stepCountNestedStep1.step:if(meta.stepCount == 1 count) = meta.stepCount.step == 1 count
+  assert.stepCountNestedStep2.step:if(meta.stepCount == 2 count) = meta.stepCount.step == 2 count
+  assert.stepCountNestedStep3.step:if(meta.stepCount == 3 count) = meta.stepCount.step == 3 count
+
+  # Verify recorded values match current meta values
+  assert.recordedYearStep1.step:if(meta.stepCount == 1 count) = current.recordedYear == 2021 years
+  assert.recordedYearStep2.step:if(meta.stepCount == 2 count) = current.recordedYear == 2022 years
+  assert.recordedYearStep3.step:if(meta.stepCount == 3 count) = current.recordedYear == 2023 years
+
+  assert.recordedStepCountStep1.step:if(meta.stepCount == 1 count) = current.recordedStepCount == 1 count
+  assert.recordedStepCountStep2.step:if(meta.stepCount == 2 count) = current.recordedStepCount == 2 count
+  assert.recordedStepCountStep3.step:if(meta.stepCount == 3 count) = current.recordedStepCount == 3 count
+
+  # Verify recorded nested temporal values
+  assert.recordedYearStepStep1.step:if(meta.stepCount == 1 count) = current.recordedYearStep == 2021 years
+  assert.recordedYearStepStep2.step:if(meta.stepCount == 2 count) = current.recordedYearStep == 2022 years
+  assert.recordedYearStepStep3.step:if(meta.stepCount == 3 count) = current.recordedYearStep == 2023 years
+
+  assert.recordedStepCountStepStep1.step:if(meta.stepCount == 1 count) = current.recordedStepCountStep == 1 count
+  assert.recordedStepCountStepStep2.step:if(meta.stepCount == 2 count) = current.recordedStepCountStep == 2 count
+  assert.recordedStepCountStepStep3.step:if(meta.stepCount == 3 count) = current.recordedStepCountStep == 3 count
+
+  # Verify custom simulation temporal attributes
+  assert.totalYearsStep0.step:if(meta.stepCount == 0 count) = meta.totalYears == 0 years
+  assert.totalYearsStep1.step:if(meta.stepCount == 1 count) = meta.totalYears == 1 year
+  assert.totalYearsStep2.step:if(meta.stepCount == 2 count) = meta.totalYears == 2 years
+  assert.totalYearsStep3.step:if(meta.stepCount == 3 count) = meta.totalYears == 3 years
+
+  # Verify totalYears.step nested access
+  assert.totalYearsStepNestedStep0.step:if(meta.stepCount == 0 count) = meta.totalYears.step == 0 years
+  assert.totalYearsStepNestedStep1.step:if(meta.stepCount == 1 count) = meta.totalYears.step == 1 year
+  assert.totalYearsStepNestedStep2.step:if(meta.stepCount == 2 count) = meta.totalYears.step == 2 years
+  assert.totalYearsStepNestedStep3.step:if(meta.stepCount == 3 count) = meta.totalYears.step == 3 years
+
+  # Verify recorded totalYears matches
+  assert.recordedTotalYearsStep1.step:if(meta.stepCount == 1 count) = current.recordedTotalYears == 1 year
+  assert.recordedTotalYearsStep2.step:if(meta.stepCount == 2 count) = current.recordedTotalYears == 2 years
+  assert.recordedTotalYearsStep3.step:if(meta.stepCount == 3 count) = current.recordedTotalYears == 3 years
+
+  # Verify recorded totalYears.step matches
+  assert.recordedTotalYearsStepStep1.step:if(meta.stepCount == 1 count) = current.recordedTotalYearsStep == 1 year
+  assert.recordedTotalYearsStepStep2.step:if(meta.stepCount == 2 count) = current.recordedTotalYearsStep == 2 years
+  assert.recordedTotalYearsStepStep3.step:if(meta.stepCount == 3 count) = current.recordedTotalYearsStep == 3 years
+
+  # Verify doubleYear computation
+  assert.doubleYearStep0.step:if(meta.stepCount == 0 count) = meta.doubleYear == 4040 years
+  assert.doubleYearStep1.step:if(meta.stepCount == 1 count) = meta.doubleYear == 4042 years
+  assert.doubleYearStep2.step:if(meta.stepCount == 2 count) = meta.doubleYear == 4044 years
+  assert.doubleYearStep3.step:if(meta.stepCount == 3 count) = meta.doubleYear == 4046 years
+
+  # Verify recorded doubleYear
+  assert.recordedDoubleYearStep1.step:if(meta.stepCount == 1 count) = current.recordedDoubleYear == 4042 years
+  assert.recordedDoubleYearStep2.step:if(meta.stepCount == 2 count) = current.recordedDoubleYear == 4044 years
+  assert.recordedDoubleYearStep3.step:if(meta.stepCount == 3 count) = current.recordedDoubleYear == 4046 years
+
+end patch
+
+start organism Tracker
+
+  # Organism-level tracking of meta attributes
+  birthStep.init = meta.stepCount
+  birthStep.step = prior.birthStep
+
+  birthYear.init = meta.year
+  birthYear.step = prior.birthYear
+
+  currentStep.init = meta.stepCount
+  currentStep.step = meta.stepCount
+
+  currentYear.init = meta.year
+  currentYear.step = meta.year
+
+  # Track nested temporal access at organism level
+  currentYearNested.init = meta.year.step
+  currentYearNested.step = meta.year.step
+
+  currentStepCountNested.init = meta.stepCount.step
+  currentStepCountNested.step = meta.stepCount.step
+
+  # Calculate age based on meta
+  stepsAlive.init = 0 count
+  stepsAlive.step = meta.stepCount - current.birthStep
+
+  yearsAlive.init = 0 year
+  yearsAlive.step = meta.year - current.birthYear
+
+  # Assert birth attributes persist
+  assert.birthStepPersistsStep1.step:if(meta.stepCount == 1 count) = current.birthStep == 0 count
+  assert.birthStepPersistsStep2.step:if(meta.stepCount == 2 count) = current.birthStep == 0 count
+  assert.birthStepPersistsStep3.step:if(meta.stepCount == 3 count) = current.birthStep == 0 count
+
+  assert.birthYearPersistsStep1.step:if(meta.stepCount == 1 count) = current.birthYear == 2020 years
+  assert.birthYearPersistsStep2.step:if(meta.stepCount == 2 count) = current.birthYear == 2020 years
+  assert.birthYearPersistsStep3.step:if(meta.stepCount == 3 count) = current.birthYear == 2020 years
+
+  # Assert current attributes track meta
+  assert.currentStepStep0.step:if(meta.stepCount == 0 count) = current.currentStep == 0 count
+  assert.currentStepStep1.step:if(meta.stepCount == 1 count) = current.currentStep == 1 count
+  assert.currentStepStep2.step:if(meta.stepCount == 2 count) = current.currentStep == 2 count
+  assert.currentStepStep3.step:if(meta.stepCount == 3 count) = current.currentStep == 3 count
+
+  assert.currentYearStep0.step:if(meta.stepCount == 0 count) = current.currentYear == 2020 years
+  assert.currentYearStep1.step:if(meta.stepCount == 1 count) = current.currentYear == 2021 years
+  assert.currentYearStep2.step:if(meta.stepCount == 2 count) = current.currentYear == 2022 years
+  assert.currentYearStep3.step:if(meta.stepCount == 3 count) = current.currentYear == 2023 years
+
+  # Assert nested temporal access at organism level
+  assert.currentYearNestedStep0.step:if(meta.stepCount == 0 count) = current.currentYearNested == 2020 years
+  assert.currentYearNestedStep1.step:if(meta.stepCount == 1 count) = current.currentYearNested == 2021 years
+  assert.currentYearNestedStep2.step:if(meta.stepCount == 2 count) = current.currentYearNested == 2022 years
+  assert.currentYearNestedStep3.step:if(meta.stepCount == 3 count) = current.currentYearNested == 2023 years
+
+  assert.currentStepCountNestedStep0.step:if(meta.stepCount == 0 count) = current.currentStepCountNested == 0 count
+  assert.currentStepCountNestedStep1.step:if(meta.stepCount == 1 count) = current.currentStepCountNested == 1 count
+  assert.currentStepCountNestedStep2.step:if(meta.stepCount == 2 count) = current.currentStepCountNested == 2 count
+  assert.currentStepCountNestedStep3.step:if(meta.stepCount == 3 count) = current.currentStepCountNested == 3 count
+
+  # Assert stepsAlive calculation
+  assert.stepsAliveStep0.step:if(meta.stepCount == 0 count) = current.stepsAlive == 0 count
+  assert.stepsAliveStep1.step:if(meta.stepCount == 1 count) = current.stepsAlive == 1 count
+  assert.stepsAliveStep2.step:if(meta.stepCount == 2 count) = current.stepsAlive == 2 count
+  assert.stepsAliveStep3.step:if(meta.stepCount == 3 count) = current.stepsAlive == 3 count
+
+  # Assert yearsAlive calculation
+  assert.yearsAliveStep0.step:if(meta.stepCount == 0 count) = current.yearsAlive == 0 years
+  assert.yearsAliveStep1.step:if(meta.stepCount == 1 count) = current.yearsAlive == 1 year
+  assert.yearsAliveStep2.step:if(meta.stepCount == 2 count) = current.yearsAlive == 2 years
+  assert.yearsAliveStep3.step:if(meta.stepCount == 3 count) = current.yearsAlive == 3 years
+
+  # Assert nested meta access produces same results as direct access
+  assert.nestedEqualsDirectYearStep1.step:if(meta.stepCount == 1 count) = meta.year.step == meta.year
+  assert.nestedEqualsDirectYearStep2.step:if(meta.stepCount == 2 count) = meta.year.step == meta.year
+  assert.nestedEqualsDirectYearStep3.step:if(meta.stepCount == 3 count) = meta.year.step == meta.year
+
+  assert.nestedEqualsDirectStepCountStep1.step:if(meta.stepCount == 1 count) = meta.stepCount.step == meta.stepCount
+  assert.nestedEqualsDirectStepCountStep2.step:if(meta.stepCount == 2 count) = meta.stepCount.step == meta.stepCount
+  assert.nestedEqualsDirectStepCountStep3.step:if(meta.stepCount == 3 count) = meta.stepCount.step == meta.stepCount
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

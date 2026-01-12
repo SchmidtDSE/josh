@@ -1,0 +1,62 @@
+# @category: io
+# @subcategory: exports
+# @priority: medium
+# @description: Test GeoTIFF export for single timestep with spatial extent and resolution
+
+start simulation ExportGeoTIFFSingle
+
+  # Define spatial grid for raster export (small grid to avoid memory issues)
+  grid.size = 500 m
+  grid.low = 38.0 degrees latitude, -121.0 degrees longitude
+  grid.high = 38.01 degrees latitude, -120.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to GeoTIFF file with step and variable templates
+  exportFiles.patch = "file:///tmp/test_export_geotiff_single_{variable}_{step}.tif"
+  exportFiles.patch.columns = "elevation,treeHeight"
+
+end simulation
+
+start patch Default
+
+  # Initialize spatial attribute
+  Tree.init = create 25 count of Tree
+
+  # Calculate patch attribute for raster export
+  elevation.init = sample uniform from 100 m to 500 m
+  elevation.step = elevation
+
+  # Export spatial data as raster
+  export.elevation.step = elevation
+  export.treeHeight.step = mean(Tree.height)
+
+  # Assertions for spatial data validity
+  assert.elevationLow.step = elevation >= 100 m
+  assert.elevationHigh.step = elevation <= 500 m
+  assert.treeHeightPositive.step = mean(Tree.height) >= 0 m
+
+end patch
+
+start organism Tree
+
+  height.init = sample uniform from 5 m to 15 m
+  height.step = prior.height + 0.5 m
+
+  dbh.init = sample uniform from 0.1 m to 0.5 m
+  dbh.step = prior.dbh + 0.02 m
+
+  # Assert growth
+  assert.heightGrows.step = current.height >= prior.height
+  assert.dbhGrows.step = current.dbh >= prior.dbh
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

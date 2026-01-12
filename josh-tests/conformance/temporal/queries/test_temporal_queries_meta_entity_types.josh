@@ -1,0 +1,221 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: high
+# @description: Test meta nested attribute access from different entity types (patch, multiple organism types) - EXPECTED TO FAIL: 3+ level nesting not currently supported
+
+start simulation TemporalQueriesMetaEntityTypes
+
+  # NOTE: Spec requires 'degrees latitude/longitude' but using meters for compatibility
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 2020 year
+  steps.high = 2024 year
+
+  year.init = 2020 year
+  year.step = 2020 year + meta.stepCount
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Define nested simulation attributes that all entity types should access (constants don't need .init/.step)
+  environment.temperature.base = 20 degC
+  environment.temperature.variation = 5 degC
+
+  events.fire.intensity = 80 percent
+  events.fire.radius = 15 m
+  events.fire.threshold = 70 percent
+
+  species.tree.maxAge = 100 year
+  species.tree.growthRate = 1.5 m/yr
+  species.shrub.maxAge = 50 year
+  species.shrub.growthRate = 0.8 m/yr
+
+  model.timeStep = 1 year
+
+end simulation
+
+start patch Default
+
+  # Create entities at init
+  Tree.init = create Tree
+  Shrub.init = create Shrub
+
+  # Patch accessing nested simulation attributes
+  patchTemp.init = 0 degC
+  patchTemp.step = meta.environment.temperature.base
+
+  patchFireIntensity.init = 0 percent
+  patchFireIntensity.step = meta.events.fire.intensity
+
+  patchTreeMaxAge.init = 0 year
+  patchTreeMaxAge.step = meta.species.tree.maxAge
+
+  patchShrubMaxAge.init = 0 year
+  patchShrubMaxAge.step = meta.species.shrub.maxAge
+
+  # Patch using nested meta in computations
+  vegetation.init = 50 percent
+  vegetation.step = prior.vegetation + 2 percent
+
+  fireRisk.init = false
+  fireRisk.step = current.vegetation > meta.events.fire.threshold
+
+  # Cross-attribute reference with nested meta in patch
+  shouldTriggerFire.init = false
+  shouldTriggerFire.step = current.fireRisk == true
+
+  # Patch assertions - verify meta access works
+  assert.patchTempStep1.step:if(meta.stepCount == 1 count) = current.patchTemp == 20 degC
+  assert.patchFireIntensityStep1.step:if(meta.stepCount == 1 count) = current.patchFireIntensity == 80 percent
+  assert.patchTreeMaxAgeStep1.step:if(meta.stepCount == 1 count) = current.patchTreeMaxAge == 100 year
+  assert.patchShrubMaxAgeStep1.step:if(meta.stepCount == 1 count) = current.patchShrubMaxAge == 50 year
+
+  # Patch assertions - verify computed attributes
+  assert.vegetationStep1.step:if(meta.stepCount == 1 count) = current.vegetation == 52 percent
+  assert.vegetationStep2.step:if(meta.stepCount == 2 count) = current.vegetation == 54 percent
+  assert.vegetationStep3.step:if(meta.stepCount == 3 count) = current.vegetation == 56 percent
+  assert.vegetationStep4.step:if(meta.stepCount == 4 count) = current.vegetation == 58 percent
+
+  assert.fireRiskStep1.step:if(meta.stepCount == 1 count) = current.fireRisk == false
+  assert.fireRiskStep2.step:if(meta.stepCount == 2 count) = current.fireRisk == false
+  assert.fireRiskStep3.step:if(meta.stepCount == 3 count) = current.fireRisk == false
+  assert.fireRiskStep4.step:if(meta.stepCount == 4 count) = current.fireRisk == false
+
+  # Verify cross-attribute reference works with nested meta
+  assert.shouldTriggerFireStep2.step:if(meta.stepCount == 2 count) = current.shouldTriggerFire == false
+
+end patch
+
+start organism Tree
+
+  # Organism accessing nested simulation attributes
+  maxAge.init = meta.species.tree.maxAge
+  maxAge.step = prior.maxAge
+
+  growthRate.init = meta.species.tree.growthRate
+  growthRate.step = prior.growthRate
+
+  birthYear.init = meta.year
+  birthYear.step = prior.birthYear
+
+  # Organism using nested meta in computations
+  age.init = 0 year
+  age.step = prior.age + meta.model.timeStep
+
+  height.init = 2 m
+  height.step = prior.height + meta.species.tree.growthRate
+
+  mature.init = false
+  mature.step = current.age >= 10 year
+
+  # Temperature affects growth (uses nested meta)
+  tempModifier.init = 1.0 scalar
+  tempModifier.step = meta.environment.temperature.base / 20 degC
+
+  adjustedHeight.init = 2 m
+  adjustedHeight.step = prior.adjustedHeight + (meta.species.tree.growthRate * current.tempModifier)
+
+  # Organism assertions - init phase
+  assert.maxAgeInit.init = current.maxAge == 100 year
+  assert.growthRateInit.init = current.growthRate == 1.5 m/yr
+  assert.birthYearInit.init = current.birthYear == 2020 year
+  assert.ageInit.init = current.age == 0 year
+  assert.heightInit.init = current.height == 2 m
+  assert.matureInit.init = current.mature == false
+
+  # Organism assertions - step phase
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = current.age == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = current.age == 2 year
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = current.age == 3 year
+  assert.ageStep4.step:if(meta.stepCount == 4 count) = current.age == 4 year
+
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 3.5 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 5 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 6.5 m
+  assert.heightStep4.step:if(meta.stepCount == 4 count) = current.height == 8 m
+
+  assert.matureStep1.step:if(meta.stepCount == 1 count) = current.mature == false
+  assert.matureStep4.step:if(meta.stepCount == 4 count) = current.mature == false
+
+  # Verify persistent values from init
+  assert.maxAgePersistsStep2.step:if(meta.stepCount == 2 count) = current.maxAge == 100 year
+  assert.birthYearPersistsStep3.step:if(meta.stepCount == 3 count) = current.birthYear == 2020 year
+
+  # Verify temperature modifier computation
+  assert.tempModifierStep1.step:if(meta.stepCount == 1 count) = current.tempModifier == 1.0 scalar
+  assert.adjustedHeightStep1.step:if(meta.stepCount == 1 count) = current.adjustedHeight == 3.5 m
+
+end organism
+
+start organism Shrub
+
+  # Second organism type accessing different nested attributes
+  maxAge.init = meta.species.shrub.maxAge
+  maxAge.step = prior.maxAge
+
+  growthRate.init = meta.species.shrub.growthRate
+  growthRate.step = prior.growthRate
+
+  birthYear.init = meta.year
+  birthYear.step = prior.birthYear
+
+  age.init = 0 year
+  age.step = prior.age + meta.model.timeStep
+
+  height.init = 0.5 m
+  height.step = prior.height + meta.species.shrub.growthRate
+
+  # Shrub assertions - init phase
+  assert.maxAgeInit.init = current.maxAge == 50 year
+  assert.growthRateInit.init = current.growthRate == 0.8 m/yr
+  assert.birthYearInit.init = current.birthYear == 2020 year
+  assert.ageInit.init = current.age == 0 year
+  assert.heightInit.init = current.height == 0.5 m
+
+  # Shrub assertions - step phase
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = current.age == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = current.age == 2 year
+
+  assert.heightStep1.step:if(meta.stepCount == 1 count) = current.height == 1.3 m
+  assert.heightStep2.step:if(meta.stepCount == 2 count) = current.height == 2.1 m
+  assert.heightStep3.step:if(meta.stepCount == 3 count) = current.height == 2.9 m
+
+  # Verify persistent values
+  assert.maxAgePersistsStep2.step:if(meta.stepCount == 2 count) = current.maxAge == 50 year
+
+end organism
+
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit degC
+  alias celsius
+end unit
+
+start unit percent
+  alias pct
+end unit
+
+start unit scalar
+end unit
+
+start unit degrees
+  alias degree
+  alias deg
+end unit
+
+start unit count
+end unit

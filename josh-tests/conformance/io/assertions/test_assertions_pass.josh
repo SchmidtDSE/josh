@@ -1,0 +1,93 @@
+# @category: io
+# @subcategory: assertions
+# @priority: critical
+# @description: Test multiple passing assertions - equality, inequality, ranges, scalars, and distributions
+
+start simulation AssertionsPass
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init
+  Tree.init = create 10 count of Tree
+
+  # Test 1: Equality assertions on counts
+  treeCount.step = count(Tree)
+  assert.treeCountEquals.step = treeCount == 10 count
+
+  # Test 2: Inequality assertions
+  assert.treeCountNotZero.step = treeCount != 0 count
+
+  # Test 3: Range assertions (greater than)
+  assert.treeCountGreaterThan.step = treeCount > 5 count
+
+  # Test 4: Range assertions (less than)
+  assert.treeCountLessThan.step = treeCount < 20 count
+
+  # Test 5: Combined range assertions (within bounds)
+  assert.treeCountInRange.step = (treeCount >= 10 count) and (treeCount <= 10 count)
+
+  # Test 6: Aggregation assertions on collections
+  avgAge.step = mean(Tree.age)
+  assert.avgAgePositive.step = avgAge >= 0 years
+
+  # Test 7: Collection aggregations with ranges
+  maxHeight.step = max(Tree.height)
+  minHeight.step = min(Tree.height)
+  assert.heightsInRange.step = (minHeight >= 0 m) and (maxHeight <= 100 m)
+
+  # Test 8: Assertions on simulation metadata
+  assert.stepCountValid.step = meta.stepCount >= 0 count
+  assert.stepCountIncreases.step:if(meta.stepCount > 0 count) = meta.stepCount > 0 count
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1 m
+  height.step = prior.height + sample uniform from 0 m to 2 m
+
+  # Test 9: Organism-level equality assertions
+  assert.ageNonNegative.step = current.age >= 0 years
+
+  # Test 10: Organism-level assertions on growth
+  assert.heightPositive.step = current.height > 0 m
+
+  # Test 11: Assertions on prior values
+  assert.heightIncreases.step:if(meta.stepCount > 0 count) = current.height >= prior.height
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

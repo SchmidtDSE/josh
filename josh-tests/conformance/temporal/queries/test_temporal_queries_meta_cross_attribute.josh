@@ -1,0 +1,241 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: high
+# @description: Test cross-entity attribute references using meta keyword - patches and organisms accessing simulation attributes
+
+start simulation CrossAttributeMetaTest
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  # Start at year 2020, run for 4 steps
+  steps.low = 2020 year
+  steps.high = 2023 year
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Simulation-level configuration attributes (constants don't need .init/.step)
+  # These are the attributes that patches and organisms will reference
+  maxConstraint = 100 kg
+  minConstraint = 10 kg
+  growthRate = 0.15 proportion
+  mortalityRate = 0.05 proportion
+  temperature = 25 degC
+  rainfall = 1000 mm
+
+end simulation
+
+start patch Default
+
+  # Create organisms at init
+  Plant.init = create Plant
+  Animal.init = create Animal
+
+  # Patch attributes that depend on simulation attributes via meta
+  # This tests cross-entity attribute access from patch to simulation
+  maxBiomass.init = meta.maxConstraint
+  maxBiomass.step = prior.maxBiomass
+  
+  minBiomass.init = meta.minConstraint
+  minBiomass.step = prior.minBiomass
+  
+  targetTemperature.init = meta.temperature
+  targetTemperature.step = prior.targetTemperature
+  
+  # Patch attributes that use simulation parameters in calculations
+  expectedGrowth.init = 0 kg
+  expectedGrowth.step = mean(Plant.biomass) * meta.growthRate
+  
+  expectedMortality.init = 0 kg
+  expectedMortality.step = mean(Plant.biomass) * meta.mortalityRate
+
+  # Track total biomass and enforce constraints
+  totalBiomass.init = 0 kg
+  totalBiomass.step = sum(Plant.biomass) + sum(Animal.biomass)
+  
+  # Use simulation constraints to determine if biomass is within bounds
+  withinBounds.init = 1 proportion
+  withinBounds.step = {
+    if ((current.totalBiomass >= meta.minConstraint) and (current.totalBiomass <= meta.maxConstraint)) {
+      return 1 proportion
+    } else {
+      return 0 proportion
+    }
+  }
+
+  # Assert patch attributes correctly reference simulation attributes at init
+  assert.maxBiomassInit.init = current.maxBiomass == 100 kg
+  assert.minBiomassInit.init = current.minBiomass == 10 kg
+  assert.targetTemperatureInit.init = current.targetTemperature == 25 degC
+  
+  # Assert patch attributes persist across steps
+  assert.maxBiomassStep1.step:if(meta.stepCount == 1 count) = current.maxBiomass == 100 kg
+  assert.maxBiomassStep2.step:if(meta.stepCount == 2 count) = current.maxBiomass == 100 kg
+  assert.maxBiomassStep3.step:if(meta.stepCount == 3 count) = current.maxBiomass == 100 kg
+  
+  assert.minBiomassStep1.step:if(meta.stepCount == 1 count) = current.minBiomass == 10 kg
+  assert.minBiomassStep2.step:if(meta.stepCount == 2 count) = current.minBiomass == 10 kg
+  assert.minBiomassStep3.step:if(meta.stepCount == 3 count) = current.minBiomass == 10 kg
+  
+  # Assert expected growth uses simulation growth rate correctly
+  assert.expectedGrowthStep1.step:if(meta.stepCount == 1 count) = current.expectedGrowth == 15 kg * meta.growthRate
+  assert.expectedGrowthStep2.step:if(meta.stepCount == 2 count) = current.expectedGrowth == (15 kg + 15 kg * 0.15 proportion) * meta.growthRate
+  
+  # Assert within bounds check uses simulation constraints
+  assert.withinBoundsStep1.step:if(meta.stepCount == 1 count) = current.withinBounds == 1 proportion
+  assert.withinBoundsStep2.step:if(meta.stepCount == 2 count) = current.withinBounds == 1 proportion
+  assert.withinBoundsStep3.step:if(meta.stepCount == 3 count) = current.withinBounds == 1 proportion
+
+end patch
+
+start organism Plant
+
+  # Plant attributes that depend on simulation attributes via meta
+  # This tests cross-entity attribute access from organism to simulation
+  maxAllowedBiomass.init = meta.maxConstraint
+  maxAllowedBiomass.step = prior.maxAllowedBiomass
+  
+  localGrowthRate.init = meta.growthRate
+  localGrowthRate.step = prior.localGrowthRate
+  
+  # Biomass grows using simulation growth rate
+  biomass.init = 15 kg
+  biomass.step = prior.biomass * (1 proportion + meta.growthRate)
+  
+  # Track if plant exceeds max constraint
+  exceedsMax.init = 0 proportion
+  exceedsMax.step = {
+    if (current.biomass > meta.maxConstraint) {
+      return 1 proportion
+    } else {
+      return 0 proportion
+    }
+  }
+  
+  # Temperature sensitivity based on simulation environment
+  temperatureDeviation.init = 0 degC
+  temperatureDeviation.step = abs(meta.temperature - 20 degC)
+  
+  # Water requirements based on simulation environment
+  waterNeeded.init = meta.rainfall * 0.01 proportion
+  waterNeeded.step = prior.waterNeeded
+
+  # Assert organism attributes correctly reference simulation attributes at init
+  assert.maxAllowedBiomassInit.init = current.maxAllowedBiomass == 100 kg
+  assert.localGrowthRateInit.init = current.localGrowthRate == 0.15 proportion
+  assert.waterNeededInit.init = current.waterNeeded == 10 mm
+  
+  # Assert organism attributes persist across steps
+  assert.maxAllowedBiomassStep1.step:if(meta.stepCount == 1 count) = current.maxAllowedBiomass == 100 kg
+  assert.maxAllowedBiomassStep2.step:if(meta.stepCount == 2 count) = current.maxAllowedBiomass == 100 kg
+  assert.maxAllowedBiomassStep3.step:if(meta.stepCount == 3 count) = current.maxAllowedBiomass == 100 kg
+  
+  # Assert biomass growth uses simulation growth rate
+  assert.biomassStep1.step:if(meta.stepCount == 1 count) = current.biomass == 15 kg * 1.15 proportion
+  assert.biomassStep2.step:if(meta.stepCount == 2 count) = current.biomass == 15 kg * 1.15 proportion * 1.15 proportion
+  
+  # Assert plant does not exceed max constraint
+  assert.exceedsMaxStep1.step:if(meta.stepCount == 1 count) = current.exceedsMax == 0 proportion
+  assert.exceedsMaxStep2.step:if(meta.stepCount == 2 count) = current.exceedsMax == 0 proportion
+  assert.exceedsMaxStep3.step:if(meta.stepCount == 3 count) = current.exceedsMax == 0 proportion
+  
+  # Assert temperature deviation calculated from simulation environment
+  assert.temperatureDeviationStep1.step:if(meta.stepCount == 1 count) = current.temperatureDeviation == 5 degC
+
+end organism
+
+start organism Animal
+
+  # Animal attributes that depend on simulation attributes via meta
+  maxWeight.init = meta.maxConstraint
+  maxWeight.step = prior.maxWeight
+  
+  minWeight.init = meta.minConstraint
+  minWeight.step = prior.minWeight
+  
+  # Weight starts at minimum and grows
+  biomass.init = meta.minConstraint
+  biomass.step = prior.biomass + 2 kg
+  
+  # Mortality risk based on simulation mortality rate
+  mortalityRisk.init = meta.mortalityRate
+  mortalityRisk.step = prior.mortalityRisk
+  
+  # Track if animal is within healthy weight range
+  withinHealthyRange.init = 1 proportion
+  withinHealthyRange.step = {
+    if ((current.biomass >= meta.minConstraint) and (current.biomass <= meta.maxConstraint)) {
+      return 1 proportion
+    } else {
+      return 0 proportion
+    }
+  }
+  
+  # Calculate weight as percentage of max using simulation constraints
+  percentOfMax.init = (meta.minConstraint / meta.maxConstraint) * 100 proportion
+  percentOfMax.step = (current.biomass / meta.maxConstraint) * 100 proportion
+
+  # Assert animal attributes correctly reference simulation attributes at init
+  assert.maxWeightInit.init = current.maxWeight == 100 kg
+  assert.minWeightInit.init = current.minWeight == 10 kg
+  assert.biomassInit.init = current.biomass == 10 kg
+  assert.mortalityRiskInit.init = current.mortalityRisk == 0.05 proportion
+  assert.percentOfMaxInit.init = current.percentOfMax == 10 proportion
+  
+  # Assert animal attributes persist and calculate correctly across steps
+  assert.maxWeightStep1.step:if(meta.stepCount == 1 count) = current.maxWeight == 100 kg
+  assert.maxWeightStep2.step:if(meta.stepCount == 2 count) = current.maxWeight == 100 kg
+  
+  assert.biomassStep1.step:if(meta.stepCount == 1 count) = current.biomass == 12 kg
+  assert.biomassStep2.step:if(meta.stepCount == 2 count) = current.biomass == 14 kg
+  assert.biomassStep3.step:if(meta.stepCount == 3 count) = current.biomass == 16 kg
+  
+  # Assert within healthy range check uses simulation constraints
+  assert.withinHealthyRangeStep1.step:if(meta.stepCount == 1 count) = current.withinHealthyRange == 1 proportion
+  assert.withinHealthyRangeStep2.step:if(meta.stepCount == 2 count) = current.withinHealthyRange == 1 proportion
+  assert.withinHealthyRangeStep3.step:if(meta.stepCount == 3 count) = current.withinHealthyRange == 1 proportion
+  
+  # Assert percent of max calculated using simulation max constraint
+  assert.percentOfMaxStep1.step:if(meta.stepCount == 1 count) = current.percentOfMax == 12 proportion
+  assert.percentOfMaxStep2.step:if(meta.stepCount == 2 count) = current.percentOfMax == 14 proportion
+  assert.percentOfMaxStep3.step:if(meta.stepCount == 3 count) = current.percentOfMax == 16 proportion
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit proportion
+  alias proportions
+end unit
+
+start unit degC
+  alias celsius
+  alias degree
+  alias degrees
+end unit
+
+start unit mm
+  alias millimeter
+  alias millimeters
+end unit

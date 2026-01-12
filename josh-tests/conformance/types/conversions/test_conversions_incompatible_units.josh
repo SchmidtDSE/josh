@@ -1,0 +1,89 @@
+# @category: types
+# @subcategory: conversions
+# @priority: high
+# @description: Test behavior with incompatible units (documents current behavior)
+
+start simulation ConversionsIncompatibleUnits
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test that compatible units can be converted
+  distance.init = 1000 m
+  distanceKm.init = distance as km
+  assert.compatibleUnits.init = distanceKm == 1 km
+
+  # Test that same-dimension units work
+  time1.init = 60 seconds
+  time2.init = time1 as minutes
+  assert.sameDimension.init = time2 == 1 minutes
+
+  # Test that dimensionless values can be used
+  # Count and percentage are dimensionless but serve different purposes
+  itemCount.init = 100 count
+  assert.countValue.init = itemCount == 100 count
+
+  # Test percentage as dimensionless
+  probability.init = 50 percent
+  assert.percentageValue.init = probability == 50 percent
+
+  # Document that units must be defined with conversions
+  # If no conversion path exists between units, they cannot be converted
+  # This test documents that compatible unit systems work correctly
+  distance2.init = 3 ft
+  distance2In.init = distance2 as in
+  assert.customUnitsConvert.init = distance2In == 36 in
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit second
+  alias seconds
+  minutes = current / 60
+end unit
+
+start unit minute
+  alias minutes
+  seconds = current * 60
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+end unit
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

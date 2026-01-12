@@ -1,0 +1,146 @@
+# @category: core
+# @subcategory: collections
+# @priority: high
+# @description: Test combining multiple collections into unified collections
+
+start simulation CollectionsCombine
+
+  grid.size = 10 m
+  grid.low = 36.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 36.01 degrees latitude, -117.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create different organism types
+  Oaks.init = create 5 count of Oak
+  Pines.init = create 7 count of Pine
+  Firs.init = create 3 count of Fir
+
+  # Combine two collections using | operator
+  oakAndPine.step:if(meta.stepCount >= 1 count) = Oaks | Pines
+
+  # Combine three collections using | operator
+  allTrees.step:if(meta.stepCount >= 1 count) = Oaks | Pines | Firs
+
+  # Combine with empty collection (edge case)
+  Maples.init = create 0 count of Maple
+  oakAndMaple.step:if(meta.stepCount >= 1 count) = Oaks | Maples
+
+  # Create additional organisms later and combine
+  Birches.step:if(meta.stepCount == 2 count) = create 4 count of Birch
+  oakAndBirch.step:if(meta.stepCount >= 3 count) = Oaks | Birches
+
+  # Combine result with another collection
+  pineAndFir.step:if(meta.stepCount >= 1 count) = Pines | Firs
+  allConifersAndOak.step:if(meta.stepCount >= 1 count) = pineAndFir | Oaks
+
+  # Assert individual collection sizes remain unchanged
+  assert.oaksCount.step:if(meta.stepCount == 1 count) = count(Oaks) == 5 count
+  assert.pinesCount.step:if(meta.stepCount == 1 count) = count(Pines) == 7 count
+  assert.firsCount.step:if(meta.stepCount == 1 count) = count(Firs) == 3 count
+
+  # Assert combined collection sizes
+  assert.oakAndPineSize.step:if(meta.stepCount == 1 count) = count(oakAndPine) == 12 count
+  assert.allTreesSize.step:if(meta.stepCount == 1 count) = count(allTrees) == 15 count
+
+  # Assert combine with empty collection
+  assert.oakAndMapleSize.step:if(meta.stepCount == 1 count) = count(oakAndMaple) == 5 count
+
+  # Assert combine after delayed creation
+  assert.birchCreated.step:if(meta.stepCount == 2 count) = count(Birches) == 4 count
+  assert.oakAndBirchSize.step:if(meta.stepCount == 3 count) = count(oakAndBirch) == 9 count
+
+  # Assert nested combine operations
+  assert.pineAndFirSize.step:if(meta.stepCount == 1 count) = count(pineAndFir) == 10 count
+  assert.allConifersAndOakSize.step:if(meta.stepCount == 1 count) = count(allConifersAndOak) == 15 count
+
+  # Assert combined collections persist across time steps
+  assert.allTreesSizePersists.step:if(meta.stepCount == 3 count) = count(allTrees) == 15 count
+  assert.oakAndPineSizePersists.step:if(meta.stepCount == 4 count) = count(oakAndPine) == 12 count
+
+  # Test combining same collection with itself (should have same organisms)
+  oaksDuplicate.step:if(meta.stepCount >= 1 count) = Oaks | Oaks
+  assert.oaksDuplicateSize.step:if(meta.stepCount == 1 count) = count(oaksDuplicate) == 10 count
+
+  # Verify combined collection contains organisms from both sources
+  # by checking average age across combined collection
+  avgAgeOakAndPine.step:if(meta.stepCount >= 2 count) = mean(oakAndPine.age)
+  avgAgeOaks.step:if(meta.stepCount >= 2 count) = mean(Oaks.age)
+  avgAgePines.step:if(meta.stepCount >= 2 count) = mean(Pines.age)
+
+  # Average should be reasonable (between individual averages with seed-based distribution)
+  assert.avgAgeReasonable.step:if(meta.stepCount == 2 count) = current.avgAgeOakAndPine >= 0 years and current.avgAgeOakAndPine <= 10 years
+
+end patch
+
+start organism Oak
+
+  age.init = sample uniform from 0 years to 4 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 2 m to 3.2 m
+  height.step = prior.height + 0.3 m
+
+end organism
+
+start organism Pine
+
+  age.init = sample uniform from 0 years to 6 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 3 m to 5.4 m
+  height.step = prior.height + 0.4 m
+
+end organism
+
+start organism Fir
+
+  age.init = sample uniform from 0 years to 2 years
+  age.step = prior.age + 1 year
+
+  height.init = sample uniform from 2.5 m to 3.2 m
+  height.step = prior.height + 0.35 m
+
+end organism
+
+start organism Maple
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1.5 m
+  height.step = prior.height + 0.2 m
+
+end organism
+
+start organism Birch
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1 m
+  height.step = prior.height + 0.25 m
+
+  # Assert birch ages correctly after creation at step 2
+  assert.birchAgeStep3.step:if(meta.stepCount == 3 count) = current.age == 1 year
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
