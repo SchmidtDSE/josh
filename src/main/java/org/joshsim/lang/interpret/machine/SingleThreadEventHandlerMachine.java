@@ -908,33 +908,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       return this;
     }
 
-    String message = value.getAsString();
+    String message = formatDebugValue(value);
     long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
 
-    // Get current entity type category from scope
-    String entityCategory = "unknown";
-    try {
-      EngineValue currentValue = scope.get("current");
-      if (currentValue != null) {
-        MutableEntity current = currentValue.getAsMutableEntity();
-        EntityType type = current.getEntityType();
-        // Map EntityType to debug file key
-        entityCategory = switch (type) {
-          case AGENT -> "organism";  // organisms map to AGENT type
-          case PATCH -> "patch";
-          case SIMULATION -> "simulation";
-          case DISTURBANCE -> "disturbance";
-          default -> "unknown";
-        };
-      }
-    } catch (Exception e) {
-      // Fall back to "unknown" if we can't determine entity type
-    }
-
-    // Set entity type context and write
+    // Write with full context
     CombinedDebugOutputFacade facade = debugOutputFacade.get();
-    facade.setCurrentEntityType(entityCategory);
-    facade.write(message, step);
+    facade.write(message, step, info.entityCategory, info.identifier, info.x, info.y);
 
     // Push the original value back (debug is a pass-through function)
     push(value);
@@ -947,7 +927,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     List<String> parts = new ArrayList<>();
     for (int i = 0; i < argCount; i++) {
       EngineValue value = pop();
-      parts.add(0, value.getAsString()); // Insert at beginning to reverse order
+      parts.add(0, formatDebugValue(value)); // Insert at beginning to reverse order
     }
 
     if (debugOutputFacade.isEmpty()) {
@@ -957,14 +937,78 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
 
-    // Get current entity type category from scope
+    // Write with full context
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.write(String.join(" ", parts), step, info.entityCategory, info.identifier, info.x, info.y);
+
+    // Push 0 count as result (allows debug in expressions)
+    push(valueFactory.build(0, Units.of("count")));
+    return this;
+  }
+
+  /**
+   * Formats a value for debug output with cleaner formatting.
+   *
+   * <p>Applies formatting improvements:
+   * <ul>
+   *   <li>Strips surrounding quotes from string values</li>
+   *   <li>Truncates floating point numbers to 4 decimal places</li>
+   * </ul>
+   *
+   * @param value The EngineValue to format.
+   * @return A formatted string representation.
+   */
+  private String formatDebugValue(EngineValue value) {
+    String raw = value.getAsString();
+
+    // Strip surrounding quotes from strings
+    if (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"")) {
+      return raw.substring(1, raw.length() - 1);
+    }
+
+    // Try to truncate floating point numbers to 4 decimal places
+    try {
+      // Check if it looks like a decimal number (contains a dot)
+      if (raw.contains(".") && !raw.contains(" ")) {
+        double d = Double.parseDouble(raw);
+        // Format to 4 decimal places, removing trailing zeros
+        String formatted = String.format("%.4f", d);
+        // Remove trailing zeros after decimal point (but keep at least one decimal place)
+        formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", ".0");
+        return formatted;
+      }
+    } catch (NumberFormatException e) {
+      // Not a number, return as-is
+    }
+
+    return raw;
+  }
+
+  /**
+   * Helper record to hold entity debug context information.
+   */
+  private record DebugEntityInfo(String entityCategory, String identifier, double x, double y) {}
+
+  /**
+   * Extracts debug context information from the current entity in scope.
+   *
+   * @return DebugEntityInfo with entity category, identifier, and location.
+   */
+  private DebugEntityInfo getDebugEntityInfo() {
     String entityCategory = "unknown";
+    String identifier = "0";
+    double x = 0.0;
+    double y = 0.0;
+
     try {
       EngineValue currentValue = scope.get("current");
       if (currentValue != null) {
         MutableEntity current = currentValue.getAsMutableEntity();
         EntityType type = current.getEntityType();
+
+        // Map EntityType to debug file key
         entityCategory = switch (type) {
           case AGENT -> "organism";
           case PATCH -> "patch";
@@ -972,19 +1016,33 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
           case DISTURBANCE -> "disturbance";
           default -> "unknown";
         };
+
+        // Get unique identifier from Java identity hash
+        identifier = Integer.toHexString(System.identityHashCode(current));
+
+        // Get location - try entity's own geometry first, then fall back to "here"
+        Optional<EngineGeometry> geometry = current.getGeometry();
+        if (geometry.isPresent()) {
+          x = geometry.get().getCenterX().doubleValue();
+          y = geometry.get().getCenterY().doubleValue();
+        } else if (scope.has("here")) {
+          // For inner entities (organisms), use containing patch's location
+          EngineValue hereValue = scope.get("here");
+          if (hereValue != null) {
+            Entity here = hereValue.getAsEntity();
+            Optional<EngineGeometry> hereGeom = here.getGeometry();
+            if (hereGeom.isPresent()) {
+              x = hereGeom.get().getCenterX().doubleValue();
+              y = hereGeom.get().getCenterY().doubleValue();
+            }
+          }
+        }
       }
     } catch (Exception e) {
-      // Fall back to "unknown"
+      // Fall back to defaults if we can't determine entity info
     }
 
-    // Concatenate with spaces and write
-    CombinedDebugOutputFacade facade = debugOutputFacade.get();
-    facade.setCurrentEntityType(entityCategory);
-    facade.write(String.join(" ", parts), step);
-
-    // Push 0 count as result (allows debug in expressions)
-    push(valueFactory.build(0, Units.of("count")));
-    return this;
+    return new DebugEntityInfo(entityCategory, identifier, x, y);
   }
 
   /**

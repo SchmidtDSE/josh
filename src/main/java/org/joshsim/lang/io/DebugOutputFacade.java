@@ -89,16 +89,21 @@ public class DebugOutputFacade {
    * @param message The debug message to write.
    * @param step The current simulation step number.
    * @param entityType The type of entity generating the message (e.g., "patch", "agent").
+   * @param identifier Unique identifier for the entity (hex hash).
+   * @param x X coordinate of the entity's location.
+   * @param y Y coordinate of the entity's location.
    */
-  public void write(String message, long step, String entityType) {
-    DebugMessage debugMessage = new DebugMessage(message, step, entityType);
+  public void write(String message, long step, String entityType,
+                    String identifier, double x, double y) {
+    DebugMessage debugMessage = new DebugMessage(message, step, entityType, identifier, x, y);
     queueService.add(debugMessage);
   }
 
   /**
    * Internal record to hold debug message data for queue processing.
    */
-  private record DebugMessage(String message, long step, String entityType) {}
+  private record DebugMessage(String message, long step, String entityType,
+                              String identifier, double x, double y) {}
 
   /**
    * Internal callback that handles writing debug messages to the output stream.
@@ -140,8 +145,8 @@ public class DebugOutputFacade {
       }
 
       DebugMessage msg = (DebugMessage) taskMaybe.get();
-      String formatted = String.format("[Step %d, %s] %s",
-          msg.step(), msg.entityType(), msg.message());
+      String formatted = String.format("[Step %d, %s @ %s (%.1f, %.1f)] %s",
+          msg.step(), msg.entityType(), msg.identifier(), msg.x(), msg.y(), msg.message());
       writer.println(formatted);
     }
 

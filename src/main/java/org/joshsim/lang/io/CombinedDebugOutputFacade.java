@@ -84,38 +84,23 @@ public class CombinedDebugOutputFacade {
   }
 
   /**
-   * Writes a debug message to the facade for the current entity type.
+   * Writes a debug message with entity context information.
    *
-   * <p>The message is routed based on the entity type set via {@link #setCurrentEntityType}.
-   * If no entity type is set or no facade is configured for the current type,
-   * the message is silently ignored.</p>
-   *
-   * @param message The debug message to write.
-   * @param step The current simulation step number.
-   */
-  public void write(String message, long step) {
-    String entityType = currentEntityType.get();
-    if (entityType == null) {
-      return;
-    }
-
-    DebugOutputFacade facade = facadesByEntityType.get(entityType);
-    if (facade != null) {
-      facade.write(message, step, entityType);
-    }
-  }
-
-  /**
-   * Writes a debug message with explicit entity type.
+   * <p>The message is routed based on entity type. If no facade is configured
+   * for the entity type, the message is silently ignored.</p>
    *
    * @param message The debug message to write.
    * @param step The current simulation step number.
    * @param entityType The entity type for routing.
+   * @param identifier Unique identifier for the entity (hex hash).
+   * @param x X coordinate of the entity's location.
+   * @param y Y coordinate of the entity's location.
    */
-  public void write(String message, long step, String entityType) {
+  public void write(String message, long step, String entityType,
+                    String identifier, double x, double y) {
     DebugOutputFacade facade = facadesByEntityType.get(entityType);
     if (facade != null) {
-      facade.write(message, step, entityType);
+      facade.write(message, step, entityType, identifier, x, y);
     }
   }
 
