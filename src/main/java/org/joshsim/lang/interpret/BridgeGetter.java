@@ -6,7 +6,9 @@
 
 package org.joshsim.lang.interpret;
 
+import java.util.Optional;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 
 
 /**
@@ -31,6 +33,29 @@ public interface BridgeGetter {
    */
   default void setBridge(EngineBridge bridge) {
     throw new UnsupportedOperationException("setBridge not supported by this implementation");
+  }
+
+  /**
+   * Sets the debug output facade for writing debug messages.
+   *
+   * <p>This allows injecting a configured debug output facade so that debug()
+   * function calls can write to the appropriate destinations.</p>
+   *
+   * @param debugOutputFacade The debug output facade to use.
+   */
+  default void setDebugOutputFacade(CombinedDebugOutputFacade debugOutputFacade) {
+    throw new UnsupportedOperationException(
+        "setDebugOutputFacade not supported by this implementation"
+    );
+  }
+
+  /**
+   * Get the optional debug output facade for writing debug output.
+   *
+   * @return Optional containing the debug output facade if configured, empty otherwise.
+   */
+  default Optional<CombinedDebugOutputFacade> getDebugOutputFacade() {
+    return Optional.empty();
   }
 
 }

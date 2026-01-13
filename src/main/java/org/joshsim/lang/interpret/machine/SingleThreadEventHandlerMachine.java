@@ -17,6 +17,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
@@ -34,6 +35,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 
 
 /**
@@ -56,6 +58,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final EngineValueFactory valueFactory;
   private final Random random;
   private final boolean favorBigDecimal;
+  private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -68,8 +71,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param scope The scope in which to have this automaton perform its operations.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+    this(bridge, scope, Optional.empty());
+  }
+
+  /**
+   * Create a new push-down automaton with debug output support.
+   *
+   * @param bridge The EngineBridge through which to interact with the engine.
+   * @param scope The scope in which to have this automaton perform its operations.
+   * @param debugOutputFacade Optional debug output facade for writing debug messages.
+   */
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
+      Optional<CombinedDebugOutputFacade> debugOutputFacade) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
+    this.debugOutputFacade = debugOutputFacade;
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -880,6 +896,95 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue defaultValue = pop(); // Get default from stack
     Optional<EngineValue> configValue = bridge.getConfigOptional(name);
     push(configValue.orElse(defaultValue));
+  }
+
+  @Override
+  public EventHandlerMachine writeDebug() {
+    EngineValue value = pop();
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output facade configured - push value back (pass-through)
+      push(value);
+      return this;
+    }
+
+    String message = value.getAsString();
+    long step = bridge.getAbsoluteTimestep();
+
+    // Get current entity type category from scope
+    String entityCategory = "unknown";
+    try {
+      EngineValue currentValue = scope.get("current");
+      if (currentValue != null) {
+        MutableEntity current = currentValue.getAsMutableEntity();
+        EntityType type = current.getEntityType();
+        // Map EntityType to debug file key
+        entityCategory = switch (type) {
+          case AGENT -> "organism";  // organisms map to AGENT type
+          case PATCH -> "patch";
+          case SIMULATION -> "simulation";
+          case DISTURBANCE -> "disturbance";
+          default -> "unknown";
+        };
+      }
+    } catch (Exception e) {
+      // Fall back to "unknown" if we can't determine entity type
+    }
+
+    // Set entity type context and write
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.setCurrentEntityType(entityCategory);
+    facade.write(message, step);
+
+    // Push the original value back (debug is a pass-through function)
+    push(value);
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine debugVariadic(int argCount) {
+    // Pop all values in reverse order (last arg is on top of stack)
+    List<String> parts = new ArrayList<>();
+    for (int i = 0; i < argCount; i++) {
+      EngineValue value = pop();
+      parts.add(0, value.getAsString()); // Insert at beginning to reverse order
+    }
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output configured - push 0 count as result
+      push(valueFactory.build(0, Units.of("count")));
+      return this;
+    }
+
+    long step = bridge.getAbsoluteTimestep();
+
+    // Get current entity type category from scope
+    String entityCategory = "unknown";
+    try {
+      EngineValue currentValue = scope.get("current");
+      if (currentValue != null) {
+        MutableEntity current = currentValue.getAsMutableEntity();
+        EntityType type = current.getEntityType();
+        entityCategory = switch (type) {
+          case AGENT -> "organism";
+          case PATCH -> "patch";
+          case SIMULATION -> "simulation";
+          case DISTURBANCE -> "disturbance";
+          default -> "unknown";
+        };
+      }
+    } catch (Exception e) {
+      // Fall back to "unknown"
+    }
+
+    // Concatenate with spaces and write
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.setCurrentEntityType(entityCategory);
+    facade.write(String.join(" ", parts), step);
+
+    // Push 0 count as result (allows debug in expressions)
+    push(valueFactory.build(0, Units.of("count")));
+    return this;
   }
 
   /**

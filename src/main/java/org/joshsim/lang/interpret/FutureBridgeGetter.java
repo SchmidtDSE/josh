@@ -17,6 +17,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.precompute.JshdExternalGetter;
 
@@ -35,6 +36,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineBridge> builtBridge;
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
+  private Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -48,6 +50,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.builtBridge = Optional.empty();
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
+    this.debugOutputFacade = Optional.empty();
   }
 
   /**
@@ -97,6 +100,24 @@ public class FutureBridgeGetter implements BridgeGetter {
       throw new IllegalStateException("Input output layer already set.");
     }
     this.inputOutputLayer = Optional.of(inputOutputLayer);
+  }
+
+  /**
+   * Sets the debug output facade for debug output.
+   *
+   * @param debugOutputFacade The debug output facade to use for debug() function calls.
+   */
+  @Override
+  public void setDebugOutputFacade(CombinedDebugOutputFacade debugOutputFacade) {
+    if (this.debugOutputFacade.isPresent()) {
+      throw new IllegalStateException("Debug output facade already set.");
+    }
+    this.debugOutputFacade = Optional.of(debugOutputFacade);
+  }
+
+  @Override
+  public Optional<CombinedDebugOutputFacade> getDebugOutputFacade() {
+    return this.debugOutputFacade;
   }
 
   /**
