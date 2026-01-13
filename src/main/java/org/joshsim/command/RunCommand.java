@@ -52,6 +52,7 @@ import org.joshsim.util.OutputOptions;
 import org.joshsim.util.OutputStepsParser;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SharedRandom;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -159,6 +160,13 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean uploadData = false;
 
+  @Option(
+      names = "--seed",
+      description = "Random seed for reproducible simulations. If specified, all random "
+                  + "operations will use this seed to produce deterministic results."
+  )
+  private Long seed = null;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -204,6 +212,22 @@ public class RunCommand implements Callable<Integer> {
     if (replicates < 1) {
       output.printError("Number of replicates must be at least 1");
       return 1;
+    }
+
+    // Initialize shared random with seed for reproducibility
+    if (seed != null) {
+      SharedRandom.initialize(seed);
+      output.printInfo("Using random seed: " + seed);
+
+      // Force serial execution when seeded for deterministic results
+      // Parallel execution would cause non-deterministic random call ordering
+      if (!serialPatches) {
+        output.printInfo(
+            "Note: Forcing serial patch execution for reproducibility with --seed");
+        serialPatches = true;
+      }
+    } else {
+      SharedRandom.initialize(Optional.empty());
     }
 
     // Parse output steps early for fail-fast validation
@@ -433,6 +457,9 @@ public class RunCommand implements Callable<Integer> {
         }
       }
     }
+
+    // Clean up shared random
+    SharedRandom.clear();
 
     return 0;
   }

@@ -11,7 +11,6 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Stack;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -36,6 +35,7 @@ import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
 import org.joshsim.lang.io.CombinedDebugOutputFacade;
+import org.joshsim.util.SharedRandom;
 
 
 /**
@@ -56,7 +56,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final Stack<EngineValue> memory;
   private final LocalScope scope;
   private final EngineValueFactory valueFactory;
-  private final Random random;
   private final boolean favorBigDecimal;
   private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
@@ -93,7 +92,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     valueFactory = bridge.getEngineValueFactory();
     currentValueResolver = new ValueResolver(valueFactory, "current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
-    random = new Random();
     isEnded = false;
   }
 
@@ -566,7 +564,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     if (Math.abs(maxDouble - minDouble) < 1e-7) {
       doubleResult = minDouble;
     } else {
-      doubleResult = random.nextDouble(minDouble, maxDouble);
+      doubleResult = SharedRandom.nextDouble(minDouble, maxDouble);
     }
 
     EngineValue decoratedResult = valueFactory.buildForNumber(doubleResult, min.getUnits());
@@ -584,7 +582,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     double meanDouble = mean.getAsDouble();
     double stdDouble = std.getAsDouble();
-    double randGauss = random.nextGaussian(meanDouble, stdDouble);
+    double randGauss = SharedRandom.nextGaussian(meanDouble, stdDouble);
 
     EngineValue result = valueFactory.buildForNumber(randGauss, mean.getUnits());
     memory.push(result);

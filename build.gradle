@@ -260,3 +260,25 @@ checkstyleMain.dependsOn setupCheckstyle
 
 // Require Checkstyle set up before checing test.
 checkstyleTest.dependsOn setupCheckstyle
+
+// Task to run conformance tests
+task conformanceTest(type: Test) {
+    description = 'Runs conformance tests'
+    group = 'verification'
+    
+    useJUnitPlatform()
+    
+    include 'org/joshsim/conformance/**'
+    
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = false
+        exceptionFormat = "full"
+    }
+    
+    // Generate XML reports for analysis
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+}
