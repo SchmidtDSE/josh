@@ -218,6 +218,14 @@ public class RunCommand implements Callable<Integer> {
     if (seed != null) {
       SharedRandom.initialize(seed);
       output.printInfo("Using random seed: " + seed);
+
+      // Force serial execution when seeded for deterministic results
+      // Parallel execution would cause non-deterministic random call ordering
+      if (!serialPatches) {
+        output.printInfo(
+            "Note: Forcing serial patch execution for reproducibility with --seed");
+        serialPatches = true;
+      }
     } else {
       SharedRandom.initialize(Optional.empty());
     }
