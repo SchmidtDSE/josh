@@ -54,7 +54,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
-  private final LocalScope scope;
+  private LocalScope scope;  // Mutable to allow temporary scope swapping in withLocalBinding
   private final EngineValueFactory valueFactory;
   private final boolean favorBigDecimal;
   private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
@@ -1156,6 +1156,29 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    */
   private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
     return resolver.toString().contains("ValueResolver(" + patchName + ")");
+  }
+
+  @Override
+  public EngineValue peek() {
+    return memory.peek();
+  }
+
+  @Override
+  public void withLocalBinding(String name, EngineValue value, Runnable action) {
+    // Create nested local scope that allows shadowing parent scope variables
+    LocalScope nestedScope = new LocalScope(scope);
+    nestedScope.defineConstantAllowShadowing(name, value);
+
+    // Temporarily switch to nested scope
+    LocalScope originalScope = this.scope;
+    this.scope = nestedScope;
+
+    try {
+      action.run();
+    } finally {
+      // Always restore original scope, even if action throws
+      this.scope = originalScope;
+    }
   }
 
 }

@@ -2,6 +2,9 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +12,7 @@ import static org.mockito.Mockito.when;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.LanguageType;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.NormalSampleContext;
 import org.joshsim.lang.antlr.JoshLangParser.SampleParamContext;
@@ -76,9 +80,25 @@ class JoshDistributionVisitorTest {
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
     when(mockMachine.slice()).thenReturn(mockMachine);
 
+    // Mock peek() to return a subject value with language type
+    EngineValue subjectValue = mock(EngineValue.class);
+    LanguageType languageType = mock(LanguageType.class);
+    when(mockMachine.peek()).thenReturn(subjectValue);
+    when(subjectValue.getLanguageType()).thenReturn(languageType);
+    when(languageType.getRootType()).thenReturn("Tree");
+
+    // Mock withLocalBinding to actually invoke the runnable
+    doAnswer(invocation -> {
+      Runnable runnable = invocation.getArgument(2);
+      runnable.run();
+      return null;
+    }).when(mockMachine).withLocalBinding(eq("Tree"), eq(subjectValue), any(Runnable.class));
+
     action.apply(mockMachine);
 
     verify(subjectAction).apply(mockMachine);
+    verify(mockMachine).peek();
+    verify(mockMachine).withLocalBinding(eq("Tree"), eq(subjectValue), any(Runnable.class));
     verify(selectionAction).apply(mockMachine);
     verify(mockMachine).slice();
   }
