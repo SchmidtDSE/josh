@@ -585,4 +585,28 @@ public interface EventHandlerMachine {
    * @return Reference to this machine for chaining.
    */
   EventHandlerMachine debugVariadic(int argCount);
+
+  /**
+   * Peek at the top value on the stack without removing it.
+   *
+   * <p>Returns the value at the top of the stack without popping it. This is useful
+   * for inspecting values before operations that need the value to remain on the stack.</p>
+   *
+   * @return The value at the top of the stack.
+   */
+  EngineValue peek();
+
+  /**
+   * Execute an action with a temporary local binding in scope.
+   *
+   * <p>Creates a nested scope with the given name bound to the given value, executes
+   * the provided action within that scope, then restores the original scope. This is
+   * useful for filter expressions where the type name needs to be temporarily bound
+   * to the subject distribution being filtered.</p>
+   *
+   * @param name The name to bind in the temporary scope.
+   * @param value The value to bind to the name.
+   * @param action The action to execute with the binding in scope.
+   */
+  void withLocalBinding(String name, EngineValue value, Runnable action);
 }
