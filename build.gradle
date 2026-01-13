@@ -265,20 +265,76 @@ checkstyleTest.dependsOn setupCheckstyle
 task conformanceTest(type: Test) {
     description = 'Runs conformance tests'
     group = 'verification'
-    
+    dependsOn preprocessTestData  // Ensure test data is preprocessed before running
+
     useJUnitPlatform()
-    
+
     include 'org/joshsim/conformance/**'
-    
+
     testLogging {
         events "passed", "skipped", "failed"
         showStandardStreams = false
         exceptionFormat = "full"
     }
-    
+
     // Generate XML reports for analysis
     reports {
         junitXml.required = true
         html.required = true
     }
+}
+
+// Task to generate raw test data files (GeoTIFF/NetCDF)
+task generateRawTestData(type: JavaExec) {
+    description = 'Generates raw GeoTIFF and NetCDF test data files'
+    group = 'verification'
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'org.joshsim.conformance.TestDataGenerator'
+}
+
+// Task to preprocess test data into JSHD format
+task preprocessTestData(type: Exec) {
+    description = 'Preprocesses test data files into JSHD format for conformance tests'
+    group = 'verification'
+    dependsOn fatJar, generateRawTestData
+
+    doFirst {
+        // Define the preprocessing jobs: [scriptFile, simulation, dataFile, variable, units, outputFile]
+        def jobs = [
+            ['josh-tests/conformance/io/external/test_external_geotiff_checkerboard.josh',
+             'ExternalGeoTiffCheckerboard',
+             'josh-tests/test-data/spatial/grid_10x10_checkerboard.tiff',
+             '0', 'count', 'CheckerboardData.jshd'],
+            ['josh-tests/conformance/io/external/test_external_geotiff_sequential.josh',
+             'ExternalGeoTiffSequential',
+             'josh-tests/test-data/spatial/grid_10x10_sequential.tiff',
+             '0', 'count', 'SequentialData.jshd'],
+            ['josh-tests/conformance/io/external/test_external_jshd_basic.josh',
+             'ExternalJshdBasic',
+             'josh-tests/test-data/spatial/grid_10x10_constant.tiff',
+             '0', 'count', 'JshdBasicData.jshd'],
+            ['josh-tests/conformance/io/external/test_external_jshd_large.josh',
+             'ExternalJshdLarge',
+             'josh-tests/test-data/spatial/grid_10x10_sequential.tiff',
+             '0', 'count', 'JshdLargeData.jshd'],
+        ]
+
+        jobs.each { job ->
+            exec {
+                commandLine 'java', '-jar', 'build/libs/joshsim-fat.jar', 'preprocess',
+                    job[0], job[1], job[2], job[3], job[4], job[5]
+            }
+        }
+    }
+
+    // Dummy command since we run everything in doFirst
+    commandLine 'echo', 'Preprocessing complete'
+}
+
+// Convenience task that generates and preprocesses all test data
+task generateTestData {
+    description = 'Generates and preprocesses all test data files for conformance testing'
+    group = 'verification'
+    dependsOn preprocessTestData
 }
