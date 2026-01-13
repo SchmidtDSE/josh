@@ -941,7 +941,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     // Write with full context
     CombinedDebugOutputFacade facade = debugOutputFacade.get();
-    facade.write(String.join(" ", parts), step, info.entityCategory, info.identifier, info.x, info.y);
+    facade.write(
+        String.join(" ", parts),
+        step,
+        info.entityCategory,
+        info.identifier, 
+        info.x,
+        info.y
+    );
 
     // Push 0 count as result (allows debug in expressions)
     push(valueFactory.build(0, Units.of("count")));

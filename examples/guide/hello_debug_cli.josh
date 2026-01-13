@@ -33,8 +33,7 @@ start organism ForeverTree
   height.init = 0 meters
   height.step = prior.height + sample uniform from 0 meters to 1 meters
 
-  # dbg.step = debug("Tree", identifier, " takes a step age:", age, " with height: ", height, "at location", here.x, here.y)
-  dbg.step = debug("Tree takes a step age:", age, " with height: ", height)
+  dbg.step = debug("Tree age:", age, "height:", height)
 
 end organism
 
