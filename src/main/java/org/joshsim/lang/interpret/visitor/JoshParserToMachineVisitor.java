@@ -153,6 +153,11 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return mathematicsVisitor.visitSingleParamFunctionCall(ctx);
   }
 
+  public JoshFragment visitVariadicFunctionCall(
+      JoshLangParser.VariadicFunctionCallContext ctx) {
+    return mathematicsVisitor.visitVariadicFunctionCall(ctx);
+  }
+
   public JoshFragment visitConcatExpression(JoshLangParser.ConcatExpressionContext ctx) {
     return stringOperationVisitor.visitConcatExpression(ctx);
   }

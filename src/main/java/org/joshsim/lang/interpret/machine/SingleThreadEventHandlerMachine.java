@@ -17,6 +17,7 @@ import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
@@ -34,6 +35,7 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 
 
 /**
@@ -56,6 +58,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final EngineValueFactory valueFactory;
   private final Random random;
   private final boolean favorBigDecimal;
+  private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -68,8 +71,21 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param scope The scope in which to have this automaton perform its operations.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+    this(bridge, scope, Optional.empty());
+  }
+
+  /**
+   * Create a new push-down automaton with debug output support.
+   *
+   * @param bridge The EngineBridge through which to interact with the engine.
+   * @param scope The scope in which to have this automaton perform its operations.
+   * @param debugOutputFacade Optional debug output facade for writing debug messages.
+   */
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
+      Optional<CombinedDebugOutputFacade> debugOutputFacade) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
+    this.debugOutputFacade = debugOutputFacade;
 
     memory = new Stack<>();
     inConversionGroup = false;
@@ -880,6 +896,160 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue defaultValue = pop(); // Get default from stack
     Optional<EngineValue> configValue = bridge.getConfigOptional(name);
     push(configValue.orElse(defaultValue));
+  }
+
+  @Override
+  public EventHandlerMachine writeDebug() {
+    EngineValue value = pop();
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output facade configured - push value back (pass-through)
+      push(value);
+      return this;
+    }
+
+    String message = formatDebugValue(value);
+    long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
+
+    // Write with full context
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.write(message, step, info.entityCategory, info.identifier, info.x, info.y);
+
+    // Push the original value back (debug is a pass-through function)
+    push(value);
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine debugVariadic(int argCount) {
+    // Pop all values in reverse order (last arg is on top of stack)
+    List<String> parts = new ArrayList<>();
+    for (int i = 0; i < argCount; i++) {
+      EngineValue value = pop();
+      parts.add(0, formatDebugValue(value)); // Insert at beginning to reverse order
+    }
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output configured - push 0 count as result
+      push(valueFactory.build(0, Units.of("count")));
+      return this;
+    }
+
+    long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
+
+    // Write with full context
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.write(
+        String.join(" ", parts),
+        step,
+        info.entityCategory,
+        info.identifier, 
+        info.x,
+        info.y
+    );
+
+    // Push 0 count as result (allows debug in expressions)
+    push(valueFactory.build(0, Units.of("count")));
+    return this;
+  }
+
+  /**
+   * Formats a value for debug output with cleaner formatting.
+   *
+   * <p>Applies formatting improvements:
+   * <ul>
+   *   <li>Strips surrounding quotes from string values</li>
+   *   <li>Truncates floating point numbers to 4 decimal places</li>
+   * </ul>
+   *
+   * @param value The EngineValue to format.
+   * @return A formatted string representation.
+   */
+  private String formatDebugValue(EngineValue value) {
+    String raw = value.getAsString();
+
+    // Strip surrounding quotes from strings
+    if (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"")) {
+      return raw.substring(1, raw.length() - 1);
+    }
+
+    // Try to truncate floating point numbers to 4 decimal places
+    try {
+      // Check if it looks like a decimal number (contains a dot)
+      if (raw.contains(".") && !raw.contains(" ")) {
+        double d = Double.parseDouble(raw);
+        // Format to 4 decimal places, removing trailing zeros
+        String formatted = String.format("%.4f", d);
+        // Remove trailing zeros after decimal point (but keep at least one decimal place)
+        formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", ".0");
+        return formatted;
+      }
+    } catch (NumberFormatException e) {
+      // Not a number, return as-is
+    }
+
+    return raw;
+  }
+
+  /**
+   * Helper record to hold entity debug context information.
+   */
+  private record DebugEntityInfo(String entityCategory, String identifier, double x, double y) {}
+
+  /**
+   * Extracts debug context information from the current entity in scope.
+   *
+   * @return DebugEntityInfo with entity category, identifier, and location.
+   */
+  private DebugEntityInfo getDebugEntityInfo() {
+    String entityCategory = "unknown";
+    String identifier = "0";
+    double x = 0.0;
+    double y = 0.0;
+
+    try {
+      EngineValue currentValue = scope.get("current");
+      if (currentValue != null) {
+        MutableEntity current = currentValue.getAsMutableEntity();
+        EntityType type = current.getEntityType();
+
+        // Map EntityType to debug file key
+        entityCategory = switch (type) {
+          case AGENT -> "organism";
+          case PATCH -> "patch";
+          case SIMULATION -> "simulation";
+          case DISTURBANCE -> "disturbance";
+          default -> "unknown";
+        };
+
+        // Get unique identifier from Java identity hash
+        identifier = Integer.toHexString(System.identityHashCode(current));
+
+        // Get location - try entity's own geometry first, then fall back to "here"
+        Optional<EngineGeometry> geometry = current.getGeometry();
+        if (geometry.isPresent()) {
+          x = geometry.get().getCenterX().doubleValue();
+          y = geometry.get().getCenterY().doubleValue();
+        } else if (scope.has("here")) {
+          // For inner entities (organisms), use containing patch's location
+          EngineValue hereValue = scope.get("here");
+          if (hereValue != null) {
+            Entity here = hereValue.getAsEntity();
+            Optional<EngineGeometry> hereGeom = here.getGeometry();
+            if (hereGeom.isPresent()) {
+              x = hereGeom.get().getCenterX().doubleValue();
+              y = hereGeom.get().getCenterY().doubleValue();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Fall back to defaults if we can't determine entity info
+    }
+
+    return new DebugEntityInfo(entityCategory, identifier, x, y);
   }
 
   /**
