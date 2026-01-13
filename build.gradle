@@ -261,29 +261,6 @@ checkstyleMain.dependsOn setupCheckstyle
 // Require Checkstyle set up before checing test.
 checkstyleTest.dependsOn setupCheckstyle
 
-// Task to run conformance tests
-task conformanceTest(type: Test) {
-    description = 'Runs conformance tests'
-    group = 'verification'
-    dependsOn preprocessTestData  // Ensure test data is preprocessed before running
-
-    useJUnitPlatform()
-
-    include 'org/joshsim/conformance/**'
-
-    testLogging {
-        events "passed", "skipped", "failed"
-        showStandardStreams = false
-        exceptionFormat = "full"
-    }
-
-    // Generate XML reports for analysis
-    reports {
-        junitXml.required = true
-        html.required = true
-    }
-}
-
 // Task to generate raw test data files (GeoTIFF/NetCDF)
 task generateRawTestData(type: JavaExec) {
     description = 'Generates raw GeoTIFF and NetCDF test data files'
@@ -337,4 +314,27 @@ task generateTestData {
     description = 'Generates and preprocesses all test data files for conformance testing'
     group = 'verification'
     dependsOn preprocessTestData
+}
+
+// Task to run conformance tests
+task conformanceTest(type: Test) {
+    description = 'Runs conformance tests'
+    group = 'verification'
+    dependsOn preprocessTestData  // Ensure test data is preprocessed before running
+
+    useJUnitPlatform()
+
+    include 'org/joshsim/conformance/**'
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = false
+        exceptionFormat = "full"
+    }
+
+    // Generate XML reports for analysis
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
 }
