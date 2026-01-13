@@ -945,7 +945,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         String.join(" ", parts),
         step,
         info.entityCategory,
-        info.identifier, 
+        info.identifier,
         info.x,
         info.y
     );
