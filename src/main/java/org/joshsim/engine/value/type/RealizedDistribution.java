@@ -12,9 +12,11 @@ import java.util.Collections;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.util.SharedRandom;
 
 /**
  * Distribution with a finite number of elements.
@@ -251,7 +253,7 @@ public class RealizedDistribution extends Distribution {
   @Override
   public EngineValue sample() {
     requireNonEmpty();
-    int index = (int) (Math.random() * values.size());
+    int index = SharedRandom.nextInt(values.size());
     return values.get(index);
   }
 
@@ -392,7 +394,9 @@ public class RealizedDistribution extends Distribution {
       throw new IllegalArgumentException(message);
     }
     List<EngineValue> sampledValues = new ArrayList<>(values);
-    Collections.shuffle(sampledValues);
+    // Use SharedRandom for reproducibility
+    Random random = SharedRandom.get();
+    Collections.shuffle(sampledValues, random);
     return new RealizedDistribution(getCaster(), sampledValues.subList(0, (int) count), getUnits());
   }
 
