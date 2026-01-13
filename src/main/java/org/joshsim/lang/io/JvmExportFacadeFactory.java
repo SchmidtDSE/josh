@@ -10,6 +10,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,12 +33,16 @@ import org.joshsim.util.MinioOptions;
  */
 public class JvmExportFacadeFactory implements ExportFacadeFactory {
 
+  private static final DateTimeFormatter TIMESTAMP_FORMAT =
+      DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
   private final int replicate;
   private final MapExportSerializeStrategy serializeStrategy;
   private final Optional<PatchBuilderExtents> extents;
   private final Optional<BigDecimal> width;
   private final TemplateStringRenderer templateRenderer;
   private final MinioOptions minioOptions;
+  private final String timestamp;
   private TemplateResult lastTemplateResult;
 
   /**
@@ -53,6 +60,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
+    this.timestamp = TIMESTAMP_FORMAT.format(Instant.now().atZone(ZoneId.systemDefault()));
     serializeStrategy = new MapSerializeStrategy();
     extents = Optional.empty();
     width = Optional.empty();
@@ -90,6 +98,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
+    this.timestamp = TIMESTAMP_FORMAT.format(Instant.now().atZone(ZoneId.systemDefault()));
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
@@ -161,13 +170,15 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
     if (template.contains(".tif") || template.contains(".tiff")) {
       String replicateStr = ((Integer) replicate).toString();
       String withReplicate = template.replaceAll("\\{replicate\\}", replicateStr);
-      String withStep = withReplicate.replaceAll("\\{step\\}", "__step__");
+      String withTimestamp = withReplicate.replaceAll("\\{timestamp\\}", timestamp);
+      String withStep = withTimestamp.replaceAll("\\{step\\}", "__step__");
       String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
       return withVariable;
     }
 
     // For tabular and NetCDF formats, remove replicate template (consolidated files)
-    String withStep = template.replaceAll("\\{step\\}", "__step__");
+    String withTimestamp = template.replaceAll("\\{timestamp\\}", timestamp);
+    String withStep = withTimestamp.replaceAll("\\{step\\}", "__step__");
     String withVariable = withStep.replaceAll("\\{variable\\}", "__variable__");
     return withVariable.replaceAll("\\{replicate\\}", "");
   }
