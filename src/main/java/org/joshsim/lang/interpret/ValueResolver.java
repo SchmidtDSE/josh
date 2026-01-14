@@ -170,6 +170,15 @@ public class ValueResolver {
     return entityScope.getOptional(index);
   }
 
+  /**
+   * Get the path being resolved.
+   *
+   * @return the dot-separated path string.
+   */
+  public String getPath() {
+    return path;
+  }
+
   @Override
   public String toString() {
     return String.format("ValueResolver(%s)", path);

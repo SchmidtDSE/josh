@@ -97,11 +97,26 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
+    String path = valueResolver.getPath();
+
+    // Try normal resolution first
     Optional<EngineValue> value = valueResolver.get(scope);
-    memory.push(value.orElseThrow(
-        () -> new IllegalStateException("Unable to get value for " + valueResolver)
-    ));
-    return this;
+    if (value.isPresent()) {
+      memory.push(value.get());
+      return this;
+    }
+
+    // Fall back to built-in meta attributes (e.g., meta.year, meta.stepCount)
+    if (path.startsWith("meta.")) {
+      String attrName = path.substring(5); // Remove "meta." prefix
+      Optional<EngineValue> builtin = getBuiltinMetaAttribute(attrName);
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
+    throw new IllegalStateException("Unable to get value for " + valueResolver);
   }
 
   @Override
@@ -545,9 +560,46 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine pushAttribute(ValueResolver resolver) {
     Entity entity = pop().getAsEntity();
     Scope scope = new EntityScope(entity);
-    EngineValue attributeValue = resolver.get(scope).orElseThrow();
-    memory.push(attributeValue);
-    return this;
+
+    // Try normal resolution first
+    Optional<EngineValue> value = resolver.get(scope);
+    if (value.isPresent()) {
+      memory.push(value.get());
+      return this;
+    }
+
+    // Fall back to built-in meta attributes on simulation entity
+    if (entity.getEntityType() == EntityType.SIMULATION) {
+      Optional<EngineValue> builtin = getBuiltinMetaAttribute(resolver.getPath());
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
+    throw new IllegalStateException("Unable to get attribute " + resolver.getPath()
+        + " from " + entity.getName());
+  }
+
+  /**
+   * Get a built-in meta attribute value if the name matches a built-in.
+   *
+   * <p>Built-in meta attributes are available without user definition per the language spec:
+   * meta.stepCount (0-based step counter), meta.year/meta.step (current step value).</p>
+   *
+   * @param name the attribute name to check.
+   * @return Optional containing the value if it's a built-in, empty otherwise.
+   */
+  private Optional<EngineValue> getBuiltinMetaAttribute(String name) {
+    return switch (name) {
+      case "stepCount" -> Optional.of(
+          valueFactory.build(bridge.getAbsoluteTimestep(), COUNT_UNITS)
+      );
+      case "year" -> Optional.of(
+          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
+      );
+      default -> Optional.empty();
+    };
   }
 
   @Override
