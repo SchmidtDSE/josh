@@ -155,6 +155,11 @@ public abstract class VirtualDistribution extends Distribution {
   }
 
   @Override
+  public long getCount() {
+    throw new UnsupportedOperationException("Cannot count a virtualized distribution.");
+  }
+
+  @Override
   public Scalar getAsScalar() {
     return sample().getAsScalar();
   }
@@ -276,6 +281,24 @@ public abstract class VirtualDistribution extends Distribution {
   protected EngineValue unsafeNotEqualTo(EngineValue other) {
     RealizedDistribution realized = realizeToMatchOther(other);
     return realized.unsafeNotEqualTo(other);
+  }
+
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeAnd(other);
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeOr(other);
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    RealizedDistribution realized = realizeToMatchOther(other);
+    return realized.unsafeXor(other);
   }
 
 }

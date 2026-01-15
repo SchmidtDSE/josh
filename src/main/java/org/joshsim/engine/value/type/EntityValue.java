@@ -40,6 +40,11 @@ public class EntityValue extends EngineValue {
   }
 
   @Override
+  public long getCount() {
+    return 1;
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Entity conversion to scalar is not defined.");
   }
@@ -172,6 +177,21 @@ public class EntityValue extends EngineValue {
   @Override
   protected EngineValue unsafeNotEqualTo(EngineValue other) {
     throw new UnsupportedOperationException("Entity comparison is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical AND is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical OR is not defined.");
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    throw new UnsupportedOperationException("Entity logical XOR is not defined.");
   }
 
   @Override

@@ -1439,7 +1439,7 @@ start patch Default
   Fire.step = {
     const count = 1 count if (sample uniform from 0% to 100% < 5%) else 0 count
     const new = create count of Fire
-    return prior.Fire + new;
+    return prior.Fire | new;
   }
 
 end patch

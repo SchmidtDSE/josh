@@ -201,6 +201,93 @@ public class RealizedDistribution extends Distribution {
   }
 
   @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise AND with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise AND on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean andResult = values.get(i).getAsBoolean() && otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), andResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // AND each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean andResult = value.getAsBoolean() && otherBool;
+            return new BooleanScalar(getCaster(), andResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise OR with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise OR on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean orResult = values.get(i).getAsBoolean() || otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), orResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // OR each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean orResult = value.getAsBoolean() || otherBool;
+            return new BooleanScalar(getCaster(), orResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise XOR with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise XOR on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean xorResult = values.get(i).getAsBoolean() ^ otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), xorResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // XOR each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean xorResult = value.getAsBoolean() ^ otherBool;
+            return new BooleanScalar(getCaster(), xorResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
+  }
+
+  @Override
   public Scalar getAsScalar() {
     throw new UnsupportedOperationException("Cannot convert multiple values to a single scalar.");
   }
@@ -265,6 +352,16 @@ public class RealizedDistribution extends Distribution {
   @Override
   public Optional<Integer> getSize() {
     return Optional.of(values.size());
+  }
+
+  @Override
+  public long getCount() {
+    if (getLanguageType().getRootType().equals("boolean")) {
+      return values.stream()
+          .filter(EngineValue::getAsBoolean)
+          .count();
+    }
+    return values.size();
   }
 
   @Override
