@@ -244,9 +244,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() && left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.and(right);
+    memory.push(result);
 
     return this;
   }
@@ -258,9 +257,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() || left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.or(right);
+    memory.push(result);
 
     return this;
   }
@@ -272,9 +270,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() ^ left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.xor(right);
+    memory.push(result);
 
     return this;
   }
@@ -769,14 +766,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine count() {
     EngineValue value = pop();
-    Distribution distribution = value.getAsDistribution();
-    Optional<Integer> size = distribution.getSize();
-
-    if (!size.isPresent()) {
-      throw new IllegalArgumentException("Cannot count a virtualized distribution.");
-    }
-
-    EngineValue result = valueFactory.build(size.get(), EMPTY_UNITS);
+    EngineValue result = valueFactory.build(value.getCount(), EMPTY_UNITS);
     memory.push(result);
     return this;
   }
