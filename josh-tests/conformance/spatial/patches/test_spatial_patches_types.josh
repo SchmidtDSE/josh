@@ -1,22 +1,16 @@
 # @category: spatial
 # @subcategory: patches
 # @priority: high
-# @description: Test different patch types on grid - organisms on correct patch type
+# @description: Test different patch types on grid using state-based initialization
 
 start simulation SpatialPatchesTypes
 
-  # Create a 3x3 grid with two patch types
+  # Create a 3x3 grid with two patch types determined by state
   grid.size = 10 m
   grid.low.x = 0 m
   grid.low.y = 0 m
   grid.high.x = 30 m
   grid.high.y = 30 m  # 3x3 grid
-
-  # Use alternating patch pattern
-  grid.patch = "Forest"
-  grid.patch:if(meta.x == 0 count and meta.y == 0 count) = "Grassland"
-  grid.patch:if(meta.x == 2 count and meta.y == 2 count) = "Grassland"
-  grid.patch:if(meta.x == 1 count and meta.y == 1 count) = "Grassland"
 
   steps.low = 0 count
   steps.high = 2 count
@@ -26,21 +20,26 @@ start simulation SpatialPatchesTypes
 
 end simulation
 
-start patch Forest
+start patch Default
 
-  # Forest patches have trees
-  Tree.init = create 3 count of Tree
+  # Patches on the diagonal (where x == y) are Grassland, others are Forest
+  # Cell centers are at (5,5), (15,15), (25,25) for diagonal
+  state.init = "Forest"
+  state.init:if(here.x == here.y) = "Grassland"
 
-  patchType.init = "forest"
+  patchType.init = "unknown"
 
-end patch
+  start state "Forest"
+    # Forest patches have trees
+    Tree.init = create 3 count of Tree
+    patchType.init = "forest"
+  end state
 
-start patch Grassland
-
-  # Grassland patches have grass
-  Grass.init = create 5 count of Grass
-
-  patchType.init = "grassland"
+  start state "Grassland"
+    # Grassland patches have grass
+    Grass.init = create 5 count of Grass
+    patchType.init = "grassland"
+  end state
 
 end patch
 
