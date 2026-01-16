@@ -1,22 +1,16 @@
 # @category: spatial
 # @subcategory: patches
 # @priority: medium
-# @description: Test heterogeneous grid with multiple patch types and different behaviors
+# @description: Test heterogeneous grid with state-based patch types and different behaviors
 
 start simulation SpatialPatchesHeterogeneous
 
-  # Create a 4x4 grid with multiple patch types
+  # Create a 4x4 grid with patch types determined by state
   grid.size = 10 m
   grid.low.x = 0 m
   grid.low.y = 0 m
   grid.high.x = 40 m
   grid.high.y = 40 m  # 4x4 grid
-
-  # Create a checkerboard pattern of patch types
-  grid.patch = "Wet"
-  grid.patch:if((meta.x + meta.y) == 2 count) = "Dry"
-  grid.patch:if((meta.x + meta.y) == 4 count) = "Dry"
-  grid.patch:if((meta.x + meta.y) == 6 count) = "Dry"
 
   steps.low = 0 count
   steps.high = 3 count
@@ -26,27 +20,35 @@ start simulation SpatialPatchesHeterogeneous
 
 end simulation
 
-start patch Wet
+start patch Default
 
-  moisture.init = 80 percent
-  moisture.step = prior.moisture - 2 percent
+  # Right side of grid (x > 20m) is Dry, left side is Wet
+  # Cell centers are at x = 5, 15, 25, 35 meters
+  state.init = "Wet"
+  state.init:if(here.x > 20 m) = "Dry"
 
-  # Wet patches support more plants
-  Plant.init = create 5 count of Plant
+  moisture.init = 50 percent
+  patchType.init = "unknown"
 
-  patchType.init = "wet"
+  start state "Wet"
+    moisture.init = 80 percent
+    moisture.step = prior.moisture - 2 percent
 
-end patch
+    # Wet patches support more plants
+    Plant.init = create 5 count of Plant
 
-start patch Dry
+    patchType.init = "wet"
+  end state
 
-  moisture.init = 20 percent
-  moisture.step = prior.moisture - 1 percent
+  start state "Dry"
+    moisture.init = 20 percent
+    moisture.step = prior.moisture - 1 percent
 
-  # Dry patches support fewer plants
-  Plant.init = create 2 count of Plant
+    # Dry patches support fewer plants
+    Plant.init = create 2 count of Plant
 
-  patchType.init = "dry"
+    patchType.init = "dry"
+  end state
 
 end patch
 
