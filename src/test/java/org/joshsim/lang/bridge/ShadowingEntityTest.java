@@ -82,8 +82,44 @@ public class ShadowingEntityTest {
     Optional<EngineValue> priorValue = spatialEntity.getPriorAttribute(attrName);
     assertEquals(mockEngineValue, priorValue.get());
 
+    // setAttributeValue should cache the value but NOT write to inner immediately.
+    // Values are deferred to endSubstep() to ensure prior.X returns the correct value.
     spatialEntity.setAttributeValue(attrName, mockEngineValue);
-    verify(mockSpatialEntity).setAttributeValue(attrName, mockEngineValue);
+
+    // The value should be available via getAttributeValue (from cache)
+    Optional<EngineValue> cachedValue = spatialEntity.getAttributeValue(attrName);
+    assertTrue(cachedValue.isPresent());
+    assertEquals(mockEngineValue, cachedValue.get());
+  }
+
+  @Test
+  void testDeferredWriteToInnerAtEndSubstep() {
+    String attrName = "testAttr";
+
+    // Setup index mapping for endSubstep to copy values
+    Map<String, Integer> indexMap = Map.of(attrName, 0);
+    String[] indexToNameArray = new String[] {attrName};
+    when(mockSpatialEntity.getAttributeNameToIndex()).thenReturn(indexMap);
+    when(mockSpatialEntity.getIndexToAttributeName()).thenReturn(indexToNameArray);
+    when(mockSpatialEntity.getAttributeIndex(attrName)).thenReturn(Optional.of(0));
+
+    // Recreate entity with proper mocks
+    spatialEntity = new ShadowingEntity(
+        valueFactory,
+        mockSpatialEntity,
+        patchEntity,
+        mockSimulation
+    );
+
+    String substepName = "test";
+    spatialEntity.startSubstep(substepName);
+    spatialEntity.setAttributeValue(attrName, mockEngineValue);
+
+    // Value should be written to inner at endSubstep
+    spatialEntity.endSubstep();
+
+    // Verify inner.setAttributeValue was called at endSubstep
+    verify(mockSpatialEntity).setAttributeValue(0, mockEngineValue);
   }
 
   @Test

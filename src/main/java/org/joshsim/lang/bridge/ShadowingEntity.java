@@ -280,20 +280,17 @@ public class ShadowingEntity implements MutableEntity {
       }
     }
 
-    inner.setAttributeValue(name, value);
+    // NOTE: Do NOT write to inner here. Values are written to inner at endSubstep().
+    // This ensures that prior.X returns the value from the previous substep, not
+    // a value that was just computed in this substep by another attribute.
   }
 
   @Override
   public void setAttributeValue(int index, EngineValue value) {
     String[] indexArray = inner.getIndexToAttributeName();
-    String attributeName = null;
 
     boolean indexInRange = index >= 0 && indexArray != null && index < indexArray.length;
-    if (indexInRange) {
-      attributeName = indexArray[index];
-    }
-
-    if (attributeName == null) {
+    if (!indexInRange) {
       String message = String.format(
           "Attribute index %d not found for entity %s",
           index, inner.getName());
@@ -305,7 +302,9 @@ public class ShadowingEntity implements MutableEntity {
       resolvedCacheByIndex[index] = value;
     }
 
-    setAttributeValue(attributeName, value);
+    // NOTE: Do NOT write to inner here. Values are written to inner at endSubstep().
+    // This ensures that prior.X returns the value from the previous substep, not
+    // a value that was just computed in this substep by another attribute.
   }
 
   /**
@@ -758,6 +757,17 @@ public class ShadowingEntity implements MutableEntity {
   @Override
   public void endSubstep() {
     InnerEntityGetter.getInnerEntities(this).forEach((x) -> x.endSubstep());
+
+    // Copy resolved values from cache to inner entity.
+    // This is done at endSubstep (rather than in setAttributeValue) to ensure that
+    // prior.X always returns the value from the previous substep, not a value that
+    // was computed earlier in the current substep by another attribute.
+    for (int i = 0; i < resolvedCacheByIndex.length; i++) {
+      EngineValue resolved = resolvedCacheByIndex[i];
+      if (resolved != null) {
+        inner.setAttributeValue(i, resolved);
+      }
+    }
 
     // Clear array-based tracking
     Arrays.fill(resolvingByIndex, false);
