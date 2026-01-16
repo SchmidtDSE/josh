@@ -95,7 +95,6 @@ public class ShadowingEntityTest {
   @Test
   void testDeferredWriteToInnerAtEndSubstep() {
     String attrName = "testAttr";
-    String substepName = "test";
 
     // Setup index mapping for endSubstep to copy values
     Map<String, Integer> indexMap = Map.of(attrName, 0);
@@ -112,6 +111,7 @@ public class ShadowingEntityTest {
         mockSimulation
     );
 
+    String substepName = "test";
     spatialEntity.startSubstep(substepName);
     spatialEntity.setAttributeValue(attrName, mockEngineValue);
 
