@@ -116,6 +116,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       }
     }
 
+    // Fall back to built-in here attributes (e.g., here.x, here.y)
+    if (path.startsWith("here.")) {
+      String attrName = path.substring(5); // Remove "here." prefix
+      Optional<EngineValue> builtin = getBuiltinHereAttribute(attrName);
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
     throw new IllegalStateException("Unable to get value for " + valueResolver);
   }
 
@@ -594,6 +604,38 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       );
       case "year" -> Optional.of(
           valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
+      );
+      default -> Optional.empty();
+    };
+  }
+
+  /**
+   * Get a built-in here attribute value if the name matches a built-in.
+   *
+   * <p>Built-in here attributes provide spatial information about the current patch:
+   * here.x (center X coordinate in meters), here.y (center Y coordinate in meters).</p>
+   *
+   * @param name the attribute name to check.
+   * @return Optional containing the value if it's a built-in, empty otherwise.
+   */
+  private Optional<EngineValue> getBuiltinHereAttribute(String name) {
+    if (!scope.has("here")) {
+      return Optional.empty();
+    }
+
+    Entity here = scope.get("here").getAsEntity();
+    Optional<EngineGeometry> geometry = here.getGeometry();
+
+    if (geometry.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return switch (name) {
+      case "x" -> Optional.of(
+          valueFactory.buildForNumber(geometry.get().getCenterX().doubleValue(), Units.of("m"))
+      );
+      case "y" -> Optional.of(
+          valueFactory.buildForNumber(geometry.get().getCenterY().doubleValue(), Units.of("m"))
       );
       default -> Optional.empty();
     };
