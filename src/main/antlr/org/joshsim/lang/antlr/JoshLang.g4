@@ -107,7 +107,7 @@ identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 // Values
 number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
 
-unitsValue: number (identifier|PERCENT_);
+unitsValue: number (identifier|PERCENT_|STR_);
 
 string: STR_;
 
