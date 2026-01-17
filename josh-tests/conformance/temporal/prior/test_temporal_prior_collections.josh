@@ -28,7 +28,7 @@ start patch Default
   avgAge.init = 0 year
   avgAge.step = mean(Trees.age)
 
-  avgHeight.init = 0 m
+  avgHeight.init = 1 m
   avgHeight.step = mean(Trees.height)
 
   totalBiomass.init = 0 kg
@@ -88,7 +88,7 @@ start organism Tree
 
   # Biomass depends on height
   biomass.init = 0 kg
-  biomass.step = prior.biomass + (current.height * 0.1 kg/m)
+  biomass.step = prior.biomass + (current.height * 0.1 "kg / m")
 
   # Each tree tracks its previous height
   priorHeight.init = 0 m
