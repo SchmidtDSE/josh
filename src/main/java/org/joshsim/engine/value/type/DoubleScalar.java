@@ -127,4 +127,57 @@ public class DoubleScalar extends Scalar {
         determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
+
+  /**
+   * Epsilon value for floating-point equality comparison.
+   *
+   * <p>This value is used to determine if two floating-point numbers are "equal"
+   * within acceptable precision limits. Standard floating-point arithmetic can
+   * produce small rounding errors (e.g., 0.4 + 0.05 = 0.45000000000000001).</p>
+   */
+  private static final double EPSILON = 1e-10;
+
+  /**
+   * Compares this DoubleScalar to another EngineValue for equality using epsilon tolerance.
+   *
+   * <p>Floating-point arithmetic can produce small rounding errors, so exact comparison
+   * is unreliable. This method uses relative epsilon for large values and absolute
+   * epsilon for small values to determine equality.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    double thisVal = getAsDouble();
+    double otherVal = other.getAsDouble();
+    double diff = Math.abs(thisVal - otherVal);
+
+    // Use relative epsilon for large values, absolute for small values
+    double scale = Math.max(1.0, Math.max(Math.abs(thisVal), Math.abs(otherVal)));
+    boolean result = diff < EPSILON * scale;
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
+
+  /**
+   * Compares this DoubleScalar to another EngineValue for inequality using epsilon tolerance.
+   *
+   * <p>This is the logical negation of {@link #unsafeEqualTo(EngineValue)}.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are not equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
+    double thisVal = getAsDouble();
+    double otherVal = other.getAsDouble();
+    double diff = Math.abs(thisVal - otherVal);
+
+    // Use relative epsilon for large values, absolute for small values
+    double scale = Math.max(1.0, Math.max(Math.abs(thisVal), Math.abs(otherVal)));
+    boolean result = diff >= EPSILON * scale;
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
 }

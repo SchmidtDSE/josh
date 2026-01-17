@@ -128,4 +128,56 @@ public class DecimalScalar extends Scalar {
       determineRaisedUnits(getUnits(), other.getAsInt())
     );
   }
+
+  /**
+   * Epsilon value for floating-point equality comparison.
+   *
+   * <p>This value is used to determine if two decimal numbers are "equal"
+   * within acceptable precision limits. Some operations involve conversion
+   * through doubles which can introduce small rounding errors.</p>
+   */
+  private static final double EPSILON = 1e-10;
+
+  /**
+   * Compares this DecimalScalar to another EngineValue for equality using epsilon tolerance.
+   *
+   * <p>While BigDecimal provides exact decimal arithmetic, some operations may involve
+   * floating-point conversions. This method uses epsilon tolerance for robustness.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    double thisVal = getAsDouble();
+    double otherVal = other.getAsDouble();
+    double diff = Math.abs(thisVal - otherVal);
+
+    // Use relative epsilon for large values, absolute for small values
+    double scale = Math.max(1.0, Math.max(Math.abs(thisVal), Math.abs(otherVal)));
+    boolean result = diff < EPSILON * scale;
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
+
+  /**
+   * Compares this DecimalScalar to another EngineValue for inequality using epsilon tolerance.
+   *
+   * <p>This is the logical negation of {@link #unsafeEqualTo(EngineValue)}.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are not equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
+    double thisVal = getAsDouble();
+    double otherVal = other.getAsDouble();
+    double diff = Math.abs(thisVal - otherVal);
+
+    // Use relative epsilon for large values, absolute for small values
+    double scale = Math.max(1.0, Math.max(Math.abs(thisVal), Math.abs(otherVal)));
+    boolean result = diff >= EPSILON * scale;
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
 }
