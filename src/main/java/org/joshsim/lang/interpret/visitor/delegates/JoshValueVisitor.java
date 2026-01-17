@@ -125,7 +125,8 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * Parse a value with units into an EngineValue.
    *
    * <p>Helper method to parse a numeric value with units into an appropriate EngineValue,
-   * handling special cases like percentages and different numeric formats.</p>
+   * handling special cases like percentages, compound units in strings, and different
+   * numeric formats.</p>
    *
    * @param ctx The context from which to parse the units value.
    * @return The parsed EngineValue with appropriate units.
@@ -135,6 +136,11 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
     String unitsText = ctx.getChild(1).getText();
     boolean hasDecimal = numberStr.contains(".");
     boolean isPercent = unitsText.equals("percent") || unitsText.equals("%");
+
+    // Handle quoted compound units like "m / yr" - strip quotes and pass to Units.of()
+    if (unitsText.startsWith("\"") && unitsText.endsWith("\"")) {
+      unitsText = unitsText.substring(1, unitsText.length() - 1);
+    }
 
     if (unitsText.isBlank()) {
       unitsText = "count";
