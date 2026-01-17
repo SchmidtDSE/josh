@@ -92,7 +92,7 @@ start organism Tree
 
   # Biomass accumulates based on height
   biomass.init = 1 kg
-  biomass.step = prior.biomass + (current.height * 0.1 kg/m)
+  biomass.step = prior.biomass + (current.height * 0.1 "kg / m")
 
   # Track execution count to verify removal
   executionCounter.init = 0 count

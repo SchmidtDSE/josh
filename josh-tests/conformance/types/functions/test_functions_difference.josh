@@ -58,8 +58,9 @@ start patch Default
   assert.zeroDiff.init = diff3 == 0 m
 
   # Test cumulative change over multiple steps
+  # At step N, age = (N+1) years because age starts at 0 and .step runs at step 0
   stepsSoFar.step = meta.stepCount
-  expectedAge.step:if(meta.stepCount > 0 count) = stepsSoFar * 1 years
+  expectedAge.step:if(meta.stepCount > 0 count) = (stepsSoFar + 1 count) * 1 years
   assert.cumulativeAge.step:if(meta.stepCount > 0 count) = currentAge == expectedAge
 
 end patch

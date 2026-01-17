@@ -22,7 +22,7 @@ start simulation TemporalQueriesMetaDeepNesting
   parameters.threshold = 50 percent
 
   # 3-level nesting
-  parameters.growth.rate = 2.5 m/yr
+  parameters.growth.rate = 2.5 "m / yr"
   parameters.growth.maxHeight = 30 m
 
   # 4-level nesting
@@ -31,8 +31,8 @@ start simulation TemporalQueriesMetaDeepNesting
   fire.trigger.condition.threshold = 60 percent
 
   # 5-level nesting (edge case)
-  params.model.vegetation.grass.growthRate = 1.2 m/yr
-  params.model.vegetation.shrub.growthRate = 0.8 m/yr
+  params.model.vegetation.grass.growthRate = 1.2 "m / yr"
+  params.model.vegetation.shrub.growthRate = 0.8 "m / yr"
 
 end simulation
 
@@ -46,7 +46,7 @@ start patch Default
   baseThreshold.step = meta.parameters.threshold
 
   # Test 3-level nesting access
-  growthRate.init = 0 m/yr
+  growthRate.init = 0 "m / yr"
   growthRate.step = meta.parameters.growth.rate
 
   maxHeight.init = 0 m
@@ -63,10 +63,10 @@ start patch Default
   fireThreshold.step = meta.fire.trigger.condition.threshold
 
   # Test 5-level nesting access
-  grassGrowth.init = 0 m/yr
+  grassGrowth.init = 0 "m / yr"
   grassGrowth.step = meta.params.model.vegetation.grass.growthRate
 
-  shrubGrowth.init = 0 m/yr
+  shrubGrowth.init = 0 "m / yr"
   shrubGrowth.step = meta.params.model.vegetation.shrub.growthRate
 
   # Test using nested meta in expressions
@@ -84,7 +84,7 @@ start patch Default
   assert.baseThresholdStep2.step:if(meta.stepCount == 2 count) = current.baseThreshold == 50 percent
 
   # Assertions for 3-level nesting
-  assert.growthRateStep1.step:if(meta.stepCount == 1 count) = current.growthRate == 2.5 m/yr
+  assert.growthRateStep1.step:if(meta.stepCount == 1 count) = current.growthRate == 2.5 "m / yr"
   assert.maxHeightStep1.step:if(meta.stepCount == 1 count) = current.maxHeight == 30 m
 
   # Assertions for 4-level nesting
@@ -93,8 +93,8 @@ start patch Default
   assert.fireThresholdStep1.step:if(meta.stepCount == 1 count) = current.fireThreshold == 60 percent
 
   # Assertions for 5-level nesting
-  assert.grassGrowthStep1.step:if(meta.stepCount == 1 count) = current.grassGrowth == 1.2 m/yr
-  assert.shrubGrowthStep1.step:if(meta.stepCount == 1 count) = current.shrubGrowth == 0.8 m/yr
+  assert.grassGrowthStep1.step:if(meta.stepCount == 1 count) = current.grassGrowth == 1.2 "m / yr"
+  assert.shrubGrowthStep1.step:if(meta.stepCount == 1 count) = current.shrubGrowth == 0.8 "m / yr"
 
   # Assertions for complex expressions with deep nesting
   assert.coverageStep1.step:if(meta.stepCount == 1 count) = current.coverage == 45 percent
@@ -110,7 +110,7 @@ start patch Default
 
   # Test cross-attribute references with deep nesting
   computedHeight.init = 0 m
-  computedHeight.step = prior.computedHeight + meta.parameters.growth.rate
+  computedHeight.step = prior.computedHeight + (meta.parameters.growth.rate * 1 yr)
 
   assert.computedHeightStep1.step:if(meta.stepCount == 1 count) = current.computedHeight == 2.5 m
   assert.computedHeightStep2.step:if(meta.stepCount == 2 count) = current.computedHeight == 5 m
@@ -134,15 +134,15 @@ start organism Plant
 
   # Use nested meta in organism computations
   height.init = 1 m
-  height.step = prior.height + meta.parameters.growth.rate
+  height.step = prior.height + (meta.parameters.growth.rate * 1 yr)
 
   maxReached.init = false
   maxReached.step = current.height >= meta.parameters.growth.maxHeight
 
   # Organism assertions - init phase with nested meta
-  assert.growthRateInit.init = current.growthRate == 2.5 m/yr
+  assert.growthRateInit.init = current.growthRate == 2.5 "m / yr"
   assert.fireProbInit.init = current.fireProb == 3 percent
-  assert.speciesGrowthInit.init = current.speciesGrowth == 1.2 m/yr
+  assert.speciesGrowthInit.init = current.speciesGrowth == 1.2 "m / yr"
   assert.heightInit.init = current.height == 1 m
   assert.maxReachedInit.init = current.maxReached == false
 
@@ -156,7 +156,7 @@ start organism Plant
   assert.maxReachedStep3.step:if(meta.stepCount == 3 count) = current.maxReached == false
 
   # Verify persistent values from init
-  assert.growthRatePersistsStep2.step:if(meta.stepCount == 2 count) = current.growthRate == 2.5 m/yr
+  assert.growthRatePersistsStep2.step:if(meta.stepCount == 2 count) = current.growthRate == 2.5 "m / yr"
   assert.fireProbPersistsStep2.step:if(meta.stepCount == 2 count) = current.fireProb == 3 percent
 
 end organism

@@ -30,9 +30,9 @@ start simulation TemporalQueriesMetaEntityTypes
   events.fire.threshold = 70 percent
 
   species.tree.maxAge = 100 year
-  species.tree.growthRate = 1.5 m/yr
+  species.tree.growthRate = 1.5 "m / yr"
   species.shrub.maxAge = 50 year
-  species.shrub.growthRate = 0.8 m/yr
+  species.shrub.growthRate = 0.8 "m / yr"
 
   model.timeStep = 1 year
 
@@ -107,7 +107,7 @@ start organism Tree
   age.step = prior.age + meta.model.timeStep
 
   height.init = 2 m
-  height.step = prior.height + meta.species.tree.growthRate
+  height.step = prior.height + (meta.species.tree.growthRate * 1 yr)
 
   mature.init = false
   mature.step = current.age >= 10 year
@@ -121,7 +121,7 @@ start organism Tree
 
   # Organism assertions - init phase
   assert.maxAgeInit.init = current.maxAge == 100 year
-  assert.growthRateInit.init = current.growthRate == 1.5 m/yr
+  assert.growthRateInit.init = current.growthRate == 1.5 "m / yr"
   assert.birthYearInit.init = current.birthYear == 2020 year
   assert.ageInit.init = current.age == 0 year
   assert.heightInit.init = current.height == 2 m
@@ -167,11 +167,11 @@ start organism Shrub
   age.step = prior.age + meta.model.timeStep
 
   height.init = 0.5 m
-  height.step = prior.height + meta.species.shrub.growthRate
+  height.step = prior.height + (meta.species.shrub.growthRate * 1 yr)
 
   # Shrub assertions - init phase
   assert.maxAgeInit.init = current.maxAge == 50 year
-  assert.growthRateInit.init = current.growthRate == 0.8 m/yr
+  assert.growthRateInit.init = current.growthRate == 0.8 "m / yr"
   assert.birthYearInit.init = current.birthYear == 2020 year
   assert.ageInit.init = current.age == 0 year
   assert.heightInit.init = current.height == 0.5 m
