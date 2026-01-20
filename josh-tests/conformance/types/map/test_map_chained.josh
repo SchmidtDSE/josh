@@ -25,29 +25,38 @@ start patch Default
   step2.init = map step1 from [0 count, 10 count] to [0 %, 100 %] linearly
   assert.linearChain.init = step2 == 50 %
 
-  # Test chaining linear then quadratic
+  # Test chaining linear then quadratic (parabola)
+  # Linear: 50 m -> 50 count (center of domain)
+  # Quadratic parabola: 50 count (center) -> 100% (max of range)
   input2.init = 50 m
   linearStep.init = map input2 from [0 m, 100 m] to [0 count, 100 count] linearly
   quadStep.init = map linearStep from [0 count, 100 count] to [0 %, 100 %] quadratically
-  # After linear (50 m -> 50 count), then quadratic (50 count -> 25%)
-  assert.linearThenQuadratic.init = quadStep < 30 %
-  assert.linearThenQuadraticPositive.init = quadStep > 20 %
+  assert.linearThenQuadratic.init = quadStep == 100 %
 
   # Test chaining quadratic then linear
+  # Quadratic parabola: 50 m (center) -> 100 count (max)
+  # Linear: 100 count -> 100%
   input3.init = 50 m
   quadFirstStep.init = map input3 from [0 m, 100 m] to [0 count, 100 count] quadratically
   linearSecondStep.init = map quadFirstStep from [0 count, 100 count] to [0 %, 100 %] linearly
-  # After quadratic (50 m -> ~25 count), then linear (25 count -> 25%)
-  assert.quadraticThenLinear.init = linearSecondStep < 30 %
-  assert.quadraticThenLinearPositive.init = linearSecondStep > 20 %
+  assert.quadraticThenLinear.init = linearSecondStep == 100 %
+
+  # Test chaining with endpoint values (where quadratic gives 0)
+  # Quadratic parabola: 0 m (endpoint) -> 0 count
+  # Linear: 0 count -> 0%
+  inputEndpoint.init = 0 m
+  quadEndpoint.init = map inputEndpoint from [0 m, 100 m] to [0 count, 100 count] quadratically
+  linearAfterQuad.init = map quadEndpoint from [0 count, 100 count] to [0 %, 100 %] linearly
+  assert.quadraticEndpointThenLinear.init = linearAfterQuad == 0 %
 
   # Test three-step chain: linear -> quadratic -> sigmoid
   input4.init = 50 m
   chain1.init = map input4 from [0 m, 100 m] to [0 count, 100 count] linearly
   chain2.init = map chain1 from [0 count, 100 count] to [0 count, 100 count] quadratically
   chain3.init = map chain2 from [0 count, 100 count] to [0 %, 100 %] sigmoidally
-  # Complex composition, result should be within valid range
-  assert.threeStepChainValid.init = chain3 >= 0 %
+  # Linear: 50 m -> 50 count; Quadratic parabola: 50 count -> 100 count
+  # Sigmoid: 100 count (endpoint) -> ~99.75% (approaching max)
+  assert.threeStepChainValid.init = chain3 > 95 %
   assert.threeStepChainBounded.init = chain3 <= 100 %
 
   # Test chaining with range scaling
@@ -57,12 +66,14 @@ start patch Default
   assert.scalingChain.init = scale2 == 0.25 m
 
   # Test chaining with different mappings produces different results
-  input6.init = 50 m
+  input6.init = 25 m  # Use non-center value to see difference
   allLinear1.init = map input6 from [0 m, 100 m] to [0 count, 100 count] linearly
   allLinear2.init = map allLinear1 from [0 count, 100 count] to [0 %, 100 %] linearly
+  # Linear: 25 m -> 25 count -> 25%
 
   mixedMap1.init = map input6 from [0 m, 100 m] to [0 count, 100 count] quadratically
   mixedMap2.init = map mixedMap1 from [0 count, 100 count] to [0 %, 100 %] linearly
+  # Quadratic parabola: 25 m -> 75 count (halfway to center) -> 75%
 
   assert.chainsDiffer.init = allLinear2 != mixedMap2
 

@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
@@ -26,6 +29,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
@@ -683,126 +687,63 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine abs() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply abs to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal absValue = value.getAsDecimal().abs();
-      result = valueFactory.build(absValue, value.getUnits());
-    } else {
-      double absValue = Math.abs(value.getAsDouble());
-      result = valueFactory.build(absValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().abs(), v.getUnits());
+      }
+      return valueFactory.build(Math.abs(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine ceil() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply ceil to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal ceilValue = value.getAsDecimal().setScale(0, RoundingMode.CEILING);
-      result = valueFactory.build(ceilValue, value.getUnits());
-    } else {
-      double ceilValue = Math.ceil(value.getAsDouble());
-      result = valueFactory.build(ceilValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.CEILING), v.getUnits());
+      }
+      return valueFactory.build(Math.ceil(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine floor() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply floor to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal floorValue = value.getAsDecimal().setScale(0, RoundingMode.FLOOR);
-      result = valueFactory.build(floorValue, value.getUnits());
-    } else {
-      double floorValue = Math.floor(value.getAsDouble());
-      result = valueFactory.build(floorValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.FLOOR), v.getUnits());
+      }
+      return valueFactory.build(Math.floor(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine round() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply round to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal roundedValue = value.getAsDecimal().setScale(0, RoundingMode.HALF_UP);
-      result = valueFactory.build(roundedValue, value.getUnits());
-    } else {
-      double roundedValue = Math.round(value.getAsDouble());
-      result = valueFactory.build(roundedValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.HALF_UP), v.getUnits());
+      }
+      return valueFactory.build(Math.round(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine log10() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply log10 to a distribution.");
-    }
-
-    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
-    }
-
-    double logValue = Math.log10(value.getAsDouble());
-    EngineValue result = valueFactory.buildForNumber(logValue, value.getUnits());
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (v.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
+      }
+      return valueFactory.buildForNumber(Math.log10(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine ln() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply natural log (ln) to a distribution.");
-    }
-
-    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException(
-          "Natural logarithm can only be applied to positive numbers."
-      );
-    }
-
-    double lnValue = Math.log(value.getAsDouble());
-    EngineValue result = valueFactory.buildForNumber(lnValue, value.getUnits());
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (v.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException(
+            "Natural logarithm can only be applied to positive numbers.");
+      }
+      return valueFactory.buildForNumber(Math.log(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
@@ -1263,6 +1204,61 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       // Always restore original scope, even if action throws
       this.scope = originalScope;
     }
+  }
+
+  /**
+   * Apply a unary math function to a value, handling both scalars and distributions.
+   *
+   * <p>If the value is a distribution, applies the function element-wise. Otherwise, applies
+   * directly to the scalar value. This eliminates boilerplate in abs(), ceil(), floor(), etc.</p>
+   *
+   * @param scalarFunction The function to apply to each scalar value.
+   * @return This machine for method chaining.
+   */
+  private EventHandlerMachine applyUnaryMathFunction(
+      Function<EngineValue, EngineValue> scalarFunction
+  ) {
+    EngineValue value = pop();
+    EngineValue result;
+
+    if (value.getLanguageType().isDistribution()) {
+      result = applyToDistribution(value, scalarFunction);
+    } else {
+      result = scalarFunction.apply(value);
+    }
+
+    memory.push(result);
+    return this;
+  }
+
+  /**
+   * Apply a unary function to each element of a distribution.
+   *
+   * @param distribution The distribution (realized or virtual) to apply the function to.
+   * @param function The function to apply to each element.
+   * @return A new RealizedDistribution containing the transformed values.
+   */
+  private EngineValue applyToDistribution(
+      EngineValue distribution,
+      Function<EngineValue, EngineValue> function
+  ) {
+    Distribution dist = distribution.getAsDistribution();
+
+    // Get the size - if virtual, sample a reasonable number of elements
+    Optional<Integer> sizeOpt = dist.getSize();
+    int size = sizeOpt.orElse(1000); // Default sample size for virtual distributions
+
+    // Get contents and apply function element-wise
+    Iterable<EngineValue> contents = dist.getContents(size, true);
+    List<EngineValue> transformedValues = StreamSupport.stream(contents.spliterator(), false)
+        .map(function)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new RealizedDistribution(
+        distribution.getCaster(),
+        transformedValues,
+        distribution.getUnits()
+    );
   }
 
 }

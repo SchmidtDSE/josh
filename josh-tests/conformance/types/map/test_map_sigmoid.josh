@@ -46,17 +46,17 @@ start patch Default
   assert.sigmoidDiffersFromLinear.init = sigmoidMap != linearMap
 
   # Test sigmoid S-curve characteristics
-  # Early values should be larger than quadratic (slow start)
+  # Early values should be small (compressed toward 0 due to S-curve)
   earlyInput.init = 25 m
   earlyMapped.init = map earlyInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
-  # Sigmoid at 25% should be > 15 (slower than linear quadratic)
-  assert.sigmoidEarlyAboveQuadratic.init = earlyMapped > 15 count
+  # Sigmoid at 25% should be < 10 (steep transition happens in middle)
+  assert.sigmoidEarlyCompressed.init = earlyMapped < 10 count
 
-  # Late values should be smaller than linear (slow end)
+  # Late values should be large (stretched toward 100 due to S-curve)
   lateInput.init = 75 m
   lateMapped.init = map lateInput from [0 m, 100 m] to [0 count, 100 count] sigmoidally
-  # Sigmoid at 75% should be < 85 (slower than linear)
-  assert.sigmoidLateBelowLinear.init = lateMapped < 85 count
+  # Sigmoid at 75% should be > 90 (steep transition in middle pushes late values high)
+  assert.sigmoidLateExpanded.init = lateMapped > 90 count
 
   # Test sigmoid with percentage output
   pctInput1.init = 50 m

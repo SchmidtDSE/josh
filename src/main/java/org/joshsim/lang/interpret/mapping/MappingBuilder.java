@@ -83,14 +83,19 @@ public class MappingBuilder {
   /**
    * Build a mapping strategy based on the provided strategy name and builder settings.
    *
-   * @param strategyName The name of the mapping strategy to build ("linear", "quadratic", or
-   *     "sigmoid").
+   * <p>Accepts both base forms ("linear", "quadratic", "sigmoid") and adverb forms
+   * ("linearly", "quadratically", "sigmoidally") as used in Josh language syntax.</p>
+   *
+   * @param strategyName The name of the mapping strategy to build.
    * @return The constructed mapping strategy.
    * @throws IllegalArgumentException if the strategy name is unknown or required fields are
    *     missing.
    */
   public MapStrategy build(String strategyName) {
-    return switch (strategyName) {
+    // Normalize strategy name - accept both base and adverb forms
+    String normalizedName = normalizeStrategyName(strategyName);
+
+    return switch (normalizedName) {
       case "linear" -> new LinearMapStrategy(
           valueFactory.orElseThrow(),
           domain.orElseThrow(),
@@ -109,6 +114,21 @@ public class MappingBuilder {
           mapBehaviorArgument.orElseThrow().getAsBoolean()
       );
       default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
+    };
+  }
+
+  /**
+   * Normalize strategy name by converting adverb forms to base forms.
+   *
+   * @param strategyName The strategy name (may be "linear" or "linearly", etc.)
+   * @return The normalized base form ("linear", "quadratic", or "sigmoid")
+   */
+  private String normalizeStrategyName(String strategyName) {
+    return switch (strategyName) {
+      case "linearly" -> "linear";
+      case "quadratically" -> "quadratic";
+      case "sigmoidally" -> "sigmoid";
+      default -> strategyName;
     };
   }
 }
