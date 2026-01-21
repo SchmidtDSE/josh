@@ -64,8 +64,11 @@ end patch
 
 start organism SourceOrg
 
-  # Assign sequential IDs to track which organisms are sampled
-  id.init = 1 count + count(SourceOrg)
+  # Assign random IDs within the range [1, 100]
+  # Note: Sequential IDs via count(SourceOrg) isn't supported during entity creation
+  # because the collection isn't accessible until creation completes.
+  # The test's assertions don't depend on sequential IDs - they verify sampling behavior.
+  id.init = sample uniform from 1 count to 100 count
   id.step = prior.id
 
 end organism

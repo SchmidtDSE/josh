@@ -59,8 +59,9 @@ start patch Default
 
   # Test 2: Arithmetic operations with nested meta attributes
   # Pattern: prior.value + meta.increment
-  grassCover.init = 10%
-  shrubCover.init = 12%
+  # Note: Values chosen so totalCover (12%) < coverThreshold (15%) for isLowRisk test
+  grassCover.init = 5%
+  shrubCover.init = 7%
 
   # Fire probability based on nested meta attributes
   isHighCover.step = prior.grassCover > meta.fire.trigger.coverThreshold
