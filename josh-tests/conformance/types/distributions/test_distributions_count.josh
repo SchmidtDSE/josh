@@ -45,13 +45,13 @@ start patch Default
   singleCount.init = count(SingleTree)
   assert.singleCount.init = singleCount == 1 count
 
-  # Test count persists across timesteps
+  # Test count persists across timesteps (no changes at step 1)
   assert.countStep1.step:if(meta.stepCount == 1 count) = count(Trees) == 10 count
-  assert.countStep2.step:if(meta.stepCount == 2 count) = count(Trees) == 10 count
 
-  # Test count after additional creation
-  Trees.step:if(meta.stepCount == 1 count) = create 5 count of Tree
-  assert.countAfterAddition.step:if(meta.stepCount == 1 count) = count(Trees) == 15 count
+  # Test count after additional creation at step 2
+  # Note: .step = X replaces the attribute; use prior.Trees | create to concatenate
+  Trees.step:if(meta.stepCount == 2 count) = prior.Trees | create 5 count of Tree
+  assert.countAfterAddition.step:if(meta.stepCount == 2 count) = count(Trees) == 15 count
 
 end patch
 
