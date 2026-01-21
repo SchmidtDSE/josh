@@ -9,29 +9,37 @@
 
 ## PR Summary Table
 
-| PR | Title | Impact | What Changed |
-|----|-------|--------|--------------|
-| #333 | Conformance Tests | Additive | 117 test files + JUnit infrastructure |
-| #334 | Debug Output System | Additive + Engine | New `debug()` function, grammar changes, machine methods |
-| #335 | Timestamp Templating | Additive | `{timestamp}` in `TemplateStringRenderer` |
-| #336 | Random Seed | Engine | `--seed` CLI flag, `SharedRandom` utility, serial execution |
-| #337 | Test Data Generation | Additive | Gradle tasks for GeoTIFF/NetCDF/JSHD generation |
-| #338 | Lambda Scope Fix | Engine | Fix filter expression scope in `SingleThreadEventHandlerMachine` |
-| #339 | Meta Synthetic Variables | Engine | `meta.stepCount`, `meta.year` in `SyntheticScope` |
-| #340 | Documentation | Docs only | `LanguageSpecification.md`, `llms-full.txt` |
-| #341 | Boolean Distribution Count | Engine | Fix `count()` on boolean distributions in `RealizedDistribution` |
-| #342 | Built-ins for 'here' | Engine | `here.attr` resolution in `ValueResolver` |
-| #343 | Prior Attribute Value Fix | Engine | Prior value consistency in `ShadowingEntity` |
-| #344 | Compound Units | Engine | Unit tracking in arithmetic ops (`CompoundUnits`) |
-| #345 | Boolean Epsilon | Engine | Float comparison tolerance in `EngineValue` |
-| #346 | Map/Distribution Expansion | Engine | Element-wise ops, map strategy in `RealizedDistribution` |
-| #347 | Inner Entity Deduplication | Engine | Identity-based dedup in `InnerEntityGetter` |
-| #348 | Boolean Distribution Units | Engine | `Units.EMPTY` for boolean results in `RealizedDistribution` |
+| PR | Title | Risk | Impact | What Changed |
+|----|-------|------|--------|--------------|
+| #333 | Conformance Tests | 🟢 Low | Additive | 117 test files + JUnit infrastructure |
+| #334 | Debug Output System | 🔴 High | Additive + Engine | Grammar changes, new `debug()` function, machine methods |
+| #335 | Timestamp Templating | 🟢 Low | Additive | `{timestamp}` in `TemplateStringRenderer` (has unit tests) |
+| #336 | Random Seed | 🔴 High | Engine | Modifies `SimulationStepper`*, forces serial execution when seeded |
+| #337 | Test Data Generation | 🟢 Low | Additive | Gradle tasks for GeoTIFF/NetCDF/JSHD generation |
+| #338 | Lambda Scope Fix | 🔴 High | Engine | Modifies `SingleThreadEventHandlerMachine`* - port of PR #314 |
+| #339 | Meta Synthetic Variables | 🟡 Med | Engine | `meta.stepCount`, `meta.year` in `SyntheticScope` + `SimulationStepper`* |
+| #340 | Documentation | ⚪ None | Docs only | `LanguageSpecification.md`, `llms-full.txt` |
+| #341 | Boolean Distribution Count | 🟡 Med | Engine | Fix `count()` on boolean distributions in `RealizedDistribution` |
+| #342 | Built-ins for 'here' | 🟡 Med | Engine | `here.attr` resolution in `ValueResolver` + `SyntheticScope` |
+| #343 | Prior Attribute Value Fix | 🔴 High | Engine | Modifies `ShadowingEntity`* - prior value caching |
+| #344 | Compound Units | 🔴 High | Engine | Unit tracking in `CompoundUnits` + `EngineValue` (affects all arithmetic) |
+| #345 | Boolean Epsilon | 🔴 High | Engine | Float comparison tolerance in `EngineValue` + `DecimalScalar` (affects all comparisons) |
+| #346 | Map/Distribution Expansion | 🔴 High | Engine | Element-wise ops in `RealizedDistribution` + `SingleThreadEventHandlerMachine`* |
+| #347 | Inner Entity Deduplication | 🟡 Med | Engine | Identity-based dedup in `InnerEntityGetter` (fixes double-unlock) |
+| #348 | Boolean Distribution Units | 🟢 Low | Engine | Small fix in `RealizedDistribution` + test corrections |
 
-**Legend:**
+**Risk Legend:**
+- 🔴 **High** = Touches contaminated files*, grammar, or core value/comparison logic
+- 🟡 **Med** = Engine changes but isolated scope
+- 🟢 **Low** = Additive only or well-tested isolated changes
+- ⚪ **None** = Docs only
+
+**Impact Legend:**
 - **Additive** = New files/features, no core engine changes
 - **Engine** = Changes to core simulation engine files
 - **Docs only** = Documentation changes only
+
+*\* Contaminated files from original `dev` branch: `ShadowingEntity.java`, `SimulationStepper.java`, `SingleThreadEventHandlerMachine.java`*
 
 ---
 
