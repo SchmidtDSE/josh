@@ -6,10 +6,11 @@
 
 package org.joshsim.lang.bridge;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
@@ -33,11 +34,16 @@ public class InnerEntityGetter {
    * that contain entities. Uses direct iteration instead of streams for better performance
    * in this hot path (called in every substep for every entity).</p>
    *
+   * <p>Uses identity-based Set to ensure each entity is returned only once, even if the same
+   * entity object appears in multiple attributes (e.g., in both a full collection and a
+   * filtered subset of that collection).</p>
+   *
    * @param target in which to find the inner entites
-   * @return Iterable of MutableEntity instances found in attributes that contain entities
+   * @return Iterable of unique MutableEntity instances found in attributes that contain entities
    */
   public static Iterable<MutableEntity> getInnerEntities(MutableEntity target) {
-    List<MutableEntity> result = new ArrayList<>();
+    // Use identity-based set - same entity in multiple attributes is only returned once
+    Set<MutableEntity> result = Collections.newSetFromMap(new IdentityHashMap<>());
 
     // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
@@ -81,11 +87,15 @@ public class InnerEntityGetter {
    * <p>Iterates through all attribute names and collects Entity instances from attributes
    * that contain entities. Uses direct iteration instead of streams for better performance.</p>
    *
+   * <p>Uses identity-based Set to ensure each entity is returned only once, even if the same
+   * entity object appears in multiple attributes.</p>
+   *
    * @param target in which to find the inner entites
-   * @return Iterable of Entity instances found in attributes that contain entities
+   * @return Iterable of unique Entity instances found in attributes that contain entities
    */
   public static Iterable<Entity> getInnerFrozenEntities(Entity target) {
-    List<Entity> result = new ArrayList<>();
+    // Use identity-based set - same entity in multiple attributes is only returned once
+    Set<Entity> result = Collections.newSetFromMap(new IdentityHashMap<>());
 
     // Use integer-based iteration
     Map<String, Integer> indexMap = target.getAttributeNameToIndex();
@@ -95,14 +105,12 @@ public class InnerEntityGetter {
       Optional<EngineValue> valueMaybe = target.getAttributeValue(i);
       boolean valueNotSet = valueMaybe.isEmpty();
       if (valueNotSet) {
-        // Continue for profiling reasons
         continue;
       }
 
       EngineValue value = valueMaybe.get();
       boolean hasInnerAttrs = value.getLanguageType().containsAttributes();
       if (!hasInnerAttrs) {
-        // Continue for profiling reasons
         continue;
       }
 

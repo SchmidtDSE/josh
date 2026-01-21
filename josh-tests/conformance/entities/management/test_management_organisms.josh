@@ -99,7 +99,8 @@ start organism Tree
   managementNearby.step = count(Thinning within 60 m radial at prior)
 
   # Mark as thinned if management is nearby and diameter is small
-  thinned.step:if(current.managementNearby > 0 count and current.diameter < 15 cm) = true
+  # Note: Use prior.diameter to avoid circular dependency (diameter -> growthRate -> thinned -> diameter)
+  thinned.step:if(current.managementNearby > 0 count and prior.diameter < 15 cm) = true
 
   # Growth rate increases after thinning (less competition)
   growthRate.init = 0.5 cm

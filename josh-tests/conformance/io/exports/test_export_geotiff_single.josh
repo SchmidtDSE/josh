@@ -29,7 +29,8 @@ start patch Default
 
   # Calculate patch attribute for raster export
   elevation.init = sample uniform from 100 m to 500 m
-  elevation.step = elevation
+  # Note: Use prior.elevation to carry forward; bare 'elevation' would create circular dependency
+  elevation.step = prior.elevation
 
   # Export spatial data as raster
   export.elevation.step = elevation
