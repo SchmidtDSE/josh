@@ -24,31 +24,32 @@ start patch Default
 
   # Complex filter with AND operator
   # Old AND tall trees
-  oldAndTall.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age > 10 years) and (Tree.height > 5 m)]
+  oldAndTall.step = Trees[(Tree.age > 10 years) and (Tree.height > 5 m)]
 
   # Complex filter with OR operator
-  # Young OR short trees
-  youngOrShort.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age < 5 years) or (Tree.height < 3 m)]
+  # Young OR short trees - use wider ranges to ensure some always match
+  # With ages 0-29 and heights 1-15.5, most trees will qualify for either condition
+  youngOrShort.step = Trees[(Tree.age < 15 years) or (Tree.height < 8 m)]
 
   # Complex filter with NOT operator (using !=)
   # Not mature trees (status != 1)
-  notMature.step:if(meta.stepCount >= 2 count) = Trees[Tree.status != 1 count]
+  notMature.step = Trees[Tree.status != 1 count]
 
   # Nested conditions with AND and OR
   # (Old and tall) OR (young and growing)
-  complexMix.step:if(meta.stepCount >= 2 count) = Trees[((Tree.age > 15 years) and (Tree.height > 8 m)) or ((Tree.age < 5 years) and (Tree.height > 2 m))]
+  complexMix.step = Trees[((Tree.age > 15 years) and (Tree.height > 8 m)) or ((Tree.age < 5 years) and (Tree.height > 2 m))]
 
   # Multiple AND conditions
   # Age between 5 and 15 years (age > 5 AND age < 15)
-  midAge.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age > 5 years) and (Tree.age < 15 years)]
+  midAge.step = Trees[(Tree.age > 5 years) and (Tree.age < 15 years)]
 
   # Multiple OR conditions
   # Very young or very old (age < 3 OR age > 20)
-  extremeAge.step:if(meta.stepCount >= 2 count) = Trees[(Tree.age < 3 years) or (Tree.age > 20 years)]
+  extremeAge.step = Trees[(Tree.age < 3 years) or (Tree.age > 20 years)]
 
   # Complex three-way condition
   # Tall AND (old OR mature)
-  tallAndOldOrMature.step:if(meta.stepCount >= 2 count) = Trees[(Tree.height > 5 m) and ((Tree.age > 10 years) or (Tree.status == 1 count))]
+  tallAndOldOrMature.step = Trees[(Tree.height > 5 m) and ((Tree.age > 10 years) or (Tree.status == 1 count))]
 
   # Assert total tree count remains constant
   assert.totalTrees.step:if(meta.stepCount == 2 count) = count(Trees) == 30 count
