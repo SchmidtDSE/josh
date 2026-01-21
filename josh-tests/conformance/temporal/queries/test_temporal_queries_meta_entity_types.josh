@@ -117,7 +117,8 @@ start organism Tree
   tempModifier.step = meta.environment.temperature.base / 20 degC
 
   adjustedHeight.init = 2 m
-  adjustedHeight.step = prior.adjustedHeight + (meta.species.tree.growthRate * current.tempModifier)
+  # Note: must multiply by 1 yr to convert m/yr rate to m distance
+  adjustedHeight.step = prior.adjustedHeight + (meta.species.tree.growthRate * 1 yr * current.tempModifier)
 
   # Organism assertions - init phase
   assert.maxAgeInit.init = current.maxAge == 100 year
