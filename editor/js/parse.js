@@ -92,10 +92,9 @@ function parseEngineResponse(source) {
     };
   }
 
-  // Handle debug messages - log to console and return as debug type
+  // Handle debug messages - return as debug type for UI display
   const debugMatch = source.match(/^\[debug\] (.+)$/);
   if (debugMatch) {
-    console.log("[JOSH DEBUG]", debugMatch[1]);
     return {
       type: "debug",
       message: debugMatch[1]

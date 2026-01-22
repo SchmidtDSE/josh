@@ -95,7 +95,7 @@ public class DebugOutputFacadeBuilder {
    * <p>Handles stdout:// specially, memory:// for sandbox environments (WASM), and delegates
    * to JvmExportFacadeFactory for file:// and minio://.</p>
    *
-   * @param path The path string (e.g., "file:///tmp/debug.txt", "stdout://", "memory://editor/debug")
+   * @param path The path string (e.g., "file:///tmp/debug.txt", "memory://editor/debug", etc).
    * @param exportFactory The export factory to use for creating strategies.
    * @return The appropriate OutputStreamStrategy for the path.
    * @throws IllegalArgumentException if the path scheme is unsupported or factory doesn't support

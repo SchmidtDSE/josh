@@ -28,7 +28,6 @@ function reportData(source) {
   // Use startsWith for robustness (avoids regex edge cases with newlines)
   if (trimmed.startsWith("[debug] ")) {
     const message = trimmed.substring(8); // Remove "[debug] " prefix
-    console.log("[JOSH DEBUG]", message);
     postMessage({ type: "debug", success: true, result: message });
     return;
   }
