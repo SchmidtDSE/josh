@@ -11,6 +11,7 @@
  *   <li>Whitespace flexible around equals sign</li>
  *   <li>Variable names follow Josh language patterns</li>
  *   <li>Values must be valid EngineValue format (number + optional units)</li>
+ *   <li>Compound units via quoted strings: rainfall = 50 "mm / month"</li>
  * </ul>
  *
  * These configuration strings may be provided in jshc files.
@@ -31,6 +32,8 @@ COMMENT_ : '#' ~[\r\n]* -> channel(HIDDEN) ;
 EQUALS_ : '=' ;
 
 PERCENT_ : '%' ;
+
+STR_ : '"' ~["]* '"' ;
 
 IDENTIFIER_ : [A-Za-z/][A-Za-z0-9/]* ;
 
@@ -59,4 +62,4 @@ identifier : IDENTIFIER_ ;
 
 number : NUMBER_ ;
 
-value : number (identifier | PERCENT_)? ;
+value : number (identifier | PERCENT_ | STR_)? ;
