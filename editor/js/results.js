@@ -1,11 +1,12 @@
 /**
  * Logic for presenters handling simulation results display.
- * 
+ *
  * @license BSD-3-Clause
  */
 
 import {BasemapDialogPresenter} from "baselayer";
 import {ExportPresenter} from "exporter";
+import {DebugMessage, DebugMessageStore} from "model";
 import {DataQuery, summarizeDatasets} from "summarize";
 import {GridPresenter, ScrubPresenter, MapConfigPresenter} from "viz";
 
@@ -17,7 +18,7 @@ class ResultsPresenter {
 
   /**
    * Creates a new results presenter.
-   * 
+   *
    * @param {string} rootId - The ID of the element containing the results display.
    */
   constructor(rootId) {
@@ -38,6 +39,9 @@ class ResultsPresenter {
       self._root.querySelector("#map-dialog"),
       (url) => self._onBasemapChange(url)
     );
+    self._debugPresenter = new DebugPresenter(
+      self._root.querySelector("#debug-panel")
+    );
 
     self._results = null;
     self._metadata = null;
@@ -52,6 +56,7 @@ class ResultsPresenter {
     const self = this;
     self._statusPresenter.resetProgress();
     self._resultsDisplayPresenter.hide();
+    self._debugPresenter.clear();
     self._root.style.display = "block";
     self._secondsOnStart = self._getEpochSeconds();
   }
@@ -73,8 +78,9 @@ class ResultsPresenter {
    * @param {SimulationMetadata} metadata - The metadata of the simulation being displayed.
    * @param {Array<SimulationResult>} results - Array of simulation results containing output
    *     records.
+   * @param {DebugMessageStore} debugStore - Optional store containing debug messages.
    */
-  onComplete(metadata, results) {
+  onComplete(metadata, results, debugStore) {
     const self = this;
     self._metadata = metadata;
     self._results = results;
@@ -83,6 +89,9 @@ class ResultsPresenter {
     self._renderDisplay(metadata);
     self._exportPresenter.setDataset(metadata, results);
     self._baselayerDialogPresenter.setMetadata(metadata);
+    if (debugStore) {
+      self._debugPresenter.setDebugStore(debugStore);
+    }
   }
 
   /**
@@ -596,4 +605,300 @@ class DataQuerySelector {
 }
 
 
-export {ResultsPresenter};
+/**
+ * Presenter for the debug output panel with filtering capabilities.
+ */
+class DebugPresenter {
+
+  /**
+   * Creates a new debug presenter.
+   *
+   * @param {Element} panelElement - The debug panel DOM element.
+   */
+  constructor(panelElement) {
+    const self = this;
+    self._panel = panelElement;
+    self._debugStore = null;
+    self._entityIds = [];
+    self._currentEntityIndex = -1; // -1 means "All"
+
+    self._locationFilter = self._panel.querySelector("#debug-location-filter");
+    self._stepFilter = self._panel.querySelector("#debug-step-filter");
+    self._entityDisplay = self._panel.querySelector("#debug-entity-display");
+    self._entityNextBtn = self._panel.querySelector("#debug-entity-next");
+    self._entityResetBtn = self._panel.querySelector("#debug-entity-reset");
+    self._typeFilter = self._panel.querySelector("#debug-type-filter");
+    self._filteredCount = self._panel.querySelector("#debug-filtered-count");
+    self._totalCount = self._panel.querySelector("#debug-total-count");
+    self._messagesList = self._panel.querySelector("#debug-messages-list");
+
+    self._addEventListeners();
+  }
+
+  /**
+   * Sets the debug message store and updates the display.
+   *
+   * @param {DebugMessageStore} debugStore - The store containing debug messages.
+   */
+  setDebugStore(debugStore) {
+    const self = this;
+    self._debugStore = debugStore;
+
+    if (debugStore && debugStore.getAll().length > 0) {
+      self._panel.classList.add("visible");
+      self._populateFilters();
+      self._renderMessages();
+    } else {
+      self._panel.classList.remove("visible");
+    }
+  }
+
+  /**
+   * Clears the debug display and hides the panel.
+   */
+  clear() {
+    const self = this;
+    self._debugStore = null;
+    self._entityIds = [];
+    self._currentEntityIndex = -1;
+    self._panel.classList.remove("visible");
+    self._messagesList.innerHTML = "";
+    self._resetFilters();
+  }
+
+  /**
+   * Adds event listeners to filter controls.
+   */
+  _addEventListeners() {
+    const self = this;
+
+    // When other filters change, rebuild the filtered entity list
+    self._locationFilter.addEventListener("change", () => self._onFilterChange());
+    self._stepFilter.addEventListener("change", () => self._onFilterChange());
+    self._typeFilter.addEventListener("change", () => self._onFilterChange());
+
+    self._entityNextBtn.addEventListener("click", () => self._nextEntity());
+    self._entityResetBtn.addEventListener("click", () => self._resetEntity());
+  }
+
+  /**
+   * Handles changes to location, step, or type filters.
+   * Rebuilds the filtered entity list and resets entity selection.
+   */
+  _onFilterChange() {
+    const self = this;
+    self._rebuildFilteredEntityIds();
+    self._currentEntityIndex = -1;
+    self._updateEntityDisplay();
+    self._renderMessages();
+  }
+
+  /**
+   * Rebuilds the list of entity IDs that match current filters (excluding entity filter).
+   */
+  _rebuildFilteredEntityIds() {
+    const self = this;
+    if (!self._debugStore) {
+      self._entityIds = [];
+      return;
+    }
+
+    const location = self._locationFilter.value || null;
+    const step = self._stepFilter.value ? parseInt(self._stepFilter.value) : null;
+    const entityType = self._typeFilter.value || null;
+
+    // Get messages matching current filters (without entity filter)
+    const filtered = self._debugStore.filter(location, step, null, entityType);
+
+    // Extract unique entity IDs from filtered messages
+    const entityIdSet = new Set();
+    filtered.forEach(msg => entityIdSet.add(msg.getEntityId()));
+    self._entityIds = Array.from(entityIdSet).sort();
+  }
+
+  /**
+   * Advances to the next entity ID.
+   */
+  _nextEntity() {
+    const self = this;
+    if (self._entityIds.length === 0) return;
+
+    self._currentEntityIndex++;
+    if (self._currentEntityIndex >= self._entityIds.length) {
+      self._currentEntityIndex = 0;
+    }
+
+    self._updateEntityDisplay();
+    self._renderMessages();
+  }
+
+  /**
+   * Resets entity filter to show all entities.
+   */
+  _resetEntity() {
+    const self = this;
+    self._currentEntityIndex = -1;
+    self._updateEntityDisplay();
+    self._renderMessages();
+  }
+
+  /**
+   * Updates the entity display text.
+   */
+  _updateEntityDisplay() {
+    const self = this;
+    if (self._currentEntityIndex < 0 || self._entityIds.length === 0) {
+      self._entityDisplay.textContent = "All";
+    } else {
+      const id = self._entityIds[self._currentEntityIndex];
+      const num = self._currentEntityIndex + 1;
+      const total = self._entityIds.length;
+      self._entityDisplay.textContent = `${num}/${total}`;
+    }
+  }
+
+  /**
+   * Resets all filters to their default state.
+   */
+  _resetFilters() {
+    const self = this;
+    self._locationFilter.innerHTML = '<option value="">All locations</option>';
+    self._stepFilter.innerHTML = '<option value="">All steps</option>';
+    self._currentEntityIndex = -1;
+    self._updateEntityDisplay();
+    self._typeFilter.value = "";
+  }
+
+  /**
+   * Populates filter controls based on available data in the debug store.
+   */
+  _populateFilters() {
+    const self = this;
+    if (!self._debugStore) return;
+
+    // Populate locations
+    self._locationFilter.innerHTML = '<option value="">All locations</option>';
+    const locations = self._debugStore.getLocations();
+    locations.forEach(loc => {
+      const option = document.createElement("option");
+      option.value = loc;
+      option.text = loc;
+      self._locationFilter.appendChild(option);
+    });
+
+    // Populate steps
+    self._stepFilter.innerHTML = '<option value="">All steps</option>';
+    const steps = self._debugStore.getSteps();
+    steps.sort((a, b) => a - b);
+    steps.forEach(step => {
+      const option = document.createElement("option");
+      option.value = step;
+      option.text = `Step ${step}`;
+      self._stepFilter.appendChild(option);
+    });
+
+    // Build filtered entity IDs for cycling
+    self._rebuildFilteredEntityIds();
+    self._currentEntityIndex = -1;
+    self._updateEntityDisplay();
+
+    // Set default filter to first location if there are many messages
+    const allMessages = self._debugStore.getAll();
+    if (allMessages.length > 100 && locations.length > 0) {
+      self._locationFilter.value = locations[0];
+    }
+  }
+
+  /**
+   * Gets the currently selected entity ID.
+   *
+   * @returns {?string} The selected entity ID or null for all.
+   */
+  _getCurrentEntityId() {
+    const self = this;
+    if (self._currentEntityIndex < 0 || self._entityIds.length === 0) {
+      return null;
+    }
+    return self._entityIds[self._currentEntityIndex];
+  }
+
+  /**
+   * Renders messages based on current filter selections.
+   */
+  _renderMessages() {
+    const self = this;
+    if (!self._debugStore) {
+      self._messagesList.innerHTML = '<div class="debug-no-messages">No debug messages</div>';
+      return;
+    }
+
+    const location = self._locationFilter.value || null;
+    const step = self._stepFilter.value ? parseInt(self._stepFilter.value) : null;
+    const entityId = self._getCurrentEntityId();
+    const entityType = self._typeFilter.value || null;
+
+    const filtered = self._debugStore.filter(location, step, entityId, entityType);
+    const total = self._debugStore.getAll().length;
+
+    self._filteredCount.textContent = filtered.length;
+    self._totalCount.textContent = total;
+
+    if (filtered.length === 0) {
+      self._messagesList.innerHTML = '<div class="debug-no-messages">No messages match the current filters</div>';
+      return;
+    }
+
+    // Limit display to prevent browser slowdown
+    const displayLimit = 500;
+    const toDisplay = filtered.slice(0, displayLimit);
+
+    const html = toDisplay.map(msg => self._renderMessage(msg)).join("");
+    self._messagesList.innerHTML = html;
+
+    if (filtered.length > displayLimit) {
+      const moreDiv = document.createElement("div");
+      moreDiv.className = "debug-no-messages";
+      moreDiv.textContent = `... and ${filtered.length - displayLimit} more messages. Use filters to narrow results.`;
+      self._messagesList.appendChild(moreDiv);
+    }
+  }
+
+  /**
+   * Renders a single debug message to HTML.
+   *
+   * @param {DebugMessage} msg - The debug message to render.
+   * @returns {string} HTML string for the message.
+   */
+  _renderMessage(msg) {
+    const step = msg.getStep();
+    const entityType = msg.getEntityType();
+    const entityId = msg.getEntityId();
+    const x = msg.getX();
+    const y = msg.getY();
+    const content = this._escapeHtml(msg.getContent());
+
+    return `<div class="debug-message">
+      <span class="debug-message-header">
+        <span class="debug-message-step">[Step ${step}]</span>
+        <span class="debug-message-entity">${entityType} @ ${entityId.substring(0, 8)}</span>
+        <span class="debug-message-location">(${x}, ${y})</span>
+      </span>
+      <span class="debug-message-content">${content}</span>
+    </div>`;
+  }
+
+  /**
+   * Escapes HTML special characters in a string.
+   *
+   * @param {string} text - The text to escape.
+   * @returns {string} The escaped text.
+   */
+  _escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
+
+
+export {DebugPresenter, ResultsPresenter};
