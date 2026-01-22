@@ -92,6 +92,16 @@ function parseEngineResponse(source) {
     };
   }
 
+  // Handle debug messages - log to console and return as debug type
+  const debugMatch = source.match(/^\[debug\] (.+)$/);
+  if (debugMatch) {
+    console.log("[JOSH DEBUG]", debugMatch[1]);
+    return {
+      type: "debug",
+      message: debugMatch[1]
+    };
+  }
+
   const match = source.match(/^\[(\d+)\] (.+)$/);
   if (!match) {
     throw "Got error engine response: " + source;

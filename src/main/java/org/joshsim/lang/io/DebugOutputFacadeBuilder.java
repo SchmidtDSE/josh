@@ -25,12 +25,20 @@ import org.joshsim.engine.value.type.EngineValue;
  *
  * <p>Supported path schemes depend on the ExportFacadeFactory implementation:</p>
  * <ul>
- *   <li>file:// - writes to local file system</li>
- *   <li>minio:// - writes to MinIO object storage (requires MinIO configuration)</li>
+ *   <li>file:// - writes to local file system (JVM only)</li>
+ *   <li>minio:// - writes to MinIO object storage (JVM only, requires MinIO configuration)</li>
  *   <li>stdout:// - writes to standard output</li>
+ *   <li>memory://editor/debug - writes to browser console via callback (WASM only)</li>
  * </ul>
  *
- * <p>Example usage:</p>
+ * <p>Example usage in Josh simulation for WASM/browser:</p>
+ * <pre>
+ * start simulation Example
+ *   debugFiles.organism = "memory://editor/debug"
+ * end simulation
+ * </pre>
+ *
+ * <p>Example usage in Java:</p>
  * <pre>
  * CombinedDebugOutputFacade debugFacade = DebugOutputFacadeBuilder.build(simEntity, factory);
  * debugFacade.start();
@@ -84,11 +92,10 @@ public class DebugOutputFacadeBuilder {
   /**
    * Creates an OutputStreamStrategy from a path string.
    *
-   * <p>Handles stdout:// specially, and delegates to JvmExportFacadeFactory for file:// and
-   * minio://. Other factory types (e.g., SandboxExportFacadeFactory for WASM) do not support
-   * debug file output and will throw an exception.</p>
+   * <p>Handles stdout:// specially, memory:// for sandbox environments (WASM), and delegates
+   * to JvmExportFacadeFactory for file:// and minio://.</p>
    *
-   * @param path The path string (e.g., "file:///tmp/debug.txt", "stdout://")
+   * @param path The path string (e.g., "file:///tmp/debug.txt", "stdout://", "memory://editor/debug")
    * @param exportFactory The export factory to use for creating strategies.
    * @return The appropriate OutputStreamStrategy for the path.
    * @throws IllegalArgumentException if the path scheme is unsupported or factory doesn't support
@@ -104,6 +111,18 @@ public class DebugOutputFacadeBuilder {
 
     ExportTarget target = ExportTargetParser.parse(cleanPath);
 
+    // Handle memory:// protocol for sandbox environments (WASM)
+    if (target.getProtocol().equals("memory")) {
+      if (exportFactory instanceof SandboxExportFacadeFactory sandboxFactory) {
+        return sandboxFactory.createDebugOutputStreamStrategy();
+      }
+      // memory:// in JVM environment - just ignore (no output)
+      throw new UnsupportedOperationException(
+          "memory:// debug output is only supported in sandbox/WASM environments. "
+          + "Use file:// or stdout:// for debug output in JVM environments."
+      );
+    }
+
     // Only JvmExportFacadeFactory supports file-based debug output
     // Other factories (e.g., SandboxExportFacadeFactory for WASM) don't support file I/O
     if (exportFactory instanceof JvmExportFacadeFactory jvmFactory) {
@@ -113,7 +132,7 @@ public class DebugOutputFacadeBuilder {
     // Non-JVM environments don't support debug file output
     throw new UnsupportedOperationException(
         "Debug file output is only supported in JVM environments. "
-        + "Use stdout:// for debug output in other environments, "
+        + "Use memory://editor/debug for WASM, stdout:// for console, "
         + "or remove debugFiles configuration."
     );
   }

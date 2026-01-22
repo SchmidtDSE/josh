@@ -101,7 +101,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values

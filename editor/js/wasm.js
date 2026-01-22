@@ -22,7 +22,7 @@ class WasmLayer {
    */
   constructor() {
     const self = this;
-    self._worker = new Worker("./js/wasm.worker.js");
+    self._worker = new Worker("./js/wasm.worker.js?v=0.0.5");
     self._initialized = false;
     self._datasetBuilder = null;
     self._wireSerializer = new ExternalDataSerializer();
