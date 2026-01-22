@@ -171,35 +171,7 @@ jobs:
             for xml in "$RESULTS_DIR"/*.xml; do
               if [ -f "$xml" ]; then
                 # Extract failed test names and their output
-                python3 - "$xml" >> "$REPORT_FILE" << 'PYEOF'
-import xml.etree.ElementTree as ET
-import sys
-
-xml_path = sys.argv[1]
-try:
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-    for testcase in root.findall('.//testcase'):
-        failure = testcase.find('failure')
-        error = testcase.find('error')
-        if failure is not None or error is not None:
-            name = testcase.get('name', 'unknown')
-            print(f"### `{name}`")
-            print()
-            elem = failure if failure is not None else error
-            message = elem.get('message', '')
-            text = elem.text or ''
-            if message:
-                print(f"**Error:** {message}")
-                print()
-            if text.strip():
-                print("```")
-                print(text.strip()[:2000])
-                print("```")
-            print()
-except Exception as e:
-    pass
-PYEOF
+                python3 .github/scripts/parse_test_failures.py "$xml" >> "$REPORT_FILE"
               fi
             done
           fi
