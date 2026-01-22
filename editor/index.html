@@ -10,7 +10,7 @@
       }
     </style>
     <link href="third_party/tabby-ui.min.css" rel="stylesheet" type="text/css" />
-    <link href="style/style.css?v=0.0.5" rel="stylesheet" type="text/css" />
+    <link href="style/style.css?v=0.0.8" rel="stylesheet" type="text/css" />
   </head>
 
   <body>
@@ -475,6 +475,51 @@ end simulation
                 
               </div>
             </div>
+
+            <div id="debug-panel" class="results-panel">
+              <details id="debug-details">
+                <summary><h3 style="display: inline;">Debug Output</h3></summary>
+                <div id="debug-controls">
+                  <div class="debug-filter-row">
+                    <label for="debug-location-filter">Location:</label>
+                    <span class="sel">
+                      <select id="debug-location-filter" class="debug-filter">
+                        <option value="">All locations</option>
+                      </select>
+                    </span>
+
+                    <label for="debug-step-filter">Step:</label>
+                    <span class="sel">
+                      <select id="debug-step-filter" class="debug-filter">
+                        <option value="">All steps</option>
+                      </select>
+                    </span>
+
+                    <label for="debug-entity-filter">Entity:</label>
+                    <span id="debug-entity-display" class="debug-entity-display">All</span>
+                    <button type="button" id="debug-entity-next" class="debug-entity-btn">Next</button>
+                    <button type="button" id="debug-entity-reset" class="debug-entity-btn secondary">Reset</button>
+
+                    <label for="debug-type-filter">Type:</label>
+                    <span class="sel">
+                      <select id="debug-type-filter" class="debug-filter">
+                        <option value="">All types</option>
+                        <option value="organism">organism</option>
+                        <option value="patch">patch</option>
+                        <option value="agent">agent</option>
+                        <option value="disturbance">disturbance</option>
+                      </select>
+                    </span>
+                  </div>
+                  <div class="debug-stats">
+                    Showing <span id="debug-filtered-count">0</span> of <span id="debug-total-count">0</span> messages
+                  </div>
+                </div>
+                <div id="debug-messages-container">
+                  <div id="debug-messages-list"></div>
+                </div>
+              </details>
+            </div>
           </div>
         </section>
       </main>
@@ -497,23 +542,23 @@ end simulation
     <script type="importmap">
       {
         "imports": {
-          "ai": "./js/ai.js?v=0.0.5",
-          "baselayer": "./js/baselayer.js?v=0.0.5",
-          "config": "./js/config.js?v=0.0.5",
-          "data": "./js/data.js?v=0.0.5",
-          "editor": "./js/editor.js?v=0.0.5",
-          "engine": "./js/engine.js?v=0.0.5",
-          "exporter": "./js/exporter.js?v=0.0.5",
-          "file": "./js/file.js?v=0.0.5",
-          "main": "./js/main.js?v=0.0.5",
-          "model": "./js/model.js?v=0.0.5",
-          "results": "./js/results.js?v=0.0.5",
-          "run": "./js/run.js?v=0.0.5",
-          "summarize": "./js/summarize.js?v=0.0.5",
-          "util": "./js/util.js?v=0.0.5",
-          "viz": "./js/viz.js?v=0.0.5",
-          "wasm": "./js/wasm.js?v=0.0.5",
-          "wire": "./js/wire.js?v=0.0.5"
+          "ai": "./js/ai.js?v=0.0.8",
+          "baselayer": "./js/baselayer.js?v=0.0.8",
+          "config": "./js/config.js?v=0.0.8",
+          "data": "./js/data.js?v=0.0.8",
+          "editor": "./js/editor.js?v=0.0.8",
+          "engine": "./js/engine.js?v=0.0.8",
+          "exporter": "./js/exporter.js?v=0.0.8",
+          "file": "./js/file.js?v=0.0.8",
+          "main": "./js/main.js?v=0.0.8",
+          "model": "./js/model.js?v=0.0.8",
+          "results": "./js/results.js?v=0.0.8",
+          "run": "./js/run.js?v=0.0.8",
+          "summarize": "./js/summarize.js?v=0.0.8",
+          "util": "./js/util.js?v=0.0.8",
+          "viz": "./js/viz.js?v=0.0.8",
+          "wasm": "./js/wasm.js?v=0.0.8",
+          "wire": "./js/wire.js?v=0.0.8"
         }
       }
     </script>
