@@ -179,4 +179,32 @@ public class JshcConfigGetterTest {
     verify(mockInputStrategy).exists("test");
     verify(mockInputStrategy, times(0)).open("test");
   }
+
+  @Test
+  public void testCompoundUnits() throws IOException {
+    // Setup - compound units via quoted string
+    String configContent = "rainfall = 50 \"mm / month\"\nevapRate = 2.5 \"kg / hectare\"";
+    InputStream inputStream = new ByteArrayInputStream(
+        configContent.getBytes(StandardCharsets.UTF_8));
+    when(mockInputStrategy.exists("test.jshc")).thenReturn(true);
+    when(mockInputStrategy.open("test.jshc")).thenReturn(inputStream);
+
+    // Execute
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
+
+    // Verify
+    assertTrue(configOpt.isPresent());
+    Config config = configOpt.get();
+
+    assertNotNull(config.getValue("rainfall"));
+    assertEquals(50.0, config.getValue("rainfall").getAsDouble(), 0.001);
+    assertEquals(Units.of("mm / month"), config.getValue("rainfall").getUnits());
+
+    assertNotNull(config.getValue("evapRate"));
+    assertEquals(2.5, config.getValue("evapRate").getAsDouble(), 0.001);
+    assertEquals(Units.of("kg / hectare"), config.getValue("evapRate").getUnits());
+
+    verify(mockInputStrategy).exists("test.jshc");
+    verify(mockInputStrategy).open("test.jshc");
+  }
 }
