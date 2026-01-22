@@ -3,7 +3,7 @@
 **Branch:** `dev-restore`
 **Base:** `main` (at commit `a6b96f85` - "Bug/inner entities not updating #319")
 **Target:** Merge into `dev`, then `dev` into `main`
-**Last Updated:** January 21, 2026
+**Last Updated:** January 22, 2026
 
 ---
 
@@ -27,6 +27,8 @@
 | #346 | Map/Distribution Expansion | 🔴 High | Engine | Element-wise ops in `RealizedDistribution`, map strategies |
 | #347 | Inner Entity Deduplication | 🟡 Med | Engine | Identity-based dedup in `InnerEntityGetter` (fixes double-unlock) |
 | #348 | Boolean Distribution Units | 🟢 Low | Engine | Small fix in `RealizedDistribution` + test corrections |
+| #351 | Quoted Compound Units in JSHC | 🟢 Low | Additive | Extend quoted compound unit parsing to `.jshc` config files |
+| #352 | Debug Support for Editor | 🟡 Med | Additive + Editor | Wire debug output to joshsim.org web editor with debug panel |
 
 **Risk Legend:**
 - 🔴 **High** = Grammar changes or core value/comparison/distribution logic
@@ -315,6 +317,45 @@ age.init
 - **Modified tests:** Fixed assertions comparing independent random samples
 
 **Validating tests:** `test_stochastic_arithmetic_scalar`, `test_stochastic_sampling_with_replacement`, `test_collections_filter_complex`
+
+---
+
+### PR #351: Quoted Compound Units in JSHC
+
+**Purpose:** Extend quoted compound unit parsing to `.jshc` configuration files
+
+**What was changed:**
+- **Modified:** `JoshConfig.g4` - Grammar now supports quoted strings for units (e.g., `"mm / month"`)
+- **Modified:** `JoshConfigParserVisitor.java` - Handles quoted unit strings in config parsing
+- **New tests:** `JshcConfigGetterTest.java` - Unit tests for quoted compound units
+
+**Example usage:**
+```
+# In example.jshc
+rainfall = 50 "mm / month"
+```
+
+**Validating tests:** `JshcConfigGetterTest`
+
+---
+
+### PR #352: Debug Support for joshsim.org Editor
+
+**Purpose:** Enable debug output functionality in the web-based joshsim.org editor
+
+**What was changed:**
+- **Editor files:** `index.html`, `main.js`, `model.js`, `parse.js`, `results.js`, `wasm.js`, `wasm.worker.js`, `wire.js`, `style.css`
+- **Modified:** `DebugOutputFacadeBuilder.java` - Support for sandbox/browser context
+- **New:** `SandboxExportFacadeFactory.java` - Factory for browser-based export handling
+- **Modified:** `JoshLang.g4` - Minor grammar adjustment
+- **New example:** `examples/guide/hello_debug.josh`
+
+**Features:**
+- Debug panel in editor UI showing entity output
+- Debug messages routed to browser console and UI panel
+- Styled debug output with step/entity context
+
+**Validating tests:** Manual testing via joshsim.org editor
 
 ---
 
