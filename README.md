@@ -212,7 +212,7 @@ The `exportFiles.patch = "memory://editor/patches"` line configures exports to b
 
 For more comprehensive tutorials and guides, visit [https://joshsim.org/guide.html](https://joshsim.org/guide.html).
 
-The Python interface (joshpy) is coming soon but not yet released.
+The Python interface is available as a separate package: [joshpy](https://github.com/SchmidtDSE/joshpy).
 
 ## Developing
 We have options available for different kinds of development workflows.
