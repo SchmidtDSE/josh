@@ -93,8 +93,8 @@ public class DebugOutputFacade {
    * @param x X coordinate of the entity's location.
    * @param y Y coordinate of the entity's location.
    */
-  public void write(String message, long step, String entityType,
-                    String identifier, double x, double y) {
+  public void write(String message, long step, String entityType, String identifier,
+      double x, double y) {
     DebugMessage debugMessage = new DebugMessage(message, step, entityType, identifier, x, y);
     queueService.add(debugMessage);
   }
@@ -102,8 +102,8 @@ public class DebugOutputFacade {
   /**
    * Internal record to hold debug message data for queue processing.
    */
-  private record DebugMessage(String message, long step, String entityType,
-                              String identifier, double x, double y) {}
+  private record DebugMessage(String message, long step, String entityType, String identifier,
+      double x, double y) {}
 
   /**
    * Internal callback that handles writing debug messages to the output stream.
@@ -145,8 +145,14 @@ public class DebugOutputFacade {
       }
 
       DebugMessage msg = (DebugMessage) taskMaybe.get();
-      String formatted = String.format("[Step %d, %s @ %s (%.1f, %.1f)] %s",
-          msg.step(), msg.entityType(), msg.identifier(), msg.x(), msg.y(), msg.message());
+      String formatted = String.format(
+          "[Step %d, %s @ %s (%.1f, %.1f)] %s",
+          msg.step(),
+          msg.entityType(),
+          msg.identifier(),
+          msg.x(),
+          msg.y(),
+          msg.message());
       writer.println(formatted);
     }
 

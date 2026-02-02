@@ -34,6 +34,23 @@ public class PerformanceTracker implements BeforeTestExecutionCallback, AfterTes
   private static final double IMPROVEMENT_THRESHOLD = 0.20;
   private static final double Z_SCORE_THRESHOLD = 2.0;
 
+  private static final String WARNING_TEMPLATE = """
+
+      [WARNING] PERFORMANCE REGRESSION: %s
+         Current: %dms
+         Baseline: %.0fms (+/-%.0fms)
+         Slowdown: %.1f%% (threshold: %.0f%%)
+         Z-score: %.2f (threshold: %.1f)
+      """;
+
+  private static final String IMPROVEMENT_TEMPLATE = """
+
+      [OK] PERFORMANCE IMPROVEMENT: %s
+         Current: %dms
+         Baseline: %.0fms
+         Speedup: %.1f%%
+      """;
+
   @Override
   public void beforeTestExecution(ExtensionContext context) throws Exception {
     context.getStore(ExtensionContext.Namespace.GLOBAL)
@@ -132,24 +149,24 @@ public class PerformanceTracker implements BeforeTestExecutionCallback, AfterTes
 
     if (slowdown > REGRESSION_THRESHOLD || zscore > Z_SCORE_THRESHOLD) {
       System.err.println(String.format(
-          "\n⚠️  PERFORMANCE WARNING: %s\n"
-          + "   Current: %dms\n"
-          + "   Baseline: %.0fms (±%.0fms)\n"
-          + "   Slowdown: %.1f%% (threshold: %.0f%%)\n"
-          + "   Z-score: %.2f (threshold: %.1f)\n",
-          testName, currentMs, baselineMean, stdDev,
-          slowdown * 100, REGRESSION_THRESHOLD * 100, zscore, Z_SCORE_THRESHOLD
-      ));
+          WARNING_TEMPLATE,
+          testName,
+          currentMs,
+          baselineMean,
+          stdDev,
+          slowdown * 100,
+          REGRESSION_THRESHOLD * 100,
+          zscore,
+          Z_SCORE_THRESHOLD));
     }
 
     if (slowdown < -IMPROVEMENT_THRESHOLD && recentRuns.size() >= BASELINE_WINDOW) {
       System.out.println(String.format(
-          "\n✨ PERFORMANCE IMPROVEMENT: %s\n"
-          + "   Current: %dms\n"
-          + "   Baseline: %.0fms\n"
-          + "   Speedup: %.1f%%\n",
-          testName, currentMs, baselineMean, Math.abs(slowdown) * 100
-      ));
+          IMPROVEMENT_TEMPLATE,
+          testName,
+          currentMs,
+          baselineMean,
+          Math.abs(slowdown) * 100));
     }
   }
 }

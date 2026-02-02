@@ -96,8 +96,8 @@ public class CombinedDebugOutputFacade {
    * @param x X coordinate of the entity's location.
    * @param y Y coordinate of the entity's location.
    */
-  public void write(String message, long step, String entityType,
-                    String identifier, double x, double y) {
+  public void write(String message, long step, String entityType, String identifier,
+      double x, double y) {
     DebugOutputFacade facade = facadesByEntityType.get(entityType);
     if (facade != null) {
       facade.write(message, step, entityType, identifier, x, y);

@@ -39,8 +39,8 @@ class TestMetadata {
    * @param issue The related issue number (e.g., "#123")
    * @param description The human-readable test description
    */
-  TestMetadata(String category, String subcategory, String priority,
-               String issue, String description) {
+  TestMetadata(String category, String subcategory, String priority, String issue,
+      String description) {
     this.category = category;
     this.subcategory = subcategory;
     this.priority = priority;
