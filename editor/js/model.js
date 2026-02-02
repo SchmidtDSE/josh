@@ -719,13 +719,61 @@ class DebugMessage {
     self._raw = raw;
   }
 
-  getStep() { return this._step; }
-  getEntityType() { return this._entityType; }
-  getEntityId() { return this._entityId; }
-  getX() { return this._x; }
-  getY() { return this._y; }
-  getContent() { return this._content; }
-  getRaw() { return this._raw; }
+  /**
+   * Get the simulation step when this message was emitted.
+   * @returns {number} The step number.
+   */
+  getStep() {
+    return this._step;
+  }
+
+  /**
+   * Get the entity type that generated this message.
+   * @returns {string} The entity type (e.g., "organism", "patch").
+   */
+  getEntityType() {
+    return this._entityType;
+  }
+
+  /**
+   * Get the unique identifier of the entity.
+   * @returns {string} The entity ID.
+   */
+  getEntityId() {
+    return this._entityId;
+  }
+
+  /**
+   * Get the x coordinate of the entity.
+   * @returns {number} The x coordinate.
+   */
+  getX() {
+    return this._x;
+  }
+
+  /**
+   * Get the y coordinate of the entity.
+   * @returns {number} The y coordinate.
+   */
+  getY() {
+    return this._y;
+  }
+
+  /**
+   * Get the debug message content.
+   * @returns {string} The message content.
+   */
+  getContent() {
+    return this._content;
+  }
+
+  /**
+   * Get the raw unparsed message string.
+   * @returns {string} The raw message.
+   */
+  getRaw() {
+    return this._raw;
+  }
 
   /**
    * Get a location key for filtering by patch.
@@ -868,14 +916,17 @@ class DebugMessageStore {
    * @param {?string} entityType - Entity type to filter by, or null for all.
    * @returns {Array<DebugMessage>} Filtered messages.
    */
-  filter(location, step, entityId, entityType) {
+  getFiltered(location, step, entityId, entityType) {
     const self = this;
+
+    const getIsMatched = (filterVal, actual) => filterVal === null || filterVal === actual;
+
     return self._messages.filter((msg) => {
-      if (location !== null && msg.getLocationKey() !== location) return false;
-      if (step !== null && msg.getStep() !== step) return false;
-      if (entityId !== null && msg.getEntityId() !== entityId) return false;
-      if (entityType !== null && msg.getEntityType() !== entityType) return false;
-      return true;
+      let isMatched = getIsMatched(location, msg.getLocationKey());
+      isMatched = isMatched && getIsMatched(step, msg.getStep());
+      isMatched = isMatched && getIsMatched(entityId, msg.getEntityId());
+      isMatched = isMatched && getIsMatched(entityType, msg.getEntityType());
+      return isMatched;
     });
   }
 }
