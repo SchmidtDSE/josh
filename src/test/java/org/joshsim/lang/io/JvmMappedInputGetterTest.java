@@ -142,4 +142,57 @@ class JvmMappedInputGetterTest {
     assertFalse(getter.exists("modified.txt"));
     assertEquals(1, getter.getFileMapping().size());
   }
+
+  @Test
+  void testOpenWithExtensionFallback() throws Exception {
+    // Arrange - map without extension
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("editor", TEST_FILE_PATH_1);  // No .jshc extension
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    // Act - lookup with extension (simulates config.editor.maxGrowth lookup)
+    InputStream inputStream = getter.open("editor.jshc");
+
+    // Assert - should find it by falling back to "editor"
+    String result = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    assertEquals(TEST_CONTENT_1, result);
+  }
+
+  @Test
+  void testExistsWithExtensionFallback() {
+    // Arrange - map without extension
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("editor", TEST_FILE_PATH_1);  // No .jshc extension
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    // Act & Assert - lookup with extension should work via fallback
+    assertTrue(getter.exists("editor.jshc"));
+  }
+
+  @Test
+  void testExactMatchTakesPrecedenceOverFallback() throws Exception {
+    // Arrange - map both with and without extension
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("editor", TEST_FILE_PATH_1);        // Without extension
+    fileMapping.put("editor.jshc", TEST_FILE_PATH_2);   // With extension
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    // Act - lookup with extension
+    InputStream inputStream = getter.open("editor.jshc");
+
+    // Assert - should use exact match (test file 2), not fallback
+    String result = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    assertEquals(TEST_CONTENT_2, result);
+  }
+
+  @Test
+  void testFallbackOnlyWorksWhenLookupHasExtension() {
+    // Arrange - map with extension
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("editor.jshc", TEST_FILE_PATH_1);
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    // Act & Assert - lookup without extension should NOT use fallback
+    assertFalse(getter.exists("editor"));
+  }
 }

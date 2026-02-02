@@ -2,7 +2,7 @@
 
 This document tracks language design decisions that require discussion and consensus. These are not bugs, but rather places where the language specification is ambiguous or where implementation choices affect user expectations.
 
-**Last Updated:** January 21, 2026
+**Last Updated:** January 29, 2026
 
 ---
 
@@ -18,6 +18,7 @@ This document tracks language design decisions that require discussion and conse
 | 6 | Quadratic Mapping Behavior | Resolved (PR #346) | 0 |
 | 7 | Sigmoid Mapping Steepness | Resolved (PR #346) | 0 |
 | 8 | Entity Removal Syntax | Resolved (Design Doc) | 0 |
+| 9 | Underscore Support in Identifiers | Resolved (Jan 2026) | 0 |
 
 **Current Test Status:** 111 passing / 6 failing (all 6 failures are design decisions listed above)
 
@@ -391,6 +392,71 @@ A test (`test_collections_remove`) incorrectly assumed a `remove` statement exis
 #### Future Consideration
 
 A dedicated `remove` operation could be valuable for performance in high-entity-count simulations (bacteria, particles) where immediate cleanup would prevent memory bloat. This would be a future enhancement, not a current design choice.
+
+---
+
+### 9. Underscore Support in Identifiers
+
+**Status:** Resolved - Underscores Allowed
+**Resolved in:** January 2026 (Grammar Update)
+
+#### Decision Made
+
+Josh identifiers support underscores in addition to letters and digits. Both `camelCase` and `snake_case` naming conventions are valid:
+
+```josh
+# snake_case style
+start organism MyTree
+  tree_height.init = 0 meters
+  tree_height.step = prior.tree_height + 1 meters
+
+  age_years.init = 0 year
+  age_years.step = prior.age_years + 1 year
+end organism
+
+# camelCase style (also valid)
+start organism MyTree
+  treeHeight.init = 0 meters
+  ageYears.init = 0 year
+end organism
+
+# Config files also support underscores
+config my_config.max_growth  # Valid
+config myConfig.maxGrowth    # Also valid
+```
+
+#### Grammar Changes
+
+Updated two ANTLR grammar files:
+
+**JoshLang.g4** (line 98):
+```antlr
+IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;  // Was: [A-Za-z][A-Za-z0-9]*
+```
+
+**JoshConfig.g4** (line 38):
+```antlr
+IDENTIFIER_ : [A-Za-z/][A-Za-z0-9/_]* ;  // Was: [A-Za-z/][A-Za-z0-9/]*
+```
+
+#### Why Allow Underscores?
+
+Originally, Josh only supported camelCase identifiers (`maxGrowth`, `treeHeight`). This restriction was lifted to:
+
+1. **Support both conventions**: Allow users to choose their preferred naming style
+2. **Interoperability**: Match conventions from data sources (CSV columns, NetCDF variables often use snake_case)
+3. **Readability**: Some users find `max_growth` more readable than `maxGrowth`
+4. **Community standards**: Many scientific computing languages (Python, R, Julia) commonly use underscores
+
+#### Constraints
+
+Identifiers must still:
+- Start with a letter (A-Z, a-z)
+- Contain only letters, digits, and underscores
+- Not start with an underscore (`_invalid` is still rejected)
+- Not be a reserved keyword
+
+Both styles can be mixed within a single program, though consistency within a project is recommended.
 
 ---
 
