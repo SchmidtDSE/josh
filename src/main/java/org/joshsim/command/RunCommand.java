@@ -427,7 +427,7 @@ public class RunCommand implements Callable<Integer> {
 
     // Report overall success
     output.printInfo("");
-    output.printInfo("✓ All simulations completed successfully!");
+    output.printInfo("[OK] All simulations completed successfully!");
     output.printInfo("  Total simulations run: " + totalSimulationCount);
     output.printInfo("  Job combinations: " + jobs.size());
     output.printInfo("  Replicates per job: " + replicates);
