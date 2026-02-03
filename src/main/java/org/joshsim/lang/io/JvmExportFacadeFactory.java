@@ -56,7 +56,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param minioOptions The MinIO configuration options (nullable).
    */
   public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
-                                MinioOptions minioOptions) {
+      MinioOptions minioOptions) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
@@ -93,8 +93,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param minioOptions The MinIO configuration options (nullable).
    */
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
-                                TemplateStringRenderer templateRenderer,
-                                MinioOptions minioOptions) {
+      TemplateStringRenderer templateRenderer, MinioOptions minioOptions) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
@@ -225,7 +224,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @throws IllegalArgumentException if protocol is unsupported or MinIO is not configured
    */
   private OutputStreamStrategy createOutputStreamStrategy(ExportTarget target,
-                                                           boolean appendMode) {
+      boolean appendMode) {
     String protocol = target.getProtocol();
 
     if (protocol.isEmpty() || protocol.equals("file")) {
@@ -309,7 +308,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @return CsvExportFacade for consolidated export
    */
   private ExportFacade buildConsolidatedCsv(ExportTarget target,
-                                            Optional<Iterable<String>> header) {
+      Optional<Iterable<String>> header) {
     OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target, true);
 
     if (header.isPresent()) {
@@ -327,7 +326,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @return ParameterizedCsvExportFacade for multi-file export
    */
   private ExportFacade buildParameterizedCsv(ExportTarget target,
-                                             Optional<Iterable<String>> header) {
+      Optional<Iterable<String>> header) {
     // Pass factory instance directly
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(
         target,
@@ -373,7 +372,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @return NetcdfExportFacade for consolidated export
    */
   private ExportFacade buildConsolidatedNetcdf(ExportTarget target,
-                                               Optional<Iterable<String>> header) {
+      Optional<Iterable<String>> header) {
     OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target);
 
     List<String> variablesList = new ArrayList<>();
@@ -393,7 +392,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @return ParameterizedNetcdfExportFacade for multi-file export
    */
   private ExportFacade buildParameterizedNetcdf(ExportTarget target,
-                                                Optional<Iterable<String>> header) {
+      Optional<Iterable<String>> header) {
     // Pass factory instance directly
     ReplicateOutputStreamGenerator streamGenerator = new ReplicateOutputStreamGenerator(
         target,
