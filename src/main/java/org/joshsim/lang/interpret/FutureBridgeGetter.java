@@ -92,7 +92,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   /**
    * Sets the platform-specific input/output layer for this bridge getter.
    *
-   * @param inputOutputLayer The input/output layer to be set. Provides platform-specific
+   * @param newInputOutputLayer The input/output layer to be set. Provides platform-specific
    *     functionality for input and output operations.
    */
   public void setInputOutputLayer(InputOutputLayer newInputOutputLayer) {
@@ -105,7 +105,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   /**
    * Sets the debug output facade for debug output.
    *
-   * @param debugOutputFacade The debug output facade to use for debug() function calls.
+   * @param newDebugOutputFacade The debug output facade to use for debug() function calls.
    */
   @Override
   public void setDebugOutputFacade(CombinedDebugOutputFacade newDebugOutputFacade) {
