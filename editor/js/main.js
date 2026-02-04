@@ -210,9 +210,9 @@ class MainPresenter {
     self._runPresenter.showButtons();
 
     // Get debug store if using WASM backend
-    const debugStore = (self._currentEngineBackend && self._currentEngineBackend.getType() === "wasm")
-      ? self._wasmLayer.getDebugStore()
-      : null;
+    const isWasm = self._currentEngineBackend
+        && self._currentEngineBackend.getType() === "wasm";
+    const debugStore = isWasm ? self._wasmLayer.getDebugStore() : null;
 
     self._resultsPresenter.onComplete(self._metadata, self._replicateResults, debugStore);
   }

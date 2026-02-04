@@ -1,4 +1,5 @@
 #!/bin/bash
+# License: BSD-3-Clause
 
 apt-get update && \
 apt-get install -y wget unzip && \

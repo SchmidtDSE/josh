@@ -62,7 +62,7 @@ public class DebugOutputFacadeBuilder {
    * @return A CombinedDebugOutputFacade configured based on the entity's attributes.
    */
   public static CombinedDebugOutputFacade build(MutableEntity simEntity,
-                                                 ExportFacadeFactory exportFactory) {
+      ExportFacadeFactory exportFactory) {
     Map<String, DebugOutputFacade> facades = new HashMap<>();
 
     simEntity.startSubstep("constant");
@@ -102,7 +102,7 @@ public class DebugOutputFacadeBuilder {
    *     debug output.
    */
   private static OutputStreamStrategy createStrategyFromPath(String path,
-                                                              ExportFacadeFactory exportFactory) {
+      ExportFacadeFactory exportFactory) {
     String cleanPath = path.replaceAll("\"", "");
 
     if (cleanPath.startsWith("stdout://") || cleanPath.equals("stdout")) {

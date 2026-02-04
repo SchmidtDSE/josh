@@ -708,7 +708,7 @@ class DebugPresenter {
     const entityType = self._typeFilter.value || null;
 
     // Get messages matching current filters (without entity filter)
-    const filtered = self._debugStore.filter(location, step, null, entityType);
+    const filtered = self._debugStore.getFiltered(location, step, null, entityType);
 
     // Extract unique entity IDs from filtered messages
     const entityIdSet = new Set();
@@ -837,7 +837,7 @@ class DebugPresenter {
     const entityId = self._getCurrentEntityId();
     const entityType = self._typeFilter.value || null;
 
-    const filtered = self._debugStore.filter(location, step, entityId, entityType);
+    const filtered = self._debugStore.getFiltered(location, step, entityId, entityType);
     const total = self._debugStore.getAll().length;
 
     self._filteredCount.textContent = filtered.length;

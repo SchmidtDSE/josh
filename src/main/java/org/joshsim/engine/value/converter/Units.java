@@ -190,7 +190,7 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
-    String cacheKey = this.toString() + "\t*\t" + other.toString();
+    String cacheKey = toString() + "\t*\t" + other.toString();
 
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {
@@ -231,7 +231,7 @@ public class Units {
    * @return a new Units instance representing the division of the current and other units.
    */
   public Units divide(Units other) {
-    String cacheKey = this.toString() + "\t/\t" + other.toString();
+    String cacheKey = toString() + "\t/\t" + other.toString();
 
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {

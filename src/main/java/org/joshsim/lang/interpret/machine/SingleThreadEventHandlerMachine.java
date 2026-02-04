@@ -876,7 +876,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public boolean isEnded() {
-    return this.isEnded;
+    return isEnded;
   }
 
   @Override

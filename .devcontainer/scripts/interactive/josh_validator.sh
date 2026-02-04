@@ -1,4 +1,5 @@
 #!/bin/bash
+# License: BSD-3-Clause
 
 # Simple CLI interface for validating JOSH model configuration files
 # Our docker build adds this to PATH, so it can be run from anywhere!

@@ -97,8 +97,9 @@ public class LocalScope implements Scope {
    */
   public void defineConstantAllowShadowing(String name, EngineValue value) {
     if (localValues.containsKey(name)) {
-      String message =
-          String.format("The variable %s already exists in this local scope.", name);
+      String message = String.format(
+          "The variable %s already exists in this local scope.",
+          name);
       throw new RuntimeException(message);
     }
 

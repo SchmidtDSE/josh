@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# License: BSD-3-Clause
 """Parse JUnit XML test results and output failure details as markdown."""
 
 import xml.etree.ElementTree as ET
