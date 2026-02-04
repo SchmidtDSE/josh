@@ -62,7 +62,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (program.isPresent()) {
       throw new IllegalStateException("Program already set.");
     }
-    this.program = Optional.of(newProgram);
+    program = Optional.of(newProgram);
   }
 
   /**
@@ -74,7 +74,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (geometryFactory.isPresent()) {
       throw new IllegalStateException("Geometry factory already set.");
     }
-    this.geometryFactory = Optional.of(newFactory);
+    geometryFactory = Optional.of(newFactory);
   }
 
   /**
@@ -86,7 +86,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (simulationName.isPresent()) {
       throw new IllegalStateException("Simulation name already set.");
     }
-    this.simulationName = Optional.of(newName);
+    simulationName = Optional.of(newName);
   }
 
   /**
