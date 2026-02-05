@@ -95,7 +95,7 @@ WITHOUT_: 'without';
 XOR_: 'xor';
 
 // Dynamic
-IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
+IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 
 // Whitespace
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);

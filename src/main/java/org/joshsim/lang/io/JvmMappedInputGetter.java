@@ -43,11 +43,24 @@ public class JvmMappedInputGetter extends JvmInputGetter {
 
   @Override
   protected boolean checkNamePathExists(String identifier) {
-    return fileMapping.containsKey(identifier);
+    if (fileMapping.containsKey(identifier)) {
+      return true;
+    }
+    // Also try without extension if the identifier has one
+    if (identifier.contains(".")) {
+      String nameWithoutExt = identifier.substring(0, identifier.lastIndexOf('.'));
+      return fileMapping.containsKey(nameWithoutExt);
+    }
+    return false;
   }
 
   /**
    * Load a file from the mapped files.
+   *
+   * <p>This method first tries to find the file using the exact name provided. If not found
+   * and the name contains an extension, it also tries looking up the name without the extension.
+   * This allows flexibility in how files are mapped via the --data flag, particularly for
+   * config files where the .jshc extension is automatically appended during lookup.</p>
    *
    * @param name The name of the file to load from the mapping.
    * @return The input stream for the file at the mapped path.
@@ -55,6 +68,13 @@ public class JvmMappedInputGetter extends JvmInputGetter {
    */
   private InputStream loadFromMappedFiles(String name) {
     String actualPath = fileMapping.get(name);
+
+    // If not found and name has extension, also try without extension
+    if (actualPath == null && name.contains(".")) {
+      String nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
+      actualPath = fileMapping.get(nameWithoutExt);
+    }
+
     if (actualPath == null) {
       throw new RuntimeException("File not found in mapped files: " + name);
     }

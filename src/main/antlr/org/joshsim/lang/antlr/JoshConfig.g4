@@ -35,7 +35,7 @@ PERCENT_ : '%' ;
 
 STR_ : '"' ~["]* '"' ;
 
-IDENTIFIER_ : [A-Za-z/][A-Za-z0-9/]* ;
+IDENTIFIER_ : [A-Za-z/][A-Za-z0-9/_]* ;
 
 NEWLINE_ : [\r\n]+ -> skip ;
 
