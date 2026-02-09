@@ -150,59 +150,6 @@ java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTION
 **Options:**
 - `--json`: Output in JSON format (default: true)
 
-**Output (JSON format):**
-```json
-{
-  "simulation": "Main",
-  "exportFiles": {
-    "patch": {
-      "raw": "\"file:///tmp/output.csv\"",
-      "protocol": "file",
-      "host": "",
-      "path": "/tmp/output.csv",
-      "fileType": "csv"
-    },
-    "meta": null,
-    "entity": null
-  },
-  "debugFiles": {
-    "organism": null,
-    "patch": null,
-    "agent": null,
-    "disturbance": null
-  }
-}
-```
-
-**Supported Export Types:**
-- `exportFiles.patch`: Patch-level simulation data
-- `exportFiles.meta`: Simulation metadata
-- `exportFiles.entity`: Sub-patch entities (organisms, agents, etc.)
-
-**Supported Debug Types:**
-- `debugFiles.organism`: Debug messages from organism entities
-- `debugFiles.patch`: Debug messages from patch entities
-- `debugFiles.agent`: Debug messages from agent entities
-- `debugFiles.disturbance`: Debug messages from disturbance entities
-
-**Notes:**
-- Template variables are returned as-is (not resolved), including:
-  - `{replicate}` - replicate number
-  - `{step}` - simulation step number
-  - `{variable}` - export variable name
-  - `{timestamp}` - execution timestamp
-  - Custom job parameters (e.g., `{scenario}`) from job configuration
-- Each path is parsed into components: protocol, host, path, and fileType
-- Returns `null` for unconfigured export/debug types
-
-**Exit Codes:**
-- `0`: Success
-- `1`: File not found
-- `2`: File read error
-- `3`: Parse error
-- `4`: Simulation not found
-- `5`: Export extraction error
-
 #### `server` - HTTP Server Mode
 Starts Josh as an HTTP server for web-based simulation execution and API access.
 
