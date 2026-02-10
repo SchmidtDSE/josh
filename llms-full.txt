@@ -136,6 +136,20 @@ java -jar joshsim-fat.jar inspectJshd <file.jshd> <variable> <timestep> <x> <y>
 - `<x>`: X coordinate (grid space)
 - `<y>`: Y coordinate (grid space)
 
+#### `inspect-exports` - Export Path Extraction
+Parses a Josh script and extracts the configured export and debug file paths from a simulation without running it. Useful for build systems, CI/CD pipelines, and tooling that needs to know where simulation outputs will be written.
+
+```bash
+java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to inspect
+- `<SimulationName>`: Name of simulation to extract paths from
+
+**Options:**
+- `--json`: Output in JSON format (default: true)
+
 #### `server` - HTTP Server Mode
 Starts Josh as an HTTP server for web-based simulation execution and API access.
 
