@@ -99,7 +99,7 @@ public class InspectExportsCommand implements Callable<Integer> {
       Optional<EngineValue> debugDisturbance =
           simEntity.getAttributeValue("debugFiles.disturbance");
 
-      simEntity.endSubstep();
+      simEntityRaw.endSubstep();
 
       if (jsonOutput) {
         outputJson(patchExport, metaExport, entityExport,
