@@ -214,7 +214,7 @@ public class RemoteResponseHandler {
     }
 
     // Persist using Component 2 NamedMap write capability
-    exportFacade.write(namedMap, currentStep.get());
+    exportFacade.write(namedMap, currentStep.get(), replicateNumber);
   }
 
   /**
