@@ -10,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -151,5 +153,53 @@ class JvmExportFacadeFactoryStrategyTest {
     String template = "static_file.csv";
     String processedPath = factory.getPath(template);
     assertEquals("static_file.csv", processedPath);
+  }
+
+  @Test
+  void testAppendModeOffOverwritesExistingFile() throws IOException {
+    // appendMode=false (runRemote scenario) should overwrite, not append
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(
+        1,
+        (TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null,
+        false);
+
+    // Create a pre-existing CSV file with stale data
+    Path csvFile = tempDir.resolve("output.csv");
+    Files.writeString(csvFile, "old,stale,data\n1,2,3\n");
+
+    ExportTarget target = new ExportTarget("", csvFile.toString());
+    ExportFacade facade = factory.build(target);
+    facade.start();
+    facade.join();
+
+    // File should have been overwritten (truncated), not appended to
+    String contents = Files.readString(csvFile);
+    assertTrue(!contents.contains("old,stale,data"),
+        "File should be overwritten, not appended to. Contents: " + contents);
+  }
+
+  @Test
+  void testAppendModeOnAppendsToFile() throws IOException {
+    // appendMode=true (run scenario) should append
+    JvmExportFacadeFactory factory = new JvmExportFacadeFactory(
+        1,
+        (TemplateStringRenderer) null,
+        (org.joshsim.util.MinioOptions) null,
+        true);
+
+    // Create a pre-existing CSV file
+    Path csvFile = tempDir.resolve("output.csv");
+    Files.writeString(csvFile, "old,stale,data\n1,2,3\n");
+
+    ExportTarget target = new ExportTarget("", csvFile.toString());
+    ExportFacade facade = factory.build(target);
+    facade.start();
+    facade.join();
+
+    // File should still contain the original data (append mode)
+    String contents = Files.readString(csvFile);
+    assertTrue(contents.contains("old,stale,data"),
+        "File should be appended to, preserving old data. Contents: " + contents);
   }
 }
