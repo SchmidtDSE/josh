@@ -36,6 +36,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private final Optional<BigDecimal> width;
   private final TemplateStringRenderer templateRenderer;
   private final MinioOptions minioOptions;
+  private final boolean appendMode;
   private TemplateResult lastTemplateResult;
 
   /**
@@ -47,15 +48,32 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param replicate The replicate number to use in filenames.
    * @param templateRenderer The template renderer for processing export path templates (nullable).
    * @param minioOptions The MinIO configuration options (nullable).
+   * @param appendMode If true, open consolidated output files in append mode.
    */
   public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
-                                MinioOptions minioOptions) {
+                                MinioOptions minioOptions, boolean appendMode) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
+    this.appendMode = appendMode;
     serializeStrategy = new MapSerializeStrategy();
     extents = Optional.empty();
     width = Optional.empty();
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with only grid-space (no append mode).
+   *
+   * <p>Creates a new export facade factory which does not try to add latitude and longitude to
+   * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
+   */
+  public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions) {
+    this(replicate, templateRenderer, minioOptions, false);
   }
 
   /**
@@ -69,7 +87,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   @Deprecated
   public JvmExportFacadeFactory(int replicate) {
-    this(replicate, (TemplateStringRenderer) null, (MinioOptions) null);
+    this(replicate, (TemplateStringRenderer) null, (MinioOptions) null, false);
   }
 
   /**
@@ -83,17 +101,37 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    * @param width The width and height of each patch in meters.
    * @param templateRenderer The template renderer for processing export path templates (nullable).
    * @param minioOptions The MinIO configuration options (nullable).
+   * @param appendMode If true, open consolidated output files in append mode.
    */
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
                                 TemplateStringRenderer templateRenderer,
-                                MinioOptions minioOptions) {
+                                MinioOptions minioOptions, boolean appendMode) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
+    this.appendMode = appendMode;
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
     MapSerializeStrategy inner = new MapSerializeStrategy();
     serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner);
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with access to Earth-space (no append mode).
+   *
+   * <p>Creates a new export facade factory which adds latitude and longitude to returned records,
+   * allowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space.
+   * @param width The width and height of each patch in meters.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
+   */
+  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                                TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions) {
+    this(replicate, extents, width, templateRenderer, minioOptions, false);
   }
 
   /**
@@ -109,7 +147,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   @Deprecated
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width) {
-    this(replicate, extents, width, null, null);
+    this(replicate, extents, width, null, null, false);
   }
 
   @Override
@@ -299,7 +337,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   private ExportFacade buildConsolidatedCsv(ExportTarget target,
                                             Optional<Iterable<String>> header) {
-    OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target, true);
+    OutputStreamStrategy outputStreamStrategy = createOutputStreamStrategy(target, appendMode);
 
     if (header.isPresent()) {
       return new CsvExportFacade(outputStreamStrategy, serializeStrategy, header.get());
