@@ -363,6 +363,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(true)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -370,6 +371,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(true)
               .build();
         }
 
