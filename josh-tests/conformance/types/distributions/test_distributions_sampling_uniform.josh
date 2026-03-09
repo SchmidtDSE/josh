@@ -1,0 +1,97 @@
+# @category: types
+# @subcategory: distributions
+# @priority: high
+# @description: Test sampling from uniform distribution with statistical validation
+
+start simulation DistributionsSamplingUniform
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create large sample for statistical tests
+  Trees.init = create 500 count of Tree
+
+  # Test uniform distribution properties
+  # Heights from uniform(0, 100)
+  # Theoretical mean = (a+b)/2 = 50
+  # Theoretical std = (b-a)/sqrt(12) ≈ 28.87
+  meanHeight.init = mean(Trees.height)
+  stdHeight.init = std(Trees.height)
+  minHeight.init = min(Trees.height)
+  maxHeight.init = max(Trees.height)
+
+  # Test mean is approximately 50 (within 5% tolerance)
+  assert.meanLower.init = meanHeight > 47.5 m
+  assert.meanUpper.init = meanHeight < 52.5 m
+
+  # Test std is approximately 28.87 (within 10% tolerance)
+  assert.stdLower.init = stdHeight > 26 m
+  assert.stdUpper.init = stdHeight < 32 m
+
+  # Test min is near 0 (within 2% of range)
+  assert.minReasonable.init = minHeight < 2 m
+
+  # Test max is near 100 (within 2% of range)
+  assert.maxReasonable.init = maxHeight > 98 m
+
+  # Test values are within expected range
+  assert.minInRange.init = minHeight >= 0 m
+  assert.maxInRange.init = maxHeight <= 100 m
+
+  # Test uniform distribution with different range
+  Plants.init = create 500 count of Plant
+
+  # Heights from uniform(50, 150)
+  # Theoretical mean = 100, std ≈ 28.87
+  plantMean.init = mean(Plants.height)
+  plantStd.init = std(Plants.height)
+  plantMin.init = min(Plants.height)
+  plantMax.init = max(Plants.height)
+
+  # Test mean is approximately 100 (within 5% tolerance)
+  assert.plantMeanLower.init = plantMean > 95 m
+  assert.plantMeanUpper.init = plantMean < 105 m
+
+  # Test std is approximately 28.87 (within 10% tolerance)
+  assert.plantStdLower.init = plantStd > 26 m
+  assert.plantStdUpper.init = plantStd < 32 m
+
+  # Test range boundaries
+  assert.plantMinReasonable.init = plantMin < 52 m
+  assert.plantMaxReasonable.init = plantMax > 148 m
+
+end patch
+
+start organism Tree
+
+  # Sample from uniform(0, 100)
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Sample from uniform(50, 150)
+  height.init = sample uniform from 50 m to 150 m
+  height.step = prior.height
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit

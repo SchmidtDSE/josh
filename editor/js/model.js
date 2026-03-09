@@ -4,6 +4,8 @@
  * @license BSD-3-Clause
  */
 
+import {DebugMessage, DebugMessageStore} from "./debug.js";
+
 
 /**
  * Record of a simulation's results by target type for a single replicate.
@@ -695,6 +697,8 @@ class SimulationResultBuilder {
 
 
 export {
+  DebugMessage,
+  DebugMessageStore,
   OutputDatum,
   SimulationMetadata,
   SimulationResult,

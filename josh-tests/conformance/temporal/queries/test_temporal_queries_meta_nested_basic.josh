@@ -1,0 +1,213 @@
+# @category: temporal
+# @subcategory: queries
+# @priority: high
+# @description: Test basic nested attribute access through meta keyword (single and multi-level nesting)
+
+start simulation TemporalQueriesMetaNestedBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+
+  # Run for 2 steps
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Single-level nested attributes (spec-compliant nested structure)
+  params.threshold = 10 count
+  params.temperature = 25 celsius
+  params.rate = 0.5 rate
+
+  # Multi-level nested attributes (2 levels)
+  params.params.maxValue = 100 count
+  params.params.minValue = 1 count
+  params.params.growth = 1.5 rate
+
+  # Multi-level nested attributes (3 levels)
+  params.params.limits.upper = 200 count
+  params.params.limits.lower = 0 count
+
+  # Alternative nested structure
+  settings.enabled = true
+  settings.multiplier = 2.0 multiplier
+
+end simulation
+
+start patch Default
+
+  # Create organism at init
+  Tree.init = create Tree
+
+  # Test single-level nested attribute access
+  recordedThreshold.init = 0 count
+  recordedThreshold.step = meta.params.threshold
+
+  recordedTemperature.init = 0 celsius
+  recordedTemperature.step = meta.params.temperature
+
+  recordedRate.init = 0 rate
+  recordedRate.step = meta.params.rate
+
+  # Test multi-level nested attribute access (2 levels)
+  recordedMaxValue.init = 0 count
+  recordedMaxValue.step = meta.params.params.maxValue
+
+  recordedMinValue.init = 0 count
+  recordedMinValue.step = meta.params.params.minValue
+
+  recordedGrowth.init = 0 rate
+  recordedGrowth.step = meta.params.params.growth
+
+  # Test multi-level nested attribute access (3 levels)
+  recordedUpperLimit.init = 0 count
+  recordedUpperLimit.step = meta.params.params.limits.upper
+
+  recordedLowerLimit.init = 0 count
+  recordedLowerLimit.step = meta.params.params.limits.lower
+
+  # Test alternative nested structure
+  recordedEnabled.init = false
+  recordedEnabled.step = meta.settings.enabled
+
+  recordedMultiplier.init = 0 multiplier
+  recordedMultiplier.step = meta.settings.multiplier
+
+  # Use nested attributes in calculations
+  calculatedValue.init = 0 count
+  calculatedValue.step = meta.params.threshold + meta.params.params.maxValue
+
+  scaledValue.init = 0 count
+  scaledValue.step = meta.params.params.minValue * meta.settings.multiplier
+
+  # Assert single-level nested attributes are accessible
+  assert.thresholdStep1.step:if(meta.stepCount == 1 count) = current.recordedThreshold == 10 count
+  assert.thresholdStep2.step:if(meta.stepCount == 2 count) = current.recordedThreshold == 10 count
+
+  assert.temperatureStep1.step:if(meta.stepCount == 1 count) = current.recordedTemperature == 25 celsius
+  assert.temperatureStep2.step:if(meta.stepCount == 2 count) = current.recordedTemperature == 25 celsius
+
+  assert.rateStep1.step:if(meta.stepCount == 1 count) = current.recordedRate == 0.5 rate
+  assert.rateStep2.step:if(meta.stepCount == 2 count) = current.recordedRate == 0.5 rate
+
+  # Assert multi-level nested attributes are accessible (2 levels)
+  assert.maxValueStep1.step:if(meta.stepCount == 1 count) = current.recordedMaxValue == 100 count
+  assert.maxValueStep2.step:if(meta.stepCount == 2 count) = current.recordedMaxValue == 100 count
+
+  assert.minValueStep1.step:if(meta.stepCount == 1 count) = current.recordedMinValue == 1 count
+  assert.minValueStep2.step:if(meta.stepCount == 2 count) = current.recordedMinValue == 1 count
+
+  assert.growthStep1.step:if(meta.stepCount == 1 count) = current.recordedGrowth == 1.5 rate
+  assert.growthStep2.step:if(meta.stepCount == 2 count) = current.recordedGrowth == 1.5 rate
+
+  # Assert multi-level nested attributes are accessible (3 levels)
+  assert.upperLimitStep1.step:if(meta.stepCount == 1 count) = current.recordedUpperLimit == 200 count
+  assert.upperLimitStep2.step:if(meta.stepCount == 2 count) = current.recordedUpperLimit == 200 count
+
+  assert.lowerLimitStep1.step:if(meta.stepCount == 1 count) = current.recordedLowerLimit == 0 count
+  assert.lowerLimitStep2.step:if(meta.stepCount == 2 count) = current.recordedLowerLimit == 0 count
+
+  # Assert alternative nested structure attributes are accessible
+  assert.enabledStep1.step:if(meta.stepCount == 1 count) = current.recordedEnabled == true
+  assert.enabledStep2.step:if(meta.stepCount == 2 count) = current.recordedEnabled == true
+
+  assert.multiplierStep1.step:if(meta.stepCount == 1 count) = current.recordedMultiplier == 2.0 multiplier
+  assert.multiplierStep2.step:if(meta.stepCount == 2 count) = current.recordedMultiplier == 2.0 multiplier
+
+  # Assert calculations using nested attributes work correctly
+  assert.calculatedValueStep1.step:if(meta.stepCount == 1 count) = current.calculatedValue == 110 count
+  assert.calculatedValueStep2.step:if(meta.stepCount == 2 count) = current.calculatedValue == 110 count
+
+  assert.scaledValueStep1.step:if(meta.stepCount == 1 count) = current.scaledValue == 2 count
+  assert.scaledValueStep2.step:if(meta.stepCount == 2 count) = current.scaledValue == 2 count
+
+  # Assert direct access in expressions works
+  assert.directAccessThreshold.step = meta.params.threshold == 10 count
+  assert.directAccessMaxValue.step = meta.params.params.maxValue == 100 count
+  assert.directAccessUpperLimit.step = meta.params.params.limits.upper == 200 count
+
+end patch
+
+start organism Tree
+
+  # Age tracks timesteps
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  # Access single-level nested attributes from organism
+  thresholdValue.init = meta.params.threshold
+  thresholdValue.step = prior.thresholdValue
+
+  # Access multi-level nested attributes from organism (2 levels)
+  maxValue.init = meta.params.params.maxValue
+  maxValue.step = prior.maxValue
+
+  # Access multi-level nested attributes from organism (3 levels)
+  upperLimit.init = meta.params.params.limits.upper
+  upperLimit.step = prior.upperLimit
+
+  # Use nested attributes in organism calculations
+  scaledAge.init = 0 count
+  scaledAge.step = current.age * meta.settings.multiplier
+
+  # Test nested attributes in conditional expressions
+  aboveThreshold.init = false
+  aboveThreshold.step = current.age > meta.params.threshold
+
+  withinBounds.init = true
+  withinBounds.step = current.age >= meta.params.params.limits.lower and current.age <= meta.params.params.limits.upper
+
+  # Assert organism can access single-level nested attributes
+  assert.thresholdValueInit.init = current.thresholdValue == 10 count
+  assert.thresholdValueStep1.step:if(meta.stepCount == 1 count) = current.thresholdValue == 10 count
+  assert.thresholdValueStep2.step:if(meta.stepCount == 2 count) = current.thresholdValue == 10 count
+
+  # Assert organism can access multi-level nested attributes (2 levels)
+  assert.maxValueInit.init = current.maxValue == 100 count
+  assert.maxValueStep1.step:if(meta.stepCount == 1 count) = current.maxValue == 100 count
+  assert.maxValueStep2.step:if(meta.stepCount == 2 count) = current.maxValue == 100 count
+
+  # Assert organism can access multi-level nested attributes (3 levels)
+  assert.upperLimitInit.init = current.upperLimit == 200 count
+  assert.upperLimitStep1.step:if(meta.stepCount == 1 count) = current.upperLimit == 200 count
+  assert.upperLimitStep2.step:if(meta.stepCount == 2 count) = current.upperLimit == 200 count
+
+  # Assert calculations using nested attributes work in organism
+  assert.scaledAgeStep1.step:if(meta.stepCount == 1 count) = current.scaledAge == 2 count
+  assert.scaledAgeStep2.step:if(meta.stepCount == 2 count) = current.scaledAge == 4 count
+
+  # Assert conditional expressions using nested attributes work
+  assert.aboveThresholdStep0.step:if(meta.stepCount == 0 count) = current.aboveThreshold == false
+  assert.aboveThresholdStep1.step:if(meta.stepCount == 1 count) = current.aboveThreshold == false
+  assert.aboveThresholdStep2.step:if(meta.stepCount == 2 count) = current.aboveThreshold == false
+
+  assert.withinBoundsStep0.step:if(meta.stepCount == 0 count) = current.withinBounds == true
+  assert.withinBoundsStep1.step:if(meta.stepCount == 1 count) = current.withinBounds == true
+  assert.withinBoundsStep2.step:if(meta.stepCount == 2 count) = current.withinBounds == true
+
+end organism
+
+start unit celsius
+  alias C
+  alias degC
+end unit
+
+start unit rate
+  alias rates
+end unit
+
+start unit multiplier
+  alias multipliers
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

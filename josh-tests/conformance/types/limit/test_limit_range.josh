@@ -1,0 +1,102 @@
+# @category: types
+# @subcategory: limit
+# @priority: high
+# @description: Test range limiting with both min and max using limit to [min, max] syntax
+
+start simulation LimitRange
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test value below range - should be clamped to min
+  belowMin.init = 5 m
+  belowLimited.init = limit belowMin to [10 m, 50 m]
+  assert.belowRangeMin.init = belowLimited == 10 m
+
+  # Test value above range - should be clamped to max
+  aboveMax.init = 75 m
+  aboveLimited.init = limit aboveMax to [10 m, 50 m]
+  assert.aboveRangeMax.init = aboveLimited == 50 m
+
+  # Test value within range - should be unchanged
+  withinRange.init = 30 m
+  withinLimited.init = limit withinRange to [10 m, 50 m]
+  assert.withinRange.init = withinLimited == 30 m
+
+  # Test value at lower boundary
+  atMin.init = 10 m
+  atMinLimited.init = limit atMin to [10 m, 50 m]
+  assert.atMinBoundary.init = atMinLimited == 10 m
+
+  # Test value at upper boundary
+  atMax.init = 50 m
+  atMaxLimited.init = limit atMax to [10 m, 50 m]
+  assert.atMaxBoundary.init = atMaxLimited == 50 m
+
+  # Test range with negative values
+  negValue1.init = -15 m
+  negLimited1.init = limit negValue1 to [-10 m, 10 m]
+  assert.negativeToNegMin.init = negLimited1 == -10 m
+
+  negValue2.init = 15 m
+  negLimited2.init = limit negValue2 to [-10 m, 10 m]
+  assert.positiveToMax.init = negLimited2 == 10 m
+
+  negValue3.init = 0 m
+  negLimited3.init = limit negValue3 to [-10 m, 10 m]
+  assert.zeroInRange.init = negLimited3 == 0 m
+
+  # Test range with percentage units [0%, 100%]
+  pctBelow.init = -5 %
+  pctBelowLimited.init = limit pctBelow to [0 %, 100 %]
+  assert.percentageBelowZero.init = pctBelowLimited == 0 %
+
+  pctAbove.init = 150 %
+  pctAboveLimited.init = limit pctAbove to [0 %, 100 %]
+  assert.percentageAboveHundred.init = pctAboveLimited == 100 %
+
+  pctValid.init = 50 %
+  pctValidLimited.init = limit pctValid to [0 %, 100 %]
+  assert.percentageValid.init = pctValidLimited == 50 %
+
+  # Test narrow range
+  narrowValue1.init = 10 m
+  narrowLimited1.init = limit narrowValue1 to [15 m, 20 m]
+  assert.narrowRangeMin.init = narrowLimited1 == 15 m
+
+  narrowValue2.init = 25 m
+  narrowLimited2.init = limit narrowValue2 to [15 m, 20 m]
+  assert.narrowRangeMax.init = narrowLimited2 == 20 m
+
+  # Test wide range
+  wideValue.init = 500 m
+  wideLimited.init = limit wideValue to [0 m, 1000 m]
+  assert.wideRangeValid.init = wideLimited == 500 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

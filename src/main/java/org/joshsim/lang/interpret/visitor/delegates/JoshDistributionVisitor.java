@@ -42,6 +42,10 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a slice expression.
    *
+   * <p>Handles filter expressions like {@code Trees[Tree.age > 5 years]} by temporarily
+   * binding the type name (e.g., "Tree") to the subject distribution within the scope
+   * where the filter expression is evaluated.</p>
+   *
    * @param ctx The ANTLR context from which to parse the slice expression.
    * @return JoshFragment containing the slice expression parsed.
    */
@@ -51,7 +55,16 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
 
     EventHandlerAction action = (machine) -> {
       subjectAction.apply(machine);
-      selectionAction.apply(machine);
+
+      // Extract type name and bind to local scope for filter expressions
+      EngineValue subject = machine.peek();
+      String typeName = subject.getLanguageType().getRootType();
+
+      // Evaluate selection with type name bound to subject distribution
+      machine.withLocalBinding(typeName, subject, () -> {
+        selectionAction.apply(machine);
+      });
+
       return machine.slice();
     };
 

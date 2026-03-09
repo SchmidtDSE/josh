@@ -96,6 +96,11 @@ public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment>
       if (unitsText.equals("percent")) {
         isPercent = true;
       }
+    } else if (ctx.STR_() != null) {
+      // Handle quoted compound units like "mm / month"
+      unitsText = ctx.STR_().getText();
+      // Strip quotes
+      unitsText = unitsText.substring(1, unitsText.length() - 1);
     } else if (isPercent) {
       unitsText = "%";
     }

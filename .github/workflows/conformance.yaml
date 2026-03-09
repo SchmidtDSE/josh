@@ -1,0 +1,66 @@
+name: Conformance Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    name: Run Conformance Tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup netCDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnetcdf-dev
+
+      - name: Build fat jar
+        run: ./gradlew fatJar
+
+      - name: Run conformance tests
+        id: conformance
+        continue-on-error: true
+        run: ./gradlew conformanceTest
+
+      - name: Parse test results
+        if: always()
+        id: parse
+        run: .github/scripts/parse_conformance_results.sh build/test-results/conformanceTest
+
+      - name: Generate failure report
+        if: always()
+        run: .github/scripts/generate_conformance_report.sh build/test-results/conformanceTest "${{ github.head_ref || github.ref_name }}" "${{ github.sha }}"
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "## Conformance Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.parse.outputs.summary || 'No results available' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-test-results
+          path: |
+            build/test-results/conformanceTest/
+            build/reports/tests/conformanceTest/
+            conformance-report.md
+          retention-days: 30

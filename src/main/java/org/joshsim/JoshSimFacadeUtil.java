@@ -21,7 +21,10 @@ import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.CombinedExportFacade;
+import org.joshsim.lang.io.DebugOutputFacadeBuilder;
+import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
@@ -108,9 +111,22 @@ public class JoshSimFacadeUtil {
       bridgeGetter.setBridge(bridge);
     }
 
+    ExportFacadeFactory exportFactory = inputOutputLayer.getExportFacadeFactory();
+
+    // Create debug output facade from simulation entity configuration
+    CombinedDebugOutputFacade debugFacade = DebugOutputFacadeBuilder.build(
+        simEntity,
+        exportFactory
+    );
+
+    // Inject debug facade into bridge getter if configured
+    if (bridgeGetter != null && debugFacade.isConfigured()) {
+      bridgeGetter.setDebugOutputFacade(debugFacade);
+    }
+
     CombinedExportFacade exportFacade = new CombinedExportFacade(
         simEntity,
-        inputOutputLayer.getExportFacadeFactory()
+        exportFactory
     );
 
     // Create incremental export callback if export configured
@@ -120,6 +136,7 @@ public class JoshSimFacadeUtil {
     SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
     exportFacade.start();
+    debugFacade.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
@@ -145,6 +162,7 @@ public class JoshSimFacadeUtil {
     }
 
     exportFacade.join();
+    debugFacade.join();
   }
 
   /**

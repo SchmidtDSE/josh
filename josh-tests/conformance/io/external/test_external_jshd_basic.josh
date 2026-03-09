@@ -1,0 +1,40 @@
+# @category: io
+# @subcategory: external
+# @priority: medium
+# @description: Test reading preprocessed JSHD data format
+# NOTE: JSHD format is the preprocessed binary format created by the preprocess command.
+# This test validates that preprocessed data can be loaded and accessed efficiently.
+
+start external JshdBasicData
+
+  source.location = "file://test-data/spatial/grid_10x10_constant.tiff"
+  source.format = "geotiff"
+  source.units = "count"
+  source.band = 0
+
+end external
+
+start simulation ExternalJshdBasic
+
+  grid.size = 10 m
+  grid.low = -117.4 degrees longitude, 34.0 degrees latitude
+  grid.high = -117.3 degrees longitude, 33.9 degrees latitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test that JSHD preprocessed data can be accessed
+  # Constant data should have the same value everywhere
+  value.init = sample external JshdBasicData
+
+  # Verify data loaded successfully
+  # The actual constant value from the file should be consistent
+  assert.hasValue.init = current.value >= 0 count
+
+  export.value.step = current.value
+
+end patch

@@ -1,0 +1,91 @@
+# @category: types
+# @subcategory: conversions
+# @priority: medium
+# @description: Test chained conversions with value preservation
+
+start simulation ConversionsChained
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test m → km → m (round trip)
+  originalM.init = 5000 m
+  convertedKm.init = originalM as km
+  backToM.init = convertedKm as m
+  assert.mKmM.init = backToM == originalM
+
+  # Test in → ft → yd → ft → in (multi-hop chain)
+  originalIn.init = 36 in
+  toFeet.init = originalIn as ft
+  toYards.init = toFeet as yd
+  backToFeet.init = toYards as ft
+  backToInches.init = backToFeet as in
+  assert.inFtYdFtIn.init = backToInches == originalIn
+
+  # Test chain with arithmetic
+  distance1.init = 2000 m
+  distance2.init = (distance1 as km) * 2 count
+  distance3.init = distance2 as m
+  assert.chainedArithmetic.init = distance3 == 4000 m
+
+  # Test three-unit chain: m → km → m → km
+  val1.init = 3000 m
+  val2.init = val1 as km
+  val3.init = val2 as m
+  val4.init = val3 as km
+  assert.multiHopChain.init = val4 == 3 km
+
+  # Test chain preserves precision
+  preciseM.init = 1234.5 m
+  preciseKm.init = preciseM as km
+  preciseBackM.init = preciseKm as m
+  assert.precisionPreserved.init = preciseBackM == 1234.5 m
+
+end patch
+
+start unit inch
+  alias in
+  alias inches
+  ft = current / 12
+  yd = current / 36
+end unit
+
+start unit foot
+  alias ft
+  alias feet
+  in = current * 12
+  yd = current / 3
+end unit
+
+start unit yard
+  alias yd
+  alias yards
+  ft = current * 3
+  in = current * 36
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit degrees
+end unit

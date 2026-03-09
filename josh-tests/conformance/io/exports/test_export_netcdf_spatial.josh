@@ -1,0 +1,77 @@
+# @category: io
+# @subcategory: exports
+# @priority: high
+# @description: Test NetCDF export with spatial grid and coordinate system
+
+start simulation ExportNetCDFSpatial
+
+  # Define spatial grid with proper coordinates
+  grid.size = 100 m
+  grid.low = 37.0 degrees latitude, -122.0 degrees longitude
+  grid.high = 37.1 degrees latitude, -121.8 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 3 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to NetCDF file with specific columns
+  exportFiles.patch = "file:///tmp/test_export_netcdf_spatial.nc"
+  exportFiles.patch.columns = "vegetation,temperature,moisture"
+
+end simulation
+
+start patch Default
+
+  # Initialize patch attributes with spatial variation
+  Shrub.init = create 15 count of Shrub
+
+  # Calculate patch-level metrics
+  vegetationDensity.init = 50 count
+  vegetationDensity.step = count(Shrub) * 3 count
+
+  temperature.init = 298 K
+  temperature.step = prior.temperature + (sample uniform from -0.5 K to 0.5 K)
+
+  moisture.init = 40 percent
+  moisture.step = limit (prior.moisture + (sample uniform from -5 percent to 5 percent)) to [0 percent, 100 percent]
+
+  # Export spatial attributes
+  export.vegetation.step = vegetationDensity
+  export.temperature.step = temperature
+  export.moisture.step = moisture
+
+  # Assertions for spatial data validity
+  assert.vegetationPositive.step = vegetationDensity >= 0 count
+  assert.temperatureLow.step = temperature >= 250 K
+  assert.temperatureHigh.step = temperature <= 350 K
+  assert.moistureLow.step = moisture >= 0 percent
+  assert.moistureHigh.step = moisture <= 100 percent
+
+end patch
+
+start organism Shrub
+
+  height.init = sample uniform from 0.5 m to 2 m
+  height.step = prior.height + (sample uniform from 0 m to 0.1 m)
+
+  # Assert growth is positive
+  assert.heightGrows.step = current.height >= prior.height
+
+end organism
+
+start unit K
+  alias Kelvin
+  alias Kelvins
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit percent
+  alias pct
+  alias percentage
+end unit

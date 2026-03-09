@@ -47,7 +47,7 @@ public class EventHandlerGroup {
    *     evaluated.
    */
   public EventKey getEventKey() {
-    return this.eventKey;
+    return eventKey;
   }
 
   /**

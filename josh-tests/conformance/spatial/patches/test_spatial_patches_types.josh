@@ -1,0 +1,85 @@
+# @category: spatial
+# @subcategory: patches
+# @priority: high
+# @description: Test different patch types on grid using state-based initialization
+
+start simulation SpatialPatchesTypes
+
+  # Create a 3x3 grid with two patch types determined by state
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Patches on the diagonal (where x == y) are Grassland, others are Forest
+  # Cell centers are at (5,5), (15,15), (25,25) for diagonal
+  state.init = "Forest"
+  state.init:if(here.x == here.y) = "Grassland"
+
+  patchType.init = "unknown"
+
+  start state "Forest"
+    # Forest patches have trees
+    Tree.init = create 3 count of Tree
+    patchType.init = "forest"
+  end state
+
+  start state "Grassland"
+    # Grassland patches have grass
+    Grass.init = create 5 count of Grass
+    patchType.init = "grassland"
+  end state
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Trees should only exist on Forest patches
+  # Count total trees across all patches
+  totalTrees.step = count(Tree within 100 m radial at prior)
+
+  # Assert trees exist
+  assert.treesExist.step:if(meta.stepCount == 1 count) = current.totalTrees > 0 count
+
+end organism
+
+start organism Grass
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 0.1 m
+  height.step = prior.height + 0.01 m
+
+  # Grass should only exist on Grassland patches
+  totalGrass.step = count(Grass within 100 m radial at prior)
+
+  # Assert grass exists
+  assert.grassExists.step:if(meta.stepCount == 1 count) = current.totalGrass > 0 count
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

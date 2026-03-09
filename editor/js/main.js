@@ -208,7 +208,13 @@ class MainPresenter {
     const self = this;
     self._replicateResults = results;
     self._runPresenter.showButtons();
-    self._resultsPresenter.onComplete(self._metadata, self._replicateResults);
+
+    // Get debug store if using WASM backend
+    const isWasm = self._currentEngineBackend
+        && self._currentEngineBackend.getType() === "wasm";
+    const debugStore = isWasm ? self._wasmLayer.getDebugStore() : null;
+
+    self._resultsPresenter.onComplete(self._metadata, self._replicateResults, debugStore);
   }
 
   /**

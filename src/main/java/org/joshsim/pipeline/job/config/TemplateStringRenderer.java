@@ -11,6 +11,9 @@
 
 package org.joshsim.pipeline.job.config;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,9 +44,12 @@ import org.joshsim.pipeline.job.JoshJobFileInfo;
 public class TemplateStringRenderer {
 
   private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{([^}]+)\\}");
+  private static final DateTimeFormatter TIMESTAMP_FORMAT =
+      DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
   private final JoshJob job;
   private final int replicate;
+  private final String timestamp;
 
   /**
    * Creates a new template string renderer.
@@ -53,11 +59,27 @@ public class TemplateStringRenderer {
    * @throws IllegalArgumentException if job is null
    */
   public TemplateStringRenderer(JoshJob job, int replicate) {
+    this(job, replicate, TIMESTAMP_FORMAT.format(Instant.now().atZone(ZoneId.systemDefault())));
+  }
+
+  /**
+   * Creates a new template string renderer with a specific timestamp.
+   *
+   * <p>This constructor allows injecting a specific timestamp for testing purposes
+   * or for ensuring consistent timestamps across multiple renderers.</p>
+   *
+   * @param job The Josh job containing file mappings for template substitution
+   * @param replicate The replicate number for export-specific templates
+   * @param timestamp The timestamp string to use for {timestamp} template substitution
+   * @throws IllegalArgumentException if job is null
+   */
+  public TemplateStringRenderer(JoshJob job, int replicate, String timestamp) {
     if (job == null) {
       throw new IllegalArgumentException("JoshJob cannot be null");
     }
     this.job = job;
     this.replicate = replicate;
+    this.timestamp = timestamp;
   }
 
   /**
@@ -153,6 +175,7 @@ public class TemplateStringRenderer {
 
       // Add export-specific templates
       availableTemplates.add("{replicate}");
+      availableTemplates.add("{timestamp}");
       availableTemplates.add("{step}");
       availableTemplates.add("{variable}");
 
@@ -214,7 +237,8 @@ public class TemplateStringRenderer {
   private boolean isExportSpecificTemplate(String templateVar) {
     return "replicate".equals(templateVar)
            || "step".equals(templateVar)
-           || "variable".equals(templateVar);
+           || "variable".equals(templateVar)
+           || "timestamp".equals(templateVar);
   }
 
   /**
@@ -233,6 +257,9 @@ public class TemplateStringRenderer {
     // If {replicate} is present, replace with actual number for ALL formats
     // If {replicate} is absent, no replacement needed (consolidated files)
     result = result.replaceAll("\\{replicate\\}", Integer.toString(replicate));
+
+    // Timestamp template - replaced with consistent timestamp for the entire run
+    result = result.replaceAll("\\{timestamp\\}", timestamp);
 
     // Step and variable templates always become placeholders for later processing
     result = result.replaceAll("\\{step\\}", "__step__");

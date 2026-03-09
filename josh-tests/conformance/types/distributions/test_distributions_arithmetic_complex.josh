@@ -1,0 +1,148 @@
+# @category: types
+# @subcategory: distributions
+# @priority: medium
+# @description: Test complex arithmetic expressions with distributions
+
+start simulation DistributionsArithmeticComplex
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Test complex expression: (dist1 + dist2) * scalar (dimensionless)
+  dist1.init = sample uniform from 0 m to 50 m
+  dist2.init = sample uniform from 0 m to 50 m
+  complex1.init = (dist1 + dist2) * 2
+
+  # With virtual distributions, dist1 and dist2 are sampled once each
+  # Sum range: [0, 100], times 2: [0, 200]
+  assert.complex1Min.init = complex1 >= 0 m
+  assert.complex1Max.init = complex1 <= 200 m
+
+  # Test complex expression: dist * scalar + offset
+  dist3.init = sample uniform from 0 m to 100 m
+  complex2.init = dist3 * 2 + 50 m
+
+  # Range: [50, 250]
+  assert.complex2Min.init = complex2 >= 50 m
+  assert.complex2Max.init = complex2 <= 250 m
+
+  # Test complex expression with parentheses: dist * (scalar + scalar)
+  complex3.init = dist3 * (2 + 3)
+
+  # Should equal dist3 * 5, range: [0, 500]
+  assert.complex3Min.init = complex3 >= 0 m
+  assert.complex3Max.init = complex3 <= 500 m
+
+  # Test complex expression with virtual distribution behavior
+  # This creates compound units!
+  dist4.init = sample uniform from 10 m to 20 m
+  complex4.init = (dist4 + dist4) * dist4  # (m + m) * m = m * m
+
+  # dist4 sampled once, used three times (virtual)
+  # Result: (dist4 + dist4) * dist4 = 2*dist4 * dist4 = 2*dist4^2
+  # Range for dist4: [10, 20], so dist4^2: [100, 400], times 2: [200, 800]
+  # Units are "m * m"
+  expectedComplex4Min.init = 200 m * 1 m
+  expectedComplex4Max.init = 800 m * 1 m
+  assert.complex4Min.init = complex4 >= expectedComplex4Min
+  assert.complex4Max.init = complex4 <= expectedComplex4Max
+
+  # Test with organisms (realized distributions in complex expressions)
+  Trees.init = create 100 count of Tree
+
+  # Test complex expression with reductions
+  treeMean.init = mean(Trees.height)
+  treeStd.init = std(Trees.height)
+  treeMin.init = min(Trees.height)
+  treeMax.init = max(Trees.height)
+
+  # Complex expression: (mean + std) * 2 - min
+  # Heights from uniform(0, 100): mean ≈ 50, std ≈ 28.87, min ≈ 0
+  # Result ≈ (50 + 28.87) * 2 - 0 ≈ 157.74
+  complexReduction.init = (treeMean + treeStd) * 2 - treeMin
+
+  # Result should be in reasonable range [140, 180]
+  assert.complexReductionMin.init = complexReduction > 140 m
+  assert.complexReductionMax.init = complexReduction < 180 m
+
+  # Test organisms with complex expressions in init
+  Plants.init = create 100 count of Plant
+
+  # Plants have complex height calculation: (base * factor + offset) * 2
+  # All using dimensionless factor to avoid compound units
+  plantMean.init = mean(Plants.complexHeight)
+  plantMin.init = min(Plants.complexHeight)
+  plantMax.init = max(Plants.complexHeight)
+
+  # base: uniform(5, 15) -> mean 10
+  # factor: uniform(1, 3) (dimensionless) -> mean 2
+  # offset: uniform(0, 10) -> mean 5
+  # Expected: (10 * 2 + 5) * 2 = 50
+  # Min possible: (5 * 1 + 0) * 2 = 10
+  # Max possible: (15 * 3 + 10) * 2 = 110
+  assert.plantMeanReasonable.init = plantMean > 40 m
+  assert.plantMeanReasonable2.init = plantMean < 60 m
+  assert.plantMinReasonable.init = plantMin >= 10 m
+  assert.plantMaxReasonable.init = plantMax <= 110 m
+
+  # Test nested complex expressions
+  dist5.init = sample uniform from 1 m to 10 m
+  dist6.init = sample uniform from 1 m to 10 m
+  nested.init = ((dist5 + dist6) * 2 + 10 m) * 0.5
+
+  # Inner: (dist5 + dist6) range [2, 20], times 2: [4, 40]
+  # Plus 10: [14, 50]
+  # Times 0.5: [7, 25]
+  assert.nestedMin.init = nested >= 7 m
+  assert.nestedMax.init = nested <= 25 m
+
+end patch
+
+start organism Tree
+
+  # Simple uniform distribution
+  height.init = sample uniform from 0 m to 100 m
+  height.step = prior.height
+
+end organism
+
+start organism Plant
+
+  # Complex expression with multiple distributions
+  # Using dimensionless factor to avoid compound units
+  base.init = sample uniform from 5 m to 15 m
+  factor.init = sample uniform from 1 count to 3 count
+  offset.init = sample uniform from 0 m to 10 m
+  complexHeight.init = (base * factor + offset) * 2
+  complexHeight.step = prior.complexHeight
+
+end organism
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+end unit
+
+start unit degrees
+end unit

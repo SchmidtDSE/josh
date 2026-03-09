@@ -1,0 +1,122 @@
+# @category: stochastic
+# @subcategory: arithmetic
+# @priority: high
+# @description: Test distribution arithmetic with scalars - verifies mean transforms correctly with scalar operations
+
+start simulation StochasticArithmeticScalar
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km  # 1x1 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Create organisms with base distribution
+  BaseOrg.init = create 500 count of BaseOrg
+
+  # Create organisms with distribution + scalar
+  AddOrg.init = create 500 count of AddOrg
+
+  # Create organisms with distribution * scalar
+  MultOrg.init = create 500 count of MultOrg
+
+  # Calculate means
+  meanBase.step = mean(BaseOrg.value)
+  meanAdd.step = mean(AddOrg.value)
+  meanMult.step = mean(MultOrg.value)
+
+  # Test 1: Base distribution mean should be around 50 (mean of uniform 0-100)
+  # Using wider tolerance (8m) to account for random variance across many patches
+  expectedBase.step = 50 m
+  toleranceBase.step = 8 m
+  lowerBase.step = expectedBase - toleranceBase
+  upperBase.step = expectedBase + toleranceBase
+  assert.baseMean.step = (meanBase >= lowerBase) and (meanBase <= upperBase)
+
+  # Test 2: Added distribution mean should be around 60 (mean of uniform 10-110)
+  # Note: AddOrg samples independently, so we compare to absolute expected value, not meanBase + 10
+  # The test verifies that (sample + 10) produces mean ≈ 60 for uniform(0,100) + 10
+  expectedAdd.step = 60 m
+  toleranceAdd.step = 8 m
+  lowerAdd.step = expectedAdd - toleranceAdd
+  upperAdd.step = expectedAdd + toleranceAdd
+  assert.addMean.step = (meanAdd >= lowerAdd) and (meanAdd <= upperAdd)
+
+  # Test 3: Multiplied distribution mean should be around 100 (mean of uniform 0-200)
+  # Note: MultOrg samples independently, so we compare to absolute expected value
+  # The test verifies that (sample * 2) produces mean ≈ 100 for uniform(0,100) * 2
+  expectedMult.step = 100 m
+  toleranceMult.step = 16 m
+  lowerMult.step = expectedMult - toleranceMult
+  upperMult.step = expectedMult + toleranceMult
+  assert.multMean.step = (meanMult >= lowerMult) and (meanMult <= upperMult)
+
+  # Test 4: Verify ranges are also transformed correctly
+  minBase.step = min(BaseOrg.value)
+  maxBase.step = max(BaseOrg.value)
+  minAdd.step = min(AddOrg.value)
+  maxAdd.step = max(AddOrg.value)
+  minMult.step = min(MultOrg.value)
+  maxMult.step = max(MultOrg.value)
+
+  # Addition should shift range minimum (min of uniform 10-110 > min of uniform 0-100)
+  assert.addRangeShifted.step = minAdd > minBase
+
+  # Multiplication should expand range (range of 0-200 > range of 0-100)
+  rangeBase.step = maxBase - minBase
+  rangeMult.step = maxMult - minMult
+  assert.multRangeExpanded.step = rangeMult > rangeBase
+
+end patch
+
+start organism BaseOrg
+
+  # Base distribution: uniform(0, 100)
+  value.init = sample uniform from 0 m to 100 m
+  value.step = prior.value
+
+end organism
+
+start organism AddOrg
+
+  # Distribution + 10
+  baseValue.init = sample uniform from 0 m to 100 m
+  value.init = baseValue + 10 m
+  value.step = prior.value
+
+end organism
+
+start organism MultOrg
+
+  # Distribution * 2
+  baseValue.init = sample uniform from 0 m to 100 m
+  value.init = baseValue * 2 count
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

@@ -123,6 +123,9 @@ class ResponseReader {
         const rawInput = intermediate["datum"];
         const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
         self._replicateReducer.get(intermediate["replicate"]).add(parsed);
+      } else if (intermediate["type"] === "debug") {
+        // Debug messages are already logged to console in parseEngineResponse
+        // Just ignore them here - they don't affect simulation results
       } else if (intermediate["type"] === "end") {
         self._completedReplicates++;
         if (self._replicateReducer.has(intermediate["replicate"])) {

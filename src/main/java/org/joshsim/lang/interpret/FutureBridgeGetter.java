@@ -17,6 +17,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.precompute.JshdExternalGetter;
 
@@ -35,6 +36,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineBridge> builtBridge;
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
+  private Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -48,6 +50,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.builtBridge = Optional.empty();
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
+    this.debugOutputFacade = Optional.empty();
   }
 
   /**
@@ -59,7 +62,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (program.isPresent()) {
       throw new IllegalStateException("Program already set.");
     }
-    this.program = Optional.of(newProgram);
+    program = Optional.of(newProgram);
   }
 
   /**
@@ -71,7 +74,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (geometryFactory.isPresent()) {
       throw new IllegalStateException("Geometry factory already set.");
     }
-    this.geometryFactory = Optional.of(newFactory);
+    geometryFactory = Optional.of(newFactory);
   }
 
   /**
@@ -83,20 +86,38 @@ public class FutureBridgeGetter implements BridgeGetter {
     if (simulationName.isPresent()) {
       throw new IllegalStateException("Simulation name already set.");
     }
-    this.simulationName = Optional.of(newName);
+    simulationName = Optional.of(newName);
   }
 
   /**
    * Sets the platform-specific input/output layer for this bridge getter.
    *
-   * @param inputOutputLayer The input/output layer to be set. Provides platform-specific
+   * @param newInputOutputLayer The input/output layer to be set. Provides platform-specific
    *     functionality for input and output operations.
    */
-  public void setInputOutputLayer(InputOutputLayer inputOutputLayer) {
-    if (this.inputOutputLayer.isPresent()) {
+  public void setInputOutputLayer(InputOutputLayer newInputOutputLayer) {
+    if (inputOutputLayer.isPresent()) {
       throw new IllegalStateException("Input output layer already set.");
     }
-    this.inputOutputLayer = Optional.of(inputOutputLayer);
+    inputOutputLayer = Optional.of(newInputOutputLayer);
+  }
+
+  /**
+   * Sets the debug output facade for debug output.
+   *
+   * @param newDebugOutputFacade The debug output facade to use for debug() function calls.
+   */
+  @Override
+  public void setDebugOutputFacade(CombinedDebugOutputFacade newDebugOutputFacade) {
+    if (debugOutputFacade.isPresent()) {
+      throw new IllegalStateException("Debug output facade already set.");
+    }
+    debugOutputFacade = Optional.of(newDebugOutputFacade);
+  }
+
+  @Override
+  public Optional<CombinedDebugOutputFacade> getDebugOutputFacade() {
+    return debugOutputFacade;
   }
 
   /**
@@ -108,7 +129,7 @@ public class FutureBridgeGetter implements BridgeGetter {
    * @param bridge The bridge to use for all operations.
    */
   public void setBridge(EngineBridge bridge) {
-    this.builtBridge = Optional.of(bridge);
+    builtBridge = Optional.of(bridge);
   }
 
   @Override

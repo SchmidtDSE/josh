@@ -6,6 +6,8 @@
 
 package org.joshsim.lang.interpret.visitor.delegates;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -299,6 +301,7 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
       case "abs" -> (machine) -> machine.abs();
       case "ceil" -> (machine) -> machine.ceil();
       case "count" -> (machine) -> machine.count();
+      case "debug" -> (machine) -> machine.writeDebug();
       case "floor" -> (machine) -> machine.floor();
       case "log10" -> (machine) -> machine.log10();
       case "ln" -> (machine) -> machine.ln();
@@ -318,6 +321,44 @@ public class JoshMathematicsVisitor implements JoshVisitorDelegate {
     };
 
     return new ActionFragment(action);
+  }
+
+  /**
+   * Parse a variadic function call (function with multiple arguments).
+   *
+   * <p>Currently only supports the debug() function with multiple arguments.
+   * Arguments are evaluated and concatenated with spaces for debug output.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the function call.
+   * @return JoshFragment containing the function call operation parsed.
+   * @throws IllegalArgumentException if the function name is not supported for variadic calls.
+   */
+  public JoshFragment visitVariadicFunctionCall(
+      JoshLangParser.VariadicFunctionCallContext ctx) {
+    String funcName = ctx.name.getText();
+
+    if ("debug".equals(funcName)) {
+      // Parse all arguments
+      List<EventHandlerAction> argActions = new ArrayList<>();
+      for (JoshLangParser.ExpressionContext expr : ctx.args.expression()) {
+        argActions.add(expr.accept(parent).getCurrentAction());
+      }
+
+      EventHandlerAction action = (machine) -> {
+        // Evaluate all arguments - they are pushed onto the stack in order
+        for (EventHandlerAction argAction : argActions) {
+          argAction.apply(machine);
+        }
+
+        // Machine method pops all values, formats them, and writes to debug
+        machine.debugVariadic(argActions.size());
+        return machine;
+      };
+
+      return new ActionFragment(action);
+    } else {
+      throw new IllegalArgumentException("Unknown variadic function: " + funcName);
+    }
   }
 
 }

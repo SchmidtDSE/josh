@@ -102,10 +102,13 @@ public class GridCrsDefinition {
   @Override
   public String toString() {
     return String.format(
-      "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), cellSize=%s %s]",
-      name,
-      extents.getTopLeftX(), extents.getTopLeftY(),
-      extents.getBottomRightX(), extents.getBottomRightY(),
-      cellSize, cellSizeUnits);
+        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), cellSize=%s %s]",
+        name,
+        extents.getTopLeftX(),
+        extents.getTopLeftY(),
+        extents.getBottomRightX(),
+        extents.getBottomRightY(),
+        cellSize,
+        cellSizeUnits);
   }
 }

@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.util.PrecisionUtil;
 
 
 /**
@@ -127,5 +128,35 @@ public class DecimalScalar extends Scalar {
       BigDecimal.valueOf(Math.pow(base, exponent)),
       determineRaisedUnits(getUnits(), other.getAsInt())
     );
+  }
+
+  /**
+   * Compares this DecimalScalar to another EngineValue for equality using epsilon tolerance.
+   *
+   * <p>While BigDecimal provides exact decimal arithmetic, some operations may involve
+   * floating-point conversions. This method uses epsilon tolerance for robustness.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    boolean result = PrecisionUtil.areEqual(getAsDouble(), other.getAsDouble());
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
+
+  /**
+   * Compares this DecimalScalar to another EngineValue for inequality using epsilon tolerance.
+   *
+   * <p>This is the logical negation of {@link #unsafeEqualTo(EngineValue)}.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are not equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
+    boolean result = PrecisionUtil.areNotEqual(getAsDouble(), other.getAsDouble());
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
   }
 }

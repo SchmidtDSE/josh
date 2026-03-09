@@ -1,0 +1,89 @@
+# @category: types
+# @subcategory: map
+# @priority: medium
+# @description: Test quadratic mapping with parabola transformations
+
+start simulation MapQuadratic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Quadratic mapping creates a PARABOLA where:
+  # - The CENTER of the domain maps to one extreme of the range
+  # - The ENDPOINTS of the domain map to the other extreme
+  # Default behavior (centerIsMaximum=true): center → max, endpoints → min
+  # This models optimal range curves (e.g., optimal temperature)
+
+  # Test quadratic map at endpoints - should map to range minimum
+  input1.init = 0 m
+  mapped1.init = map input1 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAtMin.init = mapped1 == 0 count
+
+  input2.init = 100 m
+  mapped2.init = map input2 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAtMax.init = mapped2 == 0 count
+
+  # Test quadratic map at midpoint - should map to range maximum
+  input3.init = 50 m
+  mapped3.init = map input3 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAtMid.init = mapped3 == 100 count
+
+  # Test quadratic produces different result than linear
+  input4.init = 25 m
+  linearMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] linearly
+  quadraticMap.init = map input4 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticDiffersFromLinear.init = quadraticMap != linearMap
+
+  # Test quadratic curve at 25% - parabola should give 75% of max
+  # At x=25, distance from center is 25, half the max distance of 50
+  # Parabola: y = 100 * (1 - ((x-50)/50)^2) = 100 * (1 - 0.25) = 75
+  input5.init = 25 m
+  mapped5.init = map input5 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAt25.init = mapped5 > 70 count
+  assert.quadraticAt25High.init = mapped5 < 80 count
+
+  # Test quadratic curve at 75% - should be symmetric with 25%
+  input6.init = 75 m
+  mapped6.init = map input6 from [0 m, 100 m] to [0 count, 100 count] quadratically
+  assert.quadraticAt75.init = mapped6 > 70 count
+  assert.quadraticAt75High.init = mapped6 < 80 count
+
+  # Test symmetry: 25% and 75% should give same result (equidistant from center)
+  assert.quadraticSymmetric.init = mapped5 == mapped6
+
+  # Test quadratic with percentage output
+  pctInput1.init = 0 m
+  pctMapped1.init = map pctInput1 from [0 m, 100 m] to [0 %, 100 %] quadratically
+  assert.quadraticPctMin.init = pctMapped1 == 0 %
+
+  pctInput2.init = 50 m
+  pctMapped2.init = map pctInput2 from [0 m, 100 m] to [0 %, 100 %] quadratically
+  assert.quadraticPctMax.init = pctMapped2 == 100 %
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit
+
+start unit percent
+  alias percentage
+end unit

@@ -83,7 +83,7 @@ public class Replicate {
    * Increment the current step number by 1.
    */
   public void incrementStepNumber() {
-    this.stepNumber++;
+    stepNumber++;
   }
 
   /**

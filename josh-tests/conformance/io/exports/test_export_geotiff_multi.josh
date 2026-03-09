@@ -1,0 +1,78 @@
+# @category: io
+# @subcategory: exports
+# @priority: medium
+# @description: Test GeoTIFF export for multiple variables as multi-band raster
+
+start simulation ExportGeoTIFFMulti
+
+  # Define spatial grid for multi-band raster export (small grid to avoid memory issues)
+  grid.size = 500 m
+  grid.low = 39.0 degrees latitude, -123.0 degrees longitude
+  grid.high = 39.01 degrees latitude, -122.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to GeoTIFF with multiple bands (separate files for each variable)
+  exportFiles.patch = "file:///tmp/test_export_geotiff_multi_{variable}_{step}.tif"
+  exportFiles.patch.columns = "biomass,canopyCover,soilMoisture"
+
+end simulation
+
+start patch Default
+
+  # Initialize organisms
+  ForestTree.init = create 20 count of ForestTree
+
+  # Calculate multiple spatial attributes for multi-band export
+  canopyCover.init = sample uniform from 30 percent to 70 percent
+  canopyCover.step = limit (prior.canopyCover + (sample uniform from -2 percent to 3 percent)) to [0 percent, 100 percent]
+
+  soilMoisture.init = sample uniform from 20 percent to 60 percent
+  soilMoisture.step = limit (prior.soilMoisture + (sample uniform from -5 percent to 5 percent)) to [0 percent, 100 percent]
+
+  # Export multiple attributes (will be separate bands in GeoTIFF)
+  export.biomass.step = sum(ForestTree.biomass)
+  export.canopyCover.step = canopyCover
+  export.soilMoisture.step = soilMoisture
+
+  # Assertions for multi-band data validity
+  assert.biomassPositive.step = sum(ForestTree.biomass) >= 0 kg
+  assert.canopyCoverLow.step = canopyCover >= 0 percent
+  assert.canopyCoverHigh.step = canopyCover <= 100 percent
+  assert.soilMoistureLow.step = soilMoisture >= 0 percent
+  assert.soilMoistureHigh.step = soilMoisture <= 100 percent
+
+end patch
+
+start organism ForestTree
+
+  biomass.init = sample uniform from 100 kg to 500 kg
+  biomass.step = prior.biomass + (sample uniform from 5 kg to 20 kg)
+
+  height.init = sample uniform from 10 m to 30 m
+  height.step = prior.height + 0.5 m
+
+  # Assert growth
+  assert.biomassGrows.step = current.biomass >= prior.biomass
+  assert.heightGrows.step = current.height >= prior.height
+
+end organism
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit percent
+  alias pct
+  alias percentage
+end unit

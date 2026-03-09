@@ -1052,6 +1052,74 @@ end simulation
 
 This sends patch exports to the IDE for visualization and interactive exploration without saving to disk.
 
+## Debug Output
+
+Josh provides debug output capabilities for logging runtime information during simulation execution. Debug output is configured through `debugFiles` attributes on the simulation entity and written using the `debug()` function.
+
+### Debug Configuration
+
+Debug output destinations are specified in simulation stanzas using `debugFiles.*` attributes:
+
+```
+start simulation Example
+
+  debugFiles.patch = "file:///tmp/debug_patch.txt"
+  debugFiles.organism = "file:///tmp/debug_organism_{replicate}.txt"
+
+end simulation
+```
+
+Each entity type can have its own output file:
+- `debugFiles.patch` - Messages from patch entities
+- `debugFiles.organism` - Messages from organism entities
+- `debugFiles.agent` - Alias for organism messages
+- `debugFiles.disturbance` - Messages from disturbance entities
+
+### Debug Function
+
+The `debug()` function accepts any number of arguments, concatenates them with spaces, and writes to the configured output:
+
+```
+start organism Tree
+
+  age.init = 0 years
+  age.step = prior.age + 1 year
+
+  dbg.step = debug("Tree age:", age, "height:", height)
+
+end organism
+```
+
+The function returns `0 count`, making it suitable for side-effect-only attributes.
+
+### Output Format
+
+Debug messages automatically include context information:
+
+```
+[Step N, <entityType> @ <identifier> (x, y)] <message>
+```
+
+Example output:
+```
+[Step 0, organism @ 733264e6 (72.5, 1.5)] Tree age: 1 height: 0.1784
+[Step 1, organism @ 733264e6 (72.5, 1.5)] Tree age: 2 height: 1.0917
+```
+
+The hexadecimal identifier is unique to each entity instance. Track an entity's lifecycle with:
+```bash
+grep "733264e6" organism_debug.txt
+```
+
+### Output Protocols
+
+Debug output supports:
+- **file://**: Local file system (e.g., `file:///tmp/debug.txt`)
+- **minio://**: MinIO/S3 cloud storage (e.g., `minio://bucket/path/debug.txt`)
+- **stdout://**: Standard output
+
+Path templates support `{replicate}` and `{timestamp}` placeholders.
+
 # Reservations, Conventions, and Defaults
 The following conventions are recommended. Unless specified otherwise, violations should not result in an exception raised from the interpreter / compiler.
 
@@ -1077,7 +1145,7 @@ const countsAlsoOnCell = here.JoshuaTrees.count
 To help improve readability, it is recommended that entity names are `CamelCase` with leading upper case character.
 
 ## Reserved names
-The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within.
+The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, debug, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within.
 
 
 # Example
@@ -1371,7 +1439,7 @@ start patch Default
   Fire.step = {
     const count = 1 count if (sample uniform from 0% to 100% < 5%) else 0 count
     const new = create count of Fire
-    return prior.Fire + new;
+    return prior.Fire | new;
   }
 
 end patch

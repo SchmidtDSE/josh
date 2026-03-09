@@ -68,7 +68,7 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
    * @param objectPath The path within the bucket where the object will be stored
    */
   public MinioOutputStreamStrategy(MinioClient minioClient, String bucketName,
-                                   String objectPath) {
+      String objectPath) {
     this.minioClient = minioClient;
     this.bucketName = bucketName;
     this.objectPath = objectPath;
@@ -203,7 +203,7 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
      * @param uploadFuture The future representing the async upload task
      */
     public MinioOutputStream(BlockingQueueOutputStream delegate,
-                             CompletableFuture<Void> uploadFuture) {
+        CompletableFuture<Void> uploadFuture) {
       this.delegate = delegate;
       this.uploadFuture = uploadFuture;
     }
