@@ -29,17 +29,18 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    * @param inputStrategy The strategy for input file access.
    * @param templateRenderer The renderer for processing template strings (null for legacy mode).
    * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @param appendMode If true, open output files in append mode (for multi-replicate shared files).
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy,
                              TemplateStringRenderer templateRenderer,
-                             MinioOptions minioOptions) {
+                             MinioOptions minioOptions, boolean appendMode) {
     if (extents != null && width != null) {
       this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width,
-                                                       templateRenderer, minioOptions);
+                                                       templateRenderer, minioOptions, appendMode);
     } else {
       this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer,
-                                                       minioOptions);
+                                                       minioOptions, appendMode);
     }
     this.inputStrategy = inputStrategy;
   }
@@ -57,7 +58,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   @Deprecated
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy) {
-    this(replicate, extents, width, inputStrategy, null, null);
+    this(replicate, extents, width, inputStrategy, null, null, false);
   }
 
   @Override

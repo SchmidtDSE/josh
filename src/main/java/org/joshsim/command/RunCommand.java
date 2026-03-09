@@ -350,7 +350,7 @@ public class RunCommand implements Callable<Integer> {
     boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
 
     // Execute simulation for each job combination and replicate
-    int totalSimulationCount = 0;
+    int totalReplicateCount = 0;
 
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
@@ -363,11 +363,11 @@ public class RunCommand implements Callable<Integer> {
 
       for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
            currentReplicate++) {
-        totalSimulationCount++;
+        totalReplicateCount++;
 
         // Reset progress tracking for each new simulation (except first)
-        if (totalSimulationCount > 1) {
-          progressCalculator.resetForNextReplicate(totalSimulationCount);
+        if (totalReplicateCount > 1) {
+          progressCalculator.resetForNextReplicate(totalReplicateCount);
         }
 
         // Create TemplateStringRenderer for this job and replicate
@@ -387,6 +387,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(totalReplicateCount > 1)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -394,6 +395,7 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(totalReplicateCount > 1)
               .build();
         }
 
@@ -415,7 +417,7 @@ public class RunCommand implements Callable<Integer> {
 
         // Report replicate completion
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
-            totalSimulationCount);
+            totalReplicateCount);
         output.printInfo(completion.getMessage());
       }
 
@@ -427,8 +429,8 @@ public class RunCommand implements Callable<Integer> {
 
     // Report overall success
     output.printInfo("");
-    output.printInfo("[OK] All simulations completed successfully!");
-    output.printInfo("  Total simulations run: " + totalSimulationCount);
+    output.printInfo("✓ All simulations completed successfully!");
+    output.printInfo("  Total replicates run: " + totalReplicateCount);
     output.printInfo("  Job combinations: " + jobs.size());
     output.printInfo("  Replicates per job: " + replicates);
 

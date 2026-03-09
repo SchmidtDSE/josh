@@ -23,6 +23,7 @@ public class JvmInputOutputLayerBuilder {
   private InputGetterStrategy inputStrategy = new JvmWorkingDirInputGetter();
   private TemplateStringRenderer templateRenderer = null;
   private MinioOptions minioOptions = null;
+  private boolean appendMode = false;
 
   /**
    * Set the replicate number to use in filenames.
@@ -82,12 +83,27 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set whether the factory should append to existing output files.
+   *
+   * <p>Use true when multiple per-replicate factories write to a shared consolidated file
+   * (the {@code run} command). Use false when a single factory owns the file and should
+   * overwrite any stale data from a previous run (the {@code runRemote} command).</p>
+   *
+   * @param appendMode If true, open output files in append mode.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withAppendMode(boolean appendMode) {
+    this.appendMode = appendMode;
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
     return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer,
-                                    minioOptions);
+                                    minioOptions, appendMode);
   }
 }

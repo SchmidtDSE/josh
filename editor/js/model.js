@@ -601,11 +601,13 @@ class SimulationResultBuilder {
    */
   add(result) {
     const self = this;
-    // Normalize target name: URL-decode and remove leading slash if present
-    // The backend now uses standard URI parsing which URL-encodes the path
+    // Normalize target name: URL-decode and extract last path segment.
+    // Remote workers send full URIs like "memory://editor/patches" which get
+    // URL-encoded on the wire. We only need the final segment (e.g. "patches").
     const rawTargetName = result.getTarget();
     const decodedTargetName = decodeURIComponent(rawTargetName);
-    const targetName = decodedTargetName.startsWith("/") ? decodedTargetName.substring(1) : decodedTargetName;
+    const lastSlashIndex = decodedTargetName.lastIndexOf("/");
+    const targetName = lastSlashIndex >= 0 ? decodedTargetName.substring(lastSlashIndex + 1) : decodedTargetName;
 
     const targetCollection = {
       "simulation": self._simResults,

@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -165,7 +167,7 @@ public class RemoteResponseHandlerTest {
     // Verify export facade was created and started
     verify(exportFactory).build(any(ExportTarget.class));
     verify(exportFacade).start();
-    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), anyLong());
+    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), anyLong(), anyInt());
   }
 
   @Test
@@ -182,7 +184,7 @@ public class RemoteResponseHandlerTest {
     // Verify export facade was created only once but used twice
     verify(exportFactory, times(1)).build(any(ExportTarget.class));
     verify(exportFacade, times(1)).start();
-    verify(exportFacade, times(2)).write(any(org.joshsim.wire.NamedMap.class), anyLong());
+    verify(exportFacade, times(2)).write(any(org.joshsim.wire.NamedMap.class), anyLong(), anyInt());
   }
 
   @Test
@@ -205,8 +207,8 @@ public class RemoteResponseHandlerTest {
     verify(exportFactory, times(2)).build(any(ExportTarget.class));
     verify(exportFacade).start();
     verify(exportFacade2).start();
-    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), anyLong());
-    verify(exportFacade2).write(any(org.joshsim.wire.NamedMap.class), anyLong());
+    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), anyLong(), anyInt());
+    verify(exportFacade2).write(any(org.joshsim.wire.NamedMap.class), anyLong(), anyInt());
   }
 
   @Test
@@ -379,5 +381,18 @@ public class RemoteResponseHandlerTest {
     assertTrue(exception.getMessage().contains("Failed to process response for replicate 3"));
     assertTrue(exception.getCause().getMessage()
         .contains("Wire format must contain a colon separator"));
+  }
+
+  @Test
+  public void testDatumResponsePassesReplicateNumber() {
+    // Arrange
+    String datumLine = "[0] TestEntity:x=1\ty=2";
+    int replicateNumber = 7;
+
+    // Act
+    handler.processResponseLine(datumLine, replicateNumber, null);
+
+    // Assert - verify the 3-arg write is called with the correct replicate number
+    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), eq(0L), eq(7));
   }
 }
