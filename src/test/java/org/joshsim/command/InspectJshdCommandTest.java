@@ -392,6 +392,95 @@ public class InspectJshdCommandTest {
   }
 
   @Test
+  public void testToCsvExportsAllData() throws IOException {
+    Path csvOutput = tempDir.resolve("output.csv");
+
+    InspectJshdCommand command = new InspectJshdCommand();
+    setField(command, "jshdFile", testJshdFile.toFile());
+    setField(command, "variable", "data");
+    setField(command, "csvOutputPath", csvOutput.toString());
+
+    Integer result = command.call();
+    assertEquals(0, result);
+
+    // Verify JSON metadata was printed to stdout
+    String stdoutOutput = outContent.toString();
+    assertTrue(stdoutOutput.contains("\"minX\": 0"));
+    assertTrue(stdoutOutput.contains("\"maxX\": 2"));
+    assertTrue(stdoutOutput.contains("\"minY\": 0"));
+    assertTrue(stdoutOutput.contains("\"maxY\": 2"));
+    assertTrue(stdoutOutput.contains("\"minTimestep\": 0"));
+    assertTrue(stdoutOutput.contains("\"maxTimestep\": 1"));
+    assertTrue(stdoutOutput.contains("\"width\": 3"));
+    assertTrue(stdoutOutput.contains("\"height\": 3"));
+    assertTrue(stdoutOutput.contains("\"units\": \"meters\""));
+    assertTrue(stdoutOutput.contains("\"csv\": \""));
+
+    // Verify CSV file was created and has correct content
+    assertTrue(csvOutput.toFile().exists());
+    java.util.List<String> lines = Files.readAllLines(csvOutput);
+
+    // Header + 3x3 grid * 2 timesteps = 1 + 18 = 19 lines
+    assertEquals(19, lines.size());
+    assertEquals("x,y,timestep,value", lines.get(0));
+
+    // First data line: x=0, y=0, timestep=0, value=1
+    assertEquals("0,0,0,1", lines.get(1));
+
+    // Check a known non-zero value: x=1, y=1, timestep=0, value=2
+    // Row order: t=0, y=0: (0,0),(1,0),(2,0), y=1: (0,1),(1,1),(2,1), y=2: (0,2),(1,2),(2,2)
+    // So (1,1,0) is at index 1 + 3 + 1 = 5 (0-indexed line 4)
+    assertEquals("1,1,0,2", lines.get(5));
+
+    // Check timestep 1 value: (0,0,1) = 4.0, starts at line 10 (after 9 data lines for t=0)
+    assertEquals("0,0,1,4", lines.get(10));
+  }
+
+  @Test
+  public void testToCsvWithInvalidVariable() {
+    Path csvOutput = tempDir.resolve("output.csv");
+
+    InspectJshdCommand command = new InspectJshdCommand();
+    setField(command, "jshdFile", testJshdFile.toFile());
+    setField(command, "variable", "nonexistent");
+    setField(command, "csvOutputPath", csvOutput.toString());
+
+    Integer result = command.call();
+    assertEquals(6, result);
+  }
+
+  @Test
+  public void testToCsvWithFileNotFound() {
+    Path csvOutput = tempDir.resolve("output.csv");
+    File nonExistentFile = new File("nonexistent.jshd");
+
+    InspectJshdCommand command = new InspectJshdCommand();
+    setField(command, "jshdFile", nonExistentFile);
+    setField(command, "variable", "data");
+    setField(command, "csvOutputPath", csvOutput.toString());
+
+    Integer result = command.call();
+    assertEquals(1, result);
+  }
+
+  @Test
+  public void testSingleValueModeRequiresTimestep() {
+    InspectJshdCommand command = new InspectJshdCommand();
+    setField(command, "jshdFile", testJshdFile.toFile());
+    setField(command, "variable", "data");
+    setField(command, "timestep", "");
+    setField(command, "xcoordinate", "0");
+    setField(command, "ycoordinate", "0");
+    setField(command, "csvOutputPath", "");
+
+    Integer result = command.call();
+    assertEquals(3, result);
+
+    String errOutput = errContent.toString();
+    assertTrue(errOutput.contains("Time step is required"));
+  }
+
+  @Test
   public void testValidateCorrectVariableName() {
     InspectJshdCommand command = new InspectJshdCommand();
     setField(command, "jshdFile", testJshdFile.toFile());
