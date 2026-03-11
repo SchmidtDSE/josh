@@ -136,6 +136,19 @@ java -jar joshsim-fat.jar inspectJshd <file.jshd> <variable> <timestep> <x> <y>
 - `<x>`: X coordinate (grid space)
 - `<y>`: Y coordinate (grid space)
 
+**Options:**
+- `--to-csv <outputPath>`: Export the entire grid across all timesteps to a CSV file instead of inspecting a single value. When used, `<timestep>`, `<x>`, and `<y>` are not required. The CSV contains columns `x,y,timestep,value`. Grid metadata is printed to stdout as JSON:
+```json
+{
+  "minX": 0, "maxX": 922,
+  "minY": 0, "maxY": 1112,
+  "minTimestep": 0, "maxTimestep": 1,
+  "width": 923, "height": 1113,
+  "units": "K",
+  "csv": "/path/to/output.csv"
+}
+```
+
 #### `inspect-exports` - Export Path Extraction
 Parses a Josh script and extracts the configured export and debug file paths from a simulation without running it. Useful for build systems, CI/CD pipelines, and tooling that needs to know where simulation outputs will be written.
 
