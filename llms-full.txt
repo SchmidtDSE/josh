@@ -49,7 +49,8 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `--output-format <format>`: Output format (csv, netcdf, geotiff)
 - `-o, --output <path>`: Output file path
 - `--parallel`: Enable parallel patch processing
-- `--verbose`: Enable verbose output
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
 - `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
 - `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
 - `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
@@ -86,8 +87,12 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `--crs <CRS>`: Coordinate Reference System for reading input file
 - `--x-coord <name>`: Name of X coordinate dimension
 - `--y-coord <name>`: Name of Y coordinate dimension
-- `--time-coord <name>`: Name of time dimension
-- `--verbose`: Enable verbose output
+- `--time-dim <name>`: Name of time dimension
+- `--timestep <value>`: Process only a single timestep (for parallel orchestration across timesteps)
+- `--default-value <value>`: Default value to fill grid spaces before copying data from source file
+- `--parallel`: Enable parallel processing of patches within each timestep for ~Nx speedup on N cores
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
 
 **Examples:**
 ```bash
@@ -96,6 +101,9 @@ java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K 
 
 # Preprocessing with custom coordinates
 java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm/year" precipitation.jshd --x-coord longitude --y-coord latitude
+
+# Parallel preprocessing for faster execution on multi-core machines
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "kg / m * m * s" precip.jshd --parallel
 ```
 
 #### `validate` - Syntax Validation
@@ -109,7 +117,8 @@ java -jar joshsim-fat.jar validate <script.josh>
 - `<script.josh>`: Path to Josh script file to validate
 
 **Options:**
-- `--verbose`: Enable verbose validation output
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
 - `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
 #### `discoverConfig` - Configuration Discovery
@@ -195,8 +204,8 @@ java -jar joshsim-fat.jar runRemote <script.josh> <SimulationName> [OPTIONS]
 All commands support these global options:
 - `--help`: Show command help
 - `--version`: Display version information
-- `--verbose`: Enable verbose output
-- `--quiet`: Suppress non-essential output
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
 
 ### Integration with Build Systems
 

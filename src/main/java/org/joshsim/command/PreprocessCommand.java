@@ -153,6 +153,13 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private String defaultValue;
 
+  @Option(
+      names = "--parallel",
+      description = "Enable parallel processing of patches within each timestep",
+      defaultValue = "false"
+  )
+  private boolean parallel;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -200,6 +207,7 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     final ExternalGeoMapper mapper = geoMapperBuilder.build();
+    mapper.setUseParallelProcessing(parallel);
 
     // If using JSHD input file, validate grid compatibility
     if (dataFile.toLowerCase().endsWith(".jshd")) {
