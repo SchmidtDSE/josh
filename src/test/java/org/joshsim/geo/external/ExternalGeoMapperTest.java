@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.Entity;
@@ -655,36 +654,24 @@ public class ExternalGeoMapperTest {
     // Define a threshold value for filtering
     final BigDecimal threshold = new BigDecimal(300.0);  // Filter for precipitation above value
 
-    // Process multiple time steps
-    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
-        new EngineValueFactory(),
-        riversideFilePath
-    )) {
-      reader.open(riversideFilePath);
-      reader.setDimensions(DIM_X, DIM_Y, Optional.ofNullable(DIM_TIME));
-      reader.setCrsCode("EPSG:4326");
-      int timeSteps = reader.getTimeDimensionSize().orElse(30);
-      ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
+    // Process first 10 time steps using the 4-arg streaming method
+    for (int t = 0; t < 10; t++) {
+      try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+          riversideFilePath, VAR_NAME, t, patchSet)) {
 
-      for (int t = 0; t < Math.min(timeSteps, 10); t++) {  // Limit to first 10 time steps
-        // Stream just this time step
-        try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
-            reader, riversideFilePath, VAR_NAME, t, dimensions, patchSet)) {
+        long highPrecipCount = stream
+            .filter(entry -> {
+              try {
+                BigDecimal value = entry.getValue().getAsDecimal();
+                return value.compareTo(threshold) > 0.0;
+              } catch (Exception e) {
+                return false;
+              }
+            })
+            .count();
 
-          long highPrecipCount = stream
-              .filter(entry -> {
-                try {
-                  BigDecimal value = entry.getValue().getAsDecimal();
-                  return value.compareTo(threshold) > 0.0;
-                } catch (Exception e) {
-                  return false;
-                }
-              })
-              .count();
-
-          System.out.printf("Time step %d: %d patches with precipitation > %.1f mm%n",
-              t, highPrecipCount, threshold);
-        }
+        System.out.printf("Time step %d: %d patches with precipitation > %.1f mm%n",
+            t, highPrecipCount, threshold);
       }
     }
   }

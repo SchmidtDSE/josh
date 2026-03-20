@@ -63,27 +63,29 @@ public class StreamToPrecomputedGridUtil {
     }
 
     for (long timestep = minTimestep; timestep <= maxTimestep; timestep++) {
-      Stream<PatchKeyConverter.ProjectedValue> values = streamGetter.getForTimestep(timestep);
       final long timestepRealized = timestep;
-      values.forEach(entry -> {
-        double value = entry.getValue().doubleValue();
+      try (Stream<PatchKeyConverter.ProjectedValue> values =
+          streamGetter.getForTimestep(timestep)) {
+        values.forEach(entry -> {
+          double value = entry.getValue().doubleValue();
 
-        // Skip values that match the default value (within tolerance)
-        if (defaultValue.isPresent()) {
-          double defaultVal = defaultValue.get();
-          double tolerance = 0.000001;
-          if (Math.abs(value - defaultVal) <= tolerance) {
-            return; // Skip this value
+          // Skip values that match the default value (within tolerance)
+          if (defaultValue.isPresent()) {
+            double defaultVal = defaultValue.get();
+            double tolerance = 0.000001;
+            if (Math.abs(value - defaultVal) <= tolerance) {
+              return; // Skip this value
+            }
           }
-        }
 
-        grid.setAt(
-            entry.getX().longValue(),
-            entry.getY().longValue(),
-            timestepRealized,
-            value
-        );
-      });
+          grid.setAt(
+              entry.getX().longValue(),
+              entry.getY().longValue(),
+              timestepRealized,
+              value
+          );
+        });
+      }
     }
 
     return grid;
