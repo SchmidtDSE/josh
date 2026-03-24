@@ -7,6 +7,7 @@
 package org.joshsim.precompute;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.joshsim.engine.geometry.HaversineUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 
@@ -38,8 +39,8 @@ public class ExtentsTransformer {
         new HaversineUtil.HaversinePoint(extents.getTopLeftX(), extents.getBottomRightY())
     );
 
-    BigDecimal gridWidth = width.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
-    BigDecimal gridHeight = height.divide(sizeMeters, 0, BigDecimal.ROUND_CEILING);
+    BigDecimal gridWidth = width.divide(sizeMeters, 0, RoundingMode.CEILING);
+    BigDecimal gridHeight = height.divide(sizeMeters, 0, RoundingMode.CEILING);
 
     return new PatchBuilderExtents(
         BigDecimal.ZERO,

@@ -2,6 +2,7 @@
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -110,5 +111,33 @@ class DoublePrecomputedGridTest {
     assertEquals(mockEngineValue, result2);
     assertEquals(mockEngineValue, result3);
     assertEquals(mockEngineValue, result4);
+  }
+
+  @Test
+  void testGetAtOutOfBoundsX() {
+    assertThrows(IllegalArgumentException.class,
+        () -> grid.getAt(-1, 0, 0),
+        "Should throw for negative x");
+    assertThrows(IllegalArgumentException.class,
+        () -> grid.getAt(11, 0, 0),
+        "Should throw for x >= width");
+  }
+
+  @Test
+  void testGetAtOutOfBoundsY() {
+    assertThrows(IllegalArgumentException.class,
+        () -> grid.getAt(0, -1, 0),
+        "Should throw for negative y");
+    assertThrows(IllegalArgumentException.class,
+        () -> grid.getAt(0, 11, 0),
+        "Should throw for y >= height");
+  }
+
+  @Test
+  void testGetAtMaxValidPosition() {
+    // Max valid position is (10, 10, 10) for an 11x11x11 grid starting at (0,0)
+    when(mockFactory.buildForNumber(0.0, testUnits)).thenReturn(mockEngineValue);
+    EngineValue result = grid.getAt(10, 10, 10);
+    assertEquals(mockEngineValue, result);
   }
 }
