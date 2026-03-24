@@ -140,15 +140,21 @@ public class ParallelWorkerHandler {
         );
       }
 
-      // Wait for all tasks to complete
+      // Wait for all tasks to complete, collecting errors instead of failing fast
+      List<Exception> failures = new ArrayList<>();
       for (Future<?> future : futures) {
         try {
           future.get();
         } catch (Exception e) {
-          System.err.println("Exception in worker task execution: "
-              + e.getClass().getSimpleName() + ": " + e.getMessage());
-          throw new RuntimeException("Worker task execution failed", e);
+          System.err.println("Worker task failed: " + e.getMessage());
+          failures.add(e);
         }
+      }
+      if (!failures.isEmpty()) {
+        RuntimeException aggregate = new RuntimeException(
+            failures.size() + " of " + tasks.size() + " worker task(s) failed");
+        failures.forEach(aggregate::addSuppressed);
+        throw aggregate;
       }
     } finally {
       executor.shutdown();

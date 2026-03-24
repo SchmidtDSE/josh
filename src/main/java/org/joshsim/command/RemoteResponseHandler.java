@@ -46,7 +46,6 @@ public class RemoteResponseHandler {
   private final AtomicInteger completedReplicates;
   private final boolean useCumulativeProgress;
   private final boolean reportStepProgress;
-  private int lastProcessedReplicate = -1;
 
   /**
    * Creates a new RemoteResponseHandler.
