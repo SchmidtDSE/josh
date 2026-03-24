@@ -61,7 +61,7 @@ public class ProgressCalculator {
    * @param currentStepInReplicate The current step within the active replicate (0-based)
    * @return ProgressUpdate indicating whether to report and what message to show
    */
-  public ProgressUpdate updateStep(long currentStepInReplicate) {
+  public synchronized ProgressUpdate updateStep(long currentStepInReplicate) {
     // Calculate per-replicate progress (0-100% within current replicate)
     double currentPercentage = (double) currentStepInReplicate / totalStepsPerReplicate * 100.0;
 
@@ -89,7 +89,7 @@ public class ProgressCalculator {
    * @param completedReplicateNumber The replicate number that just completed
    * @return ProgressUpdate with a completion message
    */
-  public ProgressUpdate updateReplicateCompleted(int completedReplicateNumber) {
+  public synchronized ProgressUpdate updateReplicateCompleted(int completedReplicateNumber) {
     // Per-replicate completion is always 100%
     double currentPercentage = 100.0;
 
@@ -181,7 +181,7 @@ public class ProgressCalculator {
    * @param nextReplicateNumber The replicate number starting next (1-based)
    * @throws IllegalArgumentException if nextReplicateNumber is invalid
    */
-  public void resetForNextReplicate(int nextReplicateNumber) {
+  public synchronized void resetForNextReplicate(int nextReplicateNumber) {
     if (nextReplicateNumber < 1 || nextReplicateNumber > totalReplicates) {
       throw new IllegalArgumentException("Invalid replicate number: " + nextReplicateNumber
           + " (must be between 1 and " + totalReplicates + ")");
