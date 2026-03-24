@@ -126,6 +126,34 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int horizCut = (int) (x - getMinX());
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
+
+    if (horizCut < 0 || horizCut >= getWidth()) {
+      throw new IllegalArgumentException(String.format(
+          "Horizontal out of bounds (%d < 0 || %d >= %d)",
+          horizCut,
+          horizCut,
+          getWidth()
+      ));
+    }
+
+    if (vertCut < 0 || vertCut >= getHeight()) {
+      throw new IllegalArgumentException(String.format(
+          "Vertical out of bounds (%d < 0 || %d >= %d)",
+          vertCut,
+          vertCut,
+          getHeight()
+      ));
+    }
+
+    if (timestepCut < 0 || timestepCut > (getMaxTimestep() - getMinTimestep())) {
+      throw new IllegalArgumentException(String.format(
+          "Timestep out of bounds (%d < 0 || %d >= %d)",
+          timestepCut,
+          timestepCut,
+          (getMaxTimestep() - getMinTimestep())
+      ));
+    }
+
     double value = innerValues[timestepCut][vertCut][horizCut];
     return factory.buildForNumber(value, units);
   }

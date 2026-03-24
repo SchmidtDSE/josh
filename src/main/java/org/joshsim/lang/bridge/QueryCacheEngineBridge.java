@@ -7,8 +7,8 @@
 package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
@@ -57,7 +57,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         externalResourceGetter,
         configGetter
     );
-    cachedPatchesByGeometry = new HashMap<>();
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
 
   /**
@@ -87,14 +87,14 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         configGetter,
         replicate
     );
-    cachedPatchesByGeometry = new HashMap<>();
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
 
   @Override
   public List<Entity> getPriorPatches(GeometryMomento geometryMomento) {
-    if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
+    List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
+    if (keys != null) {
       // Cache hit: retrieve patches by keys using direct iteration
-      List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
       long priorTimestep = getPriorTimestep();
 
       List<Entity> result = new ArrayList<>(keys.size());
@@ -114,7 +114,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         }
       }
 
-      cachedPatchesByGeometry.put(geometryMomento, geoKeys);
+      cachedPatchesByGeometry.putIfAbsent(geometryMomento, geoKeys);
       return entities;
     }
   }

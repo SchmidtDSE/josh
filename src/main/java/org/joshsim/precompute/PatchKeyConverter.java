@@ -24,7 +24,6 @@ public class PatchKeyConverter {
   private final PatchBuilderExtents geoExtents;
   private final HaversineUtil.HaversinePoint startPoint;
   private final BigDecimal patchWidth;
-  private final BigDecimal patchWidthHalf;
 
   /**
    * Create a utility which performs conversions from patch keys in geoExtents to grid-space.
@@ -35,7 +34,6 @@ public class PatchKeyConverter {
   public PatchKeyConverter(PatchBuilderExtents geoExtents, BigDecimal patchWidth) {
     this.geoExtents = geoExtents;
     this.patchWidth = patchWidth;
-    this.patchWidthHalf = patchWidth.divide(new BigDecimal(2));
     this.startPoint = new HaversineUtil.HaversinePoint(
         geoExtents.getTopLeftX(),
         geoExtents.getTopLeftY()
@@ -63,16 +61,8 @@ public class PatchKeyConverter {
     );
 
     // Convert distances to grid cell indices by dividing by patch width
-    BigDecimal gridX = horizontalDistance.subtract(patchWidthHalf).divide(
-        patchWidth,
-        0,
-        RoundingMode.HALF_UP
-    );
-    BigDecimal gridY = verticalDistance.subtract(patchWidthHalf).divide(
-        patchWidth,
-        0,
-        RoundingMode.HALF_UP
-    );
+    BigDecimal gridX = horizontalDistance.divide(patchWidth, 0, RoundingMode.FLOOR);
+    BigDecimal gridY = verticalDistance.divide(patchWidth, 0, RoundingMode.FLOOR);
 
     return new ProjectedValue(gridX, gridY, value);
   }
