@@ -23,6 +23,7 @@ import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
+import org.joshsim.command.RunFromMinioCommand;
 import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
@@ -59,6 +60,7 @@ import picocli.CommandLine;
     subcommands = {
         ValidateCommand.class,
         RunCommand.class,
+        RunFromMinioCommand.class,
         RunRemoteCommand.class,
         ServerCommand.class,
         PreprocessCommand.class,
