@@ -5,10 +5,18 @@
 package org.joshsim.util;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.Result;
 import io.minio.UploadObjectArgs;
+import io.minio.messages.Item;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,6 +120,94 @@ public class MinioHandler {
     if (!failedFiles.isEmpty()) {
       output.printError(
           "Failed to upload " + failedFiles.size() + " files: " + String.join(", ", failedFiles)
+      );
+    }
+
+    return successCount;
+  }
+
+  /**
+   * Download a single object from MinIO to a local file.
+   *
+   * @param objectPath The full object path in the bucket
+   * @param destination The local file to write to
+   * @return true if download was successful
+   */
+  public boolean downloadFile(String objectPath, File destination) {
+    try {
+      Files.createDirectories(destination.getParentFile().toPath());
+
+      try (InputStream stream = minioClient.getObject(
+          GetObjectArgs.builder()
+              .bucket(bucketName)
+              .object(objectPath)
+              .build())) {
+        Files.copy(stream, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
+
+      output.printInfo(
+          "Downloaded minio://" + bucketName + "/" + objectPath + " to " + destination.getPath()
+      );
+      return true;
+    } catch (Exception e) {
+      output.printError("Failed to download " + objectPath + ": " + e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Download all objects under a prefix to a local directory.
+   *
+   * <p>Objects are downloaded preserving their relative path structure beneath the prefix.
+   * For example, an object at "job-123/input/simulation.josh" with prefix "job-123/input/"
+   * would be downloaded to localDir/simulation.josh.</p>
+   *
+   * @param prefix The object prefix to list and download (should end with /)
+   * @param localDir The local directory to download files into
+   * @return The number of files successfully downloaded
+   */
+  public int downloadDirectory(String prefix, File localDir) {
+    int successCount = 0;
+    List<String> failedFiles = new ArrayList<>();
+
+    String normalizedPrefix = prefix.endsWith("/") ? prefix : prefix + "/";
+
+    try {
+      Iterable<Result<Item>> results = minioClient.listObjects(
+          ListObjectsArgs.builder()
+              .bucket(bucketName)
+              .prefix(normalizedPrefix)
+              .recursive(true)
+              .build()
+      );
+
+      for (Result<Item> result : results) {
+        Item item = result.get();
+        String objectName = item.objectName();
+
+        // Skip directory markers
+        if (objectName.endsWith("/")) {
+          continue;
+        }
+
+        // Compute relative path beneath the prefix
+        String relativePath = objectName.substring(normalizedPrefix.length());
+        File destination = new File(localDir, relativePath);
+
+        if (downloadFile(objectName, destination)) {
+          successCount++;
+        } else {
+          failedFiles.add(objectName);
+        }
+      }
+    } catch (Exception e) {
+      output.printError("Failed to list objects under " + prefix + ": " + e.getMessage());
+    }
+
+    if (!failedFiles.isEmpty()) {
+      output.printError(
+          "Failed to download " + failedFiles.size() + " files: "
+              + String.join(", ", failedFiles)
       );
     }
 
