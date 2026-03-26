@@ -4,6 +4,4 @@ WORKDIR /app
 
 COPY joshsim-fat.jar /app/
 
-# No EXPOSE, no CMD — command specified by execution target (K8s Job spec, SSH).
-# The -Xmx value should be ~80% of available memory to leave room for off-heap + OS.
 ENTRYPOINT ["java"]
