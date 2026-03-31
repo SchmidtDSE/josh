@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Map;
 import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.remote.batch.KubernetesConfig;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -72,13 +73,17 @@ public class RunRemoteContext {
    * @param outputOptions The output options for logging
    * @param minioOptions The MinIO options for cloud storage
    * @param maxConcurrentWorkers Maximum concurrent workers for local leader mode
+   * @param targetType The execution target type ("http", "kubernetes", "ssh")
+   * @param kubernetesConfig The Kubernetes configuration (null unless kubernetes target)
+   * @param replicatesPerJob Sequential replicates per job unit (default 1)
    */
   public RunRemoteContext(File file, String simulation, boolean useFloat64,
       URI endpointUri, String apiKey, JoshJob job,
       String joshCode, String externalDataSerialized,
       SimulationMetadata metadata, ProgressCalculator progressCalculator,
       OutputOptions outputOptions, MinioOptions minioOptions,
-      int maxConcurrentWorkers) {
+      int maxConcurrentWorkers,
+      String targetType, KubernetesConfig kubernetesConfig, int replicatesPerJob) {
     this.file = file;
     this.simulation = simulation;
     this.useFloat64 = useFloat64;
@@ -92,6 +97,9 @@ public class RunRemoteContext {
     this.outputOptions = outputOptions;
     this.minioOptions = minioOptions;
     this.maxConcurrentWorkers = maxConcurrentWorkers;
+    this.targetType = targetType;
+    this.kubernetesConfig = kubernetesConfig;
+    this.replicatesPerJob = replicatesPerJob;
   }
 
   /**
@@ -247,5 +255,32 @@ public class RunRemoteContext {
    */
   public int getMaxConcurrentWorkers() {
     return maxConcurrentWorkers;
+  }
+
+  /**
+   * Gets the execution target type.
+   *
+   * @return The target type ("http", "kubernetes", or "ssh")
+   */
+  public String getTargetType() {
+    return targetType;
+  }
+
+  /**
+   * Gets the Kubernetes configuration. Null unless target is "kubernetes".
+   *
+   * @return The KubernetesConfig, or null
+   */
+  public KubernetesConfig getKubernetesConfig() {
+    return kubernetesConfig;
+  }
+
+  /**
+   * Gets the number of sequential replicates per job unit.
+   *
+   * @return Replicates per job (default 1)
+   */
+  public int getReplicatesPerJob() {
+    return replicatesPerJob;
   }
 }

@@ -34,6 +34,9 @@ import org.joshsim.pipeline.remote.RunRemoteContextBuilder;
 import org.joshsim.pipeline.remote.RunRemoteLocalLeaderStrategy;
 import org.joshsim.pipeline.remote.RunRemoteOffloadLeaderStrategy;
 import org.joshsim.pipeline.remote.RunRemoteStrategy;
+import org.joshsim.pipeline.remote.batch.BatchJobStrategy;
+import org.joshsim.pipeline.remote.batch.KubernetesConfig;
+import org.joshsim.pipeline.remote.batch.KubernetesTarget;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -84,9 +87,8 @@ public class RunRemoteCommand implements Callable<Integer> {
   @Option(
       names = "--api-key",
       description = "API key for authentication. "
-                   + "Required for Josh Cloud and custom endpoints. "
-                   + "Get Josh Cloud API key from https://joshsim.org",
-      required = true
+                   + "Required for HTTP targets (Josh Cloud and custom endpoints). "
+                   + "Not required for batch targets (kubernetes, ssh)."
   )
   private String apiKey;
 
@@ -162,6 +164,91 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private boolean uploadData = false;
 
+  // --- Batch target options ---
+
+  @Option(
+      names = "--target",
+      description = "Execution target: http (default), kubernetes, or ssh.",
+      defaultValue = "http"
+  )
+  private String target = "http";
+
+  @Option(
+      names = "--replicates-per-job",
+      description = "Sequential replicates per job unit (default: 1). "
+                  + "Higher values mean fewer jobs, each running more replicates sequentially.",
+      defaultValue = "1"
+  )
+  private int replicatesPerJob = 1;
+
+  // --- Kubernetes target options ---
+
+  @Option(
+      names = "--k8s-namespace",
+      description = "Kubernetes namespace (default: default)",
+      defaultValue = "default"
+  )
+  private String k8sNamespace = "default";
+
+  @Option(
+      names = "--k8s-context",
+      description = "kubectl context name (uses current context if absent)"
+  )
+  private String k8sContext;
+
+  @Option(
+      names = "--k8s-image",
+      description = "Container image for batch worker pods (required for kubernetes target)"
+  )
+  private String k8sImage;
+
+  @Option(
+      names = "--k8s-memory",
+      description = "Memory resource request (e.g., '256Gi', required for kubernetes target)"
+  )
+  private String k8sMemory;
+
+  @Option(
+      names = "--k8s-cpu",
+      description = "CPU resource request (e.g., '64', default: '4')",
+      defaultValue = "4"
+  )
+  private String k8sCpu = "4";
+
+  @Option(
+      names = "--k8s-gpu",
+      description = "Number of GPUs to request (default: 0)",
+      defaultValue = "0"
+  )
+  private int k8sGpu = 0;
+
+  @Option(
+      names = "--k8s-gpu-product",
+      description = "GPU product name for node selection (e.g., 'NVIDIA-A100-SXM4-80GB')"
+  )
+  private String k8sGpuProduct;
+
+  @Option(
+      names = "--k8s-timeout",
+      description = "Job timeout in seconds (default: 86400 = 24h)",
+      defaultValue = "86400"
+  )
+  private long k8sTimeout = 86400;
+
+  @Option(
+      names = "--k8s-backoff-limit",
+      description = "Number of retries for failed pods (default: 1)",
+      defaultValue = "1"
+  )
+  private int k8sBackoffLimit = 1;
+
+  @Option(
+      names = "--k8s-parallelism",
+      description = "Max concurrent pods (default: same as --replicates)",
+      defaultValue = "-1"
+  )
+  private int k8sParallelism = -1;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -198,19 +285,29 @@ public class RunRemoteCommand implements Callable<Integer> {
       return SERIALIZATION_ERROR_CODE;
     }
     try {
-      // Detect if using Josh Cloud vs custom endpoint
-      boolean usingJoshCloud = isUsingJoshCloud();
+      URI endpointUri = null;
 
-      if (usingJoshCloud) {
-        output.printInfo("Using Josh Cloud for remote execution");
-        output.printInfo("Your simulation will run on our community infrastructure");
-        validateJoshCloudApiKey();
+      if ("http".equals(target)) {
+        // HTTP target: validate endpoint and API key
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+          output.printError("--api-key is required for HTTP targets.");
+          return SERIALIZATION_ERROR_CODE;
+        }
+
+        boolean usingJoshCloud = isUsingJoshCloud();
+
+        if (usingJoshCloud) {
+          output.printInfo("Using Josh Cloud for remote execution");
+          output.printInfo("Your simulation will run on our community infrastructure");
+          validateJoshCloudApiKey();
+        } else {
+          output.printInfo("Using custom endpoint: " + endpoint);
+        }
+
+        endpointUri = validateAndParseEndpoint(endpoint);
       } else {
-        output.printInfo("Using custom endpoint: " + endpoint);
+        output.printInfo("Using " + target + " target for batch execution");
       }
-
-      // Validate endpoint URL
-      URI endpointUri = validateAndParseEndpoint(endpoint);
 
       // Execute remote simulation using strategy pattern
       List<JoshJob> jobs = executeRemoteSimulation(endpointUri);
@@ -364,21 +461,34 @@ public class RunRemoteCommand implements Callable<Integer> {
       );
 
       // Create execution context for this job combination
-      RunRemoteContext context = new RunRemoteContextBuilder()
+      RunRemoteContextBuilder contextBuilder = new RunRemoteContextBuilder()
           .withFile(file)
           .withSimulation(simulation)
           .withUseFloat64(useFloat64)
-          .withEndpointUri(endpointUri)
-          .withApiKey(apiKey)
           .withJob(currentJob)
           .withJoshCode(joshCode)
-          .withExternalDataSerialized(externalDataSerialized)
           .withMetadata(metadata)
           .withProgressCalculator(progressCalculator)
           .withOutputOptions(output)
           .withMinioOptions(minioOptions)
           .withMaxConcurrentWorkers(concurrentWorkers)
-          .build();
+          .withTargetType(target)
+          .withReplicatesPerJob(replicatesPerJob);
+
+      // HTTP-specific fields
+      if ("http".equals(target)) {
+        contextBuilder
+            .withEndpointUri(endpointUri)
+            .withApiKey(apiKey)
+            .withExternalDataSerialized(externalDataSerialized);
+      }
+
+      // Kubernetes-specific fields
+      if ("kubernetes".equals(target)) {
+        contextBuilder.withKubernetesConfig(buildKubernetesConfig());
+      }
+
+      RunRemoteContext context = contextBuilder.build();
 
       // Execute strategy for this job combination
       strategy.execute(context);
@@ -393,11 +503,49 @@ public class RunRemoteCommand implements Callable<Integer> {
    * @return The execution strategy to use
    */
   private RunRemoteStrategy selectExecutionStrategy() {
-    if (useRemoteLeader) {
-      return new RunRemoteOffloadLeaderStrategy();
-    } else {
-      return new RunRemoteLocalLeaderStrategy();
+    switch (target) {
+      case "kubernetes":
+        return new BatchJobStrategy(
+            new KubernetesTarget(buildKubernetesConfig(), output)
+        );
+      case "http":
+      default:
+        if (useRemoteLeader) {
+          return new RunRemoteOffloadLeaderStrategy();
+        } else {
+          return new RunRemoteLocalLeaderStrategy();
+        }
     }
+  }
+
+  /**
+   * Builds a KubernetesConfig from CLI flags.
+   *
+   * @return the Kubernetes configuration
+   */
+  private KubernetesConfig buildKubernetesConfig() {
+    KubernetesConfig.Builder builder = new KubernetesConfig.Builder()
+        .setNamespace(k8sNamespace)
+        .setCpu(k8sCpu)
+        .setGpu(k8sGpu)
+        .setTimeoutSeconds(k8sTimeout)
+        .setBackoffLimit(k8sBackoffLimit)
+        .setParallelism(k8sParallelism);
+
+    if (k8sContext != null) {
+      builder.setContext(k8sContext);
+    }
+    if (k8sImage != null) {
+      builder.setImage(k8sImage);
+    }
+    if (k8sMemory != null) {
+      builder.setMemory(k8sMemory);
+    }
+    if (k8sGpuProduct != null) {
+      builder.setGpuProduct(k8sGpuProduct);
+    }
+
+    return builder.build();
   }
 
 
