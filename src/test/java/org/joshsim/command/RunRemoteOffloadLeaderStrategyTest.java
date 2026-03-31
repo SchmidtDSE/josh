@@ -73,7 +73,8 @@ public class RunRemoteOffloadLeaderStrategyTest {
         endpointUri, apiKey, job,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers,
+        "http", null, 1
     );
   }
 
@@ -125,7 +126,8 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(),
+        "http", null, 1
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -148,7 +150,8 @@ public class RunRemoteOffloadLeaderStrategyTest {
         "simulation code with spaces", "external data with spaces",
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(),
+        "http", null, 1
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -262,7 +265,8 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(),
+        "http", null, 1
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
@@ -291,7 +295,8 @@ public class RunRemoteOffloadLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(),
+        "http", null, 1
     );
 
     Method method = RunRemoteOffloadLeaderStrategy.class.getDeclaredMethod(
