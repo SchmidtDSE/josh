@@ -57,6 +57,11 @@ public class RunRemoteContext {
   // Execution parameters for local leader mode
   private final int maxConcurrentWorkers;
 
+  // Batch-specific fields (null when targetType is "http")
+  private final String targetType;
+  private final KubernetesConfig kubernetesConfig;
+  private final int replicatesPerJob;
+
   /**
    * Creates a new RunRemoteContext with all necessary parameters.
    *

@@ -14,19 +14,10 @@ package org.joshsim.command;
 import io.minio.PutObjectArgs;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Optional;
-import org.joshsim.JoshSimCommander;
-import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.bridge.ShadowingEntity;
-import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.io.ExportTarget;
-import org.joshsim.lang.io.ExportTargetParser;
+import java.util.List;
+import org.joshsim.pipeline.remote.batch.BatchExportValidator;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
@@ -210,110 +201,25 @@ public class RunFromMinioCommand implements java.util.concurrent.Callable<Intege
   /**
    * Validates that all export paths in the simulation are safe for batch execution.
    *
-   * <p>Batch workers write to MinIO concurrently. Export paths must use minio:// protocol
-   * and contain {replicate} to ensure each worker writes to a unique location. The
-   * consolidated CSV mode (all replicates appending to one file) is unsafe for object
-   * storage.</p>
+   * <p>Delegates to {@link BatchExportValidator} which checks that all export paths
+   * use minio:// protocol and contain {replicate}.</p>
    *
    * @param joshFile the simulation file to validate
    * @return 0 if valid, error code otherwise
    */
   Integer validateExportPaths(File joshFile) {
-    JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-        new GridGeometryFactory(),
-        joshFile,
-        output
-    );
+    List<String> errors = BatchExportValidator.validate(joshFile, simulation, output);
 
-    if (initResult.getFailureStep().isPresent()) {
-      output.printError("Failed to parse Josh file for export validation");
-      return VALIDATION_ERROR_CODE;
+    for (String error : errors) {
+      output.printError(error);
     }
 
-    JoshProgram program = initResult.getProgram().orElseThrow();
-
-    if (!program.getSimulations().hasPrototype(simulation)) {
-      output.printError("Could not find simulation: " + simulation);
-      return VALIDATION_ERROR_CODE;
-    }
-
-    try {
-      EngineValueFactory valueFactory = new EngineValueFactory();
-      MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-      MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
-      simEntity.startSubstep("constant");
-
-      // Check all exportFiles and debugFiles targets
-      String[] exportKeys = {
-          "exportFiles.patch", "exportFiles.meta", "exportFiles.entity"
-      };
-      String[] debugKeys = {
-          "debugFiles.organism", "debugFiles.patch", "debugFiles.agent",
-          "debugFiles.disturbance"
-      };
-
-      boolean hasErrors = false;
-      hasErrors |= validateTargets(simEntity, exportKeys, "exportFiles");
-      hasErrors |= validateTargets(simEntity, debugKeys, "debugFiles");
-
-      simEntityRaw.endSubstep();
-
-      if (hasErrors) {
-        return VALIDATION_ERROR_CODE;
-      }
-    } catch (Exception e) {
-      output.printError("Error validating export paths: " + e.getMessage());
+    if (!errors.isEmpty()) {
       return VALIDATION_ERROR_CODE;
     }
 
     output.printInfo("Export path validation passed");
     return 0;
-  }
-
-  /**
-   * Validates a set of export/debug targets for batch safety.
-   *
-   * @param simEntity the simulation entity to extract paths from
-   * @param keys the attribute keys to check
-   * @param category the category name for error messages
-   * @return true if any errors were found
-   */
-  private boolean validateTargets(MutableEntity simEntity, String[] keys, String category) {
-    boolean hasErrors = false;
-
-    for (String key : keys) {
-      Optional<EngineValue> value = simEntity.getAttributeValue(key);
-      if (value.isEmpty()) {
-        continue;
-      }
-
-      String rawPath = value.get().getAsString();
-      ExportTarget target = ExportTargetParser.parse(rawPath);
-      String uri = target.toUri();
-
-      if (!rawPath.contains("{replicate}")) {
-        output.printError(
-            "Batch execution requires {replicate} in all export paths. "
-            + category + " path '" + uri + "' (from " + key + ") "
-            + "does not contain {replicate}. This is required because batch workers "
-            + "write to MinIO concurrently and cannot safely share output files. "
-            + "Use a path like: minio://bucket/results/output_{replicate}.csv"
-        );
-        hasErrors = true;
-      }
-
-      if (!"minio".equals(target.getProtocol())) {
-        output.printError(
-            "Batch execution requires minio:// protocol for all export paths. "
-            + category + " path '" + uri + "' (from " + key + ") "
-            + "uses a non-MinIO protocol. Results written to local paths inside "
-            + "containers are lost on termination."
-        );
-        hasErrors = true;
-      }
-    }
-
-    return hasErrors;
   }
 
   /**

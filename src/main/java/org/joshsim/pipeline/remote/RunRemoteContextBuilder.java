@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Optional;
 import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.remote.batch.KubernetesConfig;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
@@ -55,6 +56,11 @@ public class RunRemoteContextBuilder {
   // Execution parameters for local leader mode
   private int maxConcurrentWorkers = 10;
   private int replicateNumber = 0;
+
+  // Batch-specific fields
+  private String targetType = "http";
+  private KubernetesConfig kubernetesConfig;
+  private int replicatesPerJob = 1;
 
   /**
    * Set the Josh simulation file.
@@ -212,6 +218,39 @@ public class RunRemoteContextBuilder {
   }
 
   /**
+   * Set the execution target type.
+   *
+   * @param targetType The target type ("http", "kubernetes", "ssh")
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withTargetType(String targetType) {
+    this.targetType = targetType;
+    return this;
+  }
+
+  /**
+   * Set the Kubernetes configuration for batch execution.
+   *
+   * @param kubernetesConfig The Kubernetes configuration
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withKubernetesConfig(KubernetesConfig kubernetesConfig) {
+    this.kubernetesConfig = kubernetesConfig;
+    return this;
+  }
+
+  /**
+   * Set the number of sequential replicates per job unit.
+   *
+   * @param replicatesPerJob Replicates per job (default 1)
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withReplicatesPerJob(int replicatesPerJob) {
+    this.replicatesPerJob = replicatesPerJob;
+    return this;
+  }
+
+  /**
    * Build the RunRemoteContext instance.
    *
    * @return A new RunRemoteContext instance with the configured parameters
@@ -222,11 +261,12 @@ public class RunRemoteContextBuilder {
 
     return new RunRemoteContext(
         file.get(), simulation.get(), useFloat64,
-        endpointUri.get(), apiKey.get(), job.get(),
-        joshCode.get(), externalDataSerialized.get(),
+        endpointUri.orElse(null), apiKey.orElse(null), job.get(),
+        joshCode.get(), externalDataSerialized.orElse(null),
         metadata.get(), progressCalculator.get(),
         outputOptions.get(), minioOptions.get(),
-        maxConcurrentWorkers
+        maxConcurrentWorkers,
+        targetType, kubernetesConfig, replicatesPerJob
     );
   }
 
@@ -245,18 +285,27 @@ public class RunRemoteContextBuilder {
     if (!job.isPresent()) {
       throw new IllegalStateException("Job is required");
     }
-    if (!endpointUri.isPresent()) {
-      throw new IllegalStateException("Endpoint URI is required");
+
+    // Endpoint and API key are only required for HTTP targets
+    final boolean isBatchTarget = "kubernetes".equals(targetType) || "ssh".equals(targetType);
+    if (!isBatchTarget) {
+      if (!endpointUri.isPresent()) {
+        throw new IllegalStateException("Endpoint URI is required");
+      }
+      if (!apiKey.isPresent()) {
+        throw new IllegalStateException("API key is required");
+      }
     }
-    if (!apiKey.isPresent()) {
-      throw new IllegalStateException("API key is required");
-    }
+
     if (!joshCode.isPresent()) {
       throw new IllegalStateException("Josh code is required");
     }
-    if (!externalDataSerialized.isPresent()) {
+
+    // External data serialization is HTTP wire format; batch targets use MinIO staging
+    if (!isBatchTarget && !externalDataSerialized.isPresent()) {
       throw new IllegalStateException("External data serialized is required");
     }
+
     if (!metadata.isPresent()) {
       throw new IllegalStateException("Metadata is required");
     }
@@ -268,6 +317,11 @@ public class RunRemoteContextBuilder {
     }
     if (!minioOptions.isPresent()) {
       throw new IllegalStateException("Minio options are required");
+    }
+
+    // Batch-specific validation
+    if ("kubernetes".equals(targetType) && kubernetesConfig == null) {
+      throw new IllegalStateException("KubernetesConfig is required for kubernetes target");
     }
   }
 }
