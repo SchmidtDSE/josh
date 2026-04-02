@@ -1,0 +1,56 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: critical
+# @issue: spatial-overcount
+# @description: Larger within radius finds at least as many patches as smaller radius
+
+# The within operator uses edge-intersection: a patch is included if ANY part of
+# its area overlaps the query circle. This is the intended GIS-style spatial
+# overlap behavior. See SPATIAL_OVERCOUNT.md for full analysis.
+#
+# Edge-intersection gives more results than center-to-center at small radii:
+#   radius=1.0 cells → 9 patches (edge) vs 5 (center-to-center)
+#   radius=1.5 cells → 13 patches (edge) vs 9 (center-to-center)
+# This is by design. See PatchSpatialIndexTest.java for unit-level verification.
+#
+# This test verifies basic monotonicity: larger radius >= smaller radius count.
+# On a grid-space grid with a patch .step handler, organisms can compute counts.
+
+start simulation TestSpatialWithinMonotonicByRadius
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 70 m
+  grid.high.y = 70 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  at10.step = mean(Tree.n10)
+  at30.step = mean(Tree.n30)
+
+  # Larger radius should find at least as many patches.
+  assert.monotonic.step:if(meta.stepCount == 2 count) = current.at10 <= current.at30
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  n10.step = count(Tree within 10 m radial at prior)
+  n30.step = count(Tree within 30 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

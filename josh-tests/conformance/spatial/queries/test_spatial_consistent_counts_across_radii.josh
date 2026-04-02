@@ -1,0 +1,54 @@
+# @category: regression
+# @subcategory: spatial-cache
+# @priority: critical
+# @description: Smaller within radius returns fewer patches than larger radius
+
+# BUG: CircleOffsetsCache uses ceil(radiusInGridCells) as the key.
+# radius=10m on 10m grid → radiusInGridCells=1.0, key=ceil(1.0)=1 → 9 offsets
+# radius=5m  on 10m grid → radiusInGridCells=0.5, key=ceil(0.5)=1 → 9 offsets (stale!)
+#
+# The 5m query should find fewer patches than the 10m query, but it gets
+# the same cached offsets. The assertion at5m < at10m should pass but FAILS.
+#
+# Only triggers when two within calls with different radii appear in the
+# same Josh file (same JVM). Separate runs start with an empty cache.
+
+start simulation TestSpatialConsistentCountsAcrossRadii
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 70 m
+  grid.high.y = 70 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  at10m.step = mean(Tree.n10)
+  at5m.step = mean(Tree.n5)
+
+  # A smaller radius should find strictly fewer patches than a larger one.
+  # BUG: both return the same count due to cache key collision.
+  assert.smallerRadius.step:if(meta.stepCount == 2 count) = current.at5m < current.at10m
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  n10.step = count(Tree within 10 m radial at prior)
+  n5.step = count(Tree within 5 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

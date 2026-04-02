@@ -1,0 +1,49 @@
+# @category: regression
+# @subcategory: organism-lifecycle
+# @priority: critical
+# @description: Organism .step handlers run when only simulation defines .step
+
+# BUG: Even if the simulation entity defines .step attributes (like stepCount),
+# SimulationStepper only collects events from PATCH handlers. The step phase
+# is gated by events.contains("step") which is false when only the simulation
+# (not a patch) has .step handlers.
+
+start simulation TestOrganismStepRunsWithSimStepOnly
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  avgAge.end = mean(Tree.age)
+
+  # BUG: organism age stays 0 because step phase is skipped.
+  # Unconditional — fires at every .end, catches the bug immediately at step 1.
+  assert.ageAdvanced.end = current.avgAge >= 1 year
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

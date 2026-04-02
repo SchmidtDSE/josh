@@ -1,0 +1,56 @@
+# @category: regression
+# @subcategory: organism-lifecycle
+# @priority: critical
+# @description: Organism .step handlers run even when patch has no .step handlers
+
+# BUG: SimulationStepper collects events only from patch handlers (line 55-62).
+# If no patch defines a .step handler, "step" is absent from the events set,
+# and the entire step phase is skipped. Organism .step handlers never execute.
+#
+# This is a behavioral bug, not just an assertion bug — organism state
+# (age, growth, mortality) never advances.
+#
+# The patch below has only .init (to create the Tree). The organism defines
+# age.step. If the step phase runs, age reaches 5 at step 5. If skipped,
+# age stays 0 forever.
+#
+# Uses a patch-level .end assertion to verify organism age indirectly.
+# Patch .end assertions ARE enforced, so this test concretely fails when
+# the bug is present.
+
+start simulation TestOrganismStepRunsWithoutPatchStep
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  avgAge.end = mean(Tree.age)
+
+  # At step 5, organism should be 5 years old.
+  # BUG: age stays 0 because step phase is skipped (no patch .step handler).
+  assert.ageAdvanced.end:if(meta.stepCount == 5 count) = current.avgAge >= 1 year
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

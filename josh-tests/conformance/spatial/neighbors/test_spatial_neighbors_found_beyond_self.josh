@@ -1,0 +1,61 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: critical
+# @issue: spatial-overcount
+# @description: Organism spatial query finds neighbors beyond the querying patch
+
+# 7x7 grid with 10m cells, 1 tree per patch. Patch centers 10m apart.
+# Edge-intersection at radius=10m (1.0 grid cells):
+#   Interior: 9 (self + 4 cardinal + 4 diagonal)
+#   Corner: 4 (clipped to grid bounds)
+#
+# Edge-intersection at radius=30m (3.0 grid cells):
+#   Interior: 45 (verified by PatchSpatialIndexTest)
+#
+# This test uses patch-level assertions checking organism-computed counts.
+# Note: count(Tree within R radial at prior) from organism context returns the
+# number of patches found (each contributes one entry to the distribution).
+
+start simulation TestSpatialNeighborsFoundBeyondSelf
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 70 m
+  grid.high.y = 70 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  avgAt10.step = mean(Tree.n10)
+  avgAt30.step = mean(Tree.n30)
+
+  # Interior cells get 9 at radius=10m (edge-intersection).
+  # Edge/corner cells get fewer. The MEAN across all 49 patches should be
+  # strictly greater than 1 (every cell finds at least self + some neighbors).
+  assert.meanAbove1.step:if(meta.stepCount == 2 count) = current.avgAt10 > 1 count
+
+  # Mean at 30m should be greater than mean at 10m.
+  assert.radiusOrder.step:if(meta.stepCount == 2 count) = current.avgAt30 > current.avgAt10
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  n10.step = count(Tree within 10 m radial at prior)
+  n30.step = count(Tree within 30 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

@@ -1,0 +1,59 @@
+# @category: regression
+# @subcategory: organism-lifecycle
+# @priority: critical
+# @description: Organism state transitions work even without patch .step handlers
+
+# BUG: State transitions defined via state.step handlers never execute when
+# the step phase is skipped. Organisms remain in their initial state forever.
+#
+# Tree starts as "young" and should transition to "old" after 3 years.
+# BUG: stays "young" forever because state.step never runs.
+#
+# Uses a patch-level .end assertion to verify organism state indirectly.
+
+start simulation TestStateTransitionsWithoutPatchStep
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 6 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  numOld.end = count(Tree[Tree.state == "old"])
+
+  # At step 6, tree age should be 6 (> 3), so state should be "old".
+  # BUG: state.step never runs, tree stays "young", numOld stays 0.
+  assert.treeTransitioned.end:if(meta.stepCount == 6 count) = current.numOld >= 1 count
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  state.init = "young"
+
+  start state "young"
+    state.step:if(current.age > 3 years) = "old"
+  end state
+
+  start state "old"
+  end state
+
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
