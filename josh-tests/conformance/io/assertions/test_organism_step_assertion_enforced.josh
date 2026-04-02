@@ -1,0 +1,56 @@
+# @category: regression
+# @subcategory: organism-lifecycle
+# @priority: critical
+# @description: Organism .step assertions are enforced regardless of patch handler presence
+
+# BUG: When the step phase is skipped (no patch .step handler), organism
+# assertions at .step are never evaluated.
+#
+# This test verifies indirectly: the organism has age.step which should
+# advance age. A patch-level .end assertion checks mean(Tree.age).
+# If step ran, age >= 1. If skipped, age == 0 and assertion fails.
+#
+# The organism also has a trivially false .step assertion. Even if the
+# age bug is fixed, this organism assertion should independently fail.
+# Currently neither fires.
+
+start simulation TestOrganismStepAssertionEnforced
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  avgAge.end = mean(Tree.age)
+
+  # Patch-level check: if organism .step ran, age should be >= 1 by step 3.
+  # BUG: age stays 0 because step phase is skipped.
+  assert.ageAdvanced.end:if(meta.stepCount == 3 count) = current.avgAge >= 1 year
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # This trivially false organism assertion would ALSO fail if it ever ran.
+  # BUG: it silently passes because the step phase is never entered.
+  assert.alwaysFalse.step = 1 count == 0 count
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

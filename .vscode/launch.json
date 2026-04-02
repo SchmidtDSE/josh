@@ -65,6 +65,20 @@
     },
     {
       "type": "java",
+      "name": "Debug Conformance Test (open .josh file)",
+      "request": "launch",
+      "mainClass": "org.joshsim.JoshSimCommander",
+      "classPaths": ["${workspaceFolder}/build/libs/joshsim-fat.jar"],
+      "args": [
+        "run",
+        "${file}",
+        "${input:joshSimName}",
+        "--seed", "42"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "java",
       "name": "JOTR Grid Search (2 configs x 2 replicates)",
       "request": "launch",
       "mainClass": "org.joshsim.JoshSimCommander",
@@ -90,6 +104,14 @@
         "-Xmx2g"
       ],
       "envFile": "${workspaceFolder}/.devcontainer/.env"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "joshSimName",
+      "type": "promptString",
+      "description": "Simulation name (from 'start simulation X' in the .josh file)",
+      "default": "Main"
     }
   ]
 }
