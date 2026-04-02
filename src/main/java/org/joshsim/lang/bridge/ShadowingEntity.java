@@ -103,6 +103,13 @@ public class ShadowingEntity implements MutableEntity {
     this.here = here;
     this.meta = meta;
 
+    Optional<EngineValue> checkAssertionsMaybe = meta.getAttributeValue("checkAssertions");
+    if (checkAssertionsMaybe.isPresent()) {
+      checkAssertions = checkAssertionsMaybe.get().getAsBoolean();
+    } else {
+      checkAssertions = true;
+    }
+
     scope = new EntityScope(inner);
 
     // Initialize array-based caches

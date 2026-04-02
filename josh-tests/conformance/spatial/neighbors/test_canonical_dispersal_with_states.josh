@@ -1,0 +1,112 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: critical
+# @description: Combined seed dispersal + organism states — canonical model pattern
+#
+# Mirrors the canonical Joshua Tree model's core loop:
+#   1. Organisms have states (Seedling -> Adult, no death in this test)
+#   2. Patch tracks organism counts via .step exports
+#   3. Patch computes seed production from adult trees at .end
+#   4. Seeds disperse to neighbors via patch-level `within` query
+#   5. Seed immigration summed from neighboring patches
+#
+# 5x5 grid with 10m cells, radius=15m.
+# All trees start as "Seedling" at age 0. At age > 1, transition to "Adult".
+# Adults produce seeds (isProducing = true). Seedlings do not.
+#
+# Key interactions tested:
+#   - Organism state transitions during .step
+#   - Counting organisms by state at .end (producerCount)
+#   - Patch-to-patch `within` query at .end phase
+#   - Cross-patch attribute access: sum(neighbors.emissionPerNeighbor)
+#   - Event phase ordering: .step (organisms age/transition) then .end (dispersal)
+#
+# Assertions use step 3 to ensure organisms have matured and prior is populated.
+
+start simulation TestCanonicalDispersalWithStates
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 50 m
+  grid.high.y = 50 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 4 count
+end simulation
+
+start patch Default
+  Tree.init = create 3 count of Tree
+
+  # Track organism count (also ensures step phase runs)
+  export.treeCount.step = count(Tree)
+
+  # Count producers at .end (adults only)
+  producerCount.end = count(current.Tree[current.Tree.isProducing])
+
+  # Seed production from producing trees (2 seeds per producer)
+  localSeedProduction.end = current.producerCount * 2 count
+
+  # Neighbor count for dispersal
+  neighborCount.end = {
+    const neighbors = Default within 15 m radial at prior
+    const result = limit count(neighbors) - 1 count to [1, 100]
+    return result
+  }
+
+  # Per-neighbor emission
+  emissionPerNeighbor.end = current.localSeedProduction / current.neighborCount
+
+  # Immigration from neighbors
+  seedImmigration.end = {
+    const neighbors = Default within 15 m radial at prior
+    if (count(neighbors) > 1 count) {
+      return sum(neighbors.emissionPerNeighbor)
+    } else {
+      return 0 count
+    }
+  }
+
+  # --- Assertions ---
+
+  # At step 0: all 3 trees present, all seedlings
+  assert.initialCount.step:if(meta.stepCount == 0 count) = count(Tree) == 3 count
+
+  # At step 3: trees are age 3, should all be Adults and producing
+  assert.allProducing.end:if(meta.stepCount == 3 count) = current.producerCount == 3 count
+
+  # Seed production should be positive once trees are adults
+  assert.seedsProduced.end:if(meta.stepCount == 3 count) = current.localSeedProduction > 0 count
+
+  # Neighbor-based immigration should be positive when seeds are produced
+  assert.immigrationPositive.end:if(meta.stepCount == 3 count) = current.seedImmigration > 0 count
+
+  # Neighbor count should be reasonable (not the whole grid)
+  assert.neighborsBounded.end:if(meta.stepCount == 3 count) = current.neighborCount <= 20 count
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  state.init = "Seedling"
+  isProducing.init = false
+
+  start state "Seedling"
+    state.step:if(current.age > 1 year) = "Adult"
+    isProducing.step = false
+  end state
+
+  start state "Adult"
+    isProducing.step = true
+  end state
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
