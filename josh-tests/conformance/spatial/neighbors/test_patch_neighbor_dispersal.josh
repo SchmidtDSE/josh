@@ -1,0 +1,91 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: critical
+# @description: Patch-level within query for seed dispersal accounting
+#
+# Mirrors the canonical Joshua Tree seed dispersal pattern:
+#   1. Each patch produces seeds locally (fixed 10 count)
+#   2. neighborCount.end = count(Default within R radial at prior) - 1
+#   3. emissionPerNeighbor.end = localProduction / neighborCount
+#   4. immigration.end = sum(neighbors.emissionPerNeighbor)
+#
+# 7x7 grid with 10m cells, radius=15m (1.5 grid cells).
+# Edge-intersection at radius=1.5 grid cells:
+#   Interior (e.g. 3,3): 13 patches -> neighborCount = 12
+#   Corner (0,0): 6 patches -> neighborCount = 5
+#
+# Key behavior tested:
+#   - Patch-to-patch `Default within R radial at prior` returns patches
+#   - `neighbors.attribute` accesses resolved .end values on other patches
+#   - Seed accounting: division by local neighborCount + summation from neighbors
+#
+# Assertions use step 2 to ensure prior spatial index is populated.
+
+start simulation TestPatchNeighborDispersal
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 70 m
+  grid.high.y = 70 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 3 count
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  # Each patch produces a fixed amount of seeds
+  localProduction.step = 10 count
+
+  # Raw count from within query (before subtracting self)
+  rawNeighborCount.end = {
+    const neighbors = Default within 15 m radial at prior
+    return count(neighbors)
+  }
+
+  # Count neighboring patches (subtract self, clamp to [1, 100])
+  neighborCount.end = {
+    const neighbors = Default within 15 m radial at prior
+    const result = limit count(neighbors) - 1 count to [1, 100]
+    return result
+  }
+
+  # Divide production across neighbors
+  emissionPerNeighbor.end = current.localProduction / current.neighborCount
+
+  # Sum immigration from all neighbors' per-neighbor emissions
+  immigration.end = {
+    const neighbors = Default within 15 m radial at prior
+    if (count(neighbors) > 1 count) {
+      return sum(neighbors.emissionPerNeighbor)
+    } else {
+      return 0 count
+    }
+  }
+
+  # At step 2+, within query should find more than just self
+  # (prior spatial index is populated from step 1 onward)
+  assert.findNeighbors.end:if(meta.stepCount == 2 count) = current.rawNeighborCount > 1 count
+
+  # Immigration should be positive when neighbors exist
+  assert.positiveImmigration.end:if(meta.stepCount == 2 count) = current.immigration > 0 count
+
+  # Neighbor count should be bounded (not the whole 49-patch grid)
+  assert.neighborsBounded.end:if(meta.stepCount == 2 count) = current.neighborCount <= 20 count
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
