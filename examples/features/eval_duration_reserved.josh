@@ -1,0 +1,5 @@
+start organism BadTree
+
+  evalDuration.step = 0 ms
+
+end organism

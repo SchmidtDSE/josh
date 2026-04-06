@@ -123,6 +123,7 @@ test_discover_config examples/features/config_example.josh "example.testVar1 exa
 test_discover_config examples/simulations/simple.josh "" || exit 36
 
 assert_ok examples/features/eval_duration.josh || exit 37
+assert_not_ok examples/features/eval_duration_reserved.josh || exit 39
 
 # Test discoverConfig error handling with nonexistent file
 if [ "$verbose" = true ]; then
