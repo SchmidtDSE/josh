@@ -25,9 +25,9 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -274,6 +274,35 @@ public class ValueResolverTest {
     // Should return empty (attribute doesn't exist)
     Optional<EngineValue> result = resolver.get(entityScope);
     assertFalse(result.isPresent());
+  }
+
+  @Test
+  void testEvalDurationReturnsZero() {
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "evalDuration");
+    Optional<EngineValue> result = resolver.get(mockScope);
+
+    assertTrue(result.isPresent(), "evalDuration should return a value");
+    assertEquals(0L, result.get().getAsInt(), "evalDuration should return 0");
+    assertEquals(
+        Units.of("milliseconds"),
+        result.get().getUnits(),
+        "evalDuration should use milliseconds units"
+    );
+  }
+
+  @Test
+  void testEvalDurationSuffixReturnsZero() {
+    // When a dotted path ending in evalDuration is resolved, the terminal
+    // child resolver should return 0 ms without actually querying the entity.
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "entity.evalDuration");
+    Optional<EngineValue> result = resolver.get(mockScope);
+
+    assertTrue(result.isPresent(), "entity.evalDuration should return a value");
+    assertEquals(
+        Units.of("milliseconds"),
+        result.get().getUnits(),
+        "evalDuration suffix should use milliseconds units"
+    );
   }
 
 }

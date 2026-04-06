@@ -1,0 +1,8 @@
+start organism SimpleTree
+
+  height.init = 1 m
+  height.step = prior.height + 1 m
+
+  heightEvalDuration.step = height.evalDuration
+
+end organism

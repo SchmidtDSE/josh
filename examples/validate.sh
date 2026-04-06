@@ -122,10 +122,12 @@ test_discover_config examples/features/config_example.josh "example.testVar1 exa
 # Test discoverConfig on file with no config variables
 test_discover_config examples/simulations/simple.josh "" || exit 36
 
+assert_ok examples/features/eval_duration.josh || exit 37
+
 # Test discoverConfig error handling with nonexistent file
 if [ "$verbose" = true ]; then
   java -jar build/libs/joshsim-fat.jar discoverConfig nonexistent.josh >/dev/null 2>&1
 else
   java -jar build/libs/joshsim-fat.jar discoverConfig nonexistent.josh >/dev/null 2>&1
 fi
-[ $? -eq 1 ] || exit 37
+[ $? -eq 1 ] || exit 38

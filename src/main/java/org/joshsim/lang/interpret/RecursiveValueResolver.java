@@ -29,17 +29,16 @@ import org.joshsim.engine.value.type.RealizedDistribution;
  */
 public class RecursiveValueResolver implements ValueResolver {
 
+  private static final String EVAL_DURATION_ATTR = "evalDuration";
+
   private final EngineValueFactory valueFactory;
   private final String path;
   private final boolean hasDot;
+  private final boolean isEvalDuration;
 
   private String foundPath;
   private Optional<RecursiveValueResolver> memoizedContinuationResolver;
 
-  // Cache maps from the shared attributeNameToIndex Map reference to the attribute's index.
-  // The Map object identity serves as a stand-in for entity type name (e.g., "JoshuaTree")
-  // without the overhead of String hashing. All entities of the same type share the same
-  // immutable attributeNameToIndex Map instance, making it perfect for identity-based caching.
   private IdentityHashMap<Map<String, Integer>, Integer> indexCache;
 
   /**
@@ -52,9 +51,10 @@ public class RecursiveValueResolver implements ValueResolver {
     this.valueFactory = valueFactory;
     this.path = path;
     this.hasDot = path != null && path.indexOf('.') != -1;
+    this.isEvalDuration = EVAL_DURATION_ATTR.equals(path);
     memoizedContinuationResolver = null;
     foundPath = null;
-    indexCache = null; // Initialized lazily
+    indexCache = null;
   }
 
   /**
@@ -68,7 +68,10 @@ public class RecursiveValueResolver implements ValueResolver {
    */
   @Override
   public Optional<EngineValue> get(Scope target) {
-    // Try integer-based access for EntityScope
+    if (isEvalDuration) {
+      return Optional.of(valueFactory.build(0L, Units.of("milliseconds")));
+    }
+
     if (target instanceof EntityScope) {
       EntityScope entityScope = (EntityScope) target;
       Optional<EngineValue> fastResult = tryIntegerLookup(entityScope);
@@ -77,7 +80,6 @@ public class RecursiveValueResolver implements ValueResolver {
       }
     }
 
-    // Original string-based resolution
     Optional<RecursiveValueResolver> continuationResolverMaybe = getInnerResolver(target);
     if (continuationResolverMaybe == null) {
       return Optional.empty();
@@ -116,59 +118,44 @@ public class RecursiveValueResolver implements ValueResolver {
   }
 
   /**
-   * Attempts to resolve the attribute using cached integer index.
+   * Attempts to resolve the attribute using a cached integer index for fast array access.
    *
-   * <p>This method implements the fast path for attribute resolution by caching
-   * the integer index for each entity type (identified by its attributeNameToIndex map).
-   * The cache uses IdentityHashMap to distinguish between different entity types,
-   * allowing the same RecursiveValueResolver to efficiently handle multiple entity types.</p>
+   * <p>The cache maps each entity type's shared {@code attributeNameToIndex} map reference
+   * to the attribute's integer index. Map object identity serves as a stand-in for the entity
+   * type name without the overhead of String hashing, since all instances of a given entity type
+   * share the same immutable index map. Only simple (non-dotted) paths use this fast path.</p>
    *
-   * <p>Fast path only works for simple attribute names (no dots). Dotted paths like
-   * "entity.attribute" fall back to the slow path.</p>
-   *
-   * @param entityScope The EntityScope to resolve from
-   * @return Optional containing the resolved value if fast path succeeded,
-   *         null if fast path cannot be used (caller should use slow path)
+   * @param entityScope The EntityScope to resolve from.
+   * @return Optional containing the resolved value if the fast path succeeded,
+   *         or null if the fast path cannot be used (caller should fall back to slow path).
    */
   private Optional<EngineValue> tryIntegerLookup(EntityScope entityScope) {
-    // Fast path only works for simple attribute names (no nested paths)
     if (hasDot) {
-      return null; // Use slow path
+      return null;
     }
 
-    // Get the entity type's index map (shared across all instances of this type)
-    // The Map object identity serves as the cache key for the entity type
     Map<String, Integer> indexMap = entityScope.getAttributeNameToIndex();
 
-    // Handle null or empty distributions (no attributes)
     if (indexMap == null || indexMap.isEmpty()) {
-      return null; // Use slow path for safety
+      return null;
     }
 
-    // Initialize cache on first use
     if (indexCache == null) {
       indexCache = new IdentityHashMap<>();
     }
 
-    // Check cache (identity-based, so different entity types are separate)
     Integer cachedIndex = indexCache.get(indexMap);
 
     if (cachedIndex != null) {
-      // Use cached index for fast array access
       return entityScope.getOptional(cachedIndex);
     }
 
-    // Look up the index and cache it
     Integer index = indexMap.get(path);
     if (index == null) {
-      // Attribute doesn't exist on this entity type
-      return null; // Use slow path (will properly handle error)
+      return null;
     }
 
-    // Cache the index for future lookups
     indexCache.put(indexMap, index);
-
-    // Use the newly cached index
     return entityScope.getOptional(index);
   }
 
@@ -192,9 +179,9 @@ public class RecursiveValueResolver implements ValueResolver {
    *
    * <p>This method attempts to find the longest prefix of the path that exists in the target scope.
    * It then creates a resolver for any remaining path segments if needed. This is required because
-   * some attributes may appear nested but not actually within an inner scope. This may be beacuse
+   * some attributes may appear nested but not actually within an inner scope. This may be because
    * they are saved on the outer scope like for steps.low and steps.high which are within
-   * Simulation. The "nesting" is simply syntatic sugar in this case for the Josh language.</p>
+   * Simulation. The "nesting" is simply syntactic sugar in this case for the Josh language.</p>
    *
    * @param target The scope to search for matching path prefixes.
    * @return Optional containing a resolver for remaining segments if any, empty if full path.
