@@ -15,6 +15,7 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -169,7 +170,7 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   public JoshFragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(parent).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
-    ValueResolver resolver = new ValueResolver(engineValueFactory, attrName);
+    ValueResolver resolver = new RecursiveValueResolver(engineValueFactory, attrName);
 
     EventHandlerAction action = (machine) -> {
       expressionAction.apply(machine);
@@ -190,7 +191,8 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the spatial query parsed.
    */
   public JoshFragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.getText());
+    ValueResolver targetResolver = new RecursiveValueResolver(
+        engineValueFactory, ctx.target.getText());
     EventHandlerAction distanceAction = ctx.distance.accept(parent).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {

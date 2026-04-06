@@ -31,6 +31,7 @@ import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
@@ -821,7 +822,7 @@ public class SingleThreadEventHandlerMachineTest {
     // When
     machine.push(value);
     machine.saveLocalVariable("localConstant");
-    machine.push(new ValueResolver(new EngineValueFactory(), "localConstant"));
+    machine.push(new RecursiveValueResolver(new EngineValueFactory(), "localConstant"));
 
     // Then
     machine.end();
@@ -957,7 +958,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new ValueResolver(new EngineValueFactory(), "testAttr"));
+    machine.executeSpatialQuery(new RecursiveValueResolver(new EngineValueFactory(), "testAttr"));
 
     // Then
     machine.end();
@@ -989,7 +990,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(30.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new ValueResolver(new EngineValueFactory(), "Default"));
+    machine.executeSpatialQuery(new RecursiveValueResolver(new EngineValueFactory(), "Default"));
 
     // Then - should return the patch entities themselves
     machine.end();

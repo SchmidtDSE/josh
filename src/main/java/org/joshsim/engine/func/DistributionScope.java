@@ -16,6 +16,7 @@ import java.util.Set;
 import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 
 
@@ -50,7 +51,7 @@ public class DistributionScope implements Scope {
     // Cache ValueResolver to avoid repeated allocation for the same attribute name
     ValueResolver innerResolver = resolverCache.computeIfAbsent(
         name,
-        key -> new ValueResolver(valueFactory, key)
+        key -> new RecursiveValueResolver(valueFactory, key)
     );
 
     // Transform

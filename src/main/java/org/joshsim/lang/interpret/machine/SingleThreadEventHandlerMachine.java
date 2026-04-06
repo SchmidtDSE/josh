@@ -33,6 +33,7 @@ import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
@@ -94,7 +95,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     inConversionGroup = false;
     conversionTarget = Optional.empty();
     valueFactory = bridge.getEngineValueFactory();
-    currentValueResolver = new ValueResolver(valueFactory, "current");
+    currentValueResolver = new RecursiveValueResolver(valueFactory, "current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
     isEnded = false;
   }
@@ -1180,7 +1181,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @return true if the resolver path matches the patch name, indicating a query for patches.
    */
   private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
-    return resolver.toString().contains("ValueResolver(" + patchName + ")");
+    return resolver.toString().contains("RecursiveValueResolver(" + patchName + ")");
   }
 
   @Override
