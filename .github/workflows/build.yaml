@@ -9,7 +9,7 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Update apt
         run: sudo apt-get update
       - name: Install LaTeX
@@ -21,7 +21,7 @@ jobs:
       - name: Build paper
         run: pandoc -o spec.pdf --number-sections LanguageSpecification.md
       - name: Upload paper
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: spec
           path: spec.pdf
@@ -31,16 +31,16 @@ jobs:
     name: Build Fat Jar
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Build fat jar
         run: ./gradlew fatJar
       - name: Upload jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: fatJar
           path: build/libs/joshsim-fat.jar
@@ -51,9 +51,9 @@ jobs:
     name: Static Checks
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -70,13 +70,13 @@ jobs:
     name: Test Java
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Update apt
         run: sudo apt-get update
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -89,9 +89,9 @@ jobs:
     name: Test Preprocessing and Create Tutorial Data
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -100,7 +100,7 @@ jobs:
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
       - name: Download fat jar
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Setup environment
@@ -117,7 +117,7 @@ jobs:
       - name: Run temporal preprocessing and create tutorial data
         run: bash landing/test_preprocess.sh
       - name: Upload preprocessed tutorial data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: preprocessed-tutorial-data
           path: landing/preprocessed_data/
@@ -128,14 +128,14 @@ jobs:
     name: Validate Josh examples
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
@@ -149,14 +149,14 @@ jobs:
     name: Test CSV Output Format
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
@@ -181,9 +181,9 @@ jobs:
     name: Test NetCDF Output Format
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -192,7 +192,7 @@ jobs:
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
@@ -214,14 +214,14 @@ jobs:
     name: Test GeoTIFF Output Format
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
@@ -243,9 +243,9 @@ jobs:
     name: Test Guide Examples
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -254,13 +254,13 @@ jobs:
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: preprocessed-tutorial-data
           path: ./landing/preprocessed_data/
@@ -273,14 +273,14 @@ jobs:
     name: Test Configuration Features
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
@@ -294,9 +294,9 @@ jobs:
     name: Test Additional Features
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -305,13 +305,13 @@ jobs:
       - name: Setup netCDF
         run: sudo apt-get install -y libnetcdf-dev
       - name: Download farJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: preprocessed-tutorial-data
           path: ./landing/preprocessed_data/
@@ -327,9 +327,9 @@ jobs:
     name: Build for Browser
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -369,7 +369,7 @@ jobs:
           cp examples/guide/grass_shrub_fire.josh landing/examples/guide/
           cp examples/guide/two_trees.josh landing/examples/guide/
       - name: Upload war
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: war
           path: build/libs/JoshSim.war
@@ -378,17 +378,17 @@ jobs:
       - name: Build fat jar
         run: ./gradlew fatJar
       - name: Upload full jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: fullJar
           path: build/libs/joshsim-fat.jar
       - name: Upload editor
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: editor
           path: editor
       - name: Upload landing
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: landing
           path: landing
@@ -416,17 +416,17 @@ jobs:
           BRANCH=${GITHUB_REF#refs/heads/}
           echo "name=$BRANCH" >> $GITHUB_OUTPUT
       - name: Download fatJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fullJar
           path: ./deploy
       - name: Download WAR artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: war
           path: ./deploy/war
       - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: preprocessed-tutorial-data
           path: ./tutorial-data-temp
@@ -446,12 +446,12 @@ jobs:
             ./deploy/* \
             ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:./joshsim.org/dist/${{ steps.branch.outputs.name }}/
       - name: Download editor
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: editor
           path: ./editor-build
       - name: Checkout for llms.txt
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: ./repo
       - name: Copy documentation files to editor
@@ -467,7 +467,7 @@ jobs:
             ./editor-build/* \
             ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.EDITOR_DIRECTORY }}/
       - name: Download landing
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: landing
           path: ./landing-build
@@ -515,21 +515,21 @@ jobs:
             echo "Deploying to Development environment"
           fi
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: 'temurin'
       - name: Google Auth
         id: auth
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
       - name: Download fatJar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: fullJar
           path: ./cloud-img
