@@ -1,4 +1,3 @@
-
 /**
  * Tests for ConverterBuilder.
  *
@@ -8,6 +7,7 @@
 package org.joshsim.engine.value.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -64,5 +64,26 @@ public class ConverterBuilderTest {
     Conversion result = converter.getConversion(kilometersUnits, centimetersUnits);
     // The result should be a transitive conversion since it requires two steps
     assertTrue(result instanceof TransitiveConversion);
+  }
+
+  @Test
+  void testMillisecondAliasConversion() {
+    Converter converter = new ConverterBuilder().build();
+    Conversion result = converter.getConversion(Units.of("ms"), Units.of("millisecond"));
+    assertTrue(result instanceof NoopConversion);
+  }
+
+  @Test
+  void testMillisecondsTransitiveAliasConversion() {
+    Converter converter = new ConverterBuilder().build();
+    Conversion result = converter.getConversion(Units.of("ms"), Units.of("milliseconds"));
+    assertTrue(result instanceof TransitiveConversion);
+  }
+
+  @Test
+  void testMillisecondInverseConversion() {
+    Converter converter = new ConverterBuilder().build();
+    Conversion result = converter.getConversion(Units.of("milliseconds"), Units.of("ms"));
+    assertNotNull(result);
   }
 }
