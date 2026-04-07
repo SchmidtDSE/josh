@@ -18,6 +18,7 @@ import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.EntityValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -98,6 +99,15 @@ public class RecursiveValueResolver implements ValueResolver {
             resolved.getLanguageType()
         );
         throw new IllegalArgumentException(message);
+      }
+
+      // If the continuation path is evalDuration and the resolved value is a non-entity scalar,
+      // delegate directly to the continuation resolver which will return the 0 ms sentinel value
+      // without trying to cast the scalar to an entity scope.
+      if (EVAL_DURATION_ATTR.equals(continuationResolver.getPath())
+          && innerSize.get() == 1
+          && !(resolved instanceof EntityValue)) {
+        return continuationResolver.get(target);
       }
 
       Scope newScope;

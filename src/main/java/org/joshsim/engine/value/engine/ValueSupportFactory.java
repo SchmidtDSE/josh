@@ -57,6 +57,19 @@ public class ValueSupportFactory {
   }
 
   /**
+   * Create a new ValueSupportFactory using a default casting strategy with explicit resolver.
+   *
+   * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
+   *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
+   * @param valueResolverFactory Factory used to build ValueResolver instances.
+   */
+  public ValueSupportFactory(boolean favorBigDecimal, ValueResolverFactory valueResolverFactory) {
+    this.favorBigDecimal = favorBigDecimal;
+    caster = new EngineValueWideningCaster(this);
+    this.valueResolverFactory = valueResolverFactory;
+  }
+
+  /**
    * Constructor for ValueSupportFactory.
    *
    * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor

@@ -37,6 +37,9 @@ import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.ValueResolverFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
@@ -166,6 +169,13 @@ public class RunCommand implements Callable<Integer> {
                   + "operations will use this seed to produce deterministic results."
   )
   private Long seed = null;
+
+  @Option(
+      names = "--enable-profiler",
+      description = "Enable evalDuration profiling to capture attribute resolution timing.",
+      defaultValue = "false"
+  )
+  private boolean enableProfiler;
 
   /**
    * Parses custom parameter command-line options.
@@ -334,7 +344,10 @@ public class RunCommand implements Callable<Integer> {
 
     // Set up ValueSupportFactory
     boolean favorBigDecimal = !useFloat64;
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
+    ValueResolverFactory resolverFactory = enableProfiler
+        ? new TimedRecursiveValueResolverFactory()
+        : new RecursiveValueResolverFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal, resolverFactory);
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();

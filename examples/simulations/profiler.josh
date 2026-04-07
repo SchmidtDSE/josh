@@ -1,0 +1,32 @@
+start simulation ProfilerExample
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 3 count latitude, 3 count longitude
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  exportFiles.patch = "file:///tmp/profiler_josh.csv"
+
+end simulation
+
+
+start patch Default
+
+  TimedTree.init = create TimedTree
+
+  export.averageHeight.step = mean(TimedTree.height)
+  export.avgHeightEvalDuration.step = mean(TimedTree.height.evalDuration)
+
+end patch
+
+
+start organism TimedTree
+
+  height.init = 1 m
+  height.step = prior.height + 1 m
+
+  heightEvalDuration.step = height.evalDuration
+
+end organism

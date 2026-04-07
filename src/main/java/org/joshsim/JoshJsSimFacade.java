@@ -298,6 +298,9 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
+    // Profiler support (--enable-profiler) is not yet available in the WASM path.
+    // RecursiveValueResolverFactory is used here until profiler support is wired to the
+    // WASM frontend in a future component.
     ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);

@@ -38,6 +38,23 @@ assert_not_ok() {
   fi
 }
 
+assert_run() {
+  local file="$1"
+  local sim="$2"
+  shift 2
+  if [ "$verbose" = true ]; then
+    java -jar build/libs/joshsim-fat.jar run "$@" "$file" "$sim"
+  else
+    java -jar build/libs/joshsim-fat.jar run --suppress-info "$@" "$file" "$sim"
+  fi
+  local status=$?
+  if [ $status -eq 0 ]; then
+    return 0
+  else
+    return $status
+  fi
+}
+
 # Test discoverConfig command
 test_discover_config() {
   local file="$1"
@@ -132,3 +149,14 @@ else
   java -jar build/libs/joshsim-fat.jar discoverConfig nonexistent.josh >/dev/null 2>&1
 fi
 [ $? -eq 1 ] || exit 38
+
+# Test profiler example runs both without and with --enable-profiler
+rm -f /tmp/profiler_josh.csv
+assert_run examples/simulations/profiler.josh ProfilerExample || exit 40
+[ -f "/tmp/profiler_josh.csv" ] || exit 41
+[ -s "/tmp/profiler_josh.csv" ] || exit 42
+
+rm -f /tmp/profiler_josh.csv
+assert_run examples/simulations/profiler.josh ProfilerExample --enable-profiler || exit 43
+[ -f "/tmp/profiler_josh.csv" ] || exit 44
+[ -s "/tmp/profiler_josh.csv" ] || exit 45

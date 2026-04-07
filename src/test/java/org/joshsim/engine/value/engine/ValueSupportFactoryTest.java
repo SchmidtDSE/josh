@@ -10,6 +10,10 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.DoubleScalar;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.Test;
 
@@ -155,6 +159,48 @@ class ValueSupportFactoryTest {
 
     // Assert
     assertEquals("some.path", resolver.getPath());
+  }
+
+  @Test
+  void testTwoArgConstructorWithTimedFactoryProducesTimedValueResolver() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory(
+        true,
+        new TimedRecursiveValueResolverFactory()
+    );
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof TimedValueResolver);
+  }
+
+  @Test
+  void testTwoArgConstructorWithRecursiveFactoryProducesRecursiveValueResolver() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory(
+        true,
+        new RecursiveValueResolverFactory()
+    );
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof RecursiveValueResolver);
+  }
+
+  @Test
+  void testOneBoolArgConstructorStillProducesRecursiveValueResolver() {
+    // Arrange - regression guard: existing single-arg constructor must remain unchanged
+    ValueSupportFactory factory = new ValueSupportFactory(true);
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof RecursiveValueResolver);
   }
 
 }
