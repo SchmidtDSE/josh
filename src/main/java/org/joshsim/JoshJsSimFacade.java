@@ -298,10 +298,7 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
-    // Profiler support (--enable-profiler) is not yet available in the WASM path.
-    // RecursiveValueResolverFactory is used here until profiler support is wired to the
-    // WASM frontend in a future component.
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
@@ -363,6 +360,20 @@ public class JoshJsSimFacade {
    * @param args ignored arguments
    */
   public static void main(String[] args) {}
+
+  /**
+   * Build a ValueSupportFactory for the WASM execution path.
+   *
+   * <p>Profiler support (--enable-profiler) is not yet available in the WASM path. This method
+   * uses the non-timed RecursiveValueResolverFactory until profiler support is wired to the
+   * WASM frontend in a future component.</p>
+   *
+   * @param favorBigDecimal True if decimal values should favor BigDecimal, false for double.
+   * @return A ValueSupportFactory configured for WASM execution.
+   */
+  private static ValueSupportFactory buildValueSupportFactory(boolean favorBigDecimal) {
+    return new ValueSupportFactory(favorBigDecimal);
+  }
 
   /**
    * Get the input / output layer for the browser sandbox without a filesystem.

@@ -178,6 +178,20 @@ public class RunCommand implements Callable<Integer> {
   private boolean enableProfiler;
 
   /**
+   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
+   *
+   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
+   * @return A ValueResolverFactory configured for the requested profiling mode.
+   */
+  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
+    if (enableProfiler) {
+      return new TimedRecursiveValueResolverFactory();
+    } else {
+      return new RecursiveValueResolverFactory();
+    }
+  }
+
+  /**
    * Parses custom parameter command-line options.
    *
    * @return Map of custom parameter names to values
@@ -344,10 +358,10 @@ public class RunCommand implements Callable<Integer> {
 
     // Set up ValueSupportFactory
     boolean favorBigDecimal = !useFloat64;
-    ValueResolverFactory resolverFactory = enableProfiler
-        ? new TimedRecursiveValueResolverFactory()
-        : new RecursiveValueResolverFactory();
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal, resolverFactory);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(
+        favorBigDecimal,
+        buildValueResolverFactory(enableProfiler)
+    );
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();

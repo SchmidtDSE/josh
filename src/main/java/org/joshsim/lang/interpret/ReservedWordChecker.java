@@ -34,6 +34,12 @@ public class ReservedWordChecker {
     checkReservedSuffixes(name);
   }
 
+  /**
+   * Checks that no component of a dotted name matches a reserved suffix.
+   *
+   * @param name The dotted attribute name to check (e.g. "tree.evalDuration").
+   * @throws IllegalArgumentException if any token in the path is a reserved suffix.
+   */
   private static void checkReservedSuffixes(String name) {
     StringTokenizer tokenizer = new StringTokenizer(name, ".");
     while (tokenizer.hasMoreTokens()) {

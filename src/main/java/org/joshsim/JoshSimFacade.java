@@ -98,7 +98,7 @@ public class JoshSimFacade {
         Optional<Set<Integer>> outputSteps) {
     setupForJvm();
 
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -165,6 +165,19 @@ public class JoshSimFacade {
         boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
     runSimulation(geometryFactory, program, simulationName, callback, serialPatches,
         replicateNumber, favorBigDecimal, Optional.empty());
+  }
+
+  /**
+   * Build a ValueSupportFactory for the JVM execution path.
+   *
+   * <p>Uses the default RecursiveValueResolverFactory. Callers needing profiler support should
+   * pass an explicit ValueResolverFactory to the ValueSupportFactory constructor instead.</p>
+   *
+   * @param favorBigDecimal True if decimal values should favor BigDecimal, false for double.
+   * @return A ValueSupportFactory configured for JVM execution.
+   */
+  private static ValueSupportFactory buildValueSupportFactory(boolean favorBigDecimal) {
+    return new ValueSupportFactory(favorBigDecimal);
   }
 
   /**

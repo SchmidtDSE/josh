@@ -36,6 +36,7 @@ public class RecursiveValueResolver implements ValueResolver {
   private final String path;
   private final boolean hasDot;
   private final boolean isEvalDuration;
+  private final EngineValue zeroMilliseconds;
 
   private String foundPath;
   private Optional<RecursiveValueResolver> memoizedContinuationResolver;
@@ -53,6 +54,7 @@ public class RecursiveValueResolver implements ValueResolver {
     this.path = path;
     this.hasDot = path != null && path.indexOf('.') != -1;
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(path);
+    this.zeroMilliseconds = valueFactory.build(0L, Units.MILLISECONDS);
     memoizedContinuationResolver = null;
     foundPath = null;
     indexCache = null;
@@ -70,7 +72,7 @@ public class RecursiveValueResolver implements ValueResolver {
   @Override
   public Optional<EngineValue> get(Scope target) {
     if (isEvalDuration) {
-      return Optional.of(valueFactory.build(0L, Units.of("milliseconds")));
+      return Optional.of(zeroMilliseconds);
     }
 
     if (target instanceof EntityScope) {
