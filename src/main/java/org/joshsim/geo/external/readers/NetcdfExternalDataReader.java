@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
@@ -28,7 +28,7 @@ import ucar.nc2.util.CancelTask;
  */
 public class NetcdfExternalDataReader implements ExternalDataReader {
   private NetcdfFile ncFile;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private Optional<CancelTask> cancelTask = Optional.empty();
   private final Map<String, Array> variableDataCache = new HashMap<>();
 
@@ -56,7 +56,7 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
    *
    * @param valueFactory Factory for creating EngineValue objects
    */
-  public NetcdfExternalDataReader(EngineValueFactory valueFactory) {
+  public NetcdfExternalDataReader(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 

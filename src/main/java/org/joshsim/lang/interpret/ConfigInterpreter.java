@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.engine.config.Config;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshConfigLexer;
 import org.joshsim.lang.antlr.JoshConfigParser;
 import org.joshsim.lang.interpret.fragment.jshc.JshcFragment;
@@ -43,11 +43,11 @@ public class ConfigInterpreter {
    * Interprets a Josh configuration file content and returns a Config.
    *
    * @param configContent The content of the .jshc file as a string
-   * @param valueFactory The EngineValueFactory to use for creating values
+   * @param valueFactory The ValueSupportFactory to use for creating values
    * @return A Config instance containing the parsed configuration values
    * @throws IllegalArgumentException if parsing fails due to syntax errors or invalid content
    */
-  public Config interpret(String configContent, EngineValueFactory valueFactory) {
+  public Config interpret(String configContent, ValueSupportFactory valueFactory) {
     try {
       // Create lexer and parser
       JoshConfigLexer lexer = new JoshConfigLexer(CharStreams.fromString(configContent));

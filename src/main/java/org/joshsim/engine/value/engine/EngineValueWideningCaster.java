@@ -29,7 +29,7 @@ public class EngineValueWideningCaster implements EngineValueCaster {
    *
    * @param valueFactory The factory to use in constructing values returned by this caster.
    */
-  public EngineValueWideningCaster(EngineValueFactory valueFactory) {
+  public EngineValueWideningCaster(ValueSupportFactory valueFactory) {
     favoringBigDecimal = valueFactory.isFavoringBigDecimal();
     strategies = new HashMap<>();
 

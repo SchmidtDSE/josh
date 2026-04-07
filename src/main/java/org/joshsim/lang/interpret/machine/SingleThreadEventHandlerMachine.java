@@ -25,15 +25,14 @@ import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
-import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
@@ -60,7 +59,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
   private LocalScope scope;  // Mutable to allow temporary scope swapping in withLocalBinding
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final boolean favorBigDecimal;
   private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
@@ -94,8 +93,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = bridge.getEngineValueFactory();
-    currentValueResolver = new RecursiveValueResolver(valueFactory, "current");
+    valueFactory = bridge.getValueSupportFactory();
+    currentValueResolver = valueFactory.buildValueResolver("current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
     isEnded = false;
   }

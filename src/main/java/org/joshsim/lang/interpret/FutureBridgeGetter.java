@@ -13,7 +13,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
@@ -30,7 +30,7 @@ import org.joshsim.precompute.JshdExternalGetter;
  */
 public class FutureBridgeGetter implements BridgeGetter {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private Optional<JoshProgram> program;
   private Optional<String> simulationName;
   private Optional<EngineBridge> builtBridge;
@@ -43,7 +43,7 @@ public class FutureBridgeGetter implements BridgeGetter {
    *
    * @param valueFactory The value factory to use in constructing returned and supporting values.
    */
-  public FutureBridgeGetter(EngineValueFactory valueFactory) {
+  public FutureBridgeGetter(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
     this.program = Optional.empty();
     this.simulationName = Optional.empty();

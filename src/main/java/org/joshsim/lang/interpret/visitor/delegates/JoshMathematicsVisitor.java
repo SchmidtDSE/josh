@@ -9,7 +9,7 @@ package org.joshsim.lang.interpret.visitor.delegates;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
@@ -26,7 +26,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 public class JoshMathematicsVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
 
   /**
    * Constructs a new instance of the JoshMathematicsVisitor class.

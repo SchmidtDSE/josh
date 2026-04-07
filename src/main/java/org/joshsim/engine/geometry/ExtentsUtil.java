@@ -7,7 +7,7 @@
 package org.joshsim.engine.geometry;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -24,7 +24,7 @@ public class ExtentsUtil {
    * @param start true if these are start coordinates, false if end coordinates
    */
   public static void addExtents(PatchBuilderExtentsBuilder builder, String target, boolean start,
-        EngineValueFactory valueFactory) {
+        ValueSupportFactory valueFactory) {
     String[] pieces = target.split(",");
 
     EngineValue value1 = parseExtentComponent(pieces[0], valueFactory);
@@ -49,7 +49,7 @@ public class ExtentsUtil {
    * @param target the coordinate component string in format "X latitude/longitude"
    * @return EngineValue containing the parsed value and units
    */
-  public static EngineValue parseExtentComponent(String target, EngineValueFactory valueFactory) {
+  public static EngineValue parseExtentComponent(String target, ValueSupportFactory valueFactory) {
     String engineValStr = target.strip().replaceAll(" latitude", "").replaceAll(" longitude", "");
     String[] pieces = engineValStr.split(" ");
     return valueFactory.parseNumber(pieces[0], Units.of(pieces[1]));

@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 public class JshcConfigGetterTest {
 
   private InputGetterStrategy mockInputStrategy;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JshcConfigGetter getter;
 
   /**
@@ -42,7 +42,7 @@ public class JshcConfigGetterTest {
   @BeforeEach
   public void setUp() {
     mockInputStrategy = mock(InputGetterStrategy.class);
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     getter = new JshcConfigGetter(mockInputStrategy, valueFactory);
   }
 

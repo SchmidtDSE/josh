@@ -26,7 +26,7 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -46,7 +46,7 @@ public class ShadowingEntity implements MutableEntity {
   private static final boolean ASSERT_VALUE_PRESENT_DEBUG = false;
   private static final List<EventHandlerGroup> EMPTY_HANDLERS = Collections.emptyList();
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final MutableEntity inner;
   private final Entity here;
   private final Entity meta;
@@ -66,7 +66,7 @@ public class ShadowingEntity implements MutableEntity {
    * @param inner Entity to decorate.
    * @param meta Reference to simulation or simulation-like entity. May be self.
    */
-  public ShadowingEntity(EngineValueFactory valueFactory, MutableEntity inner, Entity meta) {
+  public ShadowingEntity(ValueSupportFactory valueFactory, MutableEntity inner, Entity meta) {
     this.valueFactory = valueFactory;
     this.inner = inner;
     this.here = this;
@@ -96,7 +96,7 @@ public class ShadowingEntity implements MutableEntity {
    * @param here reference to Path that contains this entity.
    * @param meta reference to simulation or simulation-like entity.
    */
-  public ShadowingEntity(EngineValueFactory valueFactory, MutableEntity inner, Entity here,
+  public ShadowingEntity(ValueSupportFactory valueFactory, MutableEntity inner, Entity here,
         Entity meta) {
     this.valueFactory = valueFactory;
     this.inner = inner;
@@ -123,9 +123,9 @@ public class ShadowingEntity implements MutableEntity {
   /**
    * Get the value factory to use in building derivative values from this entity.
    *
-   * @return EngineValueFactory available for use in building values from this entity.
+   * @return ValueSupportFactory available for use in building values from this entity.
    */
-  public EngineValueFactory getValueFactory() {
+  public ValueSupportFactory getValueFactory() {
     return valueFactory;
   }
 

@@ -31,7 +31,7 @@ import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
@@ -332,9 +332,9 @@ public class RunCommand implements Callable<Integer> {
     compatLayer.setExportQueueCapacity(exportQueueSize);
     CompatibilityLayerKeeper.set(compatLayer);
 
-    // Set up EngineValueFactory
+    // Set up ValueSupportFactory
     boolean favorBigDecimal = !useFloat64;
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();

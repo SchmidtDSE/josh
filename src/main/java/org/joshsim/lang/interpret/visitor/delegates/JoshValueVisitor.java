@@ -7,10 +7,9 @@
 package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
-import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
@@ -22,7 +21,7 @@ import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
  */
 public class JoshValueVisitor implements JoshVisitorDelegate {
 
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
   private final EngineValue allString;
 
   /**
@@ -45,7 +44,7 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    */
   public JoshFragment visitIdentifier(JoshLangParser.IdentifierContext ctx) {
     String identifierName = ctx.getText();
-    ValueResolver resolver = new RecursiveValueResolver(engineValueFactory, identifierName);
+    ValueResolver resolver = engineValueFactory.buildValueResolver(identifierName);
     EventHandlerAction action = (machine) -> machine.push(resolver);
     return new ActionFragment(action);
   }

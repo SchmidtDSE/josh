@@ -16,7 +16,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -63,7 +63,7 @@ public class JoshSimFacade {
         ParseResult parsed, InputOutputLayer inputOutputLayer) {
     setupForJvm();
     return JoshSimFacadeUtil.interpret(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         engineGeometryFactory,
         parsed,
         inputOutputLayer
@@ -98,7 +98,7 @@ public class JoshSimFacade {
         Optional<Set<Integer>> outputSteps) {
     setupForJvm();
 
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);

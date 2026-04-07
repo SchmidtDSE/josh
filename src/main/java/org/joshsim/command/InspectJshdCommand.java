@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.readers.JshdExternalDataReader;
 import org.joshsim.precompute.DoublePrecomputedGrid;
@@ -109,7 +109,7 @@ public class InspectJshdCommand implements Callable<Integer> {
   }
 
   private Integer exportToCsv() {
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory();
     try (JshdExternalDataReader reader = new JshdExternalDataReader(valueFactory)) {
       reader.open(jshdFile.getAbsolutePath());
 
@@ -220,7 +220,7 @@ public class InspectJshdCommand implements Callable<Integer> {
     }
 
     // Create JSHD reader and attempt to read the value
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory();
     try (JshdExternalDataReader reader = new JshdExternalDataReader(valueFactory)) {
       reader.open(jshdFile.getAbsolutePath());
 

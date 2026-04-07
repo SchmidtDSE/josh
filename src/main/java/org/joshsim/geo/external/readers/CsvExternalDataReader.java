@@ -19,7 +19,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
@@ -32,7 +32,7 @@ import org.joshsim.geo.external.ExternalSpatialDimensions;
  * data (longitude and latitude) and optional variable-based data columns.</p>
  */
 public class CsvExternalDataReader implements ExternalDataReader {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private String crsCode = "EPSG:4326"; // Default to WGS84
   private final Map<String, List<BigDecimal>> data = new HashMap<>();
   private boolean isOpen = false;
@@ -40,9 +40,9 @@ public class CsvExternalDataReader implements ExternalDataReader {
   /**
    * Constructs a new instance of CsvExternalDataReader.
    *
-   * @param valueFactory an instance of EngineValueFactory used to create EngineValue objects.
+   * @param valueFactory an instance of ValueSupportFactory used to create EngineValue objects.
    */
-  public CsvExternalDataReader(EngineValueFactory valueFactory) {
+  public CsvExternalDataReader(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 

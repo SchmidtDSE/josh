@@ -13,10 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.interpret.RecursiveValueResolver;
 import org.joshsim.lang.interpret.ValueResolver;
 
 
@@ -25,7 +24,7 @@ import org.joshsim.lang.interpret.ValueResolver;
  */
 public class DistributionScope implements Scope {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final Distribution value;
   private final Set<String> expectedAttrs;
 
@@ -37,7 +36,7 @@ public class DistributionScope implements Scope {
    * @param valueFactory Factory to use for creating transformed EngineValues.
    * @param value Distribution to use for current.
    */
-  public DistributionScope(EngineValueFactory valueFactory, Distribution value) {
+  public DistributionScope(ValueSupportFactory valueFactory, Distribution value) {
     this.valueFactory = valueFactory;
     this.value = value;
     this.expectedAttrs = getAttributes(value);
@@ -51,7 +50,7 @@ public class DistributionScope implements Scope {
     // Cache ValueResolver to avoid repeated allocation for the same attribute name
     ValueResolver innerResolver = resolverCache.computeIfAbsent(
         name,
-        key -> new RecursiveValueResolver(valueFactory, key)
+        key -> valueFactory.buildValueResolver(key)
     );
 
     // Transform

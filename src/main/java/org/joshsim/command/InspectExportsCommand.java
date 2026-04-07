@@ -15,7 +15,7 @@ import java.util.concurrent.Callable;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -83,7 +83,7 @@ public class InspectExportsCommand implements Callable<Integer> {
     }
 
     try {
-      EngineValueFactory valueFactory = new EngineValueFactory();
+      ValueSupportFactory valueFactory = new ValueSupportFactory();
       MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
       MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
 

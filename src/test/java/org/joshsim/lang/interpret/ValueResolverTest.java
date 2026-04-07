@@ -26,7 +26,7 @@ import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EventHandlerGroup mockNestedGroup;
   @Mock(lenient = true) private EventHandler mockNestedHandler;
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private Scope scope;
   private ValueResolver resolver;
 
@@ -60,7 +60,7 @@ public class ValueResolverTest {
    */
   @BeforeEach
   void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Set up nested reference on root
     when(mockNestedHandler.getAttributeName()).thenReturn("nested");

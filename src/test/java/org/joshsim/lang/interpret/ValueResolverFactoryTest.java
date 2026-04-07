@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ValueResolverFactoryTest {
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private ValueResolverFactory factory;
 
   /**
@@ -32,7 +32,7 @@ public class ValueResolverFactoryTest {
    */
   @BeforeEach
   void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     factory = new RecursiveValueResolverFactory();
   }
 

@@ -16,7 +16,7 @@ import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +37,7 @@ public class EngineBridgeSimulationStoreTest {
         new ParentlessEntityPrototype(
             "testSimluation",
             EntityType.SIMULATION,
-            new EntityBuilder(new EngineValueFactory())
+            new EntityBuilder(new ValueSupportFactory())
         )
     );
 

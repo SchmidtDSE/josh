@@ -10,7 +10,7 @@
 package org.joshsim.lang.interpret.mapping;
 
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -21,7 +21,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class MappingBuilder {
 
-  private Optional<EngineValueFactory> valueFactory;
+  private Optional<ValueSupportFactory> valueFactory;
   private Optional<MapBounds> domain;
   private Optional<MapBounds> range;
   private Optional<EngineValue> mapBehaviorArgument;
@@ -42,7 +42,7 @@ public class MappingBuilder {
    * @param valueFactory The value factory to use.
    * @return This builder instance for method chaining.
    */
-  public MappingBuilder setValueFactory(EngineValueFactory valueFactory) {
+  public MappingBuilder setValueFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = Optional.of(valueFactory);
     return this;
   }

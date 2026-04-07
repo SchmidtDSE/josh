@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
@@ -32,7 +32,7 @@ class JoshDistributionVisitorTest {
 
   private DelegateToolbox toolbox;
   private JoshParserToMachineVisitor parent;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JoshDistributionVisitor visitor;
   private EngineValue singleCount;
 
@@ -40,7 +40,7 @@ class JoshDistributionVisitorTest {
   void setUp() {
     toolbox = mock(DelegateToolbox.class);
     parent = mock(JoshParserToMachineVisitor.class);
-    valueFactory = mock(EngineValueFactory.class);
+    valueFactory = mock(ValueSupportFactory.class);
     singleCount = mock(EngineValue.class);
 
     when(toolbox.getParent()).thenReturn(parent);

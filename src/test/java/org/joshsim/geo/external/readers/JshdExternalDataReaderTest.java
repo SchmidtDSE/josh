@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.precompute.DoublePrecomputedGrid;
@@ -37,7 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class JshdExternalDataReaderTest {
 
   private JshdExternalDataReader reader;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private Path testJshdFile;
 
   @TempDir
@@ -49,7 +49,7 @@ public class JshdExternalDataReaderTest {
    */
   @BeforeEach
   public void setUp() throws Exception {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     reader = new JshdExternalDataReader(valueFactory);
 
     // Create a test JSHD file

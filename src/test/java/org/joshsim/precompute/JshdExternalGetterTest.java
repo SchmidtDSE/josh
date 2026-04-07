@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,14 +23,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class JshdExternalGetterTest {
 
   private JshdExternalGetter getter;
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
 
   @Mock
   private InputGetterStrategy mockInputStrategy;
 
   @BeforeEach
   void setUp() {
-    factory = new EngineValueFactory();
+    factory = new ValueSupportFactory();
     getter = new JshdExternalGetter(mockInputStrategy, factory);
   }
 

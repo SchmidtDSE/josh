@@ -25,7 +25,7 @@ import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.simulation.Query;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
@@ -62,7 +62,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private CoordinateReferenceSystem mockCrs;
 
   private SingleThreadEventHandlerMachine machine;
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
 
   /**
    * Setup test environment before each test.
@@ -73,8 +73,8 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockEntityValue.getAsMutableEntity()).thenReturn(mockMutableEntity);
     when(mockScope.get("current")).thenReturn(mockEntityValue);
 
-    factory = new EngineValueFactory();
-    when(mockBridge.getEngineValueFactory()).thenReturn(factory);
+    factory = new ValueSupportFactory();
+    when(mockBridge.getValueSupportFactory()).thenReturn(factory);
 
     machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
   }
@@ -822,7 +822,7 @@ public class SingleThreadEventHandlerMachineTest {
     // When
     machine.push(value);
     machine.saveLocalVariable("localConstant");
-    machine.push(new RecursiveValueResolver(new EngineValueFactory(), "localConstant"));
+    machine.push(new RecursiveValueResolver(new ValueSupportFactory(), "localConstant"));
 
     // Then
     machine.end();
@@ -834,17 +834,17 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   private EngineValue makeIntScalar(long value) {
-    EngineValueFactory factory = new EngineValueFactory();
+    ValueSupportFactory factory = new ValueSupportFactory();
     return factory.build(value, Units.EMPTY);
   }
 
   private EngineValue makeBoolScalar(boolean value) {
-    EngineValueFactory factory = new EngineValueFactory();
+    ValueSupportFactory factory = new ValueSupportFactory();
     return factory.build(value, Units.EMPTY);
   }
 
   private EngineValue makeDecimalScalar(BigDecimal value) {
-    EngineValueFactory factory = new EngineValueFactory();
+    ValueSupportFactory factory = new ValueSupportFactory();
     return factory.build(value, Units.EMPTY);
   }
 
@@ -958,7 +958,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new RecursiveValueResolver(new EngineValueFactory(), "testAttr"));
+    machine.executeSpatialQuery(new RecursiveValueResolver(new ValueSupportFactory(), "testAttr"));
 
     // Then
     machine.end();
@@ -990,7 +990,7 @@ public class SingleThreadEventHandlerMachineTest {
     BigDecimal queryDistance = BigDecimal.valueOf(30.0);
     EngineValue distanceValue = factory.build(queryDistance, Units.of("meters"));
     machine.push(distanceValue);
-    machine.executeSpatialQuery(new RecursiveValueResolver(new EngineValueFactory(), "Default"));
+    machine.executeSpatialQuery(new RecursiveValueResolver(new ValueSupportFactory(), "Default"));
 
     // Then - should return the patch entities themselves
     machine.end();

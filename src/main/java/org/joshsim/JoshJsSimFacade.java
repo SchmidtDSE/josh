@@ -22,7 +22,7 @@ import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -73,7 +73,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      EngineValueFactory valueFactory = new EngineValueFactory();
+      ValueSupportFactory valueFactory = new ValueSupportFactory();
       EngineGeometryFactory geometryFactory = new GridGeometryFactory();
       interpreter.interpret(result, valueFactory, geometryFactory, getInputOutputLayer());
     } catch (Exception e) {
@@ -101,7 +101,7 @@ public class JoshJsSimFacade {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     JoshProgram program = JoshSimFacadeUtil.interpret(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -186,7 +186,7 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
     JoshProgram program = JoshSimFacadeUtil.interpret(
         engineValueFactory,
         geometryFactory,
@@ -298,7 +298,7 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 

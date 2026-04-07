@@ -6,7 +6,7 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 /**
  * Factory that builds a RecursiveValueResolver without decoration.
@@ -21,7 +21,7 @@ public class RecursiveValueResolverFactory implements ValueResolverFactory {
    * @return RecursiveValueResolver configured for the given path.
    */
   @Override
-  public ValueResolver build(EngineValueFactory valueFactory, String path) {
+  public ValueResolver build(ValueSupportFactory valueFactory, String path) {
     return new RecursiveValueResolver(valueFactory, path);
   }
 

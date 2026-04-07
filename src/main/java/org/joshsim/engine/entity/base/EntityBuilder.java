@@ -24,7 +24,7 @@ import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -37,7 +37,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class EntityBuilder implements EntityInitializationInfo {
   private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -53,7 +53,7 @@ public class EntityBuilder implements EntityInitializationInfo {
   /**
    * Create an empty builder.
    */
-  public EntityBuilder(EngineValueFactory valueFactory) {
+  public EntityBuilder(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
 
     name = Optional.empty();

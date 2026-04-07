@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class JshdUtilTest {
 
-  private final EngineValueFactory factory = new EngineValueFactory();
+  private final ValueSupportFactory factory = new ValueSupportFactory();
 
   @Mock
   private EngineValue mockEngineValue;

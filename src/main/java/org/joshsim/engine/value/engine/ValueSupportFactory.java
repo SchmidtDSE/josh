@@ -21,46 +21,70 @@ import org.joshsim.engine.value.type.IntScalar;
 import org.joshsim.engine.value.type.MutableEntityValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.StringScalar;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.ValueResolver;
+import org.joshsim.lang.interpret.ValueResolverFactory;
 
 
 /**
- * Factory to build new EngineValues from Java types.
+ * Factory to build new EngineValues from Java types and to build ValueResolver instances.
  */
-public class EngineValueFactory {
+public class ValueSupportFactory {
 
   private final EngineValueCaster caster;
   private final boolean favorBigDecimal;
+  private final ValueResolverFactory valueResolverFactory;
 
   /**
-   * Create a new EnigneValueFactory using a default casting strategy and favoring BigDecimal.
+   * Create a new ValueSupportFactory using a default casting strategy and favoring BigDecimal.
    */
-  public EngineValueFactory() {
+  public ValueSupportFactory() {
     favorBigDecimal = true;
     caster = new EngineValueWideningCaster(this);
+    valueResolverFactory = new RecursiveValueResolverFactory();
   }
 
-
   /**
-   * Create a new EnigneValueFactory using a default casting strategy.
+   * Create a new ValueSupportFactory using a default casting strategy.
    *
    * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
    *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
    */
-  public EngineValueFactory(boolean favorBigDecimal) {
+  public ValueSupportFactory(boolean favorBigDecimal) {
     this.favorBigDecimal = favorBigDecimal;
     caster = new EngineValueWideningCaster(this);
+    valueResolverFactory = new RecursiveValueResolverFactory();
   }
 
   /**
-   * Constructor for EngineValueFactory.
+   * Constructor for ValueSupportFactory.
    *
    * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
    *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
    * @param caster EngineValueCaster to cast within operations involving the EngineValue.
    */
-  public EngineValueFactory(boolean favorBigDecimal, EngineValueCaster caster) {
+  public ValueSupportFactory(boolean favorBigDecimal, EngineValueCaster caster) {
     this.favorBigDecimal = favorBigDecimal;
     this.caster = caster;
+    valueResolverFactory = new RecursiveValueResolverFactory();
+  }
+
+  /**
+   * Constructor for ValueSupportFactory with an explicit ValueResolverFactory.
+   *
+   * @param favorBigDecimal Flag indicating if decimal values produced by this factory should favor
+   *     BigDecimal or double if not specified. True if favor BigDecimal and false if favor double.
+   * @param caster EngineValueCaster to cast within operations involving the EngineValue.
+   * @param valueResolverFactory Factory used to build ValueResolver instances.
+   */
+  public ValueSupportFactory(
+      boolean favorBigDecimal,
+      EngineValueCaster caster,
+      ValueResolverFactory valueResolverFactory
+  ) {
+    this.favorBigDecimal = favorBigDecimal;
+    this.caster = caster;
+    this.valueResolverFactory = valueResolverFactory;
   }
 
   /**
@@ -196,6 +220,16 @@ public class EngineValueFactory {
    */
   public boolean isFavoringBigDecimal() {
     return favorBigDecimal;
+  }
+
+  /**
+   * Build a ValueResolver configured to resolve the given path.
+   *
+   * @param path The dot-separated path to resolve (e.g. "entity.attribute").
+   * @return ValueResolver configured for the given path.
+   */
+  public ValueResolver buildValueResolver(String path) {
+    return valueResolverFactory.build(this, path);
   }
 
 }

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +23,7 @@ public class CsvExternalDataReaderTest {
   private static final String CSV_RESOURCE_PATH = "csv/local.csv";
   private String csvFilePath;
   private CsvExternalDataReader reader;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   /**
    * Get the test CSV file.
@@ -31,7 +31,7 @@ public class CsvExternalDataReaderTest {
   @BeforeEach
   public void setUp() throws IOException {
     // Initialize value factory
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Initialize reader
     reader = new CsvExternalDataReader(valueFactory);

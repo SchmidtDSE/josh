@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class QuadraticMapStrategyTest {
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private MapBounds domain;
   private MapBounds range;
   private QuadraticMapStrategy maxStrategy;
@@ -20,7 +20,7 @@ class QuadraticMapStrategyTest {
 
   @BeforeEach
   void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Set up domain values (5 to 15)
     EngineValue domainLow = valueFactory.build(new BigDecimal("5"), Units.METERS);

@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.Scalar;
@@ -46,7 +46,7 @@ class DistributionScopeTest {
    */
   @BeforeEach
   void setUp() {
-    EngineValueFactory factory = new EngineValueFactory();
+    ValueSupportFactory factory = new ValueSupportFactory();
     attributeValue = factory.build(5L, Units.EMPTY);
 
     when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
@@ -58,7 +58,7 @@ class DistributionScopeTest {
         Arrays.asList(mockEntityValue, mockEntityValue, mockEntityValue)
     );
 
-    scope = new DistributionScope(new EngineValueFactory(), mockDistribution);
+    scope = new DistributionScope(new ValueSupportFactory(), mockDistribution);
   }
 
   @Test

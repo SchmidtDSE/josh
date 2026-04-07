@@ -6,7 +6,7 @@
 
 package org.joshsim.lang.interpret;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 /**
  * Factory responsible for creating instances of ValueResolver for a given path.
@@ -20,6 +20,6 @@ public interface ValueResolverFactory {
    * @param path The dot-separated path to resolve (e.g. "entity.attribute").
    * @return ValueResolver configured for the given path.
    */
-  ValueResolver build(EngineValueFactory valueFactory, String path);
+  ValueResolver build(ValueSupportFactory valueFactory, String path);
 
 }

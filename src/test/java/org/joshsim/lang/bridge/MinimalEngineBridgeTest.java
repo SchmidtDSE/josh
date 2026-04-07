@@ -35,7 +35,7 @@ import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +71,7 @@ public class MinimalEngineBridgeTest {
   void setUp() {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     bridge = new MinimalEngineBridge(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         geometryFactory,
         mockSimulation,
         mockConverter,
@@ -166,14 +166,14 @@ public class MinimalEngineBridgeTest {
     // Setup
     ConfigGetter mockConfigGetter = mock(ConfigGetter.class);
     Config mockConfig = mock(Config.class);
-    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
     EngineValue mockValue = engineValueFactory.build(5.0, Units.of("meters"));
 
     when(mockConfig.getValue("testVar")).thenReturn(mockValue);
     when(mockConfigGetter.getConfig("test.jshc")).thenReturn(Optional.of(mockConfig));
 
     EngineBridge bridgeWithConfig = new MinimalEngineBridge(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         new GridGeometryFactory(),
         mockSimulation,
         mockConverter,
@@ -197,7 +197,7 @@ public class MinimalEngineBridgeTest {
     // Setup
     ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
     DataGridLayer mockLayer = mock(DataGridLayer.class);
-    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
     EngineValue mockValue = engineValueFactory.build(10.0, Units.of("mm"));
     GeoKey mockKey = mock(GeoKey.class);
 
@@ -205,7 +205,7 @@ public class MinimalEngineBridgeTest {
     when(mockExternalGetter.getResource("Precipitation.jshd")).thenReturn(mockLayer);
 
     EngineBridge bridgeWithExternal = new MinimalEngineBridge(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         new GridGeometryFactory(),
         mockSimulation,
         mockConverter,

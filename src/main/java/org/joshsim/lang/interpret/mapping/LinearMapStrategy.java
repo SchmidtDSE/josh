@@ -7,7 +7,7 @@
 package org.joshsim.lang.interpret.mapping;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -16,7 +16,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class LinearMapStrategy implements MapStrategy {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final MapBounds domain;
   private final MapBounds range;
 
@@ -27,7 +27,7 @@ public class LinearMapStrategy implements MapStrategy {
    * @param domain The domain from which values provided will be mapped linearly.
    * @param range The range to which values provided will be mapped linearly.
    */
-  public LinearMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range) {
+  public LinearMapStrategy(ValueSupportFactory valueFactory, MapBounds domain, MapBounds range) {
     this.valueFactory = valueFactory;
     this.domain = domain;
     this.range = range;

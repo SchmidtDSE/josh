@@ -28,7 +28,7 @@ import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
 
@@ -43,7 +43,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
   private final EngineValue startStep;
   private final EngineValue endStep;
   private final Converter converter;
@@ -74,7 +74,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param configGetter Strategy to use in loading configuration resources.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
@@ -118,7 +118,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param replicate The replicate to use for testing.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter, Replicate replicate) {
@@ -222,7 +222,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
 
   @Override
-  public EngineValueFactory getEngineValueFactory() {
+  public ValueSupportFactory getValueSupportFactory() {
     return engineValueFactory;
   }
 

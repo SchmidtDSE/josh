@@ -16,7 +16,7 @@ import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
@@ -36,7 +36,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Create a new stanza visitor.
