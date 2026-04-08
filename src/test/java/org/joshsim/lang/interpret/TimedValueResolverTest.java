@@ -33,10 +33,12 @@ public class TimedValueResolverTest {
   @Mock(lenient = true) private Scope mockScope;
   @Mock(lenient = true) private ValueResolver mockInner;
   @Mock(lenient = true) private ValueResolver mockEvalDurationInner;
+  @Mock(lenient = true) private ValueResolver mockPrefixInner;
   @Mock(lenient = true) private EngineValue mockEngineValue;
 
   private ValueSupportFactory valueFactory;
   private TimedValueResolver timedResolver;
+  private TimedValueResolver dottedEvalDurationResolver;
 
   /**
    * Set up shared instances before each test.
@@ -47,7 +49,10 @@ public class TimedValueResolverTest {
     when(mockInner.getPath()).thenReturn("height");
     when(mockInner.get(mockScope)).thenReturn(Optional.of(mockEngineValue));
     when(mockEvalDurationInner.getPath()).thenReturn("evalDuration");
+    when(mockPrefixInner.getPath()).thenReturn("height.evalDuration");
+    when(mockPrefixInner.get(mockScope)).thenReturn(Optional.of(mockEngineValue));
     timedResolver = new TimedValueResolver(valueFactory, mockInner);
+    dottedEvalDurationResolver = new TimedValueResolver(valueFactory, mockPrefixInner);
   }
 
   @Test
@@ -147,6 +152,40 @@ public class TimedValueResolverTest {
     assertTrue(
         toStringResult.contains("height"),
         "toString should contain the inner resolver's path"
+    );
+  }
+
+  @Test
+  void dottedEvalDurationTimesPrefix() {
+    dottedEvalDurationResolver.get(mockScope);
+
+    verify(mockPrefixInner, never()).get(mockScope);
+
+    Optional<EngineValue> result = dottedEvalDurationResolver.get(mockScope);
+    assertEquals(
+        Units.MILLISECONDS,
+        result.get().getUnits(),
+        "dotted evalDuration should return a value in MILLISECONDS"
+    );
+  }
+
+  @Test
+  void dottedEvalDurationResultIsNonNegative() {
+    Optional<EngineValue> result = dottedEvalDurationResolver.get(mockScope);
+
+    assertTrue(result.isPresent(), "dotted evalDuration should return a value");
+    assertTrue(
+        result.get().getAsInt() >= 0,
+        "dotted evalDuration result should be non-negative"
+    );
+  }
+
+  @Test
+  void dottedEvalDurationGetPathReturnsFull() {
+    assertEquals(
+        "height.evalDuration",
+        dottedEvalDurationResolver.getPath(),
+        "getPath should return the full dotted path including .evalDuration"
     );
   }
 
