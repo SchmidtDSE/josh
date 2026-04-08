@@ -160,3 +160,14 @@ rm -f /tmp/profiler_josh.csv
 assert_run examples/simulations/profiler.josh ProfilerExample --enable-profiler || exit 43
 [ -f "/tmp/profiler_josh.csv" ] || exit 44
 [ -s "/tmp/profiler_josh.csv" ] || exit 45
+
+# Test profiler_multi example runs both without and with --enable-profiler
+rm -f /tmp/profiler_multi_josh.csv
+assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample || exit 46
+[ -f "/tmp/profiler_multi_josh.csv" ] || exit 47
+[ -s "/tmp/profiler_multi_josh.csv" ] || exit 48
+
+rm -f /tmp/profiler_multi_josh.csv
+assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample --enable-profiler || exit 49
+[ -f "/tmp/profiler_multi_josh.csv" ] || exit 50
+[ -s "/tmp/profiler_multi_josh.csv" ] || exit 51
