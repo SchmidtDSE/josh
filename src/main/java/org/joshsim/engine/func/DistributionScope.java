@@ -73,12 +73,12 @@ public class DistributionScope implements Scope {
   public boolean has(String name) {
     if (expectedAttrs.contains(name)) {
       return true;
-    }
-    if (name.endsWith(EVAL_DURATION_SUFFIX)) {
+    } else if (name.endsWith(EVAL_DURATION_SUFFIX)) {
       String prefix = name.substring(0, name.length() - EVAL_DURATION_SUFFIX.length());
       return expectedAttrs.contains(prefix);
+    } else {
+      return false;
     }
-    return false;
   }
 
   @Override

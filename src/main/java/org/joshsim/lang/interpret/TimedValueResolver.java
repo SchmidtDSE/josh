@@ -81,6 +81,18 @@ public class TimedValueResolver implements ValueResolver {
   /**
    * Gets a value from the target scope, timing the delegation or returning last duration.
    *
+   * @param target The scope to search for the value.
+   * @return Optional containing the resolved value if found, or the elapsed duration in
+   *     milliseconds for evalDuration paths.
+   */
+  @Override
+  public Optional<EngineValue> get(Scope target) {
+    return resolveValue(target);
+  }
+
+  /**
+   * Resolves a value from the target scope, applying timing instrumentation as appropriate.
+   *
    * <p>Three branches exist:
    * <ul>
    *   <li>Bare {@code evalDuration}: returns the last recorded duration in milliseconds without
@@ -97,25 +109,24 @@ public class TimedValueResolver implements ValueResolver {
    * @return Optional containing the resolved value if found, or the elapsed duration in
    *     milliseconds for evalDuration paths.
    */
-  @Override
-  public Optional<EngineValue> get(Scope target) {
+  private Optional<EngineValue> resolveValue(Scope target) {
     if (isEvalDuration) {
       return Optional.of(valueFactory.build(lastDurationMs, Units.MILLISECONDS));
     }
+    long start = System.currentTimeMillis();
     if (endsWithEvalDuration) {
-      long start = System.currentTimeMillis();
       try {
         prefixResolver.get(target);
       } finally {
         lastDurationMs = System.currentTimeMillis() - start;
       }
       return Optional.of(valueFactory.build(lastDurationMs, Units.MILLISECONDS));
-    }
-    long start = System.currentTimeMillis();
-    try {
-      return inner.get(target);
-    } finally {
-      lastDurationMs = System.currentTimeMillis() - start;
+    } else {
+      try {
+        return inner.get(target);
+      } finally {
+        lastDurationMs = System.currentTimeMillis() - start;
+      }
     }
   }
 

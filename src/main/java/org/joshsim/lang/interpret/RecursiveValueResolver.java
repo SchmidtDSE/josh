@@ -18,7 +18,6 @@ import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.engine.value.type.EntityValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 
 /**
@@ -39,7 +38,7 @@ public class RecursiveValueResolver implements ValueResolver {
   private final EngineValue zeroMilliseconds;
 
   private String foundPath;
-  private Optional<RecursiveValueResolver> memoizedContinuationResolver;
+  private Optional<ValueResolver> memoizedContinuationResolver;
 
   private IdentityHashMap<Map<String, Integer>, Integer> indexCache;
 
@@ -52,12 +51,26 @@ public class RecursiveValueResolver implements ValueResolver {
   public RecursiveValueResolver(ValueSupportFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
-    this.hasDot = path != null && path.indexOf('.') != -1;
+    this.hasDot = getHasDot(path);
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(path);
     this.zeroMilliseconds = valueFactory.build(0L, Units.MILLISECONDS);
     memoizedContinuationResolver = null;
     foundPath = null;
     indexCache = null;
+  }
+
+  /**
+   * Determines whether the given path contains a dot separator.
+   *
+   * <p>Used to decide whether the fast integer-indexed lookup can be applied. If the path
+   * contains a dot, the path refers to a nested attribute and must be resolved recursively
+   * rather than via the direct index cache.</p>
+   *
+   * @param path The dot-separated attribute path to examine, may be null.
+   * @return True if the path is non-null and contains at least one dot character, false otherwise.
+   */
+  private static boolean getHasDot(String path) {
+    return path != null && path.indexOf('.') != -1;
   }
 
   /**
@@ -83,7 +96,7 @@ public class RecursiveValueResolver implements ValueResolver {
       }
     }
 
-    Optional<RecursiveValueResolver> continuationResolverMaybe = getInnerResolver(target);
+    Optional<ValueResolver> continuationResolverMaybe = getInnerResolver(target);
     if (continuationResolverMaybe == null) {
       return Optional.empty();
     }
@@ -92,7 +105,7 @@ public class RecursiveValueResolver implements ValueResolver {
     if (continuationResolverMaybe.isEmpty()) {
       return Optional.of(resolved);
     } else {
-      RecursiveValueResolver continuationResolver = continuationResolverMaybe.get();
+      ValueResolver continuationResolver = continuationResolverMaybe.get();
       Optional<Integer> innerSize = resolved.getSize();
 
       if (innerSize.isEmpty()) {
@@ -103,17 +116,15 @@ public class RecursiveValueResolver implements ValueResolver {
         throw new IllegalArgumentException(message);
       }
 
-      // If the continuation path is evalDuration and the resolved value is a non-entity scalar,
-      // delegate directly to the continuation resolver which will return the 0 ms sentinel value
-      // without trying to cast the scalar to an entity scope.
-      if (EVAL_DURATION_ATTR.equals(continuationResolver.getPath())
-          && innerSize.get() == 1
-          && !(resolved instanceof EntityValue)) {
-        return continuationResolver.get(target);
-      }
-
       Scope newScope;
       if (innerSize.get() == 1) {
+        // If the continuation path is evalDuration, delegate directly to the continuation resolver
+        // which will return the 0 ms sentinel value. Since evalDuration is a reserved attribute
+        // name, it always returns 0 ms regardless of the resolved value type, so no instanceof
+        // check is needed here.
+        if (EVAL_DURATION_ATTR.equals(continuationResolver.getPath())) {
+          return continuationResolver.get(target);
+        }
         newScope = new EntityScope(resolved.getAsEntity());
       } else if (innerSize.get() == 0) {
         return Optional.of(new RealizedDistribution(
@@ -200,7 +211,7 @@ public class RecursiveValueResolver implements ValueResolver {
    *     matched on the root, or null if no match found. If null, this should try resolution again
    *     on the next request.
    */
-  private Optional<RecursiveValueResolver> getInnerResolver(Scope target) {
+  private Optional<ValueResolver> getInnerResolver(Scope target) {
     if (memoizedContinuationResolver != null) {
       return memoizedContinuationResolver;
     }
@@ -232,7 +243,7 @@ public class RecursiveValueResolver implements ValueResolver {
           }
           String remainingPath = remainingJoiner.toString();
           memoizedContinuationResolver = Optional.of(
-              new RecursiveValueResolver(valueFactory, remainingPath)
+              valueFactory.buildValueResolver(remainingPath)
           );
         }
 

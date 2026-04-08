@@ -168,13 +168,16 @@ public class JoshSimFacade {
   }
 
   /**
-   * Build a ValueSupportFactory for the JVM execution path.
+   * Build a ValueSupportFactory for the JVM execution path without profiling timing active.
    *
-   * <p>Uses the default RecursiveValueResolverFactory. Callers needing profiler support should
-   * pass an explicit ValueResolverFactory to the ValueSupportFactory constructor instead.</p>
+   * <p>Uses the default RecursiveValueResolverFactory, which does not record per-attribute
+   * wall-clock timing. No {@link org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory}
+   * is used here, so evalDuration profiling overhead is absent on this code path. Callers needing
+   * profiler support should pass an explicit ValueResolverFactory to the ValueSupportFactory
+   * constructor instead (see RunCommand for the CLI profiler flag).</p>
    *
    * @param favorBigDecimal True if decimal values should favor BigDecimal, false for double.
-   * @return A ValueSupportFactory configured for JVM execution.
+   * @return A ValueSupportFactory configured for JVM execution without profiling.
    */
   private static ValueSupportFactory buildValueSupportFactory(boolean favorBigDecimal) {
     return new ValueSupportFactory(favorBigDecimal);

@@ -81,6 +81,20 @@ public class RunCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
 
+  /**
+   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
+   *
+   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
+   * @return A ValueResolverFactory configured for the requested profiling mode.
+   */
+  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
+    if (enableProfiler) {
+      return new TimedRecursiveValueResolverFactory();
+    } else {
+      return new RecursiveValueResolverFactory();
+    }
+  }
+
   @Parameters(index = "0", description = "Path to file to validate")
   private File file;
 
@@ -176,20 +190,6 @@ public class RunCommand implements Callable<Integer> {
       defaultValue = "false"
   )
   private boolean enableProfiler;
-
-  /**
-   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
-   *
-   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
-   * @return A ValueResolverFactory configured for the requested profiling mode.
-   */
-  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
-    if (enableProfiler) {
-      return new TimedRecursiveValueResolverFactory();
-    } else {
-      return new RecursiveValueResolverFactory();
-    }
-  }
 
   /**
    * Parses custom parameter command-line options.
