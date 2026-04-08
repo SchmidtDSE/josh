@@ -24,6 +24,8 @@ import org.joshsim.lang.interpret.ValueResolver;
  */
 public class DistributionScope implements Scope {
 
+  private static final String EVAL_DURATION_SUFFIX = ".evalDuration";
+
   private final ValueSupportFactory valueFactory;
   private final Distribution value;
   private final Set<String> expectedAttrs;
@@ -69,9 +71,15 @@ public class DistributionScope implements Scope {
 
   @Override
   public boolean has(String name) {
-    return expectedAttrs.contains(name);
+    if (expectedAttrs.contains(name)) {
+      return true;
+    }
+    if (name.endsWith(EVAL_DURATION_SUFFIX)) {
+      String prefix = name.substring(0, name.length() - EVAL_DURATION_SUFFIX.length());
+      return expectedAttrs.contains(prefix);
+    }
+    return false;
   }
-
 
   @Override
   public Set<String> getAttributes() {
@@ -83,7 +91,7 @@ public class DistributionScope implements Scope {
    *
    * <p>Returns a deep copy.</p>
    *
-   * @param target the Distriubtion to sample for an Entity from which to extract attribute names.
+   * @param target the Distribution to sample for an Entity from which to extract attribute names.
    * @return Set of attribute names found in the entity's event handlers or set attributes.
    */
   private Set<String> getAttributes(Distribution target) {

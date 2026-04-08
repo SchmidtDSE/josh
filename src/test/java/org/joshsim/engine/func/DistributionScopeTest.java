@@ -80,4 +80,14 @@ class DistributionScopeTest {
     assertTrue(attributes.iterator().hasNext());
     assertEquals("testAttr", attributes.iterator().next());
   }
+
+  @Test
+  void testHasAttrEvalDuration() {
+    assertTrue(scope.has("testAttr.evalDuration"));
+  }
+
+  @Test
+  void testHasNonExistentAttrEvalDuration() {
+    assertFalse(scope.has("nonExistent.evalDuration"));
+  }
 }
