@@ -64,9 +64,7 @@ public class TimedValueResolver implements ValueResolver {
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(inner.getPath());
     this.lastDurationMs = 0L;
     String innerPath = inner.getPath();
-    this.endsWithEvalDuration = !isEvalDuration
-        && innerPath != null
-        && innerPath.endsWith("." + EVAL_DURATION_ATTR);
+    this.endsWithEvalDuration = getEndsWithEvalDuration(this.isEvalDuration, innerPath);
     if (this.endsWithEvalDuration) {
       this.evalAttributePrefix = innerPath.substring(
           0, innerPath.length() - ("." + EVAL_DURATION_ATTR).length()
@@ -88,6 +86,27 @@ public class TimedValueResolver implements ValueResolver {
   @Override
   public Optional<EngineValue> get(Scope target) {
     return resolveValue(target);
+  }
+
+  /**
+   * Determines whether the inner resolver's path ends with the evalDuration suffix.
+   *
+   * <p>Returns false immediately if the path is the bare {@code evalDuration} attribute or if
+   * the path is null. Otherwise returns true only when the path ends with
+   * {@code ".evalDuration"}, indicating a dotted per-attribute timing request.</p>
+   *
+   * @param isEvalDuration true if the inner path is exactly {@code "evalDuration"}.
+   * @param innerPath the inner resolver's path, may be null.
+   * @return true if the path ends with {@code ".evalDuration"} and is not the bare form.
+   */
+  private static boolean getEndsWithEvalDuration(boolean isEvalDuration, String innerPath) {
+    if (isEvalDuration) {
+      return false;
+    } else if (innerPath == null) {
+      return false;
+    } else {
+      return innerPath.endsWith("." + EVAL_DURATION_ATTR);
+    }
   }
 
   /**
