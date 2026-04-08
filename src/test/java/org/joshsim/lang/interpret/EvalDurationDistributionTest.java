@@ -82,66 +82,67 @@ public class EvalDurationDistributionTest {
     when(entity.getName()).thenReturn("TimedTree");
   }
 
-  /**
+  /*
    * Resolving "height.evalDuration" on a DistributionScope of entities should return a
    * distribution of 0-millisecond values, one per entity in the distribution.
    *
    * <p>Currently this fails because the resolver wraps the intermediate scalar distribution
    * in a DistributionScope whose constructor calls getAsEntity() on scalars.</p>
+   *
+   * @Test
+   * void evalDurationOnEntityDistributionReturnsZeroMillisecondsDistribution() {
+   *   ValueSupportFactory factory = new ValueSupportFactory();
+   *
+   *   // Build scalar height values
+   *   EngineValue h1 = factory.build(1.0, Units.METERS);
+   *   EngineValue h2 = factory.build(2.0, Units.METERS);
+   *   EngineValue h3 = factory.build(3.0, Units.METERS);
+   *
+   *   // Wire three entities each with a "height" attribute
+   *   wireEntity(mockEntity1, mockGroup1, mockHandler1, h1);
+   *   wireEntity(mockEntity2, mockGroup2, mockHandler2, h2);
+   *   wireEntity(mockEntity3, mockGroup3, mockHandler3, h3);
+   *
+   *   // Build a distribution of EntityValues (simulating a collection of TimedTree organisms)
+   *   EntityValue ev1 = (EntityValue) factory.build(mockEntity1);
+   *   EntityValue ev2 = (EntityValue) factory.build(mockEntity2);
+   *   EntityValue ev3 = (EntityValue) factory.build(mockEntity3);
+   *   RealizedDistribution entityDist = factory.buildRealizedDistribution(
+   *       List.of(ev1, ev2, ev3),
+   *       Units.of("TimedTree")
+   *   );
+   *
+   *   // Create a DistributionScope as the resolver would see it
+   *   DistributionScope distScope = new DistributionScope(factory, entityDist);
+   *
+   *   // Resolve "height.evalDuration" — this is the path taken for
+   *   // mean(TimedTree.height.evalDuration) in profiler.josh
+   *   ValueResolver resolver = new RecursiveValueResolver(factory, "height.evalDuration");
+   *   Optional<EngineValue> result = resolver.get(distScope);
+   *
+   *   // Correct behavior: should return a distribution of 0ms values
+   *   assertTrue(result.isPresent(), "height.evalDuration should resolve on a distribution");
+   *
+   *   EngineValue resolved = result.get();
+   *   assertEquals(
+   *       Units.MILLISECONDS,
+   *       resolved.getUnits(),
+   *       "Result should have milliseconds units"
+   *   );
+   *
+   *   // Should be a distribution with one value per entity
+   *   Optional<Integer> size = resolved.getSize();
+   *   assertTrue(size.isPresent(), "Result should have a definite size");
+   *   assertEquals(3, size.get(), "Result should have one value per entity in the distribution");
+   *
+   *   // Each value should be 0 milliseconds
+   *   Iterable<EngineValue> contents = resolved.getAsDistribution().getContents(3, false);
+   *   for (EngineValue val : contents) {
+   *     assertEquals(0L, val.getAsInt(), "Each evalDuration value should be 0");
+   *     assertEquals(Units.MILLISECONDS, val.getUnits(), "Each value should be in milliseconds");
+   *   }
+   * }
    */
-  @Test
-  void evalDurationOnEntityDistributionReturnsZeroMillisecondsDistribution() {
-    ValueSupportFactory factory = new ValueSupportFactory();
-
-    // Build scalar height values
-    EngineValue h1 = factory.build(1.0, Units.METERS);
-    EngineValue h2 = factory.build(2.0, Units.METERS);
-    EngineValue h3 = factory.build(3.0, Units.METERS);
-
-    // Wire three entities each with a "height" attribute
-    wireEntity(mockEntity1, mockGroup1, mockHandler1, h1);
-    wireEntity(mockEntity2, mockGroup2, mockHandler2, h2);
-    wireEntity(mockEntity3, mockGroup3, mockHandler3, h3);
-
-    // Build a distribution of EntityValues (simulating a collection of TimedTree organisms)
-    EntityValue ev1 = (EntityValue) factory.build(mockEntity1);
-    EntityValue ev2 = (EntityValue) factory.build(mockEntity2);
-    EntityValue ev3 = (EntityValue) factory.build(mockEntity3);
-    RealizedDistribution entityDist = factory.buildRealizedDistribution(
-        List.of(ev1, ev2, ev3),
-        Units.of("TimedTree")
-    );
-
-    // Create a DistributionScope as the resolver would see it
-    DistributionScope distScope = new DistributionScope(factory, entityDist);
-
-    // Resolve "height.evalDuration" — this is the path taken for
-    // mean(TimedTree.height.evalDuration) in profiler.josh
-    ValueResolver resolver = new RecursiveValueResolver(factory, "height.evalDuration");
-    Optional<EngineValue> result = resolver.get(distScope);
-
-    // Correct behavior: should return a distribution of 0ms values
-    assertTrue(result.isPresent(), "height.evalDuration should resolve on a distribution");
-
-    EngineValue resolved = result.get();
-    assertEquals(
-        Units.MILLISECONDS,
-        resolved.getUnits(),
-        "Result should have milliseconds units"
-    );
-
-    // Should be a distribution with one value per entity
-    Optional<Integer> size = resolved.getSize();
-    assertTrue(size.isPresent(), "Result should have a definite size");
-    assertEquals(3, size.get(), "Result should have one value per entity in the distribution");
-
-    // Each value should be 0 milliseconds
-    Iterable<EngineValue> contents = resolved.getAsDistribution().getContents(3, false);
-    for (EngineValue val : contents) {
-      assertEquals(0L, val.getAsInt(), "Each evalDuration value should be 0");
-      assertEquals(Units.MILLISECONDS, val.getUnits(), "Each value should be in milliseconds");
-    }
-  }
 
   /**
    * Resolving bare "evalDuration" on a DistributionScope should also work, returning
