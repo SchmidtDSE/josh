@@ -90,4 +90,10 @@ class DistributionScopeTest {
   void testHasNonExistentAttrEvalDuration() {
     assertFalse(scope.has("nonExistent.evalDuration"));
   }
+
+  @Test
+  void testTryIndexedGetAlwaysEmpty() {
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+    assertTrue(result.isEmpty());
+  }
 }

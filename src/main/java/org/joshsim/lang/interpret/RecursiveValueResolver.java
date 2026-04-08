@@ -7,8 +7,6 @@
 package org.joshsim.lang.interpret;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Optional;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.CompatibleStringJoiner;
@@ -40,8 +38,6 @@ public class RecursiveValueResolver implements ValueResolver {
   private String foundPath;
   private Optional<ValueResolver> memoizedContinuationResolver;
 
-  private IdentityHashMap<Map<String, Integer>, Integer> indexCache;
-
   /**
    * Creates a new RecursiveValueResolver for resolving dot-separated paths.
    *
@@ -56,7 +52,6 @@ public class RecursiveValueResolver implements ValueResolver {
     this.zeroMilliseconds = valueFactory.build(0L, Units.MILLISECONDS);
     memoizedContinuationResolver = null;
     foundPath = null;
-    indexCache = null;
   }
 
   /**
@@ -88,10 +83,9 @@ public class RecursiveValueResolver implements ValueResolver {
       return Optional.of(zeroMilliseconds);
     }
 
-    if (target instanceof EntityScope) {
-      EntityScope entityScope = (EntityScope) target;
-      Optional<EngineValue> fastResult = tryIntegerLookup(entityScope);
-      if (fastResult != null) {
+    if (!hasDot) {
+      Optional<EngineValue> fastResult = target.tryIndexedGet(path);
+      if (fastResult.isPresent()) {
         return fastResult;
       }
     }
@@ -138,48 +132,6 @@ public class RecursiveValueResolver implements ValueResolver {
 
       return continuationResolver.get(newScope);
     }
-  }
-
-  /**
-   * Attempts to resolve the attribute using a cached integer index for fast array access.
-   *
-   * <p>The cache maps each entity type's shared {@code attributeNameToIndex} map reference
-   * to the attribute's integer index. Map object identity serves as a stand-in for the entity
-   * type name without the overhead of String hashing, since all instances of a given entity type
-   * share the same immutable index map. Only simple (non-dotted) paths use this fast path.</p>
-   *
-   * @param entityScope The EntityScope to resolve from.
-   * @return Optional containing the resolved value if the fast path succeeded,
-   *         or null if the fast path cannot be used (caller should fall back to slow path).
-   */
-  private Optional<EngineValue> tryIntegerLookup(EntityScope entityScope) {
-    if (hasDot) {
-      return null;
-    }
-
-    Map<String, Integer> indexMap = entityScope.getAttributeNameToIndex();
-
-    if (indexMap == null || indexMap.isEmpty()) {
-      return null;
-    }
-
-    if (indexCache == null) {
-      indexCache = new IdentityHashMap<>();
-    }
-
-    Integer cachedIndex = indexCache.get(indexMap);
-
-    if (cachedIndex != null) {
-      return entityScope.getOptional(cachedIndex);
-    }
-
-    Integer index = indexMap.get(path);
-    if (index == null) {
-      return null;
-    }
-
-    indexCache.put(indexMap, index);
-    return entityScope.getOptional(index);
   }
 
   /**

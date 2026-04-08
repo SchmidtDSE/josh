@@ -78,6 +78,11 @@ public class SyntheticScope implements Scope {
     return newSet;
   }
 
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
+  }
+
   private Optional<EngineValue> getSynthetic(String name) {
     return switch (name) {
       case "current" -> Optional.of(valueFactory.build(inner));

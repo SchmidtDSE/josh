@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -245,19 +246,22 @@ public class ValueResolverTest {
   }
 
   @Test
-  void testUninitializedAttributeReturnsEmpty() {
-    // Setup: Attribute exists in index map but returns empty
+  void testUninitializedAttributeThrows() {
+    // Setup: Attribute exists in index map but returns empty (uninitialized)
     Map<String, Integer> indexMap = Map.of("testAttr", 0);
     when(mockEntity.getAttributeNameToIndex()).thenReturn(indexMap);
     when(mockEntity.getAttributeValue(0)).thenReturn(Optional.empty());
+    when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.empty());
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
 
     EntityScope entityScope = new EntityScope(mockEntity);
     ValueResolver resolver = new RecursiveValueResolver(valueFactory, "testAttr");
 
-    // Should return empty (attribute exists but uninitialized)
-    Optional<EngineValue> result = resolver.get(entityScope);
-    assertFalse(result.isPresent());
+    // Uninitialized attribute: fast path returns empty, slow path throws IllegalArgumentException
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> resolver.get(entityScope)
+    );
   }
 
   @Test

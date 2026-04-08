@@ -114,4 +114,10 @@ public class SyntheticScopeTest {
         .collect(Collectors.toSet())
         .containsAll(Arrays.asList("current", "prior", "here", "meta", "testAttr")));
   }
+
+  @Test
+  void testTryIndexedGetAlwaysEmpty() {
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+    assertTrue(result.isEmpty());
+  }
 }

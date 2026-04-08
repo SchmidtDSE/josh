@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,5 +94,11 @@ class LocalScopeTest {
     assertTrue(attributes.hasNext());
     assertEquals("localVar", attributes.next());
     assertFalse(attributes.hasNext());
+  }
+
+  @Test
+  void testTryIndexedGetAlwaysEmpty() {
+    Optional<EngineValue> result = scope.tryIndexedGet("localVar");
+    assertTrue(result.isEmpty());
   }
 }

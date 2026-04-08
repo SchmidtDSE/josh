@@ -98,4 +98,9 @@ public class DistributionScope implements Scope {
     Set<String> attributeNames = target.sample().getAsEntity().getAttributeNames();
     return new HashSet<>(attributeNames);
   }
+
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
+  }
 }
