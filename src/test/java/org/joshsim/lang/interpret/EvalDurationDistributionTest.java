@@ -14,8 +14,11 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 
 
 /**
@@ -142,6 +146,88 @@ public class EvalDurationDistributionTest {
       assertEquals(0L, val.getAsInt(), "Each evalDuration value should be 0");
       assertEquals(Units.MILLISECONDS, val.getUnits(), "Each value should be in milliseconds");
     }
+  }
+
+  /**
+   * Wire a mock entity so its "height" attribute sleeps 1 ms before returning.
+   *
+   * <p>The sleep ensures the TimedValueResolver's millisecond clock captures
+   * a non-zero duration for at least some entities in the distribution.</p>
+   */
+  private void wireEntityWithDelay(
+      MutableEntity entity,
+      EventHandlerGroup group,
+      EventHandler handler,
+      EngineValue heightValue
+  ) {
+    when(handler.getAttributeName()).thenReturn("height");
+    when(handler.getEventName()).thenReturn("step");
+    when(group.getEventHandlers()).thenReturn(Arrays.asList(handler));
+    when(entity.getEventHandlers()).thenReturn(Arrays.asList(group));
+    when(entity.getAttributeNames()).thenReturn(Set.of("height"));
+    when(entity.getAttributeValue("height")).thenAnswer((Answer<Optional<EngineValue>>) inv -> {
+      Thread.sleep(1);
+      return Optional.of(heightValue);
+    });
+    when(entity.getName()).thenReturn("TimedTree");
+  }
+
+  /**
+   * Resolving "height.evalDuration" with the timed factory over 100 entities should return
+   * a distribution whose min and max values differ, confirming per-entity timing variation.
+   *
+   * <p>Each entity's height resolution sleeps for 1 ms to ensure the wall-clock timer
+   * captures measurably non-zero durations. With 100 entities and 1 ms sleep each, at
+   * least some entities will be measured at different durations, so min != max.</p>
+   */
+  @Test
+  void evalDurationWithTimedFactoryHasVariation() throws InterruptedException {
+    ValueSupportFactory timedFactory = new ValueSupportFactory(
+        true,
+        new TimedRecursiveValueResolverFactory()
+    );
+
+    List<EngineValue> entityValues = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      MutableEntity entity = mock(MutableEntity.class, withSettings().lenient());
+      EventHandlerGroup group = mock(EventHandlerGroup.class, withSettings().lenient());
+      EventHandler handler = mock(EventHandler.class, withSettings().lenient());
+      EngineValue heightValue = timedFactory.build((double) (i + 1), Units.METERS);
+      wireEntityWithDelay(entity, group, handler, heightValue);
+      entityValues.add(timedFactory.build(entity));
+    }
+
+    RealizedDistribution entityDist = timedFactory.buildRealizedDistribution(
+        entityValues,
+        Units.of("TimedTree")
+    );
+
+    DistributionScope distScope = new DistributionScope(timedFactory, entityDist);
+
+    ValueResolver resolver = new RecursiveValueResolver(timedFactory, "height.evalDuration");
+    Optional<EngineValue> result = resolver.get(distScope);
+
+    assertTrue(result.isPresent(), "height.evalDuration should resolve on a timed distribution");
+
+    EngineValue resolved = result.get();
+    assertEquals(Units.MILLISECONDS, resolved.getUnits(), "Result should be in milliseconds");
+
+    Optional<Integer> size = resolved.getSize();
+    assertTrue(size.isPresent(), "Result should have a definite size");
+    assertEquals(100, size.get(), "Result should have one value per entity");
+
+    long min = Long.MAX_VALUE;
+    long max = Long.MIN_VALUE;
+    for (EngineValue val : resolved.getAsDistribution().getContents(100, false)) {
+      long ms = val.getAsInt();
+      if (ms < min) {
+        min = ms;
+      }
+      if (ms > max) {
+        max = ms;
+      }
+    }
+    assertTrue(min != max, "min and max durations should differ across 100 timed entities");
   }
 
   /**
