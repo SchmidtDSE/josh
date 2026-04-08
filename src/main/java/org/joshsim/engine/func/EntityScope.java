@@ -21,7 +21,7 @@ public class EntityScope implements Scope {
 
   private final Entity value;
   private final Set<String> expectedAttrs;
-  private Map<String, Integer> indexCache;
+  private Optional<HashMap<String, Integer>> indexCacheMaybe;
 
   /**
    * Create a scope decorator around this entity.
@@ -31,6 +31,7 @@ public class EntityScope implements Scope {
   public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = value.getAttributeNames();
+    this.indexCacheMaybe = Optional.empty();
   }
 
   @Override
@@ -122,9 +123,11 @@ public class EntityScope implements Scope {
       return Optional.empty();
     }
 
-    if (indexCache == null) {
-      indexCache = new HashMap<>();
+    if (indexCacheMaybe.isEmpty()) {
+      indexCacheMaybe = Optional.of(new HashMap<>());
     }
+
+    HashMap<String, Integer> indexCache = indexCacheMaybe.get();
 
     Integer cachedIndex = indexCache.get(name);
 

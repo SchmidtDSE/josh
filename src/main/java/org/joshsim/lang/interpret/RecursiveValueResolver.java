@@ -100,37 +100,10 @@ public class RecursiveValueResolver implements ValueResolver {
       return Optional.of(resolved);
     } else {
       ValueResolver continuationResolver = continuationResolverMaybe.get();
-      Optional<Integer> innerSize = resolved.getSize();
 
-      if (innerSize.isEmpty()) {
-        String message = String.format(
-            "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",
-            resolved.getLanguageType()
-        );
-        throw new IllegalArgumentException(message);
-      }
+      checkUndefinedSize(resolved);
 
-      Scope newScope;
-      if (innerSize.get() == 1) {
-        // If the continuation path is evalDuration, delegate directly to the continuation resolver
-        // which will return the 0 ms sentinel value. Since evalDuration is a reserved attribute
-        // name, it always returns 0 ms regardless of the resolved value type, so no instanceof
-        // check is needed here.
-        if (EVAL_DURATION_ATTR.equals(continuationResolver.getPath())) {
-          return continuationResolver.get(target);
-        }
-        newScope = new EntityScope(resolved.getAsEntity());
-      } else if (innerSize.get() == 0) {
-        return Optional.of(new RealizedDistribution(
-            resolved.getCaster(),
-            new ArrayList<>(),
-            Units.EMPTY
-        ));
-      } else {
-        newScope = new DistributionScope(valueFactory, resolved.getAsDistribution());
-      }
-
-      return continuationResolver.get(newScope);
+      return resolveBasedOnSize(resolved, continuationResolver, target);
     }
   }
 
@@ -147,6 +120,73 @@ public class RecursiveValueResolver implements ValueResolver {
   @Override
   public String toString() {
     return String.format("RecursiveValueResolver(%s)", path);
+  }
+
+  /**
+   * Checks that the resolved value has a defined size, throwing if it does not.
+   *
+   * <p>A value with an undefined size is a distribution or type whose cardinality cannot be
+   * determined at resolution time. Attempting to resolve attributes within such a value is
+   * not supported because no appropriate scope can be constructed for the continuation
+   * resolver.</p>
+   *
+   * @param resolved the EngineValue whose size to check.
+   * @throws IllegalArgumentException if the size of {@code resolved} is undefined.
+   */
+  private void checkUndefinedSize(EngineValue resolved) {
+    if (resolved.getSize().isEmpty()) {
+      String message = String.format(
+          "Cannot resolve attributes in %s as it is a distribution or type of undefined size.",
+          resolved.getLanguageType()
+      );
+      throw new IllegalArgumentException(message);
+    }
+  }
+
+  /**
+   * Resolves the continuation path based on the size of the already-resolved value.
+   *
+   * <p>Three cases are handled based on the size of {@code resolved}:</p>
+   * <ul>
+   *   <li>Size&nbsp;==&nbsp;1: the value represents a single entity. If the continuation path is
+   *       {@code evalDuration}, the continuation resolver is invoked on the original outer scope
+   *       to return the 0&nbsp;ms sentinel value, since {@code evalDuration} is a reserved
+   *       attribute that always returns 0&nbsp;ms regardless of the entity type. Otherwise, an
+   *       {@link EntityScope} is constructed around the entity and the continuation resolver is
+   *       invoked on it.</li>
+   *   <li>Size&nbsp;==&nbsp;0: the value represents an empty distribution. An empty
+   *       {@link RealizedDistribution} is returned immediately without further resolution.</li>
+   *   <li>Size&nbsp;&gt;&nbsp;1: the value represents a non-empty distribution. A
+   *       {@link DistributionScope} is constructed and the continuation resolver is invoked
+   *       on it.</li>
+   * </ul>
+   *
+   * @param resolved the resolved EngineValue whose size determines the scope type.
+   * @param continuationResolver the resolver for remaining path segments.
+   * @param target the original outer scope, used for the {@code evalDuration} fast-path.
+   * @return Optional containing the final resolved value.
+   */
+  private Optional<EngineValue> resolveBasedOnSize(
+      EngineValue resolved,
+      ValueResolver continuationResolver,
+      Scope target) {
+    int size = resolved.getSize().get();
+    Scope newScope;
+    if (size == 1) {
+      if (EVAL_DURATION_ATTR.equals(continuationResolver.getPath())) {
+        return continuationResolver.get(target);
+      }
+      newScope = new EntityScope(resolved.getAsEntity());
+    } else if (size == 0) {
+      return Optional.of(new RealizedDistribution(
+          resolved.getCaster(),
+          new ArrayList<>(),
+          Units.EMPTY
+      ));
+    } else {
+      newScope = new DistributionScope(valueFactory, resolved.getAsDistribution());
+    }
+    return continuationResolver.get(newScope);
   }
 
   /**
