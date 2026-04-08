@@ -100,7 +100,7 @@ done < <(grep -- '--custom-tag ' "$RUN_SH")
 # --- Workaround: inject tags that joshpy SweepManager provides at runtime but
 # --- doesn't include in run.sh. Remove once fixed in joshpy bottling. ---
 
-CUSTOM_TAG_ARGS+=("--custom-tag" "run_hash=$RUN_HASH")
+# CUSTOM_TAG_ARGS+=("--custom-tag" "run_hash=$RUN_HASH")
 
 # --- Print summary ---
 
