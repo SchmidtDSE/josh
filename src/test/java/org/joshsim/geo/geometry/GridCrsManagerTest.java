@@ -72,12 +72,12 @@ public class GridCrsManagerTest {
 
     assertEquals(definition.getName(), returnedDefinition.getName());
     assertEquals(definition.getBaseCrsCode(), returnedDefinition.getBaseCrsCode());
-    assertEquals(definition.getCellSize(), returnedDefinition.getCellSize());
+    assertEquals(definition.getIndexCellSize(), returnedDefinition.getIndexCellSize());
   }
 
   @Test
   void testGetCellSizeReturnsCellSizeFromDefinition() {
-    double expectedCellSize = definition.getCellSize().doubleValue();
+    double expectedCellSize = definition.getIndexCellSize().doubleValue();
     double actualCellSize = gridCrsManager.getCellSize();
 
     assertEquals(expectedCellSize, actualCellSize, DELTA);

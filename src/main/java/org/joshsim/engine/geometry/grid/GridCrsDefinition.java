@@ -110,19 +110,6 @@ public class GridCrsDefinition {
     return cellSizeMeters;
   }
 
-  /**
-   * Gets the cell size. Prefer {@link #getIndexCellSize()} or
-   * {@link #getOriginalCellSizeMeters()} for clarity about which value you need.
-   *
-   * @return cell width in index/coordinate space (same as {@link #getIndexCellSize()})
-   * @deprecated Use {@link #getIndexCellSize()} for grid layout or
-   *     {@link #getOriginalCellSizeMeters()} for physical distance calculations.
-   */
-  @Deprecated
-  public BigDecimal getCellSize() {
-    return getIndexCellSize();
-  }
-
   public String getName() {
     return name;
   }

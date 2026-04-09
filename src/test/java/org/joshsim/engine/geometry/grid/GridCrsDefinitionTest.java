@@ -41,7 +41,7 @@ class GridCrsDefinitionTest {
     assertEquals(name, definition.getName());
     assertEquals(baseCrsCode, definition.getBaseCrsCode());
     assertEquals(extents, definition.getExtents());
-    assertEquals(cellSize, definition.getCellSize());
+    assertEquals(cellSize, definition.getIndexCellSize());
   }
 
   @Test
