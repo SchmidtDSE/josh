@@ -32,7 +32,9 @@ class PatchSpatialIndex {
   private final BigDecimal minY;
   private final BigDecimal maxX;
   private final BigDecimal maxY;
-  private final BigDecimal cellSize;
+  private final BigDecimal cellSizeX;
+  private final BigDecimal cellSizeY;
+  private final BigDecimal cellSizeInMeters;
   private final int gridWidth;
   private final int gridHeight;
   private final Map<GeoKey, Entity> allPatches;
@@ -41,9 +43,10 @@ class PatchSpatialIndex {
    * Builds a spatial index from the given patches.
    *
    * @param patches map of patches to index
+   * @param cellSizeMeters original cell size in meters, or null to extract from patch geometry
    * @throws IllegalStateException if patches don't form a regular grid
    */
-  PatchSpatialIndex(Map<GeoKey, Entity> patches) {
+  PatchSpatialIndex(Map<GeoKey, Entity> patches, BigDecimal cellSizeMeters) {
     this.allPatches = patches;
 
     if (patches.isEmpty()) {
@@ -52,13 +55,15 @@ class PatchSpatialIndex {
       this.minY = BigDecimal.ZERO;
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
-      this.cellSize = BigDecimal.ONE;
+      this.cellSizeX = BigDecimal.ONE;
+      this.cellSizeY = BigDecimal.ONE;
+      this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
       this.gridWidth = 0;
       this.gridHeight = 0;
       return;
     }
 
-    GridParameters params = analyzePatches(patches);
+    GridParameters params = analyzePatches(patches, cellSizeMeters);
 
     if (params == null) {
       this.grid = new Entity[0][0];
@@ -66,7 +71,9 @@ class PatchSpatialIndex {
       this.minY = BigDecimal.ZERO;
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
-      this.cellSize = BigDecimal.ONE;
+      this.cellSizeX = BigDecimal.ONE;
+      this.cellSizeY = BigDecimal.ONE;
+      this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
       this.gridWidth = 0;
       this.gridHeight = 0;
       return;
@@ -76,7 +83,9 @@ class PatchSpatialIndex {
     this.minY = params.minY;
     this.maxX = params.maxX;
     this.maxY = params.maxY;
-    this.cellSize = params.cellSize;
+    this.cellSizeX = params.cellSizeX;
+    this.cellSizeY = params.cellSizeY;
+    this.cellSizeInMeters = params.cellSizeInMeters;
 
     GridDimensions dims = calculateGridDimensions(params);
     this.gridWidth = dims.width;
@@ -91,14 +100,23 @@ class PatchSpatialIndex {
   }
 
   /**
-   * Analyzes patches to determine grid parameters.
+   * Analyzes patches to determine grid parameters including per-axis spacing.
+   *
+   * <p>Infers separate X and Y coordinate spacings from the smallest gap between
+   * distinct center coordinates in each axis. This handles Earth-space grids where
+   * longitude and latitude spacings differ by 1/cos(latitude).</p>
+   *
+   * @param patches the patches to analyze
+   * @param cellSizeMeters original cell size in meters, or null to extract from patch geometry
    */
-  private GridParameters analyzePatches(Map<GeoKey, Entity> patches) {
+  private GridParameters analyzePatches(Map<GeoKey, Entity> patches, BigDecimal cellSizeMeters) {
     BigDecimal foundMinX = null;
     BigDecimal foundMinY = null;
     BigDecimal foundMaxX = null;
     BigDecimal foundMaxY = null;
-    BigDecimal foundCellSize = null;
+    BigDecimal secondMinX = null;
+    BigDecimal secondMinY = null;
+    BigDecimal metersCellSize = cellSizeMeters;
 
     for (Entity patch : patches.values()) {
       Optional<EngineGeometry> geomOpt = patch.getGeometry();
@@ -111,28 +129,59 @@ class PatchSpatialIndex {
       BigDecimal centerY = geom.getCenterY();
 
       if (foundMinX == null || centerX.compareTo(foundMinX) < 0) {
+        secondMinX = foundMinX;
         foundMinX = centerX;
+      } else if (secondMinX == null || (centerX.compareTo(foundMinX) > 0
+          && centerX.compareTo(secondMinX) < 0)) {
+        secondMinX = centerX;
       }
+
+      if (foundMinY == null || centerY.compareTo(foundMinY) < 0) {
+        secondMinY = foundMinY;
+        foundMinY = centerY;
+      } else if (secondMinY == null || (centerY.compareTo(foundMinY) > 0
+          && centerY.compareTo(secondMinY) < 0)) {
+        secondMinY = centerY;
+      }
+
       if (foundMaxX == null || centerX.compareTo(foundMaxX) > 0) {
         foundMaxX = centerX;
-      }
-      if (foundMinY == null || centerY.compareTo(foundMinY) < 0) {
-        foundMinY = centerY;
       }
       if (foundMaxY == null || centerY.compareTo(foundMaxY) > 0) {
         foundMaxY = centerY;
       }
 
-      if (foundCellSize == null && geom.getOnGrid() != null) {
-        foundCellSize = geom.getOnGrid().getWidth();
+      if (metersCellSize == null && geom.getOnGrid() != null) {
+        metersCellSize = geom.getOnGrid().getWidth();
       }
     }
 
-    if (foundMinX == null || foundCellSize == null) {
+    if (foundMinX == null || metersCellSize == null) {
       return null;
     }
 
-    return new GridParameters(foundMinX, foundMinY, foundMaxX, foundMaxY, foundCellSize);
+    boolean hasXSpacing = secondMinX != null && secondMinX.compareTo(foundMinX) > 0;
+    boolean hasYSpacing = secondMinY != null && secondMinY.compareTo(foundMinY) > 0;
+
+    BigDecimal coordCellSizeX;
+    BigDecimal coordCellSizeY;
+
+    if (hasXSpacing && hasYSpacing) {
+      coordCellSizeX = secondMinX.subtract(foundMinX);
+      coordCellSizeY = secondMinY.subtract(foundMinY);
+    } else if (hasXSpacing) {
+      coordCellSizeX = secondMinX.subtract(foundMinX);
+      coordCellSizeY = coordCellSizeX;
+    } else if (hasYSpacing) {
+      coordCellSizeY = secondMinY.subtract(foundMinY);
+      coordCellSizeX = coordCellSizeY;
+    } else {
+      coordCellSizeX = metersCellSize;
+      coordCellSizeY = metersCellSize;
+    }
+
+    return new GridParameters(foundMinX, foundMinY, foundMaxX, foundMaxY,
+        coordCellSizeX, coordCellSizeY, metersCellSize);
   }
 
   /**
@@ -140,10 +189,10 @@ class PatchSpatialIndex {
    */
   private GridDimensions calculateGridDimensions(GridParameters params) {
     BigDecimal widthInCells = params.maxX.subtract(params.minX)
-        .divide(params.cellSize, java.math.RoundingMode.HALF_UP)
+        .divide(params.cellSizeX, java.math.RoundingMode.HALF_UP)
         .add(BigDecimal.ONE);
     BigDecimal heightInCells = params.maxY.subtract(params.minY)
-        .divide(params.cellSize, java.math.RoundingMode.HALF_UP)
+        .divide(params.cellSizeY, java.math.RoundingMode.HALF_UP)
         .add(BigDecimal.ONE);
 
     return new GridDimensions(widthInCells.intValue(), heightInCells.intValue());
@@ -178,7 +227,7 @@ class PatchSpatialIndex {
    */
   private int worldToGridX(BigDecimal worldX) {
     return worldX.subtract(minX)
-        .divide(cellSize, java.math.RoundingMode.HALF_UP)
+        .divide(cellSizeX, java.math.RoundingMode.HALF_UP)
         .intValue();
   }
 
@@ -187,7 +236,7 @@ class PatchSpatialIndex {
    */
   private int worldToGridY(BigDecimal worldY) {
     return worldY.subtract(minY)
-        .divide(cellSize, java.math.RoundingMode.HALF_UP)
+        .divide(cellSizeY, java.math.RoundingMode.HALF_UP)
         .intValue();
   }
 
@@ -271,7 +320,7 @@ class PatchSpatialIndex {
     int centerGridX = worldToGridX(centerX);
     int centerGridY = worldToGridY(centerY);
 
-    double radiusInGridCells = diameter.doubleValue() / (2.0 * cellSize.doubleValue());
+    double radiusInGridCells = diameter.doubleValue() / (2.0 * cellSizeInMeters.doubleValue());
 
     List<GridOffset> offsets = CircleOffsetsCache.getOffsetsForRadius(radiusInGridCells);
 
@@ -346,15 +395,19 @@ class PatchSpatialIndex {
     final BigDecimal minY;
     final BigDecimal maxX;
     final BigDecimal maxY;
-    final BigDecimal cellSize;
+    final BigDecimal cellSizeX;
+    final BigDecimal cellSizeY;
+    final BigDecimal cellSizeInMeters;
 
-    GridParameters(BigDecimal minX, BigDecimal minY, BigDecimal maxX,
-                   BigDecimal maxY, BigDecimal cellSize) {
+    GridParameters(BigDecimal minX, BigDecimal minY, BigDecimal maxX, BigDecimal maxY,
+                   BigDecimal cellSizeX, BigDecimal cellSizeY, BigDecimal cellSizeInMeters) {
       this.minX = minX;
       this.minY = minY;
       this.maxX = maxX;
       this.maxY = maxY;
-      this.cellSize = cellSize;
+      this.cellSizeX = cellSizeX;
+      this.cellSizeY = cellSizeY;
+      this.cellSizeInMeters = cellSizeInMeters;
     }
   }
 
