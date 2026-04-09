@@ -7,7 +7,6 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
-
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.ExtentsUtil;

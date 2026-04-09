@@ -248,7 +248,7 @@ public class RunCommand implements Callable<Integer> {
 
     // Parse output steps early for fail-fast validation
     final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
-    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    final EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();

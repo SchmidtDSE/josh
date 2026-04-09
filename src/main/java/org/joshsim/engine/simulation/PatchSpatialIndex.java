@@ -155,13 +155,13 @@ class PatchSpatialIndex {
       return null;
     }
 
-    boolean hasXSpacing = secondMinX != null && secondMinX.compareTo(foundMinX) > 0;
-    boolean hasYSpacing = secondMinY != null && secondMinY.compareTo(foundMinY) > 0;
+    boolean hasHorizSpacing = secondMinX != null && secondMinX.compareTo(foundMinX) > 0;
+    boolean hasVertSpacing = secondMinY != null && secondMinY.compareTo(foundMinY) > 0;
 
     BigDecimal coordCellSize;
-    if (hasXSpacing) {
+    if (hasHorizSpacing) {
       coordCellSize = secondMinX.subtract(foundMinX);
-    } else if (hasYSpacing) {
+    } else if (hasVertSpacing) {
       coordCellSize = secondMinY.subtract(foundMinY);
     } else {
       coordCellSize = metersCellSize;
