@@ -516,7 +516,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine executeSpatialQuery(ValueResolver resolver) {
-    EngineValue distance = convert(pop(), METER_UNITS);
+    EngineValue rawDistance = pop();
+    if (rawDistance.getUnits().equals(Units.EMPTY)) {
+      throw new IllegalArgumentException(
+          "Spatial query 'within' requires a distance with explicit units (e.g., '60 m'), "
+          + "but got unitless value: " + rawDistance.getAsString()
+      );
+    }
+    EngineValue distance = convert(rawDistance, METER_UNITS);
 
     Entity executingEntity = currentValueResolver.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
