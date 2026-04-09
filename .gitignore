@@ -70,3 +70,6 @@ run_profiler_small.sh
 
 # Jotr test files
 jotr
+
+# Joshpy bottles (compressed archives and extracted debug sessions)
+joshpy-bottles/

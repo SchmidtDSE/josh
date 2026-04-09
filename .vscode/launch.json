@@ -104,6 +104,13 @@
         "-Xmx2g"
       ],
       "envFile": "${workspaceFolder}/.devcontainer/.env"
+    },
+    {
+      "type": "java",
+      "name": "Attach to Bottle",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005
     }
   ],
   "inputs": [
