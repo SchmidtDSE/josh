@@ -32,8 +32,7 @@ class PatchSpatialIndex {
   private final BigDecimal minY;
   private final BigDecimal maxX;
   private final BigDecimal maxY;
-  private final BigDecimal cellSizeX;
-  private final BigDecimal cellSizeY;
+  private final BigDecimal cellSize;
   private final BigDecimal cellSizeInMeters;
   private final int gridWidth;
   private final int gridHeight;
@@ -55,8 +54,7 @@ class PatchSpatialIndex {
       this.minY = BigDecimal.ZERO;
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
-      this.cellSizeX = BigDecimal.ONE;
-      this.cellSizeY = BigDecimal.ONE;
+      this.cellSize = BigDecimal.ONE;
       this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
       this.gridWidth = 0;
       this.gridHeight = 0;
@@ -71,8 +69,7 @@ class PatchSpatialIndex {
       this.minY = BigDecimal.ZERO;
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
-      this.cellSizeX = BigDecimal.ONE;
-      this.cellSizeY = BigDecimal.ONE;
+      this.cellSize = BigDecimal.ONE;
       this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
       this.gridWidth = 0;
       this.gridHeight = 0;
@@ -83,8 +80,7 @@ class PatchSpatialIndex {
     this.minY = params.minY;
     this.maxX = params.maxX;
     this.maxY = params.maxY;
-    this.cellSizeX = params.cellSizeX;
-    this.cellSizeY = params.cellSizeY;
+    this.cellSize = params.cellSize;
     this.cellSizeInMeters = params.cellSizeInMeters;
 
     GridDimensions dims = calculateGridDimensions(params);
@@ -100,11 +96,10 @@ class PatchSpatialIndex {
   }
 
   /**
-   * Analyzes patches to determine grid parameters including per-axis spacing.
+   * Analyzes patches to determine grid parameters.
    *
-   * <p>Infers separate X and Y coordinate spacings from the smallest gap between
-   * distinct center coordinates in each axis. This handles Earth-space grids where
-   * longitude and latitude spacings differ by 1/cos(latitude).</p>
+   * <p>Infers coordinate spacing from the smallest gap between distinct center
+   * coordinates in either axis.</p>
    *
    * @param patches the patches to analyze
    * @param cellSizeMeters original cell size in meters, or null to extract from patch geometry
@@ -163,25 +158,17 @@ class PatchSpatialIndex {
     boolean hasXSpacing = secondMinX != null && secondMinX.compareTo(foundMinX) > 0;
     boolean hasYSpacing = secondMinY != null && secondMinY.compareTo(foundMinY) > 0;
 
-    BigDecimal coordCellSizeX;
-    BigDecimal coordCellSizeY;
-
-    if (hasXSpacing && hasYSpacing) {
-      coordCellSizeX = secondMinX.subtract(foundMinX);
-      coordCellSizeY = secondMinY.subtract(foundMinY);
-    } else if (hasXSpacing) {
-      coordCellSizeX = secondMinX.subtract(foundMinX);
-      coordCellSizeY = coordCellSizeX;
+    BigDecimal coordCellSize;
+    if (hasXSpacing) {
+      coordCellSize = secondMinX.subtract(foundMinX);
     } else if (hasYSpacing) {
-      coordCellSizeY = secondMinY.subtract(foundMinY);
-      coordCellSizeX = coordCellSizeY;
+      coordCellSize = secondMinY.subtract(foundMinY);
     } else {
-      coordCellSizeX = metersCellSize;
-      coordCellSizeY = metersCellSize;
+      coordCellSize = metersCellSize;
     }
 
     return new GridParameters(foundMinX, foundMinY, foundMaxX, foundMaxY,
-        coordCellSizeX, coordCellSizeY, metersCellSize);
+        coordCellSize, metersCellSize);
   }
 
   /**
@@ -189,10 +176,10 @@ class PatchSpatialIndex {
    */
   private GridDimensions calculateGridDimensions(GridParameters params) {
     BigDecimal widthInCells = params.maxX.subtract(params.minX)
-        .divide(params.cellSizeX, java.math.RoundingMode.HALF_UP)
+        .divide(params.cellSize, java.math.RoundingMode.HALF_UP)
         .add(BigDecimal.ONE);
     BigDecimal heightInCells = params.maxY.subtract(params.minY)
-        .divide(params.cellSizeY, java.math.RoundingMode.HALF_UP)
+        .divide(params.cellSize, java.math.RoundingMode.HALF_UP)
         .add(BigDecimal.ONE);
 
     return new GridDimensions(widthInCells.intValue(), heightInCells.intValue());
@@ -227,7 +214,7 @@ class PatchSpatialIndex {
    */
   private int worldToGridX(BigDecimal worldX) {
     return worldX.subtract(minX)
-        .divide(cellSizeX, java.math.RoundingMode.HALF_UP)
+        .divide(cellSize, java.math.RoundingMode.HALF_UP)
         .intValue();
   }
 
@@ -236,7 +223,7 @@ class PatchSpatialIndex {
    */
   private int worldToGridY(BigDecimal worldY) {
     return worldY.subtract(minY)
-        .divide(cellSizeY, java.math.RoundingMode.HALF_UP)
+        .divide(cellSize, java.math.RoundingMode.HALF_UP)
         .intValue();
   }
 
@@ -395,18 +382,16 @@ class PatchSpatialIndex {
     final BigDecimal minY;
     final BigDecimal maxX;
     final BigDecimal maxY;
-    final BigDecimal cellSizeX;
-    final BigDecimal cellSizeY;
+    final BigDecimal cellSize;
     final BigDecimal cellSizeInMeters;
 
     GridParameters(BigDecimal minX, BigDecimal minY, BigDecimal maxX, BigDecimal maxY,
-                   BigDecimal cellSizeX, BigDecimal cellSizeY, BigDecimal cellSizeInMeters) {
+                   BigDecimal cellSize, BigDecimal cellSizeInMeters) {
       this.minX = minX;
       this.minY = minY;
       this.maxX = maxX;
       this.maxY = maxY;
-      this.cellSizeX = cellSizeX;
-      this.cellSizeY = cellSizeY;
+      this.cellSize = cellSize;
       this.cellSizeInMeters = cellSizeInMeters;
     }
   }
