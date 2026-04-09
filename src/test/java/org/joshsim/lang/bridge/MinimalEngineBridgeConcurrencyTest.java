@@ -21,7 +21,7 @@ import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,11 +41,11 @@ class MinimalEngineBridgeConcurrencyTest {
   @Mock(lenient = true) private Converter mockConverter;
   @Mock(lenient = true) private EntityPrototypeStore mockPrototypeStore;
 
-  private EngineValueFactory engineValueFactory;
+  private ValueSupportFactory engineValueFactory;
 
   @BeforeEach
   void setUp() {
-    engineValueFactory = new EngineValueFactory();
+    engineValueFactory = new ValueSupportFactory();
   }
 
   @Test

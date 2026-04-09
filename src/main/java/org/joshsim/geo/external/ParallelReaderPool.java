@@ -2,7 +2,7 @@ package org.joshsim.geo.external;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 /**
  * Manages a pool of thread-local ExternalDataReader instances for parallel processing.
@@ -26,7 +26,7 @@ class ParallelReaderPool implements AutoCloseable {
    * @param crsCode CRS code (may be null)
    */
   ParallelReaderPool(
-      EngineValueFactory valueFactory,
+      ValueSupportFactory valueFactory,
       String dataFilePath,
       String dimensionX,
       String dimensionY,

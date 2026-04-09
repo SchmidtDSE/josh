@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
@@ -22,7 +22,7 @@ import org.joshsim.precompute.JshdUtil;
  */
 public class JshdExternalDataReader implements ExternalDataReader {
   private DoublePrecomputedGrid grid;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private String sourcePath;
 
   // Dimension names - JSHD files use grid coordinates
@@ -38,7 +38,7 @@ public class JshdExternalDataReader implements ExternalDataReader {
    *
    * @param valueFactory Factory for creating EngineValue objects
    */
-  public JshdExternalDataReader(EngineValueFactory valueFactory) {
+  public JshdExternalDataReader(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 

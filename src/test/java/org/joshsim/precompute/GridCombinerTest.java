@@ -13,14 +13,14 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class GridCombinerTest {
   private EngineGeometryFactory geometryFactory;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private GridCombiner gridCombiner;
   private final Units testUnits = Units.of("meters");
 
@@ -30,7 +30,7 @@ class GridCombinerTest {
   @BeforeEach
   void setUp() {
     geometryFactory = new GridGeometryFactory();
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     gridCombiner = new GridCombiner(valueFactory, geometryFactory);
 
     // Create extents for left grid (0,0 to 2,2)
@@ -51,7 +51,7 @@ class GridCombinerTest {
 
     // Create left grid and populate with values 1-4
     leftGrid = new DoublePrecomputedGridBuilder()
-        .setEngineValueFactory(valueFactory)
+        .setValueSupportFactory(valueFactory)
         .setExtents(leftExtents)
         .setTimestepRange(0, 2)
         .setUnits(testUnits)
@@ -59,7 +59,7 @@ class GridCombinerTest {
 
     // Create right grid and populate with values 5-8
     rightGrid = new DoublePrecomputedGridBuilder()
-        .setEngineValueFactory(valueFactory)
+        .setValueSupportFactory(valueFactory)
         .setExtents(rightExtents)
         .setTimestepRange(1, 3)
         .setUnits(testUnits)
@@ -123,7 +123,7 @@ class GridCombinerTest {
         .build();
 
     DoublePrecomputedGrid differentUnitsGrid = new DoublePrecomputedGridBuilder()
-        .setEngineValueFactory(valueFactory)
+        .setValueSupportFactory(valueFactory)
         .setExtents(rightExtents)
         .setTimestepRange(1, 3)
         .setUnits(Units.of("feet"))

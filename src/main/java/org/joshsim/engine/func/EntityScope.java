@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.func;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ public class EntityScope implements Scope {
 
   private final Entity value;
   private final Set<String> expectedAttrs;
+  private Optional<HashMap<String, Integer>> indexCacheMaybe;
 
   /**
    * Create a scope decorator around this entity.
@@ -29,6 +31,7 @@ public class EntityScope implements Scope {
   public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = value.getAttributeNames();
+    this.indexCacheMaybe = Optional.empty();
   }
 
   @Override
@@ -99,6 +102,46 @@ public class EntityScope implements Scope {
    */
   public Optional<EngineValue> getOptional(int index) {
     return value.getAttributeValue(index);
+  }
+
+  /**
+   * Attempt to retrieve a value using a cached integer index for fast array access.
+   *
+   * <p>Caches the resolved attribute index by name so repeated lookups for the same attribute
+   * avoid redundant map traversals. Returns {@code Optional.empty()} when the entity has no
+   * index map, when {@code name} is not present in the index, or when the stored value is
+   * uninitialized (signalling the caller to fall through to the slow path).</p>
+   *
+   * @param name the attribute name to look up.
+   * @return Optional containing the resolved value, or empty to signal fall-through to slow path.
+   */
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    Map<String, Integer> indexMap = value.getAttributeNameToIndex();
+
+    if (indexMap == null || indexMap.isEmpty()) {
+      return Optional.empty();
+    }
+
+    if (indexCacheMaybe.isEmpty()) {
+      indexCacheMaybe = Optional.of(new HashMap<>());
+    }
+
+    HashMap<String, Integer> indexCache = indexCacheMaybe.get();
+
+    Integer cachedIndex = indexCache.get(name);
+
+    if (cachedIndex != null) {
+      return getOptional(cachedIndex);
+    }
+
+    Integer index = indexMap.get(name);
+    if (index == null) {
+      return Optional.empty();
+    }
+
+    indexCache.put(name, index);
+    return getOptional(index);
   }
 
 }

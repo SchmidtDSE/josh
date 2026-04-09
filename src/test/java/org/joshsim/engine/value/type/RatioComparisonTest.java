@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,11 +27,11 @@ import org.junit.jupiter.api.Test;
 class RatioComparisonTest {
 
   private EngineValueCaster caster;
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
 
   @BeforeEach
   void setUp() {
-    factory = new EngineValueFactory();
+    factory = new ValueSupportFactory();
     caster = new EngineValueWideningCaster(factory);
   }
 

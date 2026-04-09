@@ -7,19 +7,19 @@
 package org.joshsim.geo.external.readers;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 
 /**
  * Factory for creating GeotiffExternalDataReader instances.
  */
 public class GeotiffExternalDataReaderFactory {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Creates a new factory with the specified engine value factory.
    */
-  public GeotiffExternalDataReaderFactory(EngineValueFactory valueFactory) {
+  public GeotiffExternalDataReaderFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 
@@ -54,7 +54,7 @@ public class GeotiffExternalDataReaderFactory {
   /**
    * Gets the value factory used by this reader factory.
    */
-  public EngineValueFactory getValueFactory() {
+  public ValueSupportFactory getValueFactory() {
     return valueFactory;
   }
 }

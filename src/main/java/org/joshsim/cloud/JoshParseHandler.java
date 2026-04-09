@@ -22,7 +22,7 @@ import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -150,7 +150,7 @@ public class JoshParseHandler implements HttpHandler {
 
     if (!result.hasErrors()) {
       JoshProgram facade = JoshSimFacadeUtil.interpret(
-          new EngineValueFactory(),
+          new ValueSupportFactory(),
           geometryFactory,
           result,
           inputOutputLayer
@@ -167,13 +167,13 @@ public class JoshParseHandler implements HttpHandler {
         try {
           MutableEntity simEntityRaw = facade.getSimulations().getProtoype(simName).build();
           MutableEntity simEntity = new ShadowingEntity(
-              new EngineValueFactory(),
+              new ValueSupportFactory(),
               simEntityRaw,
               simEntityRaw
           );
           GridInfoExtractor extractor = new GridInfoExtractor(
               simEntity,
-              new EngineValueFactory()
+              new ValueSupportFactory()
           );
 
           EngineValue size = extractor.getSize();

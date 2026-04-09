@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -26,7 +26,7 @@ public class SyntheticScope implements Scope {
   public static final Set<String> SYNTHETIC_ATTRS = Set.of("current", "prior", "here", "meta");
 
   private final ShadowingEntity inner;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Create a scope decorator around this entity.
@@ -39,12 +39,12 @@ public class SyntheticScope implements Scope {
   }
 
   /**
-   * Create a scope decorator around this entity with a specified EngineValueFactory.
+   * Create a scope decorator around this entity with a specified ValueSupportFactory.
    *
    * @param inner ShadowingEntity to use for the root.
-   * @param valueFactory EngineValueFactory to generate EngineValue instances.
+   * @param valueFactory ValueSupportFactory to generate EngineValue instances.
    */
-  public SyntheticScope(ShadowingEntity inner, EngineValueFactory valueFactory) {
+  public SyntheticScope(ShadowingEntity inner, ValueSupportFactory valueFactory) {
     this.inner = inner;
     this.valueFactory = valueFactory;
   }
@@ -76,6 +76,11 @@ public class SyntheticScope implements Scope {
     Set<String> newSet = new HashSet<>(SYNTHETIC_ATTRS);
     newSet.addAll(inner.getAttributeNames());
     return newSet;
+  }
+
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
   }
 
   private Optional<EngineValue> getSynthetic(String name) {

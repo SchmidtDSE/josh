@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.precompute.DoublePrecomputedGrid;
 import org.joshsim.precompute.JshdUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +33,7 @@ public class InspectJshdCommandTest {
   private ByteArrayOutputStream errContent;
   private PrintStream originalOut;
   private PrintStream originalErr;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private Path testJshdFile;
 
   @TempDir
@@ -52,7 +52,7 @@ public class InspectJshdCommandTest {
     System.setOut(new PrintStream(outContent));
     System.setErr(new PrintStream(errContent));
 
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     testJshdFile = createTestJshdFile();
   }
 

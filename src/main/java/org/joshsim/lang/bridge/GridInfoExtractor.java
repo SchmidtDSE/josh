@@ -10,7 +10,7 @@ package org.joshsim.lang.bridge;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -29,7 +29,7 @@ public class GridInfoExtractor {
   private final Optional<EngineValue> sizeMaybe;
   private final Optional<EngineValue> stepsLowMaybe;
   private final Optional<EngineValue> stepsHighMaybe;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Creates a new GridInfoExtractor by extracting grid information from a simulation.
@@ -37,7 +37,7 @@ public class GridInfoExtractor {
    * @param simulation The mutable entity containing simulation configuration
    * @param valueFactory Factory for creating engine values
    */
-  public GridInfoExtractor(MutableEntity simulation, EngineValueFactory valueFactory) {
+  public GridInfoExtractor(MutableEntity simulation, ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
 
     simulation.startSubstep("constant");

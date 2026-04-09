@@ -10,7 +10,7 @@ package org.joshsim.precompute;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -21,14 +21,14 @@ import org.joshsim.engine.value.engine.EngineValueFactory;
  */
 public class BinaryGridSerializationStrategy implements GridSerializationStrategy {
 
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
 
   /**
    * Construct a serialization strategy using the given engine factory.
    *
    * @param engineValueFactory the factory used to create values during the deserialization process
    */
-  public BinaryGridSerializationStrategy(EngineValueFactory engineValueFactory) {
+  public BinaryGridSerializationStrategy(ValueSupportFactory engineValueFactory) {
     this.engineValueFactory = engineValueFactory;
   }
 

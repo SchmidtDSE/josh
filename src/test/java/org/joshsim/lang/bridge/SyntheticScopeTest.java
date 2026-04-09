@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.simulation.Simulation;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ public class SyntheticScopeTest {
   @Mock(lenient = true) private Simulation mockMeta;
   @Mock(lenient = true) private ShadowingEntity mockPrior;
   @Mock(lenient = true) private EngineValue mockValue;
-  @Mock(lenient = true) private EngineValueFactory mockValueFactory;
+  @Mock(lenient = true) private ValueSupportFactory mockValueFactory;
 
   private SyntheticScope scope;
 
@@ -54,7 +54,7 @@ public class SyntheticScopeTest {
    */
   @BeforeEach
   void setUp() {
-    when(mockInner.getValueFactory()).thenReturn(new EngineValueFactory());
+    when(mockInner.getValueFactory()).thenReturn(new ValueSupportFactory());
     when(mockInner.getAttributeNames()).thenReturn(Set.of("testAttr"));
     when(mockInner.hasAttribute("testAttr")).thenReturn(true);
     when(mockInner.getAttributeValue("testAttr")).thenReturn(Optional.of(mockValue));
@@ -113,5 +113,11 @@ public class SyntheticScopeTest {
     assertTrue(StreamSupport.stream(attributes.spliterator(), false)
         .collect(Collectors.toSet())
         .containsAll(Arrays.asList("current", "prior", "here", "meta", "testAttr")));
+  }
+
+  @Test
+  void testTryIndexedGetAlwaysEmpty() {
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+    assertTrue(result.isEmpty());
   }
 }

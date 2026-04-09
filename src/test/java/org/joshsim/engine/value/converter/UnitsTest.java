@@ -425,6 +425,32 @@ class UnitsTest {
   }
 
   @Test
+  void testMillisecondsConstantIsCached() {
+    Units fromOf = Units.of("milliseconds");
+    assertTrue(
+        fromOf == Units.MILLISECONDS,
+        "Units.of(\"milliseconds\") should return Units.MILLISECONDS"
+    );
+  }
+
+  @Test
+  void testMillisecondsCacheReturnsIdenticalInstance() {
+    Units units1 = Units.of("milliseconds");
+    Units units2 = Units.of("milliseconds");
+    assertTrue(units1 == units2, "Cache should return same instance for milliseconds");
+  }
+
+  @Test
+  void testMillisecondsCompoundUnitsCached() {
+    Units compound1 = Units.of("milliseconds * milliseconds");
+    Units compound2 = Units.of("milliseconds * milliseconds");
+    assertTrue(
+        compound1 == compound2,
+        "Cache should return same instance for compound milliseconds units"
+    );
+  }
+
+  @Test
   void testEmptyMapsReturnEmptyConstant() {
     // Test that empty maps return cached empty unit
     Units empty = Units.of(new TreeMap<>(), new TreeMap<>());

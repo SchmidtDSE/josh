@@ -28,6 +28,8 @@ public class ConverterBuilder {
     addConversion(new NoopConversion(Units.of("count"), Units.of("counts")));
     addConversion(new NoopConversion(Units.of("m"), Units.of("meter")));
     addConversion(new NoopConversion(Units.of("meter"), Units.of("meters")));
+    addConversion(new NoopConversion(Units.of("ms"), Units.of("millisecond")));
+    addConversion(new NoopConversion(Units.of("millisecond"), Units.of("milliseconds")));
   }
 
   /**

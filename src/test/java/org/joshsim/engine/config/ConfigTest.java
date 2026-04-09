@@ -8,19 +8,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ConfigTest {
 
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
   private Config config;
 
   @BeforeEach
   void setUp() {
-    factory = new EngineValueFactory(true);
+    factory = new ValueSupportFactory(true);
     Map<String, EngineValue> values = new HashMap<>();
     values.put("testVar1", factory.parseNumber("5", Units.METERS));
     values.put("testVar2", factory.parseNumber("10", Units.of("m")));

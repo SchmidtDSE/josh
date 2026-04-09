@@ -3,7 +3,7 @@ package org.joshsim.engine.geometry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Test;
 class ExtentsUtilTest {
 
   private PatchBuilderExtentsBuilder builder;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   @BeforeEach
   void setUp() {
     builder = new PatchBuilderExtentsBuilder();
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
   }
 
   @Test

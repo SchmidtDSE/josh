@@ -9,7 +9,7 @@ package org.joshsim.lang.interpret.visitor;
 import java.math.BigDecimal;
 import org.joshsim.engine.config.ConfigBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshConfigBaseVisitor;
 import org.joshsim.lang.antlr.JoshConfigParser;
@@ -26,14 +26,14 @@ import org.joshsim.lang.interpret.fragment.jshc.JshcValueFragment;
  */
 public class JoshConfigParserVisitor extends JoshConfigBaseVisitor<JshcFragment> {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Creates a new visitor with the specified value factory.
    *
    * @param valueFactory The factory to use for creating EngineValues
    */
-  public JoshConfigParserVisitor(EngineValueFactory valueFactory) {
+  public JoshConfigParserVisitor(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 

@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -26,7 +26,7 @@ public class StreamToPrecomputedGridUtil {
    * @param units The units that returned EngineValues should be created with.
    * @return The precomputed grid created from the streams.
    */
-  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
+  public static DataGridLayer streamToGrid(ValueSupportFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units) {
     return streamToGrid(engineValueFactory, streamGetter, extents, minTimestep, maxTimestep,
@@ -45,7 +45,7 @@ public class StreamToPrecomputedGridUtil {
    * @param defaultValue Optional default value to fill grid spaces before copying data.
    * @return The precomputed grid created from the streams.
    */
-  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
+  public static DataGridLayer streamToGrid(ValueSupportFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units, Optional<Double> defaultValue) {
 

@@ -6,7 +6,7 @@
 
 package org.joshsim.lang.interpret.mapping;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -18,7 +18,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * smooth transitions with gradual changes near the boundaries.</p>
  */
 public class SigmoidMapStrategy implements MapStrategy {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final MapBounds domain;
   private final MapBounds range;
   private final boolean increasing;
@@ -39,7 +39,7 @@ public class SigmoidMapStrategy implements MapStrategy {
    * @param increasing If true, values increase as input increases (standard S-curve).
    *     If false, values decrease as input increases (inverted S-curve).
    */
-  public SigmoidMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range,
+  public SigmoidMapStrategy(ValueSupportFactory valueFactory, MapBounds domain, MapBounds range,
       boolean increasing) {
     this.valueFactory = valueFactory;
     this.domain = domain;

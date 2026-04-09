@@ -28,7 +28,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridPatchBuilder;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ public class ExternalGeoMapperTest {
   private static final String VAR_NAME = "Precipitation_(total)";
 
   private String riversideFilePath;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private ExternalGeoMapper mapper;
   private PatchSet patchSet;
   private List<String> variableNames;
@@ -59,7 +59,7 @@ public class ExternalGeoMapperTest {
   @BeforeEach
   public void setUp() throws IOException {
     // Set up the value factory
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Get resource path
     URL resourceUrl = getClass().getClassLoader().getResource(RIVERSIDE_RESOURCE_PATH);
@@ -69,7 +69,7 @@ public class ExternalGeoMapperTest {
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
     // Create mapper with real components
-    mapper = new ExternalGeoMapperBuilder(new EngineValueFactory())
+    mapper = new ExternalGeoMapperBuilder(new ValueSupportFactory())
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)
