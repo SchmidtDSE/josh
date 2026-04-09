@@ -265,7 +265,6 @@ class RunCommandReplicatesTest {
    */
   private void setupBasicFields(RunCommand command, Path joshFile) throws Exception {
     setFieldValue(command, "file", joshFile.toFile());
-    setFieldValue(command, "crs", "");
     setFieldValue(command, "dataFiles", new String[0]);
     setFieldValue(command, "replicates", 1);
   }

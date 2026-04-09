@@ -3,8 +3,8 @@
  * Command line interface handler for running Josh simulations.
  *
  * <p>This class implements the 'run' command which executes a specified simulation from a Josh
- * script file. It supports both grid-based and earth-based coordinate reference systems, and can
- * process patches either serially or in parallel.</p>
+ * script file. It processes patches either serially or in parallel using grid-based coordinate
+ * space.</p>
  *
  * @license BSD-3-Clause
  */
@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -33,7 +32,6 @@ import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
@@ -58,8 +56,6 @@ import org.joshsim.util.ProgressUpdate;
 import org.joshsim.util.SharedRandom;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.FactoryException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -100,10 +96,6 @@ public class RunCommand implements Callable<Integer> {
 
   @Parameters(index = "1", description = "Simulation to run")
   private String simulation;
-
-  @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
-  private String crs;
-
 
   @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
   private int replicates = 1;
@@ -256,18 +248,7 @@ public class RunCommand implements Callable<Integer> {
 
     // Parse output steps early for fail-fast validation
     final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
-    EngineGeometryFactory geometryFactory;
-    if (crs.isEmpty()) {
-      geometryFactory = new GridGeometryFactory();
-    } else {
-      CoordinateReferenceSystem crsRealized;
-      try {
-        crsRealized = CRS.forCode(crs);
-      } catch (FactoryException e) {
-        throw new RuntimeException(e);
-      }
-      geometryFactory = new EarthGeometryFactory(crsRealized);
-    }
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
