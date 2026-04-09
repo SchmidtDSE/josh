@@ -69,7 +69,7 @@ public class GridCrsManager {
     PatchBuilderExtents extents = definition.getExtents();
     double topLeftX = extents.getTopLeftX().doubleValue(); // longitude in degrees
     double topLeftY = extents.getTopLeftY().doubleValue(); // latitude in degrees
-    double cellSize = getCellSize(); // in meters
+    double cellSize = getCellSize();
 
     if (baseCrs instanceof GeographicCRS) {
       // For geographic CRS, we need to:
@@ -175,6 +175,6 @@ public class GridCrsManager {
    * @return The cell size in CRS units
    */
   public double getCellSize() {
-    return getDefinition().getCellSize().doubleValue();
+    return getDefinition().getOriginalCellSizeMeters().doubleValue();
   }
 }

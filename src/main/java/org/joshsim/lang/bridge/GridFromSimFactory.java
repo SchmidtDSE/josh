@@ -98,14 +98,11 @@ public class GridFromSimFactory {
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
 
-    String sizeValueUnits = "m";
-
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
         inputCrs,
         inputCrs,
         extents,
         sizeValuePrimitive,
-        sizeValueUnits,
         originalCellSizeMeters
     );
 

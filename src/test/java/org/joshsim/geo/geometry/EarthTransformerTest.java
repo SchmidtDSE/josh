@@ -83,8 +83,7 @@ public class EarthTransformerTest {
         "TestGrid",
         INPUT_CRS_CODE,
         extents,
-        CELL_SIZE,
-        "m"  // Cell size unit
+        CELL_SIZE
     );
 
     // Create target CRS
@@ -333,8 +332,7 @@ public class EarthTransformerTest {
           "DifferentTestGrid",
           INPUT_CRS_CODE,
           differentExtents,
-          CELL_SIZE,
-          "m"
+          CELL_SIZE
       );
 
       // Get a GridCrsManager with different definition
@@ -417,8 +415,7 @@ public class EarthTransformerTest {
             "UtmTestGrid",
             "EPSG:32611", // UTM 11N
             utmExtents,
-            CELL_SIZE,
-            "m"  // Cell size unit
+            CELL_SIZE
         );
       } catch (FactoryException e) {
         fail("Failed to create CRS: " + e.getMessage());

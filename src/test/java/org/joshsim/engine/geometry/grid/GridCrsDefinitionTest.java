@@ -20,7 +20,6 @@ class GridCrsDefinitionTest {
   private String baseCrsCode;
   private PatchBuilderExtents extents;
   private BigDecimal cellSize;
-  private String cellSizeUnits;
 
   @BeforeEach
   void setUp() {
@@ -32,9 +31,8 @@ class GridCrsDefinitionTest {
         new BigDecimal("-115.0"), // bottomRightX (east longitude)
         new BigDecimal("34.0"));  // bottomRightY (south latitude)
     cellSize = new BigDecimal("30");
-    cellSizeUnits = "m";
 
-    definition = new GridCrsDefinition(name, baseCrsCode, extents, cellSize, cellSizeUnits);
+    definition = new GridCrsDefinition(name, baseCrsCode, extents, cellSize);
   }
 
   @Test
@@ -49,53 +47,37 @@ class GridCrsDefinitionTest {
   @Test
   void constructorNullNameThrowsException() {
     assertThrows(NullPointerException.class, () ->
-        new GridCrsDefinition(null, baseCrsCode, extents, cellSize, cellSizeUnits));
+        new GridCrsDefinition(null, baseCrsCode, extents, cellSize));
   }
 
   @Test
   void constructorNullBaseCrsCodeThrowsException() {
     assertThrows(NullPointerException.class, () ->
-        new GridCrsDefinition(name, null, extents, cellSize, cellSizeUnits));
+        new GridCrsDefinition(name, null, extents, cellSize));
   }
 
   @Test
   void constructorNullExtentsThrowsException() {
     assertThrows(NullPointerException.class, () ->
-        new GridCrsDefinition(name, baseCrsCode, null, cellSize, cellSizeUnits));
+        new GridCrsDefinition(name, baseCrsCode, null, cellSize));
   }
 
   @Test
   void constructorNullCellSizeThrowsException() {
     assertThrows(NullPointerException.class, () ->
-        new GridCrsDefinition(name, baseCrsCode, extents, null, cellSizeUnits));
-  }
-
-  @Test
-  void constructorNullCellSizeUnitsThrowsException() {
-    assertThrows(NullPointerException.class, () ->
-        new GridCrsDefinition(name, baseCrsCode, extents, cellSize, null));
+        new GridCrsDefinition(name, baseCrsCode, extents, null));
   }
 
   @Test
   void constructorZeroCellSizeThrowsException() {
     assertThrows(IllegalArgumentException.class, () ->
-        new GridCrsDefinition(name, baseCrsCode, extents, BigDecimal.ZERO, cellSizeUnits));
+        new GridCrsDefinition(name, baseCrsCode, extents, BigDecimal.ZERO));
   }
 
   @Test
   void constructorNegativeCellSizeThrowsException() {
     assertThrows(IllegalArgumentException.class, () ->
-        new GridCrsDefinition(name, baseCrsCode, extents, new BigDecimal("-1"), cellSizeUnits));
-  }
-
-  @Test
-  void getCellSizeUnitAlwaysReturnMeters() {
-    assertEquals("m", definition.getCellSizeUnit());
-
-    // Create with different units, still returns meters
-    GridCrsDefinition definition2 = new GridCrsDefinition(
-        name, baseCrsCode, extents, cellSize, "degrees");
-    assertEquals("m", definition2.getCellSizeUnit());
+        new GridCrsDefinition(name, baseCrsCode, extents, new BigDecimal("-1")));
   }
 
   @Test
@@ -104,7 +86,7 @@ class GridCrsDefinitionTest {
 
     // Try with a different CRS code
     GridCrsDefinition definition2 = new GridCrsDefinition(
-        name, "EPSG:32611", extents, cellSize, cellSizeUnits);
+        name, "EPSG:32611", extents, cellSize);
     assertEquals("EPSG:32611", definition2.getBaseCrsCode());
   }
 
@@ -193,11 +175,11 @@ class GridCrsDefinitionTest {
   @Test
   void toStringFormatIsCorrect() {
     String expected = String.format(
-        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), cellSize=%s %s]",
+        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), indexCellSize=%s, cellSizeMeters=%s]",
         name,
         extents.getTopLeftX(), extents.getTopLeftY(),
         extents.getBottomRightX(), extents.getBottomRightY(),
-        cellSize, cellSizeUnits);
+        cellSize, cellSize);
 
     assertEquals(expected, definition.toString());
   }

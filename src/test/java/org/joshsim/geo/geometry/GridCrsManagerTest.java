@@ -45,8 +45,7 @@ public class GridCrsManagerTest {
         "TestGrid",
         "EPSG:4326",
         extents,
-        new BigDecimal("30"),
-        "m");
+        new BigDecimal("30"));
 
     gridCrsManager = new GridCrsManager(definition);
   }
@@ -108,8 +107,7 @@ public class GridCrsManagerTest {
         "InvalidCrsTest",
         "INVALID:99999", // Invalid CRS code
         extents,
-        new BigDecimal("30"),
-        "m");
+        new BigDecimal("30"));
 
     // Should throw FactoryException because the CRS code is invalid
     assertThrows(FactoryException.class, () -> new GridCrsManager(invalidDefinition));

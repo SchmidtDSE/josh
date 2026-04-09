@@ -33,12 +33,15 @@ public class PatchSet {
   }
 
   /**
-   * Returns the width of a cell in the grid.
+   * Returns the cell width in index/coordinate space.
    *
-   * @return Width of a cell in the grid in meters.
+   * <p>After count-conversion this returns 1 (count units), not meters.
+   * For the physical cell size in meters, use {@link #getOriginalCellSizeMeters()}.</p>
+   *
+   * @return Cell width in index/coordinate space.
    */
   public BigDecimal getSpacing() {
-    return gridCrsDefinition.getCellSize();
+    return gridCrsDefinition.getIndexCellSize();
   }
 
   /**
