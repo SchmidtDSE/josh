@@ -17,8 +17,9 @@ public class GridCrsDefinition {
   private final String name;
   private final String baseCrsCode;
   private final PatchBuilderExtents extents;
-  private final BigDecimal cellSize;  // Always in meters
+  private final BigDecimal cellSize;  // Always in meters (but 1 after count-conversion)
   private final String cellSizeUnits;      // For documentation only
+  private final BigDecimal originalCellSizeMeters;  // Pre-conversion meter value (survives count-conversion)
 
   /**
    * Creates a grid CRS definition with specified parameters.
@@ -26,7 +27,7 @@ public class GridCrsDefinition {
    * @param name The name of the grid system
    * @param baseCrsCode The EPSG code or identifier for base CRS
    * @param extents The grid extents in base CRS coordinates
-   * @param cellSize Size of each cell in meters
+   * @param cellSize Size of each cell in index-space units (1 after count-conversion)
    * @param cellSizeUnits Units of the base CRS (e.g., "degrees", "m")
    */
   public GridCrsDefinition(
@@ -35,12 +36,34 @@ public class GridCrsDefinition {
       PatchBuilderExtents extents,
       BigDecimal cellSize,
       String cellSizeUnits) {
+    this(name, baseCrsCode, extents, cellSize, cellSizeUnits, cellSize);
+  }
+
+  /**
+   * Creates a grid CRS definition with specified parameters and original meter cell size.
+   *
+   * @param name The name of the grid system
+   * @param baseCrsCode The EPSG code or identifier for base CRS
+   * @param extents The grid extents in base CRS coordinates
+   * @param cellSize Size of each cell in index-space units (1 after count-conversion)
+   * @param cellSizeUnits Units of the base CRS (e.g., "degrees", "m")
+   * @param originalCellSizeMeters The original cell size in meters before any count-conversion
+   */
+  public GridCrsDefinition(
+      String name,
+      String baseCrsCode,
+      PatchBuilderExtents extents,
+      BigDecimal cellSize,
+      String cellSizeUnits,
+      BigDecimal originalCellSizeMeters) {
 
     this.name = Objects.requireNonNull(name, "Name cannot be null");
     this.baseCrsCode = Objects.requireNonNull(baseCrsCode, "Base CRS code cannot be null");
     this.extents = Objects.requireNonNull(extents, "Extents cannot be null");
     this.cellSize = Objects.requireNonNull(cellSize, "Cell size cannot be null");
     this.cellSizeUnits = Objects.requireNonNull(cellSizeUnits, "Cell size units cannot be null");
+    this.originalCellSizeMeters = Objects.requireNonNull(
+        originalCellSizeMeters, "Original cell size in meters cannot be null");
 
     if (cellSize.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell size must be positive");
@@ -54,6 +77,19 @@ public class GridCrsDefinition {
 
   public String getCellSizeUnit() {
     return "m"; // Always meters
+  }
+
+  /**
+   * Gets the original cell size in meters before any count-space conversion.
+   *
+   * <p>When no count-conversion occurred, this equals {@link #getCellSize()}.
+   * When degree extents were converted to count coordinates, getCellSize() returns 1
+   * (the index-space width) while this method returns the original meter value (e.g., 30m).</p>
+   *
+   * @return the original cell size in meters
+   */
+  public BigDecimal getOriginalCellSizeMeters() {
+    return originalCellSizeMeters;
   }
 
   public String getName() {

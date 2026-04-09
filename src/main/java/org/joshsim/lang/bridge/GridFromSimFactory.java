@@ -7,6 +7,7 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
+
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.ExtentsUtil;
@@ -91,6 +92,7 @@ public class GridFromSimFactory {
     boolean posSizeMismatch = posDegrees && sizeMeters;
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
     boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    BigDecimal originalCellSizeMeters = sizeValuePrimitive;
     if (requiresCountConversion) {
       extents = ExtentsTransformer.transformToGrid(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
@@ -103,7 +105,8 @@ public class GridFromSimFactory {
         inputCrs,
         extents,
         sizeValuePrimitive,
-        sizeValueUnits
+        sizeValueUnits,
+        originalCellSizeMeters
     );
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(

@@ -42,6 +42,15 @@ public class PatchSet {
   }
 
   /**
+   * Returns the original cell size in meters before any count-space conversion.
+   *
+   * @return Original cell size in meters.
+   */
+  public BigDecimal getOriginalCellSizeMeters() {
+    return gridCrsDefinition.getOriginalCellSizeMeters();
+  }
+
+  /**
    * Returns the grid CRS definition.
    *
    * @return Grid CRS definition.
