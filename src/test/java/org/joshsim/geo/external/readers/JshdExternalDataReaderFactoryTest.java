@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.precompute.DoublePrecomputedGrid;
 import org.joshsim.precompute.JshdUtil;
@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class JshdExternalDataReaderFactoryTest {
 
   private JshdExternalDataReaderFactory factory;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   @TempDir
   Path tempDir;
@@ -39,7 +39,7 @@ public class JshdExternalDataReaderFactoryTest {
    */
   @BeforeEach
   public void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     factory = new JshdExternalDataReaderFactory(valueFactory);
   }
 

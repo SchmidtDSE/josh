@@ -9,6 +9,7 @@ package org.joshsim.engine.func;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -120,6 +121,11 @@ public class LocalScope implements Scope {
     combined.addAll(outerAttributes);
     combined.addAll(innerAttributes);
     return combined;
+  }
+
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
   }
 
 }

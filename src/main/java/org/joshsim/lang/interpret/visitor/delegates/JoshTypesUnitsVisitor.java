@@ -11,7 +11,7 @@ import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.NoopConversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
@@ -34,7 +34,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
   private final EngineValue singleCount;
   private final BridgeGetter bridgeGetter;
 
@@ -169,7 +169,7 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   public JoshFragment visitAttrExpression(JoshLangParser.AttrExpressionContext ctx) {
     EventHandlerAction expressionAction = ctx.getChild(0).accept(parent).getCurrentAction();
     String attrName = ctx.getChild(2).getText();
-    ValueResolver resolver = new ValueResolver(engineValueFactory, attrName);
+    ValueResolver resolver = engineValueFactory.buildValueResolver(attrName);
 
     EventHandlerAction action = (machine) -> {
       expressionAction.apply(machine);
@@ -190,7 +190,7 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the spatial query parsed.
    */
   public JoshFragment visitSpatialQuery(JoshLangParser.SpatialQueryContext ctx) {
-    ValueResolver targetResolver = new ValueResolver(engineValueFactory, ctx.target.getText());
+    ValueResolver targetResolver = engineValueFactory.buildValueResolver(ctx.target.getText());
     EventHandlerAction distanceAction = ctx.distance.accept(parent).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {

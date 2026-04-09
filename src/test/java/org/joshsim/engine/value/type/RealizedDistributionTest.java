@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +36,7 @@ class RealizedDistributionTest {
 
   @BeforeEach
   void setUp() {
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory();
     caster = new EngineValueWideningCaster(valueFactory);
     values = new ArrayList<>();
     nakedValues = new ArrayList<>();

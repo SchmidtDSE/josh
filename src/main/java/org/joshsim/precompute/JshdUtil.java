@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -39,11 +39,11 @@ public class JshdUtil {
    *     PrecomputedGrid.
    * @return A DoublePrecomputedGrid parsed from the given bytes.
    */
-  public static DoublePrecomputedGrid loadFromBytes(EngineValueFactory engineValueFactory,
+  public static DoublePrecomputedGrid loadFromBytes(ValueSupportFactory engineValueFactory,
         byte[] bytes) {
 
     DoublePrecomputedGridBuilder gridBuilder = new DoublePrecomputedGridBuilder();
-    gridBuilder.setEngineValueFactory(engineValueFactory);
+    gridBuilder.setValueSupportFactory(engineValueFactory);
 
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
 

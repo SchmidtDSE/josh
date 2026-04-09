@@ -1,6 +1,6 @@
 package org.joshsim.geo.external;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 /**
  * Factory for creating different interpolation strategies.
@@ -16,14 +16,14 @@ public class GeoInterpolationStrategyFactory {
     WEIGHTED_AVERAGE
   }
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Constructs an InterpolationStrategyFactory with the specified value factory.
    *
    * @param valueFactory Factory for creating EngineValue objects
    */
-  public GeoInterpolationStrategyFactory(EngineValueFactory valueFactory) {
+  public GeoInterpolationStrategyFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 

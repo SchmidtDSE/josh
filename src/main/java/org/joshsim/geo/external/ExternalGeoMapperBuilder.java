@@ -1,7 +1,7 @@
 package org.joshsim.geo.external;
 
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.GeoInterpolationStrategyFactory.InterpolationMethod;
 
 /**
@@ -10,7 +10,7 @@ import org.joshsim.geo.external.GeoInterpolationStrategyFactory.InterpolationMet
  */
 public class ExternalGeoMapperBuilder {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private ExternalCoordinateTransformer coordinateTransformer;
   private GeoInterpolationStrategy interpolationStrategy;
   private String dimensionX;
@@ -24,7 +24,7 @@ public class ExternalGeoMapperBuilder {
    *
    * @param valueFactory Factory for creating EngineValue objects in mappers built by this builder.
    */
-  public ExternalGeoMapperBuilder(EngineValueFactory valueFactory) {
+  public ExternalGeoMapperBuilder(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 
@@ -59,7 +59,7 @@ public class ExternalGeoMapperBuilder {
    * @return This builder instance
    */
   public ExternalGeoMapperBuilder addInterpolationMethod(
-      InterpolationMethod method, EngineValueFactory valueFactory) {
+      InterpolationMethod method, ValueSupportFactory valueFactory) {
     GeoInterpolationStrategyFactory factory = new GeoInterpolationStrategyFactory(valueFactory);
     this.interpolationStrategy = factory.createStrategy(method);
     return this;

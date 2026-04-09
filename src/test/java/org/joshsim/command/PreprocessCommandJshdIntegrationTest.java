@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.JshdExternalDataReader;
@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class PreprocessCommandJshdIntegrationTest {
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   @TempDir
   Path tempDir;
@@ -43,7 +43,7 @@ public class PreprocessCommandJshdIntegrationTest {
    */
   @BeforeEach
   public void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
   }
 
   @Test

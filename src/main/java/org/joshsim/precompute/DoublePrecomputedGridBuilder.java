@@ -8,13 +8,13 @@ package org.joshsim.precompute;
 
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 /**
  * Builder for DoublePrecomputedGrid.
  */
 public class DoublePrecomputedGridBuilder {
-  private EngineValueFactory engineValueFactory;
+  private ValueSupportFactory engineValueFactory;
   private PatchBuilderExtents extents;
   private long minTimestep;
   private long maxTimestep;
@@ -27,7 +27,7 @@ public class DoublePrecomputedGridBuilder {
    * @param factory Factory for creating EngineValue objects
    * @return This builder instance
    */
-  public DoublePrecomputedGridBuilder setEngineValueFactory(EngineValueFactory factory) {
+  public DoublePrecomputedGridBuilder setValueSupportFactory(ValueSupportFactory factory) {
     this.engineValueFactory = factory;
     return this;
   }
@@ -86,7 +86,7 @@ public class DoublePrecomputedGridBuilder {
    */
   public DoublePrecomputedGrid build() {
     if (engineValueFactory == null) {
-      throw new IllegalArgumentException("EngineValueFactory must be set");
+      throw new IllegalArgumentException("ValueSupportFactory must be set");
     }
     if (extents == null) {
       throw new IllegalArgumentException("Extents must be set");

@@ -6,7 +6,7 @@
 
 package org.joshsim.lang.interpret.visitor;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
@@ -51,7 +51,7 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
    * @param valueFactory The factory to use in building engine values within this visitor.
    * @param bridgeGetter The bridge getter to use in accessing a bridge for operations.
    */
-  public JoshParserToMachineVisitor(EngineValueFactory valueFactory, BridgeGetter bridgeGetter) {
+  public JoshParserToMachineVisitor(ValueSupportFactory valueFactory, BridgeGetter bridgeGetter) {
     super();
 
     DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory, bridgeGetter);

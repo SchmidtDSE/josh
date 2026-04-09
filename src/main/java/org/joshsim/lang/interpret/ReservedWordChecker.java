@@ -16,6 +16,7 @@ import java.util.StringTokenizer;
 public class ReservedWordChecker {
 
   private static final Set<String> ERROR_WORDS = Set.of("prior", "current", "here", "meta");
+  private static final Set<String> RESERVED_SUFFIXES = Set.of("evalDuration");
 
   /**
    * Checks a variable declaration to ensure it does not shadow any reserved words.
@@ -29,6 +30,24 @@ public class ReservedWordChecker {
     if (ERROR_WORDS.contains(front)) {
       String message = String.format("Cannot shadow %s.", name);
       throw new IllegalArgumentException(message);
+    }
+    checkReservedSuffixes(name);
+  }
+
+  /**
+   * Checks that no component of a dotted name matches a reserved suffix.
+   *
+   * @param name The dotted attribute name to check (e.g. "tree.evalDuration").
+   * @throws IllegalArgumentException if any token in the path is a reserved suffix.
+   */
+  private static void checkReservedSuffixes(String name) {
+    StringTokenizer tokenizer = new StringTokenizer(name, ".");
+    while (tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken();
+      if (RESERVED_SUFFIXES.contains(token)) {
+        String message = String.format("Cannot use reserved attribute %s.", name);
+        throw new IllegalArgumentException(message);
+      }
     }
   }
 

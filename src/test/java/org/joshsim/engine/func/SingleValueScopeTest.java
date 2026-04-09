@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,5 +57,11 @@ class SingleValueScopeTest {
     Iterable<String> attributes = scope.getAttributes();
     assertTrue(attributes.iterator().hasNext());
     assertEquals("current", attributes.iterator().next());
+  }
+
+  @Test
+  void testTryIndexedGetAlwaysEmpty() {
+    Optional<EngineValue> result = scope.tryIndexedGet("current");
+    assertTrue(result.isEmpty());
   }
 }

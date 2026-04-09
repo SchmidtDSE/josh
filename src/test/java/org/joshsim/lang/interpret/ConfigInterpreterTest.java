@@ -8,18 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.StringJoiner;
 import org.joshsim.engine.config.Config;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ConfigInterpreterTest {
 
   private ConfigInterpreter interpreter;
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
 
   @BeforeEach
   void setUp() {
-    factory = new EngineValueFactory(true);
+    factory = new ValueSupportFactory(true);
     interpreter = new ConfigInterpreter();
   }
 

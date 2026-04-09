@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.PatchSet;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -19,7 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class ExternalGeoMapper {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final ExternalCoordinateTransformer coordinateTransformer;
   private final GeoInterpolationStrategy interpolationStrategy;
   private final String dimensionX;
@@ -41,7 +41,7 @@ public class ExternalGeoMapper {
    * @param crsCode The coordinate reference system code (can be null)
    */
   public ExternalGeoMapper(
-      EngineValueFactory valueFactory,
+      ValueSupportFactory valueFactory,
       ExternalCoordinateTransformer coordinateTransformer,
       GeoInterpolationStrategy interpolationStrategy,
       String dimensionX,
@@ -72,7 +72,7 @@ public class ExternalGeoMapper {
    * @param forcedTimestep If provided, all values read will be assumed to have this timestep
    */
   public ExternalGeoMapper(
-      EngineValueFactory valueFactory,
+      ValueSupportFactory valueFactory,
       ExternalCoordinateTransformer coordinateTransformer,
       GeoInterpolationStrategy interpolationStrategy,
       String dimensionX,

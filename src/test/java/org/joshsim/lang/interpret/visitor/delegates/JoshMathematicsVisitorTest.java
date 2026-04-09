@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import org.antlr.v4.runtime.Token;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.AdditionExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
@@ -36,7 +36,7 @@ class JoshMathematicsVisitorTest {
 
   private DelegateToolbox toolbox;
   private JoshParserToMachineVisitor parent;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JoshMathematicsVisitor visitor;
   private EngineValue trueValue;
 
@@ -44,7 +44,7 @@ class JoshMathematicsVisitorTest {
   void setUp() {
     toolbox = mock(DelegateToolbox.class);
     parent = mock(JoshParserToMachineVisitor.class);
-    valueFactory = mock(EngineValueFactory.class);
+    valueFactory = mock(ValueSupportFactory.class);
     trueValue = mock(EngineValue.class);
 
     when(toolbox.getParent()).thenReturn(parent);

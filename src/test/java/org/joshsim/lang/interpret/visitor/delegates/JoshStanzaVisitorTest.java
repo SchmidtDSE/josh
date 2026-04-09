@@ -14,7 +14,7 @@ import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.ConfigStatementContext;
 import org.joshsim.lang.antlr.JoshLangParser.EntityStanzaContext;
@@ -43,7 +43,7 @@ class JoshStanzaVisitorTest {
     toolbox = mock(DelegateToolbox.class);
     parent = mock(JoshParserToMachineVisitor.class);
 
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory();
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);

@@ -31,12 +31,15 @@ import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.ValueResolverFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
@@ -77,6 +80,20 @@ import picocli.CommandLine.Parameters;
 public class RunCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
+
+  /**
+   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
+   *
+   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
+   * @return A ValueResolverFactory configured for the requested profiling mode.
+   */
+  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
+    if (enableProfiler) {
+      return new TimedRecursiveValueResolverFactory();
+    } else {
+      return new RecursiveValueResolverFactory();
+    }
+  }
 
   @Parameters(index = "0", description = "Path to file to validate")
   private File file;
@@ -166,6 +183,13 @@ public class RunCommand implements Callable<Integer> {
                   + "operations will use this seed to produce deterministic results."
   )
   private Long seed = null;
+
+  @Option(
+      names = "--enable-profiler",
+      description = "Enable evalDuration profiling to capture attribute resolution timing.",
+      defaultValue = "false"
+  )
+  private boolean enableProfiler;
 
   /**
    * Parses custom parameter command-line options.
@@ -332,9 +356,12 @@ public class RunCommand implements Callable<Integer> {
     compatLayer.setExportQueueCapacity(exportQueueSize);
     CompatibilityLayerKeeper.set(compatLayer);
 
-    // Set up EngineValueFactory
+    // Set up ValueSupportFactory
     boolean favorBigDecimal = !useFloat64;
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(
+        favorBigDecimal,
+        buildValueResolverFactory(enableProfiler)
+    );
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();

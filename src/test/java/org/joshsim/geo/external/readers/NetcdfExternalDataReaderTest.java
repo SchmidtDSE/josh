@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.geo.geometry.JtsTransformUtility;
@@ -47,7 +47,7 @@ public class NetcdfExternalDataReaderTest {
 
   private NetcdfExternalDataReader reader;
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   // Tolerance for floating point comparisons to handle IEEE 754 precision artifacts
   // Based on investigation: use 1e-12 relative tolerance like Python tests
@@ -68,7 +68,7 @@ public class NetcdfExternalDataReaderTest {
    */
   @BeforeEach
   public void setUp() throws IOException {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     reader = new NetcdfExternalDataReader(valueFactory);
 
     // Get resource path
@@ -192,7 +192,7 @@ public class NetcdfExternalDataReaderTest {
   @Test
   public void testReadValueAt() throws IOException {
     // Use the real factory, not a spy
-    EngineValueFactory realFactory = new EngineValueFactory();
+    ValueSupportFactory realFactory = new ValueSupportFactory();
     reader = new NetcdfExternalDataReader(realFactory);
 
     openAndSetExplicitDimensions(riversideFilePath);

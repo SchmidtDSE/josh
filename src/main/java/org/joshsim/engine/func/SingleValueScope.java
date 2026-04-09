@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.func;
 
+import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -43,6 +44,11 @@ public class SingleValueScope implements Scope {
   @Override
   public Set<String> getAttributes() {
     return Set.of("current");
+  }
+
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
   }
 
 }

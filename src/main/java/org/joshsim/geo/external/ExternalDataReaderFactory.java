@@ -1,7 +1,7 @@
 package org.joshsim.geo.external;
 
 import java.io.IOException;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.readers.CsvExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.GeotiffExternalDataReaderFactory;
 import org.joshsim.geo.external.readers.JshdExternalDataReaderFactory;
@@ -22,8 +22,8 @@ public class ExternalDataReaderFactory {
    * @throws IOException If no suitable reader is found or there's an error opening the file
    */
   public static ExternalDataReader createReader(
-        EngineValueFactory valueFactory,
-        String filePath
+      ValueSupportFactory valueFactory,
+      String filePath
   ) throws IOException {
 
     if (isNetCdfFile(filePath)) {

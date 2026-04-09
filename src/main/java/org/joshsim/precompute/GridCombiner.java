@@ -15,7 +15,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -27,7 +27,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class GridCombiner {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final EngineGeometryFactory geometryFactory;
 
   /**
@@ -37,7 +37,7 @@ public class GridCombiner {
    * @param geometryFactory The factory to use when building geometries within the new grid or when
    *     supporting its construction.
    */
-  public GridCombiner(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory) {
+  public GridCombiner(ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory) {
     this.valueFactory = valueFactory;
     this.geometryFactory = geometryFactory;
   }
@@ -62,7 +62,7 @@ public class GridCombiner {
     Units units = getUnits(left, right);
 
     DoublePrecomputedGrid combinedGrid = new DoublePrecomputedGridBuilder()
-        .setEngineValueFactory(valueFactory)
+        .setValueSupportFactory(valueFactory)
         .setExtents(combinedExtents)
         .setTimestepRange(minTimestep, maxTimestep)
         .setUnits(units)

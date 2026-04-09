@@ -14,7 +14,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +31,7 @@ class GridFromSimFactoryTest {
   @Mock(lenient = true) private MutableEntity mockSimulation;
   @Mock(lenient = true) private EntityPrototype mockPrototype;
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private GridFromSimFactory factory;
 
   /**
@@ -39,7 +39,7 @@ class GridFromSimFactoryTest {
    */
   @BeforeEach
   void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     factory = new GridFromSimFactory(mockBridge, valueFactory);
     when(mockBridge.getPrototype("Default")).thenReturn(mockPrototype);
   }
@@ -72,7 +72,7 @@ class GridFromSimFactoryTest {
   //   when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(crs));
 
   //   // Mock custom values for grid attributes
-  //   EngineValueFactory defaultFactory = new EngineValueFactory();
+  //   ValueSupportFactory defaultFactory = new ValueSupportFactory();
   //   EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
   //   EngineValue gridStartStr = defaultFactory.build(
   //       "34 degrees latitude, -116 degrees longitude",
@@ -105,7 +105,7 @@ class GridFromSimFactoryTest {
   //   when(mockBridge.getGeometryFactory()).thenReturn(new EarthGeometryFactory(baseCrs));
 
   //   // Mock custom values for grid attributes - using the example from the prompt
-  //   EngineValueFactory defaultFactory = new EngineValueFactory();
+  //   ValueSupportFactory defaultFactory = new ValueSupportFactory();
   //   EngineValue crsStr = defaultFactory.build("EPSG:4326", Units.EMPTY);
   //   EngineValue gridStartStr = defaultFactory.build(
   //       "34 degrees latitude, -116 degrees longitude",

@@ -18,7 +18,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -43,7 +43,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param externalResourceGetter Strategy to get external resources.
    * @param configGetter Strategy to get configuration resources.
    */
-  public QueryCacheEngineBridge(EngineValueFactory valueFactory,
+  public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter) {
@@ -73,7 +73,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param configGetter Strategy to get configuration resources.
    * @param replicate The replicate to use for testing.
    */
-  QueryCacheEngineBridge(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
+  QueryCacheEngineBridge(ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
         MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
         Replicate replicate) {

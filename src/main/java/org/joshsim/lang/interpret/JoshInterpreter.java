@@ -8,7 +8,7 @@ package org.joshsim.lang.interpret;
 
 import java.util.Iterator;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
@@ -30,7 +30,7 @@ public class JoshInterpreter {
    * @param inputOutputLayer Layer to use in interacting with external files.
    * @return Parsed simulations.
    */
-  public JoshProgram interpret(ParseResult parseResult, EngineValueFactory valueFactory,
+  public JoshProgram interpret(ParseResult parseResult, ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");
@@ -67,7 +67,7 @@ public class JoshInterpreter {
    * @return Parsed simulations.
    */
   public JoshProgram interpret(ParseResult parseResult, String simulationName,
-        EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
+        ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
         InputOutputLayer inputOutputLayer) {
     if (parseResult.hasErrors()) {
       throw new RuntimeException("Cannot interpret program with parse errors.");

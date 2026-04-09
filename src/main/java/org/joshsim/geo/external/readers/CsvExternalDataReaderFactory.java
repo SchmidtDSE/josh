@@ -6,7 +6,7 @@
 
 package org.joshsim.geo.external.readers;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 
 
@@ -18,15 +18,15 @@ import org.joshsim.geo.external.ExternalDataReader;
  * files.</p>
  */
 public class CsvExternalDataReaderFactory {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Constructs a new CsvExternalDataReaderFactory instance.
    *
-   * @param valueFactory the EngineValueFactory used to create EngineValue instances
+   * @param valueFactory the ValueSupportFactory used to create EngineValue instances
    *     for data manipulation within the CsvExternalDataReader.
    */
-  public CsvExternalDataReaderFactory(EngineValueFactory valueFactory) {
+  public CsvExternalDataReaderFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 
@@ -67,12 +67,12 @@ public class CsvExternalDataReaderFactory {
   }
 
   /**
-   * Retrieves the current instance of the EngineValueFactory used by this factory.
+   * Retrieves the current instance of the ValueSupportFactory used by this factory.
    *
-   * @return the EngineValueFactory instance used for creating EngineValue objects for data
+   * @return the ValueSupportFactory instance used for creating EngineValue objects for data
    *     manipulation.
    */
-  public EngineValueFactory getValueFactory() {
+  public ValueSupportFactory getValueFactory() {
     return valueFactory;
   }
 }

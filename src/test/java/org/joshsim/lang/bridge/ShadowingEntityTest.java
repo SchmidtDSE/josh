@@ -26,7 +26,7 @@ import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.simulation.Simulation;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ public class ShadowingEntityTest {
 
   private ShadowingEntity patchEntity;
   private ShadowingEntity spatialEntity;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   @BeforeEach
   void setUp() {
@@ -63,7 +63,7 @@ public class ShadowingEntityTest {
     );
     when(mockEngineValue.getLanguageType()).thenAnswer(x -> new LanguageType("test", false));
 
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     patchEntity = new ShadowingEntity(valueFactory, mockPatch, mockSimulation);
     spatialEntity = new ShadowingEntity(
         valueFactory,

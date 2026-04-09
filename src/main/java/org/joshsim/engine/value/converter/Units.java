@@ -29,6 +29,7 @@ public class Units {
   public static final Units COUNT;
   public static final Units METERS;
   public static final Units DEGREES;
+  public static final Units MILLISECONDS;
 
   // Static initializer to pre-populate cache with commonly used constants.
   // This ensures zero-allocation lookups for the most frequent cases.
@@ -40,6 +41,7 @@ public class Units {
     UNITS_CACHE.put("count", EMPTY);
     METERS = createAndCacheConstant("meters");
     DEGREES = createAndCacheConstant("degrees");
+    MILLISECONDS = createAndCacheConstant("milliseconds");
   }
 
   private static Units createAndCacheConstant(String description) {

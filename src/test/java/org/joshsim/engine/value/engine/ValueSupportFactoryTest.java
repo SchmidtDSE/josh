@@ -1,6 +1,7 @@
 package org.joshsim.engine.value.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,15 +10,20 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.DecimalScalar;
 import org.joshsim.engine.value.type.DoubleScalar;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.interpret.RecursiveValueResolver;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedValueResolver;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.Test;
 
 
-class EngineValueFactoryTest {
+class ValueSupportFactoryTest {
 
   @Test
   void testParseNumberWithBigDecimal() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(true);
+    ValueSupportFactory factory = new ValueSupportFactory(true);
     String input = "123.456";
 
     // Act
@@ -32,7 +38,7 @@ class EngineValueFactoryTest {
   @Test
   void testParseNumberWithDouble() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(false);
+    ValueSupportFactory factory = new ValueSupportFactory(false);
     String input = "123.456";
 
     // Act
@@ -47,7 +53,7 @@ class EngineValueFactoryTest {
   @Test
   void testParseNumberWithInvalidInput() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(true);
+    ValueSupportFactory factory = new ValueSupportFactory(true);
     String input = "invalid";
 
     // Act & Assert
@@ -57,7 +63,7 @@ class EngineValueFactoryTest {
   @Test
   void testParseNumberWithBigDecimalEdgeCase() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(true);
+    ValueSupportFactory factory = new ValueSupportFactory(true);
     String input = "0";
 
     // Act
@@ -72,7 +78,7 @@ class EngineValueFactoryTest {
   @Test
   void testParseNumberWithDoubleEdgeCase() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(false);
+    ValueSupportFactory factory = new ValueSupportFactory(false);
     String input = "0";
 
     // Act
@@ -87,7 +93,7 @@ class EngineValueFactoryTest {
   @Test
   void testBuildForNumberWithBigDecimal() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(true);
+    ValueSupportFactory factory = new ValueSupportFactory(true);
     double input = 123.456;
 
     // Act
@@ -107,7 +113,7 @@ class EngineValueFactoryTest {
   @Test
   void testBuildForNumberWithDouble() {
     // Arrange
-    EngineValueFactory factory = new EngineValueFactory(false);
+    ValueSupportFactory factory = new ValueSupportFactory(false);
     double input = 123.456;
 
     // Act
@@ -117,6 +123,84 @@ class EngineValueFactoryTest {
     assertTrue(result instanceof DoubleScalar);
     assertEquals(123.456, result.getAsDouble(), 0.000001);
     assertEquals(Units.COUNT, result.getUnits());
+  }
+
+  @Test
+  void testBuildValueResolverReturnsNonNull() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory();
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("some.path");
+
+    // Assert
+    assertNotNull(resolver);
+  }
+
+  @Test
+  void testBuildValueResolverReturnsValueResolverInterface() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory();
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("some.path");
+
+    // Assert
+    assertTrue(resolver instanceof ValueResolver);
+  }
+
+  @Test
+  void testBuildValueResolverHasCorrectPath() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory();
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("some.path");
+
+    // Assert
+    assertEquals("some.path", resolver.getPath());
+  }
+
+  @Test
+  void testTwoArgConstructorWithTimedFactoryProducesTimedValueResolver() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory(
+        true,
+        new TimedRecursiveValueResolverFactory()
+    );
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof TimedValueResolver);
+  }
+
+  @Test
+  void testTwoArgConstructorWithRecursiveFactoryProducesRecursiveValueResolver() {
+    // Arrange
+    ValueSupportFactory factory = new ValueSupportFactory(
+        true,
+        new RecursiveValueResolverFactory()
+    );
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof RecursiveValueResolver);
+  }
+
+  @Test
+  void testOneBoolArgConstructorStillProducesRecursiveValueResolver() {
+    // Arrange - regression guard: existing single-arg constructor must remain unchanged
+    ValueSupportFactory factory = new ValueSupportFactory(true);
+
+    // Act
+    ValueResolver resolver = factory.buildValueResolver("entity.attribute");
+
+    // Assert
+    assertTrue(resolver instanceof RecursiveValueResolver);
   }
 
 }

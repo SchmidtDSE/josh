@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.type.Agent;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,14 +30,14 @@ public class DirectLockMutableEntityIntegerAccessTest {
   private EngineValue mockValue1;
   private EngineValue mockValue2;
   private EngineValue mockValue3;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   /**
    * Setup common test objects before each test.
    */
   @BeforeEach
   public void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     builder = new EntityBuilder(valueFactory);
     mockParent = mock(Entity.class);
     mockValue1 = mock(EngineValue.class);
