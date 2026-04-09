@@ -29,6 +29,7 @@ class TestMetadata {
   final String priority;
   final String issue;
   final String description;
+  final String crs;
 
   /**
    * Constructs a TestMetadata instance with the specified fields.
@@ -38,14 +39,16 @@ class TestMetadata {
    * @param priority The test priority (e.g., "critical", "high", "medium", "low")
    * @param issue The related issue number (e.g., "#123")
    * @param description The human-readable test description
+   * @param crs The coordinate reference system (e.g., "EPSG:4326"), or null
    */
   TestMetadata(String category, String subcategory, String priority, String issue,
-      String description) {
+      String description, String crs) {
     this.category = category;
     this.subcategory = subcategory;
     this.priority = priority;
     this.issue = issue;
     this.description = description;
+    this.crs = crs;
   }
 
   /**
@@ -66,6 +69,7 @@ class TestMetadata {
     String priority = null;
     String issue = null;
     String description = null;
+    String crs = null;
 
     for (String line : Files.readAllLines(file)) {
       Matcher matcher = pattern.matcher(line);
@@ -89,6 +93,9 @@ class TestMetadata {
           case "description":
             description = value;
             break;
+          case "crs":
+            crs = value;
+            break;
           default:
             // Ignore unknown metadata keys
             break;
@@ -100,6 +107,6 @@ class TestMetadata {
       }
     }
 
-    return new TestMetadata(category, subcategory, priority, issue, description);
+    return new TestMetadata(category, subcategory, priority, issue, description, crs);
   }
 }

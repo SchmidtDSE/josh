@@ -256,7 +256,8 @@ class TestMetadataTest {
         "events",
         "critical",
         "#456",
-        "Test description"
+        "Test description",
+        null
     );
 
     assertEquals("lifecycle", metadata.category);
@@ -264,16 +265,18 @@ class TestMetadataTest {
     assertEquals("critical", metadata.priority);
     assertEquals("#456", metadata.issue);
     assertEquals("Test description", metadata.description);
+    assertNull(metadata.crs);
   }
 
   @Test
   void testConstructorWithNulls() {
-    TestMetadata metadata = new TestMetadata(null, null, null, null, null);
+    TestMetadata metadata = new TestMetadata(null, null, null, null, null, null);
 
     assertNull(metadata.category);
     assertNull(metadata.subcategory);
     assertNull(metadata.priority);
     assertNull(metadata.issue);
     assertNull(metadata.description);
+    assertNull(metadata.crs);
   }
 }

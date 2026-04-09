@@ -13,6 +13,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,11 +95,16 @@ class JoshConformanceTest {
    * @throws Exception if test execution fails
    */
   private void runJoshTest(TestInfo test) throws Exception {
-    ProcessBuilder pb = new ProcessBuilder(
+    List<String> args = new ArrayList<>(List.of(
         "java", "-jar", JOSH_JAR,
         "run", test.path.toString(), test.simulationName,
         "--seed", "42"
-    );
+    ));
+    if (test.metadata.crs != null) {
+      args.add("--crs");
+      args.add(test.metadata.crs);
+    }
+    ProcessBuilder pb = new ProcessBuilder(args);
 
     pb.redirectErrorStream(true);
     Process process = pb.start();
