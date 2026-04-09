@@ -1,0 +1,72 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: critical
+# @description: Same physical radius at different grid resolutions yields correct neighbor counts
+
+# Two scenarios that produce the same radius-in-cells (2.5):
+#   - grid.size = 10m, within 25m -> 25/10 = 2.5 cells -> 29 patches (interior)
+#   - grid.size = 20m, within 50m -> 50/20 = 2.5 cells -> 29 patches (interior)
+#
+# This test uses grid.size = 10m and within 25m to verify 29 neighbors
+# for interior patches. A companion test (or the bottle debug) can verify
+# the 20m case gives the same count.
+#
+# Also tests a second radius: within 50m on 10m grid -> 5.0 cells -> 101 patches.
+# Interior patches need a large grid: 101 patches means offsets up to ~6 cells,
+# so grid must be at least 13x13. We use 15x15 (150m x 150m).
+#
+# If meter cell size were lost, within 25m would compute radius = 25 grid cells
+# and hit the entire grid (~225 patches) instead of 29.
+
+start simulation TestSpatialWithinResolutionIndependent
+
+  grid.size = 10 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 150 m latitude, 150 m longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Probe.init = create 1 count of Probe
+
+  neighbors25m.step = mean(Probe.n25)
+  neighbors50m.step = mean(Probe.n50)
+
+  # Interior patches for 25m radius: centers 25..125 (need 2.5 cells = 25m margin)
+  # 29 patches expected from circle-square intersection at 2.5 cells
+  assert.count25m.step:if(meta.stepCount == 2 count and here.x > 25 m and here.x < 125 m and here.y > 25 m and here.y < 125 m) = current.neighbors25m == 29 count
+
+  # Interior patches for 50m radius: centers 55..95 (need 5+1.5=65m margin from edge)
+  # 101 patches expected from circle-square intersection at 5.0 cells
+  assert.count50m.step:if(meta.stepCount == 2 count and here.x > 65 m and here.x < 85 m and here.y > 65 m and here.y < 85 m) = current.neighbors50m == 101 count
+
+  # Monotonicity: 50m radius should always find >= 25m radius
+  assert.monotonic.step:if(meta.stepCount == 2 count) = current.neighbors50m >= current.neighbors25m
+
+end patch
+
+start organism Probe
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  n25.step = count(Default within 25 m radial at prior)
+  n50.step = count(Default within 50 m radial at prior)
+
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

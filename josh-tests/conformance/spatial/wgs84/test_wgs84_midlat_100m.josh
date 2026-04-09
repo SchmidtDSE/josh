@@ -1,0 +1,53 @@
+# @category: spatial
+# @subcategory: wgs84
+# @priority: critical
+# @description: WGS84 within query at 34°N (Joshua Tree latitude) with 100m cells
+
+# 11x11 grid at 34°N, 116°W. cos(34°) ≈ 0.829.
+# Haversine: 0.009° lat ≈ 1001m, 0.0109° lon at 34°N ≈ 1005m.
+# Longitude span is wider than equator to cover the same physical distance.
+# within 150m = 1.5 cell radii → 13 neighbors for interior patches.
+
+start simulation TestWgs84Midlat100m
+
+  grid.size = 100 m
+  grid.low = 34.0 degrees latitude, -116.0 degrees longitude
+  grid.high = 34.009 degrees latitude, -115.9891 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Probe.init = create 1 count of Probe
+  patchNeighborCount.step = mean(Probe.neighbors)
+
+  assert.interiorCount.step:if(meta.stepCount == 2 count and here.x > 2 m and here.x < 9 m and here.y > 2 m and here.y < 9 m) = current.patchNeighborCount == 13 count
+  assert.noOvercount.step:if(meta.stepCount == 2 count) = current.patchNeighborCount <= 13 count
+  assert.atLeastSelf.step:if(meta.stepCount == 2 count) = current.patchNeighborCount >= 1 count
+
+end patch
+
+start organism Probe
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  neighbors.step = count(Default within 150 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit degree
+  alias degrees
+end unit
+
+start unit count
+end unit

@@ -1,0 +1,53 @@
+# @category: spatial
+# @subcategory: wgs84
+# @priority: critical
+# @description: WGS84 within query at 60°N (high latitude) with 500m cells
+
+# 11x11 grid at 60°N, 10°E. cos(60°) = 0.5.
+# Haversine: 0.045° lat ≈ 5004m, 0.09° lon at 60°N ≈ 5004m.
+# Longitude span is 2x latitude span — extreme cos(latitude) distortion.
+# within 750m = 1.5 cell radii → 13 neighbors for interior patches.
+
+start simulation TestWgs84Highlat500m
+
+  grid.size = 500 m
+  grid.low = 60.0 degrees latitude, 10.0 degrees longitude
+  grid.high = 60.045 degrees latitude, 10.09 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Probe.init = create 1 count of Probe
+  patchNeighborCount.step = mean(Probe.neighbors)
+
+  assert.interiorCount.step:if(meta.stepCount == 2 count and here.x > 2 m and here.x < 9 m and here.y > 2 m and here.y < 9 m) = current.patchNeighborCount == 13 count
+  assert.noOvercount.step:if(meta.stepCount == 2 count) = current.patchNeighborCount <= 13 count
+  assert.atLeastSelf.step:if(meta.stepCount == 2 count) = current.patchNeighborCount >= 1 count
+
+end patch
+
+start organism Probe
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  neighbors.step = count(Default within 750 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit degree
+  alias degrees
+end unit
+
+start unit count
+end unit
