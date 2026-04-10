@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
  * Tests for {@link GridCrsDefinition} class.
  */
 class GridCrsDefinitionTest {
+  private static final String TO_STRING_FORMAT =
+      "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), gridCellSize=%s, cellSizeMeters=%s]";
+
   private GridCrsDefinition definition;
   private String name;
   private String baseCrsCode;
@@ -41,7 +44,7 @@ class GridCrsDefinitionTest {
     assertEquals(name, definition.getName());
     assertEquals(baseCrsCode, definition.getBaseCrsCode());
     assertEquals(extents, definition.getExtents());
-    assertEquals(cellSize, definition.getCellSizeCoords());
+    assertEquals(cellSize, definition.getCellSizeGrid());
   }
 
   @Test
@@ -174,8 +177,7 @@ class GridCrsDefinitionTest {
 
   @Test
   void toStringFormatIsCorrect() {
-    String expected = String.format(
-        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), coordCellSize=%s, cellSizeMeters=%s]",
+    String expected = String.format(TO_STRING_FORMAT,
         name,
         extents.getTopLeftX(), extents.getTopLeftY(),
         extents.getBottomRightX(), extents.getBottomRightY(),

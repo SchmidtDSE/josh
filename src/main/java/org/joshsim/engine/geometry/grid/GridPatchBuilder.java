@@ -80,7 +80,7 @@ public class GridPatchBuilder implements PatchBuilder {
   @Override
   public PatchSet build() {
     PatchBuilderExtents extents = gridCrsDefinition.getExtents();
-    BigDecimal cellWidth = gridCrsDefinition.getCellSizeCoords();
+    BigDecimal cellWidth = gridCrsDefinition.getCellSizeGrid();
 
     BigDecimal minX = extents.getTopLeftX();
     BigDecimal maxX = extents.getBottomRightX();

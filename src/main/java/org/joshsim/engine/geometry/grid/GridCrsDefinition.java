@@ -11,31 +11,38 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
  *
  * <p>This class carries two cell size values to handle the count-conversion path:
  * <ul>
- *   <li>{@link #getCellSizeCoords()} — the cell width in the grid's coordinate space.
- *       After count-conversion (WGS84 degrees → count indices), this is {@code 1}.
+ *   <li>{@link #getCellSizeGrid()} - the cell width in grid space.
+ *       After count-conversion (WGS84 degrees to count indices), this is {@code 1}.
  *       For projected or meter-space grids, this equals {@link #getCellSizeMeters()}.</li>
- *   <li>{@link #getCellSizeMeters()} — the physical cell size in meters, always the
+ *   <li>{@link #getCellSizeMeters()} - the physical cell size in meters, always the
  *       user-specified value regardless of coordinate conversions.</li>
  * </ul>
  * </p>
  */
 public class GridCrsDefinition {
+
+  // 10 decimal places, matching PrecisionUtil.EPSILON (1e-10) precision
+  private static final int CRS_COORDINATE_SCALE = 10;
+
+  private static final String TO_STRING_FORMAT =
+      "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), gridCellSize=%s, cellSizeMeters=%s]";
+
   private final String name;
   private final String baseCrsCode;
   private final PatchBuilderExtents extents;
-  private final BigDecimal coordCellSize;
+  private final BigDecimal gridCellSize;
   private final BigDecimal cellSizeMeters;
 
   /**
    * Creates a grid CRS definition where index cell size equals the meter cell size.
    *
    * <p>Use this constructor when no count-conversion occurs (Earth-space path or
-   * pure meter grids where coordinate space matches physical space).</p>
+   * pure meter grids where grid space matches physical space).</p>
    *
    * @param name The name of the grid system
    * @param baseCrsCode The EPSG code or identifier for base CRS
    * @param extents The grid extents in base CRS coordinates
-   * @param cellSize Cell size in both coordinate space and meters (they are equal)
+   * @param cellSize Cell size in both grid space and meters (they are equal)
    */
   public GridCrsDefinition(
       String name,
@@ -48,32 +55,32 @@ public class GridCrsDefinition {
   /**
    * Creates a grid CRS definition with separate coordinate and meter cell sizes.
    *
-   * <p>Use this constructor when count-conversion has occurred: {@code coordCellSize}
+   * <p>Use this constructor when count-conversion has occurred: {@code gridCellSize}
    * is typically {@code 1} (the width in count-space), while {@code cellSizeMeters}
    * preserves the user-specified meter value (e.g., 30m, 1000m).</p>
    *
    * @param name The name of the grid system
    * @param baseCrsCode The EPSG code or identifier for base CRS
-   * @param extents The grid extents in the (possibly count-converted) coordinate space
-   * @param coordCellSize Cell width in coordinate space (1 after count-conversion)
+   * @param extents The grid extents in the (possibly count-converted) grid space
+   * @param gridCellSize Cell width in grid space (1 after count-conversion)
    * @param cellSizeMeters The physical cell size in meters
    */
   public GridCrsDefinition(
       String name,
       String baseCrsCode,
       PatchBuilderExtents extents,
-      BigDecimal coordCellSize,
+      BigDecimal gridCellSize,
       BigDecimal cellSizeMeters) {
 
     this.name = Objects.requireNonNull(name, "Name cannot be null");
     this.baseCrsCode = Objects.requireNonNull(baseCrsCode, "Base CRS code cannot be null");
     this.extents = Objects.requireNonNull(extents, "Extents cannot be null");
-    this.coordCellSize = Objects.requireNonNull(coordCellSize, "Coord cell size cannot be null");
+    this.gridCellSize = Objects.requireNonNull(gridCellSize, "Grid cell size cannot be null");
     this.cellSizeMeters = Objects.requireNonNull(
         cellSizeMeters, "Cell size in meters cannot be null");
 
-    if (coordCellSize.compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Coord cell size must be positive");
+    if (gridCellSize.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException("Grid cell size must be positive");
     }
     if (cellSizeMeters.compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell size in meters must be positive");
@@ -81,16 +88,16 @@ public class GridCrsDefinition {
   }
 
   /**
-   * Gets the cell width in the grid's coordinate space.
+   * Gets the cell width in grid space.
    *
-   * <p>After count-conversion (WGS84 degrees → count indices), this returns {@code 1}.
+   * <p>After count-conversion (WGS84 degrees to count indices), this returns {@code 1}.
    * For projected or meter-space grids, this equals {@link #getCellSizeMeters()}.
    * Use this for grid layout, coordinate transforms, and patch construction.</p>
    *
-   * @return cell width in coordinate space
+   * @return cell width in grid space
    */
-  public BigDecimal getCellSizeCoords() {
-    return coordCellSize;
+  public BigDecimal getCellSizeGrid() {
+    return gridCellSize;
   }
 
   /**
@@ -127,8 +134,8 @@ public class GridCrsDefinition {
    */
   public BigDecimal[] gridToCrsCoordinates(BigDecimal gridX, BigDecimal gridY) {
     // Origin is at top-left corner
-    BigDecimal crsX = extents.getTopLeftX().add(gridX.multiply(coordCellSize));
-    BigDecimal crsY = extents.getTopLeftY().add(gridY.multiply(coordCellSize));
+    BigDecimal crsX = extents.getTopLeftX().add(gridX.multiply(gridCellSize));
+    BigDecimal crsY = extents.getTopLeftY().add(gridY.multiply(gridCellSize));
     return new BigDecimal[] {crsX, crsY};
   }
 
@@ -141,23 +148,25 @@ public class GridCrsDefinition {
    * @return Grid position [x,y]
    */
   public BigDecimal[] crsToGridCoordinates(BigDecimal crsX, BigDecimal crsY) {
-    BigDecimal gridX =
-        crsX.subtract(extents.getTopLeftX()).divide(coordCellSize, 10, RoundingMode.HALF_UP);
-    BigDecimal gridY =
-        crsY.subtract(extents.getTopLeftY()).divide(coordCellSize, 10, RoundingMode.HALF_UP);
+    BigDecimal gridX = crsToGridAxis(crsX, extents.getTopLeftX());
+    BigDecimal gridY = crsToGridAxis(crsY, extents.getTopLeftY());
     return new BigDecimal[] {gridX, gridY};
+  }
+
+  private BigDecimal crsToGridAxis(BigDecimal crsCoord, BigDecimal origin) {
+    return crsCoord.subtract(origin).divide(gridCellSize, CRS_COORDINATE_SCALE,
+        RoundingMode.HALF_UP);
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), coordCellSize=%s, cellSizeMeters=%s]",
+    return String.format(TO_STRING_FORMAT,
         name,
         extents.getTopLeftX(),
         extents.getTopLeftY(),
         extents.getBottomRightX(),
         extents.getBottomRightY(),
-        coordCellSize,
+        gridCellSize,
         cellSizeMeters);
   }
 }

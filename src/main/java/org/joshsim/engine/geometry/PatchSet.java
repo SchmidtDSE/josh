@@ -41,7 +41,7 @@ public class PatchSet {
    * @return Cell width in coordinate space.
    */
   public BigDecimal getSpacing() {
-    return gridCrsDefinition.getCellSizeCoords();
+    return gridCrsDefinition.getCellSizeGrid();
   }
 
   /**
