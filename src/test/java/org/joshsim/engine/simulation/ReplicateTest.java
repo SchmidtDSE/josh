@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Optional;
@@ -16,6 +17,8 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +91,11 @@ public class ReplicateTest {
 
   @Test
   void testQuery() {
-    // Setup
+    // Use a replicate with GridCrsDefinition for spatial queries
+    GridCrsDefinition crs = new GridCrsDefinition("test", "NONE",
+        new PatchBuilderExtents(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN, BigDecimal.TEN),
+        BigDecimal.ONE);
+    replicate = new Replicate(meta, patches, crs);
     replicate.saveTimeStep(1);
     when(mockQuery.getStep()).thenReturn(1L);
     when(mockQuery.getGeometry()).thenReturn(Optional.of(mockGeometry));

@@ -21,7 +21,9 @@ import java.util.concurrent.Future;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.grid.GridCircle;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridSquare;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +63,7 @@ class TimeStepTest {
     patches.put(mockKey2, mockPatch2);
 
     // Create TimeStep instance
-    timeStep = new TimeStep(42, mockMeta, patches);
+    timeStep = new TimeStep(42, mockMeta, patches, testCrsDef(BigDecimal.ONE));
   }
 
   @Test
@@ -182,7 +184,8 @@ class TimeStepTest {
     patchesWithNoGeo.put(keyNoGeo, patchNoGeo);
 
     Entity meta = mock(Entity.class);
-    TimeStep timeStepWithNoGeo = new TimeStep(42, meta, patchesWithNoGeo);
+    TimeStep timeStepWithNoGeo = new TimeStep(42, meta, patchesWithNoGeo,
+        testCrsDef(BigDecimal.ONE));
 
     // Should not include patch with no EngineGeometry in results
     EngineGeometry queryGeometry = mock(EngineGeometry.class);
@@ -199,7 +202,7 @@ class TimeStepTest {
   void circleQueryWithCachedOffsetsReturnsConsistentResults() {
     // Create a grid of patches with real GridSquare geometries
     HashMap<GeoKey, Entity> gridPatches = createTestGrid(10, 10, BigDecimal.ONE);
-    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches);
+    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches, testCrsDef(BigDecimal.ONE));
 
     // Create circle query centered at (5, 5) with radius 2
     BigDecimal centerX = new BigDecimal("5");
@@ -225,7 +228,7 @@ class TimeStepTest {
   void circleQueryWithFractionalRadiusWorks() {
     // Create a grid of patches
     HashMap<GeoKey, Entity> gridPatches = createTestGrid(20, 20, BigDecimal.ONE);
-    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches);
+    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches, testCrsDef(BigDecimal.ONE));
 
     // Test multiple fractional radii that should map to same cache entry
     BigDecimal centerX = new BigDecimal("10");
@@ -252,7 +255,7 @@ class TimeStepTest {
   void circleQueryWithVerySmallRadiusWorks() {
     // Create a grid of patches
     HashMap<GeoKey, Entity> gridPatches = createTestGrid(10, 10, BigDecimal.ONE);
-    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches);
+    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches, testCrsDef(BigDecimal.ONE));
 
     // Query with radius < 1 grid cell
     BigDecimal centerX = new BigDecimal("5");
@@ -270,7 +273,7 @@ class TimeStepTest {
   void circleQueryThreadSafety() throws Exception {
     // Create shared grid
     HashMap<GeoKey, Entity> gridPatches = createTestGrid(30, 30, BigDecimal.ONE);
-    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches);
+    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches, testCrsDef(BigDecimal.ONE));
 
     // Launch multiple threads querying with same radius simultaneously
     int numThreads = 10;
@@ -304,7 +307,8 @@ class TimeStepTest {
   void circleQueryReturnsCorrectPatches() {
     // Create a grid of patches with known layout
     HashMap<GeoKey, Entity> gridPatches = createTestGrid(20, 20, new BigDecimal("10"));
-    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches);
+    TimeStep testTimeStep = new TimeStep(1, mockMeta, gridPatches,
+        testCrsDef(new BigDecimal("10")));
 
     // Query circle centered at (100, 100) with diameter 40m (radius = 20m = 2 grid cells)
     BigDecimal centerX = new BigDecimal("100");
@@ -371,5 +375,11 @@ class TimeStepTest {
     }
 
     return grid;
+  }
+
+  private static GridCrsDefinition testCrsDef(BigDecimal cellSize) {
+    return new GridCrsDefinition("test", "NONE",
+        new PatchBuilderExtents(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN, BigDecimal.TEN),
+        cellSize);
   }
 }

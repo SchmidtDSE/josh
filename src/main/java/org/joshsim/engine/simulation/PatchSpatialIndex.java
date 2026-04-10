@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -42,10 +43,12 @@ class PatchSpatialIndex {
    * Builds a spatial index from the given patches.
    *
    * @param patches map of patches to index
-   * @param cellSizeMeters original cell size in meters, or null to extract from patch geometry
+   * @param cellSizeMeters cell size in meters (required, non-null)
    * @throws IllegalStateException if patches don't form a regular grid
+   * @throws NullPointerException if cellSizeMeters is null
    */
   PatchSpatialIndex(Map<GeoKey, Entity> patches, BigDecimal cellSizeMeters) {
+    Objects.requireNonNull(cellSizeMeters, "cellSizeMeters is required for radius conversion");
     this.allPatches = patches;
 
     if (patches.isEmpty()) {
@@ -55,7 +58,7 @@ class PatchSpatialIndex {
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
       this.cellSize = BigDecimal.ONE;
-      this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
+      this.cellSizeInMeters = cellSizeMeters;
       this.gridWidth = 0;
       this.gridHeight = 0;
       return;
@@ -70,7 +73,7 @@ class PatchSpatialIndex {
       this.maxX = BigDecimal.ZERO;
       this.maxY = BigDecimal.ZERO;
       this.cellSize = BigDecimal.ONE;
-      this.cellSizeInMeters = cellSizeMeters != null ? cellSizeMeters : BigDecimal.ONE;
+      this.cellSizeInMeters = cellSizeMeters;
       this.gridWidth = 0;
       this.gridHeight = 0;
       return;
@@ -102,7 +105,7 @@ class PatchSpatialIndex {
    * coordinates in either axis.</p>
    *
    * @param patches the patches to analyze
-   * @param cellSizeMeters original cell size in meters, or null to extract from patch geometry
+   * @param cellSizeMeters cell size in meters (non-null)
    */
   private GridParameters analyzePatches(Map<GeoKey, Entity> patches, BigDecimal cellSizeMeters) {
     BigDecimal foundMinX = null;
@@ -146,12 +149,9 @@ class PatchSpatialIndex {
         foundMaxY = centerY;
       }
 
-      if (metersCellSize == null && geom.getOnGrid() != null) {
-        metersCellSize = geom.getOnGrid().getWidth();
-      }
     }
 
-    if (foundMinX == null || metersCellSize == null) {
+    if (foundMinX == null) {
       return null;
     }
 
