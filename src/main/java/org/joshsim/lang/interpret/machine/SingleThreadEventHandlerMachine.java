@@ -523,6 +523,12 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
           + "but got unitless value: " + rawDistance.getAsString()
       );
     }
+    if (rawDistance.getUnits().equals(COUNT_UNITS)) {
+      throw new IllegalArgumentException(
+          "Spatial query 'within' requires a physical distance unit (e.g., '60 m'), "
+          + "not 'count': " + rawDistance.getAsString()
+      );
+    }
     EngineValue distance = convert(rawDistance, METER_UNITS);
 
     Entity executingEntity = currentValueResolver.get(scope).orElseThrow().getAsEntity();
