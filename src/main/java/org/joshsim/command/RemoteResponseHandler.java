@@ -213,7 +213,12 @@ public class RemoteResponseHandler {
     }
 
     // Persist using Component 2 NamedMap write capability
-    exportFacade.write(namedMap, currentStep.get(), replicateNumber);
+    // Use the step value already present in the DATUM payload (written by MemoryExportFacade on
+    // the worker) rather than currentStep, which is derived from PROGRESS messages and subject to
+    // a race condition when multiple replicates run in parallel.
+    String stepStr = namedMap.getTarget().get("step");
+    long step = (stepStr != null) ? Long.parseLong(stepStr) : currentStep.get();
+    exportFacade.write(namedMap, step, replicateNumber);
   }
 
   /**
