@@ -95,15 +95,11 @@ class JoshConformanceTest {
    * @throws Exception if test execution fails
    */
   private void runJoshTest(TestInfo test) throws Exception {
-    List<String> args = new ArrayList<>(List.of(
+    List<String> args = List.of(
         "java", "-jar", JOSH_JAR,
         "run", test.path.toString(), test.simulationName,
         "--seed", "42"
-    ));
-    if (test.metadata.crs != null) {
-      args.add("--crs");
-      args.add(test.metadata.crs);
-    }
+    );
     ProcessBuilder pb = new ProcessBuilder(args);
 
     pb.redirectErrorStream(true);
