@@ -1,0 +1,70 @@
+# @category: spatial
+# @subcategory: queries
+# @priority: critical
+# @description: Verify within radius uses meters not grid cells for distance conversion
+
+# A 7x7 grid with grid.size = 10m.
+# Patch centers at (5,5), (15,5), (25,5), ... (65,65).
+# An interior patch (e.g., center at (35,35)) queries within 15m.
+# radius_in_cells = 15m / 10m = 1.5 cells.
+# Circle-square intersection at radius 1.5 cells hits exactly 13 patches.
+#
+# If the meter cell size were lost (old bug), cellSize=1 (count) and
+# radius_in_cells = 30 / (2*1) = 15 -> would hit far more than 13.
+# This test catches that regression.
+
+start simulation TestSpatialWithinMeterRadius
+
+  grid.size = 10 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 70 m latitude, 70 m longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Probe.init = create 1 count of Probe
+
+  # Patch-level neighbor count (from the single probe on this patch)
+  patchNeighborCount.step = mean(Probe.neighborsWithin15m)
+
+  # Interior patches (not on edges) should find exactly 13 patches.
+  # Patches at grid edges find fewer because the circle extends beyond the grid.
+  # Patch centers range from 5 to 65. Interior = centers 15..55 (not 5 or 65).
+  # Check: interior patches must find exactly 13.
+  # Interior patches should find exactly 13 patches (radius 1.5 cells).
+  # Center patch at (35,35) confirmed = 13 via debug.
+  # Edge patches find fewer. All patches find >= 1 (self).
+  # Use stepCount == 2 so prior data is fully populated.
+  assert.interiorCount.step:if(meta.stepCount == 2 count and here.x > 15 m and here.x < 55 m and here.y > 15 m and here.y < 55 m) = current.patchNeighborCount == 13 count
+
+  assert.edgeLess.step:if(meta.stepCount == 2 count) = current.patchNeighborCount <= 13 count
+
+  assert.atLeastSelf.step:if(meta.stepCount == 2 count) = current.patchNeighborCount >= 1 count
+
+end patch
+
+start organism Probe
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Count patches within 15m radius
+  neighborsWithin15m.step = count(Default within 15 m radial at prior)
+
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit

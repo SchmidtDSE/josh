@@ -110,7 +110,11 @@ public abstract class EarthShape implements EngineGeometry {
     );
   }
 
-  @Override
+  /**
+   * Get this geometry in Earth space.
+   *
+   * @return This geometry (already in Earth space).
+   */
   public EarthShape getOnEarth() {
     return this;
   }

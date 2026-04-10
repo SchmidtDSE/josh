@@ -91,19 +91,18 @@ public class GridFromSimFactory {
     boolean posSizeMismatch = posDegrees && sizeMeters;
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
     boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    BigDecimal originalCellSizeMeters = sizeValuePrimitive;
     if (requiresCountConversion) {
       extents = ExtentsTransformer.transformToGrid(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
-
-    String sizeValueUnits = "m";
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
         inputCrs,
         inputCrs,
         extents,
         sizeValuePrimitive,
-        sizeValueUnits
+        originalCellSizeMeters
     );
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(

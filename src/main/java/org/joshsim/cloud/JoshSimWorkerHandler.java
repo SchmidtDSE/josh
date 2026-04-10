@@ -16,12 +16,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.SandboxExportCallback;
@@ -61,15 +59,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
     }
 
-    if (crs.isPresent()) {
-      try {
-        geometryFactory = new EarthGeometryFactory(CRS.forCode(crs.get()));
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to parse CRS: " + e);
-      }
-    } else {
-      geometryFactory = new GridGeometryFactory();
-    }
+    geometryFactory = new GridGeometryFactory();
   }
 
   /**

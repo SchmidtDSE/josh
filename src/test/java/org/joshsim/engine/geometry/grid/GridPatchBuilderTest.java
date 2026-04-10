@@ -46,7 +46,7 @@ class GridPatchBuilderTest {
     when(prototype.buildSpatial(any(Entity.class))).thenReturn(mock(MutableEntity.class));
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
     GridPatchBuilder builder = new GridPatchBuilder(gridCrsDefinition, prototype);
 
     // Act
@@ -79,7 +79,7 @@ class GridPatchBuilderTest {
     when(prototype.buildSpatial(any(Entity.class))).thenReturn(mock(MutableEntity.class));
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
     GridPatchBuilder builder = new GridPatchBuilder(gridCrsDefinition, prototype);
 
     // Act
@@ -105,7 +105,7 @@ class GridPatchBuilderTest {
     when(prototype.buildSpatial(any(Entity.class))).thenReturn(mock(MutableEntity.class));
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
     GridPatchBuilder builder = new GridPatchBuilder(gridCrsDefinition, prototype);
 
     // Act
@@ -129,7 +129,7 @@ class GridPatchBuilderTest {
     BigDecimal cellWidth = BigDecimal.ONE;
     EntityPrototype prototype = mock(EntityPrototype.class);
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
@@ -152,7 +152,7 @@ class GridPatchBuilderTest {
     BigDecimal cellWidth = BigDecimal.ONE;
     EntityPrototype prototype = mock(EntityPrototype.class);
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
 
     // Act & Assert
     IllegalArgumentException exception = assertThrows(
@@ -177,7 +177,7 @@ class GridPatchBuilderTest {
     when(prototype.buildSpatial(any(Entity.class))).thenReturn(mock(MutableEntity.class));
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "m");
+        "GRID", "EPSG:4326", extents, cellWidth);
     GridPatchBuilder builder = new GridPatchBuilder(gridCrsDefinition, prototype);
 
     // Act
@@ -203,7 +203,7 @@ class GridPatchBuilderTest {
     when(prototype.buildSpatial(any(Entity.class))).thenReturn(mock(MutableEntity.class));
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
-        "GRID", "EPSG:4326", extents, cellWidth, "degrees");
+        "GRID", "EPSG:4326", extents, cellWidth);
     GridPatchBuilder builder = new GridPatchBuilder(gridCrsDefinition, prototype);
 
     // Act

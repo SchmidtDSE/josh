@@ -45,8 +45,7 @@ public class GridCrsManagerTest {
         "TestGrid",
         "EPSG:4326",
         extents,
-        new BigDecimal("30"),
-        "m");
+        new BigDecimal("30"));
 
     gridCrsManager = new GridCrsManager(definition);
   }
@@ -73,12 +72,12 @@ public class GridCrsManagerTest {
 
     assertEquals(definition.getName(), returnedDefinition.getName());
     assertEquals(definition.getBaseCrsCode(), returnedDefinition.getBaseCrsCode());
-    assertEquals(definition.getCellSize(), returnedDefinition.getCellSize());
+    assertEquals(definition.getCellSizeGrid(), returnedDefinition.getCellSizeGrid());
   }
 
   @Test
   void testGetCellSizeReturnsCellSizeFromDefinition() {
-    double expectedCellSize = definition.getCellSize().doubleValue();
+    double expectedCellSize = definition.getCellSizeGrid().doubleValue();
     double actualCellSize = gridCrsManager.getCellSize();
 
     assertEquals(expectedCellSize, actualCellSize, DELTA);
@@ -108,8 +107,7 @@ public class GridCrsManagerTest {
         "InvalidCrsTest",
         "INVALID:99999", // Invalid CRS code
         extents,
-        new BigDecimal("30"),
-        "m");
+        new BigDecimal("30"));
 
     // Should throw FactoryException because the CRS code is invalid
     assertThrows(FactoryException.class, () -> new GridCrsManager(invalidDefinition));

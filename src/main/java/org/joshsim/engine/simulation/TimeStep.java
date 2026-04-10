@@ -13,6 +13,7 @@ import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.geometry.EngineGeometry;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridShape;
 import org.joshsim.engine.geometry.grid.GridShapeType;
 
@@ -25,15 +26,31 @@ public class TimeStep {
   protected long stepNumber;
   protected Entity meta;
   protected Map<GeoKey, Entity> patches;
+  private final Optional<GridCrsDefinition> gridCrsDefinition;
   private volatile PatchSpatialIndex spatialIndex;
 
   /**
    * Create a new TimeStep, which contains entities that are frozen / immutable.
    */
   public TimeStep(long stepNumber, Entity meta, Map<GeoKey, Entity> patches) {
+    this(stepNumber, meta, patches, null);
+  }
+
+  /**
+   * Create a new TimeStep with grid CRS definition for spatial queries and coordinate
+   * back-projection.
+   *
+   * @param stepNumber the step number
+   * @param meta the frozen simulation metadata entity
+   * @param patches the frozen patches
+   * @param gridCrsDefinition the grid CRS definition, or null if unavailable
+   */
+  public TimeStep(long stepNumber, Entity meta, Map<GeoKey, Entity> patches,
+      GridCrsDefinition gridCrsDefinition) {
     this.stepNumber = stepNumber;
     this.meta = meta;
     this.patches = patches;
+    this.gridCrsDefinition = Optional.ofNullable(gridCrsDefinition);
   }
 
   /**
@@ -48,11 +65,28 @@ public class TimeStep {
     if (spatialIndex == null) {
       synchronized (this) {
         if (spatialIndex == null) {
-          spatialIndex = new PatchSpatialIndex(patches);
+          GridCrsDefinition crs = gridCrsDefinition.orElseThrow(
+              () -> new IllegalStateException(
+                  "gridCrsDefinition is required for spatial queries"));
+          spatialIndex = new PatchSpatialIndex(patches,
+              crs.getCellSizeMeters(),
+              crs.getCellSizeGrid());
         }
       }
     }
     return spatialIndex;
+  }
+
+  /**
+   * Gets the grid CRS definition, if available.
+   *
+   * <p>Available when the replicate was constructed from a PatchSet (the standard path).
+   * Empty when constructed from raw patch maps (test/fallback path).</p>
+   *
+   * @return the grid CRS definition
+   */
+  public Optional<GridCrsDefinition> getGridCrsDefinition() {
+    return gridCrsDefinition;
   }
 
   /**

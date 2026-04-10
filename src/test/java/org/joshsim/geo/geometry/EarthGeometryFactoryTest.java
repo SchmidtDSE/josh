@@ -71,8 +71,7 @@ public class EarthGeometryFactoryTest {
         "TestGrid",
         "EPSG:4326",
         new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
-        cellSize,
-        "m");
+        cellSize);
 
     // Set up the EarthGeometryFactory with grid CRS
     EarthGeometryFactory factory = new EarthGeometryFactory(wgs84);

@@ -102,8 +102,7 @@ public class ExternalGeoMapperIntegrationTest {
         "RiversideGrid",  // name
         "EPSG:4326",      // baseCrsCode (WGS84)
         extents,          // extents
-        cellSize,         // cellSize
-        "degrees"         // cellSizeUnits
+        cellSize          // cellSize
     );
 
     // Create prototype for patches

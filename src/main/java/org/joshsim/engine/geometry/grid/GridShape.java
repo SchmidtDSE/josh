@@ -9,7 +9,6 @@ package org.joshsim.engine.geometry.grid;
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EnginePoint;
-import org.joshsim.geo.geometry.EarthShape;
 
 
 /**
@@ -37,13 +36,6 @@ public abstract class GridShape implements EngineGeometry {
   @Override
   public EnginePoint getCenter() {
     return new GridPoint(centerX, centerY);
-  }
-
-  @Override
-  public EarthShape getOnEarth() {
-    throw new UnsupportedOperationException(
-        "Conversion to Earth from PatchSet space reserved for future use."
-    );
   }
 
   @Override
