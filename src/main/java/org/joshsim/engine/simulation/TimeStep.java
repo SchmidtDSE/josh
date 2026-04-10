@@ -26,14 +26,14 @@ public class TimeStep {
   protected long stepNumber;
   protected Entity meta;
   protected Map<GeoKey, Entity> patches;
-  private final GridCrsDefinition gridCrsDefinition;
+  private final Optional<GridCrsDefinition> gridCrsDefinition;
   private volatile PatchSpatialIndex spatialIndex;
 
   /**
    * Create a new TimeStep, which contains entities that are frozen / immutable.
    */
   public TimeStep(long stepNumber, Entity meta, Map<GeoKey, Entity> patches) {
-    this(stepNumber, meta, patches, (GridCrsDefinition) null);
+    this(stepNumber, meta, patches, null);
   }
 
   /**
@@ -43,15 +43,14 @@ public class TimeStep {
    * @param stepNumber the step number
    * @param meta the frozen simulation metadata entity
    * @param patches the frozen patches
-   * @param gridCrsDefinition the grid CRS definition (null to extract cell size from patch
-   *     geometry)
+   * @param gridCrsDefinition the grid CRS definition, or null if unavailable
    */
   public TimeStep(long stepNumber, Entity meta, Map<GeoKey, Entity> patches,
       GridCrsDefinition gridCrsDefinition) {
     this.stepNumber = stepNumber;
     this.meta = meta;
     this.patches = patches;
-    this.gridCrsDefinition = gridCrsDefinition;
+    this.gridCrsDefinition = Optional.ofNullable(gridCrsDefinition);
   }
 
   /**
@@ -66,12 +65,12 @@ public class TimeStep {
     if (spatialIndex == null) {
       synchronized (this) {
         if (spatialIndex == null) {
-          if (gridCrsDefinition == null) {
-            throw new IllegalStateException(
-                "gridCrsDefinition is required for spatial queries");
-          }
+          GridCrsDefinition crs = gridCrsDefinition.orElseThrow(
+              () -> new IllegalStateException(
+                  "gridCrsDefinition is required for spatial queries"));
           spatialIndex = new PatchSpatialIndex(patches,
-              gridCrsDefinition.getCellSizeMeters());
+              crs.getCellSizeMeters(),
+              crs.getCellSizeGrid());
         }
       }
     }
@@ -82,11 +81,11 @@ public class TimeStep {
    * Gets the grid CRS definition, if available.
    *
    * <p>Available when the replicate was constructed from a PatchSet (the standard path).
-   * Null when constructed from raw patch maps (test/fallback path).</p>
+   * Empty when constructed from raw patch maps (test/fallback path).</p>
    *
-   * @return the grid CRS definition, or null
+   * @return the grid CRS definition
    */
-  public GridCrsDefinition getGridCrsDefinition() {
+  public Optional<GridCrsDefinition> getGridCrsDefinition() {
     return gridCrsDefinition;
   }
 
