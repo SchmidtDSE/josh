@@ -396,7 +396,7 @@ public class EarthGeometryTest {
       assertNotNull(definition, "Grid CRS definition should be created");
       assertEquals("TestGrid", definition.getName(), "Grid name should match");
       assertEquals("EPSG:4326", definition.getBaseCrsCode(), "Base CRS code should match");
-      assertEquals(cellSize, definition.getIndexCellSize(), "Cell size should match");
+      assertEquals(cellSize, definition.getCellSizeCoords(), "Cell size should match");
     }
 
     @Test

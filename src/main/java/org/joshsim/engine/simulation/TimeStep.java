@@ -66,9 +66,12 @@ public class TimeStep {
     if (spatialIndex == null) {
       synchronized (this) {
         if (spatialIndex == null) {
+          if (gridCrsDefinition == null) {
+            throw new IllegalStateException(
+                "gridCrsDefinition is required for spatial queries");
+          }
           spatialIndex = new PatchSpatialIndex(patches,
-              gridCrsDefinition != null
-                  ? gridCrsDefinition.getOriginalCellSizeMeters() : null);
+              gridCrsDefinition.getCellSizeMeters());
         }
       }
     }

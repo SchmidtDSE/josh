@@ -153,7 +153,7 @@ public class EarthPatchBuilder implements PatchBuilder {
    * specified by provided cell size in meters.</p>
    */
   private List<MutableEntity> createPatchGrid() {
-    BigDecimal cellWidthMeters = gridCrsDefinition.getOriginalCellSizeMeters();
+    BigDecimal cellWidthMeters = gridCrsDefinition.getCellSizeMeters();
     BigDecimal topLeftLon = extents.getTopLeftX();
     BigDecimal topLeftLat = extents.getTopLeftY();
     BigDecimal bottomRightLon = extents.getBottomRightX();
@@ -231,7 +231,7 @@ public class EarthPatchBuilder implements PatchBuilder {
       throw new IllegalStateException("Grid CRS not initialized");
     }
 
-    if (gridCrsDefinition.getOriginalCellSizeMeters().compareTo(BigDecimal.ZERO) <= 0) {
+    if (gridCrsDefinition.getCellSizeMeters().compareTo(BigDecimal.ZERO) <= 0) {
       throw new IllegalArgumentException("Cell width must be positive");
     }
   }

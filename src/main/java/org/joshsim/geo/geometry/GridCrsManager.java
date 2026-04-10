@@ -175,6 +175,6 @@ public class GridCrsManager {
    * @return The cell size in CRS units
    */
   public double getCellSize() {
-    return getDefinition().getOriginalCellSizeMeters().doubleValue();
+    return getDefinition().getCellSizeMeters().doubleValue();
   }
 }

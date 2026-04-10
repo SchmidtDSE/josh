@@ -47,15 +47,27 @@ public class Replicate {
   private final GridCrsDefinition gridCrsDefinition;
 
   /**
-   * Construct a replicate with the given patches.
+   * Construct a replicate with the given patches and grid definition.
+   *
+   * @param meta The simulation metadata for which this replicate was created.
+   * @param patches The patches to be included in the replicate.
+   * @param gridCrsDefinition The grid CRS definition for spatial queries, or null.
+   */
+  public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches,
+      GridCrsDefinition gridCrsDefinition) {
+    this.meta = meta;
+    this.presentTimeStep = patches;
+    this.gridCrsDefinition = gridCrsDefinition;
+  }
+
+  /**
+   * Construct a replicate with the given patches (no grid CRS definition).
    *
    * @param meta The simulation metadata for which this replicate was created.
    * @param patches The patches to be included in the replicate.
    */
   public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches) {
-    this.meta = meta;
-    this.presentTimeStep = patches;
-    this.gridCrsDefinition = null;
+    this(meta, patches, null);
   }
 
   /**

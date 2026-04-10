@@ -41,7 +41,7 @@ class GridCrsDefinitionTest {
     assertEquals(name, definition.getName());
     assertEquals(baseCrsCode, definition.getBaseCrsCode());
     assertEquals(extents, definition.getExtents());
-    assertEquals(cellSize, definition.getIndexCellSize());
+    assertEquals(cellSize, definition.getCellSizeCoords());
   }
 
   @Test
@@ -175,7 +175,7 @@ class GridCrsDefinitionTest {
   @Test
   void toStringFormatIsCorrect() {
     String expected = String.format(
-        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), indexCellSize=%s, cellSizeMeters=%s]",
+        "GridCrsDefinition[name=%s, extents=(%s,%s to %s,%s), coordCellSize=%s, cellSizeMeters=%s]",
         name,
         extents.getTopLeftX(), extents.getTopLeftY(),
         extents.getBottomRightX(), extents.getBottomRightY(),
