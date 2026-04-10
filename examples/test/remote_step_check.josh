@@ -1,0 +1,31 @@
+start simulation StepCheck
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 1 count latitude, 1 count longitude
+
+  steps.low = 0 count
+  steps.high = 9 count
+
+  exportFiles.patch = "file:///tmp/remote_step_check.csv"
+
+end simulation
+
+
+start patch Default
+
+  year.init = 0
+  year.step = prior.year + 1
+
+  height.init = 0 count
+  height.step = prior.height + 1 count
+
+  export.year.step = year
+  export.height.step = height
+
+end patch
+
+
+start unit count
+  alias counts
+end unit
