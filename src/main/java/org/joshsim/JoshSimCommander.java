@@ -22,6 +22,7 @@ import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
+import org.joshsim.command.PreprocessFromMinioCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.RunFromMinioCommand;
 import org.joshsim.command.RunRemoteCommand;
@@ -67,7 +68,8 @@ import picocli.CommandLine;
         DiscoverConfigCommand.class,
         InspectJshdCommand.class,
         InspectExportsCommand.class,
-        RunFromMinioCommand.class
+        RunFromMinioCommand.class,
+        PreprocessFromMinioCommand.class
     }
 )
 public class JoshSimCommander {
