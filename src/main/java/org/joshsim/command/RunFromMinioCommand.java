@@ -31,6 +31,8 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.ExportTarget;
+import org.joshsim.lang.io.ExportTargetParser;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
@@ -252,11 +254,12 @@ public class RunFromMinioCommand implements Callable<Integer> {
     for (String key : exportKeys) {
       Optional<EngineValue> export = simEntity.getAttributeValue(key);
       if (export.isPresent()) {
-        String path = export.get().getAsString();
-        if (!path.startsWith("minio://")) {
+        String rawPath = export.get().getAsString();
+        ExportTarget target = ExportTargetParser.parse(rawPath);
+        if (!"minio".equals(target.getProtocol())) {
           output.printError(
               "Export path for " + key + " must use minio:// protocol for MinIO-based execution. "
-              + "Found: " + path + ". "
+              + "Found: " + rawPath + ". "
               + "Update your Josh script to use minio:// URIs, e.g.: "
               + "\"minio://bucket/path/to/output.csv\""
           );
