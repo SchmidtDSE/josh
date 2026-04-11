@@ -27,6 +27,9 @@ import org.joshsim.engine.value.type.EngineValue;
  *       per-entity profiling of dotted attributes without distribution awareness.</li>
  *   <li>For all other paths, delegates to the inner resolver and records the elapsed time.</li>
  * </ul>
+ *
+ * <p>Timing uses {@link System#nanoTime()} for microsecond-level resolution and reports fractional
+ * milliseconds (e.g. 0.042 ms).</p>
  */
 public class TimedValueResolver implements ValueResolver {
 
@@ -38,7 +41,7 @@ public class TimedValueResolver implements ValueResolver {
   private final boolean endsWithEvalDuration;
   private final String evalAttributePrefix;
   private final ValueResolver prefixResolver;
-  private long lastDurationMs;
+  private double lastDurationMs;
 
   /**
    * Creates a new TimedValueResolver decorating the given inner resolver.
@@ -62,7 +65,7 @@ public class TimedValueResolver implements ValueResolver {
     this.valueFactory = valueFactory;
     this.inner = inner;
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(inner.getPath());
-    this.lastDurationMs = 0L;
+    this.lastDurationMs = 0.0;
     String innerPath = inner.getPath();
     this.endsWithEvalDuration = getEndsWithEvalDuration(this.isEvalDuration, innerPath);
     if (this.endsWithEvalDuration) {
@@ -132,21 +135,25 @@ public class TimedValueResolver implements ValueResolver {
     if (isEvalDuration) {
       return Optional.of(valueFactory.build(lastDurationMs, Units.MILLISECONDS));
     }
-    long start = System.currentTimeMillis();
+    long startNanos = System.nanoTime();
     if (endsWithEvalDuration) {
       try {
         prefixResolver.get(target);
       } finally {
-        lastDurationMs = System.currentTimeMillis() - start;
+        lastDurationMs = nanosToFractionalMs(System.nanoTime() - startNanos);
       }
       return Optional.of(valueFactory.build(lastDurationMs, Units.MILLISECONDS));
     } else {
       try {
         return inner.get(target);
       } finally {
-        lastDurationMs = System.currentTimeMillis() - start;
+        lastDurationMs = nanosToFractionalMs(System.nanoTime() - startNanos);
       }
     }
+  }
+
+  private static double nanosToFractionalMs(long nanos) {
+    return nanos / 1_000_000.0;
   }
 
   /**
