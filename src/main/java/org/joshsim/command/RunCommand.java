@@ -292,7 +292,16 @@ public class RunCommand implements Callable<Integer> {
         .withMinioOptions(minioOptions)
         .build();
 
+    // Create ValueSupportFactory before interpretation so that the profiler-enabled
+    // resolver factory is used when building ValueResolver instances at compile time.
+    boolean favorBigDecimal = !useFloat64;
+    ValueSupportFactory valueFactory = new ValueSupportFactory(
+        favorBigDecimal,
+        buildValueResolverFactory(enableProfiler)
+    );
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+        valueFactory,
         geometryFactory,
         file,
         output,
@@ -336,13 +345,6 @@ public class RunCommand implements Callable<Integer> {
     JvmCompatibilityLayer compatLayer = new JvmCompatibilityLayer();
     compatLayer.setExportQueueCapacity(exportQueueSize);
     CompatibilityLayerKeeper.set(compatLayer);
-
-    // Set up ValueSupportFactory
-    boolean favorBigDecimal = !useFloat64;
-    ValueSupportFactory valueFactory = new ValueSupportFactory(
-        favorBigDecimal,
-        buildValueResolverFactory(enableProfiler)
-    );
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();

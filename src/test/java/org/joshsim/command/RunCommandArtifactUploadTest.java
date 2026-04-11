@@ -26,6 +26,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.util.JoshTestFixtures;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
@@ -70,6 +71,9 @@ class RunCommandArtifactUploadTest {
     // Allow getJoshProgram to work normally (pass-through)
     mockJoshSimCommander.when(() -> JoshSimCommander.getJoshProgram(
         any(), any(File.class), any(), any()
+    )).thenCallRealMethod();
+    mockJoshSimCommander.when(() -> JoshSimCommander.getJoshProgram(
+        any(ValueSupportFactory.class), any(), any(File.class), any(), any()
     )).thenCallRealMethod();
   }
 
