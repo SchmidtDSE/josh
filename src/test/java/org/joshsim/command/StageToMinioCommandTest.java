@@ -22,6 +22,17 @@ public class StageToMinioCommandTest {
   }
 
   @Test
+  void command_shouldRequireInputDir() {
+    try {
+      var field = StageToMinioCommand.class.getDeclaredField("inputDir");
+      var option = field.getAnnotation(picocli.CommandLine.Option.class);
+      assertEquals(true, option.required());
+    } catch (NoSuchFieldException e) {
+      throw new AssertionError("Expected --input-dir field", e);
+    }
+  }
+
+  @Test
   void command_shouldBeRegisteredWithCorrectName() {
     var annotation = StageToMinioCommand.class.getAnnotation(picocli.CommandLine.Command.class);
     assertEquals("stageToMinio", annotation.name());

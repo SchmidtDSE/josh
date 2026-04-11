@@ -1,8 +1,8 @@
 /**
  * Command for staging local files to MinIO.
  *
- * <p>Uploads files to a MinIO prefix, preserving directory structure relative to a base
- * directory. Works like rsync from local to MinIO — the prefix is the remote "directory"
+ * <p>Uploads all files in a local directory to a MinIO prefix, preserving directory
+ * structure. Works like rsync from local to MinIO — the prefix is the remote "directory"
  * and the local structure is mirrored under it.</p>
  *
  * @license BSD-3-Clause
@@ -23,26 +23,28 @@ import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 
 /**
- * Uploads local files or directory contents to a MinIO prefix.
+ * Uploads all files in a local directory to a MinIO prefix.
  *
- * <p>If a directory is given, all files within it are uploaded recursively with their
- * relative paths preserved under the prefix. If individual files are given, they are
- * uploaded flat under the prefix.</p>
+ * <p>Each file is uploaded to {@code <bucket>/<prefix>/<relative-path>} where relative-path
+ * preserves the directory structure under the input directory.</p>
  */
 @Command(
     name = "stageToMinio",
-    description = "Upload local files to a MinIO prefix"
+    description = "Upload a local directory to a MinIO prefix"
 )
 public class StageToMinioCommand implements Callable<Integer> {
 
   private static final int MINIO_ERROR_CODE = 100;
 
-  @Parameters(description = "Local files or directory to upload")
-  private List<File> paths;
+  @Option(
+      names = "--input-dir",
+      description = "Local directory to upload",
+      required = true
+  )
+  private File inputDir;
 
   @Option(
       names = "--prefix",
@@ -60,27 +62,19 @@ public class StageToMinioCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     try {
+      if (!inputDir.exists()) {
+        output.printError("Input directory not found: " + inputDir.getPath());
+        return 1;
+      }
+      if (!inputDir.isDirectory()) {
+        output.printError("Not a directory: " + inputDir.getPath());
+        return 1;
+      }
+
       MinioHandler minio = new MinioHandler(minioOptions, output);
       String normalizedPrefix = normalizePrefix(prefix);
 
-      int uploaded = 0;
-      for (File path : paths) {
-        if (!path.exists()) {
-          output.printError("Path not found: " + path.getPath());
-          return 1;
-        }
-
-        if (path.isDirectory()) {
-          uploaded += uploadDirectory(minio, path, normalizedPrefix);
-        } else {
-          String objectPath = normalizedPrefix + path.getName();
-          if (!minio.uploadFile(path, objectPath)) {
-            return MINIO_ERROR_CODE;
-          }
-          uploaded++;
-        }
-      }
-
+      int uploaded = uploadDirectory(minio, inputDir, normalizedPrefix);
       output.printInfo("Staged " + uploaded + " file(s) to " + prefix);
       return 0;
 
