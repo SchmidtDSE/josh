@@ -36,6 +36,6 @@ end organism
 start organism Shrub
 
   cover.init = sample uniform from 0% to 5%
-  cover.step = prior.cover + sample uniform from 0% to 0.5%
+  cover.step = limit prior.cover + sample uniform from 0% to 0.5% to [0%, 100%]
 
 end organism

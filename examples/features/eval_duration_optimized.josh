@@ -17,7 +17,7 @@ start patch Default
   Tree.init = create 200 count of Tree
 
   shrubPctCover.init = sample uniform from 0% to 50%
-  shrubPctCover.step = prior.shrubPctCover + sample uniform from 0% to 2.5%
+  shrubPctCover.step = limit prior.shrubPctCover + sample uniform from 0% to 2.5% to [0%, 100%]
 
   export.avgTreeHeight.step = mean(Tree.height)
   export.shrubPctCover.step = shrubPctCover
