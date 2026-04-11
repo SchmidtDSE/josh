@@ -7,6 +7,7 @@
 package org.joshsim.lang.io;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -30,6 +31,7 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
   private final BigDecimal width;
   private final BigDecimal gridWidthMeters;
   private final BigDecimal gridHeightMeters;
+  private final int maxDecimalPlaces;
 
   /**
    * Create a new decorator.
@@ -42,9 +44,24 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
    */
   public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents, BigDecimal width,
         MapExportSerializeStrategy inner) {
+    this(extents, width, inner, MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES);
+  }
+
+  /**
+   * Create a new decorator with specified decimal precision.
+   *
+   * @param extents The extents of the simulation where these extents are provided in degrees.
+   * @param width The width and height of each patch in grid space provided in meters.
+   * @param inner The inner strategy to decorate.
+   * @param maxDecimalPlaces Maximum decimal places for lat/lng values, or
+   *     {@link MapSerializeStrategy#UNLIMITED_PRECISION} for no rounding.
+   */
+  public MapWithLatLngSerializeStrategy(PatchBuilderExtents extents, BigDecimal width,
+        MapExportSerializeStrategy inner, int maxDecimalPlaces) {
     this.inner = inner;
     this.extents = extents;
     this.width = width;
+    this.maxDecimalPlaces = maxDecimalPlaces;
 
     HaversineUtil.HaversinePoint topLeft = new HaversineUtil.HaversinePoint(
         extents.getTopLeftX(),
@@ -100,11 +117,23 @@ public class MapWithLatLngSerializeStrategy implements MapExportSerializeStrateg
       BigDecimal longitude = finalPoint.getLongitude();
       BigDecimal latitude = finalPoint.getLatitude();
 
-      result.put("position.longitude", longitude.toString());
-      result.put("position.latitude", latitude.toString());
+      result.put("position.longitude", formatDecimal(longitude));
+      result.put("position.latitude", formatDecimal(latitude));
     }
 
     return result;
+  }
+
+  private String formatDecimal(BigDecimal value) {
+    if (maxDecimalPlaces == MapSerializeStrategy.UNLIMITED_PRECISION) {
+      return value.toString();
+    }
+    if (value.scale() <= 0 || value.scale() <= maxDecimalPlaces) {
+      return value.toString();
+    }
+    return value.setScale(maxDecimalPlaces, RoundingMode.HALF_UP)
+        .stripTrailingZeros()
+        .toPlainString();
   }
 
 }

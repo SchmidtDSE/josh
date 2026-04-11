@@ -43,6 +43,7 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -183,6 +184,14 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean enableProfiler;
 
+  @Option(
+      names = "--csv-precision",
+      description = "Maximum decimal places for numeric values in CSV output. "
+                  + "Use -1 for unlimited precision (default: 6).",
+      defaultValue = "6"
+  )
+  private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -290,6 +299,7 @@ public class RunCommand implements Callable<Integer> {
         .withInputStrategy(inputStrategy)
         .withTemplateRenderer(initTemplateRenderer)
         .withMinioOptions(minioOptions)
+        .withMaxDecimalPlaces(csvPrecision)
         .build();
 
     // Create ValueSupportFactory before interpretation so that the profiler-enabled
@@ -398,6 +408,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -406,6 +417,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         }
 

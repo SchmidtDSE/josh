@@ -44,6 +44,7 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   private final MinioOptions minioOptions;
   private final boolean appendMode;
   private final String timestamp;
+  private final int maxDecimalPlaces;
   private TemplateResult lastTemplateResult;
 
   /**
@@ -59,12 +60,32 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
    */
   public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
                                 MinioOptions minioOptions, boolean appendMode) {
+    this(replicate, templateRenderer, minioOptions, appendMode,
+        MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES);
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with only grid-space and specified precision.
+   *
+   * <p>Creates a new export facade factory which does not try to add latitude and longitude to
+   * returned records, disallowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
+   * @param appendMode If true, open consolidated output files in append mode.
+   * @param maxDecimalPlaces Maximum decimal places for numeric CSV values, or -1 for unlimited.
+   */
+  public JvmExportFacadeFactory(int replicate, TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions, boolean appendMode,
+                                int maxDecimalPlaces) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
     this.appendMode = appendMode;
+    this.maxDecimalPlaces = maxDecimalPlaces;
     this.timestamp = TIMESTAMP_FORMAT.format(Instant.now().atZone(ZoneId.systemDefault()));
-    serializeStrategy = new MapSerializeStrategy();
+    serializeStrategy = new MapSerializeStrategy(maxDecimalPlaces);
     extents = Optional.empty();
     width = Optional.empty();
   }
@@ -114,15 +135,38 @@ public class JvmExportFacadeFactory implements ExportFacadeFactory {
   public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
                                 TemplateStringRenderer templateRenderer,
                                 MinioOptions minioOptions, boolean appendMode) {
+    this(replicate, extents, width, templateRenderer, minioOptions, appendMode,
+        MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES);
+  }
+
+  /**
+   * Create a new JvmExportFacadeFactory with access to Earth-space and specified precision.
+   *
+   * <p>Creates a new export facade factory which adds latitude and longitude to returned records,
+   * allowing use of geotiffs and netCDF as export formats.</p>
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space.
+   * @param width The width and height of each patch in meters.
+   * @param templateRenderer The template renderer for processing export path templates (nullable).
+   * @param minioOptions The MinIO configuration options (nullable).
+   * @param appendMode If true, open consolidated output files in append mode.
+   * @param maxDecimalPlaces Maximum decimal places for numeric CSV values, or -1 for unlimited.
+   */
+  public JvmExportFacadeFactory(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                                TemplateStringRenderer templateRenderer,
+                                MinioOptions minioOptions, boolean appendMode,
+                                int maxDecimalPlaces) {
     this.replicate = replicate;
     this.templateRenderer = templateRenderer;
     this.minioOptions = minioOptions;
     this.appendMode = appendMode;
+    this.maxDecimalPlaces = maxDecimalPlaces;
     this.timestamp = TIMESTAMP_FORMAT.format(Instant.now().atZone(ZoneId.systemDefault()));
     this.extents = Optional.of(extents);
     this.width = Optional.of(width);
-    MapSerializeStrategy inner = new MapSerializeStrategy();
-    serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner);
+    MapSerializeStrategy inner = new MapSerializeStrategy(maxDecimalPlaces);
+    serializeStrategy = new MapWithLatLngSerializeStrategy(extents, width, inner, maxDecimalPlaces);
   }
 
   /**

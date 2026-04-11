@@ -24,6 +24,7 @@ public class JvmInputOutputLayerBuilder {
   private TemplateStringRenderer templateRenderer = null;
   private MinioOptions minioOptions = null;
   private boolean appendMode = false;
+  private int maxDecimalPlaces = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
 
   /**
    * Set the replicate number to use in filenames.
@@ -98,12 +99,23 @@ public class JvmInputOutputLayerBuilder {
   }
 
   /**
+   * Set the maximum number of decimal places for numeric values in CSV export.
+   *
+   * @param maxDecimalPlaces Maximum decimal places, or -1 for unlimited precision.
+   * @return This builder instance for chaining.
+   */
+  public JvmInputOutputLayerBuilder withMaxDecimalPlaces(int maxDecimalPlaces) {
+    this.maxDecimalPlaces = maxDecimalPlaces;
+    return this;
+  }
+
+  /**
    * Build the JvmInputOutputLayer instance.
    *
    * @return A new JvmInputOutputLayer instance with the configured parameters.
    */
   public JvmInputOutputLayer build() {
     return new JvmInputOutputLayer(replicate, extents, width, inputStrategy, templateRenderer,
-                                    minioOptions, appendMode);
+                                    minioOptions, appendMode, maxDecimalPlaces);
   }
 }
