@@ -1,8 +1,31 @@
-start organism SimpleTree
+start simulation EvalDurationDemo
 
-  height.init = 1 m
-  height.step = prior.height + 1 m
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 3 count latitude, 3 count longitude
 
-  heightEvalDuration.step = height.evalDuration
+  steps.low = 0 count
+  steps.high = 5 count
+
+  exportFiles.patch = "file:///tmp/eval_duration_demo.csv"
+
+end simulation
+
+
+start patch Default
+
+  Tree.init = create 500 count of Tree
+
+  export.avgHeight.step = mean(Tree.height)
+  export.avgHeightEvalMs.step = mean(Tree.height.evalDuration)
+  export.maxHeightEvalMs.step = max(Tree.height.evalDuration)
+
+end patch
+
+
+start organism Tree
+
+  height.init = sample uniform from 0 m to 10 m
+  height.step = prior.height + sample uniform from 0 m to 1 m
 
 end organism
