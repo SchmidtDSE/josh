@@ -216,10 +216,10 @@ public class EvalDurationDistributionTest {
     assertTrue(size.isPresent(), "Result should have a definite size");
     assertEquals(100, size.get(), "Result should have one value per entity");
 
-    long min = Long.MAX_VALUE;
-    long max = Long.MIN_VALUE;
+    double min = Double.MAX_VALUE;
+    double max = Double.MIN_VALUE;
     for (EngineValue val : resolved.getAsDistribution().getContents(100, false)) {
-      long ms = val.getAsInt();
+      double ms = val.getAsDecimal().doubleValue();
       if (ms < min) {
         min = ms;
       }
