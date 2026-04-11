@@ -1193,7 +1193,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @return true if the resolver path matches the patch name, indicating a query for patches.
    */
   private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
-    return resolver.toString().contains("RecursiveValueResolver(" + patchName + ")");
+    if (patchName == null) {
+      return false;
+    }
+    return patchName.equals(resolver.getPath());
   }
 
   @Override
