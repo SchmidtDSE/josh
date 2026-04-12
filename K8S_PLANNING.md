@@ -143,6 +143,7 @@ Design note: originally built `runFromMinio` and `preprocessFromMinio` as per-co
 ```
 POST /runBatch
 Form fields: apiKey, jobId, simulation, workDir
+Optional:    stageFromMinio (boolean), minioPrefix (required if staging)
 ```
 1. Validate API key via `ApiKeyUtil.checkApiKey()`
 2. Extract required form fields (`jobId`, `simulation`, `workDir`)

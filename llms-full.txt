@@ -204,6 +204,8 @@ Content-Type: multipart/form-data
 - `jobId` — Unique job identifier, returned in the response
 - `simulation` — Name of the simulation to run
 - `workDir` — Path to local directory containing pre-staged simulation files (.josh script, .jshd, .jshc)
+- `stageFromMinio` (optional) — Set to `"true"` to download inputs from MinIO into `workDir` before running. Controls input staging only, not outputs. For serverless environments where staging and execution must happen in the same request.
+- `minioPrefix` (optional, required when `stageFromMinio=true`) — Object prefix to download from (e.g., `batch-jobs/abc/inputs/`)
 
 **Response (success):**
 ```json
