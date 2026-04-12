@@ -51,9 +51,6 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `--parallel`: Enable parallel patch processing
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
-- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
-- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
-- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
 
 **Examples:**
 ```bash
@@ -119,7 +116,6 @@ java -jar joshsim-fat.jar validate <script.josh>
 **Options:**
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
-- `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
 #### `discoverConfig` - Configuration Discovery
 Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.

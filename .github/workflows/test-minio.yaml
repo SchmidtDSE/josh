@@ -184,15 +184,13 @@ jobs:
         run: |
           echo "Testing error handling with missing credentials..."
 
-          # This should fail with clear error message
-          # Use --upload-source to trigger MinIO client initialization
-          if java -Xmx2g -jar build/libs/joshsim-fat.jar run \
-            --replicates=1 \
-            examples/test/minio/csv_export.josh \
-            MinioCSVTest \
+          # stageToMinio validates credentials eagerly via MinioHandler constructor.
+          # Without access keys, it should fail with a clear error message.
+          if java -Xmx2g -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=examples/test/minio \
+            --prefix=should-not-exist/ \
             --minio-endpoint=http://localhost:9000 \
-            --upload-source \
-            --output-steps=5 \
+            --minio-bucket=josh-test-bucket \
             2>&1 | grep -q "minio_access_key.*not found"; then
             echo "✓ Error handling test passed - detected missing credentials"
           else
