@@ -11,10 +11,10 @@
 package org.joshsim.command;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.Callable;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
+import org.joshsim.util.MinioStagingUtil;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -66,34 +66,7 @@ public class StageFromMinioCommand implements Callable<Integer> {
         return 1;
       }
 
-      String normalizedPrefix = normalizePrefix(prefix);
-      List<String> keys = minio.listObjects(normalizedPrefix);
-
-      if (keys.isEmpty()) {
-        output.printError("No objects found under prefix: " + normalizedPrefix);
-        return 1;
-      }
-
-      int downloaded = 0;
-      for (String key : keys) {
-        String relativePath = key.substring(normalizedPrefix.length());
-        if (relativePath.isEmpty()) {
-          continue;
-        }
-        File destination = new File(outputDir, relativePath);
-
-        // Create parent directories for nested objects
-        File parentDir = destination.getParentFile();
-        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
-          output.printError("Failed to create directory: " + parentDir.getPath());
-          return 1;
-        }
-
-        minio.downloadFile(key, destination);
-        downloaded++;
-      }
-
-      output.printInfo("Downloaded " + downloaded + " file(s) to " + outputDir.getPath());
+      MinioStagingUtil.stageFromMinio(minio, prefix, outputDir, output);
       return 0;
 
     } catch (Exception e) {
@@ -102,10 +75,4 @@ public class StageFromMinioCommand implements Callable<Integer> {
     }
   }
 
-  private String normalizePrefix(String prefix) {
-    if (prefix.endsWith("/")) {
-      return prefix;
-    }
-    return prefix + "/";
-  }
 }

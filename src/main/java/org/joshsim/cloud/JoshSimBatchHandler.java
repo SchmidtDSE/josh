@@ -33,7 +33,10 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
+import org.joshsim.util.MinioStagingUtil;
+import org.joshsim.util.OutputOptions;
 
 
 /**
@@ -45,6 +48,15 @@ import org.joshsim.util.MinioOptions;
  *   <li>{@code jobId} — unique job identifier (returned in response)</li>
  *   <li>{@code simulation} — name of the simulation to run</li>
  *   <li>{@code workDir} — path to local directory containing pre-staged simulation files</li>
+ * </ul>
+ *
+ * <p>Optional form fields for serverless environments where staging and execution
+ * must happen atomically within the same request:</p>
+ * <ul>
+ *   <li>{@code stageFromMinio} — set to {@code "true"} to download inputs from MinIO
+ *       into {@code workDir} before running. Controls input staging only, not outputs.</li>
+ *   <li>{@code minioPrefix} — required when {@code stageFromMinio=true}. The object prefix
+ *       to download from (e.g., {@code batch-jobs/abc/inputs/}).</li>
  * </ul>
  */
 public class JoshSimBatchHandler implements HttpHandler {
@@ -134,6 +146,32 @@ public class JoshSimBatchHandler implements HttpHandler {
     String jobId = formData.getFirst("jobId").getValue();
     String simulation = formData.getFirst("simulation").getValue();
     File workDir = new File(formData.getFirst("workDir").getValue());
+
+    // Opt-in: stage inputs from MinIO before running (for serverless environments)
+    boolean shouldStage = formData.contains("stageFromMinio")
+        && "true".equalsIgnoreCase(formData.getFirst("stageFromMinio").getValue());
+
+    if (shouldStage) {
+      if (!formData.contains("minioPrefix")) {
+        sendJsonError(exchange, 400, jobId,
+            "minioPrefix is required when stageFromMinio=true");
+        return Optional.of(apiKey);
+      }
+      String minioPrefix = formData.getFirst("minioPrefix").getValue();
+      try {
+        if (!workDir.exists() && !workDir.mkdirs()) {
+          sendJsonError(exchange, 400, jobId,
+              "Failed to create workDir: " + workDir.getPath());
+          return Optional.of(apiKey);
+        }
+        MinioOptions minioOptions = new MinioOptions();
+        MinioHandler minio = new MinioHandler(minioOptions, new OutputOptions());
+        MinioStagingUtil.stageFromMinio(minio, minioPrefix, workDir, new OutputOptions());
+      } catch (Exception e) {
+        sendJsonError(exchange, 500, jobId, "Staging from MinIO failed: " + e.getMessage());
+        return Optional.of(apiKey);
+      }
+    }
 
     if (!workDir.exists() || !workDir.isDirectory()) {
       sendJsonError(exchange, 400, jobId,

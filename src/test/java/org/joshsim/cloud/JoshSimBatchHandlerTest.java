@@ -162,6 +162,54 @@ class JoshSimBatchHandlerTest {
   }
 
   @Test
+  void whenStageFromMinioTrueButMissingPrefix_shouldReturn400() {
+    setupValidApiKey();
+    setupRequiredFields("job-stage-1", "TestSim", "/tmp/some-dir");
+
+    FormData.FormValue stageFlag = mock(FormData.FormValue.class);
+    when(formData.contains("stageFromMinio")).thenReturn(true);
+    when(formData.getFirst("stageFromMinio")).thenReturn(stageFlag);
+    when(stageFlag.getValue()).thenReturn("true");
+    when(formData.contains("minioPrefix")).thenReturn(false);
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("minioPrefix is required"));
+  }
+
+  @Test
+  void whenStageFromMinioFalse_shouldNotRequirePrefix() {
+    setupValidApiKey();
+    setupRequiredFields("job-no-stage", "TestSim", "/nonexistent");
+
+    FormData.FormValue stageFlag = mock(FormData.FormValue.class);
+    when(formData.contains("stageFromMinio")).thenReturn(true);
+    when(formData.getFirst("stageFromMinio")).thenReturn(stageFlag);
+    when(stageFlag.getValue()).thenReturn("false");
+    when(formData.contains("minioPrefix")).thenReturn(false);
+
+    handler.processFormData(exchange, formData);
+
+    // Should hit workDir validation (400), not minioPrefix validation
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("does not exist"));
+  }
+
+  @Test
+  void whenStageFromMinioAbsent_shouldNotRequirePrefix() {
+    setupValidApiKey();
+    setupRequiredFields("job-default", "TestSim", "/nonexistent");
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    handler.processFormData(exchange, formData);
+
+    // Should hit workDir validation (400), not minioPrefix validation
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("does not exist"));
+  }
+
+  @Test
   void processFormDataReturnsApiKeyOnSuccess() {
     setupValidApiKey();
     setupRequiredFields("job-1", "TestSim", "/nonexistent");
