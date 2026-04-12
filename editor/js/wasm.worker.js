@@ -1,6 +1,6 @@
-importScripts("../war/js/JoshSim.js?v=0.0.3");
-importScripts("../war/wasm-gc/JoshSim.wasm-runtime.js?v=0.0.3");
-importScripts("./parse.js?v=0.0.3");
+importScripts("../war/js/JoshSim.js?v=0.0.8");
+importScripts("../war/wasm-gc/JoshSim.wasm-runtime.js?v=0.0.8");
+importScripts("./parse.js?v=0.0.8");
 
 let wasmLayer = null;
 let postMessage = null;
@@ -18,11 +18,21 @@ function reportStepComplete(stepCount) {
 
 /**
  * Parses a data string from MemoryWriteStrategy and reports the parsed data to the main thread.
- * 
+ *
  * @param {string} source - The formatted string containing target name and key-value pairs.
  */
 function reportData(source) {
-  const datum = parseDatum(source);
+  const trimmed = source.trim();
+
+  // Check for debug messages first - they have a different format
+  // Use startsWith for robustness (avoids regex edge cases with newlines)
+  if (trimmed.startsWith("[debug] ")) {
+    const message = trimmed.substring(8); // Remove "[debug] " prefix
+    postMessage({ type: "debug", success: true, result: message });
+    return;
+  }
+
+  const datum = parseDatum(trimmed);
   postMessage({ type: "outputDatum", success: true, result: datum });
 }
 

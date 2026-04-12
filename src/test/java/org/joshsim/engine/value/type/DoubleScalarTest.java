@@ -8,14 +8,15 @@
 package org.joshsim.engine.value.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ class DoubleScalarTest {
   @BeforeEach
   void setUp() {
     caster = new EngineValueWideningCaster(
-        new EngineValueFactory()
+        new ValueSupportFactory()
     );
   }
 
@@ -164,5 +165,81 @@ class DoubleScalarTest {
 
     assertEquals(123.456789, scalar.getAsDouble(), 0.000001);
     assertEquals("123.456789", scalar.getAsString());
+  }
+
+  @Test
+  void testEqualToWithArithmeticResult() {
+    // This is the critical test case: 0.4 + 0.05 should equal 0.45
+    // even though floating-point arithmetic produces 0.45000000000000001
+    DoubleScalar a = new DoubleScalar(caster, 0.4, Units.of("count"));
+    DoubleScalar b = new DoubleScalar(caster, 0.05, Units.of("count"));
+    DoubleScalar sum = (DoubleScalar) a.add(b);
+    DoubleScalar expected = new DoubleScalar(caster, 0.45, Units.of("count"));
+
+    EngineValue result = sum.equalTo(expected);
+    assertTrue(result.getAsBoolean(), "0.4 + 0.05 should equal 0.45 with epsilon tolerance");
+  }
+
+  @Test
+  void testEqualToWithExactValues() {
+    DoubleScalar scalar1 = new DoubleScalar(caster, 42.5, Units.of("m"));
+    DoubleScalar scalar2 = new DoubleScalar(caster, 42.5, Units.of("m"));
+
+    EngineValue result = scalar1.equalTo(scalar2);
+    assertTrue(result.getAsBoolean(), "Identical values should be equal");
+  }
+
+  @Test
+  void testEqualToWithClearlyDifferentValues() {
+    DoubleScalar scalar1 = new DoubleScalar(caster, 42.5, Units.of("m"));
+    DoubleScalar scalar2 = new DoubleScalar(caster, 42.6, Units.of("m"));
+
+    EngineValue result = scalar1.equalTo(scalar2);
+    assertFalse(result.getAsBoolean(), "Clearly different values should not be equal");
+  }
+
+  @Test
+  void testNotEqualToWithArithmeticResult() {
+    // 0.4 + 0.05 should NOT be "not equal" to 0.45
+    DoubleScalar a = new DoubleScalar(caster, 0.4, Units.of("count"));
+    DoubleScalar b = new DoubleScalar(caster, 0.05, Units.of("count"));
+    DoubleScalar sum = (DoubleScalar) a.add(b);
+    DoubleScalar expected = new DoubleScalar(caster, 0.45, Units.of("count"));
+
+    EngineValue result = sum.notEqualTo(expected);
+    assertFalse(result.getAsBoolean(), "0.4 + 0.05 should not be 'not equal' to 0.45");
+  }
+
+  @Test
+  void testNotEqualToWithClearlyDifferentValues() {
+    DoubleScalar scalar1 = new DoubleScalar(caster, 42.5, Units.of("m"));
+    DoubleScalar scalar2 = new DoubleScalar(caster, 42.6, Units.of("m"));
+
+    EngineValue result = scalar1.notEqualTo(scalar2);
+    assertTrue(result.getAsBoolean(), "Clearly different values should be not equal");
+  }
+
+  @Test
+  void testEqualToWithLargeValues() {
+    // Epsilon should scale with value magnitude
+    DoubleScalar scalar1 = new DoubleScalar(caster, 1e10, Units.of("m"));
+    DoubleScalar scalar2 = new DoubleScalar(caster, 1e10 + 0.001, Units.of("m"));
+
+    EngineValue result = scalar1.equalTo(scalar2);
+    assertTrue(result.getAsBoolean(), "Large values with tiny relative difference should be equal");
+  }
+
+  @Test
+  void testEqualToWithPercentageArithmetic() {
+    // Simulating percentage arithmetic: 40% + 5% = 45%
+    // Internally percentages are stored as 0.4, 0.05, 0.45
+    DoubleScalar fortyPercent = new DoubleScalar(caster, 0.4, Units.of("count"));
+    DoubleScalar fivePercent = new DoubleScalar(caster, 0.05, Units.of("count"));
+    DoubleScalar fortyFivePercent = new DoubleScalar(caster, 0.45, Units.of("count"));
+
+    DoubleScalar sum = (DoubleScalar) fortyPercent.add(fivePercent);
+    EngineValue result = sum.equalTo(fortyFivePercent);
+
+    assertTrue(result.getAsBoolean(), "40% + 5% should equal 45%");
   }
 }

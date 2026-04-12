@@ -29,17 +29,41 @@ public class JvmInputOutputLayer implements InputOutputLayer {
    * @param inputStrategy The strategy for input file access.
    * @param templateRenderer The renderer for processing template strings (null for legacy mode).
    * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @param appendMode If true, open output files in append mode (for multi-replicate shared files).
    */
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy,
                              TemplateStringRenderer templateRenderer,
-                             MinioOptions minioOptions) {
+                             MinioOptions minioOptions, boolean appendMode) {
+    this(replicate, extents, width, inputStrategy, templateRenderer, minioOptions, appendMode,
+        MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES);
+  }
+
+  /**
+   * Create a new input / output layer with all parameters and CSV precision specified.
+   *
+   * @param replicate The replicate number to use in filenames.
+   * @param extents The extents of the grid in the simulation in Earth-space (null for grid-only).
+   * @param width The width and height of each patch in meters (null for grid-only).
+   * @param inputStrategy The strategy for input file access.
+   * @param templateRenderer The renderer for processing template strings (null for legacy mode).
+   * @param minioOptions The MinIO configuration options (null if not using MinIO).
+   * @param appendMode If true, open output files in append mode (for multi-replicate shared files).
+   * @param maxDecimalPlaces Maximum decimal places for numeric CSV values, or -1 for unlimited.
+   */
+  public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
+                             InputGetterStrategy inputStrategy,
+                             TemplateStringRenderer templateRenderer,
+                             MinioOptions minioOptions, boolean appendMode,
+                             int maxDecimalPlaces) {
     if (extents != null && width != null) {
       this.exportFactory = new JvmExportFacadeFactory(replicate, extents, width,
-                                                       templateRenderer, minioOptions);
+                                                       templateRenderer, minioOptions, appendMode,
+                                                       maxDecimalPlaces);
     } else {
       this.exportFactory = new JvmExportFacadeFactory(replicate, templateRenderer,
-                                                       minioOptions);
+                                                       minioOptions, appendMode,
+                                                       maxDecimalPlaces);
     }
     this.inputStrategy = inputStrategy;
   }
@@ -57,7 +81,7 @@ public class JvmInputOutputLayer implements InputOutputLayer {
   @Deprecated
   public JvmInputOutputLayer(int replicate, PatchBuilderExtents extents, BigDecimal width,
                              InputGetterStrategy inputStrategy) {
-    this(replicate, extents, width, inputStrategy, null, null);
+    this(replicate, extents, width, inputStrategy, null, null, false);
   }
 
   @Override

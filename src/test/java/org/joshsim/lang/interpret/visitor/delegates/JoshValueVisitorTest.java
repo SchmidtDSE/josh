@@ -2,13 +2,14 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.AllExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.BoolContext;
@@ -28,7 +29,7 @@ import org.junit.jupiter.api.Test;
 class JoshValueVisitorTest {
 
   private DelegateToolbox toolbox;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JoshValueVisitor visitor;
   private EngineValue mockValue;
   private EngineValue allString;
@@ -36,12 +37,13 @@ class JoshValueVisitorTest {
   @BeforeEach
   void setUp() {
     toolbox = mock(DelegateToolbox.class);
-    valueFactory = mock(EngineValueFactory.class);
+    valueFactory = mock(ValueSupportFactory.class);
     mockValue = mock(EngineValue.class);
     allString = mock(EngineValue.class);
 
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
     when(valueFactory.build("all", Units.of(""))).thenReturn(allString);
+    when(valueFactory.buildValueResolver(anyString())).thenReturn(mock(ValueResolver.class));
 
     visitor = new JoshValueVisitor(toolbox);
   }

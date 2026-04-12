@@ -6,11 +6,11 @@
 
 package org.joshsim.lang.bridge;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.config.Config;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
@@ -28,7 +28,7 @@ import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
 
@@ -43,14 +43,14 @@ public class MinimalEngineBridge implements EngineBridge {
 
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
-  private final EngineValueFactory engineValueFactory;
+  private final ValueSupportFactory engineValueFactory;
   private final EngineValue startStep;
   private final EngineValue endStep;
   private final Converter converter;
   private final EntityPrototypeStore prototypeStore;
   private final Map<String, DataGridLayer> externalData;
   private final ExternalResourceGetter externalResourceGetter;
-  private final Map<String, Config> configData;
+  private final Map<String, Optional<Config>> configData;
   private final ConfigGetter configGetter;
 
   private Optional<Replicate> replicate;
@@ -74,7 +74,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param configGetter Strategy to use in loading configuration resources.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
@@ -85,7 +85,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.prototypeStore = prototypeStore;
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
-    this.configData = new HashMap<>();
+    this.configData = new ConcurrentHashMap<>();
 
     replicate = Optional.empty();
 
@@ -105,7 +105,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
-    externalData = new HashMap<>();
+    externalData = new ConcurrentHashMap<>();
   }
 
   /**
@@ -118,7 +118,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param replicate The replicate to use for testing.
    */
-  public MinimalEngineBridge(EngineValueFactory engineValueFactory,
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter, Replicate replicate) {
@@ -129,7 +129,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.prototypeStore = prototypeStore;
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
-    this.configData = new HashMap<>();
+    this.configData = new ConcurrentHashMap<>();
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
@@ -148,7 +148,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
     absoluteStep = 0;
     inStep = false;
-    externalData = new HashMap<>();
+    externalData = new ConcurrentHashMap<>();
   }
 
   @Override
@@ -192,17 +192,14 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
-    if (!externalData.containsKey(name)) {
-      // Append .jshd extension to external resource name before loading
-      String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
-      externalData.put(name, externalResourceGetter.getResource(fileName));
-    }
-    return externalData.get(name).getAt(key, step);
+    String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
+    DataGridLayer layer = externalData.computeIfAbsent(name,
+        k -> externalResourceGetter.getResource(fileName));
+    return layer.getAt(key, step);
   }
 
   @Override
   public Optional<EngineValue> getConfigOptional(String name) {
-    // Extract the actual config variable from the dot notation
     String[] parts = name.split("\\.", 2);
     if (parts.length != 2) {
       return Optional.empty();
@@ -210,26 +207,22 @@ public class MinimalEngineBridge implements EngineBridge {
     String configName = parts[0];
     String variableName = parts[1];
 
-    // Append .jshc extension to config name before looking it up
     String configFileName = configName.endsWith(".jshc") ? configName : configName + ".jshc";
 
-    if (!configData.containsKey(configName)) {
-      Optional<Config> configOptional = configGetter.getConfig(configFileName);
-      if (configOptional.isEmpty()) {
-        // Config file not found
-        return Optional.empty();
-      }
-      configData.put(configName, configOptional.get());
+    Optional<Config> configOptional = configData.computeIfAbsent(configName,
+        k -> configGetter.getConfig(configFileName));
+
+    if (configOptional.isEmpty()) {
+      return Optional.empty();
     }
 
-    Config config = configData.get(configName);
-    EngineValue value = config.getValue(variableName);
+    EngineValue value = configOptional.get().getValue(variableName);
     return Optional.ofNullable(value);
   }
 
 
   @Override
-  public EngineValueFactory getEngineValueFactory() {
+  public ValueSupportFactory getValueSupportFactory() {
     return engineValueFactory;
   }
 

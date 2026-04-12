@@ -12,7 +12,7 @@ import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.TimeStep;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.PatchExportCallback;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
@@ -21,7 +21,10 @@ import org.joshsim.lang.bridge.SimulationStepper;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.JoshInterpreter;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.CombinedExportFacade;
+import org.joshsim.lang.io.DebugOutputFacadeBuilder;
+import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
@@ -57,7 +60,7 @@ public class JoshSimFacadeUtil {
    * @param inputOutputLayer Layer to use to interact with external files and resources.
    * @return The parsed JoshProgram which can be used to run a specific simulation.
    */
-  public static JoshProgram interpret(EngineValueFactory valueFactory,
+  public static JoshProgram interpret(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, ParseResult parsed,
         InputOutputLayer inputOutputLayer) {
     JoshInterpreter interpreter = new JoshInterpreter();
@@ -84,7 +87,7 @@ public class JoshSimFacadeUtil {
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
    */
-  public static void runSimulation(EngineValueFactory valueFactory,
+  public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches, Optional<Set<Integer>> outputSteps) {
@@ -108,9 +111,22 @@ public class JoshSimFacadeUtil {
       bridgeGetter.setBridge(bridge);
     }
 
+    ExportFacadeFactory exportFactory = inputOutputLayer.getExportFacadeFactory();
+
+    // Create debug output facade from simulation entity configuration
+    CombinedDebugOutputFacade debugFacade = DebugOutputFacadeBuilder.build(
+        simEntity,
+        exportFactory
+    );
+
+    // Inject debug facade into bridge getter if configured
+    if (bridgeGetter != null && debugFacade.isConfigured()) {
+      bridgeGetter.setDebugOutputFacade(debugFacade);
+    }
+
     CombinedExportFacade exportFacade = new CombinedExportFacade(
         simEntity,
-        inputOutputLayer.getExportFacadeFactory()
+        exportFactory
     );
 
     // Create incremental export callback if export configured
@@ -120,6 +136,7 @@ public class JoshSimFacadeUtil {
     SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
     exportFacade.start();
+    debugFacade.start();
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
@@ -145,6 +162,7 @@ public class JoshSimFacadeUtil {
     }
 
     exportFacade.join();
+    debugFacade.join();
   }
 
   /**
@@ -165,7 +183,7 @@ public class JoshSimFacadeUtil {
    * @param serialPatches If true, patches will be processed serially. If false, they will be
    *     processed in parallel.
    */
-  public static void runSimulation(EngineValueFactory valueFactory,
+  public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches) {

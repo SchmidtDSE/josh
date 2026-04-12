@@ -46,7 +46,6 @@ public class RemoteResponseHandler {
   private final AtomicInteger completedReplicates;
   private final boolean useCumulativeProgress;
   private final boolean reportStepProgress;
-  private int lastProcessedReplicate = -1;
 
   /**
    * Creates a new RemoteResponseHandler.
@@ -214,7 +213,7 @@ public class RemoteResponseHandler {
     }
 
     // Persist using Component 2 NamedMap write capability
-    exportFacade.write(namedMap, currentStep.get());
+    exportFacade.write(namedMap, currentStep.get(), replicateNumber);
   }
 
   /**

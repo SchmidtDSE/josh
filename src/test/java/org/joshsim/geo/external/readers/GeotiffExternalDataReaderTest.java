@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ public class GeotiffExternalDataReaderTest {
   private static final String GEOTIFF_RESOURCE_PATH = "cog/nclimgrid-prcp-202111.tif";
   private String geotiffFilePath;
   private GeotiffExternalDataReader reader;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
 
   /**
    * Load the sample file.
@@ -33,7 +33,7 @@ public class GeotiffExternalDataReaderTest {
   @BeforeEach
   public void setUp() throws IOException {
     // Initialize value factory
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Initialize reader
     reader = new GeotiffExternalDataReader(valueFactory, Units.of("mm"));

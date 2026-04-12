@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.joshsim.engine.entity.base.Entity;
@@ -29,7 +28,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 import org.joshsim.engine.geometry.grid.GridPatchBuilder;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ public class ExternalGeoMapperTest {
   private static final String VAR_NAME = "Precipitation_(total)";
 
   private String riversideFilePath;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private ExternalGeoMapper mapper;
   private PatchSet patchSet;
   private List<String> variableNames;
@@ -60,7 +59,7 @@ public class ExternalGeoMapperTest {
   @BeforeEach
   public void setUp() throws IOException {
     // Set up the value factory
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Get resource path
     URL resourceUrl = getClass().getClassLoader().getResource(RIVERSIDE_RESOURCE_PATH);
@@ -70,7 +69,7 @@ public class ExternalGeoMapperTest {
     riversideFilePath = new File(resourceUrl.getFile()).getAbsolutePath();
 
     // Create mapper with real components
-    mapper = new ExternalGeoMapperBuilder(new EngineValueFactory())
+    mapper = new ExternalGeoMapperBuilder(new ValueSupportFactory())
         .addCoordinateTransformer(new GridExternalCoordinateTransformer())
         .addInterpolationStrategy(new NearestNeighborInterpolationStrategy())
         .addDimensions(DIM_X, DIM_Y, DIM_TIME)
@@ -144,8 +143,7 @@ public class ExternalGeoMapperTest {
         "RiversideGrid",  // name
         "EPSG:4326",      // baseCrsCode (WGS84)
         extents,          // extents
-        cellSize,         // cellSize
-        "degrees"         // cellSizeUnits
+        cellSize          // cellSize
     );
 
     // Create prototype for patches
@@ -655,36 +653,24 @@ public class ExternalGeoMapperTest {
     // Define a threshold value for filtering
     final BigDecimal threshold = new BigDecimal(300.0);  // Filter for precipitation above value
 
-    // Process multiple time steps
-    try (ExternalDataReader reader = ExternalDataReaderFactory.createReader(
-        new EngineValueFactory(),
-        riversideFilePath
-    )) {
-      reader.open(riversideFilePath);
-      reader.setDimensions(DIM_X, DIM_Y, Optional.ofNullable(DIM_TIME));
-      reader.setCrsCode("EPSG:4326");
-      int timeSteps = reader.getTimeDimensionSize().orElse(30);
-      ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
+    // Process first 10 time steps using the 4-arg streaming method
+    for (int t = 0; t < 10; t++) {
+      try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
+          riversideFilePath, VAR_NAME, t, patchSet)) {
 
-      for (int t = 0; t < Math.min(timeSteps, 10); t++) {  // Limit to first 10 time steps
-        // Stream just this time step
-        try (Stream<Map.Entry<GeoKey, EngineValue>> stream = mapper.streamVariableTimeStepToPatches(
-            reader, riversideFilePath, VAR_NAME, t, dimensions, patchSet)) {
+        long highPrecipCount = stream
+            .filter(entry -> {
+              try {
+                BigDecimal value = entry.getValue().getAsDecimal();
+                return value.compareTo(threshold) > 0.0;
+              } catch (Exception e) {
+                return false;
+              }
+            })
+            .count();
 
-          long highPrecipCount = stream
-              .filter(entry -> {
-                try {
-                  BigDecimal value = entry.getValue().getAsDecimal();
-                  return value.compareTo(threshold) > 0.0;
-                } catch (Exception e) {
-                  return false;
-                }
-              })
-              .count();
-
-          System.out.printf("Time step %d: %d patches with precipitation > %.1f mm%n",
-              t, highPrecipCount, threshold);
-        }
+        System.out.printf("Time step %d: %d patches with precipitation > %.1f mm%n",
+            t, highPrecipCount, threshold);
       }
     }
   }

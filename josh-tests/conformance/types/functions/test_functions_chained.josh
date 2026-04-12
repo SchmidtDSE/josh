@@ -1,0 +1,97 @@
+# @category: types
+# @subcategory: functions
+# @priority: medium
+# @description: Test chained and composed function calls with correct order of operations
+
+start simulation FunctionsChained
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 100 m
+  grid.high.y = 100 m  # 10x10 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Test chained functions: abs(log10(x))
+  value100.init = 100 count
+  logValue.init = log10(value100)  # log10(100) = 2
+  absLogValue.init = abs(logValue)  # abs(2) = 2
+  assert.logThenAbs.init = absLogValue == 2 count
+
+  # Test with negative result: abs(log10(x)) where result is already positive
+  value1000.init = 1000 count
+  chainedAbsLog.init = abs(log10(value1000))  # abs(log10(1000)) = abs(3) = 3
+  assert.chainedAbsLog.init = chainedAbsLog == 3 count
+
+  # Test round(abs(x)) with negative value
+  negValue.init = -7.8 m
+  absNeg.init = abs(negValue)  # abs(-7.8) = 7.8
+  roundAbsNeg.init = round(absNeg)  # round(7.8) = 8
+  assert.roundAbs.init = roundAbsNeg == 8 m
+
+  # Test ceil(abs(x)) with negative fractional value
+  negFrac.init = -3.2 m
+  ceilAbsFrac.init = ceil(abs(negFrac))  # ceil(abs(-3.2)) = ceil(3.2) = 4
+  assert.ceilAbs.init = ceilAbsFrac == 4 m
+
+  # Test floor(abs(x))
+  floorAbsValue.init = floor(abs(-5.9 m))  # floor(abs(-5.9)) = floor(5.9) = 5
+  assert.floorAbs.init = floorAbsValue == 5 m
+
+  # Test multiple levels: round(abs(log10(x)))
+  value50.init = 50 count
+  log50.init = log10(value50)  # log10(50) ≈ 1.699
+  absLog50.init = abs(log50)  # abs(1.699) = 1.699
+  roundAbsLog50.init = round(absLog50)  # round(1.699) = 2
+  assert.roundAbsLog.init = roundAbsLog50 == 2 count
+
+  # Test order of operations with arithmetic and functions
+  base.init = 10 m
+  squared.init = base ^ 2  # 10^2 = 100
+  sqrtSquared.init = squared ^ 0.5  # 100^0.5 = 10
+  assert.powerRoundtrip.init = sqrtSquared == base
+
+  # Test function composition with different units
+  distance.init = 8 m
+  sqrtDistance.init = distance ^ 0.5  # sqrt(8) ≈ 2.828
+  ceilSqrt.init = ceil(sqrtDistance)  # ceil(2.828) = 3
+  assert.ceilSqrt.init = ceilSqrt == 3 m
+
+  # Test abs(x - y) pattern (difference magnitude)
+  val1.init = 15 m
+  val2.init = 22 m
+  difference.init = val1 - val2  # 15 - 22 = -7
+  absDifference.init = abs(difference)  # abs(-7) = 7
+  assert.absDifference.init = absDifference == 7 m
+
+  # Test nested rounding operations
+  value7p7.init = 7.7 m
+  floorValue.init = floor(value7p7)  # floor(7.7) = 7
+  ceilFloor.init = ceil(floorValue)  # ceil(7) = 7
+  assert.ceilFloor.init = ceilFloor == 7 m
+
+  # Test log composition: log10(10^x) should equal x
+  exponent.init = 2 count
+  power10.init = 10 m ^ exponent  # 10^2 = 100
+  logPower.init = log10(power10)  # log10(100) = 2
+  assert.logPowerRoundtrip.init = logPower == 2 m
+
+end patch
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit count
+end unit
+
+start unit degrees
+end unit

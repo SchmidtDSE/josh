@@ -218,7 +218,7 @@ public class TemplateStringRendererTest {
 
     String message = exception.getMessage();
     assertTrue(message.contains("Unknown template variables: {missing}"));
-    assertTrue(message.contains("Available: {replicate}, {step}, {variable}"));
+    assertTrue(message.contains("Available: {replicate}, {timestamp}, {step}, {variable}"));
   }
 
   @Test
@@ -402,5 +402,97 @@ public class TemplateStringRendererTest {
     String result = customRenderer.renderTemplate(template).getProcessedTemplate();
 
     assertEquals("/tmp/example_1_test-env_v1.0_beta.csv", result);
+  }
+
+  @Test
+  public void testTimestampTemplateWithExplicitTimestamp() {
+    // Use the constructor with explicit timestamp for deterministic testing
+    String ts = "20260113_120000";
+    TemplateStringRenderer timestampRenderer = new TemplateStringRenderer(job, 0, ts);
+
+    String template = "/tmp/output_{timestamp}/results.csv";
+    String expected = "/tmp/output_20260113_120000/results.csv";
+    assertEquals(expected, timestampRenderer.renderTemplate(template).getProcessedTemplate());
+  }
+
+  @Test
+  public void testTimestampConsistencyAcrossMultipleCalls() {
+    // Use the constructor with explicit timestamp
+    String ts = "20260113_120000";
+    TemplateStringRenderer timestampRenderer = new TemplateStringRenderer(job, 0, ts);
+
+    String template1 = "/tmp/{timestamp}/file1.csv";
+    String template2 = "/tmp/{timestamp}/file2.csv";
+
+    String result1 = timestampRenderer.renderTemplate(template1).getProcessedTemplate();
+    String result2 = timestampRenderer.renderTemplate(template2).getProcessedTemplate();
+
+    assertEquals("/tmp/20260113_120000/file1.csv", result1);
+    assertEquals("/tmp/20260113_120000/file2.csv", result2);
+  }
+
+  @Test
+  public void testTimestampWithOtherTemplates() {
+    String ts = "20260113_143052";
+    TemplateStringRenderer timestampRenderer = new TemplateStringRenderer(job, 1, ts);
+
+    String template = "/data/{timestamp}/{example}_{replicate}.csv";
+    String expected = "/data/20260113_143052/example_1_1.csv";
+    assertEquals(expected, timestampRenderer.renderTemplate(template).getProcessedTemplate());
+  }
+
+  @Test
+  public void testTimestampWithGeotiff() {
+    String ts = "20260113_143052";
+    TemplateStringRenderer timestampRenderer = new TemplateStringRenderer(job, 2, ts);
+
+    String template = "/output/{timestamp}/result_{replicate}_{step}_{variable}.tif";
+    String expected = "/output/20260113_143052/result_2___step_____variable__.tif";
+    assertEquals(expected, timestampRenderer.renderTemplate(template).getProcessedTemplate());
+  }
+
+  @Test
+  public void testTimestampAvailableInErrorMessage() {
+    JoshJob emptyJob = new JoshJobBuilder()
+        .setReplicates(1)
+        .build();
+    TemplateStringRenderer emptyRenderer = new TemplateStringRenderer(emptyJob, 0);
+
+    String template = "/path/{missing}.csv";
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+      emptyRenderer.renderTemplate(template).getProcessedTemplate();
+    });
+
+    String message = exception.getMessage();
+    assertTrue(message.contains("{timestamp}"),
+        "Error message should include {timestamp} as available template");
+  }
+
+  @Test
+  public void testTimestampMultipleOccurrences() {
+    String ts = "20260113_120000";
+    TemplateStringRenderer timestampRenderer = new TemplateStringRenderer(job, 0, ts);
+
+    String template = "/data/{timestamp}/backup_{timestamp}.csv";
+    String expected = "/data/20260113_120000/backup_20260113_120000.csv";
+    assertEquals(expected, timestampRenderer.renderTemplate(template).getProcessedTemplate());
+  }
+
+  @Test
+  public void testDefaultConstructorGeneratesTimestamp() {
+    // Test that the default constructor generates a timestamp in the expected format
+    TemplateStringRenderer defaultRenderer = new TemplateStringRenderer(job, 0);
+
+    String template = "/data/{timestamp}/output.csv";
+    String result = defaultRenderer.renderTemplate(template).getProcessedTemplate();
+
+    // Verify the timestamp was replaced (should not contain {timestamp})
+    assertTrue(!result.contains("{timestamp}"),
+        "Timestamp template should be replaced");
+
+    // Verify the format is yyyyMMdd_HHmmss (15 characters)
+    // Example: /data/20260113_120000/output.csv
+    assertTrue(result.matches("/data/\\d{8}_\\d{6}/output\\.csv"),
+        "Timestamp should match format yyyyMMdd_HHmmss");
   }
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
 import org.joshsim.command.DiscoverConfigCommand;
+import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
@@ -26,6 +27,7 @@ import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
@@ -62,7 +64,8 @@ import picocli.CommandLine;
         ServerCommand.class,
         PreprocessCommand.class,
         DiscoverConfigCommand.class,
-        InspectJshdCommand.class
+        InspectJshdCommand.class,
+        InspectExportsCommand.class
     }
 )
 public class JoshSimCommander {
@@ -164,6 +167,34 @@ public class JoshSimCommander {
       OutputOptions output,
       InputOutputLayer inputOutputLayer
   ) {
+    return getJoshProgram(
+        new ValueSupportFactory(), geometryFactory, file, output, inputOutputLayer
+    );
+  }
+
+  /**
+   * Retrieves and initializes a Josh program with a caller-supplied ValueSupportFactory.
+   *
+   * <p>This overload allows the caller to supply a pre-configured {@link ValueSupportFactory} so
+   * that features like evalDuration profiling (via {@code TimedRecursiveValueResolverFactory}) are
+   * wired in at compile time when {@link org.joshsim.lang.interpret.ValueResolver} instances are
+   * created.</p>
+   *
+   * @param valueFactory The factory for creating engine values and value resolvers.
+   * @param geometryFactory The factory for creating geometry objects.
+   * @param file The file containing the Josh program code.
+   * @param output Options for handling output messages.
+   * @param inputOutputLayer The input/output layer to use for file access and exports.
+   * @return A ProgramInitResult containing either the initialized JoshProgram or information about
+   *     the failure.
+   */
+  public static ProgramInitResult getJoshProgram(
+      ValueSupportFactory valueFactory,
+      EngineGeometryFactory geometryFactory,
+      File file,
+      OutputOptions output,
+      InputOutputLayer inputOutputLayer
+  ) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -195,7 +226,9 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result, inputOutputLayer);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        valueFactory, geometryFactory, result, inputOutputLayer
+    );
     assert program != null;
 
     return new ProgramInitResult(program);

@@ -11,21 +11,25 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Stack;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
+import org.joshsim.engine.entity.type.EntityType;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.Slicer;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.Distribution;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.engine.value.type.Scalar;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntityPrototype;
@@ -34,6 +38,8 @@ import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
+import org.joshsim.lang.io.CombinedDebugOutputFacade;
+import org.joshsim.util.SharedRandom;
 
 
 /**
@@ -52,10 +58,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   private final EngineBridge bridge;
   private final Stack<EngineValue> memory;
-  private final LocalScope scope;
-  private final EngineValueFactory valueFactory;
-  private final Random random;
+  private LocalScope scope;  // Mutable to allow temporary scope swapping in withLocalBinding
+  private final ValueSupportFactory valueFactory;
   private final boolean favorBigDecimal;
+  private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -68,26 +74,63 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @param scope The scope in which to have this automaton perform its operations.
    */
   public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope) {
+    this(bridge, scope, Optional.empty());
+  }
+
+  /**
+   * Create a new push-down automaton with debug output support.
+   *
+   * @param bridge The EngineBridge through which to interact with the engine.
+   * @param scope The scope in which to have this automaton perform its operations.
+   * @param debugOutputFacade Optional debug output facade for writing debug messages.
+   */
+  public SingleThreadEventHandlerMachine(EngineBridge bridge, Scope scope,
+      Optional<CombinedDebugOutputFacade> debugOutputFacade) {
     this.bridge = bridge;
     this.scope = new LocalScope(scope);
+    this.debugOutputFacade = debugOutputFacade;
 
     memory = new Stack<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
-    valueFactory = bridge.getEngineValueFactory();
-    currentValueResolver = new ValueResolver(valueFactory, "current");
+    valueFactory = bridge.getValueSupportFactory();
+    currentValueResolver = valueFactory.buildValueResolver("current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
-    random = new Random();
     isEnded = false;
   }
 
   @Override
   public EventHandlerMachine push(ValueResolver valueResolver) {
+    String path = valueResolver.getPath();
+
+    // Try normal resolution first
     Optional<EngineValue> value = valueResolver.get(scope);
-    memory.push(value.orElseThrow(
-        () -> new IllegalStateException("Unable to get value for " + valueResolver)
-    ));
-    return this;
+    if (value.isPresent()) {
+      memory.push(value.get());
+      return this;
+    }
+
+    // Fall back to built-in meta attributes (e.g., meta.year, meta.stepCount)
+    if (path.startsWith("meta.")) {
+      String attrName = path.substring(5); // Remove "meta." prefix
+      Optional<EngineValue> builtin = getBuiltinMetaAttribute(attrName);
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
+    // Fall back to built-in here attributes (e.g., here.x, here.y)
+    if (path.startsWith("here.")) {
+      String attrName = path.substring(5); // Remove "here." prefix
+      Optional<EngineValue> builtin = getBuiltinHereAttribute(attrName);
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
+    throw new IllegalStateException("Unable to get value for " + valueResolver);
   }
 
   @Override
@@ -215,9 +258,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() && left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.and(right);
+    memory.push(result);
 
     return this;
   }
@@ -229,9 +271,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() || left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.or(right);
+    memory.push(result);
 
     return this;
   }
@@ -243,9 +284,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue left = pop();
     endConversionGroup();
 
-    boolean result = right.getAsBoolean() ^ left.getAsBoolean();
-    EngineValue resultDecorated = valueFactory.build(result, EMPTY_UNITS);
-    memory.push(resultDecorated);
+    EngineValue result = left.xor(right);
+    memory.push(result);
 
     return this;
   }
@@ -476,7 +516,20 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine executeSpatialQuery(ValueResolver resolver) {
-    EngineValue distance = convert(pop(), METER_UNITS);
+    EngineValue rawDistance = pop();
+    if (rawDistance.getUnits().equals(Units.EMPTY)) {
+      throw new IllegalArgumentException(
+          "Spatial query 'within' requires a distance with explicit units (e.g., '60 m'), "
+          + "but got unitless value: " + rawDistance.getAsString()
+      );
+    }
+    if (rawDistance.getUnits().equals(COUNT_UNITS)) {
+      throw new IllegalArgumentException(
+          "Spatial query 'within' requires a physical distance unit (e.g., '60 m'), "
+          + "not 'count': " + rawDistance.getAsString()
+      );
+    }
+    EngineValue distance = convert(rawDistance, METER_UNITS);
 
     Entity executingEntity = currentValueResolver.get(scope).orElseThrow().getAsEntity();
     EngineGeometry centerGeometry = executingEntity.getGeometry().orElseThrow();
@@ -531,9 +584,78 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public EventHandlerMachine pushAttribute(ValueResolver resolver) {
     Entity entity = pop().getAsEntity();
     Scope scope = new EntityScope(entity);
-    EngineValue attributeValue = resolver.get(scope).orElseThrow();
-    memory.push(attributeValue);
-    return this;
+
+    // Try normal resolution first
+    Optional<EngineValue> value = resolver.get(scope);
+    if (value.isPresent()) {
+      memory.push(value.get());
+      return this;
+    }
+
+    // Fall back to built-in meta attributes on simulation entity
+    if (entity.getEntityType() == EntityType.SIMULATION) {
+      Optional<EngineValue> builtin = getBuiltinMetaAttribute(resolver.getPath());
+      if (builtin.isPresent()) {
+        memory.push(builtin.get());
+        return this;
+      }
+    }
+
+    throw new IllegalStateException("Unable to get attribute " + resolver.getPath()
+        + " from " + entity.getName());
+  }
+
+  /**
+   * Get a built-in meta attribute value if the name matches a built-in.
+   *
+   * <p>Built-in meta attributes are available without user definition per the language spec:
+   * meta.stepCount (0-based step counter), meta.year/meta.step (current step value).</p>
+   *
+   * @param name the attribute name to check.
+   * @return Optional containing the value if it's a built-in, empty otherwise.
+   */
+  private Optional<EngineValue> getBuiltinMetaAttribute(String name) {
+    return switch (name) {
+      case "stepCount" -> Optional.of(
+          valueFactory.build(bridge.getAbsoluteTimestep(), COUNT_UNITS)
+      );
+      case "year" -> Optional.of(
+          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
+      );
+      default -> Optional.empty();
+    };
+  }
+
+  /**
+   * Get a built-in here attribute value if the name matches a built-in.
+   *
+   * <p>Built-in here attributes provide spatial information about the current patch:
+   * here.x (center X coordinate in meters), here.y (center Y coordinate in meters).</p>
+   *
+   * @param name the attribute name to check.
+   * @return Optional containing the value if it's a built-in, empty otherwise.
+   */
+  private Optional<EngineValue> getBuiltinHereAttribute(String name) {
+    if (!scope.has("here")) {
+      return Optional.empty();
+    }
+
+    Entity here = scope.get("here").getAsEntity();
+    Optional<EngineGeometry> geometry = here.getGeometry();
+
+    if (geometry.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return switch (name) {
+      case "x" -> Optional.of(
+          valueFactory.buildForNumber(geometry.get().getCenterX().doubleValue(), Units.of("m"))
+      );
+      case "y" -> Optional.of(
+          valueFactory.buildForNumber(geometry.get().getCenterY().doubleValue(), Units.of("m"))
+      );
+      default -> Optional.empty();
+    };
   }
 
   @Override
@@ -550,7 +672,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     if (Math.abs(maxDouble - minDouble) < 1e-7) {
       doubleResult = minDouble;
     } else {
-      doubleResult = random.nextDouble(minDouble, maxDouble);
+      doubleResult = SharedRandom.nextDouble(minDouble, maxDouble);
     }
 
     EngineValue decoratedResult = valueFactory.buildForNumber(doubleResult, min.getUnits());
@@ -568,7 +690,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     double meanDouble = mean.getAsDouble();
     double stdDouble = std.getAsDouble();
-    double randGauss = random.nextGaussian(meanDouble, stdDouble);
+    double randGauss = SharedRandom.nextGaussian(meanDouble, stdDouble);
 
     EngineValue result = valueFactory.buildForNumber(randGauss, mean.getUnits());
     memory.push(result);
@@ -578,139 +700,69 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine abs() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply abs to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal absValue = value.getAsDecimal().abs();
-      result = valueFactory.build(absValue, value.getUnits());
-    } else {
-      double absValue = Math.abs(value.getAsDouble());
-      result = valueFactory.build(absValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().abs(), v.getUnits());
+      }
+      return valueFactory.build(Math.abs(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine ceil() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply ceil to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal ceilValue = value.getAsDecimal().setScale(0, RoundingMode.CEILING);
-      result = valueFactory.build(ceilValue, value.getUnits());
-    } else {
-      double ceilValue = Math.ceil(value.getAsDouble());
-      result = valueFactory.build(ceilValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.CEILING), v.getUnits());
+      }
+      return valueFactory.build(Math.ceil(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine floor() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply floor to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal floorValue = value.getAsDecimal().setScale(0, RoundingMode.FLOOR);
-      result = valueFactory.build(floorValue, value.getUnits());
-    } else {
-      double floorValue = Math.floor(value.getAsDouble());
-      result = valueFactory.build(floorValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.FLOOR), v.getUnits());
+      }
+      return valueFactory.build(Math.floor(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine round() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply round to a distribution.");
-    }
-
-    EngineValue result;
-    if (favorBigDecimal) {
-      BigDecimal roundedValue = value.getAsDecimal().setScale(0, RoundingMode.HALF_UP);
-      result = valueFactory.build(roundedValue, value.getUnits());
-    } else {
-      double roundedValue = Math.round(value.getAsDouble());
-      result = valueFactory.build(roundedValue, value.getUnits());
-    }
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (favorBigDecimal) {
+        return valueFactory.build(v.getAsDecimal().setScale(0, RoundingMode.HALF_UP), v.getUnits());
+      }
+      return valueFactory.build(Math.round(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine log10() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply log10 to a distribution.");
-    }
-
-    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
-    }
-
-    double logValue = Math.log10(value.getAsDouble());
-    EngineValue result = valueFactory.buildForNumber(logValue, value.getUnits());
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (v.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("Logarithm can only be applied to positive numbers.");
+      }
+      return valueFactory.buildForNumber(Math.log10(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine ln() {
-    EngineValue value = pop();
-
-    if (value.getLanguageType().isDistribution()) {
-      throw new IllegalArgumentException("Cannot apply natural log (ln) to a distribution.");
-    }
-
-    if (value.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new IllegalArgumentException(
-          "Natural logarithm can only be applied to positive numbers."
-      );
-    }
-
-    double lnValue = Math.log(value.getAsDouble());
-    EngineValue result = valueFactory.buildForNumber(lnValue, value.getUnits());
-    memory.push(result);
-
-    return this;
+    return applyUnaryMathFunction(v -> {
+      if (v.getAsDecimal().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException(
+            "Natural logarithm can only be applied to positive numbers.");
+      }
+      return valueFactory.buildForNumber(Math.log(v.getAsDouble()), v.getUnits());
+    });
   }
 
   @Override
   public EventHandlerMachine count() {
     EngineValue value = pop();
-    Distribution distribution = value.getAsDistribution();
-    Optional<Integer> size = distribution.getSize();
-
-    if (!size.isPresent()) {
-      throw new IllegalArgumentException("Cannot count a virtualized distribution.");
-    }
-
-    EngineValue result = valueFactory.build(size.get(), EMPTY_UNITS);
+    EngineValue result = valueFactory.build(value.getCount(), EMPTY_UNITS);
     memory.push(result);
     return this;
   }
@@ -837,7 +889,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public boolean isEnded() {
-    return this.isEnded;
+    return isEnded;
   }
 
   @Override
@@ -880,6 +932,160 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue defaultValue = pop(); // Get default from stack
     Optional<EngineValue> configValue = bridge.getConfigOptional(name);
     push(configValue.orElse(defaultValue));
+  }
+
+  @Override
+  public EventHandlerMachine writeDebug() {
+    EngineValue value = pop();
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output facade configured - push value back (pass-through)
+      push(value);
+      return this;
+    }
+
+    String message = formatDebugValue(value);
+    long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
+
+    // Write with full context
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.write(message, step, info.entityCategory, info.identifier, info.x, info.y);
+
+    // Push the original value back (debug is a pass-through function)
+    push(value);
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine debugVariadic(int argCount) {
+    // Pop all values in reverse order (last arg is on top of stack)
+    List<String> parts = new ArrayList<>();
+    for (int i = 0; i < argCount; i++) {
+      EngineValue value = pop();
+      parts.add(0, formatDebugValue(value)); // Insert at beginning to reverse order
+    }
+
+    if (debugOutputFacade.isEmpty()) {
+      // No debug output configured - push 0 count as result
+      push(valueFactory.build(0, Units.of("count")));
+      return this;
+    }
+
+    long step = bridge.getAbsoluteTimestep();
+    DebugEntityInfo info = getDebugEntityInfo();
+
+    // Write with full context
+    CombinedDebugOutputFacade facade = debugOutputFacade.get();
+    facade.write(
+        String.join(" ", parts),
+        step,
+        info.entityCategory,
+        info.identifier,
+        info.x,
+        info.y
+    );
+
+    // Push 0 count as result (allows debug in expressions)
+    push(valueFactory.build(0, Units.of("count")));
+    return this;
+  }
+
+  /**
+   * Formats a value for debug output with cleaner formatting.
+   *
+   * <p>Applies formatting improvements:
+   * <ul>
+   *   <li>Strips surrounding quotes from string values</li>
+   *   <li>Truncates floating point numbers to 4 decimal places</li>
+   * </ul>
+   *
+   * @param value The EngineValue to format.
+   * @return A formatted string representation.
+   */
+  private String formatDebugValue(EngineValue value) {
+    String raw = value.getAsString();
+
+    // Strip surrounding quotes from strings
+    if (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"")) {
+      return raw.substring(1, raw.length() - 1);
+    }
+
+    // Try to truncate floating point numbers to 4 decimal places
+    try {
+      // Check if it looks like a decimal number (contains a dot)
+      if (raw.contains(".") && !raw.contains(" ")) {
+        double d = Double.parseDouble(raw);
+        // Format to 4 decimal places, removing trailing zeros
+        String formatted = String.format("%.4f", d);
+        // Remove trailing zeros after decimal point (but keep at least one decimal place)
+        formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", ".0");
+        return formatted;
+      }
+    } catch (NumberFormatException e) {
+      // Not a number, return as-is
+    }
+
+    return raw;
+  }
+
+  /**
+   * Helper record to hold entity debug context information.
+   */
+  private record DebugEntityInfo(String entityCategory, String identifier, double x, double y) {}
+
+  /**
+   * Extracts debug context information from the current entity in scope.
+   *
+   * @return DebugEntityInfo with entity category, identifier, and location.
+   */
+  private DebugEntityInfo getDebugEntityInfo() {
+    String entityCategory = "unknown";
+    String identifier = "0";
+    double x = 0.0;
+    double y = 0.0;
+
+    try {
+      EngineValue currentValue = scope.get("current");
+      if (currentValue != null) {
+        MutableEntity current = currentValue.getAsMutableEntity();
+        EntityType type = current.getEntityType();
+
+        // Map EntityType to debug file key
+        entityCategory = switch (type) {
+          case AGENT -> "organism";
+          case PATCH -> "patch";
+          case SIMULATION -> "simulation";
+          case DISTURBANCE -> "disturbance";
+          default -> "unknown";
+        };
+
+        // Get unique identifier from Java identity hash
+        identifier = Integer.toHexString(System.identityHashCode(current));
+
+        // Get location - try entity's own geometry first, then fall back to "here"
+        Optional<EngineGeometry> geometry = current.getGeometry();
+        if (geometry.isPresent()) {
+          x = geometry.get().getCenterX().doubleValue();
+          y = geometry.get().getCenterY().doubleValue();
+        } else if (scope.has("here")) {
+          // For inner entities (organisms), use containing patch's location
+          EngineValue hereValue = scope.get("here");
+          if (hereValue != null) {
+            Entity here = hereValue.getAsEntity();
+            Optional<EngineGeometry> hereGeom = here.getGeometry();
+            if (hereGeom.isPresent()) {
+              x = hereGeom.get().getCenterX().doubleValue();
+              y = hereGeom.get().getCenterY().doubleValue();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Fall back to defaults if we can't determine entity info
+    }
+
+    return new DebugEntityInfo(entityCategory, identifier, x, y);
   }
 
   /**
@@ -987,7 +1193,88 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * @return true if the resolver path matches the patch name, indicating a query for patches.
    */
   private boolean isQueryForPatch(ValueResolver resolver, String patchName) {
-    return resolver.toString().contains("ValueResolver(" + patchName + ")");
+    if (patchName == null) {
+      return false;
+    }
+    return patchName.equals(resolver.getPath());
+  }
+
+  @Override
+  public EngineValue peek() {
+    return memory.peek();
+  }
+
+  @Override
+  public void withLocalBinding(String name, EngineValue value, Runnable action) {
+    // Create nested local scope that allows shadowing parent scope variables
+    LocalScope nestedScope = new LocalScope(scope);
+    nestedScope.defineConstantAllowShadowing(name, value);
+
+    // Temporarily switch to nested scope
+    LocalScope originalScope = this.scope;
+    this.scope = nestedScope;
+
+    try {
+      action.run();
+    } finally {
+      // Always restore original scope, even if action throws
+      this.scope = originalScope;
+    }
+  }
+
+  /**
+   * Apply a unary math function to a value, handling both scalars and distributions.
+   *
+   * <p>If the value is a distribution, applies the function element-wise. Otherwise, applies
+   * directly to the scalar value. This eliminates boilerplate in abs(), ceil(), floor(), etc.</p>
+   *
+   * @param scalarFunction The function to apply to each scalar value.
+   * @return This machine for method chaining.
+   */
+  private EventHandlerMachine applyUnaryMathFunction(
+      Function<EngineValue, EngineValue> scalarFunction
+  ) {
+    EngineValue value = pop();
+    EngineValue result;
+
+    if (value.getLanguageType().isDistribution()) {
+      result = applyToDistribution(value, scalarFunction);
+    } else {
+      result = scalarFunction.apply(value);
+    }
+
+    memory.push(result);
+    return this;
+  }
+
+  /**
+   * Apply a unary function to each element of a distribution.
+   *
+   * @param distribution The distribution (realized or virtual) to apply the function to.
+   * @param function The function to apply to each element.
+   * @return A new RealizedDistribution containing the transformed values.
+   */
+  private EngineValue applyToDistribution(
+      EngineValue distribution,
+      Function<EngineValue, EngineValue> function
+  ) {
+    Distribution dist = distribution.getAsDistribution();
+
+    // Get the size - if virtual, sample a reasonable number of elements
+    Optional<Integer> sizeOpt = dist.getSize();
+    int size = sizeOpt.orElse(1000); // Default sample size for virtual distributions
+
+    // Get contents and apply function element-wise
+    Iterable<EngineValue> contents = dist.getContents(size, true);
+    List<EngineValue> transformedValues = StreamSupport.stream(contents.spliterator(), false)
+        .map(function)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return new RealizedDistribution(
+        distribution.getCaster(),
+        transformedValues,
+        distribution.getUnits()
+    );
   }
 
 }

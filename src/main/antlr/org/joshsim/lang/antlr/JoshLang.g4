@@ -51,6 +51,7 @@ CONFIG_: 'config';
 CONST_: 'const';
 CREATE_: 'create';
 CURRENT_: 'current';
+DEBUG_: 'debug';
 DISTURBANCE_: 'disturbance';
 ELIF_: 'elif';
 ELSE_: 'else';
@@ -94,19 +95,19 @@ WITHOUT_: 'without';
 XOR_: 'xor';
 
 // Dynamic
-IDENTIFIER_: [A-Za-z][A-Za-z0-9]*;
+IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 
 // Whitespace
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
 number: (SUB_|ADD_)? (FLOAT_ | INTEGER_);
 
-unitsValue: number (identifier|PERCENT_);
+unitsValue: number (identifier|PERCENT_|STR_);
 
 string: STR_;
 
@@ -128,6 +129,7 @@ expression: unitsValue # simpleExpression
   | operand=expression AS_ target=identifier # cast
   | FORCE_ operand=expression AS_ target=identifier # castForce
   | name=funcName LPAREN_ operand=expression RPAREN_ # singleParamFunctionCall
+  | name=funcName LPAREN_ args=expressionList RPAREN_ # variadicFunctionCall
   | left=expression POW_ right=expression # powExpression
   | left=expression op=(MULT_ | DIV_) right=expression # multiplyExpression
   | left=expression op=(ADD_ | SUB_) right=expression # additionExpression
@@ -150,9 +152,11 @@ expression: unitsValue # simpleExpression
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;
 
-funcName: (MEAN_ | STD_) # reservedFuncName
+funcName: (MEAN_ | STD_ | DEBUG_) # reservedFuncName
   | identifier # identifierFuncName
   ;
+
+expressionList: expression (COMMA_ expression)+;
 
 assignment: CONST_ name=identifier EQ_ val=expression;
 

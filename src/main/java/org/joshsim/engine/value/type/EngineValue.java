@@ -55,6 +55,18 @@ public abstract class EngineValue {
   public abstract Optional<Integer> getSize();
 
   /**
+   * Get the count of elements in this value.
+   *
+   * <p>For scalars and entities, this returns 1. For distributions, this returns
+   * the number of elements. For boolean distributions, this returns the count
+   * of TRUE values.</p>
+   *
+   * @return the count of elements
+   * @throws UnsupportedOperationException if count is not defined (e.g., virtual distributions)
+   */
+  public abstract long getCount();
+
+  /**
    * Convert this EngineValue to a Scalar.
    *
    * <p>Convert this EngineValue to a Scalar such that Scalars return themselves unchanged while
@@ -443,6 +455,57 @@ public abstract class EngineValue {
   }
 
   /**
+   * Perform logical AND operation with another engine value.
+   *
+   * @param other The other engine value.
+   * @return EngineValue with a single boolean if both are scalars or a distribution of boolean
+   *     values for element-wise AND if either is a distribution.
+   */
+  public EngineValue and(EngineValue other) {
+    if (getLanguageType().isDistribution()) {
+      return unsafeAnd(other);
+    } else if (other.getLanguageType().isDistribution()) {
+      return other.unsafeAnd(this);
+    } else {
+      return unsafeAnd(other);
+    }
+  }
+
+  /**
+   * Perform logical OR operation with another engine value.
+   *
+   * @param other The other engine value.
+   * @return EngineValue with a single boolean if both are scalars or a distribution of boolean
+   *     values for element-wise OR if either is a distribution.
+   */
+  public EngineValue or(EngineValue other) {
+    if (getLanguageType().isDistribution()) {
+      return unsafeOr(other);
+    } else if (other.getLanguageType().isDistribution()) {
+      return other.unsafeOr(this);
+    } else {
+      return unsafeOr(other);
+    }
+  }
+
+  /**
+   * Perform logical XOR operation with another engine value.
+   *
+   * @param other The other engine value.
+   * @return EngineValue with a single boolean if both are scalars or a distribution of boolean
+   *     values for element-wise XOR if either is a distribution.
+   */
+  public EngineValue xor(EngineValue other) {
+    if (getLanguageType().isDistribution()) {
+      return unsafeXor(other);
+    } else if (other.getLanguageType().isDistribution()) {
+      return other.unsafeXor(this);
+    } else {
+      return unsafeXor(other);
+    }
+  }
+
+  /**
    * Add this value to another value assuming that the units and type are compatible.
    *
    * @param other the other value.
@@ -587,6 +650,33 @@ public abstract class EngineValue {
    * @throws IllegalArgumentException if units are incompatible.
    */
   protected abstract EngineValue unsafeNotEqualTo(EngineValue other);
+
+  /**
+   * Perform logical AND with another value.
+   *
+   * @param other the other value.
+   * @return the result of the logical AND operation.
+   * @throws UnsupportedOperationException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeAnd(EngineValue other);
+
+  /**
+   * Perform logical OR with another value.
+   *
+   * @param other the other value.
+   * @return the result of the logical OR operation.
+   * @throws UnsupportedOperationException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeOr(EngineValue other);
+
+  /**
+   * Perform logical XOR with another value.
+   *
+   * @param other the other value.
+   * @return the result of the logical XOR operation.
+   * @throws UnsupportedOperationException if the operation is not supported for this data type.
+   */
+  protected abstract EngineValue unsafeXor(EngineValue other);
 
   /**
    * Determine if this value can be used to raise another value to a power.

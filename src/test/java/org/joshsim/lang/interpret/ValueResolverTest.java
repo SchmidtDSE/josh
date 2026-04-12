@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -25,7 +26,8 @@ import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.Scope;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.converter.Units;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +52,7 @@ public class ValueResolverTest {
   @Mock(lenient = true) private EventHandlerGroup mockNestedGroup;
   @Mock(lenient = true) private EventHandler mockNestedHandler;
 
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private Scope scope;
   private ValueResolver resolver;
 
@@ -59,7 +61,7 @@ public class ValueResolverTest {
    */
   @BeforeEach
   void setUp() {
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
 
     // Set up nested reference on root
     when(mockNestedHandler.getAttributeName()).thenReturn("nested");
@@ -93,7 +95,7 @@ public class ValueResolverTest {
 
   @Test
   void testDirectValueResolution() {
-    resolver = new ValueResolver(valueFactory, "direct");
+    resolver = new RecursiveValueResolver(valueFactory, "direct");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve direct value");
@@ -102,7 +104,7 @@ public class ValueResolverTest {
 
   @Test
   void testNestedValueResolution() {
-    resolver = new ValueResolver(valueFactory, "entity.nested");
+    resolver = new RecursiveValueResolver(valueFactory, "entity.nested");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve nested value");
@@ -111,7 +113,7 @@ public class ValueResolverTest {
 
   @Test
   void testLocalDotValueResolution() {
-    resolver = new ValueResolver(valueFactory, "local.value");
+    resolver = new RecursiveValueResolver(valueFactory, "local.value");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent(), "Should resolve local.value");
@@ -127,7 +129,7 @@ public class ValueResolverTest {
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    ValueResolver resolver = new ValueResolver(valueFactory, "testAttr");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "testAttr");
 
     // First access: Should miss cache, then cache the index
     Optional<EngineValue> result1 = resolver.get(entityScope);
@@ -164,7 +166,7 @@ public class ValueResolverTest {
     EntityScope patchScope = new EntityScope(mockPatch);
 
     // Same resolver used for both entity types
-    ValueResolver resolver = new ValueResolver(valueFactory, "testAttr");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "testAttr");
 
     // Access agent (testAttr at index 0)
     Optional<EngineValue> agentResult = resolver.get(agentScope);
@@ -189,7 +191,7 @@ public class ValueResolverTest {
     when(mockEntity.getAttributeNames()).thenReturn(Set.of());
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    ValueResolver resolver = new ValueResolver(valueFactory, "nonExistent");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "nonExistent");
 
     // Should return empty (not throw exception)
     Optional<EngineValue> result = resolver.get(entityScope);
@@ -211,7 +213,7 @@ public class ValueResolverTest {
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("nested"));
 
     // Dotted path should use slow path (complex resolution)
-    ValueResolver resolver = new ValueResolver(valueFactory, "entity.nested");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "entity.nested");
     Optional<EngineValue> result = resolver.get(mockScope);
 
     assertTrue(result.isPresent());
@@ -227,7 +229,7 @@ public class ValueResolverTest {
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    ValueResolver resolver = new ValueResolver(valueFactory, "testAttr");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "testAttr");
 
     // Make multiple accesses
     for (int i = 0; i < 10; i++) {
@@ -244,19 +246,22 @@ public class ValueResolverTest {
   }
 
   @Test
-  void testUninitializedAttributeReturnsEmpty() {
-    // Setup: Attribute exists in index map but returns empty
+  void testUninitializedAttributeThrows() {
+    // Setup: Attribute exists in index map but returns empty (uninitialized)
     Map<String, Integer> indexMap = Map.of("testAttr", 0);
     when(mockEntity.getAttributeNameToIndex()).thenReturn(indexMap);
     when(mockEntity.getAttributeValue(0)).thenReturn(Optional.empty());
+    when(mockEntity.getAttributeValue("testAttr")).thenReturn(Optional.empty());
     when(mockEntity.getAttributeNames()).thenReturn(Set.of("testAttr"));
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    ValueResolver resolver = new ValueResolver(valueFactory, "testAttr");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "testAttr");
 
-    // Should return empty (attribute exists but uninitialized)
-    Optional<EngineValue> result = resolver.get(entityScope);
-    assertFalse(result.isPresent());
+    // Uninitialized attribute: fast path returns empty, slow path throws IllegalArgumentException
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> resolver.get(entityScope)
+    );
   }
 
   @Test
@@ -268,11 +273,40 @@ public class ValueResolverTest {
     when(mockEntity.getAttributeValue("nonExistent")).thenReturn(Optional.empty());
 
     EntityScope entityScope = new EntityScope(mockEntity);
-    ValueResolver resolver = new ValueResolver(valueFactory, "nonExistent");
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "nonExistent");
 
     // Should return empty (attribute doesn't exist)
     Optional<EngineValue> result = resolver.get(entityScope);
     assertFalse(result.isPresent());
+  }
+
+  @Test
+  void testEvalDurationReturnsZero() {
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "evalDuration");
+    Optional<EngineValue> result = resolver.get(mockScope);
+
+    assertTrue(result.isPresent(), "evalDuration should return a value");
+    assertEquals(0L, result.get().getAsInt(), "evalDuration should return 0");
+    assertEquals(
+        Units.of("milliseconds"),
+        result.get().getUnits(),
+        "evalDuration should use milliseconds units"
+    );
+  }
+
+  @Test
+  void testEvalDurationSuffixReturnsZero() {
+    // When a dotted path ending in evalDuration is resolved, the terminal
+    // child resolver should return 0 ms without actually querying the entity.
+    ValueResolver resolver = new RecursiveValueResolver(valueFactory, "entity.evalDuration");
+    Optional<EngineValue> result = resolver.get(mockScope);
+
+    assertTrue(result.isPresent(), "entity.evalDuration should return a value");
+    assertEquals(
+        Units.of("milliseconds"),
+        result.get().getUnits(),
+        "evalDuration suffix should use milliseconds units"
+    );
   }
 
 }

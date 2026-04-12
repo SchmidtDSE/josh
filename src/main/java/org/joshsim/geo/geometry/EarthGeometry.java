@@ -94,17 +94,16 @@ public class EarthGeometry extends EarthShape {
   }
 
   @Override
-  public boolean intersects(EngineGeometry other) {
-    return intersects(other.getOnEarth());
-  }
-
-  @Override
   public GridShape getOnGrid() {
     throw new UnsupportedOperationException(
         "EarthGeometry does not support conversion to GridShape");
   }
 
-  @Override
+  /**
+   * Get this geometry in Earth space.
+   *
+   * @return This geometry (already in Earth space).
+   */
   public EarthShape getOnEarth() {
     return this;
   }

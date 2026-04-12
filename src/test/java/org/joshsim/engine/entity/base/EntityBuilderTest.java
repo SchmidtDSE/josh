@@ -15,7 +15,7 @@ import org.joshsim.engine.entity.type.Disturbance;
 import org.joshsim.engine.entity.type.Patch;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.simulation.Simulation;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ public class EntityBuilderTest {
    */
   @BeforeEach
   public void setUp() {
-    builder = new EntityBuilder(new EngineValueFactory());
+    builder = new EntityBuilder(new ValueSupportFactory());
     mockParent = mock(Entity.class);
     mockGeometry = mock(EngineGeometry.class);
     mockEventKey = EventKey.of("testState", "testAttribute", "testEvent");

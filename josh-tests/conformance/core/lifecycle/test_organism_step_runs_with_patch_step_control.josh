@@ -1,0 +1,47 @@
+# @category: regression
+# @subcategory: organism-lifecycle
+# @priority: critical
+# @description: Control test - organism .step runs when patch has a .step handler
+
+# CONTROL: When the patch defines at least one .step handler, the step phase
+# runs and organism .step handlers execute via the startSubstep cascade.
+# This test documents the WORKING case for comparison with the broken cases.
+#
+# The only difference from test_organism_step_skipped_no_patch_step.josh is
+# that the patch export uses .step instead of .end.
+
+start simulation TestOrganismStepRunsWithPatchStepControl
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+  exportFiles.patch = "file:///tmp/test_organism_step_runs.csv"
+end simulation
+
+start patch Default
+  Tree.init = create 1 count of Tree
+
+  # This .step export causes "step" to appear in the events set,
+  # which gates the entire step phase for all patches and organisms.
+  export.avgAge.step = mean(Tree.age)
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

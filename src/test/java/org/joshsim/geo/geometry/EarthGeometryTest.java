@@ -391,13 +391,12 @@ public class EarthGeometryTest {
           "TestGrid",
           "EPSG:4326",
           new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
-          cellSize,
-          "m");
+          cellSize);
 
       assertNotNull(definition, "Grid CRS definition should be created");
       assertEquals("TestGrid", definition.getName(), "Grid name should match");
       assertEquals("EPSG:4326", definition.getBaseCrsCode(), "Base CRS code should match");
-      assertEquals(cellSize, definition.getCellSize(), "Cell size should match");
+      assertEquals(cellSize, definition.getCellSizeGrid(), "Cell size should match");
     }
 
     @Test
@@ -414,8 +413,7 @@ public class EarthGeometryTest {
           "TestGrid",
           "EPSG:4326",
           new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
-          cellSize,
-          "degrees");
+          cellSize);
 
       // Test converting from grid to CRS coordinates
       BigDecimal gridX = BigDecimal.ZERO;
@@ -444,8 +442,7 @@ public class EarthGeometryTest {
           "TestGrid",
           "EPSG:4326",
           new PatchBuilderExtents(topLeftX, topLeftY, bottomRightX, bottomRightY),
-          cellSize,
-          "degrees");
+          cellSize);
 
       // Test converting from CRS to grid coordinates
       BigDecimal[] gridCoords = definition.crsToGridCoordinates(topLeftX, topLeftY);

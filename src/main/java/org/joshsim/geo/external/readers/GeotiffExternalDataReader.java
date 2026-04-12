@@ -25,7 +25,7 @@ import org.apache.sis.storage.StorageConnector;
 import org.apache.sis.storage.geotiff.GeoTiffStore;
 import org.apache.sis.storage.geotiff.GeoTiffStoreProvider;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
@@ -41,7 +41,7 @@ import org.opengis.util.FactoryException;
  */
 public class GeotiffExternalDataReader implements ExternalDataReader {
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final Units units;
 
   private GeoTiffStore store;
@@ -59,7 +59,7 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
    * @param valueFactory The value factory to use in building values returned from this reader.
    * @param units The units to use for the values returned from this reader.
    */
-  public GeotiffExternalDataReader(EngineValueFactory valueFactory, Units units) {
+  public GeotiffExternalDataReader(ValueSupportFactory valueFactory, Units units) {
     this.valueFactory = valueFactory;
     this.units = units;
   }

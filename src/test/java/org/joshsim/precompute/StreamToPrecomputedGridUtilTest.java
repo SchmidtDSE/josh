@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class StreamToPrecomputedGridUtilTest {
 
   @Mock
-  private EngineValueFactory mockFactory;
+  private ValueSupportFactory mockFactory;
   @Mock
   private PatchBuilderExtents mockExtents;
 

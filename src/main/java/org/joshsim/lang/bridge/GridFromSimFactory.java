@@ -15,7 +15,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridCrsDefinition;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.ExtentsTransformer;
 
@@ -26,7 +26,7 @@ import org.joshsim.precompute.ExtentsTransformer;
 public class GridFromSimFactory {
 
   private final EngineBridge bridge;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Constructs a GridFromSimFactory with the specified EngineBridge.
@@ -36,16 +36,16 @@ public class GridFromSimFactory {
   public GridFromSimFactory(EngineBridge bridge) {
     this.bridge = bridge;
 
-    valueFactory = bridge.getEngineValueFactory();
+    valueFactory = bridge.getValueSupportFactory();
   }
 
   /**
-   * Constructs a GridFromSimFactory with the specified EngineBridge and EngineValueFactory.
+   * Constructs a GridFromSimFactory with the specified EngineBridge and ValueSupportFactory.
    *
    * @param bridge the EngineBridge used for converting units
-   * @param valueFactory the EngineValueFactory used to create EngineValue instances
+   * @param valueFactory the ValueSupportFactory used to create EngineValue instances
    */
-  public GridFromSimFactory(EngineBridge bridge, EngineValueFactory valueFactory) {
+  public GridFromSimFactory(EngineBridge bridge, ValueSupportFactory valueFactory) {
     this.bridge = bridge;
     this.valueFactory = valueFactory;
   }
@@ -91,19 +91,18 @@ public class GridFromSimFactory {
     boolean posSizeMismatch = posDegrees && sizeMeters;
     boolean supportsEarthSpace = geometryFactory.supportsEarthSpace();
     boolean requiresCountConversion = posSizeMismatch && !supportsEarthSpace;
+    BigDecimal originalCellSizeMeters = sizeValuePrimitive;
     if (requiresCountConversion) {
       extents = ExtentsTransformer.transformToGrid(extents, sizeValuePrimitive);
       sizeValuePrimitive = BigDecimal.valueOf(1);
     }
-
-    String sizeValueUnits = "m";
 
     GridCrsDefinition gridCrsDefinition = new GridCrsDefinition(
         inputCrs,
         inputCrs,
         extents,
         sizeValuePrimitive,
-        sizeValueUnits
+        originalCellSizeMeters
     );
 
     PatchBuilder builder = geometryFactory.getPatchBuilder(

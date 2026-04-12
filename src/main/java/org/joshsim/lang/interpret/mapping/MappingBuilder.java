@@ -10,7 +10,7 @@
 package org.joshsim.lang.interpret.mapping;
 
 import java.util.Optional;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 /**
@@ -21,7 +21,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class MappingBuilder {
 
-  private Optional<EngineValueFactory> valueFactory;
+  private Optional<ValueSupportFactory> valueFactory;
   private Optional<MapBounds> domain;
   private Optional<MapBounds> range;
   private Optional<EngineValue> mapBehaviorArgument;
@@ -42,7 +42,7 @@ public class MappingBuilder {
    * @param valueFactory The value factory to use.
    * @return This builder instance for method chaining.
    */
-  public MappingBuilder setValueFactory(EngineValueFactory valueFactory) {
+  public MappingBuilder setValueFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = Optional.of(valueFactory);
     return this;
   }
@@ -83,14 +83,19 @@ public class MappingBuilder {
   /**
    * Build a mapping strategy based on the provided strategy name and builder settings.
    *
-   * @param strategyName The name of the mapping strategy to build ("linear", "quadratic", or
-   *     "sigmoid").
+   * <p>Accepts both base forms ("linear", "quadratic", "sigmoid") and adverb forms
+   * ("linearly", "quadratically", "sigmoidally") as used in Josh language syntax.</p>
+   *
+   * @param strategyName The name of the mapping strategy to build.
    * @return The constructed mapping strategy.
    * @throws IllegalArgumentException if the strategy name is unknown or required fields are
    *     missing.
    */
   public MapStrategy build(String strategyName) {
-    return switch (strategyName) {
+    // Normalize strategy name - accept both base and adverb forms
+    String normalizedName = normalizeStrategyName(strategyName);
+
+    return switch (normalizedName) {
       case "linear" -> new LinearMapStrategy(
           valueFactory.orElseThrow(),
           domain.orElseThrow(),
@@ -109,6 +114,21 @@ public class MappingBuilder {
           mapBehaviorArgument.orElseThrow().getAsBoolean()
       );
       default -> throw new IllegalArgumentException("Unknown mapping: " + strategyName);
+    };
+  }
+
+  /**
+   * Normalize strategy name by converting adverb forms to base forms.
+   *
+   * @param strategyName The strategy name (may be "linear" or "linearly", etc.)
+   * @return The normalized base form ("linear", "quadratic", or "sigmoid")
+   */
+  private String normalizeStrategyName(String strategyName) {
+    return switch (strategyName) {
+      case "linearly" -> "linear";
+      case "quadratically" -> "quadratic";
+      case "sigmoidally" -> "sigmoid";
+      default -> strategyName;
     };
   }
 }

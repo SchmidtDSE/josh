@@ -7,10 +7,10 @@
 package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -18,7 +18,7 @@ import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -43,7 +43,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param externalResourceGetter Strategy to get external resources.
    * @param configGetter Strategy to get configuration resources.
    */
-  public QueryCacheEngineBridge(EngineValueFactory valueFactory,
+  public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter) {
@@ -57,7 +57,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         externalResourceGetter,
         configGetter
     );
-    cachedPatchesByGeometry = new HashMap<>();
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
 
   /**
@@ -73,7 +73,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param configGetter Strategy to get configuration resources.
    * @param replicate The replicate to use for testing.
    */
-  QueryCacheEngineBridge(EngineValueFactory valueFactory, EngineGeometryFactory geometryFactory,
+  QueryCacheEngineBridge(ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
         MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
         Replicate replicate) {
@@ -87,14 +87,14 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         configGetter,
         replicate
     );
-    cachedPatchesByGeometry = new HashMap<>();
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
 
   @Override
   public List<Entity> getPriorPatches(GeometryMomento geometryMomento) {
-    if (cachedPatchesByGeometry.containsKey(geometryMomento)) {
+    List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
+    if (keys != null) {
       // Cache hit: retrieve patches by keys using direct iteration
-      List<GeoKey> keys = cachedPatchesByGeometry.get(geometryMomento);
       long priorTimestep = getPriorTimestep();
 
       List<Entity> result = new ArrayList<>(keys.size());
@@ -114,7 +114,7 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         }
       }
 
-      cachedPatchesByGeometry.put(geometryMomento, geoKeys);
+      cachedPatchesByGeometry.putIfAbsent(geometryMomento, geoKeys);
       return entities;
     }
   }

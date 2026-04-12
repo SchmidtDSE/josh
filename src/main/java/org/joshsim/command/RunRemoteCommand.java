@@ -251,21 +251,21 @@ public class RunRemoteCommand implements Callable<Integer> {
       return HTTP_ERROR_CODE;
     } catch (IOException e) {
       if (isUsingJoshCloud()) {
-        output.printError("Josh Cloud execution failed: " + e.getMessage());
+        output.printError("Josh Cloud execution failed: " + getRootCauseMessage(e));
         output.printError("Please check your API key and network connection.");
         output.printError("Visit https://joshsim.org for support.");
       } else {
-        output.printError("Custom endpoint execution failed: " + e.getMessage());
+        output.printError("Custom endpoint execution failed: " + getRootCauseMessage(e));
         output.printError("Please verify your endpoint URL and API key.");
       }
       return NETWORK_ERROR_CODE;
     } catch (Exception e) {
       if (isUsingJoshCloud()) {
-        output.printError("Josh Cloud execution failed: " + e.getMessage());
+        output.printError("Josh Cloud execution failed: " + getRootCauseMessage(e));
         output.printError("Please check your API key and network connection.");
         output.printError("Visit https://joshsim.org for support.");
       } else {
-        output.printError("Custom endpoint execution failed: " + e.getMessage());
+        output.printError("Custom endpoint execution failed: " + getRootCauseMessage(e));
         output.printError("Please verify your endpoint URL and API key.");
       }
       return UNKNOWN_ERROR_CODE;
@@ -498,6 +498,23 @@ public class RunRemoteCommand implements Callable<Integer> {
   }
 
 
+
+  /**
+   * Walks the exception chain to find the first non-null, non-empty message.
+   *
+   * @param e The exception to inspect
+   * @return The first meaningful message found, or the exception class name as fallback
+   */
+  private String getRootCauseMessage(Exception e) {
+    Throwable current = e;
+    while (current != null) {
+      if (current.getMessage() != null && !current.getMessage().isEmpty()) {
+        return current.getMessage();
+      }
+      current = current.getCause();
+    }
+    return e.getClass().getSimpleName();
+  }
 
   /**
    * Determines if the current endpoint is Josh Cloud.

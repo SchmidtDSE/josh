@@ -69,6 +69,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
     InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(context.getReplicateNumber())
         .withMinioOptions(context.getMinioOptions())
+        .withAppendMode(false)
         .build();
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
 
@@ -228,7 +229,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
      * @param cumulativeStepCount Shared cumulative step counter for progress coordination
      */
     public LocalLeaderWireResponseHandler(RemoteResponseHandler sharedHandler,
-                                         AtomicInteger cumulativeStepCount) {
+        AtomicInteger cumulativeStepCount) {
       this.sharedHandler = sharedHandler;
       this.cumulativeStepCount = cumulativeStepCount;
     }
@@ -246,8 +247,8 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
      */
     @Override
     public void handleWireResponse(WireResponse response, int replicateNumber,
-                                  io.undertow.server.HttpServerExchange clientExchange,
-                                  AtomicInteger cumulativeStepCount) {
+        io.undertow.server.HttpServerExchange clientExchange,
+        AtomicInteger cumulativeStepCount) {
       // Convert WireResponse back to string format for shared handler
       // This avoids duplicating all the processing logic
       String wireFormatLine = response.toWireFormat();

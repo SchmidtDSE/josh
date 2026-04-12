@@ -91,13 +91,13 @@ public class Slicer {
 
     @Override
     public boolean hasNext() {
-      return this.subjects.hasNext();
+      return subjects.hasNext();
     }
 
     @Override
     public Optional<EngineValue> next() {
-      EngineValue subject = this.subjects.next();
-      EngineValue selection = this.selections.next();
+      EngineValue subject = subjects.next();
+      EngineValue selection = selections.next();
       boolean selectionBool = selection.getAsBoolean();
       return selectionBool ? Optional.of(subject) : Optional.empty();
     }

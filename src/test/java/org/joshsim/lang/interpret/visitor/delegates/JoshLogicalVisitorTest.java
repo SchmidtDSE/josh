@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.ConditionContext;
 import org.joshsim.lang.antlr.JoshLangParser.ConditionalContext;
@@ -30,7 +30,7 @@ class JoshLogicalVisitorTest {
 
   private DelegateToolbox toolbox;
   private JoshParserToMachineVisitor parent;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JoshLogicalVisitor visitor;
   private EngineValue trueValue;
 
@@ -38,7 +38,7 @@ class JoshLogicalVisitorTest {
   void setUp() {
     toolbox = mock(DelegateToolbox.class);
     parent = mock(JoshParserToMachineVisitor.class);
-    valueFactory = mock(EngineValueFactory.class);
+    valueFactory = mock(ValueSupportFactory.class);
     trueValue = mock(EngineValue.class);
 
     when(toolbox.getParent()).thenReturn(parent);

@@ -298,7 +298,7 @@ public class EarthGeometryFactory implements EngineGeometryFactory {
           gridCrsDefinition.getBaseCrsCode(),
           gridCrsDefinition.getBaseCrsCode(),
           gridCrsDefinition.getExtents(),
-          gridCrsDefinition.getCellSize(),
+          gridCrsDefinition.getCellSizeMeters(),
           prototype
       );
     } catch (TransformException | FactoryException e) {

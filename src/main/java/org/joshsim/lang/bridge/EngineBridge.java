@@ -17,7 +17,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.EnginePoint;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -182,6 +182,6 @@ public interface EngineBridge {
    *
    * @return Value factory to use across the simulation this bridge supports.
    */
-  EngineValueFactory getEngineValueFactory();
+  ValueSupportFactory getValueSupportFactory();
 
 }

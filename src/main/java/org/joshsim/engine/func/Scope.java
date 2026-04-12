@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.func;
 
+import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -40,5 +41,19 @@ public interface Scope {
    * @return all attributes within this scope.
    */
   Set<String> getAttributes();
+
+  /**
+   * Attempt to retrieve a value using an integer index cache for fast array access.
+   *
+   * <p>Implementations that maintain an attribute index (e.g. EntityScope) should resolve
+   * {@code name} via that index and return the value when present. Implementations that do not
+   * support indexed access must return {@code Optional.empty()} so callers fall through to the
+   * standard slow path.</p>
+   *
+   * @param name the attribute name to look up.
+   * @return Optional containing the value if the fast path succeeded, or empty to signal the
+   *     caller should fall back to the slow path.
+   */
+  Optional<EngineValue> tryIndexedGet(String name);
 
 }

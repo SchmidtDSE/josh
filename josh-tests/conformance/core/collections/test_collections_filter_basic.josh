@@ -1,0 +1,108 @@
+# @category: core
+# @subcategory: collections
+# @priority: critical
+# @description: Test filtering collection by single attribute using comparison operators
+
+start simulation CollectionsFilterBasic
+
+  grid.size = 10 m
+  grid.low = 36.0 degrees latitude, -118.0 degrees longitude
+  grid.high = 36.01 degrees latitude, -117.99 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 6 count
+
+end simulation
+
+start patch Default
+
+  # Create trees with varying ages
+  Trees.init = create 20 count of Tree
+
+  # Filter operations with different comparison operators
+
+  # Filter by age > 3 years
+  oldTrees.step:if(meta.stepCount >= 2 count) = Trees[Tree.age > 3 years]
+
+  # Filter by height >= 2.5 m
+  tallTrees.step:if(meta.stepCount >= 2 count) = Trees[Tree.height >= 2.5 m]
+
+  # Filter by age < 2 years
+  youngTrees.step:if(meta.stepCount >= 2 count) = Trees[Tree.age < 2 years]
+
+  # Filter by age == 3 years
+  exactAgeTrees.step:if(meta.stepCount >= 2 count) = Trees[Tree.age == 3 years]
+
+  # Filter by status != 0 count
+  matureTrees.step:if(meta.stepCount >= 2 count) = Trees[Tree.status != 0 count]
+
+  # Assert total tree count remains constant across steps
+  assert.totalTreesStep0.step:if(meta.stepCount == 0 count) = count(Trees) == 20 count
+  assert.totalTreesStep1.step:if(meta.stepCount == 1 count) = count(Trees) == 20 count
+  assert.totalTreesStep2.step:if(meta.stepCount == 2 count) = count(Trees) == 20 count
+
+  # Assert filtered collection sizes at step 2
+  # At step 2: ages = init + 2 (range 2-21 from uniform 0-19 init)
+  # Filter age > 3 selects ages 4-21, about 90% on average
+  # With variance across many patches, use range 12-20
+  assert.oldTreesCount.step:if(meta.stepCount == 2 count) = count(oldTrees) >= 12 count and count(oldTrees) <= 20 count
+
+  # Filter age < 2: at step 2 ages are 2-21, none are < 2
+  assert.youngTreesCount.step:if(meta.stepCount == 2 count) = count(youngTrees) == 0 count
+
+  # Filter age == 3: with continuous ages, very few will be exactly 3
+  assert.exactAgeTreesCount.step:if(meta.stepCount == 2 count) = count(exactAgeTrees) >= 0 count and count(exactAgeTrees) <= 2 count
+
+  # Assert filtered by height (initial 1-10.5m + 1m growth at step 2 = 2-11.5m)
+  # Filter height >= 2.5: expect most trees to qualify
+  assert.tallTreesCount.step:if(meta.stepCount == 2 count) = count(tallTrees) >= 12 count
+
+  # Assert filtered collection size is bounded by original
+  assert.filterReducesSize.step:if(meta.stepCount == 2 count) = count(oldTrees) <= count(Trees)
+
+  # Assert filter with != operator
+  # Status = 1 when age >= 5 years. At step 2: ages 2-21, so ~85% mature
+  # With variance across patches, use range 8-20
+  assert.matureTreesCount.step:if(meta.stepCount == 2 count) = count(matureTrees) >= 8 count and count(matureTrees) <= 20 count
+
+  # Test edge case: filter with no matches should return empty collection
+  veryOldTrees.step:if(meta.stepCount == 2 count) = Trees[Tree.age > 100 years]
+  assert.noVeryOldTrees.step:if(meta.stepCount == 2 count) = count(veryOldTrees) == 0 count
+
+  # Test that filter results change over time as organisms age
+  oldTreesStep3.step:if(meta.stepCount == 3 count) = Trees[Tree.age > 3 years]
+  # At step 3: ages = init + 3 = 3-22, filter selects ages > 3 (~95%)
+  assert.oldTreesGrow.step:if(meta.stepCount == 3 count) = count(oldTreesStep3) >= 15 count and count(oldTreesStep3) <= 20 count
+
+end patch
+
+start organism Tree
+
+  # Each tree starts with a random age (uniformly distributed 0-19 years)
+  age.init = sample uniform from 0 years to 19 years
+  age.step = prior.age + 1 year
+
+  # Height starts at 1m to 10.5m (uniformly distributed)
+  height.init = sample uniform from 1 m to 10.5 m
+  height.step = prior.height + 0.5 m
+
+  # Status flag: 0 for young trees, 1 for trees >= 5 years old
+  status.init = 0 count
+  status.step:if(current.age >= 5 years) = 1 count
+
+  # Assert individual age increases correctly
+  assert.ageIncreasesStep2.step:if(meta.stepCount == 2 count and current.age == 5 years) = prior.age == 4 years
+  assert.ageIncreasesStep3.step:if(meta.stepCount == 3 count and current.age == 6 years) = prior.age == 5 years
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

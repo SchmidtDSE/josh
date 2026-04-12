@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.ConfigGetter;
 import org.joshsim.lang.interpret.ConfigInterpreter;
 import org.joshsim.lang.io.InputGetterStrategy;
@@ -25,7 +25,7 @@ import org.joshsim.lang.io.InputGetterStrategy;
 public class JshcConfigGetter implements ConfigGetter {
 
   private final InputGetterStrategy inputStrategy;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final ConcurrentHashMap<String, Optional<Config>> configCache;
 
   /**
@@ -34,7 +34,7 @@ public class JshcConfigGetter implements ConfigGetter {
    * @param inputStrategy Strategy for loading input files
    * @param valueFactory Factory for creating engine values
    */
-  public JshcConfigGetter(InputGetterStrategy inputStrategy, EngineValueFactory valueFactory) {
+  public JshcConfigGetter(InputGetterStrategy inputStrategy, ValueSupportFactory valueFactory) {
     this.inputStrategy = inputStrategy;
     this.valueFactory = valueFactory;
     this.configCache = new ConcurrentHashMap<>();

@@ -2,10 +2,9 @@ package org.joshsim.engine.geometry;
 
 import java.math.BigDecimal;
 import org.joshsim.engine.geometry.grid.GridShape;
-import org.joshsim.geo.geometry.EarthShape;
 
 /**
- * A geometric object which defines if it is in Earth space or in grid space.
+ * A geometric object representing a spatial geometry in grid or coordinate space.
  */
 public interface EngineGeometry extends Spatial {
 
@@ -34,14 +33,7 @@ public interface EngineGeometry extends Spatial {
   boolean intersects(BigDecimal locationX, BigDecimal locationY);
 
   /**
-   * Get this geometry in Earth space.
-   *
-   * @return A version of this geometry in Earth space.
-   */
-  EarthShape getOnEarth();
-
-  /**
-   * Get this geometry on PatchSet sapce.
+   * Get this geometry on PatchSet space.
    *
    * @return A version of this geometry in PatchSet space.
    */

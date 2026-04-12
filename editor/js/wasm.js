@@ -4,7 +4,7 @@
  * @license BSD-3-Clause
  */
 
-import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum} from "model";
+import {SimulationMetadata, SimulationResult, SimulationResultBuilder, OutputDatum, DebugMessage, DebugMessageStore} from "model";
 import {getDistanceMeters} from "util";
 import {ExternalDataSerializer} from "wire";
 
@@ -22,10 +22,11 @@ class WasmLayer {
    */
   constructor() {
     const self = this;
-    self._worker = new Worker("./js/wasm.worker.js");
+    self._worker = new Worker("./js/wasm.worker.js?v=0.0.8");
     self._initialized = false;
     self._datasetBuilder = null;
     self._wireSerializer = new ExternalDataSerializer();
+    self._debugStore = new DebugMessageStore();
     self._initPromise = new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, result, error, success } = e.data;
@@ -144,7 +145,8 @@ class WasmLayer {
 
     const externalDataStr = self._wireSerializer.serialize(externalData);
     self._datasetBuilder = new SimulationResultBuilder();
-    
+    self._debugStore.clear();
+
     return new Promise((resolve, reject) => {
       self._worker.onmessage = (e) => {
         const { type, error, success } = e.data;
@@ -162,6 +164,9 @@ class WasmLayer {
           const rawInput = e.data.result;
           const parsed = new OutputDatum(rawInput["target"], rawInput["attributes"]);
           self._datasetBuilder.add(parsed);
+        } else if (type === "debug") {
+          const parsed = DebugMessage.parse(e.data.result);
+          self._debugStore.add(parsed);
         }
       };
       self._worker.postMessage({
@@ -312,6 +317,16 @@ class WasmLayer {
   _isDegrees(unitsStr) {
     const self = this;
     return unitsStr === "degree" || unitsStr === "degrees";
+  }
+
+  /**
+   * Get the debug message store containing messages from the last simulation run.
+   *
+   * @returns {DebugMessageStore} The debug message store.
+   */
+  getDebugStore() {
+    const self = this;
+    return self._debugStore;
   }
 }
 

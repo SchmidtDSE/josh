@@ -1,0 +1,22 @@
+start simulation TestAppendOverwrite
+
+  grid.size = 1 count
+  grid.low = 0 count latitude, 0 count longitude
+  grid.high = 2 count latitude, 2 count longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  exportFiles.patch = "file:///tmp/josh_append_overwrite_test.csv"
+
+end simulation
+
+
+start patch Default
+
+  export.value.step = 1 count
+
+end patch

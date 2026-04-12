@@ -16,6 +16,7 @@ import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.PatchSet;
+import org.joshsim.engine.geometry.grid.GridCrsDefinition;
 
 /**
  * A full simulation replicate.
@@ -43,16 +44,30 @@ public class Replicate {
   private long stepNumber = 0;
   private Map<GeoKey, Entity> currentStepFrozenPatches = new ConcurrentHashMap<>();
   private Entity frozenMeta = null;
+  private final GridCrsDefinition gridCrsDefinition;
 
   /**
-   * Construct a replicate with the given patches.
+   * Construct a replicate with the given patches and grid definition.
+   *
+   * @param meta The simulation metadata for which this replicate was created.
+   * @param patches The patches to be included in the replicate.
+   * @param gridCrsDefinition The grid CRS definition for spatial queries, or null.
+   */
+  public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches,
+      GridCrsDefinition gridCrsDefinition) {
+    this.meta = meta;
+    this.presentTimeStep = patches;
+    this.gridCrsDefinition = gridCrsDefinition;
+  }
+
+  /**
+   * Construct a replicate with the given patches (no grid CRS definition).
    *
    * @param meta The simulation metadata for which this replicate was created.
    * @param patches The patches to be included in the replicate.
    */
   public Replicate(MutableEntity meta, Map<GeoKey, MutableEntity> patches) {
-    this.meta = meta;
-    this.presentTimeStep = patches;
+    this(meta, patches, null);
   }
 
   /**
@@ -63,6 +78,7 @@ public class Replicate {
    */
   public Replicate(MutableEntity meta, PatchSet grid) {
     this.meta = meta;
+    this.gridCrsDefinition = grid.getGridCrsDefinition();
 
     presentTimeStep = new HashMap<>();
     for (MutableEntity patch : grid.getPatches()) {
@@ -83,7 +99,7 @@ public class Replicate {
    * Increment the current step number by 1.
    */
   public void incrementStepNumber() {
-    this.stepNumber++;
+    stepNumber++;
   }
 
   /**
@@ -150,7 +166,8 @@ public class Replicate {
       frozenMetaEntity = meta.freeze();
     }
 
-    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMetaEntity, frozenPatches);
+    TimeStep frozenTimeStep = new TimeStep(stepNumber, frozenMetaEntity, frozenPatches,
+        gridCrsDefinition);
     pastTimeSteps.put(stepNumber, frozenTimeStep);
   }
 

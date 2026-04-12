@@ -18,7 +18,7 @@ import static org.mockito.Mockito.lenient;
 
 import org.joshsim.engine.func.Scope;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.machine.SingleThreadEventHandlerMachine;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +36,12 @@ class ExternalRatioComparisonIntegrationTest {
   @Mock private EngineBridge mockBridge;
   @Mock private Scope mockScope;
 
-  private EngineValueFactory factory;
+  private ValueSupportFactory factory;
 
   @BeforeEach
   void setUp() {
-    factory = new EngineValueFactory();
-    lenient().when(mockBridge.getEngineValueFactory()).thenReturn(factory);
+    factory = new ValueSupportFactory();
+    lenient().when(mockBridge.getValueSupportFactory()).thenReturn(factory);
     // Mock the convert method to return the value with new units (NoopConversion behavior)
     lenient().when(mockBridge.convert(any(EngineValue.class), any(Units.class)))
         .thenAnswer(invocation -> {

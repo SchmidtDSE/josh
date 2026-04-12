@@ -15,18 +15,18 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Global cache of precomputed grid offsets for circle queries.
  *
- * <p>Maps radius (in grid cells, ceiled to integer) to list of (offsetX, offsetY) offsets
+ * <p>Maps radius (in grid cells) to list of (offsetX, offsetY) offsets
  * that intersect a circle of that radius centered at origin.</p>
  *
  * <p>Thread-safe using ConcurrentHashMap for parallel query processing.
  * Cache entries are never evicted as typical simulations use a small number
  * of distinct radii.</p>
  *
- * <p>Cache key: ceil(radiusInGridCells) ensures conservative correctness
- * by never missing cells that should be included.</p>
+ * <p>Cache key: exact radiusInGridCells double value. The same within expression
+ * always produces bitwise-identical values from the same BigDecimal inputs.</p>
  */
 class CircleOffsetsCache {
-  private static final Map<Integer, List<GridOffset>> CIRCLE_OFFSETS_CACHE =
+  private static final Map<Double, List<GridOffset>> CIRCLE_OFFSETS_CACHE =
       new ConcurrentHashMap<>();
 
   /**
@@ -36,9 +36,9 @@ class CircleOffsetsCache {
    * which (dx, dy) offsets should be included. The result is cached globally
    * and reused for all subsequent queries with the same radius.</p>
    *
-   * <p>The cache key is ceil(radiusInGridCells) for conservative correctness.
-   * Using ceiling ensures we never miss cells that should be included, though
-   * it may include a few extra cells for fractional radii.</p>
+   * <p>The cache key is the exact radiusInGridCells double value. Each distinct
+   * radius gets its own cached offset set, avoiding collisions between different
+   * radii that previously mapped to the same ceiling integer.</p>
    *
    * <p>Thread-safety: Uses ConcurrentHashMap.putIfAbsent for safe concurrent
    * first-access. Multiple threads may compute offsets simultaneously on first
@@ -48,9 +48,7 @@ class CircleOffsetsCache {
    * @return immutable list of (offsetX, offsetY) offsets relative to circle center
    */
   static List<GridOffset> getOffsetsForRadius(double radiusInGridCells) {
-    int radiusKey = (int) Math.ceil(radiusInGridCells);
-
-    List<GridOffset> cached = CIRCLE_OFFSETS_CACHE.get(radiusKey);
+    List<GridOffset> cached = CIRCLE_OFFSETS_CACHE.get(radiusInGridCells);
     if (cached != null) {
       return cached;
     }
@@ -68,8 +66,18 @@ class CircleOffsetsCache {
     }
 
     List<GridOffset> immutableOffsets = Collections.unmodifiableList(offsets);
-    CIRCLE_OFFSETS_CACHE.putIfAbsent(radiusKey, immutableOffsets);
+    CIRCLE_OFFSETS_CACHE.putIfAbsent(radiusInGridCells, immutableOffsets);
 
-    return CIRCLE_OFFSETS_CACHE.get(radiusKey);
+    return CIRCLE_OFFSETS_CACHE.get(radiusInGridCells);
+  }
+
+  /**
+   * Clears the global offset cache.
+   *
+   * <p>Intended for test isolation — the static cache persists across JUnit tests
+   * in the same JVM, which can cause cross-test contamination.</p>
+   */
+  static void clearCache() {
+    CIRCLE_OFFSETS_CACHE.clear();
   }
 }

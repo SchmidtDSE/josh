@@ -16,12 +16,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.SandboxExportCallback;
@@ -61,15 +59,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
     }
 
-    if (crs.isPresent()) {
-      try {
-        geometryFactory = new EarthGeometryFactory(CRS.forCode(crs.get()));
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to parse CRS: " + e);
-      }
-    } else {
-      geometryFactory = new GridGeometryFactory();
-    }
+    geometryFactory = new GridGeometryFactory();
   }
 
   /**
@@ -171,7 +161,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
 
     // Execute interpretation securely
     Optional<JoshProgram> programResult = executeInterpretation(
@@ -211,7 +201,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     return OutputStepsParser.parseForWasmOrRemote(outputSteps);
   }
 
-  private Optional<JoshProgram> executeInterpretation(EngineValueFactory valueFactory,
+  private Optional<JoshProgram> executeInterpretation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, ParseResult parsed,
         InputOutputLayer inputOutputLayer, HttpServerExchange httpServerExchange, String apiKey) {
     try {
@@ -242,7 +232,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
    *     should be exported.
    * @return true on success, false on failure (400 response set).
    */
-  private boolean executeSimulation(EngineValueFactory valueFactory,
+  private boolean executeSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, String externalData, JoshProgram program,
         String simulationName, HttpServerExchange httpServerExchange, String apiKey,
         Optional<Set<Integer>> outputSteps) {

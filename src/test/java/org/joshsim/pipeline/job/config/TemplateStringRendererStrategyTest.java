@@ -125,7 +125,7 @@ class TemplateStringRendererStrategyTest {
 
     assertTrue(exception.getMessage().contains("Unknown template variables: {unknown}"));
     assertTrue(exception.getMessage().contains(
-        "Available: {example}, {other}, {replicate}, {step}, {variable}"));
+        "Available: {example}, {other}, {replicate}, {timestamp}, {step}, {variable}"));
   }
 
   @Test

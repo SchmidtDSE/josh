@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 
 
 /**
@@ -26,7 +26,7 @@ public class StreamToPrecomputedGridUtil {
    * @param units The units that returned EngineValues should be created with.
    * @return The precomputed grid created from the streams.
    */
-  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
+  public static DataGridLayer streamToGrid(ValueSupportFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units) {
     return streamToGrid(engineValueFactory, streamGetter, extents, minTimestep, maxTimestep,
@@ -45,7 +45,7 @@ public class StreamToPrecomputedGridUtil {
    * @param defaultValue Optional default value to fill grid spaces before copying data.
    * @return The precomputed grid created from the streams.
    */
-  public static DataGridLayer streamToGrid(EngineValueFactory engineValueFactory,
+  public static DataGridLayer streamToGrid(ValueSupportFactory engineValueFactory,
         StreamGetter streamGetter, PatchBuilderExtents extents, long minTimestep,
         long maxTimestep, Units units, Optional<Double> defaultValue) {
 
@@ -63,27 +63,29 @@ public class StreamToPrecomputedGridUtil {
     }
 
     for (long timestep = minTimestep; timestep <= maxTimestep; timestep++) {
-      Stream<PatchKeyConverter.ProjectedValue> values = streamGetter.getForTimestep(timestep);
       final long timestepRealized = timestep;
-      values.forEach(entry -> {
-        double value = entry.getValue().doubleValue();
+      try (Stream<PatchKeyConverter.ProjectedValue> values =
+          streamGetter.getForTimestep(timestep)) {
+        values.forEach(entry -> {
+          double value = entry.getValue().doubleValue();
 
-        // Skip values that match the default value (within tolerance)
-        if (defaultValue.isPresent()) {
-          double defaultVal = defaultValue.get();
-          double tolerance = 0.000001;
-          if (Math.abs(value - defaultVal) <= tolerance) {
-            return; // Skip this value
+          // Skip values that match the default value (within tolerance)
+          if (defaultValue.isPresent()) {
+            double defaultVal = defaultValue.get();
+            double tolerance = 0.000001;
+            if (Math.abs(value - defaultVal) <= tolerance) {
+              return; // Skip this value
+            }
           }
-        }
 
-        grid.setAt(
-            entry.getX().longValue(),
-            entry.getY().longValue(),
-            timestepRealized,
-            value
-        );
-      });
+          grid.setAt(
+              entry.getX().longValue(),
+              entry.getY().longValue(),
+              timestepRealized,
+              value
+          );
+        });
+      }
     }
 
     return grid;

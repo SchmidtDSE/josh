@@ -8,7 +8,7 @@ package org.joshsim.precompute;
 
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -17,7 +17,7 @@ import org.joshsim.engine.value.type.EngineValue;
  */
 public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
 
-  private final EngineValueFactory factory;
+  private final ValueSupportFactory factory;
   private final Units units;
   private final double[][][] innerValues;
 
@@ -30,7 +30,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    * @param maxTimestep The end of the timestep series that should be supported in this grid.
    * @param units The units that returned EngineValues should be created with.
    */
-  DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents,
+  DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
         long minTimestep, long maxTimestep, Units units) {
     super(extents, minTimestep, maxTimestep);
 
@@ -54,7 +54,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    * @param units The units that returned EngineValues should be created with.
    * @param innerValues The values with which to populate the grid.
    */
-  public DoublePrecomputedGrid(EngineValueFactory engineValueFactory, PatchBuilderExtents extents,
+  public DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
         long minTimestep, long maxTimestep, Units units, double[][][] innerValues) {
     super(extents, minTimestep, maxTimestep);
 
@@ -126,6 +126,34 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int horizCut = (int) (x - getMinX());
     int vertCut = (int) (y - getMinY());
     int timestepCut = (int) (timestep - getMinTimestep());
+
+    if (horizCut < 0 || horizCut >= getWidth()) {
+      throw new IllegalArgumentException(String.format(
+          "Horizontal out of bounds (%d < 0 || %d >= %d)",
+          horizCut,
+          horizCut,
+          getWidth()
+      ));
+    }
+
+    if (vertCut < 0 || vertCut >= getHeight()) {
+      throw new IllegalArgumentException(String.format(
+          "Vertical out of bounds (%d < 0 || %d >= %d)",
+          vertCut,
+          vertCut,
+          getHeight()
+      ));
+    }
+
+    if (timestepCut < 0 || timestepCut > (getMaxTimestep() - getMinTimestep())) {
+      throw new IllegalArgumentException(String.format(
+          "Timestep out of bounds (%d < 0 || %d >= %d)",
+          timestepCut,
+          timestepCut,
+          (getMaxTimestep() - getMinTimestep())
+      ));
+    }
+
     double value = innerValues[timestepCut][vertCut][horizCut];
     return factory.buildForNumber(value, units);
   }

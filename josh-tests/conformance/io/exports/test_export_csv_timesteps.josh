@@ -1,0 +1,73 @@
+# @category: io
+# @subcategory: exports
+# @priority: high
+# @description: Test CSV export across multiple timesteps with patch-level aggregations
+
+start simulation ExportCSVTimesteps
+
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.002 degrees latitude, 0.002 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 10 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+  # Export to file:///tmp/ for temporal CSV data
+  exportFiles.patch = "file:///tmp/test_export_csv_timesteps.csv"
+
+end simulation
+
+start patch Default
+
+  # Create patches with varying organisms
+  Plant.init = create 20 count of Plant
+
+  # Calculate patch-level aggregations that change over time
+  avgTemperature.init = 20 C
+  avgTemperature.step = prior.avgTemperature + (sample uniform from -1 C to 1 C)
+
+  # Export temporal data
+  export.totalBiomass.step = sum(Plant.biomass)
+  export.avgTemperature.step = avgTemperature
+  export.biomassPerPlant.step = sum(Plant.biomass) / count(Plant)
+  export.plantCount.step = count(Plant)
+  export.timestep.step = meta.stepCount
+
+  # Assertions to validate temporal changes
+  assert.plantCountConstant.step = count(Plant) == 20 count
+  assert.totalBiomassPositive.step = sum(Plant.biomass) >= 0 kg
+
+end patch
+
+start organism Plant
+
+  biomass.init = sample uniform from 5 kg to 15 kg
+  biomass.step = prior.biomass + (sample uniform from 0.5 kg to 1.5 kg)
+
+  # Assert biomass growth
+  assert.biomassGrows.step = current.biomass >= prior.biomass
+
+end organism
+
+start unit C
+  alias Celsius
+  K = 273.15 + current
+end unit
+
+start unit K
+  alias Kelvin
+  alias Kelvins
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

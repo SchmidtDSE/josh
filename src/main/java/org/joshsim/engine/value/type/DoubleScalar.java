@@ -9,6 +9,7 @@ package org.joshsim.engine.value.type;
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.util.PrecisionUtil;
 
 
 /**
@@ -126,5 +127,36 @@ public class DoubleScalar extends Scalar {
         Math.pow(base, exponent),
         determineRaisedUnits(getUnits(), other.getAsInt())
     );
+  }
+
+  /**
+   * Compares this DoubleScalar to another EngineValue for equality using epsilon tolerance.
+   *
+   * <p>Floating-point arithmetic can produce small rounding errors, so exact comparison
+   * is unreliable. This method uses relative epsilon for large values and absolute
+   * epsilon for small values to determine equality.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeEqualTo(EngineValue other) {
+    boolean result = PrecisionUtil.areEqual(getAsDouble(), other.getAsDouble());
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
+  }
+
+  /**
+   * Compares this DoubleScalar to another EngineValue for inequality using epsilon tolerance.
+   *
+   * <p>This is the logical negation of {@link #unsafeEqualTo(EngineValue)}.</p>
+   *
+   * @param other the other EngineValue to compare with.
+   * @return a BooleanScalar indicating whether the values are not equal within tolerance.
+   */
+  @Override
+  protected EngineValue unsafeNotEqualTo(EngineValue other) {
+    boolean result = PrecisionUtil.areNotEqual(getAsDouble(), other.getAsDouble());
+
+    return new BooleanScalar(getCaster(), result, Units.EMPTY);
   }
 }

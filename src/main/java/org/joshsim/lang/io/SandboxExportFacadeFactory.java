@@ -109,6 +109,19 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
   }
 
   /**
+   * Creates an OutputStreamStrategy for debug output that writes through the callback.
+   *
+   * <p>This allows debug output to use the same callback mechanism as exports in
+   * sandbox environments (WebAssembly). The debug messages are prefixed with "[debug] "
+   * so JavaScript can distinguish them from export data.</p>
+   *
+   * @return An OutputStreamStrategy that writes debug messages through the sandbox callback.
+   */
+  public OutputStreamStrategy createDebugOutputStreamStrategy() {
+    return () -> new DebugRedirectOutputStream(callback);
+  }
+
+  /**
    * An OutputStream implementation that redirects output through an in-memory callback.
    *
    * <p>This class is thread-safe and can be used concurrently by multiple threads when
@@ -158,6 +171,73 @@ public class SandboxExportFacadeFactory implements ExportFacadeFactory {
       }
 
       callback.onWrite(buffer.toString());
+      buffer.setLength(0);
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      flush();
+    }
+  }
+
+  /**
+   * An OutputStream for debug messages that prefixes output with "[debug] " marker.
+   *
+   * <p>This allows JavaScript to distinguish debug messages from export data. Each complete
+   * line written is prefixed with "[debug] " before being sent through the callback.</p>
+   */
+  public static class DebugRedirectOutputStream extends OutputStream {
+
+    private final SandboxExportCallback callback;
+    private final StringBuilder buffer;
+
+    /**
+     * Constructs a new DebugRedirectOutputStream with the specified callback.
+     *
+     * @param callback The callback to use for output redirection
+     */
+    public DebugRedirectOutputStream(SandboxExportCallback callback) {
+      this.callback = callback;
+      this.buffer = new StringBuilder();
+    }
+
+    @Override
+    public synchronized void write(int b) throws IOException {
+      buffer.append((char) b);
+      if (b == '\n') {
+        flush();
+      }
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+      write(b, 0, b.length);
+    }
+
+    @Override
+    public synchronized void write(byte[] b, int off, int len) throws IOException {
+      buffer.append(new String(b, off, len));
+      boolean containsNewline = buffer.indexOf("\n") != -1;
+      if (containsNewline) {
+        flush();
+      }
+    }
+
+    @Override
+    public synchronized void flush() throws IOException {
+      if (buffer.length() == 0) {
+        return;
+      }
+
+      // Prefix each line with [debug] marker for JavaScript parsing
+      String content = buffer.toString();
+      String[] lines = content.split("\n", -1);
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        if (!line.isEmpty()) {
+          callback.onWrite("[debug] " + line + "\n");
+        }
+      }
       buffer.setLength(0);
     }
 

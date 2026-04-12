@@ -16,7 +16,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -63,7 +63,7 @@ public class JoshSimFacade {
         ParseResult parsed, InputOutputLayer inputOutputLayer) {
     setupForJvm();
     return JoshSimFacadeUtil.interpret(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         engineGeometryFactory,
         parsed,
         inputOutputLayer
@@ -98,7 +98,7 @@ public class JoshSimFacade {
         Optional<Set<Integer>> outputSteps) {
     setupForJvm();
 
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -165,6 +165,22 @@ public class JoshSimFacade {
         boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
     runSimulation(geometryFactory, program, simulationName, callback, serialPatches,
         replicateNumber, favorBigDecimal, Optional.empty());
+  }
+
+  /**
+   * Build a ValueSupportFactory for the JVM execution path without profiling timing active.
+   *
+   * <p>Uses the default RecursiveValueResolverFactory, which does not record per-attribute
+   * wall-clock timing. No {@link org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory}
+   * is used here, so evalDuration profiling overhead is absent on this code path. Callers needing
+   * profiler support should pass an explicit ValueResolverFactory to the ValueSupportFactory
+   * constructor instead (see RunCommand for the CLI profiler flag).</p>
+   *
+   * @param favorBigDecimal True if decimal values should favor BigDecimal, false for double.
+   * @return A ValueSupportFactory configured for JVM execution without profiling.
+   */
+  private static ValueSupportFactory buildValueSupportFactory(boolean favorBigDecimal) {
+    return new ValueSupportFactory(favorBigDecimal);
   }
 
   /**

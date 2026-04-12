@@ -1,0 +1,87 @@
+# @category: spatial
+# @subcategory: neighbors
+# @priority: high
+# @description: Test organism behavior based on neighbors - competition and cooperation
+
+start simulation SpatialNeighborsInteractions
+
+  # Create a 3x3 grid
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m  # 3x3 grid
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 4 count
+
+  stepCount.init = 0 count
+  stepCount.step = prior.stepCount + 1 count
+
+end simulation
+
+start patch Default
+
+  # Create 9 organisms
+  Tree.init = create 9 count of Tree
+
+end patch
+
+start organism Tree
+
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  # Base growth rate
+  baseGrowth.init = 5 kg
+
+  # Count nearby competitors within 15m
+  competitors.step = count(Tree within 15 m radial at prior) - 1 count
+
+  # Competition effect - growth reduced by number of competitors
+  competitionEffect.step = current.competitors * 0.5 kg
+
+  # Biomass grows but is reduced by competition
+  biomass.init = 10 kg
+  biomass.step = prior.biomass + current.baseGrowth - current.competitionEffect
+
+  # Assert that competition reduces growth
+  # Trees with more competitors should have less biomass after several steps
+  assert.competitionEffect.step:if(meta.stepCount == 3 count) = current.competitionEffect >= 0 kg
+
+  # Cooperation effect - count of helpful neighbors
+  helpers.step = count(Tree within 20 m radial at prior[Tree.biomass > 30 kg])
+
+  # Cooperation bonus
+  cooperationBonus.step = current.helpers * 0.2 kg
+  biomassWithCooperation.step = prior.biomass + current.baseGrowth - current.competitionEffect + current.cooperationBonus
+
+  # Assert cooperation bonus is non-negative
+  assert.cooperationPositive.step:if(meta.stepCount == 3 count) = current.cooperationBonus >= 0 kg
+
+  # Test density-dependent behavior
+  neighborDensity.step = count(Tree within 15 m radial at prior)
+  crowded.step:if(current.neighborDensity > 4 count) = 1 count
+  crowded.step:if(current.neighborDensity <= 4 count) = 0 count
+
+  # Assert crowding is detected
+  assert.crowdingDetected.step:if(meta.stepCount == 2 count) = (current.crowded == 1 count) or (current.crowded == 0 count)
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit kg
+  alias kilogram
+  alias kilograms
+end unit

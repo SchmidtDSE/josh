@@ -2,7 +2,7 @@ package org.joshsim.geo.external.readers;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 import ucar.nc2.dataset.NetcdfDatasets;
 
@@ -17,12 +17,12 @@ public class NetcdfExternalDataReaderFactory {
   private static final int CACHE_REFRESH_INTERVAL_SECONDS = 300;
 
 
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Creates a new factory with the specified engine value factory.
    */
-  public NetcdfExternalDataReaderFactory(EngineValueFactory valueFactory) {
+  public NetcdfExternalDataReaderFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 
@@ -78,7 +78,7 @@ public class NetcdfExternalDataReaderFactory {
   /**
    * Gets the value factory used by this reader factory.
    */
-  public EngineValueFactory getValueFactory() {
+  public ValueSupportFactory getValueFactory() {
     return valueFactory;
   }
 }

@@ -1,0 +1,79 @@
+# @category: core
+# @subcategory: lifecycle
+# @priority: critical
+# @description: Organism state transition and dead filtering in patch .step
+#
+# Mirrors the canonical Joshua Tree lifecycle pattern:
+#   1. Trees start as "Alive" with age 0
+#   2. Trees age each step
+#   3. Trees transition to "Dead" when age > 2 years
+#   4. Patch filters dead trees: Tree.step = prior.Tree[prior.Tree.state != "Dead"]
+#   5. Population count decreases after deaths
+#
+# Timeline (5 trees, all created at step 0):
+#   Step 0: init -> age=0, state="Alive", count=5
+#   Step 1: age=1, state="Alive" (1 <= 2), count=5
+#   Step 2: age=2, state="Alive" (2 <= 2), count=5
+#   Step 3: age=3, state.step -> "Dead" (3 > 2).
+#           Patch Tree.step filters on prior.state which is "Alive" -> kept.
+#           Trees ARE now "Dead" at end of step 3.
+#   Step 4: Patch Tree.step filters on prior.state="Dead" -> removed. count=0.
+#
+# This tests:
+#   - Organism state machines work during .step
+#   - Filtering by prior.state in patch .step handler
+#   - Population management via collection filtering
+
+start simulation TestOrganismDeadStateFiltering
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 5 count
+end simulation
+
+start patch Default
+  Tree.init = create 5 count of Tree
+
+  # Filter dead trees each step — exact pattern from canonical model
+  Tree.step = prior.Tree[prior.Tree.state != "Dead"]
+
+  # Track counts via patch .step exports (these also gate the step phase)
+  export.treeCount.step = count(Tree)
+
+  # At step 0, all trees should exist
+  assert.allPresent.step:if(meta.stepCount == 0 count) = count(Tree) == 5 count
+
+  # At step 2, all trees still alive (age=2, threshold is > 2)
+  assert.stillAlive.step:if(meta.stepCount == 2 count) = count(Tree) == 5 count
+
+  # At step 4, trees should be gone (died at step 3, filtered at step 4)
+  assert.removed.step:if(meta.stepCount == 4 count) = count(Tree) == 0 count
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  state.init = "Alive"
+
+  start state "Alive"
+    state.step:if(current.age > 2 years) = "Dead"
+  end state
+
+  start state "Dead"
+  end state
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

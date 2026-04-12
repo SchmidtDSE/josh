@@ -27,7 +27,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchSet;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalDataReaderFactory;
@@ -153,6 +153,13 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private String defaultValue;
 
+  @Option(
+      names = "--parallel",
+      description = "Enable parallel processing of patches within each timestep",
+      defaultValue = "false"
+  )
+  private boolean parallel;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -182,7 +189,7 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     // Initialize an external geo mapper
-    EngineValueFactory valueFactory = new EngineValueFactory();
+    ValueSupportFactory valueFactory = new ValueSupportFactory();
     ExternalGeoMapperBuilder geoMapperBuilder = new ExternalGeoMapperBuilder(valueFactory);
     geoMapperBuilder.addCrsCode(crsCode);
     geoMapperBuilder.addInterpolationStrategy(new NearestNeighborInterpolationStrategy());
@@ -200,6 +207,7 @@ public class PreprocessCommand implements Callable<Integer> {
     }
 
     final ExternalGeoMapper mapper = geoMapperBuilder.build();
+    mapper.setUseParallelProcessing(parallel);
 
     // If using JSHD input file, validate grid compatibility
     if (dataFile.toLowerCase().endsWith(".jshd")) {
@@ -343,7 +351,7 @@ public class PreprocessCommand implements Callable<Integer> {
    * @throws IOException If validation fails or file cannot be read
    */
   private void validateJshdGridCompatibility(
-        EngineValueFactory valueFactory,
+        ValueSupportFactory valueFactory,
         String jshdFilePath,
         String crsCode) throws IOException {
 

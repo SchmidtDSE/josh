@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
-import org.joshsim.engine.value.engine.EngineValueFactory;
 import org.joshsim.engine.value.engine.EngineValueWideningCaster;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class DecimalScalarTest {
   @BeforeEach
   void setUp() {
     caster = new EngineValueWideningCaster(
-        new EngineValueFactory()
+        new ValueSupportFactory()
     );
   }
 

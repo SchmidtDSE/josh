@@ -7,9 +7,9 @@
 package org.joshsim.engine.value.type;
 
 import java.math.BigDecimal;
-import java.util.Random;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.util.SharedRandom;
 
 /**
  * A normal distribution.
@@ -20,7 +20,6 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
 public class StandardVirtualDistribution extends VirtualDistribution {
   private final BigDecimal mu;
   private final BigDecimal sigma;
-  private final Random random = new Random();
 
 
   /**
@@ -43,7 +42,7 @@ public class StandardVirtualDistribution extends VirtualDistribution {
    */
   @Override
   public EngineValue sample() {
-    double baseValue = random.nextGaussian();
+    double baseValue = SharedRandom.nextGaussian();
     double value = baseValue * sigma.doubleValue() + mu.doubleValue();
     return new DecimalScalar(caster, BigDecimal.valueOf(value), units);
   }

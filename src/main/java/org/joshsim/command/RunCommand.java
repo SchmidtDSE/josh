@@ -3,8 +3,8 @@
  * Command line interface handler for running Josh simulations.
  *
  * <p>This class implements the 'run' command which executes a specified simulation from a Josh
- * script file. It supports both grid-based and earth-based coordinate reference systems, and can
- * process patches either serially or in parallel.</p>
+ * script file. It processes patches either serially or in parallel using grid-based coordinate
+ * space.</p>
  *
  * @license BSD-3-Clause
  */
@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import org.apache.sis.referencing.CRS;
 import org.joshsim.JoshSimCommander;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -31,17 +30,20 @@ import org.joshsim.engine.geometry.ExtentsUtil;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.geo.geometry.EarthGeometryFactory;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
+import org.joshsim.lang.interpret.ValueResolverFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -52,10 +54,9 @@ import org.joshsim.util.OutputOptions;
 import org.joshsim.util.OutputStepsParser;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.SharedRandom;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.FactoryException;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -77,15 +78,25 @@ public class RunCommand implements Callable<Integer> {
   private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
 
+  /**
+   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
+   *
+   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
+   * @return A ValueResolverFactory configured for the requested profiling mode.
+   */
+  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
+    if (enableProfiler) {
+      return new TimedRecursiveValueResolverFactory();
+    } else {
+      return new RecursiveValueResolverFactory();
+    }
+  }
+
   @Parameters(index = "0", description = "Path to file to validate")
   private File file;
 
   @Parameters(index = "1", description = "Simulation to run")
   private String simulation;
-
-  @Option(names = "--crs", description = "Coordinate Reference System", defaultValue = "")
-  private String crs;
-
 
   @Option(names = "--replicates", description = "Number of replicates to run", defaultValue = "1")
   private int replicates = 1;
@@ -159,6 +170,28 @@ public class RunCommand implements Callable<Integer> {
   )
   private boolean uploadData = false;
 
+  @Option(
+      names = "--seed",
+      description = "Random seed for reproducible simulations. If specified, all random "
+                  + "operations will use this seed to produce deterministic results."
+  )
+  private Long seed = null;
+
+  @Option(
+      names = "--enable-profiler",
+      description = "Enable evalDuration profiling to capture attribute resolution timing.",
+      defaultValue = "false"
+  )
+  private boolean enableProfiler;
+
+  @Option(
+      names = "--csv-precision",
+      description = "Maximum decimal places for numeric values in CSV output. "
+                  + "Use -1 for unlimited precision (default: 6).",
+      defaultValue = "6"
+  )
+  private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -206,20 +239,25 @@ public class RunCommand implements Callable<Integer> {
       return 1;
     }
 
+    // Initialize shared random with seed for reproducibility
+    if (seed != null) {
+      SharedRandom.initialize(seed);
+      output.printInfo("Using random seed: " + seed);
+
+      // Force serial execution when seeded for deterministic results
+      // Parallel execution would cause non-deterministic random call ordering
+      if (!serialPatches) {
+        output.printInfo(
+            "Note: Forcing serial patch execution for reproducibility with --seed");
+        serialPatches = true;
+      }
+    } else {
+      SharedRandom.initialize(Optional.empty());
+    }
+
     // Parse output steps early for fail-fast validation
     final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
-    EngineGeometryFactory geometryFactory;
-    if (crs.isEmpty()) {
-      geometryFactory = new GridGeometryFactory();
-    } else {
-      CoordinateReferenceSystem crsRealized;
-      try {
-        crsRealized = CRS.forCode(crs);
-      } catch (FactoryException e) {
-        throw new RuntimeException(e);
-      }
-      geometryFactory = new EarthGeometryFactory(crsRealized);
-    }
+    final EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
@@ -261,9 +299,19 @@ public class RunCommand implements Callable<Integer> {
         .withInputStrategy(inputStrategy)
         .withTemplateRenderer(initTemplateRenderer)
         .withMinioOptions(minioOptions)
+        .withMaxDecimalPlaces(csvPrecision)
         .build();
 
+    // Create ValueSupportFactory before interpretation so that the profiler-enabled
+    // resolver factory is used when building ValueResolver instances at compile time.
+    boolean favorBigDecimal = !useFloat64;
+    ValueSupportFactory valueFactory = new ValueSupportFactory(
+        favorBigDecimal,
+        buildValueResolverFactory(enableProfiler)
+    );
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+        valueFactory,
         geometryFactory,
         file,
         output,
@@ -308,10 +356,6 @@ public class RunCommand implements Callable<Integer> {
     compatLayer.setExportQueueCapacity(exportQueueSize);
     CompatibilityLayerKeeper.set(compatLayer);
 
-    // Set up EngineValueFactory
-    boolean favorBigDecimal = !useFloat64;
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
-
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -326,7 +370,7 @@ public class RunCommand implements Callable<Integer> {
     boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
 
     // Execute simulation for each job combination and replicate
-    int totalSimulationCount = 0;
+    int totalReplicateCount = 0;
 
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
@@ -339,11 +383,11 @@ public class RunCommand implements Callable<Integer> {
 
       for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
            currentReplicate++) {
-        totalSimulationCount++;
+        totalReplicateCount++;
 
         // Reset progress tracking for each new simulation (except first)
-        if (totalSimulationCount > 1) {
-          progressCalculator.resetForNextReplicate(totalSimulationCount);
+        if (totalReplicateCount > 1) {
+          progressCalculator.resetForNextReplicate(totalReplicateCount);
         }
 
         // Create TemplateStringRenderer for this job and replicate
@@ -363,6 +407,8 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -370,6 +416,8 @@ public class RunCommand implements Callable<Integer> {
               .withInputStrategy(inputStrategy)
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
+              .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         }
 
@@ -391,7 +439,7 @@ public class RunCommand implements Callable<Integer> {
 
         // Report replicate completion
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
-            totalSimulationCount);
+            totalReplicateCount);
         output.printInfo(completion.getMessage());
       }
 
@@ -404,7 +452,7 @@ public class RunCommand implements Callable<Integer> {
     // Report overall success
     output.printInfo("");
     output.printInfo("✓ All simulations completed successfully!");
-    output.printInfo("  Total simulations run: " + totalSimulationCount);
+    output.printInfo("  Total replicates run: " + totalReplicateCount);
     output.printInfo("  Job combinations: " + jobs.size());
     output.printInfo("  Replicates per job: " + replicates);
 
@@ -433,6 +481,9 @@ public class RunCommand implements Callable<Integer> {
         }
       }
     }
+
+    // Clean up shared random
+    SharedRandom.clear();
 
     return 0;
   }

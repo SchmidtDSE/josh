@@ -29,6 +29,7 @@ public class Units {
   public static final Units COUNT;
   public static final Units METERS;
   public static final Units DEGREES;
+  public static final Units MILLISECONDS;
 
   // Static initializer to pre-populate cache with commonly used constants.
   // This ensures zero-allocation lookups for the most frequent cases.
@@ -40,6 +41,7 @@ public class Units {
     UNITS_CACHE.put("count", EMPTY);
     METERS = createAndCacheConstant("meters");
     DEGREES = createAndCacheConstant("degrees");
+    MILLISECONDS = createAndCacheConstant("milliseconds");
   }
 
   private static Units createAndCacheConstant(String description) {
@@ -190,7 +192,7 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
-    String cacheKey = this.toString() + "\t*\t" + other.toString();
+    String cacheKey = toString() + "\t*\t" + other.toString();
 
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {
@@ -231,7 +233,7 @@ public class Units {
    * @return a new Units instance representing the division of the current and other units.
    */
   public Units divide(Units other) {
-    String cacheKey = this.toString() + "\t/\t" + other.toString();
+    String cacheKey = toString() + "\t/\t" + other.toString();
 
     Units cached = UNITS_CACHE.get(cacheKey);
     if (cached != null) {

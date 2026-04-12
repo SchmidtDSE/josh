@@ -26,7 +26,7 @@ A readable domain-specific language with:
 - **Java Backend**: Main simulation engine built with Gradle
 - **Web Editor**: Browser-based IDE at editor.joshsim.org
 - **Command Line Interface**: Local execution via `java -jar joshsim.jar`
-- **Python Interface (joshpy)**: Coming soon but not yet released
+- **Python Interface (joshpy)**: Available at [github.com/SchmidtDSE/joshpy](https://github.com/SchmidtDSE/joshpy)
 
 ### Commands
 - `validate`: Check Josh script syntax
@@ -140,7 +140,6 @@ josh/
 ├── examples/              # Example Josh scripts
 ├── landing/               # Landing page and documentation
 ├── cloud-img/             # Docker configurations
-├── joshpy/                # Python interface (future)
 ├── tasks/                 # Task documentation
 ├── llms.txt              # LLM-specific context
 └── build.gradle          # Build configuration

@@ -163,6 +163,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     // Initialize export system using Component 2 infrastructure
     InputOutputLayer ioLayer = new JvmInputOutputLayerBuilder()
         .withReplicate(context.getReplicateNumber())
+        .withAppendMode(false)
         .build();
     ExportFacadeFactory exportFactory = ioLayer.getExportFacadeFactory();
 

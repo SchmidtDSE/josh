@@ -7,7 +7,7 @@
 package org.joshsim.lang.interpret.mapping;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -19,7 +19,7 @@ import org.joshsim.engine.value.type.EngineValue;
  * maps to the opposite range value. The resulting curve forms a parabola.</p>
  */
 public class QuadraticMapStrategy implements MapStrategy {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final MapBounds domain;
   private final MapBounds range;
   private final boolean centerIsMaximum;
@@ -33,7 +33,7 @@ public class QuadraticMapStrategy implements MapStrategy {
    * @param centerIsMaximum If true, the center of the domain maps to range maximum, endpoints to
    *     minimum. If false, the center maps to range minimum, endpoints to maximum.
    */
-  public QuadraticMapStrategy(EngineValueFactory valueFactory, MapBounds domain, MapBounds range,
+  public QuadraticMapStrategy(ValueSupportFactory valueFactory, MapBounds domain, MapBounds range,
       boolean centerIsMaximum) {
     this.valueFactory = valueFactory;
     this.domain = domain;

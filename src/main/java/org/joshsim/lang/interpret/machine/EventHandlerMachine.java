@@ -562,4 +562,51 @@ public interface EventHandlerMachine {
    * @param name The name of the config value to push.
    */
   void pushConfigWithDefault(String name);
+
+  /**
+   * Write a debug message to the configured debug output.
+   *
+   * <p>Pops the top of the stack, converts it to a string, and writes it to the debug output
+   * along with the current step number and entity type context. If no debug output is configured,
+   * this operation is a no-op with zero overhead.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine writeDebug();
+
+  /**
+   * Write multiple values to debug output by concatenating them.
+   *
+   * <p>Pops the specified number of values from the stack, concatenates them with spaces,
+   * and writes to the configured debug output. After writing, pushes 0 count as the result
+   * (allowing debug to be used in expressions without side effects).</p>
+   *
+   * @param argCount Number of arguments to pop from the stack.
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine debugVariadic(int argCount);
+
+  /**
+   * Peek at the top value on the stack without removing it.
+   *
+   * <p>Returns the value at the top of the stack without popping it. This is useful
+   * for inspecting values before operations that need the value to remain on the stack.</p>
+   *
+   * @return The value at the top of the stack.
+   */
+  EngineValue peek();
+
+  /**
+   * Execute an action with a temporary local binding in scope.
+   *
+   * <p>Creates a nested scope with the given name bound to the given value, executes
+   * the provided action within that scope, then restores the original scope. This is
+   * useful for filter expressions where the type name needs to be temporarily bound
+   * to the subject distribution being filtered.</p>
+   *
+   * @param name The name to bind in the temporary scope.
+   * @param value The value to bind to the name.
+   * @param action The action to execute with the binding in scope.
+   */
+  void withLocalBinding(String name, EngineValue value, Runnable action);
 }

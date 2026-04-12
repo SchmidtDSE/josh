@@ -1,20 +1,20 @@
 package org.joshsim.geo.external.readers;
 
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.geo.external.ExternalDataReader;
 
 /**
  * Factory for creating JshdExternalDataReader instances.
  */
 public class JshdExternalDataReaderFactory {
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
 
   /**
    * Creates a new factory with the specified engine value factory.
    *
    * @param valueFactory Factory for creating EngineValue objects
    */
-  public JshdExternalDataReaderFactory(EngineValueFactory valueFactory) {
+  public JshdExternalDataReaderFactory(ValueSupportFactory valueFactory) {
     this.valueFactory = valueFactory;
   }
 
@@ -52,9 +52,9 @@ public class JshdExternalDataReaderFactory {
   /**
    * Gets the value factory used by this reader factory.
    *
-   * @return The EngineValueFactory instance
+   * @return The ValueSupportFactory instance
    */
-  public EngineValueFactory getValueFactory() {
+  public ValueSupportFactory getValueFactory() {
     return valueFactory;
   }
 }

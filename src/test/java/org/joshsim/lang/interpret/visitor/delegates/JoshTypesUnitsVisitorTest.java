@@ -11,7 +11,7 @@ import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.NoopConversion;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser.ActiveConversionContext;
 import org.joshsim.lang.antlr.JoshLangParser.AssignmentContext;
@@ -42,7 +42,7 @@ class JoshTypesUnitsVisitorTest {
   private DelegateToolbox toolbox;
   private JoshParserToMachineVisitor parent;
   private BridgeGetter bridgeGetter;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JoshTypesUnitsVisitor visitor;
   private EngineValue mockValue;
   private ReservedWordChecker reservedWordChecker;
@@ -52,13 +52,14 @@ class JoshTypesUnitsVisitorTest {
     toolbox = mock(DelegateToolbox.class);
     parent = mock(JoshParserToMachineVisitor.class);
     bridgeGetter = mock(BridgeGetter.class);
-    valueFactory = mock(EngineValueFactory.class);
+    valueFactory = mock(ValueSupportFactory.class);
     mockValue = mock(EngineValue.class);
     reservedWordChecker = mock(ReservedWordChecker.class);
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getBridgeGetter()).thenReturn(bridgeGetter);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
+    when(valueFactory.buildValueResolver(any())).thenReturn(mock(ValueResolver.class));
 
     visitor = new JoshTypesUnitsVisitor(toolbox);
   }
@@ -338,7 +339,7 @@ class JoshTypesUnitsVisitorTest {
     DelegateToolbox toolbox = mock(DelegateToolbox.class);
     JoshParserToMachineVisitor parent = mock(JoshParserToMachineVisitor.class);
     BridgeGetter bridgeGetter = mock(BridgeGetter.class);
-    EngineValueFactory valueFactory = mock(EngineValueFactory.class);
+    ValueSupportFactory valueFactory = mock(ValueSupportFactory.class);
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getBridgeGetter()).thenReturn(bridgeGetter);

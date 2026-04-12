@@ -119,4 +119,53 @@ class EntityScopeTest {
 
     assertEquals(expectedMap, result);
   }
+
+  @Test
+  void testTryIndexedGetKnownAttribute() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+    when(mockEntity.getAttributeValue(0)).thenReturn(Optional.of(mockValue));
+
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+
+    assertTrue(result.isPresent());
+    assertEquals(mockValue, result.get());
+  }
+
+  @Test
+  void testTryIndexedGetUnknownAttribute() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+
+    Optional<EngineValue> result = scope.tryIndexedGet("unknownAttr");
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testTryIndexedGetNullIndexMap() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(null);
+
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testTryIndexedGetEmptyIndexMap() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of());
+
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testTryIndexedGetUninitializedValue() {
+    when(mockEntity.getAttributeNameToIndex()).thenReturn(Map.of("testAttr", 0));
+    when(mockEntity.getAttributeValue(0)).thenReturn(Optional.empty());
+
+    Optional<EngineValue> result = scope.tryIndexedGet("testAttr");
+
+    // Uninitialized value: fast path cannot supply a result, falls through to slow path.
+    assertTrue(result.isEmpty());
+  }
 }

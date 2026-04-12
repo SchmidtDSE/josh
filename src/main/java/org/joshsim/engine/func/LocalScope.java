@@ -9,6 +9,7 @@ package org.joshsim.engine.func;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.value.type.EngineValue;
 
@@ -84,6 +85,29 @@ public class LocalScope implements Scope {
   }
 
   /**
+   * Defines a constant value in the local scope, allowing shadowing of parent scope variables.
+   *
+   * <p>Unlike {@link #defineConstant}, this method only checks if the variable exists in this
+   * local scope, not in the parent scope. This allows temporarily shadowing variables from
+   * enclosing scopes, which is useful for filter expressions where the type name needs to
+   * be bound to the subject distribution.</p>
+   *
+   * @param name The name of the constant to define within this LocalScope.
+   * @param value The value to associate with the constant within this LocalScope.
+   * @throws RuntimeException if a variable with the given name already exists in this local scope.
+   */
+  public void defineConstantAllowShadowing(String name, EngineValue value) {
+    if (localValues.containsKey(name)) {
+      String message = String.format(
+          "The variable %s already exists in this local scope.",
+          name);
+      throw new RuntimeException(message);
+    }
+
+    localValues.put(name, value);
+  }
+
+  /**
    * Determine what values are on this scope.
    *
    * @return all attributes within this scope.
@@ -97,6 +121,11 @@ public class LocalScope implements Scope {
     combined.addAll(outerAttributes);
     combined.addAll(innerAttributes);
     return combined;
+  }
+
+  @Override
+  public Optional<EngineValue> tryIndexedGet(String name) {
+    return Optional.empty();
   }
 
 }

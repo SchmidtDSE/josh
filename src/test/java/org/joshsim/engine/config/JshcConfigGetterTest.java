@@ -22,7 +22,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 public class JshcConfigGetterTest {
 
   private InputGetterStrategy mockInputStrategy;
-  private EngineValueFactory valueFactory;
+  private ValueSupportFactory valueFactory;
   private JshcConfigGetter getter;
 
   /**
@@ -42,7 +42,7 @@ public class JshcConfigGetterTest {
   @BeforeEach
   public void setUp() {
     mockInputStrategy = mock(InputGetterStrategy.class);
-    valueFactory = new EngineValueFactory();
+    valueFactory = new ValueSupportFactory();
     getter = new JshcConfigGetter(mockInputStrategy, valueFactory);
   }
 
@@ -178,5 +178,33 @@ public class JshcConfigGetterTest {
     assertFalse(configOpt.isPresent());
     verify(mockInputStrategy).exists("test");
     verify(mockInputStrategy, times(0)).open("test");
+  }
+
+  @Test
+  public void testCompoundUnits() throws IOException {
+    // Setup - compound units via quoted string
+    String configContent = "rainfall = 50 \"mm / month\"\nevapRate = 2.5 \"kg / hectare\"";
+    InputStream inputStream = new ByteArrayInputStream(
+        configContent.getBytes(StandardCharsets.UTF_8));
+    when(mockInputStrategy.exists("test.jshc")).thenReturn(true);
+    when(mockInputStrategy.open("test.jshc")).thenReturn(inputStream);
+
+    // Execute
+    Optional<Config> configOpt = getter.getConfig("test.jshc");
+
+    // Verify
+    assertTrue(configOpt.isPresent());
+    Config config = configOpt.get();
+
+    assertNotNull(config.getValue("rainfall"));
+    assertEquals(50.0, config.getValue("rainfall").getAsDouble(), 0.001);
+    assertEquals(Units.of("mm / month"), config.getValue("rainfall").getUnits());
+
+    assertNotNull(config.getValue("evapRate"));
+    assertEquals(2.5, config.getValue("evapRate").getAsDouble(), 0.001);
+    assertEquals(Units.of("kg / hectare"), config.getValue("evapRate").getUnits());
+
+    verify(mockInputStrategy).exists("test.jshc");
+    verify(mockInputStrategy).open("test.jshc");
   }
 }

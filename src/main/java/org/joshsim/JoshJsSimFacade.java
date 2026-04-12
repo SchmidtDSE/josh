@@ -22,7 +22,7 @@ import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
@@ -73,7 +73,7 @@ public class JoshJsSimFacade {
 
     JoshInterpreter interpreter = new JoshInterpreter();
     try {
-      EngineValueFactory valueFactory = new EngineValueFactory();
+      ValueSupportFactory valueFactory = new ValueSupportFactory();
       EngineGeometryFactory geometryFactory = new GridGeometryFactory();
       interpreter.interpret(result, valueFactory, geometryFactory, getInputOutputLayer());
     } catch (Exception e) {
@@ -101,7 +101,7 @@ public class JoshJsSimFacade {
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
     JoshProgram program = JoshSimFacadeUtil.interpret(
-        new EngineValueFactory(),
+        new ValueSupportFactory(),
         geometryFactory,
         result,
         getInputOutputLayer()
@@ -186,7 +186,7 @@ public class JoshJsSimFacade {
 
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    EngineValueFactory engineValueFactory = new EngineValueFactory();
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
     JoshProgram program = JoshSimFacadeUtil.interpret(
         engineValueFactory,
         geometryFactory,
@@ -298,7 +298,7 @@ public class JoshJsSimFacade {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
-    EngineValueFactory valueFactory = new EngineValueFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
     InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
@@ -360,6 +360,20 @@ public class JoshJsSimFacade {
    * @param args ignored arguments
    */
   public static void main(String[] args) {}
+
+  /**
+   * Build a ValueSupportFactory for the WASM execution path.
+   *
+   * <p>Profiler support (--enable-profiler) is not yet available in the WASM path. This method
+   * uses the non-timed RecursiveValueResolverFactory until profiler support is wired to the
+   * WASM frontend in a future component.</p>
+   *
+   * @param favorBigDecimal True if decimal values should favor BigDecimal, false for double.
+   * @return A ValueSupportFactory configured for WASM execution.
+   */
+  private static ValueSupportFactory buildValueSupportFactory(boolean favorBigDecimal) {
+    return new ValueSupportFactory(favorBigDecimal);
+  }
 
   /**
    * Get the input / output layer for the browser sandbox without a filesystem.

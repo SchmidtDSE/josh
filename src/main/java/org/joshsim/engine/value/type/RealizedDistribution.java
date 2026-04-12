@@ -12,9 +12,11 @@ import java.util.Collections;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.EngineValueCaster;
+import org.joshsim.util.SharedRandom;
 
 /**
  * Distribution with a finite number of elements.
@@ -155,7 +157,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.greaterThan(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -163,7 +165,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.greaterThanOrEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -171,7 +173,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.lessThan(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -179,7 +181,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.lessThanOrEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -187,7 +189,7 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.equalTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
   }
 
   @Override
@@ -195,7 +197,94 @@ public class RealizedDistribution extends Distribution {
     List<EngineValue> result = values.stream()
         .map(value -> value.notEqualTo(other))
         .collect(Collectors.toCollection(ArrayList::new));
-    return new RealizedDistribution(getCaster(), result, getUnits());
+    return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise AND with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise AND on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean andResult = values.get(i).getAsBoolean() && otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), andResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // AND each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean andResult = value.getAsBoolean() && otherBool;
+            return new BooleanScalar(getCaster(), andResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise OR with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise OR on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean orResult = values.get(i).getAsBoolean() || otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), orResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // OR each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean orResult = value.getAsBoolean() || otherBool;
+            return new BooleanScalar(getCaster(), orResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    if (other.getLanguageType().isDistribution()) {
+      // Element-wise XOR with another distribution
+      List<EngineValue> otherValues = ((RealizedDistribution) other.getAsDistribution()).values;
+      if (values.size() != otherValues.size()) {
+        throw new IllegalArgumentException(
+            "Cannot perform element-wise XOR on distributions of different sizes: "
+            + values.size() + " vs " + otherValues.size());
+      }
+      List<EngineValue> result = new ArrayList<>(values.size());
+      for (int i = 0; i < values.size(); i++) {
+        boolean xorResult = values.get(i).getAsBoolean() ^ otherValues.get(i).getAsBoolean();
+        result.add(new BooleanScalar(getCaster(), xorResult, Units.EMPTY));
+      }
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    } else {
+      // XOR each element with a scalar
+      boolean otherBool = other.getAsBoolean();
+      List<EngineValue> result = values.stream()
+          .map(value -> {
+            boolean xorResult = value.getAsBoolean() ^ otherBool;
+            return new BooleanScalar(getCaster(), xorResult, Units.EMPTY);
+          })
+          .collect(Collectors.toCollection(ArrayList::new));
+      return new RealizedDistribution(getCaster(), result, Units.EMPTY);
+    }
   }
 
   @Override
@@ -251,7 +340,7 @@ public class RealizedDistribution extends Distribution {
   @Override
   public EngineValue sample() {
     requireNonEmpty();
-    int index = (int) (Math.random() * values.size());
+    int index = SharedRandom.nextInt(values.size());
     return values.get(index);
   }
 
@@ -263,6 +352,16 @@ public class RealizedDistribution extends Distribution {
   @Override
   public Optional<Integer> getSize() {
     return Optional.of(values.size());
+  }
+
+  @Override
+  public long getCount() {
+    if (getLanguageType().getRootType().equals("boolean")) {
+      return values.stream()
+          .filter(EngineValue::getAsBoolean)
+          .count();
+    }
+    return values.size();
   }
 
   @Override
@@ -392,7 +491,9 @@ public class RealizedDistribution extends Distribution {
       throw new IllegalArgumentException(message);
     }
     List<EngineValue> sampledValues = new ArrayList<>(values);
-    Collections.shuffle(sampledValues);
+    // Use SharedRandom for reproducibility
+    Random random = SharedRandom.get();
+    Collections.shuffle(sampledValues, random);
     return new RealizedDistribution(getCaster(), sampledValues.subList(0, (int) count), getUnits());
   }
 

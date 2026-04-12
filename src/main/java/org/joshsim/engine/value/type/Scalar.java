@@ -34,6 +34,11 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
     return Optional.of(1);
   }
 
+  @Override
+  public long getCount() {
+    return 1;
+  }
+
   /**
    * Converts this Scalar into a Distribution.
    *
@@ -228,6 +233,24 @@ public abstract class Scalar extends EngineValue implements Comparable<Scalar> {
   @Override
   protected EngineValue unsafeNotEqualTo(EngineValue other) {
     boolean result = getInnerValue().compareTo(other.getInnerValue()) != 0;
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeAnd(EngineValue other) {
+    boolean result = getAsBoolean() && other.getAsBoolean();
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeOr(EngineValue other) {
+    boolean result = getAsBoolean() || other.getAsBoolean();
+    return new BooleanScalar(caster, result, Units.EMPTY);
+  }
+
+  @Override
+  protected EngineValue unsafeXor(EngineValue other) {
+    boolean result = getAsBoolean() ^ other.getAsBoolean();
     return new BooleanScalar(caster, result, Units.EMPTY);
   }
 

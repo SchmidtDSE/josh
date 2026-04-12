@@ -1,0 +1,79 @@
+# @category: spatial
+# @subcategory: wgs84
+# @priority: critical
+# @description: WGS84 within query at 60°N with 500m cells — multi-radius with edge/corner checks
+
+# 11x11 grid, 500m cells.
+# Three radii: 250m (0.5 cells), 750m (1.5 cells), 1250m (2.5 cells).
+# Expected interior counts: 5, 13, 29.
+
+start simulation TestWgs84Highlat_500m
+
+  grid.size = 500 m
+  grid.low = 60.0 degrees latitude, 10.0 degrees longitude
+  grid.high = 60.045 degrees latitude, 10.09 degrees longitude
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Probe.init = create 1 count of Probe
+
+  small.step = mean(Probe.nSmall)
+  medium.step = mean(Probe.nMedium)
+  large.step = mean(Probe.nLarge)
+
+  # Interior exact counts
+  assert.interiorSmall.step:if(meta.stepCount == 2 count and here.x > 2 m and here.x < 9 m and here.y > 2 m and here.y < 9 m) = current.small == 5 count
+  assert.interiorMedium.step:if(meta.stepCount == 2 count and here.x > 2 m and here.x < 9 m and here.y > 2 m and here.y < 9 m) = current.medium == 13 count
+  assert.interiorLarge.step:if(meta.stepCount == 2 count and here.x > 3 m and here.x < 8 m and here.y > 3 m and here.y < 8 m) = current.large == 29 count
+
+  # Monotonicity
+  assert.mono1.step:if(meta.stepCount == 2 count) = current.small <= current.medium
+  assert.mono2.step:if(meta.stepCount == 2 count) = current.medium <= current.large
+
+  # No overcount
+  assert.noOverSmall.step:if(meta.stepCount == 2 count) = current.small <= 5 count
+  assert.noOverMedium.step:if(meta.stepCount == 2 count) = current.medium <= 13 count
+  assert.noOverLarge.step:if(meta.stepCount == 2 count) = current.large <= 29 count
+
+  # Edge patches find strictly fewer at medium radius
+  assert.edgeFewer.step:if(meta.stepCount == 2 count and (here.x < 2 m or here.x > 9 m or here.y < 2 m or here.y > 9 m)) = current.medium < 13 count
+
+  # Corner patches exact count at medium radius
+  assert.cornerFewest.step:if(meta.stepCount == 2 count and here.x < 1 m and here.y < 1 m) = current.medium == 6 count
+
+  # Mid-edge patches (not near corners) exact count at medium radius
+  assert.edgeCount.step:if(meta.stepCount == 2 count and here.x < 1 m and here.y > 2 m and here.y < 9 m) = current.medium == 9 count
+
+  # Every patch finds at least itself
+  assert.atLeastSelf.step:if(meta.stepCount == 2 count) = current.small >= 1 count
+
+end patch
+
+start organism Probe
+  age.init = 0 year
+  age.step = prior.age + 1 year
+  nSmall.step = count(Default within 250 m radial at prior)
+  nMedium.step = count(Default within 750 m radial at prior)
+  nLarge.step = count(Default within 1250 m radial at prior)
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
+
+start unit degree
+  alias degrees
+end unit
+
+start unit count
+end unit

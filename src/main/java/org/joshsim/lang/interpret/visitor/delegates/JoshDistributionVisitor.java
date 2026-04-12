@@ -7,7 +7,7 @@
 package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.EngineValueFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -25,7 +25,7 @@ import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 public class JoshDistributionVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
-  private final EngineValueFactory valueFactory;
+  private final ValueSupportFactory valueFactory;
   private final EngineValue singleCount;
 
   /**
@@ -42,6 +42,10 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
   /**
    * Parse a slice expression.
    *
+   * <p>Handles filter expressions like {@code Trees[Tree.age > 5 years]} by temporarily
+   * binding the type name (e.g., "Tree") to the subject distribution within the scope
+   * where the filter expression is evaluated.</p>
+   *
    * @param ctx The ANTLR context from which to parse the slice expression.
    * @return JoshFragment containing the slice expression parsed.
    */
@@ -51,7 +55,16 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
 
     EventHandlerAction action = (machine) -> {
       subjectAction.apply(machine);
-      selectionAction.apply(machine);
+
+      // Extract type name and bind to local scope for filter expressions
+      EngineValue subject = machine.peek();
+      String typeName = subject.getLanguageType().getRootType();
+
+      // Evaluate selection with type name bound to subject distribution
+      machine.withLocalBinding(typeName, subject, () -> {
+        selectionAction.apply(machine);
+      });
+
       return machine.slice();
     };
 
