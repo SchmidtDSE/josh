@@ -1,11 +1,12 @@
-"""Check that profiler timings are non-trivial (> 0.0 ms, profiler enabled).
+"""Check that profiler timings are non-trivial (> 0.1 ms, profiler enabled).
 
 Reads the CSV output of a run of ProfilerMultiExample and verifies that
-at least one row's avgHeightEvalDuration value is > 0.0 ms, confirming
+at least one row's avgHeightEvalDuration value is > 0.1 ms, confirming
 that the profiler was active and capturing real timing data during the
 simulation run. When the profiler is disabled, all values are exactly 0.0;
-when enabled, values are consistently in the range 0.05-2.0 ms on typical
-hardware. A threshold of > 0.0 reliably distinguishes the two cases.
+when enabled, values are consistently above 0.1 ms because the simulation
+uses 50 TimedTree agents per patch, giving each mean() call enough
+evaluations to produce a meaningful timing even on fast hardware.
 
 This script is shared with the remote profiler test (component 3).
 """
@@ -13,7 +14,7 @@ This script is shared with the remote profiler test (component 3).
 import csv
 import sys
 
-THRESHOLD_MS = 0.0
+THRESHOLD_MS = 0.1
 
 found = False
 row_count = 0

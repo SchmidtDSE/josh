@@ -14,7 +14,7 @@ end simulation
 
 start patch Default
 
-  TimedTree.init = create 5 count of TimedTree
+  TimedTree.init = create 50 count of TimedTree
 
   export.averageHeight.step = mean(TimedTree.height)
   export.avgHeightEvalDuration.step = mean(TimedTree.height.evalDuration)
