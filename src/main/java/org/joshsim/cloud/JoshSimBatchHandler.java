@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -159,30 +160,11 @@ public class JoshSimBatchHandler implements HttpHandler {
     String jobId = formData.getFirst("jobId").getValue();
     File workDir = new File(formData.getFirst("workDir").getValue());
 
-    // Opt-in: stage inputs from MinIO before running (for serverless environments)
-    boolean shouldStage = formData.contains("stageFromMinio")
-        && "true".equalsIgnoreCase(formData.getFirst("stageFromMinio").getValue());
-
-    if (shouldStage) {
-      if (!formData.contains("minioPrefix")) {
-        sendJsonError(exchange, 400, jobId,
-            "minioPrefix is required when stageFromMinio=true");
-        return Optional.of(apiKey);
-      }
-      String minioPrefix = formData.getFirst("minioPrefix").getValue();
-      try {
-        if (!workDir.exists() && !workDir.mkdirs()) {
-          sendJsonError(exchange, 400, jobId,
-              "Failed to create workDir: " + workDir.getPath());
-          return Optional.of(apiKey);
-        }
-        MinioOptions minioOptions = new MinioOptions();
-        MinioHandler minio = new MinioHandler(minioOptions, new OutputOptions());
-        MinioStagingUtil.stageFromMinio(minio, minioPrefix, workDir, new OutputOptions());
-      } catch (Exception e) {
-        sendJsonError(exchange, 500, jobId, "Staging from MinIO failed: " + e.getMessage());
-        return Optional.of(apiKey);
-      }
+    Optional<String> stagingError = stageInputsIfRequested(formData, jobId, workDir);
+    if (stagingError.isPresent()) {
+      sendJsonError(exchange, stagingError.get().startsWith("5") ? 500 : 400, jobId,
+          stagingError.get().substring(4));
+      return Optional.of(apiKey);
     }
 
     if (!workDir.exists() || !workDir.isDirectory()) {
@@ -191,16 +173,7 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    MinioHandler statusMinioInit = null;
-    try {
-      MinioOptions statusMinioOptions = new MinioOptions();
-      statusMinioInit = new MinioHandler(statusMinioOptions, new OutputOptions());
-    } catch (Exception e) {
-      System.err.println("[batch] Status tracking unavailable for job " + jobId
-          + ": " + e.getMessage());
-    }
-    final MinioHandler statusMinio = statusMinioInit;
-
+    MinioHandler statusMinio = initStatusMinio(jobId);
     String simulation = formData.getFirst("simulation").getValue();
     String statusPath = "batch-status/" + jobId + "/status.json";
     sendJsonAccepted(exchange, jobId, statusPath);
@@ -213,19 +186,64 @@ public class JoshSimBatchHandler implements HttpHandler {
     return Optional.of(apiKey);
   }
 
+  /**
+   * Stage inputs from MinIO into workDir if the stageFromMinio flag is set.
+   *
+   * @return Empty if staging succeeded or was not requested; error message prefixed with
+   *     HTTP status code (e.g. "400:message") if staging failed.
+   */
+  private Optional<String> stageInputsIfRequested(FormData formData, String jobId, File workDir) {
+    boolean shouldStage = formData.contains("stageFromMinio")
+        && "true".equalsIgnoreCase(formData.getFirst("stageFromMinio").getValue());
+
+    if (!shouldStage) {
+      return Optional.empty();
+    }
+
+    if (!formData.contains("minioPrefix")) {
+      return Optional.of("400:minioPrefix is required when stageFromMinio=true");
+    }
+
+    String minioPrefix = formData.getFirst("minioPrefix").getValue();
+    try {
+      if (!workDir.exists() && !workDir.mkdirs()) {
+        return Optional.of("400:Failed to create workDir: " + workDir.getPath());
+      }
+      MinioOptions minioOptions = new MinioOptions();
+      MinioHandler minio = new MinioHandler(minioOptions, new OutputOptions());
+      MinioStagingUtil.stageFromMinio(minio, minioPrefix, workDir, new OutputOptions());
+    } catch (Exception e) {
+      return Optional.of("500:Staging from MinIO failed: " + e.getMessage());
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Initialize a MinioHandler for writing status files. Returns null if MinIO
+   * credentials are unavailable (status tracking degrades gracefully).
+   */
+  private MinioHandler initStatusMinio(String jobId) {
+    try {
+      return new MinioHandler(new MinioOptions(), new OutputOptions());
+    } catch (Exception e) {
+      System.err.println("[batch] Status tracking unavailable for job " + jobId
+          + ": " + e.getMessage());
+      return null;
+    }
+  }
+
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
       String simulation, File workDir, String statusPath, String apiKey) {
-    writeStatus(statusMinio, statusPath, String.format(
-        "{\"status\":\"running\",\"jobId\":\"%s\",\"startedAt\":\"%s\"}",
-        jobId, Instant.now().toString()
+    writeStatus(statusMinio, statusPath, buildStatusJson(
+        "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
       executeBatchJob(jobId, simulation, workDir);
 
-      writeStatus(statusMinio, statusPath, String.format(
-          "{\"status\":\"complete\",\"jobId\":\"%s\",\"completedAt\":\"%s\"}",
-          jobId, Instant.now().toString()
+      writeStatus(statusMinio, statusPath, buildStatusJson(
+          "complete", jobId, "completedAt", Instant.now().toString()
       ));
     } catch (Exception e) {
       SecurityUtil.logSecureError(apiDataLayer, apiKey, "batch", e, null);
@@ -233,9 +251,8 @@ public class JoshSimBatchHandler implements HttpHandler {
       String safeMessage = e.getMessage() != null
           ? e.getMessage().replace("\"", "\\\"").replace("\n", " ")
           : "unknown error";
-      writeStatus(statusMinio, statusPath, String.format(
-          "{\"status\":\"error\",\"jobId\":\"%s\",\"message\":\"%s\",\"failedAt\":\"%s\"}",
-          jobId, safeMessage, Instant.now().toString()
+      writeStatus(statusMinio, statusPath, buildStatusJson(
+          "error", jobId, "failedAt", Instant.now().toString(), "message", safeMessage
       ));
     }
   }
@@ -303,12 +320,11 @@ public class JoshSimBatchHandler implements HttpHandler {
   private void sendJsonAccepted(HttpServerExchange exchange, String jobId, String statusPath) {
     exchange.setStatusCode(202);
     exchange.getResponseHeaders().put(new HttpString("Content-Type"), "application/json");
-    exchange.getResponseSender().send(
-        String.format(
-            "{\"status\":\"accepted\",\"jobId\":\"%s\",\"statusPath\":\"%s\"}",
-            jobId, statusPath
-        )
-    );
+    Map<String, String> fields = new LinkedHashMap<>();
+    fields.put("status", "accepted");
+    fields.put("jobId", jobId);
+    fields.put("statusPath", statusPath);
+    exchange.getResponseSender().send(toJson(fields));
   }
 
   private void sendJsonError(HttpServerExchange exchange, int statusCode, String jobId,
@@ -316,9 +332,42 @@ public class JoshSimBatchHandler implements HttpHandler {
     exchange.setStatusCode(statusCode);
     exchange.getResponseHeaders().put(new HttpString("Content-Type"), "application/json");
     String safeMessage = message.replace("\"", "\\\"").replace("\n", " ");
-    exchange.getResponseSender().send(
-        String.format("{\"status\":\"error\",\"jobId\":\"%s\",\"message\":\"%s\"}",
-            jobId, safeMessage)
-    );
+    Map<String, String> fields = new LinkedHashMap<>();
+    fields.put("status", "error");
+    fields.put("jobId", jobId);
+    fields.put("message", safeMessage);
+    exchange.getResponseSender().send(toJson(fields));
+  }
+
+  /**
+   * Build a JSON status string with the given status, jobId, and additional key-value pairs.
+   *
+   * @param status The status value (running, complete, error)
+   * @param jobId The job identifier
+   * @param extra Additional key-value pairs (must be even number of args)
+   * @return JSON string
+   */
+  private String buildStatusJson(String status, String jobId, String... extra) {
+    Map<String, String> fields = new LinkedHashMap<>();
+    fields.put("status", status);
+    fields.put("jobId", jobId);
+    for (int i = 0; i < extra.length; i += 2) {
+      fields.put(extra[i], extra[i + 1]);
+    }
+    return toJson(fields);
+  }
+
+  private static String toJson(Map<String, String> fields) {
+    StringBuilder sb = new StringBuilder("{");
+    boolean first = true;
+    for (Map.Entry<String, String> entry : fields.entrySet()) {
+      if (!first) {
+        sb.append(",");
+      }
+      sb.append("\"").append(entry.getKey()).append("\":\"").append(entry.getValue()).append("\"");
+      first = false;
+    }
+    sb.append("}");
+    return sb.toString();
   }
 }
