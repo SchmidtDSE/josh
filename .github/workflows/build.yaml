@@ -187,7 +187,7 @@ jobs:
             --api-key testkey \
             --replicates 5
       - name: Check step labeling
-        run: python3 examples/test/check_remote_step.py
+        run: python3 .github/scripts/check_remote_step.py
       - name: Stop server
         if: always()
         run: pkill -f joshsim-fat.jar || true
