@@ -208,7 +208,7 @@ jobs:
             --api-key testkey \
             --replicates=1 \
             --enable-profiler
-          python3 .github/scripts/check_profiler_off.py
+          python3 .github/scripts/check_profiler_on.py
           rm -f /tmp/profiler_multi_josh.csv
       - name: Stop server
         if: always()
