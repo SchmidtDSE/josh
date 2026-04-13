@@ -19,12 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
-import org.joshsim.JoshSimCommander;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.pipeline.job.JoshJob;
@@ -143,27 +140,6 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private int replicates = 1;
 
-  @Option(
-      names = "--upload-source",
-      description = "Upload source .josh file to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadSource = false;
-
-  @Option(
-      names = "--upload-config",
-      description = "Upload config files (.jshc) to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadConfig = false;
-
-  @Option(
-      names = "--upload-data",
-      description = "Upload data files (.jshd) to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadData = false;
-
   /**
    * Parses custom parameter command-line options.
    *
@@ -215,36 +191,9 @@ public class RunRemoteCommand implements Callable<Integer> {
       URI endpointUri = validateAndParseEndpoint(endpoint);
 
       // Execute remote simulation using strategy pattern
-      List<JoshJob> jobs = executeRemoteSimulation(endpointUri);
+      executeRemoteSimulation(endpointUri);
 
       output.printInfo("Remote simulation completed successfully");
-
-      // Upload artifacts if requested and MinIO is configured
-      if (minioOptions.isMinioOutput()) {
-        // Upload the josh file if requested
-        if (uploadSource) {
-          boolean joshSuccess = JoshSimCommander.saveToMinio("run", file, minioOptions, output);
-          if (!joshSuccess) {
-            return SERIALIZATION_ERROR_CODE;
-          }
-        }
-
-        // Upload config files if requested
-        if (uploadConfig) {
-          Integer configResult = uploadArtifacts(jobs, ".jshc", "run");
-          if (configResult != 0) {
-            return configResult;
-          }
-        }
-
-        // Upload data files if requested
-        if (uploadData) {
-          Integer dataResult = uploadArtifacts(jobs, ".jshd", "run");
-          if (dataResult != 0) {
-            return dataResult;
-          }
-        }
-      }
 
       return 0;
 
@@ -548,59 +497,6 @@ public class RunRemoteCommand implements Callable<Integer> {
 
       output.printInfo("Validated Josh Cloud API key");
     }
-  }
-
-  /**
-   * Uploads artifact files with the given extension from all jobs.
-   * If no files are found in jobs, scans the working directory for files with the extension.
-   *
-   * @param jobs List of jobs to extract files from
-   * @param extension File extension to match (e.g., ".jshc", ".jshd")
-   * @param subDirectories Subdirectory path in MinIO bucket
-   * @return 0 if successful, error code otherwise
-   */
-  private Integer uploadArtifacts(List<JoshJob> jobs, String extension, String subDirectories) {
-    // Collect unique file paths across all jobs
-    Set<String> uniqueFilePaths = new HashSet<>();
-    for (JoshJob job : jobs) {
-      for (JoshJobFileInfo fileInfo : job.getFileInfos().values()) {
-        if (fileInfo.getPath().endsWith(extension)) {
-          uniqueFilePaths.add(fileInfo.getPath());
-        }
-      }
-    }
-
-    // If no files found in jobs (no --data flag used), scan working directory
-    if (uniqueFilePaths.isEmpty()) {
-      File workingDir = file.getParentFile();
-      if (workingDir == null) {
-        workingDir = new File(".");
-      }
-
-      File[] filesInDir = workingDir.listFiles((dir, name) -> name.endsWith(extension));
-      if (filesInDir != null) {
-        for (File f : filesInDir) {
-          uniqueFilePaths.add(f.getPath());
-        }
-      }
-    }
-
-    // Upload each unique file
-    for (String filePath : uniqueFilePaths) {
-      File artifactFile = new File(filePath);
-      if (artifactFile.exists()) {
-        boolean success = JoshSimCommander.saveToMinio(
-            subDirectories, artifactFile, minioOptions, output
-        );
-        if (!success) {
-          return SERIALIZATION_ERROR_CODE;
-        }
-      } else {
-        output.printError("Artifact file not found: " + filePath);
-      }
-    }
-
-    return 0;
   }
 
 }

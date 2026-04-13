@@ -120,6 +120,10 @@ public class JoshSimServer {
             "/runReplicates",
             new JoshSimLeaderHandler(dataLayer, workerUrl, maxParallelRequests)
         )
+        .addPrefixPath(
+            "/runBatch",
+            new JoshSimBatchHandler(dataLayer)
+        )
 
         // Health endpoint
         .addPrefixPath("/health", exchange -> {

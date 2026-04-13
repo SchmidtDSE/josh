@@ -18,6 +18,7 @@ import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.value.type.EngineValue;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -121,5 +122,147 @@ class MapSerializeStrategyTest {
 
     // Assert
     assertEquals(0, result.size());
+  }
+
+  @Nested
+  class PrecisionTests {
+
+    @Test
+    void testDefaultPrecisionTruncatesLongDecimals() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy();
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("3.141592653589793238462643383279");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.pi"));
+      when(entity.getAttributeValue("export.pi")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("3.1415926535", result.get("pi"));
+    }
+
+    @Test
+    void testCustomPrecision() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(2);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("3.14159");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.pi"));
+      when(entity.getAttributeValue("export.pi")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("3.14", result.get("pi"));
+    }
+
+    @Test
+    void testUnlimitedPrecision() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(
+          MapSerializeStrategy.UNLIMITED_PRECISION);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      String longDecimal = "3.141592653589793238462643383279";
+      when(value.getAsString()).thenReturn(longDecimal);
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.pi"));
+      when(entity.getAttributeValue("export.pi")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals(longDecimal, result.get("pi"));
+    }
+
+    @Test
+    void testIntegerValuesUnchanged() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(2);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("42");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.count"));
+      when(entity.getAttributeValue("export.count")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("42", result.get("count"));
+    }
+
+    @Test
+    void testStringValuesUnchanged() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(2);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("hello world");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.label"));
+      when(entity.getAttributeValue("export.label")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("hello world", result.get("label"));
+    }
+
+    @Test
+    void testValuesWithinPrecisionUnchanged() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(6);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("1.5");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.height"));
+      when(entity.getAttributeValue("export.height")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("1.5", result.get("height"));
+    }
+
+    @Test
+    void testGeometryPositionRounded() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(3);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineGeometry geometry = Mockito.mock(EngineGeometry.class);
+      when(geometry.getCenterX()).thenReturn(new BigDecimal("12.123456789"));
+      when(geometry.getCenterY()).thenReturn(new BigDecimal("34.987654321"));
+      when(entity.getAttributeNames()).thenReturn(Set.of());
+      when(entity.getGeometry()).thenReturn(Optional.of(geometry));
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("12.123", result.get("position.x"));
+      assertEquals("34.988", result.get("position.y"));
+    }
+
+    @Test
+    void testTrailingZerosKept() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(6);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("1.10000000000000000");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.val"));
+      when(entity.getAttributeValue("export.val")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("1.100000", result.get("val"));
+    }
+
+    @Test
+    void testTruncationNotRounding() {
+      MapSerializeStrategy strategy = new MapSerializeStrategy(2);
+
+      Entity entity = Mockito.mock(Entity.class);
+      EngineValue value = Mockito.mock(EngineValue.class);
+      when(value.getAsString()).thenReturn("1.005");
+      when(entity.getAttributeNames()).thenReturn(Set.of("export.val"));
+      when(entity.getAttributeValue("export.val")).thenReturn(Optional.of(value));
+      when(entity.getGeometry()).thenReturn(Optional.empty());
+
+      Map<String, String> result = strategy.getRecord(entity);
+      assertEquals("1.00", result.get("val"));
+    }
   }
 }

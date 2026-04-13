@@ -14,7 +14,6 @@ package org.joshsim.command;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,9 +42,9 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
+import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
-import org.joshsim.pipeline.job.JoshJobFileInfo;
 import org.joshsim.pipeline.job.config.JobVariationParser;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioOptions;
@@ -74,7 +73,6 @@ import picocli.CommandLine.Parameters;
     description = "Run a simulation file"
 )
 public class RunCommand implements Callable<Integer> {
-  private static final int MINIO_ERROR_CODE = 100;
   private static final int UNKNOWN_ERROR_CODE = 404;
 
   /**
@@ -149,27 +147,6 @@ public class RunCommand implements Callable<Integer> {
   private int exportQueueSize = 1000000;
 
   @Option(
-      names = "--upload-source",
-      description = "Upload source .josh file to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadSource = false;
-
-  @Option(
-      names = "--upload-config",
-      description = "Upload config files (.jshc) to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadConfig = false;
-
-  @Option(
-      names = "--upload-data",
-      description = "Upload data files (.jshd) to MinIO after simulation completes",
-      defaultValue = "false"
-  )
-  private boolean uploadData = false;
-
-  @Option(
       names = "--seed",
       description = "Random seed for reproducible simulations. If specified, all random "
                   + "operations will use this seed to produce deterministic results."
@@ -182,6 +159,14 @@ public class RunCommand implements Callable<Integer> {
       defaultValue = "false"
   )
   private boolean enableProfiler;
+
+  @Option(
+      names = "--csv-precision",
+      description = "Maximum decimal places for numeric values in CSV output. "
+                  + "Use -1 for unlimited precision (default: 10).",
+      defaultValue = "10"
+  )
+  private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
 
   /**
    * Parses custom parameter command-line options.
@@ -290,9 +275,19 @@ public class RunCommand implements Callable<Integer> {
         .withInputStrategy(inputStrategy)
         .withTemplateRenderer(initTemplateRenderer)
         .withMinioOptions(minioOptions)
+        .withMaxDecimalPlaces(csvPrecision)
         .build();
 
+    // Create ValueSupportFactory before interpretation so that the profiler-enabled
+    // resolver factory is used when building ValueResolver instances at compile time.
+    boolean favorBigDecimal = !useFloat64;
+    ValueSupportFactory valueFactory = new ValueSupportFactory(
+        favorBigDecimal,
+        buildValueResolverFactory(enableProfiler)
+    );
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
+        valueFactory,
         geometryFactory,
         file,
         output,
@@ -336,13 +331,6 @@ public class RunCommand implements Callable<Integer> {
     JvmCompatibilityLayer compatLayer = new JvmCompatibilityLayer();
     compatLayer.setExportQueueCapacity(exportQueueSize);
     CompatibilityLayerKeeper.set(compatLayer);
-
-    // Set up ValueSupportFactory
-    boolean favorBigDecimal = !useFloat64;
-    ValueSupportFactory valueFactory = new ValueSupportFactory(
-        favorBigDecimal,
-        buildValueResolverFactory(enableProfiler)
-    );
 
     // Extract grid information for Earth-space detection (similar to JoshSimFacade)
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
@@ -396,6 +384,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         } else {
           inputOutputLayer = new JvmInputOutputLayerBuilder()
@@ -404,6 +393,7 @@ public class RunCommand implements Callable<Integer> {
               .withTemplateRenderer(templateRenderer)
               .withMinioOptions(minioOptions)
               .withAppendMode(totalReplicateCount > 1)
+              .withMaxDecimalPlaces(csvPrecision)
               .build();
         }
 
@@ -442,90 +432,8 @@ public class RunCommand implements Callable<Integer> {
     output.printInfo("  Job combinations: " + jobs.size());
     output.printInfo("  Replicates per job: " + replicates);
 
-    if (minioOptions.isMinioOutput()) {
-      // Upload the josh file if requested
-      if (uploadSource) {
-        Integer joshResult = saveToMinio("run", file);
-        if (joshResult != 0) {
-          return joshResult;
-        }
-      }
-
-      // Upload config files if requested
-      if (uploadConfig) {
-        Integer configResult = uploadArtifacts(jobs, ".jshc", "run");
-        if (configResult != 0) {
-          return configResult;
-        }
-      }
-
-      // Upload data files if requested
-      if (uploadData) {
-        Integer dataResult = uploadArtifacts(jobs, ".jshd", "run");
-        if (dataResult != 0) {
-          return dataResult;
-        }
-      }
-    }
-
     // Clean up shared random
     SharedRandom.clear();
-
-    return 0;
-  }
-
-  private Integer saveToMinio(String subDirectories, File file) {
-    boolean successful = JoshSimCommander.saveToMinio(subDirectories, file, minioOptions, output);
-    return successful ? 0 : MINIO_ERROR_CODE;
-  }
-
-  /**
-   * Uploads artifact files with the given extension from all jobs.
-   * If no files are found in jobs, scans the working directory for files with the extension.
-   *
-   * @param jobs List of jobs to extract files from
-   * @param extension File extension to match (e.g., ".jshc", ".jshd")
-   * @param subDirectories Subdirectory path in MinIO bucket
-   * @return 0 if successful, error code otherwise
-   */
-  private Integer uploadArtifacts(List<JoshJob> jobs, String extension, String subDirectories) {
-    // Collect unique file paths across all jobs
-    Set<String> uniqueFilePaths = new HashSet<>();
-    for (JoshJob job : jobs) {
-      for (JoshJobFileInfo fileInfo : job.getFileInfos().values()) {
-        if (fileInfo.getPath().endsWith(extension)) {
-          uniqueFilePaths.add(fileInfo.getPath());
-        }
-      }
-    }
-
-    // If no files found in jobs (no --data flag used), scan working directory
-    if (uniqueFilePaths.isEmpty()) {
-      File workingDir = file.getParentFile();
-      if (workingDir == null) {
-        workingDir = new File(".");
-      }
-
-      File[] filesInDir = workingDir.listFiles((dir, name) -> name.endsWith(extension));
-      if (filesInDir != null) {
-        for (File f : filesInDir) {
-          uniqueFilePaths.add(f.getPath());
-        }
-      }
-    }
-
-    // Upload each unique file
-    for (String filePath : uniqueFilePaths) {
-      File artifactFile = new File(filePath);
-      if (artifactFile.exists()) {
-        Integer result = saveToMinio(subDirectories, artifactFile);
-        if (result != 0) {
-          return result;
-        }
-      } else {
-        output.printError("Artifact file not found: " + filePath);
-      }
-    }
 
     return 0;
   }

@@ -10,10 +10,6 @@
 
 package org.joshsim;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.UploadObjectArgs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,14 +21,16 @@ import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
+import org.joshsim.command.StageFromMinioCommand;
+import org.joshsim.command.StageToMinioCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 
@@ -64,13 +62,12 @@ import picocli.CommandLine;
         PreprocessCommand.class,
         DiscoverConfigCommand.class,
         InspectJshdCommand.class,
-        InspectExportsCommand.class
+        InspectExportsCommand.class,
+        StageToMinioCommand.class,
+        StageFromMinioCommand.class
     }
 )
 public class JoshSimCommander {
-
-  private static final int MINIO_ERROR_CODE = 100;
-  private static final int UNKNOWN_ERROR_CODE = 404;
 
   /**
    * Enumeration of possible execution steps in the Josh simulation process.
@@ -166,6 +163,34 @@ public class JoshSimCommander {
       OutputOptions output,
       InputOutputLayer inputOutputLayer
   ) {
+    return getJoshProgram(
+        new ValueSupportFactory(), geometryFactory, file, output, inputOutputLayer
+    );
+  }
+
+  /**
+   * Retrieves and initializes a Josh program with a caller-supplied ValueSupportFactory.
+   *
+   * <p>This overload allows the caller to supply a pre-configured {@link ValueSupportFactory} so
+   * that features like evalDuration profiling (via {@code TimedRecursiveValueResolverFactory}) are
+   * wired in at compile time when {@link org.joshsim.lang.interpret.ValueResolver} instances are
+   * created.</p>
+   *
+   * @param valueFactory The factory for creating engine values and value resolvers.
+   * @param geometryFactory The factory for creating geometry objects.
+   * @param file The file containing the Josh program code.
+   * @param output Options for handling output messages.
+   * @param inputOutputLayer The input/output layer to use for file access and exports.
+   * @return A ProgramInitResult containing either the initialized JoshProgram or information about
+   *     the failure.
+   */
+  public static ProgramInitResult getJoshProgram(
+      ValueSupportFactory valueFactory,
+      EngineGeometryFactory geometryFactory,
+      File file,
+      OutputOptions output,
+      InputOutputLayer inputOutputLayer
+  ) {
     if (!file.exists()) {
       output.printError("Could not find file: " + file);
       return new ProgramInitResult(CommanderStepEnum.LOAD);
@@ -197,64 +222,12 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacade.interpret(geometryFactory, result, inputOutputLayer);
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        valueFactory, geometryFactory, result, inputOutputLayer
+    );
     assert program != null;
 
     return new ProgramInitResult(program);
-  }
-
-  /**
-   * Saves a file to Minio storage.
-   *
-   * @param subDirectories The subdirectory path in the Minio bucket
-   * @param file The file to upload
-   * @param minioOptions Configuration options for Minio connection
-   * @param output Options for handling output messages
-   * @return true if the upload was successful, false otherwise
-   */
-  public static boolean saveToMinio(
-      String subDirectories,
-      File file,
-      MinioOptions minioOptions,
-      OutputOptions output
-  ) {
-    try {
-      MinioClient minioClient = minioOptions.getMinioClient();
-      String bucketName = minioOptions.getBucketName();
-
-      // If bucket name is not configured, skip the upload silently
-      // (bucket may only be specified in export URLs, not in MinioOptions)
-      if (bucketName == null || bucketName.isEmpty()) {
-        return true;
-      }
-
-      String objectName = minioOptions.getObjectName(subDirectories, file.getName());
-
-      boolean bucketExists = minioClient.bucketExists(
-          BucketExistsArgs.builder().bucket(bucketName).build()
-      );
-
-      if (!bucketExists) {
-        minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-        output.printInfo("Created bucket: " + bucketName);
-      }
-
-      minioClient.uploadObject(
-          UploadObjectArgs.builder()
-            .bucket(bucketName)
-            .object(objectName)
-            .filename(file.getAbsolutePath())
-            .build()
-      );
-
-      String path = "minio://" + bucketName + "/" + objectName;
-      String message = "Successfully uploaded " + file.getName() + " to " + path;
-      output.printInfo(message);
-      return true;
-    } catch (Exception e) {
-      output.printError("Failed to upload to Minio: " + e.getMessage());
-      return false;
-    }
   }
 
   /**

@@ -51,9 +51,6 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `--parallel`: Enable parallel patch processing
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
-- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
-- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
-- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
 
 **Examples:**
 ```bash
@@ -119,7 +116,6 @@ java -jar joshsim-fat.jar validate <script.josh>
 **Options:**
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
-- `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
 #### `discoverConfig` - Configuration Discovery
 Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.
@@ -182,6 +178,53 @@ java -jar joshsim-fat.jar server [OPTIONS]
 **Options:**
 - `--port <port>`: Server port (default: 8080)
 - `--host <host>`: Server host (default: localhost)
+
+**Server Endpoints:**
+
+The server exposes the following API endpoints:
+
+- `POST /runReplicate` — Execute a single simulation replicate via HTTP streaming. Code and data are sent in the request body; results stream back in wire format.
+- `POST /runReplicates` — Leader endpoint that coordinates multiple replicates across workers.
+- `POST /runBatch` — Execute a simulation from a local directory of pre-staged files. Results are written to MinIO via `minio://` export paths in the Josh script. Returns JSON status instead of streaming results. Staging is a separate concern (use `stageFromMinio` CLI command or equivalent before calling this endpoint).
+- `POST /parse` — Parse Josh code and return the AST or errors.
+- `POST /discoverConfig` — Discover configuration variables in Josh code.
+- `GET /health` — Health check endpoint (returns "healthy").
+
+**`/runBatch` Endpoint Details:**
+
+The `/runBatch` endpoint runs a simulation from a local directory of pre-staged files. Staging and execution are separate concerns — the caller is responsible for ensuring files are local before calling this endpoint (e.g., via the `stageFromMinio` CLI command).
+
+```
+POST /runBatch
+Content-Type: multipart/form-data
+```
+
+**Form fields:**
+- `apiKey` — API key for authentication (required if `JOSH_API_KEYS` is set)
+- `jobId` — Unique job identifier, returned in the response
+- `simulation` — Name of the simulation to run
+- `workDir` — Path to local directory containing pre-staged simulation files (.josh script, .jshd, .jshc)
+- `stageFromMinio` (optional) — Set to `"true"` to download inputs from MinIO into `workDir` before running. Controls input staging only, not outputs. For serverless environments where staging and execution must happen in the same request.
+- `minioPrefix` (optional, required when `stageFromMinio=true`) — Object prefix to download from (e.g., `batch-jobs/abc/inputs/`)
+
+**Response (success):**
+```json
+{"status": "complete", "jobId": "integration-test-001"}
+```
+
+**Response (error):**
+```json
+{"status": "error", "jobId": "integration-test-001", "message": "..."}
+```
+
+**Workflow:**
+1. Stage simulation files to MinIO using `stageToMinio` (client side)
+2. Download staged files to a local directory using `stageFromMinio` (worker side)
+3. POST to `/runBatch` with the local directory path as `workDir`
+4. Results land in MinIO via `minio://` export paths in the Josh script
+5. Retrieve results using `stageFromMinio` (client side)
+
+MinIO credentials for `minio://` export paths are read from server environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`).
 
 #### `runRemote` - Cloud Execution
 Executes simulations on Josh Cloud infrastructure for distributed processing.

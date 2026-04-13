@@ -5,10 +5,17 @@
 package org.joshsim.util;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
+import io.minio.Result;
 import io.minio.UploadObjectArgs;
+import io.minio.messages.Item;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,6 +146,91 @@ public class MinioHandler {
     }
 
     return path + relativePath;
+  }
+
+  /**
+   * Download a file from MinIO to a local destination.
+   *
+   * @param objectPath The object path within the bucket (relative to base path)
+   * @param destination The local file to write to
+   * @throws Exception If the download fails
+   */
+  public void downloadFile(String objectPath, File destination) throws Exception {
+    String fullPath = constructObjectPath(objectPath);
+    try (InputStream stream = minioClient.getObject(
+        GetObjectArgs.builder()
+            .bucket(bucketName)
+            .object(fullPath)
+            .build());
+        FileOutputStream fos = new FileOutputStream(destination)) {
+      stream.transferTo(fos);
+    }
+    output.printInfo(
+        "Downloaded minio://" + bucketName + "/" + fullPath + " to " + destination.getPath()
+    );
+  }
+
+  /**
+   * Open an input stream to a MinIO object.
+   *
+   * <p>Caller is responsible for closing the returned stream.</p>
+   *
+   * @param objectPath The object path within the bucket (relative to base path)
+   * @return An InputStream for reading the object contents
+   * @throws Exception If the stream cannot be opened
+   */
+  public InputStream downloadStream(String objectPath) throws Exception {
+    String fullPath = constructObjectPath(objectPath);
+    return minioClient.getObject(
+        GetObjectArgs.builder()
+            .bucket(bucketName)
+            .object(fullPath)
+            .build()
+    );
+  }
+
+  /**
+   * List all object keys under a given prefix.
+   *
+   * @param prefix The prefix to list under (relative to base path)
+   * @return List of full object keys matching the prefix
+   * @throws Exception If listing fails
+   */
+  public List<String> listObjects(String prefix) throws Exception {
+    String fullPrefix = constructObjectPath(prefix);
+    List<String> keys = new ArrayList<>();
+    for (Result<Item> result : minioClient.listObjects(
+        ListObjectsArgs.builder()
+            .bucket(bucketName)
+            .prefix(fullPrefix)
+            .recursive(true)
+            .build())) {
+      keys.add(result.get().objectName());
+    }
+    return keys;
+  }
+
+  /**
+   * Delete all objects under a given prefix.
+   *
+   * @param prefix The prefix to delete under (relative to base path)
+   * @return The number of objects deleted
+   * @throws Exception If deletion fails
+   */
+  public int deleteObjects(String prefix) throws Exception {
+    List<String> keys = listObjects(prefix);
+    for (String key : keys) {
+      minioClient.removeObject(
+          RemoveObjectArgs.builder()
+              .bucket(bucketName)
+              .object(key)
+              .build()
+      );
+    }
+    if (!keys.isEmpty()) {
+      output.printInfo("Deleted " + keys.size() + " objects under " + prefix);
+    }
+    return keys.size();
   }
 
   /**
