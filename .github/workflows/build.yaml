@@ -376,6 +376,15 @@ jobs:
             ProfilerMultiExample
           python3 .github/scripts/check_profiler_off.py
           rm -f /tmp/profiler_multi_josh.csv
+      - name: Test profiler on local (expect non-zero timings)
+        run: |
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            --enable-profiler \
+            examples/simulations/profiler_multi.josh \
+            ProfilerMultiExample
+          python3 .github/scripts/check_profiler_on.py
+          rm -f /tmp/profiler_multi_josh.csv
   buildWeb:
     environment: Build
     needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
