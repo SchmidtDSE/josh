@@ -368,6 +368,14 @@ jobs:
         run: bash examples/test_data_option.sh
       - name: Test job configuration template functionality
         run: bash examples/test_job_config.sh
+      - name: Test profiler off local (expect zero timings)
+        run: |
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/simulations/profiler_multi.josh \
+            ProfilerMultiExample
+          python3 .github/scripts/check_profiler_off.py
+          rm -f /tmp/profiler_multi_josh.csv
   buildWeb:
     environment: Build
     needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
