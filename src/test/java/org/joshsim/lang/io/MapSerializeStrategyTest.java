@@ -139,7 +139,7 @@ class MapSerializeStrategyTest {
       when(entity.getGeometry()).thenReturn(Optional.empty());
 
       Map<String, String> result = strategy.getRecord(entity);
-      assertEquals("3.141592", result.get("pi"));
+      assertEquals("3.1415926535", result.get("pi"));
     }
 
     @Test
