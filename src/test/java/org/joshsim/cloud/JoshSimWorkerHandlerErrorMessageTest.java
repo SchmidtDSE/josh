@@ -30,7 +30,7 @@ class JoshSimWorkerHandlerErrorMessageTest {
       }
     };
 
-    handler = new JoshSimWorkerHandler(mockApiLayer, true, java.util.Optional.empty(), true);
+    handler = new JoshSimWorkerHandler(mockApiLayer, true, java.util.Optional.empty(), true, false);
   }
 
   @Test

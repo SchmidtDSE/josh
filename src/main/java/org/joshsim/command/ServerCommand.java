@@ -59,6 +59,14 @@ public class ServerCommand implements Callable<Integer> {
   )
   private boolean serialPatches;
 
+  @Option(
+      names = "--enable-profiler",
+      description = "Enable profiling for all simulation requests server-wide. "
+                  + "Forces TimedRecursiveValueResolverFactory regardless of per-request field.",
+      defaultValue = "false"
+  )
+  private boolean enableProfiler;
+
   @Override
   public Integer call() {
     try {
@@ -109,7 +117,8 @@ public class ServerCommand implements Callable<Integer> {
           processedWorkerUrl,
           port,
           workers,
-          serialPatches
+          serialPatches,
+          enableProfiler
       );
 
       server.start();

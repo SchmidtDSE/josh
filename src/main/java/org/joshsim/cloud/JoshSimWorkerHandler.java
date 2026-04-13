@@ -21,6 +21,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.SandboxExportCallback;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
@@ -37,6 +38,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private final CloudApiDataLayer apiDataLayer;
   private final EngineGeometryFactory geometryFactory;
   private final boolean useSerial;
+  private final boolean enableProfiler;
 
 
   /**
@@ -48,12 +50,15 @@ public class JoshSimWorkerHandler implements HttpHandler {
    *     given, will use grid-space.
    * @param useSerial If true, patch processing will be done serially or, otherwise, parallel
    *     processing will be used.
+   * @param enableProfiler If true, profiling is forced on for all requests regardless of the
+   *     per-request form field.
    * @throws RuntimeException if not in sandboxed mode or if there is an error decoding the CRS.
    */
   public JoshSimWorkerHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
-        Optional<String> crs, boolean useSerial) {
+        Optional<String> crs, boolean useSerial, boolean enableProfiler) {
     this.apiDataLayer = apiInternalLayer;
     this.useSerial = useSerial;
+    this.enableProfiler = enableProfiler;
 
     if (!sandboxed) {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
@@ -152,6 +157,10 @@ public class JoshSimWorkerHandler implements HttpHandler {
         ? formData.getFirst("outputSteps").getValue() : "";
     final Optional<Set<Integer>> outputSteps = parseOutputSteps(outputStepsStr);
 
+    boolean requestEnableProfiler = formData.contains("enableProfiler")
+        && "true".equals(formData.getFirst("enableProfiler").getValue());
+    boolean useProfiler = this.enableProfiler || requestEnableProfiler;
+
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
       httpServerExchange.setStatusCode(400);
@@ -161,7 +170,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueFactory(favorBigDecimal, useProfiler);
 
     // Execute interpretation securely
     Optional<JoshProgram> programResult = executeInterpretation(
@@ -187,6 +196,21 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
     httpServerExchange.endExchange();
     return Optional.of(apiKey);
+  }
+
+  /**
+   * Build a ValueSupportFactory configured for optional profiling.
+   *
+   * @param favorBigDecimal Flag indicating if decimal values should favor BigDecimal.
+   * @param useProfiler If true, the factory will use TimedRecursiveValueResolverFactory so that
+   *     evaluation durations are captured; otherwise uses the default
+   *     RecursiveValueResolverFactory.
+   * @return A ValueSupportFactory configured according to the given flags.
+   */
+  ValueSupportFactory buildValueFactory(boolean favorBigDecimal, boolean useProfiler) {
+    return useProfiler
+        ? new ValueSupportFactory(favorBigDecimal, new TimedRecursiveValueResolverFactory())
+        : new ValueSupportFactory(favorBigDecimal);
   }
 
   /**
