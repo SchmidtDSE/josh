@@ -1,8 +1,13 @@
 """Check that remote simulation step labels are correct.
 
 Reads the CSV output of a 5-replicate remote run of StepCheck and
-verifies that step == year == height for every row, and that all
-expected (step, replicate) pairs are present.
+verifies that year == step + 1 and height == step + 1 for every row,
+and that all expected (step, replicate) pairs are present.
+
+Note: year and height both start at 0 (init) and increment by 1 each
+step. Because both the init and step substeps fire on absolute step 0,
+the exported value is always one ahead of the step index, giving
+year = step + 1 and height = step + 1.
 """
 
 import csv
@@ -23,13 +28,13 @@ try:
             year = int(float(row['year']))
             height = int(float(row['height']))
 
-            if year != step:
+            if year != step + 1:
                 errors.append(
-                    f'step={step} replicate={replicate}: year={year} != step'
+                    f'step={step} replicate={replicate}: year={year} != step+1'
                 )
-            if height != step:
+            if height != step + 1:
                 errors.append(
-                    f'step={step} replicate={replicate}: height={height} != step'
+                    f'step={step} replicate={replicate}: height={height} != step+1'
                 )
 
             found_pairs.add((step, replicate))
@@ -59,6 +64,6 @@ if missing_pairs:
 
 print(
     f'PASS: {len(found_pairs)} unique (step, replicate) pairs found, '
-    'height == year == step for all rows'
+    'year == height == step+1 for all rows'
 )
 sys.exit(0)
