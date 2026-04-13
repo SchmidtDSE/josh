@@ -25,7 +25,7 @@ public class MapSerializeStrategy implements MapExportSerializeStrategy {
   public static final int UNLIMITED_PRECISION = -1;
 
   /** Default maximum number of decimal places for numeric values in CSV output. */
-  public static final int DEFAULT_MAX_DECIMAL_PLACES = 6;
+  public static final int DEFAULT_MAX_DECIMAL_PLACES = 10;
 
   private final int maxDecimalPlaces;
 
@@ -97,21 +97,31 @@ public class MapSerializeStrategy implements MapExportSerializeStrategy {
   }
 
   /**
-   * Format a string value, rounding if it represents a decimal number with excess precision.
+   * Format a string value, truncating if it represents a decimal number with excess precision.
+   *
+   * <p>Uses pure string operations to avoid expensive BigDecimal parsing. Values with fewer
+   * decimal places than the limit are returned as-is. Values with excess precision are truncated
+   * (not rounded) to the configured maximum decimal places.</p>
    *
    * @param valueStr The string to potentially format.
-   * @return The original string if non-numeric or within precision, otherwise a rounded version.
+   * @return The original string if non-numeric or within precision, otherwise a truncated version.
    */
   String formatNumeric(String valueStr) {
     if (maxDecimalPlaces == UNLIMITED_PRECISION || valueStr.isEmpty()) {
       return valueStr;
     }
-    try {
-      BigDecimal bd = new BigDecimal(valueStr);
-      return formatDecimal(bd);
-    } catch (NumberFormatException e) {
+
+    int dotIndex = valueStr.indexOf('.');
+    if (dotIndex < 0) {
       return valueStr;
     }
+
+    int decimalDigits = valueStr.length() - dotIndex - 1;
+    if (decimalDigits <= maxDecimalPlaces) {
+      return valueStr;
+    }
+
+    return valueStr.substring(0, dotIndex + 1 + maxDecimalPlaces);
   }
 
 }

@@ -163,8 +163,8 @@ public class RunCommand implements Callable<Integer> {
   @Option(
       names = "--csv-precision",
       description = "Maximum decimal places for numeric values in CSV output. "
-                  + "Use -1 for unlimited precision (default: 6).",
-      defaultValue = "6"
+                  + "Use -1 for unlimited precision (default: 10).",
+      defaultValue = "10"
   )
   private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
 
