@@ -185,7 +185,7 @@ The server exposes the following API endpoints:
 
 - `POST /runReplicate` — Execute a single simulation replicate via HTTP streaming. Code and data are sent in the request body; results stream back in wire format.
 - `POST /runReplicates` — Leader endpoint that coordinates multiple replicates across workers.
-- `POST /runBatch` — Execute a simulation from a local directory of pre-staged files. Results are written to MinIO via `minio://` export paths in the Josh script. Returns JSON status instead of streaming results. Staging is a separate concern (use `stageFromMinio` CLI command or equivalent before calling this endpoint).
+- `POST /runBatch` — Asynchronously execute a simulation from a local directory of pre-staged files. Returns 202 Accepted immediately with a `statusPath` for polling. Results are written to MinIO via `minio://` export paths in the Josh script. Job status is tracked via a `status.json` file in MinIO. Staging is a separate concern (use `stageFromMinio` CLI command or equivalent before calling this endpoint).
 - `POST /parse` — Parse Josh code and return the AST or errors.
 - `POST /discoverConfig` — Discover configuration variables in Josh code.
 - `GET /health` — Health check endpoint (returns "healthy").
@@ -207,20 +207,31 @@ Content-Type: multipart/form-data
 - `stageFromMinio` (optional) — Set to `"true"` to download inputs from MinIO into `workDir` before running. Controls input staging only, not outputs. For serverless environments where staging and execution must happen in the same request.
 - `minioPrefix` (optional, required when `stageFromMinio=true`) — Object prefix to download from (e.g., `batch-jobs/abc/inputs/`)
 
-**Response (success):**
+**Response (accepted — 202):**
 ```json
-{"status": "complete", "jobId": "integration-test-001"}
+{"status": "accepted", "jobId": "integration-test-001", "statusPath": "batch-status/integration-test-001/status.json"}
 ```
 
-**Response (error):**
+**Response (validation error — 400/401/500):**
 ```json
 {"status": "error", "jobId": "integration-test-001", "message": "..."}
 ```
 
+Validation errors (missing fields, bad API key, invalid workDir, staging failures) are returned synchronously before the simulation starts.
+
+**Status file in MinIO (`batch-status/<jobId>/status.json`):**
+
+The server writes a status file to MinIO at job lifecycle boundaries:
+- Running: `{"status": "running", "jobId": "...", "startedAt": "..."}`
+- Complete: `{"status": "complete", "jobId": "...", "completedAt": "..."}`
+- Error: `{"status": "error", "jobId": "...", "message": "...", "failedAt": "..."}`
+
+Status writes are best-effort — if the status writer cannot be initialized (e.g., missing MinIO credentials), the simulation still runs but no status file is written.
+
 **Workflow:**
 1. Stage simulation files to MinIO using `stageToMinio` (client side)
-2. Download staged files to a local directory using `stageFromMinio` (worker side)
-3. POST to `/runBatch` with the local directory path as `workDir`
+2. POST to `/runBatch` — returns 202 immediately with `statusPath`
+3. Poll `status.json` in MinIO until status is `"complete"` or `"error"`
 4. Results land in MinIO via `minio://` export paths in the Josh script
 5. Retrieve results using `stageFromMinio` (client side)
 

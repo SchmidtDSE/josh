@@ -12,9 +12,9 @@ Cloud Run has hard ceilings (32 GiB memory, 60-min timeout, 8 vCPUs) that block 
 
 ## Workflow
 
-All PRs build into `feat/enhanced_remote`. For each PR: branch off → implement → open PR targeting `feat/enhanced_remote` → review → merge → demonstrate with real model run. Final rollup PR targets `dev` after colleague review.
+PRs 1–4 built into `feat/enhanced_remote`. Rollup PR #383 merged `feat/enhanced_remote` → `dev`. PRs 4a and 4b target `dev` directly. Subsequent PRs (5+) will also target `dev`.
 
-**Important:** PRs target `feat/enhanced_remote`, NOT `dev`.
+For each PR: branch off → implement → open PR → review → merge → demonstrate with real model run.
 
 ## Architecture
 
@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR5 (profiles) → PR6 (batchRemote) → PR7 (K8sTarget) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 (profiles) → PR6 (batchRemote) → PR7 (K8sTarget) → PR8 (Dockerfile) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -171,6 +171,53 @@ Optional:    stageFromMinio (boolean), minioPrefix (required if staging)
 **Role in target system:** This is the server-side handler for `HttpBatchTarget` (PR 6). Any machine running `joshsim server` gets `/runBatch`. Users register it as an HTTP target profile.
 
 **Risk: LOW — additive endpoint, existing handlers untouched**
+
+---
+
+### PR 4a ✅: Opt-in stageFromMinio for serverless `/runBatch` — #384
+**Branch: `feat/server-run-batch` (merged into `feat/enhanced_remote`)**
+
+Added opt-in `stageFromMinio` form field to `/runBatch` so serverless environments (Cloud Run, Lambda) can stage and execute atomically within a single request instead of requiring a separate staging step.
+
+**Changes:**
+- `cloud/JoshSimBatchHandler.java` — added `stageFromMinio` (boolean) and `minioPrefix` form fields, auto-creates `workDir` if staging
+- `util/MinioStagingUtil.java` (~70 lines) — extracted shared staging logic from `StageFromMinioCommand` so both the CLI command and server handler can reuse it
+- `command/StageFromMinioCommand.java` — refactored to delegate to `MinioStagingUtil`
+
+**Design note:** This keeps staging and execution as separate concerns at the abstraction level — `MinioStagingUtil` is a reusable utility, not handler-specific logic. The opt-in flag is for environments where the network topology makes a separate staging step impractical (e.g., Cloud Run containers that boot, execute, and die).
+
+**Risk: LOW — additive field, existing behavior unchanged when field omitted**
+
+---
+
+### PR 4b ✅: Make `/runBatch` async with MinIO status tracking — #387
+**Branch: `feat/async-run-batch`**
+
+Changed `/runBatch` from synchronous (blocks until simulation completes) to asynchronous (returns 202 immediately, writes status to MinIO). This enables concurrent batch jobs against serverless workers.
+
+**Changes:**
+- `cloud/JoshSimBatchHandler.java` — simulation runs in `CompletableFuture.runAsync()` on a `BATCH_EXECUTOR` thread pool; handler returns 202 with `statusPath` immediately; `runBatchWithStatus()` writes `running`/`complete`/`error` lifecycle to MinIO
+- `util/MinioHandler.java` — added `putBytes(byte[], String, String)` for writing small JSON payloads directly to MinIO
+- `llms-full.txt` — updated `/runBatch` docs: 202 response, status file lifecycle, polling workflow
+
+**Status file lifecycle (`batch-status/<jobId>/status.json`):**
+- `{"status":"running","jobId":"...","startedAt":"..."}`
+- `{"status":"complete","jobId":"...","completedAt":"..."}`
+- `{"status":"error","jobId":"...","message":"...","failedAt":"..."}`
+
+Status writes are best-effort — missing MinIO credentials don't prevent simulation execution.
+
+**Client workflow:**
+1. POST `/runBatch` → 202 with `statusPath`
+2. Poll `status.json` in MinIO until `complete` or `error`
+3. Results land via `minio://` export paths in the Josh script
+
+**Test:**
+- [x] 11+1 unit tests for `JoshSimBatchHandler` (existing validation tests + new 202 acceptance test)
+- [x] 3 unit tests for `MinioHandler.putBytes()`
+- [x] `./gradlew test` passes, `./gradlew checkstyleMain` passes
+
+**Risk: LOW — same endpoint, additive behavior (async vs sync), validation errors still synchronous**
 
 ---
 

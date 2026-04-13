@@ -9,10 +9,12 @@ import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.Result;
 import io.minio.UploadObjectArgs;
 import io.minio.messages.Item;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -123,6 +125,35 @@ public class MinioHandler {
     }
 
     return successCount;
+  }
+
+  /**
+   * Write a byte array directly to MinIO as a single object.
+   *
+   * <p>Intended for small payloads like JSON status files. For large data,
+   * use {@link #uploadFile(File, String)} or the streaming
+   * {@link org.joshsim.lang.io.MinioOutputStreamStrategy} instead.</p>
+   *
+   * @param data The bytes to write
+   * @param relativePath The path within the base directory where the object should be stored
+   * @param contentType The MIME type for the object (e.g., "application/json")
+   * @throws Exception If the upload fails
+   */
+  public void putBytes(byte[] data, String relativePath, String contentType) throws Exception {
+    String objectName = constructObjectPath(relativePath);
+    try (ByteArrayInputStream bais = new ByteArrayInputStream(data)) {
+      minioClient.putObject(
+          PutObjectArgs.builder()
+              .bucket(bucketName)
+              .object(objectName)
+              .stream(bais, data.length, -1)
+              .contentType(contentType)
+              .build()
+      );
+    }
+    output.printInfo(
+        "Put " + data.length + " bytes to minio://" + bucketName + "/" + objectName
+    );
   }
 
   /**
