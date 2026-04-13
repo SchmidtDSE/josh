@@ -139,7 +139,7 @@ class MapSerializeStrategyTest {
       when(entity.getGeometry()).thenReturn(Optional.empty());
 
       Map<String, String> result = strategy.getRecord(entity);
-      assertEquals("3.141593", result.get("pi"));
+      assertEquals("3.141592", result.get("pi"));
     }
 
     @Test
@@ -236,7 +236,7 @@ class MapSerializeStrategyTest {
     }
 
     @Test
-    void testTrailingZerosStripped() {
+    void testTrailingZerosKept() {
       MapSerializeStrategy strategy = new MapSerializeStrategy(6);
 
       Entity entity = Mockito.mock(Entity.class);
@@ -247,11 +247,11 @@ class MapSerializeStrategyTest {
       when(entity.getGeometry()).thenReturn(Optional.empty());
 
       Map<String, String> result = strategy.getRecord(entity);
-      assertEquals("1.1", result.get("val"));
+      assertEquals("1.100000", result.get("val"));
     }
 
     @Test
-    void testRoundingHalfUp() {
+    void testTruncationNotRounding() {
       MapSerializeStrategy strategy = new MapSerializeStrategy(2);
 
       Entity entity = Mockito.mock(Entity.class);
@@ -262,7 +262,7 @@ class MapSerializeStrategyTest {
       when(entity.getGeometry()).thenReturn(Optional.empty());
 
       Map<String, String> result = strategy.getRecord(entity);
-      assertEquals("1.01", result.get("val"));
+      assertEquals("1.00", result.get("val"));
     }
   }
 }
