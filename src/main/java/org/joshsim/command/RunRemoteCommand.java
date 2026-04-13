@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -345,6 +347,9 @@ public class RunRemoteCommand implements Callable<Integer> {
 
     // Select execution strategy (same for all job combinations)
     RunRemoteStrategy strategy = selectExecutionStrategy();
+
+    // Set up JVM compatibility layer for multi-threaded CSV writes
+    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
     // Execute remote simulation for each job combination
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
