@@ -212,8 +212,34 @@ public class RemoteResponseHandler {
       }
     }
 
-    // Persist using Component 2 NamedMap write capability
-    exportFacade.write(namedMap, currentStep.get(), replicateNumber);
+    long step = parseStep(namedMap);
+    exportFacade.write(namedMap, step, replicateNumber);
+  }
+
+  /**
+   * Parses the step value from a DATUM payload NamedMap.
+   *
+   * <p>Provides a validated alternative to raw Long.parseLong that produces a clear,
+   * actionable error message when the "step" key is absent or unparseable.</p>
+   *
+   * @param namedMap The NamedMap from the deserialized DATUM payload
+   * @return The parsed step value as a long
+   * @throws IllegalStateException if the "step" key is absent or not a valid long
+   */
+  private static final String MISSING_STEP_MSG =
+      "DATUM payload is missing required 'step' field. Worker may be running an older version."
+      + " Raw payload: %s";
+
+  private static long parseStep(NamedMap namedMap) {
+    String stepValue = namedMap.getTarget().get("step");
+    if (stepValue == null) {
+      throw new IllegalStateException(String.format(MISSING_STEP_MSG, namedMap));
+    }
+    try {
+      return Long.parseLong(stepValue);
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException(String.format(MISSING_STEP_MSG, namedMap), e);
+    }
   }
 
   /**

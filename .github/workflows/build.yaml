@@ -142,6 +142,55 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
+  testRemote:
+    needs: [buildJava]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Remote
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download fat jar
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Start local server
+        run: java -Xmx2g -jar build/libs/joshsim-fat.jar server > /tmp/josh_server.log 2>&1 &
+      - name: Wait for server ready
+        run: |
+          for i in {1..30}; do
+            if curl -s --max-time 1 --connect-timeout 1 http://localhost:8085 -o /dev/null 2>&1; then
+              echo "Server ready after $i seconds"
+              break
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start. Log:"
+              cat /tmp/josh_server.log
+              exit 1
+            fi
+          done
+      - name: Run remote simulation with 5 replicates
+        run: |
+          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
+            examples/test/remote_step_check.josh \
+            StepCheck \
+            --endpoint http://localhost:8085/runReplicates \
+            --api-key testkey \
+            --replicates 5
+      - name: Check step labeling
+        run: python3 .github/scripts/check_remote_step.py
+      - name: Stop server
+        if: always()
+        run: pkill -f joshsim-fat.jar || true
   testOutputFormatCSV:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -321,7 +370,7 @@ jobs:
         run: bash examples/test_job_config.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser

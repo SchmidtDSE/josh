@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import org.joshsim.compat.CompatibilityLayerKeeper;
+import org.joshsim.compat.JvmCompatibilityLayer;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.JoshJobFileInfo;
@@ -292,8 +294,9 @@ public class RunRemoteCommand implements Callable<Integer> {
     // Read Josh simulation code
     String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
 
-    // Select execution strategy (same for all job combinations)
+    // Select execution strategy and compatibility layer
     RunRemoteStrategy strategy = selectExecutionStrategy();
+    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
     // Execute remote simulation for each job combination
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
