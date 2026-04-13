@@ -2,6 +2,7 @@ package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -394,5 +395,19 @@ public class RemoteResponseHandlerTest {
 
     // Assert - verify the 3-arg write is called with the correct replicate number
     verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), eq(5L), eq(7));
+  }
+
+  @Test
+  public void testDatumResponseMissingStepThrows() {
+    // Arrange - DATUM line with no "step" key in the payload
+    String datumLine = "[0] TestEntity:x=1\ty=2";
+
+    // Act & Assert
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+      handler.processResponseLine(datumLine, 0, null);
+    });
+
+    assertInstanceOf(IllegalStateException.class, exception.getCause());
+    assertTrue(exception.getCause().getMessage().contains("missing required 'step' field"));
   }
 }
