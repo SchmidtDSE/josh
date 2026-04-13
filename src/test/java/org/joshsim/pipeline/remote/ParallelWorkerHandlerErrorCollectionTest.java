@@ -107,7 +107,7 @@ public class ParallelWorkerHandlerErrorCollectionTest {
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 1; i <= 5; i++) {
       // Use simulationName to encode replicate number for server-side routing
-      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, ""));
+      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, "", false));
     }
 
     // Act: execute — should throw aggregate exception
@@ -143,7 +143,7 @@ public class ParallelWorkerHandlerErrorCollectionTest {
 
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 1; i <= 3; i++) {
-      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, ""));
+      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, "", false));
     }
 
     // Act: should not throw
@@ -171,7 +171,7 @@ public class ParallelWorkerHandlerErrorCollectionTest {
 
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 1; i <= 2; i++) {
-      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, ""));
+      tasks.add(new WorkerTask("code", String.valueOf(i), "key", "", false, i, "", false));
     }
 
     // Act
