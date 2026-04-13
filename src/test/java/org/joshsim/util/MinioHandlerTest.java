@@ -16,6 +16,7 @@ import io.minio.GetObjectResponse;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.Result;
 import io.minio.messages.Item;
@@ -251,6 +252,64 @@ public class MinioHandlerTest {
     // Verify
     assertTrue(keys.isEmpty());
   }
+
+  // --- putBytes tests ---
+
+  @Test
+  void putBytes_shouldUploadDataWithCorrectPath() throws Exception {
+    // Setup
+    MinioHandler handler = createHandler();
+    byte[] data = "{\"status\":\"running\"}".getBytes(StandardCharsets.UTF_8);
+
+    // Execute
+    handler.putBytes(data, "batch-status/job-1/status.json", "application/json");
+
+    // Verify
+    ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+    verify(minioClient).putObject(captor.capture());
+    assertEquals(testBucket, captor.getValue().bucket());
+    assertEquals("batch-status/job-1/status.json", captor.getValue().object());
+    assertEquals("application/json", captor.getValue().contentType());
+    verify(output).printInfo(contains("Put " + data.length + " bytes"));
+  }
+
+  @Test
+  void putBytes_shouldPrependBasePath() throws Exception {
+    // Setup - handler with a base path
+    when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
+    when(options.isEnsureBucketExists()).thenReturn(false);
+    when(options.getObjectPath()).thenReturn("base/path");
+    MinioHandler handler = new MinioHandler(options, output);
+
+    byte[] data = "test".getBytes(StandardCharsets.UTF_8);
+
+    // Execute
+    handler.putBytes(data, "status.json", "application/json");
+
+    // Verify
+    ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+    verify(minioClient).putObject(captor.capture());
+    assertEquals("base/path/status.json", captor.getValue().object());
+  }
+
+  @Test
+  void putBytes_shouldPropagateException() throws Exception {
+    // Setup
+    MinioHandler handler = createHandler();
+    when(minioClient.putObject(any(PutObjectArgs.class)))
+        .thenThrow(new RuntimeException("upload failed"));
+
+    byte[] data = "test".getBytes(StandardCharsets.UTF_8);
+
+    // Execute & Verify
+    Exception exception = assertThrows(
+        RuntimeException.class,
+        () -> handler.putBytes(data, "path.json", "application/json")
+    );
+    assertTrue(exception.getMessage().contains("upload failed"));
+  }
+
+  // --- deleteObjects tests ---
 
   @Test
   void deleteObjects_shouldDeleteAllListedObjects() throws Exception {

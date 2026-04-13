@@ -18,9 +18,13 @@ import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -240,6 +244,30 @@ class JoshSimBatchHandlerTest {
     handler.handleRequest(exchange);
 
     verify(apiDataLayer).log(anyString(), anyString(), any(long.class));
+  }
+
+  @TempDir
+  File tempDir;
+
+  @Test
+  void whenValidWorkDir_shouldReturn202() throws IOException {
+    setupValidApiKey();
+
+    // Create a real workDir with a dummy .josh file
+    File joshScript = new File(tempDir, "test.josh");
+    Files.writeString(joshScript.toPath(), "start simulation Test end simulation");
+
+    setupRequiredFields("job-async-1", "Test", tempDir.getAbsolutePath());
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(202);
+    String body = responseBody.toString();
+    assertTrue(body.contains("\"status\":\"accepted\""), "Should return accepted status");
+    assertTrue(body.contains("\"jobId\":\"job-async-1\""), "Should include jobId");
+    assertTrue(body.contains("\"statusPath\":\"batch-status/job-async-1/status.json\""),
+        "Should include statusPath");
   }
 
   // --- Helpers ---

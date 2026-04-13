@@ -20,9 +20,14 @@ import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.HttpString;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
@@ -60,6 +65,14 @@ import org.joshsim.util.OutputOptions;
  * </ul>
  */
 public class JoshSimBatchHandler implements HttpHandler {
+
+  private static final ExecutorService BATCH_EXECUTOR =
+      Executors.newCachedThreadPool(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("batch-sim-" + thread.threadId());
+        thread.setDaemon(true);
+        return thread;
+      });
 
   private final CloudApiDataLayer apiDataLayer;
 
@@ -144,7 +157,6 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
 
     String jobId = formData.getFirst("jobId").getValue();
-    String simulation = formData.getFirst("simulation").getValue();
     File workDir = new File(formData.getFirst("workDir").getValue());
 
     // Opt-in: stage inputs from MinIO before running (for serverless environments)
@@ -179,15 +191,69 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
+    MinioHandler statusMinioInit = null;
     try {
-      executeBatchJob(jobId, simulation, workDir);
-      sendJsonSuccess(exchange, jobId);
+      MinioOptions statusMinioOptions = new MinioOptions();
+      statusMinioInit = new MinioHandler(statusMinioOptions, new OutputOptions());
     } catch (Exception e) {
-      SecurityUtil.logSecureError(apiDataLayer, apiKey, "batch", e, null);
-      sendJsonError(exchange, 500, jobId, "Batch execution failed: " + e.getMessage());
+      System.err.println("[batch] Status tracking unavailable for job " + jobId
+          + ": " + e.getMessage());
     }
+    final MinioHandler statusMinio = statusMinioInit;
+
+    String simulation = formData.getFirst("simulation").getValue();
+    String statusPath = "batch-status/" + jobId + "/status.json";
+    sendJsonAccepted(exchange, jobId, statusPath);
+
+    String capturedApiKey = apiKey;
+    CompletableFuture.runAsync(() -> {
+      runBatchWithStatus(statusMinio, jobId, simulation, workDir, statusPath, capturedApiKey);
+    }, BATCH_EXECUTOR);
 
     return Optional.of(apiKey);
+  }
+
+  private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
+      String simulation, File workDir, String statusPath, String apiKey) {
+    writeStatus(statusMinio, statusPath, String.format(
+        "{\"status\":\"running\",\"jobId\":\"%s\",\"startedAt\":\"%s\"}",
+        jobId, Instant.now().toString()
+    ));
+
+    try {
+      executeBatchJob(jobId, simulation, workDir);
+
+      writeStatus(statusMinio, statusPath, String.format(
+          "{\"status\":\"complete\",\"jobId\":\"%s\",\"completedAt\":\"%s\"}",
+          jobId, Instant.now().toString()
+      ));
+    } catch (Exception e) {
+      SecurityUtil.logSecureError(apiDataLayer, apiKey, "batch", e, null);
+
+      String safeMessage = e.getMessage() != null
+          ? e.getMessage().replace("\"", "\\\"").replace("\n", " ")
+          : "unknown error";
+      writeStatus(statusMinio, statusPath, String.format(
+          "{\"status\":\"error\",\"jobId\":\"%s\",\"message\":\"%s\",\"failedAt\":\"%s\"}",
+          jobId, safeMessage, Instant.now().toString()
+      ));
+    }
+  }
+
+  private void writeStatus(MinioHandler statusMinio, String statusPath, String statusJson) {
+    if (statusMinio == null) {
+      return;
+    }
+    try {
+      statusMinio.putBytes(
+          statusJson.getBytes(StandardCharsets.UTF_8),
+          statusPath,
+          "application/json"
+      );
+    } catch (Exception e) {
+      System.err.println("[batch] Failed to write status to " + statusPath
+          + ": " + e.getMessage());
+    }
   }
 
   private void executeBatchJob(String jobId, String simulation, File workDir) throws Exception {
@@ -234,11 +300,14 @@ public class JoshSimBatchHandler implements HttpHandler {
     );
   }
 
-  private void sendJsonSuccess(HttpServerExchange exchange, String jobId) {
-    exchange.setStatusCode(200);
+  private void sendJsonAccepted(HttpServerExchange exchange, String jobId, String statusPath) {
+    exchange.setStatusCode(202);
     exchange.getResponseHeaders().put(new HttpString("Content-Type"), "application/json");
     exchange.getResponseSender().send(
-        String.format("{\"status\":\"complete\",\"jobId\":\"%s\"}", jobId)
+        String.format(
+            "{\"status\":\"accepted\",\"jobId\":\"%s\",\"statusPath\":\"%s\"}",
+            jobId, statusPath
+        )
     );
   }
 
